@@ -41,6 +41,8 @@ interface PickCardProps {
   canPurchase?: boolean;
   /** When true, shows View Details only (no purchase). Used for admin marketplace. */
   viewOnly?: boolean;
+  /** When set with viewOnly, View Details links to this URL instead of opening modal. */
+  detailsHref?: string;
   walletBalance?: number | null;
   onPurchase: () => void;
   purchasing?: boolean;
@@ -64,6 +66,7 @@ export function PickCard({
   isPurchased = false,
   canPurchase = true,
   viewOnly = false,
+  detailsHref,
   walletBalance,
   onPurchase,
   purchasing = false,
@@ -269,12 +272,21 @@ export function PickCard({
           {/* Action Button - purchased or viewOnly: View Details; else purchase */}
           <div className="mt-auto pt-3 border-t border-[var(--border)]">
             {isPurchased || viewOnly ? (
-              <button
-                onClick={handleViewDetails}
-                className="w-full px-3 py-2.5 rounded-xl font-semibold bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-sm transition-all duration-200"
-              >
-                View Details
-              </button>
+              detailsHref ? (
+                <Link
+                  href={detailsHref}
+                  className="block w-full px-3 py-2.5 rounded-xl font-semibold bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-sm text-center transition-all duration-200"
+                >
+                  View Details
+                </Link>
+              ) : (
+                <button
+                  onClick={handleViewDetails}
+                  className="w-full px-3 py-2.5 rounded-xl font-semibold bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-sm transition-all duration-200"
+                >
+                  View Details
+                </button>
+              )
             ) : canPurchase ? (
               <button
                 onClick={handlePurchase}

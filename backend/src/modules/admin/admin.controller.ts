@@ -9,6 +9,10 @@ import { PredictionEngineService } from '../predictions/prediction-engine.servic
 import { PredictionMarketplaceSyncService } from '../predictions/prediction-marketplace-sync.service';
 import { ResultTrackerService } from '../predictions/result-tracker.service';
 import { TipstersSetupService } from '../predictions/tipsters-setup.service';
+import { NewsService } from '../news/news.service';
+import { TransfersSyncService } from '../news/transfers-sync.service';
+import { ResourcesService } from '../resources/resources.service';
+import { AdsService } from '../ads/ads.service';
 import { User } from '../users/entities/user.entity';
 import { UpdateApiSportsKeyDto, TestApiSportsConnectionDto } from './dto/api-sports.dto';
 
@@ -23,6 +27,10 @@ export class AdminController {
     private readonly predictionMarketplaceSync: PredictionMarketplaceSyncService,
     private readonly resultTracker: ResultTrackerService,
     private readonly tipstersSetup: TipstersSetupService,
+    private readonly newsService: NewsService,
+    private readonly transfersSyncService: TransfersSyncService,
+    private readonly resourcesService: ResourcesService,
+    private readonly adsService: AdsService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -318,6 +326,21 @@ export class AdminController {
     return this.adminService.updateSmtpSettings(body);
   }
 
+  @Get('settings/paystack')
+  async getPaystackSettings(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.adminService.getPaystackSettings();
+  }
+
+  @Patch('settings/paystack')
+  async updatePaystackSettings(
+    @CurrentUser() user: User,
+    @Body() body: { secretKey?: string; publicKey?: string; mode?: string },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.adminService.updatePaystackSettings(body);
+  }
+
   @Post('test-email')
   async sendTestEmail(@CurrentUser() user: User, @Body() body: { to: string }) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
@@ -332,6 +355,162 @@ export class AdminController {
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.adminService.updateContentPage(slug, body);
+  }
+
+  // News Management
+  @Get('news')
+  async getNewsArticles(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.newsService.adminList();
+  }
+
+  @Post('news')
+  async createNewsArticle(
+    @CurrentUser() user: User,
+    @Body() body: { slug: string; title: string; excerpt?: string; content: string; category?: string; imageUrl?: string; sourceUrl?: string; featured?: boolean; metaDescription?: string; publishedAt?: string },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.newsService.create({
+      ...body,
+      category: body.category as any,
+      publishedAt: body.publishedAt ? new Date(body.publishedAt) : null,
+    });
+  }
+
+  @Patch('news/:id')
+  async updateNewsArticle(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { slug?: string; title?: string; excerpt?: string; content?: string; category?: string; imageUrl?: string; sourceUrl?: string; featured?: boolean; metaDescription?: string; publishedAt?: string },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.newsService.update(id, {
+      ...body,
+      category: body.category as any,
+      publishedAt: body.publishedAt !== undefined ? (body.publishedAt ? new Date(body.publishedAt) : null) : undefined,
+    });
+  }
+
+  @Delete('news/:id')
+  async deleteNewsArticle(@CurrentUser() user: User, @Param('id', ParseIntPipe) id: number) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    await this.newsService.delete(id);
+    return { ok: true };
+  }
+
+  @Post('news/sync-transfers')
+  async syncTransfers(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.transfersSyncService.sync();
+  }
+
+  // Resources Management
+  @Get('resources/categories')
+  async getResourceCategories(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.resourcesService.adminListCategories();
+  }
+
+  @Post('resources/categories')
+  async createResourceCategory(
+    @CurrentUser() user: User,
+    @Body() body: { slug: string; name: string; description?: string; level?: string; sortOrder?: number },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.resourcesService.adminCreateCategory(body as any);
+  }
+
+  @Patch('resources/categories/:id')
+  async updateResourceCategory(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { slug?: string; name?: string; description?: string; level?: string; sortOrder?: number },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.resourcesService.adminUpdateCategory(id, body as any);
+  }
+
+  @Post('resources/items')
+  async createResourceItem(
+    @CurrentUser() user: User,
+    @Body() body: { categoryId: number; slug: string; title: string; excerpt?: string; content: string; type?: string; durationMinutes?: number; toolConfig?: object; featured?: boolean; sortOrder?: number; publishedAt?: string },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.resourcesService.adminCreateItem({
+      ...body,
+      type: body.type as any,
+      toolConfig: body.toolConfig as any,
+      publishedAt: body.publishedAt ? new Date(body.publishedAt) : null,
+    } as any);
+  }
+
+  @Patch('resources/items/:id')
+  async updateResourceItem(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { slug?: string; title?: string; excerpt?: string; content?: string; type?: string; durationMinutes?: number; toolConfig?: object; featured?: boolean; sortOrder?: number; publishedAt?: string },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.resourcesService.adminUpdateItem(id, {
+      ...body,
+      type: body.type as any,
+      toolConfig: body.toolConfig as any,
+      publishedAt: body.publishedAt !== undefined ? (body.publishedAt ? new Date(body.publishedAt) : null) : undefined,
+    } as any);
+  }
+
+  @Delete('resources/items/:id')
+  async deleteResourceItem(@CurrentUser() user: User, @Param('id', ParseIntPipe) id: number) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    await this.resourcesService.adminDeleteItem(id);
+    return { ok: true };
+  }
+
+  // Ads Management
+  @Get('ads/zones')
+  async getAdZones(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.adsService.adminGetZones();
+  }
+
+  @Get('ads/campaigns')
+  async getAdCampaigns(@CurrentUser() user: User, @Query('zoneId') zoneId?: string) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.adsService.adminGetCampaigns(zoneId ? parseInt(zoneId, 10) : undefined);
+  }
+
+  @Post('ads/campaigns')
+  async createAdCampaign(
+    @CurrentUser() user: User,
+    @Body() body: { zoneId: number; advertiserName: string; imageUrl: string; targetUrl: string; startDate: string; endDate: string; status?: string },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.adsService.adminCreateCampaign({
+      ...body,
+      status: body.status as any,
+      startDate: new Date(body.startDate),
+      endDate: new Date(body.endDate),
+    });
+  }
+
+  @Patch('ads/campaigns/:id')
+  async updateAdCampaign(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { advertiserName?: string; imageUrl?: string; targetUrl?: string; startDate?: string; endDate?: string; status?: string },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const data: any = { ...body };
+    if (body.startDate) data.startDate = new Date(body.startDate);
+    if (body.endDate) data.endDate = new Date(body.endDate);
+    return this.adsService.adminUpdateCampaign(id, data);
+  }
+
+  @Delete('ads/campaigns/:id')
+  async deleteAdCampaign(@CurrentUser() user: User, @Param('id', ParseIntPipe) id: number) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    await this.adsService.adminDeleteCampaign(id);
+    return { ok: true };
   }
 
   // Notifications Management

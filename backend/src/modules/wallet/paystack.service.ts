@@ -1,17 +1,29 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { PaystackSettings } from './entities/paystack-settings.entity';
 
 @Injectable()
 export class PaystackService {
-  private readonly secretKey: string;
   private readonly baseUrl = 'https://api.paystack.co';
 
-  constructor(private config: ConfigService) {
-    this.secretKey = this.config.get<string>('PAYSTACK_SECRET_KEY') || '';
+  constructor(
+    private config: ConfigService,
+    @InjectRepository(PaystackSettings)
+    private paystackSettingsRepo: Repository<PaystackSettings>,
+  ) {}
+
+  private async getSecretKey(): Promise<string> {
+    const settings = await this.paystackSettingsRepo.findOne({ where: { id: 1 } });
+    const dbKey = settings?.secretKey?.trim();
+    if (dbKey && dbKey.startsWith('sk_')) return dbKey;
+    return this.config.get<string>('PAYSTACK_SECRET_KEY') || '';
   }
 
-  isConfigured(): boolean {
-    return !!this.secretKey && this.secretKey.startsWith('sk_');
+  async isConfigured(): Promise<boolean> {
+    const key = await this.getSecretKey();
+    return !!key && key.startsWith('sk_');
   }
 
   generateReference(prefix = 'DEP'): string {
@@ -25,9 +37,10 @@ export class PaystackService {
     callbackUrl?: string;
     metadata?: Record<string, unknown>;
   }) {
-    if (!this.isConfigured()) {
-      throw new BadRequestException('Paystack is not configured. Add PAYSTACK_SECRET_KEY to .env');
+    if (!(await this.isConfigured())) {
+      throw new BadRequestException('Paystack is not configured. Add keys in Admin Settings or PAYSTACK_SECRET_KEY in .env');
     }
+    const secretKey = await this.getSecretKey();
     // Paystack GHS: amount in pesewas (1 GHS = 100 pesewas)
     const amountInPesewas = Math.round(params.amount * 100);
     if (amountInPesewas < 100) {
@@ -38,7 +51,7 @@ export class PaystackService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.secretKey}`,
+        Authorization: `Bearer ${secretKey}`,
       },
       body: JSON.stringify({
         email: params.email,
@@ -58,17 +71,20 @@ export class PaystackService {
   }
 
   async verifyTransaction(reference: string) {
-    if (!this.isConfigured()) return null;
+    if (!(await this.isConfigured())) return null;
+    const secretKey = await this.getSecretKey();
     const res = await fetch(`${this.baseUrl}/transaction/verify/${encodeURIComponent(reference)}`, {
-      headers: { Authorization: `Bearer ${this.secretKey}` },
+      headers: { Authorization: `Bearer ${secretKey}` },
     });
     const data = await res.json();
     return data.status ? data.data : null;
   }
 
-  verifyWebhookSignature(payload: string, signature: string): boolean {
+  async verifyWebhookSignature(payload: string, signature: string): Promise<boolean> {
+    const secretKey = await this.getSecretKey();
+    if (!secretKey) return false;
     const crypto = require('crypto');
-    const hash = crypto.createHmac('sha512', this.secretKey).update(payload).digest('hex');
+    const hash = crypto.createHmac('sha512', secretKey).update(payload).digest('hex');
     return hash === signature;
   }
 
@@ -85,9 +101,10 @@ export class PaystackService {
     phone?: string;
     provider?: string;
   }) {
-    if (!this.isConfigured()) {
+    if (!(await this.isConfigured())) {
       throw new BadRequestException('Paystack is not configured');
     }
+    const secretKey = await this.getSecretKey();
     const body: Record<string, unknown> = {
       type: params.type,
       name: params.name,
@@ -105,7 +122,7 @@ export class PaystackService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.secretKey}`,
+        Authorization: `Bearer ${secretKey}`,
       },
       body: JSON.stringify(body),
     });
@@ -123,9 +140,10 @@ export class PaystackService {
     reference: string;
     reason?: string;
   }) {
-    if (!this.isConfigured()) {
+    if (!(await this.isConfigured())) {
       throw new BadRequestException('Paystack is not configured');
     }
+    const secretKey = await this.getSecretKey();
     const amountInPesewas = Math.round(params.amount * 100);
     if (amountInPesewas < 100) {
       throw new BadRequestException('Minimum transfer is GHS 1.00');
@@ -135,7 +153,7 @@ export class PaystackService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.secretKey}`,
+        Authorization: `Bearer ${secretKey}`,
       },
       body: JSON.stringify({
         source: 'balance',

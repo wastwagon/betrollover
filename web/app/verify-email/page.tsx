@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { AppShell } from '@/components/AppShell';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001';
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   const [result, setResult] = useState<{ verified: boolean; message: string } | null>(null);
@@ -117,5 +117,24 @@ export default function VerifyEmailPage() {
         )}
       </div>
     </AppShell>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense
+      fallback={
+        <AppShell>
+          <div className="max-w-md mx-auto px-4 py-20 text-center">
+            <div className="animate-pulse">
+              <div className="w-16 h-16 rounded-full bg-[var(--primary)]/20 mx-auto mb-6" />
+              <p className="text-[var(--text-muted)]">Loading...</p>
+            </div>
+          </div>
+        </AppShell>
+      }
+    >
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

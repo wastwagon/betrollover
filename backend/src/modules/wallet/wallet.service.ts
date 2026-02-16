@@ -200,7 +200,7 @@ export class WalletService {
   }
 
   async handlePaystackWebhook(rawBody: string, signature: string) {
-    if (!this.paystackService.verifyWebhookSignature(rawBody, signature)) {
+    if (!(await this.paystackService.verifyWebhookSignature(rawBody, signature))) {
       return { received: false, reason: 'Invalid signature' };
     }
     const payload = JSON.parse(rawBody || '{}');
@@ -416,7 +416,7 @@ export class WalletService {
       withdrawal.status = 'failed';
       withdrawal.failureReason = e instanceof Error ? e.message : 'Transfer failed';
       await this.withdrawalRepo.save(withdrawal);
-      await this.credit(user.id, amount, 'withdrawal_refund', reference, 'Withdrawal failed - refund');
+      await this.credit(user.id, amount, 'refund', reference, 'Withdrawal failed - refund');
 
       await this.notificationsService.create({
         userId: user.id,

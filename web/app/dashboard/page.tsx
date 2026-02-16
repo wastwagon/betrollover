@@ -7,7 +7,7 @@ import { AppShell } from '@/components/AppShell';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { PageHeader } from '@/components/PageHeader';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface User {
   id: number;
@@ -72,7 +72,7 @@ function DashboardContent() {
     if (!token) return;
     setSettling(true);
     try {
-      const res = await fetch(`${API_URL}/admin/settlement/run`, {
+      const res = await fetch(`${getApiUrl()}/admin/settlement/run`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -97,9 +97,10 @@ function DashboardContent() {
       return;
     }
     const headers = { Authorization: `Bearer ${token}` };
+    const apiUrl = getApiUrl();
 
     // Check auth first: 401 → clear token and redirect to login immediately (avoids multiple 401s)
-    fetch(`${API_URL}/users/me`, { headers })
+    fetch(`${apiUrl}/users/me`, { headers })
       .then((r) => {
         if (r.status === 401) {
           localStorage.removeItem('token');
@@ -113,14 +114,14 @@ function DashboardContent() {
         setUser(u);
         return Promise.all([
           Promise.resolve(u),
-          fetch(`${API_URL}/admin/stats`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-          fetch(`${API_URL}/tipster/stats`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-          fetch(`${API_URL}/wallet/balance`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-          fetch(`${API_URL}/admin/settings`, { headers })
+          fetch(`${apiUrl}/admin/stats`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+          fetch(`${apiUrl}/tipster/stats`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+          fetch(`${apiUrl}/wallet/balance`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+          fetch(`${apiUrl}/admin/settings`, { headers })
             .then((r) => (r.ok ? r.json() : null))
             .catch(() => null)
             .then((settings) => settings?.minimumROI !== undefined ? settings.minimumROI : 20.0),
-          fetch(`${API_URL}/accumulators/purchased`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+          fetch(`${apiUrl}/accumulators/purchased`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
         ]);
       })
       .then((result) => {

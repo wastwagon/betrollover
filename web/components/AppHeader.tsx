@@ -4,9 +4,10 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 const mainNavItems = [
+  { href: '/', label: 'Home' },
   { href: '/dashboard', label: 'Dashboard' },
   {
     label: 'Picks',
@@ -85,7 +86,7 @@ export function AppHeader({ slipCount }: AppHeaderProps) {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
-    fetch(`${API_URL}/wallet/balance`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${getApiUrl()}/wallet/balance`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => data && setBalance(Number(data.balance)))
       .catch(() => {});
@@ -94,7 +95,7 @@ export function AppHeader({ slipCount }: AppHeaderProps) {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
-    fetch(`${API_URL}/notifications?limit=5`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${getApiUrl()}/notifications?limit=5`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => (r.ok ? r.json() : []))
       .then(setNotifications)
       .catch(() => setNotifications([]));
@@ -131,9 +132,9 @@ export function AppHeader({ slipCount }: AppHeaderProps) {
     <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-xl border-b border-[var(--border)] shadow-sm">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
-          {/* Logo */}
+          {/* Logo - links to main site home */}
           <Link
-            href="/dashboard"
+            href="/"
             className="flex items-center gap-2.5 font-semibold text-[var(--text)] hover:opacity-90 transition-opacity shrink-0 group"
           >
             <span className="w-9 h-9 rounded-xl bg-[var(--primary)] flex items-center justify-center text-white text-xs font-bold shadow-md group-hover:bg-[var(--primary-hover)] transition-colors">

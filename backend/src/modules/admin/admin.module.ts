@@ -23,10 +23,14 @@ import { PredictionsModule } from '../predictions/predictions.module';
 import { AccumulatorsModule } from '../accumulators/accumulators.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ContentModule } from '../content/content.module';
+import { NewsModule } from '../news/news.module';
+import { ResourcesModule } from '../resources/resources.module';
+import { AdsModule } from '../ads/ads.module';
 import { EmailModule } from '../email/email.module';
 import { WalletModule } from '../wallet/wallet.module';
 import { SmtpSettings } from '../email/entities/smtp-settings.entity';
 import { ApiSettings } from './entities/api-settings.entity';
+import { PaystackSettings } from '../wallet/entities/paystack-settings.entity';
 import { VisitorSession } from './entities/visitor-session.entity';
 import { AnalyticsDaily } from './entities/analytics-daily.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
@@ -38,6 +42,7 @@ import { Prediction } from '../predictions/entities/prediction.entity';
       User,
       SmtpSettings,
       ApiSettings,
+      PaystackSettings,
       UserWallet,
       WalletTransaction,
       AccumulatorTicket,
@@ -57,6 +62,9 @@ import { Prediction } from '../predictions/entities/prediction.entity';
     AccumulatorsModule,
     NotificationsModule,
     ContentModule,
+    NewsModule,
+    ResourcesModule,
+    AdsModule,
     EmailModule,
     WalletModule,
     PredictionsModule,

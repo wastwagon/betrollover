@@ -19,6 +19,9 @@ import { HealthModule } from './modules/health/health.module';
 import { CacheModule } from './modules/cache/cache.module';
 import { PredictionsModule } from './modules/predictions/predictions.module';
 import { CouponsModule } from './modules/coupons/coupons.module';
+import { NewsModule } from './modules/news/news.module';
+import { ResourcesModule } from './modules/resources/resources.module';
+import { AdsModule } from './modules/ads/ads.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -59,6 +62,9 @@ import { ScheduleModule } from '@nestjs/schedule';
     HealthModule,
     PredictionsModule,
     CouponsModule,
+    NewsModule,
+    ResourcesModule,
+    AdsModule,
   ],
 })
 export class AppModule {}

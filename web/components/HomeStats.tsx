@@ -49,12 +49,12 @@ export function HomeStats() {
 
   return (
     <section className="border-y border-[var(--border)] bg-gradient-to-br from-[var(--card)] via-[var(--card)] to-[var(--primary)]/5">
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {items.map((item) => (
             <div key={item.label} className="text-center group">
-              <p className="text-2xl md:text-3xl font-bold text-[var(--primary)] tabular-nums group-hover:scale-105 transition-transform duration-300">{item.value}</p>
-              <p className="text-sm text-[var(--text-muted)] mt-1 font-medium">{item.label}</p>
+              <p className="text-xl md:text-2xl font-bold text-[var(--primary)] tabular-nums group-hover:scale-105 transition-transform">{item.value}</p>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5 font-medium">{item.label}</p>
             </div>
           ))}
         </div>

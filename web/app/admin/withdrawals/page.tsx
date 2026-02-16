@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface Withdrawal {
   id: number;
@@ -38,7 +37,7 @@ export default function AdminWithdrawalsPage() {
     const params = new URLSearchParams({ page: page.toString(), limit: '50' });
     if (userIdFilter) params.append('userId', userIdFilter);
     if (statusFilter) params.append('status', statusFilter);
-    fetch(`${API_URL}/admin/withdrawals?${params}`, {
+    fetch(`${getApiUrl()}/admin/withdrawals?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => (r.ok ? r.json() : { items: [], total: 0, page: 1, limit: 50, totalPages: 1 }))
@@ -54,7 +53,7 @@ export default function AdminWithdrawalsPage() {
     if (!confirm(`Change withdrawal status to "${status}"?`)) return;
     const token = localStorage.getItem('token');
     if (!token) return;
-    const res = await fetch(`${API_URL}/admin/withdrawals/${id}/status`, {
+    const res = await fetch(`${getApiUrl()}/admin/withdrawals/${id}/status`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ status, failureReason }),

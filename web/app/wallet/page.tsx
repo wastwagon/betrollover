@@ -4,8 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/AppShell';
 import { PageHeader } from '@/components/PageHeader';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface Transaction {
   id: number;
@@ -61,12 +60,13 @@ function WalletContent() {
     const token = localStorage.getItem('token');
     if (!token) return;
     const headers = { Authorization: `Bearer ${token}` };
+    const apiUrl = getApiUrl();
     Promise.all([
-      fetch(`${API_URL}/users/me`, { headers }).then((r) => (r.ok ? r.json() : null)),
-      fetch(`${API_URL}/wallet/balance`, { headers }).then((r) => r.ok ? r.json() : null),
-      fetch(`${API_URL}/wallet/transactions`, { headers }).then((r) => r.ok ? r.json() : []),
-      fetch(`${API_URL}/wallet/payout-methods`, { headers }).then((r) => r.ok ? r.json() : []),
-      fetch(`${API_URL}/wallet/withdrawals`, { headers }).then((r) => r.ok ? r.json() : []),
+      fetch(`${apiUrl}/users/me`, { headers }).then((r) => (r.ok ? r.json() : null)),
+      fetch(`${apiUrl}/wallet/balance`, { headers }).then((r) => r.ok ? r.json() : null),
+      fetch(`${apiUrl}/wallet/transactions`, { headers }).then((r) => r.ok ? r.json() : []),
+      fetch(`${apiUrl}/wallet/payout-methods`, { headers }).then((r) => r.ok ? r.json() : []),
+      fetch(`${apiUrl}/wallet/withdrawals`, { headers }).then((r) => r.ok ? r.json() : []),
     ])
       .then(([u, bal, txs, payouts, wdrs]) => {
         setUser(u);
@@ -98,7 +98,7 @@ function WalletContent() {
     if (deposit === 'success' && ref) {
       const token = localStorage.getItem('token');
       if (token) {
-        fetch(`${API_URL}/wallet/deposit/verify?ref=${encodeURIComponent(ref)}`, {
+        fetch(`${getApiUrl()}/wallet/deposit/verify?ref=${encodeURIComponent(ref)}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
           .then((r) => r.json())
@@ -122,7 +122,7 @@ function WalletContent() {
       return;
     }
     try {
-      const res = await fetch(`${API_URL}/wallet/deposit/initialize`, {
+      const res = await fetch(`${getApiUrl()}/wallet/deposit/initialize`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -155,7 +155,7 @@ function WalletContent() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch(`${API_URL}/wallet/withdraw`, {
+      const res = await fetch(`${getApiUrl()}/wallet/withdraw`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ amount }),
@@ -192,7 +192,7 @@ function WalletContent() {
         payoutForm.type === 'mobile_money'
           ? { type: 'mobile_money', name: payoutForm.name, phone: payoutForm.phone, provider: payoutForm.provider }
           : { type: 'bank', name: payoutForm.name, accountNumber: payoutForm.accountNumber, bankCode: payoutForm.bankCode };
-      const res = await fetch(`${API_URL}/wallet/payout-methods`, {
+      const res = await fetch(`${getApiUrl()}/wallet/payout-methods`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(body),

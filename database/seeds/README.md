@@ -6,6 +6,8 @@ This directory contains comprehensive seed data scripts to populate the BetRollo
 
 - **`comprehensive-seed-data.sql`** - Complete seed data script with users, picks, purchases, transactions, and more
 - **`ai-tipsters-full-seed.sql`** - 25 AI tipsters: creates users, links to tipsters, creates wallets (idempotent)
+- **`news-resources-seed.sql`** - News articles (football news, transfers, rumours, gossip) + Resource Center items (betting education)
+- **`fix-news-dates.sql`** - One-time fix: updates news article dates to actual event dates (2023-2025)
 - **`clean-fake-data.sql`** - Removes fake/seed data: picks, purchases, deposits, withdrawals, resets wallet balances to 0
 
 ### Leagues (API-Football Professional Coverage)
@@ -64,6 +66,35 @@ psql -h localhost -p 5435 -U betrollover -d betrollover -f database/seeds/ai-tip
 ```
 
 Creates 25 users (`*@betrollover.internal`), links them to tipsters, syncs display names/bios/avatars from config, and creates user_wallets. Idempotent (safe to re-run).
+
+### News & Resources Seed (Football news + Betting education)
+
+```bash
+# With Docker
+docker compose exec -T postgres psql -U betrollover -d betrollover < database/seeds/news-resources-seed.sql
+
+# Or with psql
+psql -h localhost -p 5435 -U betrollover -d betrollover -f database/seeds/news-resources-seed.sql
+```
+
+Populates **12 news articles** (news, transfer rumours, confirmed transfers, gossip) and **11 resource items** (betting education: odds, bankroll, value betting, strategies). Idempotent (ON CONFLICT DO NOTHING).
+
+**Data source:** News is **seeded in your database** (static/curated content). It is **not** loaded from an external API. Articles are served from PostgreSQL. To add fresh content: use Admin → News, or run the API-Football transfers sync script for confirmed transfers.
+
+### API-Football Transfers → News (optional)
+
+To add **confirmed transfers** from API-Football into the news section:
+
+```bash
+# 1. Ensure API_SPORTS_KEY is in .env
+# 2. Run the sync script (fetches transfers for major clubs)
+npx ts-node scripts/sync-transfers-to-news.ts
+
+# 3. Apply the generated SQL
+docker compose exec -T postgres psql -U betrollover -d betrollover < database/seeds/transfers-from-api.sql
+```
+
+The script fetches current-season transfers for Premier League, La Liga, Serie A, and Bundesliga clubs, then outputs SQL to insert them as `confirmed_transfer` articles.
 
 ## 📊 What Gets Seeded
 

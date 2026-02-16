@@ -9,8 +9,7 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { useErrorToast } from '@/hooks/useErrorToast';
 import { ErrorToast } from '@/components/ErrorToast';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface Pick {
   id: number;
@@ -51,7 +50,7 @@ export default function MyPurchasesPage() {
       router.push('/login');
       return;
     }
-    return fetch(`${API_URL}/accumulators/purchased`, {
+    return fetch(`${getApiUrl()}/accumulators/purchased`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => {
@@ -78,7 +77,7 @@ export default function MyPurchasesPage() {
     const interval = setInterval(() => {
       const token = localStorage.getItem('token');
       if (token) {
-        fetch(`${API_URL}/accumulators/purchased`, { headers: { Authorization: `Bearer ${token}` } })
+        fetch(`${getApiUrl()}/accumulators/purchased`, { headers: { Authorization: `Bearer ${token}` } })
           .then((r) => r.ok ? r.json() : [])
           .then((data) => setPurchases(Array.isArray(data) ? data : []))
           .catch(() => {});

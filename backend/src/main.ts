@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { json } from 'express';
+import helmet from 'helmet';
 import type { Request, Response, NextFunction } from 'express';
 import { AppModule } from './app.module';
 import { MigrationRunnerService } from './modules/admin/migration-runner.service';
@@ -23,6 +24,14 @@ async function bootstrap() {
   }
   
   const app = await NestFactory.create(AppModule, { bodyParser: false });
+
+  // Security headers (Helmet) - production-safe, no breaking changes
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // Disable CSP to avoid breaking inline scripts; add later if needed
+      crossOriginEmbedderPolicy: false, // Allow external embeds (e.g. Paystack)
+    }),
+  );
 
   // Paystack webhook needs raw body for signature verification; add parsers before Nest's default
   app.use((req: Request & { rawBody?: string }, res: Response, next: NextFunction) => {

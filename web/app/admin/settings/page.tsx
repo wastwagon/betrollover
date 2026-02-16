@@ -52,6 +52,12 @@ export default function AdminSettingsPage() {
   const [testEmailTo, setTestEmailTo] = useState('');
   const [testEmailLoading, setTestEmailLoading] = useState(false);
   const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [paystackSecretKey, setPaystackSecretKey] = useState('');
+  const [paystackPublicKey, setPaystackPublicKey] = useState('');
+  const [paystackMode, setPaystackMode] = useState<'live' | 'test'>('live');
+  const [paystackConfigured, setPaystackConfigured] = useState(false);
+  const [paystackSaving, setPaystackSaving] = useState(false);
+  const [paystackSaveResult, setPaystackSaveResult] = useState<{ success: boolean; message: string } | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -88,7 +94,27 @@ export default function AdminSettingsPage() {
     // Load sync statuses and migration status
     loadSyncStatus();
     loadMigrationStatus();
+    loadPaystackSettings();
   }, [router]);
+
+  const loadPaystackSettings = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/admin/settings/paystack`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPaystackSecretKey(data.secretKey || '');
+        setPaystackPublicKey(data.publicKey || '');
+        setPaystackMode((data.mode || 'live') as 'live' | 'test');
+        setPaystackConfigured(data.configured || false);
+      }
+    } catch (e) {
+      console.error('Failed to load Paystack settings:', e);
+    }
+  };
 
   const loadSyncStatus = async () => {
     const token = localStorage.getItem('token');
@@ -671,6 +697,131 @@ export default function AdminSettingsPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                         Send Test Email
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Paystack Payment Gateway */}
+            <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 overflow-hidden ${
+              paystackConfigured
+                ? 'border-emerald-200 dark:border-emerald-800'
+                : 'border-amber-200 dark:border-amber-800'
+            }`}>
+              <div className={`p-8 ${
+                paystackConfigured
+                  ? 'bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20'
+                  : 'bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20'
+              }`}>
+                <div className="flex items-start gap-4 mb-6">
+                  <div className={`p-3 rounded-xl ${paystackConfigured ? 'bg-emerald-500' : 'bg-amber-500'} text-white`}>
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Paystack Payment Gateway</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      Configure Paystack API keys for wallet deposits and withdrawals (GHS, Mobile Money, cards).
+                    </p>
+                    <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${
+                      paystackConfigured
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200'
+                        : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
+                    }`}>
+                      {paystackConfigured ? '✓ Configured' : '⚠ Not Configured'}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mode</label>
+                    <select
+                      value={paystackMode}
+                      onChange={(e) => setPaystackMode(e.target.value as 'live' | 'test')}
+                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white"
+                    >
+                      <option value="live">Live</option>
+                      <option value="test">Test</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Secret Key (sk_live_... or sk_test_...)</label>
+                    <input
+                      type="password"
+                      value={paystackSecretKey}
+                      onChange={(e) => setPaystackSecretKey(e.target.value)}
+                      placeholder="sk_live_xxxx or sk_test_xxxx"
+                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Public Key (pk_live_... or pk_test_...)</label>
+                    <input
+                      type="password"
+                      value={paystackPublicKey}
+                      onChange={(e) => setPaystackPublicKey(e.target.value)}
+                      placeholder="pk_live_xxxx or pk_test_xxxx"
+                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Get keys from <a href="https://dashboard.paystack.com/#/settings/developers" target="_blank" rel="noopener noreferrer" className="text-red-600 dark:text-red-400 underline">Paystack Dashboard</a>. Leave blank to keep existing. .env PAYSTACK_SECRET_KEY is used as fallback if not set here.
+                  </p>
+                  {paystackSaveResult && (
+                    <div className={`p-4 rounded-xl text-sm font-medium ${
+                      paystackSaveResult.success
+                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200'
+                        : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200'
+                    }`}>
+                      {paystackSaveResult.success ? '✓ ' : '✗ '}{paystackSaveResult.message}
+                    </div>
+                  )}
+                  <button
+                    onClick={async () => {
+                      const token = localStorage.getItem('token');
+                      if (!token) return;
+                      setPaystackSaving(true);
+                      setPaystackSaveResult(null);
+                      try {
+                        const res = await fetch(`${API_URL}/admin/settings/paystack`, {
+                          method: 'PATCH',
+                          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            secretKey: paystackSecretKey || undefined,
+                            publicKey: paystackPublicKey || undefined,
+                            mode: paystackMode,
+                          }),
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (res.ok) {
+                          setPaystackSaveResult({ success: true, message: 'Paystack settings saved.' });
+                          setPaystackConfigured(data.configured || false);
+                        } else {
+                          setPaystackSaveResult({ success: false, message: data.message || 'Failed to save' });
+                        }
+                      } catch (e: any) {
+                        setPaystackSaveResult({ success: false, message: e?.message || 'Network error' });
+                      } finally {
+                        setPaystackSaving(false);
+                      }
+                    }}
+                    disabled={paystackSaving}
+                    className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center gap-2"
+                  >
+                    {paystackSaving ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Save Paystack Settings
                       </>
                     )}
                   </button>

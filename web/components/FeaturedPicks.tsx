@@ -2,22 +2,30 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001';
+import { PickCard } from '@/components/PickCard';
+import { getApiUrl } from '@/lib/site-config';
 
 interface Pick {
+  id?: number;
+  matchDescription?: string;
+  prediction?: string;
+  odds?: number;
+}
+
+interface Accumulator {
   id: number;
   title: string;
   totalOdds: number;
   totalPicks: number;
   price: number;
+  picks?: Pick[];
 }
 
 export function FeaturedPicks() {
-  const [picks, setPicks] = useState<Pick[]>([]);
+  const [picks, setPicks] = useState<Accumulator[]>([]);
 
   useEffect(() => {
-    fetch(`${API_URL}/accumulators/featured`)
+    fetch(`${getApiUrl()}/accumulators/featured`)
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setPicks(Array.isArray(data) ? data : []))
       .catch(() => setPicks([]));
@@ -26,37 +34,36 @@ export function FeaturedPicks() {
   if (picks.length === 0) return null;
 
   return (
-    <section className="py-20 md:py-28 bg-[var(--card)] border-y border-[var(--border)] relative overflow-hidden">
+    <section className="py-12 md:py-16 bg-[var(--card)] border-y border-[var(--border)] relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--accent)]/5 to-transparent pointer-events-none" />
       <div className="relative max-w-6xl mx-auto px-6">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-[var(--text)]">Popular Picks Right Now</h2>
-          <p className="mt-3 text-[var(--text-muted)]">Top picks from our verified tipsters</p>
+        <div className="text-center mb-8">
+          <h2 className="text-xl md:text-2xl font-bold text-[var(--text)]">Marketplace Coupons</h2>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">Browse and purchase from verified tipsters</p>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {picks.map((p) => (
-            <Link
-              key={p.id}
-              href="/marketplace"
-              className="block p-6 rounded-2xl bg-[var(--bg)] border border-[var(--border)] hover:border-[var(--primary)]/30 hover:shadow-xl hover:shadow-[var(--primary)]/5 hover:-translate-y-1 transition-all duration-300"
-            >
-              <h3 className="font-semibold text-[var(--text)] line-clamp-2">{p.title}</h3>
-              <div className="mt-3 flex justify-between text-sm text-[var(--text-muted)]">
-                <span>{p.totalPicks} picks</span>
-                <span>Odds: {Number(p.totalOdds).toFixed(2)}</span>
-              </div>
-              <p className="mt-2 font-medium text-[var(--primary)]">
-                {p.price === 0 ? 'Free' : `GHS ${Number(p.price).toFixed(2)}`}
-              </p>
-            </Link>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {picks.map((a) => (
+            <PickCard
+              key={a.id}
+              id={a.id}
+              title={a.title}
+              totalPicks={a.totalPicks}
+              totalOdds={a.totalOdds}
+              price={a.price}
+              picks={a.picks || []}
+              viewOnly={true}
+              detailsHref="/marketplace"
+              onPurchase={() => {}}
+              purchasing={false}
+            />
           ))}
         </div>
-        <div className="text-center mt-10">
+        <div className="text-center mt-6">
           <Link
-            href="/register"
-            className="inline-block px-8 py-3.5 rounded-2xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors"
+            href="/marketplace"
+            className="inline-block px-6 py-2.5 rounded-xl font-semibold text-sm bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors"
           >
-            Browse All Picks
+            Browse Marketplace
           </Link>
         </div>
       </div>

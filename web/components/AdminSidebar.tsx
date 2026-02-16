@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const menuItems = [
+  { href: '/', icon: '🏠', label: 'Home' },
   { href: '/dashboard', icon: '📊', label: 'Dashboard' },
   { href: '/admin/analytics', icon: '📈', label: 'Analytics' },
   { href: '/admin/ai-predictions', icon: '🤖', label: 'AI Predictions' },
@@ -19,6 +20,9 @@ const menuItems = [
   { href: '/admin/fixtures', icon: '⚽', label: 'Fixtures' },
   { href: '/admin/coupons', icon: '🎫', label: 'Smart Coupons' },
   { href: '/admin/content', icon: '📄', label: 'Content' },
+  { href: '/admin/news', icon: '📰', label: 'News' },
+  { href: '/admin/resources', icon: '📚', label: 'Resources' },
+  { href: '/admin/ads', icon: '📢', label: 'Ads' },
   { href: '/admin/email', icon: '📧', label: 'Email' },
   { href: '/admin/settings', icon: '⚙️', label: 'Settings' },
 ];
@@ -29,7 +33,7 @@ export function AdminSidebar() {
   return (
     <aside className="w-56 min-h-screen bg-[var(--card)] border-r border-[var(--border)] flex flex-col fixed left-0 top-0 bottom-0 z-50 shadow-card">
       <div className="p-4 border-b border-[var(--border)]">
-        <Link href="/dashboard" className="font-bold text-lg text-[var(--text)]">
+        <Link href="/dashboard" className="font-bold text-lg text-[var(--text)] hover:text-[var(--primary)] transition-colors">
           BetRollover Admin
         </Link>
       </div>

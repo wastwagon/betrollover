@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { AppFooter } from '@/components/AppFooter';
+import { getApiUrl } from '@/lib/site-config';
 
 export default function AdminLayout({
   children,
@@ -19,7 +20,7 @@ export default function AdminLayout({
       router.replace('/login');
       return;
     }
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001'}/users/me`, {
+    fetch(`${getApiUrl()}/users/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => (r.ok ? r.json() : Promise.reject()))

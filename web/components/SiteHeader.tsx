@@ -6,6 +6,8 @@ import { useRouter, usePathname } from 'next/navigation';
 
 const navLinks = [
   { href: '/marketplace', label: 'Marketplace' },
+  { href: '/news', label: 'News' },
+  { href: '/resources', label: 'Resources' },
   { href: '/tipsters', label: 'Tipsters' },
   { href: '/leaderboard', label: 'Leaderboard' },
   { href: '/about', label: 'About' },
@@ -48,15 +50,26 @@ export function SiteHeader() {
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-[var(--text-muted)] hover:text-[var(--primary)] font-medium transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const isActive =
+                pathname === link.href ||
+                (link.href !== '/' && pathname.startsWith(link.href + '/'));
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`font-medium transition-colors ${
+                    isActive
+                      ? 'text-[var(--primary)]'
+                      : 'text-[var(--text-muted)] hover:text-[var(--primary)]'
+                  }`}
+                >
+                  <span className={isActive ? 'border-b-2 border-[var(--primary)] pb-0.5' : ''}>
+                    {link.label}
+                  </span>
+                </Link>
+              );
+            })}
           </nav>
 
           {/* CTA buttons */}
@@ -116,16 +129,25 @@ export function SiteHeader() {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-[var(--border)]">
             <nav className="flex flex-col gap-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-4 py-3 rounded-lg text-[var(--text)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] font-medium"
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {navLinks.map((link) => {
+                const isActive =
+                  pathname === link.href ||
+                  (link.href !== '/' && pathname.startsWith(link.href + '/'));
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`px-4 py-3 rounded-lg font-medium ${
+                      isActive
+                        ? 'text-[var(--primary)] bg-[var(--primary-light)]'
+                        : 'text-[var(--text)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)]'
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
               <div className="flex gap-3 mt-4 px-4 pt-4 border-t border-[var(--border)]">
                 {isSignedIn ? (
                   <>

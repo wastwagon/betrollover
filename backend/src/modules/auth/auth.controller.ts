@@ -14,6 +14,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
+  @Throttle({ default: { limit: 5, ttl: 300000 } }) // 5 attempts per 5 min per IP (brute-force protection)
   @UseGuards(LocalAuthGuard)
   async login(@Body() _dto: LoginDto, @CurrentUser() user: User) {
     return this.authService.login(user);

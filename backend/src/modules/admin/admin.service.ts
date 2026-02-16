@@ -20,6 +20,7 @@ import { EmailService } from '../email/email.service';
 import { WalletService } from '../wallet/wallet.service';
 import { SmtpSettings } from '../email/entities/smtp-settings.entity';
 import { ApiSettings } from './entities/api-settings.entity';
+import { PaystackSettings } from '../wallet/entities/paystack-settings.entity';
 
 @Injectable()
 export class AdminService {
@@ -32,6 +33,8 @@ export class AdminService {
     private smtpRepo: Repository<SmtpSettings>,
     @InjectRepository(ApiSettings)
     private apiSettingsRepo: Repository<ApiSettings>,
+    @InjectRepository(PaystackSettings)
+    private paystackSettingsRepo: Repository<PaystackSettings>,
     @InjectRepository(UserWallet)
     private walletsRepo: Repository<UserWallet>,
     @InjectRepository(WalletTransaction)
@@ -519,6 +522,41 @@ export class AdminService {
     if (data.fromName !== undefined) s.fromName = data.fromName;
     await this.smtpRepo.save(s);
     return this.getSmtpSettings();
+  }
+
+  async getPaystackSettings() {
+    let s = await this.paystackSettingsRepo.findOne({ where: { id: 1 } });
+    if (!s) {
+      s = this.paystackSettingsRepo.create({ mode: 'live' });
+      await this.paystackSettingsRepo.save(s);
+    }
+    return {
+      secretKey: s.secretKey ? '********' : '',
+      publicKey: s.publicKey ? '********' : '',
+      mode: s.mode || 'live',
+      configured: !!(s.secretKey?.trim() && s.secretKey.startsWith('sk_')),
+    };
+  }
+
+  async updatePaystackSettings(data: {
+    secretKey?: string;
+    publicKey?: string;
+    mode?: string;
+  }) {
+    let s = await this.paystackSettingsRepo.findOne({ where: { id: 1 } });
+    if (!s) {
+      s = this.paystackSettingsRepo.create({ mode: 'live' });
+      await this.paystackSettingsRepo.save(s);
+    }
+    if (data.secretKey !== undefined && data.secretKey !== '' && data.secretKey !== '********') {
+      s.secretKey = data.secretKey.trim();
+    }
+    if (data.publicKey !== undefined && data.publicKey !== '' && data.publicKey !== '********') {
+      s.publicKey = data.publicKey.trim();
+    }
+    if (data.mode !== undefined) s.mode = data.mode;
+    await this.paystackSettingsRepo.save(s);
+    return this.getPaystackSettings();
   }
 
   async sendTestEmail(to: string) {
