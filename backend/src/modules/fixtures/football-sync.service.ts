@@ -76,6 +76,7 @@ export class FootballSyncService {
       this.logger.warn('No enabled leagues found');
       return { fixtures: 0, odds: 0, leagues: 0 };
     }
+    this.logger.log(`Sync: ${enabledLeagueIds.length} enabled leagues, key: ${key ? '***' + key.slice(-4) : 'MISSING'}`);
 
     // 2. Sync enabled leagues metadata: league + cup (so cups in enabled_leagues get fixtures)
     const [leagueRes, cupRes] = await Promise.all([
@@ -175,9 +176,21 @@ export class FootballSyncService {
       while (hasMore) {
         const res = await fetch(`${API_BASE}/fixtures?date=${date}&page=${page}`, { headers });
         const data = await res.json();
-        const items = (data.response || []).filter(
+        if (data.errors && Object.keys(data.errors).length > 0) {
+          this.logger.warn(`API error for ${date} page ${page}: ${JSON.stringify(data.errors)}`);
+        }
+        const raw = data.response || [];
+        const items = raw.filter(
           (f: any) => f.league?.id && enabledSet.has(f.league.id),
         );
+        if (raw.length > 0 && items.length === 0 && page === 1) {
+          const sampleLeagueIds = raw.slice(0, 5).map((f: any) => f.league?.id).filter(Boolean);
+          this.logger.warn(
+            `Date ${date}: API returned ${raw.length} fixtures but 0 matched enabled leagues. ` +
+            `Sample league IDs: ${sampleLeagueIds.join(',')}. ` +
+            `Enabled count: ${enabledSet.size}. Has 162: ${enabledSet.has(162)}`,
+          );
+        }
 
         for (const f of items) {
           const fix = f.fixture;
