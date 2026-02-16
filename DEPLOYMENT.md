@@ -139,3 +139,51 @@ docker compose -f docker-compose.prod.yml logs -f
 ```
 
 Use a reverse proxy (Nginx/Caddy) in front for SSL and domain routing.
+
+---
+
+## 9. Hostinger VPS – Import Local Database
+
+If you use Hostinger VPS (or any Linux server) with PostgreSQL and want to import your **local database** (migrated + seeded) onto the server:
+
+### Step 1: Export on your local machine
+
+```bash
+./scripts/export-db-for-vps.sh
+# Creates database/dump/betrollover-YYYYMMDD-HHMM.sql
+```
+
+### Step 2: Transfer dump to VPS
+
+```bash
+scp database/dump/betrollover-*.sql user@your-vps-ip:/path/to/project/database/dump/
+```
+
+### Step 3: Import on VPS
+
+```bash
+# SSH into VPS
+ssh user@your-vps-ip
+
+cd /path/to/project
+
+# Create .env with POSTGRES_HOST, POSTGRES_PORT, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
+# (Hostinger: use the DB host/credentials from hPanel)
+
+# Install psql if needed
+sudo apt install postgresql-client
+
+# Import from dump
+chmod +x scripts/vps-import-db.sh
+DUMP_FILE=database/dump/betrollover-20260216-123456.sql ./scripts/vps-import-db.sh
+```
+
+### Alternative: Fresh setup (no dump)
+
+If you don’t have a local dump and want to run init + migrations + seeds from the project:
+
+```bash
+./scripts/vps-import-db.sh
+```
+
+This runs init scripts, all migrations, and seeds. Ensure the database exists and is empty (or drop/recreate it first).

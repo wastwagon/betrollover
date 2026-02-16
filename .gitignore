@@ -37,3 +37,6 @@ coverage/
 
 # Misc
 *.tsbuildinfo
+
+# DB dumps (for VPS transfer)
+database/dump/
