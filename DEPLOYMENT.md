@@ -47,9 +47,6 @@ Set these in Coolify **before** the first deploy. Go to your resource → **Envi
 | `PAYSTACK_PUBLIC_KEY` | Paystack public key |
 | `SENDGRID_API_KEY` | SendGrid for emails |
 | `SMTP_FROM` | From email (e.g. `noreply@betrollover.com`) |
-| `ARKESEL_API_KEY` | Arkesel for SMS OTP (optional) |
-| `ARKESEL_SENDER_ID` | Arkesel sender ID |
-
 ---
 
 ## 3. Domain Configuration
