@@ -5,6 +5,7 @@ import { FootballSyncService } from './football-sync.service';
 import { OddsSyncService } from './odds-sync.service';
 import { SettlementService } from '../accumulators/settlement.service';
 import { PredictionEngineService } from '../predictions/prediction-engine.service';
+import { SmartCouponService } from '../coupons/smart-coupon.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Fixture } from './entities/fixture.entity';
@@ -33,6 +34,8 @@ export class FixtureSchedulerService {
     private settlementService: SettlementService,
     @Inject(forwardRef(() => PredictionEngineService))
     private predictionEngine: PredictionEngineService,
+    @Inject(forwardRef(() => SmartCouponService))
+    private smartCouponService: SmartCouponService,
     @InjectRepository(Fixture)
     private fixtureRepo: Repository<Fixture>,
     @InjectRepository(FixtureArchive)
@@ -40,7 +43,7 @@ export class FixtureSchedulerService {
     @InjectRepository(SyncStatus)
     private syncStatusRepo: Repository<SyncStatus>,
     private dataSource: DataSource,
-  ) {}
+  ) { }
 
   private async updateSyncStatus(
     syncType: string,
@@ -93,7 +96,7 @@ export class FixtureSchedulerService {
       if (result.updated > 0) {
         this.logger.log(`Updated ${result.updated} live fixtures`);
         await this.updateSyncStatus('live', 'success', result.updated);
-        
+
         // Trigger settlement check for updated fixtures
         await this.settlementService.checkAndSettleAccumulators();
       } else {
@@ -118,7 +121,7 @@ export class FixtureSchedulerService {
       if (result.updated > 0) {
         this.logger.log(`Updated ${result.updated} finished fixtures`);
         await this.updateSyncStatus('finished', 'success', result.updated);
-        
+
         // Trigger settlement check immediately after fixture updates
         await this.settlementService.checkAndSettleAccumulators();
       } else {
@@ -179,7 +182,7 @@ export class FixtureSchedulerService {
     try {
       const now = new Date();
       const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-      
+
       const fixturesWithOdds = await this.fixtureRepo
         .createQueryBuilder('f')
         .innerJoin('f.odds', 'o')
@@ -188,9 +191,9 @@ export class FixtureSchedulerService {
         .andWhere('f.match_date <= :sevenDaysLater', { sevenDaysLater })
         .select('f.id')
         .getMany();
-      
+
       const fixturesWithOddsIds = fixturesWithOdds.map(f => f.id);
-      
+
       // Prioritize fixtures by match_date (soonest first) - today's matches get odds first
       const allFixtures = await this.fixtureRepo
         .createQueryBuilder('f')
@@ -199,7 +202,7 @@ export class FixtureSchedulerService {
         .andWhere('f.match_date <= :sevenDaysLater', { sevenDaysLater })
         .orderBy('f.match_date', 'ASC')
         .getMany();
-      
+
       const fixtures = allFixtures
         .filter(f => !fixturesWithOddsIds.includes(f.id))
         .slice(0, 100);
@@ -238,7 +241,7 @@ export class FixtureSchedulerService {
     try {
       const now = new Date();
       const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-      
+
       const allFixtures = await this.fixtureRepo
         .createQueryBuilder('f')
         .where("f.status IN ('NS', 'TBD')")
@@ -247,9 +250,9 @@ export class FixtureSchedulerService {
         .orderBy('f.match_date', 'ASC')
         .limit(50)
         .getMany();
-      
+
       const fixtureIds = allFixtures.map(f => f.id);
-      
+
       if (fixtureIds.length > 0) {
         const result = await this.oddsSyncService.syncOddsForFixtures(fixtureIds);
         this.logger.log(
@@ -376,6 +379,37 @@ export class FixtureSchedulerService {
     } catch (error: any) {
       this.logger.error('Error in fixture archive', error);
       await this.updateSyncStatus('archive', 'error', 0, error.message);
+    }
+  }
+
+  /**
+   * Periodic settlement check (every 30 minutes)
+   * Ensures all coupons and accumulators are settled even if fixture updates skipped.
+   */
+  @Cron('*/30 * * * *')
+  async handlePeriodicSettlement() {
+    this.logger.debug('Running periodic settlement check...');
+    try {
+      const result = await this.settlementService.runSettlement();
+      if (result.smartCouponsSettled > 0 || result.ticketsSettled > 0) {
+        this.logger.log(`Periodic settlement: ${result.smartCouponsSettled} coupons, ${result.ticketsSettled} tickets settled`);
+      }
+    } catch (error: any) {
+      this.logger.error('Error in periodic settlement', error);
+    }
+  }
+
+  /**
+   * Daily Smart Coupon generation (runs at 6:30 AM after fixture sync)
+   */
+  @Cron('30 6 * * *')
+  async handleDailySmartCouponGeneration() {
+    this.logger.log('Running scheduled daily Smart Coupon generation...');
+    try {
+      const result = await this.smartCouponService.generateCoupons();
+      this.logger.log(`Smart Coupon generation completed: ${result.length} coupons`);
+    } catch (error: any) {
+      this.logger.error('Error in Smart Coupon generation', error);
     }
   }
 }

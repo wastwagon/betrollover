@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SmartCoupon } from './entities/smart-coupon.entity';
 import { Fixture } from '../fixtures/entities/fixture.entity';
@@ -16,10 +16,10 @@ import { FixturesModule } from '../fixtures/fixtures.module';
       FixtureOdd,
       EnabledLeague,
     ]),
-    FixturesModule,
+    forwardRef(() => FixturesModule),
   ],
   controllers: [CouponsController],
   providers: [SmartCouponService],
   exports: [SmartCouponService],
 })
-export class CouponsModule {}
+export class CouponsModule { }

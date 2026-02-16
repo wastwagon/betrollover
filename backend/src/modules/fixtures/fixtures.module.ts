@@ -18,6 +18,8 @@ import { MarketFilterService } from './market-filter.service';
 import { ApiPredictionsService } from './api-predictions.service';
 import { AccumulatorsModule } from '../accumulators/accumulators.module';
 import { PredictionsModule } from '../predictions/predictions.module';
+import { CouponsModule } from '../coupons/coupons.module';
+import { SmartCouponService } from '../coupons/smart-coupon.service';
 
 @Module({
   imports: [
@@ -33,6 +35,7 @@ import { PredictionsModule } from '../predictions/predictions.module';
     ]),
     forwardRef(() => AccumulatorsModule), // For SettlementService (avoid circular dependency)
     forwardRef(() => PredictionsModule), // For PredictionEngineService (automatic prediction generation)
+    forwardRef(() => CouponsModule), // For SmartCouponService
   ],
   controllers: [FixturesController],
   providers: [
@@ -52,4 +55,4 @@ import { PredictionsModule } from '../predictions/predictions.module';
     ApiPredictionsService,
   ],
 })
-export class FixturesModule {}
+export class FixturesModule { }

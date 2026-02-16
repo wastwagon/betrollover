@@ -19,11 +19,11 @@ export class FixtureUpdateService {
     @InjectRepository(ApiSettings)
     private apiSettingsRepo: Repository<ApiSettings>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) {}
+  ) { }
 
   private async getApiKey(): Promise<string> {
     try {
-      const apiSettings = await this.apiSettingsRepo.findOne({ 
+      const apiSettings = await this.apiSettingsRepo.findOne({
         where: { id: 1 },
         select: ['apiSportsKey'], // Only select the column we need
       });
@@ -38,7 +38,7 @@ export class FixtureUpdateService {
   private async updateUsage(headers: Headers): Promise<void> {
     const rateLimitRemaining = headers.get('x-ratelimit-requests-remaining');
     const rateLimitLimit = headers.get('x-ratelimit-requests-limit');
-    
+
     if (rateLimitRemaining !== null && rateLimitLimit !== null) {
       try {
         // Use update instead of save to avoid loading all columns
@@ -118,12 +118,12 @@ export class FixtureUpdateService {
       for (const fixtureData of liveFixtures) {
         const apiId = fixtureData.fixture.id;
         const dbId = dbApiIdMap.get(apiId);
-        
+
         if (!dbId) continue; // Only update fixtures we have in DB
 
         const fix = fixtureData.fixture;
         const goals = fixtureData.goals;
-        
+
         await this.fixtureRepo.update(
           { id: dbId },
           {
@@ -166,58 +166,70 @@ export class FixtureUpdateService {
           status: Not('FT'),
           matchDate: LessThanOrEqual(now),
         },
+        order: { matchDate: 'DESC' },
         select: ['id', 'apiId'],
-        take: 50, // Batch size
+        take: 100, // Batch size
       });
+
+
 
       if (unfinishedFixtures.length === 0) {
         return { updated: 0, errors: 0 };
       }
 
-      // Fetch results in batches (API supports comma-separated IDs)
-      const apiIds = unfinishedFixtures.map(f => f.apiId).join(',');
-      const res = await fetch(`${API_SPORTS_BASE}/fixtures?id=${apiIds}`, {
-        headers: { 'x-apisports-key': apiKey },
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        this.logger.error(`Failed to fetch finished fixtures: ${res.status}`, errorData);
-        return { updated: 0, errors: 1 };
-      }
-
-      await this.updateUsage(res.headers);
-      const data = await res.json();
-      const fixtures = data.response || [];
-
-      const dbApiIdMap = new Map(unfinishedFixtures.map(f => [f.apiId, f.id]));
+      // Fetch results in batches of 20 (API-Football limit)
+      const batchSize = 20;
       let updated = 0;
+      const dbApiIdMap = new Map(unfinishedFixtures.map(f => [f.apiId, f.id]));
 
-      for (const fixtureData of fixtures) {
-        const apiId = fixtureData.fixture.id;
-        const dbId = dbApiIdMap.get(apiId);
-        
-        if (!dbId) continue;
+      for (let i = 0; i < unfinishedFixtures.length; i += batchSize) {
+        const batch = unfinishedFixtures.slice(i, i + batchSize);
+        const apiIdsString = batch.map(f => f.apiId).join('-');
 
-        const fix = fixtureData.fixture;
-        const goals = fixtureData.goals;
-        
-        // Only update if match is finished
-        if (fix.status.short === 'FT' && goals?.home !== null && goals?.away !== null) {
-          await this.fixtureRepo.update(
-            { id: dbId },
-            {
-              status: 'FT',
-              homeScore: goals.home,
-              awayScore: goals.away,
-              syncedAt: new Date(),
-            }
-          );
-          updated++;
 
-          // Invalidate cache for this fixture
-          await this.cacheManager.del(`fixture:${dbId}`);
-          await this.cacheManager.del(`fixture:api:${apiId}`);
+
+        const res = await fetch(`${API_SPORTS_BASE}/fixtures?ids=${apiIdsString}`, {
+          headers: { 'x-apisports-key': apiKey },
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          this.logger.error(`Failed to fetch fixtures batch: ${res.status}`, errorData);
+          continue;
+        }
+
+        await this.updateUsage(res.headers);
+        const data = await res.json();
+        const fixtures = data.response || [];
+
+
+
+        for (const fixtureData of fixtures) {
+          const apiId = fixtureData.fixture.id;
+          const dbId = dbApiIdMap.get(apiId);
+
+          if (!dbId) continue;
+
+          const fix = fixtureData.fixture;
+          const goals = fixtureData.goals;
+
+          // Update if there is scores data
+          if (goals?.home !== null && goals?.away !== null) {
+            await this.fixtureRepo.update(
+              { id: dbId },
+              {
+                status: fix.status.short,
+                homeScore: goals.home,
+                awayScore: goals.away,
+                syncedAt: new Date(),
+              }
+            );
+            updated++;
+
+            // Invalidate cache for this fixture
+            await this.cacheManager.del(`fixture:${dbId}`);
+            await this.cacheManager.del(`fixture:api:${apiId}`);
+          }
         }
       }
 

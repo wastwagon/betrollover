@@ -45,14 +45,16 @@ function SmartCouponsContent() {
   /* eslint-disable-next-line react-hooks/rules-of-hooks */
   const searchParams = useSearchParams();
   const router = useRouter();
-  const initialTab = (searchParams?.get('tab') === 'archive') ? 'archive' : 'active';
-  const [activeCoupons, setActiveCoupons] = useState<SmartCoupon[]>([]);
+  const initialTab = (searchParams?.get('tab') === 'archive') ? 'archive' : (searchParams?.get('tab') === 'upcoming' ? 'upcoming' : 'active');
+
+  // Use a single state for all active/pending coupons, then filter
+  const [allActiveCoupons, setAllActiveCoupons] = useState<SmartCoupon[]>([]);
   const [archiveCoupons, setArchiveCoupons] = useState<SmartCoupon[]>([]);
   const [stats, setStats] = useState<ArchiveStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'active' | 'archive'>(initialTab);
+  const [tab, setTab] = useState<'active' | 'upcoming' | 'archive'>(initialTab as any);
 
-  const handleTabChange = (newTab: 'active' | 'archive') => {
+  const handleTabChange = (newTab: 'active' | 'upcoming' | 'archive') => {
     setTab(newTab);
     const newParams = new URLSearchParams(searchParams.toString());
     newParams.set('tab', newTab);
@@ -60,11 +62,17 @@ function SmartCouponsContent() {
   };
 
   useEffect(() => {
+    if (initialTab) {
+      setTab(initialTab as any);
+    }
+  }, [initialTab]);
+
+  useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         const [activeRes, archiveRes, statsRes] = await Promise.all([
-          fetch(`${API_URL}/coupons/high-value?limit=20`),
+          fetch(`${API_URL}/coupons/high-value?limit=20`), // Fetches all pending/active
           fetch(`${API_URL}/coupons/archive`),
           fetch(`${API_URL}/coupons/archive/stats`),
         ]);
@@ -73,8 +81,8 @@ function SmartCouponsContent() {
         const archiveData = archiveRes.ok ? await archiveRes.json() : [];
         const statsData = statsRes.ok ? await statsRes.json() : null;
 
-        setActiveCoupons(activeData);
-        setArchiveCoupons(archiveData);
+        setAllActiveCoupons(Array.isArray(activeData) ? activeData : []);
+        setArchiveCoupons(Array.isArray(archiveData) ? archiveData : []);
         setStats(statsData);
       } catch (error) {
         console.error('Failed to fetch smart coupons:', error);
@@ -90,7 +98,7 @@ function SmartCouponsContent() {
     id: 999999,
     displayName: 'AI Prediction Engine',
     username: 'ai_smart_system',
-    avatarUrl: '/avatars/ai-avatar.png', // Assuming this exists or falls back
+    avatarUrl: '/avatars/ai-avatar.png',
     winRate: stats?.total ? (stats.won / stats.total) * 100 : 0,
     totalPicks: stats?.total || 0,
     wonPicks: stats?.won || 0,
@@ -98,7 +106,16 @@ function SmartCouponsContent() {
     rank: 1,
   };
 
-  const displayedCoupons = tab === 'active' ? activeCoupons : archiveCoupons;
+  // Filter coupons based on date for Active vs Upcoming
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+  const activeCoupons = allActiveCoupons.filter(c => c.date <= today).sort((a, b) => a.totalOdds - b.totalOdds);
+  const upcomingCoupons = allActiveCoupons.filter(c => c.date > today).sort((a, b) => a.date.localeCompare(b.date));
+
+  let displayedCoupons: SmartCoupon[] = [];
+  if (tab === 'active') displayedCoupons = activeCoupons;
+  else if (tab === 'upcoming') displayedCoupons = upcomingCoupons;
+  else displayedCoupons = archiveCoupons;
 
   // AI Tipster Card Component within the page header
   const renderHeader = () => (
@@ -155,19 +172,28 @@ function SmartCouponsContent() {
         {renderHeader()}
 
         {/* Tabs */}
-        <div className="flex items-center gap-2 mb-8 border-b border-[var(--border)] pb-1">
+        <div className="flex items-center gap-2 mb-8 border-b border-[var(--border)] pb-1 overflow-x-auto">
           <button
             onClick={() => handleTabChange('active')}
-            className={`px-6 py-3 rounded-t-lg font-medium text-sm transition-all relative top-[1px] ${tab === 'active'
+            className={`px-6 py-3 rounded-t-lg font-medium text-sm transition-all relative top-[1px] whitespace-nowrap ${tab === 'active'
               ? 'text-[var(--primary)] border-b-2 border-[var(--primary)] bg-[var(--primary)]/5'
               : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--card)]'
               }`}
           >
-            Active Coupons ({activeCoupons.length})
+            Active Today ({activeCoupons.length})
+          </button>
+          <button
+            onClick={() => handleTabChange('upcoming')}
+            className={`px-6 py-3 rounded-t-lg font-medium text-sm transition-all relative top-[1px] whitespace-nowrap ${tab === 'upcoming'
+              ? 'text-[var(--primary)] border-b-2 border-[var(--primary)] bg-[var(--primary)]/5'
+              : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--card)]'
+              }`}
+          >
+            Upcoming ({upcomingCoupons.length})
           </button>
           <button
             onClick={() => handleTabChange('archive')}
-            className={`px-6 py-3 rounded-t-lg font-medium text-sm transition-all relative top-[1px] ${tab === 'archive'
+            className={`px-6 py-3 rounded-t-lg font-medium text-sm transition-all relative top-[1px] whitespace-nowrap ${tab === 'archive'
               ? 'text-[var(--primary)] border-b-2 border-[var(--primary)] bg-[var(--primary)]/5'
               : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--card)]'
               }`}
@@ -181,15 +207,21 @@ function SmartCouponsContent() {
           <LoadingSkeleton count={6} variant="cards" />
         ) : displayedCoupons.length === 0 ? (
           <EmptyState
-            title={tab === 'active' ? 'No active coupons' : 'No archive data'}
+            title={
+              tab === 'active' ? 'No active coupons today' :
+                tab === 'upcoming' ? 'No upcoming coupons' :
+                  'No archive data'
+            }
             description={
               tab === 'active'
-                ? 'Check back later for new high-confidence predictions.'
-                : 'Past results will appear here once coupons are settled.'
+                ? 'Check "Upcoming" for future predictions or browse the marketplace.'
+                : tab === 'upcoming'
+                  ? 'Check back later for new high-confidence predictions.'
+                  : 'Past results will appear here once coupons are settled.'
             }
-            actionLabel={tab === 'active' ? 'Browse Marketplace' : 'View Today\'s Coupons'}
-            actionHref={tab === 'active' ? '/marketplace' : undefined}
-            onActionClick={tab === 'active' ? undefined : () => handleTabChange('active')}
+            actionLabel={tab === 'active' ? 'View Upcoming' : (tab === 'upcoming' ? 'Browse Marketplace' : 'View Today\'s Coupons')}
+            actionHref={tab === 'active' ? undefined : (tab === 'upcoming' ? '/marketplace' : undefined)}
+            onActionClick={tab === 'active' ? () => handleTabChange('upcoming') : (tab === 'upcoming' ? undefined : () => handleTabChange('active'))}
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

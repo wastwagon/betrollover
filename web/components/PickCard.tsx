@@ -78,7 +78,7 @@ export function PickCard({
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showUnveilModal, setShowUnveilModal] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
-  
+
   // Update unveil modal when prop changes
   useEffect(() => {
     if (showUnveil) {
@@ -88,7 +88,7 @@ export function PickCard({
 
   const isFree = price === 0;
   const showFullDetails = isFree || isPurchased || viewOnly;
-  
+
   const statusColors: Record<string, string> = {
     pending_approval: 'bg-amber-200 text-amber-900',
     active: 'bg-emerald-200 text-emerald-900',
@@ -194,9 +194,9 @@ export function PickCard({
             {createdAt && (
               <div className="mt-1">
                 <span className="text-xs text-[var(--text-muted)]">
-                  Created: {new Date(createdAt).toLocaleString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric', 
+                  Created: {new Date(createdAt).toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
                     year: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit'
@@ -204,11 +204,13 @@ export function PickCard({
                 </span>
               </div>
             )}
-            <div className="mt-2">
-              <span className={`text-lg font-bold ${price === 0 ? 'text-[var(--success)]' : 'text-[var(--primary)]'}`}>
-                {price === 0 ? 'Free' : `GHS ${Number(price).toFixed(2)}`}
-              </span>
-            </div>
+            {price > 0 && (
+              <div className="mt-2">
+                <span className="text-lg font-bold text-[var(--primary)]">
+                  GHS {Number(price).toFixed(2)}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Pick Details - Show for free or purchased coupons */}
@@ -233,9 +235,9 @@ export function PickCard({
                       <div className="flex items-center gap-2 flex-wrap">
                         {matchDate && (
                           <span className={`text-[10px] ${isStarted ? 'text-red-600 dark:text-red-400' : 'text-[var(--text-muted)]'}`}>
-                            {isStarted ? (isLive ? '🔴 Live' : '⏱ Started') : `⏰ ${matchDate.toLocaleString('en-US', { 
-                              month: 'short', 
-                              day: 'numeric', 
+                            {isStarted ? (isLive ? '🔴 Live' : '⏱ Started') : `⏰ ${matchDate.toLocaleString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
                               hour: '2-digit',
                               minute: '2-digit'
                             })}`}
@@ -523,7 +525,7 @@ export function PickCard({
                     <div>
                       <p className="font-semibold text-blue-900 dark:text-blue-200 mb-1">Funds in Escrow</p>
                       <p className="text-sm text-blue-700 dark:text-blue-300">
-                        GHS {Number(price).toFixed(2)} is held in escrow. Funds will be released to the tipster only if all selections win. 
+                        GHS {Number(price).toFixed(2)} is held in escrow. Funds will be released to the tipster only if all selections win.
                         If any selection loses, you'll receive a full refund.
                       </p>
                     </div>
