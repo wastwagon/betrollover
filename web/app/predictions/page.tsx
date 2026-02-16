@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 import { AppFooter } from '@/components/AppFooter';
@@ -41,7 +41,7 @@ interface ArchiveStats {
   roi: number;
 }
 
-export default function SmartCouponsPage() {
+function SmartCouponsContent() {
   /* eslint-disable-next-line react-hooks/rules-of-hooks */
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -226,5 +226,13 @@ export default function SmartCouponsPage() {
       </main>
       <AppFooter />
     </div>
+  );
+}
+
+export default function SmartCouponsPage() {
+  return (
+    <Suspense fallback={<LoadingSkeleton count={6} variant="cards" />}>
+      <SmartCouponsContent />
+    </Suspense>
   );
 }
