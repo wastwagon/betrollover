@@ -16,6 +16,9 @@ export interface SmartCouponFixture {
   confidence: number;
   odds: number;
   status?: string;
+  matchDate?: Date;
+  homeScore?: number | null;
+  awayScore?: number | null;
 }
 
 @Entity('smart_coupons')

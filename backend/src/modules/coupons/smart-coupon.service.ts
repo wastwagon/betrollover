@@ -40,7 +40,7 @@ export class SmartCouponService {
     @InjectRepository(EnabledLeague)
     private enabledLeagueRepo: Repository<EnabledLeague>,
     private apiPredictionsService: ApiPredictionsService,
-  ) {}
+  ) { }
 
   private parsePercent(val: string | number): number {
     if (typeof val === 'number') return Math.min(1, Math.max(0, val));
@@ -255,11 +255,19 @@ export class SmartCouponService {
 
   async getHighValueCoupons(limit = 8): Promise<SmartCoupon[]> {
     const now = new Date().toISOString().slice(0, 10);
-    return this.couponRepo.find({
+    const coupons = await this.couponRepo.find({
       where: { date: MoreThanOrEqual(now), status: 'pending' },
       order: { date: 'ASC', totalOdds: 'ASC' },
       take: limit,
     });
+    return this.mapWithFixtureDetails(coupons);
+  }
+
+  async getById(id: number): Promise<SmartCoupon | null> {
+    const coupon = await this.couponRepo.findOne({ where: { id } });
+    if (!coupon) return null;
+    const [enriched] = await this.mapWithFixtureDetails([coupon]);
+    return enriched;
   }
 
   async getArchive(filters?: { from?: string; to?: string; status?: string }): Promise<SmartCoupon[]> {
@@ -273,7 +281,8 @@ export class SmartCouponService {
     if (filters?.status) {
       qb.andWhere('c.status = :status', { status: filters.status });
     }
-    return qb.orderBy('c.date', 'DESC').take(100).getMany();
+    const coupons = await qb.orderBy('c.date', 'DESC').take(100).getMany();
+    return this.mapWithFixtureDetails(coupons);
   }
 
   async getArchiveStats(): Promise<{ total: number; won: number; lost: number; roi: number }> {
@@ -291,5 +300,45 @@ export class SmartCouponService {
     const totalProfit = parseFloat(profits?.sum || '0');
     const roi = settled > 0 ? (totalProfit / settled) * 100 : 0;
     return { total, won, lost, roi };
+  }
+
+  /**
+   * Enrich coupon fixtures with latest match details (scores, date, status) from Fixture repo.
+   */
+  async mapWithFixtureDetails(coupons: SmartCoupon[]): Promise<SmartCoupon[]> {
+    if (coupons.length === 0) return [];
+
+    const fixtureIds = new Set<number>();
+    coupons.forEach((c) => {
+      if (Array.isArray(c.fixtures)) {
+        c.fixtures.forEach((f) => fixtureIds.add(f.fixtureId));
+      }
+    });
+
+    if (fixtureIds.size === 0) return coupons;
+
+    const fixtures = await this.fixtureRepo.find({
+      where: { id: In([...fixtureIds]) },
+      select: ['id', 'matchDate', 'homeScore', 'awayScore', 'status'],
+    });
+
+    const fixtureMap = new Map(fixtures.map((f) => [f.id, f]));
+
+    return coupons.map((c) => {
+      const enrichedFixtures = c.fixtures.map((cf) => {
+        const live = fixtureMap.get(cf.fixtureId);
+        if (live) {
+          return {
+            ...cf,
+            matchDate: live.matchDate,
+            homeScore: live.homeScore,
+            awayScore: live.awayScore,
+            status: live.status, // e.g. '1H', 'FT', 'NS'
+          };
+        }
+        return cf;
+      });
+      return { ...c, fixtures: enrichedFixtures };
+    });
   }
 }

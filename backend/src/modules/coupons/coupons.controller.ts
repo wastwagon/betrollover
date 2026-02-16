@@ -1,11 +1,19 @@
-import { Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query, UseGuards, NotFoundException } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { SmartCouponService } from './smart-coupon.service';
 
 @Controller('coupons')
 export class CouponsController {
-  constructor(private readonly smartCouponService: SmartCouponService) {}
+  constructor(private readonly smartCouponService: SmartCouponService) { }
+
+  /** Get single coupon (public) */
+  @Get(':id')
+  async getOne(@Param('id') id: string) {
+    const coupon = await this.smartCouponService.getById(parseInt(id, 10));
+    if (!coupon) throw new NotFoundException('Coupon not found');
+    return coupon;
+  }
 
   /** High-value coupons for dashboard (public - no auth required for viewing) */
   @Get('high-value')
