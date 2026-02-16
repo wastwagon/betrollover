@@ -42,14 +42,14 @@ export default function NewsPage() {
         const list = Array.isArray(data) ? data : [];
         // Normalize snake_case from backend to camelCase
         setArticles(
-          list.map((a: Record<string, unknown>) => ({
-            id: a.id,
-            slug: a.slug,
-            title: a.title,
-            excerpt: a.excerpt ?? null,
-            category: a.category,
-            imageUrl: a.imageUrl ?? a.image_url ?? null,
-            publishedAt: a.publishedAt ?? a.published_at ?? null,
+          list.map((a: Record<string, unknown>): NewsArticle => ({
+            id: Number(a.id) || 0,
+            slug: String(a.slug ?? ''),
+            title: String(a.title ?? ''),
+            excerpt: a.excerpt != null ? String(a.excerpt) : null,
+            category: (a.category as NewsCategory) ?? 'news',
+            imageUrl: a.imageUrl != null || a.image_url != null ? String(a.imageUrl ?? a.image_url ?? '') : null,
+            publishedAt: a.publishedAt != null || a.published_at != null ? String(a.publishedAt ?? a.published_at ?? '') : null,
           }))
         );
       })
