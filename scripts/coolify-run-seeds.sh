@@ -6,12 +6,11 @@
 
 set -e
 # Run from anywhere on the VPS (where Coolify/Docker runs)
+# Coolify uses api-PROJECTID-HASH, we use betrollover-api
 API_CONTAINER=""
-for name in betrollover-api api; do
-  if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^${name}"; then
-    API_CONTAINER="$name"
-    break
-  fi
+for pattern in "betrollover-api" "^api-"; do
+  API_CONTAINER=$(docker ps --format '{{.Names}}' 2>/dev/null | grep -E "$pattern" | head -1)
+  [ -n "$API_CONTAINER" ] && break
 done
 
 if [ -z "$API_CONTAINER" ]; then

@@ -12,13 +12,11 @@ set -e
 echo "=== BetRollover Coolify Database Diagnostic ==="
 echo ""
 
-# Find postgres container (Coolify may use different naming)
+# Find postgres container (Coolify uses postgres-PROJECTID-HASH, we use betrollover-postgres)
 PG_CONTAINER=""
-for name in betrollover-postgres postgres; do
-  if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^${name}"; then
-    PG_CONTAINER="$name"
-    break
-  fi
+for pattern in "betrollover-postgres" "^postgres-"; do
+  PG_CONTAINER=$(docker ps --format '{{.Names}}' 2>/dev/null | grep -E "$pattern" | head -1)
+  [ -n "$PG_CONTAINER" ] && break
 done
 
 if [ -z "$PG_CONTAINER" ]; then
