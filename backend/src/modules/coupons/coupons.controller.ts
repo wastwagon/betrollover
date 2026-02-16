@@ -7,13 +7,7 @@ import { SmartCouponService } from './smart-coupon.service';
 export class CouponsController {
   constructor(private readonly smartCouponService: SmartCouponService) { }
 
-  /** Get single coupon (public) */
-  @Get(':id')
-  async getOne(@Param('id') id: string) {
-    const coupon = await this.smartCouponService.getById(parseInt(id, 10));
-    if (!coupon) throw new NotFoundException('Coupon not found');
-    return coupon;
-  }
+
 
   /** High-value coupons for dashboard (public - no auth required for viewing) */
   @Get('high-value')
@@ -44,5 +38,13 @@ export class CouponsController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   generate() {
     return this.smartCouponService.generateCoupons();
+  }
+
+  /** Get single coupon (public) - must be last to avoid catching specific routes */
+  @Get(':id')
+  async getOne(@Param('id') id: string) {
+    const coupon = await this.smartCouponService.getById(parseInt(id, 10));
+    if (!coupon) throw new NotFoundException('Coupon not found');
+    return coupon;
   }
 }
