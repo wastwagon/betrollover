@@ -107,7 +107,51 @@ You can configure Paystack in **Admin → Settings → Paystack** instead of env
 
 ---
 
-## 7. Troubleshooting
+## 7. Coolify – Database Not Loading
+
+If the app shows "no data" or empty pages after deploy:
+
+### 1. Find where Coolify stores your project
+
+SSH into your VPS and run:
+
+```bash
+find /data -name "docker-compose.prod.yml" 2>/dev/null | head -5
+# or
+docker ps --format '{{.Names}}'
+```
+
+### 2. Run the diagnostic script
+
+From the project root (or any directory):
+
+```bash
+cd /path/to/your/betrollover   # wherever Coolify cloned it
+chmod +x scripts/coolify-db-diagnose.sh
+./scripts/coolify-db-diagnose.sh
+```
+
+This shows: user count, migrations applied, admin user.
+
+### 3. Manually run seeds (if diagnostic shows 0 users)
+
+```bash
+./scripts/coolify-run-seeds.sh
+```
+
+### 4. Check API logs in Coolify
+
+Go to **Coolify → BetRollover → Logs** and look for:
+- `Applied seed: news-resources-seed.sql` (success)
+- `Seed failed (non-fatal):` (seeds errored)
+
+### 5. Redeploy after code changes
+
+If you pushed the psql-based seed fix, **redeploy** in Coolify so the new API image is used.
+
+---
+
+## 8. Troubleshooting
 
 | Issue | Fix |
 |-------|-----|
@@ -119,7 +163,7 @@ You can configure Paystack in **Admin → Settings → Paystack** instead of env
 
 ---
 
-## 8. Manual Deploy (without Coolify)
+## 9. Manual Deploy (without Coolify)
 
 If you prefer to deploy manually on a VPS:
 
@@ -142,7 +186,7 @@ Use a reverse proxy (Nginx/Caddy) in front for SSL and domain routing.
 
 ---
 
-## 9. Hostinger VPS – Import Local Database
+## 10. Hostinger VPS – Import Local Database
 
 If you use Hostinger VPS (or any Linux server) with PostgreSQL and want to import your **local database** (migrated + seeded) onto the server:
 
