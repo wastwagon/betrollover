@@ -1,0 +1,106 @@
+# BetRollover v2 - Local Development Stack (PostgreSQL)
+# Run: docker compose up -d
+# Preview: http://localhost:6002 (web), http://localhost:6001 (API)
+# Note: Port 6000 is blocked by Chrome (ERR_UNSAFE_PORT); using 6002
+
+services:
+  # PostgreSQL Database (long-term modern stack)
+  postgres:
+    image: postgres:16-alpine
+    container_name: betrollover-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-betrollover}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-betrollover_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-betrollover}
+    # Expose for Docker Desktop / GUI. Use 5434 if 5433 is taken by another project (e.g. egp-postgres).
+    ports:
+      - "${POSTGRES_PORT:-5435}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-betrollover} -d ${POSTGRES_DB:-betrollover}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis - caching, sessions, real-time
+  redis:
+    image: redis:7-alpine
+    container_name: betrollover-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"  # Exposed for local API dev when Docker build fails
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # NestJS API Backend
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: betrollover-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-6001}:3001"  # Host 6001 (6xxx range)
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      # Backend uses POSTGRES_HOST/PORT (not DATABASE_URL) - must use Docker service name
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      DATABASE_URL: postgresql://${POSTGRES_USER:-betrollover}:${POSTGRES_PASSWORD:-betrollover_dev}@postgres:5432/${POSTGRES_DB:-betrollover}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-in-production}
+      API_SPORTS_KEY: ${API_SPORTS_KEY:-}
+      PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY:-}
+      PAYSTACK_PUBLIC_KEY: ${PAYSTACK_PUBLIC_KEY:-}
+      ARKESEL_API_KEY: ${ARKESEL_API_KEY:-}
+      ARKESEL_SENDER_ID: ${ARKESEL_SENDER_ID:-BetRollover}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@betrollover.com}
+      APP_URL: ${APP_URL:-http://localhost:6002}
+      MIGRATIONS_PATH: /app/database/migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/src:/app/src  # Live reload source only; use image's node_modules
+      - ./database/migrations:/app/database/migrations  # For automatic migrations on startup
+
+  # Next.js Web App (mobile-first)
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: betrollover-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-6002}:3000"  # Host 6002 (6000 blocked by Chrome)
+    environment:
+      NODE_ENV: development
+      # Client-side: browser fetches API at this URL
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:6001}
+      # Canonical app URL - used for login redirects (avoids wrong port e.g. 3000 vs 6002)
+      NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:6002}
+      APP_URL: ${APP_URL:-http://localhost:6002}
+      # Server-side: web container must reach api via Docker network (not localhost)
+      BACKEND_URL: http://api:3001
+    depends_on:
+      - api
+    volumes:
+      - ./web:/app
+      - /app/node_modules
+      - /app/.next
+
+volumes:
+  postgres_data:
+  redis_data:

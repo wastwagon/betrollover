@@ -1,0 +1,34 @@
+# BetRollover - robots.txt
+# Your Shield Against Losses
+
+User-agent: *
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /app/
+Disallow: /config/
+Disallow: /storage/
+Disallow: /database/
+Disallow: /Copies/
+
+# Disallow sensitive files
+Disallow: /*.sql$
+Disallow: /*.log$
+Disallow: /*.md$
+Disallow: /*.txt$
+Disallow: /error_log
+Disallow: /clear_opcache.php
+
+# Allow important pages
+Allow: /marketplace
+Allow: /login
+Allow: /register
+Allow: /leaderboard
+
+# Sitemap location
+Sitemap: https://betrollover.com/sitemap.xml
+
+# Crawl delay (optional - remove if not needed)
+# Crawl-delay: 1
+

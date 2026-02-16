@@ -1,0 +1,109 @@
+═══════════════════════════════════════════════════════════════
+  BETROLLOVER - PRODUCTION UPLOAD CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+📦 UPLOAD LOCATION: /home/betrollover/public_html/
+
+✅ UPLOAD THESE FOLDERS & FILES:
+═══════════════════════════════════════════════════════════════
+
+1. ✅ index.php (Root file)
+2. ✅ .htaccess (If exists in production folder)
+3. ✅ paystack_webhook.php (Root file)
+
+4. ✅ app/ (ENTIRE FOLDER)
+   ├── controllers/ (82 PHP files)
+   ├── models/ (27 PHP files)
+   ├── middleware/ (AuthMiddleware.php)
+   └── views/ (All subfolders and files)
+
+5. ✅ api/ (ENTIRE FOLDER)
+   ├── get_notifications.php
+   ├── mark_notification_read.php
+   ├── get_coupon_details.php
+   ├── get_pick_details.php
+   └── (all other API files)
+
+6. ✅ config/ (ENTIRE FOLDER)
+   └── config.php (Contains production database credentials)
+
+7. ✅ public/ (ENTIRE FOLDER)
+   ├── css/
+   ├── js/
+   └── images/
+
+8. ✅ storage/ (ENTIRE FOLDER)
+   ├── logs/ (Set permissions to 777)
+   ├── cache/ (Set permissions to 777)
+   └── uploads/ (Set permissions to 777)
+
+❌ DO NOT UPLOAD:
+═══════════════════════════════════════════════════════════════
+❌ database/ folder (Run SQL files via phpMyAdmin instead)
+❌ *.md files (Documentation)
+❌ *.txt files (Documentation, except this checklist)
+❌ verify_menu_routes.php (Diagnostic script)
+❌ betrollover_production_database.sql (Import via phpMyAdmin)
+
+🚨 CRITICAL - RECENTLY FIXED FILES (MUST UPLOAD):
+═══════════════════════════════════════════════════════════════
+✅ index.php
+✅ app/controllers/create_pick.php
+✅ app/controllers/admin_settings.php
+✅ app/controllers/login.php
+✅ app/controllers/register.php
+✅ app/controllers/notification_preferences.php
+✅ app/views/layouts/user_layout.php
+✅ app/views/layouts/admin_layout.php
+✅ app/views/layouts/tipster_layout.php
+✅ app/views/components/admin_menu.php
+✅ app/views/components/user_menu.php
+✅ app/views/components/tipster_menu.php
+✅ api/get_notifications.php
+✅ api/mark_notification_read.php
+✅ app/models/NotificationService.php
+
+📋 UPLOAD STEPS:
+═══════════════════════════════════════════════════════════════
+
+Method 1: cPanel File Manager (Easiest)
+────────────────────────────────────────
+1. Log into cPanel
+2. Open File Manager
+3. Navigate to public_html/
+4. Upload entire production folder contents
+5. Set storage/ folder permissions to 777
+
+Method 2: ZIP Upload (Recommended)
+───────────────────────────────────
+1. ZIP the production folder (excluding database/)
+2. Upload ZIP to public_html/
+3. Extract in cPanel
+4. Delete ZIP file
+5. Set storage/ folder permissions to 777
+
+Method 3: FTP/SFTP
+──────────────────
+1. Connect via FTP/SFTP
+2. Navigate to public_html/
+3. Upload all files maintaining structure
+4. Set storage/ folder permissions to 777
+
+🔐 POST-UPLOAD VERIFICATION:
+═══════════════════════════════════════════════════════════════
+✅ Test homepage: https://betrollover.com/
+✅ Test login: https://betrollover.com/login
+✅ Test registration: https://betrollover.com/register
+✅ Test dashboards (user/admin/tipster)
+✅ Test Create Pick form
+✅ Test Settings page
+✅ Test Notifications bell
+
+📊 FILE STATISTICS:
+═══════════════════════════════════════════════════════════════
+Total PHP Files: 157
+Total Size: ~3.2 MB
+Database: Import separately via phpMyAdmin
+
+✅ READY TO UPLOAD!
+

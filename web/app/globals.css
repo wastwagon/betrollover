@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Professional Trust palette - teal (trust) + amber (action), restrained & premium */
+  --primary: #0f766e;
+  --primary-hover: #0d9488;
+  --primary-light: #ccfbf1;
+  --accent: #d97706;
+  --accent-light: #fffbeb;
+  --success: #059669;
+  --success-light: #d1fae5;
+  --bg: #f8fafc;
+  --bg-warm: #faf8f5;
+  --card: #ffffff;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --shadow-lg: 0 10px 40px -10px rgb(15 118 110 / 0.12), 0 4px 12px -4px rgb(0 0 0 / 0.08);
+  --radius: 0.75rem;
+  --radius-sm: 0.5rem;
+  --transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --gradient-primary: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+  --gradient-accent: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  --gradient-mesh: radial-gradient(at 15% 20%, rgb(15 118 110 / 0.08) 0px, transparent 50%),
+    radial-gradient(at 85% 15%, rgb(217 119 6 / 0.06) 0px, transparent 45%);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile-first touch targets */
+@media (pointer: coarse) {
+  button,
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Focus ring for accessibility */
+@layer base {
+  *:focus-visible {
+    @apply outline-none ring-2 ring-[var(--primary)] ring-offset-2;
+  }
+}
+
+/* Card hover lift */
+.card-hover {
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Skeleton loading */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; background: #e2e8f0; }
+}
+
+/* Modern card - clean, subtle depth */
+.card-gradient {
+  background: var(--card);
+  border: 1px solid var(--border);
+  position: relative;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 0 0 1px rgb(15 118 110 / 0.04);
+}
+.card-gradient::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgb(15 118 110 / 0.08), transparent 50%, rgb(217 119 6 / 0.05));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Stagger animation delays */
+.animate-delay-100 { animation-delay: 100ms; }
+.animate-delay-200 { animation-delay: 200ms; }
+.animate-delay-300 { animation-delay: 300ms; }
+.animate-delay-400 { animation-delay: 400ms; }
+
+/* Respect reduced motion preference - disable decorative animations */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .animate-slide-in-right,
+  .animate-fadeIn,
+  [class*="animate-"] {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* Dashboard premium background */
+.dashboard-bg {
+  background-color: #f0f9f8;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(15, 118, 110, 0.12) 0px, transparent 45%),
+    radial-gradient(at 100% 0%, rgba(13, 148, 136, 0.08) 0px, transparent 40%),
+    radial-gradient(at 100% 100%, rgba(217, 119, 6, 0.06) 0px, transparent 45%),
+    radial-gradient(at 0% 100%, rgba(15, 118, 110, 0.06) 0px, transparent 40%);
+}
+.dashboard-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230f766e' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Glass card for dashboard */
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 24px -4px rgba(15, 118, 110, 0.08), 0 0 0 1px rgba(15, 118, 110, 0.04);
+}
+.dark .glass-card {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(148, 163, 184, 0.12);
+}

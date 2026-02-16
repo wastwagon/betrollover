@@ -1,0 +1,52 @@
+🚨 URGENT: UPLOAD THESE FIXED FILES TO PRODUCTION
+================================================
+
+The live server still has OLD files causing errors. Upload these FIXED files immediately:
+
+CRITICAL FILES TO UPLOAD (Replace existing files):
+---------------------------------------------------
+
+1. ✅ index.php
+   Location: /home/betrollover/public_html/index.php
+   Fix: Session check, error handling
+
+2. ✅ app/controllers/login.php
+   Location: /home/betrollover/public_html/app/controllers/login.php
+   Fix: Session check, constant checks, dashboard redirect
+
+3. ✅ app/controllers/register.php
+   Location: /home/betrollover/public_html/app/controllers/register.php
+   Fix: Session check, constant checks, dashboard redirect
+
+4. ✅ app/views/layouts/user_layout.php
+   Location: /home/betrollover/public_html/app/views/layouts/user_layout.php
+   Fix: Missing layout file
+
+5. ✅ app/views/layouts/ (ALL FILES)
+   Location: /home/betrollover/public_html/app/views/layouts/
+   Fix: Ensure all layout files are uploaded
+
+UPLOAD INSTRUCTIONS:
+--------------------
+
+1. Open cPanel File Manager
+2. Navigate to: /home/betrollover/public_html/
+3. Upload these files (overwrite existing):
+   - index.php
+   - app/controllers/login.php
+   - app/controllers/register.php
+   - app/views/layouts/ (entire folder)
+
+4. After upload, test:
+   - https://www.betrollover.com/login
+   - https://www.betrollover.com/register
+
+ERRORS FIXED:
+-------------
+✅ Session already started - FIXED
+✅ Constants already defined - FIXED
+✅ Missing user_layout.php - FIXED
+✅ Dashboard routing - FIXED
+
+⚠️ IMPORTANT: Upload these files NOW to fix the errors!
+

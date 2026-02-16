@@ -1,0 +1,312 @@
+<?php
+/**
+ * Admin Wallet - Clean, Simple Version
+ * Uses the new layout system
+ */
+
+// Error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../models/Database.php';
+require_once __DIR__ . '/../models/Logger.php';
+require_once __DIR__ . '/../middleware/AuthMiddleware.php';
+
+// Check authentication and admin role
+try {
+    AuthMiddleware::requireAuth();
+    if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+        header('Location: /SmartPicksPro-Local/login');
+        exit;
+    }
+} catch (Exception $e) {
+    die('Authentication error: ' . $e->getMessage());
+}
+
+$db = Database::getInstance();
+
+// Get admin info
+$userId = $_SESSION['user_id'];
+$user = $db->fetch("SELECT * FROM users WHERE id = ?", [$userId]);
+
+// Get wallet data
+$walletData = [];
+$stats = [];
+
+try {
+    $walletData = $db->fetchAll("
+        SELECT uw.*, u.username, u.role
+        FROM user_wallets uw
+        JOIN users u ON uw.user_id = u.id
+        ORDER BY uw.balance DESC
+    ");
+    
+    // Get statistics
+    $stats['total_wallets'] = count($walletData);
+    $stats['total_balance'] = $db->fetch("SELECT SUM(balance) as total FROM user_wallets")['total'] ?? 0;
+    $stats['avg_balance'] = $db->fetch("SELECT AVG(balance) as avg FROM user_wallets")['avg'] ?? 0;
+    
+    // Get recent transactions
+    $stats['recent_transactions'] = $db->fetchAll("
+        SELECT wt.*, u.username
+        FROM wallet_transactions wt
+        JOIN users u ON wt.user_id = u.id
+        ORDER BY wt.created_at DESC
+        LIMIT 10
+    ");
+    
+} catch (Exception $e) {
+    $walletData = [];
+    $stats = ['total_wallets' => 0, 'total_balance' => 0, 'avg_balance' => 0, 'recent_transactions' => []];
+}
+
+// Handle wallet actions
+$message = '';
+$error = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
+    
+    if ($action === 'adjust_balance') {
+        $targetUserId = intval($_POST['user_id'] ?? 0);
+        $amount = floatval($_POST['amount'] ?? 0);
+        $description = trim($_POST['description'] ?? '');
+        
+        if ($targetUserId && $amount != 0 && !empty($description)) {
+            try {
+                // Get current balance
+                $currentBalance = $db->fetch("SELECT balance FROM user_wallets WHERE user_id = ?", [$targetUserId]);
+                if (!$currentBalance) {
+                    // Create wallet if it doesn't exist
+                    $db->query("INSERT INTO user_wallets (user_id, balance, created_at) VALUES (?, 0.00, NOW())", [$targetUserId]);
+                    $currentBalance = ['balance' => 0.00];
+                }
+                $newBalance = (float)($currentBalance['balance'] ?? 0) + (float)$amount;
+                
+                // Update wallet balance
+                $db->query("UPDATE user_wallets SET balance = ?, updated_at = NOW() WHERE user_id = ?", [$newBalance, $targetUserId]);
+                
+                // Add transaction record
+                $db->query("
+                    INSERT INTO wallet_transactions (user_id, type, amount, description, status, created_at) 
+                    VALUES (?, 'top_up', ?, ?, 'completed', NOW())
+                ", [$targetUserId, $amount, $description]);
+                
+                $message = "Wallet balance adjusted successfully.";
+                
+                // Refresh wallet data
+                $walletData = $db->fetchAll("
+                    SELECT uw.*, u.username, u.role
+                    FROM user_wallets uw
+                    JOIN users u ON uw.user_id = u.id
+                    ORDER BY uw.balance DESC
+                ");
+                
+            } catch (Exception $e) {
+                $error = "Error adjusting wallet balance: " . $e->getMessage();
+            }
+        } else {
+            $error = "Please fill in all required fields.";
+        }
+    }
+}
+
+// Set page variables
+$pageTitle = "Wallet Management";
+
+// Start content buffer
+ob_start();
+?>
+
+<div class="admin-wallet-content">
+    <?php if ($message): ?>
+    <div class="card" style="background-color: #e8f5e8; border-left: 4px solid #2e7d32;">
+        <p style="color: #2e7d32; margin: 0;"><i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($message); ?></p>
+    </div>
+    <?php endif; ?>
+    
+    <?php if ($error): ?>
+    <div class="card" style="background-color: #ffebee; border-left: 4px solid #d32f2f;">
+        <p style="color: #d32f2f; margin: 0;"><i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?></p>
+    </div>
+    <?php endif; ?>
+    
+    <div class="card">
+        <h2><i class="fas fa-wallet"></i> Wallet Management</h2>
+        <p style="color: #666; margin-top: 10px;">Manage user wallet balances and transactions across the platform.</p>
+    </div>
+    
+    <!-- Statistics -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+        <div class="card">
+            <div style="text-align: center;">
+                <p style="font-size: 32px; font-weight: bold; color: #d32f2f;"><?php echo $stats['total_wallets']; ?></p>
+                <p style="font-size: 14px; color: #666;">Total Wallets</p>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div style="text-align: center;">
+                <p style="font-size: 32px; font-weight: bold; color: #2e7d32;">$<?php echo number_format($stats['total_balance'], 2); ?></p>
+                <p style="font-size: 14px; color: #666;">Total Balance</p>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div style="text-align: center;">
+                <p style="font-size: 32px; font-weight: bold; color: #666;">$<?php echo number_format($stats['avg_balance'], 2); ?></p>
+                <p style="font-size: 14px; color: #666;">Average Balance</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Adjust Balance Form -->
+    <div class="card">
+        <h3><i class="fas fa-plus"></i> Adjust User Balance</h3>
+        
+        <form method="POST" style="margin-top: 20px;">
+            <input type="hidden" name="action" value="adjust_balance">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">Select User</label>
+                    <select name="user_id" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <option value="">Choose User</option>
+                        <?php foreach ($walletData as $wallet): ?>
+                        <option value="<?php echo $wallet['user_id']; ?>">
+                            <?php echo htmlspecialchars($wallet['username']); ?> (<?php echo ucfirst($wallet['role']); ?>)
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">Amount</label>
+                    <input type="number" name="amount" step="0.01" required
+                           placeholder="Enter amount (+/-)"
+                           style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+                
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">Description</label>
+                    <input type="text" name="description" required
+                           placeholder="Reason for adjustment"
+                           style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Adjust Balance
+            </button>
+        </form>
+    </div>
+    
+    <!-- User Wallets -->
+    <div class="card">
+        <h3><i class="fas fa-list"></i> User Wallets</h3>
+        
+        <?php if (empty($walletData)): ?>
+        <div style="text-align: center; padding: 40px; color: #666;">
+            <i class="fas fa-wallet" style="font-size: 48px; color: #ccc; margin-bottom: 20px;"></i>
+            <p>No wallet data found.</p>
+        </div>
+        <?php else: ?>
+        
+        <div style="overflow-x: auto; margin-top: 15px;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background-color: #f8f9fa;">
+                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">User</th>
+                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Role</th>
+                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Balance</th>
+                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Last Updated</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($walletData as $wallet): ?>
+                    <tr style="border-bottom: 1px solid #f0f0f0;">
+                        <td style="padding: 12px;">
+                            <p style="font-weight: 500; margin-bottom: 5px;"><?php echo htmlspecialchars($wallet['username']); ?></p>
+                        </td>
+                        <td style="padding: 12px;">
+                            <span style="background-color: <?php echo $wallet['role'] === 'admin' ? '#d32f2f' : ($wallet['role'] === 'tipster' ? '#2e7d32' : '#666'); ?>; color: white; padding: 4px 8px; border-radius: 3px; font-size: 12px; text-transform: capitalize;">
+                                <?php echo $wallet['role']; ?>
+                            </span>
+                        </td>
+                        <td style="padding: 12px;">
+                            <span style="font-weight: bold; color: #2e7d32;">
+                                $<?php echo number_format($wallet['balance'], 2); ?>
+                            </span>
+                        </td>
+                        <td style="padding: 12px;">
+                            <span style="font-size: 12px; color: #666;">
+                                <?php echo isset($wallet['updated_at']) ? date('M j, Y g:i A', strtotime($wallet['updated_at'])) : 'Never'; ?>
+                            </span>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        
+        <?php endif; ?>
+    </div>
+    
+    <!-- Recent Transactions -->
+    <?php if (!empty($stats['recent_transactions'])): ?>
+    <div class="card">
+        <h3><i class="fas fa-history"></i> Recent Transactions</h3>
+        <div style="margin-top: 15px;">
+            <?php foreach ($stats['recent_transactions'] as $transaction): ?>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
+                <div>
+                    <p style="font-weight: 500; margin-bottom: 5px;"><?php echo htmlspecialchars($transaction['username']); ?></p>
+                    <p style="font-size: 12px; color: #666;"><?php echo htmlspecialchars($transaction['description']); ?></p>
+                </div>
+                <div style="text-align: right;">
+                    <p style="font-weight: bold; color: <?php echo $transaction['amount'] >= 0 ? '#2e7d32' : '#d32f2f'; ?>;">
+                        <?php echo ($transaction['amount'] >= 0 ? '+' : '') . '$' . number_format($transaction['amount'], 2); ?>
+                    </p>
+                    <p style="font-size: 12px; color: #666;">
+                        <?php echo date('M j, g:i A', strtotime($transaction['created_at'])); ?>
+                    </p>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+    
+    <!-- Wallet Management Information -->
+    <div class="card">
+        <h3><i class="fas fa-info-circle"></i> Wallet Management Guidelines</h3>
+        <div style="margin-top: 15px;">
+            <p style="color: #666; margin-bottom: 10px;">
+                <i class="fas fa-shield-alt"></i> 
+                Only adjust balances for legitimate reasons (refunds, bonuses, corrections).
+            </p>
+            <p style="color: #666; margin-bottom: 10px;">
+                <i class="fas fa-file-alt"></i> 
+                Always provide a clear description for audit purposes.
+            </p>
+            <p style="color: #666; margin-bottom: 10px;">
+                <i class="fas fa-chart-line"></i> 
+                Monitor wallet balances to detect unusual activity.
+            </p>
+            <p style="color: #666;">
+                <i class="fas fa-exclamation-triangle"></i> 
+                Negative balances are allowed but should be monitored closely.
+            </p>
+        </div>
+    </div>
+</div>
+
+<?php
+// Get the content
+$content = ob_get_clean();
+
+// Include admin layout
+include __DIR__ . '/../views/layouts/admin_layout.php';
+?>
+

@@ -1,0 +1,35 @@
+✅ NOTIFICATION SYSTEM - PRODUCTION FILES CHECKLIST
+====================================================
+
+All notification system files have been copied to the production folder.
+
+📁 NEW FILES ADDED:
+-------------------
+✅ database/migrations/create_notifications_system.sql
+✅ app/models/NotificationService.php
+✅ api/get_notifications.php
+✅ api/mark_notification_read.php
+✅ app/controllers/notification_preferences.php
+
+📝 UPDATED FILES:
+-----------------
+✅ app/controllers/admin_approve_pick.php
+✅ app/controllers/marketplace.php
+✅ app/views/layouts/user_layout.php
+✅ app/views/layouts/admin_layout.php
+✅ app/views/layouts/tipster_layout.php
+✅ index.php
+
+🚀 DEPLOYMENT STEPS:
+--------------------
+1. Upload entire production folder to cPanel public_html/
+2. Run database migration in phpMyAdmin:
+   - File: database/migrations/create_notifications_system.sql
+   - Database: betrollover_workingdata
+3. Test notification system:
+   - Login to dashboard
+   - Check notification bell icon
+   - Visit /notifications to manage preferences
+
+✅ ALL FILES READY FOR DEPLOYMENT!
+
