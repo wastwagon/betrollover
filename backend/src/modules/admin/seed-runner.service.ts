@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -15,8 +15,6 @@ const SEED_FILES = [
 export class SeedRunnerService {
   private readonly logger = new Logger(SeedRunnerService.name);
 
-  constructor(private dataSource: DataSource) {}
-
   private getSeedsDir(): string {
     const fromEnv = process.env.SEEDS_PATH;
     if (fromEnv && fs.existsSync(fromEnv)) return path.resolve(fromEnv);
@@ -28,7 +26,7 @@ export class SeedRunnerService {
     return path.resolve(relative);
   }
 
-  /** Run all seed files. Logs errors but does not fail startup (seeds may already be applied). */
+  /** Run all seed files via psql (handles DO $$ blocks correctly). Logs errors but does not fail startup. */
   async runSeeds(): Promise<{ run: string[]; errors: string[] }> {
     const run: string[] = [];
     const errors: string[] = [];
@@ -39,6 +37,12 @@ export class SeedRunnerService {
       return { run, errors };
     }
 
+    const host = process.env.POSTGRES_HOST || 'localhost';
+    const port = process.env.POSTGRES_PORT || '5432';
+    const user = process.env.POSTGRES_USER || 'betrollover';
+    const db = process.env.POSTGRES_DB || 'betrollover';
+    const password = process.env.POSTGRES_PASSWORD || '';
+
     for (const filename of SEED_FILES) {
       const filePath = path.join(dir, filename);
       if (!fs.existsSync(filePath)) {
@@ -46,8 +50,11 @@ export class SeedRunnerService {
         continue;
       }
       try {
-        const sql = fs.readFileSync(filePath, 'utf8');
-        await this.runSql(sql, filename);
+        const env = { ...process.env, PGPASSWORD: password };
+        execSync(`psql -h ${host} -p ${port} -U ${user} -d ${db} -f "${filePath}" -v ON_ERROR_STOP=1`, {
+          env,
+          stdio: 'inherit',
+        });
         run.push(filename);
         this.logger.log(`Applied seed: ${filename}`);
       } catch (err: any) {
@@ -58,22 +65,5 @@ export class SeedRunnerService {
     }
 
     return { run, errors };
-  }
-
-  private async runSql(sql: string, _label: string): Promise<void> {
-    const statements: string[] = [];
-    let current = '';
-    for (const line of sql.split(/\r?\n/)) {
-      current += line + '\n';
-      const t = line.trim();
-      if (t.endsWith(';') && !t.startsWith('--')) {
-        statements.push(current.trim());
-        current = '';
-      }
-    }
-    if (current.trim()) statements.push(current.trim());
-    for (const statement of statements) {
-      if (statement) await this.dataSource.query(statement);
-    }
   }
 }
