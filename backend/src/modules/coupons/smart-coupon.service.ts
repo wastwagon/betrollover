@@ -281,7 +281,13 @@ export class SmartCouponService {
     if (filters?.status) {
       qb.andWhere('c.status = :status', { status: filters.status });
     }
+
+    // Debug logging for query execution
+    const sql = qb.orderBy('c.date', 'DESC').take(100).getSql();
+    this.logger.log(`Archive Query: ${sql} Params: ${JSON.stringify(qb.getParameters())}`);
+
     const coupons = await qb.orderBy('c.date', 'DESC').take(100).getMany();
+    this.logger.log(`Found ${coupons.length} coupons matching filters`);
     return this.mapWithFixtureDetails(coupons);
   }
 

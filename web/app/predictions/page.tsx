@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { PickCard } from '@/components/PickCard';
@@ -41,11 +42,22 @@ interface ArchiveStats {
 }
 
 export default function SmartCouponsPage() {
+  /* eslint-disable-next-line react-hooks/rules-of-hooks */
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const initialTab = (searchParams?.get('tab') === 'archive') ? 'archive' : 'active';
   const [activeCoupons, setActiveCoupons] = useState<SmartCoupon[]>([]);
   const [archiveCoupons, setArchiveCoupons] = useState<SmartCoupon[]>([]);
   const [stats, setStats] = useState<ArchiveStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'active' | 'archive'>('active');
+  const [tab, setTab] = useState<'active' | 'archive'>(initialTab);
+
+  const handleTabChange = (newTab: 'active' | 'archive') => {
+    setTab(newTab);
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.set('tab', newTab);
+    router.replace(`/predictions?${newParams.toString()}`, { scroll: false });
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -145,7 +157,7 @@ export default function SmartCouponsPage() {
         {/* Tabs */}
         <div className="flex items-center gap-2 mb-8 border-b border-[var(--border)] pb-1">
           <button
-            onClick={() => setTab('active')}
+            onClick={() => handleTabChange('active')}
             className={`px-6 py-3 rounded-t-lg font-medium text-sm transition-all relative top-[1px] ${tab === 'active'
               ? 'text-[var(--primary)] border-b-2 border-[var(--primary)] bg-[var(--primary)]/5'
               : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--card)]'
@@ -154,7 +166,7 @@ export default function SmartCouponsPage() {
             Active Coupons ({activeCoupons.length})
           </button>
           <button
-            onClick={() => setTab('archive')}
+            onClick={() => handleTabChange('archive')}
             className={`px-6 py-3 rounded-t-lg font-medium text-sm transition-all relative top-[1px] ${tab === 'archive'
               ? 'text-[var(--primary)] border-b-2 border-[var(--primary)] bg-[var(--primary)]/5'
               : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--card)]'
@@ -177,7 +189,7 @@ export default function SmartCouponsPage() {
             }
             actionLabel={tab === 'active' ? 'Browse Marketplace' : 'View Today\'s Coupons'}
             actionHref={tab === 'active' ? '/marketplace' : undefined}
-            onActionClick={tab === 'active' ? undefined : () => setTab('active')}
+            onActionClick={tab === 'active' ? undefined : () => handleTabChange('active')}
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

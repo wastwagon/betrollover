@@ -5,13 +5,11 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 
 const navLinks = [
+  { href: '/predictions', label: 'Smart Coupons' },
   { href: '/marketplace', label: 'Marketplace' },
-  { href: '/news', label: 'News' },
-  { href: '/resources', label: 'Resources' },
   { href: '/tipsters', label: 'Tipsters' },
   { href: '/leaderboard', label: 'Leaderboard' },
-  { href: '/about', label: 'About' },
-  { href: '/contact', label: 'Contact' },
+  { href: '/news', label: 'News' },
 ];
 
 export function SiteHeader() {
@@ -58,11 +56,10 @@ export function SiteHeader() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`font-medium transition-colors ${
-                    isActive
+                  className={`font-medium transition-colors ${isActive
                       ? 'text-[var(--primary)]'
                       : 'text-[var(--text-muted)] hover:text-[var(--primary)]'
-                  }`}
+                    }`}
                 >
                   <span className={isActive ? 'border-b-2 border-[var(--primary)] pb-0.5' : ''}>
                     {link.label}
@@ -138,11 +135,10 @@ export function SiteHeader() {
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`px-4 py-3 rounded-lg font-medium ${
-                      isActive
+                    className={`px-4 py-3 rounded-lg font-medium ${isActive
                         ? 'text-[var(--primary)] bg-[var(--primary-light)]'
                         : 'text-[var(--text)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)]'
-                    }`}
+                      }`}
                   >
                     {link.label}
                   </Link>
