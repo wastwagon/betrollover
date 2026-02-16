@@ -18,6 +18,7 @@ import { AdminService } from './admin.service';
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsTrackingService } from './analytics-tracking.service';
 import { MigrationRunnerService } from './migration-runner.service';
+import { SeedRunnerService } from './seed-runner.service';
 import { PredictionEngineService } from '../predictions/prediction-engine.service';
 import { PredictionsModule } from '../predictions/predictions.module';
 import { AccumulatorsModule } from '../accumulators/accumulators.module';
@@ -70,7 +71,7 @@ import { Prediction } from '../predictions/entities/prediction.entity';
     PredictionsModule,
   ],
   controllers: [AdminController, AnalyticsTrackingController],
-  providers: [AdminService, AnalyticsService, AnalyticsTrackingService, MigrationRunnerService],
-  exports: [MigrationRunnerService],
+  providers: [AdminService, AnalyticsService, AnalyticsTrackingService, MigrationRunnerService, SeedRunnerService],
+  exports: [MigrationRunnerService, SeedRunnerService],
 })
 export class AdminModule {}

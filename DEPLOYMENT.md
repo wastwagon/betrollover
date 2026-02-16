@@ -83,7 +83,8 @@ api.betrollover.com  A    your-vps-ip
 2. Click **Deploy**
 3. Coolify will build and start all services
 4. Migrations run automatically on API startup
-5. Visit `https://betrollover.com` when the build finishes
+5. Seeds run automatically after migrations (news, resources, users, AI tipsters)
+6. Visit `https://betrollover.com` when the build finishes
 
 ---
 

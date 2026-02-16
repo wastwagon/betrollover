@@ -59,6 +59,7 @@ services:
       SMTP_FROM: ${SMTP_FROM:-noreply@betrollover.com}
       APP_URL: ${APP_URL}
       MIGRATIONS_PATH: /app/database/migrations
+      SEEDS_PATH: /app/database/seeds
     depends_on:
       postgres:
         condition: service_healthy

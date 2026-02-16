@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import type { Request, Response, NextFunction } from 'express';
 import { AppModule } from './app.module';
 import { MigrationRunnerService } from './modules/admin/migration-runner.service';
+import { SeedRunnerService } from './modules/admin/seed-runner.service';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -124,6 +125,20 @@ async function bootstrap() {
     if (isProduction) {
       logger.warn('API will start anyway. Go to Admin → Settings → Database migrations and click "Mark all as applied" if this DB was already migrated, then restart.');
     }
+  }
+
+  // Run seed data (news, resources, users, AI tipsters) - idempotent where possible
+  try {
+    const seedRunner = app.get(SeedRunnerService);
+    const seedResult = await seedRunner.runSeeds();
+    if (seedResult.run.length > 0) {
+      logger.log(`Applied ${seedResult.run.length} seed(s): ${seedResult.run.join(', ')}`);
+    }
+    if (seedResult.errors.length > 0) {
+      logger.warn(`Seed warnings (non-fatal): ${seedResult.errors.join('; ')}`);
+    }
+  } catch (err: any) {
+    logger.warn(`Seed bootstrap failed (non-fatal): ${err?.message || err}`);
   }
 
   const port = process.env.PORT || 3001;
