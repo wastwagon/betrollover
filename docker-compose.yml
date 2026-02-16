@@ -74,6 +74,7 @@ services:
     volumes:
       - ./backend/src:/app/src  # Live reload source only; use image's node_modules
       - ./database/migrations:/app/database/migrations  # For automatic migrations on startup
+      - ./database/seeds:/app/database/seeds  # For seed runner on startup
 
   # Next.js Web App (mobile-first)
   web:

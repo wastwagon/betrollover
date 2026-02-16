@@ -171,28 +171,27 @@ export class FootballSyncService {
     let fixturesCount = 0;
 
     for (const date of dates) {
-      let page = 1;
-      let hasMore = true;
-      while (hasMore) {
-        const res = await fetch(`${API_BASE}/fixtures?date=${date}&page=${page}`, { headers });
-        const data = await res.json();
-        if (data.errors && Object.keys(data.errors).length > 0) {
-          this.logger.warn(`API error for ${date} page ${page}: ${JSON.stringify(data.errors)}`);
-        }
-        const raw = data.response || [];
-        const items = raw.filter(
-          (f: any) => f.league?.id && enabledSet.has(f.league.id),
+      // API-Football fixtures endpoint does NOT support 'page' param - fetch once per date
+      const res = await fetch(`${API_BASE}/fixtures?date=${date}`, { headers });
+      const data = await res.json();
+      if (data.errors && Object.keys(data.errors).length > 0) {
+        this.logger.warn(`API error for ${date}: ${JSON.stringify(data.errors)}`);
+        continue;
+      }
+      const raw = data.response || [];
+      const items = raw.filter(
+        (f: any) => f.league?.id && enabledSet.has(f.league.id),
+      );
+      if (raw.length > 0 && items.length === 0) {
+        const sampleLeagueIds = raw.slice(0, 5).map((f: any) => f.league?.id).filter(Boolean);
+        this.logger.warn(
+          `Date ${date}: API returned ${raw.length} fixtures but 0 matched enabled leagues. ` +
+          `Sample league IDs: ${sampleLeagueIds.join(',')}. ` +
+          `Enabled count: ${enabledSet.size}. Has 162: ${enabledSet.has(162)}`,
         );
-        if (raw.length > 0 && items.length === 0 && page === 1) {
-          const sampleLeagueIds = raw.slice(0, 5).map((f: any) => f.league?.id).filter(Boolean);
-          this.logger.warn(
-            `Date ${date}: API returned ${raw.length} fixtures but 0 matched enabled leagues. ` +
-            `Sample league IDs: ${sampleLeagueIds.join(',')}. ` +
-            `Enabled count: ${enabledSet.size}. Has 162: ${enabledSet.has(162)}`,
-          );
-        }
+      }
 
-        for (const f of items) {
+      for (const f of items) {
           const fix = f.fixture;
           const league = f.league;
           let leagueDbId: number | null = null;
@@ -218,15 +217,6 @@ export class FootballSyncService {
           );
           fixturesCount++;
         }
-
-        const paging = data.paging;
-        const noMorePages = !paging || (typeof paging.current === 'number' && typeof paging.total === 'number' && paging.current >= paging.total);
-        if (items.length === 0 || noMorePages || page >= 20) {
-          hasMore = false;
-        } else {
-          page++;
-        }
-      }
     }
 
     const now = new Date();

@@ -91,8 +91,9 @@ export class MigrationRunnerService {
     const errors: string[] = [];
     await this.ensureTable();
     const dir = this.getMigrationsDir();
+    this.logger.log(`Migrations path: ${dir} (exists: ${fs.existsSync(dir)}, MIGRATIONS_PATH: ${process.env.MIGRATIONS_PATH || 'not set'})`);
     if (!fs.existsSync(dir)) {
-      this.logger.warn(`Migrations directory not found: ${dir}. Set MIGRATIONS_PATH if needed.`);
+      this.logger.warn(`Migrations directory not found: ${dir}. Set MIGRATIONS_PATH if needed. CWD: ${process.cwd()}`);
       return { applied, skipped: 0, errors: [`Migrations directory not found: ${dir}`] };
     }
     const files = fs.readdirSync(dir)

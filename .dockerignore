@@ -32,4 +32,5 @@
 **/Copies
 **/docs
 **/scripts
+!scripts/coolify-full-db-setup.sh
 *.log
