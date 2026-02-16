@@ -1,51 +1,143 @@
-# BetRollover – Deployment & Login Best Practices
+# BetRollover – VPS Deployment (Coolify)
 
-## Environment Variables for Production
+Guide for deploying BetRollover on a VPS with [Coolify](https://coolify.io).
 
-Set these in your deployment (Vercel, Railway, Docker, etc.):
+## Prerequisites
 
-| Variable | Purpose | Example (Production) |
-|----------|---------|------------------------|
-| `APP_URL` | Canonical URL users access. **Required for correct login redirects.** | `https://app.yourdomain.com` |
-| `NEXT_PUBLIC_APP_URL` | Same as APP_URL; used by web app | `https://app.yourdomain.com` |
-| `NEXT_PUBLIC_API_URL` | API URL the browser uses for fetch calls | `https://api.yourdomain.com` |
-| `BACKEND_URL` | API URL the Next.js server uses (e.g. internal Docker network) | `http://api:3001` (Docker) or same as API |
+- VPS with Coolify installed (Ubuntu 22.04+ recommended)
+- Domain(s) pointed to your VPS IP
+- Git repository (GitHub, GitLab, or Gitea)
 
-## Login Redirect Fix
+---
 
-Login redirects use `APP_URL` / `NEXT_PUBLIC_APP_URL` as the base. This avoids:
+## 1. Coolify Setup
 
-- Redirecting to `localhost:3000` when the app runs on `localhost:6002`
-- Wrong redirects behind reverse proxies
-- "fetch failed" / "Backend unavailable" when the API is unreachable
+### Create New Resource
 
-**Local (Docker):** `APP_URL=http://localhost:6002`  
-**Production:** `APP_URL=https://yourdomain.com`
+1. In Coolify dashboard: **+ Add Resource** → **Docker Compose**
+2. Connect your Git repository (public or private)
+3. **Base Directory:** leave empty (repo root)
+4. **Docker Compose Location:** `docker-compose.prod.yml`
+5. **Branch:** `main` (or your production branch)
 
-## Correct URLs by Setup
+---
 
-| Setup | Web App | API |
-|-------|---------|-----|
-| Docker (`docker compose up`) | http://localhost:6002 | http://localhost:6001 |
-| Local dev (npm run dev) | http://localhost:6002 (if `PORT=6002`) or 3000 | http://localhost:6001 |
-| Production | https://yourdomain.com | https://api.yourdomain.com |
+## 2. Environment Variables
 
-**Do not use `localhost:3000`** when running with Docker; the web container maps port 3000 to 6002 on the host.
+Set these in Coolify **before** the first deploy. Go to your resource → **Environment Variables**.
 
-## Backend CORS
+### Required
 
-The backend allows origins from `APP_URL` and `CORS_ORIGINS` (comma-separated). For production, set:
+| Variable | Description | Example |
+|----------|--------------|---------|
+| `POSTGRES_USER` | PostgreSQL username | `betrollover` |
+| `POSTGRES_PASSWORD` | PostgreSQL password (strong!) | `your-secure-password` |
+| `POSTGRES_DB` | Database name | `betrollover` |
+| `JWT_SECRET` | JWT signing key (min 32 chars) | `your-random-32-char-secret` |
+| `APP_URL` | Public app URL (no trailing slash) | `https://betrollover.com` |
+| `NEXT_PUBLIC_APP_URL` | Same as APP_URL (for Next.js build) | `https://betrollover.com` |
+| `NEXT_PUBLIC_API_URL` | Public API URL (no trailing slash) | `https://api.betrollover.com` |
+
+### Optional (recommended for full features)
+
+| Variable | Description |
+|----------|-------------|
+| `API_SPORTS_KEY` | [API-Football](https://www.api-football.com/) key for fixtures |
+| `PAYSTACK_SECRET_KEY` | Paystack secret key (or set in Admin Settings) |
+| `PAYSTACK_PUBLIC_KEY` | Paystack public key |
+| `SENDGRID_API_KEY` | SendGrid for emails |
+| `SMTP_FROM` | From email (e.g. `noreply@betrollover.com`) |
+| `ARKESEL_API_KEY` | Arkesel for SMS OTP (optional) |
+| `ARKESEL_SENDER_ID` | Arkesel sender ID |
+
+---
+
+## 3. Domain Configuration
+
+### Assign Domains in Coolify
+
+1. **Web app:** Assign domain `betrollover.com` → service `web` (port 3000)
+2. **API:** Assign domain `api.betrollover.com` → service `api` (port 3001)
+
+Coolify uses Traefik; it will handle SSL (Let’s Encrypt) automatically when you add domains.
+
+### DNS
+
+Point your domains to the VPS IP:
 
 ```
-APP_URL=https://app.yourdomain.com
-CORS_ORIGINS=https://app.yourdomain.com,https://www.yourdomain.com
+betrollover.com      A    your-vps-ip
+api.betrollover.com  A    your-vps-ip
 ```
 
-## Checklist Before Go-Live
+---
 
-- [ ] `APP_URL` and `NEXT_PUBLIC_APP_URL` set to production URL
-- [ ] `NEXT_PUBLIC_API_URL` set to production API URL
-- [ ] `BACKEND_URL` set for server-side API calls (Docker: `http://api:3001`)
-- [ ] `JWT_SECRET` is strong and unique (min 32 chars)
-- [ ] CORS includes your production domain(s)
-- [ ] HTTPS enabled for production
+## 4. Paystack Webhook (if using payments)
+
+1. Paystack Dashboard → **Settings** → **Webhooks**
+2. Add URL: `https://api.betrollover.com/wallet/paystack-webhook`
+3. Select events: `charge.success` (and any others you need)
+
+---
+
+## 5. First Deploy
+
+1. Save all environment variables in Coolify
+2. Click **Deploy**
+3. Coolify will build and start all services
+4. Migrations run automatically on API startup
+5. Visit `https://betrollover.com` when the build finishes
+
+---
+
+## 6. Post-Deploy
+
+### Admin User
+
+If you don’t have one yet, create an admin via database or seed:
+
+```bash
+# Connect to postgres (from Coolify or SSH)
+docker exec -it betrollover-postgres psql -U betrollover -d betrollover -c "
+  UPDATE users SET role = 'admin' WHERE email = 'your-admin@email.com';
+"
+```
+
+### Paystack Keys
+
+You can configure Paystack in **Admin → Settings → Paystack** instead of env vars.
+
+---
+
+## 7. Troubleshooting
+
+| Issue | Fix |
+|-------|-----|
+| API won’t start | Check `JWT_SECRET` is set; view logs in Coolify |
+| Web shows wrong API URL | `NEXT_PUBLIC_API_URL` must match your API domain; rebuild after changing |
+| Paystack webhook fails | Ensure webhook URL is `https://api.betrollover.com/wallet/paystack-webhook` and publicly reachable |
+| 502 Bad Gateway | Wait for health checks; API may need 40s+ to start and run migrations |
+| Database connection failed | Ensure `POSTGRES_*` vars match; postgres must be healthy before API starts |
+
+---
+
+## 8. Manual Deploy (without Coolify)
+
+If you prefer to deploy manually on a VPS:
+
+```bash
+git clone https://github.com/your-org/betrollover.git
+cd betrollover
+
+# Create .env from .env.example and fill values
+cp .env.example .env
+nano .env
+
+# Deploy
+docker compose -f docker-compose.prod.yml up -d
+
+# View logs
+docker compose -f docker-compose.prod.yml logs -f
+```
+
+Use a reverse proxy (Nginx/Caddy) in front for SSL and domain routing.

@@ -1,0 +1,35 @@
+# Dependencies
+**/node_modules
+**/.npm
+**/.yarn
+
+# Build outputs
+**/dist
+**/.next
+**/out
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Env (never bake secrets into image)
+.env
+.env.*
+!.env.example
+
+# Misc
+**/*.md
+!DEPLOYMENT.md
+**/Dockerfile
+**/.dockerignore
+**/docker-compose*.yml
+**/Copies
+**/docs
+**/scripts
+*.log

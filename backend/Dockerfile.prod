@@ -1,0 +1,30 @@
+# BetRollover API - Production Dockerfile
+# Build context: project root (.)
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+RUN apk add --no-cache python3 make g++
+
+COPY backend/package*.json ./
+RUN npm ci --omit=dev
+
+COPY backend/ ./
+RUN npm run build
+
+# Production stage
+FROM node:20-alpine
+
+WORKDIR /app
+RUN apk add --no-cache dumb-init curl
+
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+COPY database/ ./database/
+
+ENV NODE_ENV=production
+EXPOSE 3001
+
+USER node
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "dist/main.js"]
