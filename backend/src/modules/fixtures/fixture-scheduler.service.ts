@@ -1,5 +1,6 @@
 import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { ConfigService } from '@nestjs/config';
 import { FixtureUpdateService } from './fixture-update.service';
 import { FootballSyncService } from './football-sync.service';
 import { OddsSyncService } from './odds-sync.service';
@@ -43,7 +44,16 @@ export class FixtureSchedulerService {
     @InjectRepository(SyncStatus)
     private syncStatusRepo: Repository<SyncStatus>,
     private dataSource: DataSource,
+    private configService: ConfigService,
   ) { }
+
+  private isSchedulingEnabled(): boolean {
+    const enabled = this.configService.get('ENABLE_SCHEDULING') === 'true';
+    if (!enabled) {
+      // this.logger.debug('Scheduling disabled (ENABLE_SCHEDULING != true), skipping task');
+    }
+    return enabled;
+  }
 
   private async updateSyncStatus(
     syncType: string,
@@ -88,6 +98,7 @@ export class FixtureSchedulerService {
    */
   @Cron('*/5 * * * *') // Every 5 minutes
   async handleLiveFixtureUpdate() {
+    if (!this.isSchedulingEnabled()) return;
     if (await this.isSyncRunning('live')) return;
     this.logger.debug('Running scheduled live fixture update...');
     await this.updateSyncStatus('live', 'running');
@@ -113,6 +124,7 @@ export class FixtureSchedulerService {
    */
   @Cron('*/5 * * * *') // Every 5 minutes
   async handleFinishedFixtureUpdate() {
+    if (!this.isSchedulingEnabled()) return;
     if (await this.isSyncRunning('finished')) return;
     this.logger.debug('Running scheduled finished fixture update...');
     await this.updateSyncStatus('finished', 'running');
@@ -141,6 +153,7 @@ export class FixtureSchedulerService {
    */
   @Cron('0 6 * * *') // Every day at 6 AM (set TZ env if you need a specific timezone)
   async handleDailyFixtureSync() {
+    if (!this.isSchedulingEnabled()) return;
     if (await this.isSyncRunning('fixtures')) {
       this.logger.warn('Daily fixture sync already running, skipping this run');
       return;
@@ -173,6 +186,7 @@ export class FixtureSchedulerService {
    */
   @Cron('0 */2 * * *') // Every 2 hours
   async handleOddsSync() {
+    if (!this.isSchedulingEnabled()) return;
     if (await this.isSyncRunning('odds')) {
       this.logger.debug('Odds sync already running, skipping');
       return;
@@ -229,6 +243,7 @@ export class FixtureSchedulerService {
    */
   @Cron('0 7 * * *') // Every day at 7 AM
   async handleOddsForceRefresh() {
+    if (!this.isSchedulingEnabled()) return;
     if (await this.isSyncRunning('odds_refresh')) {
       this.logger.debug('Odds force refresh already running, skipping');
       return;
@@ -278,6 +293,7 @@ export class FixtureSchedulerService {
    */
   @Cron('0 9 * * *')
   async handleDailyPredictionGeneration() {
+    if (!this.isSchedulingEnabled()) return;
     if (await this.isSyncRunning('predictions')) {
       this.logger.warn('Prediction generation already running, skipping');
       return;
@@ -300,6 +316,7 @@ export class FixtureSchedulerService {
    */
   @Cron('0 11 * * *')
   async handlePredictionCatchUp() {
+    if (!this.isSchedulingEnabled()) return;
     const count = await this.predictionEngine.getTodaysPredictionCount();
     if (count > 0) {
       this.logger.debug(`Catch-up skipped: ${count} predictions already exist for today`);
@@ -328,6 +345,7 @@ export class FixtureSchedulerService {
    */
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async handleFixtureArchive() {
+    if (!this.isSchedulingEnabled()) return;
     if (await this.isSyncRunning('archive')) {
       this.logger.debug('Fixture archive already running, skipping');
       return;
@@ -388,6 +406,7 @@ export class FixtureSchedulerService {
    */
   @Cron('*/30 * * * *')
   async handlePeriodicSettlement() {
+    if (!this.isSchedulingEnabled()) return;
     this.logger.debug('Running periodic settlement check...');
     try {
       const result = await this.settlementService.runSettlement();
@@ -404,6 +423,7 @@ export class FixtureSchedulerService {
    */
   @Cron('30 6 * * *')
   async handleDailySmartCouponGeneration() {
+    if (!this.isSchedulingEnabled()) return;
     this.logger.log('Running scheduled daily Smart Coupon generation...');
     try {
       const result = await this.smartCouponService.generateCoupons();
