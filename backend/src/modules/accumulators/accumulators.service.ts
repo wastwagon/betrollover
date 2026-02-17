@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, DataSource, EntityManager } from 'typeorm';
 import { AccumulatorTicket } from './entities/accumulator-ticket.entity';
 import { AccumulatorPick } from './entities/accumulator-pick.entity';
 import { PickMarketplace } from './entities/pick-marketplace.entity';
@@ -55,6 +55,7 @@ export class AccumulatorsService {
     private emailService: EmailService,
     private footballService: FootballService,
     private tipsterService: TipsterService,
+    private dataSource: DataSource,
   ) { }
 
   async create(userId: number, dto: CreateAccumulatorDto) {
@@ -466,76 +467,87 @@ export class AccumulatorsService {
   }
 
   async purchase(buyerId: number, accumulatorId: number) {
-    const ticket = await this.getById(accumulatorId);
-    if (!ticket) throw new NotFoundException('Pick not found');
-    // Allow tipsters to purchase their own picks - removed restriction
-    if (ticket.status !== 'active') throw new BadRequestException('Pick is not available');
-    if (ticket.result !== 'pending') throw new BadRequestException('Pick has already settled');
+    return this.dataSource.transaction(async (manager) => {
+      const ticketRepo = manager.getRepository(AccumulatorTicket);
+      const marketplaceRepo = manager.getRepository(PickMarketplace);
+      const purchasedRepo = manager.getRepository(UserPurchasedPick);
+      const escrowRepo = manager.getRepository(EscrowFund);
 
-    const listing = await this.marketplaceRepo.findOne({
-      where: { accumulatorId, status: 'active' },
-    });
-    if (!listing) throw new NotFoundException('Pick not listed on marketplace');
-
-    const existing = await this.purchasedRepo.findOne({
-      where: { userId: buyerId, accumulatorId },
-    });
-    if (existing) throw new BadRequestException('You have already purchased this pick');
-
-    const price = Number(listing.price);
-    if (price > 0) {
-      await this.walletService.debit(
-        buyerId,
-        price,
-        'purchase',
-        `pick-${accumulatorId}`,
-        `Purchase of pick: ${ticket.title}`,
-      );
-      await this.escrowRepo.save({
-        userId: buyerId,
-        pickId: accumulatorId,
-        amount: price,
-        reference: `pick-${accumulatorId}`,
-        status: 'held',
+      const ticket = await ticketRepo.findOne({
+        where: { id: accumulatorId },
+        relations: ['picks'],
       });
-    }
+      if (!ticket) throw new NotFoundException('Pick not found');
+      if (ticket.status !== 'active') throw new BadRequestException('Pick is not available');
+      if (ticket.result !== 'pending') throw new BadRequestException('Pick has already settled');
 
-    await this.purchasedRepo.save({
-      userId: buyerId,
-      accumulatorId,
-      purchasePrice: price,
-    });
+      const listing = await marketplaceRepo.findOne({
+        where: { accumulatorId, status: 'active' },
+      });
+      if (!listing) throw new NotFoundException('Pick not listed on marketplace');
 
-    listing.purchaseCount += 1;
-    await this.marketplaceRepo.save(listing);
+      const existing = await purchasedRepo.findOne({
+        where: { userId: buyerId, accumulatorId },
+      });
+      if (existing) throw new BadRequestException('You have already purchased this pick');
 
-    await this.notificationsService.create({
-      userId: buyerId,
-      type: 'purchase',
-      title: 'Purchase Complete',
-      message: `You purchased "${ticket.title}". Funds are held in escrow until the pick settles.`,
-      link: `/my-purchases`,
-      icon: 'cart',
-      sendEmail: true,
-      metadata: { pickTitle: ticket.title },
-    }).catch(() => { });
+      const price = Number(listing.price);
+      if (price > 0) {
+        await this.walletService.debit(
+          buyerId,
+          price,
+          'purchase',
+          `pick-${accumulatorId}`,
+          `Purchase of pick: ${ticket.title}`,
+          manager,
+        );
+        await escrowRepo.save({
+          userId: buyerId,
+          pickId: accumulatorId,
+          amount: price,
+          reference: `pick-${accumulatorId}`,
+          status: 'held',
+        });
+      }
 
-    const sellerId = ticket.userId;
-    if (sellerId && sellerId !== buyerId) {
-      await this.notificationsService.create({
-        userId: sellerId,
-        type: 'coupon_sold',
-        title: 'Coupon Sold',
-        message: price > 0
-          ? `Someone purchased "${ticket.title}" for GHS ${price.toFixed(2)}. Funds will be released to your wallet when the pick settles.`
-          : `Someone claimed your free pick "${ticket.title}".`,
-        link: '/marketplace',
+      await purchasedRepo.save({
+        userId: buyerId,
+        accumulatorId,
+        purchasePrice: price,
+      });
+
+      listing.purchaseCount += 1;
+      await marketplaceRepo.save(listing);
+
+      // Outside of heavy DB work, trigger notifications
+      this.notificationsService.create({
+        userId: buyerId,
+        type: 'purchase',
+        title: 'Purchase Complete',
+        message: `You purchased "${ticket.title}". Funds are held in escrow until the pick settles.`,
+        link: `/my-purchases`,
         icon: 'cart',
         sendEmail: true,
         metadata: { pickTitle: ticket.title },
       }).catch(() => { });
-    }
 
-    return this.getById(accumulatorId);
+      const sellerId = ticket.userId;
+      if (sellerId && sellerId !== buyerId) {
+        this.notificationsService.create({
+          userId: sellerId,
+          type: 'coupon_sold',
+          title: 'Coupon Sold',
+          message: price > 0
+            ? `Someone purchased "${ticket.title}" for GHS ${price.toFixed(2)}. Funds will be released to your wallet when the pick settles.`
+            : `Someone claimed your free pick "${ticket.title}".`,
+          link: '/marketplace',
+          icon: 'cart',
+          sendEmail: true,
+          metadata: { pickTitle: ticket.title },
+        }).catch(() => { });
+      }
+
+      return this.getById(accumulatorId);
+    });
   }
 }

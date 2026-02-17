@@ -343,43 +343,51 @@ export class SettlementService {
     const funds = await this.escrowRepo.find({
       where: { pickId: accumulatorId, status: 'held' },
     });
+
+    const processedUsers = new Set<number>();
+
     for (const f of funds) {
-      if (result === 'won') {
-        await this.walletService.credit(
-          sellerId,
-          Number(f.amount),
-          'payout',
-          `pick-${accumulatorId}`,
-          `Payout for pick ${accumulatorId}`,
-        );
-        await this.notificationsService.create({
-          userId: f.userId,
-          type: 'settlement',
-          title: 'Pick Won!',
-          message: `Your purchased pick "${title}" won! Winnings have been credited to your wallet.`,
-          link: `/my-purchases`,
-          icon: 'trophy',
-          sendEmail: true,
-          metadata: { pickTitle: title, variant: 'won' },
-        }).catch(() => { });
+      if (!processedUsers.has(f.userId)) {
+        if (result === 'won') {
+          await this.walletService.credit(
+            sellerId,
+            Number(f.amount),
+            'payout',
+            `pick-${accumulatorId}`,
+            `Payout for pick ${accumulatorId}`,
+          );
+          await this.notificationsService.create({
+            userId: f.userId,
+            type: 'settlement',
+            title: 'Pick Won!',
+            message: `Your purchased pick "${title}" won! Winnings have been credited to your wallet.`,
+            link: `/my-purchases`,
+            icon: 'trophy',
+            sendEmail: true,
+            metadata: { pickTitle: title, variant: 'won' },
+          }).catch(() => { });
+        } else {
+          await this.walletService.credit(
+            f.userId,
+            Number(f.amount),
+            'refund',
+            `pick-${accumulatorId}`,
+            `Refund for pick ${accumulatorId}`,
+          );
+          await this.notificationsService.create({
+            userId: f.userId,
+            type: 'settlement',
+            title: 'Pick Lost - Refunded',
+            message: `Your purchased pick "${title}" lost. A refund of GHS ${Number(f.amount).toFixed(2)} has been credited to your wallet.`,
+            link: `/my-purchases`,
+            icon: 'refund',
+            sendEmail: true,
+            metadata: { pickTitle: title, variant: 'lost', amount: Number(f.amount).toFixed(2) },
+          }).catch(() => { });
+        }
+        processedUsers.add(f.userId);
       } else {
-        await this.walletService.credit(
-          f.userId,
-          Number(f.amount),
-          'refund',
-          `pick-${accumulatorId}`,
-          `Refund for pick ${accumulatorId}`,
-        );
-        await this.notificationsService.create({
-          userId: f.userId,
-          type: 'settlement',
-          title: 'Pick Lost - Refunded',
-          message: `Your purchased pick "${title}" lost. A refund of GHS ${Number(f.amount).toFixed(2)} has been credited to your wallet.`,
-          link: `/my-purchases`,
-          icon: 'refund',
-          sendEmail: true,
-          metadata: { pickTitle: title, variant: 'lost', amount: Number(f.amount).toFixed(2) },
-        }).catch(() => { });
+        this.logger.warn(`Duplicate escrow fund (id: ${f.id}) found for user ${f.userId} on pick ${accumulatorId}. Skipping payout/refund.`);
       }
       f.status = result === 'won' ? 'released' : 'refunded';
       await this.escrowRepo.save(f);

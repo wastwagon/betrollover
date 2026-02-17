@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { UserWallet } from './entities/user-wallet.entity';
 import { WalletTransaction } from './entities/wallet-transaction.entity';
@@ -32,18 +32,19 @@ export class WalletService {
     private readonly notificationsService: NotificationsService,
     private readonly emailService: EmailService,
     private readonly config: ConfigService,
-  ) {}
+  ) { }
 
-  async getOrCreateWallet(userId: number): Promise<UserWallet> {
-    let wallet = await this.walletRepo.findOne({ where: { userId } });
+  async getOrCreateWallet(userId: number, manager?: EntityManager): Promise<UserWallet> {
+    const repo = manager ? manager.getRepository(UserWallet) : this.walletRepo;
+    let wallet = await repo.findOne({ where: { userId } });
     if (!wallet) {
-      wallet = this.walletRepo.create({
+      wallet = repo.create({
         userId,
         balance: 0,
         currency: 'GHS',
         status: 'active',
       });
-      await this.walletRepo.save(wallet);
+      await repo.save(wallet);
     }
     return wallet;
   }
@@ -71,15 +72,19 @@ export class WalletService {
     type: string,
     reference?: string,
     description?: string,
+    manager?: EntityManager,
   ): Promise<void> {
-    const wallet = await this.getOrCreateWallet(userId);
+    const wRepo = manager ? manager.getRepository(UserWallet) : this.walletRepo;
+    const tRepo = manager ? manager.getRepository(WalletTransaction) : this.txRepo;
+
+    const wallet = await this.getOrCreateWallet(userId, manager);
     const bal = Number(wallet.balance);
     if (bal < amount) {
       throw new BadRequestException('Insufficient balance');
     }
     wallet.balance = Number((bal - amount).toFixed(2));
-    await this.walletRepo.save(wallet);
-    await this.txRepo.save({
+    await wRepo.save(wallet);
+    await tRepo.save({
       userId,
       type,
       amount: -amount,
@@ -96,11 +101,15 @@ export class WalletService {
     type: string,
     reference?: string,
     description?: string,
+    manager?: EntityManager,
   ): Promise<void> {
-    const wallet = await this.getOrCreateWallet(userId);
+    const wRepo = manager ? manager.getRepository(UserWallet) : this.walletRepo;
+    const tRepo = manager ? manager.getRepository(WalletTransaction) : this.txRepo;
+
+    const wallet = await this.getOrCreateWallet(userId, manager);
     wallet.balance = Number((Number(wallet.balance) + amount).toFixed(2));
-    await this.walletRepo.save(wallet);
-    await this.txRepo.save({
+    await wRepo.save(wallet);
+    await tRepo.save({
       userId,
       type,
       amount,
@@ -184,7 +193,7 @@ export class WalletService {
       icon: 'wallet',
       sendEmail: true,
       metadata: { amount: amount.toFixed(2) },
-    }).catch(() => {});
+    }).catch(() => { });
 
     const user = await this.usersService.findById(userId);
     this.emailService.sendAdminNotification({
@@ -194,7 +203,7 @@ export class WalletService {
         displayName: user?.displayName || 'User',
         email: user?.email || String(userId),
       },
-    }).catch(() => {});
+    }).catch(() => { });
 
     return { credited: true, amount };
   }
@@ -245,7 +254,7 @@ export class WalletService {
       icon: 'wallet',
       sendEmail: true,
       metadata: { amount: amount.toFixed(2) },
-    }).catch(() => {});
+    }).catch(() => { });
 
     const user = await this.usersService.findById(deposit.userId);
     this.emailService.sendAdminNotification({
@@ -255,7 +264,7 @@ export class WalletService {
         displayName: user?.displayName || 'User',
         email: user?.email || String(deposit.userId),
       },
-    }).catch(() => {});
+    }).catch(() => { });
 
     return { received: true };
   }
@@ -304,19 +313,19 @@ export class WalletService {
     const recipient = await this.paystackService.createTransferRecipient(
       dto.type === 'mobile_money'
         ? {
-            type: 'mobile_money',
-            name: dto.name,
-            currency: 'GHS',
-            phone: dto.phone!.replace(/\D/g, ''),
-            provider: dto.provider!,
-          }
+          type: 'mobile_money',
+          name: dto.name,
+          currency: 'GHS',
+          phone: dto.phone!.replace(/\D/g, ''),
+          provider: dto.provider!,
+        }
         : {
-            type: 'ghipss',
-            name: dto.name,
-            currency: 'GHS',
-            accountNumber: dto.accountNumber!,
-            bankCode: dto.bankCode!,
-          },
+          type: 'ghipss',
+          name: dto.name,
+          currency: 'GHS',
+          accountNumber: dto.accountNumber!,
+          bankCode: dto.bankCode!,
+        },
     );
 
     const accountMasked =
@@ -382,7 +391,7 @@ export class WalletService {
         displayName: user.displayName,
         email: user.email,
       },
-    }).catch(() => {});
+    }).catch(() => { });
 
     try {
       const transfer = await this.paystackService.initiateTransfer({
@@ -409,7 +418,7 @@ export class WalletService {
         icon: 'wallet',
         sendEmail: true,
         metadata: { amount: amount.toFixed(2) },
-      }).catch(() => {});
+      }).catch(() => { });
 
       return { withdrawal, message: 'Withdrawal completed.' };
     } catch (e) {
@@ -427,7 +436,7 @@ export class WalletService {
         icon: 'alert',
         sendEmail: true,
         metadata: { amount: amount.toFixed(2) },
-      }).catch(() => {});
+      }).catch(() => { });
 
       throw new BadRequestException(withdrawal.failureReason);
     }

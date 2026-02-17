@@ -82,7 +82,7 @@ export class PredictionEngineService {
     private oddsSyncService: OddsSyncService,
     private dataSource: DataSource,
     private marketplaceSync: PredictionMarketplaceSyncService,
-  ) {}
+  ) { }
 
   /**
    * Returns count of predictions for today (used by scheduler for catch-up logic).
@@ -484,6 +484,14 @@ export class PredictionEngineService {
   ): Promise<void> {
 
     for (const pred of predictions) {
+      const existing = await this.predictionRepo.findOne({
+        where: { tipsterId: pred.tipsterId, predictionDate: predictionDate as any },
+      });
+      if (existing) {
+        this.logger.debug(`Prediction already exists for tipster ${pred.tipsterId} on ${predictionDate}, skipping.`);
+        continue;
+      }
+
       const prediction = await this.predictionRepo.save({
         tipsterId: pred.tipsterId,
         predictionTitle: '2-Pick Acca',
