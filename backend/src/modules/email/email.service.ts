@@ -17,7 +17,7 @@ export class EmailService {
     @InjectRepository(SmtpSettings)
     private smtpRepo: Repository<SmtpSettings>,
     private usersService: UsersService,
-  ) {}
+  ) { }
 
   private async getFromWithSettings(): Promise<string> {
     const settings = await this.smtpRepo.findOne({ where: { id: 1 } });
@@ -153,6 +153,42 @@ export class EmailService {
       to,
       subject: 'Your BetRollover verification code',
       text: `Your verification code is: ${code}\n\nValid for ${expiryMinutes} minutes. Do not share this code.\n\n— BetRollover`,
+      html,
+    });
+  }
+
+  async sendPasswordResetOtp(to: string, code: string) {
+    const expiryMinutes = 10;
+    const appUrl = process.env.APP_URL || 'http://localhost:6002';
+    const resetUrl = `${appUrl}/forgot-password?email=${encodeURIComponent(to)}&code=${code}`;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password reset code</title>
+</head>
+<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f1f5f9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto;padding:32px 16px;">
+    <tr>
+      <td style="background:#fff;border-radius:16px;padding:40px;box-shadow:0 4px 6px rgba(0,0,0,0.1);text-align:center;">
+        <div style="font-size:22px;font-weight:700;color:#0f172a;margin-bottom:8px;">BetRollover</div>
+        <p style="font-size:16px;color:#64748b;margin:0 0 24px;">Use this code to reset your password:</p>
+        <p style="font-size:32px;font-weight:700;letter-spacing:8px;color:#10b981;margin:16px 0;">${code}</p>
+        <a href="${resetUrl}" style="display:inline-block;background:#10b981;color:#fff;padding:14px 28px;text-decoration:none;border-radius:10px;font-weight:600;font-size:15px;margin:16px 0;">Reset Password Now</a>
+        <p style="font-size:13px;color:#94a3b8;">Valid for ${expiryMinutes} minutes. If you didn't request this, ignore this email.</p>
+        <p style="font-size:12px;color:#cbd5e1;margin-top:32px;">— BetRollover Team</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+    return this.send({
+      to,
+      subject: 'BetRollover password reset code',
+      text: `Your password reset code is: ${code}\n\nReset link: ${resetUrl}\n\nValid for ${expiryMinutes} minutes. If you didn't request this, ignore this email.\n\n— BetRollover`,
       html,
     });
   }

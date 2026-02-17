@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
 
 export default function RegisterPage() {
   const router = useRouter();

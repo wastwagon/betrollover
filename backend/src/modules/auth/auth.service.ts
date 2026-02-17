@@ -11,6 +11,7 @@ import { EmailOtpService } from '../otp/email-otp.service';
 import { EmailService } from '../email/email.service';
 import { User } from '../users/entities/user.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
+import { PasswordResetOtp } from '../otp/entities/password-reset-otp.entity';
 
 export interface JwtPayload {
   sub: number;
@@ -28,7 +29,9 @@ export class AuthService {
     private config: ConfigService,
     @InjectRepository(Tipster)
     private tipsterRepo: Repository<Tipster>,
-  ) {}
+    @InjectRepository(PasswordResetOtp)
+    private passwordResetOtpRepo: Repository<PasswordResetOtp>,
+  ) { }
 
   async sendRegistrationOtp(email: string) {
     const existing = await this.usersService.findByEmail(email);
@@ -91,7 +94,7 @@ export class AuthService {
         email: user.email,
         username: user.username,
       },
-    }).catch(() => {});
+    }).catch(() => { });
 
     return this.login(user);
   }
@@ -162,5 +165,51 @@ export class AuthService {
     if (!valid) throw new UnauthorizedException('Current password is incorrect');
     const hashed = await bcrypt.hash(newPassword, 12);
     await this.usersService.updatePassword(userId, hashed);
+  }
+
+  async forgotPassword(email: string) {
+    const normalized = email.trim().toLowerCase();
+    const user = await this.usersService.findByEmail(normalized);
+    // Silent fail if user not found for security, but we can't send email
+    if (!user) return { message: 'If an account exists with that email, a reset code has been sent.' };
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await this.passwordResetOtpRepo.delete({ email: normalized });
+    await this.passwordResetOtpRepo.save(
+      this.passwordResetOtpRepo.create({ email: normalized, code, expiresAt }),
+    );
+
+    await this.emailService.sendPasswordResetOtp(normalized, code);
+    return { message: 'If an account exists with that email, a reset code has been sent.' };
+  }
+
+  async resetPassword(data: { email: string; code: string; newPassword: string }) {
+    const normalized = data.email.trim().toLowerCase();
+    const record = await this.passwordResetOtpRepo.findOne({
+      where: { email: normalized, code: data.code, isUsed: false },
+    });
+
+    if (!record) {
+      throw new UnauthorizedException('Invalid or expired reset code');
+    }
+
+    if (new Date() > record.expiresAt) {
+      throw new UnauthorizedException('Reset code has expired');
+    }
+
+    const user = await this.usersService.findByEmail(normalized);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const hashed = await bcrypt.hash(data.newPassword, 12);
+    await this.usersService.updatePassword(user.id, hashed);
+
+    record.isUsed = true;
+    await this.passwordResetOtpRepo.save(record);
+
+    return { message: 'Password reset successful' };
   }
 }

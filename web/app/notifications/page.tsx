@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { AppShell } from '@/components/AppShell';
 import { PageHeader } from '@/components/PageHeader';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
 
 interface Notification {
   id: number;

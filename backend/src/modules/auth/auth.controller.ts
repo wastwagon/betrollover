@@ -11,7 +11,7 @@ import { User } from '../users/entities/user.entity';
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Post('login')
   @Throttle({ default: { limit: 5, ttl: 300000 } }) // 5 attempts per 5 min per IP (brute-force protection)
@@ -43,7 +43,6 @@ export class AuthController {
   async resendVerification(@CurrentUser() user: User) {
     return this.authService.resendVerificationEmail(user.id);
   }
-
   @Post('change-password')
   @UseGuards(JwtAuthGuard)
   async changePassword(
@@ -52,5 +51,17 @@ export class AuthController {
   ) {
     await this.authService.changePassword(user.id, body.currentPassword, body.newPassword);
     return { message: 'Password updated' };
+  }
+
+  @Post('forgot-password')
+  @Throttle({ default: { limit: 3, ttl: 90000 } }) // 3 requests per 15 min per IP
+  async forgotPassword(@Body() body: { email: string }) {
+    return this.authService.forgotPassword(body.email);
+  }
+
+  @Post('reset-password')
+  @Throttle({ default: { limit: 5, ttl: 300000 } }) // 5 attempts per 5 min
+  async resetPassword(@Body() body: { email: string; code: string; newPassword: string }) {
+    return this.authService.resetPassword(body);
   }
 }

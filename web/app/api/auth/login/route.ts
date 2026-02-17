@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Server-side: prefer BACKEND_URL (Docker internal) over NEXT_PUBLIC_API_URL (browser-facing)
-const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:6001';
 
 /** Build redirect base URL: prefer APP_URL so redirects always go to the correct host/port (avoids localhost:3000 vs 6002 confusion) */
 function getRedirectBase(request: NextRequest): string {

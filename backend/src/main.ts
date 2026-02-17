@@ -172,7 +172,7 @@ async function bootstrap() {
     logger.warn(`Seed bootstrap failed (non-fatal): ${err?.message || err}`);
   }
 
-  const port = process.env.PORT || 3001;
+  const port = process.env.PORT || 6001;
   await app.listen(port);
 
   logger.log(`🚀 BetRollover API running on http://localhost:${port}`);

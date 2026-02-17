@@ -7,7 +7,7 @@ import { AppFooter } from '@/components/AppFooter';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
 
 interface LeaderboardEntry {
   id: number;
