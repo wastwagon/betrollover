@@ -38,11 +38,25 @@ export async function POST(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    const data = await res.json().catch(() => ({}));
+
+    let data;
+    const rawResponse = await res.text();
+    try {
+      data = JSON.parse(rawResponse);
+    } catch {
+      data = { message: rawResponse || 'No response body' };
+    }
 
     if (!res.ok) {
       const errorUrl = new URL('/login', base);
-      errorUrl.searchParams.set('error', data.message || 'Login failed');
+      const errorMsg = data.message || `Backend error: ${res.status}`;
+      errorUrl.searchParams.set('error', errorMsg);
+
+      console.error(`[LoginProxy] Backend failure (${res.status}):`, {
+        url: `${BACKEND_URL}/auth/login`,
+        response: rawResponse
+      });
+
       return NextResponse.redirect(errorUrl, 302);
     }
     const token = data.access_token;
