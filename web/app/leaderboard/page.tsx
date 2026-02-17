@@ -109,16 +109,24 @@ export default function LeaderboardPage() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className={`font-bold ${Number(roi) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                      {period === 'all_time' && entry.roi != null
-                        ? `${Number(entry.roi).toFixed(2)}% ROI`
-                        : entry.monthly_profit != null
-                          ? `${Number(entry.monthly_profit).toFixed(2)} pts`
-                          : entry.total_profit != null
-                            ? `${Number(entry.total_profit).toFixed(2)} pts`
-                            : '—'}
-                    </p>
-                    {entry.win_rate != null && (
+                    {(() => {
+                      const hasSettled = ((entry.total_wins ?? 0) + (entry.total_losses ?? 0)) > 0;
+                      let mainText = '—';
+                      let roiVal: number | undefined;
+                      if (period === 'all_time' && entry.roi != null) {
+                        mainText = hasSettled ? `${Number(entry.roi).toFixed(2)}% ROI` : '—';
+                        roiVal = Number(entry.roi);
+                      } else if (entry.monthly_profit != null) {
+                        mainText = `${Number(entry.monthly_profit).toFixed(2)} pts`;
+                        roiVal = Number(entry.monthly_profit);
+                      } else if (entry.total_profit != null) {
+                        mainText = `${Number(entry.total_profit).toFixed(2)} pts`;
+                        roiVal = Number(entry.total_profit);
+                      }
+                      const colorClass = mainText !== '—' && roiVal != null ? (roiVal >= 0 ? 'text-emerald-600' : 'text-red-600') : '';
+                      return <p className={`font-bold ${colorClass}`}>{mainText}</p>;
+                    })()}
+                    {entry.win_rate != null && ((entry.total_wins ?? 0) + (entry.total_losses ?? 0)) > 0 && (
                       <p className="text-xs text-[var(--text-muted)]">{Number(entry.win_rate).toFixed(1)}% win rate</p>
                     )}
                   </div>

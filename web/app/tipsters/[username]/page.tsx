@@ -204,7 +204,10 @@ export default function TipsterProfilePage() {
   }
 
   const { tipster, marketplace_coupons, is_following } = profile;
-  const roiColor = tipster.roi > 0 ? 'text-emerald-600' : 'text-red-600';
+  const hasSettledPicks = (tipster.total_wins ?? 0) + (tipster.total_losses ?? 0) > 0;
+  const roiDisplay = hasSettledPicks ? `${Number(tipster.roi).toFixed(2)}%` : '—';
+  const winRateDisplay = hasSettledPicks ? `${Number(tipster.win_rate).toFixed(1)}%` : '—';
+  const roiColor = tipster.roi > 0 ? 'text-emerald-600' : tipster.roi < 0 ? 'text-red-600' : 'text-[var(--text)]';
   const streakDisplay =
     tipster.current_streak > 0
       ? `🔥 ${tipster.current_streak}W`
@@ -249,11 +252,11 @@ export default function TipsterProfilePage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 mb-4">
                 <div className="bg-[var(--card)] rounded-lg p-3 border border-[var(--border)]">
                   <span className="text-xs uppercase text-[var(--text-muted)]">ROI</span>
-                  <p className={`font-bold text-lg ${roiColor}`}>{Number(tipster.roi).toFixed(2)}%</p>
+                  <p className={`font-bold text-lg ${roiColor}`} title={!hasSettledPicks && tipster.total_predictions ? 'Stats update when picks settle' : undefined}>{roiDisplay}</p>
                 </div>
                 <div className="bg-[var(--card)] rounded-lg p-3 border border-[var(--border)]">
                   <span className="text-xs uppercase text-[var(--text-muted)]">Win Rate</span>
-                  <p className="font-bold text-lg text-[var(--text)]">{Number(tipster.win_rate).toFixed(1)}%</p>
+                  <p className="font-bold text-lg text-[var(--text)]" title={!hasSettledPicks && tipster.total_predictions ? 'Stats update when picks settle' : undefined}>{winRateDisplay}</p>
                 </div>
                 <div className="bg-[var(--card)] rounded-lg p-3 border border-[var(--border)]">
                   <span className="text-xs uppercase text-[var(--text-muted)]">Streak</span>

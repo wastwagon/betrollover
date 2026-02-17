@@ -14,6 +14,8 @@ export interface TipsterCardData {
   win_rate: number;
   current_streak: number;
   total_predictions?: number;
+  total_wins?: number;
+  total_losses?: number;
   leaderboard_rank?: number | null;
   is_following?: boolean;
 }
@@ -27,7 +29,10 @@ interface TipsterCardProps {
 export function TipsterCard({ tipster, onFollow, className = '' }: TipsterCardProps) {
   const [avatarError, setAvatarError] = useState(false);
   const showAvatar = tipster.avatar_url && !avatarError;
-  const roiColor = tipster.roi > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400';
+  const hasSettledPicks = ((tipster.total_wins ?? 0) + (tipster.total_losses ?? 0)) > 0;
+  const roiDisplay = hasSettledPicks ? `${Number(tipster.roi).toFixed(2)}%` : '—';
+  const winRateDisplay = hasSettledPicks ? `${Number(tipster.win_rate).toFixed(1)}%` : '—';
+  const roiColor = tipster.roi > 0 ? 'text-emerald-600 dark:text-emerald-400' : tipster.roi < 0 ? 'text-red-600 dark:text-red-400' : 'text-[var(--text)]';
   const streakDisplay =
     tipster.current_streak > 0
       ? `🔥 ${tipster.current_streak}W`
@@ -76,15 +81,11 @@ export function TipsterCard({ tipster, onFollow, className = '' }: TipsterCardPr
         <div className="flex gap-4 mb-4">
           <div className="flex flex-col">
             <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">ROI</span>
-            <span className={`text-sm font-bold ${roiColor}`}>
-              {Number(tipster.roi).toFixed(2)}%
-            </span>
+            <span className={`text-sm font-bold ${roiColor}`}>{roiDisplay}</span>
           </div>
           <div className="flex flex-col">
             <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Win Rate</span>
-            <span className="text-sm font-bold text-[var(--text)]">
-              {Number(tipster.win_rate).toFixed(1)}%
-            </span>
+            <span className="text-sm font-bold text-[var(--text)]">{winRateDisplay}</span>
           </div>
           <div className="flex flex-col">
             <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Streak</span>

@@ -278,19 +278,14 @@ export class TipstersApiService {
         id: In(accIds),
         userId: tipster.userId,
         status: 'active',
-        result: 'pending',
         isMarketplace: true,
       },
       relations: ['picks'],
       order: { createdAt: 'DESC' },
     });
 
-    const now = new Date();
-    const validTickets = tickets.filter((t) => {
-      if (!t.picks?.length) return false;
-      const hasStarted = t.picks.some((p) => p.matchDate && new Date(p.matchDate) <= now);
-      return !hasStarted;
-    });
+    // Include all marketplace coupons (upcoming + started/settled) so picks show on profile
+    const validTickets = tickets.filter((t) => t.picks?.length);
 
     const seen = new Set<string>();
     const deduped: typeof validTickets = [];
