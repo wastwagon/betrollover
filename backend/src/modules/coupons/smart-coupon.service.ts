@@ -113,16 +113,17 @@ export class SmartCouponService {
       }
 
       const confidence = Math.min(0.95, winnerConf + 0.15);
-      let tip = 'Home or Draw';
       if (pick.includes(awayTeam.toLowerCase()) || pick === 'away') {
-        tip = 'Draw or Away';
-      } else if (pick.includes(homeTeam.toLowerCase()) || pick === 'home') {
-        tip = 'Home or Draw';
-      } else if (pick === 'draw' || pick.includes('draw')) {
-        tip = 'Home or Draw'; // conservative: home or draw covers draw
+        return { tip: 'Draw or Away', confidence };
+      }
+      if (pick.includes(homeTeam.toLowerCase()) || pick === 'home') {
+        return { tip: 'Home or Draw', confidence };
+      }
+      if (pick === 'draw' || pick.includes('draw')) {
+        return { tip: 'Home or Draw', confidence }; // conservative: home or draw covers draw
       }
 
-      return { tip, confidence };
+      return { tip: `${pick} or Draw`, confidence };
     }
 
     return null;

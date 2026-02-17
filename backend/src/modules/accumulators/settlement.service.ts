@@ -43,7 +43,7 @@ export class SettlementService {
     private walletService: WalletService,
     private notificationsService: NotificationsService,
     private tipsterService: TipsterService,
-  ) {}
+  ) { }
 
   /**
    * Check and settle accumulators (optimized for frequent calls)
@@ -122,7 +122,7 @@ export class SettlementService {
       const fix = fixtureMap.get(pick.fixtureId!);
       if (!fix || fix.homeScore == null || fix.awayScore == null) continue;
 
-      const result = this.determinePickResult(pick.prediction, fix.homeScore, fix.awayScore);
+      const result = this.determinePickResult(pick.prediction, fix.homeScore, fix.awayScore, fix.homeTeamName, fix.awayTeamName);
       if (result) {
         pick.result = result;
         await this.pickRepo.save(pick);
@@ -184,7 +184,7 @@ export class SettlementService {
         if (f.status === 'won' || f.status === 'lost') return f;
         const fix = fixtureMap.get(f.fixtureId);
         if (!fix || fix.homeScore == null || fix.awayScore == null || !finishedSet.has(f.fixtureId)) return f;
-        const result = this.determinePickResult(f.tip, fix.homeScore, fix.awayScore);
+        const result = this.determinePickResult(f.tip, fix.homeScore, fix.awayScore, f.home, f.away);
         if (result) {
           anyUpdated = true;
           return { ...f, status: result };
@@ -218,7 +218,9 @@ export class SettlementService {
     prediction: string,
     homeScore: number,
     awayScore: number,
-  ): 'won' | 'lost' | null {
+    homeTeam?: string,
+    awayTeam?: string,
+  ): 'won' | 'lost' | 'void' | null {
     const pred = (prediction || '').trim().toLowerCase();
     const total = homeScore + awayScore;
     const homeWin = homeScore > awayScore;
@@ -226,7 +228,11 @@ export class SettlementService {
     const draw = homeScore === awayScore;
     const bothScored = homeScore > 0 && awayScore > 0;
 
+    const homeName = (homeTeam || '').toLowerCase();
+    const awayName = (awayTeam || '').toLowerCase();
+
     // --- Double Chance (check FIRST - before home/away/draw) ---
+    // Standard patterns
     if (pred.includes('12') || pred.includes('home_away') || pred.includes('home or away')) {
       return homeWin || awayWin ? 'won' : 'lost';
     }
@@ -237,27 +243,52 @@ export class SettlementService {
       return awayWin || draw ? 'won' : 'lost';
     }
 
+    // Team-name based patterns (e.g. "Santos W or Draw")
+    if (homeName && (pred.includes(`${homeName} or draw`) || pred.includes(`${homeName}_draw`) || pred.includes(`${homeName} or x`))) {
+      return homeWin || draw ? 'won' : 'lost';
+    }
+    if (awayName && (pred.includes(`${awayName} or draw`) || pred.includes(`draw or ${awayName}`) || pred.includes(`x2`))) {
+      return awayWin || draw ? 'won' : 'lost';
+    }
+    if (homeName && awayName && (pred.includes(`${homeName} or ${awayName}`) || pred.includes(`${homeName}_${awayName}`))) {
+      return homeWin || awayWin ? 'won' : 'lost';
+    }
+
+    // Catch-all regex for any "X or Draw" where X might be a partial team name or 1
+    if (/(home|1|[\w\s.-]+) or draw/i.test(pred) || /(home|1|[\w\s.-]+) or x/i.test(pred)) {
+      // If tip is "Away or Draw", this regex might be too broad if we don't check 'away'
+      if (!pred.includes('away')) {
+        return homeWin || draw ? 'won' : 'lost';
+      }
+    }
+    if (/(away|2|[\w\s.-]+) or draw/i.test(pred) || /draw or (away|2|[\w\s.-]+)/i.test(pred) || /x or (away|2)/i.test(pred)) {
+      if (!pred.includes('home') || pred.indexOf('home') > pred.indexOf('away')) { // simple check to favor away if both mentioned in complex ways
+        return awayWin || draw ? 'won' : 'lost';
+      }
+    }
+
     // --- Match Winner (1X2) ---
+    // Be careful with greedy "draw" matching - only match if it's strictly Match Winner
     if (
-      pred.includes('home') ||
+      pred === 'home' ||
       pred === '1' ||
-      pred.includes('match winner: home') ||
-      pred.includes('home win')
+      pred === 'match winner: home' ||
+      pred === 'home win'
     ) {
       return homeWin ? 'won' : 'lost';
     }
     if (
-      pred.includes('away') ||
+      pred === 'away' ||
       pred === '2' ||
-      pred.includes('match winner: away') ||
-      pred.includes('away win')
+      pred === 'match winner: away' ||
+      pred === 'away win'
     ) {
       return awayWin ? 'won' : 'lost';
     }
     if (
-      pred.includes('draw') ||
+      pred === 'draw' ||
       pred === 'x' ||
-      pred.includes('match winner: draw')
+      pred === 'match winner: draw'
     ) {
       return draw ? 'won' : 'lost';
     }
@@ -303,7 +334,7 @@ export class SettlementService {
 
     this.logger.warn(
       `Unmatched prediction for settlement: "${prediction}" (normalized: "${pred}"). ` +
-        `Add support in determinePickResult. Supported: ${SETTLEMENT_SUPPORTED_MARKETS.join('; ')}`,
+      `Add support in determinePickResult. Supported: ${SETTLEMENT_SUPPORTED_MARKETS.join('; ')}`,
     );
     return null;
   }
@@ -330,7 +361,7 @@ export class SettlementService {
           icon: 'trophy',
           sendEmail: true,
           metadata: { pickTitle: title, variant: 'won' },
-        }).catch(() => {});
+        }).catch(() => { });
       } else {
         await this.walletService.credit(
           f.userId,
@@ -348,7 +379,7 @@ export class SettlementService {
           icon: 'refund',
           sendEmail: true,
           metadata: { pickTitle: title, variant: 'lost', amount: Number(f.amount).toFixed(2) },
-        }).catch(() => {});
+        }).catch(() => { });
       }
       f.status = result === 'won' ? 'released' : 'refunded';
       await this.escrowRepo.save(f);
@@ -364,7 +395,7 @@ export class SettlementService {
       icon: result === 'won' ? 'trophy' : 'info',
       metadata: { pickTitle: title, variant: result },
       sendEmail: true,
-    }).catch(() => {});
+    }).catch(() => { });
 
     // Notify tipster if ROI fell below minimum (they can only post free picks until it improves)
     const user = await this.userRepo.findOne({ where: { id: sellerId }, select: ['role'] });
@@ -382,7 +413,7 @@ export class SettlementService {
           link: '/create-pick',
           icon: 'alert',
           sendEmail: true,
-        }).catch(() => {});
+        }).catch(() => { });
       }
     }
   }
