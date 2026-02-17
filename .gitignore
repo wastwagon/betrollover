@@ -6,6 +6,17 @@ node_modules/
 .env.local
 .env.*.local
 .env.backup
+.env.tunnel
+db-tunnel.sh
+generate-migration-prod.sh
+cleanup-prod.sh
+cleanup-purchases-prod.sh
+diagnose-prod.sh
+diagnose-stats-prod.sh
+reset-sales-prod.sh
+deep-clean-prod.sh
+check-purchases-prod.sh
+check-purchases-tunnel.sh
 
 # Build outputs
 dist/

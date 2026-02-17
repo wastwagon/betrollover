@@ -1,7 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, Unique } from 'typeorm';
 import { AccumulatorPick } from './accumulator-pick.entity';
 
 @Entity('accumulator_tickets')
+@Unique(['userId', 'title'])
 export class AccumulatorTicket {
   @PrimaryGeneratedColumn()
   id: number;

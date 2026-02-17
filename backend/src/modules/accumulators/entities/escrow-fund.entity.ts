@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Unique } from 'typeorm';
 
 @Entity('escrow_funds')
+@Unique(['userId', 'pickId'])
 export class EscrowFund {
   @PrimaryGeneratedColumn()
   id: number;

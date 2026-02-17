@@ -63,6 +63,15 @@ export class AccumulatorsService {
     if (!dto.title || dto.title.trim().length === 0) {
       throw new BadRequestException('Title is required');
     }
+
+    // Check for duplicate title for this user to prevent unique constraint violation
+    const existingTitle = await this.ticketRepo.findOne({
+      where: { userId, title: dto.title.trim() }
+    });
+    if (existingTitle) {
+      throw new BadRequestException(`You already have a coupon with the title "${dto.title}". Please use a different title.`);
+    }
+
     if (dto.title.length > 255) {
       throw new BadRequestException('Title must be 255 characters or less');
     }
@@ -525,6 +534,14 @@ export class AccumulatorsService {
           amount: price,
           reference: `pick-${accumulatorId}`,
           status: 'held',
+        }).catch(err => {
+          // Ignore unique constraint violation (user might have clicked twice, but funds already escrowed)
+          // If it's another error, we let it bubble up or handle it, but for duplicate key, we proceed.
+          if (err.code === '23505') { // Postgres unique violation
+            this.logger.warn(`Duplicate escrow fund attempt for user ${buyerId} on pick ${accumulatorId}. Ignoring.`);
+          } else {
+            throw err;
+          }
         });
       }
 
