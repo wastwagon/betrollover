@@ -280,6 +280,8 @@ export class SmartCouponService {
     }
     if (filters?.status) {
       qb.andWhere('c.status = :status', { status: filters.status });
+    } else {
+      qb.andWhere("c.status IN ('won', 'lost')");
     }
 
     // Debug logging for query execution
@@ -292,11 +294,11 @@ export class SmartCouponService {
   }
 
   async getArchiveStats(): Promise<{ total: number; won: number; lost: number; roi: number }> {
-    const [total, won, lost] = await Promise.all([
-      this.couponRepo.count(),
+    const [won, lost] = await Promise.all([
       this.couponRepo.count({ where: { status: 'won' } }),
       this.couponRepo.count({ where: { status: 'lost' } }),
     ]);
+    const total = won + lost;
     const settled = won + lost;
     const profits = await this.couponRepo
       .createQueryBuilder('c')
