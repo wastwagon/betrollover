@@ -55,7 +55,7 @@ export class AccumulatorsService {
     private emailService: EmailService,
     private footballService: FootballService,
     private tipsterService: TipsterService,
-  ) {}
+  ) { }
 
   async create(userId: number, dto: CreateAccumulatorDto) {
     // Validate inputs
@@ -71,7 +71,7 @@ export class AccumulatorsService {
     if (dto.selections.length > 20) {
       throw new BadRequestException('Maximum 20 selections allowed per coupon');
     }
-    
+
     // Validate price
     if (dto.price < 0) {
       throw new BadRequestException('Price cannot be negative');
@@ -79,7 +79,7 @@ export class AccumulatorsService {
     if (dto.price > 10000) {
       throw new BadRequestException('Price cannot exceed GHS 10,000');
     }
-    
+
     // Validate selections
     for (const selection of dto.selections) {
       if (!selection.matchDescription || selection.matchDescription.trim().length === 0) {
@@ -95,29 +95,29 @@ export class AccumulatorsService {
         throw new BadRequestException('Odds cannot exceed 1000');
       }
     }
-    
+
     // Default price to 0 (free) if not provided or invalid
     const price = dto.price && dto.price > 0 ? dto.price : 0;
-    
+
     // If user wants to set a price > 0, check ROI requirement
     if (price > 0) {
       const user = await this.usersRepo.findOne({ where: { id: userId } });
       if (!user) throw new NotFoundException('User not found');
-      
+
       // Get minimum ROI from settings
       const apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
       const minimumROI = Number(apiSettings?.minimumROI ?? 20.0);
-      
+
       // Get user's stats and ROI
       const stats = await this.tipsterService.getStats(userId, user.role);
-      
+
       if (stats.roi < minimumROI) {
         throw new BadRequestException(
           `You need a minimum ROI of ${minimumROI}% to sell paid coupons. Your current ROI is ${stats.roi.toFixed(2)}%. Continue creating free picks to improve your ROI.`
         );
       }
     }
-    
+
     const totalOdds = dto.selections.reduce((a, s) => a * s.odds, 1);
     // Auto-approve ALL coupons (both free and paid) - they become immediately available on marketplace
     const ticket = this.ticketRepo.create({
@@ -136,13 +136,13 @@ export class AccumulatorsService {
     // Store fixtures on-demand (only if fixtureId provided)
     for (const s of dto.selections) {
       let fixtureId = s.fixtureId;
-      
+
       // If API fixture ID provided but not in DB, fetch and store it
       if (s.fixtureId && typeof s.fixtureId === 'number') {
         const existingFixture = await this.fixtureRepo.findOne({
           where: { apiId: s.fixtureId },
         });
-        
+
         if (!existingFixture) {
           // Fetch fixture from API and store it
           try {
@@ -150,7 +150,7 @@ export class AccumulatorsService {
               s.matchDate ? new Date(s.matchDate).toISOString().split('T')[0] : undefined
             );
             const apiFixture = apiFixtures.find((f: any) => f.fixture.id === s.fixtureId);
-            
+
             if (apiFixture) {
               const newFixture = this.fixtureRepo.create({
                 apiId: apiFixture.fixture.id,
@@ -208,7 +208,7 @@ export class AccumulatorsService {
         icon: 'check',
         sendEmail: true,
         metadata: { pickTitle: ticket.title },
-      }).catch(() => {});
+      }).catch(() => { });
 
       const creator = await this.usersRepo.findOne({ where: { id: userId }, select: ['displayName', 'username'] });
       const creatorName = creator?.displayName || creator?.username || 'Tipster';
@@ -220,7 +220,7 @@ export class AccumulatorsService {
           price,
           isFree: price === 0,
         },
-      }).catch(() => {});
+      }).catch(() => { });
     }
 
     return this.getById(ticket.id);
@@ -233,9 +233,15 @@ export class AccumulatorsService {
     const fixtureMap = new Map(fixtures.map((f) => [f.id, f]));
     return tickets.map((t) => ({
       ...t,
-      picks: (t.picks || []).map((p) => {
+      picks: (t.picks || []).map((p: any) => {
         const fix = p.fixtureId ? fixtureMap.get(p.fixtureId) : null;
-        return { ...p, homeScore: fix?.homeScore ?? null, awayScore: fix?.awayScore ?? null, fixtureStatus: fix?.status ?? null };
+        return {
+          ...p,
+          homeScore: fix?.homeScore ?? null,
+          awayScore: fix?.awayScore ?? null,
+          fixtureStatus: fix?.status ?? null,
+          status: p.result || 'pending'
+        };
       }),
     })) as T[];
   }
@@ -297,27 +303,29 @@ export class AccumulatorsService {
       order: { createdAt: 'DESC' },
     });
 
+    const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
+
     // Filter out coupons where any fixture has already started (unless includeAllListings for admin)
     const now = new Date();
-    const validTickets = includeAllListings ? tickets : tickets.filter(ticket => {
+    const validTickets = includeAllListings ? enrichedTickets : enrichedTickets.filter(ticket => {
       // Check if all picks have matchDate and none have started
       if (!ticket.picks || ticket.picks.length === 0) return false;
-      
+
       // If any pick has started (matchDate <= now), exclude this coupon
       const hasStartedFixture = ticket.picks.some(pick => {
         if (!pick.matchDate) return false; // If no matchDate, we can't determine - exclude for safety
         return new Date(pick.matchDate) <= now;
       });
-      
+
       return !hasStartedFixture;
     });
 
     // Get unique tipster IDs
     const tipsterIds = [...new Set(validTickets.map(t => t.userId))];
-    
+
     // Calculate tipster stats using SQL aggregation (fixes N+1 query)
     const tipsterStatsMap = new Map<number, { winRate: number; totalPicks: number; wonPicks: number; lostPicks: number; rank: number }>();
-    
+
     if (tipsterIds.length > 0) {
       // Use raw query for efficient aggregation instead of fetching all records
       const statsQuery = await this.ticketRepo
@@ -381,7 +389,7 @@ export class AccumulatorsService {
     return validTickets.map(ticket => {
       const tipster = tipsterMap.get(ticket.userId);
       const stats = tipsterStatsMap.get(ticket.userId) || { winRate: 0, totalPicks: 0, wonPicks: 0, lostPicks: 0, rank: 0 };
-      
+
       return {
         ...ticket,
         price: priceMap.get(ticket.id) ?? ticket.price,
@@ -510,7 +518,7 @@ export class AccumulatorsService {
       icon: 'cart',
       sendEmail: true,
       metadata: { pickTitle: ticket.title },
-    }).catch(() => {});
+    }).catch(() => { });
 
     const sellerId = ticket.userId;
     if (sellerId && sellerId !== buyerId) {
@@ -525,7 +533,7 @@ export class AccumulatorsService {
         icon: 'cart',
         sendEmail: true,
         metadata: { pickTitle: ticket.title },
-      }).catch(() => {});
+      }).catch(() => { });
     }
 
     return this.getById(accumulatorId);
