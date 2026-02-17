@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Post, Query, UseGuards } from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -11,13 +11,20 @@ import { User } from '../users/entities/user.entity';
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(private readonly authService: AuthService) { }
 
   @Post('login')
   @Throttle({ default: { limit: 5, ttl: 300000 } }) // 5 attempts per 5 min per IP (brute-force protection)
   @UseGuards(LocalAuthGuard)
   async login(@Body() _dto: LoginDto, @CurrentUser() user: User) {
-    return this.authService.login(user);
+    try {
+      return await this.authService.login(user);
+    } catch (err: any) {
+      this.logger.error(`[Login] 500 for user ${user?.id ?? '?'}: ${err?.message ?? err}`, err?.stack);
+      throw err;
+    }
   }
 
   @Post('otp/send')

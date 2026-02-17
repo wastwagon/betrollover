@@ -49,12 +49,19 @@ export async function POST(request: NextRequest) {
 
     if (!res.ok) {
       const errorUrl = new URL('/login', base);
-      const errorMsg = data.message || `Backend error: ${res.status}`;
+      // For 500, backend returns generic "Internal server error" - surface actionable hint
+      const errorMsg = res.status === 500
+        ? 'Login failed (server error). Check API container logs on your VPS.'
+        : (data.message || `Backend error: ${res.status}`);
       errorUrl.searchParams.set('error', errorMsg);
+      if (res.status === 500) {
+        errorUrl.searchParams.set('code', '500');
+      }
 
       console.error(`[LoginProxy] Backend failure (${res.status}):`, {
         url: `${BACKEND_URL}/auth/login`,
-        response: rawResponse
+        response: rawResponse,
+        parsed: data
       });
 
       return NextResponse.redirect(errorUrl, 302);
