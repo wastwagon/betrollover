@@ -57,6 +57,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(redirectUrl, 302);
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Login failed';
+    const stack = e instanceof Error ? e.stack : undefined;
+
+    // Log detailed error for production debugging
+    console.error(`[Login Error] Backend: ${BACKEND_URL} | Msg: ${msg}`, {
+      error: e,
+      stack,
+      url: `${BACKEND_URL}/auth/login`
+    });
+
     const userMsg = msg.toLowerCase().includes('fetch') || msg.toLowerCase().includes('network')
       ? 'Backend unavailable. Please try again.'
       : msg;
