@@ -219,6 +219,13 @@ export class SmartCouponService {
 
     const coupons: SmartCoupon[] = [];
     for (const [dateStr, tips] of byDate) {
+      // Idempotency check: Skip if coupon already exists for this date
+      const existing = await this.couponRepo.findOne({ where: { date: dateStr } });
+      if (existing) {
+        this.logger.debug(`Smart Coupon already exists for date ${dateStr}, skipping.`);
+        continue;
+      }
+
       const sorted = tips.sort((a, b) => b.confidence - a.confidence);
       const top2 = sorted.slice(0, 2);
       if (top2.length < 2) continue;
