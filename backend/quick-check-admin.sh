@@ -1,0 +1,15 @@
+#!/bin/bash
+
+echo "🔍 Checking admin users in production database..."
+echo ""
+echo "Run this command on your VPS (copy and paste):"
+echo ""
+echo "docker exec -it postgres-aw0so4cgcscsgk8c0okggswk-192537349803 psql -U betrollover -d betrollover -c \"SELECT id, email, role, created_at FROM users WHERE role = 'admin';\""
+echo ""
+echo "---"
+echo ""
+echo "If NO admin users exist, run this to create one:"
+echo ""
+echo "docker exec -it postgres-aw0so4cgcscsgk8c0okggswk-192537349803 psql -U betrollover -d betrollover -c \"INSERT INTO users (email, password, role, is_verified, created_at, updated_at) VALUES ('admin@betrollover.com', '\\\$2b\\\$10\\\$YourHashedPasswordHere', 'admin', true, NOW(), NOW()) ON CONFLICT (email) DO NOTHING;\""
+echo ""
+echo "⚠️  Note: You'll need to hash the password first. Let me know if you need help with that."

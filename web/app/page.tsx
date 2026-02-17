@@ -36,9 +36,14 @@ export default function HomePage() {
                     <h2 className="text-3xl md:text-4xl font-bold text-[var(--text)] mb-4">
                       Escrow Protection
                     </h2>
-                    <p className="text-lg text-[var(--text-muted)] mb-6">
-                      Your funds are held securely until matches settle. Win or get a full refund. No risk, complete transparency.
+                    <p className="text-lg text-[var(--text-muted)] mb-4">
+                      Your coupon purchase funds are held securely in escrow until matches settle. If the coupon loses, you receive a full refund of your purchase price directly to your account.
                     </p>
+                    <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-lg mb-4">
+                      <p className="text-xs text-amber-800 leading-relaxed">
+                        <strong>Important:</strong> Coupons shared by tipsters are for educational purposes only. We are not responsible for any betting losses. Please bet responsibly and within your means.
+                      </p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 text-[var(--primary)] font-semibold group-hover:gap-3 transition-all">
                     Learn More
@@ -141,27 +146,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Final CTA */}
-        <section className="py-16 bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white">
-          <div className="max-w-4xl mx-auto px-6 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Get Started?</h2>
-            <p className="text-lg mb-8 opacity-90">Join thousands of users who trust BetRollover for secure transactions</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/register"
-                className="px-8 py-4 rounded-xl font-bold text-base bg-white text-[var(--primary)] hover:bg-gray-50 transition-all"
-              >
-                Create Account
-              </Link>
-              <Link
-                href="/login"
-                className="px-8 py-4 rounded-xl font-bold text-base border-2 border-white text-white hover:bg-white/10 transition-all"
-              >
-                Sign In
-              </Link>
-            </div>
-          </div>
-        </section>
       </main>
 
       <AppFooter />

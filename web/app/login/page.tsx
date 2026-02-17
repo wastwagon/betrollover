@@ -2,19 +2,67 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 
 function LoginForm() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const urlError = searchParams.get('error');
   useEffect(() => {
     if (urlError) setError(decodeURIComponent(urlError));
   }, [urlError]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!res.ok) {
+        // Check if it's a redirect with error
+        const redirectUrl = res.headers.get('location');
+        if (redirectUrl) {
+          const url = new URL(redirectUrl, window.location.origin);
+          const errorMsg = url.searchParams.get('error');
+          if (errorMsg) {
+            setError(errorMsg);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // Fallback error
+        const data = await res.json().catch(() => ({ message: 'Login failed' }));
+        setError(data.message || 'Invalid email or password');
+        setLoading(false);
+        return;
+      }
+
+      // Success - redirect will be handled by the API route
+      const redirectUrl = res.headers.get('location');
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      } else {
+        router.push('/dashboard');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Unable to connect to server. Please try again.');
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[var(--bg)] relative overflow-hidden">
@@ -27,7 +75,7 @@ function LoginForm() {
               <h1 className="text-2xl font-bold text-[var(--text)]">Welcome back</h1>
               <p className="mt-2 text-[var(--text-muted)]">Sign in to access your dashboard</p>
             </div>
-            <form action="/api/auth/login" method="POST" className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-[var(--text)] mb-1.5">
                   Email
@@ -40,7 +88,8 @@ function LoginForm() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
-                  className="w-full px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200"
+                  disabled={loading}
+                  className="w-full px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200 disabled:opacity-50"
                   placeholder="you@example.com"
                 />
               </div>
@@ -56,7 +105,8 @@ function LoginForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="w-full px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200"
+                  disabled={loading}
+                  className="w-full px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200 disabled:opacity-50"
                 />
                 <div className="flex justify-end mt-2">
                   <Link href="/forgot-password" className="text-sm text-[var(--primary)] hover:underline font-medium">
@@ -65,13 +115,23 @@ function LoginForm() {
                 </div>
               </div>
               {error && (
-                <p className="text-sm text-[var(--primary)] font-medium" role="alert">{error}</p>
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+                  <p className="text-sm text-red-600 font-medium" role="alert">{error}</p>
+                </div>
               )}
               <button
                 type="submit"
-                className="w-full py-3.5 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-[var(--primary)]/25 hover:shadow-xl hover:shadow-[var(--primary)]/30 hover:shadow-xl transition-all duration-300"
+                disabled={loading}
+                className="w-full py-3.5 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-[var(--primary)]/25 hover:shadow-xl hover:shadow-[var(--primary)]/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Sign In
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  'Sign In'
+                )}
               </button>
             </form>
             <p className="text-center text-sm text-[var(--text-muted)] mt-6">
