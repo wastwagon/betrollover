@@ -10,37 +10,47 @@ const config: Config = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#0f766e',
-          hover: '#0d9488',
-          light: '#ccfbf1',
+          DEFAULT: 'var(--primary)',
+          hover: 'var(--primary-hover)',
+          light: 'var(--primary-light)',
         },
         accent: {
-          DEFAULT: '#d97706',
-          light: '#fffbeb',
+          DEFAULT: 'var(--accent)',
+          light: 'var(--accent-light)',
         },
+        // Add semantic colors mapping to CSS variables
+        background: 'var(--bg)',
+        'background-warm': 'var(--bg-warm)',
+        card: 'var(--card)',
+        text: 'var(--text)',
+        'text-muted': 'var(--text-muted)',
+        border: 'var(--border)',
       },
       fontFamily: {
         sans: ['var(--font-dm-sans)', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        card: '0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05)',
-        'card-hover': '0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05)',
-        glow: '0 0 40px -10px rgb(196 30 58 / 0.3)',
-        'glow-accent': '0 0 40px -10px rgb(13 148 136 / 0.3)',
+        card: 'var(--shadow)',
+        'card-hover': 'var(--shadow-lg)',
+        glow: 'var(--shadow-glow)',
+        'glow-accent': '0 0 20px rgba(245, 158, 11, 0.15)',
       },
       borderRadius: {
-        card: '0.75rem',
+        card: 'var(--radius)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-mesh': 'radial-gradient(at 15% 20%, rgb(15 118 110 / 0.1) 0px, transparent 50%), radial-gradient(at 85% 15%, rgb(217 119 6 / 0.08) 0px, transparent 45%)',
-        'gradient-hero': 'linear-gradient(135deg, rgb(196 30 58 / 0.06) 0%, transparent 50%, rgb(13 148 136 / 0.04) 100%)',
+        'gradient-mesh': 'var(--gradient-mesh)',
+        'gradient-primary': 'var(--gradient-primary)',
+        'gradient-accent': 'var(--gradient-accent)',
+        'gradient-hero': 'radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.1) 0%, transparent 50%)',
       },
       animation: {
-        'fade-in': 'fadeIn 0.5s ease-out both',
-        'fade-in-up': 'fadeInUp 0.5s ease-out both',
+        'fade-in': 'fadeIn 0.6s ease-out both',
+        'fade-in-up': 'fadeInUp 0.6s ease-out both',
         'float': 'float 6s ease-in-out infinite',
         'shimmer': 'shimmer 2s linear infinite',
+        'pulse-glow': 'pulseGlow 3s infinite',
       },
       animationDelay: {
         '100': '100ms',
@@ -64,6 +74,10 @@ const config: Config = {
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
+        },
+        pulseGlow: {
+          '0%, 100%': { boxShadow: '0 0 20px rgba(16, 185, 129, 0.0)' },
+          '50%': { boxShadow: '0 0 25px rgba(16, 185, 129, 0.2)' },
         },
       },
     },

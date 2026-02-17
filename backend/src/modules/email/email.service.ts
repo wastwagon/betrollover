@@ -58,15 +58,15 @@ export class EmailService {
         });
         return { sent: true };
       } catch (err: any) {
-        console.error('SendGrid email error:', err?.response?.body || err);
+        console.error('SendGrid email error:', JSON.stringify(err?.response?.body || err, null, 2));
         return { sent: false, error: String(err?.response?.body?.errors?.[0]?.message || err?.message || err) };
       }
     }
 
     const transporter = await this.getTransporter();
     if (!transporter) {
-      console.warn('Email not configured. Set SENDGRID_API_KEY or SMTP settings. Skipping send.');
-      return { sent: false, error: 'Email not configured' };
+      console.error('CRITICAL: Email not configured. Set SENDGRID_API_KEY or SMTP settings. Registration OTP will fail.');
+      return { sent: false, error: 'Email configuration missing on server' };
     }
 
     const from = await this.getFromWithSettings();

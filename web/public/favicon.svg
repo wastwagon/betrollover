@@ -1,38 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Red circle background -->
-  <circle cx="50" cy="50" r="45" fill="#DC2626"/>
-  
-  <!-- White gear icon -->
-  <g fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-    <!-- Gear teeth (8 teeth) -->
-    <path d="M 50 10 L 50 5 M 50 95 L 50 90 M 10 50 L 5 50 M 95 50 L 90 50 M 21.21 21.21 L 17.68 17.68 M 82.32 82.32 L 78.79 78.79 M 21.21 78.79 L 17.68 82.32 M 82.32 17.68 L 78.79 21.21"/>
-    
-    <!-- Outer gear circle -->
-    <circle cx="50" cy="50" r="30" fill="none"/>
-    
-    <!-- Inner circle (center hole) -->
-    <circle cx="50" cy="50" r="12" fill="#FFFFFF"/>
-  </g>
-  
-  <!-- Simplified gear shape -->
-  <g transform="translate(50,50)">
-    <!-- Outer ring -->
-    <circle cx="0" cy="0" r="30" fill="none" stroke="#FFFFFF" stroke-width="3"/>
-    
-    <!-- Gear teeth (simplified) -->
-    <g stroke="#FFFFFF" stroke-width="3" stroke-linecap="round">
-      <line x1="0" y1="-30" x2="0" y2="-35"/>
-      <line x1="21.21" y1="-21.21" x2="25" y2="-25"/>
-      <line x1="30" y1="0" x2="35" y2="0"/>
-      <line x1="21.21" y1="21.21" x2="25" y2="25"/>
-      <line x1="0" y1="30" x2="0" y2="35"/>
-      <line x1="-21.21" y1="21.21" x2="-25" y2="25"/>
-      <line x1="-30" y1="0" x2="-35" y2="0"/>
-      <line x1="-21.21" y1="-21.21" x2="-25" y2="-25"/>
-    </g>
-    
-    <!-- Center hole -->
-    <circle cx="0" cy="0" r="12" fill="#FFFFFF"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="128" fill="#10b981"/>
+  <path d="M0 0h512v512H0z" fill="none"/>
+  <text x="50%" y="55%" dominant-baseline="central" text-anchor="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="280" fill="#ffffff" style="text-shadow: 0 4px 12px rgba(0,0,0,0.1);">BR</text>
 </svg>
-
