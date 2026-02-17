@@ -22,6 +22,11 @@ interface Pick {
   matchDescription?: string;
   prediction?: string;
   odds?: number;
+  matchDate?: string;
+  homeScore?: number | null;
+  awayScore?: number | null;
+  fixtureStatus?: string | null;
+  status?: string;
 }
 
 interface Tipster {
@@ -33,6 +38,7 @@ interface Tipster {
   wonPicks: number;
   lostPicks: number;
   rank: number;
+  avatarUrl?: string | null;
 }
 
 interface Accumulator {
@@ -46,6 +52,8 @@ interface Accumulator {
   tipster?: Tipster | null;
   createdAt?: string;
   updatedAt?: string;
+  status?: string;
+  result?: string;
 }
 
 interface User {
@@ -89,7 +97,7 @@ export default function MarketplacePage() {
       router.push('/login');
       return;
     }
-    
+
     // Fetch marketplace picks, wallet balance, user info, and purchased picks
     Promise.all([
       fetch(`${API_URL}/accumulators/marketplace`, {
@@ -124,23 +132,23 @@ export default function MarketplacePage() {
   const purchase = async (id: number) => {
     const token = localStorage.getItem('token');
     if (!token) return;
-    
+
     const coupon = picks.find(p => p.id === id);
     if (!coupon) return;
-    
+
     // Check wallet balance for paid coupons
     if (coupon.price > 0 && (walletBalance === null || walletBalance < coupon.price)) {
       showError(new Error(`Insufficient funds. You need GHS ${coupon.price.toFixed(2)} but only have GHS ${walletBalance?.toFixed(2) || '0.00'}.`));
       return;
     }
-    
+
     setPurchasing(id);
     try {
       const res = await fetch(`${API_URL}/accumulators/${id}/purchase`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       if (res.ok) {
         const purchasedTicket = await res.json();
         showSuccess('Coupon purchased! View your picks in My Purchases.');
@@ -155,7 +163,7 @@ export default function MarketplacePage() {
           setWalletBalance(Number(walletData.balance));
         }
         // Update pick data
-        setPicks(prev => prev.map(p => 
+        setPicks(prev => prev.map(p =>
           p.id === id ? { ...p, purchased: true, purchasedTicket } : p
         ));
         // Trigger unveil modal
@@ -229,61 +237,63 @@ export default function MarketplacePage() {
           {loading && (
             <LoadingSkeleton count={8} variant="cards" />
           )}
-        {!loading && picks.length === 0 && (
-          <div className="card-gradient rounded-2xl">
-            <EmptyState
-              title="No picks available"
-              description="There are no picks available on the marketplace right now. Check back later or create your own pick to share with others."
-              actionLabel="Create Pick"
-              actionHref="/create-pick"
-              icon="🛒"
-            />
-          </div>
-        )}
-        {!loading && picks.length > 0 && filteredAndSortedPicks.length === 0 && (
-          <div className="card-gradient rounded-2xl p-6">
-            <EmptyState
-              title="No picks match your filters"
-              description="Try adjusting your filters to see more coupons."
-              actionLabel="Clear filters"
-              onActionClick={() => {
-                setPriceFilter('all');
-                setSortBy('newest');
-              }}
-              icon="🔍"
-            />
-          </div>
-        )}
-        {!loading && filteredAndSortedPicks.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
-            {filteredAndSortedPicks.map((a) => {
-              const isPurchased = purchasedIds.has(a.id);
-              const canPurchase = a.price === 0 || (walletBalance !== null && walletBalance >= a.price);
-              
-              return (
-                <PickCard
-                  key={a.id}
-                  id={a.id}
-                  title={a.title}
-                  totalPicks={a.totalPicks}
-                  totalOdds={a.totalOdds}
-                  price={a.price}
-                  purchaseCount={a.purchaseCount}
-                  picks={a.picks || []}
-                  tipster={a.tipster}
-                  isPurchased={isPurchased}
-                  canPurchase={canPurchase}
-                  walletBalance={walletBalance}
-                  onPurchase={() => purchase(a.id)}
-                  purchasing={purchasing === a.id}
-                  showUnveil={unveilCouponId === a.id}
-                  onUnveilClose={() => setUnveilCouponId(null)}
-                  createdAt={a.createdAt}
-                />
-              );
-            })}
-          </div>
-        )}
+          {!loading && picks.length === 0 && (
+            <div className="card-gradient rounded-2xl">
+              <EmptyState
+                title="No picks available"
+                description="There are no picks available on the marketplace right now. Check back later or create your own pick to share with others."
+                actionLabel="Create Pick"
+                actionHref="/create-pick"
+                icon="🛒"
+              />
+            </div>
+          )}
+          {!loading && picks.length > 0 && filteredAndSortedPicks.length === 0 && (
+            <div className="card-gradient rounded-2xl p-6">
+              <EmptyState
+                title="No picks match your filters"
+                description="Try adjusting your filters to see more coupons."
+                actionLabel="Clear filters"
+                onActionClick={() => {
+                  setPriceFilter('all');
+                  setSortBy('newest');
+                }}
+                icon="🔍"
+              />
+            </div>
+          )}
+          {!loading && filteredAndSortedPicks.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
+              {filteredAndSortedPicks.map((a) => {
+                const isPurchased = purchasedIds.has(a.id);
+                const canPurchase = a.price === 0 || (walletBalance !== null && walletBalance >= a.price);
+
+                return (
+                  <PickCard
+                    key={a.id}
+                    id={a.id}
+                    title={a.title}
+                    totalPicks={a.totalPicks}
+                    totalOdds={a.totalOdds}
+                    price={a.price}
+                    purchaseCount={a.purchaseCount}
+                    status={a.status}
+                    result={a.result}
+                    picks={a.picks || []}
+                    tipster={a.tipster}
+                    isPurchased={isPurchased}
+                    canPurchase={canPurchase}
+                    walletBalance={walletBalance}
+                    onPurchase={() => purchase(a.id)}
+                    purchasing={purchasing === a.id}
+                    showUnveil={unveilCouponId === a.id}
+                    onUnveilClose={() => setUnveilCouponId(null)}
+                    createdAt={a.createdAt}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </AppShell>

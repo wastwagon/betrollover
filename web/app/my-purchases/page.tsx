@@ -20,6 +20,7 @@ interface Pick {
   awayScore?: number | null;
   fixtureStatus?: string | null;
   matchDate?: string;
+  status?: string;
 }
 
 interface Purchase {
@@ -80,7 +81,7 @@ export default function MyPurchasesPage() {
         fetch(`${getApiUrl()}/accumulators/purchased`, { headers: { Authorization: `Bearer ${token}` } })
           .then((r) => r.ok ? r.json() : [])
           .then((data) => setPurchases(Array.isArray(data) ? data : []))
-          .catch(() => {});
+          .catch(() => { });
       }
     }, 60000);
     return () => clearInterval(interval);
@@ -111,26 +112,26 @@ export default function MyPurchasesPage() {
           )}
           {!loading && purchases.length > 0 && (
             <div className="space-y-3 pb-6">
-            {purchases.map((p) => (
-              p.pick && (
-                <PickCard
-                  key={p.id}
-                  id={p.pick.id}
-                  title={p.pick.title}
-                  totalPicks={p.pick.totalPicks}
-                  totalOdds={p.pick.totalOdds}
-                  price={p.purchasePrice}
-                  status={p.pick.status}
-                  result={p.pick.result}
-                  picks={p.pick.picks || []}
-                  isPurchased={true}
-                  onPurchase={() => {}}
-                  purchasing={false}
-                />
-              )
-            ))}
-          </div>
-        )}
+              {purchases.map((p) => (
+                p.pick && (
+                  <PickCard
+                    key={p.id}
+                    id={p.pick.id}
+                    title={p.pick.title}
+                    totalPicks={p.pick.totalPicks}
+                    totalOdds={p.pick.totalOdds}
+                    price={p.purchasePrice}
+                    status={p.pick.status}
+                    result={p.pick.result}
+                    picks={p.pick.picks || []}
+                    isPurchased={true}
+                    onPurchase={() => { }}
+                    purchasing={false}
+                  />
+                )
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </AppShell>

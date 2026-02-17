@@ -17,6 +17,11 @@ interface Pick {
   matchDescription?: string;
   prediction?: string;
   odds?: number;
+  homeScore?: number | null;
+  awayScore?: number | null;
+  fixtureStatus?: string | null;
+  matchDate?: string;
+  status?: string;
 }
 
 interface Accumulator {
@@ -95,24 +100,25 @@ export default function MyPicksPage() {
           )}
           {!loading && picks.length > 0 && (
             <div className="space-y-3 pb-6">
-            {picks.map((a) => (
-              <PickCard
-                key={a.id}
-                id={a.id}
-                title={a.title}
-                totalPicks={a.totalPicks}
-                totalOdds={a.totalOdds}
-                price={a.price}
-                status={a.status}
-                picks={a.picks || []}
-                isPurchased={true}
-                createdAt={a.createdAt}
-                onPurchase={() => {}}
-                purchasing={false}
-              />
-            ))}
-          </div>
-        )}
+              {picks.map((a) => (
+                <PickCard
+                  key={a.id}
+                  id={a.id}
+                  title={a.title}
+                  totalPicks={a.totalPicks}
+                  totalOdds={a.totalOdds}
+                  price={a.price}
+                  status={a.status}
+                  result={a.result}
+                  picks={a.picks || []}
+                  isPurchased={true}
+                  createdAt={a.createdAt}
+                  onPurchase={() => { }}
+                  purchasing={false}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </AppShell>

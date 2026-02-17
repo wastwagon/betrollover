@@ -20,6 +20,7 @@ interface SmartCouponFixture {
   tip: string;
   odds: number;
   status?: string;
+  matchStatus?: string;
   matchDate?: string;
   homeScore?: number | null;
   awayScore?: number | null;
@@ -128,7 +129,8 @@ export default function PredictionDetailPage() {
               matchDate: f.matchDate,
               homeScore: f.homeScore ?? undefined,
               awayScore: f.awayScore ?? undefined,
-              fixtureStatus: f.status
+              fixtureStatus: f.matchStatus,
+              status: f.status
             }))}
             tipster={aiTipsterProfile}
             isPurchased={true}

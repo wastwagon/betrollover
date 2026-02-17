@@ -19,6 +19,7 @@ interface SmartCouponFixture {
   tip: string;
   odds: number;
   status?: string;
+  matchStatus?: string;
   matchDate?: string;
   homeScore?: number;
   awayScore?: number;
@@ -244,6 +245,8 @@ function SmartCouponsContent() {
                   // If your archive includes scores, map them here:
                   homeScore: f.homeScore,
                   awayScore: f.awayScore,
+                  fixtureStatus: f.matchStatus,
+                  status: f.status,
                 }))}
                 tipster={aiTipsterProfile}
                 isPurchased={true} // Always show details for free coupons

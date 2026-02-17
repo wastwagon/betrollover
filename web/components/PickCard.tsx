@@ -12,6 +12,7 @@ interface Pick {
   homeScore?: number | null;
   awayScore?: number | null;
   fixtureStatus?: string | null;
+  status?: string;
 }
 
 interface Tipster {
@@ -221,7 +222,8 @@ export function PickCard({
                   const matchDate = p.matchDate ? new Date(p.matchDate) : null;
                   const isStarted = matchDate ? matchDate <= new Date() : false;
                   const hasLiveScore = p.homeScore != null && p.awayScore != null;
-                  const isLive = ['1H', '2H', 'HT', 'ET', 'P'].includes(p.fixtureStatus || '');
+                  const isLive = ['1H', '2H', 'HT', 'ET', 'P', 'LIVE'].includes(p.fixtureStatus || '');
+                  const isFinished = ['FT', 'AET', 'PEN'].includes(p.fixtureStatus || '');
                   return (
                     <li key={i} className="flex flex-col gap-0.5 text-xs">
                       <div className="flex justify-between items-start gap-2">
@@ -234,8 +236,8 @@ export function PickCard({
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
                         {matchDate && (
-                          <span className={`text-[10px] ${isStarted ? 'text-red-600 dark:text-red-400' : 'text-[var(--text-muted)]'}`}>
-                            {isStarted ? (isLive ? '🔴 Live' : '⏱ Started') : `⏰ ${matchDate.toLocaleString('en-US', {
+                          <span className={`text-[10px] ${isFinished ? 'text-emerald-600 dark:text-emerald-400' : isLive ? 'text-red-600 dark:text-red-400' : isStarted ? 'text-amber-600 dark:text-amber-400' : 'text-[var(--text-muted)]'}`}>
+                            {isFinished ? '🏁 FT' : isLive ? '🔴 Live' : isStarted ? '⏱ Started' : `⏰ ${matchDate.toLocaleString('en-US', {
                               month: 'short',
                               day: 'numeric',
                               hour: '2-digit',
@@ -244,9 +246,16 @@ export function PickCard({
                           </span>
                         )}
                         {hasLiveScore && (
-                          <span className="text-[10px] font-bold text-[var(--primary)] bg-[var(--primary)]/10 px-1.5 py-0.5 rounded">
-                            {p.homeScore} - {p.awayScore}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-bold text-[var(--primary)] bg-[var(--primary)]/10 px-1.5 py-0.5 rounded">
+                              {p.homeScore} - {p.awayScore}
+                            </span>
+                            {p.status && (
+                              <span className={`text-[8px] font-bold uppercase px-1 rounded ${p.status === 'won' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                                {p.status}
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
                     </li>
@@ -378,9 +387,21 @@ export function PickCard({
                         <div className="flex-1 pr-4 min-w-0">
                           <span className="text-[var(--text)] font-medium block">{p.matchDescription}</span>
                           {hasScore && (
-                            <span className="text-sm font-bold text-[var(--primary)] mt-1 inline-block">
-                              {p.homeScore} - {p.awayScore}
-                            </span>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-sm font-bold text-[var(--primary)]">
+                                {p.homeScore} - {p.awayScore}
+                              </span>
+                              {p.status && (
+                                <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${p.status === 'won' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
+                                  {p.status}
+                                </span>
+                              )}
+                              {p.fixtureStatus && (
+                                <span className="text-[10px] text-[var(--text-muted)] bg-[var(--border)]/30 px-1.5 py-0.5 rounded">
+                                  {p.fixtureStatus}
+                                </span>
+                              )}
+                            </div>
                           )}
                         </div>
                         <div className="text-right flex-shrink-0">
@@ -501,9 +522,21 @@ export function PickCard({
                           <div className="flex-1 pr-4 min-w-0">
                             <span className="text-sm text-[var(--text)] font-medium block">{p.matchDescription}</span>
                             {hasScore && (
-                              <span className="text-xs font-bold text-[var(--primary)] mt-0.5 inline-block">
-                                {p.homeScore} - {p.awayScore}
-                              </span>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-xs font-bold text-[var(--primary)]">
+                                  {p.homeScore} - {p.awayScore}
+                                </span>
+                                {p.status && (
+                                  <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${p.status === 'won' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-200' : 'bg-red-500/10 text-red-600 border border-red-200'}`}>
+                                    {p.status}
+                                  </span>
+                                )}
+                                {p.fixtureStatus && (
+                                  <span className="text-[9px] text-[var(--text-muted)] bg-[var(--border)]/30 px-1.5 py-0.5 rounded">
+                                    {p.fixtureStatus}
+                                  </span>
+                                )}
+                              </div>
                             )}
                           </div>
                           <div className="text-right flex-shrink-0">
