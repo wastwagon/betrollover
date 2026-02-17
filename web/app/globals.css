@@ -21,17 +21,17 @@
   --accent-light: #451a03;
   /* Amber-950: Backgrounds */
 
-  /* Backgrounds (Deep Midnight Blue) */
-  --bg: #020617;
-  /* Slate-950: Main background (Rich dark) */
-  --bg-warm: #0f172a;
-  /* Slate-900: Secondary background */
-  --card: #1e293b;
-  /* Slate-800: Card background */
+  /* Backgrounds (Rich Gradient Foundation) */
+  --bg: #0f172a;
+  /* Slate-900: Softer, rich dark base (was Slate-950) */
+  --bg-warm: #1e293b;
+  /* Slate-800: Lighter secondary background */
+  --card: rgba(30, 41, 59, 0.7);
+  /* Slate-800 w/ opacity for glass feel */
 
   /* Text */
-  --text: #f8fafc;
-  /* Slate-50: Primary text */
+  --text: #f1f5f9;
+  /* Slate-100: Softened white for better readability */
   --text-muted: #94a3b8;
   /* Slate-400: Secondary text */
   --border: #334155;
@@ -52,17 +52,20 @@
   --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Gradients based on User's Preference */
+  --gradient-bg: linear-gradient(to bottom right, #0f172a, #111827, #0f172a);
+  /* Deep, subtle motion */
   --gradient-primary: linear-gradient(135deg, #10b981 0%, #059669 100%);
   /* Emerald 500 -> 600 */
   --gradient-accent: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   /* Amber 500 -> 600 */
   --gradient-mesh:
     radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(245, 158, 11, 0.1) 0px, transparent 50%);
+    radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.08) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.8) 0px, transparent 100%);
 
   /* Glassmorphism */
-  --glass-bg: rgba(30, 41, 59, 0.7);
-  /* Slate-800 with opacity */
+  --glass-bg: rgba(15, 23, 42, 0.6);
+  /* Slate-900 with opacity */
   --glass-border: rgba(255, 255, 255, 0.08);
 }
 

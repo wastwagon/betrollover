@@ -23,7 +23,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-[var(--bg)]">
       <SiteHeader />
 
-      <main>
+      <main className="bg-gradient-page min-h-screen">
         {/* Hero */}
         {/* Hero - Premium Dark Overhaul */}
         <section className="relative overflow-hidden min-h-[600px] flex items-center justify-center py-20 lg:py-32">
