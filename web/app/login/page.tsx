@@ -28,35 +28,36 @@ function LoginForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
+        redirect: 'follow', // Follow redirects automatically
       });
 
-      if (!res.ok) {
-        // Check if it's a redirect with error
-        const redirectUrl = res.headers.get('location');
-        if (redirectUrl) {
-          const url = new URL(redirectUrl, window.location.origin);
-          const errorMsg = url.searchParams.get('error');
-          if (errorMsg) {
-            setError(errorMsg);
-            setLoading(false);
-            return;
-          }
-        }
+      // After redirect, check the final URL for error parameter
+      const finalUrl = new URL(res.url);
+      const errorParam = finalUrl.searchParams.get('error');
 
-        // Fallback error
+      if (errorParam) {
+        setError(decodeURIComponent(errorParam));
+        setLoading(false);
+        return;
+      }
+
+      // Check if we're on the dashboard (success)
+      if (finalUrl.pathname.includes('/dashboard')) {
+        // Success - the API route handled the redirect
+        window.location.href = res.url;
+        return;
+      }
+
+      // Fallback: check response status
+      if (!res.ok) {
         const data = await res.json().catch(() => ({ message: 'Login failed' }));
         setError(data.message || 'Invalid email or password');
         setLoading(false);
         return;
       }
 
-      // Success - redirect will be handled by the API route
-      const redirectUrl = res.headers.get('location');
-      if (redirectUrl) {
-        window.location.href = redirectUrl;
-      } else {
-        router.push('/dashboard');
-      }
+      // Default success case
+      router.push('/dashboard');
     } catch (err) {
       console.error('Login error:', err);
       setError('Unable to connect to server. Please try again.');
