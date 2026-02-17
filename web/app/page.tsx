@@ -19,135 +19,124 @@ export default function HomePage() {
     <div className="min-h-screen bg-[var(--bg)]">
       <SiteHeader />
 
-      <main>
-        {/* Hero Section - Mobile App Style */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-[var(--bg-warm)] to-white py-16 lg:py-24">
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-20 left-10 w-72 h-72 bg-[var(--primary)]/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-20 right-10 w-96 h-96 bg-[var(--accent)]/10 rounded-full blur-3xl" />
-          </div>
+      <main className="bg-[var(--bg)]">
+        {/* Bento Grid Section */}
+        <section className="py-12 md:py-16 lg:py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Bento Grid Container */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
 
-          <div className="relative max-w-4xl mx-auto px-6 text-center z-10">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--border)] bg-white shadow-sm mb-6">
-              <span className="flex h-2 w-2 rounded-full bg-[var(--success)]" />
-              <span className="text-xs font-semibold text-[var(--text-muted)] tracking-wide uppercase">Secure Tipster Marketplace</span>
-            </div>
-
-            {/* Headline */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-[var(--text)] mb-4 leading-tight">
-              BetRollover
-            </h1>
-            <p className="text-xl md:text-2xl text-[var(--text-muted)] mb-8 max-w-2xl mx-auto">
-              Protect your bets with verified experts. Funds held in escrow until matches settle.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <Link
-                href="/register"
-                className="px-8 py-4 rounded-xl font-bold text-base text-white bg-[var(--primary)] hover:bg-[var(--primary-hover)] shadow-lg hover:shadow-xl transition-all w-full sm:w-auto"
-              >
-                Create Account
-              </Link>
-              <Link
-                href="/login"
-                className="px-8 py-4 rounded-xl font-bold text-base border-2 border-[var(--border)] text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-all w-full sm:w-auto"
-              >
-                Sign In
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section className="py-16 bg-white">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-[var(--text)] mb-4">Platform Features</h2>
-              <p className="text-[var(--text-muted)] max-w-2xl mx-auto">Everything you need for secure and profitable betting</p>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[
-                {
-                  title: 'Verified Tipsters',
-                  description: '100% audited profiles with transparent performance tracking',
-                  icon: '✓',
-                  color: 'primary'
-                },
-                {
-                  title: 'Escrow Protection',
-                  description: 'Funds held securely until match completion',
-                  icon: '🔒',
-                  color: 'primary'
-                },
-                {
-                  title: 'Fast Payouts',
-                  description: 'Instant refunds on losses, quick withdrawals on wins',
-                  icon: '⚡',
-                  color: 'accent'
-                },
-                {
-                  title: 'Trusted Platform',
-                  description: 'Transparent performance tracking and user reviews',
-                  icon: '⭐',
-                  color: 'accent'
-                },
-              ].map((feature) => (
-                <div
-                  key={feature.title}
-                  className="p-6 rounded-2xl border border-[var(--border)] bg-white hover:shadow-lg transition-shadow"
-                >
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--${feature.color})] to-[var(--${feature.color}-hover)] flex items-center justify-center text-2xl mb-4 shadow-md`}>
-                    {feature.icon}
+              {/* Large Card - Escrow Protection */}
+              <div className="md:col-span-2 lg:row-span-2 p-8 md:p-10 rounded-3xl bg-gradient-to-br from-[var(--primary)]/10 via-[var(--primary)]/5 to-transparent border border-[var(--border)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                <div className="flex flex-col h-full justify-between">
+                  <div>
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-hover)] flex items-center justify-center text-3xl mb-6 shadow-lg group-hover:scale-110 transition-transform">
+                      🔒
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-bold text-[var(--text)] mb-4">
+                      Escrow Protection
+                    </h2>
+                    <p className="text-lg text-[var(--text-muted)] mb-6">
+                      Your funds are held securely until matches settle. Win or get a full refund. No risk, complete transparency.
+                    </p>
                   </div>
-                  <h3 className="text-lg font-bold text-[var(--text)] mb-2">{feature.title}</h3>
-                  <p className="text-sm text-[var(--text-muted)]">{feature.description}</p>
+                  <div className="flex items-center gap-2 text-[var(--primary)] font-semibold group-hover:gap-3 transition-all">
+                    Learn More
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
+              </div>
 
-        {/* Why Choose Us Section */}
-        <section className="py-16 bg-[var(--bg-warm)]">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-[var(--text)] mb-4">Why Choose BetRollover?</h2>
-              <p className="text-[var(--text-muted)] max-w-2xl mx-auto">Join thousands of users who trust our platform</p>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
-              {[
-                { label: 'Secure', sublabel: 'Escrow System' },
-                { label: 'Protected', sublabel: 'Payments' },
-                { label: '24/7', sublabel: 'Support' },
-                { label: 'Trusted', sublabel: 'Platform' },
-              ].map((item) => (
-                <div key={item.label} className="flex flex-col items-center">
-                  <div className="text-4xl font-bold text-[var(--primary)] mb-2">{item.label}</div>
-                  <div className="text-sm text-[var(--text-muted)]">{item.sublabel}</div>
+              {/* Medium Card - Verified Tipsters */}
+              <div className="p-6 md:p-8 rounded-3xl bg-white border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-2xl mb-4 shadow-md">
+                  ✓
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
+                <h3 className="text-xl font-bold text-[var(--text)] mb-2">
+                  Verified Experts
+                </h3>
+                <p className="text-sm text-[var(--text-muted)]">
+                  100% audited tipster profiles with transparent performance tracking
+                </p>
+              </div>
 
-        {/* Trust Indicators */}
-        <section className="py-12 bg-white border-t border-[var(--border)]">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="flex flex-wrap justify-center gap-12 md:gap-16">
-              {[
-                { label: 'Verified Tipsters', value: '100%' },
-                { label: 'Matches Tracked', value: '50k+' },
-                { label: 'Secure Payments', value: 'Escrow' },
-              ].map((stat) => (
-                <div key={stat.label} className="flex flex-col items-center gap-1">
-                  <span className="text-2xl font-bold text-[var(--text)]">{stat.value}</span>
-                  <span className="text-sm text-[var(--text-muted)]">{stat.label}</span>
+              {/* Medium Card - Fast Payouts */}
+              <div className="p-6 md:p-8 rounded-3xl bg-white border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-2xl mb-4 shadow-md">
+                  ⚡
                 </div>
-              ))}
+                <h3 className="text-xl font-bold text-[var(--text)] mb-2">
+                  Instant Payouts
+                </h3>
+                <p className="text-sm text-[var(--text-muted)]">
+                  Quick withdrawals on wins, instant refunds on losses
+                </p>
+              </div>
+
+              {/* Wide Card - Marketplace Preview */}
+              <div className="md:col-span-2 p-6 md:p-8 rounded-3xl bg-gradient-to-br from-[var(--bg-warm)] to-white border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-2xl font-bold text-[var(--text)] mb-2">
+                      Browse Tipster Marketplace
+                    </h3>
+                    <p className="text-sm text-[var(--text-muted)]">
+                      Discover verified experts and their winning picks
+                    </p>
+                  </div>
+                  <Link
+                    href="/marketplace"
+                    className="px-6 py-3 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] transition-all shadow-md hover:shadow-lg whitespace-nowrap group-hover:scale-105"
+                  >
+                    Explore Picks →
+                  </Link>
+                </div>
+              </div>
+
+              {/* Medium Card - Performance Tracking */}
+              <div className="p-6 md:p-8 rounded-3xl bg-white border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-2xl mb-4 shadow-md">
+                  📊
+                </div>
+                <h3 className="text-xl font-bold text-[var(--text)] mb-2">
+                  Performance Tracking
+                </h3>
+                <p className="text-sm text-[var(--text-muted)]">
+                  Real-time stats, ROI, and win rates for every tipster
+                </p>
+              </div>
+
+              {/* Small Card - Join CTA */}
+              <div className="p-6 md:p-8 rounded-3xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-hover)] text-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-center items-center text-center">
+                <h3 className="text-2xl font-bold mb-3">
+                  Join Free
+                </h3>
+                <p className="text-sm opacity-90 mb-4">
+                  Start protecting your bets today
+                </p>
+                <Link
+                  href="/register"
+                  className="px-6 py-3 rounded-xl bg-white text-[var(--primary)] font-semibold hover:bg-gray-50 transition-all shadow-md"
+                >
+                  Sign Up →
+                </Link>
+              </div>
+
+              {/* Medium Card - Trust Indicator */}
+              <div className="p-6 md:p-8 rounded-3xl bg-white border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-2xl mb-4 shadow-md">
+                  ⭐
+                </div>
+                <h3 className="text-xl font-bold text-[var(--text)] mb-2">
+                  Trusted Platform
+                </h3>
+                <p className="text-sm text-[var(--text-muted)]">
+                  User reviews, ratings, and community feedback
+                </p>
+              </div>
+
             </div>
           </div>
         </section>
