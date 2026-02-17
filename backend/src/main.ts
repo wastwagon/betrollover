@@ -9,21 +9,21 @@ import { SeedRunnerService } from './modules/admin/seed-runner.service';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
-  
+
   // Validate critical environment variables
   const isProduction = process.env.NODE_ENV === 'production';
   const jwtSecret = process.env.JWT_SECRET;
-  
+
   if (isProduction && !jwtSecret) {
     logger.error('❌ CRITICAL: JWT_SECRET environment variable is required in production!');
     logger.error('Please set JWT_SECRET in your environment variables.');
     process.exit(1);
   }
-  
+
   if (!jwtSecret) {
     logger.warn('⚠️  WARNING: JWT_SECRET not set, using default secret (NOT SECURE FOR PRODUCTION)');
   }
-  
+
   const app = await NestFactory.create(AppModule, { bodyParser: false });
 
   // Security headers (Helmet) - production-safe, no breaking changes
@@ -71,18 +71,39 @@ async function bootstrap() {
 
   // CORS configuration - environment-specific
   const allowedOrigins: (string | RegExp)[] = [];
-  
+
   if (isProduction) {
     // Production: Only allow specific domains
     const appUrl = process.env.APP_URL;
     if (appUrl) {
-      allowedOrigins.push(appUrl);
+      const cleanUrl = appUrl.replace(/\/$/, '');
+      allowedOrigins.push(cleanUrl);
+
+      // Automatically add www if missing (or vice-versa)
+      if (cleanUrl.includes('//www.')) {
+        allowedOrigins.push(cleanUrl.replace('//www.', '//'));
+      } else if (cleanUrl.includes('://')) {
+        const parts = cleanUrl.split('://');
+        allowedOrigins.push(`${parts[0]}://www.${parts[1]}`);
+      }
     }
+
     // Add any additional production domains from env
     const additionalOrigins = process.env.CORS_ORIGINS?.split(',').map(o => o.trim()).filter(Boolean);
     if (additionalOrigins) {
-      allowedOrigins.push(...additionalOrigins);
+      additionalOrigins.forEach(origin => {
+        const clean = origin.replace(/\/$/, '');
+        allowedOrigins.push(clean);
+        // Add www/non-www for these too
+        if (clean.includes('//www.')) {
+          allowedOrigins.push(clean.replace('//www.', '//'));
+        } else if (clean.includes('://')) {
+          const parts = clean.split('://');
+          allowedOrigins.push(`${parts[0]}://www.${parts[1]}`);
+        }
+      });
     }
+
     if (allowedOrigins.length === 0) {
       logger.warn('⚠️  No CORS origins configured for production. Set APP_URL or CORS_ORIGINS.');
     }
@@ -93,22 +114,31 @@ async function bootstrap() {
       'http://localhost:6002',
       'http://localhost:3000',
       'http://localhost:3001',
-      // More restrictive regex: only common dev ports
       /^https?:\/\/localhost:(6000|6002|3000|3001|5173|8080)$/,
     );
     if (process.env.APP_URL) {
-      allowedOrigins.push(process.env.APP_URL);
+      allowedOrigins.push(process.env.APP_URL.replace(/\/$/, ''));
     }
   }
-  
+
+  // Deduplicate origins
+  const uniqueOrigins = [...new Set(allowedOrigins.map(o => (typeof o === 'string' ? o : o.toString())))];
+
   app.enableCors({
     origin: allowedOrigins.length > 0 ? allowedOrigins : false,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Session-Id',
+      'X-Tipster-Id',
+      'X-Requested-With',
+      'Accept'
+    ],
   });
-  
-  logger.log(`CORS enabled for origins: ${isProduction ? 'Production domains' : 'Development (localhost)'}`);
+
+  logger.log(`CORS whitelisted origins: ${uniqueOrigins.join(', ')}`);
 
   // Run pending DB migrations before accepting traffic (production-safe: no manual scripts)
   try {
