@@ -8,6 +8,9 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { SiteHeader } from '@/components/SiteHeader';
 import { AppFooter } from '@/components/AppFooter';
+import { useToast } from '@/hooks/useToast';
+import { ErrorToast } from '@/components/ErrorToast';
+import { SuccessToast } from '@/components/SuccessToast';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
 
@@ -16,6 +19,8 @@ export default function TipstersPage() {
   const [tipsters, setTipsters] = useState<TipsterCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [followLoading, setFollowLoading] = useState<number | null>(null);
+  const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
 
   const fetchTipsters = useCallback((searchTerm?: string) => {
     setLoading(true);
@@ -36,23 +41,47 @@ export default function TipstersPage() {
     return () => clearTimeout(t);
   }, [search, fetchTipsters]);
 
-  const handleFollow = (tipster: TipsterCardData) => {
+  const handleFollow = async (tipster: TipsterCardData) => {
     const token = localStorage.getItem('token');
     if (!token) {
       router.push(`/login?redirect=/tipsters`);
       return;
     }
     const isFollowing = tipster.is_following;
-    fetch(`${API_URL}/tipsters/${encodeURIComponent(tipster.username)}/follow`, {
-      method: isFollowing ? 'DELETE' : 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-    }).then((r) => {
-      if (r.ok) fetchTipsters(search);
-    });
+    setFollowLoading(tipster.id);
+    setTipsters((prev) =>
+      prev.map((t) =>
+        t.id === tipster.id ? { ...t, is_following: !isFollowing, follower_count: Math.max(0, (t.follower_count ?? 0) + (isFollowing ? -1 : 1)) } : t
+      )
+    );
+    try {
+      const res = await fetch(`${API_URL}/tipsters/${encodeURIComponent(tipster.username)}/follow`, {
+        method: isFollowing ? 'DELETE' : 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        showSuccess(isFollowing ? 'Unfollowed' : 'Following! You\'ll see their picks in your feed.');
+      } else {
+        setTipsters((prev) =>
+          prev.map((t) => (t.id === tipster.id ? { ...t, is_following: isFollowing, follower_count: tipster.follower_count ?? 0 } : t))
+        );
+        const err = await res.json().catch(() => ({}));
+        showError(new Error(err.message || 'Failed to update follow'));
+      }
+    } catch (e) {
+      setTipsters((prev) =>
+        prev.map((t) => (t.id === tipster.id ? { ...t, is_following: isFollowing, follower_count: tipster.follower_count ?? 0 } : t))
+      );
+      showError(e instanceof Error ? e : new Error('Failed to update follow'));
+    } finally {
+      setFollowLoading(null);
+    }
   };
 
   return (
     <div className="min-h-screen bg-[var(--bg)]">
+      {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
+      {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <SiteHeader />
       <main className="max-w-6xl mx-auto px-4 py-8 md:py-12">
         <div className="mb-8">
@@ -92,6 +121,7 @@ export default function TipstersPage() {
                 key={t.id}
                 tipster={t}
                 onFollow={() => handleFollow(t)}
+                followLoading={followLoading === t.id}
               />
             ))}
           </div>

@@ -17,16 +17,18 @@ export interface TipsterCardData {
   total_wins?: number;
   total_losses?: number;
   leaderboard_rank?: number | null;
+  follower_count?: number;
   is_following?: boolean;
 }
 
 interface TipsterCardProps {
   tipster: TipsterCardData;
   onFollow?: () => void;
+  followLoading?: boolean;
   className?: string;
 }
 
-export function TipsterCard({ tipster, onFollow, className = '' }: TipsterCardProps) {
+export function TipsterCard({ tipster, onFollow, followLoading = false, className = '' }: TipsterCardProps) {
   const [avatarError, setAvatarError] = useState(false);
   const showAvatar = tipster.avatar_url && !avatarError;
   const hasSettledPicks = ((tipster.total_wins ?? 0) + (tipster.total_losses ?? 0)) > 0;
@@ -66,9 +68,12 @@ export function TipsterCard({ tipster, onFollow, className = '' }: TipsterCardPr
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-semibold text-[var(--text)] truncate">{tipster.display_name}</h3>
             </div>
-            {tipster.leaderboard_rank != null && (
-              <p className="text-xs text-[var(--text-muted)] mt-0.5">Rank #{tipster.leaderboard_rank}</p>
-            )}
+            <div className="flex items-center gap-3 mt-0.5 text-xs text-[var(--text-muted)]">
+              {tipster.leaderboard_rank != null && <span>Rank #{tipster.leaderboard_rank}</span>}
+              {tipster.follower_count != null && tipster.follower_count > 0 && (
+                <span>{tipster.follower_count} follower{tipster.follower_count !== 1 ? 's' : ''}</span>
+              )}
+            </div>
           </div>
         </Link>
 
@@ -97,13 +102,14 @@ export function TipsterCard({ tipster, onFollow, className = '' }: TipsterCardPr
         {onFollow && (
           <button
             onClick={(e) => { e.preventDefault(); onFollow(); }}
-            className={`mt-auto w-full px-4 py-2.5 rounded-xl font-semibold text-sm transition-colors ${
+            disabled={followLoading}
+            className={`mt-auto w-full px-4 py-2.5 rounded-xl font-semibold text-sm transition-colors disabled:opacity-70 ${
               tipster.is_following
                 ? 'bg-[var(--border)] text-[var(--text-muted)] hover:bg-gray-300 dark:hover:bg-gray-600'
                 : 'bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white'
             }`}
           >
-            {tipster.is_following ? 'Following' : 'Follow'}
+            {followLoading ? '...' : tipster.is_following ? 'Following' : 'Follow'}
           </button>
         )}
       </div>

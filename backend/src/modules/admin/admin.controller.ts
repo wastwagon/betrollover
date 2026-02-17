@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards, ForbiddenException, BadRequestException, ParseIntPipe, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards, ForbiddenException, BadRequestException, ParseIntPipe, UsePipes, ValidationPipe, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { DataSource } from 'typeorm';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -15,6 +16,7 @@ import { InjuriesSyncService } from '../news/injuries-sync.service';
 import { ResourcesService } from '../resources/resources.service';
 import { AdsService } from '../ads/ads.service';
 import { User } from '../users/entities/user.entity';
+import { UsersService } from '../users/users.service';
 import { UpdateApiSportsKeyDto, TestApiSportsConnectionDto } from './dto/api-sports.dto';
 
 @Controller('admin')
@@ -22,6 +24,7 @@ import { UpdateApiSportsKeyDto, TestApiSportsConnectionDto } from './dto/api-spo
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
+    private readonly usersService: UsersService,
     private readonly analyticsService: AnalyticsService,
     private readonly migrationRunner: MigrationRunnerService,
     private readonly predictionEngine: PredictionEngineService,
@@ -195,10 +198,28 @@ export class AdminController {
   async updateUser(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: { role?: string; status?: string },
+    @Body() body: { role?: string; status?: string; avatar?: string | null },
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.adminService.updateUser(id, body);
+  }
+
+  @Post('users/:id/avatar')
+  @UseInterceptors(FileInterceptor('avatar', {
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (allowed.includes(file.mimetype)) cb(null, true);
+      else cb(new Error('Invalid file type.'), false);
+    },
+  }))
+  async uploadUserAvatar(
+    @CurrentUser() admin: User,
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (admin.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.usersService.uploadAvatar(id, file);
   }
 
   @Get('tipster-requests')

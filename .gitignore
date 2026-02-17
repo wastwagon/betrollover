@@ -46,6 +46,9 @@ redis_data/
 coverage/
 .nyc_output/
 
+# Uploads
+uploads/
+
 # Misc
 *.tsbuildinfo
 

@@ -147,6 +147,19 @@ export class TipstersApiService {
     const humanUserIds = tipsters.filter((t) => t.userId != null).map((t) => t.userId!);
     const ticketStatsMap = await this.computeStatsFromTickets(humanUserIds);
 
+    const tipsterIds = tipsters.map((t) => t.id);
+    const followerCountMap = new Map<number, number>();
+    if (tipsterIds.length > 0) {
+      const counts = await this.followRepo
+        .createQueryBuilder('f')
+        .select('f.tipsterId', 'tipsterId')
+        .addSelect('COUNT(*)', 'cnt')
+        .where('f.tipsterId IN (:...ids)', { ids: tipsterIds })
+        .groupBy('f.tipsterId')
+        .getRawMany();
+      counts.forEach((r) => followerCountMap.set(Number(r.tipsterId), Number(r.cnt) || 0));
+    }
+
     let followingSet = new Set<number>();
     if (options.userId) {
       const follows = await this.followRepo.find({
@@ -186,6 +199,7 @@ export class TipstersApiService {
         total_profit: Number(t.totalProfit),
         avg_odds: Number(t.avgOdds),
         leaderboard_rank: t.leaderboardRank,
+        follower_count: followerCountMap.get(t.id) ?? 0,
         is_following: followingSet.has(t.id),
       };
     });
@@ -226,6 +240,8 @@ export class TipstersApiService {
       [tipster.id],
     );
 
+    const followerCount = await this.followRepo.count({ where: { tipsterId: tipster.id } });
+
     return {
       tipster: {
         id: tipster.id,
@@ -246,6 +262,7 @@ export class TipstersApiService {
         total_profit: Number(tipster.totalProfit),
         avg_odds: Number(tipster.avgOdds),
         leaderboard_rank: tipster.leaderboardRank,
+        follower_count: followerCount,
         last_prediction_date: tipster.lastPredictionDate,
         join_date: tipster.joinDate,
         is_active: tipster.isActive,
@@ -448,5 +465,91 @@ export class TipstersApiService {
       monthly_profit: r.profit,
       rank: i + 1,
     }));
+  }
+
+  /** Feed of marketplace picks from tipsters the user follows (for dashboard) */
+  async getFeedFromFollowedTipsters(userId: number, limit = 20) {
+    const follows = await this.followRepo.find({
+      where: { userId },
+      select: ['tipsterId'],
+    });
+    const tipsterIds = follows.map((f) => f.tipsterId);
+    if (tipsterIds.length === 0) return [];
+
+    const tipsters = await this.tipsterRepo.find({
+      where: { id: In(tipsterIds) },
+      select: ['id', 'userId', 'username', 'displayName', 'avatarUrl', 'winRate', 'leaderboardRank'],
+    });
+    const followedUserIds = tipsters.filter((t) => t.userId != null).map((t) => t.userId!);
+    if (followedUserIds.length === 0) return [];
+
+    const tickets = await this.ticketRepo.find({
+      where: {
+        userId: In(followedUserIds),
+        status: 'active',
+        isMarketplace: true,
+      },
+      relations: ['picks'],
+      order: { createdAt: 'DESC' },
+      take: limit,
+    });
+
+    const listingRows = await this.marketplaceRepo.find({
+      where: { accumulatorId: In(tickets.map((t) => t.id)), status: 'active' },
+      select: ['accumulatorId', 'price', 'purchaseCount'],
+    });
+    const priceMap = new Map(listingRows.map((r) => [r.accumulatorId, Number(r.price)]));
+    const purchaseMap = new Map(listingRows.map((r) => [r.accumulatorId, r.purchaseCount || 0]));
+
+    const userMap = new Map<number, { displayName: string; username: string; avatarUrl: string | null; winRate: number; rank: number }>();
+    for (const t of tipsters) {
+      if (t.userId) {
+        userMap.set(t.userId, {
+          displayName: t.displayName,
+          username: t.username,
+          avatarUrl: t.avatarUrl,
+          winRate: Number(t.winRate),
+          rank: t.leaderboardRank ?? 0,
+        });
+      }
+    }
+
+    const ticketStatsMap = await this.computeStatsFromTickets(followedUserIds);
+
+    return tickets
+      .filter((t) => t.picks?.length)
+      .map((ticket) => {
+        const tipsterUser = userMap.get(ticket.userId!);
+        const stats = ticketStatsMap.get(ticket.userId!);
+        const totalPicks = stats?.total ?? 0;
+        const wonPicks = stats?.won ?? 0;
+        const lostPicks = stats?.lost ?? 0;
+        const winRate = stats?.winRate ?? (tipsterUser?.winRate ?? 0);
+        return {
+          id: ticket.id,
+          title: ticket.title,
+          totalPicks: ticket.picks?.length ?? 0,
+          totalOdds: Number(ticket.totalOdds),
+          price: priceMap.get(ticket.id) ?? 0,
+          purchaseCount: purchaseMap.get(ticket.id) ?? 0,
+          status: ticket.status,
+          result: ticket.result,
+          picks: ticket.picks ?? [],
+          tipster: tipsterUser
+            ? {
+                id: 0,
+                displayName: tipsterUser.displayName,
+                username: tipsterUser.username,
+                avatarUrl: tipsterUser.avatarUrl,
+                winRate,
+                totalPicks,
+                wonPicks,
+                lostPicks,
+                rank: tipsterUser.rank,
+              }
+            : null,
+          createdAt: ticket.createdAt,
+        };
+      });
   }
 }

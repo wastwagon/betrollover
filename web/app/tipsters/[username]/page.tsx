@@ -61,6 +61,7 @@ interface TipsterProfile {
     current_streak: number;
     best_streak?: number | null;
     leaderboard_rank: number | null;
+    follower_count?: number;
     total_profit?: number;
     avg_odds?: number;
   };
@@ -242,10 +243,15 @@ export default function TipsterProfilePage() {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2 mb-2">
+              <div className="flex flex-wrap items-center gap-3 mb-2">
                 <h1 className="text-2xl md:text-3xl font-bold text-[var(--text)]">{tipster.display_name}</h1>
                 {tipster.leaderboard_rank != null && (
                   <span className="text-sm text-[var(--text-muted)]">Rank #{tipster.leaderboard_rank}</span>
+                )}
+                {tipster.follower_count != null && tipster.follower_count > 0 && (
+                  <span className="text-sm text-[var(--text-muted)]">
+                    {tipster.follower_count} follower{tipster.follower_count !== 1 ? 's' : ''}
+                  </span>
                 )}
               </div>
               {tipster.bio && <p className="text-[var(--text-muted)] mb-4">{tipster.bio}</p>}

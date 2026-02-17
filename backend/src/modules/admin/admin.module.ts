@@ -30,6 +30,7 @@ import { ResourcesModule } from '../resources/resources.module';
 import { AdsModule } from '../ads/ads.module';
 import { EmailModule } from '../email/email.module';
 import { WalletModule } from '../wallet/wallet.module';
+import { UsersModule } from '../users/users.module';
 import { SmtpSettings } from '../email/entities/smtp-settings.entity';
 import { ApiSettings } from './entities/api-settings.entity';
 import { PaystackSettings } from '../wallet/entities/paystack-settings.entity';
@@ -73,6 +74,7 @@ import { Prediction } from '../predictions/entities/prediction.entity';
     AdsModule,
     EmailModule,
     WalletModule,
+    UsersModule,
     PredictionsModule,
   ],
   controllers: [AdminController, AnalyticsTrackingController],

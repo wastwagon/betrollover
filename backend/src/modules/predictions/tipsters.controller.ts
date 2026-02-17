@@ -16,6 +16,19 @@ export class TipstersController {
     private readonly followService: TipsterFollowService,
   ) {}
 
+  @Get('feed')
+  @UseGuards(JwtAuthGuard)
+  async getFeed(@CurrentUser() user: User, @Query('limit') limit?: string) {
+    const limitVal = Math.min(Math.max(parseInt(limit || '20', 10) || 20, 1), 50);
+    return this.tipstersApi.getFeedFromFollowedTipsters(user.id, limitVal);
+  }
+
+  @Get('me/following')
+  @UseGuards(JwtAuthGuard)
+  async getFollowing(@CurrentUser() user: User) {
+    return this.followService.getFollowedTipsters(user.id);
+  }
+
   @Get()
   @UseGuards(OptionalJwtGuard)
   async getTipsters(

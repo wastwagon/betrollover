@@ -32,7 +32,7 @@ export class TipsterFollowService {
         type: 'new_follower',
         title: 'New Follower',
         message: 'Someone started following you on BetRollover.',
-        link: '/tipsters',
+        link: `/tipsters/${tipster.username}`,
         icon: 'user-plus',
         sendEmail: true,
       }).catch(() => {});
@@ -54,5 +54,19 @@ export class TipsterFollowService {
       where: { userId, tipsterId },
     });
     return !!found;
+  }
+
+  async getFollowedTipsters(userId: number): Promise<{ id: number; username: string; displayName: string; avatarUrl: string | null }[]> {
+    const follows = await this.followRepo.find({
+      where: { userId },
+      relations: ['tipster'],
+      select: { tipster: { id: true, username: true, displayName: true, avatarUrl: true } },
+    });
+    return follows.map((f) => ({
+      id: f.tipster.id,
+      username: f.tipster.username,
+      displayName: f.tipster.displayName,
+      avatarUrl: f.tipster.avatarUrl,
+    }));
   }
 }

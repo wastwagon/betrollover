@@ -17,25 +17,19 @@ async function proxyRequest(request: NextRequest, path: string[]) {
     method: request.method,
     headers,
   };
-  if (['POST', 'PUT', 'PATCH'].includes(request.method)) {
-    try {
-      const body = await request.text();
-      if (body) {
-        headers.set('Content-Type', request.headers.get('content-type') || 'application/json');
-        init.body = body;
-      }
-    } catch {
-      // no body
-    }
+  if (['POST', 'PUT', 'PATCH'].includes(request.method) && request.body) {
+    const contentType = request.headers.get('content-type');
+    if (contentType) headers.set('Content-Type', contentType);
+    init.body = request.body;
   }
 
   const res = await fetch(url.toString(), init);
-  const data = await res.text();
+  const contentType = res.headers.get('Content-Type') || 'application/json';
+  const isBinary = contentType.startsWith('image/') || contentType.includes('octet-stream');
+  const data = isBinary ? await res.arrayBuffer() : await res.text();
   return new NextResponse(data, {
     status: res.status,
-    headers: {
-      'Content-Type': res.headers.get('Content-Type') || 'application/json',
-    },
+    headers: { 'Content-Type': contentType },
   });
 }
 

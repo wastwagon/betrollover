@@ -2,6 +2,8 @@ import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/com
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import * as fs from 'fs';
+import * as path from 'path';
 import { User, UserRole } from './entities/user.entity';
 import { TipsterRequest } from './entities/tipster-request.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
@@ -77,14 +79,39 @@ export class UsersService {
 
   async updateProfile(
     id: number,
-    data: { displayName?: string; phone?: string },
+    data: { displayName?: string; phone?: string; avatar?: string | null },
   ): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) throw new Error('User not found');
     if (data.displayName !== undefined) user.displayName = data.displayName;
     if (data.phone !== undefined) user.phone = data.phone;
+    if (data.avatar !== undefined) {
+      user.avatar = data.avatar || null;
+      await this.syncAvatarToTipster(id, user.avatar);
+    }
     await this.usersRepository.save(user);
     return this.findById(id) as Promise<User>;
+  }
+
+  async uploadAvatar(userId: number, file: Express.Multer.File): Promise<User> {
+    if (!file?.buffer) throw new BadRequestException('No file received');
+    const uploadDir = path.join(process.cwd(), 'uploads', 'avatars');
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+    const ext = (file.mimetype === 'image/jpeg' ? '.jpg' : file.mimetype === 'image/png' ? '.png' : file.mimetype === 'image/webp' ? '.webp' : '.gif');
+    const filename = `avatar_${userId}_${Date.now()}${ext}`;
+    const filePath = path.join(uploadDir, filename);
+    fs.writeFileSync(filePath, file.buffer);
+    const avatarPath = `/uploads/avatars/${filename}`;
+    await this.updateProfile(userId, { avatar: avatarPath });
+    return this.findById(userId) as Promise<User>;
+  }
+
+  private async syncAvatarToTipster(userId: number, avatarUrl: string | null): Promise<void> {
+    const tipster = await this.tipsterRepo.findOne({ where: { userId } });
+    if (tipster) {
+      tipster.avatarUrl = avatarUrl;
+      await this.tipsterRepo.save(tipster);
+    }
   }
 
   async updatePassword(id: number, hashedPassword: string): Promise<void> {

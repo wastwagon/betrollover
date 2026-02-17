@@ -4,14 +4,16 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
+import { getApiUrl } from '@/lib/site-config';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+const API_URL = getApiUrl();
 
 interface User {
   id: number;
   email: string;
   username: string;
   displayName: string;
+  avatar?: string | null;
   role: string;
   status: string;
   createdAt: string;
@@ -26,6 +28,7 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [updating, setUpdating] = useState<number | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState<number | null>(null);
   const [tipsterRequests, setTipsterRequests] = useState<{ id: number; userId: number; user?: { displayName: string; email: string }; createdAt: string }[]>([]);
 
   const load = () => {
@@ -98,6 +101,24 @@ export default function AdminUsersPage() {
       }
     } finally {
       setUpdating(null);
+    }
+  };
+
+  const uploadUserAvatar = async (userId: number, file: File) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setAvatarUploading(userId);
+    try {
+      const form = new FormData();
+      form.append('avatar', file);
+      const res = await fetch(`${API_URL}/admin/users/${userId}/avatar`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      if (res.ok) load();
+    } finally {
+      setAvatarUploading(null);
     }
   };
 
@@ -240,9 +261,33 @@ export default function AdminUsersPage() {
                   {users.map((u) => (
                     <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <p className="font-semibold text-gray-900 dark:text-white">{u.displayName}</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{u.email}</p>
+                        <div className="flex items-center gap-3">
+                          <div className="relative group">
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                              {u.avatar ? (
+                                <img src={u.avatar.startsWith('http') ? u.avatar : `${API_URL}${u.avatar}`} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-sm font-bold text-gray-500 dark:text-gray-400">{(u.displayName || u.username || 'U').charAt(0).toUpperCase()}</span>
+                              )}
+                            </div>
+                            <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/gif,image/webp"
+                                className="sr-only"
+                                onChange={(e) => {
+                                  const f = e.target.files?.[0];
+                                  if (f) uploadUserAvatar(u.id, f);
+                                  e.target.value = '';
+                                }}
+                              />
+                              <span className="text-white text-xs font-medium pointer-events-none">{avatarUploading === u.id ? '...' : 'Edit'}</span>
+                            </label>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-white">{u.displayName}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{u.email}</p>
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

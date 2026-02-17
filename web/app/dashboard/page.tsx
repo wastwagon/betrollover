@@ -8,6 +8,28 @@ import { AdminSidebar } from '@/components/AdminSidebar';
 import { PageHeader } from '@/components/PageHeader';
 
 import { getApiUrl } from '@/lib/site-config';
+import { PickCard } from '@/components/PickCard';
+
+interface FollowedTipster {
+  id: number;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
+
+interface FeedPick {
+  id: number;
+  title: string;
+  totalPicks: number;
+  totalOdds: number;
+  price: number;
+  purchaseCount: number;
+  status: string;
+  result: string;
+  picks: Array<{ matchDescription?: string; prediction?: string; odds?: number; matchDate?: string }>;
+  tipster?: { id: number; displayName: string; username: string; avatarUrl: string | null; winRate: number; totalPicks: number; wonPicks: number; lostPicks: number; rank: number } | null;
+  createdAt: string;
+}
 
 interface User {
   id: number;
@@ -66,6 +88,9 @@ function DashboardContent() {
     totalSpent: number;
     active: number;
   } | null>(null);
+  const [feedPicks, setFeedPicks] = useState<FeedPick[]>([]);
+  const [following, setFollowing] = useState<FollowedTipster[]>([]);
+  const [feedPurchasing, setFeedPurchasing] = useState<number | null>(null);
 
   const runSettlement = async () => {
     const token = localStorage.getItem('token');
@@ -122,11 +147,13 @@ function DashboardContent() {
             .catch(() => null)
             .then((settings) => settings?.minimumROI !== undefined ? settings.minimumROI : 20.0),
           fetch(`${apiUrl}/accumulators/purchased`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+          fetch(`${apiUrl}/tipsters/feed?limit=10`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+          fetch(`${apiUrl}/tipsters/me/following`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
         ]);
       })
       .then((result) => {
         if (!result) return;
-        const [u, s, ts, wallet, minROI, purchasedData] = result;
+        const [u, s, ts, wallet, minROI, purchasedData, feedData, followingData] = result;
         if (u.role === 'admin') setStats(s || {});
         setTipsterStats(ts || { totalPicks: 0, wonPicks: 0, lostPicks: 0, winRate: 0, totalEarnings: 0, roi: 0 });
         if (wallet) setWalletBalance(Number(wallet.balance));
@@ -138,6 +165,8 @@ function DashboardContent() {
           p.pick && p.pick.status === 'active' && p.pick.result === 'pending'
         ).length;
         setPurchaseStats({ total: purchasesList.length, totalSpent, active });
+        setFeedPicks(Array.isArray(feedData) ? feedData : []);
+        setFollowing(Array.isArray(followingData) ? followingData : []);
       })
       .catch((err) => {
         if (err?.message !== 'Unauthorized') {
@@ -309,6 +338,96 @@ function DashboardContent() {
               </div>
             </section>
           )}
+
+          {/* Feed from Followed Tipsters / Following */}
+          <section className="mb-6 sm:mb-8">
+              <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">Followed Tipsters</h2>
+              <div className="glass-card rounded-2xl sm:rounded-3xl overflow-hidden border border-[var(--border)]/60">
+                <div className="p-4 sm:p-6">
+                  {following.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {following.map((t) => (
+                        <Link
+                          key={t.id}
+                          href={`/tipsters/${t.username}`}
+                          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--bg)]/70 hover:bg-teal-50/60 border border-[var(--border)]/60 transition-colors"
+                        >
+                          {t.avatarUrl ? (
+                            <img src={t.avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover" />
+                          ) : (
+                            <span className="w-6 h-6 rounded-full bg-[var(--primary-light)] flex items-center justify-center text-xs font-bold text-[var(--primary)]">
+                              {t.displayName?.charAt(0)?.toUpperCase() || '?'}
+                            </span>
+                          )}
+                          <span className="font-medium text-[var(--text)] text-sm">{t.displayName}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                  {feedPicks.length > 0 ? (
+                    <div>
+                      <p className="text-sm text-[var(--text-muted)] mb-3">Latest picks from tipsters you follow</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                        {feedPicks.slice(0, 4).map((pick) => {
+                          const isPurchased = purchases.some((p) => p.accumulatorId === pick.id);
+                          const canPurchase = pick.price === 0 || (walletBalance !== null && walletBalance >= pick.price);
+                          return (
+                            <PickCard
+                              key={pick.id}
+                              id={pick.id}
+                              title={pick.title}
+                              totalPicks={pick.totalPicks}
+                              totalOdds={pick.totalOdds}
+                              price={pick.price}
+                              purchaseCount={pick.purchaseCount}
+                              picks={pick.picks || []}
+                              tipster={pick.tipster}
+                              isPurchased={isPurchased}
+                              canPurchase={canPurchase}
+                              walletBalance={walletBalance}
+                              onPurchase={async () => {
+                                const token = localStorage.getItem('token');
+                                if (!token) return;
+                                setFeedPurchasing(pick.id);
+                                try {
+                                  const res = await fetch(`${getApiUrl()}/accumulators/${pick.id}/purchase`, {
+                                    method: 'POST',
+                                    headers: { Authorization: `Bearer ${token}` },
+                                  });
+                                  if (res.ok) {
+                                    setPurchases((prev) => [...prev, { id: 0, accumulatorId: pick.id, purchasePrice: pick.price, purchasedAt: new Date().toISOString(), pick: { id: pick.id, title: pick.title, totalPicks: pick.totalPicks, totalOdds: pick.totalOdds, status: pick.status, result: pick.result } }]);
+                                    const w = await fetch(`${getApiUrl()}/wallet/balance`, { headers: { Authorization: `Bearer ${token}` } });
+                                    if (w.ok) {
+                                      const d = await w.json();
+                                      setWalletBalance(Number(d.balance));
+                                    }
+                                  }
+                                } finally {
+                                  setFeedPurchasing(null);
+                                }
+                              }}
+                              purchasing={feedPurchasing === pick.id}
+                            />
+                          );
+                        })}
+                      </div>
+                      <Link
+                        href="/marketplace"
+                        className="inline-block mt-3 text-sm font-medium text-[var(--primary)] hover:underline"
+                      >
+                        View all in Marketplace →
+                      </Link>
+                    </div>
+                  ) : following.length > 0 ? (
+                    <p className="text-[var(--text-muted)] text-sm">No new picks from followed tipsters. <Link href="/tipsters" className="text-[var(--primary)] hover:underline">Follow more tipsters</Link></p>
+                  ) : (
+                    <p className="text-[var(--text-muted)] text-sm">
+                      <Link href="/tipsters" className="text-[var(--primary)] hover:underline font-medium">Follow tipsters</Link> to see their latest picks here.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </section>
 
           {/* Purchase Summary */}
           {purchaseStats !== null && (

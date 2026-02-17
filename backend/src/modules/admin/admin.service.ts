@@ -22,6 +22,7 @@ import { WalletService } from '../wallet/wallet.service';
 import { SmtpSettings } from '../email/entities/smtp-settings.entity';
 import { ApiSettings } from './entities/api-settings.entity';
 import { PaystackSettings } from '../wallet/entities/paystack-settings.entity';
+import { Tipster } from '../predictions/entities/tipster.entity';
 
 @Injectable()
 export class AdminService {
@@ -122,7 +123,7 @@ export class AdminService {
     const skip = (page - 1) * limit;
 
     const qb = this.usersRepo.createQueryBuilder('u')
-      .select(['u.id', 'u.username', 'u.email', 'u.displayName', 'u.role', 'u.status', 'u.createdAt'])
+      .select(['u.id', 'u.username', 'u.email', 'u.displayName', 'u.avatar', 'u.role', 'u.status', 'u.createdAt'])
       .orderBy('u.createdAt', 'DESC');
 
     if (params.role) qb.andWhere('u.role = :role', { role: params.role });
@@ -137,13 +138,25 @@ export class AdminService {
     return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
-  async updateUser(id: number, data: { role?: string; status?: string }) {
+  async updateUser(id: number, data: { role?: string; status?: string; avatar?: string | null }) {
     const user = await this.usersRepo.findOne({ where: { id } });
     if (!user) return null;
     if (data.role) user.role = data.role as UserRole;
     if (data.status) user.status = data.status as UserStatus;
+    if (data.avatar !== undefined) {
+      user.avatar = data.avatar || null;
+      await this.syncAvatarToTipster(id, user.avatar);
+    }
     await this.usersRepo.save(user);
     return user;
+  }
+
+  private async syncAvatarToTipster(userId: number, avatarUrl: string | null): Promise<void> {
+    const tipster = await this.dataSource.getRepository(Tipster).findOne({ where: { userId } });
+    if (tipster) {
+      tipster.avatarUrl = avatarUrl;
+      await this.dataSource.getRepository(Tipster).save(tipster);
+    }
   }
 
   async getEscrow() {
