@@ -5,7 +5,6 @@ import { AccumulatorTicket } from './entities/accumulator-ticket.entity';
 import { AccumulatorPick } from './entities/accumulator-pick.entity';
 import { EscrowFund } from './entities/escrow-fund.entity';
 import { Fixture } from '../fixtures/entities/fixture.entity';
-import { SmartCoupon, SmartCouponFixture } from '../coupons/entities/smart-coupon.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { User } from '../users/entities/user.entity';
 import { WalletService } from '../wallet/wallet.service';
@@ -34,8 +33,6 @@ export class SettlementService {
     private escrowRepo: Repository<EscrowFund>,
     @InjectRepository(Fixture)
     private fixtureRepo: Repository<Fixture>,
-    @InjectRepository(SmartCoupon)
-    private smartCouponRepo: Repository<SmartCoupon>,
     @InjectRepository(ApiSettings)
     private apiSettingsRepo: Repository<ApiSettings>,
     @InjectRepository(User)
@@ -52,7 +49,6 @@ export class SettlementService {
   async checkAndSettleAccumulators(): Promise<{
     picksUpdated: number;
     ticketsSettled: number;
-    smartCouponsSettled: number;
   }> {
     return this.runSettlement();
   }
@@ -66,7 +62,6 @@ export class SettlementService {
    * 3. For each pending pick on those fixtures, determine won/lost via determinePickResult
    * 4. For tickets where all picks are settled, set ticket result (won/lost/void) and status
    * 5. If marketplace coupon with price > 0: settle escrow (payout tipster or refund buyer)
-   * 6. Settle Smart Coupons (Double Chance tips) — update status and profit when all fixtures finish
    *
    * Supported markets: Match Winner, Double Chance, BTTS, Over/Under 1.5/2.5/3.5, Correct Score.
    * Unmatched predictions log a warning so new market types can be added.
@@ -74,18 +69,17 @@ export class SettlementService {
   async runSettlement(): Promise<{
     picksUpdated: number;
     ticketsSettled: number;
-    smartCouponsSettled: number;
   }> {
     // Get all finished fixtures: status FT, OR has scores and match was >2h ago (catch missed updates)
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
     const [ftFixtures, scoredPastFixtures] = await Promise.all([
       this.fixtureRepo.find({
         where: { status: 'FT' },
-        select: ['id', 'homeScore', 'awayScore'],
+        select: ['id', 'homeScore', 'awayScore', 'homeTeamName', 'awayTeamName'],
       }),
       this.fixtureRepo
         .createQueryBuilder('f')
-        .select(['f.id', 'f.homeScore', 'f.awayScore'])
+        .select(['f.id', 'f.homeScore', 'f.awayScore', 'f.homeTeamName', 'f.awayTeamName'])
         .where("f.status != 'FT'")
         .andWhere('f.matchDate < :cutoff', { cutoff: twoHoursAgo })
         .andWhere('f.homeScore IS NOT NULL')
@@ -108,8 +102,7 @@ export class SettlementService {
       .map((f) => f.id);
 
     if (fixtureIds.length === 0) {
-      const smartSettled = await this.settleSmartCoupons([], new Map());
-      return { picksUpdated: 0, ticketsSettled: 0, smartCouponsSettled: smartSettled };
+      return { picksUpdated: 0, ticketsSettled: 0 };
     }
 
     const fixtureMap = new Map(finishedFixtures.map((f) => [f.id, f]));
@@ -154,64 +147,7 @@ export class SettlementService {
       }
     }
 
-    const smartCouponsSettled = await this.settleSmartCoupons(fixtureIds, fixtureMap);
-    return { picksUpdated, ticketsSettled, smartCouponsSettled };
-  }
-
-  /**
-   * Settle Smart Coupons when their fixtures finish.
-   * Smart Coupons use Double Chance tips only (Home or Draw, Draw or Away, Home or Away).
-   * Profit: 1 unit stake assumed — won = totalOdds - 1, lost = -1.
-   */
-  private async settleSmartCoupons(
-    finishedFixtureIds: number[],
-    fixtureMap: Map<number, { homeScore: number | null; awayScore: number | null }>,
-  ): Promise<number> {
-    if (finishedFixtureIds.length === 0) return 0;
-
-    const finishedSet = new Set(finishedFixtureIds);
-    const pendingCoupons = await this.smartCouponRepo.find({
-      where: { status: 'pending' },
-    });
-
-    let settled = 0;
-    for (const coupon of pendingCoupons) {
-      const fixtures = (coupon.fixtures || []) as SmartCouponFixture[];
-      if (fixtures.length === 0) continue;
-
-      let anyUpdated = false;
-      const updatedFixtures = fixtures.map((f) => {
-        if (f.status === 'won' || f.status === 'lost') return f;
-        const fix = fixtureMap.get(f.fixtureId);
-        if (!fix || fix.homeScore == null || fix.awayScore == null || !finishedSet.has(f.fixtureId)) return f;
-        const result = this.determinePickResult(f.tip, fix.homeScore, fix.awayScore, f.home, f.away);
-        if (result) {
-          anyUpdated = true;
-          return { ...f, status: result };
-        }
-        return f;
-      });
-
-      if (!anyUpdated) continue;
-
-      const allSettled = updatedFixtures.every((f) => f.status === 'won' || f.status === 'lost');
-      if (!allSettled) {
-        coupon.fixtures = updatedFixtures;
-        await this.smartCouponRepo.save(coupon);
-        continue;
-      }
-
-      const hasLost = updatedFixtures.some((f) => f.status === 'lost');
-      coupon.status = hasLost ? 'lost' : 'won';
-      coupon.fixtures = updatedFixtures;
-      // Profit per 1 unit stake: won = totalOdds - 1, lost = -1
-      const totalOdds = Number(coupon.totalOdds);
-      coupon.profit = hasLost ? -1 : totalOdds - 1;
-      await this.smartCouponRepo.save(coupon);
-      settled++;
-    }
-
-    return settled;
+    return { picksUpdated, ticketsSettled };
   }
 
   private determinePickResult(

@@ -18,7 +18,6 @@ const menuItems = [
   { href: '/admin/wallet', icon: '💰', label: 'Wallet' },
   { href: '/admin/notifications', icon: '🔔', label: 'Notifications' },
   { href: '/admin/fixtures', icon: '⚽', label: 'Fixtures' },
-  { href: '/admin/coupons', icon: '🎫', label: 'Smart Coupons' },
   { href: '/admin/content', icon: '📄', label: 'Content' },
   { href: '/admin/news', icon: '📰', label: 'News' },
   { href: '/admin/resources', icon: '📚', label: 'Resources' },

@@ -21,7 +21,6 @@ export function AppFooter() {
           <div>
             <h3 className="font-semibold mb-3 text-[var(--text)]">Features</h3>
             <ul className="space-y-2 text-sm text-[var(--text-muted)]">
-              <li><Link href="/predictions" className="hover:text-[var(--primary)] transition-colors">Smart Coupons</Link></li>
               <li><Link href="/marketplace" className="hover:text-[var(--primary)] transition-colors">Marketplace</Link></li>
               <li><Link href="/tipsters" className="hover:text-[var(--primary)] transition-colors">Top Tipsters</Link></li>
             </ul>

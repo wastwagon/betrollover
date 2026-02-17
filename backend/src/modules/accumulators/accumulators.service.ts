@@ -104,6 +104,9 @@ export class AccumulatorsService {
       if (selection.odds > 1000) {
         throw new BadRequestException('Odds cannot exceed 1000');
       }
+      if (dto.isMarketplace && (!selection.fixtureId || selection.fixtureId < 1)) {
+        throw new BadRequestException('Fixture ID is required for all selections when listing on marketplace (needed for settlement)');
+      }
     }
 
     // Default price to 0 (free) if not provided or invalid
@@ -495,61 +498,72 @@ export class AccumulatorsService {
 
   async purchase(buyerId: number, accumulatorId: number) {
     return this.dataSource.transaction(async (manager) => {
-      const ticketRepo = manager.getRepository(AccumulatorTicket);
-      const marketplaceRepo = manager.getRepository(PickMarketplace);
-      const purchasedRepo = manager.getRepository(UserPurchasedPick);
-      const escrowRepo = manager.getRepository(EscrowFund);
+        const ticketRepo = manager.getRepository(AccumulatorTicket);
+        const marketplaceRepo = manager.getRepository(PickMarketplace);
+        const purchasedRepo = manager.getRepository(UserPurchasedPick);
+        const escrowRepo = manager.getRepository(EscrowFund);
 
-      const ticket = await ticketRepo.findOne({
-        where: { id: accumulatorId },
-        relations: ['picks'],
-      });
-      if (!ticket) throw new NotFoundException('Pick not found');
-      if (ticket.status !== 'active') throw new BadRequestException('Pick is not available');
-      if (ticket.result !== 'pending') throw new BadRequestException('Pick has already settled');
-
-      const listing = await marketplaceRepo.findOne({
-        where: { accumulatorId, status: 'active' },
-      });
-      if (!listing) throw new NotFoundException('Pick not listed on marketplace');
-
-      const existing = await purchasedRepo.findOne({
-        where: { userId: buyerId, accumulatorId },
-      });
-      if (existing) throw new BadRequestException('You have already purchased this pick');
-
-      const price = Number(listing.price);
-      if (price > 0) {
-        await this.walletService.debit(
-          buyerId,
-          price,
-          'purchase',
-          `pick-${accumulatorId}`,
-          `Purchase of pick: ${ticket.title}`,
-          manager,
-        );
-        await escrowRepo.save({
-          userId: buyerId,
-          pickId: accumulatorId,
-          amount: price,
-          reference: `pick-${accumulatorId}`,
-          status: 'held',
-        }).catch(err => {
-          // Ignore unique constraint violation (user might have clicked twice, but funds already escrowed)
-          // If it's another error, we let it bubble up or handle it, but for duplicate key, we proceed.
-          if (err.code === '23505') { // Postgres unique violation
-            this.logger.warn(`Duplicate escrow fund attempt for user ${buyerId} on pick ${accumulatorId}. Ignoring.`);
-          } else {
-            throw err;
-          }
+        const ticket = await ticketRepo.findOne({
+          where: { id: accumulatorId },
+          relations: ['picks'],
         });
-      }
+        if (!ticket) throw new NotFoundException('Pick not found');
+        if (ticket.status !== 'active') throw new BadRequestException('Pick is not available');
+        if (ticket.result !== 'pending') throw new BadRequestException('Pick has already settled');
 
-      await purchasedRepo.save({
-        userId: buyerId,
-        accumulatorId,
-        purchasePrice: price,
-      });
+        const listing = await marketplaceRepo.findOne({
+          where: { accumulatorId, status: 'active' },
+        });
+        if (!listing) throw new NotFoundException('Pick not listed on marketplace');
+
+        const existing = await purchasedRepo.findOne({
+          where: { userId: buyerId, accumulatorId },
+        });
+        if (existing) throw new BadRequestException('You have already purchased this pick');
+
+        const price = Number(listing.price);
+        if (price > 0) {
+          await this.walletService.debit(
+            buyerId,
+            price,
+            'purchase',
+            `pick-${accumulatorId}`,
+            `Purchase of pick: ${ticket.title}`,
+            manager,
+          );
+          try {
+            await escrowRepo.save({
+              userId: buyerId,
+              pickId: accumulatorId,
+              amount: price,
+              reference: `pick-${accumulatorId}`,
+              status: 'held',
+            });
+          } catch (escrowErr: any) {
+            if (escrowErr?.code === '23505') {
+              this.logger.warn(`Duplicate escrow for user ${buyerId} pick ${accumulatorId} (race). Refunding debit.`);
+              await this.walletService.credit(buyerId, price, 'refund', `pick-${accumulatorId}-refund`, 'Refund: duplicate purchase attempt', manager);
+              throw new BadRequestException('You have already purchased this pick. Please refresh the page.');
+            }
+            throw escrowErr;
+          }
+        }
+
+        try {
+          await purchasedRepo.save({
+            userId: buyerId,
+            accumulatorId,
+            purchasePrice: price,
+          });
+        } catch (purchErr: any) {
+          if (purchErr?.code === '23505' && price > 0) {
+            await this.walletService.credit(buyerId, price, 'refund', `pick-${accumulatorId}-refund`, 'Refund: duplicate purchase attempt', manager);
+          }
+          if (purchErr?.code === '23505') {
+            throw new BadRequestException('You have already purchased this pick. Please refresh the page.');
+          }
+          throw purchErr;
+        }
 
       listing.purchaseCount += 1;
       await marketplaceRepo.save(listing);

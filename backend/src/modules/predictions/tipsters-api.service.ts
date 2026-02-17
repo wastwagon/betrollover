@@ -367,32 +367,85 @@ export class TipstersApiService {
 
     const dateFilter =
       options.period === 'monthly'
+        ? "at.updated_at >= DATE_TRUNC('month', CURRENT_DATE)"
+        : "at.updated_at >= DATE_TRUNC('week', CURRENT_DATE)";
+
+    // AI tipsters: from predictions. Human tipsters: from accumulator_tickets.
+    const predDateFilter =
+      options.period === 'monthly'
         ? "p.prediction_date >= DATE_TRUNC('month', CURRENT_DATE)"
         : "p.prediction_date >= DATE_TRUNC('week', CURRENT_DATE)";
 
-    const rows = await this.tipsterRepo.query(
-      `SELECT 
-        t.id, t.username, t.display_name, t.avatar_url,
-        COUNT(p.id)::int as monthly_predictions,
-        SUM(CASE WHEN p.status = 'won' THEN 1 ELSE 0 END)::int as monthly_wins,
-        COALESCE(SUM(p.actual_result), 0)::float as monthly_profit
-      FROM tipsters t
-      LEFT JOIN predictions p ON t.id = p.tipster_id AND ${dateFilter}
-      WHERE t.is_active = true
-      GROUP BY t.id, t.username, t.display_name, t.avatar_url
-      ORDER BY monthly_profit DESC NULLS LAST
-      LIMIT $1`,
-      [options.limit],
-    );
+    const [aiRows, humanRows] = await Promise.all([
+      this.tipsterRepo.query(
+        `SELECT t.id, t.username, t.display_name, t.avatar_url,
+          COUNT(p.id)::int as cnt,
+          SUM(CASE WHEN p.status = 'won' THEN 1 ELSE 0 END)::int as wins,
+          COALESCE(SUM(p.actual_result), 0)::float as profit
+         FROM tipsters t
+         LEFT JOIN predictions p ON t.id = p.tipster_id AND ${predDateFilter}
+         WHERE t.is_active = true
+         GROUP BY t.id, t.username, t.display_name, t.avatar_url`,
+        [],
+      ),
+      this.tipsterRepo.query(
+        `SELECT t.id, t.username, t.display_name, t.avatar_url,
+          COUNT(at.id)::int as cnt,
+          SUM(CASE WHEN at.result = 'won' THEN 1 ELSE 0 END)::int as wins,
+          COALESCE(SUM(CASE WHEN at.result = 'won' THEN at.total_odds - 1 ELSE -1 END), 0)::float as profit
+         FROM tipsters t
+         INNER JOIN accumulator_tickets at ON at.user_id = t.user_id
+           AND at.result IN ('won', 'lost') AND ${dateFilter}
+         WHERE t.is_active = true AND t.user_id IS NOT NULL
+         GROUP BY t.id, t.username, t.display_name, t.avatar_url`,
+        [],
+      ),
+    ]);
 
-    return rows.map((r: any, i: number) => ({
+    const merged = new Map<number, { id: number; username: string; display_name: string; avatar_url: string | null; cnt: number; wins: number; profit: number }>();
+    for (const r of aiRows) {
+      merged.set(r.id, {
+        id: r.id,
+        username: r.username,
+        display_name: r.display_name,
+        avatar_url: r.avatar_url,
+        cnt: Number(r.cnt ?? 0),
+        wins: Number(r.wins ?? 0),
+        profit: parseFloat(r.profit ?? 0),
+      });
+    }
+    for (const r of humanRows) {
+      const existing = merged.get(r.id);
+      if (existing) {
+        existing.cnt += Number(r.cnt ?? 0);
+        existing.wins += Number(r.wins ?? 0);
+        existing.profit += parseFloat(r.profit ?? 0);
+      } else {
+        merged.set(r.id, {
+          id: r.id,
+          username: r.username,
+          display_name: r.display_name,
+          avatar_url: r.avatar_url,
+          cnt: Number(r.cnt ?? 0),
+          wins: Number(r.wins ?? 0),
+          profit: parseFloat(r.profit ?? 0),
+        });
+      }
+    }
+
+    const sorted = Array.from(merged.values())
+      .filter((e) => e.cnt > 0 || e.profit !== 0)
+      .sort((a, b) => b.profit - a.profit)
+      .slice(0, options.limit);
+
+    return sorted.map((r, i) => ({
       id: r.id,
       username: r.username,
       display_name: r.display_name,
       avatar_url: r.avatar_url,
-      monthly_predictions: r.monthly_predictions ?? 0,
-      monthly_wins: r.monthly_wins ?? 0,
-      monthly_profit: parseFloat(r.monthly_profit ?? 0),
+      monthly_predictions: r.cnt,
+      monthly_wins: r.wins,
+      monthly_profit: r.profit,
       rank: i + 1,
     }));
   }

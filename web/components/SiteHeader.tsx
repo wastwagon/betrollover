@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 
 const navLinks = [
-  { href: '/predictions', label: 'Smart Coupons' },
   { href: '/marketplace', label: 'Marketplace' },
   { href: '/tipsters', label: 'Tipsters' },
   { href: '/leaderboard', label: 'Leaderboard' },

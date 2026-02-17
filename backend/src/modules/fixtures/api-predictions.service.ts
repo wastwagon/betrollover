@@ -8,13 +8,6 @@ import { Repository } from 'typeorm';
 const API_BASE = 'https://v3.football.api-sports.io';
 const PREDICTIONS_CACHE_TTL = 24 * 60 * 60; // 24 hours
 
-/** Raw API-Football prediction with advice (for Smart Coupon strategy) */
-export interface ApiPredictionWithAdvice {
-  advice: string;
-  percent: { home: string; draw: string; away: string };
-  winner?: { name: string };
-}
-
 /** API-Football prediction for a single outcome (e.g. home win, over 2.5) */
 export interface ApiPredictionOutcome {
   outcome: string; // 'home' | 'draw' | 'away' | 'over25' | 'under25' | 'btts'
@@ -161,51 +154,6 @@ export class ApiPredictionsService {
     const n = parseFloat(s);
     if (isNaN(n)) return 0;
     return Math.min(1, Math.max(0, n > 1 ? n / 100 : n));
-  }
-
-  /**
-   * Fetch raw prediction with advice for Smart Coupon strategy.
-   * Cached 24 hours in Redis to minimize API calls.
-   */
-  async getPredictionWithAdvice(apiFixtureId: number): Promise<ApiPredictionWithAdvice | null> {
-    const cacheKey = `prediction:advice:${apiFixtureId}`;
-    const cached = await this.cacheManager.get<ApiPredictionWithAdvice>(cacheKey);
-    if (cached) return cached;
-
-    const apiKey = await this.getApiKey();
-    if (!apiKey) return null;
-
-    try {
-      const res = await fetch(`${API_BASE}/predictions?fixture=${apiFixtureId}`, {
-        headers: { 'x-apisports-key': apiKey },
-      });
-      if (!res.ok) return null;
-
-      const data = await res.json();
-      const response = data?.response?.[0];
-      if (!response?.predictions) return null;
-
-      const pred = response.predictions as Record<string, unknown>;
-      const advice = (pred.advice as string) || '';
-      const percent = (pred.percent as Record<string, string>) || {};
-      const winner = pred.winner as Record<string, string> | undefined;
-
-      const result: ApiPredictionWithAdvice = {
-        advice,
-        percent: {
-          home: percent.home || winner?.home || '0',
-          draw: percent.draw || winner?.draw || '0',
-          away: percent.away || winner?.away || '0',
-        },
-        winner: winner ? { name: winner.name || '' } : undefined,
-      };
-
-      await this.cacheManager.set(cacheKey, result, PREDICTIONS_CACHE_TTL * 1000);
-      return result;
-    } catch (err: any) {
-      this.logger.warn(`Failed to fetch prediction advice for fixture ${apiFixtureId}: ${err?.message}`);
-      return null;
-    }
   }
 
   /**

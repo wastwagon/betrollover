@@ -31,7 +31,6 @@ async function checkStats() {
             { name: "Duplicate Purchase Check", sql: "SELECT user_id, accumulator_id, count(*), sum(purchase_price) FROM user_purchased_picks GROUP BY user_id, accumulator_id HAVING count(*) > 1 LIMIT 10;" },
             { name: "Duplicate Picks Check", sql: "SELECT title, user_id, count(*) FROM accumulator_tickets GROUP BY title, user_id HAVING count(*) > 1 LIMIT 10;" },
             { name: "Table Constraints Check", sql: "SELECT conname, contype FROM pg_constraint WHERE conrelid = 'user_purchased_picks'::regclass;" },
-            { name: "Smart Coupons Total", sql: "SELECT count(*) as count FROM smart_coupons;" },
             { name: "Recent Escrow (Held)", sql: "SELECT id, amount, status, created_at FROM escrow_funds WHERE status = 'held' ORDER BY created_at DESC LIMIT 5;" },
             { name: "Recent Purchases", sql: "SELECT id, purchase_price, purchased_at FROM user_purchased_picks ORDER BY purchased_at DESC LIMIT 5;" }
         ];

@@ -6,7 +6,6 @@ import { FootballSyncService } from './football-sync.service';
 import { OddsSyncService } from './odds-sync.service';
 import { SettlementService } from '../accumulators/settlement.service';
 import { PredictionEngineService } from '../predictions/prediction-engine.service';
-import { SmartCouponService } from '../coupons/smart-coupon.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Fixture } from './entities/fixture.entity';
@@ -35,8 +34,6 @@ export class FixtureSchedulerService {
     private settlementService: SettlementService,
     @Inject(forwardRef(() => PredictionEngineService))
     private predictionEngine: PredictionEngineService,
-    @Inject(forwardRef(() => SmartCouponService))
-    private smartCouponService: SmartCouponService,
     @InjectRepository(Fixture)
     private fixtureRepo: Repository<Fixture>,
     @InjectRepository(FixtureArchive)
@@ -410,26 +407,12 @@ export class FixtureSchedulerService {
     this.logger.debug('Running periodic settlement check...');
     try {
       const result = await this.settlementService.runSettlement();
-      if (result.smartCouponsSettled > 0 || result.ticketsSettled > 0) {
-        this.logger.log(`Periodic settlement: ${result.smartCouponsSettled} coupons, ${result.ticketsSettled} tickets settled`);
+      if (result.ticketsSettled > 0) {
+        this.logger.log(`Periodic settlement: ${result.ticketsSettled} tickets settled`);
       }
     } catch (error: any) {
       this.logger.error('Error in periodic settlement', error);
     }
   }
 
-  /**
-   * Daily Smart Coupon generation (runs at 6:30 AM after fixture sync)
-   */
-  @Cron('30 6 * * *')
-  async handleDailySmartCouponGeneration() {
-    if (!this.isSchedulingEnabled()) return;
-    this.logger.log('Running scheduled daily Smart Coupon generation...');
-    try {
-      const result = await this.smartCouponService.generateCoupons();
-      this.logger.log(`Smart Coupon generation completed: ${result.length} coupons`);
-    } catch (error: any) {
-      this.logger.error('Error in Smart Coupon generation', error);
-    }
-  }
 }

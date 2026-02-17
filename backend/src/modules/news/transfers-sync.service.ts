@@ -167,7 +167,7 @@ export class TransfersSyncService {
   }
 
   /** Runs daily at 6 AM - syncs real transfers from API-Football */
-  @Cron('0 6 * * *')
+  @Cron('15 6 * * *')
   async handleDailySync(): Promise<void> {
     const result = await this.sync();
     if (result.added > 0) {

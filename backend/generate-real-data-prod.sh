@@ -23,12 +23,9 @@ export POSTGRES_PASSWORD=$REMOTE_DB_PASSWORD
 export POSTGRES_DB=$REMOTE_DB_NAME
 export NODE_ENV=production
 
-# Run the generation scripts
+# Run the generation script
 echo "🚀 Generating Artificial Intelligence (AI) Predictions..."
 npx ts-node -r tsconfig-paths/register scripts/generate-predictions.ts
-
-echo "🚀 Generating Smart Coupons..."
-npx ts-node -r tsconfig-paths/register scripts/generate-coupons.ts
 
 # Kill tunnel
 echo "🛑 Closing tunnel..."

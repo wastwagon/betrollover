@@ -280,22 +280,22 @@ export function PickCard({
             </div>
           )}
 
-          {/* Action Button - purchased or viewOnly: View Details; else purchase */}
+          {/* Action Button - purchased, viewOnly, or free: View; else purchase */}
           <div className="mt-auto pt-3 border-t border-[var(--border)]">
-            {isPurchased || viewOnly ? (
+            {isPurchased || viewOnly || isFree ? (
               detailsHref ? (
                 <Link
                   href={detailsHref}
                   className="block w-full px-3 py-2.5 rounded-xl font-semibold bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-sm text-center transition-all duration-200"
                 >
-                  View Details
+                  View
                 </Link>
               ) : (
                 <button
                   onClick={handleViewDetails}
                   className="w-full px-3 py-2.5 rounded-xl font-semibold bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-sm transition-all duration-200"
                 >
-                  View Details
+                  View
                 </button>
               )
             ) : canPurchase ? (
@@ -304,7 +304,7 @@ export function PickCard({
                 disabled={purchasing}
                 className="w-full px-3 py-2.5 rounded-xl font-semibold bg-[var(--accent)] hover:bg-amber-600 text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
-                {purchasing ? 'Processing...' : price === 0 ? 'Get Free' : 'Purchase'}
+                {purchasing ? 'Processing...' : 'Purchase'}
               </button>
             ) : (
               <Link
@@ -414,8 +414,8 @@ export function PickCard({
                 </ul>
               </div>
 
-              {/* Purchase Button in Modal */}
-              {!isPurchased && (
+              {/* Purchase Button in Modal - only for paid picks */}
+              {!isPurchased && !isFree && (
                 <div className="mt-6 pt-6 border-t border-[var(--border)]">
                   {canPurchase ? (
                     <button
@@ -426,7 +426,7 @@ export function PickCard({
                       disabled={purchasing}
                       className="w-full px-6 py-3 rounded-lg font-semibold bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
-                      {purchasing ? 'Processing...' : price === 0 ? 'Get Free Coupon' : `Purchase for GHS ${Number(price).toFixed(2)}`}
+                      {purchasing ? 'Processing...' : `Purchase for GHS ${Number(price).toFixed(2)}`}
                     </button>
                   ) : (
                     <Link

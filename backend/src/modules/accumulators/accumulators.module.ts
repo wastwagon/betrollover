@@ -16,8 +16,6 @@ import { TipsterModule } from '../tipster/tipster.module';
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { User } from '../users/entities/user.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
-import { SmartCoupon } from '../coupons/entities/smart-coupon.entity';
-
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -29,7 +27,6 @@ import { SmartCoupon } from '../coupons/entities/smart-coupon.entity';
       Fixture,
       User,
       ApiSettings,
-      SmartCoupon,
     ]),
     WalletModule,
     NotificationsModule,
