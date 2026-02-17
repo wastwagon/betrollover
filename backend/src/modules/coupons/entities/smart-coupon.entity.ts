@@ -16,6 +16,7 @@ export interface SmartCouponFixture {
   confidence: number;
   odds: number;
   status?: string;
+  matchStatus?: string;
   matchDate?: Date;
   homeScore?: number | null;
   awayScore?: number | null;

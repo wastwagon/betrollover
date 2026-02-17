@@ -341,7 +341,7 @@ export class SmartCouponService {
             matchDate: live.matchDate,
             homeScore: live.homeScore,
             awayScore: live.awayScore,
-            status: live.status, // e.g. '1H', 'FT', 'NS'
+            matchStatus: live.status, // e.g. '1H', 'FT', 'NS'
           };
         }
         return cf;
