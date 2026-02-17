@@ -10,6 +10,7 @@ const navLinks = [
   { href: '/tipsters', label: 'Tipsters' },
   { href: '/leaderboard', label: 'Leaderboard' },
   { href: '/news', label: 'News' },
+  { href: '/resources', label: 'Resource Centre' },
 ];
 
 export function SiteHeader() {
@@ -57,8 +58,8 @@ export function SiteHeader() {
                   key={link.href}
                   href={link.href}
                   className={`font-medium transition-colors ${isActive
-                      ? 'text-[var(--primary)]'
-                      : 'text-[var(--text-muted)] hover:text-[var(--primary)]'
+                    ? 'text-[var(--primary)]'
+                    : 'text-[var(--text-muted)] hover:text-[var(--primary)]'
                     }`}
                 >
                   <span className={isActive ? 'border-b-2 border-[var(--primary)] pb-0.5' : ''}>
@@ -136,8 +137,8 @@ export function SiteHeader() {
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
                     className={`px-4 py-3 rounded-lg font-medium ${isActive
-                        ? 'text-[var(--primary)] bg-[var(--primary-light)]'
-                        : 'text-[var(--text)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)]'
+                      ? 'text-[var(--primary)] bg-[var(--primary-light)]'
+                      : 'text-[var(--text)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)]'
                       }`}
                   >
                     {link.label}

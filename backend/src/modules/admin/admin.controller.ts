@@ -32,7 +32,7 @@ export class AdminController {
     private readonly resourcesService: ResourcesService,
     private readonly adsService: AdsService,
     private readonly dataSource: DataSource,
-  ) {}
+  ) { }
 
   @Get('stats')
   async getStats(@CurrentUser() user: User) {
@@ -105,7 +105,18 @@ export class AdminController {
     } catch {
       // admin_actions table may not exist yet
     }
+    try {
+      this.predictionMarketplaceSync.syncAllPendingToMarketplace();
+    } catch (e) {
+      // this.logger.error('Marketplace sync failed after generation', e); // Assuming logger is available or needs to be injected
+    }
     return result;
+  }
+
+  @Post('news/sync')
+  async syncNews(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.transfersSyncService.sync();
   }
 
   @Get('predictions/today')
