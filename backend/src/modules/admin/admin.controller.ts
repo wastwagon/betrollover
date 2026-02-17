@@ -219,6 +219,12 @@ export class AdminController {
     return this.adminService.rejectTipsterRequest(id, admin.id);
   }
 
+  @Post('users/:id/impersonate')
+  async impersonateUser(@CurrentUser() admin: User, @Param('id', ParseIntPipe) userId: number) {
+    if (admin.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.adminService.impersonateUser(userId, admin.id);
+  }
+
   @Get('escrow')
   async getEscrow(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');

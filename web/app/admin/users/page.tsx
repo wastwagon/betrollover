@@ -118,6 +118,28 @@ export default function AdminUsersPage() {
     }
   };
 
+  const impersonateUser = async (userId: number) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${API_URL}/admin/users/${userId}/impersonate`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Store the new token
+        localStorage.setItem('token', data.token);
+        // Redirect to dashboard
+        router.push('/dashboard');
+      }
+    } catch (error) {
+      console.error('Impersonation failed:', error);
+    }
+  };
+
   const totalPages = Math.ceil(total / 20);
 
   return (
@@ -236,11 +258,10 @@ export default function AdminUsersPage() {
                         </select>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                          u.status === 'active' 
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200' 
-                            : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
-                        }`}>
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${u.status === 'active'
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200'
+                          : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
+                          }`}>
                           {u.status}
                         </span>
                       </td>
@@ -248,24 +269,40 @@ export default function AdminUsersPage() {
                         {new Date(u.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {u.status === 'active' && u.role !== 'admin' && (
-                          <button
-                            onClick={() => updateUser(u.id, { status: 'suspended' })}
-                            disabled={updating === u.id}
-                            className="text-sm font-medium text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
-                          >
-                            Suspend
-                          </button>
-                        )}
-                        {u.status === 'suspended' && (
-                          <button
-                            onClick={() => updateUser(u.id, { status: 'active' })}
-                            disabled={updating === u.id}
-                            className="text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors"
-                          >
-                            Activate
-                          </button>
-                        )}
+                        <div className="flex items-center gap-3">
+                          {/* Login as Tipster icon */}
+                          {u.role === 'tipster' && (
+                            <button
+                              onClick={() => impersonateUser(u.id)}
+                              title="Login as this tipster"
+                              className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                              </svg>
+                            </button>
+                          )}
+
+                          {/* Existing suspend/activate buttons */}
+                          {u.status === 'active' && u.role !== 'admin' && (
+                            <button
+                              onClick={() => updateUser(u.id, { status: 'suspended' })}
+                              disabled={updating === u.id}
+                              className="text-sm font-medium text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
+                            >
+                              Suspend
+                            </button>
+                          )}
+                          {u.status === 'suspended' && (
+                            <button
+                              onClick={() => updateUser(u.id, { status: 'active' })}
+                              disabled={updating === u.id}
+                              className="text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors"
+                            >
+                              Activate
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

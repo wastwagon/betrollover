@@ -1,6 +1,7 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, DataSource, Between } from 'typeorm';
+import { JwtService } from '@nestjs/jwt';
 import { User, UserRole, UserStatus } from '../users/entities/user.entity';
 import { UserWallet } from '../wallet/entities/user-wallet.entity';
 import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity';
@@ -60,8 +61,9 @@ export class AdminService {
     private contentService: ContentService,
     private emailService: EmailService,
     private walletService: WalletService,
+    private jwtService: JwtService,
     private dataSource: DataSource,
-  ) {}
+  ) { }
 
   async getStats() {
     // All users (except admin) are tipsters - merged model
@@ -174,7 +176,7 @@ export class AdminService {
     // Check both database and environment variable for backward compatibility
     let apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
     const envApiKey = process.env.API_SPORTS_KEY;
-    
+
     // If no DB record exists but env var is set, create one
     if (!apiSettings && envApiKey) {
       apiSettings = this.apiSettingsRepo.create({
@@ -185,10 +187,10 @@ export class AdminService {
       });
       await this.apiSettingsRepo.save(apiSettings);
     }
-    
+
     // Use DB value if available, otherwise fall back to env
     const apiKey = apiSettings?.apiSportsKey || envApiKey || '';
-    
+
     return {
       apiSportsConfigured: !!(apiKey && apiKey.trim().length > 0),
       apiSportsKey: apiSettings?.apiSportsKey || null,
@@ -217,20 +219,20 @@ export class AdminService {
 
   async updateApiSportsKey(key: string): Promise<ApiSettings> {
     let apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
-    
+
     if (!apiSettings) {
       apiSettings = this.apiSettingsRepo.create({ id: 1 });
     }
-    
+
     apiSettings.apiSportsKey = key.trim();
     apiSettings.isActive = !!key.trim();
-    
+
     return await this.apiSettingsRepo.save(apiSettings);
   }
 
   async testApiSportsConnection(key?: string): Promise<{ success: boolean; message: string; usage?: { used: number; limit: number } }> {
     const apiKey = key || (await this.apiSettingsRepo.findOne({ where: { id: 1 } }))?.apiSportsKey || process.env.API_SPORTS_KEY || '';
-    
+
     if (!apiKey) {
       return { success: false, message: 'API key not configured' };
     }
@@ -243,22 +245,22 @@ export class AdminService {
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        return { 
-          success: false, 
-          message: errorData.errors?.[0]?.message || `API returned status ${res.status}` 
+        return {
+          success: false,
+          message: errorData.errors?.[0]?.message || `API returned status ${res.status}`
         };
       }
 
       const data = await res.json();
-      
+
       // Check for rate limit headers
       const rateLimitRemaining = res.headers.get('x-ratelimit-requests-remaining');
       const rateLimitLimit = res.headers.get('x-ratelimit-requests-limit');
-      
+
       // Also check response body for limit info (API-Sports includes it in response)
       let used = 0;
       let limit = 0;
-      
+
       if (data?.response?.requests) {
         limit = parseInt(String(data.response.requests.limit_day || '0'), 10);
         used = parseInt(String(data.response.requests.current || '0'), 10);
@@ -268,7 +270,7 @@ export class AdminService {
         const remaining = parseInt(String(rateLimitRemaining), 10) || 0;
         used = limit - remaining;
       }
-      
+
       // Update usage in database
       const apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
       if (apiSettings) {
@@ -289,16 +291,16 @@ export class AdminService {
         } : undefined,
       };
     } catch (error: any) {
-      return { 
-        success: false, 
-        message: error.message || 'Failed to connect to API-Sports' 
+      return {
+        success: false,
+        message: error.message || 'Failed to connect to API-Sports'
       };
     }
   }
 
   async getApiSportsUsage(): Promise<{ used: number; limit: number; remaining: number } | null> {
     const apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
-    
+
     if (!apiSettings || !apiSettings.apiSportsKey) {
       return null;
     }
@@ -456,7 +458,7 @@ export class AdminService {
       link: '/create-pick',
       icon: 'check',
       sendEmail: true,
-    }).catch(() => {});
+    }).catch(() => { });
     return { ok: true };
   }
 
@@ -583,7 +585,7 @@ export class AdminService {
       link: '/dashboard',
       icon: 'x',
       sendEmail: true,
-    }).catch(() => {});
+    }).catch(() => { });
     return { ok: true };
   }
 
@@ -736,5 +738,37 @@ export class AdminService {
     wallet.status = freeze ? 'frozen' : 'active';
     await this.walletsRepo.save(wallet);
     return wallet;
+  }
+
+  /** Admin impersonation - allows admin to login as any user */
+  async impersonateUser(userId: number, adminId: number) {
+    const user = await this.usersRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    // Log the impersonation action
+    try {
+      await this.dataSource.query(
+        `INSERT INTO admin_actions (action_type, entity_type, entity_id, admin_user, notes) 
+         VALUES ($1, $2, $3, $4, $5)`,
+        ['impersonate', 'user', userId, adminId, `Impersonated user ${user.email || user.username}`]
+      );
+    } catch {
+      // admin_actions table may not exist yet
+    }
+
+    // Generate JWT token for the target user
+    const payload = { sub: user.id, email: user.email, role: user.role };
+    const token = this.jwtService.sign(payload);
+
+    return {
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        displayName: user.displayName,
+        role: user.role
+      }
+    };
   }
 }

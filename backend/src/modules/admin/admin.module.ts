@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
 import { User } from '../users/entities/user.entity';
 import { UserWallet } from '../wallet/entities/user-wallet.entity';
 import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity';
@@ -60,6 +61,10 @@ import { Prediction } from '../predictions/entities/prediction.entity';
       VisitorSession,
       AnalyticsDaily,
     ]),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || 'betrollover-secret-key-change-in-production',
+      signOptions: { expiresIn: '7d' },
+    }),
     AccumulatorsModule,
     NotificationsModule,
     ContentModule,
@@ -74,4 +79,4 @@ import { Prediction } from '../predictions/entities/prediction.entity';
   providers: [AdminService, AnalyticsService, AnalyticsTrackingService, MigrationRunnerService, SeedRunnerService],
   exports: [MigrationRunnerService, SeedRunnerService],
 })
-export class AdminModule {}
+export class AdminModule { }
