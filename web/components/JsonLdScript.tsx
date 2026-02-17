@@ -35,10 +35,15 @@ const jsonLd = [
 ];
 
 export function JsonLdScript() {
+  const graphData = {
+    '@context': 'https://schema.org',
+    '@graph': jsonLd.map(({ '@context': _, ...rest }) => rest),
+  };
+
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(graphData) }}
     />
   );
 }

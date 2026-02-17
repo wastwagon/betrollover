@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-export type NewsCategory = 'news' | 'transfer_rumour' | 'confirmed_transfer' | 'gossip';
+export type NewsCategory = 'news' | 'transfer_rumour' | 'confirmed_transfer' | 'gossip' | 'injury';
 
 @Entity('news_articles')
 export class NewsArticle {

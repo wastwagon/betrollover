@@ -47,7 +47,7 @@ export class TransfersSyncService {
     private newsRepo: Repository<NewsArticle>,
     @InjectRepository(ApiSettings)
     private apiSettingsRepo: Repository<ApiSettings>,
-  ) {}
+  ) { }
 
   private async getKey(): Promise<string> {
     try {
@@ -69,8 +69,8 @@ export class TransfersSyncService {
       .slice(0, 90);
   }
 
-  private async fetchTransfersForTeam(teamId: number, season: number, headers: Record<string, string>): Promise<Transfer[]> {
-    const url = `${API_BASE}/transfers?team=${teamId}&season=${season}`;
+  private async fetchTransfersForTeam(teamId: number, headers: Record<string, string>): Promise<Transfer[]> {
+    const url = `${API_BASE}/transfers?team=${teamId}`;
     const res = await fetch(url, { headers });
     const data = (await res.json()) as TransfersResponse;
     if (data.errors && Object.keys(data.errors).length > 0) {
@@ -97,68 +97,69 @@ export class TransfersSyncService {
     }
 
     const headers = { 'x-apisports-key': key };
-    const currentYear = new Date().getFullYear();
-    const currentSeason = new Date().getMonth() >= 6 ? currentYear : currentYear - 1;
-    const seasons = [currentSeason, currentSeason - 1]; // Current + previous season
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
     const seen = new Set<string>();
     let added = 0;
     const errors: string[] = [];
 
-    this.logger.log(`Syncing transfers for seasons ${seasons.join(', ')}...`);
+    this.logger.log(`Syncing transfers for major teams (filtering for matches after ${oneYearAgo.toISOString().split('T')[0]})...`);
 
-    for (const season of seasons) {
-      for (const teamId of MAJOR_TEAM_IDS) {
-        try {
-          const transfers = await this.fetchTransfersForTeam(teamId, season, headers);
-          for (const t of transfers) {
-            const dedupKey = `${t.player.id}-${t.teams.out.id}-${t.teams.in.id}-${t.date}`;
-            if (seen.has(dedupKey)) continue;
-            seen.add(dedupKey);
+    for (const teamId of MAJOR_TEAM_IDS) {
+      try {
+        const transfers = await this.fetchTransfersForTeam(teamId, headers);
+        for (const t of transfers) {
+          const publishedAt = t.date ? new Date(t.date) : new Date();
+          if (isNaN(publishedAt.getTime())) continue;
 
-            const player = t.player.name;
-            const fromTeam = t.teams.out.name;
-            const toTeam = t.teams.in.name;
-            const fee = t.type || 'Undisclosed';
-            const dateStr = t.date;
+          // Filter: only include transfers from the last 12 months
+          if (publishedAt < oneYearAgo) continue;
 
-            const slug = this.slugify(`${player}-${toTeam}-${dateStr}`);
-            const existing = await this.newsRepo.findOne({ where: { slug } });
-            if (existing) continue;
+          const dedupKey = `${t.player.id}-${t.teams.out.id}-${t.teams.in.id}-${t.date}`;
+          if (seen.has(dedupKey)) continue;
+          seen.add(dedupKey);
 
-            const title = `${player} completes move from ${fromTeam} to ${toTeam}`;
-            const excerpt =
-              fee !== 'N/A' && fee !== 'Free' && fee
-                ? `The transfer has been confirmed. Reported fee: ${fee}.`
-                : 'The transfer has been confirmed.';
-            const content =
-              fee !== 'N/A' && fee !== 'Free' && fee
-                ? `${player} has completed a move from ${fromTeam} to ${toTeam}. The transfer was confirmed on ${dateStr}. The transfer fee is reported as ${fee}.`
-                : `${player} has completed a move from ${fromTeam} to ${toTeam}. The transfer was confirmed on ${dateStr}.`;
+          const player = t.player.name;
+          const fromTeam = t.teams.out.name;
+          const toTeam = t.teams.in.name;
+          const fee = t.type || 'Undisclosed';
+          const dateStr = t.date;
 
-            const publishedAt = dateStr ? new Date(dateStr) : new Date();
-            if (isNaN(publishedAt.getTime())) continue;
+          const slug = this.slugify(`${player}-${toTeam}-${dateStr}`);
+          const existing = await this.newsRepo.findOne({ where: { slug } });
+          if (existing) continue;
 
-            await this.newsRepo.save(
-              this.newsRepo.create({
-                slug,
-                title,
-                excerpt,
-                content,
-                category: 'confirmed_transfer',
-                featured: false,
-                metaDescription: title,
-                publishedAt,
-              }),
-            );
-            added++;
-          }
-        } catch (err: any) {
-          const msg = err?.message || String(err);
-          errors.push(`Team ${teamId} season ${season}: ${msg}`);
-          this.logger.warn(`Transfers sync team ${teamId}: ${msg}`);
+          const title = `${player} completes move from ${fromTeam} to ${toTeam}`;
+          const excerpt =
+            fee !== 'N/A' && fee !== 'Free' && fee
+              ? `The transfer has been confirmed. Reported fee: ${fee}.`
+              : 'The transfer has been confirmed.';
+          const content =
+            fee !== 'N/A' && fee !== 'Free' && fee
+              ? `${player} has completed a move from ${fromTeam} to ${toTeam}. The transfer was confirmed on ${dateStr}. The transfer fee is reported as ${fee}.`
+              : `${player} has completed a move from ${fromTeam} to ${toTeam}. The transfer was confirmed on ${dateStr}.`;
+
+          await this.newsRepo.save(
+            this.newsRepo.create({
+              slug,
+              title,
+              excerpt,
+              content,
+              category: 'confirmed_transfer',
+              featured: false,
+              metaDescription: title,
+              publishedAt,
+            }),
+          );
+          added++;
         }
-        await new Promise((r) => setTimeout(r, 350)); // rate limit
+      } catch (err: any) {
+        const msg = err?.message || String(err);
+        errors.push(`Team ${teamId}: ${msg}`);
+        this.logger.warn(`Transfers sync team ${teamId}: ${msg}`);
       }
+      await new Promise((r) => setTimeout(r, 350)); // rate limit
     }
 
     this.logger.log(`Transfers sync complete: ${added} new articles added`);

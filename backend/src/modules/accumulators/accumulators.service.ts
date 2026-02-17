@@ -321,6 +321,11 @@ export class AccumulatorsService {
       return !hasStartedFixture;
     });
 
+    return this.enrichWithTipsterMetadata(validTickets, rows);
+  }
+
+  /** Unified method to add tipster rankings, stats, and prices to tickets */
+  private async enrichWithTipsterMetadata(validTickets: AccumulatorTicket[], marketplaceRows: PickMarketplace[]) {
     // Get unique tipster IDs
     const tipsterIds = [...new Set(validTickets.map(t => t.userId))];
 
@@ -331,14 +336,14 @@ export class AccumulatorsService {
       // Use raw query for efficient aggregation instead of fetching all records
       const statsQuery = await this.ticketRepo
         .createQueryBuilder('ticket')
-        .select('ticket.userId', 'userId')
+        .select('ticket.user_id', 'userId')
         .addSelect('COUNT(*)', 'total')
         .addSelect('SUM(CASE WHEN ticket.result = :won THEN 1 ELSE 0 END)', 'won')
         .addSelect('SUM(CASE WHEN ticket.result = :lost THEN 1 ELSE 0 END)', 'lost')
-        .where('ticket.userId IN (:...tipsterIds)', { tipsterIds })
+        .where('ticket.user_id IN (:...tipsterIds)', { tipsterIds })
         .setParameter('won', 'won')
         .setParameter('lost', 'lost')
-        .groupBy('ticket.userId')
+        .groupBy('ticket.user_id')
         .getRawMany();
 
       // Calculate stats per tipster from aggregated results
@@ -382,9 +387,9 @@ export class AccumulatorsService {
     });
     const tipsterMap = new Map(tipsters.map(t => [t.id, t]));
 
-    // Create price map
-    const priceMap = new Map(rows.map(r => [r.accumulatorId, Number(r.price)]));
-    const purchaseCountMap = new Map(rows.map(r => [r.accumulatorId, r.purchaseCount || 0]));
+    // Create price & purchase count maps
+    const priceMap = new Map(marketplaceRows.map(r => [r.accumulatorId, Number(r.price)]));
+    const purchaseCountMap = new Map(marketplaceRows.map(r => [r.accumulatorId, r.purchaseCount || 0]));
 
     // Enrich tickets with tipster data
     return validTickets.map(ticket => {
@@ -448,7 +453,7 @@ export class AccumulatorsService {
   async getMarketplacePublic(limit = 4) {
     const rows = await this.marketplaceRepo.find({
       where: { status: 'active' },
-      select: ['accumulatorId', 'price'],
+      select: ['accumulatorId', 'price', 'purchaseCount'],
       order: { purchaseCount: 'DESC' },
       take: limit,
     });
@@ -462,8 +467,21 @@ export class AccumulatorsService {
       },
       relations: ['picks'],
     });
-    const priceMap = new Map(rows.map((r) => [r.accumulatorId, Number(r.price)]));
-    return tickets.map((t) => ({ ...t, price: priceMap.get(t.id) ?? 0 }));
+
+    const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
+
+    // Filter out coupons where any fixture has already started
+    const now = new Date();
+    const validTickets = enrichedTickets.filter(ticket => {
+      if (!ticket.picks || ticket.picks.length === 0) return false;
+      const hasStartedFixture = ticket.picks.some(pick => {
+        if (!pick.matchDate) return false;
+        return new Date(pick.matchDate) <= now;
+      });
+      return !hasStartedFixture;
+    });
+
+    return this.enrichWithTipsterMetadata(validTickets, rows);
   }
 
   async purchase(buyerId: number, accumulatorId: number) {

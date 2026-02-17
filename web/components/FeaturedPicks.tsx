@@ -12,13 +12,29 @@ interface Pick {
   odds?: number;
 }
 
+interface Tipster {
+  id: number;
+  displayName: string;
+  username: string;
+  winRate: number;
+  totalPicks: number;
+  wonPicks: number;
+  lostPicks: number;
+  rank: number;
+  avatarUrl?: string | null;
+}
+
 interface Accumulator {
   id: number;
   title: string;
   totalOdds: number;
   totalPicks: number;
   price: number;
+  status?: string;
+  result?: string;
   picks?: Pick[];
+  tipster?: Tipster | null;
+  createdAt?: string;
 }
 
 export function FeaturedPicks() {
@@ -50,10 +66,14 @@ export function FeaturedPicks() {
               totalPicks={a.totalPicks}
               totalOdds={a.totalOdds}
               price={a.price}
+              status={a.status}
+              result={a.result}
               picks={a.picks || []}
+              tipster={a.tipster}
+              createdAt={a.createdAt}
               viewOnly={true}
               detailsHref="/marketplace"
-              onPurchase={() => {}}
+              onPurchase={() => { }}
               purchasing={false}
             />
           ))}

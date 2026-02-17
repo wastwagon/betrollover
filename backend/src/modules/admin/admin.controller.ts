@@ -11,6 +11,7 @@ import { ResultTrackerService } from '../predictions/result-tracker.service';
 import { TipstersSetupService } from '../predictions/tipsters-setup.service';
 import { NewsService } from '../news/news.service';
 import { TransfersSyncService } from '../news/transfers-sync.service';
+import { InjuriesSyncService } from '../news/injuries-sync.service';
 import { ResourcesService } from '../resources/resources.service';
 import { AdsService } from '../ads/ads.service';
 import { User } from '../users/entities/user.entity';
@@ -29,6 +30,7 @@ export class AdminController {
     private readonly tipstersSetup: TipstersSetupService,
     private readonly newsService: NewsService,
     private readonly transfersSyncService: TransfersSyncService,
+    private readonly injuriesSyncService: InjuriesSyncService,
     private readonly resourcesService: ResourcesService,
     private readonly adsService: AdsService,
     private readonly dataSource: DataSource,
@@ -117,6 +119,12 @@ export class AdminController {
   async syncNews(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.transfersSyncService.sync();
+  }
+
+  @Post('news/sync/injuries')
+  async syncInjuries(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.injuriesSyncService.sync();
   }
 
   @Get('predictions/today')

@@ -111,10 +111,11 @@ async function bootstrap() {
     // Development: Allow localhost with specific ports
     allowedOrigins.push(
       'http://localhost:6000',
+      'http://localhost:6001',
       'http://localhost:6002',
       'http://localhost:3000',
       'http://localhost:3001',
-      /^https?:\/\/localhost:(6000|6002|3000|3001|5173|8080)$/,
+      /^https?:\/\/localhost:(6000|6001|6002|3000|3001|5173|8080)$/,
     );
     if (process.env.APP_URL) {
       allowedOrigins.push(process.env.APP_URL.replace(/\/$/, ''));

@@ -8,14 +8,14 @@ export class NewsService {
   constructor(
     @InjectRepository(NewsArticle)
     private repo: Repository<NewsArticle>,
-  ) {}
+  ) { }
 
   async findAll(params?: { category?: NewsCategory; limit?: number; offset?: number; featured?: boolean }) {
     const qb = this.repo
       .createQueryBuilder('a')
-      .where('a.published_at IS NOT NULL')
-      .andWhere('a.published_at <= :now', { now: new Date() })
-      .orderBy('a.published_at', 'DESC');
+      .where('a.publishedAt IS NOT NULL')
+      .andWhere('a.publishedAt <= :now', { now: new Date() })
+      .orderBy('a.publishedAt', 'DESC');
 
     if (params?.category) {
       qb.andWhere('a.category = :category', { category: params.category });
