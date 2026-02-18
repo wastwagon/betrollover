@@ -225,15 +225,16 @@ export default function TipsterProfilePage() {
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <SiteHeader />
-      <main className="max-w-6xl mx-auto px-4 py-8 md:py-12">
-        <div className="mb-8">
+      <main className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
+        <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
           <Link href="/tipsters" className="text-sm text-[var(--primary)] hover:underline mb-4 inline-block">
             ← Back to Tipsters
           </Link>
 
-          <div className="flex flex-col sm:flex-row gap-6 items-start">
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <div className="w-20 h-20 rounded-full overflow-hidden bg-[var(--card)] border border-[var(--border)]">
+          <div className="rounded-2xl p-6 md:p-8 mb-8 bg-gradient-to-br from-emerald-50 via-green-50/90 to-teal-50 dark:from-emerald-900/20 dark:via-green-900/15 dark:to-teal-900/20 border border-emerald-200/60 dark:border-emerald-700/40 shadow-lg shadow-emerald-500/5">
+            <div className="flex flex-col sm:flex-row gap-6 items-start">
+              <div className="flex flex-col items-center gap-2 flex-shrink-0">
+                <div className="w-20 h-20 rounded-full overflow-hidden bg-white dark:bg-gray-800 border-2 border-emerald-200 dark:border-emerald-600 shadow-md">
                 {tipster.avatar_url && !avatarError ? (
                   <img
                     src={tipster.avatar_url}
@@ -273,25 +274,25 @@ export default function TipsterProfilePage() {
               </div>
               {tipster.bio && <p className="text-[var(--text-muted)] mb-4">{tipster.bio}</p>}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 mb-4">
-                <div className="bg-[var(--card)] rounded-lg p-3 border border-[var(--border)]">
+                <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
                   <span className="text-xs uppercase text-[var(--text-muted)]">ROI</span>
                   <p className={`font-bold text-lg ${roiColor}`} title={!hasSettledPicks && tipster.total_predictions ? 'Stats update when picks settle' : undefined}>{roiDisplay}</p>
                 </div>
-                <div className="bg-[var(--card)] rounded-lg p-3 border border-[var(--border)]">
+                <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
                   <span className="text-xs uppercase text-[var(--text-muted)]">Win Rate</span>
                   <p className="font-bold text-lg text-[var(--text)]" title={!hasSettledPicks && tipster.total_predictions ? 'Stats update when picks settle' : undefined}>{winRateDisplay}</p>
                 </div>
-                <div className="bg-[var(--card)] rounded-lg p-3 border border-[var(--border)]">
+                <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
                   <span className="text-xs uppercase text-[var(--text-muted)]">Streak</span>
                   <p className="font-bold text-lg text-[var(--text)]">{streakDisplay}</p>
                 </div>
-                <div className="bg-[var(--card)] rounded-lg p-3 border border-[var(--border)]">
+                <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
                   <span className="text-xs uppercase text-[var(--text-muted)]">Won / Lost</span>
                   <p className="font-bold text-lg text-[var(--text)]">
                     {tipster.total_wins}W / {tipster.total_losses}L
                   </p>
                 </div>
-                <div className="bg-[var(--card)] rounded-lg p-3 border border-[var(--border)]">
+                <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
                   <span className="text-xs uppercase text-[var(--text-muted)]">Best Streak</span>
                   <p className="font-bold text-lg text-[var(--text)]">
                     {tipster.best_streak != null && tipster.best_streak > 0
@@ -299,7 +300,7 @@ export default function TipsterProfilePage() {
                       : '—'}
                   </p>
                 </div>
-                <div className="bg-[var(--card)] rounded-lg p-3 border border-[var(--border)]">
+                <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
                   <span className="text-xs uppercase text-[var(--text-muted)]">Predictions</span>
                   <p className="font-bold text-lg text-[var(--text)]">{tipster.total_predictions}</p>
                 </div>
@@ -308,9 +309,9 @@ export default function TipsterProfilePage() {
           </div>
         </div>
 
-        <section className="mb-12">
+        <section className="max-w-6xl mx-auto px-4 mb-12">
           <div className="flex items-center gap-2 mb-4">
-            <div className="inline-flex p-1 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+            <div className="inline-flex p-1 rounded-xl bg-white/80 dark:bg-gray-800/80 border border-emerald-200/60 dark:border-emerald-700/40 shadow-sm">
               <button
                 onClick={() => setCouponFilter('active')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -408,6 +409,7 @@ export default function TipsterProfilePage() {
             </>
           )}
         </section>
+        </div>
       </main>
       <AppFooter />
     </div>
