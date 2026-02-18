@@ -79,7 +79,6 @@ export default function MarketplacePage() {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
   const [sortBy, setSortBy] = useState<SortBy>('newest');
-  const [reacting, setReacting] = useState<number | null>(null);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
 
   const filteredAndSortedPicks = useMemo(() => {
@@ -145,51 +144,6 @@ export default function MarketplacePage() {
 
   const recordView = (id: number) => {
     fetch(`${API_URL}/accumulators/${id}/view`, { method: 'POST' }).catch(() => {});
-  };
-
-  const handleReact = async (pick: Accumulator) => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login?redirect=/marketplace');
-      return;
-    }
-    const prevReacted = !!pick.hasReacted;
-    const prevCount = pick.reactionCount ?? 0;
-    const newReacted = !prevReacted;
-    const newCount = prevCount + (newReacted ? 1 : -1);
-    // Optimistic update: show new state immediately
-    setPicks((prev) =>
-      prev.map((p) =>
-        p.id === pick.id ? { ...p, hasReacted: newReacted, reactionCount: Math.max(0, newCount) } : p
-      )
-    );
-    setReacting(pick.id);
-    try {
-      const res = await fetch(`${API_URL}/accumulators/${pick.id}/${prevReacted ? 'unreact' : 'react'}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) {
-        // Revert on failure
-        setPicks((prev) =>
-          prev.map((p) =>
-            p.id === pick.id ? { ...p, hasReacted: prevReacted, reactionCount: prevCount } : p
-          )
-        );
-        showError(new Error('Could not update reaction. Try again.'));
-      } else {
-        showSuccess(newReacted ? 'Liked!' : 'Unliked');
-      }
-    } catch {
-      setPicks((prev) =>
-        prev.map((p) =>
-          p.id === pick.id ? { ...p, hasReacted: prevReacted, reactionCount: prevCount } : p
-        )
-      );
-      showError(new Error('Could not update reaction. Try again.'));
-    } finally {
-      setReacting(null);
-    }
   };
 
   const loadMore = async () => {
@@ -371,10 +325,6 @@ export default function MarketplacePage() {
                     purchasing={purchasing === a.id}
                     showUnveil={unveilCouponId === a.id}
                     onUnveilClose={() => setUnveilCouponId(null)}
-                    reactionCount={a.reactionCount ?? 0}
-                    hasReacted={a.hasReacted ?? false}
-                    reacting={reacting === a.id}
-                    onReact={currentUserId ? () => handleReact(a) : undefined}
                     onView={() => recordView(a.id)}
                     createdAt={a.createdAt}
                   />
