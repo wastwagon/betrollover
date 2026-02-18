@@ -10,8 +10,16 @@ async function bootstrap() {
 
     try {
         logger.log('Starting manual AI Prediction generation...');
-        const result = await service.runNow();
-        logger.log(`Success! ${result.message}`);
+        const predictions = await service.generateDailyPredictionsForAllTipsters();
+        logger.log(`Generated ${predictions.length} coupons (2-pick accas).`);
+        if (predictions.length > 0) {
+            logger.log('Tipsters that got a coupon:');
+            predictions.forEach((p) => {
+                logger.log(`  - ${p.tipsterDisplayName} (${p.tipsterUsername}): combined odds ${p.combinedOdds?.toFixed(2)}, source: ${p.source}`);
+            });
+        } else {
+            logger.warn('No coupons generated. Check: fixtures with odds in next 7 days, API-Football key, and generation logs.');
+        }
     } catch (error) {
         logger.error('Error generating predictions', error);
     } finally {

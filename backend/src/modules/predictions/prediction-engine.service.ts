@@ -317,6 +317,17 @@ export class PredictionEngineService {
     return results;
   }
 
+  /** League name matches config focus: exact includes, or normalized (no spaces) so e.g. "La Liga" matches "LaLiga". */
+  private leagueMatchesFocus(fixtureLeagueName: string | null, configLeague: string): boolean {
+    if (!fixtureLeagueName) return false;
+    const f = fixtureLeagueName.toLowerCase().trim();
+    const c = configLeague.toLowerCase().trim();
+    if (f.includes(c)) return true;
+    const fNorm = f.replace(/\s+/g, '');
+    const cNorm = c.replace(/\s+/g, '');
+    return fNorm.includes(cNorm) || cNorm.includes(fNorm);
+  }
+
   /** Weekend = Sat(6), Sun(0). Midweek = Tue(2), Wed(3), Thu(4). */
   private matchesFixtureDays(matchDate: Date, fixtureDays?: 'weekend' | 'midweek'): boolean {
     if (!fixtureDays) return true;
@@ -335,15 +346,14 @@ export class PredictionEngineService {
     // When API data available, use min_api_confidence (or 0.52 fallback); else min_win_probability
     const minConf = personality.min_api_confidence ?? Math.min(0.52, personality.min_win_probability);
     const minProb = personality.min_win_probability;
-    const evMin = Math.max(0, personality.min_expected_value - 0.05); // Slight relaxation for borderline EV
+    const evMin = Math.max(0, personality.min_expected_value - 0.08); // Relax so more tipsters see same value pool as Gambler
 
     return fixturePredictions.filter((fp) => {
       if (!this.matchesFixtureDays(fp.matchDate, personality.fixture_days)) return false;
 
-      if (!hasAll && leagues.length > 0 && fp.leagueName) {
-        const match = leagues.some(
-          (l) => fp.leagueName?.toLowerCase().includes(l.toLowerCase()),
-        );
+      if (!hasAll && leagues.length > 0) {
+        if (!fp.leagueName) return false;
+        const match = leagues.some((l) => this.leagueMatchesFocus(fp.leagueName, l));
         if (!match) return false;
       }
 
@@ -399,11 +409,6 @@ export class PredictionEngineService {
         const leg1 = fixtures[i];
         const leg2 = fixtures[j];
 
-        const d1 = new Date(leg1.matchDate).getTime();
-        const d2 = new Date(leg2.matchDate).getTime();
-        const sameDay = Math.abs((d1 - d2) / (24 * 60 * 60 * 1000)) < 1;
-        if (personality.risk_level === 'conservative' && sameDay) continue;
-
         const combinedOdds = leg1.odds * leg2.odds;
         if (combinedOdds < PredictionEngineService.MIN_COMBINED_ODDS) continue;
         if (combinedOdds > PredictionEngineService.MAX_COMBINED_ODDS) continue;
@@ -431,9 +436,11 @@ export class PredictionEngineService {
   ): TipsterPredictionResult | null {
     const personality = tipsterConfig.personality;
     const suitable = this.filterByPersonality(fixturePredictions, personality);
-    if (suitable.length < 2) return null;
-
     const bestAcca = this.findBest2FixtureAcca(suitable, personality);
+    this.logger.debug(
+      `${tipsterConfig.username}: ${suitable.length} suitable → ${bestAcca ? 'coupon' : 'no acca in 2–4 odds'}`,
+    );
+    if (suitable.length < 2) return null;
     if (!bestAcca) return null;
 
     const { leg1, leg2 } = bestAcca;
