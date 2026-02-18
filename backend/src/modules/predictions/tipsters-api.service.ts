@@ -268,8 +268,57 @@ export class TipstersApiService {
         is_active: tipster.isActive,
       },
       marketplace_coupons: marketplaceCoupons,
+      archived_coupons: await this.getArchivedCouponsForTipster(username),
       performance_history: performance,
     };
+  }
+
+  /** Settled (won/lost/void) coupons for this tipster. For archive display. */
+  async getArchivedCouponsForTipster(username: string) {
+    const tipster = await this.tipsterRepo.findOne({ where: { username } });
+    if (!tipster?.userId) return [];
+
+    const ticketStats = (await this.computeStatsFromTickets([tipster.userId])).get(tipster.userId);
+    const winRate = ticketStats ? ticketStats.winRate : Number(tipster.winRate);
+    const totalPredictions = ticketStats ? ticketStats.total : tipster.totalPredictions;
+    const totalWins = ticketStats ? ticketStats.won : tipster.totalWins;
+    const totalLosses = ticketStats ? ticketStats.lost : tipster.totalLosses;
+
+    const tickets = await this.ticketRepo.find({
+      where: {
+        userId: tipster.userId,
+        result: In(['won', 'lost', 'void']),
+        isMarketplace: true,
+      },
+      relations: ['picks'],
+      order: { createdAt: 'DESC' },
+      take: 50,
+    });
+
+    const validTickets = tickets.filter((t) => t.picks?.length);
+    const user = await this.usersRepo.findOne({
+      where: { id: tipster.userId },
+      select: ['id', 'displayName', 'username', 'avatar'],
+    });
+
+    return validTickets.map((ticket) => ({
+      ...ticket,
+      price: Number(ticket.price),
+      purchaseCount: 0,
+      tipster: user
+        ? {
+            id: user.id,
+            displayName: user.displayName,
+            username: user.username,
+            avatarUrl: user.avatar ?? tipster.avatarUrl,
+            winRate,
+            totalPicks: totalPredictions,
+            wonPicks: totalWins,
+            lostPicks: totalLosses,
+            rank: tipster.leaderboardRank ?? 0,
+          }
+        : null,
+    }));
   }
 
   /** Marketplace coupons for this tipster only. Deduplicated, same format as marketplace. Uses computed stats from accumulator_tickets. */

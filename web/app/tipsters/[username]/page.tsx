@@ -43,6 +43,8 @@ interface MarketplaceCoupon {
   picks: Pick[];
   tipster?: Tipster | null;
   createdAt?: string;
+  status?: string;
+  result?: string;
 }
 
 interface TipsterProfile {
@@ -66,6 +68,7 @@ interface TipsterProfile {
     avg_odds?: number;
   };
   marketplace_coupons: MarketplaceCoupon[];
+  archived_coupons?: MarketplaceCoupon[];
   is_following: boolean;
 }
 
@@ -204,7 +207,7 @@ export default function TipsterProfilePage() {
     );
   }
 
-  const { tipster, marketplace_coupons, is_following } = profile;
+  const { tipster, marketplace_coupons, archived_coupons = [], is_following } = profile;
   const hasSettledPicks = (tipster.total_wins ?? 0) + (tipster.total_losses ?? 0) > 0;
   const roiDisplay = hasSettledPicks ? `${Number(tipster.roi).toFixed(2)}%` : '—';
   const winRateDisplay = hasSettledPicks ? `${Number(tipster.win_rate).toFixed(1)}%` : '—';
@@ -302,10 +305,10 @@ export default function TipsterProfilePage() {
           </div>
         </div>
 
-        <section>
-          <h2 className="text-lg font-semibold text-[var(--text)] mb-4">Predictions</h2>
+        <section className="mb-12">
+          <h2 className="text-lg font-semibold text-[var(--text)] mb-4">Active Predictions</h2>
           {!marketplace_coupons?.length ? (
-            <p className="text-[var(--text-muted)]">No predictions yet.</p>
+            <p className="text-[var(--text-muted)]">No active predictions.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
               {marketplace_coupons.map((a) => {
@@ -337,6 +340,38 @@ export default function TipsterProfilePage() {
             </div>
           )}
         </section>
+
+        {archived_coupons.length > 0 && (
+          <section>
+            <h2 className="text-lg font-semibold text-[var(--text)] mb-4">Archive – Past Coupons</h2>
+            <p className="text-sm text-[var(--text-muted)] mb-4">
+              Settled coupons from this tipster. Click to view details.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
+              {archived_coupons.map((a) => (
+                <PickCard
+                  key={a.id}
+                  id={a.id}
+                  title={a.title}
+                  totalPicks={a.totalPicks}
+                  totalOdds={a.totalOdds}
+                  price={a.price}
+                  purchaseCount={a.purchaseCount}
+                  picks={a.picks || []}
+                  tipster={a.tipster}
+                  status={a.status}
+                  result={a.result}
+                  isPurchased={false}
+                  canPurchase={false}
+                  viewOnly
+                  walletBalance={walletBalance}
+                  onPurchase={() => {}}
+                  createdAt={a.createdAt}
+                />
+              ))}
+            </div>
+          </section>
+        )}
       </main>
       <AppFooter />
     </div>
