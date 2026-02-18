@@ -280,15 +280,15 @@ export default function AdminUsersPage() {
                         <div className="flex items-center gap-3">
                           <div className="relative group">
                             <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 relative">
-                              {u.avatar ? (
+                              {u.avatar && (u.avatar.startsWith('http') || u.avatar.startsWith('/')) ? (
                                 <img
-                                  src={u.avatar.startsWith('http') ? u.avatar : `${API_URL.replace(/\/$/, '')}${u.avatar.startsWith('/') ? u.avatar : `/${u.avatar}`}`}
+                                  src={u.avatar.startsWith('http') ? u.avatar : `${API_URL.replace(/\/$/, '')}${u.avatar}`}
                                   alt=""
                                   className="w-full h-full object-cover absolute inset-0"
                                   onError={(e) => { e.currentTarget.style.display = 'none'; const fallback = e.currentTarget.parentElement?.querySelector('[data-avatar-fallback]'); if (fallback) (fallback as HTMLElement).classList.remove('hidden'); }}
                                 />
                               ) : null}
-                              <span className={`text-sm font-bold text-gray-500 dark:text-gray-400 ${u.avatar ? 'hidden' : ''}`} data-avatar-fallback>
+                              <span className={`text-sm font-bold text-gray-500 dark:text-gray-400 ${u.avatar && (u.avatar.startsWith('http') || u.avatar.startsWith('/')) ? 'hidden' : ''}`} data-avatar-fallback>
                                 {(u.displayName || u.username || 'U').charAt(0).toUpperCase()}
                               </span>
                             </div>
