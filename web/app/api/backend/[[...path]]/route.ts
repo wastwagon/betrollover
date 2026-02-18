@@ -17,20 +17,30 @@ async function proxyRequest(request: NextRequest, path: string[]) {
     method: request.method,
     headers,
   };
-  if (['POST', 'PUT', 'PATCH'].includes(request.method) && request.body) {
+  const contentLength = request.headers.get('content-length');
+  const hasBody = contentLength && parseInt(contentLength, 10) > 0;
+  if (['POST', 'PUT', 'PATCH'].includes(request.method) && hasBody && request.body) {
     const contentType = request.headers.get('content-type');
     if (contentType) headers.set('Content-Type', contentType);
     init.body = request.body;
   }
 
-  const res = await fetch(url.toString(), init);
-  const contentType = res.headers.get('Content-Type') || 'application/json';
-  const isBinary = contentType.startsWith('image/') || contentType.includes('octet-stream');
-  const data = isBinary ? await res.arrayBuffer() : await res.text();
-  return new NextResponse(data, {
-    status: res.status,
-    headers: { 'Content-Type': contentType },
-  });
+  try {
+    const res = await fetch(url.toString(), init);
+    const contentType = res.headers.get('Content-Type') || 'application/json';
+    const isBinary = contentType.startsWith('image/') || contentType.includes('octet-stream');
+    const data = isBinary ? await res.arrayBuffer() : await res.text();
+    return new NextResponse(data, {
+      status: res.status,
+      headers: { 'Content-Type': contentType },
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return new NextResponse(
+      JSON.stringify({ message: 'Backend proxy error', error: msg }),
+      { status: 502, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
 }
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ path?: string[] }> }) {

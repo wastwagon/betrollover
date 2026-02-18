@@ -15,8 +15,11 @@ RUN npm ci
 # Copy source
 COPY . .
 
+# Build with tsc (remove incremental cache so we get full emit)
+RUN rm -f tsconfig.build.tsbuildinfo && npx tsc -p tsconfig.build.json
+
 # Expose port
 EXPOSE 3001
 
-# Development: run with watch
-CMD ["npm", "run", "start:dev"]
+# Run compiled output
+CMD ["node", "dist/main.js"]

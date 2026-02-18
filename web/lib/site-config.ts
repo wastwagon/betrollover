@@ -6,10 +6,10 @@
 export const SITE_URL =
   process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:6002';
 
-/** API base URL: use proxy in browser (works in Docker), direct URL on server */
+/** API base URL: prefer direct URL in browser when set (avoids proxy issues); otherwise use proxy */
 export const getApiUrl = () =>
   typeof window !== 'undefined'
-    ? '/api/backend'
+    ? (process.env.NEXT_PUBLIC_API_URL || '/api/backend')
     : (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001');
 
 export const SITE_NAME = 'BetRollover';
