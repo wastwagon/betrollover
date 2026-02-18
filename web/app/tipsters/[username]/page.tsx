@@ -84,6 +84,7 @@ export default function TipsterProfilePage() {
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [purchasing, setPurchasing] = useState<number | null>(null);
   const [unveilCouponId, setUnveilCouponId] = useState<number | null>(null);
+  const [couponFilter, setCouponFilter] = useState<'active' | 'archive'>('active');
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
 
   useEffect(() => {
@@ -231,19 +232,32 @@ export default function TipsterProfilePage() {
           </Link>
 
           <div className="flex flex-col sm:flex-row gap-6 items-start">
-            <div className="flex-shrink-0 w-20 h-20 rounded-full overflow-hidden bg-[var(--card)] border border-[var(--border)]">
-              {tipster.avatar_url && !avatarError ? (
-                <img
-                  src={tipster.avatar_url}
-                  alt={tipster.display_name}
-                  className="w-full h-full object-cover"
-                  onError={() => setAvatarError(true)}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-[var(--primary)] bg-[var(--primary-light)]">
-                  {tipster.display_name.charAt(0).toUpperCase()}
-                </div>
-              )}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="w-20 h-20 rounded-full overflow-hidden bg-[var(--card)] border border-[var(--border)]">
+                {tipster.avatar_url && !avatarError ? (
+                  <img
+                    src={tipster.avatar_url}
+                    alt={tipster.display_name}
+                    className="w-full h-full object-cover"
+                    onError={() => setAvatarError(true)}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-[var(--primary)] bg-[var(--primary-light)]">
+                    {tipster.display_name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={handleFollow}
+                disabled={followLoading}
+                className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
+                  is_following
+                    ? 'bg-[var(--border)] text-[var(--text-muted)] hover:bg-gray-300 dark:hover:bg-gray-600'
+                    : 'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]'
+                }`}
+              >
+                {followLoading ? '...' : is_following ? 'Following' : 'Follow'}
+              </button>
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-3 mb-2">
@@ -290,88 +304,110 @@ export default function TipsterProfilePage() {
                   <p className="font-bold text-lg text-[var(--text)]">{tipster.total_predictions}</p>
                 </div>
               </div>
-              <button
-                onClick={handleFollow}
-                disabled={followLoading}
-                className={`px-6 py-2.5 rounded-xl font-semibold transition-colors ${
-                  is_following
-                    ? 'bg-[var(--border)] text-[var(--text-muted)] hover:bg-gray-300 dark:hover:bg-gray-600'
-                    : 'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]'
-                }`}
-              >
-                {followLoading ? '...' : is_following ? 'Following' : 'Follow'}
-              </button>
             </div>
           </div>
         </div>
 
         <section className="mb-12">
-          <h2 className="text-lg font-semibold text-[var(--text)] mb-4">Active Predictions</h2>
-          {!marketplace_coupons?.length ? (
-            <p className="text-[var(--text-muted)]">No active predictions.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
-              {marketplace_coupons.map((a) => {
-                const isPurchased = purchasedIds.has(a.id);
-                const canPurchase =
-                  a.price === 0 || (walletBalance !== null && walletBalance >= a.price);
-                return (
-                  <PickCard
-                    key={a.id}
-                    id={a.id}
-                    title={a.title}
-                    totalPicks={a.totalPicks}
-                    totalOdds={a.totalOdds}
-                    price={a.price}
-                    purchaseCount={a.purchaseCount}
-                    picks={a.picks || []}
-                    tipster={a.tipster}
-                    isPurchased={isPurchased}
-                    canPurchase={canPurchase}
-                    walletBalance={walletBalance}
-                    onPurchase={() => purchase(a.id)}
-                    purchasing={purchasing === a.id}
-                    showUnveil={unveilCouponId === a.id}
-                    onUnveilClose={() => setUnveilCouponId(null)}
-                    createdAt={a.createdAt}
-                  />
-                );
-              })}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="inline-flex p-1 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+              <button
+                onClick={() => setCouponFilter('active')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  couponFilter === 'active'
+                    ? 'bg-[var(--primary)] text-white shadow-sm'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+                }`}
+              >
+                Active
+              </button>
+              <button
+                onClick={() => setCouponFilter('archive')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  couponFilter === 'archive'
+                    ? 'bg-[var(--primary)] text-white shadow-sm'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+                }`}
+              >
+                Archive
+              </button>
             </div>
+            <span className="text-sm text-[var(--text-muted)]">
+              {couponFilter === 'active'
+                ? `${marketplace_coupons?.length ?? 0} available`
+                : `${archived_coupons.length} settled`}
+            </span>
+          </div>
+
+          {couponFilter === 'active' && (
+            <>
+              {!marketplace_coupons?.length ? (
+                <p className="text-[var(--text-muted)]">No active predictions.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
+                  {marketplace_coupons.map((a) => {
+                    const isPurchased = purchasedIds.has(a.id);
+                    const canPurchase =
+                      a.price === 0 || (walletBalance !== null && walletBalance >= a.price);
+                    return (
+                      <PickCard
+                        key={a.id}
+                        id={a.id}
+                        title={a.title}
+                        totalPicks={a.totalPicks}
+                        totalOdds={a.totalOdds}
+                        price={a.price}
+                        purchaseCount={a.purchaseCount}
+                        picks={a.picks || []}
+                        tipster={a.tipster}
+                        isPurchased={isPurchased}
+                        canPurchase={canPurchase}
+                        walletBalance={walletBalance}
+                        onPurchase={() => purchase(a.id)}
+                        purchasing={purchasing === a.id}
+                        showUnveil={unveilCouponId === a.id}
+                        onUnveilClose={() => setUnveilCouponId(null)}
+                        createdAt={a.createdAt}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+
+          {couponFilter === 'archive' && (
+            <>
+              {archived_coupons.length === 0 ? (
+                <p className="text-[var(--text-muted)]">No settled coupons yet.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
+                  {archived_coupons.map((a) => (
+                    <PickCard
+                      key={a.id}
+                      id={a.id}
+                      title={a.title}
+                      totalPicks={a.totalPicks}
+                      totalOdds={a.totalOdds}
+                      price={a.price}
+                      purchaseCount={a.purchaseCount}
+                      picks={a.picks || []}
+                      tipster={a.tipster}
+                      status={a.status}
+                      result={a.result}
+                      isPurchased={false}
+                      canPurchase={false}
+                      viewOnly
+                      walletBalance={walletBalance}
+                      onPurchase={() => {}}
+                      createdAt={a.createdAt}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </section>
-
-        {archived_coupons.length > 0 && (
-          <section>
-            <h2 className="text-lg font-semibold text-[var(--text)] mb-4">Archive – Past Coupons</h2>
-            <p className="text-sm text-[var(--text-muted)] mb-4">
-              Settled coupons from this tipster. Click to view details.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
-              {archived_coupons.map((a) => (
-                <PickCard
-                  key={a.id}
-                  id={a.id}
-                  title={a.title}
-                  totalPicks={a.totalPicks}
-                  totalOdds={a.totalOdds}
-                  price={a.price}
-                  purchaseCount={a.purchaseCount}
-                  picks={a.picks || []}
-                  tipster={a.tipster}
-                  status={a.status}
-                  result={a.result}
-                  isPurchased={false}
-                  canPurchase={false}
-                  viewOnly
-                  walletBalance={walletBalance}
-                  onPurchase={() => {}}
-                  createdAt={a.createdAt}
-                />
-              ))}
-            </div>
-          </section>
-        )}
       </main>
       <AppFooter />
     </div>

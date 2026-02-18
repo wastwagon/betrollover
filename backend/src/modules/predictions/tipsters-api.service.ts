@@ -9,6 +9,7 @@ import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.e
 import { AccumulatorPick } from '../accumulators/entities/accumulator-pick.entity';
 import { PickMarketplace } from '../accumulators/entities/pick-marketplace.entity';
 import { User } from '../users/entities/user.entity';
+import { Fixture } from '../fixtures/entities/fixture.entity';
 
 const SORT_COLUMNS: Record<string, string> = {
   roi: 'roi',
@@ -36,6 +37,8 @@ export class TipstersApiService {
     private marketplaceRepo: Repository<PickMarketplace>,
     @InjectRepository(User)
     private usersRepo: Repository<User>,
+    @InjectRepository(Fixture)
+    private fixtureRepo: Repository<Fixture>,
   ) {}
 
   /** Compute stats from accumulator_tickets for human tipsters (userId) - matches Marketplace logic */
@@ -303,8 +306,25 @@ export class TipstersApiService {
       select: ['id', 'displayName', 'username', 'avatar'],
     });
 
+    // Enrich picks with fixture scores (FT scoreline) for settled coupons
+    const fixtureIds = [...new Set(validTickets.flatMap((t) => (t.picks || []).map((p) => p.fixtureId).filter(Boolean) as number[]))];
+    const fixtures = fixtureIds.length > 0
+      ? await this.fixtureRepo.find({ where: { id: In(fixtureIds) }, select: ['id', 'homeScore', 'awayScore', 'status'] })
+      : [];
+    const fixtureMap = new Map(fixtures.map((f) => [f.id, f]));
+
     return validTickets.map((ticket) => ({
       ...ticket,
+      picks: (ticket.picks || []).map((p: AccumulatorPick & { fixtureId?: number | null }) => {
+        const fix = p.fixtureId ? fixtureMap.get(p.fixtureId) : null;
+        return {
+          ...p,
+          homeScore: fix?.homeScore ?? null,
+          awayScore: fix?.awayScore ?? null,
+          fixtureStatus: fix?.status ?? null,
+          status: p.result || 'pending',
+        };
+      }),
       price: Number(ticket.price),
       purchaseCount: 0,
       tipster: user

@@ -265,19 +265,22 @@ export function PickCard({
                         </span>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        {matchDate && (
+                        {(matchDate || hasLiveScore) && (
                           <span className={`text-[10px] ${isFinished ? 'text-emerald-600 dark:text-emerald-400' : isLive ? 'text-red-600 dark:text-red-400' : isStarted ? 'text-amber-600 dark:text-amber-400' : 'text-[var(--text-muted)]'}`}>
-                            {isFinished ? '🏁 FT' : isLive ? '🔴 Live' : isStarted ? '⏱ Started' : `⏰ ${matchDate.toLocaleString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}`}
+                            {isFinished
+                              ? (hasLiveScore ? `🏁 FT ${p.homeScore}-${p.awayScore}` : '🏁 FT')
+                              : isLive
+                                ? (hasLiveScore ? `🔴 Live ${p.homeScore}-${p.awayScore}` : '🔴 Live')
+                                : isStarted
+                                  ? '⏱ Started'
+                                  : matchDate
+                                    ? `⏰ ${new Date(matchDate).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                                    : null}
                           </span>
                         )}
                         {(hasLiveScore || (p.result || p.status)) && (
                           <div className="flex items-center gap-1.5">
-                            {hasLiveScore && (
+                            {hasLiveScore && !isFinished && (
                               <span className="text-[10px] font-bold text-[var(--primary)] bg-[var(--primary)]/10 px-1.5 py-0.5 rounded">
                                 {p.homeScore} - {p.awayScore}
                               </span>
