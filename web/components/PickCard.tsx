@@ -37,6 +37,11 @@ interface PickCardProps {
   result?: string;
   picks: Pick[];
   purchaseCount?: number;
+  reactionCount?: number;
+  hasReacted?: boolean;
+  reacting?: boolean;
+  onReact?: () => void;
+  onView?: () => void;
   tipster?: Tipster | null;
   isPurchased?: boolean;
   canPurchase?: boolean;
@@ -73,6 +78,11 @@ export function PickCard({
   purchasing = false,
   showUnveil = false,
   onUnveilClose,
+  reactionCount = 0,
+  hasReacted = false,
+  reacting = false,
+  onReact,
+  onView,
   className = '',
   createdAt,
 }: PickCardProps) {
@@ -121,6 +131,7 @@ export function PickCard({
   };
 
   const handleViewDetails = () => {
+    onView?.();
     if (isPurchased) {
       setShowUnveilModal(true);
     } else {
@@ -170,11 +181,27 @@ export function PickCard({
                     )}
                   </div>
                 </div>
-                {purchaseCount !== undefined && purchaseCount > 0 && (
-                  <div className="flex-shrink-0 text-right">
-                    <p className="text-[10px] text-[var(--text-muted)]">{purchaseCount}</p>
-                  </div>
-                )}
+                <div className="flex-shrink-0 flex items-center gap-2">
+                  {purchaseCount !== undefined && purchaseCount > 0 && (
+                    <span className="text-[10px] text-[var(--text-muted)]">{purchaseCount} bought</span>
+                  )}
+                  {onReact && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); if (!reacting) onReact(); }}
+                      disabled={reacting}
+                      className={`flex items-center gap-1 text-xs transition-transform active:scale-90 ${hasReacted ? 'text-[var(--primary)]' : 'text-[var(--text-muted)] hover:text-[var(--primary)]'} disabled:opacity-60 disabled:cursor-wait`}
+                      aria-label={hasReacted ? 'Unlike' : 'Like'}
+                      aria-busy={reacting}
+                    >
+                      <span className={`inline-block transition-transform ${reacting ? 'animate-pulse' : ''}`}>
+                        {hasReacted ? '👍' : '👍'}
+                      </span>
+                      {reactionCount > 0 && <span>{reactionCount}</span>}
+                      {reacting && <span className="text-[10px] opacity-70">…</span>}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           )}

@@ -6,7 +6,7 @@ import { OptionalJwtGuard } from '../auth/guards/optional-jwt.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
 
-const SORT_OPTIONS = ['roi', 'win_rate', 'total_profit', 'total_predictions'] as const;
+const SORT_OPTIONS = ['roi', 'win_rate', 'total_profit', 'total_predictions', 'follower_count'] as const;
 const ORDER_OPTIONS = ['asc', 'desc'] as const;
 
 @Controller('tipsters')
@@ -18,9 +18,14 @@ export class TipstersController {
 
   @Get('feed')
   @UseGuards(JwtAuthGuard)
-  async getFeed(@CurrentUser() user: User, @Query('limit') limit?: string) {
+  async getFeed(
+    @CurrentUser() user: User,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
     const limitVal = Math.min(Math.max(parseInt(limit || '20', 10) || 20, 1), 50);
-    return this.tipstersApi.getFeedFromFollowedTipsters(user.id, limitVal);
+    const offsetVal = Math.max(parseInt(offset || '0', 10) || 0, 0);
+    return this.tipstersApi.getFeedFromFollowedTipsters(user.id, limitVal, offsetVal);
   }
 
   @Get('me/following')

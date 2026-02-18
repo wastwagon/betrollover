@@ -11,8 +11,9 @@ import { useToast } from '@/hooks/useToast';
 import { formatError } from '@/utils/errorMessages';
 import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
+import { getApiUrl } from '@/lib/site-config';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+const API_URL = getApiUrl();
 
 type PriceFilter = 'all' | 'free' | 'paid';
 type SortBy = 'newest' | 'price-low' | 'price-high' | 'tipster-rank';
@@ -48,6 +49,8 @@ interface Accumulator {
   totalPicks: number;
   price: number;
   purchaseCount?: number;
+  reactionCount?: number;
+  hasReacted?: boolean;
   picks: Pick[];
   tipster?: Tipster | null;
   createdAt?: string;
@@ -65,7 +68,10 @@ interface User {
 export default function MarketplacePage() {
   const router = useRouter();
   const [picks, setPicks] = useState<Accumulator[]>([]);
+  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [purchasing, setPurchasing] = useState<number | null>(null);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [purchasedIds, setPurchasedIds] = useState<Set<number>>(new Set());
@@ -73,6 +79,7 @@ export default function MarketplacePage() {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
   const [sortBy, setSortBy] = useState<SortBy>('newest');
+  const [reacting, setReacting] = useState<number | null>(null);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
 
   const filteredAndSortedPicks = useMemo(() => {
@@ -100,9 +107,9 @@ export default function MarketplacePage() {
 
     // Fetch marketplace picks, wallet balance, user info, and purchased picks
     Promise.all([
-      fetch(`${API_URL}/accumulators/marketplace`, {
+      fetch(`${API_URL}/accumulators/marketplace?limit=24`, {
         headers: { Authorization: `Bearer ${token}` },
-      }).then((r) => (r.ok ? r.json() : [])),
+      }).then((r) => (r.ok ? r.json() : { items: [], total: 0, hasMore: false })),
       fetch(`${API_URL}/wallet/balance`, {
         headers: { Authorization: `Bearer ${token}` },
       }).then((r) => (r.ok ? r.json() : null)),
@@ -114,7 +121,12 @@ export default function MarketplacePage() {
       }).then((r) => (r.ok ? r.json() : null)),
     ])
       .then(([marketplaceData, walletData, purchasedData, userData]) => {
-        setPicks(Array.isArray(marketplaceData) ? marketplaceData : []);
+        const items = marketplaceData?.items ?? (Array.isArray(marketplaceData) ? marketplaceData : []);
+        const totalCount = marketplaceData?.total ?? items.length;
+        const hasMoreFlag = marketplaceData?.hasMore ?? false;
+        setPicks(items);
+        setTotal(totalCount);
+        setHasMore(hasMoreFlag);
         if (walletData) setWalletBalance(Number(walletData.balance));
         if (userData) setCurrentUserId(userData.id);
         if (Array.isArray(purchasedData)) {
@@ -124,10 +136,68 @@ export default function MarketplacePage() {
       })
       .catch((err) => {
         setPicks([]);
+        setTotal(0);
+        setHasMore(false);
         showError(err);
       })
       .finally(() => setLoading(false));
   }, [router]);
+
+  const recordView = (id: number) => {
+    fetch(`${API_URL}/accumulators/${id}/view`, { method: 'POST' }).catch(() => {});
+  };
+
+  const handleReact = async (pick: Accumulator) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login?redirect=/marketplace');
+      return;
+    }
+    setReacting(pick.id);
+    try {
+      const res = await fetch(`${API_URL}/accumulators/${pick.id}/${pick.hasReacted ? 'unreact' : 'react'}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const newHasReacted = !pick.hasReacted;
+        setPicks((prev) =>
+          prev.map((p) =>
+            p.id === pick.id
+              ? {
+                  ...p,
+                  hasReacted: newHasReacted,
+                  reactionCount: (p.reactionCount ?? 0) + (newHasReacted ? 1 : -1),
+                }
+              : p
+          )
+        );
+        showSuccess(newHasReacted ? 'Liked!' : 'Unliked');
+      }
+    } finally {
+      setReacting(null);
+    }
+  };
+
+  const loadMore = async () => {
+    const token = localStorage.getItem('token');
+    if (!token || loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetch(
+        `${API_URL}/accumulators/marketplace?limit=24&offset=${picks.length}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json().catch(() => ({}));
+      const items = data?.items ?? [];
+      setPicks((prev) => [...prev, ...items]);
+      setHasMore(data?.hasMore ?? false);
+    } catch (e) {
+      showError(e instanceof Error ? e : new Error('Failed to load more'));
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const purchase = async (id: number) => {
     const token = localStorage.getItem('token');
@@ -288,10 +358,26 @@ export default function MarketplacePage() {
                     purchasing={purchasing === a.id}
                     showUnveil={unveilCouponId === a.id}
                     onUnveilClose={() => setUnveilCouponId(null)}
+                    reactionCount={a.reactionCount ?? 0}
+                    hasReacted={a.hasReacted ?? false}
+                    reacting={reacting === a.id}
+                    onReact={currentUserId ? () => handleReact(a) : undefined}
+                    onView={() => recordView(a.id)}
                     createdAt={a.createdAt}
                   />
                 );
               })}
+            </div>
+          )}
+          {!loading && hasMore && (
+            <div className="flex justify-center py-6">
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="px-6 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-70 transition-colors"
+              >
+                {loadingMore ? 'Loading...' : `Load more (${picks.length} of ${total})`}
+              </button>
             </div>
           )}
         </div>

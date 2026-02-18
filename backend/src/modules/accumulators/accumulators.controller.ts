@@ -32,10 +32,17 @@ export class AccumulatorsController {
   getMarketplace(
     @CurrentUser() user: User,
     @Query('includeAll') includeAll?: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
   ) {
     const isAdmin = user.role === 'admin';
     const includeAllListings = isAdmin && includeAll === 'true';
-    return this.accumulatorsService.getMarketplace(user.id, includeAllListings);
+    const limitVal = limit ? parseInt(limit, 10) : undefined;
+    const offsetVal = offset ? parseInt(offset, 10) : undefined;
+    return this.accumulatorsService.getMarketplace(user.id, includeAllListings, {
+      limit: limitVal,
+      offset: offsetVal,
+    });
   }
 
   @Get('featured')
@@ -58,5 +65,22 @@ export class AccumulatorsController {
   @UseGuards(JwtAuthGuard)
   purchase(@CurrentUser() user: { id: number }, @Param('id', ParseIntPipe) id: number) {
     return this.accumulatorsService.purchase(user.id, id);
+  }
+
+  @Post(':id/react')
+  @UseGuards(JwtAuthGuard)
+  react(@CurrentUser() user: { id: number }, @Param('id', ParseIntPipe) id: number) {
+    return this.accumulatorsService.react(user.id, id);
+  }
+
+  @Post(':id/unreact')
+  @UseGuards(JwtAuthGuard)
+  unreact(@CurrentUser() user: { id: number }, @Param('id', ParseIntPipe) id: number) {
+    return this.accumulatorsService.unreact(user.id, id);
+  }
+
+  @Post(':id/view')
+  recordView(@Param('id', ParseIntPipe) id: number) {
+    return this.accumulatorsService.recordView(id);
   }
 }

@@ -19,27 +19,28 @@ export default function TipstersPage() {
   const [tipsters, setTipsters] = useState<TipsterCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState<'roi' | 'win_rate' | 'total_profit' | 'follower_count'>('roi');
   const [followLoading, setFollowLoading] = useState<number | null>(null);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
 
-  const fetchTipsters = useCallback((searchTerm?: string) => {
+  const fetchTipsters = useCallback((searchTerm?: string, sort?: string) => {
     setLoading(true);
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const params = new URLSearchParams({ limit: '50', sort_by: 'roi', order: 'desc' });
+    const params = new URLSearchParams({ limit: '50', sort_by: sort || sortBy, order: 'desc' });
     if (searchTerm?.trim()) params.set('search', searchTerm.trim());
     fetch(`${API_URL}/tipsters?${params}`, { headers })
       .then((r) => (r.ok ? r.json() : { tipsters: [] }))
       .then((data) => setTipsters(data.tipsters || []))
       .catch(() => setTipsters([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [sortBy]);
 
   useEffect(() => {
     const t = setTimeout(() => fetchTipsters(search), search ? 300 : 0);
     return () => clearTimeout(t);
-  }, [search, fetchTipsters]);
+  }, [search, sortBy, fetchTipsters]);
 
   const handleFollow = async (tipster: TipsterCardData) => {
     const token = localStorage.getItem('token');
@@ -89,7 +90,7 @@ export default function TipstersPage() {
           <p className="mt-2 text-[var(--text-muted)]">
             Browse verified tipsters. Follow your favorites and track their performance.
           </p>
-          <div className="mt-4">
+          <div className="mt-4 flex flex-col sm:flex-row gap-3 sm:items-center">
             <input
               type="search"
               placeholder="Search tipsters by name or bio..."
@@ -98,6 +99,17 @@ export default function TipstersPage() {
               className="w-full max-w-md px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--text)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
               aria-label="Search tipsters"
             />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+              aria-label="Sort tipsters"
+            >
+              <option value="roi">Sort by ROI</option>
+              <option value="win_rate">Sort by Win Rate</option>
+              <option value="total_profit">Sort by Profit</option>
+              <option value="follower_count">Sort by Followers</option>
+            </select>
           </div>
         </div>
 

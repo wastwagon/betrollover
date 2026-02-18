@@ -1,9 +1,17 @@
 import { Controller, Get, Query } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { TipstersApiService } from './tipsters-api.service';
+
+const LEADERBOARD_CACHE_TTL = 300; // 5 minutes
 
 @Controller('leaderboard')
 export class LeaderboardController {
-  constructor(private readonly tipstersApi: TipstersApiService) {}
+  constructor(
+    private readonly tipstersApi: TipstersApiService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+  ) {}
 
   @Get()
   async getLeaderboard(
@@ -17,10 +25,15 @@ export class LeaderboardController {
       Math.max(parseInt(limit || '25', 10) || 25, 1),
       100,
     );
+    const cacheKey = `leaderboard:${periodVal}:${limitVal}`;
+    const cached = await this.cacheManager.get<{ period: string; leaderboard: unknown[] }>(cacheKey);
+    if (cached) return cached;
     const leaderboard = await this.tipstersApi.getLeaderboard({
       period: periodVal,
       limit: limitVal,
     });
-    return { period: periodVal, leaderboard };
+    const result = { period: periodVal, leaderboard };
+    await this.cacheManager.set(cacheKey, result, LEADERBOARD_CACHE_TTL * 1000);
+    return result;
   }
 }

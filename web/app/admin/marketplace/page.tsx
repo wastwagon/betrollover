@@ -56,8 +56,11 @@ export default function AdminMarketplacePage() {
     setLoading(true);
     const url = `${API_URL}/accumulators/marketplace${includeAll ? '?includeAll=true' : ''}`;
     fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => setPicks(Array.isArray(data) ? data : []))
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((data: { items?: Accumulator[] } | Accumulator[]) => {
+        const items = Array.isArray(data) ? data : (data?.items ?? []);
+        setPicks(items);
+      })
       .catch(() => setPicks([]))
       .finally(() => setLoading(false));
   };

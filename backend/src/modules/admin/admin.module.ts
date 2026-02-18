@@ -6,6 +6,7 @@ import { UserWallet } from '../wallet/entities/user-wallet.entity';
 import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity';
 import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
 import { PickMarketplace } from '../accumulators/entities/pick-marketplace.entity';
+import { PickReaction } from '../accumulators/entities/pick-reaction.entity';
 import { EscrowFund } from '../accumulators/entities/escrow-fund.entity';
 import { TipsterRequest } from '../users/entities/tipster-request.entity';
 import { Notification } from '../notifications/entities/notification.entity';
@@ -50,6 +51,7 @@ import { Prediction } from '../predictions/entities/prediction.entity';
       WalletTransaction,
       AccumulatorTicket,
       PickMarketplace,
+      PickReaction,
       EscrowFund,
       TipsterRequest,
       Notification,

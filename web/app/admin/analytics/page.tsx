@@ -67,6 +67,8 @@ interface EngagementMetrics {
   avgNotificationsPerUser: number;
   activeTipsters: number;
   avgPicksPerTipster: number;
+  totalReactions?: number;
+  totalViews?: number;
 }
 
 interface RealTimeStats {
@@ -720,6 +722,22 @@ export default function AdminAnalyticsPage() {
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Notifications</p>
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">{engagement.totalNotifications}</p>
               </div>
+              {(engagement.totalReactions != null || engagement.totalViews != null) && (
+                <>
+                  {engagement.totalReactions != null && (
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Reactions (Likes)</p>
+                      <p className="text-3xl font-bold text-gray-900 dark:text-white">{engagement.totalReactions}</p>
+                    </div>
+                  )}
+                  {engagement.totalViews != null && (
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Pick Views</p>
+                      <p className="text-3xl font-bold text-gray-900 dark:text-white">{engagement.totalViews}</p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
             )}
           </div>

@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccumulatorTicket } from './entities/accumulator-ticket.entity';
 import { AccumulatorPick } from './entities/accumulator-pick.entity';
 import { PickMarketplace } from './entities/pick-marketplace.entity';
+import { PickReaction } from './entities/pick-reaction.entity';
 import { EscrowFund } from './entities/escrow-fund.entity';
 import { UserPurchasedPick } from './entities/user-purchased-pick.entity';
 import { AccumulatorsController } from './accumulators.controller';
@@ -16,17 +17,22 @@ import { TipsterModule } from '../tipster/tipster.module';
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { User } from '../users/entities/user.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
+import { Tipster } from '../predictions/entities/tipster.entity';
+import { TipsterFollow } from '../predictions/entities/tipster-follow.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       AccumulatorTicket,
       AccumulatorPick,
       PickMarketplace,
+      PickReaction,
       EscrowFund,
       UserPurchasedPick,
       Fixture,
       User,
       ApiSettings,
+      Tipster,
+      TipsterFollow,
     ]),
     WalletModule,
     NotificationsModule,

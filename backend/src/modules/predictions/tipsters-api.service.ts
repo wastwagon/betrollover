@@ -468,7 +468,7 @@ export class TipstersApiService {
   }
 
   /** Feed of marketplace picks from tipsters the user follows (for dashboard) */
-  async getFeedFromFollowedTipsters(userId: number, limit = 20) {
+  async getFeedFromFollowedTipsters(userId: number, limit = 20, offset = 0) {
     const follows = await this.followRepo.find({
       where: { userId },
       select: ['tipsterId'],
@@ -492,6 +492,7 @@ export class TipstersApiService {
       relations: ['picks'],
       order: { createdAt: 'DESC' },
       take: limit,
+      skip: offset,
     });
 
     const listingRows = await this.marketplaceRepo.find({

@@ -4,6 +4,7 @@ import { Repository, In, DataSource, EntityManager } from 'typeorm';
 import { AccumulatorTicket } from './entities/accumulator-ticket.entity';
 import { AccumulatorPick } from './entities/accumulator-pick.entity';
 import { PickMarketplace } from './entities/pick-marketplace.entity';
+import { PickReaction } from './entities/pick-reaction.entity';
 import { EscrowFund } from './entities/escrow-fund.entity';
 import { UserPurchasedPick } from './entities/user-purchased-pick.entity';
 import { User, UserRole } from '../users/entities/user.entity';
@@ -14,6 +15,8 @@ import { Fixture } from '../fixtures/entities/fixture.entity';
 import { FootballService } from '../football/football.service';
 import { TipsterService } from '../tipster/tipster.service';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
+import { Tipster } from '../predictions/entities/tipster.entity';
+import { TipsterFollow } from '../predictions/entities/tipster-follow.entity';
 
 export interface CreateAccumulatorDto {
   title: string;
@@ -40,6 +43,8 @@ export class AccumulatorsService {
     private pickRepo: Repository<AccumulatorPick>,
     @InjectRepository(PickMarketplace)
     private marketplaceRepo: Repository<PickMarketplace>,
+    @InjectRepository(PickReaction)
+    private reactionRepo: Repository<PickReaction>,
     @InjectRepository(EscrowFund)
     private escrowRepo: Repository<EscrowFund>,
     @InjectRepository(UserPurchasedPick)
@@ -50,6 +55,10 @@ export class AccumulatorsService {
     private fixtureRepo: Repository<Fixture>,
     @InjectRepository(ApiSettings)
     private apiSettingsRepo: Repository<ApiSettings>,
+    @InjectRepository(Tipster)
+    private tipsterRepo: Repository<Tipster>,
+    @InjectRepository(TipsterFollow)
+    private tipsterFollowRepo: Repository<TipsterFollow>,
     private walletService: WalletService,
     private notificationsService: NotificationsService,
     private emailService: EmailService,
@@ -234,6 +243,30 @@ export class AccumulatorsService {
           isFree: price === 0,
         },
       }).catch(() => { });
+
+      // Notify followers that this tipster posted a new pick (email)
+      const tipster = await this.tipsterRepo.findOne({ where: { userId }, select: ['id', 'displayName'] });
+      if (tipster) {
+        const follows = await this.tipsterFollowRepo.find({
+          where: { tipsterId: tipster.id },
+          select: ['userId'],
+        });
+        const followerIds = follows.map((f) => f.userId).filter((id) => id !== userId);
+        const tipsterName = tipster.displayName || creatorName;
+        const pickLink = `/marketplace`;
+        for (const followerId of followerIds) {
+          this.notificationsService.create({
+            userId: followerId,
+            type: 'new_pick_from_followed',
+            title: 'New Pick from Tipster You Follow',
+            message: `${tipsterName} posted a new pick "${ticket.title}"${price > 0 ? ` at GHS ${price.toFixed(2)}` : ' (free)'}.`,
+            link: pickLink,
+            icon: 'bell',
+            sendEmail: true,
+            metadata: { tipsterName, pickTitle: ticket.title },
+          }).catch(() => {});
+        }
+      }
     }
 
     return this.getById(ticket.id);
@@ -297,13 +330,16 @@ export class AccumulatorsService {
     }));
   }
 
-  async getMarketplace(userId: number, includeAllListings = false) {
+  async getMarketplace(userId: number, includeAllListings = false, options?: { limit?: number; offset?: number }) {
+    const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
+    const offset = Math.max(options?.offset ?? 0, 0);
+
     const rows = await this.marketplaceRepo.find({
       where: { status: 'active' },
       select: ['accumulatorId', 'price', 'purchaseCount'],
     });
     const accIds = rows.map((r) => r.accumulatorId);
-    if (accIds.length === 0) return [];
+    if (accIds.length === 0) return { items: [], total: 0, hasMore: false };
 
     const ticketWhere: any = { id: In(accIds) };
     if (!includeAllListings) {
@@ -333,11 +369,14 @@ export class AccumulatorsService {
       return !hasStartedFixture;
     });
 
-    return this.enrichWithTipsterMetadata(validTickets, rows);
+    const total = validTickets.length;
+    const paginated = validTickets.slice(offset, offset + limit);
+    const items = await this.enrichWithTipsterMetadata(paginated, rows, userId);
+    return { items, total, hasMore: offset + items.length < total };
   }
 
-  /** Unified method to add tipster rankings, stats, and prices to tickets */
-  private async enrichWithTipsterMetadata(validTickets: AccumulatorTicket[], marketplaceRows: PickMarketplace[]) {
+  /** Unified method to add tipster rankings, stats, prices, and reactions to tickets */
+  private async enrichWithTipsterMetadata(validTickets: AccumulatorTicket[], marketplaceRows: PickMarketplace[], currentUserId?: number) {
     // Get unique tipster IDs
     const tipsterIds = [...new Set(validTickets.map(t => t.userId))];
 
@@ -402,6 +441,25 @@ export class AccumulatorsService {
     // Create price & purchase count maps
     const priceMap = new Map(marketplaceRows.map(r => [r.accumulatorId, Number(r.price)]));
     const purchaseCountMap = new Map(marketplaceRows.map(r => [r.accumulatorId, r.purchaseCount || 0]));
+    const viewCountMap = new Map(marketplaceRows.map(r => [r.accumulatorId, r.viewCount || 0]));
+
+    // Reaction counts and user's reacted state
+    const accIds = validTickets.map(t => t.id);
+    let reactionCountMap = new Map<number, number>();
+    let userReactedSet = new Set<number>();
+    if (accIds.length > 0) {
+      const counts = await this.reactionRepo.createQueryBuilder('r')
+        .select('r.accumulatorId', 'aid')
+        .addSelect('COUNT(*)', 'cnt')
+        .where('r.accumulatorId IN (:...ids)', { ids: accIds })
+        .groupBy('r.accumulatorId')
+        .getRawMany();
+      counts.forEach((r: { aid: number; cnt: string }) => reactionCountMap.set(Number(r.aid), parseInt(r.cnt, 10)));
+      if (currentUserId) {
+        const reacted = await this.reactionRepo.find({ where: { userId: currentUserId, accumulatorId: In(accIds) }, select: ['accumulatorId'] });
+        userReactedSet = new Set(reacted.map(r => r.accumulatorId));
+      }
+    }
 
     // Enrich tickets with tipster data
     return validTickets.map(ticket => {
@@ -412,6 +470,9 @@ export class AccumulatorsService {
         ...ticket,
         price: priceMap.get(ticket.id) ?? ticket.price,
         purchaseCount: purchaseCountMap.get(ticket.id) ?? 0,
+        viewCount: viewCountMap.get(ticket.id) ?? 0,
+        reactionCount: reactionCountMap.get(ticket.id) ?? 0,
+        hasReacted: userReactedSet.has(ticket.id),
         tipster: tipster ? {
           id: tipster.id,
           displayName: tipster.displayName,
@@ -589,7 +650,7 @@ export class AccumulatorsService {
           message: price > 0
             ? `Someone purchased "${ticket.title}" for GHS ${price.toFixed(2)}. Funds will be released to your wallet when the pick settles.`
             : `Someone claimed your free pick "${ticket.title}".`,
-          link: '/marketplace',
+          link: '/my-picks',
           icon: 'cart',
           sendEmail: true,
           metadata: { pickTitle: ticket.title },
@@ -598,5 +659,28 @@ export class AccumulatorsService {
 
       return this.getById(accumulatorId);
     });
+  }
+
+  async react(userId: number, accumulatorId: number): Promise<{ success: boolean }> {
+    const ticket = await this.ticketRepo.findOne({ where: { id: accumulatorId } });
+    if (!ticket) throw new NotFoundException('Pick not found');
+    const existing = await this.reactionRepo.findOne({ where: { userId, accumulatorId } });
+    if (existing) return { success: true };
+    await this.reactionRepo.save({ userId, accumulatorId, type: 'like' });
+    return { success: true };
+  }
+
+  async unreact(userId: number, accumulatorId: number): Promise<{ success: boolean }> {
+    await this.reactionRepo.delete({ userId, accumulatorId });
+    return { success: true };
+  }
+
+  async recordView(accumulatorId: number): Promise<{ success: boolean }> {
+    const listing = await this.marketplaceRepo.findOne({ where: { accumulatorId } });
+    if (listing) {
+      listing.viewCount = (listing.viewCount || 0) + 1;
+      await this.marketplaceRepo.save(listing);
+    }
+    return { success: true };
   }
 }

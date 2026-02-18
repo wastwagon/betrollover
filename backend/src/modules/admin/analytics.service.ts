@@ -5,6 +5,7 @@ import { User, UserRole } from '../users/entities/user.entity';
 import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
 import { UserPurchasedPick } from '../accumulators/entities/user-purchased-pick.entity';
 import { PickMarketplace } from '../accumulators/entities/pick-marketplace.entity';
+import { PickReaction } from '../accumulators/entities/pick-reaction.entity';
 import { VisitorSession } from './entities/visitor-session.entity';
 import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity';
 import { DepositRequest } from '../wallet/entities/deposit-request.entity';
@@ -24,6 +25,8 @@ export class AnalyticsService {
     private purchasesRepo: Repository<UserPurchasedPick>,
     @InjectRepository(PickMarketplace)
     private marketplaceRepo: Repository<PickMarketplace>,
+    @InjectRepository(PickReaction)
+    private reactionRepo: Repository<PickReaction>,
     @InjectRepository(VisitorSession)
     private visitorRepo: Repository<VisitorSession>,
     @InjectRepository(WalletTransaction)
@@ -473,6 +476,8 @@ export class AnalyticsService {
       avgNotificationsPerUser,
       activeTipsters,
       avgPicksPerTipster,
+      totalReactions,
+      totalViews,
     ] = await Promise.all([
       this.notificationsRepo.count(),
       this.notificationsRepo.count({ where: { isRead: true } }),
@@ -501,6 +506,12 @@ export class AnalyticsService {
         const totalPicks = ticketCount + predCount;
         return tipsterCount > 0 ? totalPicks / tipsterCount : 0;
       })(),
+      this.reactionRepo.count(),
+      this.marketplaceRepo
+        .createQueryBuilder('m')
+        .select('COALESCE(SUM(m.viewCount), 0)', 'total')
+        .getRawOne()
+        .then((r) => parseInt(r?.total || '0', 10)),
     ]);
 
     return {
@@ -511,6 +522,8 @@ export class AnalyticsService {
       avgNotificationsPerUser,
       activeTipsters,
       avgPicksPerTipster,
+      totalReactions,
+      totalViews,
     };
   }
 

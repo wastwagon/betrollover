@@ -67,6 +67,13 @@ export const NOTIFICATION_TYPES = {
     ctaText: 'View Tipsters',
     category: 'social',
   },
+  new_pick_from_followed: {
+    icon: 'bell',
+    defaultSubject: 'New Pick from Followed Tipster',
+    emailSubject: (ctx: Record<string, string>) => `${ctx.tipsterName || 'A tipster'} you follow posted a new pick`,
+    ctaText: 'View Marketplace',
+    category: 'social',
+  },
   leaderboard_rank_up: {
     icon: 'trophy',
     defaultSubject: 'Leaderboard Rank Up',
