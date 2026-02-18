@@ -753,7 +753,7 @@ export class AdminService {
     return wallet;
   }
 
-  /** Admin impersonation - allows admin to login as any user */
+  /** Admin impersonation - allows admin to login as any user. JWT payload matches auth login (sub, email) so token is valid for JwtStrategy. */
   async impersonateUser(userId: number, adminId: number) {
     const user = await this.usersRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
@@ -767,10 +767,14 @@ export class AdminService {
       )
       .catch(() => {});
 
-    // Generate JWT token for the target user (plain values; match auth module payload shape)
-    const role = user.role != null ? String(user.role) : 'user';
-    const payload = { sub: user.id, email: user.email ?? '', role };
-    const token = this.jwtService.sign(payload, { expiresIn: '7d' });
+    // Use same payload shape as AuthService.login so token is valid for JwtStrategy (validate uses payload.sub only)
+    const payload = { sub: user.id, email: user.email ?? '' };
+    let token: string;
+    try {
+      token = this.jwtService.sign(payload);
+    } catch (err) {
+      throw new BadRequestException('Could not issue session token. Check server JWT configuration.');
+    }
 
     return {
       token,

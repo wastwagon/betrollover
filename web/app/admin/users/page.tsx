@@ -282,7 +282,7 @@ export default function AdminUsersPage() {
                             <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 relative">
                               {u.avatar && (u.avatar.startsWith('http') || u.avatar.startsWith('/')) ? (
                                 <img
-                                  src={u.avatar.startsWith('http') ? u.avatar : `${API_URL.replace(/\/$/, '')}${u.avatar}`}
+                                  src={u.avatar}
                                   alt=""
                                   className="w-full h-full object-cover absolute inset-0"
                                   onError={(e) => { e.currentTarget.style.display = 'none'; const fallback = e.currentTarget.parentElement?.querySelector('[data-avatar-fallback]'); if (fallback) (fallback as HTMLElement).classList.remove('hidden'); }}
