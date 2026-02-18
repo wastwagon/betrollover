@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, DataSource, Between } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -755,36 +755,45 @@ export class AdminService {
 
   /** Admin impersonation - allows admin to login as any user. JWT payload matches auth login (sub, email) so token is valid for JwtStrategy. */
   async impersonateUser(userId: number, adminId: number) {
-    const user = await this.usersRepo.findOne({ where: { id: userId } });
-    if (!user) throw new NotFoundException('User not found');
-
-    // Log the impersonation action (fire-and-forget; do not let it affect response)
-    this.dataSource
-      .query(
-        `INSERT INTO admin_actions (action_type, entity_type, entity_id, admin_user, notes) 
-         VALUES ($1, $2, $3, $4, $5)`,
-        ['impersonate', 'user', userId, String(adminId), `Impersonated user ${user.email || user.username}`]
-      )
-      .catch(() => {});
-
-    // Use same payload shape as AuthService.login so token is valid for JwtStrategy (validate uses payload.sub only)
-    const payload = { sub: user.id, email: user.email ?? '' };
-    let token: string;
+    const logger = new Logger(AdminService.name);
     try {
-      token = this.jwtService.sign(payload);
-    } catch (err) {
-      throw new BadRequestException('Could not issue session token. Check server JWT configuration.');
-    }
+      const user = await this.usersRepo.findOne({ where: { id: userId } });
+      if (!user) throw new NotFoundException('User not found');
 
-    return {
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        displayName: user.displayName,
-        role: user.role,
-      },
-    };
+      // Use same payload shape as AuthService.login so token is valid for JwtStrategy (validate uses payload.sub only)
+      const payload = { sub: user.id, email: user.email ?? '' };
+      let token: string;
+      try {
+        token = this.jwtService.sign(payload);
+      } catch (err) {
+        throw new BadRequestException('Could not issue session token. Check server JWT configuration.');
+      }
+
+      // Log the impersonation action after success; never let audit failure affect the response
+      try {
+        await this.dataSource.query(
+          `INSERT INTO admin_actions (action_type, entity_type, entity_id, admin_user, notes) 
+           VALUES ($1, $2, $3, $4, $5)`,
+          ['impersonate', 'user', userId, String(adminId), `Impersonated user ${user.email || user.username}`]
+        );
+      } catch {
+        // admin_actions table may not exist yet
+      }
+
+      return {
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          displayName: user.displayName,
+          role: user.role,
+        },
+      };
+    } catch (err: any) {
+      if (err instanceof BadRequestException || err instanceof NotFoundException) throw err;
+      logger.error(`Impersonation failed for user ${userId}: ${err?.message || err}`);
+      throw new InternalServerErrorException('Impersonation failed. Please try again or check server logs.');
+    }
   }
 }
