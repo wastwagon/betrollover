@@ -758,19 +758,23 @@ export class AdminService {
     const user = await this.usersRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
-    // Log the impersonation action
+    // Log the impersonation action (non-blocking; table may not exist or columns may differ)
     try {
       await this.dataSource.query(
         `INSERT INTO admin_actions (action_type, entity_type, entity_id, admin_user, notes) 
          VALUES ($1, $2, $3, $4, $5)`,
-        ['impersonate', 'user', userId, adminId, `Impersonated user ${user.email || user.username}`]
+        ['impersonate', 'user', userId, String(adminId), `Impersonated user ${user.email || user.username}`]
       );
     } catch {
-      // admin_actions table may not exist yet
+      // Ignore - admin_actions may not exist or schema may differ
     }
 
-    // Generate JWT token for the target user
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    // Generate JWT token for the target user (ensure plain values for sign)
+    const payload = {
+      sub: user.id,
+      email: user.email ?? '',
+      role: String(user.role ?? 'user'),
+    };
     const token = this.jwtService.sign(payload);
 
     return {
@@ -780,8 +784,8 @@ export class AdminService {
         email: user.email,
         username: user.username,
         displayName: user.displayName,
-        role: user.role
-      }
+        role: user.role,
+      },
     };
   }
 }

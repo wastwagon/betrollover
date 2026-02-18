@@ -279,12 +279,18 @@ export default function AdminUsersPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           <div className="relative group">
-                            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 relative">
                               {u.avatar ? (
-                                <img src={u.avatar.startsWith('http') ? u.avatar : `${API_URL}${u.avatar}`} alt="" className="w-full h-full object-cover" />
-                              ) : (
-                                <span className="text-sm font-bold text-gray-500 dark:text-gray-400">{(u.displayName || u.username || 'U').charAt(0).toUpperCase()}</span>
-                              )}
+                                <img
+                                  src={u.avatar.startsWith('http') ? u.avatar : `${API_URL.replace(/\/$/, '')}${u.avatar.startsWith('/') ? u.avatar : `/${u.avatar}`}`}
+                                  alt=""
+                                  className="w-full h-full object-cover absolute inset-0"
+                                  onError={(e) => { e.currentTarget.style.display = 'none'; const fallback = e.currentTarget.parentElement?.querySelector('[data-avatar-fallback]'); if (fallback) (fallback as HTMLElement).classList.remove('hidden'); }}
+                                />
+                              ) : null}
+                              <span className={`text-sm font-bold text-gray-500 dark:text-gray-400 ${u.avatar ? 'hidden' : ''}`} data-avatar-fallback>
+                                {(u.displayName || u.username || 'U').charAt(0).toUpperCase()}
+                              </span>
                             </div>
                             <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
                               <input
