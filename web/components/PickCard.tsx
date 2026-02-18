@@ -13,6 +13,8 @@ interface Pick {
   awayScore?: number | null;
   fixtureStatus?: string | null;
   status?: string;
+  /** Pick-level result (won/lost/void) - when set, match is finished */
+  result?: string;
 }
 
 interface Tipster {
@@ -247,10 +249,11 @@ export function PickCard({
               <ul className="space-y-1.5">
                 {picks.slice(0, 3).map((p, i) => {
                   const matchDate = p.matchDate ? new Date(p.matchDate) : null;
+                  const pickSettled = ['won', 'lost'].includes(p.result || '');
                   const isStarted = matchDate ? matchDate <= new Date() : false;
                   const hasLiveScore = p.homeScore != null && p.awayScore != null;
-                  const isLive = ['1H', '2H', 'HT', 'ET', 'P', 'LIVE'].includes(p.fixtureStatus || '');
-                  const isFinished = ['FT', 'AET', 'PEN'].includes(p.fixtureStatus || '');
+                  const isLive = !pickSettled && ['1H', '2H', 'HT', 'ET', 'P', 'LIVE'].includes(p.fixtureStatus || '');
+                  const isFinished = pickSettled || ['FT', 'AET', 'PEN'].includes(p.fixtureStatus || '');
                   return (
                     <li key={i} className="flex flex-col gap-0.5 text-xs">
                       <div className="flex justify-between items-start gap-2">
@@ -272,14 +275,16 @@ export function PickCard({
                             })}`}
                           </span>
                         )}
-                        {hasLiveScore && (
+                        {(hasLiveScore || (p.result || p.status)) && (
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] font-bold text-[var(--primary)] bg-[var(--primary)]/10 px-1.5 py-0.5 rounded">
-                              {p.homeScore} - {p.awayScore}
-                            </span>
-                            {p.status && (
-                              <span className={`text-[8px] font-bold uppercase px-1 rounded ${p.status === 'won' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                                {p.status}
+                            {hasLiveScore && (
+                              <span className="text-[10px] font-bold text-[var(--primary)] bg-[var(--primary)]/10 px-1.5 py-0.5 rounded">
+                                {p.homeScore} - {p.awayScore}
+                              </span>
+                            )}
+                            {(p.result || p.status) && (
+                              <span className={`text-[8px] font-bold uppercase px-1 rounded ${(p.result || p.status) === 'won' ? 'bg-emerald-100 text-emerald-700' : (p.result || p.status) === 'lost' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'}`}>
+                                {p.result || p.status}
                               </span>
                             )}
                           </div>
@@ -409,18 +414,21 @@ export function PickCard({
                 <ul className="space-y-3">
                   {picks.map((p, i) => {
                     const hasScore = p.homeScore != null && p.awayScore != null;
+                    const pickResult = p.result || p.status;
                     return (
                       <li key={i} className="flex justify-between items-start p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                         <div className="flex-1 pr-4 min-w-0">
                           <span className="text-[var(--text)] font-medium block">{p.matchDescription}</span>
-                          {hasScore && (
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-sm font-bold text-[var(--primary)]">
-                                {p.homeScore} - {p.awayScore}
-                              </span>
-                              {p.status && (
-                                <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${p.status === 'won' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
-                                  {p.status}
+                          {(hasScore || pickResult) && (
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              {hasScore && (
+                                <span className="text-sm font-bold text-[var(--primary)]">
+                                  {p.homeScore} - {p.awayScore}
+                                </span>
+                              )}
+                              {pickResult && (
+                                <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${pickResult === 'won' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : pickResult === 'lost' ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-slate-100 text-slate-600'}`}>
+                                  {pickResult}
                                 </span>
                               )}
                               {p.fixtureStatus && (
@@ -544,18 +552,21 @@ export function PickCard({
                   <ul className="space-y-2">
                     {picks.map((p, i) => {
                       const hasScore = p.homeScore != null && p.awayScore != null;
+                      const pickResult = p.result || p.status;
                       return (
                         <li key={i} className="flex justify-between items-start p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
                           <div className="flex-1 pr-4 min-w-0">
                             <span className="text-sm text-[var(--text)] font-medium block">{p.matchDescription}</span>
-                            {hasScore && (
-                              <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-xs font-bold text-[var(--primary)]">
-                                  {p.homeScore} - {p.awayScore}
-                                </span>
-                                {p.status && (
-                                  <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${p.status === 'won' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-200' : 'bg-red-500/10 text-red-600 border border-red-200'}`}>
-                                    {p.status}
+                            {(hasScore || pickResult) && (
+                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                {hasScore && (
+                                  <span className="text-xs font-bold text-[var(--primary)]">
+                                    {p.homeScore} - {p.awayScore}
+                                  </span>
+                                )}
+                                {pickResult && (
+                                  <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${pickResult === 'won' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-200' : pickResult === 'lost' ? 'bg-red-500/10 text-red-600 border border-red-200' : 'bg-slate-500/10 text-slate-600'}`}>
+                                    {pickResult}
                                   </span>
                                 )}
                                 {p.fixtureStatus && (

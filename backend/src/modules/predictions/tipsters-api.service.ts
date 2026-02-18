@@ -65,6 +65,8 @@ export class TipstersApiService {
       const settled = won + lost;
       const winRate = settled > 0 ? (won / settled) * 100 : 0;
       const totalOddsWon = Number(row.totalOddsWon) || 0;
+      // ROI: equal stake per coupon (1 unit). Formula: ((returns - investment) / investment) * 100
+      // Same % for any stake (e.g. GHS 100/coupon): returns = sum(totalOdds) for won, investment = settled count
       const totalInvestment = settled;
       const totalReturns = won > 0 ? totalOddsWon : 0;
       const roi = totalInvestment > 0 ? ((totalReturns - totalInvestment) / totalInvestment) * 100 : 0;
