@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuthModule } from '../auth/auth.module';
 import { User } from '../users/entities/user.entity';
 import { UserWallet } from '../wallet/entities/user-wallet.entity';
 import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity';
@@ -65,14 +64,7 @@ import { Prediction } from '../predictions/entities/prediction.entity';
       VisitorSession,
       AnalyticsDaily,
     ]),
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'betrollover-secret-key-change-in-production',
-        signOptions: { expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '7d' },
-      }),
-      inject: [ConfigService],
-    }),
+    AuthModule,
     AccumulatorsModule,
     NotificationsModule,
     ContentModule,

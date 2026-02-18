@@ -48,11 +48,16 @@ export class AuthService {
     return valid ? user : null;
   }
 
+  /** Create a JWT for a user (used by login and admin impersonation). */
+  createTokenForUser(user: { id: number; email: string }): string {
+    const payload: JwtPayload = { sub: user.id, email: user.email ?? '' };
+    return this.jwtService.sign(payload);
+  }
+
   async login(user: User) {
-    const payload: JwtPayload = { sub: user.id, email: user.email };
     const fullUser = await this.usersService.findById(user.id);
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: this.createTokenForUser(user),
       user: {
         id: user.id,
         email: user.email,

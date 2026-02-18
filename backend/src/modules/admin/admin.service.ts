@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, DataSource, Between } from 'typeorm';
-import { JwtService } from '@nestjs/jwt';
+import { AuthService } from '../auth/auth.service';
 import { User, UserRole, UserStatus } from '../users/entities/user.entity';
 import { UserWallet } from '../wallet/entities/user-wallet.entity';
 import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity';
@@ -62,7 +62,7 @@ export class AdminService {
     private contentService: ContentService,
     private emailService: EmailService,
     private walletService: WalletService,
-    private jwtService: JwtService,
+    private authService: AuthService,
     private dataSource: DataSource,
   ) { }
 
@@ -760,14 +760,8 @@ export class AdminService {
       const user = await this.usersRepo.findOne({ where: { id: userId } });
       if (!user) throw new NotFoundException('User not found');
 
-      // Use same payload shape as AuthService.login so token is valid for JwtStrategy (validate uses payload.sub only)
-      const payload = { sub: user.id, email: user.email ?? '' };
-      let token: string;
-      try {
-        token = this.jwtService.sign(payload);
-      } catch (err) {
-        throw new BadRequestException('Could not issue session token. Check server JWT configuration.');
-      }
+      // Use AuthService so token matches login flow exactly (same JWT config, verifiable by JwtStrategy)
+      const token = this.authService.createTokenForUser(user);
 
       // Log the impersonation action after success; never let audit failure affect the response
       try {
