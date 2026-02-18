@@ -15,6 +15,6 @@ export class PickReaction {
   @Column({ length: 20, default: 'like' })
   type: string;
 
-  @CreateDateColumn({ name: 'createdAt' })
+  @CreateDateColumn()
   createdAt: Date;
 }

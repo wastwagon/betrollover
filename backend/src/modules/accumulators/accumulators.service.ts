@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, DataSource, EntityManager } from 'typeorm';
 import { AccumulatorTicket } from './entities/accumulator-ticket.entity';
@@ -672,8 +672,12 @@ export class AccumulatorsService {
     try {
       await this.reactionRepo.save({ userId, accumulatorId, type: 'like' });
     } catch (err) {
-      this.logger.warn(`react failed: ${err instanceof Error ? err.message : String(err)}`);
-      throw err;
+      const message = err instanceof Error ? err.message : String(err);
+      const stack = err instanceof Error ? err.stack : undefined;
+      this.logger.error(`react failed for accumulator ${accumulatorId}: ${message}${stack ? `\n${stack}` : ''}`);
+      throw new InternalServerErrorException(
+        'Reaction could not be saved. If this persists, ensure migration 041_pick_reactions_created_at has been run.',
+      );
     }
     return { success: true };
   }
