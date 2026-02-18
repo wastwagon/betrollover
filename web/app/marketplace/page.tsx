@@ -153,27 +153,40 @@ export default function MarketplacePage() {
       router.push('/login?redirect=/marketplace');
       return;
     }
+    const prevReacted = !!pick.hasReacted;
+    const prevCount = pick.reactionCount ?? 0;
+    const newReacted = !prevReacted;
+    const newCount = prevCount + (newReacted ? 1 : -1);
+    // Optimistic update: show new state immediately
+    setPicks((prev) =>
+      prev.map((p) =>
+        p.id === pick.id ? { ...p, hasReacted: newReacted, reactionCount: Math.max(0, newCount) } : p
+      )
+    );
     setReacting(pick.id);
     try {
-      const res = await fetch(`${API_URL}/accumulators/${pick.id}/${pick.hasReacted ? 'unreact' : 'react'}`, {
+      const res = await fetch(`${API_URL}/accumulators/${pick.id}/${prevReacted ? 'unreact' : 'react'}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
-        const newHasReacted = !pick.hasReacted;
+      if (!res.ok) {
+        // Revert on failure
         setPicks((prev) =>
           prev.map((p) =>
-            p.id === pick.id
-              ? {
-                  ...p,
-                  hasReacted: newHasReacted,
-                  reactionCount: (p.reactionCount ?? 0) + (newHasReacted ? 1 : -1),
-                }
-              : p
+            p.id === pick.id ? { ...p, hasReacted: prevReacted, reactionCount: prevCount } : p
           )
         );
-        showSuccess(newHasReacted ? 'Liked!' : 'Unliked');
+        showError(new Error('Could not update reaction. Try again.'));
+      } else {
+        showSuccess(newReacted ? 'Liked!' : 'Unliked');
       }
+    } catch {
+      setPicks((prev) =>
+        prev.map((p) =>
+          p.id === pick.id ? { ...p, hasReacted: prevReacted, reactionCount: prevCount } : p
+        )
+      );
+      showError(new Error('Could not update reaction. Try again.'));
     } finally {
       setReacting(null);
     }

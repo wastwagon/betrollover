@@ -317,7 +317,17 @@ export class PredictionEngineService {
     return results;
   }
 
-  /** League name matches config focus: exact includes, or normalized (no spaces) so e.g. "La Liga" matches "LaLiga". */
+  /** Aliases for league matching: config key (lowercase) -> possible API/DB names (lowercase, no spaces for fuzzy match). */
+  private static readonly LEAGUE_ALIASES: Record<string, string[]> = {
+    'premier league': ['premier league', 'english premier league', 'epl'],
+    'la liga': ['la liga', 'laliga', 'spanish la liga', 'laliga santander'],
+    'serie a': ['serie a', 'italian serie a', 'serie a tim'],
+    'bundesliga': ['bundesliga', 'german bundesliga', 'bundesliga 1'],
+    'ligue 1': ['ligue 1', 'france ligue 1', 'ligue 1 ubereats'],
+    championship: ['championship', 'english championship', 'efl championship', 'championship league'],
+  };
+
+  /** League name matches config focus: includes, normalized (no spaces), or explicit aliases. */
   private leagueMatchesFocus(fixtureLeagueName: string | null, configLeague: string): boolean {
     if (!fixtureLeagueName) return false;
     const f = fixtureLeagueName.toLowerCase().trim();
@@ -325,7 +335,9 @@ export class PredictionEngineService {
     if (f.includes(c)) return true;
     const fNorm = f.replace(/\s+/g, '');
     const cNorm = c.replace(/\s+/g, '');
-    return fNorm.includes(cNorm) || cNorm.includes(fNorm);
+    if (fNorm.includes(cNorm) || cNorm.includes(fNorm)) return true;
+    const aliases = PredictionEngineService.LEAGUE_ALIASES[cNorm] ?? [cNorm];
+    return aliases.some((alias) => f.includes(alias) || fNorm.includes(alias.replace(/\s+/g, '')));
   }
 
   /** Weekend = Sat(6), Sun(0). Midweek = Tue(2), Wed(3), Thu(4). */

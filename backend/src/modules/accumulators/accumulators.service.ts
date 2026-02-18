@@ -662,11 +662,19 @@ export class AccumulatorsService {
   }
 
   async react(userId: number, accumulatorId: number): Promise<{ success: boolean }> {
+    if (userId == null || accumulatorId == null) {
+      throw new BadRequestException('User and accumulator required');
+    }
     const ticket = await this.ticketRepo.findOne({ where: { id: accumulatorId } });
     if (!ticket) throw new NotFoundException('Pick not found');
     const existing = await this.reactionRepo.findOne({ where: { userId, accumulatorId } });
     if (existing) return { success: true };
-    await this.reactionRepo.save({ userId, accumulatorId, type: 'like' });
+    try {
+      await this.reactionRepo.save({ userId, accumulatorId, type: 'like' });
+    } catch (err) {
+      this.logger.warn(`react failed: ${err instanceof Error ? err.message : String(err)}`);
+      throw err;
+    }
     return { success: true };
   }
 
