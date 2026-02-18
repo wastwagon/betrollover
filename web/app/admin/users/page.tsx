@@ -139,25 +139,34 @@ export default function AdminUsersPage() {
     }
   };
 
+  const [impersonating, setImpersonating] = useState<number | null>(null);
+  const [impersonateError, setImpersonateError] = useState<string | null>(null);
+
   const impersonateUser = async (userId: number) => {
     const token = localStorage.getItem('token');
     if (!token) return;
 
+    setImpersonateError(null);
+    setImpersonating(userId);
     try {
       const res = await fetch(`${API_URL}/admin/users/${userId}/impersonate`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        // Store the new token
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.token) {
         localStorage.setItem('token', data.token);
-        // Redirect to dashboard
-        router.push('/dashboard');
+        // Full page redirect so app re-initializes with new token
+        window.location.href = '/dashboard';
+        return;
       }
+      setImpersonateError(data.message || `Impersonation failed (${res.status})`);
     } catch (error) {
       console.error('Impersonation failed:', error);
+      setImpersonateError('Network error. Try again.');
+    } finally {
+      setImpersonating(null);
     }
   };
 
@@ -206,6 +215,13 @@ export default function AdminUsersPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {impersonateError && (
+          <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 flex items-center justify-between">
+            <span>{impersonateError}</span>
+            <button onClick={() => setImpersonateError(null)} className="text-red-600 dark:text-red-400 hover:underline text-sm">Dismiss</button>
           </div>
         )}
 
@@ -315,16 +331,21 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
-                          {/* Login as Tipster icon */}
-                          {u.role === 'tipster' && (
+                          {/* Login as user (any non-admin) */}
+                          {u.role !== 'admin' && (
                             <button
                               onClick={() => impersonateUser(u.id)}
-                              title="Login as this tipster"
-                              className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+                              disabled={impersonating !== null}
+                              title="Login as this user"
+                              className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors disabled:opacity-50"
                             >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                              </svg>
+                              {impersonating === u.id ? (
+                                <span className="text-xs">...</span>
+                              ) : (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                                </svg>
+                              )}
                             </button>
                           )}
 
