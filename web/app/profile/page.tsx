@@ -6,9 +6,7 @@ import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 
-import { getApiUrl } from '@/lib/site-config';
-
-const API_URL = getApiUrl();
+import { getApiUrl, getApiBaseUrl } from '@/lib/site-config';
 
 interface Profile {
   id: number;
@@ -45,7 +43,7 @@ export default function ProfilePage() {
       router.push('/login');
       return;
     }
-    fetch(`${API_URL}/users/me`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${getApiUrl()}/users/me`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data) => {
         setProfile(data);
@@ -64,7 +62,7 @@ export default function ProfilePage() {
     setSaving(true);
     setMsg('');
     try {
-      const res = await fetch(`${API_URL}/users/me`, {
+      const res = await fetch(`${getApiUrl()}/users/me`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -85,7 +83,7 @@ export default function ProfilePage() {
     }
   };
 
-  const avatarSrc = profile?.avatar ? (profile.avatar.startsWith('http') ? profile.avatar : `${API_URL}${profile.avatar}`) : null;
+  const avatarSrc = profile?.avatar ? (profile.avatar.startsWith('http') ? profile.avatar : `${getApiBaseUrl()}${profile.avatar}`) : null;
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -97,7 +95,7 @@ export default function ProfilePage() {
     try {
       const form = new FormData();
       form.append('avatar', file);
-      const res = await fetch(`${API_URL}/users/me/avatar`, {
+      const res = await fetch(`${getApiUrl()}/users/me/avatar`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: form,
@@ -121,7 +119,7 @@ export default function ProfilePage() {
     setSaving(true);
     setMsg('');
     try {
-      const res = await fetch(`${API_URL}/users/me`, {
+      const res = await fetch(`${getApiUrl()}/users/me`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ avatar: null }),
@@ -152,7 +150,7 @@ export default function ProfilePage() {
     setPwSaving(true);
     setPwMsg('');
     try {
-      const res = await fetch(`${API_URL}/auth/change-password`, {
+      const res = await fetch(`${getApiUrl()}/auth/change-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

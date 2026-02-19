@@ -127,6 +127,14 @@ Your **live site and Coolify don’t depend on creating Releases**; they only de
 
 ---
 
+## CORS / "Backend unavailable" on production
+
+If the live site shows **"Backend unavailable"** or the browser console shows **CORS** errors (e.g. "Access to fetch at 'https://api.betrollover.com/...' has been blocked by CORS policy"), the API is not allowing your frontend origin.
+
+**Fix in Coolify:** For the **API** service (not the web service), set environment variable **`APP_URL`** to your frontend URL with no trailing slash (e.g. `https://betrollover.com`). Then redeploy or restart the API. You can also set **`CORS_ORIGINS`** to a comma-separated list of extra origins.
+
+---
+
 ## Summary
 
 | What you have | Is it OK? |

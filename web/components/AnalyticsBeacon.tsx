@@ -2,8 +2,7 @@
 
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 function getOrCreateSessionId(): string {
   if (typeof window === 'undefined') return '';
@@ -18,7 +17,7 @@ function getOrCreateSessionId(): string {
 
 function track(page: string) {
   const sessionId = getOrCreateSessionId();
-  fetch(`${API_URL}/analytics/track`, {
+  fetch(`${getApiUrl()}/analytics/track`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ sessionId, page }),

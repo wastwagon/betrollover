@@ -124,6 +124,7 @@ async function bootstrap() {
 
     if (allowedOrigins.length === 0) {
       logger.warn('⚠️  No CORS origins configured for production. Set APP_URL or CORS_ORIGINS.');
+      logger.warn('   Example: APP_URL=https://betrollover.com (so the frontend can call the API).');
     }
   } else {
     // Development: Allow localhost with specific ports

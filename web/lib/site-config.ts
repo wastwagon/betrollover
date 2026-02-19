@@ -6,13 +6,18 @@
 export const SITE_URL =
   process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:6002';
 
-/** API base URL including /api/v1. In browser: direct URL + /api/v1 or proxy (proxy prepends api/v1). Server: backend URL + /api/v1. */
-export const getApiUrl = (): string => {
+/** Base URL of the API (no path). Use for building upload/avatar URLs. */
+export const getApiBaseUrl = (): string => {
   const base =
     typeof window !== 'undefined'
       ? (process.env.NEXT_PUBLIC_API_URL || '/api/backend')
       : (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001');
-  const baseClean = base.replace(/\/$/, '');
+  return base.replace(/\/$/, '');
+};
+
+/** API base URL including /api/v1. Use for all API fetch calls. */
+export const getApiUrl = (): string => {
+  const baseClean = getApiBaseUrl();
   if (baseClean === '/api/backend') return baseClean;
   return `${baseClean}/api/v1`;
 };
