@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { AppShell } from '@/components/AppShell';
+import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
@@ -50,16 +50,16 @@ export default function NotificationsPage() {
 
   if (loading) {
     return (
-      <AppShell>
+      <DashboardShell>
         <div className="min-h-[200px] flex items-center justify-center">
           <div className="w-10 h-10 rounded-full border-2 border-[var(--primary)] border-t-transparent animate-spin" />
         </div>
-      </AppShell>
+      </DashboardShell>
     );
   }
 
   return (
-    <AppShell>
+    <DashboardShell>
       <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
         <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 md:py-6 pb-24">
           <PageHeader
@@ -105,6 +105,6 @@ export default function NotificationsPage() {
         )}
         </div>
       </div>
-    </AppShell>
+    </DashboardShell>
   );
 }

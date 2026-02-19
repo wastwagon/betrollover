@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { AppShell } from '@/components/AppShell';
+import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { getApiUrl } from '@/lib/site-config';
 
@@ -212,7 +212,7 @@ function WalletContent() {
   const isTipster = user?.role === 'tipster' || user?.role === 'admin';
 
   return (
-    <AppShell>
+    <DashboardShell>
       <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
         <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 md:py-6 pb-24">
           <PageHeader
@@ -408,18 +408,18 @@ function WalletContent() {
         )}
         </div>
       </div>
-    </AppShell>
+    </DashboardShell>
   );
 }
 
 export default function WalletPage() {
   return (
     <Suspense fallback={
-      <AppShell>
+      <DashboardShell>
         <div className="dashboard-bg dashboard-pattern min-h-[200px] flex items-center justify-center">
           <p className="text-[var(--text-muted)] text-sm animate-pulse">Loading wallet...</p>
         </div>
-      </AppShell>
+      </DashboardShell>
     }>
       <WalletContent />
     </Suspense>

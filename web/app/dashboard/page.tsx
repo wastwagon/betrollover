@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { AppShell } from '@/components/AppShell';
+import { DashboardShell } from '@/components/DashboardShell';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { PageHeader } from '@/components/PageHeader';
 
@@ -307,7 +307,7 @@ function DashboardContent() {
   }
 
   return (
-    <AppShell>
+    <DashboardShell>
       {/* Premium dashboard: mobile-first background and layout */}
       <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] relative">
         <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 sm:py-6 md:py-8 pb-24">
@@ -638,7 +638,7 @@ function DashboardContent() {
           </section>
         </div>
       </div>
-    </AppShell>
+    </DashboardShell>
   );
 }
 

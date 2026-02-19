@@ -168,12 +168,38 @@ body {
   animation-delay: 400ms;
 }
 
+/* Bottom sheet slide-up */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0.9;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* Safe area insets for mobile notch/home bar */
+.safe-area-inset-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
 /* Respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
 
   .skeleton,
   .animate-slide-in-right,
   .animate-fadeIn,
+  .animate-slide-up,
   [class*="animate-"] {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

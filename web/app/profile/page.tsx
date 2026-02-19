@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { AppShell } from '@/components/AppShell';
+import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 
 import { getApiUrl } from '@/lib/site-config';
@@ -186,7 +186,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <AppShell>
+    <DashboardShell>
       <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
         <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 md:py-6 pb-24">
           <PageHeader
@@ -324,6 +324,6 @@ export default function ProfilePage() {
         </div>
         </div>
       </div>
-    </AppShell>
+    </DashboardShell>
   );
 }

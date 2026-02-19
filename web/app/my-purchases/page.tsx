@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AppShell } from '@/components/AppShell';
+import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { PickCard } from '@/components/PickCard';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
@@ -88,7 +88,7 @@ export default function MyPurchasesPage() {
   }, [purchases.length, loading]);
 
   return (
-    <AppShell>
+    <DashboardShell>
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
         <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 md:py-6 pb-24">
@@ -134,6 +134,6 @@ export default function MyPurchasesPage() {
           )}
         </div>
       </div>
-    </AppShell>
+    </DashboardShell>
   );
 }

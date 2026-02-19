@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { AppShell } from '@/components/AppShell';
+import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { PickCard } from '@/components/PickCard';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
@@ -273,7 +273,7 @@ export default function MarketplacePage() {
   };
 
   return (
-    <AppShell>
+    <DashboardShell>
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
@@ -406,6 +406,6 @@ export default function MarketplacePage() {
           )}
         </div>
       </div>
-    </AppShell>
+    </DashboardShell>
   );
 }

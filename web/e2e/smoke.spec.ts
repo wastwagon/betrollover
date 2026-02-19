@@ -20,4 +20,14 @@ test.describe('Smoke tests', () => {
     await page.goto('/login');
     await expect(page.getByRole('button', { name: /log in|sign in/i })).toBeVisible();
   });
+
+  test('dashboard redirects to login when unauthenticated', async ({ page }) => {
+    await page.goto('/dashboard');
+    await expect(page).toHaveURL(/\/login/);
+  });
+
+  test('marketplace redirects to login when unauthenticated', async ({ page }) => {
+    await page.goto('/marketplace');
+    await expect(page).toHaveURL(/\/login/);
+  });
 });

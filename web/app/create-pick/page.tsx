@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { AppShell } from '@/components/AppShell';
+import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
@@ -495,7 +495,7 @@ export default function CreatePickPage() {
   };
 
   return (
-    <AppShell slipCount={selections.length}>
+    <DashboardShell>
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
@@ -955,6 +955,6 @@ export default function CreatePickPage() {
         </div>
         </div>
       </div>
-    </AppShell>
+    </DashboardShell>
   );
 }
