@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { execSync } from 'child_process';
 import { DataSource } from 'typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -107,8 +108,7 @@ export class MigrationRunnerService {
     for (const filename of pending) {
       const filePath = path.join(dir, filename);
       try {
-        const sql = fs.readFileSync(filePath, 'utf8');
-        await this.runSql(sql, filename);
+        await this.runMigrationFile(filePath, filename);
         await this.dataSource.query(
           'INSERT INTO applied_migrations (filename) VALUES ($1)',
           [filename],
@@ -129,14 +129,43 @@ export class MigrationRunnerService {
     await this.dataSource.query(APPLIED_TABLE);
   }
 
-  /** Execute SQL file content. Splits by statement (line ending with ;) but does NOT split inside DO $$ blocks. */
-  private async runSql(sql: string, _label: string): Promise<void> {
+  /**
+   * Run a migration file via psql -f (same as seeds).
+   * Handles DO $$ blocks, multi-line SQL, and all PostgreSQL syntax correctly.
+   * Falls back to DataSource.query if psql fails (e.g. not in PATH).
+   */
+  private async runMigrationFile(filePath: string, filename: string): Promise<void> {
+    const host = process.env.POSTGRES_HOST || process.env.PGHOST || 'localhost';
+    const port = process.env.POSTGRES_PORT || process.env.PGPORT || '5432';
+    const user = process.env.POSTGRES_USER || process.env.PGUSER || 'betrollover';
+    const db = process.env.POSTGRES_DB || process.env.PGDATABASE || 'betrollover';
+    const password = process.env.POSTGRES_PASSWORD || process.env.PGPASSWORD || '';
+
+    try {
+      execSync(`psql -h ${host} -p ${port} -U ${user} -d ${db} -f "${filePath}" -v ON_ERROR_STOP=1`, {
+        env: { ...process.env, PGPASSWORD: password },
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+    } catch (psqlErr: any) {
+      // Only fall back when psql command not found (e.g. not in PATH)
+      const isPsqlNotFound = psqlErr?.code === 'ENOENT' || psqlErr?.message?.includes('spawn psql');
+      if (isPsqlNotFound) {
+        this.logger.warn(`psql not available, using DataSource fallback for ${filename}`);
+        const sql = fs.readFileSync(filePath, 'utf8');
+        await this.runSqlFallback(sql);
+      } else {
+        throw psqlErr;
+      }
+    }
+  }
+
+  /** Fallback: split by line-ending ; and execute. Avoid DO $$ blocks in migrations when using this fallback. */
+  private async runSqlFallback(sql: string): Promise<void> {
     const statements: string[] = [];
     let current = '';
     for (const line of sql.split(/\r?\n/)) {
       current += line + '\n';
       const t = line.trim();
-      // Only split on ; when not inside a dollar-quoted block (DO $$ ... $$)
       const dollarCount = (current.match(/\$\$/g) || []).length;
       const insideDollarBlock = dollarCount % 2 === 1;
       if (t.endsWith(';') && !t.startsWith('--') && !insideDollarBlock) {
