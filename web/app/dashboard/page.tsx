@@ -317,6 +317,99 @@ function DashboardContent() {
             tagline="Your performance, picks, and earnings at a glance."
           />
 
+          {/* Quick Actions — large touch targets, premium cards */}
+          <section className="mb-6 sm:mb-8">
+            <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">Quick Actions</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <Link
+                href="/dashboard"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+              >
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  🏠
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-[var(--text)] block">Dashboard</span>
+                  <span className="text-sm text-[var(--text-muted)]">Your hub</span>
+                </div>
+              </Link>
+              <Link
+                href="/create-pick"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-700 text-white hover:from-teal-700 hover:to-teal-800 transition-all duration-200 shadow-lg shadow-teal-500/25 hover:shadow-teal-500/30"
+              >
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  ➕
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold block text-white">Create Pick</span>
+                  <span className="text-sm text-white/85">Share tips & earn</span>
+                </div>
+              </Link>
+              <Link
+                href="/my-picks"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+              >
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  🎯
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-[var(--text)] block">My Picks</span>
+                  <span className="text-sm text-[var(--text-muted)]">View & manage</span>
+                </div>
+              </Link>
+              <Link
+                href="/marketplace"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+              >
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  🛒
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-[var(--text)] block">Marketplace</span>
+                  <span className="text-sm text-[var(--text-muted)]">Browse picks & coupons</span>
+                </div>
+              </Link>
+              <Link
+                href="/my-purchases"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+              >
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  📥
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-[var(--text)] block">My Purchases</span>
+                  <span className="text-sm text-[var(--text-muted)]">
+                    {purchaseStats && purchaseStats.total > 0 ? `${purchaseStats.total} total` : 'Your bought picks'}
+                  </span>
+                </div>
+              </Link>
+              <Link
+                href="/profile"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+              >
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  👤
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-[var(--text)] block">Profile</span>
+                  <span className="text-sm text-[var(--text-muted)]">Your profile</span>
+                </div>
+              </Link>
+              <Link
+                href="/wallet"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+              >
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  💰
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-[var(--text)] block">Wallet</span>
+                  <span className="text-sm text-[var(--text-muted)]">Balance & transactions</span>
+                </div>
+              </Link>
+            </div>
+          </section>
+
           {/* Performance stats — glass cards, 2 cols mobile → 4 cols desktop */}
           {tipsterStats && (
             <section className="mb-6 sm:mb-8">
@@ -577,63 +670,6 @@ function DashboardContent() {
                   </div>
                 )}
               </div>
-            </div>
-          </section>
-
-          {/* Quick Actions — large touch targets, premium cards */}
-          <section>
-            <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">Quick Actions</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              <Link
-                href="/create-pick"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-700 text-white hover:from-teal-700 hover:to-teal-800 transition-all duration-200 shadow-lg shadow-teal-500/25 hover:shadow-teal-500/30"
-              >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  ➕
-                </span>
-                <div className="min-w-0">
-                  <span className="font-semibold block text-white">Create Pick</span>
-                  <span className="text-sm text-white/85">Share tips & earn</span>
-                </div>
-              </Link>
-              <Link
-                href="/my-picks"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
-              >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  🎯
-                </span>
-                <div className="min-w-0">
-                  <span className="font-semibold text-[var(--text)] block">My Picks</span>
-                  <span className="text-sm text-[var(--text-muted)]">View & manage</span>
-                </div>
-              </Link>
-              <Link
-                href="/marketplace"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
-              >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  🛒
-                </span>
-                <div className="min-w-0">
-                  <span className="font-semibold text-[var(--text)] block">Marketplace</span>
-                  <span className="text-sm text-[var(--text-muted)]">Browse picks & coupons</span>
-                </div>
-              </Link>
-              <Link
-                href="/my-purchases"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
-              >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  📥
-                </span>
-                <div className="min-w-0">
-                  <span className="font-semibold text-[var(--text)] block">My Purchases</span>
-                  <span className="text-sm text-[var(--text-muted)]">
-                    {purchaseStats && purchaseStats.total > 0 ? `${purchaseStats.total} total` : 'Your bought picks'}
-                  </span>
-                </div>
-              </Link>
             </div>
           </section>
         </div>
