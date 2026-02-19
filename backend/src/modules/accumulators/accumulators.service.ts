@@ -14,6 +14,7 @@ import { EmailService } from '../email/email.service';
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { FootballService } from '../football/football.service';
 import { TipsterService } from '../tipster/tipster.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { TipsterFollow } from '../predictions/entities/tipster-follow.entity';
@@ -23,6 +24,10 @@ export interface CreateAccumulatorDto {
   description?: string;
   price: number;
   isMarketplace: boolean;
+  /** Placement: 'marketplace' | 'subscription' | 'both' (default: marketplace) */
+  placement?: string;
+  /** If placement includes subscription: package IDs to add coupon to */
+  subscriptionPackageIds?: number[];
   selections: {
     fixtureId?: number;
     matchDescription: string;
@@ -64,6 +69,7 @@ export class AccumulatorsService {
     private emailService: EmailService,
     private footballService: FootballService,
     private tipsterService: TipsterService,
+    private subscriptionsService: SubscriptionsService,
     private dataSource: DataSource,
   ) { }
 
@@ -212,13 +218,21 @@ export class AccumulatorsService {
     }
 
     if (dto.isMarketplace) {
+      const placement = (dto.placement || 'marketplace') as string;
+      const subPackageIds = dto.subscriptionPackageIds ?? [];
+      const firstPackageId = subPackageIds[0] ?? null;
       await this.marketplaceRepo.save({
         accumulatorId: ticket.id,
         sellerId: userId,
         price: dto.price,
         status: 'active',
         maxPurchases: dto.price === 0 ? 999999 : 999999,
+        placement: ['marketplace', 'subscription', 'both'].includes(placement) ? placement : 'marketplace',
+        subscriptionPackageId: firstPackageId,
       });
+      if ((placement === 'subscription' || placement === 'both') && subPackageIds.length > 0) {
+        await this.subscriptionsService.addCouponToPackages(ticket.id, subPackageIds);
+      }
       await this.notificationsService.create({
         userId,
         type: 'pick_published',
@@ -328,6 +342,31 @@ export class AccumulatorsService {
       ...p,
       pick: ticketMap.get(p.accumulatorId),
     }));
+  }
+
+  /** Subscription feed: coupons from tipsters the user is subscribed to */
+  async getSubscriptionFeed(userId: number, options?: { limit?: number; offset?: number }) {
+    const accIds = await this.subscriptionsService.getMySubscriptionCoupons(userId);
+    if (accIds.length === 0) return { items: [], total: 0, hasMore: false };
+
+    const tickets = await this.ticketRepo.find({
+      where: { id: In(accIds), status: 'active' },
+      relations: ['picks'],
+      order: { createdAt: 'DESC' },
+    });
+    const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
+    const rows = await this.marketplaceRepo.find({
+      where: { accumulatorId: In(accIds), status: 'active' },
+    });
+    const items = await this.enrichWithTipsterMetadata(enrichedTickets, rows, userId);
+    const limit = Math.min(Math.max(options?.limit ?? 20, 1), 100);
+    const offset = Math.max(options?.offset ?? 0, 0);
+    const paginated = items.slice(offset, offset + limit);
+    return {
+      items: paginated,
+      total: items.length,
+      hasMore: offset + paginated.length < items.length,
+    };
   }
 
   async getMarketplace(userId: number, includeAllListings = false, options?: { limit?: number; offset?: number }) {

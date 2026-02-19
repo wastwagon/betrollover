@@ -358,6 +358,18 @@ function DashboardContent() {
                 </div>
               </Link>
               <Link
+                href="/dashboard/subscription-packages"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+              >
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  📦
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-[var(--text)] block">Subscription Packages</span>
+                  <span className="text-sm text-[var(--text-muted)]">Create & manage</span>
+                </div>
+              </Link>
+              <Link
                 href="/marketplace"
                 className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
               >
@@ -405,6 +417,18 @@ function DashboardContent() {
                 <div className="min-w-0">
                   <span className="font-semibold text-[var(--text)] block">Wallet</span>
                   <span className="text-sm text-[var(--text-muted)]">Balance & transactions</span>
+                </div>
+              </Link>
+              <Link
+                href="/subscriptions"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+              >
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  ⭐
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-[var(--text)] block">Subscriptions</span>
+                  <span className="text-sm text-[var(--text-muted)]">Tipster subscription coupons</span>
                 </div>
               </Link>
             </div>

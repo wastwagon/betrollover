@@ -3,6 +3,7 @@
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { DashboardBottomNav } from '@/components/DashboardBottomNav';
 import { AppFooter } from '@/components/AppFooter';
+import { PushNotificationPrompt } from '@/components/PushNotificationPrompt';
 
 export function DashboardShell({
   children,
@@ -17,6 +18,7 @@ export function DashboardShell({
       <main className="flex-1 flex flex-col min-h-0 pb-20 md:pb-0">
         {children}
       </main>
+      <PushNotificationPrompt />
       <AppFooter />
     </div>
   );

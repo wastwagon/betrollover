@@ -6,11 +6,16 @@
 export const SITE_URL =
   process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:6002';
 
-/** API base URL: prefer direct URL in browser when set (avoids proxy issues); otherwise use proxy */
-export const getApiUrl = () =>
-  typeof window !== 'undefined'
-    ? (process.env.NEXT_PUBLIC_API_URL || '/api/backend')
-    : (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001');
+/** API base URL including /api/v1. In browser: direct URL + /api/v1 or proxy (proxy prepends api/v1). Server: backend URL + /api/v1. */
+export const getApiUrl = (): string => {
+  const base =
+    typeof window !== 'undefined'
+      ? (process.env.NEXT_PUBLIC_API_URL || '/api/backend')
+      : (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001');
+  const baseClean = base.replace(/\/$/, '');
+  if (baseClean === '/api/backend') return baseClean;
+  return `${baseClean}/api/v1`;
+};
 
 export const SITE_NAME = 'BetRollover';
 export const SITE_DESCRIPTION =

@@ -1,9 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification } from './entities/notification.entity';
 import { User } from '../users/entities/user.entity';
 import { EmailService } from '../email/email.service';
+import { PushService } from '../push/push.service';
+
+const PUSH_NOTIFICATION_TYPES = new Set([
+  'subscription', 'subscription_refund', 'subscription_payout',
+  'pick_published', 'new_pick_from_followed', 'settlement', 'subscription_payout',
+]);
 
 @Injectable()
 export class NotificationsService {
@@ -13,6 +19,7 @@ export class NotificationsService {
     @InjectRepository(User)
     private userRepo: Repository<User>,
     private emailService: EmailService,
+    @Optional() private pushService?: PushService,
   ) {}
 
   async list(userId: number, limit = 20) {
@@ -52,6 +59,17 @@ export class NotificationsService {
       icon: data.icon ?? 'bell',
     });
     await this.repo.save(n);
+
+    if (this.pushService && PUSH_NOTIFICATION_TYPES.has(data.type)) {
+      this.pushService
+        .sendToUser(data.userId, {
+          title: data.title,
+          body: data.message,
+          link: data.link ?? undefined,
+          icon: data.icon,
+        })
+        .catch(() => {});
+    }
 
     if (data.sendEmail) {
       const user = await this.userRepo.findOne({

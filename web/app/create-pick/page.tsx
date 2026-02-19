@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
@@ -90,6 +91,9 @@ export default function CreatePickPage() {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState(0);
   const [isMarketplace, setIsMarketplace] = useState(true);
+  const [placement, setPlacement] = useState<'marketplace' | 'subscription' | 'both'>('marketplace');
+  const [subscriptionPackageIds, setSubscriptionPackageIds] = useState<number[]>([]);
+  const [myPackages, setMyPackages] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,6 +104,7 @@ export default function CreatePickPage() {
   const [selectedCountry, setSelectedCountry] = useState<string>('');
   const [selectedLeague, setSelectedLeague] = useState<string>('');
   const [teamSearch, setTeamSearch] = useState<string>('');
+  const [slipSheetOpen, setSlipSheetOpen] = useState(false);
   const debouncedTeamSearch = useDebounce(teamSearch, 500); // Debounce team search by 500ms
   const [filterOptions, setFilterOptions] = useState<{
     countries: string[];
@@ -285,6 +290,22 @@ export default function CreatePickPage() {
     })();
   }, [router, selectedCountry, selectedLeague, debouncedTeamSearch]);
 
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    fetch(`${API_URL}/users/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((user) => {
+        if (!user?.id) return;
+        return fetch(`${API_URL}/subscriptions/packages?tipsterId=${user.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      })
+      .then((r) => (r?.ok ? r.json() : []))
+      .then((arr) => setMyPackages(Array.isArray(arr) ? arr.map((p: { id: number; name: string }) => ({ id: p.id, name: p.name })) : []))
+      .catch(() => {});
+  }, []);
+
   const loadFixtureOdds = async (f: Fixture) => {
     // If odds already loaded, skip
     if (f.odds && f.odds.length > 0) return;
@@ -401,7 +422,11 @@ export default function CreatePickPage() {
   };
 
   const removeSelection = (idx: number) => {
-    setSelections((prev) => prev.filter((_, i) => i !== idx));
+    setSelections((prev) => {
+      const next = prev.filter((_, i) => i !== idx);
+      if (next.length === 0) setSlipSheetOpen(false);
+      return next;
+    });
   };
 
   const totalOdds = selections.reduce((a, s) => a * s.odds, 1);
@@ -429,6 +454,8 @@ export default function CreatePickPage() {
         description: description.trim() || undefined,
         price: Number(price) || 0,
         isMarketplace,
+        placement: placement,
+        subscriptionPackageIds: (placement === 'subscription' || placement === 'both') ? subscriptionPackageIds : undefined,
         selections: selections.map((s) => ({
           fixtureId: s.fixtureId,
           matchDescription: s.matchDescription,
@@ -507,10 +534,16 @@ export default function CreatePickPage() {
           />
           {selections.length > 0 && (
             <div className="flex justify-end mb-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--primary-light)] text-[var(--primary)] text-xs font-medium">
-                <span>📝</span>
+              <button
+                type="button"
+                onClick={() => setSlipSheetOpen(true)}
+                className="lg:hidden flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--primary-light)] text-[var(--primary)] text-sm font-semibold shadow-sm hover:bg-teal-100 active:scale-[0.98] transition-all touch-manipulation min-h-[44px]"
+                aria-label="View slip"
+              >
+                <span className="text-base">📝</span>
                 <span>{selections.length} selection{selections.length !== 1 ? 's' : ''}</span>
-              </div>
+                <span className="text-[var(--primary)] font-bold ml-0.5">@ {totalOdds.toFixed(2)}</span>
+              </button>
             </div>
           )}
 
@@ -810,8 +843,8 @@ export default function CreatePickPage() {
           </div>
           </div>
 
-          {/* Right Column: Fixed Slip Widget */}
-          <div className="lg:w-96 lg:flex-shrink-0">
+          {/* Right Column: Fixed Slip Widget (desktop only) */}
+          <div className="hidden lg:block lg:w-96 lg:flex-shrink-0">
             <div className="lg:sticky lg:top-4">
               <div className="bg-gradient-to-br from-[var(--primary)]/10 via-[var(--primary)]/5 to-transparent rounded-card shadow-card border-2 border-[var(--primary)]/30 p-5 space-y-4">
                 {/* Header */}
@@ -933,6 +966,42 @@ export default function CreatePickPage() {
                         />
                         <span className="text-[var(--text)]">List on marketplace</span>
                       </label>
+                      <div>
+                        <label className="block text-xs font-medium text-[var(--text)] mb-1">Placement</label>
+                        <select
+                          value={placement}
+                          onChange={(e) => setPlacement(e.target.value as 'marketplace' | 'subscription' | 'both')}
+                          className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border)] bg-[var(--card)]"
+                        >
+                          <option value="marketplace">Marketplace only</option>
+                          <option value="subscription">Subscription only</option>
+                          <option value="both">Both marketplace & subscription</option>
+                        </select>
+                        {(placement === 'subscription' || placement === 'both') && myPackages.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            <span className="text-xs text-[var(--text-muted)]">Add to packages:</span>
+                            {myPackages.map((p) => (
+                              <label key={p.id} className="flex items-center gap-2 cursor-pointer text-xs">
+                                <input
+                                  type="checkbox"
+                                  checked={subscriptionPackageIds.includes(p.id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) setSubscriptionPackageIds((prev) => [...prev, p.id]);
+                                    else setSubscriptionPackageIds((prev) => prev.filter((id) => id !== p.id));
+                                  }}
+                                  className="w-3.5 h-3.5 rounded border-[var(--border)]"
+                                />
+                                <span>{p.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                        {(placement === 'subscription' || placement === 'both') && myPackages.length === 0 && (
+                          <p className="text-xs text-[var(--text-muted)] mt-1">
+                            <Link href="/dashboard/subscription-packages" className="text-[var(--primary)] hover:underline">Create subscription packages</Link> first.
+                          </p>
+                        )}
+                      </div>
                       {error && (
                         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-2">
                           <p className="text-red-800 dark:text-red-200 text-xs">{error}</p>
@@ -955,6 +1024,151 @@ export default function CreatePickPage() {
         </div>
         </div>
       </div>
+
+      {/* Mobile: Sticky slip bar above nav — tap to open slip sheet */}
+      {selections.length > 0 && (
+        <div
+          className="lg:hidden fixed left-0 right-0 bottom-16 z-40 px-4 pb-2"
+          style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+        >
+          <button
+            type="button"
+            onClick={() => setSlipSheetOpen(true)}
+            className="w-full flex items-center justify-between gap-3 px-5 py-4 rounded-2xl bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-teal-500/30 active:scale-[0.99] transition-transform touch-manipulation"
+          >
+            <div className="flex items-center gap-3">
+              <span className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">📝</span>
+              <div className="text-left">
+                <p className="font-semibold text-sm">{selections.length} selection{selections.length !== 1 ? 's' : ''}</p>
+                <p className="text-xs text-white/85">Total @ {totalOdds.toFixed(2)}</p>
+              </div>
+            </div>
+            <span className="font-bold text-base">Review & Create</span>
+          </button>
+        </div>
+      )}
+
+      {/* Mobile: Slip bottom sheet */}
+      {slipSheetOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+          onClick={() => setSlipSheetOpen(false)}
+          aria-hidden
+        >
+          <div
+            className="absolute bottom-0 left-0 right-0 max-h-[90vh] overflow-y-auto bg-white rounded-t-3xl shadow-2xl animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+            style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+          >
+            <div className="sticky top-0 z-10 bg-white rounded-t-3xl pt-4 pb-3 px-4 border-b border-[var(--border)]">
+              <div className="w-12 h-1 rounded-full bg-[var(--border)] mx-auto mb-4" />
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
+                  <span>📝</span> Bet Slip
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setSlipSheetOpen(false)}
+                  className="p-2 -m-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-warm)] transition-colors"
+                  aria-label="Close"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="space-y-2 max-h-[180px] overflow-y-auto">
+                {selections.map((s, i) => (
+                  <div
+                    key={i}
+                    className="bg-[var(--bg-warm)] rounded-xl p-4 border border-[var(--border)]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-[var(--text)]">{s.matchDescription}</p>
+                        <p className="text-xs text-[var(--text-muted)] mt-1">{s.prediction}</p>
+                        <p className="text-base font-bold text-[var(--primary)] mt-2">@ {s.odds.toFixed(2)}</p>
+                      </div>
+                      <button
+                        onClick={() => removeSelection(i)}
+                        className="flex-shrink-0 p-2 rounded-lg text-red-500 hover:bg-red-50 active:bg-red-100 transition-colors touch-manipulation"
+                        aria-label="Remove selection"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="bg-[var(--primary-light)]/50 rounded-xl p-4 border-2 border-[var(--primary)]/30">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-[var(--text-muted)]">Total Odds</span>
+                  <span className="text-xl font-bold text-[var(--primary)]">{totalOdds.toFixed(2)}</span>
+                </div>
+              </div>
+              <div className="space-y-3 pt-2 border-t border-[var(--border)]">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text)] mb-1">Title <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g. Saturday Banker"
+                    className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text)] mb-1">Description (optional)</label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Brief analysis..."
+                    className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent resize-none"
+                    rows={2}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text)] mb-1">Price (GHS) — 0 = free</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={price || ''}
+                    onChange={(e) => setPrice(Number(e.target.value) || 0)}
+                    placeholder="0"
+                    className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                  />
+                </div>
+                <label className="flex items-center gap-3 cursor-pointer py-2">
+                  <input
+                    type="checkbox"
+                    checked={isMarketplace}
+                    onChange={(e) => setIsMarketplace(e.target.checked)}
+                    className="w-5 h-5 rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)]"
+                  />
+                  <span className="text-sm text-[var(--text)]">List on marketplace</span>
+                </label>
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+                    <p className="text-red-700 text-sm">{error}</p>
+                  </div>
+                )}
+                <button
+                  onClick={() => submit()}
+                  disabled={submitting || selections.length === 0 || !title.trim()}
+                  className="w-full py-4 rounded-xl font-bold text-base bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-teal-500/30 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] transition-all flex items-center justify-center gap-2 touch-manipulation min-h-[52px]"
+                >
+                  {submitting && <LoadingSpinner size="sm" />}
+                  {submitting ? 'Creating...' : 'Create Pick'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardShell>
   );
 }

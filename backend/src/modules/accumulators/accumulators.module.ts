@@ -14,6 +14,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { EmailModule } from '../email/email.module';
 import { FootballModule } from '../football/football.module';
 import { TipsterModule } from '../tipster/tipster.module';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { User } from '../users/entities/user.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
@@ -39,6 +40,7 @@ import { TipsterFollow } from '../predictions/entities/tipster-follow.entity';
     EmailModule,
     FootballModule,
     TipsterModule,
+    SubscriptionsModule,
   ],
   controllers: [AccumulatorsController],
   providers: [AccumulatorsService, SettlementService],

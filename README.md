@@ -74,6 +74,7 @@ PostgreSQL runs inside Docker; init scripts in `database/init/` run on first sta
 | **Web** | http://localhost:6002 |
 | **API** | http://localhost:6001 |
 | **API Health** | http://localhost:6001/health |
+| **API (versioned)** | http://localhost:6001/api/v1/* (e.g. `/api/v1/auth/login`) |
 
 ---
 
@@ -119,7 +120,7 @@ cp _temp/assets/* assets/ && rm -rf _temp
 npx expo start
 ```
 
-**API URL for mobile:** Use your machine's local IP (e.g. `192.168.1.x`) so the device/simulator can reach the API:
+**API URL for mobile:** Use your machine's local IP (e.g. `192.168.1.x`) so the device/simulator can reach the API. The app uses `/api/v1` for all routes (no trailing slash on base URL):
 
 ```bash
 EXPO_PUBLIC_API_URL=http://192.168.1.100:6001 npx expo start
@@ -201,6 +202,19 @@ npm run dev
 ```bash
 cd backend && npm test
 ```
+
+---
+
+## Docs
+
+| Doc | Purpose |
+|-----|---------|
+| **[docs/SIMPLE_DEPLOY_GUIDE.md](docs/SIMPLE_DEPLOY_GUIDE.md)** | **Deploying with Coolify + GitHub (one branch, step-by-step)** |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Branching, conventional commits, PRs |
+| [CHANGELOG.md](CHANGELOG.md) | Version history |
+| [docs/BACKUP_AND_RUNBOOK.md](docs/BACKUP_AND_RUNBOOK.md) | DB backup, migrations, release steps |
+| [docs/TEMPLATE_IMPLEMENTATION_PHASES.md](docs/TEMPLATE_IMPLEMENTATION_PHASES.md) | World-class template alignment |
+| [docs/WORLD_CLASS_DEV_TEMPLATE_COMPLETE.md](docs/WORLD_CLASS_DEV_TEMPLATE_COMPLETE.md) | Stack, phases, versioning reference |
 
 ---
 

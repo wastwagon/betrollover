@@ -9,11 +9,18 @@ import {
   Linking,
   Alert,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:6001';
+const API_BASE = `${(process.env.EXPO_PUBLIC_API_URL || 'http://localhost:6001').replace(/\/$/, '')}/api/v1`;
+
+interface IapProduct {
+  productId: string;
+  amountGhs: number;
+  label: string;
+}
 
 interface Transaction {
   id: number;
@@ -63,6 +70,9 @@ export default function WalletScreen() {
   });
   const [payoutLoading, setPayoutLoading] = useState(false);
   const [payoutError, setPayoutError] = useState('');
+  const [iapProducts, setIapProducts] = useState<IapProduct[]>([]);
+  const [iapLoading, setIapLoading] = useState<string | null>(null);
+  const [iapError, setIapError] = useState('');
 
   const loadData = async () => {
     const token = await AsyncStorage.getItem('token');
@@ -72,23 +82,26 @@ export default function WalletScreen() {
     }
     const headers = { Authorization: `Bearer ${token}` };
     try {
-      const [uRes, balRes, txRes, payRes, wdrRes] = await Promise.all([
-        fetch(`${API_URL}/users/me`, { headers }),
-        fetch(`${API_URL}/wallet/balance`, { headers }),
-        fetch(`${API_URL}/wallet/transactions`, { headers }),
-        fetch(`${API_URL}/wallet/payout-methods`, { headers }),
-        fetch(`${API_URL}/wallet/withdrawals`, { headers }),
+      const [uRes, balRes, txRes, payRes, wdrRes, iapRes] = await Promise.all([
+        fetch(`${API_BASE}/users/me`, { headers }),
+        fetch(`${API_BASE}/wallet/balance`, { headers }),
+        fetch(`${API_BASE}/wallet/transactions`, { headers }),
+        fetch(`${API_BASE}/wallet/payout-methods`, { headers }),
+        fetch(`${API_BASE}/wallet/withdrawals`, { headers }),
+        fetch(`${API_BASE}/wallet/iap/products`, { headers }),
       ]);
       const u = uRes.ok ? await uRes.json() : null;
       const bal = balRes.ok ? await balRes.json() : { balance: 0, currency: 'GHS' };
       const txs = txRes.ok ? await txRes.json() : [];
       const payouts = payRes.ok ? await payRes.json() : [];
       const wdrs = wdrRes.ok ? await wdrRes.json() : [];
+      const iapList = iapRes.ok ? await iapRes.json() : [];
       setUser(u);
       setBalance(bal);
       setTransactions(Array.isArray(txs) ? txs : []);
       setPayoutMethods(Array.isArray(payouts) ? payouts : []);
       setWithdrawals(Array.isArray(wdrs) ? wdrs : []);
+      setIapProducts(Array.isArray(iapList) ? iapList : []);
     } catch {
       setBalance({ balance: 0, currency: 'GHS' });
     } finally {
@@ -117,7 +130,7 @@ export default function WalletScreen() {
     const token = await AsyncStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch(`${API_URL}/wallet/deposit/initialize`, {
+      const res = await fetch(`${API_BASE}/wallet/deposit/initialize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ amount }),
@@ -157,7 +170,7 @@ export default function WalletScreen() {
     const token = await AsyncStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch(`${API_URL}/wallet/withdraw`, {
+      const res = await fetch(`${API_BASE}/wallet/withdraw`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ amount }),
@@ -170,6 +183,36 @@ export default function WalletScreen() {
       setWithdrawError(e instanceof Error ? e.message : 'Withdrawal failed');
     } finally {
       setWithdrawLoading(false);
+    }
+  };
+
+  const handleIapVerify = async (product: IapProduct) => {
+    setIapError('');
+    setIapLoading(product.productId);
+    const token = await AsyncStorage.getItem('token');
+    if (!token) return;
+    try {
+      const platform = Platform.OS === 'ios' ? 'ios' : 'android';
+      const transactionId = `sim_${platform}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const res = await fetch(`${API_BASE}/wallet/iap/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          platform,
+          productId: product.productId,
+          transactionId,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Verify failed');
+      if (data.credited) {
+        Alert.alert('Success', `GHS ${data.amount.toFixed(2)} added to your wallet.`);
+        loadData();
+      }
+    } catch (e) {
+      setIapError(e instanceof Error ? e.message : 'Failed');
+    } finally {
+      setIapLoading(null);
     }
   };
 
@@ -194,7 +237,7 @@ export default function WalletScreen() {
         payoutForm.type === 'mobile_money'
           ? { type: 'mobile_money', name: payoutForm.name, phone: payoutForm.phone, provider: payoutForm.provider }
           : { type: 'bank', name: payoutForm.name, accountNumber: payoutForm.accountNumber, bankCode: payoutForm.bankCode };
-      const res = await fetch(`${API_URL}/wallet/payout-methods`, {
+      const res = await fetch(`${API_BASE}/wallet/payout-methods`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(body),
@@ -250,9 +293,31 @@ export default function WalletScreen() {
           onPress={handleDeposit}
           disabled={depositLoading}
         >
-          <Text style={styles.buttonText}>{depositLoading ? 'Redirecting...' : 'Deposit'}</Text>
+          <Text style={styles.buttonText}>{depositLoading ? 'Redirecting...' : 'Deposit (Paystack)'}</Text>
         </Pressable>
       </View>
+
+      {iapProducts.length > 0 && (
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Top up via {Platform.OS === 'ios' ? 'App Store' : 'Google Play'}</Text>
+          <Text style={styles.muted}>
+            In production, purchase in the store then the app will verify and credit automatically. For testing:
+          </Text>
+          {iapError ? <Text style={styles.error}>{iapError}</Text> : null}
+          <View style={styles.row}>
+            {iapProducts.map((p) => (
+              <Pressable
+                key={p.productId}
+                style={[styles.chip, iapLoading === p.productId && styles.buttonDisabled]}
+                onPress={() => handleIapVerify(p)}
+                disabled={!!iapLoading}
+              >
+                <Text style={styles.chipText}>{iapLoading === p.productId ? '...' : p.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      )}
 
       {isTipster && (
         <View style={styles.card}>

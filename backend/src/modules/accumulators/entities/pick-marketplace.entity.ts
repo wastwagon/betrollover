@@ -30,6 +30,14 @@ export class PickMarketplace {
   @Column({ type: 'int', nullable: true })
   predictionId: number | null = null;
 
+  /** Placement: 'marketplace' | 'subscription' | 'both' (default: marketplace) */
+  @Column({ length: 20, default: 'marketplace' })
+  placement: string;
+
+  /** If placement includes subscription: which package(s) this coupon belongs to */
+  @Column({ type: 'int', nullable: true })
+  subscriptionPackageId: number | null = null;
+
   @CreateDateColumn()
   createdAt: Date;
 

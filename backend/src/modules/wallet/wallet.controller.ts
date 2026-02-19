@@ -4,12 +4,14 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { WalletService } from './wallet.service';
 import { PaystackService } from './paystack.service';
+import { WalletIapService } from './wallet-iap.service';
 
 @Controller('wallet')
 export class WalletController {
   constructor(
     private readonly walletService: WalletService,
     private readonly paystackService: PaystackService,
+    private readonly walletIapService: WalletIapService,
   ) {}
 
   @Get('balance')
@@ -76,6 +78,28 @@ export class WalletController {
   @UseGuards(JwtAuthGuard)
   async getWithdrawals(@CurrentUser() user: { id: number }) {
     return this.walletService.getWithdrawals(user.id);
+  }
+
+  @Get('iap/products')
+  @UseGuards(JwtAuthGuard)
+  getIapProducts() {
+    return this.walletIapService.getProducts();
+  }
+
+  @Post('iap/verify')
+  @UseGuards(JwtAuthGuard)
+  async verifyIap(
+    @CurrentUser() user: { id: number },
+    @Body()
+    body: {
+      platform: 'ios' | 'android';
+      productId: string;
+      transactionId: string;
+      receipt?: string;
+      purchaseToken?: string;
+    },
+  ) {
+    return this.walletIapService.verifyAndCredit(user.id, body);
   }
 
   @Post('paystack-webhook')

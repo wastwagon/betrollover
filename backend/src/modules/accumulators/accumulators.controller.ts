@@ -27,6 +27,21 @@ export class AccumulatorsController {
     return this.accumulatorsService.getPurchased(user.id);
   }
 
+  @Get('subscription-feed')
+  @UseGuards(JwtAuthGuard)
+  getSubscriptionFeed(
+    @CurrentUser() user: { id: number },
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    const limitVal = limit ? parseInt(limit, 10) : undefined;
+    const offsetVal = offset ? parseInt(offset, 10) : undefined;
+    return this.accumulatorsService.getSubscriptionFeed(user.id, {
+      limit: limitVal,
+      offset: offsetVal,
+    });
+  }
+
   @Get('marketplace')
   @UseGuards(JwtAuthGuard)
   getMarketplace(

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { getApiUrl } from '@/lib/site-config';
+import type { BalanceResponse } from '@betrollover/shared-types';
 
 interface Transaction {
   id: number;
@@ -33,7 +34,7 @@ function WalletContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<{ role: string; emailVerifiedAt?: string | null } | null>(null);
-  const [balance, setBalance] = useState<{ balance: number; currency: string } | null>(null);
+  const [balance, setBalance] = useState<BalanceResponse | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [payoutMethods, setPayoutMethods] = useState<PayoutMethod[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);

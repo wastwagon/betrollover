@@ -12,7 +12,7 @@ import {
 import { Link, router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:6001';
+const API_BASE = `${(process.env.EXPO_PUBLIC_API_URL || 'http://localhost:6001').replace(/\/$/, '')}/api/v1`;
 
 export default function RegisterScreen() {
   const [step, setStep] = useState<'email' | 'form'>('email');
@@ -31,7 +31,7 @@ export default function RegisterScreen() {
     setOtpError('');
     setOtpLoading(true);
     try {
-      const res = await fetch(`${API_URL}/auth/otp/send`, {
+      const res = await fetch(`${API_BASE}/auth/otp/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
@@ -50,7 +50,7 @@ export default function RegisterScreen() {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/auth/register`, {
+      const res = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

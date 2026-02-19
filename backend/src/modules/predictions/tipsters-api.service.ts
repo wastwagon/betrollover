@@ -250,6 +250,7 @@ export class TipstersApiService {
     return {
       tipster: {
         id: tipster.id,
+        user_id: tipster.userId,
         username: tipster.username,
         display_name: tipster.displayName,
         avatar_url: tipster.avatarUrl,

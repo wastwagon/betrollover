@@ -1,9 +1,31 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:6001';
+const API_BASE = `${(process.env.EXPO_PUBLIC_API_URL || 'http://localhost:6001').replace(/\/$/, '')}/api/v1`;
+
+async function registerPushToken(token: string, apiBase: string) {
+  if (!Device.isDevice) return;
+  const { status: existing } = await Notifications.getPermissionsAsync();
+  let final = existing;
+  if (existing !== 'granted') {
+    const { status } = await Notifications.requestPermissionsAsync();
+    final = status;
+  }
+  if (final !== 'granted') return;
+  const pushToken = (await Notifications.getExpoPushTokenAsync()).data;
+  await fetch(`${apiBase}/notifications/push/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      platform: Platform.OS,
+      token: pushToken,
+    }),
+  });
+}
 
 export default function DashboardScreen() {
   const [user, setUser] = useState<{ displayName: string; role: string } | null>(null);
@@ -15,14 +37,17 @@ export default function DashboardScreen() {
         router.replace('/');
         return;
       }
-      fetch(`${API_URL}/users/me`, {
+      fetch(`${API_BASE}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => {
           if (!res.ok) throw new Error('Unauthorized');
           return res.json();
         })
-        .then(setUser)
+        .then((u) => {
+          setUser(u);
+          registerPushToken(token, API_BASE).catch(() => {});
+        })
         .catch(() => {
           AsyncStorage.removeItem('token');
           router.replace('/');

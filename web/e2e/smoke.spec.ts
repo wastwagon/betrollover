@@ -30,4 +30,9 @@ test.describe('Smoke tests', () => {
     await page.goto('/marketplace');
     await expect(page).toHaveURL(/\/login/);
   });
+
+  test('create-pick redirects to login when unauthenticated', async ({ page }) => {
+    await page.goto('/create-pick');
+    await expect(page).toHaveURL(/\/login/);
+  });
 });

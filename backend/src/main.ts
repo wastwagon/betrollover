@@ -1,11 +1,12 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ValidationPipe, Logger, RequestMethod } from '@nestjs/common';
 import { json } from 'express';
 import * as path from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import type { Request, Response, NextFunction } from 'express';
 import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { MigrationRunnerService } from './modules/admin/migration-runner.service';
 import { SeedRunnerService } from './modules/admin/seed-runner.service';
 
@@ -27,6 +28,14 @@ async function bootstrap() {
   }
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { bodyParser: false });
+
+  // API versioning: all routes under /api/v1 except health and Paystack webhook
+  app.setGlobalPrefix('api/v1', {
+    exclude: [
+      { path: 'health', method: RequestMethod.ALL },
+      { path: 'wallet/paystack-webhook', method: RequestMethod.POST },
+    ],
+  });
 
   // Serve uploaded avatars at /uploads/avatars
   const uploadsDir = path.join(process.cwd(), 'uploads');
@@ -61,6 +70,9 @@ async function bootstrap() {
     }
     next();
   });
+
+  // RFC 7807–style error responses (statusCode, message, error, path, timestamp)
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   // Global validation - less strict to avoid issues with endpoints that don't use DTOs
   app.useGlobalPipes(

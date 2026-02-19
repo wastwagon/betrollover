@@ -21,6 +21,8 @@ import { PredictionsModule } from './modules/predictions/predictions.module';
 import { NewsModule } from './modules/news/news.module';
 import { ResourcesModule } from './modules/resources/resources.module';
 import { AdsModule } from './modules/ads/ads.module';
+import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
+import { PushModule } from './modules/push/push.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -63,6 +65,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     NewsModule,
     ResourcesModule,
     AdsModule,
+    SubscriptionsModule,
+    PushModule,
   ],
 })
 export class AppModule {}

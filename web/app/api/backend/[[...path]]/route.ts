@@ -4,7 +4,8 @@ const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL |
 
 async function proxyRequest(request: NextRequest, path: string[]) {
   const pathStr = path?.filter(Boolean).join('/') || '';
-  const url = new URL(pathStr ? `/${pathStr}` : '/', BACKEND_URL);
+  const versionedPath = pathStr ? `api/v1/${pathStr}` : 'api/v1';
+  const url = new URL(versionedPath.startsWith('api/') ? `/${versionedPath}` : `/${versionedPath}`, BACKEND_URL);
   url.search = request.nextUrl.search;
 
   const headers = new Headers();

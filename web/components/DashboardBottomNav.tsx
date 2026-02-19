@@ -22,6 +22,7 @@ const picksFoldItems = [
 const accountFoldItems = [
   { href: '/profile', label: 'Profile', icon: '👤', desc: 'Your profile' },
   { href: '/wallet', label: 'Wallet', icon: '💰', desc: 'Balance & transactions' },
+  { href: '/subscriptions', label: 'Subscriptions', icon: '⭐', desc: 'Tipster subscription coupons' },
   { href: null, label: 'Sign out', icon: '🚪', desc: 'Log out', isAction: true },
 ];
 
@@ -70,7 +71,7 @@ function isPicksActive(path: string) {
 }
 
 function isAccountActive(path: string) {
-  return path === '/profile' || path === '/wallet';
+  return path === '/profile' || path === '/wallet' || path === '/subscriptions';
 }
 
 export function DashboardBottomNav() {

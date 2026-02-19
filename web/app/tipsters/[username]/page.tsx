@@ -47,9 +47,19 @@ interface MarketplaceCoupon {
   result?: string;
 }
 
+interface SubscriptionPackage {
+  id: number;
+  name: string;
+  price: number;
+  durationDays: number;
+  roiGuaranteeMin?: number | null;
+  roiGuaranteeEnabled: boolean;
+}
+
 interface TipsterProfile {
   tipster: {
     id: number;
+    user_id?: number | null;
     username: string;
     display_name: string;
     avatar_url: string | null;
@@ -85,6 +95,9 @@ export default function TipsterProfilePage() {
   const [purchasing, setPurchasing] = useState<number | null>(null);
   const [unveilCouponId, setUnveilCouponId] = useState<number | null>(null);
   const [couponFilter, setCouponFilter] = useState<'active' | 'archive'>('active');
+  const [subscriptionPackages, setSubscriptionPackages] = useState<SubscriptionPackage[]>([]);
+  const [subscribeLoading, setSubscribeLoading] = useState<number | null>(null);
+  const [subscribedPackageIds, setSubscribedPackageIds] = useState<Set<number>>(new Set());
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
 
   useEffect(() => {
@@ -116,6 +129,68 @@ export default function TipsterProfilePage() {
       }
     });
   }, [profile?.marketplace_coupons?.length]);
+
+  useEffect(() => {
+    if (!username) return;
+    fetch(`${API_URL}/subscriptions/packages/by-username/${encodeURIComponent(username)}`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((arr: SubscriptionPackage[]) => setSubscriptionPackages(Array.isArray(arr) ? arr : []))
+      .catch(() => setSubscriptionPackages([]));
+  }, [username]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    fetch(`${API_URL}/subscriptions/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((arr: { packageId?: number; package?: { id?: number } }[]) => {
+        const ids = new Set<number>();
+        (Array.isArray(arr) ? arr : []).forEach((s) => {
+          const pkgId = s.package?.id ?? s.packageId;
+          if (pkgId && (s as { status?: string }).status === 'active') ids.add(pkgId);
+        });
+        setSubscribedPackageIds(ids);
+      })
+      .catch(() => {});
+  }, [profile?.tipster?.id]);
+
+  const handleSubscribe = async (packageId: number) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push(`/login?redirect=/tipsters/${username}`);
+      return;
+    }
+    const pkg = subscriptionPackages.find((p) => p.id === packageId);
+    if (!pkg) return;
+    if (walletBalance !== null && pkg.price > 0 && walletBalance < pkg.price) {
+      showError(new Error('Insufficient wallet balance. Top up to subscribe.'));
+      return;
+    }
+    setSubscribeLoading(packageId);
+    try {
+      const res = await fetch(`${API_URL}/subscriptions/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ packageId }),
+      });
+      if (res.ok) {
+        showSuccess(`Subscribed! View ${pkg.name} coupons in your dashboard.`);
+        setSubscribedPackageIds((prev) => new Set(Array.from(prev).concat(packageId)));
+        const walletRes = await fetch(`${API_URL}/wallet/balance`, { headers: { Authorization: `Bearer ${token}` } });
+        if (walletRes.ok) {
+          const d = await walletRes.json();
+          setWalletBalance(Number(d.balance));
+        }
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showError(new Error(err.message || 'Subscribe failed'));
+      }
+    } catch (e: any) {
+      showError(e);
+    } finally {
+      setSubscribeLoading(null);
+    }
+  };
 
   const handleFollow = async () => {
     const token = localStorage.getItem('token');
@@ -308,6 +383,41 @@ export default function TipsterProfilePage() {
             </div>
           </div>
         </div>
+
+        {subscriptionPackages.length > 0 && (
+          <section className="max-w-6xl mx-auto px-4 mb-10">
+            <h2 className="text-lg font-semibold text-[var(--text)] mb-4">Subscription Packages</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {subscriptionPackages.map((pkg) => {
+                const isSubscribed = subscribedPackageIds.has(pkg.id);
+                const canSubscribe = !isSubscribed && (pkg.price === 0 || (walletBalance !== null && walletBalance >= pkg.price));
+                return (
+                  <div
+                    key={pkg.id}
+                    className="rounded-xl p-5 border border-emerald-200/60 dark:border-emerald-700/40 bg-gradient-to-br from-emerald-50/80 to-teal-50/60 dark:from-emerald-900/20 dark:to-teal-900/20 shadow-sm"
+                  >
+                    <h3 className="font-semibold text-[var(--text)] mb-1">{pkg.name}</h3>
+                    <p className="text-2xl font-bold text-[var(--primary)] mb-2">GHS {Number(pkg.price).toFixed(2)}<span className="text-sm font-normal text-[var(--text-muted)]">/{pkg.durationDays}d</span></p>
+                    {pkg.roiGuaranteeEnabled && pkg.roiGuaranteeMin != null && (
+                      <p className="text-xs text-[var(--text-muted)] mb-3">ROI guarantee: refund if below {pkg.roiGuaranteeMin}%</p>
+                    )}
+                    {isSubscribed ? (
+                      <span className="inline-flex px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 text-sm font-medium">Subscribed</span>
+                    ) : (
+                      <button
+                        onClick={() => handleSubscribe(pkg.id)}
+                        disabled={!canSubscribe || subscribeLoading === pkg.id}
+                        className="w-full py-2.5 px-4 rounded-lg font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {subscribeLoading === pkg.id ? '...' : `Subscribe`}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         <section className="max-w-6xl mx-auto px-4 mb-12">
           <div className="flex items-center gap-2 mb-4">
