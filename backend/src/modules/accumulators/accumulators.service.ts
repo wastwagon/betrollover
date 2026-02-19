@@ -371,6 +371,7 @@ export class AccumulatorsService {
     const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
     const rows = await this.marketplaceRepo.find({
       where: { accumulatorId: In(accIds), status: 'active' },
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount'],
     });
     const items = await this.enrichWithTipsterMetadata(enrichedTickets, rows, userId);
     const limit = Math.min(Math.max(options?.limit ?? 20, 1), 100);
@@ -389,7 +390,7 @@ export class AccumulatorsService {
 
     const rows = await this.marketplaceRepo.find({
       where: { status: 'active' },
-      select: ['accumulatorId', 'price', 'purchaseCount'],
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount'],
     });
     const accIds = rows.map((r) => r.accumulatorId);
     if (accIds.length === 0) return { items: [], total: 0, hasMore: false };

@@ -34,8 +34,8 @@ export class AccumulatorsController {
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
-    const limitVal = limit ? parseInt(limit, 10) : undefined;
-    const offsetVal = offset ? parseInt(offset, 10) : undefined;
+    const limitVal = limit != null ? Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100) : undefined;
+    const offsetVal = offset != null ? Math.max(parseInt(offset, 10) || 0, 0) : undefined;
     return this.accumulatorsService.getSubscriptionFeed(user.id, {
       limit: limitVal,
       offset: offsetVal,
@@ -52,8 +52,8 @@ export class AccumulatorsController {
   ) {
     const isAdmin = user.role === 'admin';
     const includeAllListings = isAdmin && includeAll === 'true';
-    const limitVal = limit ? parseInt(limit, 10) : undefined;
-    const offsetVal = offset ? parseInt(offset, 10) : undefined;
+    const limitVal = limit != null ? Math.min(Math.max(parseInt(limit, 10) || 24, 1), 100) : undefined;
+    const offsetVal = offset != null ? Math.max(parseInt(offset, 10) || 0, 0) : undefined;
     return this.accumulatorsService.getMarketplace(user.id, includeAllListings, {
       limit: limitVal,
       offset: offsetVal,

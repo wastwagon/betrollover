@@ -129,14 +129,17 @@ export class MigrationRunnerService {
     await this.dataSource.query(APPLIED_TABLE);
   }
 
-  /** Execute SQL file content. Splits by statement (line ending with ;) so COMMENT strings with ; are safe. */
+  /** Execute SQL file content. Splits by statement (line ending with ;) but does NOT split inside DO $$ blocks. */
   private async runSql(sql: string, _label: string): Promise<void> {
     const statements: string[] = [];
     let current = '';
     for (const line of sql.split(/\r?\n/)) {
       current += line + '\n';
       const t = line.trim();
-      if (t.endsWith(';') && !t.startsWith('--')) {
+      // Only split on ; when not inside a dollar-quoted block (DO $$ ... $$)
+      const dollarCount = (current.match(/\$\$/g) || []).length;
+      const insideDollarBlock = dollarCount % 2 === 1;
+      if (t.endsWith(';') && !t.startsWith('--') && !insideDollarBlock) {
         statements.push(current.trim());
         current = '';
       }
