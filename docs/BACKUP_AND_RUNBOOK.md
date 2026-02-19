@@ -24,8 +24,9 @@
 
 - Migrations run on API startup (see `MigrationRunnerService`).
 - SQL files live in `database/migrations/` (numeric prefix, e.g. `042_...sql`).
+- **Admin UI:** Admin → Settings → Database migrations shows applied/pending and lets you **Run pending** or **Mark all as applied**. See ** [docs/ADMIN_MIGRATIONS.md](ADMIN_MIGRATIONS.md)** for how it works and how to add new migrations.
 - **Do not edit** migrations that have already been applied in production.
-- To add a new migration: add a new file; next API deploy will apply it.
+- To add a new migration: add a file named `NNN_description.sql` (3-digit prefix); next API deploy or “Run pending” will apply it.
 
 ---
 

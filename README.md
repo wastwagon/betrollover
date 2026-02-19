@@ -213,6 +213,7 @@ cd backend && npm test
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Branching, conventional commits, PRs |
 | [CHANGELOG.md](CHANGELOG.md) | Version history |
 | [docs/BACKUP_AND_RUNBOOK.md](docs/BACKUP_AND_RUNBOOK.md) | DB backup, migrations, release steps |
+| [docs/ADMIN_MIGRATIONS.md](docs/ADMIN_MIGRATIONS.md) | How admin migration works; adding new migrations |
 | [docs/TEMPLATE_IMPLEMENTATION_PHASES.md](docs/TEMPLATE_IMPLEMENTATION_PHASES.md) | World-class template alignment |
 | [docs/WORLD_CLASS_DEV_TEMPLATE_COMPLETE.md](docs/WORLD_CLASS_DEV_TEMPLATE_COMPLETE.md) | Stack, phases, versioning reference |
 

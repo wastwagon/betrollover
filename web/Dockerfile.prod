@@ -3,9 +3,13 @@
 # NEXT_PUBLIC_* must be set at build time - pass as ARG in Coolify/docker-compose
 FROM node:20-alpine AS builder
 
-WORKDIR /app
+# Build shared-types first (web depends on file:../packages/shared-types)
+COPY packages/shared-types /packages/shared-types
+WORKDIR /packages/shared-types
+RUN npm ci && npm run build
 
-# Build-time args (required for Next.js public env)
+# Web app (from /app; package.json has file:../packages/shared-types so /packages must be sibling of /app)
+WORKDIR /app
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_APP_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL

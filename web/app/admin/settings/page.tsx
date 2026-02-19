@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface Settings {
   apiSportsConfigured: boolean;
@@ -65,7 +64,7 @@ export default function AdminSettingsPage() {
       router.push('/login');
       return;
     }
-    fetch(`${API_URL}/admin/settings`, { 
+    fetch(`${getApiUrl()}/admin/settings`, { 
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store' // Prevent caching
     })
@@ -101,7 +100,7 @@ export default function AdminSettingsPage() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch(`${API_URL}/admin/settings/paystack`, {
+      const res = await fetch(`${getApiUrl()}/admin/settings/paystack`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -121,7 +120,7 @@ export default function AdminSettingsPage() {
     if (!token) return;
     
     try {
-      const res = await fetch(`${API_URL}/fixtures/sync/status`, {
+      const res = await fetch(`${getApiUrl()}/fixtures/sync/status`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -137,7 +136,7 @@ export default function AdminSettingsPage() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch(`${API_URL}/admin/migrations/status`, {
+      const res = await fetch(`${getApiUrl()}/admin/migrations/status`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -165,7 +164,7 @@ export default function AdminSettingsPage() {
     setRunningMigrations(true);
     setMigrationMessage(null);
     try {
-      const res = await fetch(`${API_URL}/admin/migrations/run`, {
+      const res = await fetch(`${getApiUrl()}/admin/migrations/run`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -194,7 +193,7 @@ export default function AdminSettingsPage() {
     setMarkAllAppliedLoading(true);
     setMigrationMessage(null);
     try {
-      const res = await fetch(`${API_URL}/admin/migrations/mark-all-applied`, {
+      const res = await fetch(`${getApiUrl()}/admin/migrations/mark-all-applied`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -214,7 +213,7 @@ export default function AdminSettingsPage() {
     
     setSyncingFixtures(true);
     try {
-      const res = await fetch(`${API_URL}/fixtures/sync`, {
+      const res = await fetch(`${getApiUrl()}/fixtures/sync`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -238,7 +237,7 @@ export default function AdminSettingsPage() {
     
     setSyncingOdds(true);
     try {
-      const res = await fetch(`${API_URL}/fixtures/sync/odds`, {
+      const res = await fetch(`${getApiUrl()}/fixtures/sync/odds`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -281,7 +280,7 @@ export default function AdminSettingsPage() {
     if (!token) return;
     
     try {
-      const res = await fetch(`${API_URL}/admin/settings/api-sports/usage`, {
+      const res = await fetch(`${getApiUrl()}/admin/settings/api-sports/usage`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -306,7 +305,7 @@ export default function AdminSettingsPage() {
     setTestEmailLoading(true);
     setTestEmailResult(null);
     try {
-      const res = await fetch(`${API_URL}/admin/test-email`, {
+      const res = await fetch(`${getApiUrl()}/admin/test-email`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -340,7 +339,7 @@ export default function AdminSettingsPage() {
     setTestResult(null);
     
     try {
-      const res = await fetch(`${API_URL}/admin/settings/api-sports/test`, {
+      const res = await fetch(`${getApiUrl()}/admin/settings/api-sports/test`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -359,7 +358,7 @@ export default function AdminSettingsPage() {
           remaining: data.usage.limit - data.usage.used,
         });
         // Reload settings to get updated status
-        const settingsRes = await fetch(`${API_URL}/admin/settings`, {
+        const settingsRes = await fetch(`${getApiUrl()}/admin/settings`, {
           headers: { Authorization: `Bearer ${token}` },
           cache: 'no-store',
         });
@@ -387,7 +386,7 @@ export default function AdminSettingsPage() {
     setTestResult(null);
     
     try {
-      const res = await fetch(`${API_URL}/admin/settings/api-sports`, {
+      const res = await fetch(`${getApiUrl()}/admin/settings/api-sports`, {
         method: 'PATCH',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -406,7 +405,7 @@ export default function AdminSettingsPage() {
       await testConnection();
       
       // Reload settings
-      const settingsRes = await fetch(`${API_URL}/admin/settings`, {
+      const settingsRes = await fetch(`${getApiUrl()}/admin/settings`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store',
       });
@@ -786,7 +785,7 @@ export default function AdminSettingsPage() {
                       setPaystackSaving(true);
                       setPaystackSaveResult(null);
                       try {
-                        const res = await fetch(`${API_URL}/admin/settings/paystack`, {
+                        const res = await fetch(`${getApiUrl()}/admin/settings/paystack`, {
                           method: 'PATCH',
                           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
                           body: JSON.stringify({
@@ -1078,7 +1077,7 @@ export default function AdminSettingsPage() {
                       if (!token) return;
                       setSavingROI(true);
                       try {
-                        const res = await fetch(`${API_URL}/admin/settings/minimum-roi`, {
+                        const res = await fetch(`${getApiUrl()}/admin/settings/minimum-roi`, {
                           method: 'PATCH',
                           headers: {
                             Authorization: `Bearer ${token}`,
@@ -1088,7 +1087,7 @@ export default function AdminSettingsPage() {
                         });
                         if (res.ok) {
                           alert('Minimum ROI updated successfully');
-                          const settingsRes = await fetch(`${API_URL}/admin/settings`, {
+                          const settingsRes = await fetch(`${getApiUrl()}/admin/settings`, {
                             headers: { Authorization: `Bearer ${token}` },
                             cache: 'no-store',
                           });
