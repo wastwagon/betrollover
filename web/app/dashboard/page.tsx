@@ -137,15 +137,16 @@ function DashboardContent() {
       .then((u) => {
         if (!u) return;
         setUser(u);
+        const isAdmin = u.role === 'admin';
         return Promise.all([
           Promise.resolve(u),
-          fetch(`${apiUrl}/admin/stats`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+          isAdmin ? fetch(`${apiUrl}/admin/stats`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null) : Promise.resolve(null),
           fetch(`${apiUrl}/tipster/stats`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
           fetch(`${apiUrl}/wallet/balance`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-          fetch(`${apiUrl}/admin/settings`, { headers })
+          isAdmin ? fetch(`${apiUrl}/admin/settings`, { headers })
             .then((r) => (r.ok ? r.json() : null))
             .catch(() => null)
-            .then((settings) => settings?.minimumROI !== undefined ? settings.minimumROI : 20.0),
+            .then((settings) => settings?.minimumROI !== undefined ? settings.minimumROI : 20.0) : Promise.resolve(20.0),
           fetch(`${apiUrl}/accumulators/purchased`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
           fetch(`${apiUrl}/tipsters/feed?limit=10`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
           fetch(`${apiUrl}/tipsters/me/following`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),

@@ -44,7 +44,7 @@ export function usePushNotifications() {
       const keyRes = await fetch(`${apiUrl}/notifications/push/vapid-public-key`);
       const { vapidPublicKey } = await keyRes.json();
       if (!vapidPublicKey) {
-        setError('Server push not configured');
+        setError('Push notifications are not configured yet. The admin needs to add VAPID keys to the API. Contact support.');
         setLoading(false);
         return;
       }

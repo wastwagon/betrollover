@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
+import { SuccessToast } from '@/components/SuccessToast';
+import { useToast } from '@/hooks/useToast';
 import { getApiUrl } from '@/lib/site-config';
 
 interface SubscriptionPackage {
@@ -22,6 +24,7 @@ export default function SubscriptionPackagesPage() {
   const [packages, setPackages] = useState<SubscriptionPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const { showSuccess, clearSuccess, success: toastSuccess } = useToast();
   const [form, setForm] = useState({
     name: '',
     price: '',
@@ -83,6 +86,7 @@ export default function SubscriptionPackagesPage() {
         const pkg = await res.json();
         setPackages((prev) => [pkg, ...prev]);
         setForm({ name: '', price: '', durationDays: '30', roiGuaranteeEnabled: false, roiGuaranteeMin: '' });
+        showSuccess('Subscription package created successfully!');
       } else {
         const err = await res.json().catch(() => ({}));
         alert(err.message || 'Failed to create package');
@@ -104,6 +108,7 @@ export default function SubscriptionPackagesPage() {
 
   return (
     <DashboardShell>
+      {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <div className="w-full px-4 sm:px-5 md:px-6 py-6 pb-24">
         <Link href="/dashboard" className="text-sm text-[var(--primary)] hover:underline mb-4 inline-block">
           ← Dashboard

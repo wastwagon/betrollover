@@ -89,8 +89,7 @@ export default function CreatePickPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState(0);
-  const [isMarketplace, setIsMarketplace] = useState(true);
-  const [placement, setPlacement] = useState<'marketplace' | 'subscription' | 'both'>('marketplace');
+  const [placement, setPlacement] = useState<'marketplace' | 'subscription' | 'both'>('both');
   const [subscriptionPackageIds, setSubscriptionPackageIds] = useState<number[]>([]);
   const [myPackages, setMyPackages] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -452,7 +451,7 @@ export default function CreatePickPage() {
         title: title.trim(),
         description: description.trim() || undefined,
         price: Number(price) || 0,
-        isMarketplace,
+        isMarketplace: placement === 'marketplace' || placement === 'both',
         placement: placement,
         subscriptionPackageIds: (placement === 'subscription' || placement === 'both') ? subscriptionPackageIds : undefined,
         selections: selections.map((s) => ({
@@ -467,9 +466,11 @@ export default function CreatePickPage() {
     setSubmitting(false);
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      const errorMessage = formatError(new Error(err.message || 'Failed to create pick'));
+      const msg = err?.message || err?.error || 'Failed to create pick';
+      // Prefer backend message for 4xx (validation); use formatError for generic 5xx
+      const errorMessage = res.status >= 500 ? formatError(new Error(msg)) : (msg || formatError(new Error(msg)));
       setError(errorMessage);
-      showError(new Error(err.message || 'Failed to create pick'));
+      showError(new Error(msg));
       return;
     }
     showSuccess('Pick created successfully!');
@@ -956,15 +957,6 @@ export default function CreatePickPage() {
                           className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-shadow"
                         />
                       </div>
-                      <label className="flex items-center gap-2 cursor-pointer text-xs">
-                        <input
-                          type="checkbox"
-                          checked={isMarketplace}
-                          onChange={(e) => setIsMarketplace(e.target.checked)}
-                          className="w-4 h-4 rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)]"
-                        />
-                        <span className="text-[var(--text)]">List on marketplace</span>
-                      </label>
                       <div>
                         <label className="block text-xs font-medium text-[var(--text)] mb-1">Placement</label>
                         <select
@@ -1141,15 +1133,18 @@ export default function CreatePickPage() {
                     className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
                   />
                 </div>
-                <label className="flex items-center gap-3 cursor-pointer py-2">
-                  <input
-                    type="checkbox"
-                    checked={isMarketplace}
-                    onChange={(e) => setIsMarketplace(e.target.checked)}
-                    className="w-5 h-5 rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)]"
-                  />
-                  <span className="text-sm text-[var(--text)]">List on marketplace</span>
-                </label>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text)] mb-1">Placement</label>
+                  <select
+                    value={placement}
+                    onChange={(e) => setPlacement(e.target.value as 'marketplace' | 'subscription' | 'both')}
+                    className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                  >
+                    <option value="marketplace">Marketplace only</option>
+                    <option value="subscription">Subscription only</option>
+                    <option value="both">Both marketplace & subscription</option>
+                  </select>
+                </div>
                 {error && (
                   <div className="bg-red-50 border border-red-200 rounded-xl p-3">
                     <p className="text-red-700 text-sm">{error}</p>

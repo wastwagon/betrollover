@@ -132,9 +132,14 @@ export class AccumulatorsService {
       const user = await this.usersRepo.findOne({ where: { id: userId } });
       if (!user) throw new NotFoundException('User not found');
 
-      // Get minimum ROI from settings
-      const apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
-      const minimumROI = Number(apiSettings?.minimumROI ?? 20.0);
+      // Get minimum ROI from settings (fallback to 20 if table/row missing)
+      let minimumROI = 20.0;
+      try {
+        const apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
+        minimumROI = Number(apiSettings?.minimumROI ?? 20.0);
+      } catch {
+        this.logger.warn('Could not load minimumROI from api_settings, using default 20');
+      }
 
       // Get user's stats and ROI
       const stats = await this.tipsterService.getStats(userId, user.role);
@@ -281,6 +286,9 @@ export class AccumulatorsService {
           }).catch(() => {});
         }
       }
+    } else if (dto.placement === 'subscription' && (dto.subscriptionPackageIds?.length ?? 0) > 0) {
+      // Subscription-only: add coupon to packages (no marketplace entry)
+      await this.subscriptionsService.addCouponToPackages(ticket.id, dto.subscriptionPackageIds!);
     }
 
     return this.getById(ticket.id);

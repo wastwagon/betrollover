@@ -135,6 +135,21 @@ If the live site shows **"Backend unavailable"** or the browser console shows **
 
 ---
 
+## Push notifications ("Server push not configured")
+
+If users see **"Push notifications are not configured yet"** or **"Server push not configured"** when enabling notifications, the API needs VAPID keys for web push.
+
+**Fix in Coolify:** For the **API** service, add these environment variables:
+
+1. Generate keys locally:
+   ```bash
+   npx web-push generate-vapid-keys
+   ```
+2. Copy the **public key** to `VAPID_PUBLIC_KEY` and the **private key** to `VAPID_PRIVATE_KEY` in Coolify → API → Environment variables.
+3. Redeploy or restart the API.
+
+---
+
 ## Summary
 
 | What you have | Is it OK? |
