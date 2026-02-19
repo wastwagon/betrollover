@@ -24,6 +24,7 @@ interface FixtureOdd {
 
 interface Fixture {
   id: number;
+  apiId?: number; // External API fixture ID - required for marketplace (backend looks up by apiId)
   homeTeamName: string;
   awayTeamName: string;
   leagueName: string | null;
@@ -406,11 +407,13 @@ export default function CreatePickPage() {
   const addSelection = (f: Fixture, odd: FixtureOdd) => {
     const matchDesc = `${f.homeTeamName} vs ${f.awayTeamName}`;
     const pred = `${odd.marketName}: ${odd.marketValue}`;
-    if (selections.some((s) => s.fixtureId === f.id && s.prediction === pred)) return;
+    // Backend expects apiId for marketplace; use apiId when available, else id
+    const fid = f.apiId ?? f.id;
+    if (selections.some((s) => s.fixtureId === fid && s.prediction === pred)) return;
     setSelections((prev) => [
       ...prev,
       {
-        fixtureId: f.id,
+        fixtureId: fid,
         matchDescription: matchDesc,
         prediction: pred,
         odds: Number(odd.odds),

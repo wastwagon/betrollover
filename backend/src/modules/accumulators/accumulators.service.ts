@@ -126,9 +126,10 @@ export class AccumulatorsService {
 
     // Default price to 0 (free) if not provided or invalid
     const price = dto.price && dto.price > 0 ? dto.price : 0;
+    const placement = (dto.placement || 'marketplace') as string;
 
-    // If user wants to set a price > 0, check ROI requirement
-    if (price > 0) {
+    // ROI check: only for paid picks sold on marketplace. Skip for subscription-only (access via subscription package).
+    if (price > 0 && placement !== 'subscription') {
       const user = await this.usersRepo.findOne({ where: { id: userId } });
       if (!user) throw new NotFoundException('User not found');
 
@@ -170,11 +171,16 @@ export class AccumulatorsService {
     for (const s of dto.selections) {
       let fixtureId = s.fixtureId;
 
-      // If API fixture ID provided but not in DB, fetch and store it
+      // If fixture ID provided: lookup by apiId first (external), then by id (internal)
       if (s.fixtureId && typeof s.fixtureId === 'number') {
-        const existingFixture = await this.fixtureRepo.findOne({
+        let existingFixture = await this.fixtureRepo.findOne({
           where: { apiId: s.fixtureId },
         });
+        if (!existingFixture) {
+          existingFixture = await this.fixtureRepo.findOne({
+            where: { id: s.fixtureId },
+          });
+        }
 
         if (!existingFixture) {
           // Fetch fixture from API and store it

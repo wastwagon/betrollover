@@ -1,0 +1,32 @@
+---
+description: Settlement logic - marketplace escrow and subscription ROI guarantee
+globs: backend/**/settlement*.ts, backend/**/accumulators/**/*.ts, backend/**/subscriptions/**/*.ts
+alwaysApply: false
+---
+
+# Settlement
+
+When working with picks, coupons, or subscriptions, remember settlement flows.
+
+## Key Files
+
+- **Accumulator settlement**: `backend/src/modules/accumulators/settlement.service.ts`
+  - Settles picks for finished fixtures (won/lost/void)
+  - For `isMarketplace && price > 0`: settles escrow (payout tipster or refund buyer)
+  - Uses `fixtureId` on picks to find pending picks
+- **Subscription settlement**: `backend/src/modules/subscriptions/subscription-settlement.service.ts`
+  - Runs daily at 3 AM
+  - Settles ended subscriptions
+  - ROI guarantee: if tipster ROI below threshold, refund user; else release to tipster
+  - Uses `computeRoiForPeriod` (currently `accumulator_tickets` with `is_marketplace = true`)
+
+## Placement
+
+- **Create pick**: `placement` = 'marketplace' | 'subscription' | 'both'
+- **Marketplace**: requires `fixtureId` on selections for settlement
+- **Subscription-only**: ROI check skipped on create; settlement still needs picks with `fixtureId` for result determination
+
+## Consistency
+
+- Settlement must align with create-pick rules (especially subscription-only vs marketplace)
+- ROI guarantee in subscription settlement: consider whether subscription-only picks should count toward tipster ROI
