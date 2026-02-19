@@ -58,7 +58,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-betrollover}:${POSTGRES_PASSWORD:-betrollover_dev}@postgres:5432/${POSTGRES_DB:-betrollover}
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-in-production}
-      API_SPORTS_KEY: ${API_SPORTS_KEY:-}
+      # Local dev: no API key (prevents fetching from live API). Add to .env when running live tests.
+      API_SPORTS_KEY: ""
       PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY:-}
       PAYSTACK_PUBLIC_KEY: ${PAYSTACK_PUBLIC_KEY:-}
       SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}

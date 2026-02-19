@@ -77,9 +77,14 @@ export class PredictionMarketplaceSyncService {
       return { accumulatorId: duplicate };
     }
 
-    const title = this.isMatchBasedTitle(prediction.predictionTitle)
+    // Unique title per user: append date to avoid "duplicate key (user_id, title)" constraint
+    const baseTitle = this.isMatchBasedTitle(prediction.predictionTitle)
       ? '2-Pick Acca'
       : (prediction.predictionTitle || '2-Pick Acca');
+    const dateStr = prediction.predictionDate
+      ? new Date(prediction.predictionDate).toISOString().slice(0, 10)
+      : new Date().toISOString().slice(0, 10);
+    const title = `${baseTitle} (${dateStr})`;
     const totalOdds = fixtures.reduce((acc, f) => acc * Number(f.selectionOdds), 1);
 
     const ticket = this.ticketRepo.create({
