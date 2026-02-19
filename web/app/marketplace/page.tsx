@@ -16,7 +16,7 @@ import { getApiUrl } from '@/lib/site-config';
 const API_URL = getApiUrl();
 
 type PriceFilter = 'all' | 'free' | 'paid';
-type SortBy = 'newest' | 'price-low' | 'price-high' | 'tipster-rank';
+type SortBy = 'newest' | 'price-low' | 'price-high' | 'tipster-rank' | 'following-only';
 
 interface Pick {
   id: number;
@@ -79,18 +79,62 @@ export default function MarketplacePage() {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
   const [sortBy, setSortBy] = useState<SortBy>('newest');
-  const [followingOnly, setFollowingOnly] = useState(false);
   const [followedTipsterUsernames, setFollowedTipsterUsernames] = useState<Set<string>>(new Set());
+  const [followLoading, setFollowLoading] = useState<string | null>(null);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
+
+  const handleFollow = async (username: string) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login?redirect=/marketplace');
+      return;
+    }
+    const isFollowing = followedTipsterUsernames.has(username);
+    setFollowLoading(username);
+    setFollowedTipsterUsernames((prev) => {
+      const next = new Set(prev);
+      if (isFollowing) next.delete(username);
+      else next.add(username);
+      return next;
+    });
+    try {
+      const res = await fetch(`${API_URL}/tipsters/${encodeURIComponent(username)}/follow`, {
+        method: isFollowing ? 'DELETE' : 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        showSuccess(isFollowing ? 'Unfollowed' : 'Following! You\'ll see their picks in your feed.');
+      } else {
+        setFollowedTipsterUsernames((prev) => {
+          const next = new Set(prev);
+          if (isFollowing) next.add(username);
+          else next.delete(username);
+          return next;
+        });
+        const err = await res.json().catch(() => ({}));
+        showError(new Error(err.message || 'Failed to update follow'));
+      }
+    } catch (e) {
+      setFollowedTipsterUsernames((prev) => {
+        const next = new Set(prev);
+        if (isFollowing) next.add(username);
+        else next.delete(username);
+        return next;
+      });
+      showError(e instanceof Error ? e : new Error('Failed to update follow'));
+    } finally {
+      setFollowLoading(null);
+    }
+  };
 
   const filteredAndSortedPicks = useMemo(() => {
     let list = [...picks];
     if (priceFilter === 'free') list = list.filter((p) => p.price === 0);
     if (priceFilter === 'paid') list = list.filter((p) => p.price > 0);
-    if (followingOnly && followedTipsterUsernames.size > 0) {
+    if (sortBy === 'following-only' && followedTipsterUsernames.size > 0) {
       list = list.filter((p) => p.tipster?.username && followedTipsterUsernames.has(p.tipster.username));
     }
-    if (sortBy === 'newest') {
+    if (sortBy === 'newest' || sortBy === 'following-only') {
       list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
     } else if (sortBy === 'price-low') {
       list.sort((a, b) => a.price - b.price);
@@ -100,7 +144,7 @@ export default function MarketplacePage() {
       list.sort((a, b) => (a.tipster?.rank ?? 999) - (b.tipster?.rank ?? 999));
     }
     return list;
-  }, [picks, priceFilter, sortBy, followingOnly, followedTipsterUsernames]);
+  }, [picks, priceFilter, sortBy, followedTipsterUsernames]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -243,17 +287,6 @@ export default function MarketplacePage() {
           {/* Filters */}
           {!loading && picks.length > 0 && (
             <div className="flex flex-wrap items-center gap-3 mb-4">
-              {followedTipsterUsernames.size > 0 && (
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={followingOnly}
-                    onChange={(e) => setFollowingOnly(e.target.checked)}
-                    className="rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)]"
-                  />
-                  <span className="text-sm font-medium text-[var(--text)]">Following only</span>
-                </label>
-              )}
               <div className="flex items-center gap-2">
                 <label className="text-sm font-medium text-[var(--text)]">Price</label>
                 <select
@@ -274,17 +307,19 @@ export default function MarketplacePage() {
                   className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] min-w-[140px]"
                 >
                   <option value="newest">Newest first</option>
+                  {followedTipsterUsernames.size > 0 && (
+                    <option value="following-only">Following only</option>
+                  )}
                   <option value="price-low">Price: Low to High</option>
                   <option value="price-high">Price: High to Low</option>
                   <option value="tipster-rank">Tipster rank</option>
                 </select>
               </div>
-              {(priceFilter !== 'all' || sortBy !== 'newest' || followingOnly) && (
+              {(priceFilter !== 'all' || sortBy !== 'newest') && (
                 <button
                   onClick={() => {
                     setPriceFilter('all');
                     setSortBy('newest');
-                    setFollowingOnly(false);
                   }}
                   className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                 >
@@ -317,7 +352,6 @@ export default function MarketplacePage() {
                 onActionClick={() => {
                   setPriceFilter('all');
                   setSortBy('newest');
-                  setFollowingOnly(false);
                 }}
                 icon="🔍"
               />
@@ -351,6 +385,9 @@ export default function MarketplacePage() {
                     onUnveilClose={() => setUnveilCouponId(null)}
                     onView={() => recordView(a.id)}
                     createdAt={a.createdAt}
+                    isFollowing={a.tipster?.username ? followedTipsterUsernames.has(a.tipster.username) : false}
+                    onFollow={a.tipster?.username ? () => handleFollow(a.tipster!.username) : undefined}
+                    followLoading={a.tipster?.username ? followLoading === a.tipster.username : false}
                   />
                 );
               })}

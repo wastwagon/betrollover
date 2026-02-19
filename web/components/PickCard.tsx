@@ -58,6 +58,10 @@ interface PickCardProps {
   onUnveilClose?: () => void;
   className?: string;
   createdAt?: string;
+  /** Follow tipster - when set, shows compact follow button at top right */
+  isFollowing?: boolean;
+  onFollow?: () => void;
+  followLoading?: boolean;
 }
 
 export function PickCard({
@@ -87,6 +91,9 @@ export function PickCard({
   onView,
   className = '',
   createdAt,
+  isFollowing = false,
+  onFollow,
+  followLoading = false,
 }: PickCardProps) {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showUnveilModal, setShowUnveilModal] = useState(false);
@@ -144,8 +151,25 @@ export function PickCard({
   return (
     <>
       <article
-        className={`card-gradient rounded-2xl shadow-lg overflow-hidden hover:shadow-xl hover:shadow-[var(--primary)]/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col ${className}`}
+        className={`card-gradient rounded-2xl shadow-lg overflow-hidden hover:shadow-xl hover:shadow-[var(--primary)]/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col relative ${className}`}
       >
+        {/* Compact Follow button - top right corner */}
+        {tipster && onFollow && (
+          <div className="absolute top-2 right-2 z-10">
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onFollow(); }}
+              disabled={followLoading || isFollowing}
+              className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
+                isFollowing
+                  ? 'bg-[var(--border)] text-[var(--text-muted)] cursor-default'
+                  : 'bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white'
+              } ${followLoading ? 'opacity-70' : ''}`}
+            >
+              {followLoading ? '…' : isFollowing ? 'Following' : 'Follow'}
+            </button>
+          </div>
+        )}
         <div className="p-4 flex flex-col flex-1">
           {/* Tipster Performance Header - always show when tipster data exists */}
           {(tipster || title) && (
