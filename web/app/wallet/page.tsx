@@ -4,6 +4,8 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { EmptyState } from '@/components/EmptyState';
 import { getApiUrl } from '@/lib/site-config';
 import type { BalanceResponse } from '@betrollover/shared-types';
 
@@ -231,7 +233,7 @@ function WalletContent() {
             </div>
           )}
 
-          {loading && <p className="text-[var(--text-muted)] text-sm">Loading...</p>}
+          {loading && <LoadingSkeleton count={2} variant="list" />}
           {!loading && (
             <div className="space-y-4 pb-6">
               <div className="card-gradient rounded-2xl p-5 shadow-lg">
@@ -417,8 +419,8 @@ export default function WalletPage() {
   return (
     <Suspense fallback={
       <DashboardShell>
-        <div className="dashboard-bg dashboard-pattern min-h-[200px] flex items-center justify-center">
-          <p className="text-[var(--text-muted)] text-sm animate-pulse">Loading wallet...</p>
+        <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 md:py-6 pb-24">
+          <LoadingSkeleton count={2} variant="list" />
         </div>
       </DashboardShell>
     }>

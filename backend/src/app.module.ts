@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -24,6 +24,7 @@ import { AdsModule } from './modules/ads/ads.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { PushModule } from './modules/push/push.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { GeoRestrictionMiddleware } from './common/middleware/geo-restriction.middleware';
 
 @Module({
   imports: [
@@ -69,4 +70,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     PushModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(GeoRestrictionMiddleware).forRoutes('*');
+  }
+}

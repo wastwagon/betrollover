@@ -80,6 +80,12 @@ export class User {
   @Column('text', { nullable: true })
   bio: string | null = null;
 
+  @Column('date', { nullable: true })
+  dateOfBirth: Date | null = null;
+
+  @Column('timestamp', { nullable: true })
+  ageVerifiedAt: Date | null = null;
+
   @CreateDateColumn()
   createdAt: Date;
 

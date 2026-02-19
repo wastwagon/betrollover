@@ -3,6 +3,7 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { VerifyAgeDto } from './dto/verify-age.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -50,6 +51,13 @@ export class AuthController {
   async resendVerification(@CurrentUser() user: User) {
     return this.authService.resendVerificationEmail(user.id);
   }
+  @Post('verify-age')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  async verifyAge(@CurrentUser() user: User, @Body() dto: VerifyAgeDto) {
+    return this.authService.verifyAge(user.id, dto.dateOfBirth);
+  }
+
   @Post('change-password')
   @UseGuards(JwtAuthGuard)
   async changePassword(

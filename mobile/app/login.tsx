@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const API_BASE = `${(process.env.EXPO_PUBLIC_API_URL || 'http://localhost:6001').replace(/\/$/, '')}/api/v1`;
+import { API_BASE, isGeoRestricted } from '@/lib/api';
+import { colors } from '@/lib/theme';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -30,9 +30,15 @@ export default function LoginScreen() {
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Login failed');
+      if (!res.ok) {
+        if (isGeoRestricted(res, data)) {
+          router.replace('/geo-restricted');
+          return;
+        }
+        throw new Error(data.message || 'Login failed');
+      }
       await AsyncStorage.setItem('token', data.access_token);
-      router.replace('/dashboard');
+      router.replace('/(tabs)');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
@@ -64,6 +70,11 @@ export default function LoginScreen() {
           secureTextEntry
           autoComplete="password"
         />
+        <Link href="/forgot-password" asChild>
+          <Pressable style={styles.forgotLink}>
+            <Text style={styles.forgotText}>Forgot password?</Text>
+          </Pressable>
+        </Link>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <Pressable
           style={[styles.button, loading && styles.buttonDisabled]}
@@ -74,7 +85,7 @@ export default function LoginScreen() {
             {loading ? 'Signing in...' : 'Sign In'}
           </Text>
         </Pressable>
-        <Link href="/" asChild>
+        <Link href="/register" asChild>
           <Pressable>
             <Text style={styles.link}>
               Don&apos;t have an account? <Text style={styles.linkBold}>Register</Text>
@@ -112,13 +123,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     fontSize: 16,
   },
+  forgotLink: { alignSelf: 'flex-end', marginBottom: 12 },
+  forgotText: { fontSize: 14, color: colors.primary },
   error: {
     color: '#dc2626',
     marginBottom: 12,
     fontSize: 14,
   },
   button: {
-    backgroundColor: '#DC2626',
+    backgroundColor: '#10b981',
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
@@ -138,7 +151,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   linkBold: {
-    color: '#dc2626',
+    color: '#10b981',
     fontWeight: '600',
   },
 });

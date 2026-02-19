@@ -9,6 +9,7 @@ import { UserPurchasedPick } from './entities/user-purchased-pick.entity';
 import { AccumulatorsController } from './accumulators.controller';
 import { AccumulatorsService } from './accumulators.service';
 import { SettlementService } from './settlement.service';
+import { UsersModule } from '../users/users.module';
 import { WalletModule } from '../wallet/wallet.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { EmailModule } from '../email/email.module';
@@ -22,6 +23,7 @@ import { Tipster } from '../predictions/entities/tipster.entity';
 import { TipsterFollow } from '../predictions/entities/tipster-follow.entity';
 @Module({
   imports: [
+    UsersModule,
     TypeOrmModule.forFeature([
       AccumulatorTicket,
       AccumulatorPick,

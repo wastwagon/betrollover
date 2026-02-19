@@ -11,8 +11,7 @@ import {
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const API_BASE = `${(process.env.EXPO_PUBLIC_API_URL || 'http://localhost:6001').replace(/\/$/, '')}/api/v1`;
+import { API_BASE } from '@/lib/api';
 
 export default function RegisterScreen() {
   const [step, setStep] = useState<'email' | 'form'>('email');
@@ -22,6 +21,7 @@ export default function RegisterScreen() {
   const [otpError, setOtpError] = useState('');
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -57,6 +57,7 @@ export default function RegisterScreen() {
           email: email.trim().toLowerCase(),
           username,
           displayName: displayName || username,
+          dateOfBirth,
           password,
           confirmPassword: confirmPassword || password,
           otpCode,
@@ -65,7 +66,7 @@ export default function RegisterScreen() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Registration failed');
       await AsyncStorage.setItem('token', data.access_token);
-      router.replace('/dashboard');
+      router.replace('/(tabs)');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
@@ -100,7 +101,7 @@ export default function RegisterScreen() {
               {otpLoading ? 'Sending...' : 'Send verification code'}
             </Text>
           </Pressable>
-          <Link href="/" asChild>
+          <Link href="/login" asChild>
             <Pressable>
               <Text style={styles.link}>
                 Already have an account? <Text style={styles.linkBold}>Sign In</Text>
@@ -171,16 +172,24 @@ export default function RegisterScreen() {
             secureTextEntry
           />
           {error ? <Text style={styles.error}>{error}</Text> : null}
+          <TextInput
+            style={styles.input}
+            placeholder="Date of birth (YYYY-MM-DD)"
+            value={dateOfBirth}
+            onChangeText={setDateOfBirth}
+            keyboardType="numbers-and-punctuation"
+          />
+          <Text style={styles.dobHint}>You must be 18 or older to register</Text>
           <Pressable
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleRegister}
-            disabled={loading || !otpCode || password.length < 8 || password !== confirmPassword}
+            disabled={loading || !otpCode || !dateOfBirth || password.length < 8 || password !== confirmPassword}
           >
             <Text style={styles.buttonText}>
               {loading ? 'Creating...' : 'Create Account'}
             </Text>
           </Pressable>
-          <Link href="/" asChild>
+          <Link href="/login" asChild>
             <Pressable>
               <Text style={styles.link}>
                 Already have an account? <Text style={styles.linkBold}>Sign In</Text>
@@ -237,7 +246,7 @@ const styles = StyleSheet.create({
   },
   changeLink: {
     fontSize: 14,
-    color: '#DC2626',
+    color: '#10b981',
     fontWeight: '600',
   },
   input: {
@@ -255,8 +264,14 @@ const styles = StyleSheet.create({
   },
   resendText: {
     fontSize: 13,
-    color: '#DC2626',
+    color: '#10b981',
     fontWeight: '500',
+  },
+  dobHint: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: -8,
+    marginBottom: 16,
   },
   error: {
     color: '#dc2626',
@@ -264,7 +279,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   button: {
-    backgroundColor: '#DC2626',
+    backgroundColor: '#10b981',
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
@@ -284,7 +299,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   linkBold: {
-    color: '#DC2626',
+    color: '#10b981',
     fontWeight: '600',
   },
 });

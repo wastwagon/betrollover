@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { EmptyState } from '@/components/EmptyState';
 import { getApiUrl } from '@/lib/site-config';
 
 interface Notification {
@@ -50,8 +51,8 @@ export default function NotificationsPage() {
   if (loading) {
     return (
       <DashboardShell>
-        <div className="min-h-[200px] flex items-center justify-center">
-          <div className="w-10 h-10 rounded-full border-2 border-[var(--primary)] border-t-transparent animate-spin" />
+        <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 md:py-6 pb-24">
+          <LoadingSkeleton count={4} variant="list" />
         </div>
       </DashboardShell>
     );
@@ -68,8 +69,14 @@ export default function NotificationsPage() {
           />
 
           {items.length === 0 ? (
-            <div className="card-gradient rounded-2xl p-8 text-center">
-              <p className="text-sm text-[var(--text-muted)]">No notifications yet.</p>
+            <div className="card-gradient rounded-2xl">
+              <EmptyState
+                title="No notifications yet"
+                description="When you get updates on your picks, purchases, or subscriptions, they'll appear here."
+                actionLabel="Go to Dashboard"
+                actionHref="/dashboard"
+                icon="🔔"
+              />
             </div>
           ) : (
             <div className="space-y-2">

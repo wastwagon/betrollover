@@ -75,6 +75,7 @@ PostgreSQL runs inside Docker; init scripts in `database/init/` run on first sta
 | **API** | http://localhost:6001 |
 | **API Health** | http://localhost:6001/health |
 | **API (versioned)** | http://localhost:6001/api/v1/* (e.g. `/api/v1/auth/login`) |
+| **API Docs (Swagger)** | http://localhost:6001/docs |
 
 ---
 
@@ -165,17 +166,17 @@ EXPO_PUBLIC_API_URL=http://192.168.1.100:6001 npx expo start
 
 ## Feature Reference (from v1)
 
-Features to port from `../BetRolloverApp`:
+Features ported from `../BetRolloverApp`:
 
 - [x] Auth (login, register, JWT)
-- [ ] Picks CRUD & marketplace
-- [ ] Accumulator builder
-- [ ] Wallet & Paystack
-- [ ] Escrow for purchases
-- [ ] Chat (WebSocket/Pusher)
-- [ ] Notifications
-- [ ] Leaderboard & contests
-- [ ] Admin dashboard
+- [x] Picks CRUD & marketplace
+- [x] Accumulator builder
+- [x] Wallet & Paystack
+- [x] Escrow for purchases
+- [ ] Chat (WebSocket/Pusher) — not yet implemented
+- [x] Notifications
+- [x] Leaderboard & contests
+- [x] Admin dashboard
 
 ---
 
@@ -213,6 +214,9 @@ cd backend && npm test
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Branching, conventional commits, PRs |
 | [CHANGELOG.md](CHANGELOG.md) | Version history |
 | [docs/BACKUP_AND_RUNBOOK.md](docs/BACKUP_AND_RUNBOOK.md) | DB backup, migrations, release steps |
+| [docs/ENV_VALIDATION.md](docs/ENV_VALIDATION.md) | Required vs optional env vars, production checklist |
+| [docs/MOBILE_APP_REVIEW.md](docs/MOBILE_APP_REVIEW.md) | Mobile vs web feature comparison, gaps, enhancement plan |
+| [docs/MOBILE_DEVELOPMENT_PLAN.md](docs/MOBILE_DEVELOPMENT_PLAN.md) | Phased mobile dev plan, design system, world-class UI/UX |
 | [docs/ADMIN_MIGRATIONS.md](docs/ADMIN_MIGRATIONS.md) | How admin migration works; adding new migrations |
 | [docs/TEMPLATE_IMPLEMENTATION_PHASES.md](docs/TEMPLATE_IMPLEMENTATION_PHASES.md) | World-class template alignment |
 | [docs/WORLD_CLASS_DEV_TEMPLATE_COMPLETE.md](docs/WORLD_CLASS_DEV_TEMPLATE_COMPLETE.md) | Stack, phases, versioning reference |

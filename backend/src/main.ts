@@ -3,6 +3,7 @@ import { ValidationPipe, Logger, RequestMethod } from '@nestjs/common';
 import { json } from 'express';
 import * as path from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import type { Request, Response, NextFunction } from 'express';
 import { AppModule } from './app.module';
@@ -29,11 +30,13 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { bodyParser: false });
 
-  // API versioning: all routes under /api/v1 except health and Paystack webhook
+  // API versioning: all routes under /api/v1 except health, Paystack webhook, and Swagger docs
   app.setGlobalPrefix('api/v1', {
     exclude: [
       { path: 'health', method: RequestMethod.ALL },
       { path: 'wallet/paystack-webhook', method: RequestMethod.POST },
+      { path: 'docs', method: RequestMethod.ALL },
+      { path: 'docs-json', method: RequestMethod.ALL },
     ],
   });
 
@@ -159,6 +162,19 @@ async function bootstrap() {
   });
 
   logger.log(`CORS whitelisted origins: ${uniqueOrigins.join(', ')}`);
+
+  // Swagger API docs at /docs (additive, read-only)
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('BetRollover API')
+    .setDescription('BetRollover tipster marketplace API. Auth, wallet, marketplace, subscriptions, predictions.')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('docs', app, document, {
+    jsonDocumentUrl: 'docs-json',
+    swaggerOptions: { persistAuthorization: true },
+  });
 
   // Run pending DB migrations before accepting traffic (production-safe: no manual scripts)
   try {

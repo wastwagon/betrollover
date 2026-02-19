@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { PickCard } from '@/components/PickCard';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getApiUrl } from '@/lib/site-config';
 
 interface Subscription {
@@ -60,8 +61,8 @@ export default function SubscriptionsPage() {
   if (loading) {
     return (
       <DashboardShell>
-        <div className="min-h-[60vh] flex items-center justify-center">
-          <div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" />
+        <div className="w-full px-4 sm:px-5 md:px-6 py-6 pb-24">
+          <LoadingSkeleton count={4} variant="cards" />
         </div>
       </DashboardShell>
     );

@@ -1,8 +1,10 @@
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
+import * as path from 'path';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
-config(); // Load .env file
+// Load .env from project root (backend/../.env) so migrations work when run from backend/
+config({ path: path.resolve(__dirname, '../../../.env') });
 
 export default new DataSource({
     type: 'postgres',

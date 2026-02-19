@@ -29,4 +29,15 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+// Wrap with Sentry only when DSN is set (opt-in, zero impact when unset)
+const sentryDsn = process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.SENTRY_DSN;
+if (sentryDsn) {
+  const { withSentryConfig } = require('@sentry/nextjs');
+  module.exports = withSentryConfig(nextConfig, {
+    org: process.env.SENTRY_ORG || '',
+    project: process.env.SENTRY_PROJECT || '',
+    silent: !process.env.CI,
+  });
+} else {
+  module.exports = nextConfig;
+}

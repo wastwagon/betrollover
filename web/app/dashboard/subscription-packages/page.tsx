@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { SuccessToast } from '@/components/SuccessToast';
 import { useToast } from '@/hooks/useToast';
 import { getApiUrl } from '@/lib/site-config';
@@ -99,8 +100,8 @@ export default function SubscriptionPackagesPage() {
   if (loading) {
     return (
       <DashboardShell>
-        <div className="min-h-[60vh] flex items-center justify-center">
-          <div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" />
+        <div className="w-full px-4 sm:px-5 md:px-6 py-6 pb-24">
+          <LoadingSkeleton count={2} variant="list" />
         </div>
       </DashboardShell>
     );

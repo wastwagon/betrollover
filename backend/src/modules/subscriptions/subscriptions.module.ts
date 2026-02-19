@@ -9,11 +9,13 @@ import { Tipster } from '../predictions/entities/tipster.entity';
 import { SubscriptionsService } from './subscriptions.service';
 import { SubscriptionsController } from './subscriptions.controller';
 import { SubscriptionSettlementService } from './subscription-settlement.service';
+import { UsersModule } from '../users/users.module';
 import { WalletModule } from '../wallet/wallet.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
+    UsersModule,
     TypeOrmModule.forFeature([
       TipsterSubscriptionPackage,
       Subscription,

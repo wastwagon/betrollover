@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,8 +13,10 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const API_BASE = `${(process.env.EXPO_PUBLIC_API_URL || 'http://localhost:6001').replace(/\/$/, '')}/api/v1`;
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { EmptyState } from '@/components/EmptyState';
+import { API_BASE, checkAgeVerificationRequired } from '@/lib/api';
+import { colors, spacing } from '@/lib/theme';
 
 interface IapProduct {
   productId: string;
@@ -45,7 +47,7 @@ interface Withdrawal {
   createdAt: string;
 }
 
-export default function WalletScreen() {
+export default function WalletTab() {
   const [user, setUser] = useState<{ role: string } | null>(null);
   const [balance, setBalance] = useState<{ balance: number; currency: string } | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -53,6 +55,7 @@ export default function WalletScreen() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
   const [depositAmount, setDepositAmount] = useState('');
   const [depositLoading, setDepositLoading] = useState(false);
   const [depositError, setDepositError] = useState('');
@@ -90,6 +93,7 @@ export default function WalletScreen() {
         fetch(`${API_BASE}/wallet/withdrawals`, { headers }),
         fetch(`${API_BASE}/wallet/iap/products`, { headers }),
       ]);
+      if (await checkAgeVerificationRequired(balRes)) return;
       const u = uRes.ok ? await uRes.json() : null;
       const bal = balRes.ok ? await balRes.json() : { balance: 0, currency: 'GHS' };
       const txs = txRes.ok ? await txRes.json() : [];
@@ -258,21 +262,19 @@ export default function WalletScreen() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.loading}>Loading...</Text>
+      <View style={[styles.container, { padding: spacing.xl }]}>
+        <LoadingSkeleton count={2} variant="list" />
       </View>
     );
   }
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={styles.container}
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
-      <Pressable style={styles.back} onPress={() => router.back()}>
-        <Text style={styles.backText}>← Back</Text>
-      </Pressable>
       <Text style={styles.title}>Wallet</Text>
 
       <View style={styles.card}>
@@ -392,9 +394,7 @@ export default function WalletScreen() {
                       onPress={handleAddPayoutMethod}
                       disabled={payoutLoading}
                     >
-                      <Text style={styles.buttonText}>
-                        {payoutLoading ? 'Saving...' : 'Save'}
-                      </Text>
+                      <Text style={styles.buttonText}>{payoutLoading ? 'Saving...' : 'Save'}</Text>
                     </Pressable>
                     <Pressable style={styles.secondaryButtonSmall} onPress={() => setShowPayoutForm(false)}>
                       <Text style={styles.secondaryButtonText}>Cancel</Text>
@@ -452,7 +452,13 @@ export default function WalletScreen() {
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Recent Transactions</Text>
         {transactions.length === 0 ? (
-          <Text style={styles.muted}>No transactions yet.</Text>
+          <EmptyState
+            title="No transactions yet"
+            description="Deposit to add funds. Your transactions will appear here."
+            icon="📋"
+            actionLabel="Deposit"
+            onActionPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}
+          />
         ) : (
           transactions.map((t) => (
             <View key={t.id} style={styles.txRow}>
@@ -472,58 +478,55 @@ export default function WalletScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: 24, paddingBottom: 48 },
-  loading: { textAlign: 'center', color: '#666', marginTop: 48 },
-  back: { marginBottom: 16 },
-  backText: { color: '#DC2626', fontSize: 16 },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 24 },
+  container: { flex: 1, backgroundColor: colors.bg },
+  content: { padding: spacing.xl, paddingBottom: spacing.xxl * 2 },
+  title: { fontSize: 24, fontWeight: 'bold', marginBottom: spacing.xl, color: colors.text },
   card: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: colors.bgWarm,
     borderRadius: 12,
     padding: 20,
-    marginBottom: 16,
+    marginBottom: spacing.lg,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.border,
   },
-  label: { fontSize: 12, color: '#666', marginBottom: 4 },
-  balance: { fontSize: 28, fontWeight: 'bold', marginBottom: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: '600', marginBottom: 12 },
+  label: { fontSize: 12, color: colors.textMuted, marginBottom: 4 },
+  balance: { fontSize: 28, fontWeight: 'bold', marginBottom: 16, color: colors.text },
+  sectionTitle: { fontSize: 16, fontWeight: '600', marginBottom: 12, color: colors.text },
   input: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.border,
     borderRadius: 8,
     padding: 14,
     marginBottom: 12,
     fontSize: 16,
   },
-  error: { color: '#dc2626', fontSize: 14, marginBottom: 8 },
+  error: { color: colors.error, fontSize: 14, marginBottom: 8 },
   button: {
-    backgroundColor: '#DC2626',
+    backgroundColor: colors.primary,
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
   },
-  buttonGreen: { backgroundColor: '#059669' },
+  buttonGreen: { backgroundColor: colors.primaryHover },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   buttonSmall: { flex: 1, marginRight: 8 },
   secondaryButton: {
     borderWidth: 2,
-    borderColor: '#DC2626',
+    borderColor: colors.primary,
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
   },
   secondaryButtonSmall: {
     borderWidth: 2,
-    borderColor: '#d1d5db',
+    borderColor: colors.border,
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
     flex: 1,
   },
-  secondaryButtonText: { color: '#DC2626', fontSize: 16, fontWeight: '600' },
+  secondaryButtonText: { color: colors.primary, fontSize: 16, fontWeight: '600' },
   form: { gap: 12 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   chip: {
@@ -531,26 +534,26 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.border,
   },
-  chipActive: { backgroundColor: '#DC2626', borderColor: '#DC2626' },
-  chipText: { color: '#666' },
+  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText: { color: colors.textMuted },
   chipTextActive: { color: '#fff', fontWeight: '600' },
-  muted: { fontSize: 14, color: '#666', marginBottom: 8 },
-  withdrawals: { marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#e5e7eb' },
+  muted: { fontSize: 14, color: colors.textMuted, marginBottom: 8 },
+  withdrawals: { marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: colors.border },
   withdrawRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  statusOk: { color: '#059669' },
-  statusFail: { color: '#dc2626' },
-  statusPending: { color: '#d97706' },
+  statusOk: { color: colors.success },
+  statusFail: { color: colors.error },
+  statusPending: { color: colors.accent },
   txRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
   },
-  txType: { fontWeight: '600', marginBottom: 2 },
-  txPos: { color: '#059669', fontWeight: '600' },
-  txNeg: { color: '#dc2626', fontWeight: '600' },
+  txType: { fontWeight: '600', marginBottom: 2, color: colors.text },
+  txPos: { color: colors.success, fontWeight: '600' },
+  txNeg: { color: colors.error, fontWeight: '600' },
 });

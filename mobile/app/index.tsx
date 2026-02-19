@@ -1,9 +1,16 @@
+import { useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { Link } from 'expo-router';
-
-const API_BASE = `${(process.env.EXPO_PUBLIC_API_URL || 'http://localhost:6001').replace(/\/$/, '')}/api/v1`;
+import { Link, router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { colors } from '@/lib/theme';
 
 export default function HomeScreen() {
+  useEffect(() => {
+    AsyncStorage.getItem('token').then((token) => {
+      if (token) router.replace('/(tabs)');
+    });
+  }, []);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>BetRollover</Text>
@@ -53,7 +60,7 @@ const styles = StyleSheet.create({
     maxWidth: 320,
   },
   primaryButton: {
-    backgroundColor: '#DC2626',
+    backgroundColor: colors.primary,
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
@@ -65,13 +72,13 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     borderWidth: 2,
-    borderColor: '#DC2626',
+    borderColor: colors.primary,
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
   },
   secondaryButtonText: {
-    color: '#DC2626',
+    color: colors.primary,
     fontSize: 16,
     fontWeight: '600',
   },

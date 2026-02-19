@@ -45,7 +45,7 @@ export class UsersService {
   async findById(id: number): Promise<User | null> {
     return this.usersRepository.findOne({
       where: { id },
-      select: ['id', 'email', 'username', 'displayName', 'avatar', 'phone', 'role', 'status', 'createdAt', 'emailVerifiedAt'],
+      select: ['id', 'email', 'username', 'displayName', 'avatar', 'phone', 'role', 'status', 'createdAt', 'emailVerifiedAt', 'ageVerifiedAt'],
     });
   }
 
@@ -56,6 +56,7 @@ export class UsersService {
     displayName: string;
     phone?: string;
     role?: string;
+    dateOfBirth?: string;
   }): Promise<User> {
     const hashedPassword = await bcrypt.hash(data.password, 12);
     const user = this.usersRepository.create({
@@ -65,8 +66,41 @@ export class UsersService {
       displayName: data.displayName || data.username,
       phone: data.phone || null,
       role: (data.role as UserRole) || UserRole.TIPSTER,
+      dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
+      ageVerifiedAt: data.dateOfBirth && this.isAtLeast18(data.dateOfBirth) ? new Date() : null,
     });
     return this.usersRepository.save(user);
+  }
+
+  /** Check if date string (YYYY-MM-DD) is at least 18 years ago */
+  isAtLeast18(dateStr: string): boolean {
+    const birth = new Date(dateStr);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age >= 18;
+  }
+
+  async verifyAge(userId: number, dateOfBirth: string): Promise<{ verified: boolean; message: string }> {
+    if (!this.isAtLeast18(dateOfBirth)) {
+      return { verified: false, message: 'You must be at least 18 years old to use this service' };
+    }
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) return { verified: false, message: 'User not found' };
+    await this.usersRepository.update(userId, {
+      dateOfBirth: new Date(dateOfBirth),
+      ageVerifiedAt: new Date(),
+    });
+    return { verified: true, message: 'Age verified successfully' };
+  }
+
+  async isAgeVerified(userId: number): Promise<boolean> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      select: ['ageVerifiedAt'],
+    });
+    return !!user?.ageVerifiedAt;
   }
 
   async validatePassword(user: User, password: string): Promise<boolean> {
