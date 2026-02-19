@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface Deposit {
   id: number;
@@ -36,7 +35,7 @@ export default function AdminDepositsPage() {
     const params = new URLSearchParams({ page: page.toString(), limit: '50' });
     if (userIdFilter) params.append('userId', userIdFilter);
     if (statusFilter) params.append('status', statusFilter);
-    fetch(`${API_URL}/admin/deposits?${params}`, {
+    fetch(`${getApiUrl()}/admin/deposits?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => (r.ok ? r.json() : { items: [], total: 0, page: 1, limit: 50, totalPages: 1 }))
@@ -52,7 +51,7 @@ export default function AdminDepositsPage() {
     if (!confirm(`Change deposit status to "${status}"?`)) return;
     const token = localStorage.getItem('token');
     if (!token) return;
-    const res = await fetch(`${API_URL}/admin/deposits/${id}/status`, {
+    const res = await fetch(`${getApiUrl()}/admin/deposits/${id}/status`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),

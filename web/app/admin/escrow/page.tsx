@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface EscrowFund {
   id: number;
@@ -28,7 +27,7 @@ export default function AdminEscrowPage() {
       router.push('/login');
       return;
     }
-    fetch(`${API_URL}/admin/escrow`, {
+    fetch(`${getApiUrl()}/admin/escrow`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => (r.ok ? r.json() : []))

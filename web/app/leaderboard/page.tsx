@@ -6,8 +6,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface LeaderboardEntry {
   id: number;
@@ -35,7 +34,7 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${API_URL}/leaderboard?period=${period}&limit=50`)
+    fetch(`${getApiUrl()}/leaderboard?period=${period}&limit=50`)
       .then((r) => (r.ok ? r.json() : { leaderboard: [] }))
       .then((data) => setEntries(data.leaderboard || []))
       .catch(() => setEntries([]))

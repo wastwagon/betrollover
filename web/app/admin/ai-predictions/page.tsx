@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface GenerationLog {
   id: number;
@@ -64,7 +64,7 @@ export default function AdminAiPredictionsPage() {
     setSyncing(true);
     setMessage(null);
     try {
-      const res = await fetch(`${API_URL}/admin/predictions/sync-to-marketplace`, {
+      const res = await fetch(`${getApiUrl()}/admin/predictions/sync-to-marketplace`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -95,8 +95,8 @@ export default function AdminAiPredictionsPage() {
     setLoading(true);
     try {
       const [logsRes, predictionsRes] = await Promise.all([
-        fetch(`${API_URL}/admin/predictions/generation-logs?limit=10`, { headers }),
-        fetch(`${API_URL}/admin/predictions/today`, { headers }),
+        fetch(`${getApiUrl()}/admin/predictions/generation-logs?limit=10`, { headers }),
+        fetch(`${getApiUrl()}/admin/predictions/today`, { headers }),
       ]);
       if (logsRes.ok) {
         const data = await logsRes.json();
@@ -124,7 +124,7 @@ export default function AdminAiPredictionsPage() {
     setGenerating(true);
     setMessage(null);
     try {
-      const res = await fetch(`${API_URL}/admin/predictions/generate`, {
+      const res = await fetch(`${getApiUrl()}/admin/predictions/generate`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       });

@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface Notification {
   id: number;
@@ -29,7 +28,7 @@ export default function NotificationsPage() {
       router.push('/login');
       return;
     }
-    fetch(`${API_URL}/notifications?limit=50`, {
+    fetch(`${getApiUrl()}/notifications?limit=50`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => (r.ok ? r.json() : []))
@@ -41,7 +40,7 @@ export default function NotificationsPage() {
   const markRead = async (id: number) => {
     const token = localStorage.getItem('token');
     if (!token) return;
-    await fetch(`${API_URL}/notifications/${id}/read`, {
+    await fetch(`${getApiUrl()}/notifications/${id}/read`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}` },
     });

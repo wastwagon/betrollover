@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface ResourceCategory {
   id: number;
@@ -26,7 +26,7 @@ export default function AdminResourcesPage() {
       router.push('/login');
       return;
     }
-    fetch(`${API_URL}/admin/resources/categories`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${getApiUrl()}/admin/resources/categories`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setCategories(Array.isArray(data) ? data : []))
       .catch(() => setCategories([]))

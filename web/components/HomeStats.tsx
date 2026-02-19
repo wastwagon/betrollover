@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface PublicStats {
   verifiedTipsters: number;
@@ -32,7 +32,7 @@ export function HomeStats() {
   const [stats, setStats] = useState<PublicStats | null>(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/accumulators/stats/public`)
+    fetch(`${getApiUrl()}/accumulators/stats/public`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => data && setStats(data))
       .catch(() => setStats(defaultStats));

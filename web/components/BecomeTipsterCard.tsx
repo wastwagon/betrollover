@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 export function BecomeTipsterCard() {
   const [status, setStatus] = useState<'idle' | 'pending' | 'rejected' | null>(null);
@@ -11,7 +10,7 @@ export function BecomeTipsterCard() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
-    fetch(`${API_URL}/users/me/tipster-request`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${getApiUrl()}/users/me/tipster-request`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => (r.ok ? r.json() : null))
       .then((req) => setStatus(req?.status ?? 'idle'))
       .catch(() => setStatus('idle'));
@@ -22,7 +21,7 @@ export function BecomeTipsterCard() {
     if (!token) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/users/me/request-tipster`, {
+      const res = await fetch(`${getApiUrl()}/users/me/request-tipster`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });

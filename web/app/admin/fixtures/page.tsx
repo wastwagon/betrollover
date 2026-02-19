@@ -4,8 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface DbFixture {
   id: number;
@@ -55,7 +54,7 @@ export default function AdminFixturesPage() {
     params.set('days', '7');
     if (selectedCountry) params.set('country', selectedCountry);
     if (selectedCompetition) params.set('league', selectedCompetition);
-    fetch(`${API_URL}/fixtures?${params.toString()}`, {
+    fetch(`${getApiUrl()}/fixtures?${params.toString()}`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
     })
@@ -68,7 +67,7 @@ export default function AdminFixturesPage() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
-    fetch(`${API_URL}/fixtures/filters`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
+    fetch(`${getApiUrl()}/fixtures/filters`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data) setFilterOptions({ countries: data.countries || [], tournaments: data.tournaments || [], leagues: data.leagues || [] });
@@ -79,7 +78,7 @@ export default function AdminFixturesPage() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
-    fetch(`${API_URL}/fixtures/sync/status`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
+    fetch(`${getApiUrl()}/fixtures/sync/status`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : []))
       .then((statuses) => {
         const fixturesStatus = Array.isArray(statuses) ? statuses.find((s: { syncType: string }) => s.syncType === 'fixtures') : null;
@@ -120,7 +119,7 @@ export default function AdminFixturesPage() {
     setError(null);
     setSyncResult(null);
     try {
-      const res = await fetch(`${API_URL}/fixtures/sync`, {
+      const res = await fetch(`${getApiUrl()}/fixtures/sync`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -150,7 +149,7 @@ export default function AdminFixturesPage() {
     setError(null);
     setSyncResult(null);
     try {
-      const url = `${API_URL}/fixtures/sync/odds${force ? '?force=true' : ''}`;
+      const url = `${getApiUrl()}/fixtures/sync/odds${force ? '?force=true' : ''}`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },

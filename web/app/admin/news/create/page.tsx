@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
+import { getApiUrl } from '@/lib/site-config';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
 const CATEGORIES = ['news', 'transfer_rumour', 'confirmed_transfer', 'gossip'] as const;
 
 export default function AdminNewsCreatePage() {
@@ -35,7 +35,7 @@ export default function AdminNewsCreatePage() {
     if (!token || !form.slug || !form.title || !form.content) return;
     setSaving(true);
     try {
-      const res = await fetch(`${API_URL}/admin/news`, {
+      const res = await fetch(`${getApiUrl()}/admin/news`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

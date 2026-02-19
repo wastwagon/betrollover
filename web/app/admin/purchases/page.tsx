@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface Purchase {
   id: number;
@@ -33,7 +33,7 @@ export default function AdminPurchasesPage() {
     const params = new URLSearchParams({ page: page.toString(), limit: '50' });
     if (userIdFilter) params.append('userId', userIdFilter);
     if (accumulatorIdFilter) params.append('accumulatorId', accumulatorIdFilter);
-    fetch(`${API_URL}/admin/purchases?${params}`, {
+    fetch(`${getApiUrl()}/admin/purchases?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => (r.ok ? r.json() : { items: [], total: 0, page: 1, limit: 50, totalPages: 1 }))

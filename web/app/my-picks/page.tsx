@@ -9,8 +9,7 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { useErrorToast } from '@/hooks/useErrorToast';
 import { ErrorToast } from '@/components/ErrorToast';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface Pick {
   id: number;
@@ -50,7 +49,7 @@ export default function MyPicksPage() {
       router.push('/login');
       return;
     }
-    fetch(`${API_URL}/accumulators/my`, {
+    fetch(`${getApiUrl()}/accumulators/my`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => {

@@ -4,8 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 function ForgotPasswordForm() {
     const searchParams = useSearchParams();
@@ -34,7 +33,7 @@ function ForgotPasswordForm() {
         setError('');
 
         try {
-            const res = await fetch(`${API_URL}/auth/forgot-password`, {
+            const res = await fetch(`${getApiUrl()}/auth/forgot-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email }),
@@ -62,7 +61,7 @@ function ForgotPasswordForm() {
         setError('');
 
         try {
-            const res = await fetch(`${API_URL}/auth/reset-password`, {
+            const res = await fetch(`${getApiUrl()}/auth/reset-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, code, newPassword }),

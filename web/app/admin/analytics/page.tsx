@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface TimeSeriesData {
   users: { date: string; value: number }[];
@@ -135,13 +134,13 @@ export default function AdminAnalyticsPage() {
     const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const endDate = new Date().toISOString().split('T')[0];
     Promise.all([
-      fetch(`${API_URL}/admin/analytics/time-series?startDate=${startDate}&endDate=${endDate}&interval=day`, { headers })
+      fetch(`${getApiUrl()}/admin/analytics/time-series?startDate=${startDate}&endDate=${endDate}&interval=day`, { headers })
         .then((r) => (r.ok ? r.json() : null))
         .catch((e) => { console.error('Time series error:', e); return null; }),
-      fetch(`${API_URL}/admin/analytics/conversion-funnel`, { headers })
+      fetch(`${getApiUrl()}/admin/analytics/conversion-funnel`, { headers })
         .then((r) => (r.ok ? r.json() : null))
         .catch((e) => { console.error('Funnel error:', e); return null; }),
-      fetch(`${API_URL}/admin/analytics/user-behavior`, { headers })
+      fetch(`${getApiUrl()}/admin/analytics/user-behavior`, { headers })
         .then(async (r) => {
           if (!r.ok) {
             const text = await r.text();
@@ -151,28 +150,28 @@ export default function AdminAnalyticsPage() {
           return r.json();
         })
         .catch((e) => { console.error('User behavior error:', e); return null; }),
-      fetch(`${API_URL}/admin/analytics/revenue?startDate=${startDate}&endDate=${endDate}`, { headers })
+      fetch(`${getApiUrl()}/admin/analytics/revenue?startDate=${startDate}&endDate=${endDate}`, { headers })
         .then((r) => (r.ok ? r.json() : null))
         .catch((e) => { console.error('Revenue error:', e); return null; }),
-      fetch(`${API_URL}/admin/analytics/pick-performance`, { headers })
+      fetch(`${getApiUrl()}/admin/analytics/pick-performance`, { headers })
         .then((r) => (r.ok ? r.json() : null))
         .catch((e) => { console.error('Pick performance error:', e); return null; }),
-      fetch(`${API_URL}/admin/analytics/engagement`, { headers })
+      fetch(`${getApiUrl()}/admin/analytics/engagement`, { headers })
         .then((r) => (r.ok ? r.json() : null))
         .catch((e) => { console.error('Engagement error:', e); return null; }),
-      fetch(`${API_URL}/admin/analytics/real-time`, { headers })
+      fetch(`${getApiUrl()}/admin/analytics/real-time`, { headers })
         .then((r) => (r.ok ? r.json() : null))
         .catch((e) => { console.error('Real-time error:', e); return null; }),
-      fetch(`${API_URL}/admin/analytics/ai-dashboard`, { headers })
+      fetch(`${getApiUrl()}/admin/analytics/ai-dashboard`, { headers })
         .then((r) => (r.ok ? r.json() : null))
         .catch((e) => { console.error('AI dashboard error:', e); return null; }),
-      fetch(`${API_URL}/admin/analytics/cohorts?days=${days}`, { headers })
+      fetch(`${getApiUrl()}/admin/analytics/cohorts?days=${days}`, { headers })
         .then((r) => (r.ok ? r.json() : null))
         .catch((e) => { console.error('Cohorts error:', e); return null; }),
-      fetch(`${API_URL}/admin/analytics/retention`, { headers })
+      fetch(`${getApiUrl()}/admin/analytics/retention`, { headers })
         .then((r) => (r.ok ? r.json() : null))
         .catch((e) => { console.error('Retention error:', e); return null; }),
-      fetch(`${API_URL}/admin/analytics/visitors?days=7`, { headers })
+      fetch(`${getApiUrl()}/admin/analytics/visitors?days=7`, { headers })
         .then((r) => (r.ok ? r.json() : null))
         .catch((e) => { console.error('Visitors error:', e); return null; }),
     ])

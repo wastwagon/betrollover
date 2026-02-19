@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface Wallet {
   id: number;
@@ -44,14 +43,14 @@ export default function AdminWalletPage() {
     }
     if (tab === 'wallets') {
       setLoading(true);
-      fetch(`${API_URL}/admin/wallets`, { headers: { Authorization: `Bearer ${token}` } })
+      fetch(`${getApiUrl()}/admin/wallets`, { headers: { Authorization: `Bearer ${token}` } })
         .then((r) => (r.ok ? r.json() : []))
         .then((data) => setWallets(Array.isArray(data) ? data : []))
         .catch(() => setWallets([]))
         .finally(() => setLoading(false));
     } else {
       setLoading(true);
-      fetch(`${API_URL}/admin/wallet-transactions?limit=50`, { headers: { Authorization: `Bearer ${token}` } })
+      fetch(`${getApiUrl()}/admin/wallet-transactions?limit=50`, { headers: { Authorization: `Bearer ${token}` } })
         .then((r) => (r.ok ? r.json() : []))
         .then((data) => setTransactions(Array.isArray(data) ? data : []))
         .catch(() => setTransactions([]))
@@ -68,7 +67,7 @@ export default function AdminWalletPage() {
     }
     const token = localStorage.getItem('token');
     if (!token) return;
-    const res = await fetch(`${API_URL}/admin/wallets/${userId}/adjust`, {
+    const res = await fetch(`${getApiUrl()}/admin/wallets/${userId}/adjust`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ amount: parseFloat(adjustAmount), reason: adjustReason }),
@@ -79,7 +78,7 @@ export default function AdminWalletPage() {
       setAdjustAmount('');
       setAdjustReason('');
       // Reload wallets
-      fetch(`${API_URL}/admin/wallets`, { headers: { Authorization: `Bearer ${token}` } })
+      fetch(`${getApiUrl()}/admin/wallets`, { headers: { Authorization: `Bearer ${token}` } })
         .then((r) => (r.ok ? r.json() : []))
         .then((data) => setWallets(Array.isArray(data) ? data : []));
     } else {
@@ -91,14 +90,14 @@ export default function AdminWalletPage() {
     if (!confirm(`${freeze ? 'Freeze' : 'Unfreeze'} this wallet?`)) return;
     const token = localStorage.getItem('token');
     if (!token) return;
-    const res = await fetch(`${API_URL}/admin/wallets/${userId}/freeze`, {
+    const res = await fetch(`${getApiUrl()}/admin/wallets/${userId}/freeze`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ freeze }),
     });
     if (res.ok) {
       // Reload wallets
-      fetch(`${API_URL}/admin/wallets`, { headers: { Authorization: `Bearer ${token}` } })
+      fetch(`${getApiUrl()}/admin/wallets`, { headers: { Authorization: `Bearer ${token}` } })
         .then((r) => (r.ok ? r.json() : []))
         .then((data) => setWallets(Array.isArray(data) ? data : []));
     } else {

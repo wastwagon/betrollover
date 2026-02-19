@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { PickCard } from '@/components/PickCard';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface Pick {
   id?: number;
@@ -54,7 +53,7 @@ export default function AdminMarketplacePage() {
       return;
     }
     setLoading(true);
-    const url = `${API_URL}/accumulators/marketplace${includeAll ? '?includeAll=true' : ''}`;
+    const url = `${getApiUrl()}/accumulators/marketplace${includeAll ? '?includeAll=true' : ''}`;
     fetch(url, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => (r.ok ? r.json() : {}))
       .then((data: { items?: Accumulator[] } | Accumulator[]) => {
@@ -74,7 +73,7 @@ export default function AdminMarketplacePage() {
     if (!token) return;
     setFixing(true);
     try {
-      const res = await fetch(`${API_URL}/admin/predictions/fix-marketplace`, {
+      const res = await fetch(`${getApiUrl()}/admin/predictions/fix-marketplace`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });

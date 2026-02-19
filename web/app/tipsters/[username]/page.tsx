@@ -11,8 +11,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { useToast } from '@/hooks/useToast';
 import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface Pick {
   id?: number;
@@ -105,7 +104,7 @@ export default function TipsterProfilePage() {
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    fetch(`${API_URL}/tipsters/${encodeURIComponent(username)}`, { headers })
+    fetch(`${getApiUrl()}/tipsters/${encodeURIComponent(username)}`, { headers })
       .then((r) => (r.ok ? r.json() : null))
       .then(setProfile)
       .catch(() => setProfile(null))
@@ -116,10 +115,10 @@ export default function TipsterProfilePage() {
     const token = localStorage.getItem('token');
     if (!token) return;
     Promise.all([
-      fetch(`${API_URL}/wallet/balance`, { headers: { Authorization: `Bearer ${token}` } }).then((r) =>
+      fetch(`${getApiUrl()}/wallet/balance`, { headers: { Authorization: `Bearer ${token}` } }).then((r) =>
         r.ok ? r.json() : null,
       ),
-      fetch(`${API_URL}/accumulators/purchased`, { headers: { Authorization: `Bearer ${token}` } }).then((r) =>
+      fetch(`${getApiUrl()}/accumulators/purchased`, { headers: { Authorization: `Bearer ${token}` } }).then((r) =>
         r.ok ? r.json() : [],
       ),
     ]).then(([walletData, purchasedData]) => {
@@ -132,7 +131,7 @@ export default function TipsterProfilePage() {
 
   useEffect(() => {
     if (!username) return;
-    fetch(`${API_URL}/subscriptions/packages/by-username/${encodeURIComponent(username)}`)
+    fetch(`${getApiUrl()}/subscriptions/packages/by-username/${encodeURIComponent(username)}`)
       .then((r) => (r.ok ? r.json() : []))
       .then((arr: SubscriptionPackage[]) => setSubscriptionPackages(Array.isArray(arr) ? arr : []))
       .catch(() => setSubscriptionPackages([]));
@@ -141,7 +140,7 @@ export default function TipsterProfilePage() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
-    fetch(`${API_URL}/subscriptions/me`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${getApiUrl()}/subscriptions/me`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => (r.ok ? r.json() : []))
       .then((arr: { packageId?: number; package?: { id?: number } }[]) => {
         const ids = new Set<number>();
@@ -168,7 +167,7 @@ export default function TipsterProfilePage() {
     }
     setSubscribeLoading(packageId);
     try {
-      const res = await fetch(`${API_URL}/subscriptions/subscribe`, {
+      const res = await fetch(`${getApiUrl()}/subscriptions/subscribe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ packageId }),
@@ -176,7 +175,7 @@ export default function TipsterProfilePage() {
       if (res.ok) {
         showSuccess(`Subscribed! View ${pkg.name} coupons in your dashboard.`);
         setSubscribedPackageIds((prev) => new Set(Array.from(prev).concat(packageId)));
-        const walletRes = await fetch(`${API_URL}/wallet/balance`, { headers: { Authorization: `Bearer ${token}` } });
+        const walletRes = await fetch(`${getApiUrl()}/wallet/balance`, { headers: { Authorization: `Bearer ${token}` } });
         if (walletRes.ok) {
           const d = await walletRes.json();
           setWalletBalance(Number(d.balance));
@@ -201,7 +200,7 @@ export default function TipsterProfilePage() {
     setFollowLoading(true);
     try {
       const isFollowing = profile?.is_following;
-      const res = await fetch(`${API_URL}/tipsters/${encodeURIComponent(username)}/follow`, {
+      const res = await fetch(`${getApiUrl()}/tipsters/${encodeURIComponent(username)}/follow`, {
         method: isFollowing ? 'DELETE' : 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -228,14 +227,14 @@ export default function TipsterProfilePage() {
     }
     setPurchasing(id);
     try {
-      const res = await fetch(`${API_URL}/accumulators/${id}/purchase`, {
+      const res = await fetch(`${getApiUrl()}/accumulators/${id}/purchase`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         showSuccess('Coupon purchased! View in My Purchases.');
         setPurchasedIds((prev) => new Set([...Array.from(prev), id]));
-        const walletRes = await fetch(`${API_URL}/wallet/balance`, {
+        const walletRes = await fetch(`${getApiUrl()}/wallet/balance`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (walletRes.ok) {

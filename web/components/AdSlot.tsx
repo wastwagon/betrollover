@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface AdCampaign {
   id: number;
@@ -24,7 +23,7 @@ export function AdSlot({ zoneSlug, className = '' }: AdSlotProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_URL}/ads/zone/${zoneSlug}`)
+    fetch(`${getApiUrl()}/ads/zone/${zoneSlug}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => setAd(data))
       .catch(() => setAd(null))
@@ -55,7 +54,7 @@ export function AdSlot({ zoneSlug, className = '' }: AdSlotProps) {
   }
 
   const handleClick = () => {
-    fetch(`${API_URL}/ads/click/${ad.id}`, { method: 'POST' }).catch(() => {});
+    fetch(`${getApiUrl()}/ads/click/${ad.id}`, { method: 'POST' }).catch(() => {});
   };
 
   return (

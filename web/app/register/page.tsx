@@ -4,8 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -29,7 +28,7 @@ export default function RegisterPage() {
     setOtpError('');
     setOtpLoading(true);
     try {
-      const res = await fetch(`${API_URL}/auth/otp/send`, {
+      const res = await fetch(`${getApiUrl()}/auth/otp/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
@@ -50,7 +49,7 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/auth/register`, {
+      const res = await fetch(`${getApiUrl()}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -150,7 +149,7 @@ export default function RegisterPage() {
                       setOtpError('');
                       setOtpLoading(true);
                       try {
-                        const res = await fetch(`${API_URL}/auth/otp/send`, {
+                        const res = await fetch(`${getApiUrl()}/auth/otp/send`, {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ email: email.trim().toLowerCase() }),

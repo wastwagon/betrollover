@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface AdZone {
   id: number;
@@ -42,8 +42,8 @@ export default function AdminAdsPage() {
       return;
     }
     Promise.all([
-      fetch(`${API_URL}/admin/ads/zones`, { headers: { Authorization: `Bearer ${token}` } }),
-      fetch(`${API_URL}/admin/ads/campaigns`, { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${getApiUrl()}/admin/ads/zones`, { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${getApiUrl()}/admin/ads/campaigns`, { headers: { Authorization: `Bearer ${token}` } }),
     ])
       .then(([r1, r2]) => Promise.all([r1.json(), r2.json()]))
       .then(([z, c]) => {

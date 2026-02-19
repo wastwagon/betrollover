@@ -4,8 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { AppShell } from '@/components/AppShell';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -21,7 +20,7 @@ function VerifyEmailContent() {
       setLoading(false);
       return;
     }
-    fetch(`${API_URL}/auth/verify-email?token=${encodeURIComponent(token)}`)
+    fetch(`${getApiUrl()}/auth/verify-email?token=${encodeURIComponent(token)}`)
       .then((r) => r.json())
       .then((data) => setResult(data))
       .catch(() => setResult({ verified: false, message: 'Verification failed' }))
@@ -37,7 +36,7 @@ function VerifyEmailContent() {
     setResendLoading(true);
     setResendMessage(null);
     try {
-      const res = await fetch(`${API_URL}/auth/resend-verification`, {
+      const res = await fetch(`${getApiUrl()}/auth/resend-verification`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${t}` },
       });

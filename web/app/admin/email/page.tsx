@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface SmtpSettings {
   host: string;
@@ -38,7 +37,7 @@ export default function AdminEmailPage() {
   const load = () => {
     const token = localStorage.getItem('token');
     if (!token) return;
-    fetch(`${API_URL}/admin/smtp-settings`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${getApiUrl()}/admin/smtp-settings`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data) {
@@ -72,7 +71,7 @@ export default function AdminEmailPage() {
     setSaving(true);
     setMsg('');
     try {
-      const res = await fetch(`${API_URL}/admin/smtp-settings`, {
+      const res = await fetch(`${getApiUrl()}/admin/smtp-settings`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -102,7 +101,7 @@ export default function AdminEmailPage() {
     setTesting(true);
     setMsg('');
     try {
-      const res = await fetch(`${API_URL}/admin/test-email`, {
+      const res = await fetch(`${getApiUrl()}/admin/test-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

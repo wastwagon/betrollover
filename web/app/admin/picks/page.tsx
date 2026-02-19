@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface Pick {
   id: number;
@@ -34,7 +34,7 @@ export default function AdminPicksPage() {
   const load = () => {
     const token = localStorage.getItem('token');
     if (!token) return;
-    fetch(`${API_URL}/admin/picks`, {
+    fetch(`${getApiUrl()}/admin/picks`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => (r.ok ? r.json() : []))
@@ -56,7 +56,7 @@ export default function AdminPicksPage() {
     if (!token) return;
     setActing(id);
     try {
-      const res = await fetch(`${API_URL}/admin/picks/${id}/approve`, {
+      const res = await fetch(`${getApiUrl()}/admin/picks/${id}/approve`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -71,7 +71,7 @@ export default function AdminPicksPage() {
     if (!token) return;
     setActing(id);
     try {
-      const res = await fetch(`${API_URL}/admin/picks/${id}/reject`, {
+      const res = await fetch(`${getApiUrl()}/admin/picks/${id}/reject`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });

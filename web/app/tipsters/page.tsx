@@ -11,8 +11,7 @@ import { AppFooter } from '@/components/AppFooter';
 import { useToast } from '@/hooks/useToast';
 import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 export default function TipstersPage() {
   const router = useRouter();
@@ -30,7 +29,7 @@ export default function TipstersPage() {
     if (token) headers['Authorization'] = `Bearer ${token}`;
     const params = new URLSearchParams({ limit: '50', sort_by: sort || sortBy, order: 'desc' });
     if (searchTerm?.trim()) params.set('search', searchTerm.trim());
-    fetch(`${API_URL}/tipsters?${params}`, { headers })
+    fetch(`${getApiUrl()}/tipsters?${params}`, { headers })
       .then((r) => (r.ok ? r.json() : { tipsters: [] }))
       .then((data) => setTipsters(data.tipsters || []))
       .catch(() => setTipsters([]))
@@ -56,7 +55,7 @@ export default function TipstersPage() {
       )
     );
     try {
-      const res = await fetch(`${API_URL}/tipsters/${encodeURIComponent(tipster.username)}/follow`, {
+      const res = await fetch(`${getApiUrl()}/tipsters/${encodeURIComponent(tipster.username)}/follow`, {
         method: isFollowing ? 'DELETE' : 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });

@@ -13,8 +13,7 @@ import { formatError } from '@/utils/errorMessages';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface FixtureOdd {
   id: number;
@@ -177,7 +176,7 @@ export default function CreatePickPage() {
       if (selectedLeague) params.append('league', selectedLeague);
       if (debouncedTeamSearch.trim()) params.append('team', debouncedTeamSearch.trim());
 
-      fetch(`${API_URL}/fixtures?${params.toString()}`, { headers })
+      fetch(`${getApiUrl()}/fixtures?${params.toString()}`, { headers })
         .then((r) => (r.ok ? r.json() : []))
         .then((data) => {
           if (Array.isArray(data)) {
@@ -212,7 +211,7 @@ export default function CreatePickPage() {
     const headers = { Authorization: `Bearer ${token}` };
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/fixtures/filters`, { headers });
+        const res = await fetch(`${getApiUrl()}/fixtures/filters`, { headers });
         if (res.ok) {
           const data = await res.json();
           setFilterOptions({
@@ -247,7 +246,7 @@ export default function CreatePickPage() {
     }
     const headers = { Authorization: `Bearer ${token}` };
     (async () => {
-      const userRes = await fetch(`${API_URL}/users/me`, { headers });
+      const userRes = await fetch(`${getApiUrl()}/users/me`, { headers });
       const u = userRes.ok ? await userRes.json() : null;
       if (!u) {
         router.replace('/dashboard');
@@ -263,7 +262,7 @@ export default function CreatePickPage() {
         if (selectedLeague) params.append('league', selectedLeague);
         if (debouncedTeamSearch.trim()) params.append('team', debouncedTeamSearch.trim());
 
-        const fixRes = await fetch(`${API_URL}/fixtures?${params.toString()}`, { headers });
+        const fixRes = await fetch(`${getApiUrl()}/fixtures?${params.toString()}`, { headers });
         if (!fixRes.ok) {
           const errorText = await fixRes.text().catch(() => '');
           const errorMessage = formatError(new Error(`Failed to load fixtures: ${fixRes.status}`));
@@ -293,11 +292,11 @@ export default function CreatePickPage() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
-    fetch(`${API_URL}/users/me`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${getApiUrl()}/users/me`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => (r.ok ? r.json() : null))
       .then((user) => {
         if (!user?.id) return;
-        return fetch(`${API_URL}/subscriptions/packages?tipsterId=${user.id}`, {
+        return fetch(`${getApiUrl()}/subscriptions/packages?tipsterId=${user.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
       })
@@ -318,7 +317,7 @@ export default function CreatePickPage() {
     
     try {
       // Try to load odds from fixture endpoint (auto-loads if missing)
-      const res = await fetch(`${API_URL}/fixtures/${f.id}`, {
+      const res = await fetch(`${getApiUrl()}/fixtures/${f.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       
@@ -338,7 +337,7 @@ export default function CreatePickPage() {
       } else {
         // If no odds, try to sync them
         console.log(`No odds found for fixture ${f.id}, attempting to sync...`);
-        const syncRes = await fetch(`${API_URL}/fixtures/${f.id}/odds`, {
+        const syncRes = await fetch(`${getApiUrl()}/fixtures/${f.id}/odds`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -353,7 +352,7 @@ export default function CreatePickPage() {
             );
           } else {
             // Reload fixture after sync
-            const reloadRes = await fetch(`${API_URL}/fixtures/${f.id}`, {
+            const reloadRes = await fetch(`${getApiUrl()}/fixtures/${f.id}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
             if (reloadRes.ok) {
@@ -443,7 +442,7 @@ export default function CreatePickPage() {
     setError(null);
     setSubmitting(true);
     const token = localStorage.getItem('token');
-    const res = await fetch(`${API_URL}/accumulators`, {
+    const res = await fetch(`${getApiUrl()}/accumulators`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -672,7 +671,7 @@ export default function CreatePickPage() {
                           if (selectedLeague) params.append('league', selectedLeague);
                           if (debouncedTeamSearch.trim()) params.append('team', debouncedTeamSearch.trim());
                           setLoading(true);
-                          fetch(`${API_URL}/fixtures?${params.toString()}`, { headers })
+                          fetch(`${getApiUrl()}/fixtures?${params.toString()}`, { headers })
                             .then((r) => (r.ok ? r.json() : []))
                             .then((data) => {
                               if (Array.isArray(data)) {

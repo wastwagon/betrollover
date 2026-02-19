@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { AppFooter } from '@/components/AppFooter';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001';
+import { getApiUrl } from '@/lib/site-config';
 
 interface PageData {
   slug: string;
@@ -19,7 +19,7 @@ export function ContentPage({ slug, fallbackTitle }: { slug: string; fallbackTit
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_URL}/pages/${slug}`)
+    fetch(`${getApiUrl()}/pages/${slug}`)
       .then((r) => (r.ok ? r.json() : null))
       .then(setPage)
       .catch(() => setPage(null))
