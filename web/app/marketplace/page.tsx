@@ -79,12 +79,17 @@ export default function MarketplacePage() {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
   const [sortBy, setSortBy] = useState<SortBy>('newest');
+  const [followingOnly, setFollowingOnly] = useState(false);
+  const [followedTipsterUsernames, setFollowedTipsterUsernames] = useState<Set<string>>(new Set());
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
 
   const filteredAndSortedPicks = useMemo(() => {
     let list = [...picks];
     if (priceFilter === 'free') list = list.filter((p) => p.price === 0);
     if (priceFilter === 'paid') list = list.filter((p) => p.price > 0);
+    if (followingOnly && followedTipsterUsernames.size > 0) {
+      list = list.filter((p) => p.tipster?.username && followedTipsterUsernames.has(p.tipster.username));
+    }
     if (sortBy === 'newest') {
       list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
     } else if (sortBy === 'price-low') {
@@ -95,7 +100,7 @@ export default function MarketplacePage() {
       list.sort((a, b) => (a.tipster?.rank ?? 999) - (b.tipster?.rank ?? 999));
     }
     return list;
-  }, [picks, priceFilter, sortBy]);
+  }, [picks, priceFilter, sortBy, followingOnly, followedTipsterUsernames]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -104,7 +109,7 @@ export default function MarketplacePage() {
       return;
     }
 
-    // Fetch marketplace picks, wallet balance, user info, and purchased picks
+    // Fetch marketplace picks, wallet balance, user info, purchased picks, and followed tipsters
     Promise.all([
       fetch(`${API_URL}/accumulators/marketplace?limit=24`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -118,8 +123,11 @@ export default function MarketplacePage() {
       fetch(`${API_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       }).then((r) => (r.ok ? r.json() : null)),
+      fetch(`${API_URL}/tipsters/me/following`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => (r.ok ? r.json() : [])),
     ])
-      .then(([marketplaceData, walletData, purchasedData, userData]) => {
+      .then(([marketplaceData, walletData, purchasedData, userData, followingData]) => {
         const items = marketplaceData?.items ?? (Array.isArray(marketplaceData) ? marketplaceData : []);
         const totalCount = marketplaceData?.total ?? items.length;
         const hasMoreFlag = marketplaceData?.hasMore ?? false;
@@ -131,6 +139,9 @@ export default function MarketplacePage() {
         if (Array.isArray(purchasedData)) {
           const purchasedSet = new Set(purchasedData.map((p: any) => p.accumulatorId || p.pick?.id));
           setPurchasedIds(purchasedSet);
+        }
+        if (Array.isArray(followingData)) {
+          setFollowedTipsterUsernames(new Set(followingData.map((t: { username: string }) => t.username)));
         }
       })
       .catch((err) => {
@@ -232,6 +243,17 @@ export default function MarketplacePage() {
           {/* Filters */}
           {!loading && picks.length > 0 && (
             <div className="flex flex-wrap items-center gap-3 mb-4">
+              {followedTipsterUsernames.size > 0 && (
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={followingOnly}
+                    onChange={(e) => setFollowingOnly(e.target.checked)}
+                    className="rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)]"
+                  />
+                  <span className="text-sm font-medium text-[var(--text)]">Following only</span>
+                </label>
+              )}
               <div className="flex items-center gap-2">
                 <label className="text-sm font-medium text-[var(--text)]">Price</label>
                 <select
@@ -257,11 +279,12 @@ export default function MarketplacePage() {
                   <option value="tipster-rank">Tipster rank</option>
                 </select>
               </div>
-              {(priceFilter !== 'all' || sortBy !== 'newest') && (
+              {(priceFilter !== 'all' || sortBy !== 'newest' || followingOnly) && (
                 <button
                   onClick={() => {
                     setPriceFilter('all');
                     setSortBy('newest');
+                    setFollowingOnly(false);
                   }}
                   className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                 >
@@ -294,6 +317,7 @@ export default function MarketplacePage() {
                 onActionClick={() => {
                   setPriceFilter('all');
                   setSortBy('newest');
+                  setFollowingOnly(false);
                 }}
                 icon="🔍"
               />
