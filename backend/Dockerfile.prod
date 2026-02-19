@@ -21,9 +21,10 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/dist ./dist
 COPY database/ ./database/
 COPY scripts/coolify-full-db-setup.sh /app/scripts/
+COPY backend/scripts/docker-entrypoint.sh /app/scripts/
 
-# Ensure node user can read migrations and scripts (API runs migrations on startup)
-RUN chown -R node:node /app/database /app/scripts
+# Ensure node user can read migrations and scripts
+RUN chown -R node:node /app/database /app/scripts && chmod +x /app/scripts/docker-entrypoint.sh
 
 RUN npm ci --omit=dev
 
@@ -31,5 +32,6 @@ ENV NODE_ENV=production
 EXPOSE 3001
 
 USER node
-ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "dist/main.js"]
+# Run migrations via psql before API (handles DO $$ blocks correctly)
+ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
+CMD ["dumb-init", "--", "node", "dist/main.js"]
