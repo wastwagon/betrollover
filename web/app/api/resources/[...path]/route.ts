@@ -7,7 +7,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { path } = await params;
     const pathStr = path?.join('/') || '';
     if (!pathStr) return NextResponse.json(null, { status: 404 });
-    const res = await fetch(`${BACKEND_URL}/resources/${pathStr}`, { next: { revalidate: 60 } });
+    const res = await fetch(`${BACKEND_URL}/api/v1/resources/${pathStr}`, { next: { revalidate: 60 } });
     if (!res.ok) return NextResponse.json(null, { status: res.status });
     const data = await res.json();
     return NextResponse.json(data);

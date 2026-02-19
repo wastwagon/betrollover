@@ -4,6 +4,17 @@ If login works locally but fails in production with **"Internal server error"** 
 
 ---
 
+## "Backend unavailable" – Quick checklist
+
+This error means the **web container cannot reach the API**. Try in order:
+
+1. **API not running?** In Coolify, check API container logs. If you see `DataTypeNotSupportedError: Data type "Object" in "PushDevice.deviceName"` → **Redeploy** (this is fixed in latest code).
+2. **Wrong BACKEND_URL?** In Coolify → Web service env vars, set `BACKEND_URL=https://api.betrollover.com` (use your real API domain). Redeploy web.
+3. **API on different network?** If web and API are in different Coolify apps, `http://api:3001` won't resolve. Use the public URL: `BACKEND_URL=https://api.betrollover.com`.
+4. **CORS (browser errors)?** Set `APP_URL=https://betrollover.com` on the **API** service. Redeploy API.
+
+---
+
 ## Recommended fix (do this first)
 
 1. **Redeploy** with the latest code (includes `BACKEND_URL` in compose and login error logging).
@@ -28,7 +39,7 @@ From your VPS (or your machine):
 curl -s https://api.betrollover.com/health
 
 # Login endpoint (should return 401 with invalid credentials, not 500)
-curl -X POST https://api.betrollover.com/auth/login \
+curl -X POST https://api.betrollover.com/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"wrong"}' -v
 ```
@@ -129,7 +140,7 @@ CORS_ORIGINS=https://betrollover.com,https://www.betrollover.com
 ## Login flow (for reference)
 
 1. Browser → `POST https://betrollover.com/api/auth/login`
-2. Next.js API route → `POST ${BACKEND_URL}/auth/login` (server-side)
+2. Next.js API route → `POST ${BACKEND_URL}/api/v1/auth/login` (server-side)
 3. NestJS API → validates user, returns JWT
 4. Next.js redirects to `/dashboard?token=...`
 
@@ -142,7 +153,7 @@ If the API returns 500, step 3 fails and you see "Login failed (server error)".
 
 ```bash
 # Exec into web container from Coolify or docker exec
-curl -X POST http://api:3001/auth/login \
+curl -X POST http://api:3001/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"your@email.com","password":"yourpass"}'
 ```

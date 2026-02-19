@@ -6,7 +6,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { slug } = await params;
     if (!slug) return NextResponse.json(null, { status: 404 });
-    const res = await fetch(`${BACKEND_URL}/news/${slug}`, { next: { revalidate: 60 } });
+    const res = await fetch(`${BACKEND_URL}/api/v1/news/${slug}`, { next: { revalidate: 60 } });
     if (!res.ok) return NextResponse.json(null, { status: 404 });
     const data = await res.json();
     return NextResponse.json(data);

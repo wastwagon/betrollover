@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   if (offset) params.set('offset', offset);
   if (featured) params.set('featured', featured);
 
-  const url = `${BACKEND_URL}/news${params.toString() ? `?${params}` : ''}`;
+  const url = `${BACKEND_URL}/api/v1/news${params.toString() ? `?${params}` : ''}`;
   console.log(`[NewsProxy] Fetching: ${url}`); // Debug Log
 
   try {

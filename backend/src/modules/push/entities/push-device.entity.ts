@@ -27,7 +27,7 @@ export class PushDevice {
   @Column('text')
   token: string;
 
-  @Column({ length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: true })
   deviceName: string | null;
 
   @Column({ type: 'timestamp', nullable: true })

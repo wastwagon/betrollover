@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.redirect(errorUrl, 302);
     }
 
-    const res = await fetch(`${BACKEND_URL}/auth/login`, {
+    const res = await fetch(`${BACKEND_URL}/api/v1/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       }
 
       console.error(`[LoginProxy] Backend failure (${res.status}):`, {
-        url: `${BACKEND_URL}/auth/login`,
+        url: `${BACKEND_URL}/api/v1/auth/login`,
         response: rawResponse,
         parsed: data
       });

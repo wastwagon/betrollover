@@ -2,8 +2,6 @@
 
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { getApiUrl } from '@/lib/site-config';
-
 function getOrCreateSessionId(): string {
   if (typeof window === 'undefined') return '';
   const key = 'br_session_id';
@@ -17,7 +15,8 @@ function getOrCreateSessionId(): string {
 
 function track(page: string) {
   const sessionId = getOrCreateSessionId();
-  fetch(`${getApiUrl()}/analytics/track`, {
+  // Use same-origin proxy so we avoid CORS and can handle 404 from older API images
+  fetch('/api/analytics/track', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ sessionId, page }),
