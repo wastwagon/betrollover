@@ -150,9 +150,12 @@ export class PredictionMarketplaceSyncService {
         continue;
       }
       if (!tipster.userId) {
-        skipped++;
-        errors.push(`Prediction ${prediction.id}: tipster ${tipster.username} has no userId (run setup/ai-tipsters first)`);
-        continue;
+        await this.tipstersSetup.ensureTipsterHasUser(tipster);
+        if (!tipster.userId) {
+          skipped++;
+          errors.push(`Prediction ${prediction.id}: tipster ${tipster.username} could not get user`);
+          continue;
+        }
       }
 
       const fixtures = await this.predictionFixtureRepo.find({
@@ -218,7 +221,7 @@ export class PredictionMarketplaceSyncService {
 
     for (const accId of duplicatesToDeactivate) {
       await this.ticketRepo.update(accId, { status: 'cancelled' });
-      await this.marketplaceRepo.update({ accumulatorId: accId }, { status: 'inactive' });
+      await this.marketplaceRepo.update({ accumulatorId: accId }, { status: 'removed' });
     }
 
     this.logger.log(`Fix complete: ${titlesUpdated} titles updated, ${duplicatesToDeactivate.length} duplicates deactivated`);
