@@ -31,8 +31,8 @@ export default function ResponsibleGamblingPage() {
             <section>
               <h2 className="text-xl font-semibold mt-8 mb-3">18+ Only</h2>
               <p>
-                You must be 18 years or older to use BetRollover. We verify age at registration and
-                before accessing real-money features.
+                You must be 18 years or older to use BetRollover. By using our platform you confirm
+                that you meet the legal age requirements in your jurisdiction.
               </p>
             </section>
 

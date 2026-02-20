@@ -1,6 +1,5 @@
 import { Controller, Get, Post, Body, Param, Query, UseGuards, ParseIntPipe } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { AgeVerifiedGuard } from '../auth/guards/age-verified.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AccumulatorsService, CreateAccumulatorDto } from './accumulators.service';
 import { User } from '../users/entities/user.entity';
@@ -10,26 +9,26 @@ export class AccumulatorsController {
   constructor(private readonly accumulatorsService: AccumulatorsService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
+  @UseGuards(JwtAuthGuard)
   create(@CurrentUser() user: User, @Body() dto: CreateAccumulatorDto) {
     // All users can now create picks - no role restriction
     return this.accumulatorsService.create(user.id, dto);
   }
 
   @Get('my')
-  @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
+  @UseGuards(JwtAuthGuard)
   getMy(@CurrentUser() user: { id: number }) {
     return this.accumulatorsService.getMyAccumulators(user.id);
   }
 
   @Get('purchased')
-  @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
+  @UseGuards(JwtAuthGuard)
   getPurchased(@CurrentUser() user: { id: number }) {
     return this.accumulatorsService.getPurchased(user.id);
   }
 
   @Get('subscription-feed')
-  @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
+  @UseGuards(JwtAuthGuard)
   getSubscriptionFeed(
     @CurrentUser() user: { id: number },
     @Query('limit') limit?: string,
@@ -44,7 +43,7 @@ export class AccumulatorsController {
   }
 
   @Get('marketplace')
-  @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
+  @UseGuards(JwtAuthGuard)
   getMarketplace(
     @CurrentUser() user: User,
     @Query('includeAll') includeAll?: string,
@@ -83,25 +82,25 @@ export class AccumulatorsController {
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
+  @UseGuards(JwtAuthGuard)
   getById(@Param('id', ParseIntPipe) id: number) {
     return this.accumulatorsService.getById(id);
   }
 
   @Post(':id/purchase')
-  @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
+  @UseGuards(JwtAuthGuard)
   purchase(@CurrentUser() user: { id: number }, @Param('id', ParseIntPipe) id: number) {
     return this.accumulatorsService.purchase(user.id, id);
   }
 
   @Post(':id/react')
-  @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
+  @UseGuards(JwtAuthGuard)
   react(@CurrentUser() user: { id: number }, @Param('id', ParseIntPipe) id: number) {
     return this.accumulatorsService.react(user.id, id);
   }
 
   @Post(':id/unreact')
-  @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
+  @UseGuards(JwtAuthGuard)
   unreact(@CurrentUser() user: { id: number }, @Param('id', ParseIntPipe) id: number) {
     return this.accumulatorsService.unreact(user.id, id);
   }

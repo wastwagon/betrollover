@@ -67,7 +67,7 @@ export class UsersService {
       phone: data.phone || null,
       role: (data.role as UserRole) || UserRole.TIPSTER,
       dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
-      ageVerifiedAt: data.dateOfBirth && this.isAtLeast18(data.dateOfBirth) ? new Date() : null,
+      ageVerifiedAt: new Date(), // Age verification disabled – treat all new users as verified
     });
     return this.usersRepository.save(user);
   }

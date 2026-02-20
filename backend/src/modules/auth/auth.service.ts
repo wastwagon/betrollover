@@ -76,11 +76,7 @@ export class AuthService {
     password: string;
     displayName: string;
     otpCode: string;
-    dateOfBirth: string;
   }) {
-    if (!this.usersService.isAtLeast18(data.dateOfBirth)) {
-      throw new UnauthorizedException('You must be at least 18 years old to register');
-    }
     await this.emailOtpService.verifyOtp(data.email.trim().toLowerCase(), data.otpCode);
     const existing = await this.usersService.findByEmail(data.email);
     if (existing) {
@@ -92,7 +88,6 @@ export class AuthService {
       password: data.password,
       displayName: data.displayName,
       phone: undefined,
-      dateOfBirth: data.dateOfBirth,
     });
     await this.usersService.setEmailVerified(user.id);
     await this.walletService.getOrCreateWallet(user.id);
@@ -142,10 +137,6 @@ export class AuthService {
     const user = await this.usersService.findById(userId);
     if (!user) throw new UnauthorizedException('User not found');
     return user;
-  }
-
-  async verifyAge(userId: number, dateOfBirth: string) {
-    return this.usersService.verifyAge(userId, dateOfBirth);
   }
 
   private async ensureTipsterForUser(user: User): Promise<void> {

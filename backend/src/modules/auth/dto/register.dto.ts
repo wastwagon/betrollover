@@ -8,7 +8,6 @@ import {
   ValidationArguments,
   ValidatorConstraint,
   ValidatorConstraintInterface,
-  IsDateString,
 } from 'class-validator';
 
 @ValidatorConstraint({ name: 'MatchPassword', async: false })
@@ -54,7 +53,4 @@ export class RegisterDto {
   @MinLength(4, { message: 'Verification code required' })
   @MaxLength(10)
   otpCode: string;
-
-  @IsDateString(undefined, { message: 'Date of birth required (YYYY-MM-DD)' })
-  dateOfBirth: string;
 }

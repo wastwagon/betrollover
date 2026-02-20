@@ -21,7 +21,6 @@ export default function RegisterScreen() {
   const [otpError, setOtpError] = useState('');
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -57,7 +56,6 @@ export default function RegisterScreen() {
           email: email.trim().toLowerCase(),
           username,
           displayName: displayName || username,
-          dateOfBirth,
           password,
           confirmPassword: confirmPassword || password,
           otpCode,
@@ -172,18 +170,10 @@ export default function RegisterScreen() {
             secureTextEntry
           />
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          <TextInput
-            style={styles.input}
-            placeholder="Date of birth (YYYY-MM-DD)"
-            value={dateOfBirth}
-            onChangeText={setDateOfBirth}
-            keyboardType="numbers-and-punctuation"
-          />
-          <Text style={styles.dobHint}>You must be 18 or older to register</Text>
           <Pressable
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleRegister}
-            disabled={loading || !otpCode || !dateOfBirth || password.length < 8 || password !== confirmPassword}
+            disabled={loading || !otpCode || password.length < 8 || password !== confirmPassword}
           >
             <Text style={styles.buttonText}>
               {loading ? 'Creating...' : 'Create Account'}
@@ -266,12 +256,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#10b981',
     fontWeight: '500',
-  },
-  dobHint: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: -8,
-    marginBottom: 16,
   },
   error: {
     color: '#dc2626',

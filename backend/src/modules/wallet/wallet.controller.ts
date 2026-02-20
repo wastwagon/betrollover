@@ -1,6 +1,5 @@
 import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { AgeVerifiedGuard } from '../auth/guards/age-verified.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { WalletService } from './wallet.service';
@@ -16,26 +15,26 @@ export class WalletController {
   ) {}
 
   @Get('balance')
-  @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
+  @UseGuards(JwtAuthGuard)
   async getBalance(@CurrentUser() user: { id: number }) {
     return this.walletService.getBalance(user.id);
   }
 
   @Get('transactions')
-  @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
+  @UseGuards(JwtAuthGuard)
   async getTransactions(@CurrentUser() user: { id: number }) {
     return this.walletService.getTransactions(user.id);
   }
 
   @Get('deposit/verify')
-  @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
+  @UseGuards(JwtAuthGuard)
   async verifyDeposit(@CurrentUser() user: { id: number }, @Query('ref') ref: string) {
     if (!ref) return { credited: false };
     return this.walletService.verifyDepositByRef(user.id, ref);
   }
 
   @Post('deposit/initialize')
-  @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
+  @UseGuards(JwtAuthGuard)
   async initializeDeposit(
     @CurrentUser() user: User,
     @Body() body: { amount: number },
@@ -44,13 +43,13 @@ export class WalletController {
   }
 
   @Get('payout-methods')
-  @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
+  @UseGuards(JwtAuthGuard)
   async getPayoutMethods(@CurrentUser() user: { id: number }) {
     return this.walletService.getPayoutMethods(user.id);
   }
 
   @Post('payout-methods')
-  @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
+  @UseGuards(JwtAuthGuard)
   async addPayoutMethod(
     @CurrentUser() user: User,
     @Body()
@@ -73,7 +72,7 @@ export class WalletController {
   }
 
   @Post('withdraw')
-  @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
+  @UseGuards(JwtAuthGuard)
   async requestWithdrawal(
     @CurrentUser() user: User,
     @Body() body: { amount: number },
@@ -82,19 +81,19 @@ export class WalletController {
   }
 
   @Get('withdrawals')
-  @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
+  @UseGuards(JwtAuthGuard)
   async getWithdrawals(@CurrentUser() user: { id: number }) {
     return this.walletService.getWithdrawals(user.id);
   }
 
   @Get('iap/products')
-  @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
+  @UseGuards(JwtAuthGuard)
   getIapProducts() {
     return this.walletIapService.getProducts();
   }
 
   @Post('iap/verify')
-  @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
+  @UseGuards(JwtAuthGuard)
   async verifyIap(
     @CurrentUser() user: { id: number },
     @Body()

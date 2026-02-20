@@ -139,26 +139,10 @@ export default function ProfileTab() {
   const fullAvatarUrl = avatarUrl?.startsWith('http') ? avatarUrl : avatarUrl ? `${apiHost}${avatarUrl}` : null;
 
   const needsVerification = user && !user.emailVerifiedAt;
-  const needsAgeVerification = user && !user.ageVerifiedAt;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Profile</Text>
-
-      {needsAgeVerification && (
-        <View style={styles.verifyBanner}>
-          <Ionicons name="shield-checkmark" size={24} color={colors.accent} />
-          <View style={styles.verifyBannerText}>
-            <Text style={styles.verifyBannerTitle}>Verify your age (18+)</Text>
-            <Text style={styles.verifyBannerDesc}>
-              Required for wallet, marketplace, and subscriptions.
-            </Text>
-          </View>
-          <Pressable onPress={() => router.push('/verify-age')} style={styles.verifyLink}>
-            <Text style={styles.verifyLinkText}>Verify</Text>
-          </Pressable>
-        </View>
-      )}
 
       {needsVerification && (
         <View style={styles.verifyBanner}>
