@@ -50,8 +50,12 @@ const config: Config = {
         'fade-in': 'fadeIn 0.6s ease-out both',
         'fade-in-up': 'fadeInUp 0.6s ease-out both',
         'float': 'float 6s ease-in-out infinite',
+        'float-slow': 'float 8s ease-in-out infinite',
+        'float-slower': 'float 10s ease-in-out infinite',
         'shimmer': 'shimmer 2s linear infinite',
         'pulse-glow': 'pulseGlow 3s infinite',
+        'gradient-shift': 'gradientShift 12s ease-in-out infinite',
+        'orb-drift': 'orbDrift 15s ease-in-out infinite',
       },
       animationDelay: {
         '100': '100ms',
@@ -79,6 +83,16 @@ const config: Config = {
         pulseGlow: {
           '0%, 100%': { boxShadow: '0 0 20px rgba(16, 185, 129, 0.0)' },
           '50%': { boxShadow: '0 0 25px rgba(16, 185, 129, 0.2)' },
+        },
+        gradientShift: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.85' },
+        },
+        orbDrift: {
+          '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+          '25%': { transform: 'translate(10%, -8%) scale(1.05)' },
+          '50%': { transform: 'translate(-5%, 5%) scale(0.95)' },
+          '75%': { transform: 'translate(-8%, -3%) scale(1.02)' },
         },
       },
     },

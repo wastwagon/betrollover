@@ -66,28 +66,56 @@ export function HomeHero() {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-slate-950">
-      {/* Premium gradient overlays mixing emerald/green */}
-      <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/[0.12] via-emerald-600/[0.04] to-transparent" aria-hidden="true" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(16,185,129,0.2),transparent_70%)]" aria-hidden="true" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_20%_50%,rgba(5,150,105,0.08),transparent_60%)]" aria-hidden="true" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_80%_80%,rgba(16,185,129,0.06),transparent_60%)]" aria-hidden="true" />
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/8 rounded-full blur-3xl" aria-hidden="true" />
-      <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-emerald-600/8 rounded-full blur-3xl" aria-hidden="true" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-emerald-400/5 rounded-full blur-3xl" aria-hidden="true" />
+    <section className="relative overflow-hidden min-h-[640px]">
+      {/* Brighter base gradient - appealing dark with teal/emerald warmth */}
+      <div
+        className="absolute inset-0 bg-gradient-to-br from-slate-800 via-teal-900/90 to-slate-800"
+        aria-hidden="true"
+      />
+      {/* Animated gradient mesh - livelier emerald glow */}
+      <div
+        className="absolute inset-0 bg-[radial-gradient(ellipse_90%_60%_at_50%_-10%,rgba(16,185,129,0.35),rgba(5,150,105,0.12),transparent_60%)] animate-gradient-shift"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_80%_30%,rgba(16,185,129,0.2),transparent_55%)]"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_15%_70%,rgba(5,150,105,0.15),transparent_55%)]"
+        aria-hidden="true"
+      />
+      {/* Animated floating orbs */}
+      <div
+        className="absolute top-[15%] left-[20%] w-80 h-80 bg-emerald-400/20 rounded-full blur-3xl animate-orb-drift"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute bottom-[20%] right-[25%] w-72 h-72 bg-emerald-500/25 rounded-full blur-3xl animate-float-slow"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[350px] bg-teal-400/15 rounded-full blur-3xl animate-float-slower"
+        aria-hidden="true"
+      />
+      {/* Subtle grid overlay for depth */}
+      <div
+        className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black_20%,transparent_100%)]"
+        aria-hidden="true"
+      />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 lg:py-28">
         <div className="text-center max-w-3xl mx-auto mb-14 md:mb-16">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight mb-5">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight mb-5 animate-fade-in-up">
             Your Shield Against Losses
           </h1>
-          <p className="text-lg md:text-xl text-slate-400 mb-8 leading-relaxed max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-slate-300 mb-8 leading-relaxed max-w-2xl mx-auto animate-fade-in-up animate-delay-100">
             Risk-free football betting tips with escrow protection. When our tipsters&apos; coupons lose, you get a full refund.
           </p>
-          <div className="flex flex-wrap gap-4 justify-center">
+          <div className="flex flex-wrap gap-4 justify-center animate-fade-in-up animate-delay-200">
             <Link
               href="/register"
-              className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold hover:from-emerald-400 hover:to-emerald-500 transition-all duration-200 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40"
+              className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold hover:from-emerald-400 hover:to-emerald-500 hover:scale-105 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:shadow-xl"
             >
               Join Free
             </Link>
@@ -102,10 +130,11 @@ export function HomeHero() {
 
         {/* Modern KPI Dashboard */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          {statItems.map((item) => (
+          {statItems.map((item, idx) => (
             <div
               key={item.label}
-              className="group relative overflow-hidden rounded-2xl bg-slate-900/80 backdrop-blur-sm border border-slate-800/80 p-5 md:p-6 hover:border-emerald-500/30 hover:bg-slate-800/50 transition-all duration-300"
+              className="group relative overflow-hidden rounded-2xl bg-slate-800/60 backdrop-blur-sm border border-slate-700/60 p-5 md:p-6 hover:border-emerald-500/40 hover:bg-slate-700/50 transition-all duration-300 animate-fade-in-up"
+              style={{ animationDelay: `${300 + idx * 80}ms`, animationFillMode: 'both' as const }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-emerald-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="relative flex items-start gap-3">
