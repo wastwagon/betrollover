@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Pick {
   id?: number;
@@ -176,12 +177,15 @@ export function PickCard({
             <div className="mb-3 pb-3 border-b border-[var(--border)]">
               <div className="flex items-center gap-2">
                 {tipster?.avatarUrl && !avatarError ? (
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden bg-[var(--border)]">
-                    <img
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden bg-[var(--border)] relative">
+                    <Image
                       src={tipster.avatarUrl}
                       alt={tipster.displayName}
+                      width={32}
+                      height={32}
                       className="w-full h-full object-cover"
                       onError={() => setAvatarError(true)}
+                      unoptimized
                     />
                   </div>
                 ) : (

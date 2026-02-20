@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import { SITE_URL, getAfricaAlternates } from '@/lib/site-config';
 
 export const metadata: Metadata = {
-  title: 'Marketplace',
+  title: 'Football Tips Marketplace',
   description:
-    'Browse verified football tips and predictions from top tipsters. Free and premium picks with escrow protection. Ghana, Nigeria, Kenya, South Africa.',
+    'Browse verified football tips and predictions from top tipsters. Compare win rate and ROI. Free and premium picks with escrow protection. Ghana, Nigeria, Kenya, South Africa.',
   alternates: {
     canonical: `${SITE_URL}/marketplace`,
     languages: getAfricaAlternates('/marketplace'),

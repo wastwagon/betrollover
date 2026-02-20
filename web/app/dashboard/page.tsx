@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { DashboardShell } from '@/components/DashboardShell';
 import { AdminSidebar } from '@/components/AdminSidebar';
@@ -488,7 +489,7 @@ function DashboardContent() {
                           className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--bg)]/70 hover:bg-teal-50/60 border border-[var(--border)]/60 transition-colors"
                         >
                           {t.avatarUrl ? (
-                            <img src={t.avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover" />
+                            <Image src={t.avatarUrl} alt="" width={24} height={24} className="w-6 h-6 rounded-full object-cover" unoptimized />
                           ) : (
                             <span className="w-6 h-6 rounded-full bg-[var(--primary-light)] flex items-center justify-center text-xs font-bold text-[var(--primary)]">
                               {t.displayName?.charAt(0)?.toUpperCase() || '?'}

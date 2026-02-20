@@ -168,10 +168,10 @@ export function HomeHero() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 lg:py-28">
         <div className="text-center max-w-3xl mx-auto mb-14 md:mb-16">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight mb-5 animate-fade-in-up">
-            Your Shield Against Losses
+            Risk-Free Football Tips from Verified Tipsters
           </h1>
           <p className="text-lg md:text-xl text-slate-300 mb-8 leading-relaxed max-w-2xl mx-auto animate-fade-in-up animate-delay-100">
-            Risk-free football betting tips with escrow protection. When our tipsters&apos; coupons lose, you get a full refund.
+            Track win rate and ROI. When our tipsters&apos; coupons lose, you get a full refund. Your shield against losses.
           </p>
           <div className="flex flex-wrap gap-4 justify-center animate-fade-in-up animate-delay-200">
             <Link

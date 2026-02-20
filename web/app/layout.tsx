@@ -3,7 +3,7 @@ import { DM_Sans } from 'next/font/google';
 import { QueryProvider } from '@/components/QueryProvider';
 import { AnalyticsBeacon } from '@/components/AnalyticsBeacon';
 import { JsonLdScript } from '@/components/JsonLdScript';
-import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS } from '@/lib/site-config';
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS, getApiOriginForPreconnect } from '@/lib/site-config';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -15,7 +15,7 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} — Your Shield Against Losses`,
+    default: `Football Tips | Tipster Marketplace | Win Rate & ROI — ${SITE_NAME}`,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     alternateLocale: ['en_NG', 'en_ZA', 'en_KE'],
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: `${SITE_NAME} — Your Shield Against Losses`,
+    title: `Football Tips | Tipster Marketplace | Win Rate & ROI — ${SITE_NAME}`,
     description: SITE_DESCRIPTION,
     images: [
       { url: '/og-image.png', width: 1200, height: 630, alt: `${SITE_NAME} - Africa's Premier Tipster Marketplace` },
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: `${SITE_NAME} — Your Shield Against Losses`,
+    title: `Football Tips | Tipster Marketplace | Win Rate & ROI — ${SITE_NAME}`,
     description: SITE_DESCRIPTION,
     creator: '@betrollover',
   },
@@ -74,8 +74,17 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const apiOrigin = getApiOriginForPreconnect();
   return (
     <html lang="en" className={dmSans.variable}>
+      <head>
+        {apiOrigin && (
+          <>
+            <link rel="preconnect" href={apiOrigin} crossOrigin="" />
+            <link rel="dns-prefetch" href={apiOrigin} />
+          </>
+        )}
+      </head>
       <body className="min-h-screen bg-[var(--bg)] font-sans antialiased">
         <JsonLdScript />
         <AnalyticsBeacon />

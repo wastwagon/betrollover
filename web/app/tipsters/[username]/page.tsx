@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { PickCard } from '@/components/PickCard';
@@ -310,11 +311,14 @@ export default function TipsterProfilePage() {
               <div className="flex flex-col items-center gap-2 flex-shrink-0">
                 <div className="w-20 h-20 rounded-full overflow-hidden bg-white dark:bg-gray-800 border-2 border-emerald-200 dark:border-emerald-600 shadow-md">
                 {tipster.avatar_url && !avatarError ? (
-                  <img
+                  <Image
                     src={tipster.avatar_url}
                     alt={tipster.display_name}
+                    width={80}
+                    height={80}
                     className="w-full h-full object-cover"
                     onError={() => setAvatarError(true)}
+                    unoptimized
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-[var(--primary)] bg-[var(--primary-light)]">

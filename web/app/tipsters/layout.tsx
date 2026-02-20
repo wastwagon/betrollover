@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import { SITE_URL, getAfricaAlternates } from '@/lib/site-config';
 
 export const metadata: Metadata = {
-  title: 'Tipsters',
+  title: 'Verified Tipsters | Win Rate & ROI Leaderboard',
   description:
-    'Browse verified tipsters. Rankings shown on each card. Follow your favorites and track their performance.',
+    'Browse verified tipsters ranked by win rate and ROI. Follow your favorites and track their streak. Africa\'s premier tipster marketplace.',
   alternates: {
     canonical: `${SITE_URL}/tipsters`,
     languages: getAfricaAlternates('/tipsters'),

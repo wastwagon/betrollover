@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { getApiUrl } from '@/lib/site-config';
 
@@ -95,7 +96,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
             href="/"
             className="flex items-center gap-2.5 font-bold text-xl text-[var(--text)] hover:text-[var(--primary)] transition-colors group shrink-0"
           >
-            <img src="/BetRollover-logo.png" alt="BetRollover" className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl shadow-md group-hover:shadow-lg transition-shadow object-contain" />
+            <Image src="/BetRollover-logo.png" alt="BetRollover" width={56} height={56} className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl shadow-md group-hover:shadow-lg transition-shadow object-contain" priority />
           </Link>
 
           {/* Desktop nav */}

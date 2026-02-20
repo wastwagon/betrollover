@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export interface TipsterCardData {
   id: number;
@@ -51,12 +52,14 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
         <Link href={`/tipsters/${tipster.username}`} className="flex items-center gap-3 mb-3 group">
           <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden bg-[var(--bg)] border border-[var(--border)]">
             {showAvatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={tipster.avatar_url!}
                 alt={tipster.display_name}
+                width={48}
+                height={48}
                 className="w-full h-full object-cover"
                 onError={() => setAvatarError(true)}
+                unoptimized
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-lg font-bold text-[var(--primary)] bg-[var(--primary-light)]">

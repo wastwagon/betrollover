@@ -77,9 +77,31 @@ function DiscoverContent() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <PageHeader
           label="Discover"
-          title="Discover"
-          tagline="Football news, transfer updates, and betting guides to sharpen your edge."
+          title="Football News, Transfers & Betting Guides"
+          tagline="Stay informed with the latest football news, transfer updates, and expert betting strategies."
         />
+
+        {/* SEO-rich static content - in initial HTML for crawlers & LLM readability */}
+        <section className="mb-10 rounded-2xl bg-[var(--card)] border border-[var(--border)] p-6 md:p-8">
+          <h2 className="text-xl font-bold text-[var(--text)] mb-4">Your Hub for Football Insights</h2>
+          <p className="text-[var(--text-muted)] leading-relaxed mb-4">
+            Explore the latest football news, transfer rumours, and confirmed deals from top leagues worldwide. Our news section keeps you ahead with breaking stories, while our betting guides and resources help you understand odds, bankroll management, and tipster strategies. Whether you&apos;re tracking your favourite club&apos;s signings or learning how to use betting tips responsibly, Discover has you covered.
+          </p>
+          <p className="text-[var(--text-muted)] leading-relaxed mb-4">
+            Browse articles by category—news, transfer rumours, confirmed transfers, and gossip—or dive into beginner and advanced guides on football betting. Combine what you learn here with our verified tipsters and escrow-protected picks for a complete betting toolkit.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4 mt-6">
+            <div className="p-4 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)]">
+              <h3 className="font-semibold text-[var(--text)] mb-2">News & Transfers</h3>
+              <p className="text-sm text-[var(--text-muted)]">Breaking football news, transfer rumours, confirmed deals, and insider gossip from trusted sources.</p>
+            </div>
+            <div className="p-4 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)]">
+              <h3 className="font-semibold text-[var(--text)] mb-2">Guides & Resources</h3>
+              <p className="text-sm text-[var(--text-muted)]">Beginner to advanced betting guides, bankroll strategies, and tips on using accumulator picks wisely.</p>
+            </div>
+          </div>
+        </section>
+
         <div className="mb-8">
           <div className="flex gap-2">
             {[
@@ -184,7 +206,8 @@ function NewsTab() {
         </div>
       ) : articles.length === 0 ? (
         <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-12 text-center">
-          <p className="text-[var(--text-muted)]">No articles yet. Check back soon for football news and transfers.</p>
+          <h3 className="font-semibold text-[var(--text)] mb-2">No articles yet</h3>
+          <p className="text-[var(--text-muted)] max-w-md mx-auto">We&apos;re preparing the latest football news, transfer rumours, and confirmed deals. Check back soon or explore our betting guides and tipster marketplace in the meantime.</p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -246,7 +269,8 @@ function GuidesTab() {
   if (categories.length === 0) {
     return (
       <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-12 text-center">
-        <p className="text-[var(--text-muted)]">No resources yet. Content coming soon.</p>
+        <h3 className="font-semibold text-[var(--text)] mb-2">Guides coming soon</h3>
+        <p className="text-[var(--text-muted)] max-w-md mx-auto">We&apos;re building beginner and advanced betting guides to help you understand odds, bankroll management, and how to use tipster picks. In the meantime, browse our marketplace for verified football tips.</p>
       </div>
     );
   }

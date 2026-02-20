@@ -30,6 +30,17 @@ export default function HomePage() {
           <HomeFreeTipOfTheDay />
         </section>
         <HomePopularEvents />
+        {/* SEO content - keywords & thin content */}
+        <section className="py-8 md:py-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-xl font-bold text-[var(--text)] mb-4">Why Choose Our Football Tips & Tipster Marketplace</h2>
+          <p className="text-[var(--text-muted)] leading-relaxed mb-4">
+            BetRollover connects you with verified tipsters who share their best football tips and accumulator picks. Our tipster marketplace displays real win rate and ROI so you can rank and compare experts before you buy. Every coupon is backed by escrow—if the tip loses, you get a full refund. Whether you track tipster streak and rank or simply want risk-free tips, we make it easy to find quality predictions for Ghana, Nigeria, Kenya, and South Africa.
+          </p>
+          <p className="text-[var(--text-muted)] leading-relaxed">
+            Join thousands of users who trust our platform for football predictions, betting tips, and transparent performance stats. Browse active picks, follow top tipsters, and protect your stakes with escrow. New tips are added daily from our network of audited experts.
+          </p>
+        </section>
+
         {/* Bento Grid Section */}
         <section className="py-10 md:py-14 lg:py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -87,7 +98,7 @@ export default function HomePage() {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
                     <h3 className="text-xl font-bold text-[var(--text)] mb-1">
-                      Browse Tipster Marketplace
+                      Browse Tips & Tipster Marketplace
                     </h3>
                     <p className="text-sm text-[var(--text-muted)]">
                       Discover verified experts and their winning picks
@@ -108,7 +119,7 @@ export default function HomePage() {
                   📊
                 </div>
                 <h3 className="text-lg font-bold text-[var(--text)] mb-2">
-                  Performance Tracking
+                  Win Rate, ROI & Rank
                 </h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">
                   Real-time stats, ROI, and win rates for every tipster
