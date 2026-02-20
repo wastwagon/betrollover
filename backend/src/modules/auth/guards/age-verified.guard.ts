@@ -4,11 +4,12 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
+import { UserRole } from '../../users/entities/user.entity';
 import { UsersService } from '../../users/users.service';
 
 /**
  * Requires user to be age-verified (18+) before accessing real-money features.
- * Use after JwtAuthGuard so user is authenticated.
+ * Admins bypass this check. Use after JwtAuthGuard so user is authenticated.
  */
 @Injectable()
 export class AgeVerifiedGuard implements CanActivate {
@@ -18,6 +19,8 @@ export class AgeVerifiedGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
     if (!user?.id) return false;
+
+    if (user.role === UserRole.ADMIN) return true;
 
     const verified = await this.usersService.isAgeVerified(user.id);
     if (!verified) {

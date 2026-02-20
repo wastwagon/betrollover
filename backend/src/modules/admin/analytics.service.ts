@@ -271,7 +271,7 @@ export class AnalyticsService {
         .addSelect('COUNT(*)', 'purchaseCount')
         .addSelect('SUM(p.purchasePrice)', 'totalSpent')
         .groupBy('p.userId')
-        .orderBy('purchaseCount', 'DESC')
+        .orderBy('COUNT(*)', 'DESC')
         .limit(10)
         .getRawMany(),
     ]);
@@ -284,8 +284,8 @@ export class AnalyticsService {
       avgPurchasesPerUser,
       topUsers: topUsers.map((u) => ({
         userId: u.userId,
-        purchaseCount: parseInt(u.purchaseCount, 10),
-        totalSpent: parseFloat(u.totalSpent || '0'),
+        purchaseCount: parseInt(u.purchaseCount ?? (u as Record<string, string>).purchasecount ?? '0', 10),
+        totalSpent: parseFloat(u.totalSpent ?? (u as Record<string, string>).totalspent ?? '0'),
       })),
     };
   }
@@ -323,7 +323,7 @@ export class AnalyticsService {
         .addSelect('COUNT(*)', 'sales')
         .addSelect('SUM(p.purchasePrice)', 'revenue')
         .groupBy('p.accumulatorId')
-        .orderBy('sales', 'DESC')
+        .orderBy('COUNT(*)', 'DESC')
         .limit(10)
         .getRawMany(),
       
@@ -333,7 +333,7 @@ export class AnalyticsService {
         .addSelect('SUM(p.purchasePrice)', 'revenue')
         .addSelect('COUNT(*)', 'sales')
         .groupBy('t.userId')
-        .orderBy('revenue', 'DESC')
+        .orderBy('SUM(p.purchasePrice)', 'DESC')
         .limit(10)
         .getRawMany(),
       
@@ -397,7 +397,7 @@ export class AnalyticsService {
         .addSelect('SUM(CASE WHEN t.result = \'won\' THEN 1 ELSE 0 END)', 'wonPicks')
         .addSelect('SUM(CASE WHEN t.result = \'lost\' THEN 1 ELSE 0 END)', 'lostPicks')
         .groupBy('ts.id')
-        .orderBy('wonPicks', 'DESC')
+        .orderBy('SUM(CASE WHEN t.result = \'won\' THEN 1 ELSE 0 END)', 'DESC')
         .limit(10)
         .getRawMany(),
       this.predictionRepo.count(),
@@ -412,7 +412,7 @@ export class AnalyticsService {
         .addSelect('SUM(CASE WHEN p.status = \'won\' THEN 1 ELSE 0 END)', 'wonPicks')
         .addSelect('SUM(CASE WHEN p.status = \'lost\' THEN 1 ELSE 0 END)', 'lostPicks')
         .groupBy('p.tipsterId')
-        .orderBy('wonPicks', 'DESC')
+        .orderBy('SUM(CASE WHEN p.status = \'won\' THEN 1 ELSE 0 END)', 'DESC')
         .limit(10)
         .getRawMany(),
     ]);
@@ -667,7 +667,7 @@ export class AnalyticsService {
         .where('v.createdAt >= :start', { start })
         .andWhere('v.page IS NOT NULL')
         .groupBy('v.page')
-        .orderBy('views', 'DESC')
+        .orderBy('COUNT(*)', 'DESC')
         .limit(10)
         .getRawMany(),
     ]);
