@@ -26,6 +26,13 @@ function formatNumber(n: number): string {
   return n + '+';
 }
 
+const statIcons: Record<string, string> = {
+  'Verified Tipsters': '✓',
+  'Tips Processed': '📊',
+  'Win Rate': '📈',
+  'Paid Out': '💰',
+};
+
 export function HomeHero() {
   const [stats, setStats] = useState<PublicStats | null>(null);
 
@@ -45,29 +52,56 @@ export function HomeHero() {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-[var(--primary)]/10 via-[var(--bg)] to-[var(--primary)]/5 border-b border-[var(--border)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 lg:py-20">
-        <div className="text-center max-w-3xl mx-auto mb-10 md:mb-12">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[var(--text)] mb-4">
+    <section className="relative overflow-hidden bg-slate-950">
+      {/* Premium gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/[0.07] via-transparent to-transparent" aria-hidden="true" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(16,185,129,0.15),transparent)]" aria-hidden="true" />
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl" aria-hidden="true" />
+      <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-emerald-600/5 rounded-full blur-3xl" aria-hidden="true" />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 lg:py-28">
+        <div className="text-center max-w-3xl mx-auto mb-14 md:mb-16">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight mb-5">
             Your Shield Against Losses
           </h1>
-          <p className="text-lg text-[var(--text-muted)] mb-6">
+          <p className="text-lg md:text-xl text-slate-400 mb-8 leading-relaxed max-w-2xl mx-auto">
             Risk-free football betting tips with escrow protection. When our tipsters&apos; coupons lose, you get a full refund.
           </p>
-          <div className="flex flex-wrap gap-3 justify-center">
-            <Link href="/register" className="px-6 py-3 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] transition-all shadow-lg">
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Link
+              href="/register"
+              className="px-8 py-3.5 rounded-xl bg-emerald-500 text-white font-semibold hover:bg-emerald-400 transition-all duration-200 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40"
+            >
               Join Free
             </Link>
-            <Link href="/marketplace" className="px-6 py-3 rounded-xl border-2 border-[var(--primary)] text-[var(--primary)] font-semibold hover:bg-[var(--primary)]/10 transition-all">
+            <Link
+              href="/marketplace"
+              className="px-8 py-3.5 rounded-xl border border-slate-600 text-slate-300 font-semibold hover:bg-slate-800/50 hover:border-slate-500 transition-all duration-200"
+            >
               Explore Picks
             </Link>
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+
+        {/* Modern KPI Dashboard */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {statItems.map((item) => (
-            <div key={item.label} className="text-center p-4 rounded-xl bg-white/60 dark:bg-[var(--card)]/80 border border-[var(--border)]">
-              <p className="text-xl md:text-2xl font-bold text-[var(--primary)] tabular-nums">{item.value}</p>
-              <p className="text-xs text-[var(--text-muted)] mt-0.5 font-medium">{item.label}</p>
+            <div
+              key={item.label}
+              className="group relative overflow-hidden rounded-2xl bg-slate-900/80 backdrop-blur-sm border border-slate-800/80 p-5 md:p-6 hover:border-slate-700/80 hover:bg-slate-800/50 transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-800 text-emerald-400 text-lg">
+                  {statIcons[item.label] ?? '•'}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-2xl md:text-3xl font-bold text-white tabular-nums tracking-tight">
+                    {item.value}
+                  </p>
+                  <p className="text-sm text-slate-400 mt-0.5 font-medium">{item.label}</p>
+                </div>
+              </div>
             </div>
           ))}
         </div>
