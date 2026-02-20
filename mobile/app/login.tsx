@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE, isGeoRestricted } from '@/lib/api';
+import { API_BASE } from '@/lib/api';
 import { colors } from '@/lib/theme';
 
 export default function LoginScreen() {
@@ -30,13 +30,7 @@ export default function LoginScreen() {
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        if (isGeoRestricted(res, data)) {
-          router.replace('/geo-restricted');
-          return;
-        }
-        throw new Error(data.message || 'Login failed');
-      }
+      if (!res.ok) throw new Error(data.message || 'Login failed');
       await AsyncStorage.setItem('token', data.access_token);
       router.replace('/(tabs)');
     } catch (err) {

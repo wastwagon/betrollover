@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { SiteHeader } from '@/components/SiteHeader';
+import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { getApiUrl } from '@/lib/site-config';
 
 function ForgotPasswordForm() {
@@ -85,7 +85,7 @@ function ForgotPasswordForm() {
     return (
         <div className="min-h-screen bg-[var(--bg)] relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-mesh pointer-events-none" />
-            <SiteHeader />
+            <UnifiedHeader />
             <main className="relative flex flex-col items-center justify-center px-6 py-20">
                 <div className="w-full max-w-md">
                     <div className="bg-white rounded-2xl shadow-xl border border-[var(--border)] p-8 md:p-10">

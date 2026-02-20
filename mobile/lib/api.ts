@@ -25,8 +25,3 @@ export async function checkAgeVerificationRequired(res: Response): Promise<boole
   return false;
 }
 
-/** Check if 403 response is geo-restricted */
-export function isGeoRestricted(res: Response, data?: { code?: string }): boolean {
-  if (res.status !== 403) return false;
-  return data?.code === 'GEO_RESTRICTED';
-}

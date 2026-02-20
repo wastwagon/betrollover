@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { SiteHeader } from '@/components/SiteHeader';
+import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { SITE_URL, getAfricaAlternates } from '@/lib/site-config';
 import type { Metadata } from 'next';
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
-      <SiteHeader />
+      <UnifiedHeader />
 
       <main className="bg-[var(--bg)]">
         {/* Bento Grid Section */}

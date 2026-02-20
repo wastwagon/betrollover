@@ -23,6 +23,9 @@ interface PayoutMethod {
   type: string;
   displayName: string;
   accountMasked: string | null;
+  country?: string | null;
+  currency?: string | null;
+  provider?: string | null;
 }
 
 interface Withdrawal {
@@ -49,12 +52,16 @@ function WalletContent() {
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
   const [showPayoutForm, setShowPayoutForm] = useState(false);
   const [payoutForm, setPayoutForm] = useState({
-    type: 'mobile_money' as 'mobile_money' | 'bank',
+    type: 'mobile_money' as 'mobile_money' | 'bank' | 'crypto',
     name: '',
     phone: '',
     provider: 'mtn_gh',
     accountNumber: '',
-    bankCode: '',
+    bankName: '',
+    country: 'GH',
+    currency: 'GHS',
+    walletAddress: '',
+    cryptoCurrency: 'BTC',
   });
   const [payoutLoading, setPayoutLoading] = useState(false);
   const [payoutError, setPayoutError] = useState<string | null>(null);
@@ -164,7 +171,13 @@ function WalletContent() {
         body: JSON.stringify({ amount }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Withdrawal failed');
+      if (!res.ok) {
+        let msg = data.message || 'Withdrawal failed';
+        if (msg.toLowerCase().includes('starter business') || msg.toLowerCase().includes('third party payout')) {
+          msg += ' Use "Change" to switch to Manual payout (admin processes withdrawals) or upgrade your Paystack account.';
+        }
+        throw new Error(msg);
+      }
       setWithdrawAmount('');
       loadData();
     } catch (e) {
@@ -180,9 +193,14 @@ function WalletContent() {
         setPayoutError('Name and phone required');
         return;
       }
-    } else {
-      if (!payoutForm.name.trim() || !payoutForm.accountNumber.trim() || !payoutForm.bankCode.trim()) {
-        setPayoutError('Name, account number and bank code required');
+    } else if (payoutForm.type === 'bank') {
+      if (!payoutForm.name.trim() || !payoutForm.accountNumber.trim() || !payoutForm.bankName.trim()) {
+        setPayoutError('Name, account number and bank name required');
+        return;
+      }
+    } else if (payoutForm.type === 'crypto') {
+      if (!payoutForm.walletAddress.trim()) {
+        setPayoutError('Wallet address required');
         return;
       }
     }
@@ -191,10 +209,33 @@ function WalletContent() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const body =
-        payoutForm.type === 'mobile_money'
-          ? { type: 'mobile_money', name: payoutForm.name, phone: payoutForm.phone, provider: payoutForm.provider }
-          : { type: 'bank', name: payoutForm.name, accountNumber: payoutForm.accountNumber, bankCode: payoutForm.bankCode };
+      let body: Record<string, unknown>;
+      if (payoutForm.type === 'crypto') {
+        body = {
+          type: 'crypto',
+          name: payoutForm.name || `${payoutForm.cryptoCurrency} Wallet`,
+          walletAddress: payoutForm.walletAddress.trim(),
+          cryptoCurrency: payoutForm.cryptoCurrency,
+        };
+      } else if (payoutForm.type === 'mobile_money') {
+        body = {
+          type: 'mobile_money',
+          name: payoutForm.name,
+          phone: payoutForm.phone,
+          provider: payoutForm.provider,
+          country: payoutForm.country,
+          currency: payoutForm.currency,
+        };
+      } else {
+        body = {
+          type: 'bank',
+          name: payoutForm.name,
+          accountNumber: payoutForm.accountNumber,
+          bankName: payoutForm.bankName,
+          country: payoutForm.country,
+          currency: payoutForm.currency,
+        };
+      }
       const res = await fetch(`${getApiUrl()}/wallet/payout-methods`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -203,7 +244,18 @@ function WalletContent() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to add payout method');
       setShowPayoutForm(false);
-      setPayoutForm({ type: 'mobile_money', name: '', phone: '', provider: 'mtn_gh', accountNumber: '', bankCode: '' });
+      setPayoutForm({
+        type: 'mobile_money',
+        name: '',
+        phone: '',
+        provider: 'mtn_gh',
+        accountNumber: '',
+        bankName: '',
+        country: 'GH',
+        currency: 'GHS',
+        walletAddress: '',
+        cryptoCurrency: 'BTC',
+      });
       loadData();
     } catch (e) {
       setPayoutError(e instanceof Error ? e.message : 'Failed');
@@ -264,64 +316,137 @@ function WalletContent() {
             </div>
 
             {isTipster && (
-              <div className="card-gradient rounded-2xl p-5 shadow-lg">
+              <div id="withdraw" className="card-gradient rounded-2xl p-5 shadow-lg scroll-mt-24">
                 <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">Withdraw (Tipsters)</h2>
-                {payoutMethods.length === 0 ? (
-                  <div className="space-y-3">
-                    {!showPayoutForm ? (
-                      <button
-                        onClick={() => setShowPayoutForm(true)}
-                        className="px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-muted)]"
-                      >
-                        Add payout method (Mobile Money or Bank)
-                      </button>
-                    ) : (
-                      <div className="space-y-2 p-4 rounded-lg border border-[var(--border)] bg-[var(--bg)]">
+                {showPayoutForm ? (
+                  <div className="space-y-2 p-4 rounded-lg border border-[var(--border)] bg-[var(--bg)]">
+                        <label className="block text-xs font-medium text-[var(--text-muted)]">Payout method</label>
                         <select
                           value={payoutForm.type}
-                          onChange={(e) => setPayoutForm((p) => ({ ...p, type: e.target.value as 'mobile_money' | 'bank' }))}
+                          onChange={(e) => setPayoutForm((p) => ({ ...p, type: e.target.value as 'mobile_money' | 'bank' | 'crypto' }))}
                           className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
                         >
                           <option value="mobile_money">Mobile Money</option>
                           <option value="bank">Bank Account</option>
+                          <option value="crypto">Cryptocurrency</option>
                         </select>
                         <input
-                          placeholder="Account name"
+                          placeholder="Account holder name"
                           value={payoutForm.name}
                           onChange={(e) => setPayoutForm((p) => ({ ...p, name: e.target.value }))}
                           className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
                         />
-                        {payoutForm.type === 'mobile_money' ? (
+                        {payoutForm.type === 'mobile_money' && (
                           <>
+                            <select
+                              value={payoutForm.country}
+                              onChange={(e) => {
+                                const c = e.target.value;
+                                const cur: Record<string, string> = { GH: 'GHS', NG: 'NGN', KE: 'KES', ZA: 'ZAR', OTHER: 'USD' };
+                                setPayoutForm((p) => ({ ...p, country: c, currency: cur[c] || 'USD' }));
+                              }}
+                              className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
+                            >
+                              <option value="GH">Ghana</option>
+                              <option value="NG">Nigeria</option>
+                              <option value="KE">Kenya</option>
+                              <option value="ZA">South Africa</option>
+                              <option value="OTHER">Other</option>
+                            </select>
                             <input
                               placeholder="Phone (e.g. 0551234567)"
                               value={payoutForm.phone}
                               onChange={(e) => setPayoutForm((p) => ({ ...p, phone: e.target.value }))}
                               className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
                             />
+                            {payoutForm.country === 'GH' ? (
+                              <select
+                                value={payoutForm.provider}
+                                onChange={(e) => setPayoutForm((p) => ({ ...p, provider: e.target.value }))}
+                                className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
+                              >
+                                <option value="mtn_gh">MTN Mobile Money</option>
+                                <option value="vodafone_gh">Vodafone Cash</option>
+                                <option value="airteltigo_gh">AirtelTigo Money</option>
+                              </select>
+                            ) : (
+                              <select
+                                value={payoutForm.currency}
+                                onChange={(e) => setPayoutForm((p) => ({ ...p, currency: e.target.value }))}
+                                className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
+                              >
+                                <option value="GHS">GHS</option>
+                                <option value="NGN">NGN</option>
+                                <option value="KES">KES</option>
+                                <option value="ZAR">ZAR</option>
+                                <option value="USD">USD</option>
+                              </select>
+                            )}
+                          </>
+                        )}
+                        {payoutForm.type === 'bank' && (
+                          <>
                             <select
-                              value={payoutForm.provider}
-                              onChange={(e) => setPayoutForm((p) => ({ ...p, provider: e.target.value }))}
+                              value={payoutForm.country}
+                              onChange={(e) => {
+                                const c = e.target.value;
+                                const cur: Record<string, string> = { GH: 'GHS', NG: 'NGN', KE: 'KES', ZA: 'ZAR', OTHER: 'USD' };
+                                setPayoutForm((p) => ({ ...p, country: c, currency: cur[c] || 'USD' }));
+                              }}
                               className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
                             >
-                              <option value="mtn_gh">MTN</option>
-                              <option value="vodafone_gh">Vodafone</option>
-                              <option value="airteltigo_gh">AirtelTigo</option>
+                              <option value="GH">Ghana</option>
+                              <option value="NG">Nigeria</option>
+                              <option value="KE">Kenya</option>
+                              <option value="ZA">South Africa</option>
+                              <option value="OTHER">Other</option>
                             </select>
-                          </>
-                        ) : (
-                          <>
+                            <select
+                              value={payoutForm.currency}
+                              onChange={(e) => setPayoutForm((p) => ({ ...p, currency: e.target.value }))}
+                              className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
+                            >
+                              <option value="GHS">GHS</option>
+                              <option value="NGN">NGN</option>
+                              <option value="KES">KES</option>
+                              <option value="ZAR">ZAR</option>
+                              <option value="USD">USD</option>
+                            </select>
+                            <input
+                              placeholder="Bank name"
+                              value={payoutForm.bankName}
+                              onChange={(e) => setPayoutForm((p) => ({ ...p, bankName: e.target.value }))}
+                              className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
+                            />
                             <input
                               placeholder="Account number"
                               value={payoutForm.accountNumber}
                               onChange={(e) => setPayoutForm((p) => ({ ...p, accountNumber: e.target.value }))}
                               className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
                             />
-                            <input
-                              placeholder="Bank code (e.g. GHSBGHAC)"
-                              value={payoutForm.bankCode}
-                              onChange={(e) => setPayoutForm((p) => ({ ...p, bankCode: e.target.value }))}
+                          </>
+                        )}
+                        {payoutForm.type === 'crypto' && (
+                          <>
+                            <select
+                              value={payoutForm.cryptoCurrency}
+                              onChange={(e) => setPayoutForm((p) => ({ ...p, cryptoCurrency: e.target.value }))}
                               className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
+                            >
+                              <option value="BTC">Bitcoin (BTC)</option>
+                              <option value="ETH">Ethereum (ETH)</option>
+                              <option value="USDT">Tether (USDT)</option>
+                              <option value="USDC">USD Coin (USDC)</option>
+                              <option value="BNB">BNB</option>
+                              <option value="LTC">Litecoin (LTC)</option>
+                              <option value="XRP">XRP</option>
+                              <option value="TRX">TRON (TRX)</option>
+                            </select>
+                            <input
+                              placeholder="Wallet address"
+                              value={payoutForm.walletAddress}
+                              onChange={(e) => setPayoutForm((p) => ({ ...p, walletAddress: e.target.value }))}
+                              className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] font-mono text-sm"
                             />
                           </>
                         )}
@@ -341,14 +466,37 @@ function WalletContent() {
                             Cancel
                           </button>
                         </div>
-                      </div>
-                    )}
+                  </div>
+                ) : payoutMethods.length === 0 ? (
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => setShowPayoutForm(true)}
+                      className="px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-muted)]"
+                    >
+                      Add payout method
+                    </button>
+                    <p className="text-xs text-[var(--text-muted)]">
+                      Mobile Money · Bank Account · Cryptocurrency (global)
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <p className="text-sm text-[var(--text-muted)]">
-                      Payout to: {payoutMethods[0].displayName} {payoutMethods[0].accountMasked && `(${payoutMethods[0].accountMasked})`}
-                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm text-[var(--text-muted)]">
+                        Payout to: {payoutMethods[0].displayName} {payoutMethods[0].accountMasked && `(${payoutMethods[0].accountMasked})`}
+                        {payoutMethods[0].type === 'mobile_money' && ' · Mobile Money'}
+                        {payoutMethods[0].type === 'bank' && ' · Bank Account'}
+                        {payoutMethods[0].type === 'manual' && ' · Mobile Money/Bank'}
+                        {payoutMethods[0].type === 'crypto' && ' · Cryptocurrency'}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setShowPayoutForm(true)}
+                        className="text-xs text-[var(--primary)] hover:underline"
+                      >
+                        Change
+                      </button>
+                    </div>
                     <input
                       type="number"
                       min={5}

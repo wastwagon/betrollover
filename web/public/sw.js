@@ -6,8 +6,8 @@ self.addEventListener('push', function (event) {
   } catch (_) {}
   const options = {
     body: payload.body || '',
-    icon: payload.icon || '/favicon.svg',
-    badge: '/favicon.svg',
+    icon: payload.icon || '/BetRollover-logo.png',
+    badge: '/BetRollover-logo.png',
     data: { url: payload.url || payload.link || '/' },
   };
   event.waitUntil(self.registration.showNotification(payload.title || 'BetRollover', options));

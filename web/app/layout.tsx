@@ -25,9 +25,9 @@ export const metadata: Metadata = {
   publisher: SITE_NAME,
   formatDetection: { email: false, address: false, telephone: false },
   icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.svg',
-    apple: '/favicon.svg',
+    icon: '/BetRollover-logo.png',
+    shortcut: '/BetRollover-logo.png',
+    apple: '/BetRollover-logo.png',
   },
   openGraph: {
     type: 'website',
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
     images: [
       { url: '/og-image.png', width: 1200, height: 630, alt: `${SITE_NAME} - Africa's Premier Tipster Marketplace` },
-      { url: '/favicon.svg', width: 512, height: 512, alt: SITE_NAME },
+      { url: '/BetRollover-logo.png', width: 512, height: 512, alt: SITE_NAME },
     ],
   },
   twitter: {

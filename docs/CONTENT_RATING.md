@@ -36,7 +36,6 @@ BetRollover is a betting tips platform with real-money features. Set the appropr
 ## Checklist Before Submission
 
 - [ ] Age gate (18+) implemented before real-money features
-- [ ] Geo-restriction configured for licensed jurisdictions
 - [ ] Terms, Privacy, and Responsible Gambling policy linked
 - [ ] Content rating set to 17+ (iOS) and 18+ (Android)
 - [ ] App description does not target minors

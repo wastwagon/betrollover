@@ -7,7 +7,7 @@ const jsonLd = [
     '@id': `${SITE_URL}/#organization`,
     name: SITE_NAME,
     url: SITE_URL,
-    logo: { '@type': 'ImageObject', url: `${SITE_URL}/favicon.svg` },
+    logo: { '@type': 'ImageObject', url: `${SITE_URL}/BetRollover-logo.png` },
     description: SITE_DESCRIPTION,
     areaServed: [
       { '@type': 'Country', name: 'Ghana' },

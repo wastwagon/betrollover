@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { SiteHeader } from '@/components/SiteHeader';
+import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { PickCard } from '@/components/PickCard';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
@@ -256,7 +256,7 @@ export default function TipsterProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--bg)]">
-        <SiteHeader />
+        <UnifiedHeader />
         <main className="max-w-6xl mx-auto px-4 py-8">
           <LoadingSkeleton count={3} className="space-y-6" />
         </main>
@@ -268,7 +268,7 @@ export default function TipsterProfilePage() {
   if (!profile) {
     return (
       <div className="min-h-screen bg-[var(--bg)]">
-        <SiteHeader />
+        <UnifiedHeader />
         <main className="max-w-6xl mx-auto px-4 py-8">
           <EmptyState
             title="Tipster not found"
@@ -298,7 +298,7 @@ export default function TipsterProfilePage() {
     <div className="min-h-screen bg-[var(--bg)]">
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
-      <SiteHeader />
+      <UnifiedHeader />
       <main className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
         <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
           <Link href="/tipsters" className="text-sm text-[var(--primary)] hover:underline mb-4 inline-block">

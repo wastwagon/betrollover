@@ -5,6 +5,17 @@ import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 
+interface PayoutMethod {
+  type: string;
+  displayName: string;
+  accountMasked: string | null;
+  country?: string | null;
+  currency?: string | null;
+  manualDetails?: string | null;
+  provider?: string | null;
+  bankCode?: string | null;
+}
+
 interface Withdrawal {
   id: number;
   userId: number;
@@ -16,6 +27,8 @@ interface Withdrawal {
   paystackTransferCode: string | null;
   failureReason: string | null;
   createdAt: string;
+  user?: { id: number; displayName: string; email: string } | null;
+  payoutMethod?: PayoutMethod | null;
 }
 
 export default function AdminWithdrawalsPage() {
@@ -60,7 +73,11 @@ export default function AdminWithdrawalsPage() {
     });
     if (res.ok) {
       const updated = await res.json();
-      setWithdrawals((w) => w.map((withdrawal) => (withdrawal.id === id ? updated : withdrawal)));
+      setWithdrawals((w) =>
+        w.map((withdrawal) =>
+          withdrawal.id === id ? { ...updated, user: withdrawal.user, payoutMethod: withdrawal.payoutMethod } : withdrawal,
+        ),
+      );
     } else {
       alert('Failed to update status');
     }
@@ -140,21 +157,49 @@ export default function AdminWithdrawalsPage() {
                     <thead className="bg-gradient-to-r from-red-600 to-red-700">
                       <tr>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">ID</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">User ID</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">User</th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Amount</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Payout Details</th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Reference</th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Date</th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                      {withdrawals.map((w) => (
+                      {withdrawals.map((w) => {
+                        const pm = w.payoutMethod;
+                        let payoutInfo = '-';
+                        if (pm) {
+                          if ((pm.type === 'manual' || pm.type === 'bank' || pm.type === 'crypto') && pm.manualDetails) {
+                            try {
+                              const d = JSON.parse(pm.manualDetails);
+                              const parts = [pm.displayName];
+                              if (d.walletAddress) parts.push(`${d.cryptoCurrency || 'Crypto'}: ${d.walletAddress.slice(0, 12)}...`);
+                              if (d.phone) parts.push(`Phone: ${d.phone}`);
+                              if (d.accountNumber) parts.push(`Acc: ${d.accountNumber}`);
+                              if (d.bankName) parts.push(`Bank: ${d.bankName}`);
+                              if (pm.country) parts.push(`(${pm.country})`);
+                              if (pm.currency) parts.push(pm.currency);
+                              payoutInfo = parts.join(' · ');
+                            } catch {
+                              payoutInfo = `${pm.displayName} ${pm.accountMasked || ''} (${pm.type})`;
+                            }
+                          } else {
+                            payoutInfo = `${pm.displayName} ${pm.accountMasked || ''} (${pm.type})`;
+                          }
+                        }
+                        return (
                         <tr key={w.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{w.id}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{w.userId}</td>
+                          <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                            <div>{w.user?.displayName || `User #${w.userId}`}</div>
+                            <div className="text-xs text-gray-500">{w.user?.email}</div>
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-red-600 dark:text-red-400">
-                            {w.currency} {Number(w.amount).toFixed(2)}
+                            {w.currency || 'GHS'} {Number(w.amount).toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 max-w-[220px]">
+                            {payoutInfo}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
@@ -171,9 +216,6 @@ export default function AdminWithdrawalsPage() {
                             {w.failureReason && (
                               <p className="text-xs text-red-600 dark:text-red-400 mt-1">{w.failureReason}</p>
                             )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 font-mono">
-                            {w.reference || '-'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                             {new Date(w.createdAt).toLocaleString()}
@@ -200,7 +242,7 @@ export default function AdminWithdrawalsPage() {
                             )}
                           </td>
                         </tr>
-                      ))}
+                      );})}
                     </tbody>
                   </table>
                 </div>

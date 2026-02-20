@@ -55,12 +55,18 @@ export class WalletController {
     @CurrentUser() user: User,
     @Body()
     body: {
-      type: 'mobile_money' | 'bank';
+      type: 'mobile_money' | 'bank' | 'manual' | 'crypto';
       name: string;
       phone?: string;
       provider?: string;
       accountNumber?: string;
       bankCode?: string;
+      country?: string;
+      currency?: string;
+      manualMethod?: 'mobile_money' | 'bank';
+      bankName?: string;
+      walletAddress?: string;
+      cryptoCurrency?: string;
     },
   ) {
     return this.walletService.addPayoutMethod(user, body);

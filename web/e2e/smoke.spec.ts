@@ -11,9 +11,10 @@ test.describe('Smoke tests', () => {
     await expect(page.locator('h1')).toContainText(/Tipsters/i);
   });
 
-  test('leaderboard page loads', async ({ page }) => {
+  test('leaderboard redirects to tipsters', async ({ page }) => {
     await page.goto('/leaderboard');
-    await expect(page.locator('h1')).toContainText(/Leaderboard/i);
+    await expect(page).toHaveURL(/\/tipsters/);
+    await expect(page.locator('h1')).toContainText(/Tipsters/i);
   });
 
   test('login page loads', async ({ page }) => {

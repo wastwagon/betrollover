@@ -655,24 +655,78 @@ export class AdminService {
 
   // Withdrawals Management
   async getAllWithdrawals(params: { userId?: number; status?: string; limit?: number; page?: number }) {
-    const page = Math.max(1, params.page ?? 1);
-    const limit = Math.min(100, params.limit ?? 50);
-    const skip = (page - 1) * limit;
+    const pageNum = Math.max(1, params.page ?? 1);
+    const limitNum = Math.min(100, params.limit ?? 50);
+    const skip = (pageNum - 1) * limitNum;
     const qb = this.withdrawalRepo.createQueryBuilder('w').orderBy('w.createdAt', 'DESC');
     if (params.userId) qb.andWhere('w.userId = :userId', { userId: params.userId });
     if (params.status) qb.andWhere('w.status = :status', { status: params.status });
-    const [items, total] = await qb.skip(skip).take(limit).getManyAndCount();
-    return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
+    const [withdrawals, total] = await qb.skip(skip).take(limitNum).getManyAndCount();
+
+    // Load payout methods and users for display (admin manual fulfill)
+    const payoutIds = [...new Set(withdrawals.map((w) => w.payoutMethodId))];
+    const userIds = [...new Set(withdrawals.map((w) => w.userId))];
+    const [payouts, users] = await Promise.all([
+      payoutIds.length ? this.payoutMethodRepo.find({ where: { id: In(payoutIds) } }) : [],
+      userIds.length ? this.usersRepo.find({ where: { id: In(userIds) } }) : [],
+    ]);
+    const payoutMap = new Map(payouts.map((p) => [p.id, p]));
+    const userMap = new Map(users.map((u) => [u.id, u]));
+
+    const items = withdrawals.map((w) => {
+      const payout = payoutMap.get(w.payoutMethodId);
+      const u = userMap.get(w.userId);
+      return {
+        ...w,
+        user: u ? { id: u.id, displayName: u.displayName, email: u.email } : null,
+        payoutMethod: payout
+          ? {
+            type: payout.type,
+            displayName: payout.displayName,
+            accountMasked: payout.accountMasked,
+            country: payout.country,
+            currency: payout.currency,
+            manualDetails: payout.manualDetails,
+            provider: payout.provider,
+            bankCode: payout.bankCode,
+          }
+          : null,
+      };
+    });
+
+    return { items, total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) };
   }
 
   async updateWithdrawalStatus(id: number, status: string, failureReason?: string) {
     const withdrawal = await this.withdrawalRepo.findOne({ where: { id } });
     if (!withdrawal) return null;
+    const payout = await this.payoutMethodRepo.findOne({ where: { id: withdrawal.payoutMethodId } });
     withdrawal.status = status;
     if (failureReason) withdrawal.failureReason = failureReason;
     await this.withdrawalRepo.save(withdrawal);
     if (status === 'failed' || status === 'cancelled') {
       await this.walletService.credit(withdrawal.userId, Number(withdrawal.amount), 'refund', withdrawal.reference || undefined, 'Withdrawal refunded');
+      await this.notificationsService.create({
+        userId: withdrawal.userId,
+        type: 'withdrawal_failed',
+        title: 'Withdrawal Rejected',
+        message: `Your withdrawal of ${withdrawal.currency || 'GHS'} ${Number(withdrawal.amount).toFixed(2)} was not completed. A refund has been credited.${failureReason ? ` Reason: ${failureReason}` : ''}`,
+        link: '/wallet',
+        icon: 'alert',
+        sendEmail: true,
+        metadata: { amount: Number(withdrawal.amount).toFixed(2), reason: failureReason },
+      }).catch(() => {});
+    } else if (status === 'completed') {
+      await this.notificationsService.create({
+        userId: withdrawal.userId,
+        type: 'withdrawal_done',
+        title: 'Withdrawal Completed',
+        message: `Your withdrawal of ${withdrawal.currency || 'GHS'} ${Number(withdrawal.amount).toFixed(2)} has been processed and sent to ${payout?.displayName || 'your payout method'}.`,
+        link: '/wallet',
+        icon: 'wallet',
+        sendEmail: true,
+        metadata: { amount: Number(withdrawal.amount).toFixed(2) },
+      }).catch(() => {});
     }
     return withdrawal;
   }

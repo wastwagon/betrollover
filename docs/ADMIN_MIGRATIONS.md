@@ -41,6 +41,7 @@ These two files are **already in the correct format** for the admin migration fe
 |------|--------|
 | **042_subscription_push_iap_tables.sql** | Creates: `tipster_subscription_packages`, `subscriptions`, `subscription_escrow`, `subscription_coupon_access`, `push_devices`, `in_app_purchases`, `roi_guarantee_refunds` |
 | **043_pick_marketplace_placement.sql** | Adds to `pick_marketplace`: `placement`, `subscription_package_id` (if not already present) |
+| **044_manual_crypto_payout_methods.sql** | Adds to `payout_methods`: `country`, `currency`, `manual_details`; extends type to `manual`, `crypto`; adds `cancelled` to withdrawal status |
 
 - If the API starts and these files are still **pending**, they run automatically.
 - You can also run them from **Admin → Settings → Database migrations → Run pending**.

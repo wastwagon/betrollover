@@ -227,7 +227,12 @@ function DashboardContent() {
               <StatCard title="Total Purchases" value={stats?.purchases?.total ?? 0} icon="🛍️" />
               <StatCard title="Revenue (GHS)" value={stats?.purchases?.revenue ?? 0} icon="💵" format="currency" />
               <StatCard title="Pending Deposits" value={stats?.deposits?.pending ?? 0} icon="💳" />
-              <StatCard title="Pending Withdrawals" value={stats?.withdrawals?.pending ?? 0} icon="💸" />
+              <StatCard
+                title="Pending Withdrawals"
+                value={stats?.withdrawals?.pending ?? 0}
+                icon="💸"
+                link="/admin/withdrawals"
+              />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -418,6 +423,18 @@ function DashboardContent() {
                 <div className="min-w-0">
                   <span className="font-semibold text-[var(--text)] block">Wallet</span>
                   <span className="text-sm text-[var(--text-muted)]">Balance & transactions</span>
+                </div>
+              </Link>
+              <Link
+                href="/wallet#withdraw"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+              >
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  💸
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-[var(--text)] block">Withdrawals</span>
+                  <span className="text-sm text-[var(--text-muted)]">Request & track payouts</span>
                 </div>
               </Link>
               <Link

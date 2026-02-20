@@ -115,12 +115,8 @@ export default function TipstersTab() {
       <View style={styles.headerRow}>
         <View>
           <Text style={styles.title}>Tipsters</Text>
-          <Text style={styles.subtitle}>Browse verified tipsters</Text>
+          <Text style={styles.subtitle}>Browse verified tipsters. Rankings on each card.</Text>
         </View>
-        <Pressable onPress={() => router.push('/leaderboard')} style={styles.leaderboardLink}>
-          <Ionicons name="trophy" size={20} color={colors.primary} />
-          <Text style={styles.leaderboardText}>Leaderboard</Text>
-        </Pressable>
       </View>
 
       <View style={styles.searchRow}>
@@ -205,18 +201,6 @@ const styles = StyleSheet.create({
   subtitle: {
     ...typography.body,
     color: colors.textMuted,
-  },
-  leaderboardLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  leaderboardText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary,
   },
   searchRow: { marginBottom: spacing.md },
   searchWrap: {

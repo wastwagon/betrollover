@@ -15,10 +15,19 @@ export class PayoutMethod {
   userId: number;
 
   @Column({ length: 20 })
-  type: string; // mobile_money | bank
+  type: string; // mobile_money | bank | manual
 
   @Column({ length: 100 })
   recipientCode: string;
+
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  country: string | null = null;
+
+  @Column({ type: 'varchar', length: 3, nullable: true })
+  currency: string | null = null;
+
+  @Column({ type: 'text', nullable: true })
+  manualDetails: string | null = null; // JSON: { phone?, accountNumber?, bankName?, provider? }
 
   @Column({ length: 100 })
   displayName: string;

@@ -279,12 +279,18 @@ export class WalletService {
   async addPayoutMethod(
     user: User,
     dto: {
-      type: 'mobile_money' | 'bank';
+      type: 'mobile_money' | 'bank' | 'manual' | 'crypto';
       name: string;
       phone?: string;
       provider?: string;
       accountNumber?: string;
       bankCode?: string;
+      country?: string;
+      currency?: string;
+      manualMethod?: 'mobile_money' | 'bank';
+      bankName?: string;
+      walletAddress?: string;
+      cryptoCurrency?: string;
     },
   ) {
     const { emailVerifiedAt } = await this.usersService.getEmailVerificationStatus(user.id);
@@ -300,49 +306,157 @@ export class WalletService {
       await this.payoutRepo.remove(existing);
     }
 
-    if (dto.type === 'mobile_money') {
-      if (!dto.phone || !dto.provider) {
-        throw new BadRequestException('Phone and provider (mtn_gh, vodafone_gh, airteltigo_gh) required');
+    // Cryptocurrency: admin processes manually
+    if (dto.type === 'crypto') {
+      if (!dto.walletAddress || !dto.cryptoCurrency) {
+        throw new BadRequestException('Wallet address and crypto currency required');
       }
-    } else {
-      if (!dto.accountNumber || !dto.bankCode) {
-        throw new BadRequestException('Account number and bank code required');
-      }
+      const manualDetails = JSON.stringify({
+        walletAddress: dto.walletAddress.trim(),
+        cryptoCurrency: dto.cryptoCurrency,
+      });
+      const accountMasked = `***${dto.walletAddress.slice(-8)}`;
+
+      return this.payoutRepo.save({
+        userId: user.id,
+        type: 'crypto',
+        recipientCode: `crypto_${Date.now()}`,
+        displayName: dto.name || `${dto.cryptoCurrency} Wallet`,
+        accountMasked,
+        country: null,
+        currency: dto.cryptoCurrency,
+        manualDetails,
+        bankCode: null,
+        provider: null,
+        isDefault: true,
+      });
     }
 
-    const recipient = await this.paystackService.createTransferRecipient(
-      dto.type === 'mobile_money'
-        ? {
-          type: 'mobile_money',
-          name: dto.name,
-          currency: 'GHS',
-          phone: dto.phone!.replace(/\D/g, ''),
-          provider: dto.provider!,
+    // Manual: admin processes (legacy / other mobile money)
+    if (dto.type === 'manual') {
+      const country = dto.country || 'GH';
+      const currency = dto.currency || 'GHS';
+      const manualMethod = dto.manualMethod || 'mobile_money';
+      if (manualMethod === 'mobile_money') {
+        if (!dto.phone) throw new BadRequestException('Phone number required for mobile money');
+      } else {
+        if (!dto.accountNumber || !dto.bankName) {
+          throw new BadRequestException('Account number and bank name required');
         }
-        : {
-          type: 'ghipss',
-          name: dto.name,
-          currency: 'GHS',
-          accountNumber: dto.accountNumber!,
-          bankCode: dto.bankCode!,
-        },
-    );
+      }
+      const manualDetails = JSON.stringify({
+        manualMethod,
+        phone: dto.phone || null,
+        accountNumber: dto.accountNumber || null,
+        bankName: dto.bankName || null,
+        bankCode: dto.bankCode || null,
+        provider: dto.provider || null,
+      });
+      const accountMasked =
+        manualMethod === 'mobile_money'
+          ? `***${(dto.phone || '').replace(/\D/g, '').slice(-4)}`
+          : `***${(dto.accountNumber || '').slice(-4)}`;
 
-    const accountMasked =
-      dto.type === 'mobile_money'
-        ? `***${(dto.phone || '').slice(-4)}`
-        : `***${(dto.accountNumber || '').slice(-4)}`;
+      return this.payoutRepo.save({
+        userId: user.id,
+        type: 'manual',
+        recipientCode: `manual_${Date.now()}`,
+        displayName: dto.name,
+        accountMasked,
+        country,
+        currency,
+        manualDetails,
+        bankCode: dto.bankCode ?? null,
+        provider: dto.provider ?? null,
+        isDefault: true,
+      });
+    }
 
-    return this.payoutRepo.save({
-      userId: user.id,
-      type: dto.type,
-      recipientCode: recipient.recipient_code,
-      displayName: dto.name,
-      accountMasked,
-      bankCode: dto.bankCode ?? null,
-      provider: dto.provider ?? null,
-      isDefault: true,
-    });
+    // Bank: global — admin processes (no Ghana-specific Paystack)
+    if (dto.type === 'bank') {
+      if (!dto.accountNumber || !dto.bankName) {
+        throw new BadRequestException('Account number and bank name required');
+      }
+      const country = dto.country || 'GH';
+      const currency = dto.currency || 'GHS';
+      const manualDetails = JSON.stringify({
+        manualMethod: 'bank',
+        accountNumber: dto.accountNumber,
+        bankName: dto.bankName,
+        bankCode: dto.bankCode || null,
+      });
+
+      return this.payoutRepo.save({
+        userId: user.id,
+        type: 'bank',
+        recipientCode: `manual_${Date.now()}`,
+        displayName: dto.name,
+        accountMasked: `***${dto.accountNumber.slice(-4)}`,
+        country,
+        currency,
+        manualDetails,
+        bankCode: dto.bankCode ?? null,
+        provider: null,
+        isDefault: true,
+      });
+    }
+
+    // Mobile Money: Ghana via Paystack (if configured)
+    if (dto.type === 'mobile_money') {
+      if (!dto.phone || !dto.provider) {
+        throw new BadRequestException('Phone and provider required for mobile money');
+      }
+      const country = dto.country || 'GH';
+      const currency = dto.currency || 'GHS';
+      const isGhana = country === 'GH' || country === 'GHA';
+
+      if (isGhana) {
+        try {
+          const recipient = await this.paystackService.createTransferRecipient({
+            type: 'mobile_money',
+            name: dto.name,
+            currency: 'GHS',
+            phone: dto.phone!.replace(/\D/g, ''),
+            provider: dto.provider!,
+          });
+          return this.payoutRepo.save({
+            userId: user.id,
+            type: 'mobile_money',
+            recipientCode: recipient.recipient_code,
+            displayName: dto.name,
+            accountMasked: `***${(dto.phone || '').replace(/\D/g, '').slice(-4)}`,
+            country,
+            currency,
+            bankCode: null,
+            provider: dto.provider ?? null,
+            isDefault: true,
+          });
+        } catch {
+          // Paystack failed — fall back to manual
+        }
+      }
+
+      const manualDetails = JSON.stringify({
+        manualMethod: 'mobile_money',
+        phone: dto.phone,
+        provider: dto.provider || null,
+      });
+      return this.payoutRepo.save({
+        userId: user.id,
+        type: 'mobile_money',
+        recipientCode: `manual_${Date.now()}`,
+        displayName: dto.name,
+        accountMasked: `***${(dto.phone || '').replace(/\D/g, '').slice(-4)}`,
+        country,
+        currency,
+        manualDetails,
+        bankCode: null,
+        provider: dto.provider ?? null,
+        isDefault: true,
+      });
+    }
+
+    throw new BadRequestException('Invalid payout type');
   }
 
   async requestWithdrawal(user: User, amount: number): Promise<{ withdrawal: WithdrawalRequest; message: string }> {
@@ -366,6 +480,7 @@ export class WalletService {
     }
 
     const reference = this.paystackService.generateTransferReference();
+    const currency = payout.currency || 'GHS';
 
     await this.debit(
       user.id,
@@ -379,8 +494,8 @@ export class WalletService {
       userId: user.id,
       payoutMethodId: payout.id,
       amount,
-      currency: 'GHS',
-      status: 'processing',
+      currency,
+      status: payout.type === 'manual' ? 'pending' : 'processing',
       reference,
     });
 
@@ -390,9 +505,23 @@ export class WalletService {
         amount: amount.toFixed(2),
         displayName: user.displayName,
         email: user.email,
+        manual: payout.type === 'manual',
       },
     }).catch(() => { });
 
+    // Manual: admin will process (manual, crypto, or bank without Paystack)
+    const isManualPayout =
+      payout.type === 'manual' ||
+      payout.type === 'crypto' ||
+      payout.recipientCode?.startsWith?.('manual_');
+    if (isManualPayout) {
+      return {
+        withdrawal,
+        message: 'Withdrawal request submitted. Admin will review and process manually. You will be notified when completed.',
+      };
+    }
+
+    // Paystack automatic transfer
     try {
       const transfer = await this.paystackService.initiateTransfer({
         amount,
@@ -413,7 +542,7 @@ export class WalletService {
         userId: user.id,
         type: 'withdrawal_done',
         title: 'Withdrawal Completed',
-        message: `Your withdrawal of GHS ${amount.toFixed(2)} has been sent to ${payout.displayName}. Funds should arrive shortly.`,
+        message: `Your withdrawal of ${currency} ${amount.toFixed(2)} has been sent to ${payout.displayName}. Funds should arrive shortly.`,
         link: '/wallet',
         icon: 'wallet',
         sendEmail: true,
@@ -431,7 +560,7 @@ export class WalletService {
         userId: user.id,
         type: 'withdrawal_failed',
         title: 'Withdrawal Failed',
-        message: `Your withdrawal of GHS ${amount.toFixed(2)} failed. A refund of GHS ${amount.toFixed(2)} has been credited to your wallet. Reason: ${withdrawal.failureReason}`,
+        message: `Your withdrawal of ${currency} ${amount.toFixed(2)} failed. A refund has been credited to your wallet. Reason: ${withdrawal.failureReason}`,
         link: '/wallet',
         icon: 'alert',
         sendEmail: true,

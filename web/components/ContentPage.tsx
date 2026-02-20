@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { SiteHeader } from '@/components/SiteHeader';
+import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
 
 import { getApiUrl } from '@/lib/site-config';
@@ -29,7 +29,7 @@ export function ContentPage({ slug, fallbackTitle }: { slug: string; fallbackTit
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--bg)]">
-        <SiteHeader />
+        <UnifiedHeader />
         <div className="flex items-center justify-center py-24">
           <div className="w-10 h-10 rounded-full border-2 border-[var(--primary)] border-t-transparent animate-spin" />
         </div>
@@ -40,7 +40,7 @@ export function ContentPage({ slug, fallbackTitle }: { slug: string; fallbackTit
   if (!page) {
     return (
       <div className="min-h-screen bg-[var(--bg)]">
-        <SiteHeader />
+        <UnifiedHeader />
         <div className="flex flex-col items-center justify-center py-24 px-6">
           <h1 className="text-2xl font-bold text-[var(--text)]">Page not found</h1>
           <Link href="/" className="mt-4 text-[var(--primary)] hover:underline">
@@ -53,7 +53,7 @@ export function ContentPage({ slug, fallbackTitle }: { slug: string; fallbackTit
 
   return (
     <div className="min-h-screen bg-[var(--bg)]">
-      <SiteHeader />
+      <UnifiedHeader />
 
       <main>
         <article className="max-w-3xl mx-auto px-6 py-12">

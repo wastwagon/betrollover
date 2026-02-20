@@ -15,7 +15,7 @@ export function AppFooter() {
             <ul className="space-y-2 text-sm text-[var(--text-muted)]">
               <li><Link href="/about" className="hover:text-[var(--primary)] transition-colors">About Us</Link></li>
               <li><Link href="/contact" className="hover:text-[var(--primary)] transition-colors">Contact</Link></li>
-              <li><Link href="/news" className="hover:text-[var(--primary)] transition-colors">News</Link></li>
+              <li><Link href="/discover?tab=news" className="hover:text-[var(--primary)] transition-colors">News</Link></li>
             </ul>
           </div>
           <div>
@@ -28,8 +28,8 @@ export function AppFooter() {
           <div>
             <h3 className="font-semibold mb-3 text-[var(--text)]">Resources</h3>
             <ul className="space-y-2 text-sm text-[var(--text-muted)]">
-              <li><Link href="/resources" className="hover:text-[var(--primary)] transition-colors">Betting Guides</Link></li>
-              <li><Link href="/leaderboard" className="hover:text-[var(--primary)] transition-colors">Leaderboard</Link></li>
+              <li><Link href="/discover?tab=guides" className="hover:text-[var(--primary)] transition-colors">Betting Guides</Link></li>
+              <li><Link href="/tipsters" className="hover:text-[var(--primary)] transition-colors">Tipsters & Rankings</Link></li>
             </ul>
           </div>
           <div>
@@ -37,6 +37,7 @@ export function AppFooter() {
             <ul className="space-y-2 text-sm text-[var(--text-muted)]">
               <li><Link href="/terms" className="hover:text-[var(--primary)] transition-colors">Terms of Service</Link></li>
               <li><Link href="/privacy" className="hover:text-[var(--primary)] transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/responsible-gambling" className="hover:text-[var(--primary)] transition-colors">Responsible Gambling</Link></li>
             </ul>
           </div>
         </div>
