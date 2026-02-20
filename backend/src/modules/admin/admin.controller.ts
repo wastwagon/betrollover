@@ -15,6 +15,7 @@ import { TransfersSyncService } from '../news/transfers-sync.service';
 import { InjuriesSyncService } from '../news/injuries-sync.service';
 import { ResourcesService } from '../resources/resources.service';
 import { AdsService } from '../ads/ads.service';
+import { AccumulatorsService } from '../accumulators/accumulators.service';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { UpdateApiSportsKeyDto, TestApiSportsConnectionDto } from './dto/api-sports.dto';
@@ -36,6 +37,7 @@ export class AdminController {
     private readonly injuriesSyncService: InjuriesSyncService,
     private readonly resourcesService: ResourcesService,
     private readonly adsService: AdsService,
+    private readonly accumulatorsService: AccumulatorsService,
     private readonly dataSource: DataSource,
   ) { }
 
@@ -69,6 +71,12 @@ export class AdminController {
   async getMarketplace(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.adminService.getMarketplace();
+  }
+
+  @Get('marketplace/diagnostic')
+  async getMarketplaceDiagnostic(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.accumulatorsService.getMarketplaceDiagnostic();
   }
 
   @Post('setup/ai-tipsters')

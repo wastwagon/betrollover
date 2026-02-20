@@ -45,6 +45,13 @@ export default function AdminMarketplacePage() {
   const [loading, setLoading] = useState(true);
   const [includeAll, setIncludeAll] = useState(false);
   const [fixing, setFixing] = useState(false);
+  const [diagnostic, setDiagnostic] = useState<{
+    activeListings?: number;
+    ticketsTotal?: number;
+    byResult?: { won: number; lost: number; pending: number; cancelled: number };
+    purchasableAfterFilter?: number;
+    reason?: string;
+  } | null>(null);
 
   const loadMarketplace = () => {
     const token = localStorage.getItem('token');
@@ -67,6 +74,15 @@ export default function AdminMarketplacePage() {
   useEffect(() => {
     loadMarketplace();
   }, [router, includeAll]);
+
+  const loadDiagnostic = () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    fetch(`${getApiUrl()}/admin/marketplace/diagnostic`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setDiagnostic)
+      .catch(() => setDiagnostic(null));
+  };
 
   const handleFixMarketplace = async () => {
     const token = localStorage.getItem('token');
@@ -120,8 +136,30 @@ export default function AdminMarketplacePage() {
             >
               {fixing ? 'Fixing...' : 'Fix duplicates & titles'}
             </button>
+            <button
+              onClick={loadDiagnostic}
+              className="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 text-white text-sm font-medium"
+            >
+              Run diagnostic
+            </button>
           </div>
         </div>
+
+        {diagnostic && (
+          <div className="mb-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <h3 className="font-semibold text-slate-900 dark:text-white mb-2">Marketplace diagnostic</h3>
+            <pre className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+              {JSON.stringify(diagnostic, null, 2)}
+            </pre>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              {diagnostic.reason === 'All coupons settled (matches finished)'
+                ? 'Matches have finished. Generate new predictions for upcoming fixtures.'
+                : diagnostic.reason === 'All pending coupons have fixtures that already started'
+                  ? 'All pending coupons contain matches that have already kicked off.'
+                  : diagnostic.reason}
+            </p>
+          </div>
+        )}
 
         {loading && (
           <div className="flex items-center justify-center py-12">

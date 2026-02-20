@@ -431,6 +431,44 @@ export class AccumulatorsService {
     return { items, total, hasMore: offset + items.length < total };
   }
 
+  /** Diagnostic: why marketplace might be empty (admin debugging) */
+  async getMarketplaceDiagnostic() {
+    const rows = await this.marketplaceRepo.find({
+      where: { status: 'active' },
+      select: ['accumulatorId', 'price', 'predictionId'],
+    });
+    const accIds = rows.map((r) => r.accumulatorId);
+    if (accIds.length === 0) {
+      return { activeListings: 0, reason: 'No active pick_marketplace rows' };
+    }
+    const tickets = await this.ticketRepo.find({
+      where: { id: In(accIds) },
+      relations: ['picks'],
+      select: ['id', 'title', 'status', 'result', 'userId'],
+    });
+    const now = new Date();
+    const pending = tickets.filter((t) => t.status === 'active' && t.result === 'pending');
+    const won = tickets.filter((t) => t.result === 'won').length;
+    const lost = tickets.filter((t) => t.result === 'lost').length;
+    const byResult = { won, lost, pending: pending.length, cancelled: tickets.length - won - lost - pending.length };
+    const afterMatchFilter = pending.filter((t) => {
+      if (!t.picks?.length) return false;
+      const started = t.picks.some((p: any) => p.matchDate && new Date(p.matchDate) <= now);
+      return !started;
+    });
+    let reason = 'ok';
+    if (byResult.won + byResult.lost === tickets.length) reason = 'All coupons settled (matches finished)';
+    else if (afterMatchFilter.length === 0 && pending.length > 0) reason = 'All pending coupons have fixtures that already started';
+    else if (pending.length === 0) reason = 'All coupons settled or cancelled';
+    return {
+      activeListings: rows.length,
+      ticketsTotal: tickets.length,
+      byResult,
+      purchasableAfterFilter: afterMatchFilter.length,
+      reason,
+    };
+  }
+
   /** Unified method to add tipster rankings, stats, prices, and reactions to tickets */
   private async enrichWithTipsterMetadata(validTickets: AccumulatorTicket[], marketplaceRows: PickMarketplace[], currentUserId?: number) {
     // Get unique tipster IDs
