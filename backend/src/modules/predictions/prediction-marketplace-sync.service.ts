@@ -66,7 +66,7 @@ export class PredictionMarketplaceSyncService {
       where: { predictionId: prediction.id },
     });
     if (existing) {
-      this.logger.debug(`Prediction ${prediction.id} already on marketplace`);
+      this.logger.log(`Prediction ${prediction.id} already on marketplace (accumulator ${existing.accumulatorId})`);
       return { accumulatorId: existing.accumulatorId };
     }
 
@@ -178,7 +178,7 @@ export class PredictionMarketplaceSyncService {
       }
     }
 
-    this.logger.log(`Backfill complete: ${synced} synced, ${skipped} skipped`);
+    this.logger.log(`Sync to marketplace complete: ${synced} synced, ${skipped} skipped${errors.length ? `. Errors: ${errors.slice(0, 5).join('; ')}` : ''}`);
     return { synced, skipped, errors };
   }
 

@@ -393,7 +393,10 @@ export class AccumulatorsService {
       select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount'],
     });
     const accIds = rows.map((r) => r.accumulatorId);
-    if (accIds.length === 0) return { items: [], total: 0, hasMore: false };
+    if (accIds.length === 0) {
+      this.logger.debug(`getMarketplace: no active pick_marketplace rows`);
+      return { items: [], total: 0, hasMore: false };
+    }
 
     const ticketWhere: any = { id: In(accIds) };
     if (!includeAllListings) {
@@ -410,22 +413,19 @@ export class AccumulatorsService {
 
     // Filter out coupons where any fixture has already started (unless includeAllListings for admin)
     const now = new Date();
-    const NOT_STARTED_STATUSES = ['NS', 'TBD'];
     const validTickets = includeAllListings ? enrichedTickets : enrichedTickets.filter(ticket => {
       if (!ticket.picks || ticket.picks.length === 0) return false;
-
-      // Use fixture status when available (NS/TBD = not started); else fall back to matchDate
       const hasStartedFixture = ticket.picks.some((pick: any) => {
-        if (pick.fixtureStatus && NOT_STARTED_STATUSES.includes(String(pick.fixtureStatus))) return false;
-        if (pick.fixtureStatus && !NOT_STARTED_STATUSES.includes(String(pick.fixtureStatus))) return true;
-        if (!pick.matchDate) return false; // Unknown - treat as not started to avoid hiding valid coupons
+        if (!pick.matchDate) return false;
         return new Date(pick.matchDate) <= now;
       });
-
       return !hasStartedFixture;
     });
 
     const total = validTickets.length;
+    if (enrichedTickets.length > 0 && validTickets.length === 0) {
+      this.logger.debug(`getMarketplace: ${enrichedTickets.length} coupons filtered out (fixtures started)`);
+    }
     const paginated = validTickets.slice(offset, offset + limit);
     const items = await this.enrichWithTipsterMetadata(paginated, rows, userId);
     return { items, total, hasMore: offset + items.length < total };
@@ -573,15 +573,9 @@ export class AccumulatorsService {
 
     const enriched = await this.enrichPicksWithFixtureScores(tickets);
     const now = new Date();
-    const NOT_STARTED_STATUSES = ['NS', 'TBD'];
     const valid = enriched.filter((t: any) => {
       if (!t.picks?.length) return false;
-      const hasStarted = t.picks.some((p: any) => {
-        if (p.fixtureStatus && NOT_STARTED_STATUSES.includes(String(p.fixtureStatus))) return false;
-        if (p.fixtureStatus && !NOT_STARTED_STATUSES.includes(String(p.fixtureStatus))) return true;
-        return p.matchDate && new Date(p.matchDate) <= now;
-      });
-      return !hasStarted;
+      return !t.picks.some((p: any) => p.matchDate && new Date(p.matchDate) <= now);
     });
     // Only return coupons that have an active marketplace listing
     const validWithListing = valid.filter((t) => rows.some((r) => r.accumulatorId === t.id));
@@ -684,14 +678,10 @@ export class AccumulatorsService {
 
     const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
 
-    // Filter out coupons where any fixture has already started (use fixture status when available)
     const now = new Date();
-    const NOT_STARTED_STATUSES = ['NS', 'TBD'];
     const validTickets = enrichedTickets.filter((ticket: any) => {
       if (!ticket.picks || ticket.picks.length === 0) return false;
       const hasStartedFixture = ticket.picks.some((pick: any) => {
-        if (pick.fixtureStatus && NOT_STARTED_STATUSES.includes(String(pick.fixtureStatus))) return false;
-        if (pick.fixtureStatus && !NOT_STARTED_STATUSES.includes(String(pick.fixtureStatus))) return true;
         if (!pick.matchDate) return false;
         return new Date(pick.matchDate) <= now;
       });
