@@ -30,15 +30,45 @@ export default function HomePage() {
           <HomeFreeTipOfTheDay />
         </section>
         <HomePopularEvents />
-        {/* SEO content - keywords & thin content */}
-        <section className="py-8 md:py-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-xl font-bold text-[var(--text)] mb-4">Verified Tipsters: Football Tips, Win Rate, ROI & Streak</h2>
-          <p className="text-[var(--text-muted)] leading-relaxed mb-4">
-            BetRollover connects you with verified tipsters who share their best football tips and accumulator picks. Our tipster marketplace displays real win rate and ROI so you can rank and compare experts before you buy. Every coupon is backed by escrow—if the tip loses, you get a full refund. Whether you track tipster streak and rank or simply want risk-free tips, we make it easy to find quality predictions for Ghana, Nigeria, Kenya, and South Africa.
-          </p>
-          <p className="text-[var(--text-muted)] leading-relaxed">
-            Join thousands of users who trust our platform for football predictions, betting tips, and transparent performance stats. Browse active picks, follow top tipsters, and protect your stakes with escrow. New tips are added daily from our network of audited experts.
-          </p>
+        {/* How It Works - user journey (Tipstrr/TIPR-style, not duplicating bento features) */}
+        <section className="py-12 md:py-16 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold text-[var(--text)] mb-3 text-center">How It Works</h2>
+            <p className="text-[var(--text-muted)] text-center mb-10 max-w-xl mx-auto">Get started in three simple steps. No subscriptions—pay only for the tips you want.</p>
+
+            <div className="grid md:grid-cols-3 gap-8 md:gap-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-2xl bg-emerald-500/15 border-2 border-emerald-500/30 flex items-center justify-center text-2xl font-bold text-emerald-600 dark:text-emerald-400 mb-4">1</div>
+                <h3 className="font-bold text-[var(--text)] mb-2">Browse & Compare</h3>
+                <p className="text-sm text-[var(--text-muted)]">Explore verified tipsters, check win rates and ROI, and pick the best football tips for you. Free and paid picks available.</p>
+              </div>
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-2xl bg-blue-500/15 border-2 border-blue-500/30 flex items-center justify-center text-2xl font-bold text-blue-600 dark:text-blue-400 mb-4">2</div>
+                <h3 className="font-bold text-[var(--text)] mb-2">Pick a Coupon</h3>
+                <p className="text-sm text-[var(--text-muted)]">Buy the tip or grab a free one. Funds go to escrow until the match settles. Follow top tipsters to stay updated.</p>
+              </div>
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border-2 border-amber-500/30 flex items-center justify-center text-2xl font-bold text-amber-600 dark:text-amber-400 mb-4">3</div>
+                <h3 className="font-bold text-[var(--text)] mb-2">Win or Refund</h3>
+                <p className="text-sm text-[var(--text-muted)]">If the tip wins, you get your winnings. If it loses, we refund your purchase. No risk—your stakes are protected.</p>
+              </div>
+            </div>
+
+            <div className="mt-12 p-6 rounded-2xl bg-gradient-to-r from-slate-50 to-emerald-50/40 dark:from-slate-800/50 dark:to-emerald-900/20 border border-[var(--border)]">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <h3 className="font-bold text-[var(--text)] mb-1">News & Betting Guides</h3>
+                  <p className="text-sm text-[var(--text-muted)]">Football news, transfer updates, and guides to sharpen your edge. Stay informed before you bet.</p>
+                </div>
+                <Link
+                  href="/discover"
+                  className="px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] transition-all shadow-md hover:shadow-lg whitespace-nowrap shrink-0"
+                >
+                  Explore Discover →
+                </Link>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Bento Grid Section */}
