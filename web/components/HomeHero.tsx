@@ -32,11 +32,60 @@ function formatNumber(n: number): string {
   return n + '+';
 }
 
-const statIcons: Record<string, string> = {
-  'Verified Tipsters': '✓',
-  'Tips Processed': '📊',
-  'Best Win Rate': '📈',
-  'Best ROI': '💰',
+type StatKey =
+  | 'verified'
+  | 'processed'
+  | 'winRate'
+  | 'roi'
+  | 'active'
+  | 'paidOut';
+
+const statConfig: Record<
+  StatKey,
+  { label: string; icon: string; bg: string; border: string; iconBg: string }
+> = {
+  verified: {
+    label: 'Verified Tipsters',
+    icon: '✓',
+    bg: 'bg-emerald-500/15',
+    border: 'border-emerald-500/40',
+    iconBg: 'bg-emerald-500/25 text-emerald-300',
+  },
+  processed: {
+    label: 'Tips Processed',
+    icon: '📊',
+    bg: 'bg-blue-500/15',
+    border: 'border-blue-500/40',
+    iconBg: 'bg-blue-500/25 text-blue-300',
+  },
+  winRate: {
+    label: 'Best Win Rate',
+    icon: '📈',
+    bg: 'bg-amber-500/15',
+    border: 'border-amber-500/40',
+    iconBg: 'bg-amber-500/25 text-amber-300',
+  },
+  roi: {
+    label: 'Best ROI',
+    icon: '💰',
+    bg: 'bg-rose-500/15',
+    border: 'border-rose-500/40',
+    iconBg: 'bg-rose-500/25 text-rose-300',
+  },
+  active: {
+    label: 'Active Picks',
+    icon: '⚡',
+    bg: 'bg-violet-500/15',
+    border: 'border-violet-500/40',
+    iconBg: 'bg-violet-500/25 text-violet-300',
+  },
+  paidOut: {
+    label: 'Paid Out',
+    icon: '🏆',
+    bg: 'bg-cyan-500/15',
+    border: 'border-cyan-500/40',
+    iconBg: 'bg-cyan-500/25 text-cyan-300',
+  },
 };
 
 export function HomeHero() {
@@ -57,12 +106,15 @@ export function HomeHero() {
   const s = stats || defaultStats;
   const bestWinRate = topTipster?.win_rate != null ? Math.round(Number(topTipster.win_rate) * 10) / 10 : s.winRate;
   const bestRoi = topTipster?.roi != null ? Math.round(Number(topTipster.roi) * 100) / 100 : 0;
+  const paidOutFormatted = s.totalPaidOut >= 1000 ? 'GHS ' + (s.totalPaidOut / 1000).toFixed(1) + 'K+' : 'GHS ' + s.totalPaidOut + '+';
 
-  const statItems = [
-    { value: formatNumber(s.verifiedTipsters), label: 'Verified Tipsters' },
-    { value: formatNumber(s.totalPicks), label: 'Tips Processed' },
-    { value: bestWinRate + '%', label: 'Best Win Rate' },
-    { value: bestRoi + '%', label: 'Best ROI' },
+  const statItems: { key: StatKey; value: string }[] = [
+    { key: 'verified', value: formatNumber(s.verifiedTipsters) },
+    { key: 'processed', value: formatNumber(s.totalPicks) },
+    { key: 'winRate', value: bestWinRate + '%' },
+    { key: 'roi', value: bestRoi + '%' },
+    { key: 'active', value: formatNumber(s.activePicks) },
+    { key: 'paidOut', value: paidOutFormatted },
   ];
 
   return (
@@ -121,35 +173,39 @@ export function HomeHero() {
             </Link>
             <Link
               href="/marketplace"
-              className="px-8 py-3.5 rounded-xl border border-slate-600 text-slate-300 font-semibold hover:bg-slate-800/50 hover:border-slate-500 transition-all duration-200"
+              className="px-8 py-3.5 rounded-xl border-2 border-white/50 bg-white/10 text-white font-semibold hover:bg-white/20 hover:border-white/70 transition-all duration-200 backdrop-blur-sm"
             >
               Explore Picks
             </Link>
           </div>
         </div>
 
-        {/* Modern KPI Dashboard */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          {statItems.map((item, idx) => (
-            <div
-              key={item.label}
-              className="group relative overflow-hidden rounded-2xl bg-slate-800/60 backdrop-blur-sm border border-slate-700/60 p-5 md:p-6 hover:border-emerald-500/40 hover:bg-slate-700/50 transition-all duration-300 animate-fade-in-up"
-              style={{ animationDelay: `${300 + idx * 80}ms`, animationFillMode: 'both' as const }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-emerald-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative flex items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-800 text-emerald-400 text-lg">
-                  {statIcons[item.label] ?? '•'}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-2xl md:text-3xl font-bold text-white tabular-nums tracking-tight">
-                    {item.value}
-                  </p>
-                  <p className="text-sm text-slate-400 mt-0.5 font-medium">{item.label}</p>
+        {/* Compact KPI Dashboard - 6 cards with distinct colors */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
+          {statItems.map((item, idx) => {
+            const cfg = statConfig[item.key];
+            return (
+              <div
+                key={item.key}
+                className={`group relative overflow-hidden rounded-xl backdrop-blur-sm border ${cfg.bg} ${cfg.border} px-3 py-2.5 md:px-4 md:py-3 hover:opacity-90 transition-all duration-300 animate-fade-in-up`}
+                style={{ animationDelay: `${300 + idx * 60}ms`, animationFillMode: 'both' as const }}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm ${cfg.iconBg}`}
+                  >
+                    {cfg.icon}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-lg md:text-xl font-bold text-white tabular-nums tracking-tight leading-tight">
+                      {item.value}
+                    </p>
+                    <p className="text-xs text-slate-300 font-medium truncate">{cfg.label}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
