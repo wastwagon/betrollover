@@ -253,7 +253,7 @@ export class PredictionEngineService {
         let fromApi = false;
 
         if (apiPred?.outcomes) {
-          let apiOutcome = apiPred.outcomes.find(
+          const apiOutcome = apiPred.outcomes.find(
             (a) =>
               a.outcome === outcomeNorm ||
               (outcomeNorm === 'over25' && a.outcome === 'over25') ||

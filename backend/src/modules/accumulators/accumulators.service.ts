@@ -499,7 +499,7 @@ export class AccumulatorsService {
 
     // Reaction counts and user's reacted state
     const accIds = validTickets.map(t => t.id);
-    let reactionCountMap = new Map<number, number>();
+    const reactionCountMap = new Map<number, number>();
     let userReactedSet = new Set<number>();
     if (accIds.length > 0) {
       const counts = await this.reactionRepo.createQueryBuilder('r')

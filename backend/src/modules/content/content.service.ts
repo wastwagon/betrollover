@@ -19,7 +19,7 @@ export class ContentService {
   }
 
   async update(slug: string, data: { title?: string; content?: string; metaDescription?: string }) {
-    let page = await this.repo.findOne({ where: { slug } });
+    const page = await this.repo.findOne({ where: { slug } });
     if (!page) throw new NotFoundException('Page not found');
     if (data.title !== undefined) page.title = data.title;
     if (data.content !== undefined) page.content = data.content;

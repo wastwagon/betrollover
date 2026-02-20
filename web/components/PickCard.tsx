@@ -525,7 +525,7 @@ export function PickCard({
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {price > 0 && (
-                    <>Funds are held in escrow until settlement. You'll be refunded if the coupon loses.</>
+                    <>Funds are held in escrow until settlement. You&apos;ll be refunded if the coupon loses.</>
                   )}
                 </p>
               </div>
@@ -608,7 +608,7 @@ export function PickCard({
                       <p className="font-semibold text-blue-900 dark:text-blue-200 mb-1">Funds in Escrow</p>
                       <p className="text-sm text-blue-700 dark:text-blue-300">
                         GHS {Number(price).toFixed(2)} is held in escrow. Funds will be released to the tipster only if all selections win.
-                        If any selection loses, you'll receive a full refund.
+                        If any selection loses, you&apos;ll receive a full refund.
                       </p>
                     </div>
                   </div>

@@ -83,8 +83,8 @@ export class PaystackService {
   async verifyWebhookSignature(payload: string, signature: string): Promise<boolean> {
     const secretKey = await this.getSecretKey();
     if (!secretKey) return false;
-    const crypto = require('crypto');
-    const hash = crypto.createHmac('sha512', secretKey).update(payload).digest('hex');
+    const { createHmac } = await import('crypto');
+    const hash = createHmac('sha512', secretKey).update(payload).digest('hex');
     return hash === signature;
   }
 

@@ -714,7 +714,7 @@ export class AdminService {
         link: '/wallet',
         icon: 'alert',
         sendEmail: true,
-        metadata: { amount: Number(withdrawal.amount).toFixed(2), reason: failureReason },
+        metadata: { amount: Number(withdrawal.amount).toFixed(2), reason: failureReason ?? '' },
       }).catch(() => {});
     } else if (status === 'completed') {
       await this.notificationsService.create({
