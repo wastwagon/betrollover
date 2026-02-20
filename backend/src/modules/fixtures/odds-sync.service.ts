@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
+import { safeJson } from '../../common/fetch-json.util';
 import { Fixture } from './entities/fixture.entity';
 import { FixtureOdd } from './entities/fixture-odd.entity';
 import { League } from './entities/league.entity';
@@ -77,7 +78,7 @@ export class OddsSyncService {
           continue;
         }
 
-        const data = await res.json();
+        const data = await safeJson<any>(res);
         
         // Check if API returned data
         if (!data?.response || data.response.length === 0) {
@@ -169,7 +170,7 @@ export class OddsSyncService {
           this.logger.warn(`Odds by date ${date}: ${res.status}`);
           continue;
         }
-        const data = await res.json();
+        const data = await safeJson<any>(res);
         const items = data?.response || [];
         if (items.length === 0) continue;
 

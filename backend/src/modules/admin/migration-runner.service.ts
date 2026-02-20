@@ -86,6 +86,28 @@ export class MigrationRunnerService {
     return { marked };
   }
 
+  /** Ensure age_verified_at exists (fixes 500 on tipster-requests, impersonate if 045 was marked without running). */
+  async ensureAgeVerifiedColumn(): Promise<void> {
+    try {
+      await this.dataSource.query(
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS age_verified_at TIMESTAMP NULL`,
+      );
+    } catch (err: any) {
+      this.logger.warn(`ensureAgeVerifiedColumn failed (non-fatal): ${err?.message || err}`);
+    }
+  }
+
+  /** Ensure date_of_birth exists (fixes 500 when User relation loads in tipster-requests, impersonate). */
+  async ensureDateOfBirthColumn(): Promise<void> {
+    try {
+      await this.dataSource.query(
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS date_of_birth DATE NULL`,
+      );
+    } catch (err: any) {
+      this.logger.warn(`ensureDateOfBirthColumn failed (non-fatal): ${err?.message || err}`);
+    }
+  }
+
   /** Run all pending migrations (numeric-prefix .sql files not in applied_migrations). */
   async runPending(): Promise<{ applied: string[]; skipped: number; errors: string[] }> {
     const applied: string[] = [];

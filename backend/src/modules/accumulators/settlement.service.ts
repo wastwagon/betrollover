@@ -172,10 +172,10 @@ export class SettlementService {
     if (pred.includes('12') || pred.includes('home_away') || pred.includes('home or away')) {
       return homeWin || awayWin ? 'won' : 'lost';
     }
-    if (pred.includes('1x') || pred.includes('home_draw') || pred.includes('home or draw')) {
+    if (pred.includes('1x') || pred.includes('home_draw') || pred.includes('home or draw') || pred.includes('home/draw') || pred.includes('draw/home')) {
       return homeWin || draw ? 'won' : 'lost';
     }
-    if (pred.includes('x2') || pred.includes('draw_away') || pred.includes('draw or away')) {
+    if (pred.includes('x2') || pred.includes('draw_away') || pred.includes('draw or away') || pred.includes('draw/away') || pred.includes('away/draw')) {
       return awayWin || draw ? 'won' : 'lost';
     }
 

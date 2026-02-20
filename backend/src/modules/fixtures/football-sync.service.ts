@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { safeJson } from '../../common/fetch-json.util';
 import { Fixture } from './entities/fixture.entity';
 import { League } from './entities/league.entity';
 import { EnabledLeague } from './entities/enabled-league.entity';
@@ -83,8 +84,8 @@ export class FootballSyncService {
       fetch(`${API_BASE}/leagues?type=league&current=true`, { headers }),
       fetch(`${API_BASE}/leagues?type=cup&current=true`, { headers }),
     ]);
-    const leagueData = await leagueRes.json();
-    const cupData = await cupRes.json();
+    const leagueData = await safeJson<any>(leagueRes);
+    const cupData = await safeJson<any>(cupRes);
     const leagueList = leagueData.response || [];
     const cupList = cupData.response || [];
     const enabledSet = new Set(enabledLeagueIds);
@@ -119,7 +120,7 @@ export class FootballSyncService {
     for (const apiId of toFetch) {
       try {
         const res = await fetch(`${API_BASE}/leagues?id=${apiId}`, { headers });
-        const data = await res.json();
+        const data = await safeJson<any>(res);
         const items = data.response || [];
         const l = items[0];
         if (l?.league) {
@@ -173,7 +174,7 @@ export class FootballSyncService {
     for (const date of dates) {
       // API-Football fixtures endpoint does NOT support 'page' param - fetch once per date
       const res = await fetch(`${API_BASE}/fixtures?date=${date}`, { headers });
-      const data = await res.json();
+      const data = await safeJson<any>(res);
       if (data.errors && Object.keys(data.errors).length > 0) {
         this.logger.warn(`API error for ${date}: ${JSON.stringify(data.errors)}`);
         continue;
@@ -280,7 +281,7 @@ export class FootballSyncService {
       try {
         const res = await fetch(`${API_BASE}/fixtures?id=${chunk.join(',')}`, { headers });
         if (!res.ok) continue;
-        const data = await res.json();
+        const data = await safeJson<any>(res);
         const items = data?.response || [];
         for (const item of items) {
           const { home, away } = extractTeamNames(item);

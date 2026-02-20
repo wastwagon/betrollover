@@ -186,10 +186,20 @@ async function bootstrap() {
     if (result.errors.length > 0) {
       logger.error(`Migration errors: ${result.errors.join('; ')}`);
     }
+    // Ensure age_verified_at and date_of_birth exist (fixes 500 on tipster-requests, impersonate)
+    await migrationRunner.ensureAgeVerifiedColumn();
+    await migrationRunner.ensureDateOfBirthColumn();
   } catch (err: any) {
     logger.error(`Migration bootstrap failed: ${err?.message || err}`);
     if (isProduction) {
       logger.warn('API will start anyway. Go to Admin → Settings → Database migrations and click "Mark all as applied" if this DB was already migrated, then restart.');
+    }
+    try {
+      const migrationRunner = app.get(MigrationRunnerService);
+      await migrationRunner.ensureAgeVerifiedColumn();
+      await migrationRunner.ensureDateOfBirthColumn();
+    } catch {
+      // best-effort schema fix
     }
   }
 

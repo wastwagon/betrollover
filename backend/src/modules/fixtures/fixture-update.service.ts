@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual, In, Not } from 'typeorm';
+import { safeJson } from '../../common/fetch-json.util';
 import { Fixture } from './entities/fixture.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -96,13 +97,13 @@ export class FixtureUpdateService {
       });
 
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
+        const errorData = await safeJson(res).catch(() => ({}));
         this.logger.error(`Failed to fetch live fixtures: ${res.status}`, errorData);
         return { updated: 0, errors: 1 };
       }
 
       await this.updateUsage(res.headers);
-      const data = await res.json();
+      const data = await safeJson<any>(res);
       const liveFixtures = data.response || [];
 
       // Get fixtures in database that are live or about to be live
@@ -193,13 +194,13 @@ export class FixtureUpdateService {
         });
 
         if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}));
+          const errorData = await safeJson(res).catch(() => ({}));
           this.logger.error(`Failed to fetch fixtures batch: ${res.status}`, errorData);
           continue;
         }
 
         await this.updateUsage(res.headers);
-        const data = await res.json();
+        const data = await safeJson<any>(res);
         const fixtures = data.response || [];
 
 
