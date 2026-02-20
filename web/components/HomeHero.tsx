@@ -91,6 +91,7 @@ const statConfig: Record<
 export function HomeHero() {
   const [stats, setStats] = useState<PublicStats | null>(null);
   const [topTipster, setTopTipster] = useState<LeaderboardEntry | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const fetchStats = () => {
     Promise.all([
@@ -110,6 +111,13 @@ export function HomeHero() {
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
+
+  useEffect(() => {
+    setIsLoggedIn(!!(typeof window !== 'undefined' && localStorage.getItem('token')));
+    const onStorage = () => setIsLoggedIn(!!localStorage.getItem('token'));
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   const s = stats || defaultStats;
@@ -174,12 +182,14 @@ export function HomeHero() {
             Track win rate and ROI. When our tipsters&apos; coupons lose, you get a full refund. Your shield against losses.
           </p>
           <div className="flex flex-wrap gap-4 justify-center animate-fade-in-up animate-delay-200">
-            <Link
-              href="/register"
-              className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold hover:from-emerald-400 hover:to-emerald-500 hover:scale-105 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:shadow-xl"
-            >
-              Join Free
-            </Link>
+            {!isLoggedIn && (
+              <Link
+                href="/register"
+                className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold hover:from-emerald-400 hover:to-emerald-500 hover:scale-105 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:shadow-xl"
+              >
+                Join Free
+              </Link>
+            )}
             <Link
               href="/marketplace"
               className="px-8 py-3.5 rounded-xl border-2 border-white/50 bg-white/10 text-white font-semibold hover:bg-white/20 hover:border-white/70 transition-all duration-200 backdrop-blur-sm"
