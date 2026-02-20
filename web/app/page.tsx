@@ -1,6 +1,10 @@
 import Link from 'next/link';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
+import { HomeHero } from '@/components/HomeHero';
+import { HomePopularTipsters } from '@/components/HomePopularTipsters';
+import { HomePopularEvents } from '@/components/HomePopularEvents';
+import { HomeFreeTipOfTheDay } from '@/components/HomeFreeTipOfTheDay';
 import { SITE_URL, getAfricaAlternates } from '@/lib/site-config';
 import type { Metadata } from 'next';
 
@@ -20,6 +24,12 @@ export default function HomePage() {
       <UnifiedHeader />
 
       <main className="bg-[var(--bg)]">
+        <HomeHero />
+        <HomePopularTipsters />
+        <section id="free-tip-of-the-day">
+          <HomeFreeTipOfTheDay />
+        </section>
+        <HomePopularEvents />
         {/* Bento Grid Section */}
         <section className="py-10 md:py-14 lg:py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -542,6 +542,85 @@ export class AccumulatorsService {
     });
   }
 
+  /** Free Tip of the Day: latest coupon from The Gambler (in marketplace). No auth. */
+  async getFreeTipOfTheDay() {
+    const gambler = await this.usersRepo.findOne({
+      where: { username: 'TheGambler', role: UserRole.TIPSTER },
+      select: ['id'],
+    });
+    if (!gambler) return null;
+
+    const tickets = await this.ticketRepo.find({
+      where: {
+        userId: gambler.id,
+        status: 'active',
+        result: 'pending',
+        isMarketplace: true,
+      },
+      relations: ['picks'],
+      order: { createdAt: 'DESC' },
+      take: 5,
+    });
+    if (tickets.length === 0) return null;
+
+    const accIds = tickets.map((t) => t.id);
+    const rows = await this.marketplaceRepo.find({
+      where: { accumulatorId: In(accIds), status: 'active' },
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount'],
+    });
+
+    const enriched = await this.enrichPicksWithFixtureScores(tickets);
+    const now = new Date();
+    const valid = enriched.filter((t) => {
+      if (!t.picks?.length) return false;
+      return !t.picks.some((p) => p.matchDate && new Date(p.matchDate) <= now);
+    });
+    // Only return coupons that have an active marketplace listing
+    const validWithListing = valid.filter((t) => rows.some((r) => r.accumulatorId === t.id));
+    if (validWithListing.length === 0) return null;
+
+    const ticket = validWithListing[0];
+    const row = rows.find((r) => r.accumulatorId === ticket.id);
+    const items = await this.enrichWithTipsterMetadata([ticket], row ? [row] : []);
+    return items[0] ?? null;
+  }
+
+  /** Popular upcoming events: fixtures with most picks in active coupons. No auth. */
+  async getPopularEvents(limit = 6) {
+    const now = new Date();
+    const rows = await this.dataSource
+      .createQueryBuilder()
+      .select('ap.fixture_id', 'fixtureId')
+      .addSelect('COUNT(*)', 'tipCount')
+      .addSelect('f.home_team_name', 'homeTeam')
+      .addSelect('f.away_team_name', 'awayTeam')
+      .addSelect('f.league_name', 'leagueName')
+      .addSelect('f.match_date', 'matchDate')
+      .from('accumulator_picks', 'ap')
+      .innerJoin('fixtures', 'f', 'f.id = ap.fixture_id')
+      .where('ap.fixture_id IS NOT NULL')
+      .andWhere('f.match_date > :now', { now })
+      .andWhere('f.status IN (:...statuses)', { statuses: ['NS', 'TBD'] })
+      .groupBy('ap.fixture_id')
+      .addGroupBy('f.id')
+      .addGroupBy('f.home_team_name')
+      .addGroupBy('f.away_team_name')
+      .addGroupBy('f.league_name')
+      .addGroupBy('f.match_date')
+      .addOrderBy('COUNT(*)', 'DESC')
+      .limit(limit)
+      .getRawMany();
+
+    return rows.map((r: any) => ({
+      fixtureId: Number(r.fixtureId),
+      homeTeam: r.homeTeam,
+      awayTeam: r.awayTeam,
+      leagueName: r.leagueName,
+      matchDate: r.matchDate,
+      tipCount: parseInt(r.tipCount, 10) || 0,
+    }));
+  }
+
   /** Public stats for homepage - no auth required */
   async getPublicStats() {
     const [

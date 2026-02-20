@@ -71,6 +71,17 @@ export class AccumulatorsController {
     return this.accumulatorsService.getPublicStats();
   }
 
+  @Get('free-tip-of-the-day')
+  getFreeTipOfTheDay() {
+    return this.accumulatorsService.getFreeTipOfTheDay();
+  }
+
+  @Get('popular-events')
+  getPopularEvents(@Query('limit') limit?: string) {
+    const limitVal = Math.min(Math.max(parseInt(limit || '6', 10) || 6, 1), 20);
+    return this.accumulatorsService.getPopularEvents(limitVal);
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard, AgeVerifiedGuard)
   getById(@Param('id', ParseIntPipe) id: number) {
