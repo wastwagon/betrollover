@@ -92,15 +92,24 @@ export function HomeHero() {
   const [stats, setStats] = useState<PublicStats | null>(null);
   const [topTipster, setTopTipster] = useState<LeaderboardEntry | null>(null);
 
-  useEffect(() => {
+  const fetchStats = () => {
     Promise.all([
-      fetch(getApiUrl() + '/accumulators/stats/public').then((r) => (r.ok ? r.json() : null)),
-      fetch(getApiUrl() + '/leaderboard?period=all_time&limit=1').then((r) => (r.ok ? r.json() : { leaderboard: [] })),
+      fetch(getApiUrl() + '/accumulators/stats/public', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)),
+      fetch(getApiUrl() + '/leaderboard?period=all_time&limit=1', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : { leaderboard: [] })),
     ]).then(([data, leaderData]) => {
       if (data) setStats(data);
       const entries = (leaderData?.leaderboard || []) as LeaderboardEntry[];
       if (entries.length > 0) setTopTipster(entries[0]);
     }).catch(() => setStats(defaultStats));
+  };
+
+  useEffect(() => {
+    fetchStats();
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') fetchStats();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
   }, []);
 
   const s = stats || defaultStats;
