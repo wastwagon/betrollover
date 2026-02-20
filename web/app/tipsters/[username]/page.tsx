@@ -12,7 +12,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { useToast } from '@/hooks/useToast';
 import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
-import { getApiUrl } from '@/lib/site-config';
+import { getApiUrl, getAvatarUrl } from '@/lib/site-config';
 
 interface Pick {
   id?: number;
@@ -312,13 +312,12 @@ export default function TipsterProfilePage() {
                 <div className="w-20 h-20 rounded-full overflow-hidden bg-white dark:bg-gray-800 border-2 border-emerald-200 dark:border-emerald-600 shadow-md">
                 {tipster.avatar_url && !avatarError ? (
                   <Image
-                    src={tipster.avatar_url}
+                    src={getAvatarUrl(tipster.avatar_url, 80)!}
                     alt={tipster.display_name}
                     width={80}
                     height={80}
                     className="w-full h-full object-cover"
                     onError={() => setAvatarError(true)}
-                    unoptimized
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-[var(--primary)] bg-[var(--primary-light)]">

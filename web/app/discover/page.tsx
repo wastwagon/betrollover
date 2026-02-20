@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { PageHeader } from '@/components/PageHeader';
@@ -219,8 +220,8 @@ function NewsTab() {
             >
               <div className="flex flex-col sm:flex-row">
                 {a.imageUrl && (
-                  <div className="sm:w-48 h-32 sm:h-auto flex-shrink-0 bg-[var(--bg)]">
-                    <img src={a.imageUrl} alt="" className="w-full h-full object-cover" />
+                  <div className="sm:w-48 h-32 sm:h-auto flex-shrink-0 bg-[var(--bg)] relative">
+                    <Image src={a.imageUrl} alt="" width={192} height={128} className="w-full h-full object-cover" unoptimized />
                   </div>
                 )}
                 <div className="p-6 flex-1">

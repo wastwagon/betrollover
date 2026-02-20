@@ -24,6 +24,7 @@ import { AdsModule } from './modules/ads/ads.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { PushModule } from './modules/push/push.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { AvatarsModule } from './modules/avatars/avatars.module';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     AdsModule,
     SubscriptionsModule,
     PushModule,
+    AvatarsModule,
   ],
 })
 export class AppModule {}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
 
@@ -96,11 +97,9 @@ export default function NewsArticlePage() {
             {article.title}
           </h1>
           {article.imageUrl && (
-            <img
-              src={article.imageUrl}
-              alt=""
-              className="w-full rounded-xl mb-6 object-cover max-h-64"
-            />
+            <div className="relative w-full h-64 mb-6 rounded-xl overflow-hidden">
+              <Image src={article.imageUrl} alt="" fill className="object-cover" unoptimized sizes="(max-width: 768px) 100vw, 768px" />
+            </div>
           )}
           <div className="prose prose-slate prose-sm max-w-none text-[var(--text)] text-[15px] leading-relaxed [&>p]:mb-4">
             {(article.content || '').trim()

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getAvatarUrl } from '@/lib/site-config';
 
 export interface TipsterCardData {
   id: number;
@@ -53,7 +54,7 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
           <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden bg-[var(--bg)] border border-[var(--border)]">
             {showAvatar ? (
               <Image
-                src={tipster.avatar_url!}
+                src={getAvatarUrl(tipster.avatar_url!, 48)!}
                 alt={tipster.display_name}
                 width={48}
                 height={48}

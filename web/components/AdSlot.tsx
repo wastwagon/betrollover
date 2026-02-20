@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getApiUrl } from '@/lib/site-config';
 
 interface AdCampaign {
@@ -66,11 +67,14 @@ export function AdSlot({ zoneSlug, className = '' }: AdSlotProps) {
         onClick={handleClick}
         className="block rounded-xl overflow-hidden border border-[var(--border)] hover:border-[var(--primary)]/30 transition-colors"
       >
-        <img
+        <Image
           src={ad.imageUrl}
           alt={`Ad: ${ad.advertiserName}`}
+          width={ad.width || 300}
+          height={ad.height || 250}
           className="w-full h-auto"
           style={{ maxWidth: ad.width || 300, maxHeight: ad.height || 250, objectFit: 'contain' }}
+          unoptimized
         />
       </Link>
       <span className="block text-[10px] text-[var(--text-muted)] mt-1 text-center">Ad</span>

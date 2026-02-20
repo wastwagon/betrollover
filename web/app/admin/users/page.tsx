@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { AdminSidebar } from '@/components/AdminSidebar';
-import { getApiUrl } from '@/lib/site-config';
+import { getApiUrl, getAvatarUrl } from '@/lib/site-config';
 
 const API_URL = getApiUrl();
 
@@ -23,6 +24,7 @@ export default function AdminUsersPage() {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [total, setTotal] = useState(0);
+  const [avatarErrors, setAvatarErrors] = useState<Set<number>>(new Set());
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -280,15 +282,17 @@ export default function AdminUsersPage() {
                         <div className="flex items-center gap-3">
                           <div className="relative group">
                             <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 relative">
-                              {u.avatar && (u.avatar.startsWith('http') || u.avatar.startsWith('/')) ? (
-                                <img
-                                  src={u.avatar}
+                              {u.avatar && (u.avatar.startsWith('http') || u.avatar.startsWith('/')) && !avatarErrors.has(u.id) ? (
+                                <Image
+                                  src={u.avatar.startsWith('http') ? u.avatar : getAvatarUrl(u.avatar, 40)!}
                                   alt=""
+                                  width={40}
+                                  height={40}
                                   className="w-full h-full object-cover absolute inset-0"
-                                  onError={(e) => { e.currentTarget.style.display = 'none'; const fallback = e.currentTarget.parentElement?.querySelector('[data-avatar-fallback]'); if (fallback) (fallback as HTMLElement).classList.remove('hidden'); }}
+                                  onError={() => setAvatarErrors((prev) => new Set(prev).add(u.id))}
                                 />
                               ) : null}
-                              <span className={`text-sm font-bold text-gray-500 dark:text-gray-400 ${u.avatar && (u.avatar.startsWith('http') || u.avatar.startsWith('/')) ? 'hidden' : ''}`} data-avatar-fallback>
+                              <span className={`text-sm font-bold text-gray-500 dark:text-gray-400 ${u.avatar && (u.avatar.startsWith('http') || u.avatar.startsWith('/')) && !avatarErrors.has(u.id) ? 'hidden' : ''}`} data-avatar-fallback>
                                 {(u.displayName || u.username || 'U').charAt(0).toUpperCase()}
                               </span>
                             </div>

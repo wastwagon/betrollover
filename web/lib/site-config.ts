@@ -24,7 +24,7 @@ export const getApiUrl = (): string => {
 
 export const SITE_NAME = 'BetRollover';
 export const SITE_DESCRIPTION =
-  'Risk-free football tips from verified tipsters. Track win rate, ROI, and rank. Escrow protection—win or get your money back. Africa\'s premier tipster marketplace for Ghana, Nigeria, Kenya & beyond.';
+  'Risk-free football tips from verified tipsters. Track win rate, ROI & streak. Escrow—win or refund. Africa\'s tipster marketplace for Ghana, Nigeria, Kenya.';
 
 /** Africa-focused + global SEO keywords for discoverability */
 export const SITE_KEYWORDS = [
@@ -50,6 +50,21 @@ export const SITE_KEYWORDS = [
 
 /** Africa locales for hreflang—signals relevance to search engines in these regions */
 export const AFRICA_LOCALE_CODES = ['en-GH', 'en-NG', 'en-ZA', 'en-KE', 'en', 'x-default'] as const;
+
+/** Build avatar URL with optional resize (reduces 25MB+ AI tipster avatars to ~5KB) */
+export function getAvatarUrl(avatarPath: string | null | undefined, size = 96): string | null {
+  if (!avatarPath) return null;
+  if (avatarPath.startsWith('http')) return avatarPath;
+  const path = avatarPath.startsWith('/') ? avatarPath : `/${avatarPath}`;
+  if (path.startsWith('/avatars/') || path.startsWith('/uploads/avatars/')) {
+    const base = getApiBaseUrl();
+    if (base === '/api/backend') {
+      return `/api/avatars/resize?path=${encodeURIComponent(path)}&size=${size}`;
+    }
+    return `${base}/avatars/resize?path=${encodeURIComponent(path)}&size=${size}`;
+  }
+  return `${getApiBaseUrl()}${path}`;
+}
 
 /** API origin for preconnect (performance: saves ~300ms LCP when API is external) */
 export function getApiOriginForPreconnect(): string | null {

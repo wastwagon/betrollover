@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getAvatarUrl } from '@/lib/site-config';
 
 interface Pick {
   id?: number;
@@ -179,13 +180,12 @@ export function PickCard({
                 {tipster?.avatarUrl && !avatarError ? (
                   <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden bg-[var(--border)] relative">
                     <Image
-                      src={tipster.avatarUrl}
+                      src={getAvatarUrl(tipster.avatarUrl, 32)!}
                       alt={tipster.displayName}
                       width={32}
                       height={32}
                       className="w-full h-full object-cover"
                       onError={() => setAvatarError(true)}
-                      unoptimized
                     />
                   </div>
                 ) : (

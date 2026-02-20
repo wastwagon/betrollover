@@ -15,7 +15,7 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `Football Tips | Tipster Marketplace | Win Rate & ROI — ${SITE_NAME}`,
+    default: `Verified Football Tips | Win Rate & ROI — ${SITE_NAME}`,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     alternateLocale: ['en_NG', 'en_ZA', 'en_KE'],
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: `Football Tips | Tipster Marketplace | Win Rate & ROI — ${SITE_NAME}`,
+    title: `Verified Football Tips | Win Rate & ROI — ${SITE_NAME}`,
     description: SITE_DESCRIPTION,
     images: [
       { url: '/og-image.png', width: 1200, height: 630, alt: `${SITE_NAME} - Africa's Premier Tipster Marketplace` },
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: `Football Tips | Tipster Marketplace | Win Rate & ROI — ${SITE_NAME}`,
+    title: `Verified Football Tips | Win Rate & ROI — ${SITE_NAME}`,
     description: SITE_DESCRIPTION,
     creator: '@betrollover',
   },

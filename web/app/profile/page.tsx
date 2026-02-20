@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 
-import { getApiUrl, getApiBaseUrl } from '@/lib/site-config';
+import { getApiUrl, getAvatarUrl } from '@/lib/site-config';
 
 interface Profile {
   id: number;
@@ -83,7 +84,7 @@ export default function ProfilePage() {
     }
   };
 
-  const avatarSrc = profile?.avatar ? (profile.avatar.startsWith('http') ? profile.avatar : `${getApiBaseUrl()}${profile.avatar}`) : null;
+  const avatarSrc = getAvatarUrl(profile?.avatar ?? null, 96);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -200,9 +201,11 @@ export default function ProfilePage() {
                 <div className="flex flex-col items-center gap-2">
                   <div className="w-24 h-24 rounded-full overflow-hidden bg-[var(--border)] flex items-center justify-center border-2 border-[var(--border)]">
                     {avatarSrc && !avatarError ? (
-                      <img
-                        src={avatarSrc}
+                      <Image
+                        src={avatarSrc!}
                         alt="Profile"
+                        width={96}
+                        height={96}
                         className="w-full h-full object-cover"
                         onError={() => setAvatarError(true)}
                       />

@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { getAvatarUrl } from '@/lib/site-config';
 import { useRouter } from 'next/navigation';
 
 export interface PredictionFixture {
@@ -106,10 +108,11 @@ export function PredictionCard({ prediction, onCopyBet, className = '', linkToDe
           onClick={(e) => e.stopPropagation()}
         >
             {showAvatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={prediction.avatar_url!}
+              <Image
+                src={getAvatarUrl(prediction.avatar_url!, 40)!}
                 alt={tipsterName}
+                width={40}
+                height={40}
                 className="w-full h-full object-cover"
                 onError={() => setAvatarError(true)}
               />

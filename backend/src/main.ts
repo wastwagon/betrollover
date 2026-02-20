@@ -37,6 +37,7 @@ async function bootstrap() {
       { path: 'wallet/paystack-webhook', method: RequestMethod.POST },
       { path: 'docs', method: RequestMethod.ALL },
       { path: 'docs-json', method: RequestMethod.ALL },
+      { path: 'avatars', method: RequestMethod.ALL },
     ],
   });
 
