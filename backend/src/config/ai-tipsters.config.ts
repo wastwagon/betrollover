@@ -468,7 +468,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2', 'BTTS', 'Over/Under', 'Double Chance'],
-      max_daily_predictions: 3,
+      max_daily_predictions: 999,
     },
   },
   {

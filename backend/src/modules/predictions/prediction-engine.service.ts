@@ -172,9 +172,12 @@ export class PredictionEngineService {
       if (!tipster) continue;
 
       const usedFixtureIds = new Set<number>();
+      const maxForTipster = tipsterConfig.personality.max_daily_predictions ?? 999;
       let pred = this.createTipsterPrediction(tipsterConfig, tipster.id, fixturePredictions, usedFixtureIds);
-      while (pred) {
+      let count = 0;
+      while (pred && count < maxForTipster) {
         allPredictions.push(pred);
+        count++;
         pred.fixtures.forEach((f) => usedFixtureIds.add(f.fixtureId));
         pred = this.createTipsterPrediction(tipsterConfig, tipster.id, fixturePredictions, usedFixtureIds);
       }
