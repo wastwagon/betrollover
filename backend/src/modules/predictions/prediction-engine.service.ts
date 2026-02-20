@@ -159,7 +159,7 @@ export class PredictionEngineService {
     const fixturePredictions = await this.generateFixturePredictionsHybrid(withOdds, apiPredictionsMap);
     this.logger.log(`Generated predictions for ${fixturePredictions.length} fixtures`);
 
-    // 6. For each tipster, create best 2-fixture acca
+    // 6. For each tipster, create multiple 2-fixture accas (no max cap; no fixture repeat)
     const allPredictions: TipsterPredictionResult[] = [];
     const tipsterByUsername = new Map<string, Tipster>();
     const dbTipsters = await this.tipsterRepo.find({ where: { isAi: true } });
@@ -171,9 +171,12 @@ export class PredictionEngineService {
       const tipster = tipsterByUsername.get(tipsterConfig.username);
       if (!tipster) continue;
 
-      const pred = this.createTipsterPrediction(tipsterConfig, tipster.id, fixturePredictions);
-      if (pred) {
+      const usedFixtureIds = new Set<number>();
+      let pred = this.createTipsterPrediction(tipsterConfig, tipster.id, fixturePredictions, usedFixtureIds);
+      while (pred) {
         allPredictions.push(pred);
+        pred.fixtures.forEach((f) => usedFixtureIds.add(f.fixtureId));
+        pred = this.createTipsterPrediction(tipsterConfig, tipster.id, fixturePredictions, usedFixtureIds);
       }
     }
 
@@ -445,9 +448,11 @@ export class PredictionEngineService {
     tipsterConfig: AiTipsterConfig,
     tipsterId: number,
     fixturePredictions: FixturePrediction[],
+    excludeFixtureIds: Set<number> = new Set(),
   ): TipsterPredictionResult | null {
     const personality = tipsterConfig.personality;
-    const suitable = this.filterByPersonality(fixturePredictions, personality);
+    const available = fixturePredictions.filter((fp) => !excludeFixtureIds.has(fp.fixtureId));
+    const suitable = this.filterByPersonality(available, personality);
     const bestAcca = this.findBest2FixtureAcca(suitable, personality);
     this.logger.debug(
       `${tipsterConfig.username}: ${suitable.length} suitable → ${bestAcca ? 'coupon' : 'no acca in 2–4 odds'}`,
@@ -503,14 +508,6 @@ export class PredictionEngineService {
   ): Promise<void> {
 
     for (const pred of predictions) {
-      const existing = await this.predictionRepo.findOne({
-        where: { tipsterId: pred.tipsterId, predictionDate: predictionDate as any },
-      });
-      if (existing) {
-        this.logger.debug(`Prediction already exists for tipster ${pred.tipsterId} on ${predictionDate}, skipping.`);
-        continue;
-      }
-
       const prediction = await this.predictionRepo.save({
         tipsterId: pred.tipsterId,
         predictionTitle: '2-Pick Acca',
