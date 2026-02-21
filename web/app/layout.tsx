@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { DM_Sans } from 'next/font/google';
 import { QueryProvider } from '@/components/QueryProvider';
+import { SlipCartProvider } from '@/context/SlipCartContext';
+import { TopBar } from '@/components/TopBar';
 import { AnalyticsBeacon } from '@/components/AnalyticsBeacon';
 import { JsonLdScript } from '@/components/JsonLdScript';
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS, getApiOriginForPreconnect } from '@/lib/site-config';
@@ -88,7 +90,12 @@ export default function RootLayout({
       <body className="min-h-screen bg-[var(--bg)] font-sans antialiased">
         <JsonLdScript />
         <AnalyticsBeacon />
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <SlipCartProvider>
+            <TopBar />
+            {children}
+          </SlipCartProvider>
+        </QueryProvider>
       </body>
     </html>
   );

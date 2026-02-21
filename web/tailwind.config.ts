@@ -5,6 +5,7 @@ const config: Config = {
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './context/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
@@ -56,6 +57,7 @@ const config: Config = {
         'pulse-glow': 'pulseGlow 3s infinite',
         'gradient-shift': 'gradientShift 12s ease-in-out infinite',
         'orb-drift': 'orbDrift 15s ease-in-out infinite',
+        'marquee': 'marquee 25s linear infinite',
       },
       animationDelay: {
         '100': '100ms',
@@ -93,6 +95,10 @@ const config: Config = {
           '25%': { transform: 'translate(10%, -8%) scale(1.05)' },
           '50%': { transform: 'translate(-5%, 5%) scale(0.95)' },
           '75%': { transform: 'translate(-8%, -3%) scale(1.02)' },
+        },
+        marquee: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
         },
       },
     },

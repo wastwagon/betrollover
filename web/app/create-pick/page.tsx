@@ -14,6 +14,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
 import { getApiUrl } from '@/lib/site-config';
+import { useSlipCart } from '@/context/SlipCartContext';
 
 interface FixtureOdd {
   id: number;
@@ -37,14 +38,6 @@ interface Fixture {
     name: string;
     country: string | null;
   } | null;
-}
-
-interface Selection {
-  fixtureId: number;
-  matchDescription: string;
-  prediction: string;
-  odds: number;
-  matchDate: string;
 }
 
 // Group odds by market type for better display
@@ -85,8 +78,8 @@ function filterCorrectScoreOdds(odds: FixtureOdd[]): FixtureOdd[] {
 
 export default function CreatePickPage() {
   const router = useRouter();
+  const { selections, addSelection: addToCart, removeSelection: removeFromCart, clearCart } = useSlipCart();
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
-  const [selections, setSelections] = useState<Selection[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState(0);
@@ -407,27 +400,19 @@ export default function CreatePickPage() {
   const addSelection = (f: Fixture, odd: FixtureOdd) => {
     const matchDesc = `${f.homeTeamName} vs ${f.awayTeamName}`;
     const pred = `${odd.marketName}: ${odd.marketValue}`;
-    // Backend expects apiId for marketplace; use apiId when available, else id
     const fid = f.apiId ?? f.id;
-    if (selections.some((s) => s.fixtureId === fid && s.prediction === pred)) return;
-    setSelections((prev) => [
-      ...prev,
-      {
-        fixtureId: fid,
-        matchDescription: matchDesc,
-        prediction: pred,
-        odds: Number(odd.odds),
-        matchDate: f.matchDate,
-      },
-    ]);
+    addToCart({
+      fixtureId: fid,
+      matchDescription: matchDesc,
+      prediction: pred,
+      odds: Number(odd.odds),
+      matchDate: f.matchDate,
+    });
   };
 
   const removeSelection = (idx: number) => {
-    setSelections((prev) => {
-      const next = prev.filter((_, i) => i !== idx);
-      if (next.length === 0) setSlipSheetOpen(false);
-      return next;
-    });
+    removeFromCart(idx);
+    if (selections.length === 1) setSlipSheetOpen(false);
   };
 
   const totalOdds = selections.reduce((a, s) => a * s.odds, 1);
@@ -477,6 +462,7 @@ export default function CreatePickPage() {
       return;
     }
     showSuccess('Pick created successfully!');
+    clearCart();
     router.push('/my-picks');
   };
 
@@ -525,7 +511,7 @@ export default function CreatePickPage() {
   };
 
   return (
-    <DashboardShell>
+    <DashboardShell slipCount={selections.length}>
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
