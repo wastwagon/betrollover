@@ -26,12 +26,26 @@ interface Tipster {
   rank: number;
 }
 
+const SPORT_META: Record<string, { icon: string; label: string }> = {
+  football:          { icon: '⚽', label: 'Football' },
+  basketball:        { icon: '🏀', label: 'Basketball' },
+  rugby:             { icon: '🏉', label: 'Rugby' },
+  mma:               { icon: '🥊', label: 'MMA' },
+  volleyball:        { icon: '🏐', label: 'Volleyball' },
+  hockey:            { icon: '🏒', label: 'Hockey' },
+  american_football: { icon: '🏈', label: 'Amer. Football' },
+  tennis:            { icon: '🎾', label: 'Tennis' },
+  'multi-sport':     { icon: '🌍', label: 'Multi-Sport' },
+  multi:             { icon: '🌍', label: 'Multi-Sport' },
+};
+
 interface PickCardProps {
   id: number;
   title: string;
   totalPicks: number;
   totalOdds: number;
   price: number;
+  sport?: string;
   status?: string;
   result?: string;
   picks: Pick[];
@@ -51,6 +65,7 @@ export function PickCard({
   totalPicks,
   totalOdds,
   price,
+  sport,
   status,
   result,
   picks,
@@ -63,6 +78,7 @@ export function PickCard({
   purchasing = false,
   onView,
 }: PickCardProps) {
+  const sportMeta = sport ? (SPORT_META[sport.toLowerCase()] ?? null) : null;
   const isFree = price === 0;
   const showFullDetails = isFree || isPurchased;
 
@@ -118,11 +134,18 @@ export function PickCard({
         <Text style={styles.metaText}>
           {totalPicks} picks • {Number(totalOdds).toFixed(2)} odds
         </Text>
-        {displayStatus && (
-          <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-            <Text style={styles.statusText}>{displayStatus.replace(/_/g, ' ')}</Text>
-          </View>
-        )}
+        <View style={styles.metaBadges}>
+          {sportMeta && (
+            <View style={styles.sportBadge}>
+              <Text style={styles.sportBadgeText}>{sportMeta.icon} {sportMeta.label}</Text>
+            </View>
+          )}
+          {displayStatus && (
+            <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+              <Text style={styles.statusText}>{displayStatus.replace(/_/g, ' ')}</Text>
+            </View>
+          )}
+        </View>
       </View>
       {price > 0 && (
         <Text style={styles.price}>GHS {Number(price).toFixed(2)}</Text>
@@ -256,6 +279,26 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 12,
+    color: colors.textMuted,
+    flex: 1,
+  },
+  metaBadges: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  sportBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: colors.bgWarm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  sportBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
     color: colors.textMuted,
   },
   statusBadge: {

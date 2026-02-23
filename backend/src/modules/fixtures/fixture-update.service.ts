@@ -8,7 +8,11 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 
-const API_SPORTS_BASE = 'https://v3.football.api-sports.io';
+import { getSportApiBaseUrl } from '../../config/sports.config';
+import {
+  MAX_FIXTURES_TO_UPDATE_PER_RUN,
+  RESULTS_FETCH_BATCH_SIZE,
+} from '../../config/api-limits.config';
 
 @Injectable()
 export class FixtureUpdateService {
@@ -92,7 +96,7 @@ export class FixtureUpdateService {
       }
 
       // Fetch live fixtures from API
-      const res = await fetch(`${API_SPORTS_BASE}/fixtures/live`, {
+      const res = await fetch(`${getSportApiBaseUrl('football')}/fixtures/live`, {
         headers: { 'x-apisports-key': apiKey },
       });
 
@@ -169,7 +173,7 @@ export class FixtureUpdateService {
         },
         order: { matchDate: 'DESC' },
         select: ['id', 'apiId'],
-        take: 100, // Batch size
+        take: MAX_FIXTURES_TO_UPDATE_PER_RUN,
       });
 
 
@@ -178,8 +182,8 @@ export class FixtureUpdateService {
         return { updated: 0, errors: 0 };
       }
 
-      // Fetch results in batches of 20 (API-Football limit)
-      const batchSize = 20;
+      // Fetch results in batches (API-Football limit ~20 per request)
+      const batchSize = RESULTS_FETCH_BATCH_SIZE;
       let updated = 0;
       const dbApiIdMap = new Map(unfinishedFixtures.map(f => [f.apiId, f.id]));
 
@@ -189,7 +193,7 @@ export class FixtureUpdateService {
 
 
 
-        const res = await fetch(`${API_SPORTS_BASE}/fixtures?ids=${apiIdsString}`, {
+        const res = await fetch(`${getSportApiBaseUrl('football')}/fixtures?ids=${apiIdsString}`, {
           headers: { 'x-apisports-key': apiKey },
         });
 

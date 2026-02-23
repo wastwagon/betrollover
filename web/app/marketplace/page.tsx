@@ -1,9 +1,12 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { useT } from '@/context/LanguageContext';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
+import { AdSlot } from '@/components/AdSlot';
 import { PickCard } from '@/components/PickCard';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
@@ -45,6 +48,7 @@ interface Tipster {
 interface Accumulator {
   id: number;
   title: string;
+  sport?: string;
   totalOdds: number;
   totalPicks: number;
   price: number;
@@ -57,6 +61,8 @@ interface Accumulator {
   updatedAt?: string;
   status?: string;
   result?: string;
+  avgRating?: number | null;
+  reviewCount?: number | null;
 }
 
 interface User {
@@ -67,6 +73,7 @@ interface User {
 
 export default function MarketplacePage() {
   const router = useRouter();
+  const t = useT();
   const [picks, setPicks] = useState<Accumulator[]>([]);
   const [total, setTotal] = useState(0);
   const [hasMore, setHasMore] = useState(false);
@@ -79,6 +86,7 @@ export default function MarketplacePage() {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
   const [sortBy, setSortBy] = useState<SortBy>('newest');
+  const [sportFilter, setSportFilter] = useState<string>(''); // '' = all, 'football', 'basketball'
   const [followedTipsterUsernames, setFollowedTipsterUsernames] = useState<Set<string>>(new Set());
   const [followLoading, setFollowLoading] = useState<string | null>(null);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
@@ -103,7 +111,7 @@ export default function MarketplacePage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        showSuccess(isFollowing ? 'Unfollowed' : 'Following! You\'ll see their picks in your feed.');
+        showSuccess(isFollowing ? t('tipster.toast_unfollowed') : t('tipster.toast_following'));
       } else {
         setFollowedTipsterUsernames((prev) => {
           const next = new Set(prev);
@@ -128,7 +136,7 @@ export default function MarketplacePage() {
   };
 
   const filteredAndSortedPicks = useMemo(() => {
-    let list = [...picks];
+    let list = [...picks]; // API already filters by sport when sportFilter is set
     if (priceFilter === 'free') list = list.filter((p) => p.price === 0);
     if (priceFilter === 'paid') list = list.filter((p) => p.price > 0);
     if (sortBy === 'following-only' && followedTipsterUsernames.size > 0) {
@@ -154,8 +162,9 @@ export default function MarketplacePage() {
     }
 
     // Fetch marketplace picks, wallet balance, user info, purchased picks, and followed tipsters
+    const sportParam = sportFilter ? `&sport=${encodeURIComponent(sportFilter)}` : '';
     Promise.all([
-      fetch(`${API_URL}/accumulators/marketplace?limit=24`, {
+      fetch(`${API_URL}/accumulators/marketplace?limit=24${sportParam}`, {
         headers: { Authorization: `Bearer ${token}` },
       }).then((r) => (r.ok ? r.json() : { items: [], total: 0, hasMore: false })),
       fetch(`${API_URL}/wallet/balance`, {
@@ -195,7 +204,7 @@ export default function MarketplacePage() {
         showError(err);
       })
       .finally(() => setLoading(false));
-  }, [router]);
+  }, [router, sportFilter]);
 
   const recordView = (id: number) => {
     fetch(`${API_URL}/accumulators/${id}/view`, { method: 'POST' }).catch(() => {});
@@ -206,8 +215,9 @@ export default function MarketplacePage() {
     if (!token || loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
+      const sportParam = sportFilter ? `&sport=${encodeURIComponent(sportFilter)}` : '';
       const res = await fetch(
-        `${API_URL}/accumulators/marketplace?limit=24&offset=${picks.length}`,
+        `${API_URL}/accumulators/marketplace?limit=24&offset=${picks.length}${sportParam}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await res.json().catch(() => ({}));
@@ -243,7 +253,7 @@ export default function MarketplacePage() {
 
       if (res.ok) {
         const purchasedTicket = await res.json();
-        showSuccess('Coupon purchased! View your picks in My Purchases.');
+        showSuccess(t('tipster.toast_coupon_purchased'));
         // Mark as purchased
         setPurchasedIds(prev => new Set([...Array.from(prev), id]));
         // Refresh wallet balance
@@ -278,11 +288,53 @@ export default function MarketplacePage() {
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
         <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 md:py-6 pb-24">
-          <PageHeader
-            label="Marketplace"
-            title="Marketplace"
-            tagline="Browse and buy verified tips from top tipsters"
-          />
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-0">
+            <PageHeader
+              label={t('nav.marketplace')}
+              title={t('marketplace.title')}
+              tagline={t('marketplace.subtitle')}
+            />
+            <Link
+              href="/coupons/archive"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors self-start sm:self-auto flex-shrink-0"
+            >
+              📦 Settled Archive →
+            </Link>
+          </div>
+
+          {/* Full-width ad */}
+          <div className="mb-4">
+            <AdSlot zoneSlug="marketplace-full" fullWidth className="w-full" />
+          </div>
+
+          {/* Sport tabs — scrollable on mobile */}
+          <div className="flex gap-2 mb-4 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+            {([
+              { key: '',                label: `🌍 ${t('marketplace.filter_all_sports')}` },
+              { key: 'football',        label: `⚽ ${t('nav.football')}` },
+              { key: 'basketball',      label: `🏀 ${t('nav.basketball')}` },
+              { key: 'rugby',           label: '🏉 Rugby' },
+              { key: 'mma',             label: '🥊 MMA' },
+              { key: 'volleyball',      label: '🏐 Volleyball' },
+              { key: 'hockey',          label: '🏒 Hockey' },
+              { key: 'american_football', label: '🏈 Amer. Football' },
+              { key: 'tennis',          label: '🎾 Tennis' },
+              { key: 'multi',           label: '🌐 Multi-Sport' },
+            ] as { key: string; label: string }[]).map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setSportFilter(key)}
+                className={`flex-shrink-0 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                  sportFilter === key
+                    ? 'bg-[var(--primary)] text-white shadow-md'
+                    : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
 
           {/* Filters */}
           {!loading && picks.length > 0 && (
@@ -335,9 +387,9 @@ export default function MarketplacePage() {
           {!loading && picks.length === 0 && (
             <div className="card-gradient rounded-2xl">
               <EmptyState
-                title="No picks available"
-                description="There are no picks available on the marketplace right now. Check back later or create your own pick to share with others."
-                actionLabel="Create Pick"
+                title={t('marketplace.no_picks')}
+                description={t('marketplace.no_picks_sub')}
+                actionLabel={t('nav.create_coupon')}
                 actionHref="/create-pick"
                 icon="🛒"
               />
@@ -346,9 +398,9 @@ export default function MarketplacePage() {
           {!loading && picks.length > 0 && filteredAndSortedPicks.length === 0 && (
             <div className="card-gradient rounded-2xl p-6">
               <EmptyState
-                title="No picks match your filters"
-                description="Try adjusting your filters to see more coupons."
-                actionLabel="Clear filters"
+                title={t('common.no_results')}
+                description={t('marketplace.no_picks_sub')}
+                actionLabel={t('common.clear')}
                 onActionClick={() => {
                   setPriceFilter('all');
                   setSortBy('newest');
@@ -372,6 +424,8 @@ export default function MarketplacePage() {
                     totalOdds={a.totalOdds}
                     price={a.price}
                     purchaseCount={a.purchaseCount}
+                    avgRating={a.avgRating}
+                    reviewCount={a.reviewCount}
                     status={a.status}
                     result={a.result}
                     picks={a.picks || []}

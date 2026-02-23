@@ -21,12 +21,18 @@ export class PredictionFixture {
   @JoinColumn({ name: 'prediction_id' })
   prediction: Prediction;
 
-  @Column()
-  fixtureId: number;
+  @Column({ type: 'int', nullable: true })
+  fixtureId: number | null = null;
 
-  @ManyToOne(() => Fixture, { onDelete: 'RESTRICT' })
+  @Column({ type: 'int', nullable: true })
+  eventId: number | null = null;
+
+  @Column({ type: 'varchar', length: 30, default: 'football' })
+  sport: string = 'football';
+
+  @ManyToOne(() => Fixture, { onDelete: 'RESTRICT', nullable: true })
   @JoinColumn({ name: 'fixture_id' })
-  fixture: Fixture;
+  fixture: Fixture | null = null;
 
   @Column({ type: 'timestamp' })
   matchDate: Date;

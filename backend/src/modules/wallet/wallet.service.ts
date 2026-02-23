@@ -120,6 +120,32 @@ export class WalletService {
     });
   }
 
+  /**
+   * Records a wallet_transaction row without modifying any wallet balance.
+   * Used for informational entries such as the platform commission deducted from
+   * a tipster's gross payout — the actual balance impact is already captured
+   * by the reduced payout amount passed to credit().
+   */
+  async recordTransaction(
+    userId: number,
+    amount: number,
+    type: string,
+    reference?: string,
+    description?: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<void> {
+    await this.txRepo.save({
+      userId,
+      type,
+      amount,
+      currency: 'GHS',
+      status: 'completed',
+      reference: reference ?? null,
+      description: description ?? null,
+      metadata: metadata ?? null,
+    });
+  }
+
   async initializeDeposit(user: User, amount: number) {
     const { emailVerifiedAt } = await this.usersService.getEmailVerificationStatus(user.id);
     if (!emailVerifiedAt) {
@@ -222,20 +248,25 @@ export class WalletService {
     const reference = data?.reference;
     if (!reference) return { received: true };
 
-    const deposit = await this.depositRepo.findOne({ where: { reference, status: 'pending' } });
-    if (!deposit) {
-      return { received: true };
-    }
-
     const verify = await this.paystackService.verifyTransaction(reference);
     if (!verify || verify.status !== 'success') {
       return { received: true };
     }
 
     const amount = Number(verify.amount) / 100; // pesewas to GHS
-    deposit.status = 'completed';
-    deposit.paystackReference = data?.id || null;
-    await this.depositRepo.save(deposit);
+
+    // Idempotency: atomically claim the deposit (pending -> completed). Only one concurrent
+    // webhook can succeed; duplicates return early without double-crediting.
+    const result = await this.depositRepo.update(
+      { reference, status: 'pending' },
+      { status: 'completed', paystackReference: data?.id || null },
+    );
+    if (result.affected !== 1) {
+      return { received: true }; // Already processed by another webhook
+    }
+
+    const deposit = await this.depositRepo.findOne({ where: { reference } });
+    if (!deposit) return { received: true };
 
     await this.credit(
       deposit.userId,

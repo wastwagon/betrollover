@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { TipsterCard, type TipsterCardData } from '@/components/TipsterCard';
 import { getApiUrl } from '@/lib/site-config';
+import { useT } from '@/context/LanguageContext';
 
 function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: number): TipsterCardData {
   const rank = (entry.rank ?? entry.leaderboard_rank ?? index + 1) as number;
@@ -30,6 +31,7 @@ function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: numb
 }
 
 export function HomePopularTipsters() {
+  const t = useT();
   const [tipsters, setTipsters] = useState<TipsterCardData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,9 +50,9 @@ export function HomePopularTipsters() {
     <section className="py-12 md:py-16 bg-[var(--bg)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-[var(--text)]">Top Verified Tipsters by Win Rate & ROI</h2>
-          <Link href="/tipsters" className="text-sm font-medium text-[var(--primary)] hover:underline">
-            See all →
+          <h2 className="text-2xl font-bold text-[var(--text)]">{t('home.featured_tipsters')}</h2>
+          <Link href="/tipsters" className="text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline">
+            {t('home.see_tipsters')} →
           </Link>
         </div>
         {loading ? (
@@ -66,7 +68,7 @@ export function HomePopularTipsters() {
             ))}
           </div>
         ) : (
-          <p className="text-[var(--text-muted)] text-center py-8">No tipsters yet. Check back soon.</p>
+          <p className="text-[var(--text-muted)] text-center py-8">{t('common.no_results')}</p>
         )}
       </div>
     </section>

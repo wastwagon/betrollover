@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getAvatarUrl } from '@/lib/site-config';
+import { useT } from '@/context/LanguageContext';
 
 export interface TipsterCardData {
   id: number;
@@ -31,6 +32,7 @@ interface TipsterCardProps {
 }
 
 export function TipsterCard({ tipster, onFollow, followLoading = false, className = '' }: TipsterCardProps) {
+  const t = useT();
   const [avatarError, setAvatarError] = useState(false);
   const showAvatar = tipster.avatar_url && !avatarError;
   const hasSettledPicks = ((tipster.total_wins ?? 0) + (tipster.total_losses ?? 0)) > 0;
@@ -60,7 +62,6 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
                 height={48}
                 className="w-full h-full object-cover"
                 onError={() => setAvatarError(true)}
-                unoptimized
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-lg font-bold text-[var(--primary)] bg-[var(--primary-light)]">
@@ -73,9 +74,11 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
               <h3 className="font-semibold text-[var(--text)] truncate">{tipster.display_name}</h3>
             </div>
             <div className="flex items-center gap-3 mt-0.5 text-xs text-[var(--text-muted)]">
-              {tipster.leaderboard_rank != null && <span>Rank #{tipster.leaderboard_rank}</span>}
+              {tipster.leaderboard_rank != null && (
+                <span>{t('tipster.rank_prefix')}{tipster.leaderboard_rank}</span>
+              )}
               {tipster.follower_count != null && tipster.follower_count > 0 && (
-                <span>{tipster.follower_count} follower{tipster.follower_count !== 1 ? 's' : ''}</span>
+                <span>{t(tipster.follower_count === 1 ? 'tipster.x_follower' : 'tipster.x_followers', { n: String(tipster.follower_count) })}</span>
               )}
             </div>
           </div>
@@ -89,15 +92,15 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
         {/* Stats */}
         <div className="flex gap-4 mb-4">
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">ROI</span>
+            <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{t('tipster.roi')}</span>
             <span className={`text-sm font-bold ${roiColor}`}>{roiDisplay}</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Win Rate</span>
+            <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{t('tipster.win_rate')}</span>
             <span className="text-sm font-bold text-[var(--text)]">{winRateDisplay}</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Streak</span>
+            <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{t('tipster.streak')}</span>
             <span className="text-sm font-bold text-[var(--text)]">{streakDisplay}</span>
           </div>
         </div>
@@ -113,7 +116,7 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
                 : 'bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white'
             }`}
           >
-            {followLoading ? '...' : tipster.is_following ? 'Following' : 'Follow'}
+            {followLoading ? '...' : tipster.is_following ? t('tipster.following') : t('tipster.follow')}
           </button>
         )}
       </div>

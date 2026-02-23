@@ -17,6 +17,7 @@ export class LeaderboardController {
   async getLeaderboard(
     @Query('period') period?: 'all_time' | 'monthly' | 'weekly',
     @Query('limit') limit?: string,
+    @Query('sport') sport?: string,
   ) {
     const periodVal = ['all_time', 'monthly', 'weekly'].includes(period || '')
       ? (period as 'all_time' | 'monthly' | 'weekly')
@@ -25,12 +26,14 @@ export class LeaderboardController {
       Math.max(parseInt(limit || '25', 10) || 25, 1),
       100,
     );
-    const cacheKey = `leaderboard:${periodVal}:${limitVal}`;
+    const sportVal = sport && sport !== 'all' ? sport.toLowerCase() : undefined;
+    const cacheKey = `leaderboard:${periodVal}:${limitVal}:${sportVal ?? 'all'}`;
     const cached = await this.cacheManager.get<{ period: string; leaderboard: unknown[] }>(cacheKey);
     if (cached) return cached;
     const leaderboard = await this.tipstersApi.getLeaderboard({
       period: periodVal,
       limit: limitVal,
+      sport: sportVal,
     });
     const result = { period: periodVal, leaderboard };
     await this.cacheManager.set(cacheKey, result, LEADERBOARD_CACHE_TTL * 1000);

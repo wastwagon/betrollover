@@ -18,6 +18,11 @@ interface User {
   role: string;
   status: string;
   createdAt: string;
+  roi?: number | null;
+  winRate?: number | null;
+  wonPicks?: number | null;
+  lostPicks?: number | null;
+  totalCommissionPaid?: number | null;
 }
 
 export default function AdminUsersPage() {
@@ -271,6 +276,7 @@ export default function AdminUsersPage() {
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">User</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Role</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Performance</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Joined</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -335,6 +341,28 @@ export default function AdminUsersPage() {
                           }`}>
                           {u.status}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {(u.role === 'tipster' || u.role === 'admin') && (u.wonPicks != null || u.roi != null) ? (
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`font-semibold ${(u.roi ?? 0) > 0 ? 'text-emerald-600' : (u.roi ?? 0) < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                                ROI {u.roi != null ? `${Number(u.roi).toFixed(1)}%` : '—'}
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {u.wonPicks ?? 0}W / {u.lostPicks ?? 0}L
+                              {u.winRate != null ? ` · ${Number(u.winRate).toFixed(0)}%` : ''}
+                            </div>
+                            {(u.totalCommissionPaid ?? 0) > 0 && (
+                              <div className="text-[10px] text-amber-600">
+                                fee: GHS {Number(u.totalCommissionPaid).toFixed(2)}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xs">—</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                         {new Date(u.createdAt).toLocaleDateString()}

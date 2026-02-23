@@ -17,8 +17,8 @@ export class AccumulatorsController {
 
   @Get('my')
   @UseGuards(JwtAuthGuard)
-  getMy(@CurrentUser() user: { id: number }) {
-    return this.accumulatorsService.getMyAccumulators(user.id);
+  getMy(@CurrentUser() user: { id: number }, @Query('sport') sport?: string) {
+    return this.accumulatorsService.getMyAccumulators(user.id, sport || undefined);
   }
 
   @Get('purchased')
@@ -47,6 +47,7 @@ export class AccumulatorsController {
   getMarketplace(
     @CurrentUser() user: User,
     @Query('includeAll') includeAll?: string,
+    @Query('sport') sport?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
@@ -57,6 +58,7 @@ export class AccumulatorsController {
     return this.accumulatorsService.getMarketplace(user.id, includeAllListings, {
       limit: limitVal,
       offset: offsetVal,
+      sport: sport || undefined,
     });
   }
 
@@ -79,6 +81,16 @@ export class AccumulatorsController {
   getPopularEvents(@Query('limit') limit?: string) {
     const limitVal = Math.min(Math.max(parseInt(limit || '6', 10) || 6, 1), 20);
     return this.accumulatorsService.getPopularEvents(limitVal);
+  }
+
+  @Get('archive')
+  getArchive(
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    const limitVal = limit != null ? Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200) : undefined;
+    const offsetVal = offset != null ? Math.max(parseInt(offset, 10) || 0, 0) : undefined;
+    return this.accumulatorsService.getMarketplaceArchive({ limit: limitVal, offset: offsetVal });
   }
 
   @Get(':id')

@@ -108,6 +108,27 @@ export class MigrationRunnerService {
     }
   }
 
+  /** Ensure team logos and country codes exist (049; fixes missing columns if migration was marked without running). */
+  async ensureTeamLogoAndCountryColumns(): Promise<void> {
+    try {
+      await this.dataSource.query(`ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS home_team_logo VARCHAR(500)`);
+      await this.dataSource.query(`ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS away_team_logo VARCHAR(500)`);
+      await this.dataSource.query(`ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS home_country_code VARCHAR(10)`);
+      await this.dataSource.query(`ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS away_country_code VARCHAR(10)`);
+      const hasSportEvents = await this.dataSource.query(
+        `SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='sport_events'`,
+      );
+      if (hasSportEvents && hasSportEvents.length > 0) {
+        await this.dataSource.query(`ALTER TABLE sport_events ADD COLUMN IF NOT EXISTS home_team_logo VARCHAR(500)`);
+        await this.dataSource.query(`ALTER TABLE sport_events ADD COLUMN IF NOT EXISTS away_team_logo VARCHAR(500)`);
+        await this.dataSource.query(`ALTER TABLE sport_events ADD COLUMN IF NOT EXISTS home_country_code VARCHAR(10)`);
+        await this.dataSource.query(`ALTER TABLE sport_events ADD COLUMN IF NOT EXISTS away_country_code VARCHAR(10)`);
+      }
+    } catch (err: any) {
+      this.logger.warn(`ensureTeamLogoAndCountryColumns failed (non-fatal): ${err?.message || err}`);
+    }
+  }
+
   /** Run all pending migrations (numeric-prefix .sql files not in applied_migrations). */
   async runPending(): Promise<{ applied: string[]; skipped: number; errors: string[] }> {
     const applied: string[] = [];

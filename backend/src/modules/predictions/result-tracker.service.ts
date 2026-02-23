@@ -68,6 +68,7 @@ export class ResultTrackerService {
     const settledPredictionIds = new Set<number>();
 
     for (const pf of pending) {
+      if (pf.fixtureId == null) continue; // Non-football predictions handled separately (Phase 1+)
       const fixture = await this.fixtureRepo.findOne({
         where: { id: pf.fixtureId },
         select: ['id', 'status', 'homeScore', 'awayScore'],

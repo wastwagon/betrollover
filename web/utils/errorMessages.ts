@@ -11,7 +11,22 @@ export interface ErrorMapping {
 
 const errorMappings: ErrorMapping[] = [
   {
-    pattern: /network|fetch|connection/i,
+    pattern: /duplicate key|unique constraint|users_username_key|username.*taken/i,
+    message: 'This username is already taken',
+    action: 'Please choose a different username',
+  },
+  {
+    pattern: /users_email_key|email.*already.*registered/i,
+    message: 'This email is already registered',
+    action: 'Please sign in or use a different email address',
+  },
+  {
+    pattern: /18 years old|at least 18|must be 18/i,
+    message: 'You must be at least 18 years old to register',
+    action: 'This service is only available to users aged 18 and over',
+  },
+  {
+    pattern: /network|fetch|connection|failed to fetch/i,
     message: 'Unable to connect to the server',
     action: 'Please check your internet connection and try again',
   },
@@ -31,9 +46,9 @@ const errorMappings: ErrorMapping[] = [
     action: 'Please try refreshing the page',
   },
   {
-    pattern: /500|internal server error/i,
-    message: 'Something went wrong on our end',
-    action: 'Please try again in a few moments. If the problem persists, contact support',
+    pattern: /500|internal server error|something went wrong/i,
+    message: 'Something went wrong',
+    action: 'Please try again. If the problem persists, contact support',
   },
   {
     pattern: /insufficient|balance|funds/i,
@@ -76,9 +91,14 @@ export function getUserFriendlyError(error: unknown): { message: string; action?
     }
   }
   
+  // If the error message is already user-friendly (no technical jargon), use it
+  if (errorString.length < 120 && !/sql|constraint|violates|key value|postgres|exception|stack/i.test(errorString)) {
+    return { message: errorString };
+  }
+
   // Default fallback
   return {
-    message: 'An unexpected error occurred',
+    message: 'Something went wrong',
     action: 'Please try again. If the problem persists, contact support',
   };
 }

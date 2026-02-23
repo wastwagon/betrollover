@@ -3,8 +3,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useT } from '@/context/LanguageContext';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
+import { AdSlot } from '@/components/AdSlot';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -15,71 +17,43 @@ import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
 import { getApiUrl } from '@/lib/site-config';
 import { useSlipCart } from '@/context/SlipCartContext';
+import type { Fixture, FixtureOdd, SportEventItem, CreatePickSport, FilterOptions } from './types';
+import { SportLoadingSpinner } from './components/SportLoadingSpinner';
+import { SportEmptyState } from './components/SportEmptyState';
+import { FootballFixtureCard } from './components/FootballFixtureCard';
+import { SportEventCard } from './components/SportEventCard';
 
-interface FixtureOdd {
-  id: number;
-  marketName: string;
-  marketValue: string;
-  odds: number;
-}
-
-interface Fixture {
-  id: number;
-  apiId?: number; // External API fixture ID - required for marketplace (backend looks up by apiId)
-  homeTeamName: string;
-  awayTeamName: string;
-  leagueName: string | null;
-  matchDate: string;
-  status: string;
-  odds?: FixtureOdd[];
-  oddsError?: string; // Error message when odds can't be loaded
-  league?: {
-    id: number;
-    name: string;
-    country: string | null;
-  } | null;
-}
-
-// Group odds by market type for better display
-function groupOddsByMarket(odds: FixtureOdd[]): Record<string, FixtureOdd[]> {
-  const grouped: Record<string, FixtureOdd[]> = {};
-  for (const odd of odds) {
-    if (!grouped[odd.marketName]) {
-      grouped[odd.marketName] = [];
-    }
-    grouped[odd.marketName].push(odd);
-  }
-  return grouped;
-}
-
-// Market display order (Tier 1 first, then Tier 2)
-const MARKET_ORDER = [
-  'Match Winner',
-  'Goals Over/Under',
-  'Both Teams To Score',
-  'Double Chance',
-  'Half-Time/Full-Time',
-  'Correct Score',
-];
-
-/** Common Correct Score options only (excludes rare scores like 10:0, 9:9) */
-const CORRECT_SCORE_ALLOWED = new Set([
-  '0-0', '0:0', '1-0', '1:0', '0-1', '0:1', '1-1', '1:1',
-  '2-0', '2:0', '0-2', '0:2', '2-1', '2:1', '1-2', '1:2', '2-2', '2:2',
-  '3-0', '3:0', '0-3', '0:3', '3-1', '3:1', '1-3', '1:3', '3-2', '3:2', '2-3', '2:3',
-]);
-
-function filterCorrectScoreOdds(odds: FixtureOdd[]): FixtureOdd[] {
-  return odds.filter((o) => {
-    const val = (o.marketValue || '').trim().replace(/:/g, '-');
-    return CORRECT_SCORE_ALLOWED.has(val);
-  });
-}
+/** Market order per sport (non-football) */
+const SPORT_MARKET_ORDERS: Record<Exclude<CreatePickSport, 'football'>, string[]> = {
+  basketball: ['Match Winner', 'Over/Under', 'Home/Away', '3Way Result', 'Goals Over/Under'],
+  rugby: ['Match Winner', 'Over/Under', 'Home/Away', '3Way Result', 'Goals Over/Under'],
+  mma: ['Match Winner', 'Method of Victory', 'Home/Away'],
+  volleyball: ['Match Winner', 'Home/Away', '3Way Result'],
+  hockey: ['Match Winner', 'Over/Under', 'Home/Away', '3Way Result'],
+  american_football: ['Match Winner', 'Over/Under', 'Home/Away', '3Way Result'],
+  tennis: ['Match Winner', 'Over/Under', 'Set Betting', 'Games Over/Under'],
+};
 
 export default function CreatePickPage() {
   const router = useRouter();
+  const t = useT();
   const { selections, addSelection: addToCart, removeSelection: removeFromCart, clearCart } = useSlipCart();
+  const [sport, setSport] = useState<CreatePickSport>('football');
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
+  const [basketballEvents, setBasketballEvents] = useState<SportEventItem[]>([]);
+  const [rugbyEvents, setRugbyEvents] = useState<SportEventItem[]>([]);
+  const [mmaEvents, setMmaEvents] = useState<SportEventItem[]>([]);
+  const [volleyballEvents, setVolleyballEvents] = useState<SportEventItem[]>([]);
+  const [hockeyEvents, setHockeyEvents] = useState<SportEventItem[]>([]);
+  const [americanFootballEvents, setAmericanFootballEvents] = useState<SportEventItem[]>([]);
+  const [tennisEvents, setTennisEvents] = useState<SportEventItem[]>([]);
+  const [loadingTennis, setLoadingTennis] = useState(false);
+  const [loadingBasketball, setLoadingBasketball] = useState(false);
+  const [loadingRugby, setLoadingRugby] = useState(false);
+  const [loadingMma, setLoadingMma] = useState(false);
+  const [loadingVolleyball, setLoadingVolleyball] = useState(false);
+  const [loadingHockey, setLoadingHockey] = useState(false);
+  const [loadingAmericanFootball, setLoadingAmericanFootball] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState(0);
@@ -97,18 +71,9 @@ export default function CreatePickPage() {
   const [selectedLeague, setSelectedLeague] = useState<string>('');
   const [teamSearch, setTeamSearch] = useState<string>('');
   const [slipSheetOpen, setSlipSheetOpen] = useState(false);
+  const [sportLeague, setSportLeague] = useState<string>('');
   const debouncedTeamSearch = useDebounce(teamSearch, 500); // Debounce team search by 500ms
-  const [filterOptions, setFilterOptions] = useState<{
-    countries: string[];
-    tournaments: Array<{ id: number; name: string; country: string | null; apiId?: number; isInternational?: boolean }>;
-    leagues: Array<{
-      id: number;
-      name: string;
-      country: string | null;
-      category?: string | null;
-      bookmakerTier?: string | null;
-    }>;
-  }>({ countries: [], tournaments: [], leagues: [] });
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({ countries: [], tournaments: [], leagues: [] });
 
   // Competition dropdown: filter by country
   const competitionOptions = useMemo(() => {
@@ -127,6 +92,74 @@ export default function CreatePickPage() {
     return leagues;
   }, [filterOptions.leagues, selectedCountry]);
   
+  // Derive unique leagues for the currently active non-football sport (for Competition dropdown)
+  const uniqueSportLeagues = useMemo(() => {
+    let events: SportEventItem[] = [];
+    if (sport === 'basketball') events = basketballEvents;
+    else if (sport === 'rugby') events = rugbyEvents;
+    else if (sport === 'mma') events = mmaEvents;
+    else if (sport === 'volleyball') events = volleyballEvents;
+    else if (sport === 'hockey') events = hockeyEvents;
+    else if (sport === 'american_football') events = americanFootballEvents;
+    else if (sport === 'tennis') events = tennisEvents;
+    const seen = new Set<string>();
+    return events
+      .map((e) => e.leagueName)
+      .filter((l): l is string => !!l && !seen.has(l) && seen.add(l) !== undefined)
+      .sort();
+  }, [sport, basketballEvents, rugbyEvents, mmaEvents, volleyballEvents, hockeyEvents, americanFootballEvents, tennisEvents]);
+
+  // Helper: apply common client-side filters (odds present, search, league) to a sport event list
+  function filterSportEvents(events: SportEventItem[], search: string, league: string): SportEventItem[] {
+    const now = new Date();
+    const term = search.trim().toLowerCase();
+    return events.filter((e) => {
+      if (e.status !== 'NS' && e.status !== 'TBD') return false;
+      if (new Date(e.eventDate) < now) return false;
+      if (!e.odds || e.odds.length === 0) return false; // hide events with no odds
+      if (league && e.leagueName !== league) return false;
+      if (term && !e.homeTeam.toLowerCase().includes(term) && !e.awayTeam.toLowerCase().includes(term)) return false;
+      return true;
+    });
+  }
+
+  // Sport events (basketball/rugby) - filtered by backend as NS; ensure future
+  const availableBasketballEvents = useMemo(
+    () => filterSportEvents(basketballEvents, debouncedTeamSearch, sportLeague),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [basketballEvents, debouncedTeamSearch, sportLeague],
+  );
+  const availableRugbyEvents = useMemo(
+    () => filterSportEvents(rugbyEvents, debouncedTeamSearch, sportLeague),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rugbyEvents, debouncedTeamSearch, sportLeague],
+  );
+  const availableMmaEvents = useMemo(
+    () => filterSportEvents(mmaEvents, debouncedTeamSearch, sportLeague),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [mmaEvents, debouncedTeamSearch, sportLeague],
+  );
+  const availableVolleyballEvents = useMemo(
+    () => filterSportEvents(volleyballEvents, debouncedTeamSearch, sportLeague),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [volleyballEvents, debouncedTeamSearch, sportLeague],
+  );
+  const availableHockeyEvents = useMemo(
+    () => filterSportEvents(hockeyEvents, debouncedTeamSearch, sportLeague),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [hockeyEvents, debouncedTeamSearch, sportLeague],
+  );
+  const availableAmericanFootballEvents = useMemo(
+    () => filterSportEvents(americanFootballEvents, debouncedTeamSearch, sportLeague),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [americanFootballEvents, debouncedTeamSearch, sportLeague],
+  );
+  const availableTennisEvents = useMemo(
+    () => filterSportEvents(tennisEvents, debouncedTeamSearch, sportLeague),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tennisEvents, debouncedTeamSearch, sportLeague],
+  );
+
   // Filter out fixtures that have started or are live
   const availableFixtures = useMemo(() => {
     const now = new Date();
@@ -141,10 +174,115 @@ export default function CreatePickPage() {
     });
   }, [fixtures]);
 
+  // Reset sport-specific filters when switching sports (slip keeps accumulating across sports)
+  useEffect(() => {
+    setSportLeague('');
+    setTeamSearch('');
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- only when sport changes
+  }, [sport]);
+
+  // Fetch basketball events when sport = basketball
+  useEffect(() => {
+    if (sport !== 'basketball') return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const headers = { Authorization: `Bearer ${token}` };
+    setLoadingBasketball(true);
+    fetch(`${getApiUrl()}/basketball/events?days=7`, { headers })
+      .then((r) => (r.ok ? r.json() : { events: [] }))
+      .then((data) => setBasketballEvents(data?.events ?? []))
+      .catch(() => setBasketballEvents([]))
+      .finally(() => setLoadingBasketball(false));
+  }, [sport]);
+
+  // Fetch rugby events when sport = rugby
+  useEffect(() => {
+    if (sport !== 'rugby') return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const headers = { Authorization: `Bearer ${token}` };
+    setLoadingRugby(true);
+    fetch(`${getApiUrl()}/rugby/events?days=7`, { headers })
+      .then((r) => (r.ok ? r.json() : { events: [] }))
+      .then((data) => setRugbyEvents(data?.events ?? []))
+      .catch(() => setRugbyEvents([]))
+      .finally(() => setLoadingRugby(false));
+  }, [sport]);
+
+  // Fetch MMA events when sport = mma
+  useEffect(() => {
+    if (sport !== 'mma') return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const headers = { Authorization: `Bearer ${token}` };
+    setLoadingMma(true);
+    fetch(`${getApiUrl()}/mma/events?days=7`, { headers })
+      .then((r) => (r.ok ? r.json() : { events: [] }))
+      .then((data) => setMmaEvents(data?.events ?? []))
+      .catch(() => setMmaEvents([]))
+      .finally(() => setLoadingMma(false));
+  }, [sport]);
+
+  // Fetch volleyball events when sport = volleyball
+  useEffect(() => {
+    if (sport !== 'volleyball') return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const headers = { Authorization: `Bearer ${token}` };
+    setLoadingVolleyball(true);
+    fetch(`${getApiUrl()}/volleyball/events?days=7`, { headers })
+      .then((r) => (r.ok ? r.json() : { events: [] }))
+      .then((data) => setVolleyballEvents(data?.events ?? []))
+      .catch(() => setVolleyballEvents([]))
+      .finally(() => setLoadingVolleyball(false));
+  }, [sport]);
+
+  // Fetch hockey events when sport = hockey
+  useEffect(() => {
+    if (sport !== 'hockey') return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const headers = { Authorization: `Bearer ${token}` };
+    setLoadingHockey(true);
+    fetch(`${getApiUrl()}/hockey/events?days=7`, { headers })
+      .then((r) => (r.ok ? r.json() : { events: [] }))
+      .then((data) => setHockeyEvents(data?.events ?? []))
+      .catch(() => setHockeyEvents([]))
+      .finally(() => setLoadingHockey(false));
+  }, [sport]);
+
+  // Fetch American Football events when sport = american_football
+  useEffect(() => {
+    if (sport !== 'american_football') return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const headers = { Authorization: `Bearer ${token}` };
+    setLoadingAmericanFootball(true);
+    fetch(`${getApiUrl()}/american-football/events?days=7`, { headers })
+      .then((r) => (r.ok ? r.json() : { events: [] }))
+      .then((data) => setAmericanFootballEvents(data?.events ?? []))
+      .catch(() => setAmericanFootballEvents([]))
+      .finally(() => setLoadingAmericanFootball(false));
+  }, [sport]);
+
+  // Fetch Tennis events when sport = tennis
+  useEffect(() => {
+    if (sport !== 'tennis') return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const headers = { Authorization: `Bearer ${token}` };
+    setLoadingTennis(true);
+    fetch(`${getApiUrl()}/tennis/events?days=7`, { headers })
+      .then((r) => (r.ok ? r.json() : { events: [] }))
+      .then((data) => setTennisEvents(data?.events ?? []))
+      .catch(() => setTennisEvents([]))
+      .finally(() => setLoadingTennis(false));
+  }, [sport]);
+
   // Periodic refresh to update fixture statuses (every 30 seconds)
   // Only refresh when page is visible and user is active
   useEffect(() => {
-    if (loading) return;
+    if (loading || sport !== 'football') return;
     
     // Don't refresh if page is hidden
     const handleVisibilityChange = () => {
@@ -194,7 +332,7 @@ export default function CreatePickPage() {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [selectedCountry, selectedLeague, debouncedTeamSearch, loading]);
+  }, [selectedCountry, selectedLeague, debouncedTeamSearch, loading, sport]);
 
   // Fetch filter options on mount (countries = only those with fixtures in next 7 days)
   useEffect(() => {
@@ -232,6 +370,7 @@ export default function CreatePickPage() {
   }, [filterOptions.countries, filterOptions.leagues, selectedCountry, selectedLeague]);
 
   useEffect(() => {
+    if (sport !== 'football') return;
     const token = localStorage.getItem('token');
     if (!token) {
       router.push('/login');
@@ -280,7 +419,7 @@ export default function CreatePickPage() {
         setLoading(false);
       }
     })();
-  }, [router, selectedCountry, selectedLeague, debouncedTeamSearch]);
+  }, [router, selectedCountry, selectedLeague, debouncedTeamSearch, sport]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -397,17 +536,37 @@ export default function CreatePickPage() {
     }
   };
 
-  const addSelection = (f: Fixture, odd: FixtureOdd) => {
+  const addFootballSelection = (f: Fixture, odd: FixtureOdd) => {
     const matchDesc = `${f.homeTeamName} vs ${f.awayTeamName}`;
     const pred = `${odd.marketName}: ${odd.marketValue}`;
     const fid = f.apiId ?? f.id;
-    addToCart({
+    const added = addToCart({
       fixtureId: fid,
+      sport: 'football',
       matchDescription: matchDesc,
       prediction: pred,
       odds: Number(odd.odds),
       matchDate: f.matchDate,
     });
+    if (!added) {
+      showError(new Error('You already have a selection for this match. Remove it to pick a different outcome.'));
+    }
+  };
+
+  const addSportEventSelection = (e: SportEventItem, odd: FixtureOdd, eventSport: 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football' | 'tennis') => {
+    const matchDesc = `${e.homeTeam} vs ${e.awayTeam}`;
+    const pred = `${odd.marketName}: ${odd.marketValue}`;
+    const added = addToCart({
+      eventId: e.id,
+      sport: eventSport,
+      matchDescription: matchDesc,
+      prediction: pred,
+      odds: Number(odd.odds),
+      matchDate: e.eventDate,
+    });
+    if (!added) {
+      showError(new Error('You already have a selection for this match. Remove it to pick a different outcome.'));
+    }
   };
 
   const removeSelection = (idx: number) => {
@@ -442,8 +601,15 @@ export default function CreatePickPage() {
         isMarketplace: placement === 'marketplace' || placement === 'both',
         placement: placement,
         subscriptionPackageIds: (placement === 'subscription' || placement === 'both') ? subscriptionPackageIds : undefined,
+        // 'multi' when coupon spans more than one sport; otherwise the single sport
+        sport: (() => {
+          const sports = new Set(selections.map((s) => s.sport ?? 'football'));
+          return sports.size > 1 ? 'multi' : (sports.values().next().value ?? 'football');
+        })(),
         selections: selections.map((s) => ({
           fixtureId: s.fixtureId,
+          eventId: s.eventId,
+          sport: s.sport ?? 'football',  // per-selection sport for backend routing
           matchDescription: s.matchDescription,
           prediction: s.prediction,
           odds: s.odds,
@@ -466,50 +632,6 @@ export default function CreatePickPage() {
     router.push('/my-picks');
   };
 
-  // Format market value for display
-  const formatMarketValue = (marketName: string, value: string): string => {
-    if (marketName === 'Match Winner') {
-      if (value === 'Home') return '1';
-      if (value === 'Draw') return 'X';
-      if (value === 'Away') return '2';
-    }
-    if (marketName === 'Both Teams To Score') {
-      return value === 'Yes' ? 'BTTS Yes' : 'BTTS No';
-    }
-    if (marketName === 'Half-Time/Full-Time') {
-      // e.g. "Home/Home" -> "1/1", "Draw/Draw" -> "X/X", "Away/Away" -> "2/2"
-      return value
-        .replace(/\bHome\b/g, '1')
-        .replace(/\bDraw\b/g, 'X')
-        .replace(/\bAway\b/g, '2');
-    }
-    return value;
-  };
-
-  // Format fixture date and time for display
-  const formatFixtureDateTime = (matchDate: string): string => {
-    const date = new Date(matchDate);
-    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
-    // Get day with ordinal suffix (1st, 2nd, 3rd, 4th, etc.)
-    const day = date.getDate();
-    const getOrdinalSuffix = (n: number): string => {
-      const j = n % 10;
-      const k = n % 100;
-      if (j === 1 && k !== 11) return 'st';
-      if (j === 2 && k !== 12) return 'nd';
-      if (j === 3 && k !== 13) return 'rd';
-      return 'th';
-    };
-    
-    // Format as "15th February 2026, 11:30 AM"
-    const month = date.toLocaleDateString('en-US', { month: 'long' });
-    const year = date.getFullYear();
-    const dayWithOrdinal = `${day}${getOrdinalSuffix(day)}`;
-    
-    return `${dayWithOrdinal} ${month} ${year}, ${time}`;
-  };
-
   return (
     <DashboardShell slipCount={selections.length}>
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
@@ -517,10 +639,39 @@ export default function CreatePickPage() {
       <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
         <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 md:py-6 pb-24">
           <PageHeader
-            label="Create Pick"
-            title="Create Pick"
-            tagline="Build your accumulator from upcoming matches and share or sell"
+            label={t('create_pick.title')}
+            title={t('create_pick.title')}
+            tagline={t('create_pick.tagline')}
           />
+          <div className="mb-4">
+            <AdSlot zoneSlug="create-pick-full" fullWidth className="w-full" />
+          </div>
+          {/* Sport tabs — scrollable on mobile */}
+          <div className="flex gap-2 mb-4 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+            {([
+              { key: 'football',          label: `⚽ ${t('create_pick.sport_football')}` },
+              { key: 'basketball',        label: `🏀 ${t('create_pick.sport_basketball')}` },
+              { key: 'rugby',             label: `🏉 ${t('create_pick.sport_rugby')}` },
+              { key: 'mma',               label: `🥊 ${t('create_pick.sport_mma')}` },
+              { key: 'volleyball',        label: `🏐 ${t('create_pick.sport_volleyball')}` },
+              { key: 'hockey',            label: `🏒 ${t('create_pick.sport_hockey')}` },
+              { key: 'american_football', label: `🏈 ${t('create_pick.sport_american_football')}` },
+              { key: 'tennis',            label: `🎾 ${t('create_pick.sport_tennis')}` },
+            ] as { key: typeof sport; label: string }[]).map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setSport(key)}
+                className={`flex-shrink-0 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                  sport === key
+                    ? 'bg-[var(--primary)] text-white shadow-md'
+                    : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           {selections.length > 0 && (
             <div className="flex justify-end mb-3">
               <button
@@ -530,7 +681,7 @@ export default function CreatePickPage() {
                 aria-label="View slip"
               >
                 <span className="text-base">📝</span>
-                <span>{selections.length} selection{selections.length !== 1 ? 's' : ''}</span>
+                <span>{selections.length} {selections.length !== 1 ? t('create_pick.selections') : t('create_pick.selection')}</span>
                 <span className="text-[var(--primary)] font-bold ml-0.5">@ {totalOdds.toFixed(2)}</span>
               </button>
             </div>
@@ -546,7 +697,12 @@ export default function CreatePickPage() {
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Search for a team (e.g., Manchester United, Barcelona)..."
+                  placeholder={
+                    sport === 'football' ? t('create_pick.search_football') :
+                    sport === 'tennis' ? t('create_pick.search_tennis') :
+                    sport === 'mma' ? t('create_pick.search_mma') :
+                    t('create_pick.search_team')
+                  }
                   value={teamSearch}
                   onChange={(e) => setTeamSearch(e.target.value)}
                   className="w-full px-4 py-2.5 pl-10 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all"
@@ -578,60 +734,111 @@ export default function CreatePickPage() {
               </div>
             </div>
 
-            {/* Filters */}
+            {/* Sport-specific filters / info */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
               <div className="flex flex-col gap-0.5">
                 <p className="text-[var(--text-muted)] text-sm">
-                  Click on a match to load odds, then tap any market button to add to your slip.
+                  {sport === 'football' && t('create_pick.click_hint')}
+                  {sport !== 'football' && t('create_pick.click_hint_other')}
                 </p>
                 <p className="text-[var(--text)] text-sm font-medium">
-                  <strong>{availableFixtures.length}</strong> available fixture{availableFixtures.length !== 1 ? 's' : ''}
+                  {sport === 'football' && (
+                    <><strong>{availableFixtures.length}</strong> available fixture{availableFixtures.length !== 1 ? 's' : ''}</>
+                  )}
+                  {sport === 'basketball' && (
+                    <><strong>{availableBasketballEvents.length}</strong> available game{availableBasketballEvents.length !== 1 ? 's' : ''}</>
+                  )}
+                  {sport === 'rugby' && (
+                    <><strong>{availableRugbyEvents.length}</strong> available match{availableRugbyEvents.length !== 1 ? 'es' : ''}</>
+                  )}
+                  {sport === 'mma' && (
+                    <><strong>{availableMmaEvents.length}</strong> available fight{availableMmaEvents.length !== 1 ? 's' : ''}</>
+                  )}
+                  {sport === 'volleyball' && (
+                    <><strong>{availableVolleyballEvents.length}</strong> available match{availableVolleyballEvents.length !== 1 ? 'es' : ''}</>
+                  )}
+                  {sport === 'hockey' && (
+                    <><strong>{availableHockeyEvents.length}</strong> available game{availableHockeyEvents.length !== 1 ? 's' : ''}</>
+                  )}
+                  {sport === 'american_football' && (
+                    <><strong>{availableAmericanFootballEvents.length}</strong> available game{availableAmericanFootballEvents.length !== 1 ? 's' : ''}</>
+                  )}
+                  {sport === 'tennis' && (
+                    <><strong>{availableTennisEvents.length}</strong> available match{availableTennisEvents.length !== 1 ? 'es' : ''}</>
+                  )}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-[var(--text)] whitespace-nowrap">Country</label>
-                  <select
-                    value={selectedCountry}
-                    onChange={(e) => {
-                      setSelectedCountry(e.target.value);
-                      setSelectedLeague('');
-                    }}
-                    className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all min-w-[140px]"
-                  >
-                    <option value="">All countries</option>
-                    {filterOptions.countries.map((country) => (
-                      <option key={country} value={country}>
-                        {country === 'World' ? 'World (international)' : country}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {filterOptions.leagues.length > 0 && (
+                {/* Football: Country + Competition filters (API-backed) */}
+                {sport === 'football' && (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-[var(--text)] whitespace-nowrap">{t('create_pick.country')}</label>
+                      <select
+                        value={selectedCountry}
+                        onChange={(e) => {
+                          setSelectedCountry(e.target.value);
+                          setSelectedLeague('');
+                        }}
+                        className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all min-w-[140px]"
+                      >
+                        <option value="">{t('create_pick.all_countries')}</option>
+                        {filterOptions.countries.map((country) => (
+                          <option key={country} value={country}>
+                            {country === 'World' ? 'World (international)' : country}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {filterOptions.leagues.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm font-medium text-[var(--text)] whitespace-nowrap">Competition</label>
+                        <select
+                          value={competitionOptions.some((l) => String(l.id) === selectedLeague) ? selectedLeague : ''}
+                          onChange={(e) => setSelectedLeague(e.target.value)}
+                          className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all min-w-[200px]"
+                          title={selectedCountry ? (selectedCountry === 'World' ? t('create_pick.international_only') : t('create_pick.leagues_in', { country: selectedCountry })) : t('create_pick.filter_by_league')}
+                        >
+                          <option value="">All competitions</option>
+                          {competitionOptions.map((l) => (
+                            <option key={l.id} value={String(l.id)}>
+                              {l.country ? `${l.name} (${l.country})` : l.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    {(selectedCountry || selectedLeague || teamSearch) && (
+                      <button
+                        onClick={() => { setSelectedCountry(''); setSelectedLeague(''); setTeamSearch(''); }}
+                        title="Clear all filters"
+                        className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                      >
+                        {t('create_pick.clear_filters')}
+                      </button>
+                    )}
+                  </>
+                )}
+
+                {/* Non-football: Competition/League filter (client-side from loaded events) */}
+                {sport !== 'football' && uniqueSportLeagues.length > 0 && (
                   <div className="flex items-center gap-2">
                     <label className="text-sm font-medium text-[var(--text)] whitespace-nowrap">Competition</label>
                     <select
-                      value={competitionOptions.some((l) => String(l.id) === selectedLeague) ? selectedLeague : ''}
-                      onChange={(e) => setSelectedLeague(e.target.value)}
+                      value={sportLeague}
+                      onChange={(e) => setSportLeague(e.target.value)}
                       className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all min-w-[200px]"
-                      title={selectedCountry ? (selectedCountry === 'World' ? 'International competitions only' : `Leagues in ${selectedCountry}`) : 'Filter by league'}
                     >
                       <option value="">All competitions</option>
-                      {competitionOptions.map((l) => (
-                        <option key={l.id} value={String(l.id)}>
-                          {l.country ? `${l.name} (${l.country})` : l.name}
-                        </option>
+                      {uniqueSportLeagues.map((league) => (
+                        <option key={league} value={league}>{league}</option>
                       ))}
                     </select>
                   </div>
                 )}
-                {(selectedCountry || selectedLeague || teamSearch) && (
+                {sport !== 'football' && (sportLeague || teamSearch) && (
                   <button
-                    onClick={() => {
-                      setSelectedCountry('');
-                      setSelectedLeague('');
-                      setTeamSearch('');
-                    }}
+                    onClick={() => { setSportLeague(''); setTeamSearch(''); }}
                     title="Clear all filters"
                     className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                   >
@@ -640,7 +847,63 @@ export default function CreatePickPage() {
                 )}
               </div>
             </div>
-            {loading && <LoadingSkeleton count={4} />}
+            {loading && sport === 'football' && <LoadingSkeleton count={4} />}
+
+            {/* Basketball */}
+            {sport === 'basketball' && loadingBasketball && <SportLoadingSpinner label="Loading basketball games…" />}
+            {sport === 'basketball' && !loadingBasketball && availableBasketballEvents.length === 0 && (
+              basketballEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
+                ? <SportEmptyState emoji="🏀" label="No upcoming basketball games with odds" hint="Basketball data syncs daily. Odds become available shortly after events are synced." />
+                : <SportEmptyState emoji="🏀" label="No games match your filters" hint="Try clearing the Competition filter or changing your search." />
+            )}
+
+            {/* Rugby */}
+            {sport === 'rugby' && loadingRugby && <SportLoadingSpinner label="Loading rugby matches…" />}
+            {sport === 'rugby' && !loadingRugby && availableRugbyEvents.length === 0 && (
+              rugbyEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
+                ? <SportEmptyState emoji="🏉" label="No upcoming rugby matches with odds" hint="Rugby data syncs daily. Odds become available shortly after events are synced." />
+                : <SportEmptyState emoji="🏉" label="No matches match your filters" hint="Try clearing the Competition filter or changing your search." />
+            )}
+
+            {/* MMA */}
+            {sport === 'mma' && loadingMma && <SportLoadingSpinner label="Loading MMA fights…" />}
+            {sport === 'mma' && !loadingMma && availableMmaEvents.length === 0 && (
+              mmaEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
+                ? <SportEmptyState emoji="🥊" label="No upcoming MMA fights with odds" hint="MMA data syncs daily. Odds are typically available for major promotions like UFC." />
+                : <SportEmptyState emoji="🥊" label="No fights match your filters" hint="Try clearing the Competition filter or changing your search." />
+            )}
+
+            {/* Volleyball */}
+            {sport === 'volleyball' && loadingVolleyball && <SportLoadingSpinner label="Loading volleyball matches…" />}
+            {sport === 'volleyball' && !loadingVolleyball && availableVolleyballEvents.length === 0 && (
+              volleyballEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
+                ? <SportEmptyState emoji="🏐" label="No upcoming volleyball matches with odds" hint="Volleyball data syncs daily at 07:00. Odds may not be available for all leagues." />
+                : <SportEmptyState emoji="🏐" label="No matches match your filters" hint="Try clearing the Competition filter or changing your search." />
+            )}
+
+            {/* Hockey */}
+            {sport === 'hockey' && loadingHockey && <SportLoadingSpinner label="Loading hockey games…" />}
+            {sport === 'hockey' && !loadingHockey && availableHockeyEvents.length === 0 && (
+              hockeyEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
+                ? <SportEmptyState emoji="🏒" label="No upcoming hockey games with odds" hint="Hockey data syncs daily. Odds are available for NHL and major European leagues." />
+                : <SportEmptyState emoji="🏒" label="No games match your filters" hint="Try clearing the Competition filter or changing your search." />
+            )}
+
+            {/* American Football */}
+            {sport === 'american_football' && loadingAmericanFootball && <SportLoadingSpinner label="Loading American Football games…" />}
+            {sport === 'american_football' && !loadingAmericanFootball && availableAmericanFootballEvents.length === 0 && (
+              americanFootballEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
+                ? <SportEmptyState emoji="🏈" label="No upcoming NFL/NCAAF games with odds" hint="NFL is off-season. NCAAF games will appear when the season starts. Data syncs daily." />
+                : <SportEmptyState emoji="🏈" label="No games match your filters" hint="Try clearing the Competition filter or changing your search." />
+            )}
+
+            {/* Tennis */}
+            {sport === 'tennis' && loadingTennis && <SportLoadingSpinner label="Loading tennis matches…" />}
+            {sport === 'tennis' && !loadingTennis && availableTennisEvents.length === 0 && (
+              tennisEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
+                ? <SportEmptyState emoji="🎾" label="No upcoming tennis matches with odds" hint="Tennis data syncs daily at 08:30. Odds are available for ATP/WTA tour events." />
+                : <SportEmptyState emoji="🎾" label="No matches match your filters" hint="Try clearing the Competition filter or changing your search." />
+            )}
             {error && (
               <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
                 <div className="flex items-start gap-3">
@@ -684,20 +947,20 @@ export default function CreatePickPage() {
                 </div>
               </div>
             )}
-            {!loading && !error && availableFixtures.length === 0 && fixtures.length === 0 && (
+            {!loading && !error && sport === 'football' && availableFixtures.length === 0 && fixtures.length === 0 && (
               <div className="bg-[var(--card)] rounded-card border border-[var(--border)] p-6">
                 <EmptyState
                   title={
                     selectedCountry || selectedLeague || debouncedTeamSearch
-                      ? "No fixtures match your filters"
-                      : "No upcoming fixtures"
+                      ? t('create_pick.no_fixtures_filtered')
+                      : t('create_pick.no_fixtures')
                   }
                   description={
                     selectedCountry || selectedLeague || debouncedTeamSearch
-                      ? "Try adjusting your filters. Fixtures sync automatically daily for the next 7 days."
-                      : "Fixtures sync automatically daily at 6 AM for the next 7 days."
+                      ? t('create_pick.fixtures_sync_filtered')
+                      : t('create_pick.fixtures_sync')
                   }
-                  actionLabel={selectedCountry || selectedLeague || debouncedTeamSearch ? "Clear Filters" : "Go to Dashboard"}
+                  actionLabel={selectedCountry || selectedLeague || debouncedTeamSearch ? t('create_pick.clear_filters') : t('create_pick.go_dashboard')}
                   actionHref="/dashboard"
                   onActionClick={
                     selectedCountry || selectedLeague || debouncedTeamSearch
@@ -712,7 +975,7 @@ export default function CreatePickPage() {
                 />
               </div>
             )}
-            {!loading && !error && availableFixtures.length === 0 && fixtures.length > 0 && (
+            {!loading && !error && sport === 'football' && availableFixtures.length === 0 && fixtures.length > 0 && (
               <div className="bg-[var(--card)] rounded-card border border-[var(--border)] p-6">
                 <EmptyState
                   title="All fixtures have started"
@@ -723,110 +986,119 @@ export default function CreatePickPage() {
                 />
               </div>
             )}
-            {!loading && availableFixtures.length > 0 && (
+            {!loading && sport === 'football' && availableFixtures.length > 0 && (
               <div className="space-y-4">
-                {availableFixtures.map((f) => {
-                  const groupedOdds = f.odds ? groupOddsByMarket(f.odds) : {};
-                  const isLoading = loadingOdds.has(f.id);
-                  const hasOdds = f.odds && f.odds.length > 0;
-                  const isCollapsed = collapsedOdds.has(f.id);
-                  const showOdds = hasOdds && !isCollapsed;
-
-                  const toggleCollapsed = (e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    setCollapsedOdds((prev) => {
-                      const next = new Set(prev);
-                      if (next.has(f.id)) next.delete(f.id);
-                      else next.add(f.id);
-                      return next;
-                    });
-                  };
-
-                  return (
-                    <div
-                      key={f.id}
-                      className="bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] overflow-hidden transition-shadow hover:shadow-card-hover"
-                    >
-                      {/* Fixture Header */}
-                      <div
-                        className="p-4 cursor-pointer"
-                        onClick={() => !hasOdds && loadFixtureOdds(f)}
-                      >
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                          <div>
-                            <span className="font-semibold text-[var(--text)] text-base">
-                              {f.homeTeamName} vs {f.awayTeamName}
-                            </span>
-                            <div className="text-xs text-[var(--text-muted)] mt-1">
-                              {f.leagueName || 'League'} • {formatFixtureDateTime(f.matchDate)}
-                            </div>
-                          </div>
-                          {!hasOdds && !f.oddsError && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                loadFixtureOdds(f);
-                              }}
-                              disabled={isLoading}
-                              className="px-3 py-1.5 text-sm font-medium rounded-lg bg-[var(--primary-light)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white transition-colors disabled:opacity-50"
-                            >
-                              {isLoading ? 'Loading...' : 'Load Odds'}
-                            </button>
-                          )}
-                          {hasOdds && !f.oddsError && (
-                            <button
-                              onClick={toggleCollapsed}
-                              className="px-3 py-1.5 text-sm font-medium rounded-lg bg-[var(--primary-light)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white transition-colors"
-                            >
-                              {isCollapsed ? 'Show Odds' : 'Hide Odds'}
-                            </button>
-                          )}
-                          {f.oddsError && (
-                            <div className="px-3 py-1.5 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg max-w-xs">
-                              {f.oddsError}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Quick Market Buttons */}
-                      {showOdds && (
-                        <div className="px-4 pb-4 pt-0 border-t border-[var(--border)]">
-                          {MARKET_ORDER.filter((market) => groupedOdds[market]).map((marketName) => {
-                            let marketOdds = groupedOdds[marketName];
-                            if (marketName === 'Correct Score') {
-                              marketOdds = filterCorrectScoreOdds(marketOdds);
-                              if (marketOdds.length === 0) return null;
-                            }
-                            return (
-                              <div key={marketName} className="mt-3 first:mt-3">
-                                <p className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide mb-2">
-                                  {marketName}
-                                </p>
-                                <div className="flex flex-wrap gap-2">
-                                  {marketOdds.map((odd) => (
-                                    <button
-                                      key={odd.id}
-                                      onClick={() => addSelection(f, odd)}
-                                      className="px-3 py-2 rounded-lg bg-[var(--bg)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] font-medium text-sm transition-colors border border-[var(--border)] active:scale-95"
-                                    >
-                                      <span className="font-semibold">
-                                        {formatMarketValue(odd.marketName, odd.marketValue)}
-                                      </span>
-                                      <span className="ml-1.5 text-[var(--primary)]">
-                                        {Number(odd.odds).toFixed(2)}
-                                      </span>
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                {availableFixtures.map((f) => (
+                  <FootballFixtureCard
+                    key={f.id}
+                    fixture={f}
+                    isLoadingOdds={loadingOdds.has(f.id)}
+                    isCollapsed={collapsedOdds.has(f.id)}
+                    onLoadOdds={loadFixtureOdds}
+                    onToggleCollapsed={(id) =>
+                      setCollapsedOdds((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(id)) next.delete(id);
+                        else next.add(id);
+                        return next;
+                      })
+                    }
+                    onAddSelection={addFootballSelection}
+                  />
+                ))}
+              </div>
+            )}
+            {sport === 'basketball' && availableBasketballEvents.length > 0 && (
+              <div className="space-y-4">
+                {availableBasketballEvents.map((e) => (
+                  <SportEventCard
+                    key={e.id}
+                    event={e}
+                    marketOrder={SPORT_MARKET_ORDERS.basketball}
+                    sport="basketball"
+                    onAddSelection={addSportEventSelection}
+                  />
+                ))}
+              </div>
+            )}
+            {sport === 'rugby' && availableRugbyEvents.length > 0 && (
+              <div className="space-y-4">
+                {availableRugbyEvents.map((e) => (
+                  <SportEventCard
+                    key={e.id}
+                    event={e}
+                    marketOrder={SPORT_MARKET_ORDERS.rugby}
+                    sport="rugby"
+                    onAddSelection={addSportEventSelection}
+                  />
+                ))}
+              </div>
+            )}
+            {sport === 'mma' && availableMmaEvents.length > 0 && (
+              <div className="space-y-4">
+                {availableMmaEvents.map((e) => (
+                  <SportEventCard
+                    key={e.id}
+                    event={e}
+                    marketOrder={SPORT_MARKET_ORDERS.mma}
+                    sport="mma"
+                    onAddSelection={addSportEventSelection}
+                    leagueLabel="Event"
+                  />
+                ))}
+              </div>
+            )}
+            {sport === 'volleyball' && availableVolleyballEvents.length > 0 && (
+              <div className="space-y-4">
+                {availableVolleyballEvents.map((e) => (
+                  <SportEventCard
+                    key={e.id}
+                    event={e}
+                    marketOrder={SPORT_MARKET_ORDERS.volleyball}
+                    sport="volleyball"
+                    onAddSelection={addSportEventSelection}
+                  />
+                ))}
+              </div>
+            )}
+            {sport === 'hockey' && availableHockeyEvents.length > 0 && (
+              <div className="space-y-4">
+                {availableHockeyEvents.map((e) => (
+                  <SportEventCard
+                    key={e.id}
+                    event={e}
+                    marketOrder={SPORT_MARKET_ORDERS.hockey}
+                    sport="hockey"
+                    onAddSelection={addSportEventSelection}
+                  />
+                ))}
+              </div>
+            )}
+            {sport === 'american_football' && availableAmericanFootballEvents.length > 0 && (
+              <div className="space-y-4">
+                {availableAmericanFootballEvents.map((e) => (
+                  <SportEventCard
+                    key={e.id}
+                    event={e}
+                    marketOrder={SPORT_MARKET_ORDERS.american_football}
+                    sport="american_football"
+                    onAddSelection={addSportEventSelection}
+                  />
+                ))}
+              </div>
+            )}
+            {sport === 'tennis' && availableTennisEvents.length > 0 && (
+              <div className="space-y-4">
+                {availableTennisEvents.map((e) => (
+                  <SportEventCard
+                    key={e.id}
+                    event={e}
+                    marketOrder={SPORT_MARKET_ORDERS.tennis}
+                    sport="tennis"
+                    onAddSelection={addSportEventSelection}
+                    leagueLabel="Tournament"
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -840,7 +1112,7 @@ export default function CreatePickPage() {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
                     <span className="text-2xl">📝</span>
-                    Bet Slip
+                    {t('create_pick.pick_slip')}
                   </h2>
                   {selections.length > 0 && (
                     <span className="px-2.5 py-1 bg-[var(--primary)] text-white rounded-full text-xs font-semibold">
@@ -854,56 +1126,66 @@ export default function CreatePickPage() {
                   <div className="text-center py-8">
                     <div className="text-4xl mb-3 opacity-50">🎯</div>
                     <p className="text-sm text-[var(--text-muted)]">
-                      Your slip is empty
+                      {t('create_pick.slip_empty')}
                     </p>
                     <p className="text-xs text-[var(--text-muted)] mt-1">
-                      Tap market buttons to add selections
+                      {t('create_pick.tap_to_add')}
                     </p>
                   </div>
                 ) : (
                   <>
                     <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                      {selections.map((s, i) => (
-                        <div
-                          key={i}
-                          className="bg-[var(--card)] rounded-lg p-3 border border-[var(--border)] hover:border-[var(--primary)]/50 transition-colors"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-semibold text-[var(--text)] truncate">
-                                {s.matchDescription}
-                              </p>
-                              <p className="text-xs text-[var(--text-muted)] mt-1">
-                                {s.prediction}
-                              </p>
-                              <p className="text-sm font-bold text-[var(--primary)] mt-1">
-                                @ {s.odds.toFixed(2)}
-                              </p>
+                      {selections.map((s, i) => {
+                        const SLIP_SPORT_ICONS: Record<string, string> = {
+                          football: '⚽', basketball: '🏀', rugby: '🏉', mma: '🥊',
+                          volleyball: '🏐', hockey: '🏒', american_football: '🏈', tennis: '🎾',
+                        };
+                        const sportIcon = SLIP_SPORT_ICONS[s.sport ?? 'football'] ?? '🎯';
+                        return (
+                          <div
+                            key={i}
+                            className="bg-[var(--card)] rounded-lg p-3 border border-[var(--border)] hover:border-[var(--primary)]/50 transition-colors"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5 mb-0.5">
+                                  <span className="text-xs">{sportIcon}</span>
+                                  <p className="text-xs font-semibold text-[var(--text)] truncate">
+                                    {s.matchDescription}
+                                  </p>
+                                </div>
+                                <p className="text-xs text-[var(--text-muted)] mt-1">
+                                  {s.prediction}
+                                </p>
+                                <p className="text-sm font-bold text-[var(--primary)] mt-1">
+                                  @ {s.odds.toFixed(2)}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => removeSelection(i)}
+                                className="flex-shrink-0 text-red-500 hover:text-red-700 transition-colors p-1"
+                                title="Remove"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
                             </div>
-                            <button
-                              onClick={() => removeSelection(i)}
-                              className="flex-shrink-0 text-red-500 hover:text-red-700 transition-colors p-1"
-                              title="Remove"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {/* Total Odds */}
                     <div className="bg-[var(--card)] rounded-lg p-4 border-2 border-[var(--primary)]/50">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-[var(--text-muted)]">Total Odds</span>
+                        <span className="text-sm font-medium text-[var(--text-muted)]">{t('create_pick.total_odds')}</span>
                         <span className="text-xl font-bold text-[var(--primary)]">
                           {totalOdds.toFixed(2)}
                         </span>
                       </div>
                       <div className="text-xs text-[var(--text-muted)]">
-                        {selections.length} selection{selections.length !== 1 ? 's' : ''}
+                        {selections.length} {selections.length !== 1 ? t('create_pick.selections') : t('create_pick.selection')}
                       </div>
                     </div>
 
@@ -911,7 +1193,7 @@ export default function CreatePickPage() {
                     <div className="space-y-3 pt-2 border-t border-[var(--border)]">
                       <div>
                         <label className="block text-xs font-medium text-[var(--text)] mb-1">
-                          Title <span className="text-red-500">*</span>
+                          {t('create_pick.title_label')} <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
@@ -935,7 +1217,7 @@ export default function CreatePickPage() {
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-[var(--text)] mb-1">
-                          Price (GHS) <span className="text-[var(--text-muted)]">— 0 = free</span>
+                          {t('create_pick.price_label')} <span className="text-[var(--text-muted)]">{t('create_pick.price_note')}</span>
                         </label>
                         <input
                           type="number"
@@ -993,7 +1275,7 @@ export default function CreatePickPage() {
                         className="w-full py-3 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white hover:shadow-lg hover:shadow-[var(--primary)]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
                       >
                         {submitting && <LoadingSpinner size="sm" />}
-                        {submitting ? 'Creating Pick...' : 'Create Pick'}
+                        {submitting ? t('create_pick.creating') : t('create_pick.create_btn')}
                       </button>
                     </div>
                   </>
@@ -1044,7 +1326,7 @@ export default function CreatePickPage() {
               <div className="w-12 h-1 rounded-full bg-[var(--border)] mx-auto mb-4" />
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
-                  <span>📝</span> Bet Slip
+                  <span>📝</span> {t('create_pick.pick_slip')}
                 </h2>
                 <button
                   type="button"
@@ -1060,39 +1342,49 @@ export default function CreatePickPage() {
             </div>
             <div className="p-5 space-y-4">
               <div className="space-y-2 max-h-[180px] overflow-y-auto">
-                {selections.map((s, i) => (
-                  <div
-                    key={i}
-                    className="bg-[var(--bg-warm)] rounded-xl p-4 border border-[var(--border)]"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-[var(--text)]">{s.matchDescription}</p>
-                        <p className="text-xs text-[var(--text-muted)] mt-1">{s.prediction}</p>
-                        <p className="text-base font-bold text-[var(--primary)] mt-2">@ {s.odds.toFixed(2)}</p>
+                {selections.map((s, i) => {
+                  const SHEET_SPORT_ICONS: Record<string, string> = {
+                    football: '⚽', basketball: '🏀', rugby: '🏉', mma: '🥊',
+                    volleyball: '🏐', hockey: '🏒', american_football: '🏈', tennis: '🎾',
+                  };
+                  const sheetSportIcon = SHEET_SPORT_ICONS[s.sport ?? 'football'] ?? '🎯';
+                  return (
+                    <div
+                      key={i}
+                      className="bg-[var(--bg-warm)] rounded-xl p-4 border border-[var(--border)]"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="text-sm">{sheetSportIcon}</span>
+                            <p className="text-sm font-semibold text-[var(--text)] truncate">{s.matchDescription}</p>
+                          </div>
+                          <p className="text-xs text-[var(--text-muted)] mt-1">{s.prediction}</p>
+                          <p className="text-base font-bold text-[var(--primary)] mt-2">@ {s.odds.toFixed(2)}</p>
+                        </div>
+                        <button
+                          onClick={() => removeSelection(i)}
+                          className="flex-shrink-0 p-2 rounded-lg text-red-500 hover:bg-red-50 active:bg-red-100 transition-colors touch-manipulation"
+                          aria-label="Remove selection"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
                       </div>
-                      <button
-                        onClick={() => removeSelection(i)}
-                        className="flex-shrink-0 p-2 rounded-lg text-red-500 hover:bg-red-50 active:bg-red-100 transition-colors touch-manipulation"
-                        aria-label="Remove selection"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <div className="bg-[var(--primary-light)]/50 rounded-xl p-4 border-2 border-[var(--primary)]/30">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-[var(--text-muted)]">Total Odds</span>
+                  <span className="text-sm font-medium text-[var(--text-muted)]">{t('create_pick.total_odds')}</span>
                   <span className="text-xl font-bold text-[var(--primary)]">{totalOdds.toFixed(2)}</span>
                 </div>
               </div>
               <div className="space-y-3 pt-2 border-t border-[var(--border)]">
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text)] mb-1">Title <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-[var(--text)] mb-1">{t('create_pick.title_label')} <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={title}
@@ -1112,7 +1404,7 @@ export default function CreatePickPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text)] mb-1">Price (GHS) — 0 = free</label>
+                  <label className="block text-sm font-medium text-[var(--text)] mb-1">{t('create_pick.price_label')} {t('create_pick.price_note')}</label>
                   <input
                     type="number"
                     min={0}
@@ -1145,7 +1437,7 @@ export default function CreatePickPage() {
                   className="w-full py-4 rounded-xl font-bold text-base bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-teal-500/30 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] transition-all flex items-center justify-center gap-2 touch-manipulation min-h-[52px]"
                 >
                   {submitting && <LoadingSpinner size="sm" />}
-                  {submitting ? 'Creating...' : 'Create Pick'}
+                  {submitting ? t('create_pick.creating') : t('create_pick.create_btn')}
                 </button>
               </div>
             </div>

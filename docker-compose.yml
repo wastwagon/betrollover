@@ -58,13 +58,21 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-betrollover}:${POSTGRES_PASSWORD:-betrollover_dev}@postgres:5432/${POSTGRES_DB:-betrollover}
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-in-production}
-      # Local dev: no API key (prevents fetching from live API). Add to .env when running live tests.
-      API_SPORTS_KEY: ""
+      # API-Sports key — reads from .env (leave empty in .env to disable live fetching in dev)
+      API_SPORTS_KEY: ${API_SPORTS_KEY:-}
+      # The Odds API key — all sports except football (basketball, rugby, mma, hockey, american football, tennis)
+      ODDS_API_KEY: ${ODDS_API_KEY:-}
+      TENNIS_ODDS_API_KEY: ${TENNIS_ODDS_API_KEY:-}  # legacy fallback — use ODDS_API_KEY going forward
+      # Comma-separated list of enabled sports. Football is always included.
+      ENABLED_SPORTS: ${ENABLED_SPORTS:-football,basketball,rugby,mma,volleyball,hockey,american_football,tennis}
       PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY:-}
       PAYSTACK_PUBLIC_KEY: ${PAYSTACK_PUBLIC_KEY:-}
+      PAYSTACK_WEBHOOK_SECRET: ${PAYSTACK_WEBHOOK_SECRET:-}
       SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
       SMTP_FROM: ${SMTP_FROM:-noreply@betrollover.com}
       APP_URL: ${APP_URL:-http://localhost:6002}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       MIGRATIONS_PATH: /app/database/migrations
       SEEDS_PATH: /app/database/seeds
     depends_on:
@@ -100,8 +108,13 @@ services:
     volumes:
       - ./web:/app
       - /app/node_modules
-      - /app/.next
+      # .next is a named Docker volume so it lives inside the Linux VM (not the macOS
+      # host bind mount). This eliminates osxfs/virtiofs sync issues that cause webpack
+      # to read stale/incomplete chunk files and throw "Cannot read properties of
+      # undefined (reading 'call')".
+      - betrollover_web_next:/app/.next
 
 volumes:
   postgres_data:
   redis_data:
+  betrollover_web_next:

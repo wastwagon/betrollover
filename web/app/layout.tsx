@@ -1,12 +1,28 @@
 import type { Metadata, Viewport } from 'next';
+import { cookies } from 'next/headers';
 import { DM_Sans } from 'next/font/google';
 import { QueryProvider } from '@/components/QueryProvider';
 import { SlipCartProvider } from '@/context/SlipCartContext';
+import { CurrencyProvider } from '@/context/CurrencyContext';
+import { LanguageProvider, type SupportedLanguage } from '@/context/LanguageContext';
 import { TopBar } from '@/components/TopBar';
+import { SkipToMainContent } from '@/components/SkipToMainContent';
 import { AnalyticsBeacon } from '@/components/AnalyticsBeacon';
 import { JsonLdScript } from '@/components/JsonLdScript';
-import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS, getApiOriginForPreconnect } from '@/lib/site-config';
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS } from '@/lib/site-config';
 import './globals.css';
+
+const SUPPORTED_LOCALES: SupportedLanguage[] = ['en', 'fr'];
+
+async function getInitialLocale(): Promise<SupportedLanguage> {
+  try {
+    const c = await cookies();
+    const val = c.get('br_language')?.value as SupportedLanguage | undefined;
+    return val && SUPPORTED_LOCALES.includes(val) ? val : 'en';
+  } catch {
+    return 'en';
+  }
+}
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -14,10 +30,13 @@ const dmSans = DM_Sans({
   weight: ['400', '500', '600', '700'],
 });
 
+// Ensure we only pass a string to className (avoids "Objects are not valid as React child" during hydration)
+const fontClassName = typeof dmSans?.variable === 'string' ? dmSans.variable : '';
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `Verified Football Tips | Win Rate & ROI — ${SITE_NAME}`,
+    default: `Verified Sports Tips | Football, Basketball & More — ${SITE_NAME}`,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
@@ -31,24 +50,26 @@ export const metadata: Metadata = {
     shortcut: '/BetRollover-logo.png',
     apple: '/BetRollover-logo.png',
   },
+  manifest: '/manifest.json',
   openGraph: {
     type: 'website',
     locale: 'en_GH',
     alternateLocale: ['en_NG', 'en_ZA', 'en_KE'],
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: `Verified Football Tips | Win Rate & ROI — ${SITE_NAME}`,
+    title: `Verified Sports Tips | Football, Basketball & More — ${SITE_NAME}`,
     description: SITE_DESCRIPTION,
     images: [
-      { url: '/og-image.png', width: 1200, height: 630, alt: `${SITE_NAME} - Africa's Premier Tipster Marketplace` },
+      { url: '/og-image.png', width: 1200, height: 630, alt: `${SITE_NAME} - Africa's Premier Multi-Sport Tipster Marketplace` },
       { url: '/BetRollover-logo.png', width: 512, height: 512, alt: SITE_NAME },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: `Verified Football Tips | Win Rate & ROI — ${SITE_NAME}`,
+    title: `Verified Sports Tips | Football, Basketball & More — ${SITE_NAME}`,
     description: SITE_DESCRIPTION,
     creator: '@betrollover',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: `${SITE_NAME} - Africa's Premier Multi-Sport Tipster Marketplace` }],
   },
   robots: {
     index: true,
@@ -71,30 +92,30 @@ export const viewport: Viewport = {
   userScalable: true,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const apiOrigin = getApiOriginForPreconnect();
+  const locale = await getInitialLocale();
+
   return (
-    <html lang="en" className={dmSans.variable}>
-      <head>
-        {apiOrigin && (
-          <>
-            <link rel="preconnect" href={apiOrigin} crossOrigin="" />
-            <link rel="dns-prefetch" href={apiOrigin} />
-          </>
-        )}
-      </head>
+    <html lang={locale} className={fontClassName}>
       <body className="min-h-screen bg-[var(--bg)] font-sans antialiased">
         <JsonLdScript />
         <AnalyticsBeacon />
         <QueryProvider>
-          <SlipCartProvider>
-            <TopBar />
-            {children}
-          </SlipCartProvider>
+          <LanguageProvider initialLocale={locale}>
+            <CurrencyProvider>
+              <SlipCartProvider>
+                <SkipToMainContent />
+                <TopBar />
+                <div id="main-content" role="main" tabIndex={-1} className="min-h-screen">
+                  {children}
+                </div>
+              </SlipCartProvider>
+            </CurrencyProvider>
+          </LanguageProvider>
         </QueryProvider>
       </body>
     </html>

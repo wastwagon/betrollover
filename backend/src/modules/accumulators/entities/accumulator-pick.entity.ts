@@ -16,6 +16,12 @@ export class AccumulatorPick {
   @Column({ type: 'int', nullable: true })
   fixtureId: number | null = null;
 
+  @Column({ type: 'int', nullable: true })
+  eventId: number | null = null;
+
+  @Column({ type: 'varchar', length: 30, default: 'football' })
+  sport: string = 'football';
+
   @Column({ length: 255 })
   matchDescription: string;
 

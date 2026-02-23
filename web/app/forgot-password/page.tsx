@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { useT } from '@/context/LanguageContext';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { getApiUrl } from '@/lib/site-config';
 
@@ -82,6 +83,7 @@ function ForgotPasswordForm() {
         }
     };
 
+    const t = useT();
     return (
         <div className="min-h-screen bg-[var(--bg)] relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-mesh pointer-events-none" />
@@ -91,23 +93,21 @@ function ForgotPasswordForm() {
                     <div className="bg-white rounded-2xl shadow-xl border border-[var(--border)] p-8 md:p-10">
                         <div className="text-center mb-8">
                             <h1 className="text-2xl font-bold text-[var(--text)]">
-                                {step === 'request' ? 'Forgot Password' : 'Reset Password'}
+                                {step === 'request' ? t('auth.forgot_title') : t('auth.forgot_reset_title')}
                             </h1>
                             <p className="mt-2 text-[var(--text-muted)]">
-                                {step === 'request'
-                                    ? 'Enter your email to receive a reset code'
-                                    : 'Enter the code sent to your email and your new password'}
+                                {step === 'request' ? t('auth.forgot_desc') : t('auth.forgot_reset_desc')}
                             </p>
                         </div>
 
                         {error && (
-                            <div className="mb-6 p-4 rounded-xl bg-red-50 text-red-600 text-sm font-medium border border-red-100 italic">
+                            <div className="mb-6 p-4 rounded-xl bg-red-50 text-red-600 text-sm font-medium border border-red-100 italic" role="alert" aria-live="polite">
                                 {error}
                             </div>
                         )}
 
                         {success && (
-                            <div className="mb-6 p-4 rounded-xl bg-green-50 text-green-600 text-sm font-medium border border-green-100 italic">
+                            <div className="mb-6 p-4 rounded-xl bg-green-50 text-green-600 text-sm font-medium border border-green-100 italic" role="status" aria-live="polite">
                                 {success}
                             </div>
                         )}
@@ -116,7 +116,7 @@ function ForgotPasswordForm() {
                             <form onSubmit={handleRequestOtp} className="space-y-5">
                                 <div>
                                     <label htmlFor="email" className="block text-sm font-medium text-[var(--text)] mb-1.5">
-                                        Email
+                                        {t('auth.email_label')}
                                     </label>
                                     <input
                                         id="email"
@@ -133,14 +133,14 @@ function ForgotPasswordForm() {
                                     disabled={loading}
                                     className="w-full py-3.5 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-[var(--primary)]/25 hover:shadow-xl hover:shadow-[var(--primary)]/30 transition-all duration-300 disabled:opacity-50"
                                 >
-                                    {loading ? 'Sending...' : 'Send Reset Code'}
+                                    {loading ? t('auth.sending') : t('auth.send_reset_code')}
                                 </button>
                             </form>
                         ) : (
                             <form onSubmit={handleResetPassword} className="space-y-5">
                                 <div>
                                     <label htmlFor="code" className="block text-sm font-medium text-[var(--text)] mb-1.5">
-                                        Reset Code
+                                        {t('auth.reset_code')}
                                     </label>
                                     <input
                                         id="code"
@@ -154,7 +154,7 @@ function ForgotPasswordForm() {
                                 </div>
                                 <div>
                                     <label htmlFor="newPassword" className="block text-sm font-medium text-[var(--text)] mb-1.5">
-                                        New Password
+                                        {t('auth.new_password')}
                                     </label>
                                     <input
                                         id="newPassword"
@@ -167,7 +167,7 @@ function ForgotPasswordForm() {
                                 </div>
                                 <div>
                                     <label htmlFor="confirmPassword" className="block text-sm font-medium text-[var(--text)] mb-1.5">
-                                        Confirm Password
+                                        {t('auth.confirm_password_label')}
                                     </label>
                                     <input
                                         id="confirmPassword"
@@ -183,22 +183,22 @@ function ForgotPasswordForm() {
                                     disabled={loading}
                                     className="w-full py-3.5 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-[var(--primary)]/25 hover:shadow-xl hover:shadow-[var(--primary)]/30 transition-all duration-300 disabled:opacity-50"
                                 >
-                                    {loading ? 'Resetting...' : 'Reset Password'}
+                                    {loading ? t('auth.resetting') : t('auth.reset_password_btn')}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setStep('request')}
                                     className="w-full py-2 text-sm text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors"
                                 >
-                                    Back to request
+                                    {t('auth.back_to_request')}
                                 </button>
                             </form>
                         )}
 
                         <p className="text-center text-sm text-[var(--text-muted)] mt-6">
-                            Remember your password?{' '}
+                            {t('auth.remember_password')}{' '}
                             <Link href="/login" className="text-[var(--primary)] font-medium hover:underline">
-                                Sign In
+                                {t('auth.login')}
                             </Link>
                         </p>
                     </div>

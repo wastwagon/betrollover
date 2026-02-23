@@ -1,11 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NewsArticle } from './entities/news-article.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
-
-const API_BASE = 'https://v3.football.api-sports.io';
+import { getSportApiBaseUrl } from '../../config/sports.config';
+import { API_CALL_DELAY_MS } from '../../config/api-limits.config';
 
 // Major club team IDs from API-Football
 const MAJOR_TEAM_IDS = [
@@ -47,6 +48,7 @@ export class TransfersSyncService {
     private newsRepo: Repository<NewsArticle>,
     @InjectRepository(ApiSettings)
     private apiSettingsRepo: Repository<ApiSettings>,
+    private configService: ConfigService,
   ) { }
 
   private async getKey(): Promise<string> {
@@ -70,7 +72,7 @@ export class TransfersSyncService {
   }
 
   private async fetchTransfersForTeam(teamId: number, headers: Record<string, string>): Promise<Transfer[]> {
-    const url = `${API_BASE}/transfers?team=${teamId}`;
+    const url = `${getSportApiBaseUrl('football')}/transfers?team=${teamId}`;
     const res = await fetch(url, { headers });
     const data = (await res.json()) as TransfersResponse;
     if (data.errors && Object.keys(data.errors).length > 0) {
@@ -147,6 +149,7 @@ export class TransfersSyncService {
               excerpt,
               content,
               category: 'confirmed_transfer',
+              sport: 'football',
               featured: false,
               metaDescription: title,
               publishedAt,
@@ -159,16 +162,17 @@ export class TransfersSyncService {
         errors.push(`Team ${teamId}: ${msg}`);
         this.logger.warn(`Transfers sync team ${teamId}: ${msg}`);
       }
-      await new Promise((r) => setTimeout(r, 350)); // rate limit
+      await new Promise((r) => setTimeout(r, API_CALL_DELAY_MS));
     }
 
     this.logger.log(`Transfers sync complete: ${added} new articles added`);
     return { added, skipped: seen.size - added, errors };
   }
 
-  /** Runs daily at 6 AM - syncs real transfers from API-Football */
-  @Cron('15 6 * * *')
+  /** Runs daily at 12:55 AM - syncs real transfers from API-Football */
+  @Cron('55 0 * * *') // 12:55 AM — consolidated to midnight window (API-Sports)
   async handleDailySync(): Promise<void> {
+    if (this.configService.get('ENABLE_SCHEDULING') !== 'true') return;
     const result = await this.sync();
     if (result.added > 0) {
       this.logger.log(`Daily transfers sync: ${result.added} new articles`);

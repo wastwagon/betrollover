@@ -32,6 +32,10 @@ export class ApiSettings {
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 20.0 })
   minimumROI: number = 20.0;
 
+  /** Platform commission % deducted from tipster payout on winning coupons (0–50). Default 10%. */
+  @Column({ type: 'decimal', precision: 5, scale: 2, default: 10.0 })
+  platformCommissionRate: number = 10.0;
+
   @CreateDateColumn()
   createdAt: Date;
 

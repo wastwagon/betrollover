@@ -57,6 +57,9 @@ export class UsersService {
     phone?: string;
     role?: string;
     dateOfBirth?: string;
+    country?: string;
+    countryCode?: string;
+    flagEmoji?: string;
   }): Promise<User> {
     const hashedPassword = await bcrypt.hash(data.password, 12);
     const user = this.usersRepository.create({
@@ -68,6 +71,9 @@ export class UsersService {
       role: (data.role as UserRole) || UserRole.TIPSTER,
       dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
       ageVerifiedAt: new Date(), // Age verification disabled – treat all new users as verified
+      country: data.country ?? 'Ghana',
+      countryCode: data.countryCode ?? 'GHA',
+      flagEmoji: data.flagEmoji ?? '🇬🇭',
     });
     return this.usersRepository.save(user);
   }
@@ -84,10 +90,10 @@ export class UsersService {
 
   async verifyAge(userId: number, dateOfBirth: string): Promise<{ verified: boolean; message: string }> {
     if (!this.isAtLeast18(dateOfBirth)) {
-      return { verified: false, message: 'You must be at least 18 years old to use this service' };
+      return { verified: false, message: 'You must be at least 18 years old to use this service.' };
     }
     const user = await this.usersRepository.findOne({ where: { id: userId } });
-    if (!user) return { verified: false, message: 'User not found' };
+    if (!user) return { verified: false, message: 'Account not found.' };
     await this.usersRepository.update(userId, {
       dateOfBirth: new Date(dateOfBirth),
       ageVerifiedAt: new Date(),
@@ -116,7 +122,7 @@ export class UsersService {
     data: { displayName?: string; phone?: string; avatar?: string | null },
   ): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
-    if (!user) throw new Error('User not found');
+    if (!user) throw new BadRequestException('Account not found.');
     if (data.displayName !== undefined) user.displayName = data.displayName;
     if (data.phone !== undefined) user.phone = data.phone;
     if (data.avatar !== undefined) {
@@ -128,7 +134,7 @@ export class UsersService {
   }
 
   async uploadAvatar(userId: number, file: Express.Multer.File): Promise<User> {
-    if (!file?.buffer) throw new BadRequestException('No file received');
+    if (!file?.buffer) throw new BadRequestException('No image was received. Please select a file and try again.');
     const uploadDir = path.join(process.cwd(), 'uploads', 'avatars');
     if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
     const ext = (file.mimetype === 'image/jpeg' ? '.jpg' : file.mimetype === 'image/png' ? '.png' : file.mimetype === 'image/webp' ? '.webp' : '.gif');
@@ -190,7 +196,7 @@ export class UsersService {
       throw new ForbiddenException('Please verify your email before requesting tipster status.');
     }
     const user = await this.usersRepository.findOne({ where: { id: userId }, select: ['id', 'role', 'username', 'displayName', 'avatar', 'bio'] });
-    if (!user) throw new BadRequestException('User not found');
+    if (!user) throw new BadRequestException('Account not found.');
     if (user.role === UserRole.TIPSTER || user.role === UserRole.ADMIN) {
       return { status: 'already_tipster', message: 'You are already a tipster.' };
     }

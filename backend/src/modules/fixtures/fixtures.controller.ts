@@ -3,6 +3,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { FixturesService } from './fixtures.service';
 import { OddsSyncService } from './odds-sync.service';
+import { FixtureUpdateService } from './fixture-update.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SyncStatus } from './entities/sync-status.entity';
@@ -14,6 +15,7 @@ export class FixturesController {
   constructor(
     private readonly fixturesService: FixturesService,
     private readonly oddsSyncService: OddsSyncService,
+    private readonly fixtureUpdateService: FixtureUpdateService,
     @InjectRepository(SyncStatus)
     private syncStatusRepo: Repository<SyncStatus>,
   ) {}
@@ -212,6 +214,39 @@ export class FixturesController {
       );
       throw error;
     }
+  }
+
+  /**
+   * Manually fetch results for past football matches that are not yet marked FT.
+   * Mirrors what the every-5-min cron does but can be triggered on demand by admin.
+   * Use when a match has finished but settlement hasn't run yet.
+   */
+  @Post('sync/results')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async fetchResults() {
+    this.logger.log('Manual result fetch triggered by admin');
+    const result = await this.fixtureUpdateService.updateFinishedFixtures();
+    await this.syncStatusRepo.upsert(
+      {
+        syncType: 'results',
+        status: 'success',
+        lastSyncAt: new Date(),
+        lastSyncCount: result.updated,
+        lastError: null,
+      },
+      ['syncType'],
+    );
+    return result;
+  }
+
+  /**
+   * Fetch live scores for in-progress fixtures on demand.
+   */
+  @Post('sync/live')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async fetchLive() {
+    this.logger.log('Manual live fixture update triggered by admin');
+    return this.fixtureUpdateService.updateLiveFixtures();
   }
 
   @Get(':id')

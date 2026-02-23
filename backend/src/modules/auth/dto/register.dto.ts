@@ -10,6 +10,9 @@ import {
   ValidatorConstraintInterface,
 } from 'class-validator';
 
+/** Date format YYYY-MM-DD */
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
 @ValidatorConstraint({ name: 'MatchPassword', async: false })
 class MatchPasswordConstraint implements ValidatorConstraintInterface {
   validate(confirmPassword: string, args: ValidationArguments) {
@@ -53,4 +56,8 @@ export class RegisterDto {
   @MinLength(4, { message: 'Verification code required' })
   @MaxLength(10)
   otpCode: string;
+
+  @IsString()
+  @Matches(DATE_REGEX, { message: 'Date of birth must be in YYYY-MM-DD format' })
+  dateOfBirth: string;
 }

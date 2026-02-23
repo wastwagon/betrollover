@@ -8,7 +8,13 @@ import { EnabledLeague } from './entities/enabled-league.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { OddsSyncService } from './odds-sync.service';
 
-const API_BASE = 'https://v3.football.api-sports.io';
+import { getSportApiBaseUrl } from '../../config/sports.config';
+import {
+  getSyncDates,
+  MAX_FOOTBALL_ODDS_FIXTURES,
+  MAX_LEAGUE_BACKFILL_PER_RUN,
+  SYNC_LOOKAHEAD_DAYS,
+} from '../../config/api-limits.config';
 
 /** Extract team names from API response - handles various response structures */
 function extractTeamNames(item: any): { home: string; away: string } {
@@ -26,6 +32,23 @@ function extractTeamNames(item: any): { home: string; away: string } {
     home: (typeof home === 'string' && home.trim()) ? home.trim() : 'Home',
     away: (typeof away === 'string' && away.trim()) ? away.trim() : 'Away',
   };
+}
+
+/** Extract team logo URLs from API response (nullable - no break if missing) */
+function extractTeamLogos(item: any): { home: string | null; away: string | null } {
+  const home = item?.teams?.home?.logo ?? item?.teams?.home?.team?.logo ?? null;
+  const away = item?.teams?.away?.logo ?? item?.teams?.away?.team?.logo ?? null;
+  return {
+    home: typeof home === 'string' && home.startsWith('http') ? home : null,
+    away: typeof away === 'string' && away.startsWith('http') ? away : null,
+  };
+}
+
+import { extractCountryCodesFromTeams } from '../../common/team-country.util';
+
+/** Extract country codes from API (for internationals). Nullable. */
+function extractCountryCodes(item: any): { home: string | null; away: string | null } {
+  return extractCountryCodesFromTeams(item?.teams?.home, item?.teams?.away);
 }
 
 @Injectable()
@@ -81,8 +104,8 @@ export class FootballSyncService {
 
     // 2. Sync enabled leagues metadata: league + cup (so cups in enabled_leagues get fixtures)
     const [leagueRes, cupRes] = await Promise.all([
-      fetch(`${API_BASE}/leagues?type=league&current=true`, { headers }),
-      fetch(`${API_BASE}/leagues?type=cup&current=true`, { headers }),
+      fetch(`${getSportApiBaseUrl('football')}/leagues?type=league&current=true`, { headers }),
+      fetch(`${getSportApiBaseUrl('football')}/leagues?type=cup&current=true`, { headers }),
     ]);
     const leagueData = await safeJson<any>(leagueRes);
     const cupData = await safeJson<any>(cupRes);
@@ -113,13 +136,13 @@ export class FootballSyncService {
     const existingInDb = await this.leagueRepo.find({ where: { apiId: In(enabledLeagueIds) }, select: ['apiId'] });
     const existingIds = new Set(existingInDb.map((r) => r.apiId));
     const missingIds = enabledLeagueIds.filter((id) => !existingIds.has(id));
-    const toFetch = missingIds.slice(0, 30); // limit to avoid burning API quota per sync
+    const toFetch = missingIds.slice(0, MAX_LEAGUE_BACKFILL_PER_RUN);
     if (toFetch.length > 0) {
       this.logger.log(`Backfilling league metadata for ${toFetch.length} enabled leagues not in current API response`);
     }
     for (const apiId of toFetch) {
       try {
-        const res = await fetch(`${API_BASE}/leagues?id=${apiId}`, { headers });
+        const res = await fetch(`${getSportApiBaseUrl('football')}/leagues?id=${apiId}`, { headers });
         const data = await safeJson<any>(res);
         const items = data.response || [];
         const l = items[0];
@@ -142,17 +165,8 @@ export class FootballSyncService {
       }
     }
 
-    // 3. Fixture-first sync: get ALL fixtures for next 7 days (full global coverage)
-    // Odds-first returns ~100 per date (API limit) → only 96 fixtures. Fixture-first gets hundreds per day.
-    const dates: string[] = [];
-    const now = new Date();
-    const utcYear = now.getUTCFullYear();
-    const utcMonth = now.getUTCMonth();
-    const utcDate = now.getUTCDate();
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(Date.UTC(utcYear, utcMonth, utcDate + i, 12, 0, 0, 0));
-      dates.push(d.toISOString().split('T')[0]);
-    }
+    // 3. Fixture-first sync: get ALL fixtures for next N days (full global coverage)
+    const dates = getSyncDates();
 
     this.logger.log(`Fixture-first sync for ${dates.length} days (UTC): ${dates[0]} to ${dates[dates.length - 1]}`);
     const result = await this.syncFixturesFirst(dates, headers, enabledLeagueIds);
@@ -173,7 +187,7 @@ export class FootballSyncService {
 
     for (const date of dates) {
       // API-Football fixtures endpoint does NOT support 'page' param - fetch once per date
-      const res = await fetch(`${API_BASE}/fixtures?date=${date}`, { headers });
+      const res = await fetch(`${getSportApiBaseUrl('football')}/fixtures?date=${date}`, { headers });
       const data = await safeJson<any>(res);
       if (data.errors && Object.keys(data.errors).length > 0) {
         this.logger.warn(`API error for ${date}: ${JSON.stringify(data.errors)}`);
@@ -201,6 +215,8 @@ export class FootballSyncService {
             leagueDbId = rec?.id ?? null;
           }
           const { home: homeName, away: awayName } = extractTeamNames(f);
+          const { home: homeLogo, away: awayLogo } = extractTeamLogos(f);
+          const { home: homeCc, away: awayCc } = extractCountryCodes(f);
           await this.fixtureRepo.upsert(
             {
               apiId: fix.id,
@@ -208,6 +224,10 @@ export class FootballSyncService {
               leagueName: league?.name,
               homeTeamName: homeName,
               awayTeamName: awayName,
+              homeTeamLogo: homeLogo,
+              awayTeamLogo: awayLogo,
+              homeCountryCode: homeCc,
+              awayCountryCode: awayCc,
               matchDate: new Date(fix.date),
               status: fix.status?.short || 'NS',
               homeScore: f.goals?.home ?? null,
@@ -221,7 +241,7 @@ export class FootballSyncService {
     }
 
     const now = new Date();
-    const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const sevenDaysLater = new Date(now.getTime() + SYNC_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
     const withoutOdds = await this.fixtureRepo
       .createQueryBuilder('f')
       .leftJoin('f.odds', 'o')
@@ -230,7 +250,7 @@ export class FootballSyncService {
       .andWhere('f.match_date <= :end', { end: sevenDaysLater })
       .andWhere('o.id IS NULL')
       .orderBy('f.match_date', 'ASC')
-      .limit(300)
+      .limit(MAX_FOOTBALL_ODDS_FIXTURES)
       .getMany();
 
     let oddsCount = 0;
@@ -279,18 +299,20 @@ export class FootballSyncService {
     let fixed = 0;
     for (const chunk of chunks) {
       try {
-        const res = await fetch(`${API_BASE}/fixtures?id=${chunk.join(',')}`, { headers });
+        const res = await fetch(`${getSportApiBaseUrl('football')}/fixtures?id=${chunk.join(',')}`, { headers });
         if (!res.ok) continue;
         const data = await safeJson<any>(res);
         const items = data?.response || [];
         for (const item of items) {
           const { home, away } = extractTeamNames(item);
+          const { home: homeLogo, away: awayLogo } = extractTeamLogos(item);
+          const { home: homeCc, away: awayCc } = extractCountryCodes(item);
           if (home === 'Home' && away === 'Away') continue;
           const apiId = item.fixture?.id;
           if (!apiId) continue;
           await this.fixtureRepo.update(
             { apiId },
-            { homeTeamName: home, awayTeamName: away, syncedAt: new Date() },
+            { homeTeamName: home, awayTeamName: away, homeTeamLogo: homeLogo, awayTeamLogo: awayLogo, homeCountryCode: homeCc, awayCountryCode: awayCc, syncedAt: new Date() },
           );
           fixed++;
         }

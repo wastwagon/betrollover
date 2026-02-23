@@ -43,7 +43,8 @@
 
 ## Health & webhooks
 
-- **Health (unversioned):** `GET /health` — use for load balancer / readiness.
+- **Health (unversioned):** `GET /health` — liveness; always 200 if process is running.
+- **Readiness (unversioned):** `GET /health/ready` — checks DB connectivity; returns 503 if DB unreachable. Use for load balancer / k8s readiness probes.
 - **Paystack webhook (unversioned):** `POST /wallet/paystack-webhook` — ensure this URL is whitelisted in Paystack and not behind `/api/v1`.
 
 ---

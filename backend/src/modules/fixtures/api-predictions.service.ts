@@ -5,7 +5,8 @@ import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-const API_BASE = 'https://v3.football.api-sports.io';
+import { getSportApiBaseUrl } from '../../config/sports.config';
+import { PREDICTION_API_DELAY_MS } from '../../config/api-limits.config';
 const PREDICTIONS_CACHE_TTL = 24 * 60 * 60; // 24 hours
 
 /** API-Football prediction for a single outcome (e.g. home win, over 2.5) */
@@ -61,7 +62,7 @@ export class ApiPredictionsService {
     }
 
     try {
-      const res = await fetch(`${API_BASE}/predictions?fixture=${apiFixtureId}`, {
+      const res = await fetch(`${getSportApiBaseUrl('football')}/predictions?fixture=${apiFixtureId}`, {
         headers: { 'x-apisports-key': apiKey },
       });
 
@@ -162,7 +163,7 @@ export class ApiPredictionsService {
    */
   async getPredictionsForFixtures(
     fixtures: { id: number; apiId: number }[],
-    delayMs = 100,
+    delayMs = PREDICTION_API_DELAY_MS,
   ): Promise<Map<number, ApiFixturePredictions>> {
     const result = new Map<number, ApiFixturePredictions>();
     for (const f of fixtures) {

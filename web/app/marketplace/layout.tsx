@@ -1,26 +1,25 @@
 import type { Metadata } from 'next';
-import { SITE_URL, getAfricaAlternates } from '@/lib/site-config';
+import { SITE_URL, getAlternates } from '@/lib/site-config';
+import { getLocale, serverT } from '@/lib/i18n';
 
-export const metadata: Metadata = {
-  title: 'Football Tips Marketplace',
-  description:
-    'Browse verified football tips and predictions from top tipsters. Compare win rate and ROI. Free and premium picks with escrow protection. Ghana, Nigeria, Kenya, South Africa.',
-  alternates: {
-    canonical: `${SITE_URL}/marketplace`,
-    languages: getAfricaAlternates('/marketplace'),
-  },
-  openGraph: {
-    url: `${SITE_URL}/marketplace`,
-    title: 'Tipster Marketplace | BetRollover',
-    description:
-      'Browse verified football tips from top tipsters. Escrow-protected purchases—win or get your money back.',
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: serverT('seo.marketplace_title', locale),
+    description: serverT('seo.marketplace_desc', locale),
+    alternates: {
+      canonical: `${SITE_URL}/marketplace`,
+      languages: getAlternates('/marketplace'),
+    },
+    openGraph: {
+      url: `${SITE_URL}/marketplace`,
+      title: serverT('seo.marketplace_title', locale),
+      description: serverT('seo.marketplace_desc', locale),
+      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'BetRollover Marketplace' }],
+    },
+  };
+}
 
-export default function MarketplaceLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function MarketplaceLayout({ children }: { children: React.ReactNode }) {
   return children;
 }

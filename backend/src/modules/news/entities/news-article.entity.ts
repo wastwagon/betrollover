@@ -2,19 +2,33 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  Index,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
 export type NewsCategory = 'news' | 'transfer_rumour' | 'confirmed_transfer' | 'gossip' | 'injury';
 
+export type NewsSport =
+  | 'football'
+  | 'basketball'
+  | 'rugby'
+  | 'mma'
+  | 'volleyball'
+  | 'hockey'
+  | 'american_football'
+  | 'tennis';
+
 @Entity('news_articles')
 export class NewsArticle {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 100, unique: true })
+  @Column({ length: 100 })
   slug: string;
+
+  @Column({ length: 5, default: 'en' })
+  language: string;
 
   @Column({ length: 255 })
   title: string;
@@ -27,6 +41,10 @@ export class NewsArticle {
 
   @Column({ length: 50, default: 'news' })
   category: NewsCategory;
+
+  @Index()
+  @Column({ length: 50, default: 'football' })
+  sport: NewsSport;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
   imageUrl: string | null = null;

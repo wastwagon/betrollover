@@ -13,6 +13,7 @@ import { WithdrawalRequest } from '../wallet/entities/withdrawal-request.entity'
 import { Notification } from '../notifications/entities/notification.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { Prediction } from '../predictions/entities/prediction.entity';
+import { AnalyticsDaily } from './entities/analytics-daily.entity';
 
 @Injectable()
 export class AnalyticsService {
@@ -41,7 +42,21 @@ export class AnalyticsService {
     private tipsterRepo: Repository<Tipster>,
     @InjectRepository(Prediction)
     private predictionRepo: Repository<Prediction>,
+    @InjectRepository(AnalyticsDaily)
+    private analyticsDailyRepo: Repository<AnalyticsDaily>,
   ) {}
+
+  /** Fire-and-forget: increment errors count for today. Call from exception filter on 5xx. */
+  incrementErrorsToday(): void {
+    const today = new Date().toISOString().slice(0, 10);
+    this.analyticsDailyRepo.manager
+      .query(
+        `INSERT INTO analytics_daily (date, errors_count) VALUES ($1, 1)
+         ON CONFLICT (date) DO UPDATE SET errors_count = analytics_daily.errors_count + 1`,
+        [today],
+      )
+      .catch(() => {});
+  }
 
   // Time-based analytics
   async getTimeSeriesData(startDate: Date, endDate: Date, interval: 'day' | 'week' | 'month' = 'day') {
@@ -693,6 +708,7 @@ export class AnalyticsService {
       predictionsViewedToday,
       predictionsFollowedToday,
       newFollowersToday,
+      errorsTodayRow,
     ] = await Promise.all([
       this.predictionRepo
         .createQueryBuilder('p')
@@ -727,7 +743,8 @@ export class AnalyticsService {
       this.tipsterRepo.manager.query(
         `SELECT COUNT(*)::int as count FROM tipster_follows WHERE followed_at >= $1 AND followed_at <= $2`,
         [todayStart, todayEnd],
-      ).then((r: any) => parseInt(r?.[0]?.count || '0', 10)),
+      ).then((r: { count?: string }[]) => parseInt(r?.[0]?.count || '0', 10)),
+      this.analyticsDailyRepo.findOne({ where: { date: today }, select: ['errorsCount'] }),
     ]);
 
     const tipster = tipsterStats as any;
@@ -736,12 +753,14 @@ export class AnalyticsService {
     const worstRoi = parseFloat(tipster?.worstroi || '0') || 0;
     const totalProfit = parseFloat(tipster?.totalprofit || '0') || 0;
 
+    const errorsToday = errorsTodayRow?.errorsCount ?? 0;
+
     return {
       system_health: {
         predictions_generated_today: predictionsGeneratedToday,
-        api_uptime: 99.9,
-        average_response_time: 150,
-        errors_today: 0,
+        api_uptime: null as number | null, // Requires APM (e.g. Sentry, Datadog)
+        average_response_time: null as number | null, // Requires APM
+        errors_today: errorsToday,
       },
       tipster_performance: {
         avg_roi_all_tipsters: Math.round(avgRoi * 100) / 100,
@@ -756,5 +775,142 @@ export class AnalyticsService {
         new_followers_today: newFollowersToday,
       },
     };
+  }
+
+  /**
+   * Breakdown of pick counts, revenue, win rate and avg odds per sport.
+   * Covers all settled + pending accumulator tickets.
+   */
+  async getSportBreakdown(): Promise<Array<{
+    sport: string;
+    totalPicks: number;
+    wonPicks: number;
+    lostPicks: number;
+    pendingPicks: number;
+    winRate: number;
+    revenue: number;
+    avgOdds: number;
+  }>> {
+    const rows = await this.ticketsRepo
+      .createQueryBuilder('t')
+      .select('t.sport', 'sport')
+      .addSelect('COUNT(*)', 'total')
+      .addSelect('SUM(CASE WHEN t.result = :won THEN 1 ELSE 0 END)', 'won')
+      .addSelect('SUM(CASE WHEN t.result = :lost THEN 1 ELSE 0 END)', 'lost')
+      .addSelect('SUM(CASE WHEN t.result = :pending THEN 1 ELSE 0 END)', 'pending')
+      .addSelect('COALESCE(SUM(CASE WHEN t.price > 0 THEN t.price ELSE 0 END), 0)', 'revenue')
+      .addSelect('COALESCE(AVG(t.totalOdds), 0)', 'avgOdds')
+      .setParameter('won', 'won')
+      .setParameter('lost', 'lost')
+      .setParameter('pending', 'pending')
+      .groupBy('t.sport')
+      .orderBy('COUNT(*)', 'DESC')
+      .getRawMany();
+
+    return rows.map((r) => {
+      const total = Number(r.total) || 0;
+      const won = Number(r.won) || 0;
+      const lost = Number(r.lost) || 0;
+      const settled = won + lost;
+      return {
+        sport: r.sport || 'Football',
+        totalPicks: total,
+        wonPicks: won,
+        lostPicks: lost,
+        pendingPicks: Number(r.pending) || 0,
+        winRate: settled > 0 ? Math.round((won / settled) * 1000) / 10 : 0,
+        revenue: Math.round(Number(r.revenue) * 100) / 100,
+        avgOdds: Math.round(Number(r.avgOdds) * 100) / 100,
+      };
+    });
+  }
+
+  /**
+   * Daily revenue trend for the last N days, optionally broken down by sport.
+   */
+  async getRevenueTrend(days = 30): Promise<Array<{ date: string; revenue: number; purchases: number }>> {
+    const startDate = new Date(Date.now() - days * 86_400_000);
+    const rows = await this.purchasesRepo
+      .createQueryBuilder('p')
+      .innerJoin('p.pick', 'at')
+      .select("TO_CHAR(p.purchasedAt, 'YYYY-MM-DD')", 'date')
+      .addSelect('COALESCE(SUM(at.price), 0)', 'revenue')
+      .addSelect('COUNT(*)', 'purchases')
+      .where('p.purchasedAt >= :startDate', { startDate })
+      .andWhere('at.price > 0')
+      .groupBy("TO_CHAR(p.purchasedAt, 'YYYY-MM-DD')")
+      .orderBy('date', 'ASC')
+      .getRawMany();
+
+    return rows.map((r) => ({
+      date: r.date,
+      revenue: Math.round(Number(r.revenue) * 100) / 100,
+      purchases: Number(r.purchases) || 0,
+    }));
+  }
+
+  /**
+   * Top tipsters by sport — win rate, ROI, total picks.
+   * Returns up to `limit` tipsters per sport (all sports combined, client can filter).
+   */
+  async getTopTipstersBySport(limit = 5): Promise<Array<{
+    sport: string;
+    userId: number;
+    displayName: string;
+    username: string;
+    totalPicks: number;
+    wonPicks: number;
+    winRate: number;
+    roi: number;
+  }>> {
+    const rows = await this.ticketsRepo.query(
+      `SELECT
+        t.sport,
+        u.id            AS "userId",
+        COALESCE(ti.display_name, u.display_name, u.email) AS "displayName",
+        COALESCE(ti.username, u.username, u.email)         AS "username",
+        COUNT(*)::int                                      AS "totalPicks",
+        SUM(CASE WHEN t.result = 'won' THEN 1 ELSE 0 END)::int AS "wonPicks",
+        SUM(CASE WHEN t.result = 'lost' THEN 1 ELSE 0 END)::int AS "lostPicks",
+        COALESCE(SUM(CASE WHEN t.result = 'won' THEN t.total_odds ELSE 0 END), 0) AS "totalOddsWon"
+       FROM accumulator_tickets t
+       JOIN users u ON u.id = t.user_id
+       LEFT JOIN tipsters ti ON ti.user_id = u.id
+       WHERE t.result IN ('won', 'lost')
+       GROUP BY t.sport, u.id, ti.display_name, u.display_name, u.email, ti.username, u.username
+       ORDER BY t.sport, COUNT(*) DESC`,
+    );
+
+    // Keep top N per sport
+    const bySport = new Map<string, typeof rows>();
+    for (const r of rows) {
+      const arr = bySport.get(r.sport) ?? [];
+      if (arr.length < limit) {
+        arr.push(r);
+        bySport.set(r.sport, arr);
+      }
+    }
+
+    const result: ReturnType<typeof this.getTopTipstersBySport> extends Promise<infer T> ? T : never = [];
+    for (const [sport, entries] of bySport) {
+      for (const r of entries) {
+        const won = Number(r.wonPicks) || 0;
+        const lost = Number(r.lostPicks) || 0;
+        const settled = won + lost;
+        const totalOddsWon = Number(r.totalOddsWon) || 0;
+        const roi = settled > 0 ? ((totalOddsWon - settled) / settled) * 100 : 0;
+        result.push({
+          sport,
+          userId: Number(r.userId),
+          displayName: r.displayName || 'Unknown',
+          username: r.username || 'unknown',
+          totalPicks: Number(r.totalPicks),
+          wonPicks: won,
+          winRate: settled > 0 ? Math.round((won / settled) * 1000) / 10 : 0,
+          roi: Math.round(roi * 10) / 10,
+        });
+      }
+    }
+    return result;
   }
 }

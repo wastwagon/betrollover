@@ -42,11 +42,11 @@ export class TipstersApiService {
   ) {}
 
   /** Compute stats from accumulator_tickets for human tipsters (userId) - matches Marketplace logic */
-  private async computeStatsFromTickets(userIds: number[]): Promise<
+  private async computeStatsFromTickets(userIds: number[], sport?: string): Promise<
     Map<number, { total: number; won: number; lost: number; winRate: number; roi: number; currentStreak: number; bestStreak: number }>
   > {
     if (userIds.length === 0) return new Map();
-    const rows = await this.ticketRepo
+    const qb = this.ticketRepo
       .createQueryBuilder('t')
       .select('t.userId', 'userId')
       .addSelect('COUNT(*)', 'total')
@@ -56,8 +56,15 @@ export class TipstersApiService {
       .where('t.userId IN (:...userIds)', { userIds })
       .setParameter('won', 'won')
       .setParameter('lost', 'lost')
-      .groupBy('t.userId')
-      .getRawMany();
+      .groupBy('t.userId');
+
+    if (sport) {
+      // ticket sport column stores display names (e.g. 'Basketball', 'MMA')
+      const displayName = sport.charAt(0).toUpperCase() + sport.slice(1).replace('_', ' ');
+      qb.andWhere('LOWER(t.sport) = LOWER(:sport)', { sport: displayName });
+    }
+
+    const rows = await qb.getRawMany();
 
     const statsMap = new Map<number, { total: number; won: number; lost: number; winRate: number; roi: number; currentStreak: number; bestStreak: number }>();
     for (const row of rows) {
@@ -110,6 +117,7 @@ export class TipstersApiService {
     isAi?: boolean;
     userId?: number;
     search?: string;
+    sport?: string;
   }) {
     const qb = this.tipsterRepo
       .createQueryBuilder('t')
@@ -150,7 +158,7 @@ export class TipstersApiService {
 
     const tipsters = await qb.getMany();
     const humanUserIds = tipsters.filter((t) => t.userId != null).map((t) => t.userId!);
-    const ticketStatsMap = await this.computeStatsFromTickets(humanUserIds);
+    const ticketStatsMap = await this.computeStatsFromTickets(humanUserIds, options.sport);
 
     const tipsterIds = tipsters.map((t) => t.id);
     const followerCountMap = new Map<number, number>();
@@ -415,6 +423,7 @@ export class TipstersApiService {
   async getLeaderboard(options: {
     period: 'all_time' | 'monthly' | 'weekly';
     limit: number;
+    sport?: string;
   }) {
     if (options.period === 'all_time') {
       const tipsters = await this.tipsterRepo.find({
@@ -422,7 +431,7 @@ export class TipstersApiService {
         select: ['id', 'username', 'displayName', 'avatarUrl', 'userId', 'totalPredictions', 'totalWins', 'totalLosses', 'winRate', 'roi', 'totalProfit', 'leaderboardRank'],
       });
       const humanUserIds = tipsters.filter((t) => t.userId != null).map((t) => t.userId!);
-      const ticketStatsMap = await this.computeStatsFromTickets(humanUserIds);
+      const ticketStatsMap = await this.computeStatsFromTickets(humanUserIds, options.sport);
 
       const entries = tipsters.map((t) => {
         const ticketStats = t.userId != null ? ticketStatsMap.get(t.userId) : null;
@@ -451,7 +460,28 @@ export class TipstersApiService {
         .sort((a, b) => (b.roi ?? 0) - (a.roi ?? 0))
         .slice(0, options.limit);
 
-      return sorted.map((e, i) => ({ ...e, rank: i + 1 }));
+      const ranked = sorted.map((e, i) => ({ ...e, rank: i + 1 }));
+
+      // Enrich with review averages (by user_id from tipster entity)
+      const tipsterUserIds = ranked
+        .map((e) => tipsters.find((t) => t.username === e.username)?.userId)
+        .filter((id): id is number => id != null);
+      if (tipsterUserIds.length > 0) {
+        try {
+          const revRows: Array<{ tipster_id: number; avg: string; cnt: string }> = await this.tipsterRepo.query(
+            `SELECT tipster_id, AVG(rating)::numeric(3,1) AS avg, COUNT(*) AS cnt
+             FROM coupon_reviews WHERE tipster_id = ANY($1) GROUP BY tipster_id`,
+            [tipsterUserIds],
+          );
+          const revMap = new Map(revRows.map((r) => [Number(r.tipster_id), { avg: Number(r.avg), cnt: Number(r.cnt) }]));
+          return ranked.map((e) => {
+            const uid = tipsters.find((t) => t.username === e.username)?.userId;
+            const rv = uid != null ? revMap.get(uid) : undefined;
+            return { ...e, avg_rating: rv?.avg ?? null, review_count: rv?.cnt ?? null };
+          });
+        } catch { /* coupon_reviews not yet available */ }
+      }
+      return ranked;
     }
 
     const dateFilter =
@@ -464,6 +494,10 @@ export class TipstersApiService {
       options.period === 'monthly'
         ? "p.prediction_date >= DATE_TRUNC('month', CURRENT_DATE)"
         : "p.prediction_date >= DATE_TRUNC('week', CURRENT_DATE)";
+
+    const sportDisplayFilter = options.sport
+      ? `AND LOWER(at.sport) = LOWER('${options.sport.charAt(0).toUpperCase() + options.sport.slice(1).replace('_', ' ')}')`
+      : '';
 
     const [aiRows, humanRows] = await Promise.all([
       this.tipsterRepo.query(
@@ -484,7 +518,7 @@ export class TipstersApiService {
           COALESCE(SUM(CASE WHEN at.result = 'won' THEN at.total_odds - 1 ELSE -1 END), 0)::float as profit
          FROM tipsters t
          INNER JOIN accumulator_tickets at ON at.user_id = t.user_id
-           AND at.result IN ('won', 'lost') AND ${dateFilter}
+           AND at.result IN ('won', 'lost') AND ${dateFilter} ${sportDisplayFilter}
          WHERE t.is_active = true AND t.user_id IS NOT NULL
          GROUP BY t.id, t.username, t.display_name, t.avatar_url`,
         [],

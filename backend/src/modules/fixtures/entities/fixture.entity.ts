@@ -23,6 +23,19 @@ export class Fixture {
   @Column({ length: 150 })
   awayTeamName: string;
 
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  homeTeamLogo: string | null = null;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  awayTeamLogo: string | null = null;
+
+  /** ISO 2-letter or FIFA 3-letter country code for internationals (e.g. ENG, GB, DE) */
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  homeCountryCode: string | null = null;
+
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  awayCountryCode: string | null = null;
+
   @Column({ type: 'varchar', length: 100, nullable: true })
   leagueName: string | null = null;
 

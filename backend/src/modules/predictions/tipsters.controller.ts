@@ -42,12 +42,14 @@ export class TipstersController {
     @Query('order') order?: string,
     @Query('is_ai') isAi?: string,
     @Query('search') search?: string,
+    @Query('sport') sport?: string,
     @CurrentUser() user?: User | null,
   ) {
     const limitVal = Math.min(Math.max(parseInt(limit || '25', 10) || 25, 1), 100);
     const sortByVal = SORT_OPTIONS.includes(sortBy as any) ? sortBy! : 'roi';
     const orderVal = ORDER_OPTIONS.includes(order as any) ? order! : 'desc';
     const isAiVal = isAi === 'true' ? true : isAi === 'false' ? false : undefined;
+    const sportVal = sport && sport !== 'all' ? sport.toLowerCase() : undefined;
 
     const tipsters = await this.tipstersApi.getTipsters({
       limit: limitVal,
@@ -56,6 +58,7 @@ export class TipstersController {
       isAi: isAiVal,
       userId: user?.id,
       search: search?.trim() || undefined,
+      sport: sportVal,
     });
     return { total: tipsters.length, tipsters };
   }

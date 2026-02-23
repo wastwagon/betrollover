@@ -5,6 +5,7 @@ import { AccumulatorTicket } from './entities/accumulator-ticket.entity';
 import { AccumulatorPick } from './entities/accumulator-pick.entity';
 import { EscrowFund } from './entities/escrow-fund.entity';
 import { Fixture } from '../fixtures/entities/fixture.entity';
+import { SportEvent } from '../sport-events/entities/sport-event.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { User } from '../users/entities/user.entity';
 import { WalletService } from '../wallet/wallet.service';
@@ -13,11 +14,11 @@ import { TipsterService } from '../tipster/tipster.service';
 
 /** Market types and selection formats we support for settlement. See determinePickResult. */
 export const SETTLEMENT_SUPPORTED_MARKETS = [
-  'Match Winner (1X2): Home, Away, Draw',
-  'Double Chance: 1X, X2, 12 (Home or Draw, Draw or Away, Home or Away)',
-  'Both Teams To Score: Yes, No',
-  'Goals Over/Under: 1.5, 2.5, 3.5 (Over/Under)',
-  'Correct Score: e.g. 2-1, 1-1',
+  'Match Winner (1X2): Home, Away, Draw (also stored as Match Winner: Home/Away/Draw)',
+  'Double Chance: 1X/Home/Draw, X2/Draw/Away, 12/Home/Away (slash or text format)',
+  'Both Teams To Score: Yes, No (also stored as Both Teams To Score: Yes/No)',
+  'Goals Over/Under: Over/Under 1.5, 2.5, 3.5',
+  'Correct Score: e.g. 2-1, 1-1, 2:1, 1:1 (dash or colon)',
 ] as const;
 
 @Injectable()
@@ -33,6 +34,8 @@ export class SettlementService {
     private escrowRepo: Repository<EscrowFund>,
     @InjectRepository(Fixture)
     private fixtureRepo: Repository<Fixture>,
+    @InjectRepository(SportEvent)
+    private sportEventRepo: Repository<SportEvent>,
     @InjectRepository(ApiSettings)
     private apiSettingsRepo: Repository<ApiSettings>,
     @InjectRepository(User)
@@ -101,21 +104,50 @@ export class SettlementService {
       .filter((f) => f.homeScore !== null && f.awayScore !== null)
       .map((f) => f.id);
 
-    if (fixtureIds.length === 0) {
-      return { picksUpdated: 0, ticketsSettled: 0 };
-    }
+    // Finished sport_events (all non-football sports) for event-based picks
+    const finishedEvents = await this.sportEventRepo.find({
+      where: [
+        { sport: 'basketball', status: 'FT' },
+        { sport: 'rugby', status: 'FT' },
+        { sport: 'mma', status: 'FT' },
+        { sport: 'volleyball', status: 'FT' },
+        { sport: 'hockey', status: 'FT' },
+        { sport: 'american_football', status: 'FT' },
+        { sport: 'tennis', status: 'FT' },
+      ],
+      select: ['id', 'homeScore', 'awayScore', 'homeTeam', 'awayTeam'],
+    });
+    const eventsWithScores = finishedEvents.filter((e) => e.homeScore != null && e.awayScore != null);
+    const eventIds = eventsWithScores.map((e) => e.id);
+    const eventMap = new Map(eventsWithScores.map((e) => [e.id, e]));
+
+    const pendingFixturePicks = fixtureIds.length > 0
+      ? await this.pickRepo.find({ where: { fixtureId: In(fixtureIds), result: 'pending' } })
+      : [];
+    const pendingEventPicks = eventIds.length > 0
+      ? await this.pickRepo.find({ where: { eventId: In(eventIds), result: 'pending' } })
+      : [];
 
     const fixtureMap = new Map(finishedFixtures.map((f) => [f.id, f]));
-    const pendingPicks = await this.pickRepo.find({
-      where: { fixtureId: In(fixtureIds), result: 'pending' },
-    });
-
     let picksUpdated = 0;
-    for (const pick of pendingPicks) {
+
+    for (const pick of pendingFixturePicks) {
       const fix = fixtureMap.get(pick.fixtureId!);
       if (!fix || fix.homeScore == null || fix.awayScore == null) continue;
 
       const result = this.determinePickResult(pick.prediction, fix.homeScore, fix.awayScore, fix.homeTeamName, fix.awayTeamName);
+      if (result) {
+        pick.result = result;
+        await this.pickRepo.save(pick);
+        picksUpdated++;
+      }
+    }
+
+    for (const pick of pendingEventPicks) {
+      const evt = eventMap.get(pick.eventId!);
+      if (!evt || evt.homeScore == null || evt.awayScore == null) continue;
+
+      const result = this.determinePickResult(pick.prediction, evt.homeScore, evt.awayScore, evt.homeTeam, evt.awayTeam);
       if (result) {
         pick.result = result;
         await this.pickRepo.save(pick);
@@ -168,8 +200,9 @@ export class SettlementService {
     const awayName = (awayTeam || '').toLowerCase();
 
     // --- Double Chance (check FIRST - before home/away/draw) ---
-    // Standard patterns
-    if (pred.includes('12') || pred.includes('home_away') || pred.includes('home or away')) {
+    // Handles both numeric (1X, 12, X2) and slash/text variants (Home/Draw, Home/Away, Draw/Away)
+    // "Home/Away" (= 12) is the slash format API-Football stores; must be checked before Match Winner
+    if (pred.includes('12') || pred.includes('home_away') || pred.includes('home or away') || pred.includes('home/away')) {
       return homeWin || awayWin ? 'won' : 'lost';
     }
     if (pred.includes('1x') || pred.includes('home_draw') || pred.includes('home or draw') || pred.includes('home/draw') || pred.includes('draw/home')) {
@@ -203,12 +236,30 @@ export class SettlementService {
       }
     }
 
+    // --- Match Winner by team/player name (from The Odds API sport_events) ---
+    // Prediction format: "Match Winner: New Orleans Pelicans" or "Match Winner: Novak Djokovic"
+    if (pred.startsWith('match winner:')) {
+      const picked = pred.replace('match winner:', '').trim();
+      // Exact match first
+      if (homeName && picked === homeName) return homeWin ? 'won' : 'lost';
+      if (awayName && picked === awayName) return awayWin ? 'won' : 'lost';
+      // Partial / contains match (handles minor name differences)
+      if (homeName && (homeName.includes(picked) || picked.includes(homeName))) return homeWin ? 'won' : 'lost';
+      if (awayName && (awayName.includes(picked) || picked.includes(awayName))) return awayWin ? 'won' : 'lost';
+      // Positional fallback: Home / Away / Draw
+      if (picked === 'home' || picked === '1') return homeWin ? 'won' : 'lost';
+      if (picked === 'away' || picked === '2') return awayWin ? 'won' : 'lost';
+      if (picked === 'draw' || picked === 'x') return draw ? 'won' : 'lost';
+      // Can't resolve — log and return null
+      this.logger.warn(`Match Winner: cannot resolve picked="${picked}" for home="${homeName}" away="${awayName}"`);
+      return null;
+    }
+
     // --- Match Winner (1X2) ---
     // Be careful with greedy "draw" matching - only match if it's strictly Match Winner
     if (
       pred === 'home' ||
       pred === '1' ||
-      pred === 'match winner: home' ||
       pred === 'home win'
     ) {
       return homeWin ? 'won' : 'lost';
@@ -216,20 +267,26 @@ export class SettlementService {
     if (
       pred === 'away' ||
       pred === '2' ||
-      pred === 'match winner: away' ||
       pred === 'away win'
     ) {
       return awayWin ? 'won' : 'lost';
     }
     if (
       pred === 'draw' ||
-      pred === 'x' ||
-      pred === 'match winner: draw'
+      pred === 'x'
     ) {
       return draw ? 'won' : 'lost';
     }
 
-    // --- Goals Over/Under (1.5, 2.5, 3.5) ---
+    // --- Goals Over/Under (1.5, 2.5, 3.5) + generic Over/Under (basketball points, hockey goals, etc.) ---
+    const overUnderMatch = pred.match(/(?:over|under)\s*([\d.]+)/i);
+    if (overUnderMatch) {
+      const line = parseFloat(overUnderMatch[1]);
+      if (Number.isFinite(line)) {
+        if (pred.toLowerCase().includes('over')) return total > line ? 'won' : 'lost';
+        if (pred.toLowerCase().includes('under')) return total < line ? 'won' : 'lost';
+      }
+    }
     if (pred.includes('over 3.5') || pred.includes('over3.5')) {
       return total > 3.5 ? 'won' : 'lost';
     }
@@ -280,45 +337,75 @@ export class SettlementService {
       where: { pickId: accumulatorId, status: 'held' },
     });
 
+    // Load platform commission rate (default 10%)
+    const apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
+    const commissionRate = Math.min(50, Math.max(0, Number(apiSettings?.platformCommissionRate ?? 10.0)));
+
     const processedUsers = new Set<number>();
+    let totalCommission = 0;
+    let totalNetPayout = 0;
+    let buyerCount = 0;
 
     for (const f of funds) {
       if (!processedUsers.has(f.userId)) {
+        const gross = Number(f.amount);
         if (result === 'won') {
+          // Commission deducted from tipster's gross payout
+          const commission = Number((gross * commissionRate / 100).toFixed(2));
+          const netPayout = Number((gross - commission).toFixed(2));
+          totalCommission += commission;
+          totalNetPayout += netPayout;
+          buyerCount++;
+
+          // Credit tipster with net amount
           await this.walletService.credit(
             sellerId,
-            Number(f.amount),
+            netPayout,
             'payout',
             `pick-${accumulatorId}`,
-            `Payout for pick ${accumulatorId}`,
+            `Payout for pick "${title}" (gross GHS ${gross.toFixed(2)} − ${commissionRate}% platform fee)`,
           );
+
+          // Record commission transaction for revenue analytics (does NOT change any wallet balance)
+          if (commission > 0) {
+            await this.walletService.recordTransaction(
+              sellerId,
+              commission,
+              'commission',
+              `commission-pick-${accumulatorId}`,
+              `Platform commission (${commissionRate}%) on pick "${title}"`,
+              { pickId: accumulatorId, grossAmount: gross, commissionRate, netPayout },
+            );
+          }
+
           await this.notificationsService.create({
             userId: f.userId,
             type: 'settlement',
             title: 'Pick Won!',
-            message: `Your purchased pick "${title}" won! Winnings have been credited to your wallet.`,
+            message: `Your purchased pick "${title}" won! The tipster has been paid.`,
             link: `/my-purchases`,
             icon: 'trophy',
             sendEmail: true,
             metadata: { pickTitle: title, variant: 'won' },
           }).catch(() => { });
         } else {
+          // Lost: full refund to buyer
           await this.walletService.credit(
             f.userId,
-            Number(f.amount),
+            gross,
             'refund',
             `pick-${accumulatorId}`,
-            `Refund for pick ${accumulatorId}`,
+            `Refund for pick "${title}"`,
           );
           await this.notificationsService.create({
             userId: f.userId,
             type: 'settlement',
-            title: 'Pick Lost - Refunded',
-            message: `Your purchased pick "${title}" lost. A refund of GHS ${Number(f.amount).toFixed(2)} has been credited to your wallet.`,
+            title: 'Pick Lost — Refunded',
+            message: `Your purchased pick "${title}" lost. A full refund of GHS ${gross.toFixed(2)} has been credited to your wallet.`,
             link: `/my-purchases`,
             icon: 'refund',
             sendEmail: true,
-            metadata: { pickTitle: title, variant: 'lost', amount: Number(f.amount).toFixed(2) },
+            metadata: { pickTitle: title, variant: 'lost', amount: gross.toFixed(2) },
           }).catch(() => { });
         }
         processedUsers.add(f.userId);
@@ -328,16 +415,29 @@ export class SettlementService {
       f.status = result === 'won' ? 'released' : 'refunded';
       await this.escrowRepo.save(f);
     }
+
+    // Notify tipster with full breakdown
+    const payoutMsg = result === 'won'
+      ? totalNetPayout > 0
+        ? `Your pick "${title}" won! GHS ${totalNetPayout.toFixed(2)} credited (${buyerCount} buyer${buyerCount !== 1 ? 's' : ''} · GHS ${totalCommission.toFixed(2)} platform fee deducted).`
+        : `Your pick "${title}" won! Payout credited to your wallet.`
+      : `Your pick "${title}" lost. Full refunds have been sent to buyers.`;
+
     await this.notificationsService.create({
       userId: sellerId,
       type: 'settlement',
       title: result === 'won' ? 'Payout Sent' : 'Pick Settled',
-      message: result === 'won'
-        ? `Your pick "${title}" won! Your share has been credited to your wallet.`
-        : `Your pick "${title}" lost. Refunds have been sent to buyers.`,
+      message: payoutMsg,
       link: `/my-picks`,
       icon: result === 'won' ? 'trophy' : 'info',
-      metadata: { pickTitle: title, variant: result },
+      metadata: {
+        pickTitle: title,
+        variant: result,
+        grossAmount: String(totalNetPayout + totalCommission),
+        netPayout: String(totalNetPayout),
+        commissionDeducted: String(totalCommission),
+        commissionRate: String(commissionRate),
+      },
       sendEmail: true,
     }).catch(() => { });
 

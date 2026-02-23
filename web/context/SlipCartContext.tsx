@@ -5,7 +5,9 @@ import { createContext, useContext, useCallback, useState, useEffect, useMemo } 
 const STORAGE_KEY = 'betrollover_slip_cart';
 
 export interface SlipSelection {
-  fixtureId: number;
+  fixtureId?: number;
+  eventId?: number;
+  sport?: 'football' | 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football' | 'tennis';
   matchDescription: string;
   prediction: string;
   odds: number;
@@ -15,7 +17,8 @@ export interface SlipSelection {
 interface SlipCartContextValue {
   selections: SlipSelection[];
   setSelections: (s: SlipSelection[] | ((prev: SlipSelection[]) => SlipSelection[])) => void;
-  addSelection: (s: SlipSelection) => void;
+  /** Returns true if added, false if rejected (duplicate or conflicting outcome for same event) */
+  addSelection: (s: SlipSelection) => boolean;
   removeSelection: (idx: number) => void;
   clearCart: () => void;
   slipCount: number;
@@ -65,11 +68,28 @@ export function SlipCartProvider({ children }: { children: React.ReactNode }) {
     setSelectionsState((prev) => (typeof updater === 'function' ? updater(prev) : updater));
   }, []);
 
-  const addSelection = useCallback((s: SlipSelection) => {
+  const addSelection = useCallback((s: SlipSelection): boolean => {
+    let added = false;
     setSelectionsState((prev) => {
-      if (prev.some((x) => x.fixtureId === s.fixtureId && x.prediction === s.prediction)) return prev;
+      // Reject exact duplicate (same event + same prediction)
+      const samePick = (x: SlipSelection) =>
+        x.prediction === s.prediction &&
+        ((s.eventId != null && x.eventId === s.eventId) || (s.fixtureId != null && x.fixtureId === s.fixtureId));
+      if (prev.some(samePick)) return prev;
+
+      // Reject conflicting outcomes: only one selection per market per event
+      // e.g. cannot have both "Match Winner: Home" and "Match Winner: Away" for the same match
+      const marketFromPred = (p: string) => p.split(':')[0]?.trim() || '';
+      const sameEvent = (x: SlipSelection) =>
+        (s.eventId != null && x.eventId === s.eventId) || (s.fixtureId != null && x.fixtureId === s.fixtureId);
+      const sameMarket = (x: SlipSelection) => marketFromPred(x.prediction) === marketFromPred(s.prediction);
+      const hasConflict = prev.some((x) => sameEvent(x) && sameMarket(x));
+      if (hasConflict) return prev;
+
+      added = true;
       return [...prev, s];
     });
+    return added;
   }, []);
 
   const removeSelection = useCallback((idx: number) => {

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getApiUrl } from '@/lib/site-config';
+import { useT } from '@/context/LanguageContext';
 
 interface PublicStats {
   verifiedTipsters: number;
@@ -40,47 +41,47 @@ type StatKey =
   | 'active'
   | 'paidOut';
 
-const statConfig: Record<
+const statConfigBase: Record<
   StatKey,
-  { label: string; icon: string; bg: string; border: string; iconBg: string }
+  { labelKey: string; icon: string; bg: string; border: string; iconBg: string }
 > = {
   verified: {
-    label: 'Verified Tipsters',
+    labelKey: 'home.stats_tipsters',
     icon: '✓',
     bg: 'bg-emerald-500/15',
     border: 'border-emerald-500/40',
     iconBg: 'bg-emerald-500/25 text-emerald-300',
   },
   processed: {
-    label: 'Tips Processed',
+    labelKey: 'home.stats_picks',
     icon: '📊',
     bg: 'bg-blue-500/15',
     border: 'border-blue-500/40',
     iconBg: 'bg-blue-500/25 text-blue-300',
   },
   winRate: {
-    label: 'Best Win Rate',
+    labelKey: 'tipster.win_rate',
     icon: '📈',
     bg: 'bg-amber-500/15',
     border: 'border-amber-500/40',
     iconBg: 'bg-amber-500/25 text-amber-300',
   },
   roi: {
-    label: 'Best ROI',
+    labelKey: 'tipster.roi',
     icon: '💰',
     bg: 'bg-rose-500/15',
     border: 'border-rose-500/40',
     iconBg: 'bg-rose-500/25 text-rose-300',
   },
   active: {
-    label: 'Active Picks',
+    labelKey: 'home.stats_picks',
     icon: '⚡',
     bg: 'bg-violet-500/15',
     border: 'border-violet-500/40',
     iconBg: 'bg-violet-500/25 text-violet-300',
   },
   paidOut: {
-    label: 'Paid Out',
+    labelKey: 'dashboard.balance',
     icon: '🏆',
     bg: 'bg-cyan-500/15',
     border: 'border-cyan-500/40',
@@ -89,6 +90,7 @@ const statConfig: Record<
 };
 
 export function HomeHero() {
+  const t = useT();
   const [stats, setStats] = useState<PublicStats | null>(null);
   const [topTipster, setTopTipster] = useState<LeaderboardEntry | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -176,25 +178,44 @@ export function HomeHero() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 lg:py-28">
         <div className="text-center max-w-3xl mx-auto mb-14 md:mb-16">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight mb-5 animate-fade-in-up">
-            Risk-Free Football Tips from Verified Tipsters
+            {t('home.hero_title')}
           </h1>
-          <p className="text-lg md:text-xl text-slate-300 mb-8 leading-relaxed max-w-2xl mx-auto animate-fade-in-up animate-delay-100">
-            Track win rate and ROI. When our tipsters&apos; coupons lose, you get a full refund. Your shield against losses.
+          <p className="text-lg md:text-xl text-slate-300 mb-6 leading-relaxed max-w-2xl mx-auto animate-fade-in-up animate-delay-100">
+            {t('home.hero_subtitle')}
           </p>
+
+          {/* Sport pills row */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-8 animate-fade-in-up animate-delay-150">
+            {[
+              { icon: '⚽', labelKey: 'nav.football' },
+              { icon: '🏀', labelKey: 'nav.basketball' },
+              { icon: '🏉', labelKey: 'nav.rugby' },
+              { icon: '🥊', labelKey: 'nav.mma' },
+              { icon: '🏐', labelKey: 'nav.volleyball' },
+              { icon: '🏒', labelKey: 'nav.hockey' },
+              { icon: '🏈', labelKey: 'nav.american_football' },
+              { icon: '🎾', labelKey: 'nav.tennis' },
+            ].map(({ icon, labelKey }) => (
+              <span key={labelKey} className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500/30 border border-emerald-400/50 text-emerald-200 text-sm font-semibold backdrop-blur-sm">
+                {icon} {t(labelKey)}
+              </span>
+            ))}
+          </div>
+
           <div className="flex flex-wrap gap-4 justify-center animate-fade-in-up animate-delay-200">
             {!isLoggedIn && (
               <Link
                 href="/register"
                 className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold hover:from-emerald-400 hover:to-emerald-500 hover:scale-105 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:shadow-xl"
               >
-                Join Free
+                {t('home.join_cta')}
               </Link>
             )}
             <Link
               href="/marketplace"
               className="px-8 py-3.5 rounded-xl border-2 border-white/50 bg-white/10 text-white font-semibold hover:bg-white/20 hover:border-white/70 transition-all duration-200 backdrop-blur-sm"
             >
-              Explore Picks
+              {t('home.hero_cta_primary')}
             </Link>
           </div>
         </div>
@@ -202,7 +223,7 @@ export function HomeHero() {
         {/* Compact KPI Dashboard - 6 cards with distinct colors */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
           {statItems.map((item, idx) => {
-            const cfg = statConfig[item.key];
+            const cfg = statConfigBase[item.key];
             return (
               <div
                 key={item.key}
@@ -219,7 +240,7 @@ export function HomeHero() {
                     <p className="text-lg md:text-xl font-bold text-white tabular-nums tracking-tight leading-tight">
                       {item.value}
                     </p>
-                    <p className="text-xs text-slate-300 font-medium truncate">{cfg.label}</p>
+                    <p className="text-xs text-slate-300 font-medium truncate">{t(cfg.labelKey)}</p>
                   </div>
                 </div>
               </div>

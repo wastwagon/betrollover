@@ -59,6 +59,9 @@ CREATE TABLE IF NOT EXISTS accumulator_picks (
   result VARCHAR(20) DEFAULT 'pending' CHECK (result IN ('pending','won','lost','void')),
   match_date TIMESTAMP,
   match_time TIME,
+  -- Multi-sport columns (migration 048 adds these via ALTER TABLE IF NOT EXISTS on existing DBs)
+  sport VARCHAR(30) DEFAULT 'football',
+  event_id INT,  -- FK to sport_events added after that table exists (see 14-sport-events.sql)
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

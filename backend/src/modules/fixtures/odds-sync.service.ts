@@ -8,8 +8,7 @@ import { League } from './entities/league.entity';
 import { EnabledLeague } from './entities/enabled-league.entity';
 import { MarketFilterService } from './market-filter.service';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
-
-const API_BASE = 'https://v3.football.api-sports.io';
+import { getSportApiBaseUrl } from '../../config/sports.config';
 
 @Injectable()
 export class OddsSyncService {
@@ -70,7 +69,7 @@ export class OddsSyncService {
     for (const fixture of fixtures) {
       try {
         // Fetch odds from API
-        const res = await fetch(`${API_BASE}/odds?fixture=${fixture.apiId}`, { headers });
+        const res = await fetch(`${getSportApiBaseUrl('football')}/odds?fixture=${fixture.apiId}`, { headers });
         
         if (!res.ok) {
           this.logger.warn(`Failed to fetch odds for fixture ${fixture.apiId}: ${res.status}`);
@@ -165,7 +164,7 @@ export class OddsSyncService {
 
     for (const date of dates) {
       try {
-        const res = await fetch(`${API_BASE}/odds?date=${date}`, { headers });
+        const res = await fetch(`${getSportApiBaseUrl('football')}/odds?date=${date}`, { headers });
         if (!res.ok) {
           this.logger.warn(`Odds by date ${date}: ${res.status}`);
           continue;

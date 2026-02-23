@@ -1,0 +1,57 @@
+{
+  "name": "BetRollover — Multi-Sport Tipster Marketplace",
+  "short_name": "BetRollover",
+  "description": "Verified tips for Football, Basketball, Rugby & more. Escrow protection on every coupon.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#10b981",
+  "orientation": "portrait-primary",
+  "categories": ["sports", "finance", "entertainment"],
+  "lang": "en-GH",
+  "icons": [
+    {
+      "src": "/BetRollover-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "label": "BetRollover Homepage"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Marketplace",
+      "short_name": "Picks",
+      "description": "Browse verified tipster picks",
+      "url": "/marketplace",
+      "icons": [{ "src": "/BetRollover-logo.png", "sizes": "512x512" }]
+    },
+    {
+      "name": "My Dashboard",
+      "short_name": "Dashboard",
+      "description": "Your tipster dashboard",
+      "url": "/dashboard",
+      "icons": [{ "src": "/BetRollover-logo.png", "sizes": "512x512" }]
+    },
+    {
+      "name": "Wallet",
+      "short_name": "Wallet",
+      "description": "Check balance & transactions",
+      "url": "/wallet",
+      "icons": [{ "src": "/BetRollover-logo.png", "sizes": "512x512" }]
+    }
+  ]
+}

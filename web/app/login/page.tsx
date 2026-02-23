@@ -3,9 +3,11 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useT } from '@/context/LanguageContext';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 
 function LoginForm() {
+  const t = useT();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -52,7 +54,7 @@ function LoginForm() {
       // Fallback: check response status
       if (!res.ok) {
         const data = await res.json().catch(() => ({ message: 'Login failed' }));
-        setError(data.message || 'Invalid email or password');
+        setError(data.message || t('auth.invalid_credentials'));
         setLoading(false);
         return;
       }
@@ -61,7 +63,7 @@ function LoginForm() {
       router.push('/dashboard');
     } catch (err) {
       console.error('Login error:', err);
-      setError('Unable to connect to server. Please try again.');
+      setError(t('auth.server_error'));
       setLoading(false);
     }
   };
@@ -74,13 +76,13 @@ function LoginForm() {
         <div className="w-full max-w-md">
           <div className="bg-white rounded-2xl shadow-xl border border-[var(--border)] p-8 md:p-10">
             <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-[var(--text)]">Welcome back</h1>
-              <p className="mt-2 text-[var(--text-muted)]">Sign in to access your dashboard</p>
+              <h1 className="text-2xl font-bold text-[var(--text)]">{t('auth.welcome_back')}</h1>
+              <p className="mt-2 text-[var(--text-muted)]">{t('auth.sign_in_desc')}</p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-[var(--text)] mb-1.5">
-                  Email
+                  {t('auth.email')}
                 </label>
                 <input
                   id="email"
@@ -97,7 +99,7 @@ function LoginForm() {
               </div>
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-[var(--text)] mb-1.5">
-                  Password
+                  {t('auth.password')}
                 </label>
                 <div className="relative">
                   <input
@@ -116,6 +118,7 @@ function LoginForm() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
                     tabIndex={-1}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? (
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,13 +134,13 @@ function LoginForm() {
                 </div>
                 <div className="flex justify-end mt-2">
                   <Link href="/forgot-password" className="text-sm text-[var(--primary)] hover:underline font-medium">
-                    Forgot password?
+                    {t('auth.forgot_password')}
                   </Link>
                 </div>
               </div>
               {error && (
-                <div className="p-3 rounded-lg bg-red-50 border border-red-200">
-                  <p className="text-sm text-red-600 font-medium" role="alert">{error}</p>
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200" role="alert" aria-live="polite">
+                  <p className="text-sm text-red-600 font-medium">{error}</p>
                 </div>
               )}
               <button
@@ -148,17 +151,17 @@ function LoginForm() {
                 {loading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Signing in...
+                    {t('auth.signing_in')}
                   </>
                 ) : (
-                  'Sign In'
+                  t('auth.login')
                 )}
               </button>
             </form>
             <p className="text-center text-sm text-[var(--text-muted)] mt-6">
-              Don&apos;t have an account?{' '}
+              {t('auth.no_account')}{' '}
               <Link href="/register" className="text-[var(--primary)] font-medium hover:underline">
-                Register
+                {t('auth.register')}
               </Link>
             </p>
           </div>

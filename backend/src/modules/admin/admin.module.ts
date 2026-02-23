@@ -21,6 +21,8 @@ import { AnalyticsService } from './analytics.service';
 import { AnalyticsTrackingService } from './analytics-tracking.service';
 import { MigrationRunnerService } from './migration-runner.service';
 import { SeedRunnerService } from './seed-runner.service';
+import { SyncHealthService } from './sync-health.service';
+import { SportEvent } from '../sport-events/entities/sport-event.entity';
 import { PredictionEngineService } from '../predictions/prediction-engine.service';
 import { PredictionsModule } from '../predictions/predictions.module';
 import { AccumulatorsModule } from '../accumulators/accumulators.module';
@@ -39,11 +41,20 @@ import { VisitorSession } from './entities/visitor-session.entity';
 import { AnalyticsDaily } from './entities/analytics-daily.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { Prediction } from '../predictions/entities/prediction.entity';
+import { BasketballModule } from '../basketball/basketball.module';
+import { RugbyModule } from '../rugby/rugby.module';
+import { MmaModule } from '../mma/mma.module';
+import { VolleyballModule } from '../volleyball/volleyball.module';
+import { HockeyModule } from '../hockey/hockey.module';
+import { AmericanFootballModule } from '../american-football/american-football.module';
+import { TennisModule } from '../tennis/tennis.module';
+import { OddsApiModule } from '../odds-api/odds-api.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       User,
+      SportEvent,
       SmtpSettings,
       ApiSettings,
       PaystackSettings,
@@ -75,9 +86,17 @@ import { Prediction } from '../predictions/entities/prediction.entity';
     WalletModule,
     UsersModule,
     PredictionsModule,
+    BasketballModule,
+    RugbyModule,
+    MmaModule,
+    VolleyballModule,
+    HockeyModule,
+    AmericanFootballModule,
+    TennisModule,
+    OddsApiModule,
   ],
   controllers: [AdminController, AnalyticsTrackingController],
-  providers: [AdminService, AnalyticsService, AnalyticsTrackingService, MigrationRunnerService, SeedRunnerService],
-  exports: [MigrationRunnerService, SeedRunnerService],
+  providers: [AdminService, AnalyticsService, AnalyticsTrackingService, MigrationRunnerService, SeedRunnerService, SyncHealthService],
+  exports: [MigrationRunnerService, SeedRunnerService, SyncHealthService, AnalyticsService],
 })
 export class AdminModule { }

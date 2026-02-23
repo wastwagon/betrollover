@@ -16,7 +16,9 @@ import { EmailModule } from '../email/email.module';
 import { FootballModule } from '../football/football.module';
 import { TipsterModule } from '../tipster/tipster.module';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
+import { ReferralsModule } from '../referrals/referrals.module';
 import { Fixture } from '../fixtures/entities/fixture.entity';
+import { SportEvent } from '../sport-events/entities/sport-event.entity';
 import { User } from '../users/entities/user.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
@@ -32,6 +34,7 @@ import { TipsterFollow } from '../predictions/entities/tipster-follow.entity';
       EscrowFund,
       UserPurchasedPick,
       Fixture,
+      SportEvent,
       User,
       ApiSettings,
       Tipster,
@@ -43,6 +46,7 @@ import { TipsterFollow } from '../predictions/entities/tipster-follow.entity';
     FootballModule,
     TipsterModule,
     SubscriptionsModule,
+    ReferralsModule,
   ],
   controllers: [AccumulatorsController],
   providers: [AccumulatorsService, SettlementService],

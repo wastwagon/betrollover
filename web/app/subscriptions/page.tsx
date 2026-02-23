@@ -22,6 +22,7 @@ interface Subscription {
 interface FeedPick {
   id: number;
   title: string;
+  sport?: string;
   totalPicks: number;
   totalOdds: number;
   price: number;
@@ -138,6 +139,7 @@ export default function SubscriptionsPage() {
                         key={pick.id}
                         id={pick.id}
                         title={pick.title}
+                        sport={pick.sport}
                         totalPicks={pick.totalPicks}
                         totalOdds={pick.totalOdds}
                         price={pick.price}

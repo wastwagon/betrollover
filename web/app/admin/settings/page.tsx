@@ -14,6 +14,7 @@ interface Settings {
   lastTestDate?: string | null;
   isActive?: boolean;
   minimumROI?: number;
+  platformCommissionRate?: number;
   currency: string;
   country: string;
   appName: string;
@@ -43,6 +44,8 @@ export default function AdminSettingsPage() {
   const [syncingOdds, setSyncingOdds] = useState(false);
   const [minimumROI, setMinimumROI] = useState<number>(20.0);
   const [savingROI, setSavingROI] = useState(false);
+  const [commissionRate, setCommissionRate] = useState<number>(10.0);
+  const [savingCommission, setSavingCommission] = useState(false);
   const [migrationStatus, setMigrationStatus] = useState<{ applied: { filename: string; appliedAt: string }[]; pending: string[] } | null>(null);
   const [migrationStatusLoaded, setMigrationStatusLoaded] = useState(false);
   const [runningMigrations, setRunningMigrations] = useState(false);
@@ -79,9 +82,8 @@ export default function AdminSettingsPage() {
       })
       .then((data) => {
         setSettings(data);
-        if (data?.minimumROI !== undefined) {
-          setMinimumROI(data.minimumROI);
-        }
+        if (data?.minimumROI !== undefined) setMinimumROI(data.minimumROI);
+        if (data?.platformCommissionRate !== undefined) setCommissionRate(data.platformCommissionRate);
         return data;
       })
       .catch((e) => {
@@ -1114,7 +1116,73 @@ export default function AdminSettingsPage() {
                     {savingROI ? 'Saving...' : 'Save Minimum ROI'}
                   </button>
                 </div>
-                
+
+                {/* Platform Commission Rate Card */}
+                <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-2xl shadow-lg border-2 border-amber-200 dark:border-amber-800 p-6 hover:shadow-xl transition-all">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Platform Commission</h3>
+                    <span className="text-2xl">💰</span>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                    % deducted from tipster payouts when a winning coupon is settled via escrow.
+                  </p>
+                  {/* Live preview */}
+                  <div className="bg-amber-100/60 dark:bg-amber-900/30 rounded-xl p-3 mb-4 text-xs space-y-1">
+                    <p className="font-semibold text-amber-800 dark:text-amber-200">Example payout (GHS 100 escrow)</p>
+                    <p className="text-gray-600 dark:text-gray-400">Platform fee ({commissionRate}%): <span className="font-bold text-amber-700 dark:text-amber-300">GHS {(100 * commissionRate / 100).toFixed(2)}</span></p>
+                    <p className="text-gray-600 dark:text-gray-400">Tipster receives: <span className="font-bold text-emerald-600">GHS {(100 - 100 * commissionRate / 100).toFixed(2)}</span></p>
+                  </div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <input
+                      type="number"
+                      min="0"
+                      max="50"
+                      step="0.5"
+                      value={commissionRate}
+                      onChange={(e) => setCommissionRate(Math.min(50, Math.max(0, parseFloat(e.target.value) || 0)))}
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                    <span className="text-gray-600 dark:text-gray-400 font-medium">%</span>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      const token = localStorage.getItem('token');
+                      if (!token) return;
+                      setSavingCommission(true);
+                      try {
+                        const res = await fetch(`${getApiUrl()}/admin/settings/commission-rate`, {
+                          method: 'PATCH',
+                          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ platformCommissionRate: commissionRate }),
+                        });
+                        if (res.ok) {
+                          alert(`Commission rate updated to ${commissionRate}%`);
+                          const settingsRes = await fetch(`${getApiUrl()}/admin/settings`, {
+                            headers: { Authorization: `Bearer ${token}` },
+                            cache: 'no-store',
+                          });
+                          if (settingsRes.ok) {
+                            const data = await settingsRes.json();
+                            setSettings(data);
+                            if (data.platformCommissionRate !== undefined) setCommissionRate(data.platformCommissionRate);
+                          }
+                        } else {
+                          const error = await res.json().catch(() => ({}));
+                          alert(error.message || 'Failed to update commission rate');
+                        }
+                      } catch (e: any) {
+                        alert(e.message || 'Failed to update commission rate');
+                      } finally {
+                        setSavingCommission(false);
+                      }
+                    }}
+                    disabled={savingCommission}
+                    className="w-full px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
+                  >
+                    {savingCommission ? 'Saving...' : 'Save Commission Rate'}
+                  </button>
+                </div>
+
                 {/* Currency Card */}
                 <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-2xl shadow-lg border-2 border-purple-200 dark:border-purple-800 p-6 hover:shadow-xl transition-all">
                   <div className="flex items-center gap-4 mb-4">

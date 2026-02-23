@@ -27,7 +27,7 @@ export class EmailOtpService {
   async sendOtp(email: string): Promise<{ success: boolean; message?: string }> {
     const normalized = email.trim().toLowerCase();
     if (!normalized || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
-      throw new BadRequestException('Please enter a valid email address');
+      throw new BadRequestException('Please enter a valid email address.');
     }
 
     const code = this.generateCode();
@@ -40,16 +40,16 @@ export class EmailOtpService {
 
     const result = await this.emailService.sendRegistrationOtp(normalized, code);
     if (!result.sent) {
-      throw new BadRequestException(result.error || 'Failed to send verification code');
+      throw new BadRequestException(result.error || 'We couldn\'t send the verification code. Please check your email address and try again.');
     }
-    return { success: true, message: 'Verification code sent to your email' };
+    return { success: true, message: 'Verification code sent. Check your email.' };
   }
 
   async verifyOtp(email: string, code: string): Promise<boolean> {
     const normalized = email.trim().toLowerCase();
     const otpCode = String(code).trim().replace(/\D/g, '');
     if (!normalized || !otpCode || otpCode.length < 4) {
-      throw new BadRequestException('Invalid verification code');
+      throw new BadRequestException('Please enter a valid 6-digit verification code.');
     }
 
     const record = await this.otpRepo.findOne({
@@ -58,15 +58,14 @@ export class EmailOtpService {
     }) as RegistrationOtp | null;
 
     if (!record) {
-      throw new UnauthorizedException('No verification code found. Please request a new one.');
+      throw new UnauthorizedException('No verification code found. Please request a new code.');
     }
     if (new Date() > record.expiresAt) {
       await this.otpRepo.delete({ email: normalized });
-      throw new UnauthorizedException('Verification code expired. Please request a new one.');
+      throw new UnauthorizedException('The verification code has expired. Please request a new one.');
     }
     if (record.code !== otpCode) {
-      throw new UnauthorizedException('Invalid verification code');
-
+      throw new UnauthorizedException('The verification code is incorrect. Please check and try again.');
     }
 
     await this.otpRepo.delete({ email: normalized });

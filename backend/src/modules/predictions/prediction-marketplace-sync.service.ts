@@ -246,7 +246,10 @@ export class PredictionMarketplaceSyncService {
     tipsterUserId: number,
     fixtures: PredictionFixture[],
   ): Promise<number | null> {
-    const fixtureIds = fixtures.map((f) => f.fixtureId).sort((a, b) => a - b);
+    const fixtureIds = fixtures
+      .map((f) => f.fixtureId)
+      .filter((id): id is number => id != null)
+      .sort((a, b) => a - b);
 
     const existingTickets = await this.ticketRepo.find({
       where: { userId: tipsterUserId, isMarketplace: true, status: 'active', result: 'pending' },
@@ -268,6 +271,7 @@ export class PredictionMarketplaceSyncService {
         .join('|');
 
       const ourFormatted = fixtures
+        .filter((f) => f.fixtureId != null)
         .map((f) => `${f.fixtureId}:${formatOutcome(f.selectedOutcome)}:${Number(f.selectionOdds)}`)
         .sort()
         .join('|');

@@ -5,6 +5,17 @@ import { User } from '../users/entities/user.entity';
 import { WalletService } from './wallet.service';
 import { PaystackService } from './paystack.service';
 import { WalletIapService } from './wallet-iap.service';
+import { InitializeDepositDto } from './dto/initialize-deposit.dto';
+import { AddPayoutMethodDto } from './dto/add-payout-method.dto';
+import { RequestWithdrawalDto } from './dto/request-withdrawal.dto';
+import { VerifyIapDto } from './dto/verify-iap.dto';
+
+/** Paystack webhook request with raw body preserved for signature verification */
+interface PaystackWebhookRequest {
+  rawBody?: string;
+  body?: unknown;
+  headers: { [key: string]: string | string[] | undefined };
+}
 
 @Controller('wallet')
 export class WalletController {
@@ -37,9 +48,9 @@ export class WalletController {
   @UseGuards(JwtAuthGuard)
   async initializeDeposit(
     @CurrentUser() user: User,
-    @Body() body: { amount: number },
+    @Body() dto: InitializeDepositDto,
   ) {
-    return this.walletService.initializeDeposit(user, body.amount);
+    return this.walletService.initializeDeposit(user, dto.amount);
   }
 
   @Get('payout-methods')
@@ -52,32 +63,18 @@ export class WalletController {
   @UseGuards(JwtAuthGuard)
   async addPayoutMethod(
     @CurrentUser() user: User,
-    @Body()
-    body: {
-      type: 'mobile_money' | 'bank' | 'manual' | 'crypto';
-      name: string;
-      phone?: string;
-      provider?: string;
-      accountNumber?: string;
-      bankCode?: string;
-      country?: string;
-      currency?: string;
-      manualMethod?: 'mobile_money' | 'bank';
-      bankName?: string;
-      walletAddress?: string;
-      cryptoCurrency?: string;
-    },
+    @Body() dto: AddPayoutMethodDto,
   ) {
-    return this.walletService.addPayoutMethod(user, body);
+    return this.walletService.addPayoutMethod(user, dto);
   }
 
   @Post('withdraw')
   @UseGuards(JwtAuthGuard)
   async requestWithdrawal(
     @CurrentUser() user: User,
-    @Body() body: { amount: number },
+    @Body() dto: RequestWithdrawalDto,
   ) {
-    return this.walletService.requestWithdrawal(user, body.amount);
+    return this.walletService.requestWithdrawal(user, dto.amount);
   }
 
   @Get('withdrawals')
@@ -96,22 +93,15 @@ export class WalletController {
   @UseGuards(JwtAuthGuard)
   async verifyIap(
     @CurrentUser() user: { id: number },
-    @Body()
-    body: {
-      platform: 'ios' | 'android';
-      productId: string;
-      transactionId: string;
-      receipt?: string;
-      purchaseToken?: string;
-    },
+    @Body() dto: VerifyIapDto,
   ) {
-    return this.walletIapService.verifyAndCredit(user.id, body);
+    return this.walletIapService.verifyAndCredit(user.id, dto);
   }
 
   @Post('paystack-webhook')
-  async paystackWebhook(@Req() req: any) {
-    const rawBody = req.rawBody || JSON.stringify(req.body || {});
-    const signature = req.headers['x-paystack-signature'] || '';
+  async paystackWebhook(@Req() req: PaystackWebhookRequest) {
+    const rawBody = req.rawBody || JSON.stringify(req.body || '');
+    const signature = (req.headers['x-paystack-signature'] as string) || '';
     return this.walletService.handlePaystackWebhook(rawBody, signature);
   }
 }

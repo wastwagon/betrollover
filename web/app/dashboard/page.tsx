@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
+import { useT } from '@/context/LanguageContext';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { DashboardShell } from '@/components/DashboardShell';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { PageHeader } from '@/components/PageHeader';
+import { AdSlot } from '@/components/AdSlot';
 
 import { getApiUrl, getAvatarUrl } from '@/lib/site-config';
 import { PickCard } from '@/components/PickCard';
@@ -76,6 +78,7 @@ interface Purchase {
 function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useT();
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [tipsterStats, setTipsterStats] = useState<TipsterStats | null>(null);
@@ -92,6 +95,7 @@ function DashboardContent() {
   const [feedPicks, setFeedPicks] = useState<FeedPick[]>([]);
   const [following, setFollowing] = useState<FollowedTipster[]>([]);
   const [feedPurchasing, setFeedPurchasing] = useState<number | null>(null);
+  const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
 
   const runSettlement = async () => {
     const token = localStorage.getItem('token');
@@ -151,11 +155,12 @@ function DashboardContent() {
           fetch(`${apiUrl}/accumulators/purchased`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
           fetch(`${apiUrl}/tipsters/feed?limit=10`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
           fetch(`${apiUrl}/tipsters/me/following`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+          fetch(`${apiUrl}/notifications?limit=50`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
         ]);
       })
       .then((result) => {
         if (!result) return;
-        const [u, s, ts, wallet, minROI, purchasedData, feedData, followingData] = result;
+        const [u, s, ts, wallet, minROI, purchasedData, feedData, followingData, notifData] = result;
         if (u.role === 'admin') setStats(s || {});
         setTipsterStats(ts || { totalPicks: 0, wonPicks: 0, lostPicks: 0, winRate: 0, totalEarnings: 0, roi: 0 });
         if (wallet) setWalletBalance(Number(wallet.balance));
@@ -169,6 +174,8 @@ function DashboardContent() {
         setPurchaseStats({ total: purchasesList.length, totalSpent, active });
         setFeedPicks(Array.isArray(feedData) ? feedData : []);
         setFollowing(Array.isArray(followingData) ? followingData : []);
+        const notifList = Array.isArray(notifData) ? notifData : [];
+        setUnreadNotifications(notifList.filter((n: { read?: boolean }) => !n.read).length);
       })
       .catch((err) => {
         if (err?.message !== 'Unauthorized') {
@@ -185,7 +192,7 @@ function DashboardContent() {
         <div className="fixed inset-0 bg-gradient-mesh pointer-events-none -z-10" />
         <div className="flex flex-col items-center gap-4 animate-fade-in">
           <div className="w-12 h-12 rounded-full border-2 border-[var(--primary)] border-t-transparent animate-spin" />
-          <p className="text-[var(--text-muted)] font-medium">Loading your dashboard...</p>
+          <p className="text-[var(--text-muted)] font-medium">{t('dashboard.loading')}</p>
         </div>
       </div>
     );
@@ -218,7 +225,7 @@ function DashboardContent() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <StatCard title="Total Picks" value={stats?.picks?.total ?? 0} icon="🎯" />
+              <StatCard title={t("dashboard.total_picks")} value={stats?.picks?.total ?? 0} icon="🎯" />
               <StatCard title="Pending Picks" value={stats?.picks?.pending ?? 0} icon="⏳" />
               <StatCard title="Active Marketplace" value={stats?.picks?.activeMarketplace ?? 0} icon="🛒" />
               <StatCard title="Escrow Held (GHS)" value={stats?.escrow?.held ?? 0} icon="🔒" format="currency" />
@@ -236,74 +243,113 @@ function DashboardContent() {
               />
             </div>
 
+            {/* Sports Overview */}
+            <div className="mb-8 bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-[var(--text)]">Sports Overview</h2>
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-300">
+                  🌍 Multi-Sport Expansion
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+                {[
+                  { icon: '⚽', sport: 'Football' },
+                  { icon: '🏀', sport: 'Basketball' },
+                  { icon: '🏉', sport: 'Rugby' },
+                  { icon: '🥊', sport: 'MMA' },
+                  { icon: '🏐', sport: 'Volleyball' },
+                  { icon: '🏒', sport: 'Hockey' },
+                  { icon: '🏈', sport: 'Amer. Football' },
+                  { icon: '🎾', sport: 'Tennis' },
+                ].map(({ icon, sport }) => (
+                  <div
+                    key={sport}
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center bg-emerald-50 border-emerald-200"
+                  >
+                    <span className="text-2xl">{icon}</span>
+                    <span className="text-xs font-semibold text-[var(--text)]">{sport}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-[var(--text-muted)] mt-3">
+All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, American Football &amp; Tennis. API-Sports sync enabled for all.
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Quick Actions — two columns of links */}
               <div className="bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] p-6">
-                <h2 className="text-lg font-semibold text-[var(--text)] mb-4">Quick Actions</h2>
-                <div className="space-y-2">
-                  <Link
-                    href="/admin/users"
-                    className="block py-2.5 px-4 rounded-lg bg-[var(--bg)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] font-medium transition-colors"
-                  >
-                    Manage Users
-                  </Link>
-                  <Link
-                    href="/admin/picks"
-                    className="block py-2.5 px-4 rounded-lg bg-[var(--bg)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] font-medium transition-colors"
-                  >
-                    Approve Picks
-                  </Link>
-                  <Link
-                    href="/admin/marketplace"
-                    className="block py-2.5 px-4 rounded-lg bg-[var(--bg)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] font-medium transition-colors"
-                  >
-                    Marketplace
-                  </Link>
-                  <Link
-                    href="/admin/fixtures"
-                    className="block py-2.5 px-4 rounded-lg bg-[var(--bg)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] font-medium transition-colors"
-                  >
-                    Fixtures
-                  </Link>
-                  <Link
-                    href="/admin/analytics?tab=ai"
-                    className="block py-2.5 px-4 rounded-lg bg-[var(--bg)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] font-medium transition-colors"
-                  >
-                    AI Predictions Dashboard
-                  </Link>
+                <h2 className="text-lg font-semibold text-[var(--text)] mb-4">{t("dashboard.quick_actions")}</h2>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {[
+                    { href: '/admin/users',          icon: '👥', label: 'Users' },
+                    { href: '/admin/picks',           icon: '🎯', label: 'Approve Picks' },
+                    { href: '/admin/marketplace',     icon: '🛒', label: 'Marketplace' },
+                    { href: '/admin/purchases',       icon: '🛍️', label: 'Purchases' },
+                    { href: '/admin/deposits',        icon: '💳', label: 'Deposits' },
+                    { href: '/admin/withdrawals',     icon: '💸', label: 'Withdrawals' },
+                    { href: '/admin/escrow',          icon: '🔒', label: 'Escrow' },
+                    { href: '/admin/wallet',          icon: '💰', label: 'Wallet' },
+                    { href: '/admin/fixtures',        icon: '⚽', label: 'Fixtures' },
+                    { href: '/admin/sports',          icon: '🌍', label: 'Multi-Sport Sync' },
+                    { href: '/admin/analytics',       icon: '📈', label: 'Analytics' },
+                    { href: '/admin/analytics?tab=sports', icon: '🌍', label: 'Sports Analytics' },
+                    { href: '/admin/ai-predictions',  icon: '🤖', label: 'AI Predictions' },
+                    { href: '/admin/news',            icon: '📰', label: 'News' },
+                    { href: '/admin/content',         icon: '📄', label: 'Content Pages' },
+                    { href: '/admin/resources',       icon: '📚', label: 'Resources' },
+                    { href: '/admin/notifications',   icon: '🔔', label: 'Notifications' },
+                    { href: '/admin/ads',             icon: '📢', label: 'Ads' },
+                    { href: '/admin/email',           icon: '📧', label: 'Email Settings' },
+                    { href: '/admin/settings',        icon: '⚙️', label: 'Settings' },
+                    { href: '/community',             icon: '💬', label: 'Community Chat' },
+                    { href: '/admin/chat',            icon: '🛡️', label: 'Chat Moderation' },
+                  ].map(({ href, icon, label }) => (
+                    <Link
+                      key={href}
+                      href={href}
+                      className="flex items-center gap-2 py-2 px-3 rounded-lg text-sm bg-[var(--bg)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] font-medium transition-colors"
+                    >
+                      <span>{icon}</span><span className="truncate">{label}</span>
+                    </Link>
+                  ))}
                   <button
                     onClick={runSettlement}
                     disabled={settling}
-                    className="block w-full py-2.5 px-4 rounded-lg bg-[var(--bg)] hover:bg-[var(--primary-light)] font-medium text-left disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-2 py-2 px-3 rounded-lg text-sm bg-[var(--bg)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] font-medium text-left disabled:opacity-50 transition-colors col-span-2"
                   >
-                    {settling ? 'Settling...' : 'Run Settlement'}
+                    <span>⚡</span><span>{settling ? 'Running Settlement…' : 'Run Settlement Now'}</span>
                   </button>
-                  <Link
-                    href="/admin/settings"
-                    className="block py-2.5 px-4 rounded-lg bg-[var(--bg)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] font-medium transition-colors"
-                  >
-                    Settings
-                  </Link>
                 </div>
               </div>
+
+              {/* Platform Info */}
               <div className="bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] p-6">
-                <h2 className="text-lg font-semibold text-[var(--text)] mb-4">Platform Info</h2>
-                <dl className="space-y-3 text-sm">
-                  <div className="flex justify-between py-2 border-b border-[var(--border)]">
-                    <dt className="text-[var(--text-muted)]">Role</dt>
-                    <dd className="font-medium text-[var(--text)]">{user?.role}</dd>
-                  </div>
-                  <div className="flex justify-between py-2 border-b border-[var(--border)]">
-                    <dt className="text-[var(--text-muted)]">Email</dt>
-                    <dd className="font-medium text-[var(--text)]">{user?.email}</dd>
-                  </div>
-                  <div className="flex justify-between py-2">
-                    <dt className="text-[var(--text-muted)]">Fixtures</dt>
-                    <dd className="font-medium">
-                      <Link href="/admin/fixtures" className="text-[var(--primary)] hover:underline">
-                        View & Sync →
-                      </Link>
-                    </dd>
-                  </div>
+                <h2 className="text-lg font-semibold text-[var(--text)] mb-4">Platform Overview</h2>
+                <dl className="space-y-0 text-sm divide-y divide-[var(--border)]">
+                  {[
+                    { label: 'Admin',         value: user?.displayName ?? '—' },
+                    { label: 'Email',         value: user?.email ?? '—' },
+                    { label: 'Total Users',   value: stats?.users?.total != null ? `${stats.users.total}` : '—' },
+                    { label: 'Tipsters',      value: stats?.users?.tipsters != null ? `${stats.users.tipsters}` : '—' },
+                    { label: 'Active Coupons', value: stats?.picks?.activeMarketplace != null ? `${stats.picks.activeMarketplace}` : '—' },
+                    { label: 'Escrow Held',   value: stats?.escrow?.held != null ? `GHS ${Number(stats.escrow.held).toFixed(2)}` : '—' },
+                    { label: 'Revenue',       value: stats?.purchases?.revenue != null ? `GHS ${Number(stats.purchases.revenue).toFixed(2)}` : '—' },
+                    { label: 'Pending Deposits', value: stats?.deposits?.pending != null ? `${stats.deposits.pending}` : '—', highlight: (stats?.deposits?.pending ?? 0) > 0 },
+                    { label: 'Pending Withdrawals', value: stats?.withdrawals?.pending != null ? `${stats.withdrawals.pending}` : '—', highlight: (stats?.withdrawals?.pending ?? 0) > 0 },
+                    { label: 'Sports Active',  value: '7 / 7 Live' },
+                    { label: 'Multi-Sport Sync', value: undefined, link: { href: '/admin/sports', text: 'View Sync Status →' } },
+                    { label: 'Fixtures',       value: undefined, link: { href: '/admin/fixtures', text: 'View & Sync →' } },
+                  ].map(({ label, value, link, highlight }) => (
+                    <div key={label} className="flex justify-between py-2">
+                      <dt className="text-[var(--text-muted)]">{label}</dt>
+                      <dd className={`font-medium text-right ${highlight ? 'text-amber-600' : 'text-[var(--text)]'}`}>
+                        {link ? (
+                          <Link href={link.href} className="text-[var(--primary)] hover:underline">{link.text}</Link>
+                        ) : value}
+                      </dd>
+                    </div>
+                  ))}
                 </dl>
               </div>
             </div>
@@ -319,14 +365,18 @@ function DashboardContent() {
       <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] relative">
         <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 sm:py-6 md:py-8 pb-24">
           <PageHeader
-            label="Tipster Dashboard"
-            title={`Welcome back, ${user?.displayName || 'User'}`}
-            tagline="Your performance, picks, and earnings at a glance."
+            label={t('dashboard.tipster_label')}
+            title={`${t('dashboard.welcome')}, ${user?.displayName || 'User'}`}
+            tagline={t('dashboard.tagline')}
           />
+
+          <div className="mb-6">
+            <AdSlot zoneSlug="dashboard-full" fullWidth className="w-full max-w-3xl" />
+          </div>
 
           {/* Quick Actions — large touch targets, premium cards */}
           <section className="mb-6 sm:mb-8">
-            <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">Quick Actions</h2>
+            <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">{t("dashboard.quick_actions")}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <Link
                 href="/dashboard"
@@ -336,8 +386,8 @@ function DashboardContent() {
                   🏠
                 </span>
                 <div className="min-w-0">
-                  <span className="font-semibold text-[var(--text)] block">Dashboard</span>
-                  <span className="text-sm text-[var(--text-muted)]">Your hub</span>
+                  <span className="font-semibold text-[var(--text)] block">{t('dashboard.title')}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_hub')}</span>
                 </div>
               </Link>
               <Link
@@ -348,8 +398,8 @@ function DashboardContent() {
                   ➕
                 </span>
                 <div className="min-w-0">
-                  <span className="font-semibold block text-white">Create Pick</span>
-                  <span className="text-sm text-white/85">Share tips & earn</span>
+                  <span className="font-semibold block text-white">{t('dashboard.create_coupon')}</span>
+                  <span className="text-sm text-white/85">{t('dashboard.card_create_desc')}</span>
                 </div>
               </Link>
               <Link
@@ -360,8 +410,8 @@ function DashboardContent() {
                   🎯
                 </span>
                 <div className="min-w-0">
-                  <span className="font-semibold text-[var(--text)] block">My Picks</span>
-                  <span className="text-sm text-[var(--text-muted)]">View & manage</span>
+                  <span className="font-semibold text-[var(--text)] block">{t('dashboard.my_picks')}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_my_picks_desc')}</span>
                 </div>
               </Link>
               <Link
@@ -372,8 +422,8 @@ function DashboardContent() {
                   📦
                 </span>
                 <div className="min-w-0">
-                  <span className="font-semibold text-[var(--text)] block">Subscription Packages</span>
-                  <span className="text-sm text-[var(--text-muted)]">Create & manage</span>
+                  <span className="font-semibold text-[var(--text)] block">{t('tipster.subscription_packages')}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_subscription_desc')}</span>
                 </div>
               </Link>
               <Link
@@ -384,8 +434,8 @@ function DashboardContent() {
                   🛒
                 </span>
                 <div className="min-w-0">
-                  <span className="font-semibold text-[var(--text)] block">Marketplace</span>
-                  <span className="text-sm text-[var(--text-muted)]">Browse picks & coupons</span>
+                  <span className="font-semibold text-[var(--text)] block">{t('dashboard.marketplace')}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_marketplace_desc')}</span>
                 </div>
               </Link>
               <Link
@@ -396,9 +446,9 @@ function DashboardContent() {
                   📥
                 </span>
                 <div className="min-w-0">
-                  <span className="font-semibold text-[var(--text)] block">My Purchases</span>
+                  <span className="font-semibold text-[var(--text)] block">{t('nav.purchases')}</span>
                   <span className="text-sm text-[var(--text-muted)]">
-                    {purchaseStats && purchaseStats.total > 0 ? `${purchaseStats.total} total` : 'Your bought picks'}
+                    {purchaseStats && purchaseStats.total > 0 ? t('dashboard.card_my_purchases_total', { n: String(purchaseStats.total) }) : t('dashboard.card_my_purchases_empty')}
                   </span>
                 </div>
               </Link>
@@ -410,8 +460,8 @@ function DashboardContent() {
                   👤
                 </span>
                 <div className="min-w-0">
-                  <span className="font-semibold text-[var(--text)] block">Profile</span>
-                  <span className="text-sm text-[var(--text-muted)]">Your profile</span>
+                  <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_profile')}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_profile_desc')}</span>
                 </div>
               </Link>
               <Link
@@ -422,8 +472,20 @@ function DashboardContent() {
                   💰
                 </span>
                 <div className="min-w-0">
-                  <span className="font-semibold text-[var(--text)] block">Wallet</span>
-                  <span className="text-sm text-[var(--text-muted)]">Balance & transactions</span>
+                  <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_wallet')}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_wallet_desc')}</span>
+                </div>
+              </Link>
+              <Link
+                href="/earnings"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+              >
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  📈
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_earnings')}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_earnings_desc')}</span>
                 </div>
               </Link>
               <Link
@@ -434,8 +496,56 @@ function DashboardContent() {
                   💸
                 </span>
                 <div className="min-w-0">
-                  <span className="font-semibold text-[var(--text)] block">Withdrawals</span>
-                  <span className="text-sm text-[var(--text-muted)]">Request & track payouts</span>
+                  <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_withdrawals')}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_withdrawals_desc')}</span>
+                </div>
+              </Link>
+              <Link
+                href="/community"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+              >
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  💬
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-[var(--text)] block">Community Chat</span>
+                  <span className="text-sm text-[var(--text-muted)]">Join sport chat rooms</span>
+                </div>
+              </Link>
+              <Link
+                href="/invite"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+              >
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  🎁
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-[var(--text)] block">{t('dashboard.invite')}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_invite_desc')}</span>
+                </div>
+              </Link>
+              <Link
+                href="/support"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+              >
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  🎫
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_support')}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_support_desc')}</span>
+                </div>
+              </Link>
+              <Link
+                href="/community"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+              >
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  💬
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_community')}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_community_desc')}</span>
                 </div>
               </Link>
               <Link
@@ -446,23 +556,121 @@ function DashboardContent() {
                   ⭐
                 </span>
                 <div className="min-w-0">
-                  <span className="font-semibold text-[var(--text)] block">Subscriptions</span>
-                  <span className="text-sm text-[var(--text-muted)]">Tipster subscription coupons</span>
+                  <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_subscriptions')}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_subscriptions_desc')}</span>
                 </div>
               </Link>
+              <Link
+                href="/leaderboard"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+              >
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  🏆
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_leaderboard')}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_leaderboard_desc')}</span>
+                </div>
+              </Link>
+              <Link
+                href="/notifications"
+                className="group relative flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+              >
+                <span className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  🔔
+                  {unreadNotifications > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                      {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                    </span>
+                  )}
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_notifications')}</span>
+                  <span className="text-sm text-[var(--text-muted)]">
+                    {unreadNotifications > 0 ? t('dashboard.card_notifications_unread', { n: String(unreadNotifications) }) : t('dashboard.card_notifications_none')}
+                  </span>
+                </div>
+              </Link>
+              <Link
+                href={user ? `/tipsters/${user.displayName}` : '/tipsters'}
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+              >
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  🌟
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_my_profile')}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_my_profile_desc')}</span>
+                </div>
+              </Link>
+              <Link
+                href="/marketplace"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+              >
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  🛒
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_browse_marketplace')}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_browse_marketplace_desc')}</span>
+                </div>
+              </Link>
+            </div>
+          </section>
+
+          {/* Multi-Sport Live Banner */}
+          <section className="mb-6 sm:mb-8">
+            <div className="rounded-2xl sm:rounded-3xl overflow-hidden bg-gradient-to-br from-slate-800 via-teal-900/80 to-slate-800 border border-teal-500/30 shadow-lg">
+              <div className="p-5 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-2xl">
+                      🌍
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-bold text-white text-base sm:text-lg">{t('dashboard.multisport_title')}</h3>
+                      </div>
+                      <p className="text-sm text-slate-300 leading-relaxed">
+                        {t('dashboard.multisport_desc')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 sm:flex-shrink-0">
+                    {[
+                      { icon: '⚽', label: 'Football' },
+                      { icon: '🏀', label: 'Basketball' },
+                      { icon: '🏉', label: 'Rugby' },
+                      { icon: '🥊', label: 'MMA' },
+                      { icon: '🏐', label: 'Volleyball' },
+                      { icon: '🏒', label: 'Hockey' },
+                      { icon: '🏈', label: 'Amer. Ftball' },
+                      { icon: '🎾', label: 'Tennis' },
+                    ].map(({ icon, label }) => (
+                      <div
+                        key={label}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border bg-emerald-500/20 border-emerald-400/40 text-emerald-300"
+                      >
+                        <span>{icon}</span>
+                        <span>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
 
           {/* Performance stats — glass cards, 2 cols mobile → 4 cols desktop */}
           {tipsterStats && (
             <section className="mb-6 sm:mb-8">
-              <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">Performance</h2>
+              <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">{t('dashboard.performance')}</h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                <StatCard title="ROI" value={tipsterStats.roi} icon="📈" suffix="%" variant="teal" glass index={0} />
-                <StatCard title="Win Rate" value={tipsterStats.winRate} icon="📊" suffix="%" variant="emerald" glass index={1} />
-                <StatCard title="Total Picks" value={tipsterStats.totalPicks} icon="🎯" variant="amber" glass index={2} />
+                <StatCard title={t("dashboard.roi")} value={tipsterStats.roi} icon="📈" suffix="%" variant="teal" glass index={0} />
+                <StatCard title={t("dashboard.win_rate")} value={tipsterStats.winRate} icon="📊" suffix="%" variant="emerald" glass index={1} />
+                <StatCard title={t("dashboard.total_picks")} value={tipsterStats.totalPicks} icon="🎯" variant="amber" glass index={2} />
                 <StatCard
-                  title="Wallet"
+                  title={t('dashboard.card_wallet')}
                   value={walletBalance ?? 0}
                   icon="💰"
                   format="currency"
@@ -477,7 +685,7 @@ function DashboardContent() {
 
           {/* Feed from Followed Tipsters / Following */}
           <section className="mb-6 sm:mb-8">
-              <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">Followed Tipsters</h2>
+              <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">{t('dashboard.followed_tipsters')}</h2>
               <div className="glass-card rounded-2xl sm:rounded-3xl overflow-hidden border border-[var(--border)]/60">
                 <div className="p-4 sm:p-6">
                   {following.length > 0 && (
@@ -502,7 +710,7 @@ function DashboardContent() {
                   )}
                   {feedPicks.length > 0 ? (
                     <div>
-                      <p className="text-sm text-[var(--text-muted)] mb-3">Latest picks from tipsters you follow</p>
+                      <p className="text-sm text-[var(--text-muted)] mb-3">{t('dashboard.latest_picks')}</p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                         {feedPicks.slice(0, 4).map((pick) => {
                           const isPurchased = purchases.some((p) => p.accumulatorId === pick.id);
@@ -551,14 +759,14 @@ function DashboardContent() {
                         href="/marketplace"
                         className="inline-block mt-3 text-sm font-medium text-[var(--primary)] hover:underline"
                       >
-                        View all in Marketplace →
+                        {t('dashboard.view_all_marketplace')}
                       </Link>
                     </div>
                   ) : following.length > 0 ? (
-                    <p className="text-[var(--text-muted)] text-sm">No new picks from followed tipsters. <Link href="/tipsters" className="text-[var(--primary)] hover:underline">Follow more tipsters</Link></p>
+                    <p className="text-[var(--text-muted)] text-sm">{t('dashboard.no_new_picks')} <Link href="/tipsters" className="text-[var(--primary)] hover:underline">{t('dashboard.follow_more')}</Link></p>
                   ) : (
                     <p className="text-[var(--text-muted)] text-sm">
-                      <Link href="/tipsters" className="text-[var(--primary)] hover:underline font-medium">Follow tipsters</Link> to see their latest picks here.
+                      <Link href="/tipsters" className="text-[var(--primary)] hover:underline font-medium">{t('dashboard.follow_more')}</Link> {t('dashboard.follow_tipsters')}
                     </p>
                   )}
                 </div>
@@ -568,11 +776,11 @@ function DashboardContent() {
           {/* Purchase Summary */}
           {purchaseStats !== null && (
             <section className="mb-6 sm:mb-8">
-              <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">Purchase Summary</h2>
+              <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">{t('dashboard.purchase_summary')}</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-                <StatCard title="Purchases" value={purchaseStats.total} icon="🛍️" variant="slate" link="/my-purchases" glass index={4} />
-                <StatCard title="Total Spent" value={purchaseStats.totalSpent} icon="💸" format="currency" variant="slate" glass index={5} />
-                <StatCard title="Active" value={purchaseStats.active} icon="⏳" variant="slate" glass index={6} />
+                <StatCard title={t('dashboard.purchases')} value={purchaseStats.total} icon="🛍️" variant="slate" link="/my-purchases" glass index={4} />
+                <StatCard title={t('dashboard.total_spent')} value={purchaseStats.totalSpent} icon="💸" format="currency" variant="slate" glass index={5} />
+                <StatCard title={t('status.active')} value={purchaseStats.active} icon="⏳" variant="slate" glass index={6} />
               </div>
             </section>
           )}
@@ -603,7 +811,7 @@ function DashboardContent() {
                             tipsterStats.roi >= minimumROI ? 'text-emerald-900' : 'text-amber-900'
                           }`}
                         >
-                          {tipsterStats.roi >= minimumROI ? 'You Can Sell Coupons & Earn' : 'Build ROI to Start Earning'}
+                          {tipsterStats.roi >= minimumROI ? t('dashboard.earn_ready') : t('dashboard.earn_build_roi')}
                         </h3>
                         <p
                           className={`text-sm leading-relaxed ${
@@ -611,9 +819,9 @@ function DashboardContent() {
                           }`}
                         >
                           {tipsterStats.roi >= minimumROI ? (
-                            <>ROI <strong>{tipsterStats.roi.toFixed(2)}%</strong> meets minimum ({minimumROI}%). Sell picks and earn from every purchase.</>
+                            t('dashboard.earn_meets_min', { roi: tipsterStats.roi.toFixed(2), min: String(minimumROI) })
                           ) : (
-                            <>Need <strong>{minimumROI}%</strong> ROI. Current: <strong>{tipsterStats.roi.toFixed(2)}%</strong>. Create free picks to unlock earning.</>
+                            t('dashboard.earn_below_min', { roi: tipsterStats.roi.toFixed(2), min: String(minimumROI) })
                           )}
                         </p>
                       </div>
@@ -625,13 +833,13 @@ function DashboardContent() {
                             href="/create-pick"
                             className="flex-1 sm:flex-none min-h-[44px] inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors text-center"
                           >
-                            Create Paid Pick
+                            {t('dashboard.create_paid_pick')}
                           </Link>
                           <Link
                             href="/marketplace"
                             className="flex-1 sm:flex-none min-h-[44px] inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold bg-white text-emerald-700 border-2 border-emerald-600 hover:bg-emerald-50 transition-colors text-center"
                           >
-                            Marketplace
+                            {t('dashboard.marketplace')}
                           </Link>
                         </>
                       ) : (
@@ -639,7 +847,7 @@ function DashboardContent() {
                           href="/create-pick"
                           className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center px-6 py-3 rounded-xl font-semibold bg-amber-600 hover:bg-amber-700 text-white transition-colors text-center"
                         >
-                          Create Free Pick
+                          {t('dashboard.create_free_pick')}
                         </Link>
                       )}
                     </div>
@@ -653,10 +861,10 @@ function DashboardContent() {
           <section className="mb-6 sm:mb-8">
             <div className="glass-card rounded-2xl sm:rounded-3xl overflow-hidden">
               <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-[var(--border)]/80 flex items-center justify-between flex-wrap gap-2">
-                <h2 className="font-semibold text-[var(--text)] text-base sm:text-lg">Recent Purchases</h2>
+                <h2 className="font-semibold text-[var(--text)] text-base sm:text-lg">{t('dashboard.recent_purchases')}</h2>
                 {purchases.length > 0 && (
                   <Link href="/my-purchases" className="text-sm font-medium text-[var(--primary)] hover:underline">
-                    View all
+                    {t('dashboard.view_all')}
                   </Link>
                 )}
               </div>
@@ -691,7 +899,7 @@ function DashboardContent() {
                                       : 'bg-slate-100 text-slate-700'
                               }`}
                             >
-                              {isActive ? 'Active' : purchase.pick.result === 'won' ? 'Won' : purchase.pick.result === 'lost' ? 'Lost' : purchase.pick.status || '—'}
+                              {isActive ? t('status.active') : purchase.pick.result === 'won' ? t('status.won') : purchase.pick.result === 'lost' ? t('status.lost') : purchase.pick.status || '—'}
                             </span>
                             <span className="font-semibold text-[var(--text)] tabular-nums text-sm sm:text-base">
                               GHS {Number(purchase.purchasePrice || 0).toFixed(2)}
@@ -703,12 +911,12 @@ function DashboardContent() {
                   </div>
                 ) : (
                   <div className="text-center py-10 sm:py-12">
-                    <p className="text-[var(--text-muted)] mb-4 sm:mb-6">No purchases yet</p>
+                    <p className="text-[var(--text-muted)] mb-4 sm:mb-6">{t('my_purchases.no_purchases')}</p>
                     <Link
                       href="/marketplace"
                       className="inline-flex items-center justify-center min-h-[44px] px-5 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors"
                     >
-                      Browse Marketplace
+                      {t('my_purchases.browse_marketplace')}
                     </Link>
                   </div>
                 )}

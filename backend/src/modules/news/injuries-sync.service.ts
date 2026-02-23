@@ -1,11 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NewsArticle } from './entities/news-article.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
-
-const API_BASE = 'https://v3.football.api-sports.io';
+import { getSportApiBaseUrl } from '../../config/sports.config';
+import { API_CALL_DELAY_MS } from '../../config/api-limits.config';
 
 // Major League IDs from API-Football
 const LEAGUE_IDS = [39, 140, 78, 135, 61]; // Premier League, La Liga, Bundesliga, Serie A, Ligue 1
@@ -45,6 +46,7 @@ export class InjuriesSyncService {
         private newsRepo: Repository<NewsArticle>,
         @InjectRepository(ApiSettings)
         private apiSettingsRepo: Repository<ApiSettings>,
+        private configService: ConfigService,
     ) { }
 
     private async getKey(): Promise<string> {
@@ -75,7 +77,7 @@ export class InjuriesSyncService {
     }
 
     private async fetchInjuriesForLeague(leagueId: number, season: number, headers: Record<string, string>): Promise<Injury[]> {
-        const url = `${API_BASE}/injuries?league=${leagueId}&season=${season}`;
+        const url = `${getSportApiBaseUrl('football')}/injuries?league=${leagueId}&season=${season}`;
         const res = await fetch(url, { headers });
         const data = (await res.json()) as InjuriesResponse;
         if (data.errors && Object.keys(data.errors).length > 0) {
@@ -133,6 +135,7 @@ export class InjuriesSyncService {
                             excerpt,
                             content,
                             category: 'injury',
+                            sport: 'football',
                             featured: false,
                             metaDescription: title,
                             publishedAt,
@@ -145,16 +148,17 @@ export class InjuriesSyncService {
                 errors.push(`League ${leagueId}: ${msg}`);
                 this.logger.warn(`Injuries sync league ${leagueId}: ${msg}`);
             }
-            await new Promise((r) => setTimeout(r, 350)); // rate limit
+            await new Promise((r) => setTimeout(r, API_CALL_DELAY_MS));
         }
 
         this.logger.log(`Injuries sync complete: ${added} new articles added, ${skipped} skipped`);
         return { added, skipped, errors };
     }
 
-    /** Runs daily at 7 AM - syncs real injuries from API-Football */
-    @Cron('0 7 * * *')
+    /** Runs daily at 1:05 AM - syncs real injuries from API-Football */
+    @Cron('5 1 * * *') // 1:05 AM — after predictions (API-Sports)
     async handleDailySync(): Promise<void> {
+        if (this.configService.get('ENABLE_SCHEDULING') !== 'true') return;
         const result = await this.sync();
         if (result.added > 0) {
             this.logger.log(`Daily injuries sync: ${result.added} new articles`);

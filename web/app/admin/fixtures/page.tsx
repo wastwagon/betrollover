@@ -27,7 +27,10 @@ export default function AdminFixturesPage() {
   const [fixtures, setFixtures] = useState<DbFixture[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [fetchingResults, setFetchingResults] = useState(false);
+  const [settling, setSettling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resultMsg, setResultMsg] = useState<{ updated: number; settled?: number } | null>(null);
   const [syncResult, setSyncResult] = useState<{ fixtures: number; leagues: number } | null>(null);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({ countries: [], tournaments: [], leagues: [] });
   const [selectedCountry, setSelectedCountry] = useState('');
@@ -111,6 +114,75 @@ export default function AdminFixturesPage() {
     }
     load();
   }, [router, selectedCountry, selectedCompetition]);
+
+  const fetchResults = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setFetchingResults(true);
+    setError(null);
+    setResultMsg(null);
+    try {
+      const res = await fetch(`${getApiUrl()}/fixtures/sync/results`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = res.ok ? await res.json().catch(() => null) : null;
+      if (res.ok) {
+        setResultMsg({ updated: data?.updated ?? 0 });
+        load();
+      } else {
+        setError('Failed to fetch results. Check API_SPORTS_KEY in Admin → Settings.');
+      }
+    } catch {
+      setError('Failed to fetch results. Network error.');
+    } finally {
+      setFetchingResults(false);
+    }
+  };
+
+  const fetchResultsAndSettle = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setFetchingResults(true);
+    setSettling(false);
+    setError(null);
+    setResultMsg(null);
+    try {
+      // Step 1: fetch results from API-Sports
+      const resRes = await fetch(`${getApiUrl()}/fixtures/sync/results`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const resData = resRes.ok ? await resRes.json().catch(() => null) : null;
+      if (!resRes.ok) {
+        setError('Failed to fetch results. Check API_SPORTS_KEY.');
+        return;
+      }
+      setFetchingResults(false);
+      setSettling(true);
+
+      // Step 2: run settlement on the freshly updated fixtures
+      const settleRes = await fetch(`${getApiUrl()}/admin/settlement/run`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const settleData = settleRes.ok ? await settleRes.json().catch(() => null) : null;
+      if (settleRes.ok) {
+        setResultMsg({
+          updated: resData?.updated ?? 0,
+          settled: settleData?.ticketsSettled ?? 0,
+        });
+        load();
+      } else {
+        setError('Results fetched but settlement failed. Try "Run Settlement Now" from Dashboard.');
+      }
+    } catch {
+      setError('Network error during fetch-and-settle.');
+    } finally {
+      setFetchingResults(false);
+      setSettling(false);
+    }
+  };
 
   const sync = async () => {
     const token = localStorage.getItem('token');
@@ -217,41 +289,103 @@ export default function AdminFixturesPage() {
           </div>
         </div>
 
-        <div className="mb-6 flex flex-wrap gap-3">
-          <button
-            onClick={sync}
-            disabled={syncing}
-            className="px-6 py-3 rounded-xl font-semibold bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none"
-          >
-            {syncing ? (
-              <span className="flex items-center gap-2">
-                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Syncing...
-              </span>
-            ) : (
-              'Sync Fixtures'
-            )}
-          </button>
-          <button
-            onClick={() => syncOdds(false)}
-            disabled={syncing}
-            className="px-6 py-3 rounded-xl font-semibold bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none"
-          >
-            Sync Odds (new only)
-          </button>
-          <button
-            onClick={() => syncOdds(true)}
-            disabled={syncing}
-            title="Re-fetch odds for all upcoming fixtures (BTTS, Correct Score, etc.)"
-            className="px-6 py-3 rounded-xl font-semibold bg-gradient-to-r from-emerald-600 to-emerald-700 text-white hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none"
-          >
-            Force Refresh Odds
-          </button>
+        {/* Upcoming Fixtures */}
+        <div className="mb-4">
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Upcoming Fixtures</p>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={sync}
+              disabled={syncing || fetchingResults || settling}
+              className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 disabled:opacity-50 transition-all shadow-md"
+            >
+              {syncing ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Syncing...
+                </span>
+              ) : '⚽ Sync Fixtures'}
+            </button>
+            <button
+              onClick={() => syncOdds(false)}
+              disabled={syncing || fetchingResults || settling}
+              className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 transition-all shadow-md"
+            >
+              Sync Odds (new only)
+            </button>
+            <button
+              onClick={() => syncOdds(true)}
+              disabled={syncing || fetchingResults || settling}
+              title="Re-fetch odds for all upcoming fixtures (BTTS, Correct Score, etc.)"
+              className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-emerald-600 to-emerald-700 text-white hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 transition-all shadow-md"
+            >
+              Force Refresh Odds
+            </button>
+          </div>
         </div>
 
+        {/* Results & Settlement */}
+        <div className="mb-6">
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Results & Settlement</p>
+          <div className="flex flex-wrap gap-3 items-start">
+            <button
+              onClick={fetchResults}
+              disabled={syncing || fetchingResults || settling}
+              title="Fetch scores for finished matches from API-Sports (same as the cron, but manual)"
+              className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 disabled:opacity-50 transition-all shadow-md"
+            >
+              {fetchingResults && !settling ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Fetching Results…
+                </span>
+              ) : '📥 Fetch Football Results'}
+            </button>
+            <button
+              onClick={fetchResultsAndSettle}
+              disabled={syncing || fetchingResults || settling}
+              title="Fetch results from API-Sports, then immediately settle pending coupons. Use when matches have finished but coupons are still pending."
+              className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-violet-600 to-violet-700 text-white hover:from-violet-700 hover:to-violet-800 disabled:opacity-50 transition-all shadow-md"
+            >
+              {fetchingResults || settling ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {settling ? 'Settling coupons…' : 'Fetching results…'}
+                </span>
+              ) : '⚡ Fetch Results & Settle Coupons'}
+            </button>
+            <p className="w-full text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              Use when matches have finished but coupons are still &quot;pending&quot;. The cron runs every 5 min — this forces it immediately.
+            </p>
+          </div>
+        </div>
+
+        {resultMsg && !error && (
+          <div className="mb-6 bg-violet-50 dark:bg-violet-900/20 border-l-4 border-violet-500 rounded-lg p-4 text-violet-800 dark:text-violet-200 shadow-md">
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <span className="font-medium">
+                {resultMsg.updated} fixture{resultMsg.updated !== 1 ? 's' : ''} updated with results.
+                {resultMsg.settled !== undefined && (
+                  <> {resultMsg.settled} coupon{resultMsg.settled !== 1 ? 's' : ''} settled.</>
+                )}
+                {resultMsg.updated === 0 && (
+                  <> No unfinished past fixtures found — all may already be up to date, or no matches ended recently.</>
+                )}
+              </span>
+            </div>
+          </div>
+        )}
         {syncResult && syncResult.fixtures > 0 && !error && (
           <div className="mb-6 bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-500 rounded-lg p-4 text-emerald-800 dark:text-emerald-200 shadow-md">
             <div className="flex items-center gap-2">

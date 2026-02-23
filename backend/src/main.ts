@@ -7,7 +7,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import type { Request, Response, NextFunction } from 'express';
 import { AppModule } from './app.module';
-import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { MigrationRunnerService } from './modules/admin/migration-runner.service';
 import { SeedRunnerService } from './modules/admin/seed-runner.service';
 
@@ -76,13 +75,13 @@ async function bootstrap() {
   });
 
   // RFC 7807–style error responses (statusCode, message, error, path, timestamp)
-  app.useGlobalFilters(new HttpExceptionFilter());
+  // Filter registered via APP_FILTER in AppModule for DI (AnalyticsService)
 
-  // Global validation - less strict to avoid issues with endpoints that don't use DTOs
+  // Global validation — strip unknown fields always; reject them in production
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      forbidNonWhitelisted: false, // Changed to false - endpoints with DTOs will still validate, but won't reject extra fields
+      forbidNonWhitelisted: isProduction,
       transform: true,
       transformOptions: { enableImplicitConversion: true },
       skipMissingProperties: false,
@@ -164,18 +163,20 @@ async function bootstrap() {
 
   logger.log(`CORS whitelisted origins: ${uniqueOrigins.join(', ')}`);
 
-  // Swagger API docs at /docs (additive, read-only)
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('BetRollover API')
-    .setDescription('BetRollover tipster marketplace API. Auth, wallet, marketplace, subscriptions, predictions.')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('docs', app, document, {
-    jsonDocumentUrl: 'docs-json',
-    swaggerOptions: { persistAuthorization: true },
-  });
+  // Swagger API docs at /docs — disabled in production to avoid exposing API schema
+  if (!isProduction) {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('BetRollover API')
+      .setDescription('BetRollover tipster marketplace API. Auth, wallet, marketplace, subscriptions, predictions.')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('docs', app, document, {
+      jsonDocumentUrl: 'docs-json',
+      swaggerOptions: { persistAuthorization: true },
+    });
+  }
 
   // Run pending DB migrations before accepting traffic (production-safe: no manual scripts)
   try {
@@ -187,9 +188,10 @@ async function bootstrap() {
     if (result.errors.length > 0) {
       logger.error(`Migration errors: ${result.errors.join('; ')}`);
     }
-    // Ensure age_verified_at and date_of_birth exist (fixes 500 on tipster-requests, impersonate)
+    // Ensure age_verified_at, date_of_birth, team logos/country codes exist
     await migrationRunner.ensureAgeVerifiedColumn();
     await migrationRunner.ensureDateOfBirthColumn();
+    await migrationRunner.ensureTeamLogoAndCountryColumns();
   } catch (err: any) {
     logger.error(`Migration bootstrap failed: ${err?.message || err}`);
     if (isProduction) {
@@ -199,6 +201,7 @@ async function bootstrap() {
       const migrationRunner = app.get(MigrationRunnerService);
       await migrationRunner.ensureAgeVerifiedColumn();
       await migrationRunner.ensureDateOfBirthColumn();
+      await migrationRunner.ensureTeamLogoAndCountryColumns();
     } catch {
       // best-effort schema fix
     }

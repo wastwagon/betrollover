@@ -13,6 +13,7 @@ interface NewsArticle {
   title: string;
   excerpt: string | null;
   category: string;
+  language?: string;
   featured: boolean;
   publishedAt: string | null;
   createdAt: string;
@@ -116,6 +117,7 @@ export default function AdminNewsPage() {
                 <tr>
                   <th className="text-left px-6 py-4 font-semibold text-gray-900 dark:text-white">Title</th>
                   <th className="text-left px-6 py-4 font-semibold text-gray-900 dark:text-white">Category</th>
+                  <th className="text-left px-6 py-4 font-semibold text-gray-900 dark:text-white">Lang</th>
                   <th className="text-left px-6 py-4 font-semibold text-gray-900 dark:text-white">Status</th>
                   <th className="text-left px-6 py-4 font-semibold text-gray-900 dark:text-white">Date</th>
                   <th className="text-right px-6 py-4 font-semibold text-gray-900 dark:text-white">Actions</th>
@@ -130,6 +132,7 @@ export default function AdminNewsPage() {
                       </Link>
                     </td>
                     <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{a.category}</td>
+                    <td className="px-6 py-4 text-gray-600 dark:text-gray-400 text-sm">{a.language || 'en'}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${a.publishedAt ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
                         {a.publishedAt ? 'Published' : 'Draft'}

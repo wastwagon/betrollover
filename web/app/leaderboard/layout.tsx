@@ -1,25 +1,25 @@
 import type { Metadata } from 'next';
-import { SITE_URL, getAfricaAlternates } from '@/lib/site-config';
+import { SITE_URL, getAlternates } from '@/lib/site-config';
+import { getLocale, serverT } from '@/lib/i18n';
 
-export const metadata: Metadata = {
-  title: 'Leaderboard',
-  description:
-    'Top tipsters ranked by win rate and performance. Find the best football tipsters in Ghana, Nigeria, Kenya, and across Africa.',
-  alternates: {
-    canonical: `${SITE_URL}/leaderboard`,
-    languages: getAfricaAlternates('/leaderboard'),
-  },
-  openGraph: {
-    url: `${SITE_URL}/leaderboard`,
-    title: 'Tipster Leaderboard | BetRollover',
-    description: 'Ranked list of top-performing tipsters. Verified track records.',
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: serverT('seo.leaderboard_title', locale),
+    description: serverT('seo.leaderboard_desc', locale),
+    alternates: {
+      canonical: `${SITE_URL}/leaderboard`,
+      languages: getAlternates('/leaderboard'),
+    },
+    openGraph: {
+      url: `${SITE_URL}/leaderboard`,
+      title: serverT('seo.leaderboard_title', locale),
+      description: serverT('seo.leaderboard_desc', locale),
+      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'BetRollover Leaderboard' }],
+    },
+  };
+}
 
-export default function LeaderboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function LeaderboardLayout({ children }: { children: React.ReactNode }) {
   return children;
 }

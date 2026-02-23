@@ -8,6 +8,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'api.betrollover.com', pathname: '/**' },
       { protocol: 'http', hostname: 'localhost', port: '6001', pathname: '/**' },
       { protocol: 'https', hostname: 'betrollover.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'media.api-sports.io', pathname: '/**' },
     ],
   },
   async headers() {
@@ -19,19 +20,27 @@ const nextConfig = {
       { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
       { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
     ];
-    return [
+    const rules = [
       {
         source: '/:path*',
         headers: securityHeaders,
       },
-      {
+    ];
+    // In production, /_next/static files have content-hash filenames so immutable
+    // caching is safe. In development, filenames are stable (webpack.js, main-app.js
+    // etc.) but content changes on every rebuild — applying immutable here would
+    // cause browsers to serve stale chunks after a Docker restart, making webpack
+    // unable to find module factories (undefined originalFactory crash).
+    if (process.env.NODE_ENV === 'production') {
+      rules.push({
         source: '/_next/static/:path*',
         headers: [
           ...securityHeaders,
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
-      },
-    ];
+      });
+    }
+    return rules;
   },
   async rewrites() {
     const api = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001';

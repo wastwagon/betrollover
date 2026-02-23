@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
 // Server-side: use BACKEND_URL (Docker internal) so web container can reach api container
 const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
@@ -6,15 +7,20 @@ const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL |
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const category = searchParams.get('category');
+  const sport = searchParams.get('sport');
   const limit = searchParams.get('limit');
   const offset = searchParams.get('offset');
   const featured = searchParams.get('featured');
+  const language = searchParams.get('language');
 
   const params = new URLSearchParams();
   if (category) params.set('category', category);
+  if (sport) params.set('sport', sport);
   if (limit) params.set('limit', limit);
   if (offset) params.set('offset', offset);
   if (featured) params.set('featured', featured);
+  const locale = language || (await cookies()).get('br_language')?.value || 'en';
+  params.set('language', locale);
 
   const url = `${BACKEND_URL}/api/v1/news${params.toString() ? `?${params}` : ''}`;
   console.log(`[NewsProxy] Fetching: ${url}`); // Debug Log

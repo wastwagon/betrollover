@@ -26,6 +26,9 @@ export class ResourceItem {
   @Column({ length: 100 })
   slug: string;
 
+  @Column({ length: 5, default: 'en' })
+  language: string;
+
   @Column({ length: 255 })
   title: string;
 

@@ -14,13 +14,13 @@ import { SyncStatus } from './entities/sync-status.entity';
 
 /**
  * Scheduled Jobs for Fixture Updates & Syncing
- * 
- * Premium Tier (7,500 requests/day) allows:
- * - Daily fixture sync at 6 AM
- * - Live updates every 5 minutes
- * - Finished updates every 5 minutes
- * - Odds sync for upcoming fixtures every 2 hours
- * - Fast settlement (~5 min after match ends)
+ *
+ * Schedule consolidated to 12 AM window:
+ * - 12:00 AM: Daily fixture sync (7 days ahead)
+ * - 1:00 AM: Odds force refresh + AI prediction generation (ready before 4–5 AM fixtures)
+ * - 2:00 AM: Fixture archive + Prediction catch-up (if none for today)
+ *
+ * Set ENABLE_FOOTBALL_SYNC=false to skip football API (e.g. when using prod server).
  */
 @Injectable()
 export class FixtureSchedulerService {
@@ -50,6 +50,13 @@ export class FixtureSchedulerService {
       // this.logger.debug('Scheduling disabled (ENABLE_SCHEDULING != true), skipping task');
     }
     return enabled;
+  }
+
+  /** Skip football API sync when ENABLE_FOOTBALL_SYNC=false (e.g. avoid using credits in dev). */
+  private isFootballSyncEnabled(): boolean {
+    const v = this.configService.get('ENABLE_FOOTBALL_SYNC');
+    if (v === 'false' || v === '0') return false;
+    return true;
   }
 
   private async updateSyncStatus(
@@ -143,14 +150,18 @@ export class FixtureSchedulerService {
   }
 
   /**
-   * Daily fixture sync (runs at 6 AM server time, typically UTC in Docker)
+   * Daily fixture sync (runs at 12 AM server time)
    * Syncs fixtures for next 7 days from enabled leagues.
    * Then syncs odds (Tier 1/2 markets) for up to 80 fixtures without odds, soonest first.
-   * Fixtures with no odds are hidden from Create Pick (avoids unusable fixtures).
+   * Skipped when ENABLE_FOOTBALL_SYNC=false (e.g. football runs on prod, avoid credits here).
    */
-  @Cron('0 6 * * *') // Every day at 6 AM (set TZ env if you need a specific timezone)
+  @Cron('0 0 * * *') // Every day at 12 AM (set TZ env if you need a specific timezone)
   async handleDailyFixtureSync() {
     if (!this.isSchedulingEnabled()) return;
+    if (!this.isFootballSyncEnabled()) {
+      this.logger.debug('Football sync disabled (ENABLE_FOOTBALL_SYNC=false), skipping');
+      return;
+    }
     if (await this.isSyncRunning('fixtures')) {
       this.logger.warn('Daily fixture sync already running, skipping this run');
       return;
@@ -235,10 +246,10 @@ export class FixtureSchedulerService {
   }
 
   /**
-   * Daily force refresh of odds (runs at 7 AM)
+   * Daily force refresh of odds (runs at 1 AM)
    * Re-syncs 50 soonest upcoming fixtures to apply latest Tier 1/2 market filter.
    */
-  @Cron('0 7 * * *') // Every day at 7 AM
+  @Cron('0 1 * * *') // Every day at 1 AM
   async handleOddsForceRefresh() {
     if (!this.isSchedulingEnabled()) return;
     if (await this.isSyncRunning('odds_refresh')) {
@@ -285,10 +296,10 @@ export class FixtureSchedulerService {
   }
 
   /**
-   * Daily prediction generation (runs at 9 AM server time)
-   * Generates AI tipster predictions for today. Uses sync_status for consistency with fixtures/odds.
+   * Daily prediction generation (runs at 1 AM server time)
+   * Generates AI tipster predictions for today. Ready before early fixtures (4–5 AM).
    */
-  @Cron('0 9 * * *')
+  @Cron('0 1 * * *')
   async handleDailyPredictionGeneration() {
     if (!this.isSchedulingEnabled()) return;
     if (await this.isSyncRunning('predictions')) {
@@ -308,10 +319,10 @@ export class FixtureSchedulerService {
   }
 
   /**
-   * Catch-up: if no predictions for today by 11 AM, run generation again.
-   * Handles cases where 9 AM run failed or fixtures/odds weren't ready.
+   * Catch-up: if no predictions for today by 2 AM, run generation again.
+   * Handles cases where 1 AM run failed or fixtures/odds weren't ready.
    */
-  @Cron('0 11 * * *')
+  @Cron('0 2 * * *')
   async handlePredictionCatchUp() {
     if (!this.isSchedulingEnabled()) return;
     const count = await this.predictionEngine.getTodaysPredictionCount();

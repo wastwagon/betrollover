@@ -44,6 +44,12 @@ export class AdCampaign {
   @Column({ default: 0 })
   clicks: number;
 
+  @Column({ type: 'decimal', precision: 10, scale: 4, default: 0 })
+  costPerClick: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 4, default: 0 })
+  costPerMille: number;
+
   @Column({ length: 20, default: 'active' })
   status: AdStatus;
 

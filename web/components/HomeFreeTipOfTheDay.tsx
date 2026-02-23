@@ -6,6 +6,17 @@ import { useRouter } from 'next/navigation';
 import { PickCard } from '@/components/PickCard';
 import { getApiUrl } from '@/lib/site-config';
 
+const SPORT_META: Record<string, { label: string; emoji: string }> = {
+  football:          { label: 'Football',          emoji: '⚽' },
+  basketball:        { label: 'Basketball',         emoji: '🏀' },
+  rugby:             { label: 'Rugby',              emoji: '🏉' },
+  mma:               { label: 'MMA',               emoji: '🥊' },
+  volleyball:        { label: 'Volleyball',         emoji: '🏐' },
+  hockey:            { label: 'Hockey',             emoji: '🏒' },
+  american_football: { label: 'American Football',  emoji: '🏈' },
+  tennis:            { label: 'Tennis',             emoji: '🎾' },
+};
+
 interface Pick {
   id: number;
   matchDescription?: string;
@@ -29,6 +40,7 @@ interface Tipster {
 interface FreeTip {
   id: number;
   title: string;
+  sport?: string;
   totalPicks: number;
   totalOdds: number;
   price: number;
@@ -91,22 +103,30 @@ export function HomeFreeTipOfTheDay() {
     return null;
   }
 
+  const sportKey = tip.sport?.toLowerCase() ?? 'football';
+  const sportMeta = SPORT_META[sportKey] ?? SPORT_META['football'];
+
   return (
     <section className="py-12 md:py-16 border-t border-[var(--border)] bg-gradient-to-br from-amber-50/50 dark:from-amber-950/20 to-[var(--bg)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <span className="inline-block px-3 py-1 rounded-full bg-amber-200 dark:bg-amber-800/50 text-amber-900 dark:text-amber-100 text-xs font-semibold mb-2">
-              Free
-            </span>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="inline-block px-3 py-1 rounded-full bg-amber-200 dark:bg-amber-800/50 text-amber-900 dark:text-amber-100 text-xs font-semibold">
+                Free
+              </span>
+              <span className="inline-block px-3 py-1 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-xs font-semibold">
+                {sportMeta.emoji} {sportMeta.label}
+              </span>
+            </div>
             <h2 className="text-2xl font-bold text-[var(--text)]">Free Tip of the Day</h2>
             <p className="text-sm text-[var(--text-muted)] mt-0.5">
-              From {tip.tipster?.displayName ?? 'The Gambler'} — no purchase required
+              From {tip.tipster?.displayName ?? 'Expert Tipster'} — no purchase required
             </p>
           </div>
           <Link
             href="/marketplace"
-            className="text-sm font-medium text-[var(--primary)] hover:underline"
+            className="text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline"
           >
             All coupons →
           </Link>
@@ -115,6 +135,7 @@ export function HomeFreeTipOfTheDay() {
           <PickCard
             id={tip.id}
             title={tip.title}
+            sport={tip.sport}
             totalPicks={tip.totalPicks}
             totalOdds={tip.totalOdds}
             price={0}

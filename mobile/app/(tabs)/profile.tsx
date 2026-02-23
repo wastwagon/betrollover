@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useCurrencyMobile, CURRENCIES } from '@/lib/currency';
 import { useFocusEffect } from 'expo-router';
 import {
   View,
@@ -36,6 +37,8 @@ export default function ProfileTab() {
   const [editModal, setEditModal] = useState(false);
   const [editName, setEditName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
+  const { currency, setCurrencyCode } = useCurrencyMobile();
   const [resendLoading, setResendLoading] = useState(false);
 
   const fetchUser = () => {
@@ -204,6 +207,27 @@ export default function ProfileTab() {
 
       <Card>
         <Text style={styles.sectionTitle}>Account</Text>
+        <Pressable onPress={() => router.push('/earnings')} style={styles.linkRow}>
+          <Ionicons name="cash" size={20} color={colors.primary} />
+          <Text style={styles.linkText}>Earnings & Payouts</Text>
+          <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+        </Pressable>
+        <Pressable onPress={() => router.push('/invite')} style={styles.linkRow}>
+          <Ionicons name="gift" size={20} color={colors.primary} />
+          <Text style={styles.linkText}>Invite & Earn</Text>
+          <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+        </Pressable>
+        <Pressable onPress={() => router.push('/support')} style={styles.linkRow}>
+          <Ionicons name="help-circle" size={20} color={colors.primary} />
+          <Text style={styles.linkText}>Support & Disputes</Text>
+          <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+        </Pressable>
+        <Pressable onPress={() => setShowCurrencyPicker(true)} style={styles.linkRow}>
+          <Ionicons name="cash" size={20} color={colors.primary} />
+          <Text style={styles.linkText}>Display Currency</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 13, marginLeft: 'auto', marginRight: 4 }}>{currency.flag} {currency.code}</Text>
+          <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+        </Pressable>
         <Pressable
           onPress={() => router.push('/subscriptions')}
           style={styles.linkRow}
@@ -260,6 +284,32 @@ export default function ProfileTab() {
               <Button title="Cancel" variant="outline" onPress={() => setEditModal(false)} style={styles.modalBtn} />
               <Button title={saving ? 'Saving...' : 'Save'} onPress={saveProfile} loading={saving} style={styles.modalBtn} />
             </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Currency Picker Modal */}
+      <Modal visible={showCurrencyPicker} transparent animationType="slide">
+        <Pressable style={styles.modalOverlay} onPress={() => setShowCurrencyPicker(false)}>
+          <Pressable style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Display Currency</Text>
+            <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 12 }}>
+              For reference only. All transactions are in GHS.
+            </Text>
+            {CURRENCIES.map((c) => (
+              <Pressable
+                key={c.code}
+                onPress={() => { setCurrencyCode(c.code); setShowCurrencyPicker(false); }}
+                style={[styles.linkRow, { backgroundColor: c.code === currency.code ? colors.primaryLight : 'transparent' }]}
+              >
+                <Text style={{ fontSize: 20, marginRight: 8 }}>{c.flag}</Text>
+                <Text style={[styles.linkText, { flex: 1 }]}>{c.name}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 13 }}>{c.code}</Text>
+                {c.code === currency.code && (
+                  <Ionicons name="checkmark" size={18} color={colors.primary} style={{ marginLeft: 6 }} />
+                )}
+              </Pressable>
+            ))}
           </Pressable>
         </Pressable>
       </Modal>

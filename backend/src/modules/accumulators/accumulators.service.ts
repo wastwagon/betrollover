@@ -12,24 +12,50 @@ import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { EmailService } from '../email/email.service';
 import { Fixture } from '../fixtures/entities/fixture.entity';
+import { SportEvent } from '../sport-events/entities/sport-event.entity';
 import { FootballService } from '../football/football.service';
 import { TipsterService } from '../tipster/tipster.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { TipsterFollow } from '../predictions/entities/tipster-follow.entity';
+import { ReferralsService } from '../referrals/referrals.service';
+
+/** Sports that use sport_events table (eventId) rather than fixtures (fixtureId) */
+const SPORT_EVENT_SPORTS = new Set(['basketball', 'rugby', 'mma', 'volleyball', 'hockey', 'american_football', 'tennis']);
+
+const SPORT_DISPLAY_NAMES: Record<string, string> = {
+  basketball: 'Basketball',
+  rugby: 'Rugby',
+  mma: 'MMA',
+  volleyball: 'Volleyball',
+  hockey: 'Hockey',
+  american_football: 'American Football',
+  tennis: 'Tennis',
+  football: 'Football',
+  multi: 'Multi-Sport',
+};
 
 export interface CreateAccumulatorDto {
   title: string;
   description?: string;
   price: number;
   isMarketplace: boolean;
+  /**
+   * Overall coupon sport: 'football' | 'basketball' | 'rugby' | … | 'multi' (mixed).
+   * Used only for display; each selection carries its own `sport` for routing.
+   */
+  sport?: string;
   /** Placement: 'marketplace' | 'subscription' | 'both' (default: marketplace) */
   placement?: string;
   /** If placement includes subscription: package IDs to add coupon to */
   subscriptionPackageIds?: number[];
   selections: {
     fixtureId?: number;
+    /** For non-football sports: sport event ID from sport_events */
+    eventId?: number;
+    /** Per-selection sport — used to route to the correct table (fixture vs sport_event) */
+    sport?: string;
     matchDescription: string;
     prediction: string;
     odds: number;
@@ -58,6 +84,8 @@ export class AccumulatorsService {
     private usersRepo: Repository<User>,
     @InjectRepository(Fixture)
     private fixtureRepo: Repository<Fixture>,
+    @InjectRepository(SportEvent)
+    private sportEventRepo: Repository<SportEvent>,
     @InjectRepository(ApiSettings)
     private apiSettingsRepo: Repository<ApiSettings>,
     @InjectRepository(Tipster)
@@ -70,6 +98,7 @@ export class AccumulatorsService {
     private footballService: FootballService,
     private tipsterService: TipsterService,
     private subscriptionsService: SubscriptionsService,
+    private referralsService: ReferralsService,
     private dataSource: DataSource,
   ) { }
 
@@ -119,8 +148,16 @@ export class AccumulatorsService {
       if (selection.odds > 1000) {
         throw new BadRequestException('Odds cannot exceed 1000');
       }
-      if (dto.isMarketplace && (!selection.fixtureId || selection.fixtureId < 1)) {
-        throw new BadRequestException('Fixture ID is required for all selections when listing on marketplace (needed for settlement)');
+      // Use per-selection sport for routing validation, fall back to coupon sport
+      const selSport = (selection.sport || dto.sport || 'football').toLowerCase();
+      if (dto.isMarketplace) {
+        if (SPORT_EVENT_SPORTS.has(selSport)) {
+          if (!selection.eventId || selection.eventId < 1) {
+            throw new BadRequestException(`Event ID is required for ${selSport} selections when listing on marketplace (needed for settlement)`);
+          }
+        } else if (!selection.fixtureId || selection.fixtureId < 1) {
+          throw new BadRequestException('Fixture ID is required for football selections when listing on marketplace (needed for settlement)');
+        }
       }
     }
 
@@ -152,27 +189,51 @@ export class AccumulatorsService {
       }
     }
 
+    // Determine overall sport display: 'Multi-Sport' if picks span more than one sport
+    const selectionSports = new Set(
+      dto.selections.map((s) => (s.sport || dto.sport || 'football').toLowerCase()),
+    );
+    const isMixedSport = selectionSports.size > 1 || (dto.sport === 'multi');
+    const couponSport = isMixedSport
+      ? 'multi'
+      : selectionSports.values().next().value ?? (dto.sport || 'football').toLowerCase();
+    const sportDisplay = isMixedSport
+      ? 'Multi-Sport'
+      : (SPORT_DISPLAY_NAMES[couponSport] ?? 'Football');
+
     const totalOdds = dto.selections.reduce((a, s) => a * s.odds, 1);
     // Auto-approve ALL coupons (both free and paid) - they become immediately available on marketplace
     const ticket = this.ticketRepo.create({
       userId,
       title: dto.title,
       description: dto.description || 'N/A',
+      sport: sportDisplay,
       totalPicks: dto.selections.length,
       totalOdds: Math.round(totalOdds * 1000) / 1000,
-      price: price, // Use validated/defaulted price
-      status: 'active', // All coupons are auto-approved
+      price: price,
+      status: 'active',
       result: 'pending',
       isMarketplace: dto.isMarketplace,
     });
     await this.ticketRepo.save(ticket);
 
-    // Store fixtures on-demand (only if fixtureId provided)
+    // Store picks: each selection routes to fixtures or sport_events based on its own sport
     for (const s of dto.selections) {
-      let fixtureId = s.fixtureId;
+      let fixtureId: number | null = null;
+      let eventId: number | null = null;
+      // Use per-selection sport, fall back to coupon-level sport
+      const pickSport = (s.sport || couponSport || 'football').toLowerCase();
 
-      // If fixture ID provided: lookup by apiId first (external), then by id (internal)
-      if (s.fixtureId && typeof s.fixtureId === 'number') {
+      if (SPORT_EVENT_SPORTS.has(pickSport) && s.eventId && typeof s.eventId === 'number') {
+        const event = await this.sportEventRepo.findOne({
+          where: { id: s.eventId, sport: pickSport },
+          select: ['id'],
+        });
+        if (event) eventId = event.id;
+      }
+
+      // Football: fixture ID provided - lookup by apiId first (external), then by id (internal)
+      if (pickSport === 'football' && s.fixtureId && typeof s.fixtureId === 'number') {
         let existingFixture = await this.fixtureRepo.findOne({
           where: { apiId: s.fixtureId },
         });
@@ -220,6 +281,8 @@ export class AccumulatorsService {
       const pick = this.pickRepo.create({
         accumulatorId: ticket.id,
         fixtureId: fixtureId || null,
+        eventId,
+        sport: pickSport,
         matchDescription: s.matchDescription,
         prediction: s.prediction,
         odds: s.odds,
@@ -300,21 +363,36 @@ export class AccumulatorsService {
     return this.getById(ticket.id);
   }
 
-  private async enrichPicksWithFixtureScores<T extends { picks?: Array<{ fixtureId?: number | null }> }>(tickets: T[]): Promise<T[]> {
+  private async enrichPicksWithFixtureScores<T extends { picks?: Array<{ fixtureId?: number | null; eventId?: number | null }> }>(tickets: T[]): Promise<T[]> {
     const fixtureIds = [...new Set(tickets.flatMap((t) => (t.picks || []).map((p) => p.fixtureId).filter(Boolean) as number[]))];
-    if (fixtureIds.length === 0) return tickets;
-    const fixtures = await this.fixtureRepo.find({ where: { id: In(fixtureIds) }, select: ['id', 'homeScore', 'awayScore', 'status'] });
+    const eventIds = [...new Set(tickets.flatMap((t) => (t.picks || []).map((p) => p.eventId).filter(Boolean) as number[]))];
+    const fixtures = fixtureIds.length > 0
+      ? await this.fixtureRepo.find({ where: { id: In(fixtureIds) }, select: ['id', 'homeScore', 'awayScore', 'status', 'homeTeamLogo', 'awayTeamLogo', 'homeTeamName', 'awayTeamName', 'homeCountryCode', 'awayCountryCode'] })
+      : [];
+    const sportEvents = eventIds.length > 0
+      ? await this.sportEventRepo.find({ where: { id: In(eventIds) }, select: ['id', 'homeScore', 'awayScore', 'status', 'homeTeamLogo', 'awayTeamLogo', 'homeTeam', 'awayTeam', 'homeCountryCode', 'awayCountryCode'] })
+      : [];
     const fixtureMap = new Map(fixtures.map((f) => [f.id, f]));
+    const eventMap = new Map(sportEvents.map((e) => [e.id, e]));
     return tickets.map((t) => ({
       ...t,
       picks: (t.picks || []).map((p: any) => {
         const fix = p.fixtureId ? fixtureMap.get(p.fixtureId) : null;
+        const evt = p.eventId ? eventMap.get(p.eventId) : null;
+        const src = fix || evt;
+        const fixAny = src as any;
         return {
           ...p,
-          homeScore: fix?.homeScore ?? null,
-          awayScore: fix?.awayScore ?? null,
-          fixtureStatus: fix?.status ?? null,
-          status: p.result || 'pending'
+          homeScore: src?.homeScore ?? null,
+          awayScore: src?.awayScore ?? null,
+          fixtureStatus: src?.status ?? null,
+          status: p.result || 'pending',
+          homeTeamLogo: fixAny?.homeTeamLogo ?? null,
+          awayTeamLogo: fixAny?.awayTeamLogo ?? null,
+          homeTeamName: fixAny?.homeTeamName ?? fixAny?.homeTeam ?? null,
+          awayTeamName: fixAny?.awayTeamName ?? fixAny?.awayTeam ?? null,
+          homeCountryCode: fixAny?.homeCountryCode ?? null,
+          awayCountryCode: fixAny?.awayCountryCode ?? null,
         };
       }),
     })) as T[];
@@ -327,12 +405,36 @@ export class AccumulatorsService {
     });
     if (!ticket) return null;
     const [enriched] = await this.enrichPicksWithFixtureScores([ticket]);
-    return enriched;
+
+    // Include tipster metadata and marketplace row so the detail page has full context
+    const row = await this.marketplaceRepo.findOne({
+      where: { accumulatorId: id },
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount'],
+    });
+    const [withTipster] = await this.enrichWithTipsterMetadata([enriched], row ? [row] : []);
+    return withTipster ?? enriched;
   }
 
-  async getMyAccumulators(userId: number) {
+  async getMyAccumulators(userId: number, sport?: string) {
+    const SPORT_DISPLAY_MAP: Record<string, string> = {
+      football:          'Football',
+      basketball:        'Basketball',
+      rugby:             'Rugby',
+      mma:               'MMA',
+      volleyball:        'Volleyball',
+      hockey:            'Hockey',
+      american_football: 'American Football',
+      tennis:            'Tennis',
+      multi:             'Multi-Sport',
+      'multi-sport':     'Multi-Sport',
+    };
+    const where: any = { userId };
+    if (sport) {
+      const s = sport.toLowerCase();
+      where.sport = SPORT_DISPLAY_MAP[s] ?? sport;
+    }
     const tickets = await this.ticketRepo.find({
-      where: { userId },
+      where,
       relations: ['picks'],
       order: { createdAt: 'DESC' },
     });
@@ -384,7 +486,7 @@ export class AccumulatorsService {
     };
   }
 
-  async getMarketplace(userId: number, includeAllListings = false, options?: { limit?: number; offset?: number }) {
+  async getMarketplace(userId: number, includeAllListings = false, options?: { limit?: number; offset?: number; sport?: string }) {
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
     const offset = Math.max(options?.offset ?? 0, 0);
 
@@ -402,6 +504,22 @@ export class AccumulatorsService {
     if (!includeAllListings) {
       ticketWhere.status = 'active';
       ticketWhere.result = 'pending';
+    }
+    if (options?.sport) {
+      const SPORT_DISPLAY_MAP: Record<string, string> = {
+        football:          'Football',
+        basketball:        'Basketball',
+        rugby:             'Rugby',
+        mma:               'MMA',
+        volleyball:        'Volleyball',
+        hockey:            'Hockey',
+        american_football: 'American Football',
+        tennis:            'Tennis',
+        multi:             'Multi-Sport',
+        'multi-sport':     'Multi-Sport',
+      };
+      const s = options.sport.toLowerCase();
+      ticketWhere.sport = SPORT_DISPLAY_MAP[s] ?? options.sport;
     }
     const tickets = await this.ticketRepo.find({
       where: ticketWhere,
@@ -537,6 +655,20 @@ export class AccumulatorsService {
     const purchaseCountMap = new Map(marketplaceRows.map(r => [r.accumulatorId, r.purchaseCount || 0]));
     const viewCountMap = new Map(marketplaceRows.map(r => [r.accumulatorId, r.viewCount || 0]));
 
+    // Review aggregates per coupon (avg rating + count)
+    const reviewMap = new Map<number, { avg: number; count: number }>();
+    const accIdsForReview = validTickets.map(t => t.id);
+    if (accIdsForReview.length > 0) {
+      try {
+        const revRows: Array<{ coupon_id: number; avg: string; cnt: string }> = await this.dataSource.query(
+          `SELECT coupon_id, AVG(rating)::numeric(3,1) AS avg, COUNT(*) AS cnt
+           FROM coupon_reviews WHERE coupon_id = ANY($1) GROUP BY coupon_id`,
+          [accIdsForReview],
+        );
+        revRows.forEach((r) => reviewMap.set(Number(r.coupon_id), { avg: Number(r.avg), count: Number(r.cnt) }));
+      } catch { /* coupon_reviews table may not exist yet in older envs */ }
+    }
+
     // Reaction counts and user's reacted state
     const accIds = validTickets.map(t => t.id);
     const reactionCountMap = new Map<number, number>();
@@ -567,6 +699,8 @@ export class AccumulatorsService {
         viewCount: viewCountMap.get(ticket.id) ?? 0,
         reactionCount: reactionCountMap.get(ticket.id) ?? 0,
         hasReacted: userReactedSet.has(ticket.id),
+        avgRating: reviewMap.get(ticket.id)?.avg ?? null,
+        reviewCount: reviewMap.get(ticket.id)?.count ?? null,
         tipster: tipster ? {
           id: tipster.id,
           displayName: tipster.displayName,
@@ -582,47 +716,73 @@ export class AccumulatorsService {
     });
   }
 
-  /** Free Tip of the Day: latest coupon from The Gambler (in marketplace). No auth. */
+  /**
+   * Free Tip of the Day — returns the best free coupon for today across all sports.
+   * Priority: TheGambler first, then any other tipster with a free active marketplace pick.
+   * Picks are valid only if all matches are still in the future.
+   */
   async getFreeTipOfTheDay() {
+    const now = new Date();
+
+    // Helper: find the best free active pending tip for a given set of user IDs
+    const findBestFreeTip = async (userIds: number[]) => {
+      if (!userIds.length) return null;
+
+      const tickets = await this.ticketRepo.find({
+        where: {
+          userId: In(userIds),
+          status: 'active',
+          result: 'pending',
+          isMarketplace: true,
+          price: 0,
+        },
+        relations: ['picks'],
+        order: { createdAt: 'DESC' },
+        take: 20,
+      });
+      if (!tickets.length) return null;
+
+      const accIds = tickets.map((t) => t.id);
+      const rows = await this.marketplaceRepo.find({
+        where: { accumulatorId: In(accIds), status: 'active' },
+        select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount'],
+      });
+
+      const enriched = await this.enrichPicksWithFixtureScores(tickets);
+      const valid = enriched.filter((t: any) => {
+        if (!t.picks?.length) return false;
+        // All matches must be in the future
+        return !t.picks.some((p: any) => p.matchDate && new Date(p.matchDate) <= now);
+      });
+      const validWithListing = valid.filter((t) => rows.some((r) => r.accumulatorId === t.id));
+      if (!validWithListing.length) return null;
+
+      const ticket = validWithListing[0];
+      const row = rows.find((r) => r.accumulatorId === ticket.id);
+      const items = await this.enrichWithTipsterMetadata([ticket], row ? [row] : []);
+      return items[0] ?? null;
+    };
+
+    // 1. Try TheGambler first (curated daily tip)
     const gambler = await this.usersRepo.findOne({
       where: { username: 'TheGambler', role: UserRole.TIPSTER },
       select: ['id'],
     });
-    if (!gambler) return null;
+    if (gambler) {
+      const tip = await findBestFreeTip([gambler.id]);
+      if (tip) return tip;
+    }
 
-    const tickets = await this.ticketRepo.find({
-      where: {
-        userId: gambler.id,
-        status: 'active',
-        result: 'pending',
-        isMarketplace: true,
-      },
-      relations: ['picks'],
-      order: { createdAt: 'DESC' },
-      take: 5,
+    // 2. Fall back to any tipster's free pick — pick highest purchase count for today
+    const allTipsters = await this.usersRepo.find({
+      where: { role: UserRole.TIPSTER },
+      select: ['id'],
+      take: 100,
     });
-    if (tickets.length === 0) return null;
+    if (!allTipsters.length) return null;
 
-    const accIds = tickets.map((t) => t.id);
-    const rows = await this.marketplaceRepo.find({
-      where: { accumulatorId: In(accIds), status: 'active' },
-      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount'],
-    });
-
-    const enriched = await this.enrichPicksWithFixtureScores(tickets);
-    const now = new Date();
-    const valid = enriched.filter((t: any) => {
-      if (!t.picks?.length) return false;
-      return !t.picks.some((p: any) => p.matchDate && new Date(p.matchDate) <= now);
-    });
-    // Only return coupons that have an active marketplace listing
-    const validWithListing = valid.filter((t) => rows.some((r) => r.accumulatorId === t.id));
-    if (validWithListing.length === 0) return null;
-
-    const ticket = validWithListing[0];
-    const row = rows.find((r) => r.accumulatorId === ticket.id);
-    const items = await this.enrichWithTipsterMetadata([ticket], row ? [row] : []);
-    return items[0] ?? null;
+    const tip = await findBestFreeTip(allTipsters.map((u) => u.id));
+    return tip ?? null;
   }
 
   /** Popular upcoming events: fixtures with most picks in active coupons. No auth. */
@@ -634,6 +794,10 @@ export class AccumulatorsService {
       .addSelect('COUNT(*)', 'tipCount')
       .addSelect('f.home_team_name', 'homeTeam')
       .addSelect('f.away_team_name', 'awayTeam')
+      .addSelect('f.home_team_logo', 'homeTeamLogo')
+      .addSelect('f.away_team_logo', 'awayTeamLogo')
+      .addSelect('f.home_country_code', 'homeCountryCode')
+      .addSelect('f.away_country_code', 'awayCountryCode')
       .addSelect('f.league_name', 'leagueName')
       .addSelect('f.match_date', 'matchDate')
       .from('accumulator_picks', 'ap')
@@ -645,6 +809,10 @@ export class AccumulatorsService {
       .addGroupBy('f.id')
       .addGroupBy('f.home_team_name')
       .addGroupBy('f.away_team_name')
+      .addGroupBy('f.home_team_logo')
+      .addGroupBy('f.away_team_logo')
+      .addGroupBy('f.home_country_code')
+      .addGroupBy('f.away_country_code')
       .addGroupBy('f.league_name')
       .addGroupBy('f.match_date')
       .addOrderBy('COUNT(*)', 'DESC')
@@ -655,6 +823,10 @@ export class AccumulatorsService {
       fixtureId: Number(r.fixtureId),
       homeTeam: r.homeTeam,
       awayTeam: r.awayTeam,
+      homeTeamLogo: r.homeTeamLogo ?? null,
+      awayTeamLogo: r.awayTeamLogo ?? null,
+      homeCountryCode: r.homeCountryCode ?? null,
+      awayCountryCode: r.awayCountryCode ?? null,
       leagueName: r.leagueName,
       matchDate: r.matchDate,
       tipCount: parseInt(r.tipCount, 10) || 0,
@@ -729,6 +901,32 @@ export class AccumulatorsService {
     return this.enrichWithTipsterMetadata(validTickets, rows);
   }
 
+  /** Public archive: settled (won/lost) marketplace coupons, most recent first */
+  async getMarketplaceArchive(options?: { limit?: number; offset?: number }) {
+    const limit = Math.min(Math.max(options?.limit ?? 50, 1), 200);
+    const offset = Math.max(options?.offset ?? 0, 0);
+
+    const rows = await this.marketplaceRepo.find({
+      select: ['accumulatorId', 'price', 'purchaseCount'],
+    });
+    const accIds = rows.map((r) => r.accumulatorId);
+    if (accIds.length === 0) return [];
+
+    const tickets = await this.ticketRepo.find({
+      where: [
+        { id: In(accIds), result: 'won' },
+        { id: In(accIds), result: 'lost' },
+      ],
+      relations: ['picks'],
+      order: { updatedAt: 'DESC' },
+      take: limit,
+      skip: offset,
+    });
+
+    const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
+    return this.enrichWithTipsterMetadata(enrichedTickets, rows);
+  }
+
   async purchase(buyerId: number, accumulatorId: number) {
     return this.dataSource.transaction(async (manager) => {
         const ticketRepo = manager.getRepository(AccumulatorTicket);
@@ -800,6 +998,11 @@ export class AccumulatorsService {
 
       listing.purchaseCount += 1;
       await marketplaceRepo.save(listing);
+
+      // Credit referrer on buyer's first paid purchase (fire-and-forget, non-blocking)
+      if (price > 0) {
+        this.referralsService.creditOnFirstPurchase(buyerId).catch(() => {});
+      }
 
       // Outside of heavy DB work, trigger notifications
       this.notificationsService.create({

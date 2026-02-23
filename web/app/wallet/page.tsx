@@ -1,13 +1,17 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
+import { AdSlot } from '@/components/AdSlot';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { getApiUrl } from '@/lib/site-config';
+import { useT } from '@/context/LanguageContext';
 import type { BalanceResponse } from '@betrollover/shared-types';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface Transaction {
   id: number;
@@ -31,13 +35,18 @@ interface PayoutMethod {
 interface Withdrawal {
   id: number;
   amount: number;
+  currency?: string;
   status: string;
+  reference?: string | null;
+  failureReason?: string | null;
   createdAt: string;
 }
 
 function WalletContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useT();
+  const { format, currency } = useCurrency();
   const [user, setUser] = useState<{ role: string; emailVerifiedAt?: string | null } | null>(null);
   const [balance, setBalance] = useState<BalanceResponse | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -121,7 +130,7 @@ function WalletContent() {
   const handleDeposit = async () => {
     const amount = parseFloat(depositAmount);
     if (!amount || amount < 1 || amount > 10000) {
-      setDepositError('Enter an amount between GHS 1 and GHS 10,000');
+      setDepositError(t('wallet.deposit_range'));
       return;
     }
     setDepositError(null);
@@ -141,14 +150,14 @@ function WalletContent() {
         body: JSON.stringify({ amount }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to initialize deposit');
+      if (!res.ok) throw new Error(data.message || t('wallet.init_failed'));
       if (data.authorizationUrl) {
         window.location.href = data.authorizationUrl;
       } else {
-        setDepositError('Could not get payment link');
+        setDepositError(t('wallet.could_not_get_link'));
       }
     } catch (e) {
-      setDepositError(e instanceof Error ? e.message : 'Deposit failed');
+      setDepositError(e instanceof Error ? e.message : t('wallet.deposit_failed'));
     } finally {
       setDepositLoading(false);
     }
@@ -157,7 +166,7 @@ function WalletContent() {
   const handleWithdraw = async () => {
     const amount = parseFloat(withdrawAmount);
     if (!amount || amount < 5 || amount > 5000) {
-      setWithdrawError('Enter an amount between GHS 5 and GHS 5,000');
+      setWithdrawError(t('wallet.withdraw_range'));
       return;
     }
     setWithdrawError(null);
@@ -181,7 +190,7 @@ function WalletContent() {
       setWithdrawAmount('');
       loadData();
     } catch (e) {
-      setWithdrawError(e instanceof Error ? e.message : 'Withdrawal failed');
+      setWithdrawError(e instanceof Error ? e.message : t('wallet.withdrawal_failed'));
     } finally {
       setWithdrawLoading(false);
     }
@@ -190,17 +199,17 @@ function WalletContent() {
   const handleAddPayoutMethod = async () => {
     if (payoutForm.type === 'mobile_money') {
       if (!payoutForm.name.trim() || !payoutForm.phone.trim()) {
-        setPayoutError('Name and phone required');
+        setPayoutError(t('wallet.name_phone_required'));
         return;
       }
     } else if (payoutForm.type === 'bank') {
       if (!payoutForm.name.trim() || !payoutForm.accountNumber.trim() || !payoutForm.bankName.trim()) {
-        setPayoutError('Name, account number and bank name required');
+        setPayoutError(t('wallet.name_account_bank_required'));
         return;
       }
     } else if (payoutForm.type === 'crypto') {
       if (!payoutForm.walletAddress.trim()) {
-        setPayoutError('Wallet address required');
+        setPayoutError(t('wallet.wallet_address_required'));
         return;
       }
     }
@@ -242,7 +251,7 @@ function WalletContent() {
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to add payout method');
+      if (!res.ok) throw new Error(data.message || t('wallet.failed_add_payout'));
       setShowPayoutForm(false);
       setPayoutForm({
         type: 'mobile_money',
@@ -258,30 +267,47 @@ function WalletContent() {
       });
       loadData();
     } catch (e) {
-      setPayoutError(e instanceof Error ? e.message : 'Failed');
+      setPayoutError(e instanceof Error ? e.message : t('wallet.failed'));
     } finally {
       setPayoutLoading(false);
     }
   };
 
   const isTipster = user?.role === 'tipster' || user?.role === 'admin';
+  const pendingWithdrawal = withdrawals.find((w) => w.status === 'pending' || w.status === 'processing');
+
+  function formatDate(s: string) {
+    return new Date(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  const STATUS_STYLES: Record<string, string> = {
+    completed:  'text-emerald-600',
+    pending:    'text-amber-500',
+    processing: 'text-blue-500',
+    failed:     'text-red-500',
+    cancelled:  'text-slate-400',
+  };
 
   return (
     <DashboardShell>
       <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
         <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 md:py-6 pb-24">
           <PageHeader
-            label="Wallet"
-            title="Wallet"
-            tagline="Deposit, withdraw, and track transactions"
+            label={t('wallet.title')}
+            title={t('wallet.title')}
+            tagline={t('wallet.tagline')}
           />
+
+          <div className="mb-4">
+            <AdSlot zoneSlug="wallet-full" fullWidth className="w-full" />
+          </div>
 
           {!loading && user && !user.emailVerifiedAt && (
             <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 text-amber-700 dark:text-amber-400">
-              <p className="font-medium">Verify your email to deposit, withdraw, or add payout methods.</p>
-              <a href="/verify-email" className="mt-2 inline-block text-sm underline hover:no-underline">
-                Resend verification email →
-              </a>
+              <p className="font-medium">{t('wallet.verify_email')}</p>
+              <Link href="/verify-email" className="mt-2 inline-block text-sm underline hover:no-underline">
+                {t('wallet.resend_verify')}
+              </Link>
             </div>
           )}
 
@@ -289,17 +315,22 @@ function WalletContent() {
           {!loading && (
             <div className="space-y-4 pb-6">
               <div className="card-gradient rounded-2xl p-5 shadow-lg">
-                <p className="text-xs text-[var(--text-muted)] mb-0.5 font-medium uppercase tracking-wider">Available Balance</p>
+                <p className="text-xs text-[var(--text-muted)] mb-0.5 font-medium uppercase tracking-wider">{t('wallet.balance')}</p>
               <p className="text-2xl sm:text-3xl font-bold text-[var(--primary)]">
-                {balance?.currency} {Number(balance?.balance ?? 0).toFixed(2)}
+                {format(Number(balance?.balance ?? 0)).primary}
               </p>
+              {currency.code !== 'GHS' && (
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                  GHS {Number(balance?.balance ?? 0).toFixed(2)} · {t('wallet.for_reference_only')}
+                </p>
+              )}
               <div className="mt-3 space-y-2">
                 <input
                   type="number"
                   min={1}
                   max={10000}
                   step={0.01}
-                  placeholder="Amount (GHS)"
+                  placeholder={t('wallet.amount_placeholder')}
                   value={depositAmount}
                   onChange={(e) => setDepositAmount(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] placeholder:text-[var(--text-muted)] focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] transition-all"
@@ -310,14 +341,27 @@ function WalletContent() {
                   disabled={depositLoading}
                   className="w-full px-4 py-3 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white hover:shadow-lg hover:shadow-[var(--primary)]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 >
-                  {depositLoading ? 'Redirecting...' : 'Deposit'}
+                  {depositLoading ? t('wallet.redirecting') : t('wallet.deposit')}
                 </button>
               </div>
             </div>
 
             {isTipster && (
               <div id="withdraw" className="card-gradient rounded-2xl p-5 shadow-lg scroll-mt-24">
-                <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">Withdraw (Tipsters)</h2>
+                <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('wallet.withdraw_earnings')}</h2>
+
+                {/* Pending withdrawal warning */}
+                {pendingWithdrawal && (
+                  <div className="mb-3 p-3 rounded-xl border border-amber-400/50 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 text-sm flex items-start gap-2">
+                    <span className="text-base">⏳</span>
+                    <div>
+                      <span className="font-semibold">Withdrawal in progress — </span>
+                      {(pendingWithdrawal.currency ?? 'GHS')} {Number(pendingWithdrawal.amount).toFixed(2)} is{' '}
+                      <span className="font-medium">{pendingWithdrawal.status}</span>. Please wait for it to complete before requesting another.
+                    </div>
+                  </div>
+                )}
+
                 {showPayoutForm ? (
                   <div className="space-y-2 p-4 rounded-lg border border-[var(--border)] bg-[var(--bg)]">
                         <label className="block text-xs font-medium text-[var(--text-muted)]">Payout method</label>
@@ -457,13 +501,13 @@ function WalletContent() {
                             disabled={payoutLoading}
                             className="px-4 py-2 rounded-lg bg-[var(--primary)] text-white disabled:opacity-50"
                           >
-                            {payoutLoading ? 'Saving...' : 'Save'}
+                            {payoutLoading ? t('wallet.saving') : t('wallet.save')}
                           </button>
                           <button
                             onClick={() => setShowPayoutForm(false)}
                             className="px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--text)]"
                           >
-                            Cancel
+                            {t('wallet.cancel')}
                           </button>
                         </div>
                   </div>
@@ -473,7 +517,7 @@ function WalletContent() {
                       onClick={() => setShowPayoutForm(true)}
                       className="px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-muted)]"
                     >
-                      Add payout method
+                      {t('wallet.add_payout_method')}
                     </button>
                     <p className="text-xs text-[var(--text-muted)]">
                       Mobile Money · Bank Account · Cryptocurrency (global)
@@ -481,78 +525,126 @@ function WalletContent() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm text-[var(--text-muted)]">
-                        Payout to: {payoutMethods[0].displayName} {payoutMethods[0].accountMasked && `(${payoutMethods[0].accountMasked})`}
-                        {payoutMethods[0].type === 'mobile_money' && ' · Mobile Money'}
-                        {payoutMethods[0].type === 'bank' && ' · Bank Account'}
-                        {payoutMethods[0].type === 'manual' && ' · Mobile Money/Bank'}
-                        {payoutMethods[0].type === 'crypto' && ' · Cryptocurrency'}
-                      </p>
+                    <div className="flex items-center justify-between gap-2 p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)]">
+                      <div>
+                        <p className="text-xs font-semibold text-[var(--text-muted)] mb-0.5">Payout method</p>
+                        <p className="text-sm text-[var(--text)] font-medium">
+                          {payoutMethods[0].displayName}
+                          {payoutMethods[0].accountMasked && <span className="text-[var(--text-muted)]"> · {payoutMethods[0].accountMasked}</span>}
+                          <span className="ml-1 text-xs text-[var(--text-muted)]">
+                            {payoutMethods[0].type === 'mobile_money' ? '· Mobile Money'
+                              : payoutMethods[0].type === 'bank' ? '· Bank'
+                              : payoutMethods[0].type === 'crypto' ? '· Crypto'
+                              : ''}
+                          </span>
+                        </p>
+                      </div>
                       <button
                         type="button"
                         onClick={() => setShowPayoutForm(true)}
-                        className="text-xs text-[var(--primary)] hover:underline"
+                        className="text-xs text-[var(--primary)] hover:underline whitespace-nowrap"
                       >
-                        Change
+                        {t('wallet.replace')}
                       </button>
                     </div>
-                    <input
-                      type="number"
-                      min={5}
-                      max={5000}
-                      step={0.01}
-                      placeholder="Amount (GHS)"
-                      value={withdrawAmount}
-                      onChange={(e) => setWithdrawAmount(e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
-                    />
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min={5}
+                        max={5000}
+                        step={0.01}
+                        placeholder={t('wallet.amount_min')}
+                        value={withdrawAmount}
+                        onChange={(e) => setWithdrawAmount(e.target.value)}
+                        disabled={!!pendingWithdrawal}
+                        className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] disabled:opacity-50"
+                      />
+                      {balance && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] pointer-events-none">
+                          {t('wallet.max', { value: Number(balance.balance).toFixed(2) })}
+                        </span>
+                      )}
+                    </div>
                     {withdrawError && <p className="text-sm text-red-500">{withdrawError}</p>}
                     <button
                       onClick={handleWithdraw}
-                      disabled={withdrawLoading}
-                      className="w-full px-4 py-2 rounded-lg bg-emerald-600 text-white font-medium disabled:opacity-50"
+                      disabled={withdrawLoading || !!pendingWithdrawal}
+                      className="w-full px-4 py-2 rounded-lg bg-emerald-600 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {withdrawLoading ? 'Processing...' : 'Withdraw'}
+                      {withdrawLoading ? t('wallet.processing') : pendingWithdrawal ? t('wallet.withdrawal_pending') : t('wallet.request_withdrawal')}
                     </button>
-                    {withdrawals.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-[var(--border)]">
-                        <p className="text-sm font-medium text-[var(--text-muted)] mb-2">Recent withdrawals</p>
-                        <ul className="space-y-1 text-sm">
-                          {withdrawals.slice(0, 5).map((w) => (
-                            <li key={w.id} className="flex justify-between">
-                              <span>GHS {Number(w.amount).toFixed(2)}</span>
-                              <span className={w.status === 'completed' ? 'text-emerald-600' : w.status === 'failed' ? 'text-red-500' : 'text-amber-500'}>
-                                {w.status}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
             )}
 
-            <div className="card-gradient rounded-2xl p-5 shadow-lg">
-              <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">Recent Transactions</h2>
-              {transactions.length === 0 ? (
-                <p className="text-[var(--text-muted)] text-sm">No transactions yet.</p>
-              ) : (
-                <ul className="space-y-3">
-                  {transactions.map((t) => (
-                    <li key={t.id} className="flex justify-between items-center py-2 border-b border-[var(--border)] last:border-0">
-                      <div>
-                        <p className="font-medium text-sm">{t.type}</p>
-                        <p className="text-xs text-[var(--text-muted)]">{t.description || new Date(t.createdAt).toLocaleString()}</p>
+            {/* Withdrawal history — always visible for tipsters */}
+            {isTipster && withdrawals.length > 0 && (
+              <div className="card-gradient rounded-2xl p-5 shadow-lg">
+                <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('wallet.withdrawal_history')}</h2>
+                <ul className="space-y-2">
+                  {withdrawals.slice(0, 8).map((w) => (
+                    <li key={w.id} className="flex items-center justify-between gap-3 py-2.5 border-b border-[var(--border)] last:border-0">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-[var(--text)]">
+                          {w.currency ?? 'GHS'} {Number(w.amount).toFixed(2)}
+                        </p>
+                        <p className="text-xs text-[var(--text-muted)]">
+                          {formatDate(w.createdAt)}
+                          {w.reference && <span className="ml-1 font-mono opacity-60">· {w.reference.slice(0, 12)}</span>}
+                        </p>
+                        {w.failureReason && (
+                          <p className="text-xs text-red-500 mt-0.5">{w.failureReason}</p>
+                        )}
                       </div>
-                      <span className={`font-medium ${Number(t.amount) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                        {Number(t.amount) >= 0 ? '+' : ''}GHS {Math.abs(Number(t.amount)).toFixed(2)}
+                      <span className={`text-sm font-semibold capitalize ${STATUS_STYLES[w.status] ?? 'text-[var(--text-muted)]'}`}>
+                        {w.status}
                       </span>
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+
+            <div className="card-gradient rounded-2xl p-5 shadow-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">{t('wallet.recent_transactions')}</h2>
+                <Link href="/earnings" className="text-xs text-[var(--primary)] hover:underline">{t('wallet.full_earnings')}</Link>
+              </div>
+              {transactions.length === 0 ? (
+                <p className="text-[var(--text-muted)] text-sm">{t('wallet.no_transactions')}</p>
+              ) : (
+                <ul className="space-y-1">
+                  {transactions.map((tx) => {
+                    const isCommission = tx.type === 'commission';
+                    const isCredit = ['payout','deposit','refund','credit'].includes(tx.type);
+                    const TX_ICON: Record<string, string> = { payout:'💰', commission:'🏛', refund:'↩', deposit:'⬆', withdrawal:'💸', purchase:'🛒', credit:'✨' };
+                    const TX_LABEL: Record<string, string> = { payout: t('wallet.net_payout'), commission: t('wallet.commission'), refund: t('wallet.refund'), deposit: t('wallet.deposit'), withdrawal: t('wallet.withdrawal'), purchase: t('wallet.purchase'), credit: t('wallet.credit') };
+                    return (
+                      <li key={tx.id} className={`flex items-center gap-3 py-2 border-b border-[var(--border)] last:border-0 ${isCommission ? 'opacity-70' : ''}`}>
+                        <span className="text-base w-6 text-center flex-shrink-0">{TX_ICON[tx.type] ?? '↔'}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm text-[var(--text)]">{TX_LABEL[tx.type] ?? tx.type}</p>
+                          <p className="text-xs text-[var(--text-muted)] truncate">{tx.description || new Date(tx.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short' })}</p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <span className={`font-semibold text-sm tabular-nums block ${isCommission ? 'text-amber-600' : isCredit ? 'text-emerald-600' : 'text-red-500'}`}>
+                            {isCommission ? '−' : isCredit ? '+' : '−'}{format(Math.abs(Number(tx.amount))).primary}
+                          </span>
+                          {currency.code !== 'GHS' && (
+                            <span className="text-[10px] text-[var(--text-muted)]">GHS {Math.abs(Number(tx.amount)).toFixed(2)}</span>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {transactions.some(tx => tx.type === 'commission') && (
+                <p className="text-[10px] text-[var(--text-muted)] mt-3 pt-2 border-t border-[var(--border)]">
+                  {t('wallet.platform_fee_note')}
+                  <Link href="/earnings" className="ml-1 text-amber-600 hover:underline">{t('wallet.view_full_breakdown')}</Link>
+                </p>
               )}
             </div>
           </div>

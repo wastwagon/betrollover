@@ -1,25 +1,24 @@
 import type { Metadata } from 'next';
-import { SITE_URL, getAfricaAlternates } from '@/lib/site-config';
+import { SITE_URL, getAlternates } from '@/lib/site-config';
+import { getLocale, serverT } from '@/lib/i18n';
 
-export const metadata: Metadata = {
-  title: 'Football News, Transfers & Betting Guides',
-  description:
-    'Discover the latest football news, transfer rumours, confirmed deals, and betting guides. Expert tips and strategies to sharpen your edge. Ghana, Nigeria, Kenya, South Africa.',
-  alternates: {
-    canonical: `${SITE_URL}/discover`,
-    languages: getAfricaAlternates('/discover'),
-  },
-  openGraph: {
-    url: `${SITE_URL}/discover`,
-    title: 'Discover | BetRollover',
-    description: 'Football news, transfer updates, and betting guides.',
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: serverT('seo.discover_title', locale),
+    description: serverT('seo.discover_desc', locale),
+    alternates: {
+      canonical: `${SITE_URL}/discover`,
+      languages: getAlternates('/discover'),
+    },
+    openGraph: {
+      url: `${SITE_URL}/discover`,
+      title: serverT('seo.discover_title', locale),
+      description: serverT('seo.discover_desc', locale),
+    },
+  };
+}
 
-export default function DiscoverLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DiscoverLayout({ children }: { children: React.ReactNode }) {
   return children;
 }

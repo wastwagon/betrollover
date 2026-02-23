@@ -9,6 +9,7 @@ import {
   Alert,
   Modal,
   ScrollView,
+  TextInput,
 } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -21,6 +22,19 @@ import { colors, spacing, typography } from '@/lib/theme';
 
 type PriceFilter = 'all' | 'free' | 'paid';
 type SortBy = 'newest' | 'price-low' | 'price-high' | 'tipster-rank';
+type SportFilter = 'all' | 'football' | 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football' | 'tennis';
+
+const SPORT_CHIPS: { key: SportFilter; label: string }[] = [
+  { key: 'all',               label: '🌍 All' },
+  { key: 'football',          label: '⚽ Football' },
+  { key: 'basketball',        label: '🏀 Basketball' },
+  { key: 'rugby',             label: '🏉 Rugby' },
+  { key: 'mma',               label: '🥊 MMA' },
+  { key: 'volleyball',        label: '🏐 Volleyball' },
+  { key: 'hockey',            label: '🏒 Hockey' },
+  { key: 'american_football', label: '🏈 Amer. Football' },
+  { key: 'tennis',            label: '🎾 Tennis' },
+];
 
 interface Pick {
   id?: number;
@@ -50,6 +64,7 @@ interface Accumulator {
   totalOdds: number;
   totalPicks: number;
   price: number;
+  sport?: string;
   purchaseCount?: number;
   picks: Pick[];
   tipster?: Tipster | null;
@@ -67,6 +82,8 @@ export default function MarketplaceTab() {
   const [purchasedIds, setPurchasedIds] = useState<Set<number>>(new Set());
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
   const [sortBy, setSortBy] = useState<SortBy>('newest');
+  const [sportFilter, setSportFilter] = useState<SportFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [purchaseModal, setPurchaseModal] = useState<Accumulator | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -80,8 +97,9 @@ export default function MarketplaceTab() {
     else setLoading(true);
 
     try {
+      const sportParam = sportFilter && sportFilter !== 'all' ? `&sport=${encodeURIComponent(sportFilter)}` : '';
       const [marketRes, walletRes, purchasedRes] = await Promise.all([
-        fetch(`${API_BASE}/accumulators/marketplace?limit=50`, {
+        fetch(`${API_BASE}/accumulators/marketplace?limit=50${sportParam}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch(`${API_BASE}/wallet/balance`, {
@@ -117,7 +135,7 @@ export default function MarketplaceTab() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [sportFilter]);
 
   useEffect(() => {
     fetchData();
@@ -127,6 +145,14 @@ export default function MarketplaceTab() {
     let list = [...picks];
     if (priceFilter === 'free') list = list.filter((p) => p.price === 0);
     if (priceFilter === 'paid') list = list.filter((p) => p.price > 0);
+    if (searchQuery.trim()) {
+      const term = searchQuery.trim().toLowerCase();
+      list = list.filter((p) =>
+        p.title.toLowerCase().includes(term) ||
+        p.tipster?.displayName?.toLowerCase().includes(term) ||
+        p.picks?.some((pick) => pick.matchDescription?.toLowerCase().includes(term))
+      );
+    }
     if (sortBy === 'newest') {
       list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
     } else if (sortBy === 'price-low') {
@@ -137,7 +163,7 @@ export default function MarketplaceTab() {
       list.sort((a, b) => (a.tipster?.rank ?? 999) - (b.tipster?.rank ?? 999));
     }
     return list;
-  }, [picks, priceFilter, sortBy]);
+  }, [picks, priceFilter, sortBy, searchQuery]);
 
   const handlePurchase = async (item: Accumulator) => {
     const token = await AsyncStorage.getItem('token');
@@ -210,6 +236,43 @@ export default function MarketplaceTab() {
         </View>
       )}
 
+      {/* Search bar */}
+      <View style={styles.searchContainer}>
+        <Text style={styles.searchIcon}>🔍</Text>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search by tipster, title, or team..."
+          placeholderTextColor={colors.textMuted}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          clearButtonMode="while-editing"
+          returnKeyType="search"
+        />
+        {searchQuery.length > 0 && (
+          <Pressable onPress={() => setSearchQuery('')} style={styles.searchClear}>
+            <Text style={styles.searchClearText}>✕</Text>
+          </Pressable>
+        )}
+      </View>
+
+      {/* Sport filter row - always visible */}
+      <View style={styles.filterRow}>
+        <Text style={styles.filterLabel}>Sport</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterChips}>
+          {SPORT_CHIPS.map((sc) => (
+            <Pressable
+              key={sc.key}
+              style={[styles.chip, sportFilter === sc.key && styles.chipActive]}
+              onPress={() => setSportFilter(sc.key)}
+            >
+              <Text style={[styles.chipText, sportFilter === sc.key && styles.chipTextActive]}>
+                {sc.label}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+
       {picks.length > 0 && (
         <View style={styles.filters}>
           <View style={styles.filterRow}>
@@ -270,6 +333,7 @@ export default function MarketplaceTab() {
               totalPicks={item.totalPicks}
               totalOdds={item.totalOdds}
               price={item.price}
+              sport={item.sport}
               status={item.status}
               result={item.result}
               picks={item.picks ?? []}
@@ -357,6 +421,26 @@ const styles = StyleSheet.create({
   },
   successText: { color: colors.text, fontSize: 14 },
   successLink: { color: colors.primary, fontWeight: '600', fontSize: 14 },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+    height: 44,
+  },
+  searchIcon: { fontSize: 16, marginRight: spacing.sm },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text,
+    height: '100%',
+  },
+  searchClear: { padding: 4 },
+  searchClearText: { fontSize: 14, color: colors.textMuted },
   filters: { marginBottom: spacing.lg },
   filterRow: { marginBottom: spacing.sm },
   filterLabel: {

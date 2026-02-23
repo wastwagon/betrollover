@@ -4,8 +4,7 @@ import { Repository } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
-
-const API_SPORTS_BASE = 'https://v3.football.api-sports.io';
+import { getSportApiBaseUrl } from '../../config/sports.config';
 
 export interface ApiFootballFixture {
   fixture: { id: number; date: string; status: { short: string } };
@@ -62,7 +61,7 @@ export class FootballService {
     }
     
     // Cache miss - fetch from API
-    let url = `${API_SPORTS_BASE}/fixtures?date=${d}`;
+    let url = `${getSportApiBaseUrl('football')}/fixtures?date=${d}`;
     if (leagueId) {
       url += `&league=${leagueId}`;
     }
@@ -97,7 +96,7 @@ export class FootballService {
     }
     
     const res = await fetch(
-      `${API_SPORTS_BASE}/leagues?type=league&current=true`,
+      `${getSportApiBaseUrl('football')}/leagues?type=league&current=true`,
       { headers: { 'x-apisports-key': key } }
     );
     

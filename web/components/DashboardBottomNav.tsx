@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -110,6 +110,9 @@ export function DashboardBottomNav() {
                   key={item.id}
                   type="button"
                   onClick={() => setOpenFold(openFold === item.id ? null : (item.id as FoldId))}
+                  aria-expanded={openFold === item.id}
+                  aria-haspopup="true"
+                  aria-label={openFold === item.id ? `Close ${item.label} menu` : `Open ${item.label} menu`}
                   className={`flex flex-col items-center justify-center flex-1 md:flex-initial md:px-6 py-3 gap-1 min-w-0 transition-colors ${
                     isActive ? 'text-[var(--primary)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'
                   }`}
@@ -138,11 +141,7 @@ export function DashboardBottomNav() {
 
       {/* Picks fold sheet */}
       {openFold === 'picks' && (
-        <div
-          className="fixed inset-0 z-[60] md:bg-black/20"
-          onClick={() => setOpenFold(null)}
-          aria-hidden
-        >
+        <FoldOverlay onClose={() => setOpenFold(null)}>
           <div
             className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] animate-slide-up"
             onClick={(e) => e.stopPropagation()}
@@ -166,16 +165,12 @@ export function DashboardBottomNav() {
               ))}
             </div>
           </div>
-        </div>
+        </FoldOverlay>
       )}
 
       {/* Account fold sheet */}
       {openFold === 'account' && (
-        <div
-          className="fixed inset-0 z-[60] md:bg-black/20"
-          onClick={() => setOpenFold(null)}
-          aria-hidden
-        >
+        <FoldOverlay onClose={() => setOpenFold(null)}>
           <div
             className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] animate-slide-up"
             onClick={(e) => e.stopPropagation()}
@@ -214,8 +209,27 @@ export function DashboardBottomNav() {
               )}
             </div>
           </div>
-        </div>
+        </FoldOverlay>
       )}
     </>
+  );
+}
+
+/** Overlay with click-outside and Escape to close */
+function FoldOverlay({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', h);
+    return () => document.removeEventListener('keydown', h);
+  }, [onClose]);
+  return (
+    <div
+      className="fixed inset-0 z-[60] md:bg-black/20"
+      onClick={onClose}
+      role="presentation"
+      aria-hidden
+    >
+      {children}
+    </div>
   );
 }

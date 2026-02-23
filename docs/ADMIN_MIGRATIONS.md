@@ -33,15 +33,15 @@ This document describes how the **admin migration** system works and how to add 
 
 ---
 
-## Current migrations (subscriptions, push, IAP)
-
-These two files are **already in the correct format** for the admin migration feature and will run in this order:
+## Current migrations (subscriptions, push, IAP, team badges)
 
 | File | Purpose |
 |------|--------|
-| **042_subscription_push_iap_tables.sql** | Creates: `tipster_subscription_packages`, `subscriptions`, `subscription_escrow`, `subscription_coupon_access`, `push_devices`, `in_app_purchases`, `roi_guarantee_refunds` |
-| **043_pick_marketplace_placement.sql** | Adds to `pick_marketplace`: `placement`, `subscription_package_id` (if not already present) |
-| **044_manual_crypto_payout_methods.sql** | Adds to `payout_methods`: `country`, `currency`, `manual_details`; extends type to `manual`, `crypto`; adds `cancelled` to withdrawal status |
+| **042_subscription_push_iap_tables.sql** | Creates: `tipster_subscription_packages`, `subscriptions`, `subscription_coupon_access`, `push_devices`, etc. |
+| **043_pick_marketplace_placement.sql** | Adds to `pick_marketplace`: `placement`, `subscription_package_id` |
+| **044_manual_crypto_payout_methods.sql** | Adds to `payout_methods`: `country`, `currency`, `manual_details` |
+| **048_multi_sport_foundation.sql** | Creates `sport_events`, `sport_event_odds` for basketball, rugby, MMA, etc. |
+| **049_add_team_logos_and_country_codes.sql** | Adds `home_team_logo`, `away_team_logo`, `home_country_code`, `away_country_code` to `fixtures` and `sport_events` (badges/flags) |
 
 - If the API starts and these files are still **pending**, they run automatically.
 - You can also run them from **Admin → Settings → Database migrations → Run pending**.

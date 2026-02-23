@@ -21,6 +21,7 @@ import { EmailService } from '../email/email.service';
 import { WalletService } from '../wallet/wallet.service';
 import { SmtpSettings } from '../email/entities/smtp-settings.entity';
 import { ApiSettings } from './entities/api-settings.entity';
+import { getSportApiBaseUrl } from '../../config/sports.config';
 import { PaystackSettings } from '../wallet/entities/paystack-settings.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 
@@ -135,7 +136,51 @@ export class AdminService {
     }
 
     const [items, total] = await qb.skip(skip).take(limit).getManyAndCount();
-    return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
+
+    // Attach tipster performance stats (ROI, win rate, commission paid) for tipster/admin rows
+    const enriched = await Promise.all(
+      items.map(async (u) => {
+        if (u.role !== 'tipster' && u.role !== 'admin') return u;
+        try {
+          const [statsRaw, commRaw] = await Promise.all([
+            this.dataSource.query(
+              `SELECT
+                 COUNT(*) FILTER (WHERE result='won')  AS won,
+                 COUNT(*) FILTER (WHERE result='lost') AS lost,
+                 COUNT(*) FILTER (WHERE result IN ('won','lost')) AS settled,
+                 COALESCE(SUM(CASE WHEN result='won' THEN total_odds ELSE 0 END),0) AS sum_odds_won
+               FROM accumulator_tickets WHERE user_id=$1 AND status='active'`,
+              [u.id],
+            ),
+            this.dataSource.query(
+              `SELECT COALESCE(SUM(amount),0) AS total FROM wallet_transactions
+               WHERE user_id=$1 AND type='commission' AND status='completed'`,
+              [u.id],
+            ),
+          ]);
+          const s = statsRaw[0] ?? {};
+          const won = Number(s.won ?? 0);
+          const lost = Number(s.lost ?? 0);
+          const settled = Number(s.settled ?? 0);
+          const winRate = settled > 0 ? (won / settled) * 100 : null;
+          const roi = settled > 0
+            ? ((Number(s.sum_odds_won ?? 0) - settled) / settled) * 100
+            : null;
+          return {
+            ...u,
+            wonPicks: won,
+            lostPicks: lost,
+            winRate: winRate !== null ? Number(winRate.toFixed(1)) : null,
+            roi: roi !== null ? Number(roi.toFixed(2)) : null,
+            totalCommissionPaid: Number(commRaw[0]?.total ?? 0),
+          };
+        } catch {
+          return u;
+        }
+      }),
+    );
+
+    return { items: enriched, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   async updateUser(id: number, data: { role?: string; status?: string; avatar?: string | null }) {
@@ -212,6 +257,7 @@ export class AdminService {
       lastTestDate: apiSettings?.lastTestDate || null,
       isActive: apiSettings?.isActive || false,
       minimumROI: Number(apiSettings?.minimumROI ?? 20.0),
+      platformCommissionRate: Number(apiSettings?.platformCommissionRate ?? 10.0),
       currency: 'GHS',
       country: 'Ghana',
       appName: 'BetRollover',
@@ -228,6 +274,59 @@ export class AdminService {
     }
     apiSettings.minimumROI = minimumROI;
     return this.apiSettingsRepo.save(apiSettings);
+  }
+
+  async updateCommissionRate(platformCommissionRate: number): Promise<{ platformCommissionRate: number }> {
+    if (platformCommissionRate < 0 || platformCommissionRate > 50) {
+      throw new BadRequestException('Commission rate must be between 0 and 50');
+    }
+    let apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
+    if (!apiSettings) {
+      apiSettings = this.apiSettingsRepo.create({ id: 1 });
+    }
+    apiSettings.platformCommissionRate = platformCommissionRate;
+    await this.apiSettingsRepo.save(apiSettings);
+    return { platformCommissionRate };
+  }
+
+  /** Get total platform commission revenue (all time and by period) */
+  async getCommissionRevenue(): Promise<{
+    allTime: number;
+    last30d: number;
+    last7d: number;
+    recentTransactions: Array<{ id: number; amount: number; reference: string | null; description: string | null; createdAt: Date; userId: number }>;
+  }> {
+    const now = new Date();
+    const d30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const d7  = new Date(now.getTime() -  7 * 24 * 60 * 60 * 1000);
+
+    const [allTime, last30d, last7d, recentTransactions] = await Promise.all([
+      this.txRepo.createQueryBuilder('t')
+        .select('COALESCE(SUM(t.amount), 0)', 'total')
+        .where("t.type = 'commission' AND t.status = 'completed'")
+        .getRawOne<{ total: string }>(),
+      this.txRepo.createQueryBuilder('t')
+        .select('COALESCE(SUM(t.amount), 0)', 'total')
+        .where("t.type = 'commission' AND t.status = 'completed' AND t.created_at >= :d", { d: d30 })
+        .getRawOne<{ total: string }>(),
+      this.txRepo.createQueryBuilder('t')
+        .select('COALESCE(SUM(t.amount), 0)', 'total')
+        .where("t.type = 'commission' AND t.status = 'completed' AND t.created_at >= :d", { d: d7 })
+        .getRawOne<{ total: string }>(),
+      this.txRepo.find({
+        where: { type: 'commission', status: 'completed' },
+        order: { createdAt: 'DESC' },
+        take: 50,
+        select: ['id', 'amount', 'reference', 'description', 'createdAt', 'userId'],
+      }),
+    ]);
+
+    return {
+      allTime:  Number(allTime?.total  ?? 0),
+      last30d:  Number(last30d?.total  ?? 0),
+      last7d:   Number(last7d?.total   ?? 0),
+      recentTransactions,
+    };
   }
 
   async updateApiSportsKey(key: string): Promise<ApiSettings> {
@@ -252,7 +351,7 @@ export class AdminService {
 
     try {
       // Make a simple API call to test the connection
-      const res = await fetch('https://v3.football.api-sports.io/status', {
+      const res = await fetch(`${getSportApiBaseUrl('football')}/status`, {
         headers: { 'x-apisports-key': apiKey },
       });
 

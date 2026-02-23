@@ -7,8 +7,8 @@ export class ResourcesController {
   constructor(private readonly resourcesService: ResourcesService) {}
 
   @Get('categories')
-  async getCategories() {
-    return this.resourcesService.getCategories();
+  async getCategories(@Query('language') language?: string) {
+    return this.resourcesService.getCategories(language || 'en');
   }
 
   @Get('items')
@@ -16,17 +16,22 @@ export class ResourcesController {
     @Query('category') categorySlug?: string,
     @Query('type') type?: ResourceType,
     @Query('limit') limit?: string,
+    @Query('language') language?: string,
   ) {
     return this.resourcesService.listPublishedItems({
       categorySlug,
       type,
       limit: limit ? parseInt(limit, 10) : undefined,
+      language: language || 'en',
     });
   }
 
   @Get('categories/:categorySlug')
-  async getCategory(@Param('categorySlug') categorySlug: string) {
-    const cat = await this.resourcesService.getCategoryBySlug(categorySlug);
+  async getCategory(
+    @Param('categorySlug') categorySlug: string,
+    @Query('language') language?: string,
+  ) {
+    const cat = await this.resourcesService.getCategoryBySlug(categorySlug, language || 'en');
     if (!cat) return null;
     return cat;
   }
@@ -35,7 +40,8 @@ export class ResourcesController {
   async getItem(
     @Param('categorySlug') categorySlug: string,
     @Param('itemSlug') itemSlug: string,
+    @Query('language') language?: string,
   ) {
-    return this.resourcesService.getItemOrFail(categorySlug, itemSlug);
+    return this.resourcesService.getItemOrFail(categorySlug, itemSlug, language || 'en');
   }
 }

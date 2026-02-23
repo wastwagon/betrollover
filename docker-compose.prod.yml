@@ -56,11 +56,21 @@ services:
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET}
       API_SPORTS_KEY: ${API_SPORTS_KEY:-}
+      ODDS_API_KEY: ${ODDS_API_KEY:-}
+      TENNIS_ODDS_API_KEY: ${TENNIS_ODDS_API_KEY:-}  # legacy fallback
+      ENABLED_SPORTS: ${ENABLED_SPORTS:-football,basketball,rugby,mma,volleyball,hockey,american_football,tennis}
       PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY:-}
       PAYSTACK_PUBLIC_KEY: ${PAYSTACK_PUBLIC_KEY:-}
+      PAYSTACK_WEBHOOK_SECRET: ${PAYSTACK_WEBHOOK_SECRET:-}
       SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
       SMTP_FROM: ${SMTP_FROM:-noreply@betrollover.com}
       APP_URL: ${APP_URL}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      ENABLE_SCHEDULING: ${ENABLE_SCHEDULING:-true}
+      ENABLE_FOOTBALL_SYNC: ${ENABLE_FOOTBALL_SYNC:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
       MIGRATIONS_PATH: /app/database/migrations
       SEEDS_PATH: /app/database/seeds
     depends_on:

@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Logger, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Request } from 'express';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -35,8 +36,12 @@ export class AuthController {
 
   @Post('register')
   @Throttle({ default: { limit: 5, ttl: 3600000 } }) // 5 registrations per hour per IP
-  async register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+  async register(@Body() dto: RegisterDto, @Req() req: Request) {
+    const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim()
+      || req.headers['x-real-ip']
+      || req.socket?.remoteAddress
+      || req.ip;
+    return this.authService.register(dto, typeof ip === 'string' ? ip : undefined);
   }
 
   @Get('verify-email')
@@ -70,5 +75,17 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 300000 } }) // 5 attempts per 5 min
   async resetPassword(@Body() body: { email: string; code: string; newPassword: string }) {
     return this.authService.resetPassword(body);
+  }
+
+  @Post('refresh')
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 per min per IP
+  async refresh(@Body() body: { refresh_token: string }) {
+    return this.authService.refresh(body.refresh_token);
+  }
+
+  @Post('logout')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  async logout(@Body() body: { refresh_token?: string }) {
+    return this.authService.logout(body.refresh_token ?? '');
   }
 }

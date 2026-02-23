@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
+import { AdSlot } from '@/components/AdSlot';
+import { useT } from '@/context/LanguageContext';
 
 import { getApiUrl, getAvatarUrl } from '@/lib/site-config';
 
@@ -22,6 +24,7 @@ interface Profile {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const t = useT();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -75,9 +78,9 @@ export default function ProfilePage() {
       if (res.ok) {
         const updated = await res.json();
         setProfile((p) => (p ? { ...p, ...updated } : null));
-        setMsg('Profile updated.');
+        setMsg(t('profile.updated'));
       } else {
-        setMsg(data.message || 'Update failed.');
+        setMsg(data.message || t('profile.update_failed'));
       }
     } finally {
       setSaving(false);
@@ -129,7 +132,7 @@ export default function ProfilePage() {
         const data = await res.json();
         setProfile((p) => (p ? { ...p, avatar: null } : null));
         setAvatarUrl('');
-        setMsg('Profile image removed.');
+        setMsg(t('profile.image_removed'));
       }
     } finally {
       setSaving(false);
@@ -139,11 +142,11 @@ export default function ProfilePage() {
   const changePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (pwNew !== pwConfirm) {
-      setPwMsg('New passwords do not match.');
+      setPwMsg(t('profile.passwords_no_match'));
       return;
     }
     if (pwNew.length < 6) {
-      setPwMsg('Password must be at least 6 characters.');
+      setPwMsg(t('profile.password_min_length'));
       return;
     }
     const token = localStorage.getItem('token');
@@ -167,9 +170,9 @@ export default function ProfilePage() {
         setPwCurrent('');
         setPwNew('');
         setPwConfirm('');
-        setPwMsg('Password updated.');
+        setPwMsg(t('profile.password_updated'));
       } else {
-        setPwMsg(data.message || 'Change failed.');
+        setPwMsg(data.message || t('profile.change_failed'));
       }
     } finally {
       setPwSaving(false);
@@ -189,14 +192,18 @@ export default function ProfilePage() {
       <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
         <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 md:py-6 pb-24">
           <PageHeader
-            label="Profile"
-            title="Profile"
-            tagline="Your account and preferences"
+            label={t('profile.title')}
+            title={t('profile.title')}
+            tagline={t('profile.tagline')}
           />
+
+          <div className="mb-4">
+            <AdSlot zoneSlug="profile-full" fullWidth className="w-full" />
+          </div>
 
           <div className="space-y-4">
             <form onSubmit={saveProfile} className="card-gradient rounded-2xl p-5 shadow-lg animate-fade-in-up animate-delay-100">
-              <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">Account</h2>
+              <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('profile.account')}</h2>
               <div className="flex flex-col sm:flex-row gap-6 mb-6">
                 <div className="flex flex-col items-center gap-2">
                   <div className="w-24 h-24 rounded-full overflow-hidden bg-[var(--border)] flex items-center justify-center border-2 border-[var(--border)]">
@@ -216,7 +223,7 @@ export default function ProfilePage() {
                     )}
                   </div>
                   <label className="cursor-pointer text-sm font-medium text-[var(--primary)] hover:underline">
-                    {avatarUploading ? 'Uploading...' : 'Change Photo'}
+                    {avatarUploading ? t('profile.uploading') : t('profile.change_photo')}
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/gif,image/webp"
@@ -232,23 +239,23 @@ export default function ProfilePage() {
                       disabled={saving}
                       className="text-xs text-red-600 hover:underline"
                     >
-                      Remove
+                      {t('profile.remove')}
                     </button>
                   )}
                 </div>
                 <div className="flex-1 space-y-3">
               <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">Email</label>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.email')}</label>
                 <input
                   type="email"
                   value={profile?.email || ''}
                   disabled
                   className="w-full px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text-muted)]"
                 />
-                <p className="text-xs text-[var(--text-muted)] mt-1">Email cannot be changed.</p>
+                <p className="text-xs text-[var(--text-muted)] mt-1">{t('profile.email_cannot_change')}</p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">Display Name</label>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.display_name')}</label>
                 <input
                   type="text"
                   value={displayName}
@@ -257,12 +264,12 @@ export default function ProfilePage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">Phone</label>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.phone')}</label>
                 <input
                   type="text"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="Optional"
+                  placeholder={t('profile.optional')}
                   className="w-full px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
                 />
               </div>
@@ -272,17 +279,17 @@ export default function ProfilePage() {
                 disabled={saving}
                 className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white hover:shadow-lg hover:shadow-[var(--primary)]/30 disabled:opacity-50 transition-all"
               >
-                {saving ? 'Saving...' : 'Save Profile'}
+                {saving ? t('profile.saving') : t('profile.save_profile')}
               </button>
                 </div>
               </div>
             </form>
 
           <form onSubmit={changePassword} className="card-gradient rounded-2xl p-5 shadow-lg animate-fade-in-up animate-delay-200">
-            <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">Change Password</h2>
+            <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('profile.change_password')}</h2>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">Current Password</label>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.current_password')}</label>
                 <input
                   type="password"
                   value={pwCurrent}
@@ -292,7 +299,7 @@ export default function ProfilePage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">New Password</label>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.new_password')}</label>
                 <input
                   type="password"
                   value={pwNew}
@@ -303,7 +310,7 @@ export default function ProfilePage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">Confirm New Password</label>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.confirm_new_password')}</label>
                 <input
                   type="password"
                   value={pwConfirm}
@@ -312,13 +319,13 @@ export default function ProfilePage() {
                   className="w-full px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
                 />
               </div>
-              {pwMsg && <p className={`text-sm ${pwMsg.startsWith('Password updated') ? 'text-green-600' : 'text-red-600'}`}>{pwMsg}</p>}
+              {pwMsg && <p className={`text-sm ${pwMsg.startsWith(t('profile.password_updated')) ? 'text-green-600' : 'text-red-600'}`}>{pwMsg}</p>}
               <button
                 type="submit"
                 disabled={pwSaving}
                 className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white hover:shadow-lg hover:shadow-[var(--primary)]/30 disabled:opacity-50 transition-all duration-200"
               >
-                {pwSaving ? 'Updating...' : 'Change Password'}
+                {pwSaving ? t('profile.updating') : t('profile.change_password')}
               </button>
             </div>
           </form>

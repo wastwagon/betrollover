@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useT } from '@/context/LanguageContext';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
+import { AdSlot } from '@/components/AdSlot';
 
 interface ResourceItem {
   id: number;
@@ -21,6 +23,7 @@ export default function ResourceItemPage() {
   const params = useParams();
   const categorySlug = params?.category as string;
   const itemSlug = params?.slug as string;
+  const t = useT();
   const [item, setItem] = useState<ResourceItem | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -52,9 +55,9 @@ export default function ResourceItemPage() {
       <div className="min-h-screen bg-[var(--bg)]">
         <UnifiedHeader />
         <main className="max-w-3xl mx-auto px-4 py-12 text-center">
-          <h1 className="text-2xl font-bold text-[var(--text)] mb-4">Resource not found</h1>
+          <h1 className="text-2xl font-bold text-[var(--text)] mb-4">{t('discover.resource_not_found')}</h1>
           <Link href="/discover?tab=guides" className="text-[var(--primary)] hover:underline">
-            Back to Discover
+            {t('discover.back_to_discover')}
           </Link>
         </main>
         <AppFooter />
@@ -62,7 +65,8 @@ export default function ResourceItemPage() {
     );
   }
 
-  const typeLabel = item.type.charAt(0).toUpperCase() + item.type.slice(1);
+  const typeKey = `discover.type_${item.type}` as 'discover.type_article' | 'discover.type_strategy' | 'discover.type_tool';
+  const typeLabel = ['article', 'strategy', 'tool'].includes(item.type) ? t(typeKey) : item.type.charAt(0).toUpperCase() + item.type.slice(1);
 
   return (
     <div className="min-h-screen bg-[var(--bg)]">
@@ -72,8 +76,11 @@ export default function ResourceItemPage() {
           href="/discover?tab=guides"
           className="inline-flex items-center gap-1 text-sm text-[var(--primary)] hover:underline mb-8 transition-colors"
         >
-          ← Back to Discover
+          ← {t('discover.back_to_discover')}
         </Link>
+        <div className="mb-6">
+          <AdSlot zoneSlug="resource-item-full" fullWidth className="w-full max-w-3xl" />
+        </div>
         <article className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-6 sm:p-8 shadow-sm">
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-[var(--primary)]/10 text-[var(--primary)]">
@@ -81,7 +88,7 @@ export default function ResourceItemPage() {
             </span>
             {item.durationMinutes && (
               <span className="text-sm text-[var(--text-muted)]">
-                {item.durationMinutes} min read
+                {t('discover.min_read', { n: String(item.durationMinutes) })}
               </span>
             )}
             {item.category?.name && (

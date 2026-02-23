@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as nodemailer from 'nodemailer';
@@ -13,6 +13,8 @@ import {
 
 @Injectable()
 export class EmailService {
+  private readonly logger = new Logger(EmailService.name);
+
   constructor(
     @InjectRepository(SmtpSettings)
     private smtpRepo: Repository<SmtpSettings>,
@@ -43,46 +45,85 @@ export class EmailService {
     });
   }
 
+  private readonly SEND_RETRIES = 3;
+  private readonly RETRY_DELAY_MS = 1000;
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   async send(options: { to: string; subject: string; text: string; html?: string }) {
     const apiKey = process.env.SENDGRID_API_KEY;
     if (apiKey) {
-      try {
-        sgMail.setApiKey(apiKey);
-        const from = await this.getFromWithSettings();
-        await sgMail.send({
-          to: options.to,
-          from,
-          subject: options.subject,
-          text: options.text,
-          html: options.html || options.text.replace(/\n/g, '<br>'),
-        });
-        return { sent: true };
-      } catch (err: any) {
-        console.error('SendGrid email error:', JSON.stringify(err?.response?.body || err, null, 2));
-        return { sent: false, error: String(err?.response?.body?.errors?.[0]?.message || err?.message || err) };
-      }
+      return this.sendViaSendGrid(options, apiKey);
     }
 
     const transporter = await this.getTransporter();
     if (!transporter) {
-      console.error('CRITICAL: Email not configured. Set SENDGRID_API_KEY or SMTP settings. Registration OTP will fail.');
+      this.logger.error('CRITICAL: Email not configured. Set SENDGRID_API_KEY or SMTP settings. Registration OTP will fail.');
       return { sent: false, error: 'Email configuration missing on server' };
     }
 
+    return this.sendViaSmtp(options, transporter);
+  }
+
+  private async sendViaSendGrid(
+    options: { to: string; subject: string; text: string; html?: string },
+    apiKey: string,
+  ): Promise<{ sent: boolean; error?: string }> {
+    sgMail.setApiKey(apiKey);
     const from = await this.getFromWithSettings();
-    try {
-      await transporter.sendMail({
-        from,
-        to: options.to,
-        subject: options.subject,
-        text: options.text,
-        html: options.html || options.text.replace(/\n/g, '<br>'),
-      });
-      return { sent: true };
-    } catch (err) {
-      console.error('Email send error:', err);
-      return { sent: false, error: String(err) };
+    const msg = {
+      to: options.to,
+      from,
+      subject: options.subject,
+      text: options.text,
+      html: options.html || options.text.replace(/\n/g, '<br>'),
+    };
+
+    let lastError: string | undefined;
+    for (let attempt = 1; attempt <= this.SEND_RETRIES; attempt++) {
+      try {
+        await sgMail.send(msg);
+        return { sent: true };
+      } catch (err: unknown) {
+        const body = (err as { response?: { body?: unknown } })?.response?.body ?? err;
+        this.logger.warn(`SendGrid attempt ${attempt}/${this.SEND_RETRIES} failed: ${JSON.stringify(body)}`);
+        const errObj = err as { response?: { body?: { errors?: { message?: string }[] } }; message?: string };
+        lastError = String(errObj?.response?.body?.errors?.[0]?.message || errObj?.message || (err instanceof Error ? err.message : err));
+        if (attempt < this.SEND_RETRIES) await this.sleep(this.RETRY_DELAY_MS * attempt);
+      }
     }
+    this.logger.error(`SendGrid email failed after ${this.SEND_RETRIES} attempts`);
+    return { sent: false, error: lastError };
+  }
+
+  private async sendViaSmtp(
+    options: { to: string; subject: string; text: string; html?: string },
+    transporter: nodemailer.Transporter,
+  ): Promise<{ sent: boolean; error?: string }> {
+    const from = await this.getFromWithSettings();
+    const mailOptions = {
+      from,
+      to: options.to,
+      subject: options.subject,
+      text: options.text,
+      html: options.html || options.text.replace(/\n/g, '<br>'),
+    };
+
+    let lastError: string | undefined;
+    for (let attempt = 1; attempt <= this.SEND_RETRIES; attempt++) {
+      try {
+        await transporter.sendMail(mailOptions);
+        return { sent: true };
+      } catch (err) {
+        this.logger.warn(`SMTP attempt ${attempt}/${this.SEND_RETRIES} failed: ${err instanceof Error ? err.message : String(err)}`);
+        lastError = err instanceof Error ? err.message : String(err);
+        if (attempt < this.SEND_RETRIES) await this.sleep(this.RETRY_DELAY_MS * attempt);
+      }
+    }
+    this.logger.error(`Email send failed after ${this.SEND_RETRIES} attempts`);
+    return { sent: false, error: lastError };
   }
 
   async sendPurchaseConfirmation(to: string, pickTitle: string, amount: number) {

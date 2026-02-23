@@ -7,13 +7,16 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { PageHeader } from '@/components/PageHeader';
+import { AdSlot } from '@/components/AdSlot';
 import { AppFooter } from '@/components/AppFooter';
 import { useToast } from '@/hooks/useToast';
 import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
+import { useT } from '@/context/LanguageContext';
 import { getApiUrl } from '@/lib/site-config';
 
 type Period = 'all_time' | 'monthly' | 'weekly';
+type SportFilter = 'all' | 'football' | 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football';
 
 function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: number): TipsterCardData {
   const rank = (entry.rank ?? entry.leaderboard_rank ?? index + 1) as number;
@@ -42,24 +45,29 @@ function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: numb
 
 export default function TipstersPage() {
   const router = useRouter();
+  const t = useT();
   const [tipsters, setTipsters] = useState<TipsterCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [period, setPeriod] = useState<Period>('all_time');
+  const [sportFilter, setSportFilter] = useState<SportFilter>('all');
   const [sortBy, setSortBy] = useState<'roi' | 'win_rate' | 'total_profit' | 'follower_count'>('roi');
   const [followLoading, setFollowLoading] = useState<number | null>(null);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
 
   const fetchTipsters = useCallback(
-    (searchTerm?: string, sort?: string, periodVal?: Period) => {
+    (searchTerm?: string, sort?: string, periodVal?: Period, sport?: SportFilter) => {
       setLoading(true);
       const token = localStorage.getItem('token');
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       const p = periodVal ?? period;
+      const s = sport ?? sportFilter;
       if (p === 'monthly' || p === 'weekly') {
-        fetch(`${getApiUrl()}/leaderboard?period=${p}&limit=50`, { headers })
+        const params = new URLSearchParams({ period: p, limit: '50' });
+        if (s && s !== 'all') params.set('sport', s);
+        fetch(`${getApiUrl()}/leaderboard?${params}`, { headers })
           .then((r) => (r.ok ? r.json() : { leaderboard: [] }))
           .then((data) => {
             const entries = (data.leaderboard || []) as Record<string, unknown>[];
@@ -70,6 +78,7 @@ export default function TipstersPage() {
       } else {
         const params = new URLSearchParams({ limit: '50', sort_by: sort || sortBy, order: 'desc' });
         if (searchTerm?.trim()) params.set('search', searchTerm.trim());
+        if (s && s !== 'all') params.set('sport', s);
         fetch(`${getApiUrl()}/tipsters?${params}`, { headers })
           .then((r) => (r.ok ? r.json() : { tipsters: [] }))
           .then((data) => setTipsters(data.tipsters || []))
@@ -77,17 +86,17 @@ export default function TipstersPage() {
           .finally(() => setLoading(false));
       }
     },
-    [sortBy, period]
+    [sortBy, period, sportFilter]
   );
 
   useEffect(() => {
     if (period === 'monthly' || period === 'weekly') {
-      fetchTipsters(undefined, undefined, period);
+      fetchTipsters(undefined, undefined, period, sportFilter);
       return;
     }
-    const t = setTimeout(() => fetchTipsters(search, undefined, period), search ? 300 : 0);
+    const t = setTimeout(() => fetchTipsters(search, undefined, period, sportFilter), search ? 300 : 0);
     return () => clearTimeout(t);
-  }, [search, period, fetchTipsters]);
+  }, [search, period, sportFilter, fetchTipsters]);
 
   const handleFollow = async (tipster: TipsterCardData) => {
     const token = localStorage.getItem('token');
@@ -108,7 +117,7 @@ export default function TipstersPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        showSuccess(isFollowing ? 'Unfollowed' : 'Following! You\'ll see their picks in your feed.');
+        showSuccess(isFollowing ? t('tipster.toast_unfollowed') : t('tipster.toast_following'));
       } else {
         setTipsters((prev) =>
           prev.map((t) => (t.id === tipster.id ? { ...t, is_following: isFollowing, follower_count: tipster.follower_count ?? 0 } : t))
@@ -133,13 +142,49 @@ export default function TipstersPage() {
       <UnifiedHeader />
       <main className="max-w-6xl mx-auto px-4 py-8 md:py-12">
         <PageHeader
-          label="Tipsters"
-          title="Tipsters"
-          tagline="Browse verified tipsters. Rankings shown on each card. Follow your favorites and track their performance."
+          label={t('nav.tipsters')}
+          title={t('seo.tipsters_title').split(' | ')[0]}
+          tagline={t('seo.tipsters_desc')}
         />
+        {/* Full-width ad */}
+        <div className="mb-8 w-full">
+          <AdSlot zoneSlug="tipsters-full" fullWidth className="w-full max-w-3xl mx-auto" />
+        </div>
         <div className="mb-8">
+          {/* Sport filter pills */}
+          <div className="flex flex-wrap gap-2 mb-3">
+            {([
+              { key: 'all' as SportFilter,               icon: '🌍', labelKey: 'marketplace.filter_all_sports' },
+              { key: 'football' as SportFilter,          icon: '⚽', labelKey: 'nav.football' },
+              { key: 'basketball' as SportFilter,        icon: '🏀', labelKey: 'nav.basketball' },
+              { key: 'rugby' as SportFilter,             icon: '🏉', labelKey: 'nav.rugby' },
+              { key: 'mma' as SportFilter,               icon: '🥊', labelKey: 'nav.mma' },
+              { key: 'volleyball' as SportFilter,        icon: '🏐', labelKey: 'nav.volleyball' },
+              { key: 'hockey' as SportFilter,            icon: '🏒', labelKey: 'nav.hockey' },
+              { key: 'american_football' as SportFilter, icon: '🏈', labelKey: 'nav.american_football' },
+            ]).map((sp) => (
+              <button
+                key={sp.key}
+                onClick={() => setSportFilter(sp.key)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
+                  sportFilter === sp.key
+                    ? 'bg-[var(--primary)] text-white border-[var(--primary)] shadow-sm'
+                    : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
+                }`}
+              >
+                <span>{sp.icon}</span>
+                <span>{t(sp.labelKey)}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Period tabs */}
           <div className="flex flex-wrap gap-2 mb-4">
-            {(['all_time', 'monthly', 'weekly'] as const).map((p) => (
+            {([
+              { key: 'all_time' as Period,  label: t('tipster.period_alltime') },
+              { key: 'monthly'  as Period,  label: t('tipster.period_monthly') },
+              { key: 'weekly'   as Period,  label: t('tipster.period_weekly') },
+            ]).map(({ key: p, label }) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
@@ -149,7 +194,7 @@ export default function TipstersPage() {
                     : 'bg-[var(--card)] text-[var(--text-muted)] hover:bg-[var(--border)] border border-[var(--border)]'
                 }`}
               >
-                {p === 'all_time' ? 'All Time' : p === 'monthly' ? 'This Month' : 'This Week'}
+                {label}
               </button>
             ))}
           </div>
@@ -157,22 +202,22 @@ export default function TipstersPage() {
             <div className="mt-4 flex flex-col sm:flex-row gap-3 sm:items-center">
               <input
                 type="search"
-                placeholder="Search tipsters by name or bio..."
+                placeholder={t('tipster.search_placeholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full max-w-md px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--text)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-                aria-label="Search tipsters"
+                aria-label={t('common.search')}
               />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
                 className="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                aria-label="Sort tipsters"
+                aria-label={t('common.filter')}
               >
-                <option value="roi">Sort by ROI</option>
-                <option value="win_rate">Sort by Win Rate</option>
-                <option value="total_profit">Sort by Profit</option>
-                <option value="follower_count">Sort by Followers</option>
+                <option value="roi">{t('tipster.sort_roi')}</option>
+                <option value="win_rate">{t('tipster.sort_win_rate')}</option>
+                <option value="total_profit">{t('tipster.sort_profit')}</option>
+                <option value="follower_count">{t('tipster.sort_followers')}</option>
               </select>
             </div>
           )}
@@ -186,9 +231,9 @@ export default function TipstersPage() {
           </div>
         ) : tipsters.length === 0 ? (
           <EmptyState
-            title="No tipsters yet"
-            description="Tipsters will appear here soon. Check back later."
-            actionLabel="Back to Home"
+            title={t('tipster.no_tipsters')}
+            description={t('common.no_results')}
+            actionLabel={t('error.go_home')}
             actionHref="/"
           />
         ) : (

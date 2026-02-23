@@ -1,4 +1,5 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { resolveIpToCountry, countryCodeToFlagEmoji } from '../../common/geo.util';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -12,6 +13,10 @@ import { EmailService } from '../email/email.service';
 import { User } from '../users/entities/user.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { PasswordResetOtp } from '../otp/entities/password-reset-otp.entity';
+import { RefreshToken } from './entities/refresh-token.entity';
+import { ReferralsService } from '../referrals/referrals.service';
+
+const REFRESH_TOKEN_EXPIRY_DAYS = 30;
 
 export interface JwtPayload {
   sub: number;
@@ -31,12 +36,15 @@ export class AuthService {
     private tipsterRepo: Repository<Tipster>,
     @InjectRepository(PasswordResetOtp)
     private passwordResetOtpRepo: Repository<PasswordResetOtp>,
+    @InjectRepository(RefreshToken)
+    private refreshTokenRepo: Repository<RefreshToken>,
+    private referralsService: ReferralsService,
   ) { }
 
   async sendRegistrationOtp(email: string) {
     const existing = await this.usersService.findByEmail(email);
     if (existing) {
-      throw new UnauthorizedException('This email is already registered');
+      throw new ConflictException('This email is already registered. Please sign in or use a different email.');
     }
     return this.emailOtpService.sendOtp(email.trim().toLowerCase());
   }
@@ -56,8 +64,10 @@ export class AuthService {
 
   async login(user: User) {
     const fullUser = await this.usersService.findById(user.id);
+    const refreshToken = await this.createRefreshToken(user.id);
     return {
       access_token: this.createTokenForUser(user),
+      refresh_token: refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -70,28 +80,121 @@ export class AuthService {
     };
   }
 
+  /** Create a refresh token for the user; revokes any existing tokens for this user. */
+  private async createRefreshToken(userId: number): Promise<string> {
+    await this.refreshTokenRepo.delete({ userId });
+    const token = crypto.randomBytes(32).toString('hex');
+    const hash = crypto.createHash('sha256').update(token).digest('hex');
+    const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+    await this.refreshTokenRepo.save(
+      this.refreshTokenRepo.create({ userId, tokenHash: hash, expiresAt }),
+    );
+    return token;
+  }
+
+  /** Exchange a refresh token for a new access token and rotated refresh token. */
+  async refresh(refreshToken: string) {
+    if (!refreshToken?.trim()) throw new UnauthorizedException('Refresh token is required.');
+    const hash = crypto.createHash('sha256').update(refreshToken.trim()).digest('hex');
+    const record = await this.refreshTokenRepo.findOne({ where: { tokenHash: hash } });
+    if (!record) throw new UnauthorizedException('Invalid or expired refresh token.');
+    if (new Date() > record.expiresAt) {
+      await this.refreshTokenRepo.delete({ id: record.id });
+      throw new UnauthorizedException('Refresh token has expired. Please sign in again.');
+    }
+    const user = await this.usersService.findById(record.userId);
+    if (!user) throw new UnauthorizedException('Account not found.');
+    const newRefreshToken = await this.createRefreshToken(user.id);
+    return {
+      access_token: this.createTokenForUser(user),
+      refresh_token: newRefreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        displayName: user.displayName,
+        role: user.role,
+        emailVerifiedAt: (user as User & { emailVerifiedAt?: Date })?.emailVerifiedAt ?? null,
+        ageVerifiedAt: (user as User & { ageVerifiedAt?: Date })?.ageVerifiedAt ?? null,
+      },
+    };
+  }
+
+  /** Revoke a refresh token (call on logout). */
+  async logout(refreshToken: string) {
+    if (!refreshToken?.trim()) return { revoked: false };
+    const hash = crypto.createHash('sha256').update(refreshToken.trim()).digest('hex');
+    const result = await this.refreshTokenRepo.delete({ tokenHash: hash });
+    return { revoked: (result.affected ?? 0) > 0 };
+  }
+
   async register(data: {
     email: string;
     username: string;
     password: string;
     displayName: string;
     otpCode: string;
-  }) {
+    dateOfBirth: string;
+    referralCode?: string;
+  }, clientIp?: string) {
     await this.emailOtpService.verifyOtp(data.email.trim().toLowerCase(), data.otpCode);
     const existing = await this.usersService.findByEmail(data.email);
     if (existing) {
-      throw new UnauthorizedException('Email already registered');
+      throw new ConflictException('This email is already registered. Please sign in or use a different email.');
     }
-    const user = await this.usersService.create({
-      email: data.email,
-      username: data.username,
-      password: data.password,
-      displayName: data.displayName,
-      phone: undefined,
-    });
+
+    if (!this.usersService.isAtLeast18(data.dateOfBirth)) {
+      throw new ForbiddenException('You must be at least 18 years old to register.');
+    }
+
+    // Resolve country from IP (fire-and-forget friendly; fallback to defaults)
+    let country = 'Ghana';
+    let countryCode = 'GHA';
+    let flagEmoji = '🇬🇭';
+    if (clientIp) {
+      try {
+        const geo = await resolveIpToCountry(clientIp);
+        if (geo) {
+          country = geo.country;
+          countryCode = geo.countryCode;
+          flagEmoji = countryCodeToFlagEmoji(geo.countryCode) || flagEmoji;
+        }
+      } catch {
+        // Keep defaults on any error
+      }
+    }
+
+    let user: User;
+    try {
+      user = await this.usersService.create({
+        email: data.email,
+        username: data.username,
+        password: data.password,
+        displayName: data.displayName,
+        phone: undefined,
+        dateOfBirth: data.dateOfBirth,
+        country,
+        countryCode,
+        flagEmoji,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('users_username_key') || (msg.includes('unique constraint') && msg.toLowerCase().includes('username'))) {
+        throw new ConflictException('This username is already taken. Please choose another.');
+      }
+      if (msg.includes('users_email_key') || (msg.includes('unique constraint') && msg.toLowerCase().includes('email'))) {
+        throw new ConflictException('This email is already registered. Please sign in or use a different email.');
+      }
+      throw err;
+    }
     await this.usersService.setEmailVerified(user.id);
     await this.walletService.getOrCreateWallet(user.id);
     await this.ensureTipsterForUser(user);
+
+    // Register referral code if provided (fire-and-forget)
+    if (data.referralCode?.trim()) {
+      this.referralsService.registerSignup(user.id, data.referralCode.trim()).catch(() => {});
+    }
 
     this.emailService.sendAdminNotification({
       type: 'new_user_registered',
@@ -106,18 +209,18 @@ export class AuthService {
   }
 
   async verifyEmail(token: string): Promise<{ verified: boolean; message: string }> {
-    if (!token?.trim()) return { verified: false, message: 'Invalid token' };
+    if (!token?.trim()) return { verified: false, message: 'This verification link is invalid. Please request a new one.' };
     const user = await this.usersService.verifyEmailByToken(token.trim());
-    if (!user) return { verified: false, message: 'Invalid or expired token' };
-    return { verified: true, message: 'Email verified successfully' };
+    if (!user) return { verified: false, message: 'This verification link is invalid or has expired. Please request a new one.' };
+    return { verified: true, message: 'Email verified successfully. You can now sign in.' };
   }
 
   async resendVerificationEmail(userId: number): Promise<{ sent: boolean; message: string }> {
     const user = await this.usersService.findById(userId);
-    if (!user) throw new UnauthorizedException('User not found');
+    if (!user) throw new UnauthorizedException('Account not found.');
     const status = await this.usersService.getEmailVerificationStatus(userId);
     if (status.emailVerifiedAt) {
-      return { sent: false, message: 'Email already verified' };
+      return { sent: false, message: 'Your email is already verified. You can sign in.' };
     }
     const token = crypto.randomBytes(32).toString('hex');
     await this.usersService.setEmailVerificationToken(userId, token);
@@ -129,13 +232,13 @@ export class AuthService {
       user.displayName,
     );
     return result.sent
-      ? { sent: true, message: 'Verification email sent' }
-      : { sent: false, message: result.error || 'Failed to send email' };
+      ? { sent: true, message: 'Verification email sent. Check your inbox.' }
+      : { sent: false, message: result.error || 'We couldn\'t send the verification email. Please try again later.' };
   }
 
   async getProfile(userId: number) {
     const user = await this.usersService.findById(userId);
-    if (!user) throw new UnauthorizedException('User not found');
+    if (!user) throw new UnauthorizedException('Account not found.');
     return user;
   }
 
@@ -166,9 +269,9 @@ export class AuthService {
 
   async changePassword(userId: number, currentPassword: string, newPassword: string) {
     const user = await this.usersService.findById(userId);
-    if (!user) throw new UnauthorizedException('User not found');
+    if (!user) throw new UnauthorizedException('Account not found.');
     const valid = await this.usersService.validatePassword(user, currentPassword);
-    if (!valid) throw new UnauthorizedException('Current password is incorrect');
+    if (!valid) throw new UnauthorizedException('Your current password is incorrect. Please try again.');
     const hashed = await bcrypt.hash(newPassword, 12);
     await this.usersService.updatePassword(userId, hashed);
   }
@@ -198,16 +301,16 @@ export class AuthService {
     });
 
     if (!record) {
-      throw new UnauthorizedException('Invalid or expired reset code');
+      throw new UnauthorizedException('The reset code is invalid or has expired. Please request a new one.');
     }
 
     if (new Date() > record.expiresAt) {
-      throw new UnauthorizedException('Reset code has expired');
+      throw new UnauthorizedException('The reset code has expired. Please request a new password reset.');
     }
 
     const user = await this.usersService.findByEmail(normalized);
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('Account not found.');
     }
 
     const hashed = await bcrypt.hash(data.newPassword, 12);

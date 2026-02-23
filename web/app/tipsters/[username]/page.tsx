@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
+import { AdSlot } from '@/components/AdSlot';
 import { PickCard } from '@/components/PickCard';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
@@ -13,6 +14,8 @@ import { useToast } from '@/hooks/useToast';
 import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
 import { getApiUrl, getAvatarUrl } from '@/lib/site-config';
+import { PersonJsonLd } from '@/components/PersonJsonLd';
+import { useT } from '@/context/LanguageContext';
 
 interface Pick {
   id?: number;
@@ -36,6 +39,7 @@ interface Tipster {
 interface MarketplaceCoupon {
   id: number;
   title: string;
+  sport?: string;
   totalOdds: number;
   totalPicks: number;
   price: number;
@@ -85,6 +89,7 @@ interface TipsterProfile {
 export default function TipsterProfilePage() {
   const params = useParams();
   const router = useRouter();
+  const t = useT();
   const username = params.username as string;
   const [profile, setProfile] = useState<TipsterProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -95,9 +100,11 @@ export default function TipsterProfilePage() {
   const [purchasing, setPurchasing] = useState<number | null>(null);
   const [unveilCouponId, setUnveilCouponId] = useState<number | null>(null);
   const [couponFilter, setCouponFilter] = useState<'active' | 'archive'>('active');
+  const [sportFilter, setSportFilter] = useState<string>('all');
   const [subscriptionPackages, setSubscriptionPackages] = useState<SubscriptionPackage[]>([]);
   const [subscribeLoading, setSubscribeLoading] = useState<number | null>(null);
   const [subscribedPackageIds, setSubscribedPackageIds] = useState<Set<number>>(new Set());
+  const [reviewSummary, setReviewSummary] = useState<{ avg: number; total: number } | null>(null);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
 
   useEffect(() => {
@@ -107,7 +114,15 @@ export default function TipsterProfilePage() {
 
     fetch(`${getApiUrl()}/tipsters/${encodeURIComponent(username)}`, { headers })
       .then((r) => (r.ok ? r.json() : null))
-      .then(setProfile)
+      .then((p) => {
+        setProfile(p);
+        if (p?.tipster?.id) {
+          fetch(`${getApiUrl()}/reviews/tipster/${p.tipster.id}?limit=5`)
+            .then((r) => r.ok ? r.json() : null)
+            .then((d) => d && setReviewSummary({ avg: d.avg, total: d.total }))
+            .catch(() => {});
+        }
+      })
       .catch(() => setProfile(null))
       .finally(() => setLoading(false));
   }, [username]);
@@ -163,7 +178,7 @@ export default function TipsterProfilePage() {
     const pkg = subscriptionPackages.find((p) => p.id === packageId);
     if (!pkg) return;
     if (walletBalance !== null && pkg.price > 0 && walletBalance < pkg.price) {
-      showError(new Error('Insufficient wallet balance. Top up to subscribe.'));
+      showError(new Error(t('tipster.insufficient_balance')));
       return;
     }
     setSubscribeLoading(packageId);
@@ -174,7 +189,7 @@ export default function TipsterProfilePage() {
         body: JSON.stringify({ packageId }),
       });
       if (res.ok) {
-        showSuccess(`Subscribed! View ${pkg.name} coupons in your dashboard.`);
+        showSuccess(t('tipster.toast_subscribed', { name: pkg.name }));
         setSubscribedPackageIds((prev) => new Set(Array.from(prev).concat(packageId)));
         const walletRes = await fetch(`${getApiUrl()}/wallet/balance`, { headers: { Authorization: `Bearer ${token}` } });
         if (walletRes.ok) {
@@ -207,7 +222,7 @@ export default function TipsterProfilePage() {
       });
       if (res.ok && profile) {
         setProfile({ ...profile, is_following: !isFollowing });
-        showSuccess(isFollowing ? 'Unfollowed' : 'Following! You\'ll see their picks in your feed.');
+        showSuccess(isFollowing ? t('tipster.toast_unfollowed') : t('tipster.toast_following'));
       }
     } finally {
       setFollowLoading(false);
@@ -233,7 +248,7 @@ export default function TipsterProfilePage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        showSuccess('Coupon purchased! View in My Purchases.');
+        showSuccess(t('tipster.toast_coupon_purchased'));
         setPurchasedIds((prev) => new Set([...Array.from(prev), id]));
         const walletRes = await fetch(`${getApiUrl()}/wallet/balance`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -254,6 +269,27 @@ export default function TipsterProfilePage() {
     }
   };
 
+  // Hooks must be called unconditionally before any early return
+  const marketplaceCoupons = profile?.marketplace_coupons ?? [];
+  const archivedCoupons = profile?.archived_coupons ?? [];
+
+  const availableSports = useMemo(() => {
+    const allCoupons = [...marketplaceCoupons, ...archivedCoupons];
+    const sportSet = new Set<string>();
+    allCoupons.forEach((c) => { if (c.sport) sportSet.add(c.sport); });
+    return Array.from(sportSet).sort();
+  }, [marketplaceCoupons, archivedCoupons]);
+
+  const filteredActive = useMemo(() => {
+    if (sportFilter === 'all') return marketplaceCoupons;
+    return marketplaceCoupons.filter((c) => c.sport === sportFilter);
+  }, [marketplaceCoupons, sportFilter]);
+
+  const filteredArchive = useMemo(() => {
+    if (sportFilter === 'all') return archivedCoupons;
+    return archivedCoupons.filter((c) => c.sport === sportFilter);
+  }, [archivedCoupons, sportFilter]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--bg)]">
@@ -272,9 +308,9 @@ export default function TipsterProfilePage() {
         <UnifiedHeader />
         <main className="max-w-6xl mx-auto px-4 py-8">
           <EmptyState
-            title="Tipster not found"
-            description="This tipster does not exist or has been removed."
-            actionLabel="Browse Tipsters"
+            title={t('tipster.not_found')}
+            description={t('tipster.not_found_sub')}
+            actionLabel={t('tipster.browse_tipsters')}
             actionHref="/tipsters"
           />
         </main>
@@ -283,7 +319,20 @@ export default function TipsterProfilePage() {
     );
   }
 
+  const SPORT_META: Record<string, { icon: string; label: string }> = {
+    Football:          { icon: '⚽', label: 'Football' },
+    Basketball:        { icon: '🏀', label: 'Basketball' },
+    Rugby:             { icon: '🏉', label: 'Rugby' },
+    MMA:               { icon: '🥊', label: 'MMA' },
+    Volleyball:        { icon: '🏐', label: 'Volleyball' },
+    Hockey:            { icon: '🏒', label: 'Hockey' },
+    'American Football': { icon: '🏈', label: 'American Football' },
+    Tennis:            { icon: '🎾', label: 'Tennis' },
+    'Multi-Sport':     { icon: '🌍', label: 'Multi-Sport' },
+  };
+
   const { tipster, marketplace_coupons, archived_coupons = [], is_following } = profile;
+
   const hasSettledPicks = (tipster.total_wins ?? 0) + (tipster.total_losses ?? 0) > 0;
   const roiDisplay = hasSettledPicks ? `${Number(tipster.roi).toFixed(2)}%` : '—';
   const winRateDisplay = hasSettledPicks ? `${Number(tipster.win_rate).toFixed(1)}%` : '—';
@@ -297,14 +346,26 @@ export default function TipsterProfilePage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)]">
+      <PersonJsonLd
+        username={tipster.username}
+        displayName={tipster.display_name}
+        avatarUrl={tipster.avatar_url}
+        bio={tipster.bio}
+        winRate={tipster.win_rate}
+        totalPredictions={tipster.total_predictions}
+      />
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <UnifiedHeader />
       <main className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
         <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
           <Link href="/tipsters" className="text-sm text-[var(--primary)] hover:underline mb-4 inline-block">
-            ← Back to Tipsters
+            {t('tipster.back_to_tipsters')}
           </Link>
+
+          <div className="mb-6">
+            <AdSlot zoneSlug="tipster-profile-full" fullWidth className="w-full max-w-3xl" />
+          </div>
 
           <div className="rounded-2xl p-6 md:p-8 mb-8 bg-gradient-to-br from-emerald-50 via-green-50/90 to-teal-50 dark:from-emerald-900/20 dark:via-green-900/15 dark:to-teal-900/20 border border-emerald-200/60 dark:border-emerald-700/40 shadow-lg shadow-emerald-500/5">
             <div className="flex flex-col sm:flex-row gap-6 items-start">
@@ -334,43 +395,64 @@ export default function TipsterProfilePage() {
                     : 'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]'
                 }`}
               >
-                {followLoading ? '...' : is_following ? 'Following' : 'Follow'}
+                {followLoading ? '...' : is_following ? t('tipster.following') : t('tipster.follow')}
               </button>
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-3 mb-2">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
                 <h1 className="text-2xl md:text-3xl font-bold text-[var(--text)]">{tipster.display_name}</h1>
+                {tipster.is_ai && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300 border border-violet-200 dark:border-violet-700/40">
+                    🤖 {t('tipster.ai_tipster')}
+                  </span>
+                )}
                 {tipster.leaderboard_rank != null && (
-                  <span className="text-sm text-[var(--text-muted)]">Rank #{tipster.leaderboard_rank}</span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                    🏆 {t('tipster.rank_prefix')}{tipster.leaderboard_rank}
+                  </span>
                 )}
                 {tipster.follower_count != null && tipster.follower_count > 0 && (
                   <span className="text-sm text-[var(--text-muted)]">
-                    {tipster.follower_count} follower{tipster.follower_count !== 1 ? 's' : ''}
+                    {t(tipster.follower_count === 1 ? 'tipster.x_follower' : 'tipster.x_followers', { n: String(tipster.follower_count) })}
                   </span>
                 )}
               </div>
+              {/* Sport specialization badges */}
+              {availableSports.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {availableSports.map((s) => {
+                    const meta = SPORT_META[s];
+                    if (!meta) return null;
+                    return (
+                      <span key={s} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-700/40">
+                        {meta.icon} {meta.label}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
               {tipster.bio && <p className="text-[var(--text-muted)] mb-4">{tipster.bio}</p>}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 mb-4">
                 <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
-                  <span className="text-xs uppercase text-[var(--text-muted)]">ROI</span>
-                  <p className={`font-bold text-lg ${roiColor}`} title={!hasSettledPicks && tipster.total_predictions ? 'Stats update when picks settle' : undefined}>{roiDisplay}</p>
+                  <span className="text-xs uppercase text-[var(--text-muted)]">{t('tipster.roi')}</span>
+                  <p className={`font-bold text-lg ${roiColor}`} title={!hasSettledPicks && tipster.total_predictions ? t('tipster.stats_update') : undefined}>{roiDisplay}</p>
                 </div>
                 <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
-                  <span className="text-xs uppercase text-[var(--text-muted)]">Win Rate</span>
-                  <p className="font-bold text-lg text-[var(--text)]" title={!hasSettledPicks && tipster.total_predictions ? 'Stats update when picks settle' : undefined}>{winRateDisplay}</p>
+                  <span className="text-xs uppercase text-[var(--text-muted)]">{t('tipster.win_rate')}</span>
+                  <p className="font-bold text-lg text-[var(--text)]" title={!hasSettledPicks && tipster.total_predictions ? t('tipster.stats_update') : undefined}>{winRateDisplay}</p>
                 </div>
                 <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
-                  <span className="text-xs uppercase text-[var(--text-muted)]">Streak</span>
+                  <span className="text-xs uppercase text-[var(--text-muted)]">{t('tipster.streak')}</span>
                   <p className="font-bold text-lg text-[var(--text)]">{streakDisplay}</p>
                 </div>
                 <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
-                  <span className="text-xs uppercase text-[var(--text-muted)]">Won / Lost</span>
+                  <span className="text-xs uppercase text-[var(--text-muted)]">{t('tipster.won_lost')}</span>
                   <p className="font-bold text-lg text-[var(--text)]">
                     {tipster.total_wins}W / {tipster.total_losses}L
                   </p>
                 </div>
                 <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
-                  <span className="text-xs uppercase text-[var(--text-muted)]">Best Streak</span>
+                  <span className="text-xs uppercase text-[var(--text-muted)]">{t('tipster.best_streak')}</span>
                   <p className="font-bold text-lg text-[var(--text)]">
                     {tipster.best_streak != null && tipster.best_streak > 0
                       ? `🔥 ${tipster.best_streak}W`
@@ -378,17 +460,39 @@ export default function TipsterProfilePage() {
                   </p>
                 </div>
                 <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
-                  <span className="text-xs uppercase text-[var(--text-muted)]">Predictions</span>
+                  <span className="text-xs uppercase text-[var(--text-muted)]">{t('tipster.predictions')}</span>
                   <p className="font-bold text-lg text-[var(--text)]">{tipster.total_predictions}</p>
                 </div>
+                {tipster.avg_odds != null && Number(tipster.avg_odds) > 0 && (
+                  <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
+                    <span className="text-xs uppercase text-[var(--text-muted)]">{t('tipster.avg_odds')}</span>
+                    <p className="font-bold text-lg text-[var(--text)]">{Number(tipster.avg_odds).toFixed(2)}</p>
+                  </div>
+                )}
               </div>
+              {/* Buyer rating stars */}
+              {reviewSummary && reviewSummary.total > 0 && (
+                <div className="flex items-center gap-1.5 mt-2">
+                  <span className="flex">
+                    {[1,2,3,4,5].map((s) => (
+                      <span key={s} className={`text-base ${s <= Math.round(reviewSummary.avg) ? 'text-amber-400' : 'text-gray-300'}`}>★</span>
+                    ))}
+                  </span>
+                  <span className="text-sm font-semibold text-amber-500">{reviewSummary.avg}</span>
+                  <span className="text-xs text-[var(--text-muted)]">({reviewSummary.total} {reviewSummary.total !== 1 ? t('tipster.reviews') : t('tipster.review')})</span>
+                </div>
+              )}
+              {/* Platform fee transparency note */}
+              <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
+                🏛 {t('tipster.commission_note_full')} <Link href="/resources" className="underline hover:text-[var(--primary)]">{t('tipster.learn_more')}</Link>
+              </p>
             </div>
           </div>
         </div>
 
         {subscriptionPackages.length > 0 && (
           <section className="max-w-6xl mx-auto px-4 mb-10">
-            <h2 className="text-lg font-semibold text-[var(--text)] mb-4">Subscription Packages</h2>
+            <h2 className="text-lg font-semibold text-[var(--text)] mb-4">{t('tipster.subscription_packages')}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {subscriptionPackages.map((pkg) => {
                 const isSubscribed = subscribedPackageIds.has(pkg.id);
@@ -401,17 +505,17 @@ export default function TipsterProfilePage() {
                     <h3 className="font-semibold text-[var(--text)] mb-1">{pkg.name}</h3>
                     <p className="text-2xl font-bold text-[var(--primary)] mb-2">GHS {Number(pkg.price).toFixed(2)}<span className="text-sm font-normal text-[var(--text-muted)]">/{pkg.durationDays}d</span></p>
                     {pkg.roiGuaranteeEnabled && pkg.roiGuaranteeMin != null && (
-                      <p className="text-xs text-[var(--text-muted)] mb-3">ROI guarantee: refund if below {pkg.roiGuaranteeMin}%</p>
+                      <p className="text-xs text-[var(--text-muted)] mb-3">{t('tipster.roi_guarantee', { n: String(pkg.roiGuaranteeMin) })}</p>
                     )}
                     {isSubscribed ? (
-                      <span className="inline-flex px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 text-sm font-medium">Subscribed</span>
+                      <span className="inline-flex px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 text-sm font-medium">{t('tipster.subscribed')}</span>
                     ) : (
                       <button
                         onClick={() => handleSubscribe(pkg.id)}
                         disabled={!canSubscribe || subscribeLoading === pkg.id}
                         className="w-full py-2.5 px-4 rounded-lg font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
-                        {subscribeLoading === pkg.id ? '...' : `Subscribe`}
+                        {subscribeLoading === pkg.id ? '...' : t('tipster.subscribe')}
                       </button>
                     )}
                   </div>
@@ -422,7 +526,8 @@ export default function TipsterProfilePage() {
         )}
 
         <section className="max-w-6xl mx-auto px-4 mb-12">
-          <div className="flex items-center gap-2 mb-4">
+          {/* Active / Archive tabs */}
+          <div className="flex flex-wrap items-center gap-2 mb-3">
             <div className="inline-flex p-1 rounded-xl bg-white/80 dark:bg-gray-800/80 border border-emerald-200/60 dark:border-emerald-700/40 shadow-sm">
               <button
                 onClick={() => setCouponFilter('active')}
@@ -432,7 +537,7 @@ export default function TipsterProfilePage() {
                     : 'text-[var(--text-muted)] hover:text-[var(--text)]'
                 }`}
               >
-                Active
+                {t('tipster.active')}
               </button>
               <button
                 onClick={() => setCouponFilter('archive')}
@@ -442,23 +547,60 @@ export default function TipsterProfilePage() {
                     : 'text-[var(--text-muted)] hover:text-[var(--text)]'
                 }`}
               >
-                Archive
+                {t('tipster.archive')}
               </button>
             </div>
             <span className="text-sm text-[var(--text-muted)]">
               {couponFilter === 'active'
-                ? `${marketplace_coupons?.length ?? 0} available`
-                : `${archived_coupons.length} settled`}
+                ? t('tipster.available', { n: String(filteredActive.length) })
+                : t('tipster.settled', { n: String(filteredArchive.length) })}
             </span>
           </div>
 
+          {/* Sport filter pills — only shown when tipster has multi-sport coupons */}
+          {availableSports.length > 1 && (
+            <div className="flex flex-wrap gap-2 mb-5">
+              <button
+                onClick={() => setSportFilter('all')}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                  sportFilter === 'all'
+                    ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
+                    : 'bg-white/60 dark:bg-gray-800/60 text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
+                }`}
+              >
+                🌐 {t('tipster.all_sports')}
+              </button>
+              {availableSports.map((s) => {
+                const meta = SPORT_META[s];
+                if (!meta) return null;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => setSportFilter(s)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                      sportFilter === s
+                        ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
+                        : 'bg-white/60 dark:bg-gray-800/60 text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
+                    }`}
+                  >
+                    {meta.icon} {meta.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {couponFilter === 'active' && (
             <>
-              {!marketplace_coupons?.length ? (
-                <p className="text-[var(--text-muted)]">No active predictions.</p>
+              {!filteredActive.length ? (
+                <p className="text-[var(--text-muted)]">
+                  {sportFilter !== 'all'
+                    ? t('tipster.no_active_picks_sport', { sport: SPORT_META[sportFilter]?.label ?? sportFilter })
+                    : t('tipster.no_active_predictions')}
+                </p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
-                  {marketplace_coupons.map((a) => {
+                  {filteredActive.map((a) => {
                     const isPurchased = purchasedIds.has(a.id);
                     const canPurchase =
                       a.price === 0 || (walletBalance !== null && walletBalance >= a.price);
@@ -467,6 +609,7 @@ export default function TipsterProfilePage() {
                         key={a.id}
                         id={a.id}
                         title={a.title}
+                        sport={a.sport}
                         totalPicks={a.totalPicks}
                         totalOdds={a.totalOdds}
                         price={a.price}
@@ -491,15 +634,20 @@ export default function TipsterProfilePage() {
 
           {couponFilter === 'archive' && (
             <>
-              {archived_coupons.length === 0 ? (
-                <p className="text-[var(--text-muted)]">No settled coupons yet.</p>
+              {filteredArchive.length === 0 ? (
+                <p className="text-[var(--text-muted)]">
+                  {sportFilter !== 'all'
+                    ? t('tipster.no_settled_picks_sport', { sport: SPORT_META[sportFilter]?.label ?? sportFilter })
+                    : t('tipster.no_settled_coupons')}
+                </p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
-                  {archived_coupons.map((a) => (
+                  {filteredArchive.map((a) => (
                     <PickCard
                       key={a.id}
                       id={a.id}
                       title={a.title}
+                      sport={a.sport}
                       totalPicks={a.totalPicks}
                       totalOdds={a.totalOdds}
                       price={a.price}

@@ -15,8 +15,11 @@ export class ResourceCategory {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 50, unique: true })
+  @Column({ length: 50 })
   slug: string;
+
+  @Column({ length: 5, default: 'en' })
+  language: string;
 
   @Column({ length: 100 })
   name: string;

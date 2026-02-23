@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 
-const CATEGORIES = ['news', 'transfer_rumour', 'confirmed_transfer', 'gossip'] as const;
+const CATEGORIES = ['news', 'transfer_rumour', 'confirmed_transfer', 'injury', 'gossip'] as const;
+const LANGUAGES = ['en', 'fr'] as const;
 
 export default function AdminNewsCreatePage() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function AdminNewsCreatePage() {
     excerpt: '',
     content: '',
     category: 'news' as (typeof CATEGORIES)[number],
+    language: 'en' as (typeof LANGUAGES)[number],
     imageUrl: '',
     sourceUrl: '',
     featured: false,
@@ -82,17 +84,32 @@ export default function AdminNewsCreatePage() {
               required
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
-            <select
-              value={form.category}
-              onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as any }))}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-            >
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c.replace('_', ' ')}</option>
-              ))}
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+              <select
+                value={form.category}
+                onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as any }))}
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+              >
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{c.replace('_', ' ')}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Language</label>
+              <select
+                value={form.language}
+                onChange={(e) => setForm((f) => ({ ...f, language: e.target.value as any }))}
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+              >
+                {LANGUAGES.map((l) => (
+                  <option key={l} value={l}>{l === 'en' ? 'English' : 'Français'}</option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-0.5">Same slug for French = same article, different language</p>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Excerpt</label>

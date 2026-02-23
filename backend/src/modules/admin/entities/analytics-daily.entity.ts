@@ -38,6 +38,9 @@ export class AnalyticsDaily {
   @Column({ default: 0 })
   purchases: number;
 
+  @Column({ name: 'errors_count', default: 0 })
+  errorsCount: number;
+
   @Column('decimal', { precision: 12, scale: 2, default: 0 })
   revenue: number;
 

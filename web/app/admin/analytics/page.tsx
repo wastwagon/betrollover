@@ -1,7 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  LineChart, Line, PieChart, Pie, Cell, Legend,
+} from 'recharts';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 
@@ -98,6 +103,63 @@ interface AiDashboardMetrics {
   };
 }
 
+interface SportStat {
+  sport: string;
+  totalPicks: number;
+  wonPicks: number;
+  lostPicks: number;
+  pendingPicks: number;
+  winRate: number;
+  revenue: number;
+  avgOdds: number;
+}
+
+interface RevenueTrendPoint {
+  date: string;
+  revenue: number;
+  purchases: number;
+}
+
+interface TopTipsterBySport {
+  sport: string;
+  userId: number;
+  displayName: string;
+  username: string;
+  totalPicks: number;
+  wonPicks: number;
+  winRate: number;
+  roi: number;
+}
+
+interface CommissionRevenue {
+  allTime: number;
+  last30d: number;
+  last7d: number;
+  recentTransactions: Array<{
+    id: number;
+    amount: number;
+    reference: string | null;
+    description: string | null;
+    createdAt: string;
+    userId: number;
+  }>;
+}
+
+const SPORT_COLORS: Record<string, string> = {
+  Football:          '#10b981',
+  Basketball:        '#f97316',
+  Rugby:             '#f59e0b',
+  MMA:               '#ef4444',
+  Volleyball:        '#3b82f6',
+  Hockey:            '#06b6d4',
+  'American Football': '#8b5cf6',
+  Tennis:            '#eab308',
+};
+const SPORT_ICONS: Record<string, string> = {
+  Football: '⚽', Basketball: '🏀', Rugby: '🏉', MMA: '🥊',
+  Volleyball: '🏐', Hockey: '🏒', 'American Football': '🏈', Tennis: '🎾',
+};
+
 export default function AdminAnalyticsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -112,14 +174,20 @@ export default function AdminAnalyticsPage() {
   const [cohorts, setCohorts] = useState<{ week: string; signups: number }[] | null>(null);
   const [retention, setRetention] = useState<{ activeLast7d: number; activeLast14d: number; returningUsers: number; retentionRate: number } | null>(null);
   const [visitorStats, setVisitorStats] = useState<{ uniqueSessions: number; pageViews: number; topPages: { page: string; views: number }[] } | null>(null);
+  const [sportBreakdown, setSportBreakdown] = useState<SportStat[]>([]);
+  const [revenueTrend, setRevenueTrend] = useState<RevenueTrendPoint[]>([]);
+  const [topTipstersBySport, setTopTipstersBySport] = useState<TopTipsterBySport[]>([]);
+  const [commissionRevenue, setCommissionRevenue] = useState<CommissionRevenue | null>(null);
+  const [chatStats, setChatStats] = useState<{ totalMessages: number; todayMessages: number; flaggedMessages: number; activeBans: number; roomBreakdown: { name: string; icon: string; count: number }[] } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'revenue' | 'users' | 'picks' | 'engagement' | 'visitors' | 'ai'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'revenue' | 'users' | 'picks' | 'engagement' | 'visitors' | 'ai' | 'sports'>('overview');
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d'>('30d');
 
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab === 'ai') setActiveTab('ai');
     if (tab === 'visitors') setActiveTab('visitors');
+    if (tab === 'sports') setActiveTab('sports');
   }, [searchParams]);
 
   useEffect(() => {
@@ -174,8 +242,20 @@ export default function AdminAnalyticsPage() {
       fetch(`${getApiUrl()}/admin/analytics/visitors?days=7`, { headers })
         .then((r) => (r.ok ? r.json() : null))
         .catch((e) => { console.error('Visitors error:', e); return null; }),
+      fetch(`${getApiUrl()}/admin/analytics/sport-breakdown`, { headers })
+        .then((r) => (r.ok ? r.json() : []))
+        .catch(() => []),
+      fetch(`${getApiUrl()}/admin/analytics/revenue-trend?days=${days}`, { headers })
+        .then((r) => (r.ok ? r.json() : []))
+        .catch(() => []),
+      fetch(`${getApiUrl()}/admin/analytics/top-tipsters-by-sport?limit=3`, { headers })
+        .then((r) => (r.ok ? r.json() : []))
+        .catch(() => []),
+      fetch(`${getApiUrl()}/admin/analytics/commission-revenue`, { headers })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null),
     ])
-      .then(([ts, f, ub, rev, pp, eng, rt, ai, coh, ret, vis]) => {
+      .then(([ts, f, ub, rev, pp, eng, rt, ai, coh, ret, vis, sb, rt2, ttbs, commRev]) => {
         setTimeSeries(ts);
         setFunnel(f);
         setUserBehavior(ub);
@@ -187,6 +267,30 @@ export default function AdminAnalyticsPage() {
         setCohorts(Array.isArray(coh) ? coh : null);
         setRetention(ret);
         setVisitorStats(vis);
+        setSportBreakdown(Array.isArray(sb) ? sb : []);
+        setRevenueTrend(Array.isArray(rt2) ? rt2 : []);
+        setTopTipstersBySport(Array.isArray(ttbs) ? ttbs : []);
+        setCommissionRevenue(commRev ?? null);
+
+        // Fetch chat stats separately (non-blocking)
+        fetch(`${getApiUrl()}/chat/admin/flagged?page=1`, { headers })
+          .then((r) => r.ok ? r.json() : null)
+          .then((flaggedData) => {
+            Promise.all([
+              fetch(`${getApiUrl()}/chat/rooms`, { headers }).then((r) => r.ok ? r.json() : []),
+              fetch(`${getApiUrl()}/chat/admin/bans`, { headers }).then((r) => r.ok ? r.json() : {}),
+            ]).then(([roomsData, bansData]) => {
+              const rooms = Array.isArray(roomsData) ? roomsData : [];
+              const today = rooms.reduce((s: number, r: any) => s + (r.todayMessages || 0), 0);
+              setChatStats({
+                totalMessages: rooms.reduce((s: number, r: any) => s + (r.todayMessages || 0), 0),
+                todayMessages: today,
+                flaggedMessages: flaggedData?.total ?? 0,
+                activeBans: (bansData as any)?.data?.length ?? (Array.isArray(bansData) ? bansData.length : 0),
+                roomBreakdown: rooms.map((r: any) => ({ name: r.name, icon: r.icon, count: r.todayMessages || 0 })),
+              });
+            }).catch(() => {});
+          }).catch(() => {});
       })
       .catch((e) => { console.error('Analytics fetch error:', e); })
       .finally(() => setLoading(false));
@@ -281,26 +385,81 @@ export default function AdminAnalyticsPage() {
               <p className="text-xs opacity-75 mt-2">{realTime.purchases.last7d} this week</p>
             </div>
             <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl p-6 text-white">
-              <p className="text-sm opacity-90 mb-1">Revenue (24h)</p>
+              <p className="text-sm opacity-90 mb-1">Coupon Revenue (24h)</p>
               <p className="text-3xl font-bold">GHS {(realTime.revenue.last24h ?? 0).toFixed(2)}</p>
               <p className="text-xs opacity-75 mt-2">GHS {(realTime.revenue.last7d ?? 0).toFixed(2)} this week</p>
             </div>
           </div>
         )}
 
+        {/* Platform Commission Revenue strip */}
+        {commissionRevenue && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="md:col-span-1 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-2xl shadow-xl p-5 text-white">
+              <p className="text-xs font-semibold opacity-90 uppercase tracking-wider mb-1">Commission (All Time)</p>
+              <p className="text-2xl font-bold">GHS {commissionRevenue.allTime.toFixed(2)}</p>
+              <p className="text-xs opacity-80 mt-1">Platform revenue from settlements</p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow p-5">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Last 30 Days</p>
+              <p className="text-xl font-bold text-amber-600">GHS {commissionRevenue.last30d.toFixed(2)}</p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow p-5">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Last 7 Days</p>
+              <p className="text-xl font-bold text-amber-600">GHS {commissionRevenue.last7d.toFixed(2)}</p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow p-5 flex flex-col justify-between">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Settlements</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">{commissionRevenue.recentTransactions.length}</p>
+              <button
+                onClick={() => setActiveTab('revenue')}
+                className="text-xs text-amber-600 hover:underline mt-auto"
+              >
+                View commission log →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Community Chat Stats */}
+        {chatStats && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-indigo-600 rounded-2xl p-5 text-white">
+              <p className="text-xs font-semibold opacity-90 uppercase tracking-wider mb-1">Messages Today</p>
+              <p className="text-3xl font-bold">{chatStats.todayMessages}</p>
+              <p className="text-xs opacity-80 mt-1">Across all rooms</p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-5">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Flagged Messages</p>
+              <p className={`text-2xl font-bold ${chatStats.flaggedMessages > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
+                {chatStats.flaggedMessages}
+              </p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-5">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Active Bans</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{chatStats.activeBans}</p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-5 flex flex-col justify-between">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Chat Rooms</p>
+              <p className="text-2xl font-bold text-indigo-600">{chatStats.roomBreakdown.length}</p>
+              <Link href="/admin/chat" className="text-xs text-indigo-600 hover:underline mt-auto">Manage chat →</Link>
+            </div>
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="flex gap-3 mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
-          {(['overview', 'revenue', 'users', 'picks', 'engagement', 'visitors', 'ai'] as const).map((tab) => (
+          {(['overview', 'sports', 'revenue', 'users', 'picks', 'engagement', 'visitors', 'ai'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-3 font-semibold transition-colors border-b-2 ${
+              className={`px-6 py-3 font-semibold transition-colors border-b-2 whitespace-nowrap ${
                 activeTab === tab
-                  ? 'border-red-600 text-red-600 dark:text-red-400'
+                  ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400'
                   : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'sports' ? '🌍 Sports' : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
         </div>
@@ -373,11 +532,82 @@ export default function AdminAnalyticsPage() {
         )}
 
         {/* Revenue Tab */}
-        {activeTab === 'revenue' && revenue && (
+        {activeTab === 'revenue' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Commission revenue summary */}
+            {commissionRevenue && (
+              <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/10 border border-amber-200 dark:border-amber-800/40 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                      🏛 Platform Commission Revenue
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                      Automatically deducted from tipster payouts on winning coupon settlements.
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-amber-600">GHS {commissionRevenue.allTime.toFixed(2)}</p>
+                    <p className="text-xs text-gray-500">All time</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 mb-5">
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-amber-100 dark:border-amber-800/30">
+                    <p className="text-xs text-gray-500 mb-1">Last 30 Days</p>
+                    <p className="text-xl font-bold text-amber-600">GHS {commissionRevenue.last30d.toFixed(2)}</p>
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-amber-100 dark:border-amber-800/30">
+                    <p className="text-xs text-gray-500 mb-1">Last 7 Days</p>
+                    <p className="text-xl font-bold text-amber-600">GHS {commissionRevenue.last7d.toFixed(2)}</p>
+                  </div>
+                </div>
+                {/* Commission log table */}
+                {commissionRevenue.recentTransactions.length > 0 && (
+                  <div className="overflow-x-auto rounded-xl border border-amber-100 dark:border-amber-800/30">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-amber-50 dark:bg-amber-900/20 text-left">
+                          <th className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                          <th className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pick Ref</th>
+                          <th className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tipster ID</th>
+                          <th className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Commission</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white dark:bg-gray-800 divide-y divide-amber-50 dark:divide-amber-900/10">
+                        {commissionRevenue.recentTransactions.map((tx) => (
+                          <tr key={tx.id} className="hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-colors">
+                            <td className="px-4 py-2.5 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                              {new Date(tx.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
+                            </td>
+                            <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300 font-mono text-xs">
+                              {tx.reference ?? '—'}
+                            </td>
+                            <td className="px-4 py-2.5 text-gray-600 dark:text-gray-400">
+                              #{tx.userId}
+                            </td>
+                            <td className="px-4 py-2.5 text-right font-bold text-amber-600 whitespace-nowrap">
+                              GHS {Number(tx.amount).toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr className="bg-amber-50 dark:bg-amber-900/20 font-semibold">
+                          <td colSpan={3} className="px-4 py-2.5 text-gray-700 dark:text-gray-300">Total (shown)</td>
+                          <td className="px-4 py-2.5 text-right text-amber-700 dark:text-amber-400">
+                            GHS {commissionRevenue.recentTransactions.reduce((s, t) => s + Number(t.amount), 0).toFixed(2)}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {revenue && <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-xl p-6 text-white">
-                <p className="text-sm opacity-90 mb-1">Total Revenue</p>
+                <p className="text-sm opacity-90 mb-1">Coupon Sales Revenue</p>
                 <p className="text-3xl font-bold">GHS {(revenue.totalRevenue ?? 0).toFixed(2)}</p>
               </div>
               <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white">
@@ -388,44 +618,48 @@ export default function AdminAnalyticsPage() {
                 <p className="text-sm opacity-90 mb-1">Revenue Trend</p>
                 <p className="text-3xl font-bold">{revenue.revenueTrend.length} days</p>
               </div>
-            </div>
+            </div>}
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Revenue Trend</h3>
-              <SimpleChart data={revenue.revenueTrend.map((r) => ({ date: r.date, value: r.revenue }))} color="green" />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Selling Picks</h3>
-                <div className="space-y-3">
-                  {revenue.topSellingPicks.slice(0, 5).map((pick, i) => (
-                    <div key={i} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">Pick #{pick.pickId}</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{pick.sales} sales</p>
-                      </div>
-                      <p className="font-semibold text-green-600 dark:text-green-400">GHS {pick.revenue.toFixed(2)}</p>
-                    </div>
-                  ))}
+            {revenue && (
+              <>
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Coupon Sales Revenue Trend</h3>
+                  <SimpleChart data={revenue.revenueTrend.map((r) => ({ date: r.date, value: r.revenue }))} color="green" />
                 </div>
-              </div>
 
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Revenue by Tipster</h3>
-                <div className="space-y-3">
-                  {revenue.revenueByTipster.slice(0, 5).map((tipster, i) => (
-                    <div key={i} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">Tipster #{tipster.tipsterId}</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{tipster.sales} sales</p>
-                      </div>
-                      <p className="font-semibold text-green-600 dark:text-green-400">GHS {tipster.revenue.toFixed(2)}</p>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Selling Picks</h3>
+                    <div className="space-y-3">
+                      {revenue.topSellingPicks.slice(0, 5).map((pick, i) => (
+                        <div key={i} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-white">Pick #{pick.pickId}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{pick.sales} sales</p>
+                          </div>
+                          <p className="font-semibold text-green-600 dark:text-green-400">GHS {pick.revenue.toFixed(2)}</p>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Revenue by Tipster</h3>
+                    <div className="space-y-3">
+                      {revenue.revenueByTipster.slice(0, 5).map((tipster, i) => (
+                        <div key={i} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-white">Tipster #{tipster.tipsterId}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{tipster.sales} sales</p>
+                          </div>
+                          <p className="font-semibold text-green-600 dark:text-green-400">GHS {tipster.revenue.toFixed(2)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         )}
 
@@ -632,11 +866,15 @@ export default function AdminAnalyticsPage() {
                 </div>
                 <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">API Uptime</p>
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">{aiMetrics.system_health.api_uptime}%</p>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    {aiMetrics.system_health.api_uptime != null ? `${aiMetrics.system_health.api_uptime}%` : '—'}
+                  </p>
                 </div>
                 <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Avg Response Time</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{aiMetrics.system_health.average_response_time} ms</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {aiMetrics.system_health.average_response_time != null ? `${aiMetrics.system_health.average_response_time} ms` : '—'}
+                  </p>
                 </div>
                 <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Errors Today</p>
@@ -690,6 +928,183 @@ export default function AdminAnalyticsPage() {
                 </div>
               </div>
             </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Sports Tab */}
+        {activeTab === 'sports' && (
+          <div className="space-y-8">
+            {sportBreakdown.length === 0 ? (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+                <div className="text-5xl mb-4">🌍</div>
+                <p className="text-gray-500 text-lg">No sport data yet — create picks across different sports to see breakdown here.</p>
+              </div>
+            ) : (
+              <>
+                {/* KPI cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {sportBreakdown.map((s) => (
+                    <div key={s.sport} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+                      <p className="text-2xl mb-1">{SPORT_ICONS[s.sport] ?? '🎽'}</p>
+                      <p className="font-bold text-gray-900 dark:text-white text-sm">{s.sport}</p>
+                      <p className="text-2xl font-bold text-emerald-600 mt-1">{s.totalPicks}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">picks total</p>
+                      <div className="mt-2 flex gap-2 text-xs">
+                        <span className="text-emerald-600 font-semibold">{s.winRate}% WR</span>
+                        <span className="text-gray-400">·</span>
+                        <span className="text-gray-600 dark:text-gray-400">{s.avgOdds}x odds</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Picks by sport — horizontal bar chart */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Picks by Sport</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Total, won, and lost coupons per sport</p>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={sportBreakdown} layout="vertical" margin={{ left: 20, right: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 11 }} />
+                      <YAxis dataKey="sport" type="category" tick={{ fontSize: 12 }} width={110} />
+                      <Tooltip
+                        formatter={(value: any, name: any) => [value, (name as string) === 'totalPicks' ? 'Total' : name === 'wonPicks' ? 'Won' : 'Lost']}
+                        contentStyle={{ borderRadius: 8, fontSize: 13 }}
+                      />
+                      <Legend formatter={(v) => v === 'totalPicks' ? 'Total' : v === 'wonPicks' ? 'Won' : 'Lost'} />
+                      <Bar dataKey="totalPicks" fill="#6366f1" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="wonPicks" fill="#10b981" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="lostPicks" fill="#ef4444" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Win rate & Revenue — side by side */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Win rate by sport */}
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Win Rate by Sport</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">% of settled coupons that won</p>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={sportBreakdown.filter((s) => s.totalPicks - s.pendingPicks > 0)}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="sport" tick={{ fontSize: 10 }} tickFormatter={(v: string) => v.split(' ')[0]} />
+                        <YAxis domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11 }} />
+                        <Tooltip formatter={(v: any) => [`${Number(v).toFixed(1)}%`, "Win Rate"] as any} contentStyle={{ borderRadius: 8, fontSize: 13 }} />
+                        <Bar dataKey="winRate" radius={[4, 4, 0, 0]}>
+                          {sportBreakdown.map((s) => (
+                            <Cell key={s.sport} fill={SPORT_COLORS[s.sport] ?? '#6366f1'} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Revenue by sport — pie */}
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Revenue by Sport</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">From paid coupon purchases</p>
+                    {sportBreakdown.every((s) => s.revenue === 0) ? (
+                      <div className="py-10 text-center text-gray-400 text-sm">No paid pick revenue yet</div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={220}>
+                        <PieChart>
+                          <Pie
+                            data={sportBreakdown.filter((s) => s.revenue > 0)}
+                            dataKey="revenue"
+                            nameKey="sport"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={80}
+                            label={(props: any) =>
+                              `${SPORT_ICONS[props.sport] ?? ''} ${((props.percent ?? 0) * 100).toFixed(0)}%`
+                            }
+                          >
+                            {sportBreakdown.filter((s) => s.revenue > 0).map((s) => (
+                              <Cell key={s.sport} fill={SPORT_COLORS[s.sport] ?? '#6366f1'} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(v: any) => [`GHS ${Number(v).toFixed(2)}`, "Revenue"] as any} contentStyle={{ borderRadius: 8, fontSize: 13 }} />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
+                </div>
+
+                {/* Revenue trend (30d line chart) */}
+                {revenueTrend.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Revenue Trend</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Daily paid pick revenue (GHS)</p>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <LineChart data={revenueTrend}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v: string) => v.slice(5)} />
+                        <YAxis tickFormatter={(v: number) => `GHS ${v}`} tick={{ fontSize: 11 }} />
+                        <Tooltip
+                          formatter={(v: any, name: any) => [name === 'revenue' ? `GHS ${Number(v).toFixed(2)}` : v, name === 'revenue' ? 'Revenue' : 'Purchases'] as any}
+                          contentStyle={{ borderRadius: 8, fontSize: 13 }}
+                        />
+                        <Legend />
+                        <Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} dot={false} name="revenue" />
+                        <Line type="monotone" dataKey="purchases" stroke="#6366f1" strokeWidth={2} dot={false} name="purchases" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                {/* Top tipsters by sport — table */}
+                {topTipstersBySport.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Top Tipsters by Sport</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Ranked by win rate (settled picks only)</p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-200 dark:border-gray-700">
+                            <th className="text-left py-2 px-3 font-semibold text-gray-600 dark:text-gray-400">Sport</th>
+                            <th className="text-left py-2 px-3 font-semibold text-gray-600 dark:text-gray-400">Tipster</th>
+                            <th className="text-right py-2 px-3 font-semibold text-gray-600 dark:text-gray-400">Picks</th>
+                            <th className="text-right py-2 px-3 font-semibold text-gray-600 dark:text-gray-400">Won</th>
+                            <th className="text-right py-2 px-3 font-semibold text-gray-600 dark:text-gray-400">Win Rate</th>
+                            <th className="text-right py-2 px-3 font-semibold text-gray-600 dark:text-gray-400">ROI</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {topTipstersBySport.map((t, i) => (
+                            <tr key={`${t.sport}-${t.userId}`} className={`border-b border-gray-100 dark:border-gray-700/50 ${i % 2 === 0 ? '' : 'bg-gray-50/50 dark:bg-gray-700/20'}`}>
+                              <td className="py-2.5 px-3">
+                                <span className="flex items-center gap-1.5">
+                                  <span>{SPORT_ICONS[t.sport] ?? '🎽'}</span>
+                                  <span className="text-gray-700 dark:text-gray-300 font-medium">{t.sport}</span>
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3">
+                                <span className="font-semibold text-gray-900 dark:text-white">{t.displayName}</span>
+                                <span className="text-gray-400 text-xs ml-1">@{t.username}</span>
+                              </td>
+                              <td className="py-2.5 px-3 text-right tabular-nums text-gray-700 dark:text-gray-300">{t.totalPicks}</td>
+                              <td className="py-2.5 px-3 text-right tabular-nums text-emerald-600 font-semibold">{t.wonPicks}</td>
+                              <td className="py-2.5 px-3 text-right">
+                                <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold ${t.winRate >= 60 ? 'bg-emerald-100 text-emerald-700' : t.winRate >= 40 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                                  {t.winRate}%
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3 text-right tabular-nums">
+                                <span className={`font-semibold ${t.roi >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                  {t.roi >= 0 ? '+' : ''}{t.roi}%
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>

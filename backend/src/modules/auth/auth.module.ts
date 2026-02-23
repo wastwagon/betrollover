@@ -11,8 +11,10 @@ import { UsersModule } from '../users/users.module';
 import { WalletModule } from '../wallet/wallet.module';
 import { OtpModule } from '../otp/otp.module';
 import { EmailModule } from '../email/email.module';
+import { ReferralsModule } from '../referrals/referrals.module';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { PasswordResetOtp } from '../otp/entities/password-reset-otp.entity';
+import { RefreshToken } from './entities/refresh-token.entity';
 
 @Module({
   imports: [
@@ -28,10 +30,11 @@ import { PasswordResetOtp } from '../otp/entities/password-reset-otp.entity';
       }),
       inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([Tipster, PasswordResetOtp]),
+    TypeOrmModule.forFeature([Tipster, PasswordResetOtp, RefreshToken]),
     WalletModule,
     OtpModule,
     EmailModule,
+    ReferralsModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, LocalStrategy],
