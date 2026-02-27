@@ -9,7 +9,6 @@ const menuItems = [
   { href: '/admin/analytics', icon: '📈', label: 'Analytics' },
   { href: '/admin/ai-predictions', icon: '🤖', label: 'AI Predictions' },
   { href: '/admin/users', icon: '👥', label: 'Users' },
-  { href: '/admin/picks', icon: '🎯', label: 'Picks' },
   { href: '/admin/marketplace', icon: '🛒', label: 'Marketplace' },
   { href: '/admin/purchases', icon: '🛍️', label: 'Purchases' },
   { href: '/admin/deposits', icon: '💳', label: 'Deposits' },

@@ -96,10 +96,8 @@ export class AdminService {
         .then((r) => Number(r?.total ?? 0)),
     ]);
 
-    const [totalPicks, pendingPicks, approvedPicks, activeMarketplace] = await Promise.all([
+    const [totalPicks, activeMarketplace] = await Promise.all([
       this.ticketRepo.count(),
-      this.ticketRepo.count({ where: { status: 'pending_approval' } }),
-      this.ticketRepo.count({ where: { status: 'active' } }),
       this.marketplaceRepo.count({ where: { status: 'active' } }),
     ]);
 
@@ -127,7 +125,7 @@ export class AdminService {
     return {
       users: { total: totalTipsters, tipsters: totalTipsters },
       wallets: { count: totalWallets, totalBalance },
-      picks: { total: totalPicks, pending: pendingPicks, approved: approvedPicks, activeMarketplace },
+      picks: { total: totalPicks, activeMarketplace },
       escrow: { held: escrowHeld },
       purchases: { total: totalPurchases, revenue: totalRevenue },
       deposits: { total: totalDeposits, pending: pendingDeposits },
@@ -439,32 +437,6 @@ export class AdminService {
       limit: apiSettings.dailyRequestsLimit || 0,
       remaining: (apiSettings.dailyRequestsLimit || 0) - (apiSettings.dailyRequestsUsed || 0),
     };
-  }
-
-  async getPendingPicks() {
-    return this.ticketRepo.find({
-      where: { status: 'pending_approval' },
-      relations: ['picks'],
-      order: { createdAt: 'DESC' },
-    });
-  }
-
-  /** Legacy: Picks are auto-approved when tipsters create them. Use only for manual override. */
-  async approvePick(id: number) {
-    const ticket = await this.ticketRepo.findOne({ where: { id } });
-    if (!ticket) return null;
-    ticket.status = 'active';
-    await this.ticketRepo.save(ticket);
-    return ticket;
-  }
-
-  /** Legacy: Use only for manual removal of a pick. */
-  async rejectPick(id: number) {
-    const ticket = await this.ticketRepo.findOne({ where: { id } });
-    if (!ticket) return null;
-    ticket.status = 'cancelled';
-    await this.ticketRepo.save(ticket);
-    return ticket;
   }
 
   async getMarketplace() {

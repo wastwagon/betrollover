@@ -67,24 +67,6 @@ export class AdminController {
     return this.adminService.getStats();
   }
 
-  @Get('picks')
-  async getPendingPicks(@CurrentUser() user: User) {
-    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
-    return this.adminService.getPendingPicks();
-  }
-
-  @Post('picks/:id/approve')
-  async approvePick(@CurrentUser() user: User, @Param('id', ParseIntPipe) id: number) {
-    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
-    return this.adminService.approvePick(id);
-  }
-
-  @Post('picks/:id/reject')
-  async rejectPick(@CurrentUser() user: User, @Param('id', ParseIntPipe) id: number) {
-    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
-    return this.adminService.rejectPick(id);
-  }
-
   @Get('marketplace')
   async getMarketplace(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');

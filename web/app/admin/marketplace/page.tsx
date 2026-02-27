@@ -155,7 +155,7 @@ export default function AdminMarketplacePage() {
                 onChange={(e) => setIncludeAll(e.target.checked)}
                 className="rounded border-gray-300"
               />
-              Show all (including started/settled)
+              Show all (including started, settled, removed) — required to delete archived coupons
             </label>
             <button
               onClick={handleFixMarketplace}

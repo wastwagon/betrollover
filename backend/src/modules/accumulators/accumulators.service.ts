@@ -490,8 +490,10 @@ export class AccumulatorsService {
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
     const offset = Math.max(options?.offset ?? 0, 0);
 
+    // Admin with includeAll: show all coupons (active, removed, sold, expired) so they can delete settled/archived
+    const marketplaceWhere = includeAllListings ? {} : { status: 'active' as const };
     const rows = await this.marketplaceRepo.find({
-      where: { status: 'active' },
+      where: marketplaceWhere,
       select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount'],
     });
     const accIds = rows.map((r) => r.accumulatorId);

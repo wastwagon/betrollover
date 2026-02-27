@@ -235,7 +235,6 @@ function DashboardContent() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               <StatCard title={t("dashboard.total_picks")} value={stats?.picks?.total ?? 0} icon="🎯" />
-              <StatCard title="Pending Picks" value={stats?.picks?.pending ?? 0} icon="⏳" />
               <StatCard title="Active Marketplace" value={stats?.picks?.activeMarketplace ?? 0} icon="🛒" />
               <StatCard title="Escrow Held (GHS)" value={stats?.escrow?.held ?? 0} icon="🔒" format="currency" />
             </div>
@@ -292,7 +291,6 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
                 <div className="grid grid-cols-2 gap-1.5">
                   {[
                     { href: '/admin/users',          icon: '👥', label: 'Users' },
-                    { href: '/admin/picks',           icon: '🎯', label: 'Approve Picks' },
                     { href: '/admin/marketplace',     icon: '🛒', label: 'Marketplace' },
                     { href: '/admin/purchases',       icon: '🛍️', label: 'Purchases' },
                     { href: '/admin/deposits',        icon: '💳', label: 'Deposits' },

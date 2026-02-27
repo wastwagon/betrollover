@@ -28,7 +28,7 @@ export class AccumulatorTicket {
   @Column('decimal', { precision: 8, scale: 2, default: 0 })
   price: number;
 
-  @Column({ length: 30, default: 'pending_approval' })
+  @Column({ length: 30, default: 'active' })
   status: string;
 
   @Column({ length: 20, default: 'pending' })
