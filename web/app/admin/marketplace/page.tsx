@@ -39,11 +39,18 @@ interface Accumulator {
   createdAt?: string;
 }
 
+interface MarketplaceTipster {
+  username: string;
+  displayName: string;
+}
+
 export default function AdminMarketplacePage() {
   const router = useRouter();
   const [picks, setPicks] = useState<Accumulator[]>([]);
   const [loading, setLoading] = useState(true);
   const [includeAll, setIncludeAll] = useState(false);
+  const [tipsterUsername, setTipsterUsername] = useState<string>('');
+  const [tipsters, setTipsters] = useState<MarketplaceTipster[]>([]);
   const [fixing, setFixing] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [diagnostic, setDiagnostic] = useState<{
@@ -61,7 +68,10 @@ export default function AdminMarketplacePage() {
       return;
     }
     setLoading(true);
-    const url = `${getApiUrl()}/accumulators/marketplace${includeAll ? '?includeAll=true' : ''}`;
+    const params = new URLSearchParams();
+    if (includeAll) params.set('includeAll', 'true');
+    if (tipsterUsername) params.set('tipsterUsername', tipsterUsername);
+    const url = `${getApiUrl()}/accumulators/marketplace${params.toString() ? `?${params.toString()}` : ''}`;
     fetch(url, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => (r.ok ? r.json() : {}))
       .then((data: { items?: Accumulator[] } | Accumulator[]) => {
@@ -72,9 +82,22 @@ export default function AdminMarketplacePage() {
       .finally(() => setLoading(false));
   };
 
+  const loadTipsters = () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    fetch(`${getApiUrl()}/admin/marketplace/tipsters`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setTipsters(Array.isArray(data) ? data : []))
+      .catch(() => setTipsters([]));
+  };
+
   useEffect(() => {
     loadMarketplace();
-  }, [router, includeAll]);
+  }, [router, includeAll, tipsterUsername]);
+
+  useEffect(() => {
+    loadTipsters();
+  }, [router]);
 
   const loadDiagnostic = () => {
     const token = localStorage.getItem('token');
@@ -161,6 +184,30 @@ export default function AdminMarketplacePage() {
               — Check this to see and delete archived/settled coupons
             </span>
           </div>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by tipster:</label>
+            <select
+              value={tipsterUsername}
+              onChange={(e) => setTipsterUsername(e.target.value)}
+              className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="">All tipsters</option>
+              {tipsters.map((t) => (
+                <option key={t.username} value={t.username}>
+                  {t.displayName} (@{t.username})
+                </option>
+              ))}
+            </select>
+            {tipsterUsername && (
+              <button
+                type="button"
+                onClick={() => setTipsterUsername('')}
+                className="text-sm text-gray-600 dark:text-gray-400 hover:underline"
+              >
+                Clear filter
+              </button>
+            )}
+          </div>
         </div>
         <div className="mb-6 flex flex-wrap gap-3">
           <button
@@ -211,7 +258,11 @@ export default function AdminMarketplacePage() {
             </div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No picks on marketplace</h3>
             <p className="text-gray-600 dark:text-gray-400">
-              {includeAll ? 'No active listings found.' : 'No purchasable picks. Try "Show all" to see started/settled coupons.'}
+              {tipsterUsername
+                ? `No coupons for this tipster.${includeAll ? '' : ' Try "Show all" to include archived/settled.'}`
+                : includeAll
+                  ? 'No active listings found.'
+                  : 'No purchasable picks. Try "Show all" to see started/settled coupons.'}
             </p>
           </div>
         )}

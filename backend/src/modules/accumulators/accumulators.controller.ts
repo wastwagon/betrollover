@@ -48,6 +48,7 @@ export class AccumulatorsController {
     @CurrentUser() user: User,
     @Query('includeAll') includeAll?: string,
     @Query('sport') sport?: string,
+    @Query('tipsterUsername') tipsterUsername?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
@@ -59,6 +60,7 @@ export class AccumulatorsController {
       limit: limitVal,
       offset: offsetVal,
       sport: sport || undefined,
+      tipsterUsername: isAdmin ? tipsterUsername || undefined : undefined,
     });
   }
 

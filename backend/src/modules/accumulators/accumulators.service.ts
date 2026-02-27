@@ -486,7 +486,7 @@ export class AccumulatorsService {
     };
   }
 
-  async getMarketplace(userId: number, includeAllListings = false, options?: { limit?: number; offset?: number; sport?: string }) {
+  async getMarketplace(userId: number, includeAllListings = false, options?: { limit?: number; offset?: number; sport?: string; tipsterUsername?: string }) {
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
     const offset = Math.max(options?.offset ?? 0, 0);
 
@@ -506,6 +506,13 @@ export class AccumulatorsService {
     if (!includeAllListings) {
       ticketWhere.status = 'active';
       ticketWhere.result = 'pending';
+    }
+    if (options?.tipsterUsername) {
+      const tipsterUser = await this.usersRepo.findOne({
+        where: { username: options.tipsterUsername },
+        select: ['id'],
+      });
+      if (tipsterUser) ticketWhere.userId = tipsterUser.id;
     }
     if (options?.sport) {
       const SPORT_DISPLAY_MAP: Record<string, string> = {
@@ -549,6 +556,22 @@ export class AccumulatorsService {
     const paginated = validTickets.slice(offset, offset + limit);
     const items = await this.enrichWithTipsterMetadata(paginated, rows, userId);
     return { items, total, hasMore: offset + items.length < total };
+  }
+
+  /** Tipsters who have marketplace coupons (for admin filter dropdown) */
+  async getMarketplaceTipsters(): Promise<{ username: string; displayName: string }[]> {
+    const rows = await this.marketplaceRepo
+      .createQueryBuilder('pm')
+      .select('DISTINCT pm.seller_id', 'sellerId')
+      .getRawMany();
+    const sellerIds = rows.map((r: any) => r.sellerId).filter(Boolean);
+    if (sellerIds.length === 0) return [];
+    const users = await this.usersRepo.find({
+      where: { id: In(sellerIds) },
+      select: ['username', 'displayName'],
+      order: { displayName: 'ASC' },
+    });
+    return users.map((u) => ({ username: u.username, displayName: u.displayName || u.username }));
   }
 
   /** Diagnostic: why marketplace might be empty (admin debugging) */

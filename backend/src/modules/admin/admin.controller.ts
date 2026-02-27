@@ -79,6 +79,12 @@ export class AdminController {
     return this.accumulatorsService.getMarketplaceDiagnostic();
   }
 
+  @Get('marketplace/tipsters')
+  async getMarketplaceTipsters(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.accumulatorsService.getMarketplaceTipsters();
+  }
+
   @Post('setup/ai-tipsters')
   async initializeAiTipsters(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
