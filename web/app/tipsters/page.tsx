@@ -117,6 +117,7 @@ export default function TipstersPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
+        try { (await import('@/lib/analytics')).trackEvent(isFollowing ? 'unfollowed_tipster' : 'followed_tipster', { username: tipster.username }, token); } catch { /* noop */ }
         showSuccess(isFollowing ? t('tipster.toast_unfollowed') : t('tipster.toast_following'));
       } else {
         setTipsters((prev) =>

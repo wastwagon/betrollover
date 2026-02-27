@@ -221,6 +221,7 @@ export default function TipsterProfilePage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok && profile) {
+        try { (await import('@/lib/analytics')).trackEvent(isFollowing ? 'unfollowed_tipster' : 'followed_tipster', { username }, token); } catch { /* noop */ }
         setProfile({ ...profile, is_following: !isFollowing });
         showSuccess(isFollowing ? t('tipster.toast_unfollowed') : t('tipster.toast_following'));
       }
@@ -248,6 +249,7 @@ export default function TipsterProfilePage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
+        try { (await import('@/lib/analytics')).trackEvent('coupon_purchased', { couponId: id, tipsterUsername: username }, token); } catch { /* noop */ }
         showSuccess(t('tipster.toast_coupon_purchased'));
         setPurchasedIds((prev) => new Set([...Array.from(prev), id]));
         const walletRes = await fetch(`${getApiUrl()}/wallet/balance`, {

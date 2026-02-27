@@ -1,0 +1,3 @@
+-- Phase 6: Analytics retention - no schema change, config only.
+-- Retention is enforced by backend cron (e.g. delete visitor_sessions older than 90 days).
+-- Add a settings row if you use a config table; otherwise env var ANALYTICS_RETENTION_DAYS=90

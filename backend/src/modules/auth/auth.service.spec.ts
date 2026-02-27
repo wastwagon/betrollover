@@ -13,6 +13,7 @@ import { Tipster } from '../predictions/entities/tipster.entity';
 import { PasswordResetOtp } from '../otp/entities/password-reset-otp.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { User, UserRole } from '../users/entities/user.entity';
+import { VisitorSession } from '../admin/entities/visitor-session.entity';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -73,6 +74,7 @@ describe('AuthService', () => {
         { provide: getRepositoryToken(Tipster), useValue: { findOne: jest.fn(), create: jest.fn(), save: jest.fn() } },
         { provide: getRepositoryToken(PasswordResetOtp), useValue: { findOne: jest.fn(), save: jest.fn(), delete: jest.fn() } },
         { provide: getRepositoryToken(RefreshToken), useValue: { findOne: jest.fn(), save: jest.fn(), delete: jest.fn(), create: jest.fn((o) => o) } },
+        { provide: getRepositoryToken(VisitorSession), useValue: { update: jest.fn().mockResolvedValue({ affected: 0 }) } },
       ],
     }).compile();
 

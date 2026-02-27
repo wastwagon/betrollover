@@ -15,6 +15,7 @@ import { Tipster } from '../predictions/entities/tipster.entity';
 import { PasswordResetOtp } from '../otp/entities/password-reset-otp.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { ReferralsService } from '../referrals/referrals.service';
+import { VisitorSession } from '../admin/entities/visitor-session.entity';
 
 const REFRESH_TOKEN_EXPIRY_DAYS = 30;
 
@@ -39,6 +40,8 @@ export class AuthService {
     @InjectRepository(RefreshToken)
     private refreshTokenRepo: Repository<RefreshToken>,
     private referralsService: ReferralsService,
+    @InjectRepository(VisitorSession)
+    private visitorSessionRepo: Repository<VisitorSession>,
   ) { }
 
   async sendRegistrationOtp(email: string) {
@@ -136,6 +139,7 @@ export class AuthService {
     otpCode: string;
     dateOfBirth: string;
     referralCode?: string;
+    sessionId?: string;
   }, clientIp?: string) {
     await this.emailOtpService.verifyOtp(data.email.trim().toLowerCase(), data.otpCode);
     const existing = await this.usersService.findByEmail(data.email);
@@ -194,6 +198,14 @@ export class AuthService {
     // Register referral code if provided (fire-and-forget)
     if (data.referralCode?.trim()) {
       this.referralsService.registerSignup(user.id, data.referralCode.trim()).catch(() => {});
+    }
+
+    // Link analytics session to user for conversion attribution (fire-and-forget)
+    if (data.sessionId?.trim()) {
+      this.visitorSessionRepo.update(
+        { sessionId: data.sessionId.trim().slice(0, 64) },
+        { userId: user.id },
+      ).catch(() => {});
     }
 
     this.emailService.sendAdminNotification({

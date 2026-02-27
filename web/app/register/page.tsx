@@ -77,10 +77,14 @@ function RegisterForm() {
           confirmPassword,
           otpCode,
           ...(referralCode.trim() ? { referralCode: referralCode.trim().toUpperCase() } : {}),
+          ...(typeof sessionStorage !== 'undefined' && sessionStorage.getItem('br_session_id')
+            ? { sessionId: sessionStorage.getItem('br_session_id') }
+            : {}),
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || t('auth.registration_failed'));
+      try { (await import('@/lib/analytics')).trackEvent('registration_completed'); } catch { /* noop */ }
       localStorage.setItem('token', data.access_token);
       router.push('/dashboard');
       router.refresh();

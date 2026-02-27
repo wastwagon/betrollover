@@ -15,6 +15,7 @@ import { ReferralsModule } from '../referrals/referrals.module';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { PasswordResetOtp } from '../otp/entities/password-reset-otp.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
+import { VisitorSession } from '../admin/entities/visitor-session.entity';
 
 @Module({
   imports: [
@@ -30,7 +31,7 @@ import { RefreshToken } from './entities/refresh-token.entity';
       }),
       inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([Tipster, PasswordResetOtp, RefreshToken]),
+    TypeOrmModule.forFeature([Tipster, PasswordResetOtp, RefreshToken, VisitorSession]),
     WalletModule,
     OtpModule,
     EmailModule,

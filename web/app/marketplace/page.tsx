@@ -253,6 +253,7 @@ export default function MarketplacePage() {
 
       if (res.ok) {
         const purchasedTicket = await res.json();
+        try { (await import('@/lib/analytics')).trackEvent('coupon_purchased', { couponId: id }, token); } catch { /* noop */ }
         showSuccess(t('tipster.toast_coupon_purchased'));
         // Mark as purchased
         setPurchasedIds(prev => new Set([...Array.from(prev), id]));

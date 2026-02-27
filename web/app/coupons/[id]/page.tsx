@@ -271,8 +271,9 @@ export default function CouponDetailPage() {
         .then((r) => r.ok ? r.json() : null),
       fetch(`${getApiUrl()}/accumulators/purchased`, { headers })
         .then((r) => r.ok ? r.json() : []),
-    ]).then(([couponData, walletData, purchased]) => {
+    ]).then(async ([couponData, walletData, purchased]) => {
       setCoupon(couponData);
+      if (couponData) { try { (await import('@/lib/analytics')).trackEvent('coupon_viewed', { couponId: id }); } catch { /* noop */ } }
       if (walletData) setWalletBalance(Number(walletData.balance));
       if (Array.isArray(purchased)) {
         const ids = new Set(purchased.map((p: { accumulatorId?: number }) => p.accumulatorId));
@@ -292,6 +293,7 @@ export default function CouponDetailPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
+        try { (await import('@/lib/analytics')).trackEvent('coupon_purchased', { couponId: id }, token); } catch { /* noop */ }
         setIsPurchased(true);
         setPurchaseSuccess(true);
         const w = await fetch(`${getApiUrl()}/wallet/balance`, { headers: { Authorization: `Bearer ${token}` } });

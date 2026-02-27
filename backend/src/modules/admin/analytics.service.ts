@@ -662,12 +662,44 @@ export class AnalyticsService {
     };
   }
 
+  /** Classify referrer into traffic source */
+  private classifyTrafficSource(referrer: string | null): string {
+    if (!referrer || referrer.trim() === '') return 'direct';
+    const r = referrer.toLowerCase();
+    // Internal / same-site
+    if (r.includes('betrollover') || r.includes('localhost') || r.startsWith('/')) return 'direct';
+    // Organic search
+    const searchEngines = ['google', 'bing', 'yahoo', 'duckduckgo', 'baidu', 'yandex', 'ecosia'];
+    if (searchEngines.some((e) => r.includes(e))) return 'organic';
+    // Social
+    const social = ['facebook', 'twitter', 'x.com', 'instagram', 'linkedin', 'telegram', 'tiktok', 'youtube', 'pinterest', 'whatsapp', 'reddit'];
+    if (social.some((s) => r.includes(s))) return 'social';
+    return 'referral';
+  }
+
   /**
-   * Visitor stats from tracking (when available)
+   * Comprehensive visitor analytics from self-hosted tracking (visitor_sessions).
+   * No placeholders; returns real data or zeros.
    */
   async getVisitorStats(days = 7) {
     const start = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-    const [uniqueSessions, pageViews, byPage] = await Promise.all([
+    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const todayStart = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z');
+
+    const [
+      uniqueSessions,
+      pageViews,
+      byPage,
+      totalVisitorsAllTime,
+      todaySessions,
+      todayPageViews,
+      activeSessionsNow,
+      dailyBreakdown,
+      referrerRows,
+      deviceBreakdown,
+      byCountry,
+      avgSessionDurationSec,
+    ] = await Promise.all([
       this.visitorRepo
         .createQueryBuilder('v')
         .select('COUNT(DISTINCT v.sessionId)', 'count')
@@ -683,14 +715,121 @@ export class AnalyticsService {
         .andWhere('v.page IS NOT NULL')
         .groupBy('v.page')
         .orderBy('COUNT(*)', 'DESC')
-        .limit(10)
+        .limit(25)
         .getRawMany(),
+      this.visitorRepo
+        .createQueryBuilder('v')
+        .select('COUNT(DISTINCT v.sessionId)', 'count')
+        .getRawOne()
+        .then((r) => parseInt(r?.count || '0', 10)),
+      this.visitorRepo
+        .createQueryBuilder('v')
+        .select('COUNT(DISTINCT v.sessionId)', 'count')
+        .where('v.createdAt >= :todayStart', { todayStart })
+        .getRawOne()
+        .then((r) => parseInt(r?.count || '0', 10)),
+      this.visitorRepo.count({ where: { createdAt: MoreThanOrEqual(todayStart) } }),
+      this.visitorRepo
+        .createQueryBuilder('v')
+        .select('COUNT(DISTINCT v.sessionId)', 'count')
+        .where('v.createdAt >= :fiveMinAgo', { fiveMinAgo })
+        .getRawOne()
+        .then((r) => parseInt(r?.count || '0', 10)),
+      this.visitorRepo.manager.query(
+        `SELECT DATE(created_at) as date,
+                COUNT(DISTINCT session_id)::int as "uniqueSessions",
+                COUNT(*)::int as "pageViews"
+         FROM visitor_sessions
+         WHERE created_at >= $1
+         GROUP BY DATE(created_at)
+         ORDER BY date ASC`,
+        [start],
+      ) as Promise<{ date: string; uniqueSessions: number; pageViews: number }[]>,
+      this.visitorRepo.manager.query(
+        `SELECT referrer FROM (
+           SELECT DISTINCT ON (session_id) session_id, referrer
+           FROM visitor_sessions
+           WHERE created_at >= $1
+           ORDER BY session_id, created_at ASC
+         ) sub`,
+        [start],
+      ) as Promise<{ referrer: string | null }[]>,
+      this.visitorRepo.manager.query(
+        `SELECT COALESCE(device_type, 'unknown') as device, COUNT(DISTINCT session_id)::int as count
+         FROM visitor_sessions WHERE created_at >= $1 GROUP BY COALESCE(device_type, 'unknown')`,
+        [start],
+      ) as Promise<{ device: string; count: number }[]>,
+      this.visitorRepo.manager.query(
+        `SELECT COALESCE(country, 'unknown') as country, COUNT(DISTINCT session_id)::int as count
+         FROM visitor_sessions WHERE created_at >= $1 GROUP BY COALESCE(country, 'unknown') ORDER BY count DESC LIMIT 15`,
+        [start],
+      ) as Promise<{ country: string; count: number }[]>,
+      this.visitorRepo.manager
+        .query(
+          `SELECT AVG(duration_sec)::float as avg_sec FROM (
+             SELECT EXTRACT(EPOCH FROM (MAX(created_at) - MIN(created_at))) as duration_sec
+             FROM visitor_sessions WHERE created_at >= $1 GROUP BY session_id HAVING COUNT(*) > 1
+           ) sub`,
+          [start],
+        )
+        .then((r: { avg_sec: number }[]) => r?.[0]?.avg_sec ?? 0),
     ]);
+
+    const sourceCounts: Record<string, number> = { direct: 0, organic: 0, social: 0, referral: 0 };
+    for (const row of referrerRows || []) {
+      const src = this.classifyTrafficSource(row?.referrer ?? null);
+      sourceCounts[src] = (sourceCounts[src] || 0) + 1;
+    }
+    const totalForSources = Object.values(sourceCounts).reduce((a, b) => a + b, 0);
+    const trafficSources = (['direct', 'organic', 'social', 'referral'] as const).map((source) => ({
+      source,
+      count: sourceCounts[source] || 0,
+      percent: totalForSources > 0 ? Math.round(((sourceCounts[source] || 0) / totalForSources) * 1000) / 10 : 0,
+    }));
+
     return {
       uniqueSessions,
       pageViews,
-      topPages: byPage.map((r) => ({ page: r.page, views: parseInt(r.views, 10) })),
+      topPages: (byPage || []).map((r: any) => ({ page: r.page || '/', views: parseInt(r.views, 10) })),
+      dailyVisitors: (dailyBreakdown || []).map((r: any) => ({
+        date: typeof r.date === 'string' ? r.date : r.date?.toISOString?.()?.slice(0, 10) ?? '',
+        uniqueSessions: typeof r.uniqueSessions === 'number' ? r.uniqueSessions : parseInt(String(r?.uniqueSessions ?? 0), 10),
+        pageViews: typeof r.pageViews === 'number' ? r.pageViews : parseInt(String(r?.pageViews ?? 0), 10),
+      })),
+      todayVisitors: todaySessions,
+      todayPageViews,
+      totalVisitors: totalVisitorsAllTime,
+      activeSessionsNow,
+      trafficSources,
+      deviceBreakdown: (deviceBreakdown || []).map((r: any) => ({ device: r.device, count: Number(r.count) || 0 })),
+      byCountry: (byCountry || []).map((r: any) => ({ country: r.country, count: Number(r.count) || 0 })),
+      avgSessionDurationSec: typeof avgSessionDurationSec === 'number' ? avgSessionDurationSec : 0,
+      conversionBySource: await this.getConversionBySource(start),
     };
+  }
+
+  /** Sessions with logged-in user, by traffic source (engagement attribution) */
+  private async getConversionBySource(start: Date): Promise<{ source: string; sessions: number; percent: number }[]> {
+    const rows = (await this.visitorRepo.manager.query(
+      `SELECT referrer FROM (
+         SELECT DISTINCT ON (session_id) session_id, referrer, user_id
+         FROM visitor_sessions
+         WHERE created_at >= $1 AND user_id IS NOT NULL
+         ORDER BY session_id, created_at ASC
+       ) sub`,
+      [start],
+    )) as { referrer: string | null }[];
+    const counts: Record<string, number> = { direct: 0, organic: 0, social: 0, referral: 0 };
+    for (const r of rows) {
+      const src = this.classifyTrafficSource(r?.referrer ?? null);
+      counts[src] = (counts[src] || 0) + 1;
+    }
+    const total = rows.length;
+    return (['direct', 'organic', 'social', 'referral'] as const).map((source) => ({
+      source,
+      sessions: counts[source] || 0,
+      percent: total > 0 ? Math.round(((counts[source] || 0) / total) * 1000) / 10 : 0,
+    }));
   }
 
   /**

@@ -39,6 +39,7 @@ import { ApiSettings } from './entities/api-settings.entity';
 import { PaystackSettings } from '../wallet/entities/paystack-settings.entity';
 import { VisitorSession } from './entities/visitor-session.entity';
 import { AnalyticsDaily } from './entities/analytics-daily.entity';
+import { AnalyticsEvent } from './entities/analytics-event.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { Prediction } from '../predictions/entities/prediction.entity';
 import { PredictionFixture } from '../predictions/entities/prediction-fixture.entity';
@@ -76,6 +77,7 @@ import { OddsApiModule } from '../odds-api/odds-api.module';
       PredictionFixture,
       VisitorSession,
       AnalyticsDaily,
+      AnalyticsEvent,
     ]),
     AuthModule,
     AccumulatorsModule,

@@ -173,7 +173,21 @@ export default function AdminAnalyticsPage() {
   const [aiMetrics, setAiMetrics] = useState<AiDashboardMetrics | null>(null);
   const [cohorts, setCohorts] = useState<{ week: string; signups: number }[] | null>(null);
   const [retention, setRetention] = useState<{ activeLast7d: number; activeLast14d: number; returningUsers: number; retentionRate: number } | null>(null);
-  const [visitorStats, setVisitorStats] = useState<{ uniqueSessions: number; pageViews: number; topPages: { page: string; views: number }[] } | null>(null);
+  const [visitorStats, setVisitorStats] = useState<{
+    uniqueSessions: number;
+    pageViews: number;
+    topPages: { page: string; views: number }[];
+    dailyVisitors?: { date: string; uniqueSessions: number; pageViews: number }[];
+    todayVisitors?: number;
+    todayPageViews?: number;
+    totalVisitors?: number;
+    activeSessionsNow?: number;
+    trafficSources?: { source: string; count: number; percent: number }[];
+    deviceBreakdown?: { device: string; count: number }[];
+    byCountry?: { country: string; count: number }[];
+    avgSessionDurationSec?: number;
+    conversionBySource?: { source: string; sessions: number; percent: number }[];
+  } | null>(null);
   const [sportBreakdown, setSportBreakdown] = useState<SportStat[]>([]);
   const [revenueTrend, setRevenueTrend] = useState<RevenueTrendPoint[]>([]);
   const [topTipstersBySport, setTopTipstersBySport] = useState<TopTipsterBySport[]>([]);
@@ -239,7 +253,7 @@ export default function AdminAnalyticsPage() {
       fetch(`${getApiUrl()}/admin/analytics/retention`, { headers })
         .then((r) => (r.ok ? r.json() : null))
         .catch((e) => { console.error('Retention error:', e); return null; }),
-      fetch(`${getApiUrl()}/admin/analytics/visitors?days=7`, { headers })
+      fetch(`${getApiUrl()}/admin/analytics/visitors?days=${days}`, { headers })
         .then((r) => (r.ok ? r.json() : null))
         .catch((e) => { console.error('Visitors error:', e); return null; }),
       fetch(`${getApiUrl()}/admin/analytics/sport-breakdown`, { headers })
@@ -296,41 +310,32 @@ export default function AdminAnalyticsPage() {
       .finally(() => setLoading(false));
   }, [router, dateRange]);
 
-  const SimpleChart = ({ data, color = 'blue', height = 200 }: { data: { date: string; value: number }[]; color?: string; height?: number }) => {
-    if (!data || data.length === 0) return <div className="text-gray-400 text-center py-8">No data available</div>;
-    const maxValue = Math.max(...data.map((d) => d.value), 1);
-    const width = 100 / data.length;
-    const colors = {
-      blue: 'from-blue-500 to-blue-600',
-      green: 'from-green-500 to-green-600',
-      purple: 'from-purple-500 to-purple-600',
-      orange: 'from-orange-500 to-orange-600',
-      red: 'from-red-500 to-red-600',
-    };
+  const chartColors: Record<string, string> = {
+    blue: '#3b82f6',
+    green: '#10b981',
+    purple: '#8b5cf6',
+    orange: '#f97316',
+    red: '#ef4444',
+  };
 
+  const SimpleChart = ({ data, color = 'blue', height = 200, valueLabel = 'value' }: { data: { date: string; value: number }[]; color?: string; height?: number; valueLabel?: string }) => {
+    if (!data || data.length === 0) return <div className="text-gray-400 text-center py-8">No data available</div>;
+    const fill = chartColors[color] || chartColors.blue;
+    const chartData = data.map((d) => ({ ...d, name: d.date }));
     return (
-      <div className="relative" style={{ height: `${height}px` }}>
-        <svg className="w-full h-full" viewBox={`0 0 ${data.length * 20} ${height}`}>
-          {data.map((point, i) => {
-            const barHeight = (point.value / maxValue) * height * 0.8;
-            const x = (i * width * data.length * 20) / 100;
-            return (
-              <rect
-                key={i}
-                x={x}
-                y={height - barHeight}
-                width={(width * data.length * 20) / 100 - 2}
-                height={barHeight}
-                className={`fill-gradient-to-t ${colors[color as keyof typeof colors] || colors.blue} opacity-80`}
-                rx="2"
-              />
-            );
-          })}
-        </svg>
-        <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-500 px-2">
-          <span>{data[0]?.date}</span>
-          <span>{data[data.length - 1]?.date}</span>
-        </div>
+      <div style={{ height: `${height}px` }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={chartData} margin={{ top: 8, right: 8, left: 8, bottom: 24 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+            <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+            <Tooltip
+              formatter={(v: number | undefined) => [v != null ? v.toLocaleString() : '—', valueLabel]}
+              labelFormatter={(l) => `Date: ${l}`}
+            />
+            <Bar dataKey="value" fill={fill} radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     );
   };
@@ -365,6 +370,42 @@ export default function AdminAnalyticsPage() {
             <option value="90d">Last 90 days</option>
           </select>
         </div>
+
+        {/* Visitor & Traffic KPI Cards - Self-hosted analytics */}
+        {visitorStats && (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-5">
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Today&apos;s Visitors</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{visitorStats.todayVisitors ?? 0}</p>
+              <p className="text-xs text-gray-500 mt-1">Unique sessions today</p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-5">
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Total Visitors</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{visitorStats.totalVisitors ?? visitorStats.uniqueSessions ?? 0}</p>
+              <p className="text-xs text-gray-500 mt-1">All-time unique sessions</p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-5">
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Active Now</p>
+              <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{visitorStats.activeSessionsNow ?? 0}</p>
+              <p className="text-xs text-gray-500 mt-1">Sessions in last 5 min</p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-5">
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Page Views Today</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{visitorStats.todayPageViews ?? 0}</p>
+              <p className="text-xs text-gray-500 mt-1">Total views today</p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-5">
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Period Sessions</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{visitorStats.uniqueSessions}</p>
+              <p className="text-xs text-gray-500 mt-1">Last {dateRange} unique</p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-5">
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Period Page Views</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{visitorStats.pageViews}</p>
+              <p className="text-xs text-gray-500 mt-1">Last {dateRange} total</p>
+            </div>
+          </div>
+        )}
 
         {/* Real-time Stats */}
         {realTime && (
@@ -467,24 +508,83 @@ export default function AdminAnalyticsPage() {
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            {/* Time Series Charts */}
+            {/* Time Series Charts - with numeric axes and tooltips */}
             {timeSeries && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">User Growth</h3>
-                  <SimpleChart data={timeSeries.users} color="blue" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">New registrations per day</p>
+                  <SimpleChart data={timeSeries.users} color="blue" valueLabel="Users" />
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Pick Creation</h3>
-                  <SimpleChart data={timeSeries.picks} color="purple" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Picks created per day</p>
+                  <SimpleChart data={timeSeries.picks} color="purple" valueLabel="Picks" />
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Purchases</h3>
-                  <SimpleChart data={timeSeries.purchases} color="green" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Purchases per day</p>
+                  <SimpleChart data={timeSeries.purchases} color="green" valueLabel="Purchases" />
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Revenue</h3>
-                  <SimpleChart data={timeSeries.revenue} color="orange" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">GHS per day</p>
+                  <SimpleChart data={timeSeries.revenue.map((r) => ({ ...r, value: Math.round(r.value * 100) / 100 }))} color="orange" valueLabel="GHS" />
+                </div>
+              </div>
+            )}
+
+            {/* Visitor Traffic Chart - from self-hosted tracking */}
+            {visitorStats?.dailyVisitors && visitorStats.dailyVisitors.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Daily Visitors</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Unique sessions per day (from page tracking beacon)</p>
+                <SimpleChart
+                  data={visitorStats.dailyVisitors.map((d) => ({ date: d.date, value: d.uniqueSessions }))}
+                  color="blue"
+                  valueLabel="Sessions"
+                />
+              </div>
+            )}
+
+            {/* Traffic Sources */}
+            {visitorStats?.trafficSources && visitorStats.trafficSources.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Traffic Sources</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Where visitors come from (last {dateRange})</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {visitorStats.trafficSources.map((s) => (
+                    <div key={s.source} className="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600">
+                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{s.source}</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">{s.count}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">{s.percent}%</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4" style={{ height: 200 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={visitorStats.trafficSources.filter((s) => s.count > 0)}
+                        dataKey="count"
+                        nameKey="source"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={70}
+                        label={(entry: { source?: string; percent?: number }) => `${entry?.source ?? 'Unknown'} ${((entry?.percent ?? 0) * 100).toFixed(0)}%`}
+                      >
+                        {visitorStats.trafficSources.filter((s) => s.count > 0).map((_, i) => (
+                          <Cell key={i} fill={['#3b82f6', '#10b981', '#8b5cf6', '#f97316'][i % 4]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(v, _n, props) => {
+  const p = props as { payload?: { percent?: number; source?: string } };
+  const val = typeof v === 'number' ? v : 0;
+  const pct = (p?.payload?.percent ?? 0) < 1 ? (p?.payload?.percent ?? 0) * 100 : (p?.payload?.percent ?? 0);
+  return [`${val} (${pct.toFixed(1)}%)`, p?.payload?.source ?? ''];
+}} />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
             )}
@@ -776,38 +876,154 @@ export default function AdminAnalyticsPage() {
         {/* Visitors & Expanded Analytics Tab */}
         {activeTab === 'visitors' && (
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Visitor & User Analytics</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Visitor & Traffic Analytics</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Self-hosted analytics from the page tracking beacon. No third-party scripts.</p>
 
             {visitorStats && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Visitor Tracking (Last 7 Days)</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Unique Sessions</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{visitorStats.uniqueSessions}</p>
+              <>
+                {/* Visitor KPI summary */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Today&apos;s Visitors</p>
+                    <p className="text-xl font-bold text-gray-900 dark:text-white">{visitorStats.todayVisitors ?? 0}</p>
                   </div>
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Page Views</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{visitorStats.pageViews}</p>
+                  <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Visitors</p>
+                    <p className="text-xl font-bold text-gray-900 dark:text-white">{visitorStats.totalVisitors ?? visitorStats.uniqueSessions ?? 0}</p>
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Active Now</p>
+                    <p className="text-xl font-bold text-emerald-600">{visitorStats.activeSessionsNow ?? 0}</p>
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Page Views (period)</p>
+                    <p className="text-xl font-bold text-gray-900 dark:text-white">{visitorStats.pageViews}</p>
                   </div>
                 </div>
-                {visitorStats.topPages && visitorStats.topPages.length > 0 && (
-                  <>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Top Pages</p>
-                    <div className="space-y-2">
-                      {visitorStats.topPages.map((p, i) => (
-                        <div key={i} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                          <span className="font-mono text-sm text-gray-700 dark:text-gray-300">{p.page || '/'}</span>
-                          <span className="font-semibold">{p.views} views</span>
+
+                {/* Traffic Sources */}
+                {visitorStats.trafficSources && visitorStats.trafficSources.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Traffic Sources (Last {dateRange})</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Where visitors come from: direct, organic search, social, referral</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                      {visitorStats.trafficSources.map((s) => (
+                        <div key={s.source} className="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                          <p className="text-xs font-semibold text-gray-500 uppercase">{s.source}</p>
+                          <p className="text-2xl font-bold">{s.count}</p>
+                          <p className="text-sm text-gray-600">{s.percent}%</p>
                         </div>
                       ))}
                     </div>
-                  </>
+                  </div>
                 )}
+
+                {/* Conversion by source + session duration + device + country */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {visitorStats.conversionBySource && visitorStats.conversionBySource.length > 0 && (
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Conversion by Source</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Logged-in sessions by traffic source</p>
+                      <div className="space-y-2">
+                        {visitorStats.conversionBySource.map((s) => (
+                          <div key={s.source} className="flex justify-between items-center p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+                            <span className="font-medium capitalize">{s.source}</span>
+                            <span>{s.sessions} ({s.percent}%)</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="space-y-6">
+                    {visitorStats.avgSessionDurationSec != null && visitorStats.avgSessionDurationSec > 0 && (
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Avg Session Duration</h3>
+                        <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                          {Math.floor(visitorStats.avgSessionDurationSec / 60)}m {Math.round(visitorStats.avgSessionDurationSec % 60)}s
+                        </p>
+                        <p className="text-sm text-gray-500 mt-1">Multi-page sessions only</p>
+                      </div>
+                    )}
+                    {visitorStats.deviceBreakdown && visitorStats.deviceBreakdown.length > 0 && (
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Device Breakdown</h3>
+                        <div className="flex flex-wrap gap-3">
+                          {visitorStats.deviceBreakdown.map((d) => (
+                            <span key={d.device} className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm font-medium">
+                              {d.device}: {d.count}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {visitorStats.byCountry && visitorStats.byCountry.length > 0 && (
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Countries</h3>
+                        <div className="space-y-6 max-h-48 overflow-y-auto">
+                          {visitorStats.byCountry.slice(0, 10).map((c) => (
+                            <div key={c.country} className="flex justify-between items-center">
+                              <span className="font-mono text-sm">{c.country === 'unknown' ? '—' : c.country}</span>
+                              <span className="font-semibold">{c.count}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Individual Page Performance */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Page Performance</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Views per page (last {dateRange})</p>
+                  {visitorStats.topPages && visitorStats.topPages.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-200 dark:border-gray-600 text-left">
+                            <th className="py-3 px-2 font-semibold text-gray-500 uppercase tracking-wider">#</th>
+                            <th className="py-3 px-2 font-semibold text-gray-500 uppercase tracking-wider">Page</th>
+                            <th className="py-3 px-2 font-semibold text-gray-500 uppercase tracking-wider text-right">Views</th>
+                            <th className="py-3 px-2 font-semibold text-gray-500 uppercase tracking-wider text-right">% of Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {visitorStats.topPages.map((p, i) => (
+                            <tr key={i} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                              <td className="py-2 px-2 text-gray-500">{i + 1}</td>
+                              <td className="py-2 px-2 font-mono text-gray-900 dark:text-white">{p.page || '/'}</td>
+                              <td className="py-2 px-2 text-right font-semibold">{p.views.toLocaleString()}</td>
+                              <td className="py-2 px-2 text-right text-gray-600">
+                                {visitorStats.pageViews > 0 ? ((p.views / visitorStats.pageViews) * 100).toFixed(1) : 0}%
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 py-4">No page data yet. Tracking populates as users browse the site.</p>
+                  )}
+                </div>
+
+                {/* Daily visitor chart */}
+                {visitorStats.dailyVisitors && visitorStats.dailyVisitors.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Daily Visitors Trend</h3>
+                    <SimpleChart
+                      data={visitorStats.dailyVisitors.map((d) => ({ date: d.date, value: d.uniqueSessions }))}
+                      color="blue"
+                      valueLabel="Sessions"
+                    />
+                  </div>
+                )}
+
                 {visitorStats.uniqueSessions === 0 && (
-                  <p className="text-sm text-gray-500">Visitor tracking will populate as users browse the site. The beacon runs on every page load.</p>
+                  <p className="text-sm text-gray-500 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl">
+                    Visitor tracking will populate as users browse the site. The beacon runs on every page load. Ensure AnalyticsBeacon is mounted in your layout.
+                  </p>
                 )}
-              </div>
+              </>
             )}
 
             {retention && (

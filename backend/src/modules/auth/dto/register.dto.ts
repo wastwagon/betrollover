@@ -1,5 +1,6 @@
 import {
   IsEmail,
+  IsOptional,
   IsString,
   MinLength,
   MaxLength,
@@ -60,4 +61,10 @@ export class RegisterDto {
   @IsString()
   @Matches(DATE_REGEX, { message: 'Date of birth must be in YYYY-MM-DD format' })
   dateOfBirth: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  @Matches(/^sess_[a-zA-Z0-9_-]+$/, { message: 'Invalid session ID format' })
+  sessionId?: string;
 }

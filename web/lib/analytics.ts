@@ -1,9 +1,9 @@
 /**
  * Client-side analytics helpers.
- * Sends events to the same backend as page views; backend can be extended to store custom events.
+ * Page views: AnalyticsBeacon. Custom events: trackEvent.
  */
 
-function getOrCreateSessionId(): string {
+export function getOrCreateSessionId(): string {
   if (typeof window === 'undefined') return '';
   const key = 'br_session_id';
   let sid = sessionStorage.getItem(key);
@@ -14,21 +14,36 @@ function getOrCreateSessionId(): string {
   return sid;
 }
 
+/** Allowed event types for backend validation */
+export type AnalyticsEventType =
+  | 'purchase_completed'
+  | 'followed_tipster'
+  | 'unfollowed_tipster'
+  | 'coupon_viewed'
+  | 'coupon_purchased'
+  | 'registration_started'
+  | 'registration_completed'
+  | 'language_change'
+  | 'currency_change'
+  | 'account_menu_open';
+
 /**
- * Track a custom event (currency change, language change, menu open, etc.).
- * Sends to /api/analytics/track; backend may store or ignore based on implementation.
+ * Track a custom event. Sends to /api/analytics/track-event.
+ * Pass token when user is logged in so events are attributed.
  */
-export function trackEvent(event: string, payload?: Record<string, string | number | boolean>) {
+export function trackEvent(eventType: AnalyticsEventType, metadata?: Record<string, unknown>, token?: string) {
   if (typeof window === 'undefined') return;
   const sessionId = getOrCreateSessionId();
-  fetch('/api/analytics/track', {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  fetch('/api/analytics/track-event', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({
       sessionId,
-      page: typeof window !== 'undefined' ? window.location.pathname : '/',
-      event,
-      payload: payload ?? {},
+      eventType,
+      page: window.location.pathname || '/',
+      metadata: metadata ?? {},
     }),
     keepalive: true,
   }).catch(() => {});
