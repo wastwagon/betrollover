@@ -1,16 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import { SportEvent } from '../sport-events/entities/sport-event.entity';
 import { OddsApiService, SPORT_ODDS_PREFIXES, oddsIdToNumber } from './odds-api.service';
+import { SettlementService } from '../accumulators/settlement.service';
 import { isSportEnabled } from '../../config/sports.config';
 
 /**
- * Fetches completed match scores from The Odds API and updates sport_events
- * so the main SettlementService can auto-settle pending coupons.
+ * Fetches completed match scores from The Odds API and updates sport_events,
+ * then runs settlement so Odds API sports auto-settle without relying on FixtureScheduler.
  *
- * Cron: every 4 hours.
+ * Cron: every 2 hours (respects ENABLE_SCHEDULING).
  * Cost: ~1 credit per active competition per run (shared with odds sync credits).
  */
 @Injectable()
@@ -31,6 +33,8 @@ export class OddsApiSettlementService {
     @InjectRepository(SportEvent)
     private sportEventRepo: Repository<SportEvent>,
     private oddsApi: OddsApiService,
+    private settlementService: SettlementService,
+    private configService: ConfigService,
   ) {}
 
   /**
@@ -98,9 +102,21 @@ export class OddsApiSettlementService {
     return { updated };
   }
 
-  /** Every 4 hours — fetch scores and mark completed events as FT */
-  @Cron('0 */4 * * *')
+  /** Every 2 hours — fetch scores, mark events FT, then run settlement.
+   * Chaining settlement here ensures Odds API sports settle even if FixtureScheduler
+   * is disabled or runs before we've synced. Respects ENABLE_SCHEDULING. */
+  @Cron('0 */2 * * *')
   async handleCron(): Promise<void> {
-    await this.syncResults();
+    if (this.configService.get('ENABLE_SCHEDULING') !== 'true') return;
+
+    const { updated } = await this.syncResults();
+    if (updated > 0) {
+      const result = await this.settlementService.runSettlement();
+      if (result.ticketsSettled > 0 || result.picksUpdated > 0) {
+        this.logger.log(
+          `OddsApi settlement: ${result.picksUpdated} picks updated, ${result.ticketsSettled} tickets settled`,
+        );
+      }
+    }
   }
 }

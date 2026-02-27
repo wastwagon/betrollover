@@ -107,7 +107,16 @@ function DashboardContent() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json().catch(() => ({}));
-      if (res.ok) alert(`Settlement: ${data.picksUpdated ?? 0} picks updated, ${data.ticketsSettled ?? 0} tickets settled`);
+      if (res.ok) {
+        const eventsFt = data.oddsApiEventsMarkedFt ?? 0;
+        const picks = data.picksUpdated ?? 0;
+        const tickets = data.ticketsSettled ?? 0;
+        const parts = [];
+        if (eventsFt > 0) parts.push(`${eventsFt} event(s) marked FT`);
+        if (picks > 0) parts.push(`${picks} picks updated`);
+        if (tickets > 0) parts.push(`${tickets} tickets settled`);
+        alert(parts.length ? `Settlement: ${parts.join(', ')}` : 'Settlement run — no pending items to settle');
+      }
       else alert('Settlement failed');
     } finally {
       setSettling(false);

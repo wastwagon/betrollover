@@ -114,8 +114,44 @@ export default function AdminSportsPage() {
     const token = localStorage.getItem('token');
     if (!token) return;
     setSyncing(sport);
-    // Backend endpoint: POST /admin/sport-sync/:sport
-    // american_football → american-football (underscore → hyphen for URL)
+
+    // "Sync Results & Settle" = full flow: fetch Odds API scores, then settle picks
+    if (sport === 'results') {
+      try {
+        const res = await fetch(`${getApiUrl()}/admin/settlement/run`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          const eventsFt = data.oddsApiEventsMarkedFt ?? 0;
+          const picks = data.picksUpdated ?? 0;
+          const tickets = data.ticketsSettled ?? 0;
+          setSyncResults((prev) => [
+            { sport: 'results', synced: eventsFt, error: undefined },
+            ...prev.slice(0, 9),
+          ]);
+          if (eventsFt > 0 || picks > 0 || tickets > 0) {
+            await loadEvents(selectedSport);
+          }
+        } else {
+          setSyncResults((prev) => [
+            { sport: 'results', synced: 0, error: data.message || 'Settlement failed' },
+            ...prev.slice(0, 9),
+          ]);
+        }
+      } catch {
+        setSyncResults((prev) => [
+          { sport: 'results', synced: 0, error: 'Network error' },
+          ...prev.slice(0, 9),
+        ]);
+      } finally {
+        setSyncing(null);
+      }
+      return;
+    }
+
+    // Per-sport sync: POST /admin/sport-sync/:sport
     const sportSlug = sport.replace(/_/g, '-');
     try {
       const res = await fetch(`${getApiUrl()}/admin/sport-sync/${sportSlug}`, {

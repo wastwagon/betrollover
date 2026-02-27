@@ -11,14 +11,19 @@ import { User } from '../users/entities/user.entity';
 import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TipsterService } from '../tipster/tipster.service';
+import { determinePickResult } from './settlement-logic';
 
 /** Market types and selection formats we support for settlement. See determinePickResult. */
 export const SETTLEMENT_SUPPORTED_MARKETS = [
-  'Match Winner (1X2): Home, Away, Draw (also stored as Match Winner: Home/Away/Draw)',
-  'Double Chance: 1X/Home/Draw, X2/Draw/Away, 12/Home/Away (slash or text format)',
-  'Both Teams To Score: Yes, No (also stored as Both Teams To Score: Yes/No)',
-  'Goals Over/Under: Over/Under 1.5, 2.5, 3.5',
-  'Correct Score: e.g. 2-1, 1-1, 2:1, 1:1 (dash or colon)',
+  'Match Winner (1X2): Home, Away, Draw (also Match Winner: Team/Player name)',
+  'Double Chance: 1X, X2, 12 (slash or text format)',
+  'Both Teams To Score: Yes, No',
+  'Over/Under: Over/Under 1.5, 2.5, 3.5 (goals, points, etc.)',
+  'Handicap/Spread: Home -3.5, Away +2.5, Team Name ±N',
+  'Odd/Even: Total goals/points odd or even',
+  'Draw No Bet: Match winner, draw = void',
+  'Set Betting (tennis): 2-0, 2-1 (order-agnostic)',
+  'Correct Score: 2-1, 1:1 (dash or colon)',
 ] as const;
 
 @Injectable()
@@ -135,11 +140,13 @@ export class SettlementService {
       const fix = fixtureMap.get(pick.fixtureId!);
       if (!fix || fix.homeScore == null || fix.awayScore == null) continue;
 
-      const result = this.determinePickResult(pick.prediction, fix.homeScore, fix.awayScore, fix.homeTeamName, fix.awayTeamName);
+      const result = determinePickResult(pick.prediction, fix.homeScore, fix.awayScore, fix.homeTeamName, fix.awayTeamName);
       if (result) {
         pick.result = result;
         await this.pickRepo.save(pick);
         picksUpdated++;
+      } else if (pick.prediction) {
+        this.logger.warn(`Unmatched prediction: "${pick.prediction}". Supported: ${SETTLEMENT_SUPPORTED_MARKETS.join('; ')}`);
       }
     }
 
@@ -147,11 +154,13 @@ export class SettlementService {
       const evt = eventMap.get(pick.eventId!);
       if (!evt || evt.homeScore == null || evt.awayScore == null) continue;
 
-      const result = this.determinePickResult(pick.prediction, evt.homeScore, evt.awayScore, evt.homeTeam, evt.awayTeam);
+      const result = determinePickResult(pick.prediction, evt.homeScore, evt.awayScore, evt.homeTeam, evt.awayTeam);
       if (result) {
         pick.result = result;
         await this.pickRepo.save(pick);
         picksUpdated++;
+      } else if (pick.prediction) {
+        this.logger.warn(`Unmatched prediction: "${pick.prediction}". Supported: ${SETTLEMENT_SUPPORTED_MARKETS.join('; ')}`);
       }
     }
 
@@ -180,156 +189,6 @@ export class SettlementService {
     }
 
     return { picksUpdated, ticketsSettled };
-  }
-
-  private determinePickResult(
-    prediction: string,
-    homeScore: number,
-    awayScore: number,
-    homeTeam?: string,
-    awayTeam?: string,
-  ): 'won' | 'lost' | 'void' | null {
-    const pred = (prediction || '').trim().toLowerCase();
-    const total = homeScore + awayScore;
-    const homeWin = homeScore > awayScore;
-    const awayWin = awayScore > homeScore;
-    const draw = homeScore === awayScore;
-    const bothScored = homeScore > 0 && awayScore > 0;
-
-    const homeName = (homeTeam || '').toLowerCase();
-    const awayName = (awayTeam || '').toLowerCase();
-
-    // --- Double Chance (check FIRST - before home/away/draw) ---
-    // Handles both numeric (1X, 12, X2) and slash/text variants (Home/Draw, Home/Away, Draw/Away)
-    // "Home/Away" (= 12) is the slash format API-Football stores; must be checked before Match Winner
-    if (pred.includes('12') || pred.includes('home_away') || pred.includes('home or away') || pred.includes('home/away')) {
-      return homeWin || awayWin ? 'won' : 'lost';
-    }
-    if (pred.includes('1x') || pred.includes('home_draw') || pred.includes('home or draw') || pred.includes('home/draw') || pred.includes('draw/home')) {
-      return homeWin || draw ? 'won' : 'lost';
-    }
-    if (pred.includes('x2') || pred.includes('draw_away') || pred.includes('draw or away') || pred.includes('draw/away') || pred.includes('away/draw')) {
-      return awayWin || draw ? 'won' : 'lost';
-    }
-
-    // Team-name based patterns (e.g. "Santos W or Draw")
-    if (homeName && (pred.includes(`${homeName} or draw`) || pred.includes(`${homeName}_draw`) || pred.includes(`${homeName} or x`))) {
-      return homeWin || draw ? 'won' : 'lost';
-    }
-    if (awayName && (pred.includes(`${awayName} or draw`) || pred.includes(`draw or ${awayName}`) || pred.includes(`x2`))) {
-      return awayWin || draw ? 'won' : 'lost';
-    }
-    if (homeName && awayName && (pred.includes(`${homeName} or ${awayName}`) || pred.includes(`${homeName}_${awayName}`))) {
-      return homeWin || awayWin ? 'won' : 'lost';
-    }
-
-    // Catch-all regex for any "X or Draw" where X might be a partial team name or 1
-    if (/(home|1|[\w\s.-]+) or draw/i.test(pred) || /(home|1|[\w\s.-]+) or x/i.test(pred)) {
-      // If tip is "Away or Draw", this regex might be too broad if we don't check 'away'
-      if (!pred.includes('away')) {
-        return homeWin || draw ? 'won' : 'lost';
-      }
-    }
-    if (/(away|2|[\w\s.-]+) or draw/i.test(pred) || /draw or (away|2|[\w\s.-]+)/i.test(pred) || /x or (away|2)/i.test(pred)) {
-      if (!pred.includes('home') || pred.indexOf('home') > pred.indexOf('away')) { // simple check to favor away if both mentioned in complex ways
-        return awayWin || draw ? 'won' : 'lost';
-      }
-    }
-
-    // --- Match Winner by team/player name (from The Odds API sport_events) ---
-    // Prediction format: "Match Winner: New Orleans Pelicans" or "Match Winner: Novak Djokovic"
-    if (pred.startsWith('match winner:')) {
-      const picked = pred.replace('match winner:', '').trim();
-      // Exact match first
-      if (homeName && picked === homeName) return homeWin ? 'won' : 'lost';
-      if (awayName && picked === awayName) return awayWin ? 'won' : 'lost';
-      // Partial / contains match (handles minor name differences)
-      if (homeName && (homeName.includes(picked) || picked.includes(homeName))) return homeWin ? 'won' : 'lost';
-      if (awayName && (awayName.includes(picked) || picked.includes(awayName))) return awayWin ? 'won' : 'lost';
-      // Positional fallback: Home / Away / Draw
-      if (picked === 'home' || picked === '1') return homeWin ? 'won' : 'lost';
-      if (picked === 'away' || picked === '2') return awayWin ? 'won' : 'lost';
-      if (picked === 'draw' || picked === 'x') return draw ? 'won' : 'lost';
-      // Can't resolve — log and return null
-      this.logger.warn(`Match Winner: cannot resolve picked="${picked}" for home="${homeName}" away="${awayName}"`);
-      return null;
-    }
-
-    // --- Match Winner (1X2) ---
-    // Be careful with greedy "draw" matching - only match if it's strictly Match Winner
-    if (
-      pred === 'home' ||
-      pred === '1' ||
-      pred === 'home win'
-    ) {
-      return homeWin ? 'won' : 'lost';
-    }
-    if (
-      pred === 'away' ||
-      pred === '2' ||
-      pred === 'away win'
-    ) {
-      return awayWin ? 'won' : 'lost';
-    }
-    if (
-      pred === 'draw' ||
-      pred === 'x'
-    ) {
-      return draw ? 'won' : 'lost';
-    }
-
-    // --- Goals Over/Under (1.5, 2.5, 3.5) + generic Over/Under (basketball points, hockey goals, etc.) ---
-    const overUnderMatch = pred.match(/(?:over|under)\s*([\d.]+)/i);
-    if (overUnderMatch) {
-      const line = parseFloat(overUnderMatch[1]);
-      if (Number.isFinite(line)) {
-        if (pred.toLowerCase().includes('over')) return total > line ? 'won' : 'lost';
-        if (pred.toLowerCase().includes('under')) return total < line ? 'won' : 'lost';
-      }
-    }
-    if (pred.includes('over 3.5') || pred.includes('over3.5')) {
-      return total > 3.5 ? 'won' : 'lost';
-    }
-    if (pred.includes('under 3.5') || pred.includes('under3.5')) {
-      return total < 3.5 ? 'won' : 'lost';
-    }
-    if (pred.includes('over 2.5') || pred.includes('over2.5') || pred === 'over25') {
-      return total > 2.5 ? 'won' : 'lost';
-    }
-    if (pred.includes('under 2.5') || pred.includes('under2.5') || pred === 'under25') {
-      return total < 2.5 ? 'won' : 'lost';
-    }
-    if (pred.includes('over 1.5') || pred.includes('over1.5')) {
-      return total > 1.5 ? 'won' : 'lost';
-    }
-    if (pred.includes('under 1.5') || pred.includes('under1.5')) {
-      return total < 1.5 ? 'won' : 'lost';
-    }
-
-    // --- Both Teams To Score ---
-    if (pred.includes('btts') && pred.includes('no')) {
-      return !bothScored ? 'won' : 'lost';
-    }
-    if (pred.includes('btts') || (pred.includes('both teams') && pred.includes('yes'))) {
-      return bothScored ? 'won' : 'lost';
-    }
-    if (pred.includes('both teams') && pred.includes('no')) {
-      return !bothScored ? 'won' : 'lost';
-    }
-
-    // --- Correct Score (e.g. "2-1", "1:1", "Correct Score: 2-1") ---
-    const scoreMatch = pred.match(/(\d+)\s*[-:]\s*(\d+)/);
-    if (scoreMatch) {
-      const expected = `${scoreMatch[1]}-${scoreMatch[2]}`;
-      const actual = `${homeScore}-${awayScore}`;
-      return expected === actual ? 'won' : 'lost';
-    }
-
-    this.logger.warn(
-      `Unmatched prediction for settlement: "${prediction}" (normalized: "${pred}"). ` +
-      `Add support in determinePickResult. Supported: ${SETTLEMENT_SUPPORTED_MARKETS.join('; ')}`,
-    );
-    return null;
   }
 
   private async settleEscrow(accumulatorId: number, sellerId: number, result: string, title: string) {

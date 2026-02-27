@@ -121,6 +121,22 @@ export class AdminController {
     return this.adminService.runSettlement();
   }
 
+  /** Manually settle a sport event (e.g. when Odds API doesn't return it — matches >3 days old) */
+  @Post('sport-events/:id/settle')
+  async manuallySettleEvent(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { homeScore: number; awayScore: number },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const homeScore = Number(body?.homeScore);
+    const awayScore = Number(body?.awayScore);
+    if (!Number.isFinite(homeScore) || !Number.isFinite(awayScore) || homeScore < 0 || awayScore < 0) {
+      throw new BadRequestException('homeScore and awayScore must be non-negative numbers');
+    }
+    return this.adminService.manuallySettleSportEvent(id, homeScore, awayScore);
+  }
+
   @Post('predictions/generate')
   async generateAiPredictions(
     @CurrentUser() user: User,

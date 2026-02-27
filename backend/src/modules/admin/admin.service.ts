@@ -15,6 +15,7 @@ import { DepositRequest } from '../wallet/entities/deposit-request.entity';
 import { WithdrawalRequest } from '../wallet/entities/withdrawal-request.entity';
 import { PayoutMethod } from '../wallet/entities/payout-method.entity';
 import { SettlementService } from '../accumulators/settlement.service';
+import { OddsApiSettlementService } from '../odds-api/odds-api-settlement.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ContentService } from '../content/content.service';
 import { EmailService } from '../email/email.service';
@@ -24,6 +25,7 @@ import { ApiSettings } from './entities/api-settings.entity';
 import { getSportApiBaseUrl } from '../../config/sports.config';
 import { PaystackSettings } from '../wallet/entities/paystack-settings.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
+import { SportEvent } from '../sport-events/entities/sport-event.entity';
 
 @Injectable()
 export class AdminService {
@@ -58,7 +60,10 @@ export class AdminService {
     private withdrawalRepo: Repository<WithdrawalRequest>,
     @InjectRepository(PayoutMethod)
     private payoutMethodRepo: Repository<PayoutMethod>,
+    @InjectRepository(SportEvent)
+    private sportEventRepo: Repository<SportEvent>,
     private settlementService: SettlementService,
+    private oddsApiSettlementService: OddsApiSettlementService,
     private notificationsService: NotificationsService,
     private contentService: ContentService,
     private emailService: EmailService,
@@ -537,8 +542,40 @@ export class AdminService {
     return { success: true, predictionId, price };
   }
 
+  /**
+   * Run full settlement: first sync Odds API results (marks sport_events FT),
+   * then settle picks on finished fixtures/events.
+   * Fixes: Odds API sports (tennis, basketball, etc.) were not settling because
+   * manual "Run Settlement" only ran SettlementService without syncing results first.
+   */
   async runSettlement() {
-    return this.settlementService.runSettlement();
+    const resultsSync = await this.oddsApiSettlementService.syncResults();
+    const settlement = await this.settlementService.runSettlement();
+    return {
+      ...settlement,
+      oddsApiEventsMarkedFt: resultsSync.updated,
+    };
+  }
+
+  /**
+   * Manually mark a sport event as finished and settle picks on it.
+   * Use when the Odds API doesn't return results (e.g. match >3 days old; API limit is daysFrom=3).
+   */
+  async manuallySettleSportEvent(eventId: number, homeScore: number, awayScore: number) {
+    const event = await this.sportEventRepo.findOne({
+      where: { id: eventId },
+      select: ['id', 'sport', 'homeTeam', 'awayTeam', 'status'],
+    });
+    if (!event) throw new NotFoundException('Sport event not found');
+    if (event.status === 'FT') {
+      return { message: 'Event already settled', picksUpdated: 0, ticketsSettled: 0 };
+    }
+    await this.sportEventRepo.update(
+      { id: eventId },
+      { status: 'FT', homeScore, awayScore, syncedAt: new Date() },
+    );
+    const settlement = await this.settlementService.runSettlement();
+    return { message: 'Event marked FT and settlement run', ...settlement };
   }
 
   async getTipsterRequests() {
