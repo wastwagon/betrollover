@@ -41,6 +41,7 @@ import { VisitorSession } from './entities/visitor-session.entity';
 import { AnalyticsDaily } from './entities/analytics-daily.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { Prediction } from '../predictions/entities/prediction.entity';
+import { PredictionFixture } from '../predictions/entities/prediction-fixture.entity';
 import { BasketballModule } from '../basketball/basketball.module';
 import { RugbyModule } from '../rugby/rugby.module';
 import { MmaModule } from '../mma/mma.module';
@@ -72,6 +73,7 @@ import { OddsApiModule } from '../odds-api/odds-api.module';
       PayoutMethod,
       Tipster,
       Prediction,
+      PredictionFixture,
       VisitorSession,
       AnalyticsDaily,
     ]),

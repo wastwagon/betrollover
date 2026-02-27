@@ -52,6 +52,6 @@ import { LeaderboardController } from './leaderboard.controller';
     PredictionsApiService,
     TipstersSetupService,
   ],
-  exports: [PredictionEngineService, PredictionMarketplaceSyncService, ResultTrackerService, TipstersSetupService],
+  exports: [PredictionEngineService, PredictionMarketplaceSyncService, ResultTrackerService, TipstersApiService, TipstersSetupService],
 })
 export class PredictionsModule {}

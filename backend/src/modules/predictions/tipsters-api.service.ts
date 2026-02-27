@@ -86,6 +86,54 @@ export class TipstersApiService {
     return statsMap;
   }
 
+  /**
+   * Recompute tipster stats from accumulator_tickets and persist to tipsters table.
+   * Used after admin deletes a coupon to keep ROI, win rate, streak, etc. in sync.
+   */
+  async recalculateAndPersistTipsterStats(userId: number): Promise<boolean> {
+    const tipster = await this.tipsterRepo.findOne({ where: { userId } });
+    if (!tipster) return false;
+
+    const tickets = await this.ticketRepo.find({
+      where: { userId },
+      select: ['id', 'result', 'totalOdds', 'createdAt'],
+      order: { createdAt: 'ASC' },
+    });
+
+    const totalPredictions = tickets.length;
+    const settled = tickets.filter((t) => t.result === 'won' || t.result === 'lost');
+    const totalWins = settled.filter((t) => t.result === 'won').length;
+    const totalLosses = settled.filter((t) => t.result === 'lost').length;
+
+    const totalProfit = settled.reduce((sum, t) => {
+      return sum + (t.result === 'won' ? Number(t.totalOdds) - 1 : -1);
+    }, 0);
+
+    const winRate = settled.length > 0 ? (totalWins / settled.length) * 100 : 0;
+    const roi = totalPredictions > 0 ? (totalProfit / totalPredictions) * 100 : 0;
+    const { currentStreak, bestStreak } = await this.computeStreakFromTickets(userId);
+
+    const oddsSum = tickets.reduce((s, t) => s + Number(t.totalOdds), 0);
+    const avgOdds = totalPredictions > 0 ? oddsSum / totalPredictions : 0;
+
+    const lastTicket = tickets[tickets.length - 1];
+    const lastPredictionDate = lastTicket?.createdAt ?? null;
+
+    await this.tipsterRepo.update(tipster.id, {
+      totalPredictions,
+      totalWins,
+      totalLosses,
+      winRate,
+      roi,
+      currentStreak,
+      bestStreak,
+      totalProfit,
+      avgOdds,
+      lastPredictionDate,
+    });
+    return true;
+  }
+
   private async computeStreakFromTickets(userId: number): Promise<{ currentStreak: number; bestStreak: number }> {
     const tickets = await this.ticketRepo.find({
       where: { userId },

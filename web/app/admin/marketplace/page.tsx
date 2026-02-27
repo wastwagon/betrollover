@@ -45,6 +45,7 @@ export default function AdminMarketplacePage() {
   const [loading, setLoading] = useState(true);
   const [includeAll, setIncludeAll] = useState(false);
   const [fixing, setFixing] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [diagnostic, setDiagnostic] = useState<{
     activeListings?: number;
     ticketsTotal?: number;
@@ -82,6 +83,33 @@ export default function AdminMarketplacePage() {
       .then((r) => (r.ok ? r.json() : null))
       .then(setDiagnostic)
       .catch(() => setDiagnostic(null));
+  };
+
+  const handleDeleteCoupon = async (id: number, title: string) => {
+    if (!confirm(`Permanently delete coupon "${title}"?\n\nThis will:\n• Refund any pending purchases\n• Remove from tipster stats (ROI, win rate, streak)\n• Cannot be undone`)) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setDeletingId(id);
+    try {
+      const res = await fetch(`${getApiUrl()}/admin/picks/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        const msg = data.refundedCount
+          ? `Coupon deleted. ${data.refundedCount} purchase(s) refunded. Tipster stats recalculated.`
+          : 'Coupon deleted. Tipster stats recalculated.';
+        alert(msg);
+        loadMarketplace();
+      } else {
+        alert(data.message || 'Delete failed');
+      }
+    } catch {
+      alert('Delete failed');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const handleFixMarketplace = async () => {
@@ -185,26 +213,35 @@ export default function AdminMarketplacePage() {
         {!loading && picks.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {picks.map((a) => (
-              <PickCard
-                key={a.id}
-                id={a.id}
-                title={a.title}
-                totalPicks={a.totalPicks}
-                totalOdds={a.totalOdds}
-                price={a.price}
-                status={a.status}
-                result={a.result}
-                picks={a.picks || []}
-                purchaseCount={a.purchaseCount}
-                tipster={a.tipster}
-                isPurchased={false}
-                canPurchase={false}
-                viewOnly
-                onPurchase={() => {}}
-                purchasing={false}
-                className="opacity-95"
-                createdAt={a.createdAt}
-              />
+              <div key={a.id} className="relative">
+                <PickCard
+                  id={a.id}
+                  title={a.title}
+                  totalPicks={a.totalPicks}
+                  totalOdds={a.totalOdds}
+                  price={a.price}
+                  status={a.status}
+                  result={a.result}
+                  picks={a.picks || []}
+                  purchaseCount={a.purchaseCount}
+                  tipster={a.tipster}
+                  isPurchased={false}
+                  canPurchase={false}
+                  viewOnly
+                  onPurchase={() => {}}
+                  purchasing={false}
+                  className="opacity-95"
+                  createdAt={a.createdAt}
+                />
+                <button
+                  onClick={() => handleDeleteCoupon(a.id, a.title)}
+                  disabled={deletingId === a.id}
+                  className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium disabled:opacity-50 z-10 shadow"
+                  title="Delete coupon (refunds pending purchases, recalculates tipster stats)"
+                >
+                  {deletingId === a.id ? 'Deleting…' : 'Delete'}
+                </button>
+              </div>
             ))}
           </div>
         )}

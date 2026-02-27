@@ -26,9 +26,15 @@ import { getSportApiBaseUrl } from '../../config/sports.config';
 import { PaystackSettings } from '../wallet/entities/paystack-settings.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { SportEvent } from '../sport-events/entities/sport-event.entity';
+import { Prediction } from '../predictions/entities/prediction.entity';
+import { PredictionFixture } from '../predictions/entities/prediction-fixture.entity';
+import { TipstersApiService } from '../predictions/tipsters-api.service';
+import { ResultTrackerService } from '../predictions/result-tracker.service';
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
+
   constructor(
     @InjectRepository(User)
     private usersRepo: Repository<User>,
@@ -70,6 +76,12 @@ export class AdminService {
     private walletService: WalletService,
     private authService: AuthService,
     private dataSource: DataSource,
+    @InjectRepository(Prediction)
+    private predictionRepo: Repository<Prediction>,
+    @InjectRepository(PredictionFixture)
+    private predictionFixtureRepo: Repository<PredictionFixture>,
+    private tipstersApiService: TipstersApiService,
+    private resultTrackerService: ResultTrackerService,
   ) { }
 
   async getStats() {
@@ -884,9 +896,81 @@ export class AdminService {
     return ticket;
   }
 
-  async deletePick(id: number) {
-    await this.ticketRepo.delete(id);
-    return { ok: true };
+  /**
+   * Admin-only: Complete coupon deletion with escrow refund, AI prediction cleanup,
+   * and tipster stats recalculation. Safe for live system.
+   */
+  async deletePick(id: number): Promise<{ ok: boolean; refundedCount?: number; tipsterStatsRecalculated?: boolean }> {
+    const ticket = await this.ticketRepo.findOne({
+      where: { id },
+      select: ['id', 'userId', 'title', 'result'],
+    });
+    if (!ticket) throw new NotFoundException('Coupon not found');
+
+    const accumulatorId = id;
+    const sellerId = ticket.userId;
+
+    // 1. Refund any held escrow (buyers who purchased before settlement)
+    const heldFunds = await this.escrowRepo.find({
+      where: { pickId: accumulatorId, status: 'held' },
+    });
+
+    const processedUsers = new Set<number>();
+    for (const f of heldFunds) {
+      if (!processedUsers.has(f.userId)) {
+        const gross = Number(f.amount);
+        await this.walletService.credit(
+          f.userId,
+          gross,
+          'refund',
+          `pick-${accumulatorId}-admin-delete`,
+          `Refund: coupon deleted by admin ("${ticket.title}")`,
+        );
+        await this.notificationsService.create({
+          userId: f.userId,
+          type: 'settlement',
+          title: 'Coupon Refunded',
+          message: `A coupon you purchased ("${ticket.title}") was removed by admin. GHS ${gross.toFixed(2)} has been refunded to your wallet.`,
+          link: '/my-purchases',
+          icon: 'refund',
+          sendEmail: true,
+          metadata: { pickTitle: ticket.title, amount: gross.toFixed(2) },
+        }).catch(() => {});
+        processedUsers.add(f.userId);
+      }
+      f.status = 'refunded';
+      await this.escrowRepo.save(f);
+    }
+
+    // 2. Delete AI prediction + fixtures (if linked)
+    const listing = await this.marketplaceRepo.findOne({
+      where: { accumulatorId },
+      select: ['predictionId'],
+    });
+    if (listing?.predictionId) {
+      await this.predictionFixtureRepo.delete({ predictionId: listing.predictionId });
+      await this.predictionRepo.delete(listing.predictionId);
+      this.logger.log(`Deleted AI prediction ${listing.predictionId} for coupon ${accumulatorId}`);
+    }
+
+    // 3. Delete coupon (CASCADE removes picks, marketplace, purchases, escrow, reactions, etc.)
+    await this.ticketRepo.delete(accumulatorId);
+
+    // 4. Recalculate tipster stats from remaining tickets
+    const tipsterStatsRecalculated = await this.tipstersApiService.recalculateAndPersistTipsterStats(sellerId);
+
+    // 5. Update leaderboard rankings
+    await this.resultTrackerService.updateLeaderboardNow().catch((err) => {
+      this.logger.warn(`Leaderboard update after coupon delete failed: ${err?.message}`);
+    });
+
+    this.logger.log(`Admin deleted coupon ${accumulatorId} (tipster ${sellerId}). Refunded: ${processedUsers.size}`);
+
+    return {
+      ok: true,
+      refundedCount: processedUsers.size,
+      tipsterStatsRecalculated,
+    };
   }
 
   // Marketplace Management
