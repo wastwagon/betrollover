@@ -139,38 +139,43 @@ export default function AdminMarketplacePage() {
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <AdminSidebar />
       <main className="flex-1 p-6 md:p-8 md:ml-56">
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Marketplace</h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Same data as user marketplace. Review listings and fix duplicates.{' '}
-              <Link href="/marketplace" className="text-[var(--primary)] hover:underline">View as customer →</Link>
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Marketplace</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Same data as user marketplace. Review listings and fix duplicates.{' '}
+            <Link href="/marketplace" className="text-[var(--primary)] hover:underline">View as customer →</Link>
+          </p>
+          <div className="flex flex-wrap items-center gap-4 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+            <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={includeAll}
                 onChange={(e) => setIncludeAll(e.target.checked)}
-                className="rounded border-gray-300"
+                className="w-5 h-5 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
               />
-              Show all (including started, settled, removed) — required to delete archived coupons
+              <span className="text-base font-medium text-amber-900 dark:text-amber-100">
+                Show all coupons (including started, settled, removed)
+              </span>
             </label>
-            <button
-              onClick={handleFixMarketplace}
-              disabled={fixing}
-              className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium disabled:opacity-50"
-            >
-              {fixing ? 'Fixing...' : 'Fix duplicates & titles'}
-            </button>
-            <button
-              onClick={loadDiagnostic}
-              className="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 text-white text-sm font-medium"
-            >
-              Run diagnostic
-            </button>
+            <span className="text-sm text-amber-800 dark:text-amber-200">
+              — Check this to see and delete archived/settled coupons
+            </span>
           </div>
+        </div>
+        <div className="mb-6 flex flex-wrap gap-3">
+          <button
+            onClick={handleFixMarketplace}
+            disabled={fixing}
+            className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium disabled:opacity-50"
+          >
+            {fixing ? 'Fixing...' : 'Fix duplicates & titles'}
+          </button>
+          <button
+            onClick={loadDiagnostic}
+            className="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 text-white text-sm font-medium"
+          >
+            Run diagnostic
+          </button>
         </div>
 
         {diagnostic && (
