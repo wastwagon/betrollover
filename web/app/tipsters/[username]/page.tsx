@@ -337,13 +337,6 @@ export default function TipsterProfilePage() {
   const roiDisplay = hasSettledPicks ? `${Number(tipster.roi).toFixed(2)}%` : '—';
   const winRateDisplay = hasSettledPicks ? `${Number(tipster.win_rate).toFixed(1)}%` : '—';
   const roiColor = tipster.roi > 0 ? 'text-emerald-600' : tipster.roi < 0 ? 'text-red-600' : 'text-[var(--text)]';
-  const streakDisplay =
-    tipster.current_streak > 0
-      ? `🔥 ${tipster.current_streak}W`
-      : tipster.current_streak < 0
-        ? `❄️ ${Math.abs(tipster.current_streak)}L`
-        : '—';
-
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <PersonJsonLd
@@ -440,10 +433,6 @@ export default function TipsterProfilePage() {
                 <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
                   <span className="text-xs uppercase text-[var(--text-muted)]">{t('tipster.win_rate')}</span>
                   <p className="font-bold text-lg text-[var(--text)]" title={!hasSettledPicks && tipster.total_predictions ? t('tipster.stats_update') : undefined}>{winRateDisplay}</p>
-                </div>
-                <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
-                  <span className="text-xs uppercase text-[var(--text-muted)]">{t('tipster.streak')}</span>
-                  <p className="font-bold text-lg text-[var(--text)]">{streakDisplay}</p>
                 </div>
                 <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
                   <span className="text-xs uppercase text-[var(--text-muted)]">{t('tipster.won_lost')}</span>

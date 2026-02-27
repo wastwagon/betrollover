@@ -39,12 +39,6 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
   const roiDisplay = hasSettledPicks ? `${Number(tipster.roi).toFixed(2)}%` : '—';
   const winRateDisplay = hasSettledPicks ? `${Number(tipster.win_rate).toFixed(1)}%` : '—';
   const roiColor = tipster.roi > 0 ? 'text-emerald-600 dark:text-emerald-400' : tipster.roi < 0 ? 'text-red-600 dark:text-red-400' : 'text-[var(--text)]';
-  const streakDisplay =
-    tipster.current_streak > 0
-      ? `🔥 ${tipster.current_streak}W`
-      : tipster.current_streak < 0
-        ? `❄️ ${Math.abs(tipster.current_streak)}L`
-        : '—';
 
   return (
     <article
@@ -98,10 +92,6 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
           <div className="flex flex-col">
             <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{t('tipster.win_rate')}</span>
             <span className="text-sm font-bold text-[var(--text)]">{winRateDisplay}</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{t('tipster.streak')}</span>
-            <span className="text-sm font-bold text-[var(--text)]">{streakDisplay}</span>
           </div>
         </div>
 

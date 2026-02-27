@@ -35,12 +35,6 @@ export function TipsterCard({ tipster, onFollow, followLoading = false }: Tipste
   const roiDisplay = hasSettledPicks ? `${Number(tipster.roi).toFixed(2)}%` : '—';
   const winRateDisplay = hasSettledPicks ? `${Number(tipster.win_rate).toFixed(1)}%` : '—';
   const roiColor = tipster.roi > 0 ? colors.success : tipster.roi < 0 ? colors.error : colors.text;
-  const streakDisplay =
-    tipster.current_streak > 0
-      ? `🔥 ${tipster.current_streak}W`
-      : tipster.current_streak < 0
-        ? `❄️ ${Math.abs(tipster.current_streak)}L`
-        : '—';
 
   return (
     <View style={styles.card}>
@@ -93,10 +87,6 @@ export function TipsterCard({ tipster, onFollow, followLoading = false }: Tipste
         <View style={styles.stat}>
           <Text style={styles.statLabel}>Win Rate</Text>
           <Text style={styles.statValue}>{winRateDisplay}</Text>
-        </View>
-        <View style={styles.stat}>
-          <Text style={styles.statLabel}>Streak</Text>
-          <Text style={styles.statValue}>{streakDisplay}</Text>
         </View>
       </View>
 
