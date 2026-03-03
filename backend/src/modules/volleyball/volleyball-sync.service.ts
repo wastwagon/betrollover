@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, LessThanOrEqual, Not } from 'typeorm';
 import { extractCountryCodesFromTeams } from '../../common/team-country.util';
 import { SportEvent } from '../sport-events/entities/sport-event.entity';
 import { SportEventOdd } from '../sport-events/entities/sport-event-odd.entity';
@@ -104,5 +104,48 @@ export class VolleyballSyncService {
   async handleCron(): Promise<void> {
     if (this.configService.get('ENABLE_SCHEDULING') !== 'true') return;
     await this.sync();
+  }
+
+  /**
+   * Update finished volleyball games from API-Sports (same provider as football).
+   * Fetches results for past dates where we have unfinished events. Runs every 2h to conserve
+   * API quota (volleyball Free plan: 100 req/day). Triggers settlement after updates.
+   */
+  async updateFinishedVolleyball(): Promise<{ updated: number }> {
+    if (!isSportEnabled('volleyball')) return { updated: 0 };
+
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    const notFt = await this.sportEventRepo.find({
+      where: {
+        sport: 'volleyball',
+        eventDate: LessThanOrEqual(twoHoursAgo),
+        status: Not('FT'),
+      },
+      select: ['id', 'apiId', 'eventDate', 'status', 'homeScore', 'awayScore'],
+    });
+    if (!notFt.length) return { updated: 0 };
+
+    const datesToFetch = [...new Set(notFt.map((e) => new Date(e.eventDate).toISOString().split('T')[0]))].slice(0, 3);
+    const apiIdMap = new Map(notFt.map((e) => [e.apiId, e]));
+    let updated = 0;
+
+    for (const dateStr of datesToFetch) {
+      const items = await this.volleyballApi.getGames(dateStr);
+      for (const g of items) {
+        const evt = apiIdMap.get(g.id);
+        if (!evt || evt.status === 'FT') continue;
+        const homeScore = typeof g.scores?.home === 'number' ? g.scores.home : null;
+        const awayScore = typeof g.scores?.away === 'number' ? g.scores.away : null;
+        if (homeScore == null || awayScore == null) continue;
+        await this.sportEventRepo.update(
+          { id: evt.id },
+          { status: g.status?.short || 'FT', homeScore, awayScore, syncedAt: new Date() },
+        );
+        updated++;
+        this.logger.log(`Volleyball result: ${evt.id} → ${homeScore}-${awayScore} (${g.status?.short || 'FT'})`);
+      }
+    }
+
+    return { updated };
   }
 }

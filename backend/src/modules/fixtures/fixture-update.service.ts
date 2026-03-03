@@ -189,7 +189,7 @@ export class FixtureUpdateService {
 
       for (let i = 0; i < unfinishedFixtures.length; i += batchSize) {
         const batch = unfinishedFixtures.slice(i, i + batchSize);
-        const apiIdsString = batch.map(f => f.apiId).join('-');
+        const apiIdsString = batch.map(f => f.apiId).join(',');
 
 
 

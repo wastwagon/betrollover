@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { FixtureUpdateService } from './fixture-update.service';
 import { FootballSyncService } from './football-sync.service';
 import { OddsSyncService } from './odds-sync.service';
+import { VolleyballSyncService } from '../volleyball/volleyball-sync.service';
 import { SettlementService } from '../accumulators/settlement.service';
 import { PredictionEngineService } from '../predictions/prediction-engine.service';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -30,6 +31,7 @@ export class FixtureSchedulerService {
     private fixtureUpdateService: FixtureUpdateService,
     private footballSyncService: FootballSyncService,
     private oddsSyncService: OddsSyncService,
+    private volleyballSyncService: VolleyballSyncService,
     @Inject(forwardRef(() => SettlementService))
     private settlementService: SettlementService,
     @Inject(forwardRef(() => PredictionEngineService))
@@ -405,6 +407,31 @@ export class FixtureSchedulerService {
     } catch (error: any) {
       this.logger.error('Error in fixture archive', error);
       await this.updateSyncStatus('archive', 'error', 0, error.message);
+    }
+  }
+
+  /**
+   * Update finished volleyball games from API-Sports (every 2 hours).
+   * Uses same API key as football. Free plan: 100 req/day — conservative schedule.
+   */
+  @Cron('0 */2 * * *')
+  async handleVolleyballResultsUpdate() {
+    if (!this.isSchedulingEnabled()) return;
+    if (await this.isSyncRunning('volleyball_results')) return;
+    this.logger.debug('Running volleyball results update...');
+    await this.updateSyncStatus('volleyball_results', 'running');
+    try {
+      const result = await this.volleyballSyncService.updateFinishedVolleyball();
+      if (result.updated > 0) {
+        this.logger.log(`Updated ${result.updated} volleyball result(s)`);
+        await this.updateSyncStatus('volleyball_results', 'success', result.updated);
+        await this.settlementService.checkAndSettleAccumulators();
+      } else {
+        await this.updateSyncStatus('volleyball_results', 'success', 0);
+      }
+    } catch (error: any) {
+      this.logger.error('Error in volleyball results update', error);
+      await this.updateSyncStatus('volleyball_results', 'error', 0, error.message);
     }
   }
 

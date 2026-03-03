@@ -16,6 +16,7 @@ import { WithdrawalRequest } from '../wallet/entities/withdrawal-request.entity'
 import { PayoutMethod } from '../wallet/entities/payout-method.entity';
 import { SettlementService } from '../accumulators/settlement.service';
 import { OddsApiSettlementService } from '../odds-api/odds-api-settlement.service';
+import { VolleyballSyncService } from '../volleyball/volleyball-sync.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ContentService } from '../content/content.service';
 import { EmailService } from '../email/email.service';
@@ -70,6 +71,7 @@ export class AdminService {
     private sportEventRepo: Repository<SportEvent>,
     private settlementService: SettlementService,
     private oddsApiSettlementService: OddsApiSettlementService,
+    private volleyballSyncService: VolleyballSyncService,
     private notificationsService: NotificationsService,
     private contentService: ContentService,
     private emailService: EmailService,
@@ -528,15 +530,27 @@ export class AdminService {
 
   /**
    * Diagnostic for settlement debugging. Returns counts of pending picks,
-   * finished fixtures/events with scores, and API key status.
+   * finished fixtures/events with scores, orphaned picks (no fixture/event link), and API key status.
    */
   async getSettlementDiagnostic() {
-    const [pendingFixturePicks, pendingEventPicks, ftFixturesWithScores, ftEventsWithScores, pendingTickets] = await Promise.all([
+    const [
+      pendingFixturePicks,
+      pendingEventPicks,
+      orphanedPicks,
+      ftFixturesWithScores,
+      ftEventsWithScores,
+      pendingTickets,
+      unfinishedFixturesNoScores,
+      unfinishedEventsNoScores,
+    ] = await Promise.all([
       this.dataSource.query(
         `SELECT COUNT(*)::int AS c FROM accumulator_picks WHERE result = 'pending' AND fixture_id IS NOT NULL`,
       ).then((r) => Number((r as any[])[0]?.c ?? 0)),
       this.dataSource.query(
         `SELECT COUNT(*)::int AS c FROM accumulator_picks WHERE result = 'pending' AND event_id IS NOT NULL`,
+      ).then((r) => Number((r as any[])[0]?.c ?? 0)),
+      this.dataSource.query(
+        `SELECT COUNT(*)::int AS c FROM accumulator_picks WHERE result = 'pending' AND fixture_id IS NULL AND event_id IS NULL`,
       ).then((r) => Number((r as any[])[0]?.c ?? 0)),
       this.dataSource.query(
         `SELECT COUNT(*)::int AS c FROM fixtures WHERE status = 'FT' AND home_score IS NOT NULL AND away_score IS NOT NULL`,
@@ -547,6 +561,12 @@ export class AdminService {
       this.dataSource.query(
         `SELECT COUNT(*)::int AS c FROM accumulator_tickets WHERE result = 'pending'`,
       ).then((r) => Number((r as any[])[0]?.c ?? 0)),
+      this.dataSource.query(
+        `SELECT COUNT(*)::int AS c FROM fixtures WHERE status != 'FT' AND match_date < NOW() - INTERVAL '2 hours' AND (home_score IS NULL OR away_score IS NULL)`,
+      ).then((r) => Number((r as any[])[0]?.c ?? 0)),
+      this.dataSource.query(
+        `SELECT COUNT(*)::int AS c FROM sport_events WHERE status != 'FT' AND event_date < NOW() - INTERVAL '2 hours' AND (home_score IS NULL OR away_score IS NULL)`,
+      ).then((r) => Number((r as any[])[0]?.c ?? 0)),
     ]);
 
     const apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 }, select: ['apiSportsKey'] });
@@ -556,9 +576,12 @@ export class AdminService {
     return {
       pendingFixturePicks,
       pendingEventPicks,
+      orphanedPicks,
       ftFixturesWithScores,
       ftEventsWithScores,
       pendingTickets,
+      unfinishedFixturesNoScores,
+      unfinishedEventsNoScores,
       apiSportsKeyConfigured: !!apiSportsKey,
       oddsApiKeyConfigured: !!oddsApiKey,
       enableScheduling: process.env.ENABLE_SCHEDULING === 'true',
@@ -566,17 +589,19 @@ export class AdminService {
   }
 
   /**
-   * Run full settlement: first sync Odds API results (marks sport_events FT),
+   * Run full settlement: sync Odds API results + API-Sports volleyball results,
    * then settle picks on finished fixtures/events.
-   * Fixes: Odds API sports (tennis, basketball, etc.) were not settling because
-   * manual "Run Settlement" only ran SettlementService without syncing results first.
    */
   async runSettlement() {
-    const resultsSync = await this.oddsApiSettlementService.syncResults();
+    const [oddsSync, volleyballSync] = await Promise.all([
+      this.oddsApiSettlementService.syncResults(),
+      this.volleyballSyncService.updateFinishedVolleyball(),
+    ]);
     const settlement = await this.settlementService.runSettlement();
     return {
       ...settlement,
-      oddsApiEventsMarkedFt: resultsSync.updated,
+      oddsApiEventsMarkedFt: oddsSync.updated,
+      volleyballEventsMarkedFt: volleyballSync.updated,
     };
   }
 

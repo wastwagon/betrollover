@@ -18,6 +18,8 @@ import { MarketFilterService } from './market-filter.service';
 import { ApiPredictionsService } from './api-predictions.service';
 import { AccumulatorsModule } from '../accumulators/accumulators.module';
 import { PredictionsModule } from '../predictions/predictions.module';
+import { VolleyballModule } from '../volleyball/volleyball.module';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -32,6 +34,7 @@ import { PredictionsModule } from '../predictions/predictions.module';
     ]),
     forwardRef(() => AccumulatorsModule), // For SettlementService (avoid circular dependency)
     forwardRef(() => PredictionsModule), // For PredictionEngineService (automatic prediction generation)
+    VolleyballModule,
   ],
   controllers: [FixturesController],
   providers: [

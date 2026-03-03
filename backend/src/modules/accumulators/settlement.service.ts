@@ -109,6 +109,10 @@ export class SettlementService {
       .filter((f) => f.homeScore !== null && f.awayScore !== null)
       .map((f) => f.id);
 
+    this.logger.debug(
+      `Settlement: ${fixtureIds.length} finished fixtures, ${finishedFixtures.length} total`,
+    );
+
     // Finished sport_events (all non-football sports) for event-based picks
     const finishedEvents = await this.sportEventRepo.find({
       where: [
@@ -132,6 +136,10 @@ export class SettlementService {
     const pendingEventPicks = eventIds.length > 0
       ? await this.pickRepo.find({ where: { eventId: In(eventIds), result: 'pending' } })
       : [];
+
+    this.logger.debug(
+      `Settlement: ${eventsWithScores.length} finished sport_events, ${pendingFixturePicks.length} pending fixture picks, ${pendingEventPicks.length} pending event picks`,
+    );
 
     const fixtureMap = new Map(finishedFixtures.map((f) => [f.id, f]));
     let picksUpdated = 0;
@@ -186,6 +194,10 @@ export class SettlementService {
         const fullTicket = await this.ticketRepo.findOne({ where: { id: ticket.id }, select: ['title'] });
         await this.settleEscrow(ticket.id, ticket.userId, ticket.result, fullTicket?.title ?? `Pick #${ticket.id}`);
       }
+    }
+
+    if (picksUpdated > 0 || ticketsSettled > 0) {
+      this.logger.log(`Settlement: ${picksUpdated} picks updated, ${ticketsSettled} tickets settled`);
     }
 
     return { picksUpdated, ticketsSettled };
