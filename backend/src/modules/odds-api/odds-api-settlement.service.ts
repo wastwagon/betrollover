@@ -40,9 +40,15 @@ export class OddsApiSettlementService {
   /**
    * Fetch completed scores from The Odds API and mark matching sport_events as finished (FT).
    * Returns the number of events updated.
+   * Matches by (sport, apiId) first; falls back to raw_json->>'id' for API ID format edge cases.
    */
   async syncResults(): Promise<{ updated: number }> {
     let updated = 0;
+    const key = this.oddsApi.getApiKey();
+    if (!key) {
+      this.logger.warn('ODDS_API_KEY not set — skipping Odds API results sync');
+      return { updated };
+    }
 
     for (const sport of this.COVERED_SPORTS) {
       if (!isSportEnabled(sport)) continue;
@@ -51,6 +57,10 @@ export class OddsApiSettlementService {
       if (!prefixes.length) continue;
 
       const sportKeys = await this.oddsApi.getActiveSportKeys(prefixes);
+      if (!sportKeys.length) {
+        this.logger.debug(`OddsApi sync: no active keys for ${sport}`);
+        continue;
+      }
 
       for (const sportKey of sportKeys) {
         // daysFrom=3 covers matches completed in last 3 days (catches delayed result updates)
@@ -59,12 +69,18 @@ export class OddsApiSettlementService {
 
         for (const result of completed) {
           const apiId = oddsIdToNumber(result.id);
-          if (!apiId) continue;
 
-          // Find our stored event
-          const event = await this.sportEventRepo.findOne({
+          // Find our stored event: try apiId first, then raw string ID (handles format mismatches)
+          let event = await this.sportEventRepo.findOne({
             where: { sport, apiId },
           });
+          if (!event && result.id) {
+            event = await this.sportEventRepo
+              .createQueryBuilder('e')
+              .where('e.sport = :sport', { sport })
+              .andWhere("e.raw_json->>'id' = :rawId", { rawId: result.id })
+              .getOne();
+          }
           if (!event || event.status === 'FT') continue;
 
           // Map scores — The Odds API returns scores in same order as home_team/away_team
@@ -88,8 +104,8 @@ export class OddsApiSettlementService {
             },
           );
           updated++;
-          this.logger.debug(
-            `Settled ${sport}: ${event.homeTeam} ${homeScore ?? '?'} – ${awayScore ?? '?'} ${event.awayTeam}`,
+          this.logger.log(
+            `OddsApi settled ${sport}: ${event.homeTeam} ${homeScore ?? '?'} – ${awayScore ?? '?'} ${event.awayTeam}`,
           );
         }
       }

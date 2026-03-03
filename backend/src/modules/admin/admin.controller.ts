@@ -103,6 +103,12 @@ export class AdminController {
     return this.predictionMarketplaceSync.fixMarketplaceTitlesAndDedupe();
   }
 
+  @Get('settlement/diagnostic')
+  async getSettlementDiagnostic(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.adminService.getSettlementDiagnostic();
+  }
+
   @Post('settlement/run')
   async runSettlement(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');

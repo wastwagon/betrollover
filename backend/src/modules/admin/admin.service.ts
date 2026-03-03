@@ -527,6 +527,45 @@ export class AdminService {
   }
 
   /**
+   * Diagnostic for settlement debugging. Returns counts of pending picks,
+   * finished fixtures/events with scores, and API key status.
+   */
+  async getSettlementDiagnostic() {
+    const [pendingFixturePicks, pendingEventPicks, ftFixturesWithScores, ftEventsWithScores, pendingTickets] = await Promise.all([
+      this.dataSource.query(
+        `SELECT COUNT(*)::int AS c FROM accumulator_picks WHERE result = 'pending' AND fixture_id IS NOT NULL`,
+      ).then((r) => Number((r as any[])[0]?.c ?? 0)),
+      this.dataSource.query(
+        `SELECT COUNT(*)::int AS c FROM accumulator_picks WHERE result = 'pending' AND event_id IS NOT NULL`,
+      ).then((r) => Number((r as any[])[0]?.c ?? 0)),
+      this.dataSource.query(
+        `SELECT COUNT(*)::int AS c FROM fixtures WHERE status = 'FT' AND home_score IS NOT NULL AND away_score IS NOT NULL`,
+      ).then((r) => Number((r as any[])[0]?.c ?? 0)),
+      this.dataSource.query(
+        `SELECT COUNT(*)::int AS c FROM sport_events WHERE status = 'FT' AND home_score IS NOT NULL AND away_score IS NOT NULL`,
+      ).then((r) => Number((r as any[])[0]?.c ?? 0)),
+      this.dataSource.query(
+        `SELECT COUNT(*)::int AS c FROM accumulator_tickets WHERE result = 'pending'`,
+      ).then((r) => Number((r as any[])[0]?.c ?? 0)),
+    ]);
+
+    const apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 }, select: ['apiSportsKey'] });
+    const apiSportsKey = apiSettings?.apiSportsKey || process.env.API_SPORTS_KEY || '';
+    const oddsApiKey = process.env.ODDS_API_KEY || process.env.TENNIS_ODDS_API_KEY || '';
+
+    return {
+      pendingFixturePicks,
+      pendingEventPicks,
+      ftFixturesWithScores,
+      ftEventsWithScores,
+      pendingTickets,
+      apiSportsKeyConfigured: !!apiSportsKey,
+      oddsApiKeyConfigured: !!oddsApiKey,
+      enableScheduling: process.env.ENABLE_SCHEDULING === 'true',
+    };
+  }
+
+  /**
    * Run full settlement: first sync Odds API results (marks sport_events FT),
    * then settle picks on finished fixtures/events.
    * Fixes: Odds API sports (tennis, basketball, etc.) were not settling because
