@@ -232,7 +232,7 @@ export function AppHeader({ slipCount }: AppHeaderProps) {
                 href="/wallet"
                 className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-[var(--primary)] bg-[var(--primary-light)] hover:bg-teal-100 border border-teal-200/60 transition-all duration-200"
               >
-                <span className="tabular-nums">GHS {balance.toFixed(2)}</span>
+                <span className="tabular-nums">GHS {Number(balance ?? 0).toFixed(2)}</span>
               </Link>
             )}
             <Link
@@ -335,7 +335,7 @@ export function AppHeader({ slipCount }: AppHeaderProps) {
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex-1 py-2.5 text-center rounded-lg text-sm font-medium text-emerald-700 bg-emerald-50"
                   >
-                    GHS {balance.toFixed(2)}
+                    GHS {Number(balance ?? 0).toFixed(2)}
                   </Link>
                 )}
                 <button

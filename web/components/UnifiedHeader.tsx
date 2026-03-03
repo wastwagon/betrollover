@@ -455,7 +455,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                     </svg>
                     {format(balance).primary}
                     {currency.code !== 'GHS' && (
-                      <span className="text-[10px] font-normal opacity-80">GHS {balance.toFixed(2)}</span>
+                      <span className="text-[10px] font-normal opacity-80">GHS {Number(balance ?? 0).toFixed(2)}</span>
                     )}
                   </Link>
                 )}
@@ -536,7 +536,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                                 <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-600">Balance</p>
                                 <p className="text-sm font-bold text-emerald-800">{format(balance).primary}</p>
                                 {currency.code !== 'GHS' && (
-                                  <p className="text-[10px] text-emerald-600/80 mt-0.5">GHS {balance.toFixed(2)}</p>
+                                  <p className="text-[10px] text-emerald-600/80 mt-0.5">GHS {Number(balance ?? 0).toFixed(2)}</p>
                                 )}
                               </div>
                             )}
@@ -723,7 +723,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                         <div className="px-3 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200/60 text-sm font-bold text-emerald-700 mb-1">
                           💰 Balance: {format(balance).primary}
                           {currency.code !== 'GHS' && (
-                            <span className="block text-[11px] font-normal opacity-80">GHS {balance.toFixed(2)}</span>
+                            <span className="block text-[11px] font-normal opacity-80">GHS {Number(balance ?? 0).toFixed(2)}</span>
                           )}
                         </div>
                       )}

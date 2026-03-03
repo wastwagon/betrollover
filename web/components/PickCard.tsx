@@ -236,7 +236,7 @@ export function PickCard({
                       {tipster ? `${tipster.totalPicks}p` : `${totalPicks}p`}
                     </span>
                     <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                      {tipster ? `${tipster.winRate.toFixed(1)}%` : '—'}
+                      {tipster?.winRate != null ? `${Number(tipster.winRate).toFixed(1)}%` : '—'}
                     </span>
                     {tipster && (tipster.wonPicks > 0 || tipster.lostPicks > 0) && (
                       <span className="text-[10px] text-[var(--text-muted)]">
@@ -448,7 +448,7 @@ export function PickCard({
                           {t('pick_card.picks_count', { n: String(tipster.totalPicks) })}
                         </span>
                         <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                          {t('pick_card.win_rate', { rate: tipster.winRate.toFixed(1) })}
+                          {t('pick_card.win_rate', { rate: (tipster?.winRate != null ? Number(tipster.winRate).toFixed(1) : '—') })}
                         </span>
                         <span className="text-sm text-[var(--text-muted)]">
                           {tipster.wonPicks}W / {tipster.lostPicks}L
@@ -602,7 +602,7 @@ export function PickCard({
                       <div>
                         <p className="font-semibold text-[var(--text)]">{tipster.displayName}</p>
                         <p className="text-xs text-[var(--text-muted)]">
-                          {t('pick_card.win_rate', { rate: tipster.winRate.toFixed(1) })} • {t('pick_card.picks_count', { n: String(tipster.totalPicks) })}
+                          {t('pick_card.win_rate', { rate: (tipster?.winRate != null ? Number(tipster.winRate).toFixed(1) : '—') })} • {t('pick_card.picks_count', { n: String(tipster.totalPicks) })}
                         </p>
                       </div>
                     </div>

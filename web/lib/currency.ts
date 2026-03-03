@@ -48,13 +48,15 @@ export function formatAmount(
   opts: { showOriginal?: boolean } = {},
 ): { primary: string; original?: string } {
   const currency = getCurrencyByCode(targetCode);
+  const n = Number(ghs);
+  const val = Number.isFinite(n) ? n : 0;
 
   if (targetCode === 'GHS' || !rates[targetCode]) {
-    return { primary: `${currency.symbol}${ghs.toFixed(2)}` };
+    return { primary: `${currency.symbol}${val.toFixed(2)}` };
   }
 
   const rate = rates[targetCode];
-  const converted = ghs * rate;
+  const converted = val * rate;
 
   // Format with sensible decimals
   const formatted = converted >= 100
@@ -65,6 +67,6 @@ export function formatAmount(
 
   return {
     primary: `${currency.symbol}${formatted}`,
-    original: opts.showOriginal ? `₵${ghs.toFixed(2)}` : undefined,
+    original: opts.showOriginal ? `₵${val.toFixed(2)}` : undefined,
   };
 }
