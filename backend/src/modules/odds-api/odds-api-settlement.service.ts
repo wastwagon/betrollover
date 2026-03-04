@@ -40,7 +40,7 @@ export class OddsApiSettlementService {
   /**
    * Fetch completed scores from The Odds API and mark matching sport_events as finished (FT).
    * Returns the number of events updated.
-   * Matches by (sport, apiId) first; falls back to raw_json->>'id' for API ID format edge cases.
+   * Matches by: (sport, apiId) → raw_json->>'id' → (sport, homeTeam, awayTeam, eventDate).
    */
   async syncResults(): Promise<{ updated: number }> {
     let updated = 0;
@@ -63,27 +63,38 @@ export class OddsApiSettlementService {
       }
 
       for (const sportKey of sportKeys) {
-        // daysFrom=3 covers matches completed in last 3 days (catches delayed result updates)
         const scores = await this.oddsApi.getScores(sportKey, 3);
         const completed = scores.filter((s) => s.completed && s.scores?.length);
+        if (completed.length > 0) {
+          this.logger.debug(`OddsApi ${sport} ${sportKey}: ${completed.length} completed of ${scores.length} total`);
+        }
 
         for (const result of completed) {
-          const apiId = oddsIdToNumber(result.id);
+          const rawId = typeof result.id === 'string' ? result.id : String(result.id ?? '');
+          const apiId = rawId ? oddsIdToNumber(rawId) : 0;
 
-          // Find our stored event: try apiId first, then raw string ID (handles format mismatches)
-          let event = await this.sportEventRepo.findOne({
-            where: { sport, apiId },
-          });
-          if (!event && result.id) {
+          let event = await this.sportEventRepo.findOne({ where: { sport, apiId } });
+          if (!event && rawId) {
             event = await this.sportEventRepo
               .createQueryBuilder('e')
               .where('e.sport = :sport', { sport })
-              .andWhere("e.raw_json->>'id' = :rawId", { rawId: result.id })
+              .andWhere("e.raw_json->>'id' = :rawId", { rawId })
+              .getOne();
+          }
+          if (!event) {
+            event = await this.sportEventRepo
+              .createQueryBuilder('e')
+              .where('e.sport = :sport', { sport })
+              .andWhere('e.status != :ft', { ft: 'FT' })
+              .andWhere('LOWER(TRIM(e.home_team)) = LOWER(TRIM(:home))', { home: result.home_team })
+              .andWhere('LOWER(TRIM(e.away_team)) = LOWER(TRIM(:away))', { away: result.away_team })
+              .andWhere('e.event_date::date = :date', {
+                date: new Date(result.commence_time).toISOString().split('T')[0],
+              })
               .getOne();
           }
           if (!event || event.status === 'FT') continue;
 
-          // Map scores — The Odds API returns scores in same order as home_team/away_team
           const scoreHome = result.scores?.find(
             (s) => s.name.toLowerCase() === result.home_team.toLowerCase(),
           ) ?? result.scores?.[0];

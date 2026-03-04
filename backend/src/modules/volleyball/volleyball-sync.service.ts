@@ -121,18 +121,28 @@ export class VolleyballSyncService {
         eventDate: LessThanOrEqual(twoHoursAgo),
         status: Not('FT'),
       },
-      select: ['id', 'apiId', 'eventDate', 'status', 'homeScore', 'awayScore'],
+      select: ['id', 'apiId', 'eventDate', 'status', 'homeScore', 'awayScore', 'homeTeam', 'awayTeam'],
     });
     if (!notFt.length) return { updated: 0 };
 
     const datesToFetch = [...new Set(notFt.map((e) => new Date(e.eventDate).toISOString().split('T')[0]))].slice(0, 3);
+    this.logger.debug(`Volleyball results: ${notFt.length} unfinished, fetching dates: ${datesToFetch.join(', ')}`);
     const apiIdMap = new Map(notFt.map((e) => [e.apiId, e]));
     let updated = 0;
 
     for (const dateStr of datesToFetch) {
       const items = await this.volleyballApi.getGames(dateStr);
       for (const g of items) {
-        const evt = apiIdMap.get(g.id);
+        let evt = apiIdMap.get(g.id);
+        if (!evt) {
+          const homeName = (g.teams?.home?.name ?? '').trim().toLowerCase();
+          const awayName = (g.teams?.away?.name ?? '').trim().toLowerCase();
+          evt = notFt.find(
+            (e) =>
+              (e.homeTeam?.trim().toLowerCase() === homeName && e.awayTeam?.trim().toLowerCase() === awayName) ||
+              String(g.id) === String(e.apiId),
+          );
+        }
         if (!evt || evt.status === 'FT') continue;
         const homeScore = typeof g.scores?.home === 'number' ? g.scores.home : null;
         const awayScore = typeof g.scores?.away === 'number' ? g.scores.away : null;
