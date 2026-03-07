@@ -189,9 +189,8 @@ export class FixtureUpdateService {
 
       for (let i = 0; i < unfinishedFixtures.length; i += batchSize) {
         const batch = unfinishedFixtures.slice(i, i + batchSize);
-        const apiIdsString = batch.map(f => f.apiId).join(',');
-
-
+        // API-Football expects hyphen-separated ids: ids=123-456-789 (not comma)
+        const apiIdsString = batch.map(f => f.apiId).join('-');
 
         const res = await fetch(`${getSportApiBaseUrl('football')}/fixtures?ids=${apiIdsString}`, {
           headers: { 'x-apisports-key': apiKey },
