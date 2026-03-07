@@ -166,88 +166,45 @@ export class FixtureUpdateService {
     }
 
     try {
-      // Find fixtures in DB that should be finished but aren't marked as FT
       const now = new Date();
-      const allUnfinished = await this.fixtureRepo.find({
-        where: {
-          status: Not('FT'),
-          matchDate: LessThanOrEqual(now),
-        },
-        order: { matchDate: 'DESC' },
-        select: ['id', 'apiId'],
-        take: MAX_FIXTURES_TO_UPDATE_PER_RUN * 2, // Fetch extra to reorder
-      });
+      let updated = 0;
 
-      // Prioritize fixtures that have pending accumulator picks (user bets waiting to settle)
-      const pendingFixtureIds = await this.dataSource.query<{ fixture_id: number }[]>(
-        `SELECT DISTINCT fixture_id FROM accumulator_picks
-         WHERE result = 'pending' AND fixture_id IS NOT NULL
-         AND fixture_id = ANY($1)`,
-        [allUnfinished.map((f) => f.id)],
+      // PASS 1: Fixtures with pending accumulator picks (user coupons) — fetch these first, no limit
+      const pendingRows = await this.dataSource.query<{ fixture_id: number }[]>(
+        `SELECT DISTINCT ap.fixture_id FROM accumulator_picks ap
+         JOIN fixtures f ON f.id = ap.fixture_id
+         WHERE ap.result = 'pending' AND ap.fixture_id IS NOT NULL
+         AND f.status != 'FT' AND f.match_date <= $1`,
+        [now],
       );
-      const prioritizedSet = new Set(pendingFixtureIds.map((r) => r.fixture_id));
-      const unfinishedFixtures = [
-        ...allUnfinished.filter((f) => prioritizedSet.has(f.id)),
-        ...allUnfinished.filter((f) => !prioritizedSet.has(f.id)),
-      ].slice(0, MAX_FIXTURES_TO_UPDATE_PER_RUN);
-
-      if (unfinishedFixtures.length === 0) {
-        return { updated: 0, errors: 0 };
+      const pendingIds = [...new Set(pendingRows.map((r) => r.fixture_id))];
+      if (pendingIds.length > 0) {
+        const pendingFixtures = await this.fixtureRepo.find({
+          where: { id: In(pendingIds) },
+          select: ['id', 'apiId'],
+        });
+        const fromPass1 = await this.fetchAndUpdateBatch(apiKey, pendingFixtures);
+        updated += fromPass1;
+        if (fromPass1 > 0) {
+          this.logger.log(`Updated ${fromPass1} fixture(s) with pending picks`);
+        }
       }
 
-      // Fetch results in batches (API-Football limit ~20 per request)
-      const batchSize = RESULTS_FETCH_BATCH_SIZE;
-      let updated = 0;
-      const dbApiIdMap = new Map(unfinishedFixtures.map(f => [f.apiId, f.id]));
-
-      for (let i = 0; i < unfinishedFixtures.length; i += batchSize) {
-        const batch = unfinishedFixtures.slice(i, i + batchSize);
-        // API-Football expects hyphen-separated ids: ids=123-456-789 (not comma)
-        const apiIdsString = batch.map(f => f.apiId).join('-');
-
-        const res = await fetch(`${getSportApiBaseUrl('football')}/fixtures?ids=${apiIdsString}`, {
-          headers: { 'x-apisports-key': apiKey },
-        });
-
-        if (!res.ok) {
-          const errorData = await safeJson(res).catch(() => ({}));
-          this.logger.error(`Failed to fetch fixtures batch: ${res.status}`, errorData);
-          continue;
-        }
-
-        await this.updateUsage(res.headers);
-        const data = await safeJson<any>(res);
-        const fixtures = data.response || [];
-
-
-
-        for (const fixtureData of fixtures) {
-          const apiId = fixtureData.fixture.id;
-          const dbId = dbApiIdMap.get(apiId);
-
-          if (!dbId) continue;
-
-          const fix = fixtureData.fixture;
-          const goals = fixtureData.goals;
-
-          // Update if there is scores data
-          if (goals?.home !== null && goals?.away !== null) {
-            await this.fixtureRepo.update(
-              { id: dbId },
-              {
-                status: fix.status.short,
-                homeScore: goals.home,
-                awayScore: goals.away,
-                syncedAt: new Date(),
-              }
-            );
-            updated++;
-
-            // Invalidate cache for this fixture
-            await this.cacheManager.del(`fixture:${dbId}`);
-            await this.cacheManager.del(`fixture:api:${apiId}`);
-          }
-        }
+      // PASS 2: Other unfinished fixtures (exclude pass 1 to avoid duplicate API calls)
+      const qb = this.fixtureRepo
+        .createQueryBuilder('f')
+        .select(['f.id', 'f.apiId'])
+        .where('f.status != :ft', { ft: 'FT' })
+        .andWhere('f.match_date <= :now', { now })
+        .orderBy('f.match_date', 'DESC')
+        .take(MAX_FIXTURES_TO_UPDATE_PER_RUN);
+      if (pendingIds.length > 0) {
+        qb.andWhere('f.id NOT IN (:...ids)', { ids: pendingIds });
+      }
+      const otherUnfinished = await qb.getMany();
+      if (otherUnfinished.length > 0) {
+        const fromPass2 = await this.fetchAndUpdateBatch(apiKey, otherUnfinished);
+        updated += fromPass2;
       }
 
       this.logger.log(`Updated ${updated} finished fixtures`);
@@ -256,5 +213,58 @@ export class FixtureUpdateService {
       this.logger.error('Error updating finished fixtures', error);
       return { updated: 0, errors: 1 };
     }
+  }
+
+  private async fetchAndUpdateBatch(
+    apiKey: string,
+    fixtures: { id: number; apiId: number }[],
+  ): Promise<number> {
+    if (fixtures.length === 0) return 0;
+    const batchSize = RESULTS_FETCH_BATCH_SIZE;
+    let updated = 0;
+    const dbApiIdMap = new Map(fixtures.map((f) => [f.apiId, f.id]));
+
+    for (let i = 0; i < fixtures.length; i += batchSize) {
+      const batch = fixtures.slice(i, i + batchSize);
+      const apiIdsString = batch.map((f) => f.apiId).join('-');
+
+      const res = await fetch(`${getSportApiBaseUrl('football')}/fixtures?ids=${apiIdsString}`, {
+        headers: { 'x-apisports-key': apiKey },
+      });
+
+      if (!res.ok) {
+        const errorData = await safeJson(res).catch(() => ({}));
+        this.logger.error(`Failed to fetch fixtures batch: ${res.status}`, errorData);
+        continue;
+      }
+
+      await this.updateUsage(res.headers);
+      const data = await safeJson<any>(res);
+      const response = data.response || [];
+
+      for (const fixtureData of response) {
+        const apiId = fixtureData.fixture.id;
+        const dbId = dbApiIdMap.get(apiId);
+        if (!dbId) continue;
+
+        const fix = fixtureData.fixture;
+        const goals = fixtureData.goals;
+        if (goals?.home !== null && goals?.away !== null) {
+          await this.fixtureRepo.update(
+            { id: dbId },
+            {
+              status: fix.status.short,
+              homeScore: goals.home,
+              awayScore: goals.away,
+              syncedAt: new Date(),
+            },
+          );
+          updated++;
+          await this.cacheManager.del(`fixture:${dbId}`);
+          await this.cacheManager.del(`fixture:api:${apiId}`);
+        }
+      }
+    }
+    return updated;
   }
 }
