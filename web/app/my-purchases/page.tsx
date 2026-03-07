@@ -172,6 +172,10 @@ export default function MyPurchasesPage() {
             title={t('my_purchases.title')}
             tagline={t('my_purchases.tagline')}
           />
+          <p className="text-sm text-[var(--text-muted)] mb-4 flex items-center gap-2">
+            <span aria-hidden>🛡</span>
+            Lost or voided coupons are automatically refunded to your wallet. No claims needed.
+          </p>
 
           <div className="mb-4">
             <AdSlot zoneSlug="my-purchases-full" fullWidth className="w-full" />

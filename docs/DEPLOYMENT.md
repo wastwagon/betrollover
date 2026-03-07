@@ -119,8 +119,9 @@ On a brand-new server with no existing database:
 For all future deploys (code updates):
 
 1. Push to `main` → Coolify rebuilds containers
-2. On API restart, `MigrationRunnerService` reads `applied_migrations` and only runs **new** migrations
-3. New migrations since multi-sport expansion:
+2. **Settlement:** After deploy, run settlement once (Admin → Dashboard → “Run Settlement Now” or Admin → Multi-Sport → “Sync Results & Settle”). See **`docs/SETTLEMENT_RUNBOOK.md`** for the full checklist and when to use Fixtures vs Multi-Sport.
+3. On API restart, `MigrationRunnerService` reads `applied_migrations` and only runs **new** migrations
+4. New migrations since multi-sport expansion:
    - `048_multi_sport_foundation.sql` — sport_events table, picks sport column
    - `049_add_team_logos_and_country_codes.sql` — team_logos, country_codes columns
    - `050_add_sport_to_news.sql` — sport column on news_articles
@@ -129,7 +130,7 @@ For all future deploys (code updates):
    - `053_add_support_tickets.sql` — `support_tickets` table (user-to-admin help/dispute tickets)
    - `054_add_referrals.sql` — `referral_codes`, `referral_conversions` tables, `referred_by_code` on users (invite & earn system)
    - `055_add_chat_system.sql` — `chat_rooms` (10 pre-seeded sport rooms), `chat_messages`, `chat_reactions`, `chat_reports`, `chat_bans` tables; `chat_warnings` column on users (community chat system)
-4. No manual intervention needed — the runner handles it automatically
+5. No manual intervention needed — the runner handles it automatically
 
 To manually run migrations (e.g. if runner failed):
 ```bash

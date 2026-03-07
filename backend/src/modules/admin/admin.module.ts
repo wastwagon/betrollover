@@ -51,10 +51,12 @@ import { HockeyModule } from '../hockey/hockey.module';
 import { AmericanFootballModule } from '../american-football/american-football.module';
 import { TennisModule } from '../tennis/tennis.module';
 import { OddsApiModule } from '../odds-api/odds-api.module';
+import { SyncStatus } from '../fixtures/entities/sync-status.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
+      SyncStatus,
       User,
       SportEvent,
       SmtpSettings,

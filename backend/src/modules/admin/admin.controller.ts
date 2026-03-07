@@ -245,6 +245,18 @@ export class AdminController {
     return this.syncHealthService.getStatus();
   }
 
+  @Get('sports/events')
+  async getSportEventsForAdmin(
+    @CurrentUser() user: User,
+    @Query('sport') sport: string,
+    @Query('days') days?: string,
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const sportKey = (sport || 'basketball').replace(/-/g, '_');
+    const daysNum = Math.min(parseInt(days || '14', 10) || 14, 30);
+    return this.adminService.getSportEventsForAdmin(sportKey, daysNum);
+  }
+
   @Get('predictions/today')
   async getTodaysPredictionsWithPrices(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');

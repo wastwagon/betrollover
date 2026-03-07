@@ -31,12 +31,15 @@ import { Prediction } from '../predictions/entities/prediction.entity';
 import { PredictionFixture } from '../predictions/entities/prediction-fixture.entity';
 import { TipstersApiService } from '../predictions/tipsters-api.service';
 import { ResultTrackerService } from '../predictions/result-tracker.service';
+import { SyncStatus } from '../fixtures/entities/sync-status.entity';
 
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
 
   constructor(
+    @InjectRepository(SyncStatus)
+    private syncStatusRepo: Repository<SyncStatus>,
     @InjectRepository(User)
     private usersRepo: Repository<User>,
     @InjectRepository(TipsterRequest)
@@ -573,6 +576,29 @@ export class AdminService {
     const apiSportsKey = apiSettings?.apiSportsKey || process.env.API_SPORTS_KEY || '';
     const oddsApiKey = process.env.ODDS_API_KEY || process.env.TENNIS_ODDS_API_KEY || '';
 
+    const [settlementRow, oddsApiRow] = await Promise.all([
+      this.syncStatusRepo.findOne({ where: { syncType: 'settlement' }, select: ['lastSyncAt', 'lastSyncCount'] }),
+      this.syncStatusRepo.findOne({ where: { syncType: 'odds_api_results' }, select: ['lastSyncAt', 'lastSyncCount'] }),
+    ]);
+
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    const [stuckFixturePicks, stuckEventPicks] = await Promise.all([
+      this.dataSource.query(
+        `SELECT COUNT(*)::int AS c FROM accumulator_picks ap
+         JOIN fixtures f ON f.id = ap.fixture_id
+         WHERE ap.result = 'pending' AND ap.fixture_id IS NOT NULL
+         AND f.match_date < $1 AND f.status != 'FT'`,
+        [twoHoursAgo],
+      ).then((r) => Number((r as any[])[0]?.c ?? 0)),
+      this.dataSource.query(
+        `SELECT COUNT(*)::int AS c FROM accumulator_picks ap
+         JOIN sport_events e ON e.id = ap.event_id
+         WHERE ap.result = 'pending' AND ap.event_id IS NOT NULL
+         AND e.event_date < $1 AND e.status != 'FT'`,
+        [twoHoursAgo],
+      ).then((r) => Number((r as any[])[0]?.c ?? 0)),
+    ]);
+
     return {
       pendingFixturePicks,
       pendingEventPicks,
@@ -585,6 +611,11 @@ export class AdminService {
       apiSportsKeyConfigured: !!apiSportsKey,
       oddsApiKeyConfigured: !!oddsApiKey,
       enableScheduling: process.env.ENABLE_SCHEDULING === 'true',
+      lastSettlementAt: settlementRow?.lastSyncAt?.toISOString() ?? null,
+      lastSettlementCount: settlementRow?.lastSyncCount ?? null,
+      lastOddsApiResultsAt: oddsApiRow?.lastSyncAt?.toISOString() ?? null,
+      lastOddsApiResultsCount: oddsApiRow?.lastSyncCount ?? null,
+      stuckPendingPicksPastCutoff: stuckFixturePicks + stuckEventPicks,
     };
   }
 
@@ -598,6 +629,17 @@ export class AdminService {
       this.volleyballSyncService.updateFinishedVolleyball(),
     ]);
     const settlement = await this.settlementService.runSettlement();
+    const now = new Date();
+    await Promise.all([
+      this.syncStatusRepo.upsert(
+        { syncType: 'settlement', status: 'success', lastSyncAt: now, lastSyncCount: settlement.ticketsSettled, lastError: null },
+        ['syncType'],
+      ),
+      this.syncStatusRepo.upsert(
+        { syncType: 'odds_api_results', status: 'success', lastSyncAt: now, lastSyncCount: oddsSync.updated, lastError: null },
+        ['syncType'],
+      ),
+    ]);
     return {
       ...settlement,
       oddsApiEventsMarkedFt: oddsSync.updated,
@@ -624,6 +666,29 @@ export class AdminService {
     );
     const settlement = await this.settlementService.runSettlement();
     return { message: 'Event marked FT and settlement run', ...settlement };
+  }
+
+  /**
+   * List sport events for admin Multi-Sport page. Includes past and future events (any status)
+   * so admins can manually settle events the Odds API no longer returns (>3 days old).
+   */
+  async getSportEventsForAdmin(sport: string, days: number = 14) {
+    const now = new Date();
+    const from = new Date(now);
+    from.setDate(from.getDate() - days);
+    const to = new Date(now);
+    to.setDate(to.getDate() + days);
+
+    const events = await this.sportEventRepo.find({
+      where: {
+        sport,
+        eventDate: Between(from, to),
+      },
+      select: ['id', 'sport', 'homeTeam', 'awayTeam', 'leagueName', 'eventDate', 'status', 'homeScore', 'awayScore'],
+      order: { eventDate: 'DESC' },
+      take: 300,
+    });
+    return { events };
   }
 
   async getTipsterRequests() {

@@ -13,12 +13,17 @@ interface SportEvent {
   leagueName: string | null;
   eventDate: string;
   status: string;
+  homeScore?: number | null;
+  awayScore?: number | null;
 }
 
 interface SyncResult {
   sport: string;
   synced: number;
   error?: string;
+  /** For "Sync Results & Settle": picks updated and tickets settled */
+  picksUpdated?: number;
+  ticketsSettled?: number;
 }
 
 interface SyncHealth {
@@ -49,6 +54,10 @@ export default function AdminSportsPage() {
   const [days, setDays] = useState('7');
   const [healthData, setHealthData] = useState<SyncHealth[]>([]);
   const [healthLoading, setHealthLoading] = useState(true);
+  const [settleModal, setSettleModal] = useState<{ event: SportEvent } | null>(null);
+  const [settleScores, setSettleScores] = useState({ homeScore: '', awayScore: '' });
+  const [settleSubmitting, setSettleSubmitting] = useState(false);
+  const [settleError, setSettleError] = useState<string | null>(null);
 
   const loadHealth = async () => {
     const token = localStorage.getItem('token');
@@ -95,9 +104,8 @@ export default function AdminSportsPage() {
     if (!token) { router.push('/login'); return; }
     setLoading(true);
     try {
-      const sportDef = SPORTS.find((s) => s.key === sport);
-      if (!sportDef) return;
-      const res = await fetch(`${getApiUrl()}${sportDef.endpoint}?days=${days}`, {
+      // Admin endpoint includes past events so we can show "Settle" for events >3 days old
+      const res = await fetch(`${getApiUrl()}/admin/sports/events?sport=${sport}&days=${days}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.status === 401) { router.push('/login'); return; }
@@ -128,7 +136,7 @@ export default function AdminSportsPage() {
           const picks = data.picksUpdated ?? 0;
           const tickets = data.ticketsSettled ?? 0;
           setSyncResults((prev) => [
-            { sport: 'results', synced: eventsFt, error: undefined },
+            { sport: 'results', synced: eventsFt, error: undefined, picksUpdated: picks, ticketsSettled: tickets },
             ...prev.slice(0, 9),
           ]);
           if (eventsFt > 0 || picks > 0 || tickets > 0) {
@@ -172,6 +180,59 @@ export default function AdminSportsPage() {
       ]);
     } finally {
       setSyncing(null);
+    }
+  };
+
+  const openSettleModal = (ev: SportEvent) => {
+    setSettleModal({ event: ev });
+    setSettleScores({
+      homeScore: ev.homeScore != null ? String(ev.homeScore) : '',
+      awayScore: ev.awayScore != null ? String(ev.awayScore) : '',
+    });
+    setSettleError(null);
+  };
+
+  const closeSettleModal = () => {
+    setSettleModal(null);
+    setSettleScores({ homeScore: '', awayScore: '' });
+    setSettleError(null);
+  };
+
+  const submitSettle = async () => {
+    if (!settleModal) return;
+    const homeScore = parseInt(settleScores.homeScore, 10);
+    const awayScore = parseInt(settleScores.awayScore, 10);
+    if (!Number.isFinite(homeScore) || homeScore < 0 || !Number.isFinite(awayScore) || awayScore < 0) {
+      setSettleError('Enter non-negative numbers for both scores.');
+      return;
+    }
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setSettleSubmitting(true);
+    setSettleError(null);
+    try {
+      const res = await fetch(`${getApiUrl()}/admin/sport-events/${settleModal.event.id}/settle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ homeScore, awayScore }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        const picks = data.picksUpdated ?? 0;
+        const tickets = data.ticketsSettled ?? 0;
+        setSyncResults((prev) => [
+          { sport: 'settle', synced: 1, error: undefined, picksUpdated: picks, ticketsSettled: tickets },
+          ...prev.slice(0, 9),
+        ]);
+        closeSettleModal();
+        await loadEvents(selectedSport);
+      } else {
+        setSettleError(data.message || 'Settlement failed');
+      }
+    } catch {
+      setSettleError('Network error');
+    } finally {
+      setSettleSubmitting(false);
     }
   };
 
@@ -326,8 +387,16 @@ export default function AdminSportsPage() {
                 {syncResults.map((r, i) => (
                   <li key={i} className={`text-xs flex items-center gap-2 ${r.error ? 'text-red-600' : 'text-emerald-700'}`}>
                     <span>{r.error ? '✗' : '✓'}</span>
-                    <span className="font-medium capitalize">{r.sport}</span>
-                    <span>{r.error ? r.error : `${r.synced} events synced`}</span>
+                    <span className="font-medium capitalize">{r.sport.replace(/_/g, ' ')}</span>
+                    <span>
+                      {r.error
+                        ? r.error
+                        : r.sport === 'results'
+                          ? `${r.synced} events FT${r.picksUpdated != null || r.ticketsSettled != null ? `, ${r.picksUpdated ?? 0} picks, ${r.ticketsSettled ?? 0} tickets` : ''}`
+                          : r.sport === 'settle'
+                            ? `1 event settled${r.picksUpdated != null || r.ticketsSettled != null ? `, ${r.picksUpdated ?? 0} picks, ${r.ticketsSettled ?? 0} tickets` : ''}`
+                            : `${r.synced} events synced`}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -379,6 +448,7 @@ export default function AdminSportsPage() {
                       <th className="text-left px-5 py-3 font-semibold text-[var(--text-muted)]">League</th>
                       <th className="text-left px-5 py-3 font-semibold text-[var(--text-muted)]">Date</th>
                       <th className="text-left px-5 py-3 font-semibold text-[var(--text-muted)]">Status</th>
+                      <th className="text-right px-5 py-3 font-semibold text-[var(--text-muted)]">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -399,8 +469,22 @@ export default function AdminSportsPage() {
                             ev.status === 'FT' ? 'bg-slate-100 text-slate-600' :
                             'bg-emerald-100 text-emerald-700'
                           }`}>
-                            {ev.status}
+                            {ev.status === 'FT' && ev.homeScore != null && ev.awayScore != null
+                              ? `${ev.homeScore}–${ev.awayScore}`
+                              : ev.status}
                           </span>
+                        </td>
+                        <td className="px-5 py-3 text-right">
+                          {ev.status !== 'FT' && (
+                            <button
+                              type="button"
+                              onClick={() => openSettleModal(ev)}
+                              title="Manually set result (e.g. when Odds API no longer returns this match)"
+                              className="px-2 py-1 rounded text-xs font-medium bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors"
+                            >
+                              Settle
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -409,6 +493,73 @@ export default function AdminSportsPage() {
               </div>
             )}
           </div>
+
+          {/* Manual settle modal */}
+          {settleModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={closeSettleModal}>
+              <div
+                className="bg-[var(--card)] rounded-2xl border border-[var(--border)] shadow-xl max-w-md w-full p-5"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="font-semibold text-[var(--text)] mb-1">Settle event manually</h3>
+                <p className="text-sm text-[var(--text-muted)] mb-4">
+                  Use when the Odds API no longer returns this match (e.g. &gt;3 days old). Picks on this event will be settled from the scores you enter.
+                </p>
+                <p className="text-sm font-medium text-[var(--text)] mb-2">
+                  {settleModal.event.homeTeam} vs {settleModal.event.awayTeam}
+                </p>
+                <div className="flex gap-4 mb-4">
+                  <label className="flex-1">
+                    <span className="block text-xs text-[var(--text-muted)] mb-1">Home score</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={settleScores.homeScore}
+                      onChange={(e) => setSettleScores((s) => ({ ...s, homeScore: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
+                      placeholder="0"
+                    />
+                  </label>
+                  <label className="flex-1">
+                    <span className="block text-xs text-[var(--text-muted)] mb-1">Away score</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={settleScores.awayScore}
+                      onChange={(e) => setSettleScores((s) => ({ ...s, awayScore: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
+                      placeholder="0"
+                    />
+                  </label>
+                </div>
+                {selectedSport === 'tennis' && (
+                  <p className="text-xs text-[var(--text-muted)] mb-3">
+                    Tennis: enter sets won (e.g. 2–0 for a straight-sets win).
+                  </p>
+                )}
+                {settleError && (
+                  <p className="text-sm text-red-600 mb-3">{settleError}</p>
+                )}
+                <div className="flex gap-2 justify-end">
+                  <button
+                    type="button"
+                    onClick={closeSettleModal}
+                    className="px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg)]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={submitSettle}
+                    disabled={settleSubmitting}
+                    className="px-4 py-2 rounded-lg bg-[var(--primary)] text-white font-medium hover:bg-[var(--primary-hover)] disabled:opacity-50"
+                  >
+                    {settleSubmitting ? 'Settling…' : 'Settle'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>

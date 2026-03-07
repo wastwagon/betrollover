@@ -73,6 +73,11 @@ Settlement determines the final outcome (won/lost/void) of each pick in a coupon
 | `unfinishedEventsNoScores` | Others: past events still missing scores |
 | `apiSportsKeyConfigured` | Football + Volleyball API key set |
 | `oddsApiKeyConfigured` | Odds API key set |
+| `lastSettlementAt` | Last time "Run Settlement" / "Sync Results & Settle" completed (ISO) |
+| `lastSettlementCount` | Tickets settled in that run |
+| `lastOddsApiResultsAt` | Last time Odds API results sync ran (ISO) |
+| `lastOddsApiResultsCount` | Events marked FT in that run |
+| `stuckPendingPicksPastCutoff` | Pending picks on fixtures/events &gt;2h in the past and not FT (candidates for manual settle or void) |
 
 ---
 
@@ -80,6 +85,15 @@ Settlement determines the final outcome (won/lost/void) of each pick in a coupon
 
 1. **Run Settlement** — Admin → Dashboard → "Run Settlement Now". Syncs Odds API + Volleyball results, then runs settlement.
 2. **Manual sport event** — For events >3 days old (Odds API limit) or API failures: `POST /admin/sport-events/:id/settle` with `{ homeScore, awayScore }`.
+
+---
+
+## Verification and one-time fix
+
+- **Diagnostic:** `GET /admin/settlement/diagnostic` — use to confirm pending vs finished counts and API keys.
+- **One-time SQL (already-settled tickets):** If you had tickets that were fully settled (all picks won/lost/void) but still showed as Active, run once:
+  - `scripts/fix-already-settled-tickets.sql` (see file header for `psql` / docker command).
+  - Then run settlement or refresh the tipster profile; those tickets will appear under Archive.
 
 ---
 
