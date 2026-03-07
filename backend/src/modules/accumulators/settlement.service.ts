@@ -283,23 +283,26 @@ export class SettlementService {
             metadata: { pickTitle: title, variant: 'won' },
           }).catch(() => { });
         } else {
-          // Lost: full refund to buyer
+          // Lost or void: full refund to buyer (stake back)
+          const isVoid = result === 'void';
           await this.walletService.credit(
             f.userId,
             gross,
             'refund',
             `pick-${accumulatorId}`,
-            `Refund for pick "${title}"`,
+            isVoid ? `Refund for voided pick "${title}"` : `Refund for pick "${title}"`,
           );
           await this.notificationsService.create({
             userId: f.userId,
             type: 'settlement',
-            title: 'Pick Lost — Refunded',
-            message: `Your purchased pick "${title}" lost. A full refund of GHS ${gross.toFixed(2)} has been credited to your wallet.`,
+            title: isVoid ? 'Pick Void — Refunded' : 'Pick Lost — Refunded',
+            message: isVoid
+              ? `Your purchased pick "${title}" was voided (e.g. postponed/cancelled). A full refund of GHS ${gross.toFixed(2)} has been credited to your wallet.`
+              : `Your purchased pick "${title}" lost. A full refund of GHS ${gross.toFixed(2)} has been credited to your wallet.`,
             link: `/my-purchases`,
             icon: 'refund',
             sendEmail: true,
-            metadata: { pickTitle: title, variant: 'lost', amount: gross.toFixed(2) },
+            metadata: { pickTitle: title, variant: result, amount: gross.toFixed(2) },
           }).catch(() => { });
         }
         processedUsers.add(f.userId);
@@ -315,7 +318,9 @@ export class SettlementService {
       ? totalNetPayout > 0
         ? `Your pick "${title}" won! GHS ${totalNetPayout.toFixed(2)} credited (${buyerCount} buyer${buyerCount !== 1 ? 's' : ''} · GHS ${totalCommission.toFixed(2)} platform fee deducted).`
         : `Your pick "${title}" won! Payout credited to your wallet.`
-      : `Your pick "${title}" lost. Full refunds have been sent to buyers.`;
+      : result === 'void'
+        ? `Your pick "${title}" was voided. Full refunds have been sent to buyers.`
+        : `Your pick "${title}" lost. Full refunds have been sent to buyers.`;
 
     await this.notificationsService.create({
       userId: sellerId,
