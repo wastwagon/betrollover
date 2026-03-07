@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThanOrEqual, In, Not } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { Repository, DataSource, LessThanOrEqual, In, Not } from 'typeorm';
 import { safeJson } from '../../common/fetch-json.util';
 import { Fixture } from './entities/fixture.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
@@ -24,6 +25,7 @@ export class FixtureUpdateService {
     @InjectRepository(ApiSettings)
     private apiSettingsRepo: Repository<ApiSettings>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    @InjectDataSource() private dataSource: DataSource,
   ) { }
 
   private async getApiKey(): Promise<string> {
@@ -166,17 +168,28 @@ export class FixtureUpdateService {
     try {
       // Find fixtures in DB that should be finished but aren't marked as FT
       const now = new Date();
-      const unfinishedFixtures = await this.fixtureRepo.find({
+      const allUnfinished = await this.fixtureRepo.find({
         where: {
           status: Not('FT'),
           matchDate: LessThanOrEqual(now),
         },
         order: { matchDate: 'DESC' },
         select: ['id', 'apiId'],
-        take: MAX_FIXTURES_TO_UPDATE_PER_RUN,
+        take: MAX_FIXTURES_TO_UPDATE_PER_RUN * 2, // Fetch extra to reorder
       });
 
-
+      // Prioritize fixtures that have pending accumulator picks (user bets waiting to settle)
+      const pendingFixtureIds = await this.dataSource.query<{ fixture_id: number }[]>(
+        `SELECT DISTINCT fixture_id FROM accumulator_picks
+         WHERE result = 'pending' AND fixture_id IS NOT NULL
+         AND fixture_id = ANY($1)`,
+        [allUnfinished.map((f) => f.id)],
+      );
+      const prioritizedSet = new Set(pendingFixtureIds.map((r) => r.fixture_id));
+      const unfinishedFixtures = [
+        ...allUnfinished.filter((f) => prioritizedSet.has(f.id)),
+        ...allUnfinished.filter((f) => !prioritizedSet.has(f.id)),
+      ].slice(0, MAX_FIXTURES_TO_UPDATE_PER_RUN);
 
       if (unfinishedFixtures.length === 0) {
         return { updated: 0, errors: 0 };
