@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -38,7 +38,7 @@ export default function AdminUsersPage() {
   const [avatarUploading, setAvatarUploading] = useState<number | null>(null);
   const [tipsterRequests, setTipsterRequests] = useState<{ id: number; userId: number; user?: { displayName: string; email: string }; createdAt: string }[]>([]);
 
-  const load = () => {
+  const load = useCallback(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
     setLoading(true);
@@ -55,7 +55,7 @@ export default function AdminUsersPage() {
       })
       .catch(() => setUsers([]))
       .finally(() => setLoading(false));
-  };
+  }, [page, search, roleFilter]);
 
   useEffect(() => {
     if (!localStorage.getItem('token')) {
@@ -63,7 +63,7 @@ export default function AdminUsersPage() {
       return;
     }
     load();
-  }, [router, page, search, roleFilter]);
+  }, [router, load]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');

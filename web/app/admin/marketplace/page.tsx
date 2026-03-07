@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
@@ -61,7 +61,7 @@ export default function AdminMarketplacePage() {
     reason?: string;
   } | null>(null);
 
-  const loadMarketplace = () => {
+  const loadMarketplace = useCallback(() => {
     const token = localStorage.getItem('token');
     if (!token) {
       router.push('/login');
@@ -80,24 +80,24 @@ export default function AdminMarketplacePage() {
       })
       .catch(() => setPicks([]))
       .finally(() => setLoading(false));
-  };
+  }, [router, includeAll, tipsterUsername]);
 
-  const loadTipsters = () => {
+  const loadTipsters = useCallback(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
     fetch(`${getApiUrl()}/admin/marketplace/tipsters`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setTipsters(Array.isArray(data) ? data : []))
       .catch(() => setTipsters([]));
-  };
+  }, []);
 
   useEffect(() => {
     loadMarketplace();
-  }, [router, includeAll, tipsterUsername]);
+  }, [loadMarketplace]);
 
   useEffect(() => {
     loadTipsters();
-  }, [router]);
+  }, [loadTipsters]);
 
   const loadDiagnostic = () => {
     const token = localStorage.getItem('token');

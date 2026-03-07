@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
@@ -49,7 +49,7 @@ export default function AdminFixturesPage() {
     );
   }, [filterOptions.leagues, selectedCountry]);
 
-  const load = () => {
+  const load = useCallback(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
     setLoading(true);
@@ -65,7 +65,7 @@ export default function AdminFixturesPage() {
       .then((data) => setFixtures(Array.isArray(data) ? data : []))
       .catch(() => setFixtures([]))
       .finally(() => setLoading(false));
-  };
+  }, [selectedCountry, selectedCompetition]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -113,7 +113,7 @@ export default function AdminFixturesPage() {
       return;
     }
     load();
-  }, [router, selectedCountry, selectedCompetition]);
+  }, [router, load]);
 
   const fetchResults = async () => {
     const token = localStorage.getItem('token');

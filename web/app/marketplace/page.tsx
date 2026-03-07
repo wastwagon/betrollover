@@ -204,7 +204,7 @@ export default function MarketplacePage() {
         showError(err);
       })
       .finally(() => setLoading(false));
-  }, [router, sportFilter]);
+  }, [router, sportFilter, showError]);
 
   const recordView = (id: number) => {
     fetch(`${API_URL}/accumulators/${id}/view`, { method: 'POST' }).catch(() => {});

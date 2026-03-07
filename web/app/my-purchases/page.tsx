@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
@@ -90,7 +90,7 @@ export default function MyPurchasesPage() {
   const [sportFilter, setSportFilter] = useState<string>('all');
   const { showError, clearError, error: toastError } = useErrorToast();
 
-  const fetchPurchases = () => {
+  const fetchPurchases = useCallback(() => {
     const token = localStorage.getItem('token');
     if (!token) { router.push('/login?redirect=/my-purchases'); return; }
     return fetch(`${getApiUrl()}/accumulators/purchased`, {
@@ -103,9 +103,9 @@ export default function MyPurchasesPage() {
       .then((data) => setPurchases(Array.isArray(data) ? data : []))
       .catch((err) => { setPurchases([]); showError(err); })
       .finally(() => setLoading(false));
-  };
+  }, [router, showError]);
 
-  useEffect(() => { fetchPurchases(); }, []);
+  useEffect(() => { fetchPurchases(); }, [fetchPurchases]);
 
   // Auto-refresh when there are active pending purchases
   useEffect(() => {
@@ -125,7 +125,7 @@ export default function MyPurchasesPage() {
         .catch(() => {});
     }, 60_000);
     return () => clearInterval(interval);
-  }, [purchases.length, loading]);
+  }, [purchases, loading]);
 
   /* ─── Derived stats ──────────────────────────────────────────── */
   const stats = useMemo(() => {

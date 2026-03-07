@@ -272,8 +272,8 @@ export default function TipsterProfilePage() {
   };
 
   // Hooks must be called unconditionally before any early return
-  const marketplaceCoupons = profile?.marketplace_coupons ?? [];
-  const archivedCoupons = profile?.archived_coupons ?? [];
+  const marketplaceCoupons = useMemo(() => profile?.marketplace_coupons ?? [], [profile?.marketplace_coupons]);
+  const archivedCoupons = useMemo(() => profile?.archived_coupons ?? [], [profile?.archived_coupons]);
 
   const availableSports = useMemo(() => {
     const allCoupons = [...marketplaceCoupons, ...archivedCoupons];

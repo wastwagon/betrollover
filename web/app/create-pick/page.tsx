@@ -419,7 +419,7 @@ export default function CreatePickPage() {
         setLoading(false);
       }
     })();
-  }, [router, selectedCountry, selectedLeague, debouncedTeamSearch, sport]);
+  }, [router, selectedCountry, selectedLeague, debouncedTeamSearch, sport, showError]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');

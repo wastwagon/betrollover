@@ -125,7 +125,7 @@ function WalletContent() {
       }
       router.replace('/wallet', { scroll: false });
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   const handleDeposit = async () => {
     const amount = parseFloat(depositAmount);

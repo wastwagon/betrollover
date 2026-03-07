@@ -95,7 +95,7 @@ export default function MyPicksPage() {
         showError(err);
       })
       .finally(() => setLoading(false));
-  }, [router]);
+  }, [router, showError]);
 
   const filtered = useMemo(() => {
     if (!sportFilter) return picks;

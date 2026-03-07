@@ -190,7 +190,7 @@ function CommunityPageInner() {
     const delay = idleCountRef.current >= 5 ? 8000 : POLL_INTERVAL;
     intervalRef.current = setInterval(poll, delay);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [poll, idleCountRef.current]);
+  }, [poll]);
 
   // Send message
   const handleSend = async () => {
