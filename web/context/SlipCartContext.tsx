@@ -72,16 +72,24 @@ export function SlipCartProvider({ children }: { children: React.ReactNode }) {
     let added = false;
     setSelectionsState((prev) => {
       // Reject exact duplicate (same event + same prediction)
-      const samePick = (x: SlipSelection) =>
-        x.prediction === s.prediction &&
-        ((s.eventId != null && x.eventId === s.eventId) || (s.fixtureId != null && x.fixtureId === s.fixtureId));
+      // Must compare same ID type: eventId to eventId, fixtureId to fixtureId (never cross-match)
+      const samePick = (x: SlipSelection) => {
+        if (x.prediction !== s.prediction) return false;
+        if (s.eventId != null && x.eventId != null) return x.eventId === s.eventId;
+        if (s.fixtureId != null && x.fixtureId != null) return x.fixtureId === s.fixtureId;
+        return false;
+      };
       if (prev.some(samePick)) return prev;
 
       // Reject conflicting outcomes: only one selection per market per event
       // e.g. cannot have both "Match Winner: Home" and "Match Winner: Away" for the same match
+      // Must compare same ID type (eventId↔eventId, fixtureId↔fixtureId) — different fixtures/events must not conflict
       const marketFromPred = (p: string) => p.split(':')[0]?.trim() || '';
-      const sameEvent = (x: SlipSelection) =>
-        (s.eventId != null && x.eventId === s.eventId) || (s.fixtureId != null && x.fixtureId === s.fixtureId);
+      const sameEvent = (x: SlipSelection) => {
+        if (s.eventId != null && x.eventId != null) return x.eventId === s.eventId;
+        if (s.fixtureId != null && x.fixtureId != null) return x.fixtureId === s.fixtureId;
+        return false;
+      };
       const sameMarket = (x: SlipSelection) => marketFromPred(x.prediction) === marketFromPred(s.prediction);
       const hasConflict = prev.some((x) => sameEvent(x) && sameMarket(x));
       if (hasConflict) return prev;
