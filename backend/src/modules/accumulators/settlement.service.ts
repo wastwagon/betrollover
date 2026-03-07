@@ -144,6 +144,29 @@ export class SettlementService {
     const fixtureMap = new Map(finishedFixtures.map((f) => [f.id, f]));
     let picksUpdated = 0;
 
+    // Auto-void picks on fixtures that are postponed/cancelled (no result, match date in past)
+    const voidStatuses = ['PST', 'CANC', 'ABD', 'AWD', 'WO'];
+    const voidFixtures = await this.fixtureRepo
+      .createQueryBuilder('f')
+      .select('f.id')
+      .where('f.status IN (:...statuses)', { statuses: voidStatuses })
+      .andWhere('f.match_date < :cutoff', { cutoff: twoHoursAgo })
+      .getMany();
+    const voidFixtureIds = voidFixtures.map((f) => f.id);
+    if (voidFixtureIds.length > 0) {
+      const voidPicks = await this.pickRepo.find({
+        where: { fixtureId: In(voidFixtureIds), result: 'pending' },
+      });
+      for (const pick of voidPicks) {
+        pick.result = 'void';
+        await this.pickRepo.save(pick);
+        picksUpdated++;
+      }
+      if (voidPicks.length > 0) {
+        this.logger.log(`Voided ${voidPicks.length} pick(s) on postponed/cancelled fixtures`);
+      }
+    }
+
     for (const pick of pendingFixturePicks) {
       const fix = fixtureMap.get(pick.fixtureId!);
       if (!fix || fix.homeScore == null || fix.awayScore == null) continue;

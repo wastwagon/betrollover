@@ -242,6 +242,9 @@ export class FixtureUpdateService {
       const data = await safeJson<any>(res);
       const response = data.response || [];
 
+      // Statuses that mean no final score (postponed, cancelled, etc.) - sync status so settlement can void picks
+      const NO_RESULT_STATUSES = ['PST', 'CANC', 'ABD', 'AWD', 'WO'];
+
       for (const fixtureData of response) {
         const apiId = fixtureData.fixture.id;
         const dbId = dbApiIdMap.get(apiId);
@@ -249,20 +252,29 @@ export class FixtureUpdateService {
 
         const fix = fixtureData.fixture;
         const goals = fixtureData.goals;
+        const status = fix?.status?.short ?? '';
+
         if (goals?.home !== null && goals?.away !== null) {
           await this.fixtureRepo.update(
             { id: dbId },
             {
-              status: fix.status.short,
+              status,
               homeScore: goals.home,
               awayScore: goals.away,
               syncedAt: new Date(),
             },
           );
           updated++;
-          await this.cacheManager.del(`fixture:${dbId}`);
-          await this.cacheManager.del(`fixture:api:${apiId}`);
+        } else if (NO_RESULT_STATUSES.includes(status)) {
+          // Postponed/cancelled: update status so settlement can void linked picks
+          await this.fixtureRepo.update(
+            { id: dbId },
+            { status, syncedAt: new Date() },
+          );
+          updated++;
         }
+        await this.cacheManager.del(`fixture:${dbId}`);
+        await this.cacheManager.del(`fixture:api:${apiId}`);
       }
     }
     return updated;
