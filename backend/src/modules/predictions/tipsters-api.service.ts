@@ -418,11 +418,12 @@ export class TipstersApiService {
     const accIds = rows.map((r) => r.accumulatorId);
     if (accIds.length === 0) return [];
 
+    // Only show tickets that are still unsettled (result = pending). Settled tickets appear in Archive.
     const tickets = await this.ticketRepo.find({
       where: {
         id: In(accIds),
         userId: tipster.userId,
-        status: 'active',
+        result: 'pending',
         isMarketplace: true,
       },
       relations: ['picks'],
