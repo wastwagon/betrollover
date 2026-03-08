@@ -255,9 +255,6 @@ export function PickCard({
                       )}
                     </span>
                   )}
-                  {purchaseCount !== undefined && purchaseCount > 0 && (
-                    <span className="text-[10px] text-[var(--text-muted)]">{purchaseCount} {t('pick_card.bought')}</span>
-                  )}
                 </div>
               </div>
             </div>
@@ -270,6 +267,11 @@ export function PickCard({
               <span className="text-xs text-[var(--text-muted)]">
                 {t('pick_card.picks_odds', { n: String(totalPicks), odds: Number(totalOdds).toFixed(2) })}
               </span>
+              {purchaseCount !== undefined && purchaseCount > 0 && (
+                <span className="text-xs text-[var(--text-muted)]">
+                  🛒 {purchaseCount} {t('pick_card.bought')}
+                </span>
+              )}
               {sport && SPORT_META[sport.toLowerCase()] && (
                 <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border ${SPORT_META[sport.toLowerCase()].color}`}>
                   {SPORT_META[sport.toLowerCase()].icon} {SPORT_META[sport.toLowerCase()].label}
