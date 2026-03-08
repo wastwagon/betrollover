@@ -91,6 +91,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
+  themeColor: '#10b981',
+  viewportFit: 'cover',
 };
 
 export default async function RootLayout({
@@ -111,7 +113,7 @@ export default async function RootLayout({
               <SlipCartProvider>
                 <SkipToMainContent />
                 <TopBar />
-                <div id="main-content" role="main" tabIndex={-1} className="min-h-screen pb-24 lg:pb-0">
+                <div id="main-content" role="main" tabIndex={-1} className="min-h-screen pb-[calc(6rem+env(safe-area-inset-bottom,0px))] lg:pb-0">
                   {children}
                 </div>
                 <MobileBottomNav />

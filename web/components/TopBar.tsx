@@ -188,7 +188,7 @@ export function TopBar() {
   ].join(' • ');
 
   return (
-    <div className="relative z-[60] w-full bg-slate-800 text-slate-200 text-xs sm:text-sm border-b border-slate-700/60 overflow-hidden">
+    <div className="relative z-[60] w-full bg-slate-800 text-slate-200 text-xs sm:text-sm border-b border-slate-700/60 overflow-hidden safe-area-inset-top">
       <div className="flex items-center justify-between h-9 px-3 sm:px-4 gap-2">
         {/* Scrolling disclaimer */}
           <div className="flex-1 min-w-0 overflow-hidden">
