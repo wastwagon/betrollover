@@ -21,15 +21,16 @@ function isActive(pathname: string, href: string) {
 }
 
 /* ─── Sport coverage data ────────────────────────────────── */
+/** Friendly URLs: /marketplace/rugby etc. (redirect to ?sport= in [sport] route) */
 const SPORTS = [
-  { icon: '⚽', label: 'Football',        href: '/marketplace?sport=football' },
-  { icon: '🏀', label: 'Basketball',      href: '/marketplace?sport=basketball' },
-  { icon: '🏉', label: 'Rugby',           href: '/marketplace?sport=rugby' },
-  { icon: '🥊', label: 'MMA',             href: '/marketplace?sport=mma' },
-  { icon: '🏐', label: 'Volleyball',      href: '/marketplace?sport=volleyball' },
-  { icon: '🏒', label: 'Hockey',          href: '/marketplace?sport=hockey' },
-  { icon: '🏈', label: 'Amer. Football',  href: '/marketplace?sport=american_football' },
-  { icon: '🎾', label: 'Tennis',          href: '/marketplace?sport=tennis' },
+  { icon: '⚽', label: 'Football',        href: '/marketplace/football' },
+  { icon: '🏀', label: 'Basketball',      href: '/marketplace/basketball' },
+  { icon: '🏉', label: 'Rugby',           href: '/marketplace/rugby' },
+  { icon: '🥊', label: 'MMA',             href: '/marketplace/mma' },
+  { icon: '🏐', label: 'Volleyball',      href: '/marketplace/volleyball' },
+  { icon: '🏒', label: 'Hockey',          href: '/marketplace/hockey' },
+  { icon: '🏈', label: 'Amer. Football',  href: '/marketplace/american_football' },
+  { icon: '🎾', label: 'Tennis',          href: '/marketplace/tennis' },
 ];
 
 /* ─── NavChevron ─────────────────────────────────────────── */

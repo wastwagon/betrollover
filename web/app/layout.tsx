@@ -7,6 +7,7 @@ import { CurrencyProvider } from '@/context/CurrencyContext';
 import { LanguageProvider, type SupportedLanguage } from '@/context/LanguageContext';
 import { TopBar } from '@/components/TopBar';
 import { SkipToMainContent } from '@/components/SkipToMainContent';
+import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { AnalyticsBeacon } from '@/components/AnalyticsBeacon';
 import { JsonLdScript } from '@/components/JsonLdScript';
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS } from '@/lib/site-config';
@@ -110,9 +111,10 @@ export default async function RootLayout({
               <SlipCartProvider>
                 <SkipToMainContent />
                 <TopBar />
-                <div id="main-content" role="main" tabIndex={-1} className="min-h-screen">
+                <div id="main-content" role="main" tabIndex={-1} className="min-h-screen pb-24 lg:pb-0">
                   {children}
                 </div>
+                <MobileBottomNav />
               </SlipCartProvider>
             </CurrencyProvider>
           </LanguageProvider>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useT } from '@/context/LanguageContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
@@ -17,6 +17,10 @@ import { SuccessToast } from '@/components/SuccessToast';
 import { getApiUrl } from '@/lib/site-config';
 
 const API_URL = getApiUrl();
+
+const VALID_SPORT_KEYS = new Set([
+  'football', 'basketball', 'rugby', 'mma', 'volleyball', 'hockey', 'american_football', 'tennis', 'multi',
+]);
 
 type PriceFilter = 'all' | 'free' | 'paid';
 type SortBy = 'newest' | 'price-low' | 'price-high' | 'tipster-rank' | 'following-only';
@@ -73,6 +77,7 @@ interface User {
 
 export default function MarketplacePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useT();
   const [picks, setPicks] = useState<Accumulator[]>([]);
   const [total, setTotal] = useState(0);
@@ -86,10 +91,17 @@ export default function MarketplacePage() {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
   const [sortBy, setSortBy] = useState<SortBy>('newest');
-  const [sportFilter, setSportFilter] = useState<string>(''); // '' = all, 'football', 'basketball'
+  const [sportFilter, setSportFilter] = useState<string>('');
   const [followedTipsterUsernames, setFollowedTipsterUsernames] = useState<Set<string>>(new Set());
   const [followLoading, setFollowLoading] = useState<string | null>(null);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
+
+  // Sync sport filter from URL on load and when URL changes (e.g. mega menu link, back/forward)
+  useEffect(() => {
+    const sport = searchParams.get('sport');
+    const value = sport && VALID_SPORT_KEYS.has(sport) ? sport : '';
+    setSportFilter(value);
+  }, [searchParams]);
 
   const handleFollow = async (username: string) => {
     const token = localStorage.getItem('token');
@@ -325,7 +337,12 @@ export default function MarketplacePage() {
               <button
                 key={key}
                 type="button"
-                onClick={() => setSportFilter(key)}
+                onClick={() => {
+                  setSportFilter(key);
+                  // Always use /marketplace so the bar never shows /marketplace/rugby when switching sport
+                  const url = key ? `/marketplace?sport=${encodeURIComponent(key)}` : '/marketplace';
+                  router.replace(url, { scroll: false });
+                }}
                 className={`flex-shrink-0 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
                   sportFilter === key
                     ? 'bg-[var(--primary)] text-white shadow-md'
