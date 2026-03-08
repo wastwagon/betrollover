@@ -6,9 +6,9 @@ import { SITE_URL, SITE_NAME, getAlternates } from '@/lib/site-config';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: `About ${SITE_NAME} | Africa's Multi-Sport Tipster Marketplace`,
+  title: `About ${SITE_NAME} | Ghana-based, Global Tipster Marketplace`,
   description:
-    `Learn about ${SITE_NAME} — Africa's escrow-protected multi-sport tipster marketplace. Verified tipsters, transparent performance stats, and refund-backed coupon purchases across football, basketball, tennis, MMA and more.`,
+    `Learn about ${SITE_NAME} — Ghana-based, global audience. All major global sports: football, basketball, tennis, MMA, rugby and more. Escrow-protected picks, verified tipsters. Refund if tips lose. Worldwide coverage.`,
   alternates: {
     canonical: `${SITE_URL}/about`,
     languages: getAlternates('/about'),

@@ -186,7 +186,7 @@ Withdrawal: User → request → Admin → Paystack transfer → notification
 | Tipster approved | AdminService | `tipster_approved` |
 | Support ticket reply | AdminService | (system) |
 | Sync health warning | SyncHealthService | `system` (Sport Sync Health Warning) |
-| IAP credit | WalletIapService | `deposit_success` |
+| IAP credit | *(removed — web-only)* | — |
 | Follow | TipsterFollowService | `tipster_follow` |
 | Result prediction | ResultTrackerService | (prediction result) |
 

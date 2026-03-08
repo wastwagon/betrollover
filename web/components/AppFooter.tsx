@@ -27,14 +27,16 @@ export function AppFooter() {
             <h3 className="font-semibold mb-3 text-[var(--text)]">{t('footer.platform')}</h3>
             <ul className="space-y-2 text-sm text-[var(--text-muted)]">
               <li><Link href="/marketplace" className="hover:text-[var(--primary)] transition-colors">{t('nav.marketplace')}</Link></li>
-              <li><Link href="/coupons/archive" className="hover:text-[var(--primary)] transition-colors">Settled Archive</Link></li>
+              <li><Link href="/how-it-works" className="hover:text-[var(--primary)] transition-colors">{t('home.how_it_works')}</Link></li>
+              <li><Link href="/coupons/archive" className="hover:text-[var(--primary)] transition-colors">{t('header.settled_archive')}</Link></li>
               <li><Link href="/tipsters" className="hover:text-[var(--primary)] transition-colors">{t('nav.top_tipsters')}</Link></li>
               <li><Link href="/leaderboard" className="hover:text-[var(--primary)] transition-colors">{t('nav.leaderboard')}</Link></li>
             </ul>
           </div>
           <div>
-            <h3 className="font-semibold mb-3 text-[var(--text)]">Resources</h3>
+            <h3 className="font-semibold mb-3 text-[var(--text)]">{t('footer.resources')}</h3>
             <ul className="space-y-2 text-sm text-[var(--text-muted)]">
+              <li><Link href="/learn" className="hover:text-[var(--primary)] transition-colors">{t('nav.learn')}</Link></li>
               <li><Link href="/news" className="hover:text-[var(--primary)] transition-colors">{t('discover.news')}</Link></li>
               <li><Link href="/resources" className="hover:text-[var(--primary)] transition-colors">{t('nav.guides')}</Link></li>
               <li><Link href="/discover" className="hover:text-[var(--primary)] transition-colors">{t('nav.discover')}</Link></li>
@@ -45,7 +47,7 @@ export function AppFooter() {
             <ul className="space-y-2 text-sm text-[var(--text-muted)]">
               <li><Link href="/terms" className="hover:text-[var(--primary)] transition-colors">{t('auth.terms')}</Link></li>
               <li><Link href="/privacy" className="hover:text-[var(--primary)] transition-colors">{t('auth.privacy')}</Link></li>
-              <li><Link href="/responsible-gambling" className="hover:text-[var(--primary)] transition-colors">Responsible Use</Link></li>
+              <li><Link href="/responsible-gambling" className="hover:text-[var(--primary)] transition-colors">{t('resp.headline')}</Link></li>
             </ul>
           </div>
         </div>

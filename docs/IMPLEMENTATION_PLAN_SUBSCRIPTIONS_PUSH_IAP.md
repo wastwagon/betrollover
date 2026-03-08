@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Created:** February 2026  
 **Status:** Planning — Do not implement until approved  
-**Note:** BetRollover is web-only. IAP and mobile push sections are retained for reference but not in scope.
+**Note:** BetRollover is web-only. IAP endpoints and `WalletIapService` have been removed; mobile push and IAP sections below are retained for reference only.
 
 ---
 

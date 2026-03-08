@@ -134,7 +134,7 @@ function DiscoverContent() {
           <p className="text-[var(--text-muted)] leading-relaxed mb-4">
             {t('discover.hub_desc')}
           </p>
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="p-4 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)]">
               <h3 className="font-semibold text-[var(--text)] mb-2">📰 {t('discover.news_transfers')}</h3>
               <p className="text-sm text-[var(--text-muted)]">{t('discover.news_transfers_desc')}</p>
@@ -143,6 +143,22 @@ function DiscoverContent() {
               <h3 className="font-semibold text-[var(--text)] mb-2">📚 {t('discover.guides_resources')}</h3>
               <p className="text-sm text-[var(--text-muted)]">{t('discover.guides_resources_desc')}</p>
             </div>
+            <Link
+              href="/learn"
+              className="p-4 rounded-xl bg-[var(--primary)]/10 border border-[var(--primary)]/30 hover:border-[var(--primary)]/50 transition-colors group"
+            >
+              <h3 className="font-semibold text-[var(--text)] mb-2">📖 {t('learn.card_title')}</h3>
+              <p className="text-sm text-[var(--text-muted)] mb-2">{t('learn.card_desc')}</p>
+              <span className="text-sm font-medium text-[var(--primary)] group-hover:underline">{t('learn.card_link')}</span>
+            </Link>
+            <Link
+              href="/how-it-works#faq"
+              className="p-4 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] hover:border-[var(--primary)]/50 transition-colors group"
+            >
+              <h3 className="font-semibold text-[var(--text)] mb-2">❓ {t('discover.platform_howto_title')}</h3>
+              <p className="text-sm text-[var(--text-muted)] mb-2">{t('discover.platform_howto_desc')}</p>
+              <span className="text-sm font-medium text-[var(--primary)] group-hover:underline">{t('discover.platform_howto_link')}</span>
+            </Link>
           </div>
         </section>
 

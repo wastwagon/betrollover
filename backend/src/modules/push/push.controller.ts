@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Post, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
@@ -24,8 +24,8 @@ export class PushController {
       return { error: 'platform and token required' };
     }
     const platform = String(body.platform).toLowerCase();
-    if (!['web', 'ios', 'android'].includes(platform)) {
-      return { error: 'platform must be web, ios, or android' };
+    if (platform !== 'web') {
+      throw new BadRequestException('Only web push is supported. Use platform: "web".');
     }
     return this.pushService.register(user.id, platform, body.token.trim(), body.deviceName);
   }

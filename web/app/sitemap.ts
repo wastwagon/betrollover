@@ -21,6 +21,7 @@ const LOCALISED_PAGES: Array<{
   { path: '/coupons/archive',        changeFrequency: 'daily',   priority: 0.7  },
   { path: '/about',                  changeFrequency: 'monthly', priority: 0.6  },
   { path: '/how-it-works',           changeFrequency: 'monthly', priority: 0.6  },
+  { path: '/learn',                  changeFrequency: 'monthly', priority: 0.7  },
   { path: '/contact',                changeFrequency: 'monthly', priority: 0.6  },
   { path: '/support',                changeFrequency: 'weekly',  priority: 0.5  },
   { path: '/invite',                 changeFrequency: 'monthly', priority: 0.5  },
@@ -38,6 +39,7 @@ const EN_ONLY_PAGES: Array<{
   { path: '/login',             changeFrequency: 'monthly', priority: 0.5 },
   { path: '/register',          changeFrequency: 'monthly', priority: 0.5 },
   { path: '/earnings',          changeFrequency: 'weekly',  priority: 0.6 },
+  { path: '/subscriptions',    changeFrequency: 'weekly',  priority: 0.5 },
   { path: '/tools/converter',   changeFrequency: 'weekly',  priority: 0.5 },
 ];
 

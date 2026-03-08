@@ -113,7 +113,7 @@ function RegisterForm() {
               <span className="text-2xl font-bold tracking-tight">BetRollover</span>
             </div>
             <h2 className="text-2xl xl:text-3xl font-bold leading-tight max-w-sm">
-              Join Africa&apos;s trusted tipster marketplace
+              Join Ghana&apos;s trusted tipster marketplace — for a global audience
             </h2>
             <p className="mt-4 text-emerald-100/90 text-base leading-relaxed max-w-sm">
               Verified tipsters. Escrow-protected picks. Track performance across football, basketball, tennis & more.

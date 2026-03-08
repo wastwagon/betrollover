@@ -57,9 +57,9 @@ If any step fails, fix the error before committing. If everything passes, you’
 2. You’ll see your changed files listed on the left. If you want to commit **all** of them, leave them all checked (or use “Select all”).
 3. At the bottom left, fill in:
    - **Summary (required):** Short line describing the update, e.g.  
-     `Subscriptions, push, IAP, API versioning and template updates`
+     `Subscriptions, push (web), API versioning and template updates`
    - **Description (optional):** You can leave this empty, or add something like  
-     `Subscription packages, push notifications, in-app purchases, shared types, CHANGELOG, deploy guide.`
+     `Subscription packages, push (web), shared types, CHANGELOG, deploy guide.`
 4. Click the blue **“Commit to main”** (or “Commit X files to main”) button.
 5. After the commit appears in the history, click **“Push origin”** (top right) to send the changes to GitHub. Log in with your GitHub account (e.g. Gmail) if it asks.
 6. In **Coolify**, your app should redeploy automatically if it’s set to deploy on push—or click **Redeploy** for your app.
@@ -79,7 +79,7 @@ Your **live site** will then be running the new code from **main**.
    - Then run:
      ```bash
      git add -A
-     git commit -m "Update project: subscriptions, push, IAP, template alignment"
+     git commit -m "Update project: subscriptions, push (web), template alignment"
      git push origin main
      ```
    - If GitHub asks for login, use your **Gmail-linked GitHub account** (or the username/password or token GitHub gives you).

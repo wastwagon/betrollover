@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getApiUrl } from '@/lib/site-config';
+import { useT } from '@/context/LanguageContext';
 
 type ResourceSport = '' | 'football' | 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football' | 'tennis';
 
@@ -98,6 +99,7 @@ const SKILL_OVERVIEW = [
 ];
 
 export default function ResourcesPage() {
+  const t = useT();
   const [categories, setCategories] = useState<ResourceCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSport, setActiveSport] = useState<ResourceSport>('');
@@ -118,10 +120,21 @@ export default function ResourcesPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
 
         <PageHeader
-          label="Tipster Guides"
-          title="Guides & Resources"
+          label={t('nav.guides')}
+          title={t('resources.page_title')}
           tagline="From reading odds and evaluating tipsters to advanced multi-sport accumulator strategies — make sharper, more informed decisions."
         />
+
+        <p className="mb-6 text-sm text-[var(--text-muted)]">
+          {t('resources.new_to_platform')}{' '}
+          <Link href="/how-it-works#faq" className="font-medium text-[var(--primary)] hover:underline">
+            How it works &amp; FAQs
+          </Link>
+          {' · '}
+          <Link href="/learn" className="font-medium text-[var(--primary)] hover:underline">
+            {t('learn.resources_link')}
+          </Link>
+        </p>
 
         {/* Skill level overview cards */}
         <div className="grid sm:grid-cols-3 gap-4 mb-8">

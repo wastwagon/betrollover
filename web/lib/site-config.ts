@@ -1,7 +1,7 @@
 /**
  * Site configuration for SEO, canonical URLs, and Open Graph.
  * Uses NEXT_PUBLIC_APP_URL in production; falls back to localhost for dev.
- * Optimized for global reach with Africa focus (Ghana, Nigeria, Kenya, South Africa).
+ * Ghana-based; global audience standard. Covers all major global sports and leagues worldwide.
  */
 export const SITE_URL =
   process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:6002';
@@ -28,9 +28,9 @@ export const SITE_NAME = 'BetRollover';
 export const TELEGRAM_ADS_HANDLE = process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE || 'betrollovertips';
 export const TELEGRAM_ADS_URL = `https://t.me/${TELEGRAM_ADS_HANDLE}`;
 export const SITE_DESCRIPTION =
-  "Africa's multi-sport tipster marketplace. Verified tipsters across football, basketball, tennis, MMA & more. Track win rate, ROI & streak. Escrow-protected picks — purchase refunded if tips lose. Ghana, Nigeria, Kenya, South Africa.";
+  "Ghana-based tipster marketplace for a global audience. All major global sports — football, basketball, tennis, MMA, rugby, hockey and more. Verified tipsters, win rate & ROI, escrow-protected picks (refunded if tips lose). GHS & multi-currency. Worldwide coverage.";
 
-/** Africa-focused + global SEO keywords for discoverability */
+/** Global audience standard — SEO keywords (global sports + discoverability) */
 export const SITE_KEYWORDS = [
   'tipster marketplace',
   'verified tipsters',
@@ -40,11 +40,11 @@ export const SITE_KEYWORDS = [
   'tennis picks',
   'MMA predictions',
   'rugby tips',
-  'sports predictions Africa',
-  'football predictions Ghana',
-  'Nigeria tipsters',
-  'Kenya football tips',
-  'South Africa sports picks',
+  'global sports tips',
+  'international tipster',
+  'Premier League tips',
+  'Champions League tips',
+  'NBA picks',
   'win rate tipsters',
   'ROI sports tips',
   'accumulator picks',
@@ -56,6 +56,17 @@ export const SITE_KEYWORDS = [
   'tipster ROI',
   'tipster streak',
   'sports tips marketplace',
+  'betting tips Ghana',
+  'football tips today',
+  'free football tips',
+  'tipster platform',
+  'buy sports picks',
+  'escrow sports tips',
+  'worldwide sports picks',
+  'football predictions Ghana',
+  'Nigeria tipsters',
+  'Kenya football tips',
+  'South Africa sports picks',
 ];
 
 /** English Africa locale codes for hreflang */
@@ -117,7 +128,7 @@ export function getApiOriginForPreconnect(): string | null {
  * Build hreflang alternates for a given path.
  *
  * Produces both English (canonical) and French (/fr/...) entries so Google
- * can serve the right language version to the right region.
+ * can serve the right language version to the right audience (global).
  *
  * @example
  *   getAlternates('/marketplace')
@@ -130,12 +141,12 @@ export function getAlternates(path = ''): Record<string, string> {
 
   const entries: Record<string, string> = {};
 
-  // English (default + Africa-English locales)
+  // English (default + regional variants for hreflang)
   for (const code of AFRICA_LOCALE_CODES) {
     entries[code] = enBase;
   }
 
-  // French (Francophone Africa locales)
+  // French (Francophone locales, global)
   for (const code of FRANCOPHONE_LOCALE_CODES) {
     entries[code] = frBase;
   }

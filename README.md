@@ -183,6 +183,8 @@ cd backend && npm test
 | Doc | Purpose |
 |-----|---------|
 | **[docs/SIMPLE_DEPLOY_GUIDE.md](docs/SIMPLE_DEPLOY_GUIDE.md)** | **Deploying with Coolify + GitHub (one branch, step-by-step)** |
+| [docs/WEB_ONLY_REVIEW.md](docs/WEB_ONLY_REVIEW.md) | Web-only project review (mobile app removed) |
+| [docs/SEO_AND_VISIBILITY.md](docs/SEO_AND_VISIBILITY.md) | SEO setup & getting more audience |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Branching, conventional commits, PRs |
 | [CHANGELOG.md](CHANGELOG.md) | Version history |
 | [docs/BACKUP_AND_RUNBOOK.md](docs/BACKUP_AND_RUNBOOK.md) | DB backup, migrations, release steps |

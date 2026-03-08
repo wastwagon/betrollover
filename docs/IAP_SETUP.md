@@ -2,6 +2,8 @@
 
 **Purpose:** Server-side receipt verification for App Store and Google Play wallet top-ups.
 
+> **Note:** BetRollover is currently **web-only** (no native iOS/Android apps). IAP API endpoints and `WalletIapService` have been removed. This doc is kept for reference if native apps are reintroduced.
+
 ---
 
 ## Current Behavior
@@ -41,8 +43,4 @@ For production IAP, you **must** configure server-side verification:
 
 ## Implementation Status
 
-The `WalletIapService` currently:
-
-- ✅ Prevents duplicate credits (checks `transactionId` in DB)
-- ⚠️ Does **not** yet call Apple/Google APIs to verify receipts
-- When env vars are set, the verification logic should be added (see `backend/src/modules/wallet/wallet-iap.service.ts`)
+**Removed (web-only):** `WalletIapService`, `GET /wallet/iap/products`, and `POST /wallet/iap/verify` have been removed. The `in_app_purchases` table remains (migration 042) for schema history. This doc is for reference if native apps are reintroduced.

@@ -266,7 +266,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                 onMouseEnter={() => openAfterDelay('browse')}
                 onMouseLeave={closeAfterDelay}
               >
-                <NavBtn menuKey="browse" label="Browse" />
+                <NavBtn menuKey="browse" label={t('nav.browse')} />
 
                 {openMenu === 'browse' && (
                   <MegaWrapper>
@@ -274,18 +274,18 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
                       {/* Col 1 — Coupons & Picks */}
                       <div className="w-64 border-r border-slate-100 py-3 px-2">
-                        <SectionLabel>Coupons & Picks</SectionLabel>
-                        <MegaLink href="/marketplace"     icon="🛒" label={t("nav.marketplace")}      desc="Browse & buy verified tips"    onClick={closeAll} />
-                        <MegaLink href="/coupons/archive" icon="📦" label="Settled Archive"  desc="Past results & history"        onClick={closeAll} />
+                        <SectionLabel>{t('header.section_coupons_picks')}</SectionLabel>
+                        <MegaLink href="/marketplace"     icon="🛒" label={t("nav.marketplace")}      desc={t('header.desc_marketplace')}    onClick={closeAll} />
+                        <MegaLink href="/coupons/archive" icon="📦" label={t('header.settled_archive')}  desc={t('header.settled_archive_desc')}        onClick={closeAll} />
                         <div className="my-2 border-t border-slate-100" />
-                        <SectionLabel>Platform</SectionLabel>
-                        <MegaLink href="/leaderboard" icon="🏆" label="Leaderboard"   desc="Top tipsters by ROI & wins"      onClick={closeAll} />
-                        <MegaLink href="/tipsters"    icon="👥" label="Find Tipsters" desc="Browse verified tipster profiles" onClick={closeAll} />
+                        <SectionLabel>{t('header.section_platform')}</SectionLabel>
+                        <MegaLink href="/leaderboard" icon="🏆" label={t('nav.leaderboard')}   desc={t('header.desc_leaderboard')}      onClick={closeAll} />
+                        <MegaLink href="/tipsters"    icon="👥" label={t('nav.top_tipsters')} desc={t('header.desc_find_tipsters')} onClick={closeAll} />
                       </div>
 
                       {/* Col 2 — Sports Coverage (3-column grid so labels never wrap) */}
                       <div className="flex-1 py-3 px-2">
-                        <SectionLabel>Sports Coverage</SectionLabel>
+                        <SectionLabel>{t('header.section_sports_coverage')}</SectionLabel>
                         <div className="grid grid-cols-2 gap-0.5">
                           {SPORTS.map(s => (
                             <MegaLink
@@ -303,9 +303,9 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       <div className="w-52 bg-gradient-to-br from-emerald-600 to-teal-700 text-white py-5 px-4 flex flex-col justify-between">
                         <div>
                           <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/20 text-[10px] font-bold uppercase tracking-wide mb-3">
-                            🔥 Live Now
+                            🔥 {t('header.live_now')}
                           </span>
-                          <p className="text-sm font-bold leading-snug mb-1">All 7 Sports Live</p>
+                          <p className="text-sm font-bold leading-snug mb-1">{t('header.all_sports_live')}</p>
                           <p className="text-xs text-emerald-100 leading-relaxed">
                             Football · Basketball · Rugby · MMA · Volleyball · Hockey · Amer. Football
                           </p>
@@ -315,7 +315,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                           onClick={closeAll}
                           className="mt-4 block text-center text-xs font-bold py-2 rounded-xl bg-white text-emerald-700 hover:bg-emerald-50 transition-colors"
                         >
-                          Browse Marketplace →
+                          {t('header.browse_marketplace')}
                         </Link>
                       </div>
                     </div>
@@ -336,22 +336,22 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
                       {/* Col 1 */}
                       <div className="w-64 border-r border-slate-100 py-3 px-2">
-                        <SectionLabel>Discover Tipsters</SectionLabel>
-                        <MegaLink href="/tipsters"              icon="🔍" label="Browse All"    desc="Search 100+ verified tipsters"  onClick={closeAll} />
-                        <MegaLink href="/leaderboard"           icon="🏆" label="Leaderboard"   desc="Ranked by ROI, win rate & more" onClick={closeAll} />
-                        <MegaLink href="/tipsters?sort=winRate" icon="📈" label="Top Win Rate"  desc="Highest % winners this month"   onClick={closeAll} />
-                        <MegaLink href="/tipsters?sort=roi"     icon="💹" label="Best ROI"      desc="Best return on investment"      onClick={closeAll} />
+                        <SectionLabel>{t('header.section_discover_tipsters')}</SectionLabel>
+                        <MegaLink href="/tipsters"              icon="🔍" label={t('nav.browse')}    desc={t('discover.subtitle')}  onClick={closeAll} />
+                        <MegaLink href="/leaderboard"           icon="🏆" label={t('nav.leaderboard')}   desc={t('header.desc_leaderboard')} onClick={closeAll} />
+                        <MegaLink href="/tipsters?sort=winRate" icon="📈" label={t('tipster.top_win_rate')}  desc={t('tipster.desc_win_rate')}   onClick={closeAll} />
+                        <MegaLink href="/tipsters?sort=roi"     icon="💹" label={t('tipster.best_roi')}      desc={t('tipster.desc_roi')}      onClick={closeAll} />
                       </div>
 
                       {/* Col 2 — Become a Tipster */}
                       <div className="flex-1 py-3 px-2">
-                        <SectionLabel>Become a Tipster</SectionLabel>
-                        <MegaLink href="/register"    icon="🚀" label="Get Started"          desc="Create your tipster profile free"  onClick={closeAll} />
-                        <MegaLink href="/create-pick" icon="🎯" label="Create Coupon"        desc="Share your tips & earn from sales" onClick={closeAll} />
-                        <MegaLink href="/dashboard/subscription-packages" icon="📦" label="Subscription Packages" desc="Set recurring tip subscriptions" onClick={closeAll} />
+                        <SectionLabel>{t('header.section_become_tipster')}</SectionLabel>
+                        <MegaLink href="/register"    icon="🚀" label={t('nav.register')}          desc={t('auth.register_subtitle')}  onClick={closeAll} />
+                        <MegaLink href="/create-pick" icon="🎯" label={t('nav.create_coupon')}        desc={t('create_pick.tagline')} onClick={closeAll} />
+                        <MegaLink href="/dashboard/subscription-packages" icon="📦" label={t('tipster.subscription_packages')} desc={t('tipster.subscription_packages_desc')} onClick={closeAll} />
                         <div className="mt-3 mx-1 p-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 text-white">
-                          <p className="text-xs font-bold mb-1">🛡️ Escrow Protection</p>
-                          <p className="text-[11px] text-slate-300 leading-relaxed">Every coupon is backed by our escrow system. Buyers get refunded on lost picks.</p>
+                          <p className="text-xs font-bold mb-1">🛡️ {t('home.feature_escrow_title')}</p>
+                          <p className="text-[11px] text-slate-300 leading-relaxed">{t('header.escrow_box')}</p>
                         </div>
                       </div>
                     </div>
@@ -372,26 +372,28 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
                       {/* Col 1 — Content */}
                       <div className="w-64 border-r border-slate-100 py-3 px-2">
-                        <SectionLabel>Explore</SectionLabel>
-                        <MegaLink href="/news"      icon="📰" label="News"           desc="Sports news, transfers & injuries" onClick={closeAll} />
-                        <MegaLink href="/resources" icon="📚" label="Tipster Guides" desc="Strategy & how-tos"                onClick={closeAll} />
+                        <SectionLabel>{t('header.section_explore')}</SectionLabel>
+                        <MegaLink href="/discover"  icon="🔭" label={t('nav.discover')} desc={t('discover.subtitle')} onClick={closeAll} />
+                        <MegaLink href="/learn"     icon="📖" label={t('nav.learn')}   desc={t('learn.nav_desc')} onClick={closeAll} />
+                        <MegaLink href="/news"      icon="📰" label={t('nav.news')}   desc={t('header.desc_news')} onClick={closeAll} />
+                        <MegaLink href="/resources" icon="📚" label={t('nav.guides')}  desc={t('header.desc_strategy')}                onClick={closeAll} />
                         <div className="my-2 border-t border-slate-100" />
-                        <SectionLabel>Platform Info</SectionLabel>
-                        <MegaLink href="/how-it-works" icon="📖" label="How It Works" desc="Escrow, settlement & verification" onClick={closeAll} />
-                        <MegaLink href="/community" icon="💬" label="Community Chat" desc="Live sport chat rooms" onClick={closeAll} />
-                        <MegaLink href="/about"   icon="ℹ️" label="About Us" desc="Our mission & team"        onClick={closeAll} />
-                        <MegaLink href="/contact" icon="✉️" label="Contact"   desc="Get in touch with support" onClick={closeAll} />
+                        <SectionLabel>{t('header.section_platform_info')}</SectionLabel>
+                        <MegaLink href="/how-it-works" icon="📖" label={t('home.how_it_works')} desc={t('header.desc_how_it_works')} onClick={closeAll} />
+                        <MegaLink href="/community" icon="💬" label={t('nav.community')} desc={t('header.desc_community')} onClick={closeAll} />
+                        <MegaLink href="/about"   icon="ℹ️" label={t('nav.about')}   desc={t('header.desc_about')}        onClick={closeAll} />
+                        <MegaLink href="/contact" icon="✉️" label={t('nav.contact')} desc={t('header.desc_contact')} onClick={closeAll} />
                       </div>
 
                       {/* Col 2 — Trust & Legal */}
                       <div className="flex-1 py-3 px-2">
-                        <SectionLabel>Trust & Safety</SectionLabel>
-                        <MegaLink href="/responsible-gambling" icon="🛡️" label="Responsible Use" desc="Using our platform safely & responsibly" onClick={closeAll} />
-                        <MegaLink href="/terms"   icon="📋" label="Terms of Service" desc="Platform rules & conditions" onClick={closeAll} />
-                        <MegaLink href="/privacy" icon="🔒" label="Privacy Policy"   desc="How we protect your data"    onClick={closeAll} />
+                        <SectionLabel>{t('header.section_trust_safety')}</SectionLabel>
+                        <MegaLink href="/responsible-gambling" icon="🛡️" label={t('resp.headline')} desc={t('header.desc_responsible')} onClick={closeAll} />
+                        <MegaLink href="/terms"   icon="📋" label={t('auth.terms')}   desc={t('header.desc_terms')} onClick={closeAll} />
+                        <MegaLink href="/privacy" icon="🔒" label={t('auth.privacy')} desc={t('header.desc_privacy')}    onClick={closeAll} />
                         <div className="mt-3 mx-1 p-3 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100">
-                          <p className="text-xs font-bold text-emerald-800 mb-1">18+ Only</p>
-                          <p className="text-[11px] text-slate-500 leading-relaxed">BetRollover is an educational tipster platform. Use responsibly and within your means.</p>
+                          <p className="text-xs font-bold text-emerald-800 mb-1">{t('resp.age_title')}</p>
+                          <p className="text-[11px] text-slate-500 leading-relaxed">{t('header.age_disclaimer')}</p>
                         </div>
                       </div>
                     </div>
@@ -497,7 +499,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Account
+                    {t('header.account')}
                     <NavChevron open={openMenu === 'account'} />
                   </button>
 
@@ -506,24 +508,24 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       <div className="flex w-[520px]">
                         {/* Col 1 — Profile & Activity */}
                         <div className="w-64 border-r border-slate-100 py-4 px-2">
-                          <SectionLabel>My Account</SectionLabel>
+                          <SectionLabel>{t('header.section_my_account')}</SectionLabel>
                           {[
-                            { href: '/profile',       icon: '👤', label: 'My Profile',       desc: 'Edit info & avatar' },
-                            { href: '/dashboard',     icon: '📊', label: 'Dashboard',         desc: 'Stats & overview' },
-                            { href: '/wallet',        icon: '💰', label: 'Wallet',            desc: 'Balance, deposit, withdraw' },
-                            { href: '/earnings',      icon: '📈', label: 'Earnings',          desc: 'Revenue, payouts & stats' },
+                            { href: '/profile',       icon: '👤', label: t('profile.title'),       desc: t('profile.tagline') },
+                            { href: '/dashboard',     icon: '📊', label: t('nav.dashboard'),         desc: t('dashboard.subtitle') },
+                            { href: '/wallet',        icon: '💰', label: t('nav.wallet'),            desc: t('dashboard.wallet_desc') },
+                            { href: '/earnings',      icon: '📈', label: t('nav.earnings'),          desc: t('earnings.subtitle') },
                           ].map(item => (
                             <MegaLink key={item.href} href={item.href} icon={item.icon} label={item.label} desc={item.desc} onClick={closeAll} />
                           ))}
                         </div>
                         {/* Col 2 — Picks & Subscriptions */}
                         <div className="flex-1 py-4 px-2">
-                          <SectionLabel>Activity</SectionLabel>
+                          <SectionLabel>{t('header.section_activity')}</SectionLabel>
                           {[
-                            { href: '/my-picks',      icon: '🎯', label: 'My Picks',          desc: 'Coupons you created' },
-                            { href: '/my-purchases',  icon: '🛍️', label: 'My Purchases',      desc: 'Coupons you bought' },
-                            { href: '/subscriptions', icon: '🔔', label: 'Subscriptions',     desc: 'Your active tipster feeds' },
-                            { href: '/notifications', icon: '🛎️', label: 'Notifications',     desc: unreadCount > 0 ? `${unreadCount} unread` : 'All caught up', badge: unreadCount > 0 ? String(unreadCount) : undefined, badgeColor: 'bg-red-100 text-red-600' },
+                            { href: '/my-picks',      icon: '🎯', label: t('nav.my_picks'),          desc: t('dashboard.my_picks_desc') },
+                            { href: '/my-purchases',  icon: '🛍️', label: t('my_purchases.title'),      desc: t('my_purchases.tagline') },
+                            { href: '/subscriptions', icon: '🔔', label: t('dashboard.card_subscriptions'),     desc: t('dashboard.card_subscriptions_desc') },
+                            { href: '/notifications', icon: '🛎️', label: t('nav.notifications'),     desc: unreadCount > 0 ? t('dashboard.card_notifications_unread', { n: String(unreadCount) }) : t('notifications.caught_up'), badge: unreadCount > 0 ? String(unreadCount) : undefined, badgeColor: 'bg-red-100 text-red-600' },
                           ].map(item => (
                             <MegaLink key={item.href} href={item.href} icon={item.icon} label={item.label} desc={item.desc} badge={item.badge} badgeColor={item.badgeColor} onClick={closeAll} />
                           ))}
@@ -540,7 +542,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                                 )}
                               </div>
                             )}
-                            <p className="text-[11px] text-slate-500 leading-relaxed">Manage your account and activity.</p>
+                            <p className="text-[11px] text-slate-500 leading-relaxed">{t('profile.tagline')}</p>
                           </div>
                           <button
                             type="button"
@@ -549,7 +551,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                             aria-label="Sign out of your account"
                           >
                             <span aria-hidden>🚪</span>
-                            Sign Out
+                            {t('auth.logout')}
                           </button>
                         </div>
                       </div>
@@ -584,7 +586,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               {/* Home */}
               <Link href="/" onClick={() => setMobileOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${isActive(pathname, '/') ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700 hover:bg-slate-50'}`}>
-                🏠 Home
+                🏠 {t('header.home')}
               </Link>
 
               {/* Browse section */}
@@ -595,15 +597,15 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                   className="flex items-center justify-between w-full px-4 py-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all"
                   aria-expanded={mobileSection === 'browse'}
                 >
-                  <span>🎟️ Browse Coupons</span>
+                  <span>🎟️ {t('header.browse_coupons')}</span>
                   <NavChevron open={mobileSection === 'browse'} />
                 </button>
                 {mobileSection === 'browse' && (
                   <div className="ml-4 mt-1 space-y-1 border-l-2 border-emerald-100 pl-3">
                     {[
-                      { href: '/marketplace',      label: 'Marketplace',      icon: '🛒' },
-                      { href: '/coupons/archive',  label: 'Settled Archive',  icon: '📦' },
-                      { href: '/leaderboard',      label: 'Leaderboard',      icon: '🏆' },
+                      { href: '/marketplace',      label: t('nav.marketplace'),      icon: '🛒' },
+                      { href: '/coupons/archive',  label: t('header.settled_archive'),  icon: '📦' },
+                      { href: '/leaderboard',      label: t('nav.leaderboard'),      icon: '🏆' },
                     ].map(item => (
                       <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
                         className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all ${isActive(pathname, item.href) ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}>
@@ -611,7 +613,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       </Link>
                     ))}
                     <div className="px-3 py-2">
-                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1.5">Sports</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1.5">{t('header.sports')}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {SPORTS.map(s => (
                           <Link key={s.label} href={s.href} onClick={() => setMobileOpen(false)}
@@ -661,17 +663,23 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                   className="flex items-center justify-between w-full px-4 py-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all"
                   aria-expanded={mobileSection === 'discover'}
                 >
-                  <span>🔭 Discover</span>
+                  <span>🔭 {t('nav.discover')}</span>
                   <NavChevron open={mobileSection === 'discover'} />
                 </button>
                 {mobileSection === 'discover' && (
                   <div className="ml-4 mt-1 space-y-1 border-l-2 border-emerald-100 pl-3">
                     {[
-                      { href: '/news',                  label: 'News',                  icon: '📰' },
-                      { href: '/resources',             label: 'Tipster Guides',        icon: '📚' },
-                      { href: '/about',                 label: 'About Us',              icon: 'ℹ️' },
-                      { href: '/contact',               label: 'Contact',               icon: '✉️' },
-                      { href: '/responsible-gambling',  label: 'Responsible Use',       icon: '🛡️' },
+                      { href: '/discover',              label: t('nav.discover'),       icon: '🔭' },
+                      { href: '/learn',                 label: t('nav.learn'),         icon: '📖' },
+                      { href: '/news',                  label: t('nav.news'),           icon: '📰' },
+                      { href: '/resources',             label: t('nav.guides'),         icon: '📚' },
+                      { href: '/how-it-works',          label: t('home.how_it_works'),  icon: '📖' },
+                      { href: '/community',             label: t('nav.community'),      icon: '💬' },
+                      { href: '/about',                 label: t('nav.about'),          icon: 'ℹ️' },
+                      { href: '/contact',               label: t('nav.contact'),        icon: '✉️' },
+                      { href: '/responsible-gambling',  label: t('resp.headline'),       icon: '🛡️' },
+                      { href: '/terms',                 label: t('auth.terms'),          icon: '📋' },
+                      { href: '/privacy',               label: t('auth.privacy'),       icon: '🔒' },
                     ].map(item => (
                       <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
                         className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all ${isActive(pathname, item.href) ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}>

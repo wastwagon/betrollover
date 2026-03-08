@@ -1,5 +1,7 @@
 # Content Rating for App Store & Play Console
 
+> **Note:** BetRollover is currently **web-only** (no native apps). This doc applies if you later ship iOS/Android apps.
+
 BetRollover is a betting tips platform with real-money features. Set the appropriate content rating before submission.
 
 ## Apple App Store Connect (17+)

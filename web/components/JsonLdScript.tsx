@@ -1,4 +1,4 @@
-import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from '@/lib/site-config';
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS, TELEGRAM_ADS_URL } from '@/lib/site-config';
 
 const jsonLd = [
   {
@@ -14,8 +14,10 @@ const jsonLd = [
       { '@type': 'Country', name: 'Nigeria' },
       { '@type': 'Country', name: 'Kenya' },
       { '@type': 'Country', name: 'South Africa' },
+      { '@type': 'Country', name: 'United Kingdom' },
+      { '@type': 'Country', name: 'United States' },
     ],
-    sameAs: [],
+    sameAs: [TELEGRAM_ADS_URL].filter(Boolean),
   },
   {
     '@context': 'https://schema.org',
@@ -24,8 +26,9 @@ const jsonLd = [
     url: SITE_URL,
     name: SITE_NAME,
     description: SITE_DESCRIPTION,
+    keywords: SITE_KEYWORDS.join(', '),
     publisher: { '@id': `${SITE_URL}/#organization` },
-    inLanguage: ['en-GH', 'en-NG', 'en-ZA', 'en-KE'],
+    inLanguage: ['en', 'en-GH', 'en-NG', 'en-ZA', 'en-KE', 'fr'],
     potentialAction: {
       '@type': 'SearchAction',
       target: { '@type': 'EntryPoint', urlTemplate: `${SITE_URL}/marketplace?q={search_term_string}` },

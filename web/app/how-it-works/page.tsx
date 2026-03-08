@@ -1,5 +1,6 @@
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
+import { FaqJsonLd } from '@/components/FaqJsonLd';
 import Link from 'next/link';
 import { getLocale, buildT } from '@/lib/i18n';
 import { SITE_URL, SITE_NAME, getAlternates } from '@/lib/site-config';
@@ -13,7 +14,35 @@ export const metadata: Metadata = {
     canonical: `${SITE_URL}/how-it-works`,
     languages: getAlternates('/how-it-works'),
   },
+  openGraph: {
+    url: `${SITE_URL}/how-it-works`,
+    title: `How It Works | ${SITE_NAME}`,
+    description: 'Escrow-protected picks, transparent settlement, verified tipsters. Refunded if tips lose.',
+  },
 };
+
+const HOW_IT_WORKS_FAQS = [
+  {
+    question: 'How does escrow protection work for buyers?',
+    answer: 'When you purchase a tipster coupon, your payment is held in escrow. The tipster does not receive it until the coupon settles. If the tipster\'s picks lose, your purchase is refunded to your wallet automatically.',
+  },
+  {
+    question: 'What happens if my tipster\'s picks lose?',
+    answer: 'If the tipster\'s picks lose, your purchase is refunded in full to your wallet. You only pay when the picks win.',
+  },
+  {
+    question: 'How do tipsters get verified?',
+    answer: 'All tipsters on BetRollover are verified. We check identity and ensure compliance with our terms. Performance stats (win rate, ROI, streak) are calculated from settled coupons only.',
+  },
+  {
+    question: 'How does settlement work?',
+    answer: 'We use official data sources (API-Sports, The Odds API) to fetch match results. Each pick is marked won, lost, or void. A coupon wins only if all non-void picks win.',
+  },
+  {
+    question: 'How do tipsters earn from their picks?',
+    answer: 'When someone buys your coupon, funds are held in escrow until the coupon settles. If your picks win, you receive your share minus platform commission. If they lose, the buyer is refunded.',
+  },
+];
 
 export default async function HowItWorksPage() {
   const locale = await getLocale();
@@ -21,6 +50,7 @@ export default async function HowItWorksPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)]">
+      <FaqJsonLd faqs={HOW_IT_WORKS_FAQS} />
       <UnifiedHeader />
 
       <main>
@@ -71,6 +101,18 @@ export default async function HowItWorksPage() {
                 All tipsters on BetRollover are verified. We check identity and ensure compliance with our terms. 
                 Performance stats (win rate, ROI, streak) are calculated from settled coupons only — no manipulation.
               </p>
+            </section>
+
+            <section id="faq" className="scroll-mt-24">
+              <h2 className="text-xl font-semibold mb-4">{t('how_it_works.faq_title')}</h2>
+              <ul className="space-y-4 list-none pl-0">
+                {HOW_IT_WORKS_FAQS.map((faq, i) => (
+                  <li key={i} className="border-b border-[var(--border)] pb-4 last:border-0 last:pb-0">
+                    <h3 className="text-sm font-semibold text-[var(--text)] mb-1">{faq.question}</h3>
+                    <p className="text-sm text-[var(--text-muted)] leading-relaxed">{faq.answer}</p>
+                  </li>
+                ))}
+              </ul>
             </section>
 
             <div className="mt-10 p-5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/40">

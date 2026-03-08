@@ -53,14 +53,14 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   openGraph: {
     type: 'website',
-    locale: 'en_GH',
-    alternateLocale: ['en_NG', 'en_ZA', 'en_KE'],
+    locale: 'en',
+    alternateLocale: ['en_GH', 'en_GB', 'en_US', 'en_NG', 'en_ZA', 'en_KE', 'fr'],
     url: SITE_URL,
     siteName: SITE_NAME,
     title: `Verified Sports Tips | Football, Basketball & More — ${SITE_NAME}`,
     description: SITE_DESCRIPTION,
     images: [
-      { url: '/og-image.png', width: 1200, height: 630, alt: `${SITE_NAME} - Africa's Premier Multi-Sport Tipster Marketplace` },
+      { url: '/og-image.png', width: 1200, height: 630, alt: `${SITE_NAME} — Ghana-based tipster marketplace for a global audience` },
       { url: '/BetRollover-logo.png', width: 512, height: 512, alt: SITE_NAME },
     ],
   },
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
     title: `Verified Sports Tips | Football, Basketball & More — ${SITE_NAME}`,
     description: SITE_DESCRIPTION,
     creator: '@betrollover',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: `${SITE_NAME} - Africa's Premier Multi-Sport Tipster Marketplace` }],
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: `${SITE_NAME} — Ghana-based tipster marketplace for a global audience` }],
   },
   robots: {
     index: true,

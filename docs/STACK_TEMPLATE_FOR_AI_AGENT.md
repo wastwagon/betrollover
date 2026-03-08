@@ -98,8 +98,7 @@ PROJECT_SLUG/
 **Web (Next.js)**
 - `NEXT_PUBLIC_API_URL` (e.g. `http://localhost:6001` for local, or API domain in prod)
 
-**Mobile (Expo)**
-- `EXPO_PUBLIC_API_URL` (use machine IP for device/simulator, e.g. `http://192.168.1.100:6001`)
+**Mobile:** BetRollover is web-only; no Expo/native app env vars.
 
 ---
 
@@ -122,7 +121,7 @@ Avoid port 6000 (Chrome blocks it). Use 6xxx range for API/Web.
 - DTOs with class-validator for validation
 - Consistent error format (RFC 7807–style): `{ statusCode, message, error?, path?, timestamp? }`
 - Health check: `GET /health` (no version)
-- API docs: optional OpenAPI/Swagger at `/api/docs` for web/mobile devs
+- API docs: optional OpenAPI/Swagger at `/api/docs` for web devs
 
 ---
 
@@ -132,7 +131,7 @@ Avoid port 6000 (Chrome blocks it). Use 6xxx range for API/Web.
   - API request/response DTOs
   - Domain models (User, Pick, etc.)
   - Error shapes
-- Backend, web, and mobile import from `@project/shared-types` (or workspace package name)
+- Backend and web import from `@project/shared-types` (or workspace package name)
 - Single source of truth for API contracts; reduces drift and breaking changes
 
 ---
@@ -168,15 +167,9 @@ Avoid port 6000 (Chrome blocks it). Use 6xxx range for API/Web.
 
 ---
 
-## 9. Mobile App Structure (Expo)
+## 9. Mobile App (Not Used)
 
-- **Expo Router** — `app/` directory, file-based routes
-- **app/_layout.tsx** — Root layout, QueryClientProvider, StatusBar
-- **app/index.tsx** — Home/splash
-- **app/login.tsx**, **app/register.tsx** — Auth screens
-- **app/(tabs)/** — Tab navigator for main app (dashboard, profile, etc.)
-- **Shared API client** — `fetch` with `EXPO_PUBLIC_API_URL`; store JWT in AsyncStorage
-- **@tanstack/react-query** — Same patterns as web
+BetRollover is **web-only** (mobile-first Next.js). No Expo or native app. For projects that add native mobile later, use Expo Router, shared API client, and same auth/API patterns.
 
 ---
 
@@ -193,11 +186,13 @@ Avoid port 6000 (Chrome blocks it). Use 6xxx range for API/Web.
 
 - **Backend:** Jest, unit tests for services, integration for controllers
 - **Web:** Playwright for E2E (smoke tests: home, login, key flows)
-- **Mobile:** Expo/React Native testing as needed (Jest, Detox, etc.)
+- **Mobile:** N/A (web-only)
 
 ---
 
 ## 12. iOS App Store Best Practices (Apple Review)
+
+*Not applicable for BetRollover (web-only). Retained for reference if native apps are added.*
 
 - **Privacy Policy URL** — Required. Host at `/privacy` on web; link in app and App Store Connect.
 - **Terms of Service** — Required for paid/subscription features. Host at `/terms`; link in app.
@@ -214,16 +209,18 @@ Avoid port 6000 (Chrome blocks it). Use 6xxx range for API/Web.
 
 ## 13. Google Play Best Practices (Play Console)
 
+*Not applicable for BetRollover (web-only). Retained for reference if native apps are added.*
+
 - **Privacy Policy URL** — Required. Same as web `/privacy`; add in Play Console.
 - **Data Safety Form** — Declare data collection, sharing, and security practices accurately.
 - **Target API Level** — Target recent Android API (e.g. 34+); Google requires new apps to target latest.
-- **64-bit Support** — Ensure native libs support 64-bit (Expo handles this).
+- **64-bit Support** — Ensure native libs support 64-bit.
 - **Content Rating** — Complete IARC questionnaire; set appropriate rating.
 - **App Signing** — Use Google Play App Signing; export upload key.
 - **Store Listing** — Screenshots, feature graphic (1024x500), short/long description.
 - **No Malware / Policy Violations** — No deceptive behavior; no gambling/minors violations without compliance.
 - **Testing** — Internal/closed/open testing tracks before production.
-- **Expo EAS Build** — Use EAS Build for production builds; configure `eas.json` for Android.
+- **Build** — Use EAS Build or similar for production builds if adding native apps.
 
 ---
 
@@ -265,7 +262,7 @@ Avoid port 6000 (Chrome blocks it). Use 6xxx range for API/Web.
 - **Error States** — Clear messages; retry options; no raw stack traces.
 - **Empty States** — Helpful copy and CTAs when no data.
 - **Accessibility** — Contrast ratios (4.5:1 text); keyboard nav; screen reader support.
-- **Consistency** — Shared design tokens (colors, spacing, radii); same patterns across web and mobile.
+- **Consistency** — Shared design tokens (colors, spacing, radii); same patterns across web.
 - **Offline Handling** — Graceful degradation; cache critical data; show connectivity status.
 - **Dark Mode** — Support `prefers-color-scheme` or user toggle where appropriate.
 - **Reduced Motion** — Respect `prefers-reduced-motion`; disable non-essential animations.
@@ -348,7 +345,7 @@ Implement:
 1. Shared types: packages/shared-types with DTOs and API contracts
 2. Backend: NestJS with auth (register, login) under /api/v1/, health check, TypeORM, rate limiting, Helmet
 3. Web: Next.js 14 App Router, Tailwind, metadata/sitemap/robots for SEO, login/register, dashboard shell
-4. Mobile: Expo with Expo Router, app.json (privacy policy URL, bundle IDs), login/register, dashboard tabs
+4. Mobile: N/A (BetRollover is web-only)
 5. Privacy policy page at /privacy, terms at /terms
 6. docker-compose.yml, .env.example, README
 

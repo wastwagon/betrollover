@@ -14,17 +14,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Commitlint config at repo root (optional; add `@commitlint/cli` to enforce).
 - README: API versioning note, mobile API URL note, Docs table (CONTRIBUTING, CHANGELOG, runbook, template).
 - API versioning: all routes under `/api/v1` (health and Paystack webhook excluded). Web and mobile clients updated.
-- World-class template Phase 1–2: CHANGELOG, CONTRIBUTING, mobile app.json privacy/terms URLs, API versioning.
+- World-class template Phase 1–2: CHANGELOG, CONTRIBUTING, API versioning.
 - Tipster subscription packages: create packages (name, price, duration, ROI guarantee), list by tipster.
 - User subscriptions: subscribe to tipster packages via wallet debit; escrow; access to subscription-only coupons.
 - Subscription escrow and ROI guarantee: daily settlement; release to tipster or refund user based on tipster ROI.
 - Coupon placement: marketplace, subscription, or both; link coupons to subscription packages.
-- Push notifications: web (VAPID + service worker), mobile (Expo push); register device, send from backend.
-- In-app purchases: wallet top-up via Apple/Google; GET products, POST verify; mobile IAP section in wallet.
+- Push notifications: web (VAPID + service worker); register device, send from backend.
+- In-app purchases: wallet top-up via Apple/Google — API and service removed (web-only); table retained in DB for migration history.
 - World-class template alignment: CHANGELOG, implementation phases doc, checklist doc.
 
 ### Changed
 
+- **Platform:** Native mobile app (Expo/React Native) removed; product is mobile-first web only. See `docs/WEB_ONLY_REVIEW.md`.
 - Tipster profile: includes subscription packages and Subscribe flow; user_id in tipster object for dashboard.
 - Create Pick: placement selector (marketplace / subscription / both) and package checkboxes when subscription.
 - Dashboard: Subscriptions and Subscription Packages quick actions; push notification prompt in shell.
@@ -45,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial BetRollover v2: Next.js web, Expo mobile, NestJS API.
+- Initial BetRollover v2: Next.js web (mobile-first), NestJS API.
 - Auth: register, login, JWT, email verification.
 - Wallet: balance, Paystack deposit, withdrawals, payout methods.
 - Marketplace: accumulator picks, escrow, purchase flow.

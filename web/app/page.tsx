@@ -7,17 +7,22 @@ import { HomePopularTipsters } from '@/components/HomePopularTipsters';
 import { HomePopularEvents } from '@/components/HomePopularEvents';
 import { HomeFreeTipOfTheDay } from '@/components/HomeFreeTipOfTheDay';
 import { HomePublicChatRooms } from '@/components/HomePublicChatRooms';
-import { SITE_URL, SITE_NAME, getAlternates } from '@/lib/site-config';
+import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, getAlternates } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
+  title: `Verified Sports Tips | Football, Basketball & More — ${SITE_NAME}`,
+  description: SITE_DESCRIPTION,
   alternates: {
     canonical: SITE_URL,
     languages: getAlternates('/'),
   },
   openGraph: {
     url: SITE_URL,
+    title: `Verified Sports Tips | Football, Basketball & More — ${SITE_NAME}`,
+    description: SITE_DESCRIPTION,
   },
 };
 
@@ -27,6 +32,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)]">
+      <BreadcrumbJsonLd items={[{ name: 'Home', url: SITE_URL }]} />
       <UnifiedHeader />
 
       <main className="bg-[var(--bg)]">
@@ -112,12 +118,12 @@ export default async function HomePage() {
                 },
                 {
                   icon: '🏀', name: 'Basketball', accent: 'border-orange-400/60',
-                  desc: 'NBA, EuroLeague, and African leagues. Moneyline, spreads, and totals across 420+ competitions.',
+                  desc: 'NBA, EuroLeague, and leagues worldwide. Moneyline, spreads, and totals across 420+ competitions.',
                   markets: ['Moneyline', 'Spreads', 'Totals', 'Props'],
                 },
                 {
                   icon: '🏉', name: 'Rugby', accent: 'border-amber-400/60',
-                  desc: 'Rugby Union & League from South Africa, UK, Australia & beyond. Match winner, handicap, totals.',
+                  desc: 'Rugby Union & League worldwide — UK, South Africa, Australia and more. Match winner, handicap, totals.',
                   markets: ['Match Winner', 'Handicap', 'Totals'],
                 },
                 {
@@ -127,7 +133,7 @@ export default async function HomePage() {
                 },
                 {
                   icon: '🏐', name: 'Volleyball', accent: 'border-blue-400/60',
-                  desc: 'Olympic tournaments and continental leagues. Match winner, set totals, and handicap markets.',
+                  desc: 'Olympic tournaments and major leagues worldwide. Match winner, set totals, and handicap markets.',
                   markets: ['Match Winner', 'Set Totals', 'Handicap'],
                 },
                 {
