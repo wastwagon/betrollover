@@ -38,12 +38,11 @@ interface LeadingTipsterStats {
   roi: number | null;
 }
 
-/** Seven stats: platform counts + leading tipster + paid out (escrow settled) */
+/** Six stats: platform counts + leading ROI + paid out (escrow settled) */
 type StatKey =
   | 'verified'
   | 'coupons'
   | 'couponsBought'
-  | 'leadingWinRate'
   | 'leadingRoi'
   | 'marketplace'
   | 'paidOut';
@@ -72,13 +71,6 @@ const statConfigBase: Record<
     bg: 'bg-sky-500/15',
     border: 'border-sky-500/40',
     iconBg: 'bg-sky-500/25 text-sky-300',
-  },
-  leadingWinRate: {
-    labelKey: 'home.stats_leading_win_rate',
-    icon: '📈',
-    bg: 'bg-amber-500/15',
-    border: 'border-amber-500/40',
-    iconBg: 'bg-amber-500/25 text-amber-300',
   },
   leadingRoi: {
     labelKey: 'home.stats_leading_roi',
@@ -156,8 +148,6 @@ export function HomeHero() {
   const paidOutFormatted =
     s.totalPaidOut > 0 ? 'GHS ' + s.totalPaidOut.toLocaleString() : 'GHS 0';
 
-  const leadingWinRateStr =
-    leadingTipster.winRate != null ? Number(leadingTipster.winRate).toFixed(1) + '%' : '—';
   const leadingRoiStr =
     leadingTipster.roi != null ? Number(leadingTipster.roi).toFixed(1) + '%' : '—';
 
@@ -165,7 +155,6 @@ export function HomeHero() {
     { key: 'verified', value: formatNumber(s.verifiedTipsters) },
     { key: 'coupons', value: formatNumber(s.totalPicks) },
     { key: 'couponsBought', value: formatNumber(s.successfulPurchases) },
-    { key: 'leadingWinRate', value: leadingWinRateStr },
     { key: 'leadingRoi', value: leadingRoiStr },
     { key: 'marketplace', value: formatNumber(s.activePicks) },
     { key: 'paidOut', value: paidOutFormatted },
@@ -255,8 +244,8 @@ export function HomeHero() {
           </div>
         </div>
 
-        {/* Compact KPI Dashboard - 7 cards: platform + leading tipster + paid out */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2 md:gap-3">
+        {/* Compact KPI Dashboard - 6 cards: platform + leading ROI + paid out */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
           {statItems.map((item, idx) => {
             const cfg = statConfigBase[item.key];
             return (
