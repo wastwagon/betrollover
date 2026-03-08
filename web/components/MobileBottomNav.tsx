@@ -41,7 +41,7 @@ function TipstersIcon({ active }: { active?: boolean }) {
 }
 function CreateIcon({ active }: { active?: boolean }) {
   return (
-    <svg className="w-7 h-7 shrink-0" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+    <svg className="w-6 h-6 shrink-0" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
     </svg>
   );
@@ -119,7 +119,7 @@ export function MobileBottomNav() {
                   href={item.href}
                   className={`${linkClass} ${active ? 'bg-[var(--primary)] text-white shadow-md' : 'bg-[var(--primary)]/12 text-[var(--primary)] hover:bg-[var(--primary)]/20'}`}
                 >
-                  <span className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20">
+                  <span className="flex items-center justify-center w-9 h-9 rounded-full bg-white/20">
                     <Icon active />
                   </span>
                   <span className={`text-[10px] font-semibold truncate w-full text-center ${active ? 'text-white' : ''}`}>
@@ -133,8 +133,9 @@ export function MobileBottomNav() {
               <Link
                 key={item.id}
                 href={item.href}
-                className={`${linkClass} ${active ? 'text-[var(--primary)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'}`}
+                className={`${linkClass} relative ${active ? 'text-[var(--primary)] bg-[var(--primary)]/8' : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/30'}`}
               >
+                {active && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-[var(--primary)]" aria-hidden />}
                 <Icon active={active} />
                 <span className={`text-[10px] font-medium truncate w-full text-center ${active ? 'font-semibold' : ''}`}>
                   {t(item.labelKey)}
