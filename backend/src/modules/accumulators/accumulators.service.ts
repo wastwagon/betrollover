@@ -906,6 +906,19 @@ export class AccumulatorsService {
     return parseInt(result?.cnt ?? '0', 10);
   }
 
+  /**
+   * Total amount released from escrow when winning coupons were settled (paid out to tipsters).
+   * Used for "Paid Out" homepage stat.
+   */
+  async getTotalEscrowSettled(): Promise<number> {
+    const result = await this.escrowRepo
+      .createQueryBuilder('e')
+      .select('COALESCE(SUM(e.amount), 0)', 'total')
+      .where("e.status = 'released'")
+      .getRawOne<{ total: string }>();
+    return Math.round(Number(result?.total ?? 0));
+  }
+
   /** Public stats for homepage - no auth required */
   async getPublicStats() {
     const [
@@ -913,7 +926,7 @@ export class AccumulatorsService {
       publishedCouponsCount,
       liveMarketplaceCount,
       purchaseCount,
-      totalRevenue,
+      totalEscrowSettled,
       wonPicks,
       lostPicks,
     ] = await Promise.all([
@@ -921,11 +934,7 @@ export class AccumulatorsService {
       this.getPublishedCouponsCount(),
       this.getLiveMarketplaceCount(),
       this.purchasedRepo.count(),
-      this.purchasedRepo
-        .createQueryBuilder('p')
-        .select('COALESCE(SUM(p.purchase_price), 0)', 'total')
-        .getRawOne()
-        .then((r) => Number(r?.total ?? 0)),
+      this.getTotalEscrowSettled(),
       this.ticketRepo.count({ where: { result: 'won' } }),
       this.ticketRepo.count({ where: { result: 'lost' } }),
     ]);
@@ -937,7 +946,7 @@ export class AccumulatorsService {
       activePicks: liveMarketplaceCount,
       successfulPurchases: purchaseCount,
       winRate,
-      totalPaidOut: Math.round(totalRevenue),
+      totalPaidOut: totalEscrowSettled,
     };
   }
 

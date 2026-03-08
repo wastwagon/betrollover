@@ -194,6 +194,7 @@ const fr: Record<string, string> = {
   'home.feature_community_title': 'Chat Communauté',
   'home.stats_tipsters': 'Tipsters Vérifiés',
   'home.stats_picks': 'Coupons Publiés',
+  'home.stats_coupons_bought': 'Coupons Achetés',
   'home.stats_marketplace': 'En Marketplace',
   'home.stats_purchases': 'Achats',
   'home.stats_paid_out': 'Payouts',

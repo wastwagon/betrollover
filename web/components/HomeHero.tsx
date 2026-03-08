@@ -38,10 +38,11 @@ interface LeadingTipsterStats {
   roi: number | null;
 }
 
-/** Six stats: 4 platform + 2 leading (top) tipster — fair, no platform-wide avg */
+/** Seven stats: platform counts + leading tipster + paid out (escrow settled) */
 type StatKey =
   | 'verified'
   | 'coupons'
+  | 'couponsBought'
   | 'leadingWinRate'
   | 'leadingRoi'
   | 'marketplace'
@@ -64,6 +65,13 @@ const statConfigBase: Record<
     bg: 'bg-blue-500/15',
     border: 'border-blue-500/40',
     iconBg: 'bg-blue-500/25 text-blue-300',
+  },
+  couponsBought: {
+    labelKey: 'home.stats_coupons_bought',
+    icon: '🛍️',
+    bg: 'bg-sky-500/15',
+    border: 'border-sky-500/40',
+    iconBg: 'bg-sky-500/25 text-sky-300',
   },
   leadingWinRate: {
     labelKey: 'home.stats_leading_win_rate',
@@ -156,6 +164,7 @@ export function HomeHero() {
   const statItems: { key: StatKey; value: string }[] = [
     { key: 'verified', value: formatNumber(s.verifiedTipsters) },
     { key: 'coupons', value: formatNumber(s.totalPicks) },
+    { key: 'couponsBought', value: formatNumber(s.successfulPurchases) },
     { key: 'leadingWinRate', value: leadingWinRateStr },
     { key: 'leadingRoi', value: leadingRoiStr },
     { key: 'marketplace', value: formatNumber(s.activePicks) },
@@ -246,8 +255,8 @@ export function HomeHero() {
           </div>
         </div>
 
-        {/* Compact KPI Dashboard - 6 cards with distinct colors */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
+        {/* Compact KPI Dashboard - 7 cards: platform + leading tipster + paid out */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2 md:gap-3">
           {statItems.map((item, idx) => {
             const cfg = statConfigBase[item.key];
             return (

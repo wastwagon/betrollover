@@ -194,6 +194,7 @@ const en = {
   'home.feature_community_title': 'Community Chat',
   'home.stats_tipsters': 'Verified Tipsters',
   'home.stats_picks': 'Coupons Published',
+  'home.stats_coupons_bought': 'Coupons Bought',
   'home.stats_marketplace': 'Live on Marketplace',
   'home.stats_purchases': 'Purchases',
   'home.stats_paid_out': 'Paid Out',

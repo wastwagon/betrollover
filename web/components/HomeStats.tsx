@@ -42,7 +42,8 @@ export function HomeStats() {
 
   const items = [
     { value: formatNumber(s.verifiedTipsters), label: 'Verified Tipsters' },
-    { value: formatNumber(s.totalPicks), label: 'Tips Verified' },
+    { value: formatNumber(s.totalPicks), label: 'Coupons Published' },
+    { value: formatNumber(s.successfulPurchases), label: 'Coupons Bought' },
     { value: `${s.winRate}%`, label: 'Win Rate' },
     { value: s.totalPaidOut > 0 ? `GHS ${s.totalPaidOut.toLocaleString()}` : 'GHS 0', label: 'Paid Out' },
   ];
@@ -50,7 +51,7 @@ export function HomeStats() {
   return (
     <section className="border-y border-[var(--border)] bg-gradient-to-br from-[var(--card)] via-[var(--card)] to-[var(--primary)]/5">
       <div className="max-w-6xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
           {items.map((item) => (
             <div key={item.label} className="text-center group">
               <p className="text-xl md:text-2xl font-bold text-[var(--primary)] tabular-nums group-hover:scale-105 transition-transform">{item.value}</p>
