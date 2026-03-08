@@ -23,11 +23,10 @@ const defaultStats: PublicStats = {
   totalPaidOut: 0,
 };
 
+/** Show real counts (no + or rounding). Uses locale grouping for thousands. */
 function formatNumber(n: number): string {
-  if (n >= 1000) return (n / 1000).toFixed(1) + 'K+';
-  if (n >= 100) return Math.floor(n / 100) * 100 + '+';
   if (n <= 0) return '0';
-  return n + '+';
+  return n.toLocaleString();
 }
 
 /** Min settled picks (wins + losses) before we show someone as "leading" — avoids 100% from 1 pick */
@@ -147,11 +146,7 @@ export function HomeHero() {
 
   const s = stats || defaultStats;
   const paidOutFormatted =
-    s.totalPaidOut >= 1000
-      ? 'GHS ' + (s.totalPaidOut / 1000).toFixed(1) + 'K+'
-      : s.totalPaidOut > 0
-        ? 'GHS ' + s.totalPaidOut + '+'
-        : 'GHS 0';
+    s.totalPaidOut > 0 ? 'GHS ' + s.totalPaidOut.toLocaleString() : 'GHS 0';
 
   const leadingWinRateStr =
     leadingTipster.winRate != null ? Number(leadingTipster.winRate).toFixed(1) + '%' : '—';

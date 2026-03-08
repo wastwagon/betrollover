@@ -14,18 +14,18 @@ interface PublicStats {
 }
 
 const defaultStats: PublicStats = {
-  verifiedTipsters: 7,
-  totalPicks: 80,
-  activePicks: 30,
-  successfulPurchases: 150,
-  winRate: 62,
-  totalPaidOut: 12500,
+  verifiedTipsters: 0,
+  totalPicks: 0,
+  activePicks: 0,
+  successfulPurchases: 0,
+  winRate: 0,
+  totalPaidOut: 0,
 };
 
+/** Show real counts (no + or rounding). */
 function formatNumber(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}K+`;
-  if (n >= 100) return `${Math.floor(n / 100) * 100}+`;
-  return `${n}+`;
+  if (n <= 0) return '0';
+  return n.toLocaleString();
 }
 
 export function HomeStats() {
@@ -44,7 +44,7 @@ export function HomeStats() {
     { value: formatNumber(s.verifiedTipsters), label: 'Verified Tipsters' },
     { value: formatNumber(s.totalPicks), label: 'Tips Verified' },
     { value: `${s.winRate}%`, label: 'Win Rate' },
-    { value: `GHS ${s.totalPaidOut >= 1000 ? `${(s.totalPaidOut / 1000).toFixed(1)}K+` : s.totalPaidOut}+`, label: 'Paid Out' },
+    { value: s.totalPaidOut > 0 ? `GHS ${s.totalPaidOut.toLocaleString()}` : 'GHS 0', label: 'Paid Out' },
   ];
 
   return (

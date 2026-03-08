@@ -871,20 +871,55 @@ export class AccumulatorsService {
     }));
   }
 
+  /**
+   * Count distinct coupons that have been published to the marketplace (ever listed).
+   * Used for "Coupons Published" homepage stat so it matches marketplace reality.
+   */
+  async getPublishedCouponsCount(): Promise<number> {
+    const result = await this.marketplaceRepo
+      .createQueryBuilder('pm')
+      .select('COUNT(DISTINCT pm.accumulator_id)', 'cnt')
+      .getRawOne<{ cnt: string }>();
+    return parseInt(result?.cnt ?? '0', 10);
+  }
+
+  /**
+   * Count marketplace listings that are actually "live" (available to buy):
+   * active listing + coupon active/pending + no fixture started. Matches getMarketplace filter.
+   */
+  async getLiveMarketplaceCount(): Promise<number> {
+    const validSubQuery = `
+      SELECT pm.accumulator_id FROM pick_marketplace pm
+      INNER JOIN accumulator_tickets t ON t.id = pm.accumulator_id AND t.status = 'active' AND t.result = 'pending'
+      WHERE pm.status = 'active'
+      AND NOT EXISTS (
+        SELECT 1 FROM accumulator_picks ap
+        JOIN fixtures f ON f.id = ap.fixture_id
+        WHERE ap.accumulator_id = pm.accumulator_id AND f.match_date <= NOW()
+      )
+    `;
+    const result = await this.dataSource
+      .createQueryBuilder()
+      .select('COUNT(DISTINCT sq.accumulator_id)', 'cnt')
+      .from(`(${validSubQuery})`, 'sq')
+      .getRawOne<{ cnt: string }>();
+    return parseInt(result?.cnt ?? '0', 10);
+  }
+
   /** Public stats for homepage - no auth required */
   async getPublicStats() {
     const [
       tipsterCount,
-      totalPicks,
-      activeMarketplace,
+      publishedCouponsCount,
+      liveMarketplaceCount,
       purchaseCount,
       totalRevenue,
       wonPicks,
       lostPicks,
     ] = await Promise.all([
       this.usersRepo.count({ where: { role: UserRole.TIPSTER } }),
-      this.ticketRepo.count(),
-      this.marketplaceRepo.count({ where: { status: 'active' } }),
+      this.getPublishedCouponsCount(),
+      this.getLiveMarketplaceCount(),
       this.purchasedRepo.count(),
       this.purchasedRepo
         .createQueryBuilder('p')
@@ -898,8 +933,8 @@ export class AccumulatorsService {
     const winRate = settled > 0 ? Math.round((wonPicks / settled) * 100) : 0;
     return {
       verifiedTipsters: tipsterCount,
-      totalPicks,
-      activePicks: activeMarketplace,
+      totalPicks: publishedCouponsCount,
+      activePicks: liveMarketplaceCount,
       successfulPurchases: purchaseCount,
       winRate,
       totalPaidOut: Math.round(totalRevenue),
