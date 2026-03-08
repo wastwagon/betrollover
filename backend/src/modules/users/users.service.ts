@@ -242,4 +242,26 @@ export class UsersService {
   async getMyTipsterRequest(userId: number) {
     return this.tipsterRequestRepo.findOne({ where: { userId } });
   }
+
+  /**
+   * Permanently delete the user's account. Requires password confirmation.
+   * Admins cannot delete their account via this endpoint.
+   * Removes tipster profile linked to this user, then deletes user (DB cascade removes wallets, tokens, etc.).
+   */
+  async deleteAccount(userId: number, password: string): Promise<{ message: string }> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      select: ['id', 'role', 'password'],
+    });
+    if (!user) throw new BadRequestException('Account not found.');
+    if (user.role === UserRole.ADMIN) {
+      throw new ForbiddenException('Admin accounts cannot be deleted from the profile page.');
+    }
+    const valid = await this.validatePassword(user, password);
+    if (!valid) throw new BadRequestException('Current password is incorrect.');
+
+    await this.tipsterRepo.delete({ userId });
+    await this.usersRepository.delete(userId);
+    return { message: 'Account deleted successfully.' };
+  }
 }

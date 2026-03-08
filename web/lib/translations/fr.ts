@@ -452,6 +452,14 @@ const fr: Record<string, string> = {
   'profile.password_min_length': 'Le mot de passe doit contenir au moins 6 caractères.',
   'profile.password_updated': 'Mot de passe mis à jour.',
   'profile.change_failed': 'Échec du changement.',
+  'profile.delete_account': 'Supprimer le compte',
+  'profile.delete_account_warning': 'Supprimer définitivement votre compte et toutes les données associées. Cette action est irréversible.',
+  'profile.delete_confirm_password': 'Entrez votre mot de passe pour confirmer',
+  'profile.delete_confirm_checkbox': 'Je comprends que mon compte et mes données seront définitivement supprimés.',
+  'profile.delete_button': 'Supprimer mon compte',
+  'profile.deleting': 'Suppression...',
+  'profile.delete_success': 'Compte supprimé. Vous avez été déconnecté.',
+  'profile.delete_failed': 'Impossible de supprimer le compte. Vérifiez votre mot de passe ou réessayez plus tard.',
 
   // ── Wallet ───────────────────────────────────────────────────────────────
   'wallet.title': 'Portefeuille',

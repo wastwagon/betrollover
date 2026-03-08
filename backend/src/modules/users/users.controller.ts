@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -45,5 +45,14 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   async getTipsterRequest(@CurrentUser() user: User) {
     return this.usersService.getMyTipsterRequest(user.id);
+  }
+
+  @Delete('me')
+  @UseGuards(JwtAuthGuard)
+  async deleteAccount(@CurrentUser() user: User, @Body() body: { password: string }) {
+    if (!body?.password?.trim()) {
+      throw new BadRequestException('Password is required to delete your account.');
+    }
+    return this.usersService.deleteAccount(user.id, body.password.trim());
   }
 }

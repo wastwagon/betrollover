@@ -41,6 +41,11 @@ export default function ProfilePage() {
   const [pwSaving, setPwSaving] = useState(false);
   const [pwMsg, setPwMsg] = useState('');
 
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleteSaving, setDeleteSaving] = useState(false);
+  const [deleteMsg, setDeleteMsg] = useState('');
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -136,6 +141,44 @@ export default function ProfilePage() {
       }
     } finally {
       setSaving(false);
+    }
+  };
+
+  const deleteAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!deleteConfirm) {
+      setDeleteMsg(t('profile.delete_confirm_checkbox'));
+      return;
+    }
+    if (!deletePassword.trim()) {
+      setDeleteMsg(t('profile.delete_confirm_password'));
+      return;
+    }
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setDeleteSaving(true);
+    setDeleteMsg('');
+    try {
+      const res = await fetch(`${getApiUrl()}/users/me`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ password: deletePassword }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('refresh_token');
+        router.push('/?deleted=1');
+        return;
+      }
+      setDeleteMsg(data.message || t('profile.delete_failed'));
+    } catch {
+      setDeleteMsg(t('profile.delete_failed'));
+    } finally {
+      setDeleteSaving(false);
     }
   };
 
@@ -326,6 +369,41 @@ export default function ProfilePage() {
                 className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white hover:shadow-lg hover:shadow-[var(--primary)]/30 disabled:opacity-50 transition-all duration-200"
               >
                 {pwSaving ? t('profile.updating') : t('profile.change_password')}
+              </button>
+            </div>
+          </form>
+
+          <form onSubmit={deleteAccount} className="card-gradient rounded-2xl p-5 shadow-lg border border-red-200 dark:border-red-900/50 animate-fade-in-up animate-delay-300">
+            <h2 className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider mb-3">{t('profile.delete_account')}</h2>
+            <p className="text-sm text-[var(--text-muted)] mb-4">{t('profile.delete_account_warning')}</p>
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={deleteConfirm}
+                  onChange={(e) => setDeleteConfirm(e.target.checked)}
+                  className="rounded border-[var(--border)]"
+                />
+                <span className="text-sm text-[var(--text)]">{t('profile.delete_confirm_checkbox')}</span>
+              </label>
+              <div>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.delete_confirm_password')}</label>
+                <input
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder={t('profile.current_password')}
+                  className="w-full px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
+                  disabled={!deleteConfirm}
+                />
+              </div>
+              {deleteMsg && <p className="text-sm text-red-600">{deleteMsg}</p>}
+              <button
+                type="submit"
+                disabled={!deleteConfirm || !deletePassword.trim() || deleteSaving}
+                className="px-5 py-2.5 rounded-xl font-semibold bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {deleteSaving ? t('profile.deleting') : t('profile.delete_button')}
               </button>
             </div>
           </form>

@@ -452,6 +452,14 @@ const en = {
   'profile.password_min_length': 'Password must be at least 6 characters.',
   'profile.password_updated': 'Password updated.',
   'profile.change_failed': 'Change failed.',
+  'profile.delete_account': 'Delete account',
+  'profile.delete_account_warning': 'Permanently delete your account and all associated data. This cannot be undone.',
+  'profile.delete_confirm_password': 'Enter your password to confirm',
+  'profile.delete_confirm_checkbox': 'I understand my account and data will be permanently deleted.',
+  'profile.delete_button': 'Delete my account',
+  'profile.deleting': 'Deleting...',
+  'profile.delete_success': 'Account deleted. You have been signed out.',
+  'profile.delete_failed': 'Could not delete account. Check your password or try again later.',
 
   // ── Wallet ───────────────────────────────────────────────────────────────
   'wallet.title': 'Wallet',
