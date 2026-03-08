@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
 
-type NavItemId = 'home' | 'marketplace' | 'leaderboard' | 'create' | 'wallet' | 'account';
+type NavItemId = 'home' | 'marketplace' | 'tipsters' | 'create' | 'wallet' | 'account';
 
 interface NavItem {
   id: NavItemId;
@@ -21,7 +21,7 @@ interface NavItem {
 function HomeIcon({ active }: { active?: boolean }) {
   return (
     <svg className="w-6 h-6 shrink-0" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={active ? 0 : 1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z" />
     </svg>
   );
 }
@@ -32,10 +32,10 @@ function ShopIcon({ active }: { active?: boolean }) {
     </svg>
   );
 }
-function TrophyIcon({ active }: { active?: boolean }) {
+function TipstersIcon({ active }: { active?: boolean }) {
   return (
     <svg className="w-6 h-6 shrink-0" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={active ? 0 : 1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8 21h8m-4 0v-4m0-4l2-4h-4l2 4M6 7H4a2 2 0 00-2 2v2a2 2 0 002 2h2m8-6h2a2 2 0 002-2V7a2 2 0 00-2-2h-2m-8 0H6a2 2 0 00-2 2v2a2 2 0 002 2h2m4-8v2m0 4h.01M16 7h.01" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
     </svg>
   );
 }
@@ -64,7 +64,7 @@ function UserIcon({ active }: { active?: boolean }) {
 const NAV_ITEMS: Omit<NavItem, 'Icon'>[] = [
   { id: 'home', href: '/', labelKey: 'header.home', tabletOnly: false, primary: false },
   { id: 'marketplace', href: '/marketplace', labelKey: 'nav.marketplace', tabletOnly: false, primary: false },
-  { id: 'leaderboard', href: '/leaderboard', labelKey: 'nav.leaderboard', tabletOnly: false, primary: false },
+  { id: 'tipsters', href: '/tipsters', labelKey: 'nav.tipsters', tabletOnly: false, primary: false },
   { id: 'create', href: '/create-pick', labelKey: 'nav.create_coupon', tabletOnly: false, primary: true },
   { id: 'wallet', href: '/wallet', labelKey: 'nav.wallet', tabletOnly: true, primary: false },
   { id: 'account', href: '/dashboard', labelKey: 'nav.dashboard', tabletOnly: false, primary: false },
@@ -73,7 +73,7 @@ const NAV_ITEMS: Omit<NavItem, 'Icon'>[] = [
 const ICONS: Record<NavItemId, (p: { active?: boolean }) => JSX.Element> = {
   home: HomeIcon,
   marketplace: ShopIcon,
-  leaderboard: TrophyIcon,
+  tipsters: TipstersIcon,
   create: CreateIcon,
   wallet: WalletIcon,
   account: UserIcon,
@@ -104,7 +104,7 @@ export function MobileBottomNav() {
       style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
     >
       {/* Floating bar — iOS/Android style */}
-      <div className="max-w-lg mx-auto rounded-2xl bg-[var(--card)]/90 backdrop-blur-xl border border-[var(--border)] shadow-[0_-2px_20px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.2)]">
+      <div className="max-w-lg mx-auto rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-[0_-2px_20px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.2)]">
         <div className="flex items-center justify-around min-h-[56px] px-1">
           {NAV_ITEMS.map((item) => {
             const active = isActive(pathname, item.href);
