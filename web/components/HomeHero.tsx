@@ -30,7 +30,10 @@ function formatNumber(n: number): string {
   return n + '+';
 }
 
-/** Current #1 tipster from leaderboard (win rate & ROI) — varies as leader changes */
+/** Min settled picks (wins + losses) before we show someone as "leading" — avoids 100% from 1 pick */
+const MIN_SETTLED_FOR_LEADING = 10;
+
+/** Current leading tipster from leaderboard (win rate & ROI) — varies as leader changes */
 interface LeadingTipsterStats {
   winRate: number | null;
   roi: number | null;
@@ -102,17 +105,23 @@ export function HomeHero() {
   const fetchStats = () => {
     Promise.all([
       fetch(getApiUrl() + '/accumulators/stats/public', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)),
-      fetch(getApiUrl() + '/leaderboard?period=all_time&limit=1', { cache: 'no-store' }).then((r) =>
+      fetch(getApiUrl() + '/leaderboard?period=all_time&limit=20', { cache: 'no-store' }).then((r) =>
         r.ok ? r.json() : { leaderboard: [] },
       ),
     ]).then(([data, leaderData]) => {
       if (data) setStats(data);
-      const entries = (leaderData?.leaderboard || []) as { win_rate?: number; roi?: number }[];
-      const top = entries[0];
-      if (top) {
+      const entries = (leaderData?.leaderboard || []) as {
+        win_rate?: number;
+        roi?: number;
+        total_wins?: number;
+        total_losses?: number;
+      }[];
+      const settled = (e: (typeof entries)[0]) => (e.total_wins ?? 0) + (e.total_losses ?? 0);
+      const topWithEnoughSettled = entries.find((e) => settled(e) >= MIN_SETTLED_FOR_LEADING);
+      if (topWithEnoughSettled) {
         setLeadingTipster({
-          winRate: typeof top.win_rate === 'number' ? top.win_rate : null,
-          roi: typeof top.roi === 'number' ? top.roi : null,
+          winRate: typeof topWithEnoughSettled.win_rate === 'number' ? topWithEnoughSettled.win_rate : null,
+          roi: typeof topWithEnoughSettled.roi === 'number' ? topWithEnoughSettled.roi : null,
         });
       } else {
         setLeadingTipster({ winRate: null, roi: null });
