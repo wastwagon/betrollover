@@ -36,6 +36,7 @@ const fr: Record<string, string> = {
   'nav.invite': 'Inviter & Gagner',
   'nav.support': 'Assistance',
   'nav.create_coupon': 'Créer un Coupon',
+  'nav.coupon': 'Coupon',
 
   // ── Auth ─────────────────────────────────────────────────────────────────
   'auth.login': 'Se Connecter',

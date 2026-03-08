@@ -65,7 +65,7 @@ const NAV_ITEMS: Omit<NavItem, 'Icon'>[] = [
   { id: 'home', href: '/', labelKey: 'header.home', tabletOnly: false, primary: false },
   { id: 'marketplace', href: '/marketplace', labelKey: 'nav.marketplace', tabletOnly: false, primary: false },
   { id: 'tipsters', href: '/tipsters', labelKey: 'nav.tipsters', tabletOnly: false, primary: false },
-  { id: 'create', href: '/create-pick', labelKey: 'nav.create_coupon', tabletOnly: false, primary: true },
+  { id: 'create', href: '/create-pick', labelKey: 'nav.coupon', tabletOnly: false, primary: true },
   { id: 'wallet', href: '/wallet', labelKey: 'nav.wallet', tabletOnly: true, primary: false },
   { id: 'account', href: '/dashboard', labelKey: 'nav.dashboard', tabletOnly: false, primary: false },
 ];

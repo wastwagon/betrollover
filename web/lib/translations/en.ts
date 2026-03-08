@@ -36,6 +36,7 @@ const en = {
   'nav.invite': 'Invite & Earn',
   'nav.support': 'Support',
   'nav.create_coupon': 'Create Coupon',
+  'nav.coupon': 'Coupon',
 
   // ── Auth ─────────────────────────────────────────────────────────────────
   'auth.login': 'Sign In',
