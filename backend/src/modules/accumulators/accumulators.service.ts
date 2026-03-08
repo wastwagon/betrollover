@@ -810,7 +810,7 @@ export class AccumulatorsService {
     return tip ?? null;
   }
 
-  /** Popular upcoming events: fixtures with most picks in coupons that are on marketplace and not started. Aligned with marketplace. */
+  /** Popular upcoming events: fixtures with most picks in coupons that are on marketplace and not started. Only fixtures that have odds. Aligned with marketplace. */
   async getPopularEvents(limit = 6) {
     const now = new Date();
     // Only count picks from coupons that are (1) listed on marketplace and (2) have no fixture started yet
@@ -826,7 +826,7 @@ export class AccumulatorsService {
     const rows = await this.dataSource
       .createQueryBuilder()
       .select('ap.fixture_id', 'fixtureId')
-      .addSelect('COUNT(*)', 'tipCount')
+      .addSelect('COUNT(DISTINCT ap.id)', 'tipCount')
       .addSelect('f.home_team_name', 'homeTeam')
       .addSelect('f.away_team_name', 'awayTeam')
       .addSelect('f.home_team_logo', 'homeTeamLogo')
@@ -837,6 +837,7 @@ export class AccumulatorsService {
       .addSelect('f.match_date', 'matchDate')
       .from('accumulator_picks', 'ap')
       .innerJoin('fixtures', 'f', 'f.id = ap.fixture_id')
+      .innerJoin('fixture_odds', 'fo', 'fo.fixture_id = f.id')
       .where('ap.fixture_id IS NOT NULL')
       .andWhere(`ap.accumulator_id IN (${validMarketplaceSubQuery})`)
       .setParameter('now', now)

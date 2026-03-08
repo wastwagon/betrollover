@@ -65,6 +65,34 @@ export class FixturesController {
     return statuses;
   }
 
+  /**
+   * Compare API-Sports fixtures vs enabled leagues and DB. Use to see why some leagues (e.g. Fenerbahçe, Porto) are missing.
+   * Then call POST /fixtures/sync/enable-leagues-from-api and POST /fixtures/sync to get all fixtures with odds.
+   */
+  @Get('sync/diagnostic')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async getSyncDiagnostic() {
+    return this.fixturesService.getSyncDiagnostic();
+  }
+
+  /**
+   * List enabled leagues (for admin dashboard).
+   */
+  @Get('sync/enabled-leagues')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async getEnabledLeagues() {
+    return this.fixturesService.getEnabledLeagues();
+  }
+
+  /**
+   * Enable every league that appears in API-Sports for the sync date range. Then run POST /fixtures/sync to pull all fixtures and odds.
+   */
+  @Post('sync/enable-leagues-from-api')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async enableLeaguesFromApi() {
+    return this.fixturesService.enableLeaguesFromApi();
+  }
+
   @Post('sync/backfill-teams')
   @UseGuards(JwtAuthGuard, AdminGuard)
   async backfillTeamNames() {
@@ -125,8 +153,16 @@ export class FixturesController {
 
   @Post('sync/odds')
   @UseGuards(JwtAuthGuard, AdminGuard)
-  async syncOddsManual(@Query('force') force?: string) {
-    // Update status to running
+  async syncOddsManual(
+    @Query('force') force?: string,
+    @Query('limit') limitParam?: string,
+  ) {
+    // Optional limit for full backfill (e.g. limit=500). Cap at 500 to avoid timeouts.
+    const batchLimit = Math.min(
+      Math.max(parseInt(limitParam || '0', 10) || 0, 0),
+      500,
+    ) || undefined;
+
     await this.syncStatusRepo.upsert(
       { syncType: 'odds', status: 'running' },
       ['syncType'],
@@ -136,22 +172,22 @@ export class FixturesController {
       const now = new Date();
       const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
       const forceRefresh = force === 'true' || force === '1';
+      const defaultLimit = forceRefresh ? 150 : 200;
+      const limit = batchLimit ?? defaultLimit;
 
       let fixtureIds: number[];
 
       if (forceRefresh) {
-        // Force: re-sync upcoming fixtures (replaces odds with new market filter: BTTS, etc.)
         const allFixtures = await this.fixturesService.fixtureRepo
           .createQueryBuilder('f')
           .where("f.status IN ('NS', 'TBD')")
           .andWhere('f.match_date >= :now', { now })
           .andWhere('f.match_date <= :sevenDaysLater', { sevenDaysLater })
           .orderBy('f.match_date', 'ASC')
-          .limit(150)
+          .limit(limit)
           .getMany();
         fixtureIds = allFixtures.map(f => f.id);
       } else {
-        // Default: only fixtures without odds (batch up to 200)
         const fixturesWithOdds = await this.fixturesService.fixtureRepo
           .createQueryBuilder('f')
           .innerJoin('f.odds', 'o')
@@ -169,7 +205,7 @@ export class FixturesController {
           .getMany();
         fixtureIds = allFixtures
           .filter(f => !fixturesWithOddsIds.includes(f.id))
-          .slice(0, 200)
+          .slice(0, limit)
           .map(f => f.id);
       }
       
@@ -189,6 +225,10 @@ export class FixturesController {
       }
       
       const result = await this.oddsSyncService.syncOddsForFixtures(fixtureIds);
+
+      // Don't bloat DB: remove upcoming fixtures that still have no odds
+      const removed = await this.fixturesService.deleteUpcomingFixturesWithoutOdds();
+      if (removed > 0) this.logger.log(`Cleaned up ${removed} upcoming fixture(s) without odds`);
 
       // Update status to success
       await this.syncStatusRepo.upsert(

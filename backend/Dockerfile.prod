@@ -21,10 +21,11 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/dist ./dist
 COPY database/ ./database/
 COPY scripts/coolify-full-db-setup.sh /app/scripts/
+COPY scripts/coolify-diagnose-fixtures.sh /app/scripts/
 COPY backend/scripts/docker-entrypoint.sh /app/scripts/
 
 # Ensure node user can read migrations and scripts
-RUN chown -R node:node /app/database /app/scripts && chmod +x /app/scripts/docker-entrypoint.sh
+RUN chown -R node:node /app/database /app/scripts && chmod +x /app/scripts/docker-entrypoint.sh /app/scripts/coolify-diagnose-fixtures.sh
 
 RUN npm ci --omit=dev
 

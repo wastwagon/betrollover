@@ -136,17 +136,20 @@ export class FixturesService {
       where: { id },
       relations: loadOdds ? ['odds'] : [],
     });
+    if (!fixture) return null;
 
-    // If odds not loaded and fixture exists, sync odds on-demand
-    if (fixture && loadOdds && (!fixture.odds || fixture.odds.length === 0)) {
+    // Only expose fixtures that have at least one odd (user-facing: no fixtures without odds)
+    const hasOdds = fixture.odds && fixture.odds.length > 0;
+    if (loadOdds && !hasOdds) {
       await this.oddsSyncService.syncOddsForFixture(id);
-      // Reload with odds
-      return this.fixtureRepo.findOne({
+      const reloaded = await this.fixtureRepo.findOne({
         where: { id },
         relations: ['odds'],
       });
+      if (reloaded && (!reloaded.odds || reloaded.odds.length === 0)) return null;
+      return reloaded;
     }
-
+    if (!hasOdds) return null;
     return fixture;
   }
 
@@ -265,6 +268,35 @@ export class FixturesService {
 
   async runSync() {
     return this.syncService.sync();
+  }
+
+  async getSyncDiagnostic() {
+    return this.syncService.getSyncDiagnostic();
+  }
+
+  /** List enabled leagues for admin (id, apiId, name, country, isActive). */
+  async getEnabledLeagues(): Promise<{ id: number; apiId: number; name: string; country: string | null; isActive: boolean }[]> {
+    const rows = await this.enabledLeagueRepo.find({
+      where: {},
+      order: { priority: 'ASC', apiId: 'ASC' },
+      select: ['id', 'apiId', 'name', 'country', 'isActive'],
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      apiId: r.apiId,
+      name: r.name,
+      country: r.country ?? null,
+      isActive: r.isActive,
+    }));
+  }
+
+  async enableLeaguesFromApi() {
+    return this.syncService.enableLeaguesFromApi();
+  }
+
+  /** Remove upcoming fixtures that have no odds (and are not in any coupon). Keeps DB lean. */
+  async deleteUpcomingFixturesWithoutOdds(): Promise<number> {
+    return this.syncService.deleteUpcomingFixturesWithoutOdds();
   }
 
   async backfillHomeAwayTeamNames(): Promise<{ fixed: number }> {

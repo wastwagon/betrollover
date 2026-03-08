@@ -241,6 +241,8 @@ export class FixtureSchedulerService {
       } else {
         await this.updateSyncStatus('odds', 'success', 0);
       }
+      const removed = await this.footballSyncService.deleteUpcomingFixturesWithoutOdds();
+      if (removed > 0) this.logger.log(`Cleaned up ${removed} upcoming fixture(s) without odds`);
     } catch (error: any) {
       this.logger.error('Error in scheduled odds sync', error);
       await this.updateSyncStatus('odds', 'error', 0, error.message);
@@ -284,6 +286,8 @@ export class FixtureSchedulerService {
           `Odds force refresh completed: ${result.synced} fixtures updated, ${result.errors} errors`
         );
       }
+      const removed = await this.footballSyncService.deleteUpcomingFixturesWithoutOdds();
+      if (removed > 0) this.logger.log(`Cleaned up ${removed} upcoming fixture(s) without odds`);
       await this.syncStatusRepo.upsert(
         { syncType: 'odds_refresh', status: 'success', lastSyncAt: new Date(), lastSyncCount: fixtureIds.length, lastError: null },
         ['syncType'],

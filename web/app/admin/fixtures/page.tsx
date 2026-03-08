@@ -22,6 +22,27 @@ interface FilterOptions {
   leagues: Array<{ id: number; name: string; country: string | null }>;
 }
 
+interface SyncDiagnostic {
+  ok: boolean;
+  message?: string;
+  dates: string[];
+  apiTotalFixtures: number;
+  apiLeagues: { apiId: number; name: string; country: string; fixtureCount: number }[];
+  enabledLeagueIds: number[];
+  enabledCount: number;
+  inApiNotEnabled: { apiId: number; name: string; country: string; fixtureCount: number }[];
+  dbUpcomingCount: number;
+  dbWithoutOddsCount: number;
+}
+
+interface EnableLeaguesResult {
+  ok: boolean;
+  message?: string;
+  added: number;
+  alreadyEnabled: number;
+  leagues: { apiId: number; name: string; country: string }[];
+}
+
 export default function AdminFixturesPage() {
   const router = useRouter();
   const [fixtures, setFixtures] = useState<DbFixture[]>([]);
@@ -35,6 +56,11 @@ export default function AdminFixturesPage() {
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({ countries: [], tournaments: [], leagues: [] });
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedCompetition, setSelectedCompetition] = useState('');
+  const [diagnostic, setDiagnostic] = useState<SyncDiagnostic | null>(null);
+  const [diagnosticLoading, setDiagnosticLoading] = useState(false);
+  const [enablingLeagues, setEnablingLeagues] = useState(false);
+  const [enableLeaguesResult, setEnableLeaguesResult] = useState<EnableLeaguesResult | null>(null);
+  const [enabledLeaguesCount, setEnabledLeaguesCount] = useState<number | null>(null);
 
   const competitionOptions = useMemo(() => {
     const leagues = filterOptions.leagues || [];
@@ -114,6 +140,59 @@ export default function AdminFixturesPage() {
     }
     load();
   }, [router, load]);
+
+  const loadDiagnostic = useCallback(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setDiagnosticLoading(true);
+    setDiagnostic(null);
+    fetch(`${getApiUrl()}/fixtures/sync/diagnostic`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setDiagnostic(data))
+      .catch(() => setDiagnostic(null))
+      .finally(() => setDiagnosticLoading(false));
+  }, []);
+
+  const loadEnabledLeaguesCount = useCallback(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    fetch(`${getApiUrl()}/fixtures/sync/enabled-leagues`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((arr) => setEnabledLeaguesCount(Array.isArray(arr) ? arr.length : 0))
+      .catch(() => setEnabledLeaguesCount(null));
+  }, []);
+
+  useEffect(() => {
+    if (!localStorage.getItem('token')) return;
+    loadDiagnostic();
+    loadEnabledLeaguesCount();
+  }, [loadDiagnostic, loadEnabledLeaguesCount]);
+
+  const enableAllLeaguesFromApi = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setEnablingLeagues(true);
+    setEnableLeaguesResult(null);
+    setError(null);
+    try {
+      const res = await fetch(`${getApiUrl()}/fixtures/sync/enable-leagues-from-api`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = res.ok ? await res.json().catch(() => null) : null;
+      if (res.ok && data) {
+        setEnableLeaguesResult(data);
+        loadEnabledLeaguesCount();
+        loadDiagnostic();
+      } else {
+        setError(data?.message || 'Failed to enable leagues. Check API key in Settings.');
+      }
+    } catch {
+      setError('Failed to enable leagues.');
+    } finally {
+      setEnablingLeagues(false);
+    }
+  };
 
   const fetchResults = async () => {
     const token = localStorage.getItem('token');
@@ -214,14 +293,17 @@ export default function AdminFixturesPage() {
     }
   };
 
-  const syncOdds = async (force = false) => {
+  const syncOdds = async (force = false, limit?: number) => {
     const token = localStorage.getItem('token');
     if (!token) return;
     setSyncing(true);
     setError(null);
     setSyncResult(null);
     try {
-      const url = `${getApiUrl()}/fixtures/sync/odds${force ? '?force=true' : ''}`;
+      const params = new URLSearchParams();
+      if (force) params.set('force', 'true');
+      if (limit && limit > 0) params.set('limit', String(Math.min(limit, 500)));
+      const url = `${getApiUrl()}/fixtures/sync/odds${params.toString() ? `?${params.toString()}` : ''}`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
@@ -229,6 +311,7 @@ export default function AdminFixturesPage() {
       const data = res.ok ? await res.json().catch(() => null) : null;
       if (res.ok) {
         load();
+        loadDiagnostic();
         setError(null);
       } else {
         setError('Odds sync failed. Check API key and API-Football status.');
@@ -256,7 +339,80 @@ export default function AdminFixturesPage() {
                 (Last sync: {syncResult.fixtures} fixtures{syncResult.leagues > 0 ? `, ${syncResult.leagues} leagues` : ''})
               </span>
             )}
+            {enabledLeaguesCount != null && (
+              <span className="ml-2 text-gray-500 dark:text-gray-400">· {enabledLeaguesCount} leagues enabled</span>
+            )}
           </p>
+
+          {/* Leagues & coverage — ensure enough leagues so you get all fixtures */}
+          <div className="mt-6 p-5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Leagues &amp; coverage</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Sync only keeps fixtures from <strong>enabled</strong> leagues. If you see fewer fixtures than expected (e.g. weekend), enable more leagues below, then run Sync.
+            </p>
+            {diagnosticLoading && (
+              <p className="text-sm text-gray-500 dark:text-gray-400">Loading diagnostic…</p>
+            )}
+            {diagnostic && diagnostic.ok && !diagnosticLoading && (
+              <div className="grid gap-3 text-sm mb-4">
+                <div className="flex flex-wrap gap-4">
+                  <span className="text-gray-700 dark:text-gray-300">
+                    <strong>API total:</strong> {diagnostic.apiTotalFixtures} fixtures from {diagnostic.apiLeagues.length} leagues
+                  </span>
+                  <span className="text-gray-700 dark:text-gray-300">
+                    <strong>You have:</strong> {diagnostic.enabledCount} leagues enabled → <strong>{diagnostic.dbUpcomingCount}</strong> fixtures in DB
+                  </span>
+                  {diagnostic.dbWithoutOddsCount > 0 && (
+                    <span className="text-amber-600 dark:text-amber-400">
+                      <strong>{diagnostic.dbWithoutOddsCount}</strong> fixtures without odds
+                    </span>
+                  )}
+                </div>
+                {diagnostic.inApiNotEnabled.length > 0 && (
+                  <p className="text-amber-700 dark:text-amber-300">
+                    <strong>{diagnostic.inApiNotEnabled.length} leagues</strong> in the API are not enabled (their fixtures are dropped). Click &quot;Enable all leagues from API&quot; to include them.
+                  </p>
+                )}
+              </div>
+            )}
+            {diagnostic && !diagnostic.ok && diagnostic.message && !diagnosticLoading && (
+              <p className="text-sm text-amber-600 dark:text-amber-400 mb-4">{diagnostic.message}</p>
+            )}
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={enableAllLeaguesFromApi}
+                disabled={enablingLeagues || syncing}
+                className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-indigo-600 to-indigo-700 text-white hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 transition-all shadow-md"
+              >
+                {enablingLeagues ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Enabling…
+                  </span>
+                ) : (
+                  'Enable all leagues from API'
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => { loadDiagnostic(); loadEnabledLeaguesCount(); }}
+                disabled={diagnosticLoading}
+                className="px-5 py-2.5 rounded-xl font-semibold bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50 transition-all"
+              >
+                Refresh diagnostic
+              </button>
+            </div>
+            {enableLeaguesResult && enableLeaguesResult.ok && (
+              <div className="mt-4 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-sm text-emerald-800 dark:text-emerald-200">
+                Added <strong>{enableLeaguesResult.added}</strong> new leagues ({enableLeaguesResult.alreadyEnabled} already enabled). Run &quot;Sync Fixtures&quot; below to pull all fixtures and odds.
+              </div>
+            )}
+          </div>
+
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <label className="text-gray-600 dark:text-gray-400 text-sm font-medium">Country</label>
             <select
@@ -322,6 +478,14 @@ export default function AdminFixturesPage() {
               className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-emerald-600 to-emerald-700 text-white hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 transition-all shadow-md"
             >
               Force Refresh Odds
+            </button>
+            <button
+              onClick={() => syncOdds(false, 500)}
+              disabled={syncing || fetchingResults || settling}
+              title="Sync odds for up to 500 fixtures that don't have odds yet (use after enabling all leagues)"
+              className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-cyan-600 to-cyan-700 text-white hover:from-cyan-700 hover:to-cyan-800 disabled:opacity-50 transition-all shadow-md"
+            >
+              Sync odds (backfill up to 500)
             </button>
           </div>
         </div>

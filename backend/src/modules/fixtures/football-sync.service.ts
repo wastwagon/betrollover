@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, Between, Repository } from 'typeorm';
 import { safeJson } from '../../common/fetch-json.util';
 import { Fixture } from './entities/fixture.entity';
 import { League } from './entities/league.entity';
@@ -262,7 +262,202 @@ export class FootballSyncService {
     // Backfill: fix fixtures with "Home vs Away" by fetching details from API
     await this.backfillHomeAwayTeamNames(headers, now, sevenDaysLater);
 
+    // Don't bloat DB: remove upcoming fixtures that still have no odds (not referenced by picks)
+    const removed = await this.deleteUpcomingFixturesWithoutOdds();
+    if (removed > 0) this.logger.log(`Cleaned up ${removed} upcoming fixture(s) without odds`);
+
     return { fixtures: fixturesCount, odds: oddsCount };
+  }
+
+  /**
+   * Delete upcoming fixtures that have no odds and are not referenced by any accumulator pick.
+   * Keeps the database lean (no fixtures without odds).
+   */
+  async deleteUpcomingFixturesWithoutOdds(): Promise<number> {
+    const now = new Date();
+    const sevenDaysLater = new Date(now.getTime() + SYNC_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
+    const toDelete = await this.fixtureRepo
+      .createQueryBuilder('f')
+      .leftJoin('f.odds', 'o')
+      .where("f.status IN ('NS', 'TBD')")
+      .andWhere('f.match_date >= :now', { now })
+      .andWhere('f.match_date <= :end', { end: sevenDaysLater })
+      .andWhere('o.id IS NULL')
+      .andWhere('f.id NOT IN (SELECT fixture_id FROM accumulator_picks WHERE fixture_id IS NOT NULL)')
+      .select('f.id')
+      .getMany();
+    if (toDelete.length === 0) return 0;
+    const ids = toDelete.map((f) => f.id);
+    await this.fixtureRepo.delete(ids);
+    return ids.length;
+  }
+
+  /**
+   * Diagnostic: compare API-Sports response vs enabled leagues and DB.
+   * Call from GET /fixtures/sync/diagnostic (admin). Uses same dates as sync.
+   */
+  async getSyncDiagnostic(): Promise<{
+    ok: boolean;
+    message?: string;
+    dates: string[];
+    apiTotalFixtures: number;
+    apiLeagues: { apiId: number; name: string; country: string; fixtureCount: number }[];
+    enabledLeagueIds: number[];
+    enabledCount: number;
+    inApiNotEnabled: { apiId: number; name: string; country: string; fixtureCount: number }[];
+    dbUpcomingCount: number;
+    dbWithoutOddsCount: number;
+  }> {
+    const key = await this.getKey();
+    if (!key) {
+      return {
+        ok: false,
+        message: 'API key missing. Set in Admin → Settings or API_SPORTS_KEY env.',
+        dates: [],
+        apiTotalFixtures: 0,
+        apiLeagues: [],
+        enabledLeagueIds: [],
+        enabledCount: 0,
+        inApiNotEnabled: [],
+        dbUpcomingCount: 0,
+        dbWithoutOddsCount: 0,
+      };
+    }
+    const headers = { 'x-apisports-key': key };
+    const dates = getSyncDates();
+    const byLeague = new Map<number, { name: string; country: string; count: number }>();
+    let apiTotal = 0;
+    for (const date of dates) {
+      const res = await fetch(`${getSportApiBaseUrl('football')}/fixtures?date=${date}`, { headers });
+      const data = await safeJson<any>(res);
+      const raw = (data?.response || []) as any[];
+      apiTotal += raw.length;
+      for (const f of raw) {
+        const league = f.league;
+        if (!league?.id) continue;
+        const id = league.id;
+        if (!byLeague.has(id)) {
+          byLeague.set(id, { name: league.name || '?', country: league.country || '', count: 0 });
+        }
+        const entry = byLeague.get(id)!;
+        entry.count++;
+      }
+    }
+    const enabled = await this.enabledLeagueRepo.find({
+      where: { isActive: true },
+      select: ['apiId'],
+    });
+    const enabledIds = enabled.map((l) => l.apiId);
+    const enabledSet = new Set(enabledIds);
+    const inApiNotEnabled = [...byLeague.entries()]
+      .filter(([id]) => !enabledSet.has(id))
+      .map(([apiId, info]) => ({ apiId, name: info.name, country: info.country, fixtureCount: info.count }))
+      .sort((a, b) => b.fixtureCount - a.fixtureCount);
+    const now = new Date();
+    const sevenDaysLater = new Date(now.getTime() + SYNC_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
+    const [dbUpcomingCount, dbWithoutOddsCount] = await Promise.all([
+      this.fixtureRepo.count({
+        where: {
+          status: In(['NS', 'TBD']),
+          matchDate: Between(now, sevenDaysLater),
+        },
+      }),
+      this.fixtureRepo
+        .createQueryBuilder('f')
+        .leftJoin('f.odds', 'o')
+        .where("f.status IN ('NS', 'TBD')")
+        .andWhere('f.match_date >= :now', { now })
+        .andWhere('f.match_date <= :end', { end: sevenDaysLater })
+        .andWhere('o.id IS NULL')
+        .getCount(),
+    ]);
+    const apiLeagues = [...byLeague.entries()]
+      .map(([apiId, info]) => ({ apiId, name: info.name, country: info.country, fixtureCount: info.count }))
+      .sort((a, b) => b.fixtureCount - a.fixtureCount);
+    return {
+      ok: true,
+      dates,
+      apiTotalFixtures: apiTotal,
+      apiLeagues,
+      enabledLeagueIds: enabledIds,
+      enabledCount: enabledIds.length,
+      inApiNotEnabled,
+      dbUpcomingCount,
+      dbWithoutOddsCount,
+    };
+  }
+
+  /**
+   * Enable all leagues that appear in API-Sports fixtures for the sync date range.
+   * Call from POST /fixtures/sync/enable-leagues-from-api (admin). Then run sync to pull fixtures + odds.
+   */
+  async enableLeaguesFromApi(): Promise<{
+    ok: boolean;
+    message?: string;
+    added: number;
+    alreadyEnabled: number;
+    leagues: { apiId: number; name: string; country: string }[];
+  }> {
+    const key = await this.getKey();
+    if (!key) {
+      return {
+        ok: false,
+        message: 'API key missing. Set in Admin → Settings or API_SPORTS_KEY env.',
+        added: 0,
+        alreadyEnabled: 0,
+        leagues: [],
+      };
+    }
+    const headers = { 'x-apisports-key': key };
+    const dates = getSyncDates();
+    const byLeague = new Map<number, { name: string; country: string }>();
+    for (const date of dates) {
+      const res = await fetch(`${getSportApiBaseUrl('football')}/fixtures?date=${date}`, { headers });
+      const data = await safeJson<any>(res);
+      const raw = (data?.response || []) as any[];
+      for (const f of raw) {
+        const league = f.league;
+        if (!league?.id) continue;
+        const id = league.id;
+        if (!byLeague.has(id)) {
+          byLeague.set(id, { name: league.name || '?', country: league.country || '' });
+        }
+      }
+    }
+    const existing = await this.enabledLeagueRepo.find({
+      where: { isActive: true },
+      select: ['apiId'],
+    });
+    const existingSet = new Set(existing.map((l) => l.apiId));
+    const toAdd: { apiId: number; name: string; country: string }[] = [];
+    for (const [apiId, info] of byLeague.entries()) {
+      if (!existingSet.has(apiId)) {
+        toAdd.push({ apiId, name: info.name, country: info.country });
+      }
+    }
+    let added = 0;
+    for (const item of toAdd) {
+      try {
+        await this.enabledLeagueRepo.upsert(
+          {
+            apiId: item.apiId,
+            name: item.name,
+            country: item.country || null,
+            isActive: true,
+          },
+          ['apiId'],
+        );
+        added++;
+      } catch (err) {
+        this.logger.warn(`Failed to enable league ${item.apiId}: ${err}`);
+      }
+    }
+    return {
+      ok: true,
+      added,
+      alreadyEnabled: existingSet.size,
+      leagues: toAdd,
+    };
   }
 
   /** Fetch fixture details for "Home vs Away" placeholders and update with real team names. Callable standalone for admin. */
