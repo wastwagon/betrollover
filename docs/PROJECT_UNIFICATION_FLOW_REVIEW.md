@@ -25,12 +25,12 @@
 └─────────────────────────────────────────────────────────────────────────────┘
                                         │
                     ┌───────────────────┼───────────────────┐
-                    ▼                   ▼                   ▼
-┌───────────────────────┐  ┌───────────────────────┐  ┌───────────────────────┐
-│   WEB (Next.js)       │  │   MOBILE (Expo)         │  │   PostgreSQL + Redis  │
-│   getApiUrl()         │  │   API_BASE              │  │   fixtures, sport_   │
-│   /api/backend proxy  │  │   EXPO_PUBLIC_API_URL   │  │   events, users, etc. │
-└───────────────────────┘  └───────────────────────┘  └───────────────────────┘
+                    ▼                   ▼
+┌───────────────────────┐  ┌───────────────────────┐
+│   WEB (Next.js)       │  │   PostgreSQL + Redis  │
+│   getApiUrl()         │  │   fixtures, sport_   │
+│   /api/backend proxy  │  │   events, users, etc. │
+└───────────────────────┘  └───────────────────────┘
 ```
 
 ---
@@ -104,7 +104,7 @@
 ### 3.1 Create Pick Flow
 
 ```
-User → /create-pick (web) or mobile
+User → /create-pick (web)
   → Select sport (football | basketball | rugby | mma | volleyball | hockey | american_football | tennis)
   → Football: fixtures from fixtures table (API-Sports)
   → Others: events from sport_events table (Odds API)
@@ -151,32 +151,22 @@ Deposit: User → Paystack → Webhook (POST /wallet/paystack-webhook)
   → verifyWebhookSignature → credit wallet → notification
 
 Withdrawal: User → request → Admin → Paystack transfer → notification
-
-IAP: Mobile → verify receipt → credit → notification
 ```
 
 ---
 
 ## 4. Communication & Linking
 
-### 4.1 API → Web / Mobile
+### 4.1 API → Web
 
 | Client | Base URL | Config |
 |--------|---------|-------|
 | Web | `getApiUrl()` → `/api/v1` or `NEXT_PUBLIC_API_URL/api/v1` | `site-config.ts` |
-| Mobile | `API_BASE` → `EXPO_PUBLIC_API_URL/api/v1` | `mobile/lib/api.ts` |
 | Web proxy | `/api/backend` → `BACKEND_URL` (internal) | `next.config.js` rewrites |
 
-**Unification:** Both use `/api/v1` prefix. Web can proxy via Next.js when API is same-origin.
+**Unification:** Web uses `/api/v1` prefix and can proxy via Next.js when API is same-origin.
 
-### 4.2 Web ↔ Mobile Deep Links
-
-| Mobile | Web URL | Notes |
-|--------|---------|-------|
-| `WEB_URL` | `EXPO_PUBLIC_WEB_URL` or derived from API | Create pick, etc. |
-| Invite | `/invite?ref=CODE` | Referral flow |
-
-### 4.3 Navigation Links (Web)
+### 4.2 Navigation Links (Web)
 
 | Section | Links | Consistency |
 |---------|-------|-------------|
@@ -185,7 +175,7 @@ IAP: Mobile → verify receipt → credit → notification
 | Create Pick | Sport tabs → same 8 sports | ✅ |
 | Tipsters | `/tipsters`, `/tipsters/[username]` | ✅ |
 
-### 4.4 Notification Triggers
+### 4.3 Notification Triggers
 
 | Event | Source | Notification Type |
 |-------|--------|-------------------|
@@ -272,21 +262,6 @@ All syncs consolidated to 12 AM window:
 - `POST /admin/sport-sync/all` runs all 7 non-football syncs server-side with error aggregation.
 - Returns `{ results: { [sport]: { success, count?, error? } } }`.
 
-### 6.5 Mobile ↔ Web Feature Parity
-
-| Feature | Web | Mobile |
-|---------|-----|--------|
-| Create pick | ✅ `/create-pick` | ❌ Links to WEB_URL |
-| Marketplace | ✅ | ✅ |
-| Tipsters | ✅ | ✅ |
-| Chat | ✅ | ✅ |
-| Community | ✅ | ✅ |
-| Support | ✅ | ✅ |
-| Invite/Referrals | ✅ | ✅ |
-| Notifications | ✅ | ✅ |
-
-**Gap:** Create pick is web-only; mobile deep-links to web. Document this for users.
-
 ---
 
 ## 7. Recommendations
@@ -299,8 +274,7 @@ All syncs consolidated to 12 AM window:
 
 ### 7.2 Communication
 
-1. **Shared types:** `@betrollover/shared-types` exists — ensure web and mobile use it for API contracts.
-2. **Deep links:** Document `EXPO_PUBLIC_WEB_URL` for mobile → web flows (create pick, etc.).
+1. **Shared types:** `@betrollover/shared-types` exists — ensure web uses it for API contracts.
 
 ### 7.3 Triggers
 
@@ -323,7 +297,6 @@ All syncs consolidated to 12 AM window:
 | Admin sync triggers | `backend/src/modules/admin/admin.controller.ts` |
 | Notifications | `backend/src/modules/notifications/notifications.service.ts` |
 | Web API config | `web/lib/site-config.ts` → `getApiUrl()` |
-| Mobile API config | `mobile/lib/api.ts` → `API_BASE` |
 | Sync health | `backend/src/modules/admin/sync-health.service.ts` |
 
 ---

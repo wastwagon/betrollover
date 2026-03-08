@@ -1,6 +1,6 @@
 # BetRollover v2
 
-Modern full-stack TypeScript rebuild of BetRollover — mobile-first web app + iOS/Android native apps.
+Modern full-stack TypeScript rebuild of BetRollover — mobile-first web app.
 
 **Reference:** Original implementation in `../BetRolloverApp` (PHP, MySQL, Bootstrap).
 
@@ -11,8 +11,7 @@ Modern full-stack TypeScript rebuild of BetRollover — mobile-first web app + i
 | Layer | Technology |
 |-------|------------|
 | **API** | NestJS (Node.js + TypeScript) |
-| **Web** | Next.js 14 (React, Tailwind) |
-| **Mobile** | Expo / React Native |
+| **Web** | Next.js 15 (React, Tailwind, mobile-first) |
 | **Database** | PostgreSQL 16 |
 | **Cache** | Redis |
 | **Local Dev** | Docker Compose |
@@ -34,7 +33,7 @@ This installs dependencies, builds the backend, runs Docker (if available), and 
 ### 1. Prerequisites
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
-- Node.js 20+ (for mobile dev outside Docker)
+- Node.js 20+
 
 ### 2. Database Setup
 
@@ -96,35 +95,8 @@ BetRolloverNew/
 ├── web/                  # Next.js (mobile-first)
 │   ├── app/              # App Router pages
 │   └── Dockerfile
-└── mobile/              # Expo / React Native
-    └── app/              # Expo Router screens
-```
-
----
-
-## Mobile App (Expo)
-
-Run outside Docker (Expo needs native tooling):
-
-```bash
-cd mobile
-npm install
-
-# Add app assets (required by Expo)
-# Option 1: Copy from Expo template
-npx create-expo-app@latest _temp --template blank
-cp _temp/assets/* assets/ && rm -rf _temp
-
-# Option 2: Add your own icon.png (1024x1024), splash.png, adaptive-icon.png, favicon.png
-
-# Start Expo
-npx expo start
-```
-
-**API URL for mobile:** Use your machine's local IP (e.g. `192.168.1.x`) so the device/simulator can reach the API. The app uses `/api/v1` for all routes (no trailing slash on base URL):
-
-```bash
-EXPO_PUBLIC_API_URL=http://192.168.1.100:6001 npx expo start
+└── packages/
+    └── shared-types/     # Shared DTOs for web + API
 ```
 
 ---
@@ -215,8 +187,6 @@ cd backend && npm test
 | [CHANGELOG.md](CHANGELOG.md) | Version history |
 | [docs/BACKUP_AND_RUNBOOK.md](docs/BACKUP_AND_RUNBOOK.md) | DB backup, migrations, release steps |
 | [docs/ENV_VALIDATION.md](docs/ENV_VALIDATION.md) | Required vs optional env vars, production checklist |
-| [docs/MOBILE_APP_REVIEW.md](docs/MOBILE_APP_REVIEW.md) | Mobile vs web feature comparison, gaps, enhancement plan |
-| [docs/MOBILE_DEVELOPMENT_PLAN.md](docs/MOBILE_DEVELOPMENT_PLAN.md) | Phased mobile dev plan, design system, world-class UI/UX |
 | [docs/ADMIN_MIGRATIONS.md](docs/ADMIN_MIGRATIONS.md) | How admin migration works; adding new migrations |
 | [docs/TEMPLATE_IMPLEMENTATION_PHASES.md](docs/TEMPLATE_IMPLEMENTATION_PHASES.md) | World-class template alignment |
 | [docs/WORLD_CLASS_DEV_TEMPLATE_COMPLETE.md](docs/WORLD_CLASS_DEV_TEMPLATE_COMPLETE.md) | Stack, phases, versioning reference |

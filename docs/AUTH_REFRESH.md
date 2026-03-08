@@ -17,7 +17,7 @@
 
 ## Client Usage
 
-1. **On login/register:** Store both `access_token` and `refresh_token` (e.g. `localStorage` for web, `AsyncStorage` for mobile).
+1. **On login/register:** Store both `access_token` and `refresh_token` (e.g. `localStorage`).
 2. **On API 401:** Call `POST /auth/refresh` with body `{ refresh_token: storedRefreshToken }`. If successful, use the new `access_token` and optionally `refresh_token` (rotation).
 3. **On logout:** Call `POST /auth/logout` with `refresh_token` to revoke it.
 

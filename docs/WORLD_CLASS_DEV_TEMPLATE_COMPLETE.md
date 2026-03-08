@@ -25,14 +25,10 @@ PROJECT_SLUG/
 │   ├── src/
 │   ├── package.json
 │   └── Dockerfile
-├── web/                     # Next.js (web app)
+├── web/                     # Next.js (web app, mobile-first)
 │   ├── app/
 │   ├── package.json
 │   └── Dockerfile
-├── mobile/                  # Expo (iOS/Android app)
-│   ├── app/
-│   ├── package.json
-│   └── app.json
 ├── database/
 │   ├── init/
 │   ├── migrations/
@@ -49,8 +45,6 @@ PROJECT_SLUG/
 | **Web** | Next.js (React) | 14.x | SSR, SEO, App Router |
 | **Web** | Tailwind CSS | 3.x | Utility-first styling |
 | **Web** | TypeScript | 5.x | Type safety |
-| **Mobile** | Expo | 50.x | iOS/Android |
-| **Mobile** | React Native | 0.73.x | Cross-platform UI |
 | **API** | NestJS | 10.x | Node.js backend |
 | **API** | TypeORM | 0.3.x | ORM for PostgreSQL |
 | **Database** | PostgreSQL | 16 | Primary data store |
@@ -64,8 +58,6 @@ PROJECT_SLUG/
 | Area | Key Items |
 |------|-----------|
 | **API** | Versioning (`/api/v1/`), shared types, rate limiting, Helmet |
-| **iOS App Store** | Privacy policy, Terms, Sign in with Apple, age rating |
-| **Google Play** | Privacy policy, Data Safety form, target API 34+ |
 | **Website / SEO** | Metadata, sitemap, robots, JSON-LD, Core Web Vitals |
 | **Database** | Migrations, indexes, prepared statements, backups |
 | **UI/UX** | Mobile-first, 44px+ touch targets, WCAG 2.1 AA |
@@ -143,7 +135,7 @@ PROJECT_SLUG/
 |----------|--------------|
 | Staging deploy | Test environment, QA sign-off |
 | Production deploy | Web, API, database |
-| App store submission | iOS App Store, Google Play |
+| App store submission | N/A (web-only) |
 | Monitoring setup | Logging, alerts, error tracking |
 | Documentation | Runbooks, deployment guide |
 
@@ -237,7 +229,7 @@ Examples:
 - [ ] Migrations reviewed and tested
 - [ ] Environment vars documented
 - [ ] Staging deploy successful
-- [ ] Store compliance verified (if mobile)
+- [ ] Store compliance verified (N/A — web-only)
 - [ ] Rollback plan documented
 
 ---
@@ -252,7 +244,7 @@ Examples:
 6. Merge `release/X.Y.Z` → `main`
 7. Tag: `git tag vX.Y.Z`
 8. Deploy production (web, API)
-9. Submit to App Store / Google Play (if mobile)
+9. Submit to App Store / Google Play (N/A — web-only)
 10. Merge `main` → `develop`
 11. Announce release
 
@@ -286,57 +278,34 @@ Examples:
 |-----------|-----------------|
 | **Backend** | `backend/package.json` → `version` |
 | **Web** | `web/package.json` → `version` |
-| **Mobile** | `mobile/app.json` → `expo.version` |
 | **Document** | Header of this document |
 
-**Recommendation:** Keep API, web, and mobile versions aligned for releases (e.g. all `1.2.0`) or use independent versioning if teams/releases differ.
+**Recommendation:** Keep API and web versions aligned for releases (e.g. both `1.2.0`).
 
 ---
 
-# Part 5 — iOS App Store & Google Play
+# Part 5 — Website, Database, UI, Security
 
-## 5.1 iOS App Store
-
-- Privacy policy URL (required)
-- Terms of service (for paid/subscription)
-- Sign in with Apple (if social login)
-- Age rating, metadata, screenshots
-- In-App Purchases via StoreKit
-- Deep links / Universal Links
-
-## 5.2 Google Play
-
-- Privacy policy URL (required)
-- Data Safety form
-- Target API level 34+
-- Content rating, store listing
-- Testing tracks (internal → closed → open)
-- EAS Build for production
-
----
-
-# Part 6 — Website, Database, UI, Security
-
-## 6.1 Website & SEO
+## 5.1 Website & SEO
 
 - Metadata, sitemap, robots
 - JSON-LD structured data
 - Core Web Vitals (LCP, FID, CLS)
 - Mobile-friendly, HTTPS, accessibility
 
-## 6.2 Database
+## 5.2 Database
 
 - Migrations, indexes, prepared statements
 - Backups, audit fields, soft deletes
 - Naming: snake_case
 
-## 6.3 UI/UX
+## 5.3 UI/UX
 
 - Mobile-first, 44px+ touch targets
 - Loading, error, empty states
 - WCAG 2.1 AA, dark mode, reduced motion
 
-## 6.4 Security
+## 5.4 Security
 
 - HTTPS, JWT short expiry, rate limiting
 - CORS restricted, Helmet, input validation
@@ -344,16 +313,16 @@ Examples:
 
 ---
 
-# Part 7 — AI Agent Example Prompt
+# Part 6 — AI Agent Example Prompt
 
 ```
 Create a new project named [PROJECT_NAME] using:
 
-- Monorepo: packages/shared-types, backend (NestJS), web (Next.js 14), mobile (Expo)
+- Monorepo: packages/shared-types, backend (NestJS), web (Next.js)
 - Database: PostgreSQL 16, Redis 7
 - Auth: JWT, API versioning /api/v1/
 - Docker Compose for local dev
-- Follow: API versioning, shared types, iOS/Android store practices, SEO, DB, UI, security
+- Follow: API versioning, shared types, SEO, DB, UI, security
 - Include: CHANGELOG.md, version in package.json, conventional commits
 ```
 

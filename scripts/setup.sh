@@ -17,7 +17,6 @@ echo ""
 echo "Installing dependencies..."
 npm install --prefix backend --silent 2>/dev/null || (cd backend && npm install)
 npm install --prefix web --silent 2>/dev/null || (cd web && npm install)
-npm install --prefix mobile --silent 2>/dev/null || (cd mobile && npm install)
 
 # 3. Build backend
 echo ""
@@ -46,4 +45,3 @@ fi
 echo ""
 echo "=== Setup complete ==="
 echo "Admin: admin@betrollover.com / password"
-echo "Mobile: cd mobile && EXPO_PUBLIC_API_URL=http://localhost:6001 npx expo start"

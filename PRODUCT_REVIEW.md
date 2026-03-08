@@ -90,7 +90,7 @@ displayName: string;  // Make required, remove @IsOptional
 ### UX & Reliability
 - [ ] **Loading states** – Consistent spinners/skeletons across pages
 - [ ] **Error boundaries** – Catch React errors on key pages
-- [ ] **Offline** – Basic offline handling for mobile
+- [ ] **Offline** – Basic PWA / offline handling (optional)
 - [ ] **Form validation** – Client-side validation before submit (e.g. Zod, react-hook-form)
 
 ### Data & Integrity

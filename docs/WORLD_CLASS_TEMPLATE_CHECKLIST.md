@@ -10,8 +10,8 @@
 
 | Area | Template requirement | BetRolloverNew status | Next action |
 |------|----------------------|------------------------|-------------|
-| **API versioning** | Routes under `/api/v1/` | ❌ No — all routes unversioned (e.g. `/auth`, `/wallet`) | Add global prefix `/api/v1` and update web/mobile base URL |
-| **Shared types** | `packages/shared-types` for DTOs/contracts | ❌ Missing | Add `packages/shared-types`, export key DTOs; consume from backend/web/mobile |
+| **API versioning** | Routes under `/api/v1/` | ✅ | All routes under `/api/v1`; web uses it |
+| **Shared types** | `packages/shared-types` for DTOs/contracts | ✅ | `packages/shared-types`; consumed by web |
 | **CHANGELOG** | `CHANGELOG.md` at repo root, Keep a Changelog format | ❌ Missing | Create `CHANGELOG.md`, add initial entry and document recent releases |
 | **Version control** | Branching: `main`, `develop`, `feature/*`, `release/*` | ⚠️ Only `main` in use | Introduce `develop`, use feature branches and optional `release/*` |
 | **Conventional commits** | `feat(scope): description` etc. | ⚠️ Not enforced | Add commitlint + husky (optional) or document convention in CONTRIBUTING |
@@ -19,8 +19,7 @@
 | **Database** | Migrations, indexes, backups | ✅ Migrations, indexes | Keep doing; ensure backups documented |
 | **SEO** | Metadata, sitemap, robots, JSON-LD | ✅ Metadata, sitemap, robots, JSON-LD | — |
 | **Security** | HTTPS, JWT, CORS, Helmet, validation | ✅ In place | — |
-| **Privacy / Terms** | `/privacy`, `/terms`; linked in app and stores | ✅ Web pages + footer links | Add `privacyPolicy` (and terms) URL in mobile `app.json` |
-| **iOS / Google** | Privacy policy URL, store metadata, IAP | ✅ IAP + web push added | Store listings: add privacy/terms URLs; Sign in with Apple if social login added |
+| **Privacy / Terms** | `/privacy`, `/terms`; linked in app | ✅ | Web pages + footer links |
 
 ---
 
@@ -35,14 +34,14 @@
 | `README.md` | ✅ | Present |
 | **`CHANGELOG.md`** | ❌ | **Add at repo root** |
 | **`packages/shared-types/`** | ❌ | **Create; shared DTOs, API contracts** |
-| `backend/`, `web/`, `mobile/`, `database/`, `scripts/` | ✅ | Present |
+| `backend/`, `web/`, `database/`, `scripts/` | ✅ | Present |
 
 ### 2. API (template 1.3, 6, 6b)
 
 | Item | Status | Notes |
 |------|--------|--------|
 | **Versioning `/api/v1/`** | ❌ | **Prefix all API routes** (e.g. `/api/v1/auth`, `/api/v1/wallet`) |
-| **Shared types package** | ❌ | **Add and use from backend, web, mobile** |
+| **Shared types package** | ✅ | Used by web; backend can use |
 | Rate limiting | ✅ | Throttler on auth |
 | Helmet | ✅ | In `main.ts` |
 | RFC 7807–style errors | ⚠️ | Optional: standardise exception filter |
@@ -94,10 +93,10 @@
 
 | Item | Status | Notes |
 |------|--------|--------|
-| Privacy policy URL | ✅ Web `/privacy` | **Add to mobile `app.json` (Expo `expo.privacyPolicy` or similar)** |
+| Privacy policy URL | ✅ Web `/privacy` | — |
 | Terms URL | ✅ Web `/terms` | Link in store listings and app |
 | Sign in with Apple | ⚠️ | Only if adding social login |
-| IAP (StoreKit / Play Billing) | ✅ | Backend verify + mobile flow |
+| IAP (StoreKit / Play Billing) | N/A | Web-only; Paystack for wallet |
 | Store metadata (screenshots, description) | ⚠️ | At submission time |
 
 ### 8. UI/UX (template 16)
@@ -114,11 +113,10 @@
 ## Recommended order of work (what’s next)
 
 1. **CHANGELOG.md** — Create at repo root; add an initial “Unreleased” or first version and backfill recent changes (subscriptions, push, IAP, etc.).
-2. **API versioning** — In NestJS, set global prefix `api/v1`; update web and mobile `API_URL` / `NEXT_PUBLIC_API_URL` / `EXPO_PUBLIC_API_URL` to include `/api/v1` (or keep base URL and append path in client). Document any breaking change for existing clients.
-3. **Shared types package** — Add `packages/shared-types` with `package.json` and `src/index.ts`; export shared DTOs (e.g. auth, wallet, subscriptions); have backend and/or web consume it (mobile can follow later).
+2. **API versioning** — In NestJS, set global prefix `api/v1`; update web `NEXT_PUBLIC_API_URL` to include `/api/v1`. Document any breaking change.
+3. **Shared types package** — Add `packages/shared-types` with `package.json` and `src/index.ts`; export shared DTOs (e.g. auth, wallet, subscriptions); have web consume it.
 4. **Branching & commits** — Create `develop`; document (or enforce) conventional commits; use feature branches for new work.
-5. **Mobile app.json** — Add privacy policy (and optionally terms) URL so store listings and in-app links are correct.
-6. **Optional** — RFC 7807 exception filter; commitlint + husky; backup/runbook docs.
+5. **Optional** — RFC 7807 exception filter; commitlint + husky; backup/runbook docs.
 
 ---
 

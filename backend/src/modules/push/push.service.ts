@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as webPush from 'web-push';
-import { Expo, ExpoPushMessage } from 'expo-server-sdk';
 import { PushDevice } from './entities/push-device.entity';
 
 export interface PushPayload {
@@ -17,7 +16,6 @@ export interface PushPayload {
 export class PushService {
   private readonly logger = new Logger(PushService.name);
   private vapidPublicKey: string | null = null;
-  private expo: Expo | null = null;
 
   constructor(
     @InjectRepository(PushDevice)
@@ -34,7 +32,6 @@ export class PushService {
         vapidPrivate,
       );
     }
-    this.expo = new Expo();
   }
 
   getVapidPublicKey(): string | null {
@@ -75,11 +72,9 @@ export class PushService {
       try {
         if (device.platform === 'web') {
           await this.sendWebPush(device.token, payload);
-        } else if (device.platform === 'ios' || device.platform === 'android') {
-          await this.sendExpoPush(device.token, payload);
+          device.lastUsedAt = new Date();
+          await this.deviceRepo.save(device);
         }
-        device.lastUsedAt = new Date();
-        await this.deviceRepo.save(device);
       } catch (err: unknown) {
         this.logger.warn(`Push failed for device ${device.id}: ${err instanceof Error ? err.message : String(err)}`);
         if (err instanceof Error && (err.message?.includes('410') || err.message?.includes('404'))) {
@@ -109,18 +104,4 @@ export class PushService {
     );
   }
 
-  private async sendExpoPush(expoPushToken: string, payload: PushPayload): Promise<void> {
-    if (!this.expo || !Expo.isExpoPushToken(expoPushToken)) return;
-    const message: ExpoPushMessage = {
-      to: expoPushToken,
-      title: payload.title,
-      body: payload.body,
-      data: payload.link ? { url: payload.link } : undefined,
-      sound: 'default',
-    };
-    const chunks = this.expo.chunkPushNotifications([message]);
-    for (const chunk of chunks) {
-      await this.expo.sendPushNotificationsAsync(chunk);
-    }
-  }
 }

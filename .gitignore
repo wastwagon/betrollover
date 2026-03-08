@@ -22,7 +22,6 @@ check-purchases-tunnel.sh
 dist/
 .next/
 out/
-.expo/
 
 # Logs
 *.log

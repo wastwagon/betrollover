@@ -8,31 +8,29 @@
 
 ## Phase 1 — Quick Wins (Docs & Store Config)
 
-**Scope:** CHANGELOG, mobile store URLs, version-control conventions doc.
+**Scope:** CHANGELOG, version-control conventions doc.
 
 | Task | Deliverable | Done |
 |------|-------------|------|
 | 1.1 | Create `CHANGELOG.md` at repo root (Keep a Changelog format) | ✅ |
 | 1.2 | Backfill recent changes (subscriptions, push, IAP, coupon placement) | ✅ |
-| 1.3 | Add privacy policy and terms URLs to `mobile/app.json` for store listings | ✅ |
-| 1.4 | Create `CONTRIBUTING.md` with branching strategy and conventional commits | ✅ |
+| 1.3 | Create `CONTRIBUTING.md` with branching strategy and conventional commits | ✅ |
 
-**Exit:** CHANGELOG exists and is updated; mobile app has store-ready policy URLs; contributors know branch/commit rules.
+**Exit:** CHANGELOG exists and is updated; contributors know branch/commit rules.
 
 ---
 
 ## Phase 2 — API Versioning (`/api/v1/`)
 
-**Scope:** Prefix all API routes with `/api/v1`, update web and mobile clients.
+**Scope:** Prefix all API routes with `/api/v1`, update web client.
 
 | Task | Deliverable | Done |
 |------|-------------|------|
 | 2.1 | Backend: set global prefix `api/v1` in Nest (exclude health, webhooks) | ✅ |
 | 2.2 | Web: update `getApiUrl()` and proxy to use `/api/v1` path | ✅ |
-| 2.3 | Mobile: use base URL + `/api/v1` for all API calls | ✅ |
-| 2.4 | Document in README or .env.example: API base includes `/api/v1` | ✅ |
+| 2.3 | Document in README or .env.example: API base includes `/api/v1` | ✅ |
 
-**Exit:** All API traffic goes to `/api/v1/*`; web and mobile work against versioned API.
+**Exit:** All API traffic goes to `/api/v1/*`; web works against versioned API.
 
 ---
 
@@ -46,7 +44,6 @@
 | 3.2 | Export auth/wallet/subscription DTOs and API response shapes | ✅ |
 | 3.3 | Backend: depend on shared-types (workspace or npm link); use in one module | ⏸ optional later |
 | 3.4 | Web: depend on shared-types; use types in API client or key pages | ✅ |
-| 3.5 | (Optional) Mobile: add dependency and use for request/response types | ⏸ optional later |
 
 **Exit:** Single source of truth for API contracts; backend and web consume shared-types.
 
@@ -93,6 +90,5 @@ After Phase 1, when cutting a release:
 
 - Bump `backend/package.json` → `version`
 - Bump `web/package.json` → `version`
-- Bump `mobile/app.json` → `expo.version`
 - Add new section to `CHANGELOG.md`
 - Tag: `git tag vX.Y.Z`

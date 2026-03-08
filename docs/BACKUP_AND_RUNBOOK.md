@@ -32,12 +32,11 @@
 
 ## Release steps (summary)
 
-1. From `develop`: create `release/X.Y.Z`, bump versions in `backend/package.json`, `web/package.json`, `mobile/app.json`.
+1. From `develop`: create `release/X.Y.Z`, bump versions in `backend/package.json`, `web/package.json`.
 2. Update `CHANGELOG.md`: move [Unreleased] items into `[X.Y.Z] - YYYY-MM-DD`.
 3. Run tests and deploy to staging; QA sign-off.
 4. Merge `release/X.Y.Z` → `main`, tag `vX.Y.Z`, deploy production.
 5. Merge `main` back into `develop`.
-6. Submit app store updates if mobile changed.
 
 ---
 

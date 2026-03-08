@@ -41,7 +41,7 @@
 
 - ✅ All routes under `/api/v1` except health, Paystack webhook, docs, avatars
 - ✅ Paystack webhook correctly excluded: `POST /wallet/paystack-webhook` (no version prefix)
-- ✅ Web and mobile use `getApiUrl()` / `API_BASE` with `/api/v1` suffix
+- ✅ Web uses `getApiUrl()` with `/api/v1` suffix
 - ✅ RFC 7807–style error responses via `HttpExceptionFilter`
 
 ### 1.3 Naming & Patterns
@@ -133,9 +133,9 @@
 - ✅ TypeORM `createQueryBuilder` with parameterized queries (no SQL injection from user input)
 - ⚠️ **Gap:** Auth endpoints (login, register) use same 100/min limit; consider stricter `@Throttle(5, 60)` for login to reduce brute-force risk
 
-### 4.3 Mobile
+### 4.3 Frontend / responsive
 
-- ✅ Expo Image for optimized images
+- ✅ Next.js Image for optimized images
 - ⚠️ Chat polling (`poll?after_id=`) — ensure interval is reasonable to avoid battery drain
 
 ---

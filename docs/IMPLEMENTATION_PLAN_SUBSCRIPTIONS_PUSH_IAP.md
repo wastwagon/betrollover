@@ -2,7 +2,8 @@
 
 **Version:** 1.0.0  
 **Created:** February 2026  
-**Status:** Planning — Do not implement until approved
+**Status:** Planning — Do not implement until approved  
+**Note:** BetRollover is web-only. IAP and mobile push sections are retained for reference but not in scope.
 
 ---
 
@@ -11,14 +12,14 @@
 This plan adds to BetRollover v2:
 
 1. **Tipster Subscriptions** — Users subscribe to tipsters; view coupons in dashboard; escrow + ROI guarantee
-2. **Push Notifications** — Web + Mobile (new coupon, subscription, renewal, etc.)
-3. **In-App Purchases (IAP)** — Mobile wallet top-up via Apple/Google (Paystack remains for web)
+2. **Push Notifications** — Web (VAPID; new coupon, subscription, renewal, etc.)
+3. **In-App Purchases (IAP)** — Not in scope (web-only; Paystack for wallet top-up)
 4. **Coupon Placement** — Tipsters choose: Marketplace, Subscription, or Both
 5. **ROI Guarantee** — Refund if tipster doesn’t reach target ROI during subscription period
 
 **Principles:**
 - All transactions use **wallet balance** (no change)
-- Top-up options: **Paystack** (existing) + **IAP** (mobile)
+- Top-up options: **Paystack** (existing; IAP not in scope — web-only)
 - Subscription funds held in **escrow** until end of period
 - **No breaking changes** to existing features
 

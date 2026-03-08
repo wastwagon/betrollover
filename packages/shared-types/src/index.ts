@@ -1,6 +1,6 @@
 /**
  * @betrollover/shared-types
- * Shared DTOs and API contracts for BetRollover (web, mobile, backend).
+ * Shared DTOs and API contracts for BetRollover (web, backend).
  */
 
 export * from './auth';

@@ -1,6 +1,7 @@
 # BetRollover – App Store & Play Store Approval Audit
 
 **Purpose:** Assess iOS and Android approval risk and feature compliance before launch.  
+**Note:** BetRollover is web-only; this doc is retained for reference if native mobile is added later.  
 **Date:** 2025-02-19
 
 ---

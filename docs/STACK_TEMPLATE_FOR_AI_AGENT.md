@@ -1,6 +1,6 @@
 # World-Class Development Template — AI Agent Specification
 
-Use this specification when starting a **new project** that requires both **web** and **mobile** apps. Follow this stack and structure for scalability, consistency, and store approval (iOS/Android).
+Use this specification when starting a **new project** with web and API. BetRollover is web-only (mobile-first design); adapt for projects that add native mobile.
 
 ---
 
@@ -9,8 +9,6 @@ Use this specification when starting a **new project** that requires both **web*
 | Area | Key Items |
 |------|-----------|
 | **API** | Versioning (`/api/v1/`), shared types package, rate limiting, Helmet, RFC 7807 errors |
-| **iOS App Store** | Privacy policy, Terms, Sign in with Apple (if social login), age rating, metadata, deep links |
-| **Google Play** | Privacy policy, Data Safety form, target API 34+, content rating, store listing |
 | **Website / SEO** | Metadata, sitemap, robots, JSON-LD, Core Web Vitals, accessibility |
 | **Database** | Migrations, indexes, prepared statements, backups, audit fields, soft deletes |
 | **UI/UX** | Mobile-first, 44px+ touch targets, loading/error/empty states, WCAG 2.1 AA |
@@ -43,15 +41,11 @@ PROJECT_SLUG/
 │   │   └── app.module.ts
 │   ├── package.json
 │   └── Dockerfile
-├── web/                     # Next.js (web app)
+├── web/                     # Next.js (web app, mobile-first)
 │   ├── app/                 # App Router
 │   ├── components/
 │   ├── package.json
 │   └── Dockerfile
-├── mobile/                  # Expo (iOS/Android app)
-│   ├── app/                 # Expo Router
-│   ├── package.json
-│   └── app.json
 ├── database/
 │   ├── init/                # Postgres init scripts
 │   ├── migrations/          # SQL migrations
@@ -68,9 +62,6 @@ PROJECT_SLUG/
 | **Web** | Next.js (React) | 14.x | SSR, SEO, App Router, API routes |
 | **Web** | Tailwind CSS | 3.x | Utility-first styling |
 | **Web** | TypeScript | 5.x | Type safety |
-| **Mobile** | Expo | 50.x | iOS/Android without native Xcode/Android Studio |
-| **Mobile** | React Native | 0.73.x | Cross-platform native UI |
-| **Mobile** | Expo Router | 3.x | File-based routing (like Next.js) |
 | **API** | NestJS | 10.x | Node.js backend, modules, DI |
 | **API** | TypeORM | 0.3.x | ORM for PostgreSQL |
 | **API** | Passport (JWT + Local) | Latest | Auth for web & mobile |
@@ -85,12 +76,12 @@ PROJECT_SLUG/
 
 ## 3. Core Principles
 
-1. **Single API** — One NestJS backend serves both web and mobile. No separate mobile API.
-2. **Single Database** — PostgreSQL is the source of truth. Web and mobile never have separate DBs.
-3. **Shared Auth** — JWT tokens. Web stores in `localStorage`, mobile in `AsyncStorage`. Same login/register endpoints.
-4. **Shared Data Layer** — Use `@tanstack/react-query` on both web and mobile for API state.
-5. **TypeScript Everywhere** — Backend, web, and mobile all use TypeScript.
-6. **Docker for Local Dev** — `docker compose up` starts Postgres, Redis, API, Web. Mobile runs separately (Expo needs native tooling).
+1. **Single API** — One NestJS backend serves the web app.
+2. **Single Database** — PostgreSQL is the source of truth.
+3. **Shared Auth** — JWT tokens. Web stores in `localStorage`. Same login/register endpoints.
+4. **Shared Data Layer** — Use `@tanstack/react-query` on web for API state.
+5. **TypeScript Everywhere** — Backend and web use TypeScript.
+6. **Docker for Local Dev** — `docker compose up` starts Postgres, Redis, API, Web.
 
 ---
 
@@ -312,7 +303,7 @@ Avoid port 6000 (Chrome blocks it). Use 6xxx range for API/Web.
 ## 19. AI Agent Checklist When Starting a New Project
 
 ### Structure & Setup
-- [ ] Create monorepo: `packages/shared-types/`, `backend/`, `web/`, `mobile/`, `database/`
+- [ ] Create monorepo: `packages/shared-types/`, `backend/`, `web/`, `database/`
 - [ ] Add `docker-compose.yml` for Postgres, Redis, API, Web
 - [ ] Add `.env.example` with all required vars
 - [ ] Add README with Quick Start, stack table, run instructions
@@ -332,21 +323,13 @@ Avoid port 6000 (Chrome blocks it). Use 6xxx range for API/Web.
 - [ ] API client using `NEXT_PUBLIC_API_URL`
 - [ ] Mobile-first responsive layout; 44px+ touch targets
 
-### Mobile
-- [ ] Initialize Expo in `mobile/` with Expo Router
-- [ ] app.json: bundleIdentifier (iOS), package (Android), scheme, privacyPolicy URL
-- [ ] API client using `EXPO_PUBLIC_API_URL`, AsyncStorage for token
-- [ ] Safe area handling; touch targets 44px+
-
 ### Shared
 - [ ] Shared types package for DTOs / API contracts
 - [ ] Consistent error format across API responses
 
 ### Store & Compliance
-- [ ] Privacy policy page at `/privacy`; link in app and store listings
+- [ ] Privacy policy page at `/privacy`; link in app
 - [ ] Terms of service at `/terms` if applicable
-- [ ] Sign in with Apple if using social login
-- [ ] Data Safety / App Privacy declarations for stores
 
 ---
 
@@ -355,11 +338,11 @@ Avoid port 6000 (Chrome blocks it). Use 6xxx range for API/Web.
 ```
 Create a new project named [PROJECT_NAME] using this stack:
 
-- Monorepo: packages/shared-types, backend (NestJS), web (Next.js 14), mobile (Expo)
+- Monorepo: packages/shared-types, backend (NestJS), web (Next.js)
 - Database: PostgreSQL 16, Redis 7
-- Auth: JWT (Passport), same API for web and mobile, API versioning /api/v1/
+- Auth: JWT (Passport), API versioning /api/v1/
 - Local dev: Docker Compose for Postgres, Redis, API, Web
-- Follow docs/STACK_TEMPLATE_FOR_AI_AGENT.md (API versioning, shared types, iOS/Android store practices, SEO, DB, UI, security)
+- Follow docs/STACK_TEMPLATE_FOR_AI_AGENT.md (API versioning, shared types, SEO, DB, UI, security)
 
 Implement:
 1. Shared types: packages/shared-types with DTOs and API contracts
