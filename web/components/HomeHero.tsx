@@ -9,36 +9,34 @@ interface PublicStats {
   verifiedTipsters: number;
   totalPicks: number;
   activePicks: number;
+  successfulPurchases: number;
   winRate: number;
   totalPaidOut: number;
 }
 
-interface LeaderboardEntry {
-  win_rate?: number;
-  roi?: number;
-  display_name?: string;
-}
-
 const defaultStats: PublicStats = {
-  verifiedTipsters: 7,
-  totalPicks: 80,
-  activePicks: 30,
-  winRate: 62,
-  totalPaidOut: 12500,
+  verifiedTipsters: 0,
+  totalPicks: 0,
+  activePicks: 0,
+  successfulPurchases: 0,
+  winRate: 0,
+  totalPaidOut: 0,
 };
 
 function formatNumber(n: number): string {
   if (n >= 1000) return (n / 1000).toFixed(1) + 'K+';
   if (n >= 100) return Math.floor(n / 100) * 100 + '+';
+  if (n <= 0) return '0';
   return n + '+';
 }
 
+/** Six distinct, real platform stats — no duplication or misleading labels */
 type StatKey =
   | 'verified'
-  | 'processed'
+  | 'coupons'
   | 'winRate'
-  | 'roi'
-  | 'active'
+  | 'marketplace'
+  | 'purchases'
   | 'paidOut';
 
 const statConfigBase: Record<
@@ -52,7 +50,7 @@ const statConfigBase: Record<
     border: 'border-emerald-500/40',
     iconBg: 'bg-emerald-500/25 text-emerald-300',
   },
-  processed: {
+  coupons: {
     labelKey: 'home.stats_picks',
     icon: '📊',
     bg: 'bg-blue-500/15',
@@ -66,22 +64,22 @@ const statConfigBase: Record<
     border: 'border-amber-500/40',
     iconBg: 'bg-amber-500/25 text-amber-300',
   },
-  roi: {
-    labelKey: 'tipster.roi',
-    icon: '💰',
-    bg: 'bg-rose-500/15',
-    border: 'border-rose-500/40',
-    iconBg: 'bg-rose-500/25 text-rose-300',
-  },
-  active: {
-    labelKey: 'home.stats_picks',
-    icon: '⚡',
+  marketplace: {
+    labelKey: 'home.stats_marketplace',
+    icon: '🛒',
     bg: 'bg-violet-500/15',
     border: 'border-violet-500/40',
     iconBg: 'bg-violet-500/25 text-violet-300',
   },
+  purchases: {
+    labelKey: 'home.stats_purchases',
+    icon: '🛍️',
+    bg: 'bg-rose-500/15',
+    border: 'border-rose-500/40',
+    iconBg: 'bg-rose-500/25 text-rose-300',
+  },
   paidOut: {
-    labelKey: 'dashboard.balance',
+    labelKey: 'home.stats_paid_out',
     icon: '🏆',
     bg: 'bg-cyan-500/15',
     border: 'border-cyan-500/40',
@@ -92,18 +90,13 @@ const statConfigBase: Record<
 export function HomeHero() {
   const t = useT();
   const [stats, setStats] = useState<PublicStats | null>(null);
-  const [topTipster, setTopTipster] = useState<LeaderboardEntry | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const fetchStats = () => {
-    Promise.all([
-      fetch(getApiUrl() + '/accumulators/stats/public', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)),
-      fetch(getApiUrl() + '/leaderboard?period=all_time&limit=1', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : { leaderboard: [] })),
-    ]).then(([data, leaderData]) => {
-      if (data) setStats(data);
-      const entries = (leaderData?.leaderboard || []) as LeaderboardEntry[];
-      if (entries.length > 0) setTopTipster(entries[0]);
-    }).catch(() => setStats(defaultStats));
+    fetch(getApiUrl() + '/accumulators/stats/public', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => data && setStats(data))
+      .catch(() => setStats(defaultStats));
   };
 
   useEffect(() => {
@@ -123,16 +116,19 @@ export function HomeHero() {
   }, []);
 
   const s = stats || defaultStats;
-  const bestWinRate = topTipster?.win_rate != null ? Math.round(Number(topTipster.win_rate) * 10) / 10 : s.winRate;
-  const bestRoi = topTipster?.roi != null ? Math.round(Number(topTipster.roi) * 100) / 100 : 0;
-  const paidOutFormatted = s.totalPaidOut >= 1000 ? 'GHS ' + (s.totalPaidOut / 1000).toFixed(1) + 'K+' : 'GHS ' + s.totalPaidOut + '+';
+  const paidOutFormatted =
+    s.totalPaidOut >= 1000
+      ? 'GHS ' + (s.totalPaidOut / 1000).toFixed(1) + 'K+'
+      : s.totalPaidOut > 0
+        ? 'GHS ' + s.totalPaidOut + '+'
+        : 'GHS 0';
 
   const statItems: { key: StatKey; value: string }[] = [
     { key: 'verified', value: formatNumber(s.verifiedTipsters) },
-    { key: 'processed', value: formatNumber(s.totalPicks) },
-    { key: 'winRate', value: bestWinRate + '%' },
-    { key: 'roi', value: bestRoi + '%' },
-    { key: 'active', value: formatNumber(s.activePicks) },
+    { key: 'coupons', value: formatNumber(s.totalPicks) },
+    { key: 'winRate', value: (s.winRate > 0 ? s.winRate : 0) + '%' },
+    { key: 'marketplace', value: formatNumber(s.activePicks) },
+    { key: 'purchases', value: formatNumber(s.successfulPurchases ?? 0) },
     { key: 'paidOut', value: paidOutFormatted },
   ];
 
