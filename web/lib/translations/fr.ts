@@ -197,6 +197,8 @@ const fr: Record<string, string> = {
   'home.stats_marketplace': 'En Marketplace',
   'home.stats_purchases': 'Achats',
   'home.stats_paid_out': 'Payouts',
+  'home.stats_leading_win_rate': 'Taux de victoire en tête',
+  'home.stats_leading_roi': 'ROI en tête',
   'home.stats_sports': 'Sports Couverts',
   'home.stats_members': 'Membres',
   'home.join_cta': "Rejoindre BetRollover Aujourd'hui",

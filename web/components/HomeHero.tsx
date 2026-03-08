@@ -30,13 +30,19 @@ function formatNumber(n: number): string {
   return n + '+';
 }
 
-/** Six distinct, real platform stats — no duplication or misleading labels */
+/** Current #1 tipster from leaderboard (win rate & ROI) — varies as leader changes */
+interface LeadingTipsterStats {
+  winRate: number | null;
+  roi: number | null;
+}
+
+/** Six stats: 4 platform + 2 leading (top) tipster — fair, no platform-wide avg */
 type StatKey =
   | 'verified'
   | 'coupons'
-  | 'winRate'
+  | 'leadingWinRate'
+  | 'leadingRoi'
   | 'marketplace'
-  | 'purchases'
   | 'paidOut';
 
 const statConfigBase: Record<
@@ -57,12 +63,19 @@ const statConfigBase: Record<
     border: 'border-blue-500/40',
     iconBg: 'bg-blue-500/25 text-blue-300',
   },
-  winRate: {
-    labelKey: 'tipster.win_rate',
+  leadingWinRate: {
+    labelKey: 'home.stats_leading_win_rate',
     icon: '📈',
     bg: 'bg-amber-500/15',
     border: 'border-amber-500/40',
     iconBg: 'bg-amber-500/25 text-amber-300',
+  },
+  leadingRoi: {
+    labelKey: 'home.stats_leading_roi',
+    icon: '💰',
+    bg: 'bg-rose-500/15',
+    border: 'border-rose-500/40',
+    iconBg: 'bg-rose-500/25 text-rose-300',
   },
   marketplace: {
     labelKey: 'home.stats_marketplace',
@@ -70,13 +83,6 @@ const statConfigBase: Record<
     bg: 'bg-violet-500/15',
     border: 'border-violet-500/40',
     iconBg: 'bg-violet-500/25 text-violet-300',
-  },
-  purchases: {
-    labelKey: 'home.stats_purchases',
-    icon: '🛍️',
-    bg: 'bg-rose-500/15',
-    border: 'border-rose-500/40',
-    iconBg: 'bg-rose-500/25 text-rose-300',
   },
   paidOut: {
     labelKey: 'home.stats_paid_out',
@@ -90,13 +96,28 @@ const statConfigBase: Record<
 export function HomeHero() {
   const t = useT();
   const [stats, setStats] = useState<PublicStats | null>(null);
+  const [leadingTipster, setLeadingTipster] = useState<LeadingTipsterStats>({ winRate: null, roi: null });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const fetchStats = () => {
-    fetch(getApiUrl() + '/accumulators/stats/public', { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => data && setStats(data))
-      .catch(() => setStats(defaultStats));
+    Promise.all([
+      fetch(getApiUrl() + '/accumulators/stats/public', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)),
+      fetch(getApiUrl() + '/leaderboard?period=all_time&limit=1', { cache: 'no-store' }).then((r) =>
+        r.ok ? r.json() : { leaderboard: [] },
+      ),
+    ]).then(([data, leaderData]) => {
+      if (data) setStats(data);
+      const entries = (leaderData?.leaderboard || []) as { win_rate?: number; roi?: number }[];
+      const top = entries[0];
+      if (top) {
+        setLeadingTipster({
+          winRate: typeof top.win_rate === 'number' ? top.win_rate : null,
+          roi: typeof top.roi === 'number' ? top.roi : null,
+        });
+      } else {
+        setLeadingTipster({ winRate: null, roi: null });
+      }
+    }).catch(() => setStats(defaultStats));
   };
 
   useEffect(() => {
@@ -123,12 +144,17 @@ export function HomeHero() {
         ? 'GHS ' + s.totalPaidOut + '+'
         : 'GHS 0';
 
+  const leadingWinRateStr =
+    leadingTipster.winRate != null ? Number(leadingTipster.winRate).toFixed(1) + '%' : '—';
+  const leadingRoiStr =
+    leadingTipster.roi != null ? Number(leadingTipster.roi).toFixed(1) + '%' : '—';
+
   const statItems: { key: StatKey; value: string }[] = [
     { key: 'verified', value: formatNumber(s.verifiedTipsters) },
     { key: 'coupons', value: formatNumber(s.totalPicks) },
-    { key: 'winRate', value: (s.winRate > 0 ? s.winRate : 0) + '%' },
+    { key: 'leadingWinRate', value: leadingWinRateStr },
+    { key: 'leadingRoi', value: leadingRoiStr },
     { key: 'marketplace', value: formatNumber(s.activePicks) },
-    { key: 'purchases', value: formatNumber(s.successfulPurchases ?? 0) },
     { key: 'paidOut', value: paidOutFormatted },
   ];
 

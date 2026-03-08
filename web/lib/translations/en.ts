@@ -197,6 +197,8 @@ const en = {
   'home.stats_marketplace': 'Live on Marketplace',
   'home.stats_purchases': 'Purchases',
   'home.stats_paid_out': 'Paid Out',
+  'home.stats_leading_win_rate': 'Leading Win Rate',
+  'home.stats_leading_roi': 'Leading ROI',
   'home.stats_sports': 'Sports Covered',
   'home.stats_members': 'Members',
   'home.join_cta': 'Join BetRollover Today',
