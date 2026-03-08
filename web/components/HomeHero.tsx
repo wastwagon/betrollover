@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface PublicStats {
   verifiedTipsters: number;
@@ -97,6 +98,7 @@ const statConfigBase: Record<
 
 export function HomeHero() {
   const t = useT();
+  const { format } = useCurrency();
   const [stats, setStats] = useState<PublicStats | null>(null);
   const [leadingTipster, setLeadingTipster] = useState<LeadingTipsterStats>({ winRate: null, roi: null });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -145,8 +147,7 @@ export function HomeHero() {
   }, []);
 
   const s = stats || defaultStats;
-  const paidOutFormatted =
-    s.totalPaidOut > 0 ? 'GHS ' + s.totalPaidOut.toLocaleString() : 'GHS 0';
+  const paidOutFormatted = format(s.totalPaidOut).primary;
 
   const leadingRoiStr =
     leadingTipster.roi != null ? Number(leadingTipster.roi).toFixed(1) + '%' : '—';

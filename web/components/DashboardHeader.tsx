@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getApiUrl } from '@/lib/site-config';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface Notification {
   id: number;
@@ -12,6 +13,7 @@ interface Notification {
 
 export function DashboardHeader() {
   const router = useRouter();
+  const { format, currency } = useCurrency();
   const [balance, setBalance] = useState<number | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -53,7 +55,10 @@ export function DashboardHeader() {
               href="/wallet"
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold text-[var(--primary)] bg-[var(--primary-light)] hover:bg-emerald-100 border border-emerald-200/60 transition-all"
             >
-              <span className="tabular-nums">GHS {balance.toFixed(2)}</span>
+              <span className="tabular-nums">{format(balance).primary}</span>
+              {currency.code !== 'GHS' && (
+                <span className="text-[10px] font-normal opacity-80">GHS {balance.toFixed(2)}</span>
+              )}
             </Link>
           )}
           <Link

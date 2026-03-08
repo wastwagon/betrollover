@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { getApiUrl } from '@/lib/site-config';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface PublicStats {
   verifiedTipsters: number;
@@ -29,6 +30,7 @@ function formatNumber(n: number): string {
 }
 
 export function HomeStats() {
+  const { format } = useCurrency();
   const [stats, setStats] = useState<PublicStats | null>(null);
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export function HomeStats() {
     { value: formatNumber(s.totalPicks), label: 'Coupons Published' },
     { value: formatNumber(s.successfulPurchases), label: 'Coupons Bought' },
     { value: `${s.winRate}%`, label: 'Win Rate' },
-    { value: s.totalPaidOut > 0 ? `GHS ${s.totalPaidOut.toLocaleString()}` : 'GHS 0', label: 'Paid Out' },
+    { value: format(s.totalPaidOut).primary, label: 'Paid Out' },
   ];
 
   return (

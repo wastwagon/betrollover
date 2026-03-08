@@ -12,6 +12,7 @@ import { AdSlot } from '@/components/AdSlot';
 
 import { getApiUrl, getAvatarUrl } from '@/lib/site-config';
 import { PickCard } from '@/components/PickCard';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface FollowedTipster {
   id: number;
@@ -79,6 +80,7 @@ function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useT();
+  const { format } = useCurrency();
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [tipsterStats, setTipsterStats] = useState<TipsterStats | null>(null);
@@ -681,6 +683,7 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
                   value={walletBalance ?? 0}
                   icon="💰"
                   format="currency"
+                  displayValue={format(walletBalance ?? 0).primary}
                   variant="teal"
                   link="/wallet"
                   glass
@@ -786,7 +789,7 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
               <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">{t('dashboard.purchase_summary')}</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                 <StatCard title={t('dashboard.purchases')} value={purchaseStats.total} icon="🛍️" variant="slate" link="/my-purchases" glass index={4} />
-                <StatCard title={t('dashboard.total_spent')} value={purchaseStats.totalSpent} icon="💸" format="currency" variant="slate" glass index={5} />
+                <StatCard title={t('dashboard.total_spent')} value={purchaseStats.totalSpent} icon="💸" format="currency" displayValue={format(purchaseStats.totalSpent).primary} variant="slate" glass index={5} />
                 <StatCard title={t('status.active')} value={purchaseStats.active} icon="⏳" variant="slate" glass index={6} />
               </div>
             </section>
@@ -909,7 +912,7 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
                               {isActive ? t('status.active') : purchase.pick.result === 'won' ? t('status.won') : purchase.pick.result === 'lost' ? t('status.lost') : purchase.pick.status || '—'}
                             </span>
                             <span className="font-semibold text-[var(--text)] tabular-nums text-sm sm:text-base">
-                              GHS {Number(purchase.purchasePrice || 0).toFixed(2)}
+                              {format(Number(purchase.purchasePrice || 0)).primary}
                             </span>
                           </div>
                         </Link>
@@ -954,6 +957,7 @@ function StatCard({
   variant = 'teal',
   glass = false,
   index = 0,
+  displayValue,
 }: {
   title: string;
   value: number;
@@ -964,8 +968,10 @@ function StatCard({
   variant?: 'teal' | 'emerald' | 'amber' | 'slate';
   glass?: boolean;
   index?: number;
+  /** When set (e.g. user currency formatted), shown instead of value. Admin dashboard does not pass this. */
+  displayValue?: string;
 }) {
-  const display = format === 'currency' ? value.toFixed(2) : value.toString();
+  const display = displayValue ?? (format === 'currency' ? value.toFixed(2) : value.toString());
   const variantStyles = {
     teal: 'border-l-4 border-l-teal-500',
     emerald: 'border-l-4 border-l-emerald-500',
