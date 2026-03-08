@@ -34,7 +34,7 @@ export function HomePublicChatRooms() {
           <span className="inline-block px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs font-semibold uppercase tracking-wide mb-3">
             Community
           </span>
-          <h2 className="text-2xl md:text-3xl font-bold text-[var(--text)] mb-3">
+          <h2 className="text-lg font-bold text-[var(--text)] mb-3 sm:text-xl md:text-2xl lg:text-3xl">
             Public Chat Rooms
           </h2>
           <p className="text-[var(--text-muted)] text-base max-w-xl mx-auto">

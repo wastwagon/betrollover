@@ -63,7 +63,7 @@ export function HomePopularEvents() {
     <section className="py-12 md:py-16 border-t border-[var(--border)] bg-[var(--bg-warm)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-[var(--text)]">{t('home.popular_events')}</h2>
+          <h2 className="text-lg font-bold text-[var(--text)] sm:text-xl md:text-2xl">{t('home.popular_events')}</h2>
           <Link href="/marketplace" className="text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline">
             {t('home.view_marketplace')} →
           </Link>

@@ -54,7 +54,7 @@ export default async function HomePage() {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
               <span className="inline-block px-3 py-1 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-xs font-semibold uppercase tracking-wide mb-3">{t('home.how_it_works')}</span>
-              <h2 className="text-2xl md:text-3xl font-bold text-[var(--text)] mb-3">{t('home.how_it_works_sub')}</h2>
+              <h2 className="text-lg font-bold text-[var(--text)] mb-3 sm:text-xl md:text-2xl lg:text-3xl">{t('home.how_it_works_sub')}</h2>
               <p className="text-[var(--text-muted)] text-base max-w-xl mx-auto">{t('home.escrow_note')}</p>
             </div>
 
@@ -105,7 +105,7 @@ export default async function HomePage() {
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-10">
               <span className="inline-block px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold uppercase tracking-wide mb-3">{t('nav.sports')}</span>
-              <h2 className="text-2xl md:text-3xl font-bold text-[var(--text)] mb-3">{t('home.sports_title')}</h2>
+              <h2 className="text-lg font-bold text-[var(--text)] mb-3 sm:text-xl md:text-2xl lg:text-3xl">{t('home.sports_title')}</h2>
               <p className="text-[var(--text-muted)] text-base max-w-xl mx-auto">{t('home.sports_sub')}</p>
             </div>
 

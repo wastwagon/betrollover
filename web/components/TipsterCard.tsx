@@ -44,10 +44,10 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
     <article
       className={`card-gradient rounded-2xl shadow-lg overflow-hidden hover:shadow-xl hover:shadow-[var(--primary)]/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col ${className}`}
     >
-      <div className="p-4 flex flex-col flex-1">
+      <div className="p-3 sm:p-4 flex flex-col flex-1">
         {/* Header - link to profile */}
-        <Link href={`/tipsters/${tipster.username}`} className="flex items-center gap-3 mb-3 group">
-          <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden bg-[var(--bg)] border border-[var(--border)]">
+        <Link href={`/tipsters/${tipster.username}`} className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3 group">
+          <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-[var(--bg)] border border-[var(--border)]">
             {showAvatar ? (
               <Image
                 src={getAvatarUrl(tipster.avatar_url!, 48)!}
@@ -58,16 +58,16 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
                 onError={() => setAvatarError(true)}
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-lg font-bold text-[var(--primary)] bg-[var(--primary-light)]">
+              <div className="w-full h-full flex items-center justify-center text-sm sm:text-lg font-bold text-[var(--primary)] bg-[var(--primary-light)]">
                 {tipster.display_name.charAt(0).toUpperCase()}
               </div>
             )}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-semibold text-[var(--text)] truncate">{tipster.display_name}</h3>
+              <h3 className="font-semibold text-sm sm:text-base text-[var(--text)] truncate">{tipster.display_name}</h3>
             </div>
-            <div className="flex items-center gap-3 mt-0.5 text-xs text-[var(--text-muted)]">
+            <div className="flex items-center gap-2 sm:gap-3 mt-0.5 text-[10px] sm:text-xs text-[var(--text-muted)]">
               {tipster.leaderboard_rank != null && (
                 <span>{t('tipster.rank_prefix')}{tipster.leaderboard_rank}</span>
               )}
@@ -80,18 +80,18 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
 
         {/* Bio */}
         {tipster.bio && (
-          <p className="text-sm text-[var(--text-muted)] line-clamp-2 mb-4">{tipster.bio}</p>
+          <p className="text-xs sm:text-sm text-[var(--text-muted)] line-clamp-2 mb-2 sm:mb-4">{tipster.bio}</p>
         )}
 
         {/* Stats */}
-        <div className="flex gap-4 mb-4">
+        <div className="flex gap-3 sm:gap-4 mb-2 sm:mb-4">
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{t('tipster.roi')}</span>
-            <span className={`text-sm font-bold ${roiColor}`}>{roiDisplay}</span>
+            <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{t('tipster.roi')}</span>
+            <span className={`text-xs sm:text-sm font-bold ${roiColor}`}>{roiDisplay}</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{t('tipster.win_rate')}</span>
-            <span className="text-sm font-bold text-[var(--text)]">{winRateDisplay}</span>
+            <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{t('tipster.win_rate')}</span>
+            <span className="text-xs sm:text-sm font-bold text-[var(--text)]">{winRateDisplay}</span>
           </div>
         </div>
 
@@ -100,7 +100,7 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
           <button
             onClick={(e) => { e.preventDefault(); onFollow(); }}
             disabled={followLoading}
-            className={`mt-auto w-full px-4 py-2.5 rounded-xl font-semibold text-sm transition-colors disabled:opacity-70 ${
+            className={`mt-auto w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-colors disabled:opacity-70 ${
               tipster.is_following
                 ? 'bg-[var(--border)] text-[var(--text-muted)] hover:bg-gray-300 dark:hover:bg-gray-600'
                 : 'bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white'
