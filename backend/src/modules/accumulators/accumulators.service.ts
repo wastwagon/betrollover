@@ -810,9 +810,19 @@ export class AccumulatorsService {
     return tip ?? null;
   }
 
-  /** Popular upcoming events: fixtures with most picks in active coupons. No auth. */
+  /** Popular upcoming events: fixtures with most picks in coupons that are on marketplace and not started. Aligned with marketplace. */
   async getPopularEvents(limit = 6) {
     const now = new Date();
+    // Only count picks from coupons that are (1) listed on marketplace and (2) have no fixture started yet
+    const validMarketplaceSubQuery = `
+      SELECT pm.accumulator_id FROM pick_marketplace pm
+      WHERE pm.status = 'active'
+      AND NOT EXISTS (
+        SELECT 1 FROM accumulator_picks ap2
+        JOIN fixtures f2 ON f2.id = ap2.fixture_id
+        WHERE ap2.accumulator_id = pm.accumulator_id AND f2.match_date <= :now
+      )
+    `;
     const rows = await this.dataSource
       .createQueryBuilder()
       .select('ap.fixture_id', 'fixtureId')
@@ -828,6 +838,8 @@ export class AccumulatorsService {
       .from('accumulator_picks', 'ap')
       .innerJoin('fixtures', 'f', 'f.id = ap.fixture_id')
       .where('ap.fixture_id IS NOT NULL')
+      .andWhere(`ap.accumulator_id IN (${validMarketplaceSubQuery})`)
+      .setParameter('now', now)
       .andWhere('f.match_date > :now', { now })
       .andWhere('f.status IN (:...statuses)', { statuses: ['NS', 'TBD'] })
       .groupBy('ap.fixture_id')
