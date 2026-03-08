@@ -331,11 +331,25 @@ export class TipstersApiService {
       },
       marketplace_coupons: marketplaceCoupons,
       archived_coupons: await this.getArchivedCouponsForTipster(username),
+      archived_settled_count: await this.getArchivedSettledCount(username),
       performance_history: performance,
     };
   }
 
-  /** Settled (won/lost/void) coupons for this tipster. For archive display. */
+  /** Total count of settled (won/lost/void) marketplace coupons for this tipster. Used for Archive tab label. */
+  async getArchivedSettledCount(username: string): Promise<number> {
+    const tipster = await this.tipsterRepo.findOne({ where: { username }, select: ['userId'] });
+    if (!tipster?.userId) return 0;
+    return this.ticketRepo.count({
+      where: {
+        userId: tipster.userId,
+        result: In(['won', 'lost', 'void']),
+        isMarketplace: true,
+      },
+    });
+  }
+
+  /** Settled (won/lost/void) coupons for this tipster. For archive display. Limited to 50 most recent. */
   async getArchivedCouponsForTipster(username: string) {
     const tipster = await this.tipsterRepo.findOne({ where: { username } });
     if (!tipster?.userId) return [];

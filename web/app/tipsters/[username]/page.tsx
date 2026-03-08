@@ -83,6 +83,8 @@ interface TipsterProfile {
   };
   marketplace_coupons: MarketplaceCoupon[];
   archived_coupons?: MarketplaceCoupon[];
+  /** Total settled count (won/lost/void) for Archive tab label. Backend may cap list at 50. */
+  archived_settled_count?: number;
   is_following: boolean;
 }
 
@@ -544,7 +546,7 @@ export default function TipsterProfilePage() {
             <span className="text-sm text-[var(--text-muted)]">
               {couponFilter === 'active'
                 ? t('tipster.available', { n: String(filteredActive.length) })
-                : t('tipster.settled', { n: String(filteredArchive.length) })}
+                : t('tipster.settled', { n: String(profile?.archived_settled_count ?? filteredArchive.length) })}
             </span>
           </div>
 
