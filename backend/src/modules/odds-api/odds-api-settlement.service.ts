@@ -81,15 +81,18 @@ export class OddsApiSettlementService {
               .andWhere("e.raw_json->>'id' = :rawId", { rawId })
               .getOne();
           }
+          // Fallback: match by team names + same UTC calendar day (avoids timezone skew for events ~24h ago)
           if (!event) {
+            const commenceUtc = new Date(result.commence_time);
+            const utcDateStr = commenceUtc.toISOString().split('T')[0];
             event = await this.sportEventRepo
               .createQueryBuilder('e')
               .where('e.sport = :sport', { sport })
               .andWhere('e.status != :ft', { ft: 'FT' })
               .andWhere('LOWER(TRIM(e.home_team)) = LOWER(TRIM(:home))', { home: result.home_team })
               .andWhere('LOWER(TRIM(e.away_team)) = LOWER(TRIM(:away))', { away: result.away_team })
-              .andWhere('e.event_date::date = :eventDate', {
-                eventDate: new Date(result.commence_time).toISOString().split('T')[0],
+              .andWhere("(e.event_date AT TIME ZONE 'UTC')::date = :eventDate::date", {
+                eventDate: utcDateStr,
               })
               .getOne();
           }
