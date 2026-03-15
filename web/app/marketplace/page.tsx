@@ -168,13 +168,29 @@ export default function MarketplacePage() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    const sportParam = sportFilter ? `&sport=${encodeURIComponent(sportFilter)}` : '';
+
     if (!token) {
-      router.push('/login');
+      // Guest: use public marketplace (free + paid listings; login required to purchase/claim)
+      fetch(`${API_URL}/accumulators/marketplace/public?limit=24${sportParam}`)
+        .then((r) => (r.ok ? r.json() : { items: [], total: 0, hasMore: false }))
+        .then((data) => {
+          const items = data?.items ?? [];
+          setPicks(items);
+          setTotal(data?.total ?? items.length);
+          setHasMore(data?.hasMore ?? false);
+        })
+        .catch((err) => {
+          setPicks([]);
+          setTotal(0);
+          setHasMore(false);
+          showError(err);
+        })
+        .finally(() => setLoading(false));
       return;
     }
 
-    // Fetch marketplace picks, wallet balance, user info, purchased picks, and followed tipsters
-    const sportParam = sportFilter ? `&sport=${encodeURIComponent(sportFilter)}` : '';
+    // Logged in: fetch marketplace, wallet, purchased, user, following
     Promise.all([
       fetch(`${API_URL}/accumulators/marketplace?limit=24${sportParam}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -223,15 +239,17 @@ export default function MarketplacePage() {
   };
 
   const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
     const token = localStorage.getItem('token');
-    if (!token || loadingMore || !hasMore) return;
+    const sportParam = sportFilter ? `&sport=${encodeURIComponent(sportFilter)}` : '';
+    const url = token
+      ? `${API_URL}/accumulators/marketplace?limit=24&offset=${picks.length}${sportParam}`
+      : `${API_URL}/accumulators/marketplace/public?limit=24&offset=${picks.length}${sportParam}`;
     setLoadingMore(true);
     try {
-      const sportParam = sportFilter ? `&sport=${encodeURIComponent(sportFilter)}` : '';
-      const res = await fetch(
-        `${API_URL}/accumulators/marketplace?limit=24&offset=${picks.length}${sportParam}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await fetch(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       const data = await res.json().catch(() => ({}));
       const items = data?.items ?? [];
       setPicks((prev) => [...prev, ...items]);
@@ -245,7 +263,10 @@ export default function MarketplacePage() {
 
   const purchase = async (id: number) => {
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) {
+      router.push('/login?redirect=/marketplace');
+      return;
+    }
 
     const coupon = picks.find(p => p.id === id);
     if (!coupon) return;

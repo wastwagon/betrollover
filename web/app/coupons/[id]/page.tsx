@@ -261,9 +261,25 @@ export default function CouponDetailPage() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) { router.push(`/login?redirect=/coupons/${id}`); return; }
-    const headers = { Authorization: `Bearer ${token}` };
 
+    if (!token) {
+      // Guest: try public endpoint (free coupons only)
+      fetch(`${getApiUrl()}/accumulators/${id}/public`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((couponData) => {
+          if (couponData) {
+            setCoupon(couponData);
+            setIsPurchased(false);
+          } else {
+            router.push(`/login?redirect=/coupons/${id}`);
+          }
+        })
+        .catch(() => router.push(`/login?redirect=/coupons/${id}`))
+        .finally(() => setLoading(false));
+      return;
+    }
+
+    const headers = { Authorization: `Bearer ${token}` };
     Promise.all([
       fetch(`${getApiUrl()}/accumulators/${id}`, { headers })
         .then((r) => r.ok ? r.json() : null),

@@ -558,6 +558,70 @@ export class AccumulatorsService {
     return { items, total, hasMore: offset + items.length < total };
   }
 
+  /**
+   * Public marketplace list (no login). Optional filter: freeOnly returns only price=0 coupons.
+   */
+  async getMarketplacePublicList(options?: {
+    limit?: number;
+    offset?: number;
+    sport?: string;
+    freeOnly?: boolean;
+  }) {
+    const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
+    const offset = Math.max(options?.offset ?? 0, 0);
+
+    let rows = await this.marketplaceRepo.find({
+      where: { status: 'active' },
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount'],
+    });
+    if (options?.freeOnly) {
+      rows = rows.filter((r) => Number(r.price) === 0);
+    }
+    const accIds = rows.map((r) => r.accumulatorId);
+    if (accIds.length === 0) {
+      return { items: [], total: 0, hasMore: false };
+    }
+
+    const ticketWhere: any = { id: In(accIds), status: 'active', result: 'pending' };
+    if (options?.sport) {
+      const SPORT_DISPLAY_MAP: Record<string, string> = {
+        football: 'Football', basketball: 'Basketball', rugby: 'Rugby', mma: 'MMA',
+        volleyball: 'Volleyball', hockey: 'Hockey', american_football: 'American Football',
+        tennis: 'Tennis', multi: 'Multi-Sport', 'multi-sport': 'Multi-Sport',
+      };
+      const s = options.sport.toLowerCase();
+      ticketWhere.sport = SPORT_DISPLAY_MAP[s] ?? options.sport;
+    }
+    const tickets = await this.ticketRepo.find({
+      where: ticketWhere,
+      relations: ['picks'],
+      order: { createdAt: 'DESC' },
+    });
+    const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
+    const now = new Date();
+    const validTickets = enrichedTickets.filter((ticket: any) => {
+      if (!ticket.picks?.length) return false;
+      return !ticket.picks.some((pick: any) => pick.matchDate && new Date(pick.matchDate) <= now);
+    });
+    const total = validTickets.length;
+    const paginated = validTickets.slice(offset, offset + limit);
+    const rowsForPaginated = paginated.map((t) => rows.find((r) => r.accumulatorId === t.id)).filter(Boolean) as PickMarketplace[];
+    const items = await this.enrichWithTipsterMetadata(paginated, rowsForPaginated);
+    return { items, total, hasMore: offset + paginated.length < total };
+  }
+
+  /**
+   * Public coupon by id (no login). Allowed only for free (price=0) marketplace coupons.
+   */
+  async getByIdPublic(id: number) {
+    const row = await this.marketplaceRepo.findOne({
+      where: { accumulatorId: id, status: 'active' },
+      select: ['accumulatorId', 'price'],
+    });
+    if (!row || Number(row.price) !== 0) return null;
+    return this.getById(id);
+  }
+
   /** Tipsters who have marketplace coupons (for admin filter dropdown) */
   async getMarketplaceTipsters(): Promise<{ username: string; displayName: string }[]> {
     const rows = await this.marketplaceRepo

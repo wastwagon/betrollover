@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards, ParseIntPipe, NotFoundException } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AccumulatorsService, CreateAccumulatorDto } from './accumulators.service';
@@ -39,6 +39,23 @@ export class AccumulatorsController {
     return this.accumulatorsService.getSubscriptionFeed(user.id, {
       limit: limitVal,
       offset: offsetVal,
+    });
+  }
+
+  @Get('marketplace/public')
+  getMarketplacePublic(
+    @Query('sport') sport?: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+    @Query('freeOnly') freeOnly?: string,
+  ) {
+    const limitVal = limit != null ? Math.min(Math.max(parseInt(limit, 10) || 24, 1), 100) : undefined;
+    const offsetVal = offset != null ? Math.max(parseInt(offset, 10) || 0, 0) : undefined;
+    return this.accumulatorsService.getMarketplacePublicList({
+      limit: limitVal,
+      offset: offsetVal,
+      sport: sport || undefined,
+      freeOnly: freeOnly === 'true',
     });
   }
 
@@ -93,6 +110,13 @@ export class AccumulatorsController {
     const limitVal = limit != null ? Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200) : undefined;
     const offsetVal = offset != null ? Math.max(parseInt(offset, 10) || 0, 0) : undefined;
     return this.accumulatorsService.getMarketplaceArchive({ limit: limitVal, offset: offsetVal });
+  }
+
+  @Get(':id/public')
+  async getByIdPublic(@Param('id', ParseIntPipe) id: number) {
+    const coupon = await this.accumulatorsService.getByIdPublic(id);
+    if (!coupon) throw new NotFoundException('Coupon not found or not available without login');
+    return coupon;
   }
 
   @Get(':id')
