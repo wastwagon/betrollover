@@ -4,6 +4,7 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
+import { AppleLoginDto } from './dto/apple-login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -21,6 +22,12 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 per min per IP
   async googleLogin(@Body() dto: GoogleLoginDto) {
     return this.authService.googleLogin(dto.id_token);
+  }
+
+  @Post('apple')
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 per min per IP
+  async appleLogin(@Body() dto: AppleLoginDto) {
+    return this.authService.appleLogin(dto.id_token, dto.user);
   }
 
   @Post('login')

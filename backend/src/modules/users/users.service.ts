@@ -30,7 +30,7 @@ export class UsersService {
   async findByEmail(email: string): Promise<User | null> {
     return this.usersRepository.findOne({
       where: { email },
-      select: ['id', 'email', 'password', 'username', 'displayName', 'role', 'status', 'providerGoogleId'],
+      select: ['id', 'email', 'password', 'username', 'displayName', 'role', 'status', 'providerGoogleId', 'providerAppleId'],
     });
   }
 
@@ -46,6 +46,13 @@ export class UsersService {
     return this.usersRepository.findOne({
       where: { providerGoogleId },
       select: ['id', 'email', 'username', 'displayName', 'role', 'status', 'providerGoogleId'],
+    });
+  }
+
+  async findByProviderAppleId(providerAppleId: string): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: { providerAppleId },
+      select: ['id', 'email', 'username', 'displayName', 'role', 'status', 'providerAppleId'],
     });
   }
 
@@ -113,6 +120,40 @@ export class UsersService {
       providerGoogleId: data.providerGoogleId,
       emailVerifiedAt: new Date(), // Google is trusted
       ageVerifiedAt: new Date(), // Same as email register: treat as verified
+      country: 'Ghana',
+      countryCode: 'GHA',
+      flagEmoji: '🇬🇭',
+    });
+    return this.usersRepository.save(user);
+  }
+
+  /** Create user from Apple OAuth (no password). Email may be private relay. */
+  async createFromApple(data: {
+    email: string;
+    displayName: string;
+    providerAppleId: string;
+  }): Promise<User> {
+    const baseUsername = data.email.includes('@')
+      ? data.email.replace(/@.*$/, '').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 20) || 'user'
+      : `apple_${data.providerAppleId.slice(0, 12)}`;
+    let username = baseUsername;
+    let attempts = 0;
+    while (attempts < 100) {
+      const existing = await this.usersRepository.findOne({ where: { username }, select: ['id'] });
+      if (!existing) break;
+      username = `${baseUsername}_${Math.floor(1000 + Math.random() * 9000)}`;
+      attempts++;
+    }
+    const user = this.usersRepository.create({
+      email: data.email,
+      username,
+      password: null,
+      displayName: data.displayName || username,
+      avatar: null,
+      role: UserRole.USER,
+      providerAppleId: data.providerAppleId,
+      emailVerifiedAt: new Date(),
+      ageVerifiedAt: new Date(),
       country: 'Ghana',
       countryCode: 'GHA',
       flagEmoji: '🇬🇭',
@@ -203,6 +244,10 @@ export class UsersService {
 
   async updateProviderGoogleId(userId: number, providerGoogleId: string): Promise<void> {
     await this.usersRepository.update(userId, { providerGoogleId });
+  }
+
+  async updateProviderAppleId(userId: number, providerAppleId: string): Promise<void> {
+    await this.usersRepository.update(userId, { providerAppleId });
   }
 
   async updateLastLogin(userId: number): Promise<void> {

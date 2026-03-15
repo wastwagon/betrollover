@@ -5,6 +5,8 @@ import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { OAuth2Client } from 'google-auth-library';
+import * as jwt from 'jsonwebtoken';
+import jwksRsa from 'jwks-rsa';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { UsersService } from '../users/users.service';
@@ -111,6 +113,79 @@ export class AuthService {
       displayName: payload.name || email.split('@')[0] || 'User',
       providerGoogleId: sub,
       avatar: payload.picture || null,
+    });
+    await this.walletService.getOrCreateWallet(newUser.id);
+    await this.ensureTipsterForUser(newUser);
+    return this.login(newUser);
+  }
+
+  /** Verify Apple ID token (JWT) and find or create user; return same shape as login(). */
+  async appleLogin(
+    idToken: string,
+    clientFirstNames?: { email?: string; name?: { firstName?: string; lastName?: string } },
+  ): Promise<ReturnType<AuthService['login']> extends Promise<infer R> ? R : never> {
+    const clientId = this.config.get<string>('APPLE_CLIENT_ID');
+    if (!clientId?.trim()) {
+      throw new UnauthorizedException('Apple sign-in is not configured.');
+    }
+    let payload: { sub?: string; email?: string; email_verified?: boolean | string };
+    try {
+      const decoded = jwt.decode(idToken.trim(), { complete: true }) as { header?: { kid?: string }; payload?: Record<string, unknown> } | null;
+      if (!decoded?.header?.kid || !decoded?.payload) throw new Error('Invalid token structure');
+      const client = jwksRsa({
+        jwksUri: 'https://appleid.apple.com/auth/keys',
+        cache: true,
+        cacheMaxAge: 600000,
+      });
+      const key = await client.getSigningKey(decoded.header.kid);
+      const pubKey = key.getPublicKey();
+      const verified = jwt.verify(idToken.trim(), pubKey, {
+        algorithms: ['RS256'],
+        issuer: 'https://appleid.apple.com',
+        audience: clientId,
+      }) as Record<string, unknown>;
+      payload = {
+        sub: verified.sub as string,
+        email: verified.email as string | undefined,
+        email_verified: verified.email_verified as boolean | string | undefined,
+      };
+    } catch {
+      throw new UnauthorizedException('Invalid Apple sign-in token. Please try again.');
+    }
+    const sub = payload.sub;
+    if (!sub) throw new UnauthorizedException('Invalid Apple token: missing subject.');
+
+    let user: User | null = await this.usersService.findByProviderAppleId(sub);
+    if (user) {
+      await this.usersService.updateLastLogin(user.id);
+      return this.login(user);
+    }
+
+    const emailFromToken = typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : '';
+    const emailVerified = payload.email_verified === true || payload.email_verified === 'true';
+    const email = emailFromToken || (clientFirstNames?.email?.trim().toLowerCase());
+    if (email && emailVerified) {
+      const existing = await this.usersService.findByEmail(email);
+      if (existing) {
+        await this.usersService.updateProviderAppleId(existing.id, sub);
+        const updated = await this.usersService.findByProviderAppleId(sub);
+        if (updated) {
+          await this.usersService.updateLastLogin(updated.id);
+          return this.login(updated);
+        }
+      }
+    }
+
+    const displayNameFromClient = clientFirstNames?.name
+      ? [clientFirstNames.name.firstName, clientFirstNames.name.lastName].filter(Boolean).join(' ').trim()
+      : '';
+    const emailForCreate = email || `apple_${sub}@privaterelay.appleid.local`;
+    const displayName = displayNameFromClient || emailForCreate.split('@')[0] || 'User';
+
+    const newUser = await this.usersService.createFromApple({
+      email: emailForCreate,
+      displayName,
+      providerAppleId: sub,
     });
     await this.walletService.getOrCreateWallet(newUser.id);
     await this.ensureTipsterForUser(newUser);

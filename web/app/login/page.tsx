@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useT } from '@/context/LanguageContext';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
+import { AppleSignInButton } from '@/components/AppleSignInButton';
 
 function LoginForm() {
   const t = useT();
@@ -153,6 +154,7 @@ function LoginForm() {
                 </div>
               </div>
               <GoogleSignInButton variant="signin" className="mb-4" disabled={loading} />
+              <AppleSignInButton variant="signin" className="mb-4" disabled={loading} />
               <button
                 type="submit"
                 disabled={loading}

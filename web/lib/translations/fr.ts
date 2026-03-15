@@ -935,6 +935,8 @@ const fr: Record<string, string> = {
   'auth.signing_in': 'Connexion en cours...',
   'auth.sign_in_with_google': 'Se connecter avec Google',
   'auth.sign_up_with_google': 'S\'inscrire avec Google',
+  'auth.sign_in_with_apple': 'Se connecter avec Apple',
+  'auth.sign_up_with_apple': 'S\'inscrire avec Apple',
   'auth.or_continue_with': 'ou continuer avec',
 
   // ── Error / Not found ────────────────────────────────────────────────────

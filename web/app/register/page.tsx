@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useT } from '@/context/LanguageContext';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
+import { AppleSignInButton } from '@/components/AppleSignInButton';
 import { getApiUrl } from '@/lib/site-config';
 
 function RegisterForm() {
@@ -154,7 +155,8 @@ function RegisterForm() {
                 </p>
               </div>
 
-              <GoogleSignInButton variant="signup" className="mb-6" disabled={loading} />
+              <GoogleSignInButton variant="signup" className="mb-4" disabled={loading} />
+              <AppleSignInButton variant="signup" className="mb-6" disabled={loading} />
               <div className="relative my-4">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-slate-200" />

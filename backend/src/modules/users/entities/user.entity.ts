@@ -35,6 +35,9 @@ export class User {
   @Column('varchar', { length: 255, unique: true, nullable: true })
   providerGoogleId: string | null = null;
 
+  @Column('varchar', { length: 255, unique: true, nullable: true })
+  providerAppleId: string | null = null;
+
   @Column({ length: 100 })
   displayName: string;
 
