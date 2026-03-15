@@ -6,7 +6,8 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { OAuth2Client } from 'google-auth-library';
 import * as jwt from 'jsonwebtoken';
-import jwksRsa from 'jwks-rsa';
+// jwks-rsa default export can fail at runtime when compiled to CJS; use require so the client factory is called correctly
+const jwksRsa = require('jwks-rsa');
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { UsersService } from '../users/users.service';
