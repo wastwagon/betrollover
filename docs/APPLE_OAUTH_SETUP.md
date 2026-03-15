@@ -35,6 +35,9 @@ No client secret is required for verifying the **id_token** (JWT) on the backend
 4. Callback verifies `state`, sends `id_token` and `user` to your backend **POST /auth/apple**.
 5. Backend verifies the JWT with Apple’s JWKS, finds or creates the user, returns your JWT; callback redirects to dashboard with token.
 
-## 6. Private relay email
+## 6. Private relay (Hide My Email)
 
-Apple may hide the user’s real email and use a private relay. We store whatever email is in the token or the first-time `user` object; if none, we create a placeholder email so the account is still created and tracked.
+When the user chooses **Hide My Email**, Apple does **not** send their real email to your app. You only receive the private relay address (e.g. `xyz@privaterelay.appleid.com`). There is no API to “fetch” the real email—this is by design for privacy.
+
+- **For login/account:** We store the relay (or placeholder) so the account exists and is unique.
+- **For admin communication:** Users can set an optional **Contact email** in Profile (Settings). Admins should use that when present; otherwise use the account email (relay). Emails sent to the relay are still delivered by Apple to the user’s real inbox.

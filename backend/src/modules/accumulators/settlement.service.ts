@@ -342,7 +342,7 @@ export class SettlementService {
 
     // Notify tipster if ROI fell below minimum (they can only post free picks until it improves)
     const user = await this.userRepo.findOne({ where: { id: sellerId }, select: ['role'] });
-    if (user?.role === 'tipster' || user?.role === 'admin') {
+    if (user?.role === 'tipster' || user?.role === 'admin' || user?.role === 'user') {
       const apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
       const minimumROI = Number(apiSettings?.minimumROI ?? 20.0);
       const stats = await this.tipsterService.getStats(sellerId, user.role);

@@ -144,13 +144,13 @@ export class AdminService {
     const skip = (page - 1) * limit;
 
     const qb = this.usersRepo.createQueryBuilder('u')
-      .select(['u.id', 'u.username', 'u.email', 'u.displayName', 'u.avatar', 'u.role', 'u.status', 'u.createdAt'])
+      .select(['u.id', 'u.username', 'u.email', 'u.contactEmail', 'u.displayName', 'u.avatar', 'u.role', 'u.status', 'u.createdAt'])
       .orderBy('u.createdAt', 'DESC');
 
     if (params.role) qb.andWhere('u.role = :role', { role: params.role });
     if (params.status) qb.andWhere('u.status = :status', { status: params.status });
     if (params.search) {
-      qb.andWhere('(u.email ILIKE :q OR u.username ILIKE :q OR u.display_name ILIKE :q)', {
+      qb.andWhere('(u.email ILIKE :q OR u.contactEmail ILIKE :q OR u.username ILIKE :q OR u.displayName ILIKE :q)', {
         q: `%${params.search}%`,
       });
     }
@@ -160,7 +160,7 @@ export class AdminService {
     // Attach tipster performance stats (ROI, win rate, commission paid) for tipster/admin rows
     const enriched = await Promise.all(
       items.map(async (u) => {
-        if (u.role !== 'tipster' && u.role !== 'admin') return u;
+        if (u.role !== 'tipster' && u.role !== 'admin' && u.role !== 'user') return u;
         try {
           const [statsRaw, commRaw] = await Promise.all([
             this.dataSource.query(

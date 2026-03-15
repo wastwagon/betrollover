@@ -12,6 +12,7 @@ const API_URL = getApiUrl();
 interface User {
   id: number;
   email: string;
+  contactEmail?: string | null;
   username: string;
   displayName: string;
   avatar?: string | null;
@@ -319,6 +320,11 @@ export default function AdminUsersPage() {
                           <div>
                             <p className="font-semibold text-gray-900 dark:text-white">{u.displayName}</p>
                             <p className="text-sm text-gray-600 dark:text-gray-400">{u.email}</p>
+                            {(u.contactEmail != null && u.contactEmail !== '') && (
+                              <p className="text-xs text-emerald-600 dark:text-emerald-400" title="Use this for communication if set">
+                                Contact: {u.contactEmail}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </td>

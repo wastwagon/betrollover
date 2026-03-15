@@ -862,9 +862,9 @@ export class AccumulatorsService {
       if (tip) return tip;
     }
 
-    // 2. Fall back to any tipster's free pick — pick highest purchase count for today
+    // 2. Fall back to any tipster's free pick — pick highest purchase count for today (users and tipsters same privileges)
     const allTipsters = await this.usersRepo.find({
-      where: { role: UserRole.TIPSTER },
+      where: [{ role: UserRole.TIPSTER }, { role: UserRole.USER }],
       select: ['id'],
       take: 100,
     });
@@ -994,7 +994,7 @@ export class AccumulatorsService {
       wonPicks,
       lostPicks,
     ] = await Promise.all([
-      this.usersRepo.count({ where: { role: UserRole.TIPSTER } }),
+      this.usersRepo.count({ where: [{ role: UserRole.TIPSTER }, { role: UserRole.USER }] }),
       this.getPublishedCouponsCount(),
       this.getLiveMarketplaceCount(),
       this.purchasedRepo.count(),

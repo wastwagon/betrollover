@@ -14,6 +14,7 @@ import { getApiUrl, getAvatarUrl } from '@/lib/site-config';
 interface Profile {
   id: number;
   email: string;
+  contactEmail?: string | null;
   username: string;
   displayName: string;
   avatar: string | null;
@@ -30,6 +31,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [phone, setPhone] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
@@ -58,6 +60,7 @@ export default function ProfilePage() {
         setProfile(data);
         setDisplayName(data.displayName || '');
         setPhone(data.phone || '');
+        setContactEmail(data.contactEmail || '');
         setAvatarUrl(data.avatar || '');
       })
       .catch(() => router.push('/login'))
@@ -77,12 +80,11 @@ export default function ProfilePage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ displayName, phone: phone || null }),
+        body: JSON.stringify({ displayName, phone: phone || null, contactEmail: contactEmail.trim() || null }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        const updated = await res.json();
-        setProfile((p) => (p ? { ...p, ...updated } : null));
+        setProfile((p) => (p ? { ...p, ...data } : null));
         setMsg(t('profile.updated'));
       } else {
         setMsg(data.message || t('profile.update_failed'));
@@ -315,6 +317,17 @@ export default function ProfilePage() {
                   placeholder={t('profile.optional')}
                   className="w-full px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
                 />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.contact_email')}</label>
+                <input
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  placeholder={t('profile.contact_email_placeholder')}
+                  className="w-full px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
+                />
+                <p className="text-xs text-[var(--text-muted)] mt-1">{t('profile.contact_email_hint')}</p>
               </div>
               {msg && <p className="text-sm text-[var(--primary)]">{msg}</p>}
               <button

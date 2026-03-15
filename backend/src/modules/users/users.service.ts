@@ -59,7 +59,7 @@ export class UsersService {
   async findById(id: number): Promise<User | null> {
     return this.usersRepository.findOne({
       where: { id },
-      select: ['id', 'email', 'username', 'displayName', 'avatar', 'phone', 'role', 'status', 'createdAt', 'emailVerifiedAt', 'ageVerifiedAt'],
+      select: ['id', 'email', 'contactEmail', 'username', 'displayName', 'avatar', 'phone', 'role', 'status', 'createdAt', 'emailVerifiedAt', 'ageVerifiedAt'],
     });
   }
 
@@ -116,7 +116,7 @@ export class UsersService {
       password: null,
       displayName: data.displayName || username,
       avatar: data.avatar ?? null,
-      role: UserRole.USER,
+      role: UserRole.TIPSTER,
       providerGoogleId: data.providerGoogleId,
       emailVerifiedAt: new Date(), // Google is trusted
       ageVerifiedAt: new Date(), // Same as email register: treat as verified
@@ -150,7 +150,7 @@ export class UsersService {
       password: null,
       displayName: data.displayName || username,
       avatar: null,
-      role: UserRole.USER,
+      role: UserRole.TIPSTER,
       providerAppleId: data.providerAppleId,
       emailVerifiedAt: new Date(),
       ageVerifiedAt: new Date(),
@@ -201,14 +201,23 @@ export class UsersService {
     return bcrypt.compare(password, fullUser.password);
   }
 
+  private isValidEmail(value: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value?.trim() ?? '');
+  }
+
   async updateProfile(
     id: number,
-    data: { displayName?: string; phone?: string; avatar?: string | null },
+    data: { displayName?: string; phone?: string; avatar?: string | null; contactEmail?: string | null },
   ): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) throw new BadRequestException('Account not found.');
     if (data.displayName !== undefined) user.displayName = data.displayName;
     if (data.phone !== undefined) user.phone = data.phone;
+    if (data.contactEmail !== undefined) {
+      const v = data.contactEmail?.trim() || null;
+      if (v && !this.isValidEmail(v)) throw new BadRequestException('Contact email must be a valid email address.');
+      user.contactEmail = v || null;
+    }
     if (data.avatar !== undefined) {
       user.avatar = data.avatar || null;
       await this.syncAvatarToTipster(id, user.avatar);

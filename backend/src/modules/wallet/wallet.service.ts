@@ -328,7 +328,8 @@ export class WalletService {
     if (!emailVerifiedAt) {
       throw new ForbiddenException('Please verify your email before adding a payout method.');
     }
-    if (user.role !== UserRole.TIPSTER && user.role !== UserRole.ADMIN) {
+    // Users and tipsters have same privileges (either can add payout)
+    if (user.role !== UserRole.TIPSTER && user.role !== UserRole.ADMIN && user.role !== UserRole.USER) {
       throw new ForbiddenException('Only tipsters can add payout methods');
     }
 
@@ -495,7 +496,8 @@ export class WalletService {
     if (!emailVerifiedAt) {
       throw new ForbiddenException('Please verify your email before requesting a withdrawal.');
     }
-    if (user.role !== UserRole.TIPSTER && user.role !== UserRole.ADMIN) {
+    // Users and tipsters have same privileges (either can withdraw)
+    if (user.role !== UserRole.TIPSTER && user.role !== UserRole.ADMIN && user.role !== UserRole.USER) {
       throw new ForbiddenException('Only tipsters can withdraw');
     }
 
