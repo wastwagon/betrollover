@@ -39,10 +39,11 @@ export async function GET(request: NextRequest) {
   });
 
   const response = NextResponse.redirect(`${APPLE_AUTH_URL}?${params.toString()}`, 302);
+  // SameSite=None + Secure so cookie is sent when Apple POSTs back (cross-site form POST)
   response.cookies.set(APPLE_STATE_COOKIE, state, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: true,
+    sameSite: 'none',
     maxAge: 600,
     path: '/',
   });
