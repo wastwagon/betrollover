@@ -103,7 +103,7 @@ export class PredictionEngineService {
    * Fixtures are drawn from the next 7 days (not limited to a single day). Value filters determine qualifying accas.
    * @param forDate Optional date (YYYY-MM-DD) for prediction_date; defaults to today
    */
-  async generateDailyPredictionsForAllTipsters(forDate?: string): Promise<TipsterPredictionResult[]> {
+  async generateDailyPredictionsForAllTipsters(forDate?: string, dryRun = false): Promise<TipsterPredictionResult[]> {
     const startTime = Date.now();
     const refDate = forDate ? new Date(forDate + 'T12:00:00Z') : new Date();
     const now = refDate;
@@ -159,7 +159,7 @@ export class PredictionEngineService {
     const fixturePredictions = await this.generateFixturePredictionsHybrid(withOdds, apiPredictionsMap);
     this.logger.log(`Generated predictions for ${fixturePredictions.length} fixtures`);
 
-    // 6. For each tipster, create multiple 2-fixture accas (no max cap; no fixture repeat)
+    // 6. For each tipster, create single-fixture coupons only (up to max_daily_predictions; no fixture repeat)
     const allPredictions: TipsterPredictionResult[] = [];
     const tipsterByUsername = new Map<string, Tipster>();
     const dbTipsters = await this.tipsterRepo.find({ where: { isAi: true } });
@@ -183,9 +183,13 @@ export class PredictionEngineService {
       }
     }
 
-    // 7. Save to database
+    // 7. Save to database (skip when dryRun)
     const predictionDate = forDate || new Date().toISOString().slice(0, 10);
-    await this.savePredictionsToDatabase(allPredictions, predictionDate);
+    if (!dryRun) {
+      await this.savePredictionsToDatabase(allPredictions, predictionDate);
+    } else {
+      this.logger.log(`[DRY RUN] Would save ${allPredictions.length} predictions (skipped).`);
+    }
 
     const status = allPredictions.length > 0 ? 'success' : 'partial';
     await this.logGeneration(forDate, status, allPredictions.length, withOdds.length, apiRequestsUsed, null, startTime);
@@ -409,44 +413,9 @@ export class PredictionEngineService {
     });
   }
 
-  /** Combined odds bounds for 2-fixture accas: 2.0 to 4.0 */
-  private static readonly MIN_COMBINED_ODDS = 2;
-  private static readonly MAX_COMBINED_ODDS = 4;
-
-  private findBest2FixtureAcca(
-    fixtures: FixturePrediction[],
-    personality: AiTipsterPersonality,
-  ): { leg1: FixturePrediction; leg2: FixturePrediction } | null {
-    if (fixtures.length < 2) return null;
-
-    let best: { leg1: FixturePrediction; leg2: FixturePrediction; score: number } | null =
-      null;
-
-    for (let i = 0; i < fixtures.length; i++) {
-      for (let j = i + 1; j < fixtures.length; j++) {
-        const leg1 = fixtures[i];
-        const leg2 = fixtures[j];
-
-        const combinedOdds = leg1.odds * leg2.odds;
-        if (combinedOdds < PredictionEngineService.MIN_COMBINED_ODDS) continue;
-        if (combinedOdds > PredictionEngineService.MAX_COMBINED_ODDS) continue;
-
-        const accaMin = personality.target_odds_min * personality.target_odds_min;
-        const accaMax = personality.target_odds_max * personality.target_odds_max;
-        if (combinedOdds < accaMin || combinedOdds > accaMax) continue;
-
-        const combinedProb = leg1.probability * leg2.probability;
-        const score = leg1.ev * 10 + leg2.ev * 10 + combinedProb * 5;
-
-        if (!best || score > best.score) {
-          best = { leg1, leg2, score };
-        }
-      }
-    }
-
-    return best ? { leg1: best.leg1, leg2: best.leg2 } : null;
-  }
-
+  /**
+   * AI coupons are single-fixture only. Picks the best suitable fixture by EV.
+   */
   private createTipsterPrediction(
     tipsterConfig: AiTipsterConfig,
     tipsterId: number,
@@ -456,29 +425,24 @@ export class PredictionEngineService {
     const personality = tipsterConfig.personality;
     const available = fixturePredictions.filter((fp) => !excludeFixtureIds.has(fp.fixtureId));
     const suitable = this.filterByPersonality(available, personality);
-    const bestAcca = this.findBest2FixtureAcca(suitable, personality);
-    this.logger.debug(
-      `${tipsterConfig.username}: ${suitable.length} suitable → ${bestAcca ? 'coupon' : 'no acca in 2–4 odds'}`,
-    );
-    if (suitable.length < 2) return null;
-    if (!bestAcca) return null;
-
-    const { leg1, leg2 } = bestAcca;
-    const combinedOdds = leg1.odds * leg2.odds;
-    const combinedProb = leg1.probability * leg2.probability;
-    const confidenceLevel = this.getConfidenceLevel(combinedProb);
-    const stakeUnits = this.calculateKellyStake(combinedProb, combinedOdds);
-    const source = leg1.fromApi && leg2.fromApi ? 'api_football' : 'internal';
-
+    if (suitable.length === 0) {
+      this.logger.debug(`${tipsterConfig.username}: 0 suitable → no prediction`);
+      return null;
+    }
+    const best = [...suitable].sort((a, b) => b.ev - a.ev)[0];
+    const confidenceLevel = this.getConfidenceLevel(best.probability);
+    const stakeUnits = this.calculateKellyStake(best.probability, best.odds);
+    const source = best.fromApi ? 'api_football' : 'internal';
+    this.logger.debug(`${tipsterConfig.username}: ${suitable.length} suitable → single pick`);
     return {
       tipsterUsername: tipsterConfig.username,
       tipsterDisplayName: tipsterConfig.display_name,
       tipsterId,
-      predictionTitle: `${leg1.homeTeam} vs ${leg1.awayTeam} & ${leg2.homeTeam} vs ${leg2.awayTeam}`,
-      combinedOdds,
+      predictionTitle: `${best.homeTeam} vs ${best.awayTeam}`,
+      combinedOdds: best.odds,
       stakeUnits,
       confidenceLevel,
-      fixtures: [leg1, leg2],
+      fixtures: [best],
       source,
     };
   }
@@ -511,9 +475,10 @@ export class PredictionEngineService {
   ): Promise<void> {
 
     for (const pred of predictions) {
+      // AI coupons are single-fixture only
       const prediction = await this.predictionRepo.save({
         tipsterId: pred.tipsterId,
-        predictionTitle: '2-Pick Acca',
+        predictionTitle: 'Single',
         combinedOdds: pred.combinedOdds,
         stakeUnits: pred.stakeUnits,
         confidenceLevel: pred.confidenceLevel,
