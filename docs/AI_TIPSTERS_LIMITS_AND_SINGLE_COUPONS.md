@@ -78,3 +78,27 @@ The following relaxations are in place so more tipsters can create single coupon
 1. **Weekly tipsters:** `min_win_probability` and `min_api_confidence` lowered to 0.58–0.60 (SafetyFirstPro, TheBankroller, SteadyEddie, ConsistentCarl, TopSixSniper).
 2. **Weekend / midweek:** `fixture_days` removed from WeekendWarrior, PremierLeaguePro, LaLigaLegend, BundesligaBoss, and MidweekMagic so they can post on any day when they have value.
 3. **Single-league:** `"All"` added to `leagues_focus` for PremierLeaguePro, LaLigaLegend, BundesligaBoss, SerieASavant, Ligue1Lion, ChampionshipChamp, OverUnderGuru, TopSixSniper; WeekendWarrior already had two leagues and now has `"All"` as well.
+
+---
+
+## No duplicate fixtures across tipsters (global usedFixtureIds)
+
+**Problem:** The Gambler and Under 2.5 Daily (and others) were picking the same fixtures because each tipster had their own `usedFixtureIds`; the "best" fixture by EV was the same for both.
+
+**Fix:** The engine now uses a **single global** `usedFixtureIds` for the whole run. Once any tipster uses a fixture, no other tipster can use it. Tipsters are processed in config order (e.g. Under 2.5 Daily before The Gambler), so the first tipster in the list gets first pick of the best fixtures for their filters; the rest get the next-best remaining. This reduces duplicate picks and spreads fixtures across more tipsters.
+
+---
+
+## Why only a few AI tipsters may show on a given day
+
+The **fixture pool** (next 7 days, with odds + API predictions) may only contain value that matches a **subset** of tipsters’ filters:
+
+- If most value is **Under 2.5**, tipsters that only accept 1X2, BTTS, or Over 2.5 may have few or no suitable fixtures.
+- **Market specialists** (BTTS only, Over 2.5 only, Double Chance only) only get coupons when that outcome is best by EV in the pool.
+- **Strict filters** (e.g. high min probability, single league, home_only) further reduce the number of qualifying fixtures.
+
+So it’s normal to see only 3–5 tipsters with coupons on some days. To get more tipsters to show:
+
+- Relax **min_win_probability** / **min_api_confidence** slightly for tipsters that rarely post.
+- Ensure **fixture sync** runs so the pool has enough fixtures with odds and predictions.
+- With **global usedFixtureIds**, the same fixture is not repeated across tipsters, so variety in the UI improves.

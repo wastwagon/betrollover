@@ -159,11 +159,13 @@ export class PredictionEngineService {
     const fixturePredictions = await this.generateFixturePredictionsHybrid(withOdds, apiPredictionsMap);
     this.logger.log(`Generated predictions for ${fixturePredictions.length} fixtures`);
 
-    // 6. For each tipster, create single-fixture coupons only (up to max_daily_predictions; no fixture repeat)
+    // 6. For each tipster, create single-fixture coupons only (up to max_daily_predictions).
+    // Global usedFixtureIds: once a fixture is used by any tipster, no other tipster can use it (avoids Gambler + Under 2.5 Daily picking same fixtures).
     const allPredictions: TipsterPredictionResult[] = [];
     const tipsterByUsername = new Map<string, Tipster>();
     const dbTipsters = await this.tipsterRepo.find({ where: { isAi: true } });
     for (const t of dbTipsters) tipsterByUsername.set(t.username, t);
+    const usedFixtureIds = new Set<number>();
 
     for (const tipsterConfig of AI_TIPSTERS) {
       if (!this.shouldTipsterPostToday(tipsterConfig)) continue;
@@ -171,7 +173,6 @@ export class PredictionEngineService {
       const tipster = tipsterByUsername.get(tipsterConfig.username);
       if (!tipster) continue;
 
-      const usedFixtureIds = new Set<number>();
       const maxForTipster = tipsterConfig.personality.max_daily_predictions ?? 999;
       let pred = this.createTipsterPrediction(tipsterConfig, tipster.id, fixturePredictions, usedFixtureIds);
       let count = 0;
