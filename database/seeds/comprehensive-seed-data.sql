@@ -58,9 +58,10 @@ DECLARE
   pick_price DECIMAL;
   created_date TIMESTAMP;
 BEGIN
-  -- Get tipster IDs
-  SELECT ARRAY_AGG(id) INTO tipster_ids FROM users WHERE role = 'tipster';
-  SELECT ARRAY_AGG(id) INTO user_ids FROM users WHERE role = 'user';
+  -- Get tipster IDs in fixed order so [1]=flygonpriest, [2]=wastwagon, [3]=dosty, [4]=qwerty, [5]=tipster_master, [6]=cash
+  SELECT ARRAY_AGG(id ORDER BY CASE username WHEN 'flygonpriest' THEN 1 WHEN 'wastwagon' THEN 2 WHEN 'dosty' THEN 3 WHEN 'qwerty' THEN 4 WHEN 'tipster_master' THEN 5 WHEN 'cash' THEN 6 ELSE 7 END) INTO tipster_ids
+  FROM users WHERE role = 'tipster';
+  SELECT ARRAY_AGG(id ORDER BY id) INTO user_ids FROM users WHERE role = 'user';
   
   -- Create 100 picks distributed across tipsters
   FOR i IN 1..100 LOOP
