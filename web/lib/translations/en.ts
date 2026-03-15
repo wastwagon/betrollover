@@ -933,6 +933,9 @@ const en = {
   'auth.verify_success': 'Your email has been verified. You can now sign in.',
   'auth.verify_invalid': 'This verification link is invalid or has expired.',
   'auth.signing_in': 'Signing in...',
+  'auth.sign_in_with_google': 'Sign in with Google',
+  'auth.sign_up_with_google': 'Sign up with Google',
+  'auth.or_continue_with': 'or continue with',
 
   // ── Error / Not found ────────────────────────────────────────────────────
   'error.off_side': 'This page went off-side',

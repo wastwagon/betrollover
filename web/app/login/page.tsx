@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useT } from '@/context/LanguageContext';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
+import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 
 function LoginForm() {
   const t = useT();
@@ -143,6 +144,15 @@ function LoginForm() {
                   <p className="text-sm text-red-600 font-medium">{error}</p>
                 </div>
               )}
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-[var(--border)]" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-3 bg-white text-[var(--text-muted)]">{t('auth.or_continue_with')}</span>
+                </div>
+              </div>
+              <GoogleSignInButton variant="signin" className="mb-4" disabled={loading} />
               <button
                 type="submit"
                 disabled={loading}

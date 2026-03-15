@@ -933,6 +933,9 @@ const fr: Record<string, string> = {
   'auth.verify_success': 'Votre e-mail a été vérifié. Vous pouvez maintenant vous connecter.',
   'auth.verify_invalid': 'Ce lien de vérification est invalide ou a expiré.',
   'auth.signing_in': 'Connexion en cours...',
+  'auth.sign_in_with_google': 'Se connecter avec Google',
+  'auth.sign_up_with_google': 'S\'inscrire avec Google',
+  'auth.or_continue_with': 'ou continuer avec',
 
   // ── Error / Not found ────────────────────────────────────────────────────
   'error.off_side': 'Cette page est hors jeu',

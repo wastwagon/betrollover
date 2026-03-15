@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { OAuth2Client } from 'google-auth-library';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { UsersService } from '../users/users.service';
@@ -63,6 +64,57 @@ export class AuthService {
   createTokenForUser(user: { id: number; email: string }): string {
     const payload: JwtPayload = { sub: user.id, email: user.email ?? '' };
     return this.jwtService.sign(payload);
+  }
+
+  /** Verify Google ID token and find or create user; return same shape as login(). */
+  async googleLogin(idToken: string): Promise<ReturnType<AuthService['login']> extends Promise<infer R> ? R : never> {
+    const clientId = this.config.get<string>('GOOGLE_CLIENT_ID');
+    if (!clientId?.trim()) {
+      throw new UnauthorizedException('Google sign-in is not configured.');
+    }
+    const client = new OAuth2Client(clientId);
+    let payload: { sub?: string; email?: string; email_verified?: boolean; name?: string; picture?: string };
+    try {
+      const ticket = await client.verifyIdToken({ idToken: idToken.trim(), audience: clientId });
+      payload = ticket.getPayload() || {};
+    } catch {
+      throw new UnauthorizedException('Invalid Google sign-in token. Please try again.');
+    }
+    const sub = payload.sub;
+    if (!sub) throw new UnauthorizedException('Invalid Google token: missing subject.');
+
+    let user: User | null = await this.usersService.findByProviderGoogleId(sub);
+    if (user) {
+      await this.usersService.updateLastLogin(user.id);
+      return this.login(user);
+    }
+
+    const email = payload.email?.trim().toLowerCase();
+    if (email && payload.email_verified) {
+      const existing = await this.usersService.findByEmail(email);
+      if (existing) {
+        await this.usersService.updateProviderGoogleId(existing.id, sub);
+        const updated = await this.usersService.findByProviderGoogleId(sub);
+        if (updated) {
+          await this.usersService.updateLastLogin(updated.id);
+          return this.login(updated);
+        }
+      }
+    }
+
+    if (!email) {
+      throw new UnauthorizedException('Google did not provide an email. Please use email/password sign-up or allow email in Google account.');
+    }
+
+    const newUser = await this.usersService.createFromGoogle({
+      email,
+      displayName: payload.name || email.split('@')[0] || 'User',
+      providerGoogleId: sub,
+      avatar: payload.picture || null,
+    });
+    await this.walletService.getOrCreateWallet(newUser.id);
+    await this.ensureTipsterForUser(newUser);
+    return this.login(newUser);
   }
 
   async login(user: User) {

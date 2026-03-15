@@ -3,6 +3,7 @@ import { Request } from 'express';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -15,6 +16,12 @@ export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
   constructor(private readonly authService: AuthService) { }
+
+  @Post('google')
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 per min per IP
+  async googleLogin(@Body() dto: GoogleLoginDto) {
+    return this.authService.googleLogin(dto.id_token);
+  }
 
   @Post('login')
   @Throttle({ default: { limit: 5, ttl: 300000 } }) // 5 attempts per 5 min per IP (brute-force protection)

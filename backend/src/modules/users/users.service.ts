@@ -30,7 +30,7 @@ export class UsersService {
   async findByEmail(email: string): Promise<User | null> {
     return this.usersRepository.findOne({
       where: { email },
-      select: ['id', 'email', 'password', 'username', 'displayName', 'role', 'status'],
+      select: ['id', 'email', 'password', 'username', 'displayName', 'role', 'status', 'providerGoogleId'],
     });
   }
 
@@ -39,6 +39,13 @@ export class UsersService {
     return this.usersRepository.findOne({
       where: { phone },
       select: ['id', 'email', 'username', 'displayName', 'role', 'status'],
+    });
+  }
+
+  async findByProviderGoogleId(providerGoogleId: string): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: { providerGoogleId },
+      select: ['id', 'email', 'username', 'displayName', 'role', 'status', 'providerGoogleId'],
     });
   }
 
@@ -74,6 +81,41 @@ export class UsersService {
       country: data.country ?? 'Ghana',
       countryCode: data.countryCode ?? 'GHA',
       flagEmoji: data.flagEmoji ?? '🇬🇭',
+    });
+    return this.usersRepository.save(user);
+  }
+
+  /** Create user from Google OAuth (no password). Username derived from email or sub. */
+  async createFromGoogle(data: {
+    email: string;
+    displayName: string;
+    providerGoogleId: string;
+    avatar?: string | null;
+  }): Promise<User> {
+    const baseUsername = data.email.includes('@')
+      ? data.email.replace(/@.*$/, '').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 20) || 'user'
+      : `google_${data.providerGoogleId.slice(0, 12)}`;
+    let username = baseUsername;
+    let attempts = 0;
+    while (attempts < 100) {
+      const existing = await this.usersRepository.findOne({ where: { username }, select: ['id'] });
+      if (!existing) break;
+      username = `${baseUsername}_${Math.floor(1000 + Math.random() * 9000)}`;
+      attempts++;
+    }
+    const user = this.usersRepository.create({
+      email: data.email,
+      username,
+      password: null,
+      displayName: data.displayName || username,
+      avatar: data.avatar ?? null,
+      role: UserRole.USER,
+      providerGoogleId: data.providerGoogleId,
+      emailVerifiedAt: new Date(), // Google is trusted
+      ageVerifiedAt: new Date(), // Same as email register: treat as verified
+      country: 'Ghana',
+      countryCode: 'GHA',
+      flagEmoji: '🇬🇭',
     });
     return this.usersRepository.save(user);
   }
@@ -114,7 +156,8 @@ export class UsersService {
       where: { id: user.id },
       select: ['password'],
     });
-    return fullUser ? bcrypt.compare(password, fullUser.password) : false;
+    if (!fullUser?.password) return false; // OAuth-only users have no password
+    return bcrypt.compare(password, fullUser.password);
   }
 
   async updateProfile(
@@ -156,6 +199,14 @@ export class UsersService {
 
   async updatePassword(id: number, hashedPassword: string): Promise<void> {
     await this.usersRepository.update(id, { password: hashedPassword });
+  }
+
+  async updateProviderGoogleId(userId: number, providerGoogleId: string): Promise<void> {
+    await this.usersRepository.update(userId, { providerGoogleId });
+  }
+
+  async updateLastLogin(userId: number): Promise<void> {
+    await this.usersRepository.update(userId, { lastLogin: new Date() });
   }
 
   async setEmailVerificationToken(id: number, token: string): Promise<void> {

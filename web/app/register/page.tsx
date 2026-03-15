@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useT } from '@/context/LanguageContext';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
+import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { getApiUrl } from '@/lib/site-config';
 
 function RegisterForm() {
@@ -151,6 +152,16 @@ function RegisterForm() {
                 <p className="mt-2 text-[var(--text-muted)] text-base">
                   {step === 'email' ? t('auth.verify_email_first') : t('auth.complete_registration')}
                 </p>
+              </div>
+
+              <GoogleSignInButton variant="signup" className="mb-6" disabled={loading} />
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-3 bg-white text-[var(--text-muted)]">{t('auth.or_continue_with')}</span>
+                </div>
               </div>
 
               {step === 'email' ? (
