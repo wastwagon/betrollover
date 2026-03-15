@@ -26,6 +26,7 @@ interface User {
   totalCommissionPaid?: number | null;
   totalPicks?: number;
   canDelete?: boolean;
+  cannotDeleteReason?: string | null;
 }
 
 export default function AdminUsersPage() {
@@ -136,7 +137,7 @@ export default function AdminUsersPage() {
   const deleteUser = async (id: number) => {
     const token = localStorage.getItem('token');
     if (!token) return;
-    if (!confirm('Permanently delete this user? This cannot be undone.')) return;
+    if (!confirm('Permanently delete this user and all their data (picks, purchases, wallet, etc.)? This cannot be undone.')) return;
     setDeleteError(null);
     setUpdating(id);
     try {
@@ -441,15 +442,20 @@ export default function AdminUsersPage() {
                               Activate
                             </button>
                           )}
-                          {u.canDelete && (
+                          {u.role !== 'admin' && u.canDelete && (
                             <button
                               onClick={() => deleteUser(u.id)}
                               disabled={updating === u.id}
-                              title="Permanently delete (no picks, no purchases, zero balance)"
+                              title="Permanently delete user and all their data (picks, purchases, wallet, etc.)"
                               className="text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
                             >
                               Delete
                             </button>
+                          )}
+                          {u.role === 'admin' && (u.cannotDeleteReason != null && u.cannotDeleteReason !== '') && (
+                            <span className="text-xs text-gray-500 dark:text-gray-400" title={u.cannotDeleteReason}>
+                              Can&apos;t delete: {u.cannotDeleteReason}
+                            </span>
                           )}
                         </div>
                       </td>

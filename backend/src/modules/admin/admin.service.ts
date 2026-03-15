@@ -199,8 +199,8 @@ export class AdminService {
               : null;
             const purchases = Number(safetyRaw[0]?.purchases ?? 0);
             const balance = Number(safetyRaw[0]?.balance ?? 0);
-            const canDelete =
-              u.role !== 'admin' && totalPicks === 0 && purchases === 0 && balance === 0;
+            const canDelete = u.role !== 'admin';
+            const cannotDeleteReason = u.role === 'admin' ? 'Admin account' : null;
             extra = {
               wonPicks: won,
               lostPicks: lost,
@@ -209,10 +209,17 @@ export class AdminService {
               totalCommissionPaid: Number(commRaw[0]?.total ?? 0),
               totalPicks,
               canDelete,
+              cannotDeleteReason,
             };
           } catch {
             // keep default extra
           }
+        } else {
+          extra = {
+            totalPicks: 0,
+            canDelete: u.role !== 'admin',
+            cannotDeleteReason: u.role === 'admin' ? 'Admin account' : null,
+          };
         }
         return { ...u, ...extra };
       }),
@@ -222,30 +229,13 @@ export class AdminService {
   }
 
   /**
-   * Permanently delete a user. Allowed only when user has no picks, no purchases, and zero wallet balance.
-   * Protects system integrity (no cascade of coupons/purchases).
+   * Permanently delete a user and all their data (picks, purchases, wallet, escrow, etc.).
+   * Database ON DELETE CASCADE removes related rows. Not allowed for admin users.
    */
   async deleteUser(adminId: number, userId: number): Promise<{ deleted: boolean }> {
     const user = await this.usersRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
     if (user.role === 'admin') throw new ForbiddenException('Cannot delete an admin user');
-
-    const [picksCount, purchasesCount, walletRow] = await Promise.all([
-      this.ticketRepo.count({ where: { userId } }),
-      this.purchasedRepo.count({ where: { userId } }),
-      this.walletsRepo.findOne({ where: { userId }, select: ['balance'] }),
-    ]);
-
-    if (picksCount > 0) {
-      throw new BadRequestException('User has picks and cannot be deleted. Suspend the account instead.');
-    }
-    if (purchasesCount > 0) {
-      throw new BadRequestException('User has purchases and cannot be deleted. Suspend the account instead.');
-    }
-    const balance = Number(walletRow?.balance ?? 0);
-    if (balance !== 0) {
-      throw new BadRequestException('User has non-zero wallet balance and cannot be deleted.');
-    }
 
     await this.authService.logoutAllForUser(userId);
     await this.usersRepo.delete(userId);
