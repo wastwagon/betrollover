@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { resolveIpToCountry, countryCodeToFlagEmoji } from '../../common/geo.util';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -29,6 +29,8 @@ export interface JwtPayload {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
@@ -139,7 +141,7 @@ export class AuthService {
       });
       const key = await client.getSigningKey(decoded.header.kid);
       const pubKey = key.getPublicKey();
-      const verified = jwt.verify(idToken.trim(), pubKey, {
+      const       verified = jwt.verify(idToken.trim(), pubKey, {
         algorithms: ['RS256'],
         issuer: 'https://appleid.apple.com',
         audience: clientId,
@@ -149,7 +151,9 @@ export class AuthService {
         email: verified.email as string | undefined,
         email_verified: verified.email_verified as boolean | string | undefined,
       };
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Apple id_token verification failed: ${msg}`);
       throw new UnauthorizedException('Invalid Apple sign-in token. Please try again.');
     }
     const sub = payload.sub;
