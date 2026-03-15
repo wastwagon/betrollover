@@ -11,29 +11,32 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    // Log to console or error reporting (e.g. Sentry) in dev/prod
+    console.error('Route error:', error?.message || error);
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] flex flex-col items-center justify-center px-6">
-      <div className="text-6xl mb-4">⚠️</div>
-      <h1 className="text-2xl font-bold text-[var(--text)]">Something went wrong</h1>
-      <p className="mt-4 text-[var(--text-muted)] text-center max-w-md">
-        We encountered an unexpected error. Please try again or return to the homepage.
-      </p>
-      <div className="mt-8 flex flex-wrap gap-3 justify-center">
-        <button
-          onClick={reset}
-          className="px-6 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-all"
-        >
-          Try again
-        </button>
-        <Link
-          href="/"
-          className="px-6 py-3 rounded-xl font-semibold border border-[var(--border)] text-[var(--text)] hover:bg-[var(--card)] transition-all"
-        >
-          Go Home
-        </Link>
+    <div className="min-h-[60vh] flex flex-col items-center justify-center px-6 py-12">
+      <div className="max-w-md w-full text-center space-y-6">
+        <h1 className="text-xl font-bold text-[var(--text)]">Something went wrong</h1>
+        <p className="text-sm text-[var(--text-muted)]">
+          We hit an error loading this page. You can try again or go back home.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <button
+            type="button"
+            onClick={reset}
+            className="px-5 py-2.5 rounded-xl font-semibold bg-[var(--primary)] text-white hover:opacity-90 transition-opacity"
+          >
+            Try again
+          </button>
+          <Link
+            href="/"
+            className="px-5 py-2.5 rounded-xl font-semibold border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-warm)] transition-colors"
+          >
+            Go home
+          </Link>
+        </div>
       </div>
     </div>
   );

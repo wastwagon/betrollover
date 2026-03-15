@@ -930,6 +930,8 @@ const fr: Record<string, string> = {
   'auth.sign_in_desc': 'Connectez-vous pour accéder à votre tableau de bord',
   'auth.invalid_credentials': 'E-mail ou mot de passe incorrect',
   'auth.server_error': 'Impossible de se connecter au serveur. Veuillez réessayer.',
+  'auth.retry': 'Réessayer',
+  'auth.backend_unavailable_hint': 'Si le problème persiste, le service peut être temporairement indisponible. Vérifiez votre connexion et réessayez.',
   'auth.send_reset': 'Envoyer le lien',
   'auth.check_email': 'Vérifiez votre e-mail',
   'auth.reset_sent': 'Si un compte existe, nous avons envoyé un lien de réinitialisation.',

@@ -10,10 +10,32 @@ import { AppModule } from './app.module';
 import { MigrationRunnerService } from './modules/admin/migration-runner.service';
 import { SeedRunnerService } from './modules/admin/seed-runner.service';
 
+function validateConfig(logger: Logger): void {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const requiredInProd: { key: string; message?: string }[] = [
+    { key: 'JWT_SECRET', message: 'Required for signing tokens. Set a strong random value (32+ chars).' },
+    { key: 'APP_URL', message: 'Frontend origin for CORS (e.g. https://betrollover.com). API must allow this origin.' },
+  ];
+  if (!isProduction) return;
+  const missing: string[] = [];
+  for (const { key, message } of requiredInProd) {
+    const val = process.env[key];
+    if (!val || String(val).trim() === '') {
+      missing.push(message ? `${key}: ${message}` : key);
+    }
+  }
+  if (missing.length > 0) {
+    logger.error('❌ Production config validation failed. Missing or empty:');
+    missing.forEach(m => logger.error(`   - ${m}`));
+    logger.error('Set these in your environment and restart.');
+    process.exit(1);
+  }
+}
+
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
-  // Validate critical environment variables
+  // Validate critical environment variables (production: fail fast with clear message)
   const isProduction = process.env.NODE_ENV === 'production';
   const jwtSecret = process.env.JWT_SECRET;
 
@@ -26,6 +48,8 @@ async function bootstrap() {
   if (!jwtSecret) {
     logger.warn('⚠️  WARNING: JWT_SECRET not set, using default secret (NOT SECURE FOR PRODUCTION)');
   }
+
+  validateConfig(logger);
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { bodyParser: false });
 

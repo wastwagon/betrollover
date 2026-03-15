@@ -32,12 +32,14 @@ import { PredictionFixture } from '../predictions/entities/prediction-fixture.en
 import { TipstersApiService } from '../predictions/tipsters-api.service';
 import { ResultTrackerService } from '../predictions/result-tracker.service';
 import { SyncStatus } from '../fixtures/entities/sync-status.entity';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
 
   constructor(
+    private readonly auditService: AuditService,
     @InjectRepository(SyncStatus)
     private syncStatusRepo: Repository<SyncStatus>,
     @InjectRepository(User)
@@ -203,7 +205,7 @@ export class AdminService {
     return { items: enriched, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
-  async updateUser(id: number, data: { role?: string; status?: string; avatar?: string | null }) {
+  async updateUser(adminId: number, id: number, data: { role?: string; status?: string; avatar?: string | null }) {
     const user = await this.usersRepo.findOne({ where: { id } });
     if (!user) return null;
     if (data.role) user.role = data.role as UserRole;
@@ -213,6 +215,12 @@ export class AdminService {
       await this.syncAvatarToTipster(id, user.avatar);
     }
     await this.usersRepo.save(user);
+    if (data.role || data.status) {
+      await this.auditService.log(adminId, data.role ? 'user_role_change' : 'user_status_change', 'user', id, {
+        role: data.role ?? user.role,
+        status: data.status ?? user.status,
+      });
+    }
     return user;
   }
 
@@ -728,8 +736,17 @@ export class AdminService {
     return this.contentService.getAll();
   }
 
-  async updateContentPage(slug: string, data: { title?: string; content?: string; metaDescription?: string }) {
-    return this.contentService.update(slug, data);
+  async getAuditLog(limit = 100, filters?: { adminId?: number; action?: string }) {
+    return this.auditService.getRecent(limit, filters);
+  }
+
+  async updateContentPage(adminId: number, slug: string, data: { title?: string; content?: string; metaDescription?: string }) {
+    const page = await this.contentService.update(slug, data);
+    await this.auditService.log(adminId, 'content_page_update', 'content_page', slug, {
+      slug,
+      fieldsUpdated: Object.keys(data).filter((k) => data[k as keyof typeof data] !== undefined),
+    });
+    return page;
   }
 
   async getSmtpSettings() {
@@ -946,7 +963,7 @@ export class AdminService {
     return { items, total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) };
   }
 
-  async updateWithdrawalStatus(id: number, status: string, failureReason?: string) {
+  async updateWithdrawalStatus(adminId: number, id: number, status: string, failureReason?: string) {
     const withdrawal = await this.withdrawalRepo.findOne({ where: { id } });
     if (!withdrawal) return null;
     const payout = await this.payoutMethodRepo.findOne({ where: { id: withdrawal.payoutMethodId } });
@@ -977,6 +994,12 @@ export class AdminService {
         metadata: { amount: Number(withdrawal.amount).toFixed(2) },
       }).catch(() => {});
     }
+    await this.auditService.log(adminId, 'withdrawal_status_change', 'withdrawal', id, {
+      status,
+      amount: Number(withdrawal.amount),
+      userId: withdrawal.userId,
+      failureReason: failureReason ?? null,
+    });
     return withdrawal;
   }
 

@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { CouponReview } from './entities/coupon-review.entity';
 import { UserPurchasedPick } from '../accumulators/entities/user-purchased-pick.entity';
 import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
+import { sanitizeText } from '../../common/sanitize.util';
 
 @Injectable()
 export class ReviewsService {
@@ -36,9 +37,10 @@ export class ReviewsService {
     const existing = await this.reviewRepo.findOne({
       where: { couponId: data.couponId, reviewerId: userId },
     });
+    const comment = data.comment != null ? sanitizeText(data.comment, 2000) || null : null;
     if (existing) {
       existing.rating = data.rating;
-      existing.comment = data.comment ?? null;
+      existing.comment = comment;
       return this.reviewRepo.save(existing);
     }
 
@@ -48,7 +50,7 @@ export class ReviewsService {
         reviewerId: userId,
         tipsterId: ticket.userId,
         rating: data.rating,
-        comment: data.comment ?? null,
+        comment,
         isVerifiedPurchase: true,
       }),
     );

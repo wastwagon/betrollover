@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ContentPage } from './entities/content-page.entity';
+import { sanitizeShortText, sanitizeText } from '../../common/sanitize.util';
 
 @Injectable()
 export class ContentService {
@@ -21,9 +22,9 @@ export class ContentService {
   async update(slug: string, data: { title?: string; content?: string; metaDescription?: string }) {
     const page = await this.repo.findOne({ where: { slug } });
     if (!page) throw new NotFoundException('Page not found');
-    if (data.title !== undefined) page.title = data.title;
-    if (data.content !== undefined) page.content = data.content;
-    if (data.metaDescription !== undefined) page.metaDescription = data.metaDescription;
+    if (data.title !== undefined) page.title = sanitizeShortText(data.title, 255) || page.title;
+    if (data.content !== undefined) page.content = sanitizeText(data.content, 50000);
+    if (data.metaDescription !== undefined) page.metaDescription = sanitizeShortText(data.metaDescription, 500) || null;
     await this.repo.save(page);
     return page;
   }

@@ -7,6 +7,7 @@ import { useT } from '@/context/LanguageContext';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { AppleSignInButton } from '@/components/AppleSignInButton';
+import { ApiErrorBanner } from '@/components/ApiErrorBanner';
 
 function LoginForm() {
   const t = useT();
@@ -143,9 +144,12 @@ function LoginForm() {
                 </div>
               </div>
               {error && (
-                <div className="p-3 rounded-lg bg-red-50 border border-red-200" role="alert" aria-live="polite">
-                  <p className="text-sm text-red-600 font-medium">{error}</p>
-                </div>
+                <ApiErrorBanner
+                  message={error}
+                  onRetry={() => setError('')}
+                  showHint
+                  className="mb-2"
+                />
               )}
               <div className="relative my-4">
                 <div className="absolute inset-0 flex items-center">

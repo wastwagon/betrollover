@@ -6,9 +6,10 @@ import { SupportService } from './support.service';
 import { SupportController } from './support.controller';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { EmailModule } from '../email/email.module';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([SupportTicket, User]), NotificationsModule, EmailModule],
+  imports: [TypeOrmModule.forFeature([SupportTicket, User]), NotificationsModule, EmailModule, AuditModule],
   controllers: [SupportController],
   providers: [SupportService],
   exports: [SupportService],

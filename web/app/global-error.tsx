@@ -1,5 +1,12 @@
 'use client';
 
+import { useEffect } from 'react';
+import Link from 'next/link';
+
+/**
+ * Catches errors in the root layout. Must render its own <html> and <body>
+ * because the root layout may have failed.
+ */
 export default function GlobalError({
   error,
   reset,
@@ -7,43 +14,39 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    console.error('Global error:', error?.message || error);
+  }, [error]);
+
   return (
     <html lang="en">
-      <body style={{ margin: 0, fontFamily: 'system-ui, sans-serif', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, background: '#f8fafc' }}>
-        <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1e293b', margin: 0 }}>Something went wrong</h1>
-        <p style={{ marginTop: 16, color: '#64748b', textAlign: 'center', maxWidth: 400 }}>
-          A critical error occurred. Please refresh the page or try again later.
-        </p>
-        <div style={{ marginTop: 32, display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+      <body style={{ margin: 0, fontFamily: 'system-ui, sans-serif', background: '#f8fafc', color: '#1e293b' }}>
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: 8 }}>Something went wrong</h1>
+          <p style={{ fontSize: 14, color: '#64748b', marginBottom: 24, textAlign: 'center' }}>
+            The app encountered an error. Try refreshing the page.
+          </p>
           <button
-            onClick={() => reset()}
+            type="button"
+            onClick={reset}
             style={{
-              padding: '12px 24px',
+              padding: '10px 20px',
               borderRadius: 12,
               fontWeight: 600,
-              background: '#0d9488',
-              color: 'white',
+              background: '#10b981',
+              color: '#fff',
               border: 'none',
               cursor: 'pointer',
             }}
           >
             Try again
           </button>
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-          <a
+          <Link
             href="/"
-            style={{
-              padding: '12px 24px',
-              borderRadius: 12,
-              fontWeight: 600,
-              border: '1px solid #e2e8f0',
-              color: '#1e293b',
-              textDecoration: 'none',
-            }}
+            style={{ marginTop: 12, fontSize: 14, color: '#10b981', textDecoration: 'underline' }}
           >
-            Go Home
-          </a>
+            Go home
+          </Link>
         </div>
       </body>
     </html>

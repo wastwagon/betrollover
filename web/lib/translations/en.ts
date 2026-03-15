@@ -930,6 +930,8 @@ const en = {
   'auth.sign_in_desc': 'Sign in to access your dashboard',
   'auth.invalid_credentials': 'Invalid email or password',
   'auth.server_error': 'Unable to connect to server. Please try again.',
+  'auth.retry': 'Try again',
+  'auth.backend_unavailable_hint': 'If this persists, the service may be temporarily down. Check your connection and retry.',
   'auth.send_reset': 'Send reset link',
   'auth.check_email': 'Check your email',
   'auth.reset_sent': 'If an account exists, we\'ve sent a reset link.',

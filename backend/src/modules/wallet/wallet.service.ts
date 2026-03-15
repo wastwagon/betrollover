@@ -203,6 +203,18 @@ export class WalletService {
       return { credited: false };
     }
 
+    // Idempotency: skip if already credited (e.g. webhook processed first)
+    const existingTx = await this.txRepo.findOne({
+      where: { userId, reference, type: 'deposit' },
+      select: ['id', 'amount'],
+    });
+    if (existingTx) {
+      deposit.status = 'completed';
+      deposit.paystackReference = verify.id || null;
+      await this.depositRepo.save(deposit).catch(() => {});
+      return { credited: true, amount: Number(existingTx.amount) };
+    }
+
     const amount = Number(verify.amount) / 100; // pesewas to GHS
     deposit.status = 'completed';
     deposit.paystackReference = verify.id || null;
@@ -267,6 +279,13 @@ export class WalletService {
 
     const deposit = await this.depositRepo.findOne({ where: { reference } });
     if (!deposit) return { received: true };
+
+    // Idempotency: skip if we already credited this reference (e.g. verify callback ran first)
+    const existingTx = await this.txRepo.findOne({
+      where: { userId: deposit.userId, type: 'deposit', reference },
+      select: ['id'],
+    });
+    if (existingTx) return { received: true };
 
     await this.credit(
       deposit.userId,

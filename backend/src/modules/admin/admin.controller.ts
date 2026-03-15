@@ -3,6 +3,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { DataSource } from 'typeorm';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { AuthService } from '../auth/auth.service';
 import { AdminService } from './admin.service';
 import { AnalyticsService } from './analytics.service';
 import { MigrationRunnerService } from './migration-runner.service';
@@ -34,6 +35,7 @@ import { UpdateApiSportsKeyDto, TestApiSportsConnectionDto } from './dto/api-spo
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
+    private readonly authService: AuthService,
     private readonly usersService: UsersService,
     private readonly analyticsService: AnalyticsService,
     private readonly migrationRunner: MigrationRunnerService,
@@ -328,7 +330,7 @@ export class AdminController {
     @Body() body: { role?: string; status?: string; avatar?: string | null },
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
-    return this.adminService.updateUser(id, body);
+    return this.adminService.updateUser(user.id, id, body);
   }
 
   @Post('users/:id/avatar')
@@ -365,6 +367,12 @@ export class AdminController {
   async rejectTipster(@CurrentUser() admin: User, @Param('id', ParseIntPipe) id: number) {
     if (admin.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.adminService.rejectTipsterRequest(id, admin.id);
+  }
+
+  @Post('users/:id/logout-all')
+  async logoutUserAllDevices(@CurrentUser() admin: User, @Param('id', ParseIntPipe) id: number) {
+    if (admin.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.authService.logoutAllForUser(id);
   }
 
   @Post('users/:id/impersonate')
@@ -502,6 +510,21 @@ export class AdminController {
     return this.adminService.getContentPages();
   }
 
+  @Get('audit-log')
+  async getAuditLog(
+    @CurrentUser() user: User,
+    @Query('limit') limit?: string,
+    @Query('adminId') adminId?: string,
+    @Query('action') action?: string,
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const limitNum = limit ? Math.min(200, parseInt(limit, 10) || 100) : 100;
+    const filters: { adminId?: number; action?: string } = {};
+    if (adminId) filters.adminId = parseInt(adminId, 10);
+    if (action) filters.action = action;
+    return this.adminService.getAuditLog(limitNum, Object.keys(filters).length ? filters : undefined);
+  }
+
   @Get('smtp-settings')
   async getSmtpSettings(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
@@ -545,7 +568,7 @@ export class AdminController {
     @Body() body: { title?: string; content?: string; metaDescription?: string },
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
-    return this.adminService.updateContentPage(slug, body);
+    return this.adminService.updateContentPage(user.id, slug, body);
   }
 
   // News Management
@@ -843,7 +866,7 @@ export class AdminController {
     @Body() body: { status: string; failureReason?: string },
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
-    return this.adminService.updateWithdrawalStatus(id, body.status, body.failureReason);
+    return this.adminService.updateWithdrawalStatus(user.id, id, body.status, body.failureReason);
   }
 
   // Payout Methods Management

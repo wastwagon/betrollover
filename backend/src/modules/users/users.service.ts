@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { sanitizeShortText, sanitizeText } from '../../common/sanitize.util';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -59,7 +60,7 @@ export class UsersService {
   async findById(id: number): Promise<User | null> {
     return this.usersRepository.findOne({
       where: { id },
-      select: ['id', 'email', 'contactEmail', 'username', 'displayName', 'avatar', 'phone', 'role', 'status', 'createdAt', 'emailVerifiedAt', 'ageVerifiedAt'],
+      select: ['id', 'email', 'contactEmail', 'username', 'displayName', 'avatar', 'phone', 'role', 'status', 'createdAt', 'emailVerifiedAt', 'ageVerifiedAt', 'bio'],
     });
   }
 
@@ -207,12 +208,16 @@ export class UsersService {
 
   async updateProfile(
     id: number,
-    data: { displayName?: string; phone?: string; avatar?: string | null; contactEmail?: string | null },
+    data: { displayName?: string; phone?: string; avatar?: string | null; contactEmail?: string | null; bio?: string | null },
   ): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) throw new BadRequestException('Account not found.');
-    if (data.displayName !== undefined) user.displayName = data.displayName;
+    if (data.displayName !== undefined) user.displayName = sanitizeShortText(data.displayName, 100) || user.displayName;
     if (data.phone !== undefined) user.phone = data.phone;
+    if (data.bio !== undefined) {
+      user.bio = sanitizeText(data.bio, 500) || null;
+      await this.syncBioToTipster(id, user.bio);
+    }
     if (data.contactEmail !== undefined) {
       const v = data.contactEmail?.trim() || null;
       if (v && !this.isValidEmail(v)) throw new BadRequestException('Contact email must be a valid email address.');
@@ -243,6 +248,14 @@ export class UsersService {
     const tipster = await this.tipsterRepo.findOne({ where: { userId } });
     if (tipster) {
       tipster.avatarUrl = avatarUrl;
+      await this.tipsterRepo.save(tipster);
+    }
+  }
+
+  private async syncBioToTipster(userId: number, bio: string | null): Promise<void> {
+    const tipster = await this.tipsterRepo.findOne({ where: { userId } });
+    if (tipster) {
+      tipster.bio = bio;
       await this.tipsterRepo.save(tipster);
     }
   }

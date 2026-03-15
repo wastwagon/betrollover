@@ -1,5 +1,6 @@
-import { Injectable, Logger, UnauthorizedException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, ConflictException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { resolveIpToCountry, countryCodeToFlagEmoji } from '../../common/geo.util';
+import { validatePasswordPolicy } from '../../common/password-policy.util';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -263,6 +264,12 @@ export class AuthService {
     return { revoked: (result.affected ?? 0) > 0 };
   }
 
+  /** Revoke all refresh tokens for a user (logout from all devices). */
+  async logoutAllForUser(userId: number): Promise<{ revoked: number }> {
+    const result = await this.refreshTokenRepo.delete({ userId });
+    return { revoked: result.affected ?? 0 };
+  }
+
   async register(data: {
     email: string;
     username: string;
@@ -273,6 +280,8 @@ export class AuthService {
     referralCode?: string;
     sessionId?: string;
   }, clientIp?: string) {
+    const policy = validatePasswordPolicy(data.password);
+    if (!policy.valid) throw new BadRequestException(policy.message);
     await this.emailOtpService.verifyOtp(data.email.trim().toLowerCase(), data.otpCode);
     const existing = await this.usersService.findByEmail(data.email);
     if (existing) {
@@ -412,6 +421,8 @@ export class AuthService {
   }
 
   async changePassword(userId: number, currentPassword: string, newPassword: string) {
+    const policy = validatePasswordPolicy(newPassword);
+    if (!policy.valid) throw new BadRequestException(policy.message);
     const user = await this.usersService.findById(userId);
     if (!user) throw new UnauthorizedException('Account not found.');
     const valid = await this.usersService.validatePassword(user, currentPassword);
@@ -456,6 +467,8 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Account not found.');
     }
+    const policy = validatePasswordPolicy(data.newPassword);
+    if (!policy.valid) throw new BadRequestException(policy.message);
 
     const hashed = await bcrypt.hash(data.newPassword, 12);
     await this.usersService.updatePassword(user.id, hashed);

@@ -102,4 +102,11 @@ export class AuthController {
   async logout(@Body() body: { refresh_token?: string }) {
     return this.authService.logout(body.refresh_token ?? '');
   }
+
+  @Post('logout-all')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  async logoutAll(@CurrentUser() user: User) {
+    return this.authService.logoutAllForUser(user.id);
+  }
 }

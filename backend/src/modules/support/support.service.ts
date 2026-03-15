@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { SupportTicket } from './entities/support-ticket.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { EmailService } from '../email/email.service';
+import { AuditService } from '../audit/audit.service';
+import { sanitizeShortText, sanitizeText } from '../../common/sanitize.util';
 
 export const TICKET_CATEGORIES = ['general', 'dispute', 'billing', 'settlement', 'other'] as const;
 
@@ -14,6 +16,7 @@ export class SupportService {
     private ticketRepo: Repository<SupportTicket>,
     private readonly notificationsService: NotificationsService,
     private readonly emailService: EmailService,
+    private readonly auditService: AuditService,
   ) {}
 
   async create(userId: number, data: {
@@ -25,11 +28,16 @@ export class SupportService {
     if (!data.subject?.trim()) throw new BadRequestException('Subject is required');
     if (!data.message?.trim()) throw new BadRequestException('Message is required');
 
+    const subject = sanitizeShortText(data.subject, 255);
+    const message = sanitizeText(data.message, 10000);
+    if (!subject) throw new BadRequestException('Subject is required');
+    if (!message) throw new BadRequestException('Message is required');
+
     const ticket = this.ticketRepo.create({
       userId,
       category: TICKET_CATEGORIES.includes(data.category as any) ? data.category : 'general',
-      subject: data.subject.trim().slice(0, 255),
-      message: data.message.trim(),
+      subject,
+      message,
       relatedCouponId: data.relatedCouponId ?? null,
       status: 'open',
     });
@@ -80,7 +88,7 @@ export class SupportService {
   async adminResolve(adminId: number, ticketId: number, data: { response: string; status: string }) {
     const ticket = await this.ticketRepo.findOne({ where: { id: ticketId } });
     if (!ticket) throw new NotFoundException('Ticket not found');
-    ticket.adminResponse = data.response;
+    ticket.adminResponse = sanitizeText(data.response, 10000) || null;
     ticket.status = ['open','in_progress','resolved','closed'].includes(data.status) ? data.status : 'resolved';
     ticket.resolvedBy = adminId;
     ticket.resolvedAt = new Date();
@@ -96,6 +104,10 @@ export class SupportService {
       sendEmail: false,
     }).catch(() => {});
 
+    await this.auditService.log(adminId, 'support_ticket_resolve', 'support_ticket', String(ticketId), {
+      status: ticket.status,
+      hadResponse: !!data.response?.trim(),
+    });
     return saved;
   }
 

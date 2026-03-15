@@ -52,9 +52,11 @@ import { AmericanFootballModule } from '../american-football/american-football.m
 import { TennisModule } from '../tennis/tennis.module';
 import { OddsApiModule } from '../odds-api/odds-api.module';
 import { SyncStatus } from '../fixtures/entities/sync-status.entity';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
+    AuditModule,
     TypeOrmModule.forFeature([
       SyncStatus,
       User,
