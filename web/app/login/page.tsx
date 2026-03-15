@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useT } from '@/context/LanguageContext';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
@@ -10,7 +10,6 @@ import { AppleSignInButton } from '@/components/AppleSignInButton';
 
 function LoginForm() {
   const t = useT();
-  const searchParams = useSearchParams();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,10 +17,13 @@ function LoginForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const urlError = searchParams.get('error');
+  // Read error from URL only after mount to avoid React hydration mismatch (#418) with useSearchParams
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const urlError = params.get('error');
     if (urlError) setError(decodeURIComponent(urlError));
-  }, [urlError]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
