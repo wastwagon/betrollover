@@ -97,6 +97,23 @@ When the deployment shows **Finished**, open **https://betrollover.com**.
 
 ---
 
+## Build fails with exit 255
+
+If deployment fails with **Command execution failed (exit code 255)** during the Docker build:
+
+1. **Memory (most common)** – API and Web build in parallel and can exhaust RAM.  
+   - Give the build server **at least 4GB RAM**.  
+   - In Coolify: increase the server/resources for the build, or use a larger VPS.  
+   - Try **Redeploy** once; transient OOM can happen on first run.
+
+2. **Disk space** – Ensure the server has enough free disk for build layers (e.g. 2GB+ free).
+
+3. **Logs** – In Coolify deployment log, check whether the **web** step (`RUN npm run build`) or **api** step finished. If one step is missing “DONE”, that service likely hit memory limit or a build error.
+
+The Web Dockerfile sets `NODE_OPTIONS=--max-old-space-size=3072` so the Next.js build uses at most ~3GB heap and is less likely to OOM when both images build together.
+
+---
+
 ## Quick reference
 
 | Item | Value |

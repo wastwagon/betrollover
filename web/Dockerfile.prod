@@ -1,7 +1,11 @@
 # BetRollover Web - Production Dockerfile
 # Build context: project root (.)
 # NEXT_PUBLIC_* must be set at build time - pass as ARG in Coolify/docker-compose
+# If Coolify build fails with exit 255, try: more RAM (4GB+), or redeploy (OOM/timeout).
 FROM node:20-alpine AS builder
+
+# Limit Node heap during build to avoid OOM when api+web build in parallel (e.g. on 4GB VPS)
+ENV NODE_OPTIONS=--max-old-space-size=3072
 
 # Build shared-types first (web depends on file:../packages/shared-types)
 COPY packages/shared-types /packages/shared-types
