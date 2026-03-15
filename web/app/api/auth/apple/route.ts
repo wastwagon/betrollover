@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
-    response_type: 'id_token',
+    response_type: 'code id_token',
     response_mode: 'form_post',
     scope: 'name email',
     state,
