@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useT } from '@/context/LanguageContext';
 
 type Variant = 'signin' | 'signup';
@@ -17,7 +18,11 @@ export function AppleSignInButton({
   disabled = false,
 }: AppleSignInButtonProps) {
   const t = useT();
-  const clientId = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_APPLE_CLIENT_ID || process.env.APPLE_CLIENT_ID) : '';
+  const [clientId, setClientId] = useState('');
+  // Set clientId only after mount to avoid server/client hydration mismatch (React #418)
+  useEffect(() => {
+    setClientId(process.env.NEXT_PUBLIC_APPLE_CLIENT_ID || process.env.APPLE_CLIENT_ID || '');
+  }, []);
   if (!clientId?.trim()) return null;
 
   const label = variant === 'signup' ? t('auth.sign_up_with_apple') : t('auth.sign_in_with_apple');

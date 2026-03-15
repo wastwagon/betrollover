@@ -51,8 +51,13 @@ export function GoogleSignInButton({
   const [scriptReady, setScriptReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [clientId, setClientId] = useState('');
   const t = useT();
-  const clientId = typeof window !== 'undefined' ? process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID : '';
+
+  // Set clientId only after mount to avoid server/client hydration mismatch (React #418)
+  useEffect(() => {
+    setClientId(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '');
+  }, []);
 
   useEffect(() => {
     if (!clientId?.trim()) return;

@@ -30,7 +30,7 @@ export class User {
   email: string;
 
   /** Optional; for admin communication when account email is a relay (e.g. Apple Hide My Email). */
-  @Column({ length: 255, nullable: true })
+  @Column('varchar', { length: 255, nullable: true })
   contactEmail: string | null = null;
 
   @Column('varchar', { length: 255, select: false, nullable: true })
