@@ -24,6 +24,8 @@ interface User {
   wonPicks?: number | null;
   lostPicks?: number | null;
   totalCommissionPaid?: number | null;
+  totalPicks?: number;
+  canDelete?: boolean;
 }
 
 export default function AdminUsersPage() {
@@ -37,6 +39,7 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState('');
   const [updating, setUpdating] = useState<number | null>(null);
   const [avatarUploading, setAvatarUploading] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [tipsterRequests, setTipsterRequests] = useState<{ id: number; userId: number; user?: { displayName: string; email: string }; createdAt: string }[]>([]);
 
   const load = useCallback(() => {
@@ -127,6 +130,25 @@ export default function AdminUsersPage() {
       if (res.ok) load();
     } finally {
       setAvatarUploading(null);
+    }
+  };
+
+  const deleteUser = async (id: number) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    if (!confirm('Permanently delete this user? This cannot be undone.')) return;
+    setDeleteError(null);
+    setUpdating(id);
+    try {
+      const res = await fetch(`${API_URL}/admin/users/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        load();
+      } else {
+        setDeleteError(data?.message || 'Failed to delete user');
+      }
+    } finally {
+      setUpdating(null);
     }
   };
 
@@ -230,6 +252,13 @@ export default function AdminUsersPage() {
           <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 flex items-center justify-between">
             <span>{impersonateError}</span>
             <button onClick={() => setImpersonateError(null)} className="text-red-600 dark:text-red-400 hover:underline text-sm">Dismiss</button>
+          </div>
+        )}
+
+        {deleteError && (
+          <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 flex items-center justify-between">
+            <span>{deleteError}</span>
+            <button onClick={() => setDeleteError(null)} className="text-red-600 dark:text-red-400 hover:underline text-sm">Dismiss</button>
           </div>
         )}
 
@@ -410,6 +439,16 @@ export default function AdminUsersPage() {
                               className="text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors"
                             >
                               Activate
+                            </button>
+                          )}
+                          {u.canDelete && (
+                            <button
+                              onClick={() => deleteUser(u.id)}
+                              disabled={updating === u.id}
+                              title="Permanently delete (no picks, no purchases, zero balance)"
+                              className="text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
+                            >
+                              Delete
                             </button>
                           )}
                         </div>

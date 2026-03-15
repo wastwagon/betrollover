@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, DataSource, Between } from 'typeorm';
 import { AuthService } from '../auth/auth.service';
@@ -159,50 +159,101 @@ export class AdminService {
 
     const [items, total] = await qb.skip(skip).take(limit).getManyAndCount();
 
-    // Attach tipster performance stats (ROI, win rate, commission paid) for tipster/admin rows
+    // Attach tipster performance stats, totalPicks, and canDelete (for permanent delete when no picks/purchases/balance)
     const enriched = await Promise.all(
       items.map(async (u) => {
-        if (u.role !== 'tipster' && u.role !== 'admin' && u.role !== 'user') return u;
-        try {
-          const [statsRaw, commRaw] = await Promise.all([
-            this.dataSource.query(
-              `SELECT
-                 COUNT(*) FILTER (WHERE result='won')  AS won,
-                 COUNT(*) FILTER (WHERE result='lost') AS lost,
-                 COUNT(*) FILTER (WHERE result IN ('won','lost')) AS settled,
-                 COALESCE(SUM(CASE WHEN result='won' THEN total_odds ELSE 0 END),0) AS sum_odds_won
-               FROM accumulator_tickets WHERE user_id=$1 AND status='active'`,
-              [u.id],
-            ),
-            this.dataSource.query(
-              `SELECT COALESCE(SUM(amount),0) AS total FROM wallet_transactions
-               WHERE user_id=$1 AND type='commission' AND status='completed'`,
-              [u.id],
-            ),
-          ]);
-          const s = statsRaw[0] ?? {};
-          const won = Number(s.won ?? 0);
-          const lost = Number(s.lost ?? 0);
-          const settled = Number(s.settled ?? 0);
-          const winRate = settled > 0 ? (won / settled) * 100 : null;
-          const roi = settled > 0
-            ? ((Number(s.sum_odds_won ?? 0) - settled) / settled) * 100
-            : null;
-          return {
-            ...u,
-            wonPicks: won,
-            lostPicks: lost,
-            winRate: winRate !== null ? Number(winRate.toFixed(1)) : null,
-            roi: roi !== null ? Number(roi.toFixed(2)) : null,
-            totalCommissionPaid: Number(commRaw[0]?.total ?? 0),
-          };
-        } catch {
-          return u;
+        let extra: Record<string, unknown> = { totalPicks: 0, canDelete: false };
+        if (u.role === 'tipster' || u.role === 'admin' || u.role === 'user') {
+          try {
+            const [statsRaw, commRaw, safetyRaw] = await Promise.all([
+              this.dataSource.query(
+                `SELECT
+                   COUNT(*) FILTER (WHERE result='won')  AS won,
+                   COUNT(*) FILTER (WHERE result='lost') AS lost,
+                   COUNT(*) FILTER (WHERE result IN ('won','lost')) AS settled,
+                   COALESCE(SUM(CASE WHEN result='won' THEN total_odds ELSE 0 END),0) AS sum_odds_won,
+                   COUNT(*) AS total_picks
+                 FROM accumulator_tickets WHERE user_id=$1 AND status='active'`,
+                [u.id],
+              ),
+              this.dataSource.query(
+                `SELECT COALESCE(SUM(amount),0) AS total FROM wallet_transactions
+                 WHERE user_id=$1 AND type='commission' AND status='completed'`,
+                [u.id],
+              ),
+              this.dataSource.query(
+                `SELECT
+                   (SELECT COUNT(*) FROM user_purchased_picks WHERE user_id=$1) AS purchases,
+                   (SELECT COALESCE(balance,0) FROM user_wallets WHERE user_id=$1) AS balance`,
+                [u.id],
+              ),
+            ]);
+            const s = statsRaw[0] ?? {};
+            const won = Number(s.won ?? 0);
+            const lost = Number(s.lost ?? 0);
+            const settled = Number(s.settled ?? 0);
+            const totalPicks = Number(s.total_picks ?? 0);
+            const winRate = settled > 0 ? (won / settled) * 100 : null;
+            const roi = settled > 0
+              ? ((Number(s.sum_odds_won ?? 0) - settled) / settled) * 100
+              : null;
+            const purchases = Number(safetyRaw[0]?.purchases ?? 0);
+            const balance = Number(safetyRaw[0]?.balance ?? 0);
+            const canDelete =
+              u.role !== 'admin' && totalPicks === 0 && purchases === 0 && balance === 0;
+            extra = {
+              wonPicks: won,
+              lostPicks: lost,
+              winRate: winRate !== null ? Number(winRate.toFixed(1)) : null,
+              roi: roi !== null ? Number(roi.toFixed(2)) : null,
+              totalCommissionPaid: Number(commRaw[0]?.total ?? 0),
+              totalPicks,
+              canDelete,
+            };
+          } catch {
+            // keep default extra
+          }
         }
+        return { ...u, ...extra };
       }),
     );
 
     return { items: enriched, total, page, limit, totalPages: Math.ceil(total / limit) };
+  }
+
+  /**
+   * Permanently delete a user. Allowed only when user has no picks, no purchases, and zero wallet balance.
+   * Protects system integrity (no cascade of coupons/purchases).
+   */
+  async deleteUser(adminId: number, userId: number): Promise<{ deleted: boolean }> {
+    const user = await this.usersRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+    if (user.role === 'admin') throw new ForbiddenException('Cannot delete an admin user');
+
+    const [picksCount, purchasesCount, walletRow] = await Promise.all([
+      this.ticketRepo.count({ where: { userId } }),
+      this.purchasedRepo.count({ where: { userId } }),
+      this.walletsRepo.findOne({ where: { userId }, select: ['balance'] }),
+    ]);
+
+    if (picksCount > 0) {
+      throw new BadRequestException('User has picks and cannot be deleted. Suspend the account instead.');
+    }
+    if (purchasesCount > 0) {
+      throw new BadRequestException('User has purchases and cannot be deleted. Suspend the account instead.');
+    }
+    const balance = Number(walletRow?.balance ?? 0);
+    if (balance !== 0) {
+      throw new BadRequestException('User has non-zero wallet balance and cannot be deleted.');
+    }
+
+    await this.authService.logoutAllForUser(userId);
+    await this.usersRepo.delete(userId);
+    await this.auditService.log(adminId, 'user_deleted', 'user', userId, {
+      email: user.email,
+      username: user.username,
+    });
+    return { deleted: true };
   }
 
   async updateUser(adminId: number, id: number, data: { role?: string; status?: string; avatar?: string | null }) {

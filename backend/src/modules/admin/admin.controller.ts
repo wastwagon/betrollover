@@ -333,6 +333,12 @@ export class AdminController {
     return this.adminService.updateUser(user.id, id, body);
   }
 
+  @Delete('users/:id')
+  async deleteUser(@CurrentUser() admin: User, @Param('id', ParseIntPipe) id: number) {
+    if (admin.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.adminService.deleteUser(admin.id, id);
+  }
+
   @Post('users/:id/avatar')
   @UseInterceptors(FileInterceptor('avatar', {
     limits: { fileSize: 5 * 1024 * 1024 },
