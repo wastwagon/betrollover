@@ -19,7 +19,7 @@ export class AdminAuditLog {
   @Column({ name: 'target_type', length: 40 })
   targetType: string;
 
-  @Column({ name: 'target_id', length: 64, nullable: true })
+  @Column({ name: 'target_id', type: 'varchar', length: 64, nullable: true })
   targetId: string | null = null;
 
   @Column({ type: 'jsonb', nullable: true })
