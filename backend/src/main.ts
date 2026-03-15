@@ -49,6 +49,7 @@ async function bootstrap() {
     helmet({
       contentSecurityPolicy: false, // Disable CSP to avoid breaking inline scripts; add later if needed
       crossOriginEmbedderPolicy: false, // Allow external embeds (e.g. Paystack)
+      crossOriginOpenerPolicy: false, // Allow Google Sign-In / OAuth popups (postMessage)
     }),
   );
 
@@ -94,7 +95,8 @@ async function bootstrap() {
   const allowedOrigins: (string | RegExp)[] = [];
 
   if (isProduction) {
-    // Production: Only allow specific domains
+    // Production: Only allow specific domains. APP_URL = frontend origin (e.g. https://betrollover.com)
+    // so that api.betrollover.com can accept requests from betrollover.com.
     const appUrl = process.env.APP_URL;
     if (appUrl) {
       const cleanUrl = appUrl.replace(/\/$/, '');

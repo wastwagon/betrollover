@@ -29,10 +29,10 @@ export class User {
   @Column({ length: 100, unique: true })
   email: string;
 
-  @Column({ length: 255, select: false, nullable: true })
+  @Column('varchar', { length: 255, select: false, nullable: true })
   password: string | null;
 
-  @Column({ length: 255, unique: true, nullable: true })
+  @Column('varchar', { length: 255, unique: true, nullable: true })
   providerGoogleId: string | null = null;
 
   @Column({ length: 100 })
