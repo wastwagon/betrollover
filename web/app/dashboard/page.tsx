@@ -383,6 +383,19 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
             <AdSlot zoneSlug="dashboard-full" fullWidth className="w-full max-w-3xl" />
           </div>
 
+          {/* Referral CTA — invite friends & earn */}
+          <Link
+            href="/invite"
+            className="mb-6 flex items-center gap-4 p-4 sm:p-5 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/50 dark:to-teal-950/50 hover:shadow-md transition-shadow"
+          >
+            <span className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-2xl flex-shrink-0">🎁</span>
+            <div className="min-w-0 flex-1">
+              <span className="font-semibold text-[var(--text)] block">{t('dashboard.invite')}</span>
+              <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_invite_desc')} — {t('dashboard.invite_cta_short')}</span>
+            </div>
+            <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 flex-shrink-0">→</span>
+          </Link>
+
           {/* Quick Actions — large touch targets, premium cards */}
           <section className="mb-6 sm:mb-8">
             <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">{t("dashboard.quick_actions")}</h2>

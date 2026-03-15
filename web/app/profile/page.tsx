@@ -47,6 +47,7 @@ export default function ProfilePage() {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleteSaving, setDeleteSaving] = useState(false);
   const [deleteMsg, setDeleteMsg] = useState('');
+  const [logoutAllLoading, setLogoutAllLoading] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -95,6 +96,22 @@ export default function ProfilePage() {
   };
 
   const avatarSrc = getAvatarUrl(profile?.avatar ?? null, 96);
+
+  const logoutAllDevices = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setLogoutAllLoading(true);
+    try {
+      await fetch(`${getApiUrl()}/auth/logout-all`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } finally {
+      localStorage.removeItem('token');
+      setLogoutAllLoading(false);
+      router.push('/login');
+    }
+  };
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -385,6 +402,19 @@ export default function ProfilePage() {
               </button>
             </div>
           </form>
+
+          <div className="card-gradient rounded-2xl p-5 shadow-lg animate-fade-in-up animate-delay-250">
+            <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('profile.logout_all_devices')}</h2>
+            <p className="text-sm text-[var(--text-muted)] mb-4">{t('profile.logout_all_devices_hint')}</p>
+            <button
+              type="button"
+              onClick={logoutAllDevices}
+              disabled={logoutAllLoading}
+              className="px-5 py-2.5 rounded-xl font-semibold border border-[var(--border)] bg-[var(--card)] text-[var(--text)] hover:bg-[var(--bg-warm)] disabled:opacity-50 transition-colors"
+            >
+              {logoutAllLoading ? t('profile.logout_all_devices_doing') : t('profile.logout_all_devices_btn')}
+            </button>
+          </div>
 
           <form onSubmit={deleteAccount} className="card-gradient rounded-2xl p-5 shadow-lg border border-red-200 dark:border-red-900/50 animate-fade-in-up animate-delay-300">
             <h2 className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider mb-3">{t('profile.delete_account')}</h2>

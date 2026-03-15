@@ -19,6 +19,19 @@ const nextConfig = {
       { key: 'X-XSS-Protection', value: '1; mode=block' },
       { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
       { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+      // CSP report-only: logs violations without blocking. Set CSP_REPORT_URI to collect (e.g. report-uri https://...).
+      {
+        key: 'Content-Security-Policy-Report-Only',
+        value: [
+          "default-src 'self'",
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://js.paystack.co",
+          "style-src 'self' 'unsafe-inline'",
+          "connect-src 'self' https: wss:",
+          "frame-src 'self' https://accounts.google.com https://appleid.apple.com https://js.paystack.co",
+          "img-src 'self' data: https: blob:",
+          "font-src 'self' data:",
+        ].join('; '),
+      },
     ];
     const rules = [
       {

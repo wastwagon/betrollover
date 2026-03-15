@@ -67,4 +67,10 @@ export class RegisterDto {
   @MaxLength(64)
   @Matches(/^sess_[a-zA-Z0-9_-]+$/, { message: 'Invalid session ID format' })
   sessionId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  @Matches(/^[A-Z0-9]+$/, { message: 'Referral code can only contain uppercase letters and numbers' })
+  referralCode?: string;
 }

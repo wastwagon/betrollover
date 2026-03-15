@@ -292,6 +292,7 @@ const en = {
   'dashboard.card_withdrawals': 'Withdrawals',
   'dashboard.card_withdrawals_desc': 'Request & track payouts',
   'dashboard.card_invite_desc': 'Earn GHS 5 per referral',
+  'dashboard.invite_cta_short': 'Get your link',
   'dashboard.card_support': 'Support',
   'dashboard.card_support_desc': 'Help & dispute tickets',
   'dashboard.card_community': 'Community Chat',
@@ -496,6 +497,10 @@ const en = {
   'profile.deleting': 'Deleting...',
   'profile.delete_success': 'Account deleted. You have been signed out.',
   'profile.delete_failed': 'Could not delete account. Check your password or try again later.',
+  'profile.logout_all_devices': 'Sessions',
+  'profile.logout_all_devices_hint': 'Sign out on every device where you are logged in. Use this if you lost a device or suspect someone else has access.',
+  'profile.logout_all_devices_btn': 'Log out all devices',
+  'profile.logout_all_devices_doing': 'Signing out…',
 
   // ── Wallet ───────────────────────────────────────────────────────────────
   'wallet.title': 'Wallet',

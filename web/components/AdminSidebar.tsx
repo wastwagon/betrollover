@@ -14,6 +14,7 @@ const menuItems = [
   { href: '/admin/deposits', icon: '💳', label: 'Deposits' },
   { href: '/admin/withdrawals', icon: '💸', label: 'Withdrawals' },
   { href: '/admin/support',     icon: '🎫', label: 'Support' },
+  { href: '/admin/audit-log',   icon: '📋', label: 'Audit log' },
   { href: '/admin/chat',        icon: '💬', label: 'Chat Moderation' },
   { href: '/admin/escrow', icon: '🔒', label: 'Escrow' },
   { href: '/admin/wallet', icon: '💰', label: 'Wallet' },

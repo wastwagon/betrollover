@@ -292,6 +292,7 @@ const fr: Record<string, string> = {
   'dashboard.card_withdrawals': 'Retraits',
   'dashboard.card_withdrawals_desc': 'Demander et suivre les paiements',
   'dashboard.card_invite_desc': 'Gagnez 5 GHS par parrainage',
+  'dashboard.invite_cta_short': 'Obtenez votre lien',
   'dashboard.card_support': 'Assistance',
   'dashboard.card_support_desc': 'Aide et tickets de litige',
   'dashboard.card_community': 'Chat Communauté',
@@ -496,6 +497,10 @@ const fr: Record<string, string> = {
   'profile.deleting': 'Suppression...',
   'profile.delete_success': 'Compte supprimé. Vous avez été déconnecté.',
   'profile.delete_failed': 'Impossible de supprimer le compte. Vérifiez votre mot de passe ou réessayez plus tard.',
+  'profile.logout_all_devices': 'Sessions',
+  'profile.logout_all_devices_hint': 'Déconnecter toutes les sessions (tous les appareils). Utile si vous avez perdu un appareil ou suspectez un accès non autorisé.',
+  'profile.logout_all_devices_btn': 'Déconnecter tous les appareils',
+  'profile.logout_all_devices_doing': 'Déconnexion…',
 
   // ── Wallet ───────────────────────────────────────────────────────────────
   'wallet.title': 'Portefeuille',

@@ -1,6 +1,8 @@
 # Content Security Policy (CSP) – Recommendations
 
-CSP is currently **disabled** in `backend/src/main.ts` (`contentSecurityPolicy: false`) to avoid breaking Paystack and Google/Apple Sign-In. When you are ready to enable it, use the guidance below.
+**Report-only CSP is enabled** in `web/next.config.js`: the `Content-Security-Policy-Report-Only` header is set with a permissive allowlist (self, Google, Paystack, Apple). Browsers will log violations to the console without blocking. To collect reports in production, set a reporting endpoint and add `report-uri` or `report-to` to the directive string in `next.config.js`.
+
+CSP remains **disabled** in `backend/src/main.ts` (`contentSecurityPolicy: false`) to avoid breaking Paystack and Google/Apple Sign-In. When you are ready to enforce CSP (after reviewing report-only data), use the guidance below.
 
 ---
 

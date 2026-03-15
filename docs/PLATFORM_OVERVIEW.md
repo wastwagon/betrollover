@@ -41,7 +41,7 @@ Short reference for developers: main areas, env, and critical paths.
 1. **Login:** Browser → Next.js `POST /api/auth/login` → backend `POST /api/v1/auth/login` → JWT; Google/Apple via `/api/auth/google`, `/api/auth/apple` and callbacks.
 2. **Deposit:** User initiates on `/wallet` → backend creates Paystack tx → user pays → Paystack sends webhook to `POST /wallet/paystack-webhook`; or user returns with `?ref=` and frontend calls `GET /api/v1/wallet/deposit/verify?ref=`.
 3. **Marketplace:** Public list `GET /accumulators/marketplace/public`; purchase and auth-only flows use `GET /accumulators/...` with Bearer token.
-4. **Admin audit:** Sensitive actions (user role/status, withdrawal status, support resolve, content update) are logged to `admin_audit_log`. View via `GET /api/v1/admin/audit-log` (admin only).
+4. **Admin audit:** Sensitive actions (user role/status, withdrawal status, support resolve, content update) are logged to `admin_audit_log`. View via `GET /api/v1/admin/audit-log` or Admin → **Audit log** in the UI.
 
 ---
 
@@ -49,5 +49,7 @@ Short reference for developers: main areas, env, and critical paths.
 
 - [REQUIRED_ENV_PROD.md](./REQUIRED_ENV_PROD.md) – Production env checklist
 - [PAYMENTS_RUNBOOK.md](./PAYMENTS_RUNBOOK.md) – Paystack webhook and verify
+- [SECURITY_HARDENING.md](./SECURITY_HARDENING.md) – Security checklist and quick commands
+- [PLATFORM_GROWTH.md](./PLATFORM_GROWTH.md) – Growth priorities and metrics
 - [PLATFORM_GAPS_IMPLEMENTATION_PHASES.md](./PLATFORM_GAPS_IMPLEMENTATION_PHASES.md) – Gap fixes and phases
 - [PRE_LAUNCH_REVIEW.md](./PRE_LAUNCH_REVIEW.md) – Pre-launch checklist
