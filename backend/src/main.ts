@@ -233,18 +233,27 @@ async function bootstrap() {
     }
   }
 
-  // Run seed data (news, resources, users, AI tipsters) - idempotent where possible
-  try {
-    const seedRunner = app.get(SeedRunnerService);
-    const seedResult = await seedRunner.runSeeds();
-    if (seedResult.run.length > 0) {
-      logger.log(`Applied ${seedResult.run.length} seed(s): ${seedResult.run.join(', ')}`);
+  // Run seed data (news, resources, users, AI tipsters) - idempotent where possible.
+  // In production we skip seeds on startup so that admin-deleted users/tipsters stay deleted after deploy.
+  // For fresh production DB, run seed SQL once manually or set RUN_SEEDS_ON_STARTUP=true for initial deploy only.
+  const runSeedsOnStartup =
+    process.env.RUN_SEEDS_ON_STARTUP === 'true' ||
+    (process.env.NODE_ENV !== 'production' && process.env.RUN_SEEDS_ON_STARTUP !== 'false');
+  if (runSeedsOnStartup) {
+    try {
+      const seedRunner = app.get(SeedRunnerService);
+      const seedResult = await seedRunner.runSeeds();
+      if (seedResult.run.length > 0) {
+        logger.log(`Applied ${seedResult.run.length} seed(s): ${seedResult.run.join(', ')}`);
+      }
+      if (seedResult.errors.length > 0) {
+        logger.warn(`Seed warnings (non-fatal): ${seedResult.errors.join('; ')}`);
+      }
+    } catch (err: any) {
+      logger.warn(`Seed bootstrap failed (non-fatal): ${err?.message || err}`);
     }
-    if (seedResult.errors.length > 0) {
-      logger.warn(`Seed warnings (non-fatal): ${seedResult.errors.join('; ')}`);
-    }
-  } catch (err: any) {
-    logger.warn(`Seed bootstrap failed (non-fatal): ${err?.message || err}`);
+  } else {
+    logger.log('Seeds skipped on startup (production or RUN_SEEDS_ON_STARTUP=false). Deleted users/tipsters will not be re-inserted.');
   }
 
   const port = process.env.PORT || 6001;

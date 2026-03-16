@@ -87,6 +87,7 @@ When the deployment shows **Finished**, open **https://betrollover.com**.
 
 ## 6. After first deploy
 
+- **Seeds and deleted users:** In production, seed files (users, tipsters, news, etc.) are **not** run on every API startup. That way, if you delete users or tipsters in Admin, they stay deleted after the next deploy. For a **brand-new** production DB that needs initial seed data, set `RUN_SEEDS_ON_STARTUP=true` in the API service env, deploy once, then remove it (or leave it unset for future deploys).
 - **Admin user:** If no admin exists, set one via DB:
   ```bash
   docker exec -it betrollover-postgres psql -U betrollover -d betrollover -c \

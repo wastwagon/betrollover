@@ -3,7 +3,11 @@ import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
-/** Seed files to run on deployment, in order. Uses ON CONFLICT where possible for idempotency. */
+/**
+ * Seed files to run on deployment, in order. Uses ON CONFLICT where possible for idempotency.
+ * In production, seeds are NOT run on startup by default (see main.ts) so that admin-deleted
+ * users/tipsters stay deleted after deploy. Set RUN_SEEDS_ON_STARTUP=true only for initial DB seed.
+ */
 const SEED_FILES = [
   'news-resources-seed.sql',
   'news-2026-seed.sql',
