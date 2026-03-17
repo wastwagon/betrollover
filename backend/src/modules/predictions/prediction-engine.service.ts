@@ -105,18 +105,18 @@ export class PredictionEngineService {
    */
   async generateDailyPredictionsForAllTipsters(forDate?: string, dryRun = false): Promise<TipsterPredictionResult[]> {
     const startTime = Date.now();
-    const refDate = forDate ? new Date(forDate + 'T12:00:00Z') : new Date();
-    const now = refDate;
-    const sevenDaysLater = new Date(refDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const dateStr = forDate || new Date().toISOString().slice(0, 10);
+    const startOfDay = new Date(dateStr + 'T00:00:00.000Z');
+    const endOfDay = new Date(dateStr + 'T23:59:59.999Z');
     let apiRequestsUsed = 0;
 
-    // 1. Get upcoming fixtures (next 7 days)
+    // 1. Get fixtures for target day only (no advance/future coupons)
     const allFixtures = await this.fixtureRepo
       .createQueryBuilder('f')
       .leftJoinAndSelect('f.odds', 'o')
       .where("f.status IN ('NS', 'TBD')")
-      .andWhere('f.match_date >= :now', { now })
-      .andWhere('f.match_date <= :end', { end: sevenDaysLater })
+      .andWhere('f.match_date >= :startOfDay', { startOfDay })
+      .andWhere('f.match_date <= :endOfDay', { endOfDay })
       .orderBy('f.match_date', 'ASC')
       .getMany();
 
@@ -128,22 +128,22 @@ export class PredictionEngineService {
       this.logger.log(`Synced odds for ${oddsResult.synced} fixtures`);
     }
 
-    // 3. Re-fetch fixtures with odds
+    // 3. Re-fetch fixtures with odds (same day only)
     const fixturesWithOdds = await this.fixtureRepo
       .createQueryBuilder('f')
       .leftJoinAndSelect('f.odds', 'o')
       .where("f.status IN ('NS', 'TBD')")
-      .andWhere('f.match_date >= :now', { now })
-      .andWhere('f.match_date <= :end', { end: sevenDaysLater })
+      .andWhere('f.match_date >= :startOfDay', { startOfDay })
+      .andWhere('f.match_date <= :endOfDay', { endOfDay })
       .orderBy('f.match_date', 'ASC')
       .getMany();
 
     const withOdds = fixturesWithOdds.filter((f) => f.odds && f.odds.length > 0);
-    this.logger.log(`Found ${withOdds.length} upcoming fixtures with odds`);
+    this.logger.log(`Found ${withOdds.length} fixtures with odds for ${dateStr} (same-day only)`);
 
-    if (withOdds.length < 2) {
-      this.logger.warn('Not enough fixtures with odds to generate predictions');
-      await this.logGeneration(forDate, 'failed', 0, withOdds.length, apiRequestsUsed, 'Not enough fixtures with odds', startTime);
+    if (withOdds.length < 1) {
+      this.logger.warn('No fixtures with odds for this day');
+      await this.logGeneration(forDate, 'failed', 0, withOdds.length, apiRequestsUsed, 'No fixtures with odds for target day', startTime);
       return [];
     }
 
@@ -173,7 +173,7 @@ export class PredictionEngineService {
       const tipster = tipsterByUsername.get(tipsterConfig.username);
       if (!tipster) continue;
 
-      const maxForTipster = tipsterConfig.personality.max_daily_predictions ?? 999;
+      const maxForTipster = tipsterConfig.personality.max_daily_predictions ?? 3;
       let pred = this.createTipsterPrediction(tipsterConfig, tipster.id, fixturePredictions, usedFixtureIds);
       let count = 0;
       while (pred && count < maxForTipster) {

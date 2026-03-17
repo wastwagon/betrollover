@@ -1,8 +1,9 @@
 /**
  * AI Tipsters Configuration
- * 25 tipsters. Single-fixture coupons only (per-leg odds ~1.41–2.0).
- * All use Gambler prob/confidence (0.52 / 0.5) and All leagues, all dates.
- * Global usedFixtureIds in prediction engine ensures no two AI tipsters pick the same fixture.
+ * 25 tipsters. Single-fixture coupons only. Max 3 coupons per tipster per day.
+ * Fixtures limited to target day only (no advance/future coupons).
+ * All use Gambler prob/confidence (0.52 / 0.5) and All leagues.
+ * Global usedFixtureIds ensures no two AI tipsters pick the same fixture.
  */
 
 export interface AiTipsterPersonality {
@@ -49,7 +50,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
   {
@@ -66,7 +67,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2', 'Over/Under'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
   {
@@ -83,7 +84,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
   {
@@ -100,7 +101,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
 
@@ -121,7 +122,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2', 'BTTS', 'Double Chance'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
   {
@@ -138,7 +139,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2', 'Over/Under', 'BTTS', 'Double Chance'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
   {
@@ -155,7 +156,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2', 'BTTS'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
   {
@@ -172,7 +173,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2', 'Over/Under'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
 
@@ -193,7 +194,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2', 'BTTS'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
   {
@@ -210,7 +211,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2', 'Over/Under'],
-      max_daily_predictions: 999,
+      max_daily_predictions: 3,
     },
   },
 
@@ -231,7 +232,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['Double Chance'],
-      max_daily_predictions: 999,
+      max_daily_predictions: 3,
     },
   },
   {
@@ -248,7 +249,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
   {
@@ -265,7 +266,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2', 'Over/Under'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
   {
@@ -282,7 +283,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2', 'Over/Under', 'BTTS'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
 
@@ -303,7 +304,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['BTTS'],
-      max_daily_predictions: 999,
+      max_daily_predictions: 3,
     },
   },
   {
@@ -320,7 +321,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['Over 2.5'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
   {
@@ -331,13 +332,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
     personality: {
       risk_level: 'aggressive',
       target_odds_min: 1.41,
-      target_odds_max: 2.0,
+      target_odds_max: 2.2,
       min_win_probability: 0.52,
       min_expected_value: 0.04,
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['Under 2.5'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
 
@@ -358,7 +359,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2', 'Under 2.5'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
   {
@@ -375,7 +376,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2', 'BTTS'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
   {
@@ -392,7 +393,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2', 'BTTS'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
 
@@ -414,7 +415,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       leagues_focus: ['All'],
       selection_filter: 'home_only',
       bet_types: ['1X2'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
   {
@@ -431,7 +432,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
   {
@@ -448,7 +449,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2', 'BTTS', 'Over/Under'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
   {
@@ -459,13 +460,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
     personality: {
       risk_level: 'aggressive',
       target_odds_min: 1.41,
-      target_odds_max: 2.0,
+      target_odds_max: 2.2,
       min_win_probability: 0.52,
       min_expected_value: 0.04,
       min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2', 'BTTS', 'Under 2.5'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
   {
@@ -483,7 +484,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
       leagues_focus: ['All'],
       team_filter: ['top_6'],
       bet_types: ['1X2'],
-      max_daily_predictions: 5,
+      max_daily_predictions: 3,
     },
   },
 ];
