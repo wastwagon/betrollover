@@ -187,16 +187,16 @@ export function PickCard({
   return (
     <>
       <article
-        className={`card-gradient rounded-2xl shadow-lg overflow-hidden hover:shadow-xl hover:shadow-[var(--primary)]/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col relative ${className}`}
+        className={`card-gradient rounded-xl shadow-md overflow-hidden hover:shadow-lg hover:shadow-[var(--primary)]/5 hover:-translate-y-px transition-all duration-200 flex flex-col relative border border-[var(--border)] ${className}`}
       >
         {/* Compact Follow button - top right corner */}
         {tipster && onFollow && (
-          <div className="absolute top-2 right-2 z-10">
+          <div className="absolute top-1.5 right-1.5 z-10">
             <button
               type="button"
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onFollow(); }}
               disabled={followLoading || isFollowing}
-              className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
+              className={`px-2 py-0.5 rounded-md text-[10px] font-semibold transition-colors ${
                 isFollowing
                   ? 'bg-[var(--border)] text-[var(--text-muted)] cursor-default'
                   : 'bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white'
@@ -206,52 +206,52 @@ export function PickCard({
             </button>
           </div>
         )}
-        <div className="p-4 flex flex-col flex-1">
-          {/* Tipster Performance Header - always show when tipster data exists */}
+        <div className="p-3 flex flex-col flex-1">
+          {/* Tipster Performance Header - compact */}
           {(tipster || title) && (
-            <div className="mb-3 pb-3 border-b border-[var(--border)]">
+            <div className="mb-2 pb-2 border-b border-[var(--border)]/80">
               <div className="flex items-center gap-2">
                 {tipster?.avatarUrl && !avatarError ? (
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden bg-[var(--border)] relative">
+                  <div className="flex-shrink-0 w-7 h-7 rounded-full overflow-hidden bg-[var(--border)] relative">
                     <Image
-                      src={getAvatarUrl(tipster.avatarUrl, 32)!}
+                      src={getAvatarUrl(tipster.avatarUrl, 28)!}
                       alt={tipster.displayName}
-                      width={32}
-                      height={32}
+                      width={28}
+                      height={28}
                       className="w-full h-full object-cover"
                       onError={() => setAvatarError(true)}
                     />
                   </div>
                 ) : (
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${tipster ? getRankBadgeColor(tipster.rank) : 'bg-slate-200 text-slate-700'}`}>
+                  <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold ${tipster ? getRankBadgeColor(tipster.rank) : 'bg-slate-200 text-slate-700'}`}>
                     {tipster ? (tipster.rank <= 3 ? getRankIcon(tipster.rank) : tipster.rank) : '?'}
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-sm text-[var(--text)] truncate" title={tipster ? `${t('pick_card.tipster')}: ${tipster.displayName}` : t('pick_card.tipster')}>
+                  <p className="font-semibold text-xs text-[var(--text)] truncate" title={tipster ? `${t('pick_card.tipster')}: ${tipster.displayName}` : t('pick_card.tipster')}>
                     {tipster?.displayName || t('pick_card.tipster')}
                   </p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[10px] text-[var(--text-muted)]">
+                  <div className="flex items-center gap-1.5 mt-0">
+                    <span className="text-[9px] text-[var(--text-muted)]">
                       {tipster ? `${tipster.totalPicks}p` : `${totalPicks}p`}
                     </span>
-                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                    <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
                       {tipster?.winRate != null ? `${Number(tipster.winRate).toFixed(1)}%` : '—'}
                     </span>
                     {tipster && (tipster.wonPicks > 0 || tipster.lostPicks > 0) && (
-                      <span className="text-[10px] text-[var(--text-muted)]">
+                      <span className="text-[9px] text-[var(--text-muted)]">
                         {tipster.wonPicks}W / {tipster.lostPicks}L
                       </span>
                     )}
                   </div>
                 </div>
-                <div className="flex-shrink-0 flex items-center gap-2">
+                <div className="flex-shrink-0 flex items-center gap-1">
                   {avgRating != null && avgRating > 0 && (
                     <span className="flex items-center gap-0.5">
-                      <span className="text-amber-400 text-xs">★</span>
-                      <span className="text-[10px] font-semibold text-amber-600">{Number(avgRating).toFixed(1)}</span>
+                      <span className="text-amber-400 text-[10px]">★</span>
+                      <span className="text-[9px] font-semibold text-amber-600">{Number(avgRating).toFixed(1)}</span>
                       {reviewCount != null && reviewCount > 0 && (
-                        <span className="text-[10px] text-[var(--text-muted)]">({reviewCount})</span>
+                        <span className="text-[9px] text-[var(--text-muted)]">({reviewCount})</span>
                       )}
                     </span>
                   )}
@@ -260,49 +260,41 @@ export function PickCard({
             </div>
           )}
 
-          {/* Coupon Title & Summary */}
-          <div className="mb-3">
-            <h2 className="font-semibold text-base text-[var(--text)] truncate mb-1">{title}</h2>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-[var(--text-muted)]">
+          {/* Coupon Title & Summary - compact single block */}
+          <div className="mb-2">
+            <div className="flex items-baseline justify-between gap-2 flex-wrap">
+              <h2 className="font-semibold text-sm text-[var(--text)] truncate">{title}</h2>
+              <span className="text-[10px] text-[var(--text-muted)] whitespace-nowrap">
                 {t('pick_card.picks_odds', { n: String(totalPicks), odds: Number(totalOdds).toFixed(2) })}
               </span>
-              {purchaseCount !== undefined && purchaseCount > 0 && (
-                <span className="text-xs text-[var(--text-muted)]">
-                  🛒 {purchaseCount} {t('pick_card.bought')}
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5 mt-1">
+              {createdAt && (
+                <span className="text-[9px] text-[var(--text-muted)]">
+                  {new Date(createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </span>
               )}
+              {purchaseCount !== undefined && purchaseCount > 0 && (
+                <span className="text-[9px] text-[var(--text-muted)]">· 🛒 {purchaseCount}</span>
+              )}
               {sport && SPORT_META[sport.toLowerCase()] && (
-                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border ${SPORT_META[sport.toLowerCase()].color}`}>
+                <span className={`inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-medium border ${SPORT_META[sport.toLowerCase()].color}`}>
                   {SPORT_META[sport.toLowerCase()].icon} {SPORT_META[sport.toLowerCase()].label}
                 </span>
               )}
               {displayStatus && (
-                <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium ${statusColor}`}>
+                <span className={`inline-flex px-1 py-0.5 rounded text-[9px] font-medium ${statusColor}`}>
                   {t(`status.${displayStatus}` as any) || displayStatus.replace(/_/g, ' ')}
                 </span>
               )}
             </div>
-            {createdAt && (
-              <div className="mt-1">
-                <span className="text-xs text-[var(--text-muted)]">
-                  {t('pick_card.created')}: {new Date(createdAt).toLocaleString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </span>
-              </div>
-            )}
             {price > 0 && priceDisplay && (
-              <div className="mt-2">
-                <span className="text-lg font-bold text-[var(--primary)]">
+              <div className="mt-1">
+                <span className="text-sm font-bold text-[var(--primary)]">
                   {priceDisplay.primary}
                 </span>
                 {priceDisplay.original && (
-                  <span className="ml-1 text-xs text-[var(--text-muted)]">({priceDisplay.original})</span>
+                  <span className="ml-1 text-[9px] text-[var(--text-muted)]">({priceDisplay.original})</span>
                 )}
               </div>
             )}
@@ -310,8 +302,8 @@ export function PickCard({
 
           {/* Pick Details - Show for free or purchased coupons */}
           {showFullDetails && picks.length > 0 && (
-            <div className="mb-3 flex-1">
-              <ul className="space-y-1.5">
+            <div className="mb-2 flex-1">
+              <ul className="space-y-1">
                 {picks.slice(0, 3).map((p, i) => {
                   const matchDate = p.matchDate ? new Date(p.matchDate) : null;
                   const pickSettled = ['won', 'lost'].includes(p.result || '');
@@ -320,24 +312,24 @@ export function PickCard({
                   const isLive = !pickSettled && ['1H', '2H', 'HT', 'ET', 'P', 'LIVE'].includes(p.fixtureStatus || '');
                   const isFinished = pickSettled || ['FT', 'AET', 'PEN'].includes(p.fixtureStatus || '');
                   return (
-                    <li key={i} className="flex flex-col gap-0.5 text-xs">
-                      <div className="flex justify-between items-start gap-2">
-                        <span className={`text-[var(--text)] font-medium truncate flex-1 flex items-center gap-1.5 min-w-0 ${isStarted ? 'line-through opacity-60' : ''}`}>
+                    <li key={i} className="flex flex-col gap-0 text-[11px]">
+                      <div className="flex justify-between items-start gap-1.5">
+                        <span className={`text-[var(--text)] font-medium truncate flex-1 flex items-center gap-1 min-w-0 ${isStarted ? 'line-through opacity-60' : ''}`}>
                           {(p.homeTeamLogo || p.awayTeamLogo || p.homeCountryCode || p.awayCountryCode) && (
-                            <span className="flex items-center gap-1 flex-shrink-0">
-                              <TeamBadge logo={p.homeTeamLogo} countryCode={p.homeCountryCode} name={p.homeTeamName || undefined} size={16} />
-                              <TeamBadge logo={p.awayTeamLogo} countryCode={p.awayCountryCode} name={p.awayTeamName || undefined} size={16} />
+                            <span className="flex items-center gap-0.5 flex-shrink-0">
+                              <TeamBadge logo={p.homeTeamLogo} countryCode={p.homeCountryCode} name={p.homeTeamName || undefined} size={14} />
+                              <TeamBadge logo={p.awayTeamLogo} countryCode={p.awayCountryCode} name={p.awayTeamName || undefined} size={14} />
                             </span>
                           )}
                           <span className="truncate">{p.matchDescription}</span>
                         </span>
-                        <span className="text-[var(--text-muted)] flex-shrink-0 text-[10px]">
+                        <span className="text-[var(--text-muted)] flex-shrink-0 text-[9px]">
                           {p.prediction} @ {Number(p.odds || 0).toFixed(2)}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         {(matchDate || hasLiveScore) && (
-                          <span className={`text-[10px] ${isFinished ? 'text-emerald-600 dark:text-emerald-400' : isLive ? 'text-red-600 dark:text-red-400' : isStarted ? 'text-amber-600 dark:text-amber-400' : 'text-[var(--text-muted)]'}`}>
+                          <span className={`text-[9px] ${isFinished ? 'text-emerald-600 dark:text-emerald-400' : isLive ? 'text-red-600 dark:text-red-400' : isStarted ? 'text-amber-600 dark:text-amber-400' : 'text-[var(--text-muted)]'}`}>
                             {isFinished
                               ? (hasLiveScore ? `🏁 FT ${p.homeScore}-${p.awayScore}` : '🏁 FT')
                               : isLive
@@ -350,14 +342,14 @@ export function PickCard({
                           </span>
                         )}
                         {(hasLiveScore || (p.result || p.status)) && (
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1">
                             {hasLiveScore && !isFinished && (
-                              <span className="text-[10px] font-bold text-[var(--primary)] bg-[var(--primary)]/10 px-1.5 py-0.5 rounded">
+                              <span className="text-[9px] font-bold text-[var(--primary)] bg-[var(--primary)]/10 px-1 py-0.5 rounded">
                                 {p.homeScore} - {p.awayScore}
                               </span>
                             )}
                             {(p.result || p.status) && (
-                              <span className={`text-[8px] font-bold uppercase px-1 rounded ${(p.result || p.status) === 'won' ? 'bg-emerald-100 text-emerald-700' : (p.result || p.status) === 'lost' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'}`}>
+                              <span className={`text-[7px] font-bold uppercase px-1 rounded ${(p.result || p.status) === 'won' ? 'bg-emerald-100 text-emerald-700' : (p.result || p.status) === 'lost' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'}`}>
                                 {p.result || p.status}
                               </span>
                             )}
@@ -368,7 +360,7 @@ export function PickCard({
                   );
                 })}
                 {picks.length > 3 && (
-                  <li className="text-xs text-[var(--text-muted)] italic">
+                  <li className="text-[9px] text-[var(--text-muted)] italic">
                     {t('pick_card.more_picks', { n: String(picks.length - 3) })}
                   </li>
                 )}
@@ -378,21 +370,20 @@ export function PickCard({
 
           {/* Locked Message for Paid Coupons */}
           {!showFullDetails && (
-            <div className="mb-3 flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+            <div className="mb-2 flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-md py-2 px-2">
               <div className="text-center">
-                <span className="text-2xl mb-1 block">🔒</span>
-                <p className="text-xs text-[var(--text-muted)]">{t('pick_card.purchase_to_view')}</p>
+                <span className="text-lg mb-0.5 block">🔒</span>
+                <p className="text-[10px] text-[var(--text-muted)]">{t('pick_card.purchase_to_view')}</p>
               </div>
             </div>
           )}
 
           {/* Action Button - purchased, viewOnly, or free: View; else purchase */}
-          <div className="mt-auto pt-3 border-t border-[var(--border)]">
+          <div className="mt-auto pt-2 border-t border-[var(--border)]/80">
             {isPurchased || viewOnly || isFree ? (
-              // Prefer explicit detailsHref, then canonical coupon detail page
               <Link
                 href={detailsHref ?? `/coupons/${id}`}
-                className="block w-full px-3 py-2.5 rounded-xl font-semibold bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-sm text-center transition-all duration-200"
+                className="block w-full px-3 py-2 rounded-lg font-semibold bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-xs text-center transition-all duration-200"
               >
                 {t('pick_card.view_details')}
               </Link>
@@ -400,14 +391,14 @@ export function PickCard({
               <button
                 onClick={handlePurchase}
                 disabled={purchasing}
-                className="w-full px-3 py-2.5 rounded-xl font-semibold bg-[var(--accent)] hover:bg-amber-600 text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="w-full px-3 py-2 rounded-lg font-semibold bg-[var(--accent)] hover:bg-amber-600 text-white text-xs disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 {purchasing ? t('pick_card.processing') : t('pick_card.purchase')}
               </button>
             ) : (
               <Link
                 href="/wallet"
-                className="block w-full px-3 py-2 rounded-lg font-semibold bg-amber-500 hover:bg-amber-600 text-white text-sm text-center transition-colors"
+                className="block w-full px-3 py-1.5 rounded-lg font-semibold bg-amber-500 hover:bg-amber-600 text-white text-xs text-center transition-colors"
               >
                 {t('pick_card.top_up_wallet')}
               </Link>

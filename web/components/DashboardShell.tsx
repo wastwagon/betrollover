@@ -2,7 +2,6 @@
 
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
-import { PushNotificationPrompt } from '@/components/PushNotificationPrompt';
 
 export function DashboardShell({
   children,
@@ -18,7 +17,6 @@ export function DashboardShell({
       <main className="flex-1 flex flex-col min-h-0">
         {children}
       </main>
-      <PushNotificationPrompt />
       <AppFooter />
     </div>
   );
