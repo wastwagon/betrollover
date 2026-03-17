@@ -1,4 +1,14 @@
 import Link from 'next/link';
+import {
+  ArtworkBuyerBrowse,
+  ArtworkBuyerSecure,
+  ArtworkBuyerOutcome,
+  ArtworkSellerAccount,
+  ArtworkSellerRoi,
+  ArtworkSellerPayout,
+  ArtworkNewsGuides,
+  ArtworkExplore,
+} from '@/components/home/HomeStepArtwork';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
@@ -61,33 +71,45 @@ export default async function HomePage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-6">
               <div className="flex flex-col items-center text-center rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 backdrop-blur-sm p-5 sm:p-6 shadow-sm">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-emerald-500/15 border-2 border-emerald-500/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mb-4 sm:mb-5 shrink-0">1</div>
+                <div className="flex flex-col items-center gap-2 mb-3 w-full">
+                  <ArtworkBuyerBrowse className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-sm font-bold text-emerald-700 dark:text-emerald-300">1</span>
+                </div>
                 <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('home.step1_title')}</h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('home.step1_desc')}</p>
               </div>
               <div className="flex flex-col items-center text-center rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 backdrop-blur-sm p-5 sm:p-6 shadow-sm">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-blue-500/15 border-2 border-blue-500/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 mb-4 sm:mb-5 shrink-0">2</div>
+                <div className="flex flex-col items-center gap-2 mb-3 w-full">
+                  <ArtworkBuyerSecure className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-blue-600 dark:text-blue-400" />
+                  <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-blue-500/15 border border-blue-500/30 text-sm font-bold text-blue-700 dark:text-blue-300">2</span>
+                </div>
                 <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('home.step2_title')}</h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('home.step2_desc')}</p>
               </div>
               <div className="flex flex-col items-center text-center rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 backdrop-blur-sm p-5 sm:p-6 shadow-sm">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-amber-500/15 border-2 border-amber-500/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400 mb-4 sm:mb-5 shrink-0">3</div>
+                <div className="flex flex-col items-center gap-2 mb-3 w-full">
+                  <ArtworkBuyerOutcome className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-amber-600 dark:text-amber-500" />
+                  <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-amber-500/15 border border-amber-500/30 text-sm font-bold text-amber-800 dark:text-amber-300">3</span>
+                </div>
                 <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('home.step3_title')}</h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('home.step3_desc')}</p>
               </div>
             </div>
             <div className="mt-8 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-emerald-50/40 dark:from-slate-800/50 dark:to-emerald-900/20 border border-[var(--border)] flex items-start sm:items-center gap-3 sm:gap-4 min-h-0">
-                <span className="text-3xl flex-shrink-0">📰</span>
+                <ArtworkNewsGuides className="h-11 w-11 sm:h-12 sm:w-12 shrink-0 text-emerald-600 dark:text-emerald-400" />
                 <div>
                   <h3 className="text-sm font-semibold text-[var(--text)] mb-0.5">{t('home.news_guides_title')}</h3>
                   <p className="text-xs text-[var(--text-muted)] leading-relaxed">{t('home.news_guides_desc')}</p>
                 </div>
               </div>
               <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-blue-50/40 dark:from-slate-800/50 dark:to-blue-900/20 border border-[var(--border)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-semibold text-[var(--text)] mb-0.5">{t('home.explore_cta_title')}</h3>
-                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">{t('home.explore_cta_desc')}</p>
+                <div className="flex items-start gap-3 min-w-0 flex-1">
+                  <ArtworkExplore className="h-11 w-11 sm:h-12 sm:w-12 shrink-0 text-blue-600 dark:text-blue-400" />
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-[var(--text)] mb-0.5">{t('home.explore_cta_title')}</h3>
+                    <p className="text-xs text-[var(--text-muted)] leading-relaxed">{t('home.explore_cta_desc')}</p>
+                  </div>
                 </div>
                 <Link
                   href="/discover"
@@ -112,17 +134,26 @@ export default async function HomePage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                 <div className="flex flex-col items-center text-center rounded-2xl border border-violet-500/15 dark:border-violet-800/30 bg-gradient-to-b from-violet-500/[0.06] to-[var(--card)]/80 p-5 sm:p-6 shadow-sm">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-violet-500/15 border-2 border-violet-500/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-violet-600 dark:text-violet-400 mb-4 sm:mb-5 shrink-0">1</div>
+                  <div className="flex flex-col items-center gap-2 mb-3 w-full">
+                    <ArtworkSellerAccount className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-violet-600 dark:text-violet-400" />
+                    <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-violet-500/15 border border-violet-500/30 text-sm font-bold text-violet-700 dark:text-violet-300">1</span>
+                  </div>
                   <h3 className="text-sm sm:text-base font-semibold text-[var(--text)] mb-2">{t('home.tipster_step1_title')}</h3>
                   <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">{t('home.tipster_step1_desc')}</p>
                 </div>
                 <div className="flex flex-col items-center text-center rounded-2xl border border-teal-500/15 dark:border-teal-800/30 bg-gradient-to-b from-teal-500/[0.06] to-[var(--card)]/80 p-5 sm:p-6 shadow-sm">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-teal-500/15 border-2 border-teal-500/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-teal-600 dark:text-teal-400 mb-4 sm:mb-5 shrink-0">2</div>
+                  <div className="flex flex-col items-center gap-2 mb-3 w-full">
+                    <ArtworkSellerRoi className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-teal-600 dark:text-teal-400" />
+                    <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-teal-500/15 border border-teal-500/30 text-sm font-bold text-teal-700 dark:text-teal-300">2</span>
+                  </div>
                   <h3 className="text-sm sm:text-base font-semibold text-[var(--text)] mb-2">{t('home.tipster_step2_title')}</h3>
                   <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">{t('home.tipster_step2_desc')}</p>
                 </div>
                 <div className="flex flex-col items-center text-center rounded-2xl border border-emerald-500/15 dark:border-emerald-800/30 bg-gradient-to-b from-emerald-500/[0.06] to-[var(--card)]/80 p-5 sm:p-6 shadow-sm">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-emerald-500/15 border-2 border-emerald-500/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mb-4 sm:mb-5 shrink-0">3</div>
+                  <div className="flex flex-col items-center gap-2 mb-3 w-full">
+                    <ArtworkSellerPayout className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-sm font-bold text-emerald-700 dark:text-emerald-300">3</span>
+                  </div>
                   <h3 className="text-sm sm:text-base font-semibold text-[var(--text)] mb-2">{t('home.tipster_step3_title')}</h3>
                   <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">{t('home.tipster_step3_desc')}</p>
                 </div>
