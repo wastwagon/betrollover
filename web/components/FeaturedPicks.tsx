@@ -54,7 +54,7 @@ export function FeaturedPicks() {
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--accent)]/5 to-transparent pointer-events-none" />
       <div className="relative max-w-6xl mx-auto px-6">
         <div className="text-center mb-8">
-          <h2 className="text-xl md:text-2xl font-bold text-[var(--text)]">Marketplace Coupons</h2>
+          <h2 className="text-base md:text-lg font-semibold text-[var(--text)]">Marketplace Coupons</h2>
           <p className="mt-1 text-sm text-[var(--text-muted)]">Browse and purchase from verified tipsters</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

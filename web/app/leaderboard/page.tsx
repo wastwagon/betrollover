@@ -104,7 +104,7 @@ export default function LeaderboardPage() {
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold uppercase tracking-wide mb-3">
             🏆 {t('nav.leaderboard')}
           </span>
-          <h1 className="text-3xl sm:text-4xl font-bold text-[var(--text)] mb-2">{t('seo.leaderboard_title').split(' | ')[0]}</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--text)] mb-2">{t('seo.leaderboard_title').split(' | ')[0]}</h1>
           <p className="text-[var(--text-muted)] text-lg">{t('seo.leaderboard_desc')}</p>
         </div>
 

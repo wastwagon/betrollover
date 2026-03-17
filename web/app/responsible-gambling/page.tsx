@@ -40,7 +40,7 @@ export default async function ResponsibleGamblingPage() {
 
       <main>
         <article className="max-w-3xl mx-auto px-6 py-12">
-          <h1 className="text-3xl font-bold text-[var(--text)] mb-6">
+          <h1 className="text-xl md:text-2xl font-semibold text-[var(--text)] mb-6">
             {t('resp.headline')}
           </h1>
 

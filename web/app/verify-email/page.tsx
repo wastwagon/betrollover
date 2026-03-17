@@ -64,7 +64,7 @@ function VerifyEmailContent() {
             <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-6 text-3xl">
               ✓
             </div>
-            <h1 className="text-2xl font-bold text-[var(--text)] mb-2">{t('auth.email_verified_title')}</h1>
+            <h1 className="text-xl font-semibold text-[var(--text)] mb-2">{t('auth.email_verified_title')}</h1>
             <p className="text-[var(--text-muted)] mb-8">{result.message}</p>
             <Link
               href="/dashboard"
@@ -78,7 +78,7 @@ function VerifyEmailContent() {
             <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-6 text-3xl">
               ✕
             </div>
-            <h1 className="text-2xl font-bold text-[var(--text)] mb-2">{t('auth.verification_failed')}</h1>
+            <h1 className="text-xl font-semibold text-[var(--text)] mb-2">{t('auth.verification_failed')}</h1>
             <p className="text-[var(--text-muted)] mb-8">{result?.message || t('auth.invalid_token')}</p>
             <button
               onClick={handleResend}
@@ -97,7 +97,7 @@ function VerifyEmailContent() {
           </>
         ) : (
           <>
-            <h1 className="text-2xl font-bold text-[var(--text)] mb-2">{t('auth.verify_title')}</h1>
+            <h1 className="text-xl font-semibold text-[var(--text)] mb-2">{t('auth.verify_title')}</h1>
             <p className="text-[var(--text-muted)] mb-6">
               {t('auth.verify_check_inbox')}
             </p>

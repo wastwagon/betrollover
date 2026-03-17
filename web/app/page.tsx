@@ -64,24 +64,24 @@ export default async function HomePage() {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
               <span className="inline-block px-3 py-1 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-xs font-semibold uppercase tracking-wide mb-3">{t('home.how_it_works')}</span>
-              <h2 className="text-lg font-bold text-[var(--text)] mb-3 sm:text-xl md:text-2xl lg:text-3xl">{t('home.how_it_works_sub')}</h2>
+              <h2 className="text-base font-semibold text-[var(--text)] mb-3 sm:text-lg md:text-xl">{t('home.how_it_works_sub')}</h2>
               <p className="text-[var(--text-muted)] text-base max-w-xl mx-auto">{t('home.escrow_note')}</p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-8 md:gap-6">
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 rounded-2xl bg-emerald-500/15 border-2 border-emerald-500/30 flex items-center justify-center text-2xl font-bold text-emerald-600 dark:text-emerald-400 mb-5">1</div>
-                <h3 className="text-base font-bold text-[var(--text)] mb-2">{t('home.step1_title')}</h3>
+                <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('home.step1_title')}</h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('home.step1_desc')}</p>
               </div>
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 rounded-2xl bg-blue-500/15 border-2 border-blue-500/30 flex items-center justify-center text-2xl font-bold text-blue-600 dark:text-blue-400 mb-5">2</div>
-                <h3 className="text-base font-bold text-[var(--text)] mb-2">{t('home.step2_title')}</h3>
+                <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('home.step2_title')}</h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('home.step2_desc')}</p>
               </div>
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border-2 border-amber-500/30 flex items-center justify-center text-2xl font-bold text-amber-600 dark:text-amber-400 mb-5">3</div>
-                <h3 className="text-base font-bold text-[var(--text)] mb-2">{t('home.step3_title')}</h3>
+                <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('home.step3_title')}</h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('home.step3_desc')}</p>
               </div>
             </div>
@@ -90,13 +90,13 @@ export default async function HomePage() {
               <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-emerald-50/40 dark:from-slate-800/50 dark:to-emerald-900/20 border border-[var(--border)] flex items-center gap-4">
                 <span className="text-3xl flex-shrink-0">📰</span>
                 <div>
-                  <h3 className="text-sm font-bold text-[var(--text)] mb-0.5">{t('home.news_guides_title')}</h3>
+                  <h3 className="text-sm font-semibold text-[var(--text)] mb-0.5">{t('home.news_guides_title')}</h3>
                   <p className="text-xs text-[var(--text-muted)] leading-relaxed">{t('home.news_guides_desc')}</p>
                 </div>
               </div>
               <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-blue-50/40 dark:from-slate-800/50 dark:to-blue-900/20 border border-[var(--border)] flex items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-sm font-bold text-[var(--text)] mb-0.5">{t('home.explore_cta_title')}</h3>
+                  <h3 className="text-sm font-semibold text-[var(--text)] mb-0.5">{t('home.explore_cta_title')}</h3>
                   <p className="text-xs text-[var(--text-muted)]">{t('home.explore_cta_desc')}</p>
                 </div>
                 <Link
@@ -115,7 +115,7 @@ export default async function HomePage() {
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-10">
               <span className="inline-block px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold uppercase tracking-wide mb-3">{t('nav.sports')}</span>
-              <h2 className="text-lg font-bold text-[var(--text)] mb-3 sm:text-xl md:text-2xl lg:text-3xl">{t('home.sports_title')}</h2>
+              <h2 className="text-base font-semibold text-[var(--text)] mb-3 sm:text-lg md:text-xl">{t('home.sports_title')}</h2>
               <p className="text-[var(--text-muted)] text-base max-w-xl mx-auto">{t('home.sports_sub')}</p>
             </div>
 
@@ -164,7 +164,7 @@ export default async function HomePage() {
               ] as { icon: string; name: string; accent: string; desc: string; markets: string[] }[]).map((sport) => (
                 <div key={sport.name} className={`p-5 rounded-2xl bg-[var(--card)] border-2 ${sport.accent} shadow-sm hover:shadow-md transition-all duration-200`}>
                   <span className="text-3xl mb-3 block">{sport.icon}</span>
-                  <h3 className="text-base font-bold text-[var(--text)] mb-1.5">{sport.name}</h3>
+                  <h3 className="text-base font-semibold text-[var(--text)] mb-1.5">{sport.name}</h3>
                   <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-3">{sport.desc}</p>
                   <div className="flex flex-wrap gap-1.5">
                     {sport.markets.map((m) => (
@@ -184,7 +184,7 @@ export default async function HomePage() {
             {/* Section header */}
             <div className="text-center mb-10">
               <span className="inline-block px-3 py-1 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-xs font-semibold uppercase tracking-wide mb-3">{t('home.features_badge')}</span>
-              <h2 className="text-2xl md:text-3xl font-bold text-[var(--text)] mb-3">{t('home.features_title')}</h2>
+              <h2 className="text-lg md:text-xl font-semibold text-[var(--text)] mb-3">{t('home.features_title')}</h2>
               <p className="text-[var(--text-muted)] text-base max-w-xl mx-auto">{t('home.features_sub')}</p>
             </div>
 
@@ -197,7 +197,7 @@ export default async function HomePage() {
                   <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-hover)] flex items-center justify-center text-2xl mb-5 shadow-lg group-hover:scale-110 transition-transform">
                     🔒
                   </div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-[var(--text)] mb-3">
+                  <h3 className="text-lg md:text-xl font-semibold text-[var(--text)] mb-3">
                     {t('home.feature_escrow_title')}
                   </h3>
                   <p className="text-base text-[var(--text-muted)] mb-4 leading-relaxed">
@@ -255,7 +255,7 @@ export default async function HomePage() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-lg">🌍</span>
-                      <h3 className="text-lg font-bold text-[var(--text)]">
+                      <h3 className="text-base font-semibold text-[var(--text)]">
                         {t('home.feature_marketplace_title')}
                       </h3>
                     </div>
@@ -277,8 +277,8 @@ export default async function HomePage() {
                 <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-xl mb-4 shadow-md">
                   📊
                 </div>
-                <h3 className="text-base font-bold text-[var(--text)] mb-2">
-                  {t('home.feature_stats_title')}
+<h3 className="text-base font-semibold text-[var(--text)] mb-2">
+                {t('home.feature_stats_title')}
                 </h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">
                   {t('home.feature_stats_desc')}
@@ -287,7 +287,7 @@ export default async function HomePage() {
 
               {/* Card — Join Free CTA */}
               <div className="p-5 md:p-6 rounded-2xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-hover)] text-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-center items-center text-center">
-                <h3 className="text-xl font-bold mb-1">
+                <h3 className="text-lg font-semibold mb-1">
                   {t('home.join_cta')}
                 </h3>
                 <p className="text-sm opacity-85 mb-4 leading-relaxed">

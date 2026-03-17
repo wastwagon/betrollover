@@ -70,7 +70,7 @@ export default function InvitePage() {
 
         <div className="mb-8">
           <p className="text-xs font-semibold text-[var(--primary)] uppercase tracking-wider mb-1">{t('invite.grow_together')}</p>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)]">{t('invite.invite_earn')}</h1>
+          <h1 className="text-lg sm:text-xl font-semibold text-[var(--text)]">{t('invite.invite_earn')}</h1>
           <p className="text-[var(--text-muted)] mt-1 text-sm">
             {t('invite.invite_desc', { amount: stats?.rewardPerReferral?.toFixed(2) ?? '5.00' })}
           </p>
@@ -98,7 +98,7 @@ export default function InvitePage() {
                 { label: t('invite.total_credited'), value: `GHS ${Number(stats.totalCredited).toFixed(2)}` },
               ].map((c) => (
                 <div key={c.label} className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-4 text-center shadow-sm">
-                  <p className="text-xl font-bold text-[var(--text)]">{c.value}</p>
+                  <p className="text-base font-semibold text-[var(--text)]">{c.value}</p>
                   <p className="text-xs text-[var(--text-muted)] mt-0.5 uppercase tracking-wide">{c.label}</p>
                 </div>
               ))}

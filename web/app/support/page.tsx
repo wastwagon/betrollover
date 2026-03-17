@@ -101,7 +101,7 @@ function SupportContent() {
         <div className="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
           <div>
             <p className="text-xs font-semibold text-[var(--primary)] uppercase tracking-wider mb-1">{t('support.help_centre')}</p>
-            <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)]">{t('support.title')}</h1>
+            <h1 className="text-lg sm:text-xl font-semibold text-[var(--text)]">{t('support.title')}</h1>
             <p className="text-[var(--text-muted)] mt-1 text-sm">{t('support.raise_prompt')}</p>
           </div>
           <button
@@ -128,7 +128,7 @@ function SupportContent() {
 
         {showForm && (
           <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-6 shadow-sm mb-8">
-            <h2 className="text-base font-bold text-[var(--text)] mb-4">{t('support.new_support_ticket')}</h2>
+            <h2 className="text-sm font-semibold text-[var(--text)] mb-4">{t('support.new_support_ticket')}</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{t('support.category')}</label>

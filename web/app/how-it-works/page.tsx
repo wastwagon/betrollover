@@ -58,7 +58,7 @@ export default async function HowItWorksPage() {
           <p className="text-xs font-bold uppercase tracking-widest text-[var(--primary)] mb-3">
             Transparency
           </p>
-          <h1 className="text-3xl font-bold text-[var(--text)] mb-4">
+          <h1 className="text-xl md:text-2xl font-semibold text-[var(--text)] mb-4">
             How BetRollover Works
           </h1>
           <p className="text-[var(--text-muted)] text-lg leading-relaxed mb-10">

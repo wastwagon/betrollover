@@ -92,7 +92,7 @@ export function HomeFreeTipOfTheDay() {
     return (
       <section className="py-12 md:py-16 border-t border-[var(--border)] bg-[var(--bg)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-lg font-bold text-[var(--text)] mb-4 sm:mb-6 sm:text-xl md:text-2xl">Free Tip of the Day</h2>
+          <h2 className="text-base font-semibold text-[var(--text)] mb-4 sm:mb-6 sm:text-lg md:text-xl">Free Tip of the Day</h2>
           <div className="max-w-md h-64 rounded-2xl bg-[var(--card)] animate-pulse" />
         </div>
       </section>
@@ -119,7 +119,7 @@ export function HomeFreeTipOfTheDay() {
                 {sportMeta.emoji} {sportMeta.label}
               </span>
             </div>
-            <h2 className="text-lg font-bold text-[var(--text)] sm:text-xl md:text-2xl">Free Tip of the Day</h2>
+            <h2 className="text-base font-semibold text-[var(--text)] sm:text-lg md:text-xl">Free Tip of the Day</h2>
             <p className="text-sm text-[var(--text-muted)] mt-0.5">
               From {tip.tipster?.displayName ?? 'Expert Tipster'} — no purchase required
             </p>

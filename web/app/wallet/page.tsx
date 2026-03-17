@@ -316,7 +316,7 @@ function WalletContent() {
             <div className="space-y-4 pb-6">
               <div className="card-gradient rounded-2xl p-5 shadow-lg">
                 <p className="text-xs text-[var(--text-muted)] mb-0.5 font-medium uppercase tracking-wider">{t('wallet.balance')}</p>
-              <p className="text-2xl sm:text-3xl font-bold text-[var(--primary)]">
+              <p className="text-xl sm:text-2xl font-semibold text-[var(--primary)]">
                 {format(Number(balance?.balance ?? 0)).primary}
               </p>
               {currency.code !== 'GHS' && (

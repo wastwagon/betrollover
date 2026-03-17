@@ -32,7 +32,7 @@ export function NewsWidget() {
       <div className="max-w-6xl mx-auto px-6">
         <div className="flex justify-between items-end mb-6">
           <div>
-            <h2 className="text-xl md:text-2xl font-bold text-[var(--text)]">Latest News</h2>
+            <h2 className="text-base md:text-lg font-semibold text-[var(--text)]">Latest News</h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">Football news, transfers & gossip</p>
           </div>
           <Link

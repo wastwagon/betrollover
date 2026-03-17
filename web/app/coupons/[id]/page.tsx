@@ -341,7 +341,7 @@ export default function CouponDetailPage() {
         <UnifiedHeader />
         <main className="max-w-3xl mx-auto px-4 py-20 text-center">
           <p className="text-5xl mb-4">🎫</p>
-          <h1 className="text-2xl font-bold text-[var(--text)] mb-3">Coupon not found</h1>
+          <h1 className="text-lg font-semibold text-[var(--text)] mb-3">Coupon not found</h1>
           <p className="text-[var(--text-muted)] mb-6">This coupon may have been removed or the link is invalid.</p>
           <Link href="/coupons" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] transition-colors">
             ← Browse Coupons

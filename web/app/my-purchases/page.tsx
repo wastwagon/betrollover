@@ -194,7 +194,7 @@ export default function MyPurchasesPage() {
                   key={labelKey}
                   className="rounded-xl bg-[var(--card)] border border-[var(--border)] p-4 shadow-sm text-center"
                 >
-                  <p className={`text-2xl font-bold ${color}`}>{value}</p>
+                  <p className={`text-lg font-semibold ${color}`}>{value}</p>
                   <p className="text-xs text-[var(--text-muted)] mt-0.5 font-medium">{t(labelKey)}</p>
                 </div>
               ))}

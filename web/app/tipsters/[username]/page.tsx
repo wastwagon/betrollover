@@ -397,7 +397,7 @@ export default function TipsterProfilePage() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-2">
-                <h1 className="text-2xl md:text-3xl font-bold text-[var(--text)]">{tipster.display_name}</h1>
+                <h1 className="text-lg sm:text-xl font-semibold text-[var(--text)]">{tipster.display_name}</h1>
                 {tipster.is_ai && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300 border border-violet-200 dark:border-violet-700/40">
                     🤖 {t('tipster.ai_tipster')}
@@ -432,21 +432,21 @@ export default function TipsterProfilePage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 mb-4">
                 <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
                   <span className="text-xs uppercase text-[var(--text-muted)]">{t('tipster.roi')}</span>
-                  <p className={`font-bold text-lg ${roiColor}`} title={!hasSettledPicks && tipster.total_predictions ? t('tipster.stats_update') : undefined}>{roiDisplay}</p>
+                  <p className={`font-semibold text-base ${roiColor}`} title={!hasSettledPicks && tipster.total_predictions ? t('tipster.stats_update') : undefined}>{roiDisplay}</p>
                 </div>
                 <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
                   <span className="text-xs uppercase text-[var(--text-muted)]">{t('tipster.win_rate')}</span>
-                  <p className="font-bold text-lg text-[var(--text)]" title={!hasSettledPicks && tipster.total_predictions ? t('tipster.stats_update') : undefined}>{winRateDisplay}</p>
+                  <p className="font-semibold text-base text-[var(--text)]" title={!hasSettledPicks && tipster.total_predictions ? t('tipster.stats_update') : undefined}>{winRateDisplay}</p>
                 </div>
                 <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
                   <span className="text-xs uppercase text-[var(--text-muted)]">{t('tipster.won_lost')}</span>
-                  <p className="font-bold text-lg text-[var(--text)]">
+                  <p className="font-semibold text-base text-[var(--text)]">
                     {tipster.total_wins}W / {tipster.total_losses}L
                   </p>
                 </div>
                 <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
                   <span className="text-xs uppercase text-[var(--text-muted)]">{t('tipster.best_streak')}</span>
-                  <p className="font-bold text-lg text-[var(--text)]">
+                  <p className="font-semibold text-base text-[var(--text)]">
                     {tipster.best_streak != null && tipster.best_streak > 0
                       ? `🔥 ${tipster.best_streak}W`
                       : '—'}
@@ -454,12 +454,12 @@ export default function TipsterProfilePage() {
                 </div>
                 <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
                   <span className="text-xs uppercase text-[var(--text-muted)]">{t('tipster.predictions')}</span>
-                  <p className="font-bold text-lg text-[var(--text)]">{tipster.total_predictions}</p>
+                  <p className="font-semibold text-base text-[var(--text)]">{tipster.total_predictions}</p>
                 </div>
                 {tipster.avg_odds != null && Number(tipster.avg_odds) > 0 && (
                   <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
                     <span className="text-xs uppercase text-[var(--text-muted)]">{t('tipster.avg_odds')}</span>
-                    <p className="font-bold text-lg text-[var(--text)]">{Number(tipster.avg_odds).toFixed(2)}</p>
+                    <p className="font-semibold text-base text-[var(--text)]">{Number(tipster.avg_odds).toFixed(2)}</p>
                   </div>
                 )}
               </div>
@@ -496,7 +496,7 @@ export default function TipsterProfilePage() {
                     className="rounded-xl p-5 border border-emerald-200/60 dark:border-emerald-700/40 bg-gradient-to-br from-emerald-50/80 to-teal-50/60 dark:from-emerald-900/20 dark:to-teal-900/20 shadow-sm"
                   >
                     <h3 className="font-semibold text-[var(--text)] mb-1">{pkg.name}</h3>
-                    <p className="text-2xl font-bold text-[var(--primary)] mb-2">GHS {Number(pkg.price).toFixed(2)}<span className="text-sm font-normal text-[var(--text-muted)]">/{pkg.durationDays}d</span></p>
+                    <p className="text-lg font-semibold text-[var(--primary)] mb-2">GHS {Number(pkg.price).toFixed(2)}<span className="text-sm font-normal text-[var(--text-muted)]">/{pkg.durationDays}d</span></p>
                     {pkg.roiGuaranteeEnabled && pkg.roiGuaranteeMin != null && (
                       <p className="text-xs text-[var(--text-muted)] mb-3">{t('tipster.roi_guarantee', { n: String(pkg.roiGuaranteeMin) })}</p>
                     )}

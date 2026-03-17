@@ -109,15 +109,15 @@ export default function CouponsArchivePage() {
         {!loading && coupons.length > 0 && (
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center">
-              <p className="text-2xl font-bold text-[var(--text)]">{coupons.length}</p>
+              <p className="text-lg font-semibold text-[var(--text)]">{coupons.length}</p>
               <p className="text-xs text-[var(--text-muted)] mt-1">Total Settled</p>
             </div>
             <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
-              <p className="text-2xl font-bold text-emerald-700">{wonCount}</p>
+              <p className="text-lg font-semibold text-emerald-700">{wonCount}</p>
               <p className="text-xs text-emerald-600 mt-1">Won</p>
             </div>
             <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-center">
-              <p className="text-2xl font-bold text-red-700">{lostCount}</p>
+              <p className="text-lg font-semibold text-red-700">{lostCount}</p>
               <p className="text-xs text-red-600 mt-1">Lost ({winRate}% win rate)</p>
             </div>
           </div>

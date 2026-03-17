@@ -32,7 +32,7 @@ export default async function TermsPage() {
           <p className="text-xs font-bold uppercase tracking-widest text-[var(--primary)] mb-3">
             {t('privacy.legal')}
           </p>
-          <h1 className="text-3xl font-bold text-[var(--text)] mb-2">{t('terms.title')}</h1>
+          <h1 className="text-xl md:text-2xl font-semibold text-[var(--text)] mb-2">{t('terms.title')}</h1>
           <p className="text-sm text-[var(--text-muted)] mb-10">
             {t('privacy.effective')}: {EFFECTIVE_DATE}
           </p>

@@ -55,7 +55,7 @@ export default function ResourceItemPage() {
       <div className="min-h-screen bg-[var(--bg)]">
         <UnifiedHeader />
         <main className="max-w-3xl mx-auto px-4 py-12 text-center">
-          <h1 className="text-2xl font-bold text-[var(--text)] mb-4">{t('discover.resource_not_found')}</h1>
+          <h1 className="text-lg font-semibold text-[var(--text)] mb-4">{t('discover.resource_not_found')}</h1>
           <Link href="/discover?tab=guides" className="text-[var(--primary)] hover:underline">
             {t('discover.back_to_discover')}
           </Link>
@@ -97,7 +97,7 @@ export default function ResourceItemPage() {
               </span>
             )}
           </div>
-          <h1 className="text-xl md:text-2xl font-semibold text-[var(--text)] leading-tight mb-6">
+          <h1 className="text-lg md:text-xl font-semibold text-[var(--text)] leading-tight mb-6">
             {item.title}
           </h1>
           <div className="prose prose-slate prose-sm max-w-none text-[var(--text)] text-[15px] leading-relaxed [&>p]:mb-4">

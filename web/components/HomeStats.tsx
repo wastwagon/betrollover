@@ -56,7 +56,7 @@ export function HomeStats() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
           {items.map((item) => (
             <div key={item.label} className="text-center group">
-              <p className="text-xl md:text-2xl font-bold text-[var(--primary)] tabular-nums group-hover:scale-105 transition-transform">{item.value}</p>
+              <p className="text-lg font-semibold text-[var(--primary)] tabular-nums group-hover:scale-105 transition-transform">{item.value}</p>
               <p className="text-xs text-[var(--text-muted)] mt-0.5 font-medium">{item.label}</p>
             </div>
           ))}

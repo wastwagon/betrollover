@@ -122,8 +122,8 @@ const en = {
   'status.void': 'Void',
 
   // ── Home page ────────────────────────────────────────────────────────────
-  'home.hero_title': 'The Smarter Way to Follow Sports Tips',
-  'home.hero_subtitle': "Ghana-based tipster marketplace for a global audience. All major sports — football, basketball, tennis, MMA, rugby and more. Discover expert picks, track performance, and make informed decisions worldwide.",
+  'home.hero_title': 'Follow expert picks. Track real results.',
+  'home.hero_subtitle': "Tipster marketplace for a global audience. All major sports — football, basketball, tennis, MMA, rugby and more. Discover expert picks, track performance, and make informed decisions.",
   'home.hero_cta_primary': 'Browse Picks',
   'home.hero_cta_secondary': 'Become a Tipster',
   'home.hero_badge': 'Trusted by sports enthusiasts',

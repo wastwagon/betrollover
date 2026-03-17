@@ -112,9 +112,9 @@ function RegisterForm() {
           <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-12">
-              <span className="text-2xl font-bold tracking-tight">BetRollover</span>
+              <span className="text-xl font-semibold tracking-tight">BetRollover</span>
             </div>
-            <h2 className="text-2xl xl:text-3xl font-bold leading-tight max-w-sm">
+            <h2 className="text-xl xl:text-2xl font-semibold leading-tight max-w-sm">
               Join Ghana&apos;s trusted tipster marketplace — for a global audience
             </h2>
             <p className="mt-4 text-emerald-100/90 text-base leading-relaxed max-w-sm">
@@ -149,7 +149,7 @@ function RegisterForm() {
             <div className="relative bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl shadow-slate-200/50 border border-slate-100 p-8 md:p-10 overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[var(--primary)] via-emerald-400 to-[var(--primary)]" />
               <div className="text-center mb-8">
-                <h1 className="text-2xl md:text-3xl font-bold text-[var(--text)] tracking-tight">{t('auth.create_account')}</h1>
+                <h1 className="text-xl md:text-2xl font-semibold text-[var(--text)] tracking-tight">{t('auth.create_account')}</h1>
                 <p className="mt-2 text-[var(--text-muted)] text-base">
                   {step === 'email' ? t('auth.verify_email_first') : t('auth.complete_registration')}
                 </p>

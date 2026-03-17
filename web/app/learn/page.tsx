@@ -15,7 +15,7 @@ export default async function LearnPage() {
           <p className="text-xs font-bold uppercase tracking-widest text-[var(--primary)] mb-3">
             {t('learn.education')}
           </p>
-          <h1 className="text-3xl font-bold text-[var(--text)] mb-4">
+          <h1 className="text-xl md:text-2xl font-semibold text-[var(--text)] mb-4">
             {t('learn.page_title')}
           </h1>
           <p className="text-lg text-[var(--text-muted)] leading-relaxed mb-10">

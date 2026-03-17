@@ -122,8 +122,8 @@ const fr: Record<string, string> = {
   'status.void': 'Annulé',
 
   // ── Home page ────────────────────────────────────────────────────────────
-  'home.hero_title': 'La Façon Intelligente de Suivre les Pronostics Sportifs',
-  'home.hero_subtitle': "Marketplace de tipsters basée au Ghana, pour un public mondial. Tous les grands sports — football, basketball, tennis, MMA, rugby et plus. Découvrez des pronostics d'experts et suivez les performances partout dans le monde.",
+  'home.hero_title': 'Suivez les pronostics d\'experts. Suivez les résultats.',
+  'home.hero_subtitle': "Marketplace de tipsters pour un public mondial. Tous les grands sports — football, basketball, tennis, MMA, rugby et plus. Découvrez des pronostics d'experts et suivez les performances.",
   'home.hero_cta_primary': 'Voir les Pronostics',
   'home.hero_cta_secondary': 'Devenir Tipster',
   'home.hero_badge': 'Approuvé par les passionnés de sport',

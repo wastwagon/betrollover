@@ -28,7 +28,7 @@ export default async function AboutPage() {
           <p className="text-xs font-bold uppercase tracking-widest text-[var(--primary)] mb-3">
             {t('nav.about')}
           </p>
-          <h1 className="text-3xl font-bold text-[var(--text)] mb-4">
+          <h1 className="text-xl md:text-2xl font-semibold text-[var(--text)] mb-4">
             {t('about.headline')}
           </h1>
           <p className="text-[var(--text-muted)] text-lg leading-relaxed mb-10">

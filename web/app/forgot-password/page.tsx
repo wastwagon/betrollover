@@ -92,7 +92,7 @@ function ForgotPasswordForm() {
                 <div className="w-full max-w-md">
                     <div className="bg-white rounded-2xl shadow-xl border border-[var(--border)] p-8 md:p-10">
                         <div className="text-center mb-8">
-                            <h1 className="text-2xl font-bold text-[var(--text)]">
+                            <h1 className="text-xl font-semibold text-[var(--text)]">
                                 {step === 'request' ? t('auth.forgot_title') : t('auth.forgot_reset_title')}
                             </h1>
                             <p className="mt-2 text-[var(--text-muted)]">

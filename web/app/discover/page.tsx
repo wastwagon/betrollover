@@ -130,7 +130,7 @@ function DiscoverContent() {
 
         {/* SEO-rich static content */}
         <section className="mb-8 rounded-2xl bg-[var(--card)] border border-[var(--border)] p-6 md:p-8">
-          <h2 className="text-xl font-bold text-[var(--text)] mb-3">{t('discover.hub_title')}</h2>
+          <h2 className="text-base font-semibold text-[var(--text)] mb-3">{t('discover.hub_title')}</h2>
           <p className="text-[var(--text-muted)] leading-relaxed mb-4">
             {t('discover.hub_desc')}
           </p>
@@ -163,7 +163,7 @@ function DiscoverContent() {
 
           {/* More — contextual links (no hamburger needed) */}
           <div className="mt-6 pt-6 border-t border-[var(--border)]">
-            <h3 className="text-sm font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('discover.more')}</h3>
+            <h3 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('discover.more')}</h3>
             <div className="flex flex-wrap gap-2">
               <Link href="/community" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">💬 {t('nav.community')}</Link>
               <Link href="/news" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">📰 {t('nav.news')}</Link>
@@ -318,7 +318,7 @@ function NewsTab({ sport }: { sport: NewsSport | '' }) {
           {sportMeta && sportMeta.comingSoon ? (
             <>
               <div className="text-5xl mb-4">{sportMeta.icon}</div>
-              <h3 className="text-xl font-bold text-[var(--text)] mb-2">{t('discover.sport_news_coming_soon', { sport: getSportLabel(t, sport) })}</h3>
+              <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('discover.sport_news_coming_soon', { sport: getSportLabel(t, sport) })}</h3>
               <p className="text-[var(--text-muted)] max-w-md mx-auto mb-4">
                 {t('news.coming_soon_desc', { sport: getSportLabel(t, sport) })}
               </p>
@@ -331,7 +331,7 @@ function NewsTab({ sport }: { sport: NewsSport | '' }) {
             </>
           ) : (
             <>
-              <h3 className="text-xl font-bold text-[var(--text)] mb-2">{t('news.no_articles')}</h3>
+              <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('news.no_articles')}</h3>
               <p className="text-[var(--text-muted)] max-w-md mx-auto">
                 {sport ? t('news.no_articles_filtered') : t('news.no_articles_default')}
               </p>
@@ -414,7 +414,7 @@ function GuidesTab({ sport }: { sport: NewsSport | '' }) {
         {sportMeta ? (
           <>
             <div className="text-5xl mb-4">{sportMeta.icon}</div>
-            <h3 className="text-xl font-bold text-[var(--text)] mb-2">{t('discover.guides_coming_soon', { sport: getSportLabel(t, sport) })}</h3>
+            <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('discover.guides_coming_soon', { sport: getSportLabel(t, sport) })}</h3>
             <p className="text-[var(--text-muted)] max-w-md mx-auto mb-4">
               {t('discover.guides_coming_desc', { sport: getSportLabel(t, sport) })}
             </p>
@@ -428,7 +428,7 @@ function GuidesTab({ sport }: { sport: NewsSport | '' }) {
         ) : (
           <>
             <div className="text-5xl mb-4">📚</div>
-            <h3 className="text-xl font-bold text-[var(--text)] mb-2">{t('discover.guides_coming_generic')}</h3>
+            <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('discover.guides_coming_generic')}</h3>
             <p className="text-[var(--text-muted)] max-w-md mx-auto">
               {t('discover.guides_coming_generic_desc')}
             </p>

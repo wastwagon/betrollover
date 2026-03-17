@@ -162,7 +162,7 @@ function NewsContent() {
                 {activeSport && ['basketball', 'rugby', 'mma', 'volleyball', 'hockey', 'american_football', 'tennis'].includes(activeSport) ? (
                   <>
                     <div className="text-5xl mb-4">{SPORT_ICONS[activeSport]}</div>
-                    <h3 className="text-xl font-bold text-[var(--text)] mb-2">{getSportLabel(t, activeSport)} {t('nav.news')} — {t('common.coming_soon')}</h3>
+                    <h3 className="text-base font-semibold text-[var(--text)] mb-2">{getSportLabel(t, activeSport)} {t('nav.news')} — {t('common.coming_soon')}</h3>
                     <p className="text-[var(--text-muted)] text-sm max-w-md mx-auto mb-4">
                       {t('news.coming_soon_desc', { sport: getSportLabel(t, activeSport) })}
                     </p>
@@ -220,7 +220,7 @@ function NewsContent() {
                             <span className="text-xs text-[var(--text-muted)]">{formatDate(article.publishedAt)}</span>
                           )}
                         </div>
-                        <h2 className="text-lg font-bold text-[var(--text)] group-hover:text-[var(--primary)] transition-colors leading-snug mb-2">
+                        <h2 className="text-base font-semibold text-[var(--text)] group-hover:text-[var(--primary)] transition-colors leading-snug mb-2">
                           {article.title}
                         </h2>
                         {article.excerpt && (
@@ -238,7 +238,7 @@ function NewsContent() {
             <div className="sticky top-24 space-y-4">
               <AdSlot zoneSlug="news-sidebar" />
               <div className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
-                <h3 className="text-sm font-bold text-[var(--text)] mb-3">📚 {t('news.sidebar_guides_title')}</h3>
+                <h3 className="text-sm font-semibold text-[var(--text)] mb-3">📚 {t('news.sidebar_guides_title')}</h3>
                 <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-3">
                   {t('news.sidebar_guides_desc')}
                 </p>
@@ -247,7 +247,7 @@ function NewsContent() {
                 </Link>
               </div>
               <div className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
-                <h3 className="text-sm font-bold text-[var(--text)] mb-3">🎯 {t('news.sidebar_top_tipsters')}</h3>
+                <h3 className="text-sm font-semibold text-[var(--text)] mb-3">🎯 {t('news.sidebar_top_tipsters')}</h3>
                 <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-3">
                   {t('news.sidebar_top_tipsters_desc')}
                 </p>

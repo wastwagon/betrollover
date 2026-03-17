@@ -120,7 +120,7 @@ export default function NewsArticlePage() {
         <UnifiedHeader />
         <main className="max-w-3xl mx-auto px-4 py-20 text-center">
           <p className="text-5xl mb-4">📰</p>
-          <h1 className="text-2xl font-bold text-[var(--text)] mb-3">{t('news.article_not_found')}</h1>
+          <h1 className="text-lg font-semibold text-[var(--text)] mb-3">{t('news.article_not_found')}</h1>
           <p className="text-[var(--text-muted)] mb-6">{t('news.article_not_found_desc')}</p>
           <Link href="/news" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] transition-colors">
             {t('news.back_to_news')}
@@ -182,7 +182,7 @@ export default function NewsArticlePage() {
             </div>
 
             {/* Title */}
-            <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)] leading-tight mb-4">
+            <h1 className="text-lg sm:text-xl font-semibold text-[var(--text)] leading-tight mb-4">
               {article.title}
             </h1>
 

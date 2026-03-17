@@ -81,7 +81,7 @@ function LoginForm() {
         <div className="w-full max-w-md">
           <div className="bg-white rounded-2xl shadow-xl border border-[var(--border)] p-8 md:p-10">
             <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-[var(--text)]">{t('auth.welcome_back')}</h1>
+              <h1 className="text-xl font-semibold text-[var(--text)]">{t('auth.welcome_back')}</h1>
               <p className="mt-2 text-[var(--text-muted)]">{t('auth.sign_in_desc')}</p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-5">

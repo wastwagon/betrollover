@@ -230,7 +230,7 @@ export default function EarningsPage() {
         {/* Header */}
         <div className="mb-8">
           <p className="text-xs font-semibold text-[var(--primary)] uppercase tracking-wider mb-1">{t('earnings.title')}</p>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)]">{t('earnings.subtitle')}</h1>
+          <h1 className="text-lg sm:text-xl font-semibold text-[var(--text)]">{t('earnings.subtitle')}</h1>
           <p className="text-[var(--text-muted)] mt-1">{t('earnings.track_desc_full')}</p>
         </div>
 
@@ -242,7 +242,7 @@ export default function EarningsPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm">
             <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{t('earnings.wallet_balance')}</p>
-            <p className="text-2xl font-bold text-[var(--primary)]">
+            <p className="text-lg font-semibold text-[var(--primary)]">
               GHS {balance !== null ? balance.toFixed(2) : '—'}
             </p>
             <Link href="/wallet" className="text-xs text-[var(--primary)] hover:underline mt-1 inline-block">{t('earnings.manage_wallet')}</Link>
@@ -250,13 +250,13 @@ export default function EarningsPage() {
 
           <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm">
             <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{t('earnings.net_earned')}</p>
-            <p className="text-2xl font-bold text-emerald-600">GHS {totalEarned.toFixed(2)}</p>
+            <p className="text-lg font-semibold text-emerald-600">GHS {totalEarned.toFixed(2)}</p>
             <p className="text-xs text-[var(--text-muted)] mt-1">{t('earnings.from_payouts', { n: String(transactions.filter(tx => tx.type === 'payout').length) })}</p>
           </div>
 
           <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm">
             <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{t('earnings.platform_fee')}</p>
-            <p className="text-2xl font-bold text-amber-600">GHS {totalCommissionDeducted.toFixed(2)}</p>
+            <p className="text-lg font-semibold text-amber-600">GHS {totalCommissionDeducted.toFixed(2)}</p>
             <p className="text-xs text-[var(--text-muted)] mt-1">
               {totalGross > 0
                 ? t('earnings.gross_pct', { pct: ((totalCommissionDeducted / totalGross) * 100).toFixed(1), gross: totalGross.toFixed(2) })
@@ -266,7 +266,7 @@ export default function EarningsPage() {
 
           <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm">
             <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{t('earnings.withdrawn')}</p>
-            <p className="text-2xl font-bold text-[var(--text)]">GHS {totalWithdrawn.toFixed(2)}</p>
+            <p className="text-lg font-semibold text-[var(--text)]">GHS {totalWithdrawn.toFixed(2)}</p>
             {pendingWithdrawal > 0 && (
               <p className="text-xs text-amber-600 mt-1">⏳ GHS {pendingWithdrawal.toFixed(2)} {t('earnings.pending')}</p>
             )}
@@ -296,7 +296,7 @@ export default function EarningsPage() {
         {/* ── Earnings chart ── */}
         {chartData.length > 0 && (
           <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm mb-6">
-            <h2 className="text-sm font-bold text-[var(--text)] mb-4">{t('earnings.monthly_earnings')}</h2>
+            <h2 className="text-sm font-semibold text-[var(--text)] mb-4">{t('earnings.monthly_earnings')}</h2>
             <ResponsiveContainer width="100%" height={180}>
               <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
                 <defs>
@@ -323,7 +323,7 @@ export default function EarningsPage() {
           {/* ── Coupon performance ── */}
           <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-hidden shadow-sm">
             <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
-              <h2 className="text-sm font-bold text-[var(--text)]">{t('earnings.top_revenue')}</h2>
+              <h2 className="text-sm font-semibold text-[var(--text)]">{t('earnings.top_revenue')}</h2>
               <Link href="/my-picks" className="text-xs text-[var(--primary)] hover:underline">{t('earnings.view_all_picks')}</Link>
             </div>
 
@@ -367,7 +367,7 @@ export default function EarningsPage() {
           {/* ── Coupon stats summary ── */}
           <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-[var(--text)]">{t('earnings.coupon_stats')}</h2>
+              <h2 className="text-sm font-semibold text-[var(--text)]">{t('earnings.coupon_stats')}</h2>
               {reviewSummary && (
                 <div className="flex items-center gap-1.5">
                   <span className="flex">
@@ -444,7 +444,7 @@ export default function EarningsPage() {
         {/* ── Transaction history ── */}
         <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-hidden shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-[var(--border)]">
-            <h2 className="text-sm font-bold text-[var(--text)]">{t('earnings.tx_history')}</h2>
+            <h2 className="text-sm font-semibold text-[var(--text)]">{t('earnings.tx_history')}</h2>
             <div className="flex flex-wrap gap-1.5">
               {([
                 { key: 'all',        label: t('earnings.filter_all') },

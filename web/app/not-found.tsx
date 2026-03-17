@@ -35,7 +35,7 @@ export default async function NotFound() {
           </span>
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)] mb-3 text-center">
+        <h1 className="text-lg sm:text-xl font-semibold text-[var(--text)] mb-3 text-center">
           {t('error.off_side')}
         </h1>
         <p className="text-[var(--text-muted)] text-center max-w-md mb-10 leading-relaxed">

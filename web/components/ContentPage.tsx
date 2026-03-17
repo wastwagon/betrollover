@@ -42,7 +42,7 @@ export function ContentPage({ slug, fallbackTitle }: { slug: string; fallbackTit
       <div className="min-h-screen bg-[var(--bg)]">
         <UnifiedHeader />
         <div className="flex flex-col items-center justify-center py-24 px-6">
-          <h1 className="text-2xl font-bold text-[var(--text)]">Page not found</h1>
+          <h1 className="text-lg font-semibold text-[var(--text)]">Page not found</h1>
           <Link href="/" className="mt-4 text-[var(--primary)] hover:underline">
             Go home
           </Link>
@@ -57,7 +57,7 @@ export function ContentPage({ slug, fallbackTitle }: { slug: string; fallbackTit
 
       <main>
         <article className="max-w-3xl mx-auto px-6 py-12">
-        <h1 className="text-3xl font-bold text-[var(--text)] mb-6">
+        <h1 className="text-xl md:text-2xl font-semibold text-[var(--text)] mb-6">
           {page.title || fallbackTitle}
         </h1>
         <div className="prose prose-slate max-w-none">
