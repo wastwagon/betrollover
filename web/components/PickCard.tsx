@@ -262,8 +262,14 @@ export function PickCard({
 
           {/* Coupon Title & Summary - compact single block */}
           <div className="mb-2">
-            <div className="flex items-baseline justify-between gap-2 flex-wrap">
-              <h2 className="font-medium text-xs text-[var(--text)] truncate">{title}</h2>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <span
+                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[var(--primary)]/10 border border-[var(--primary)]/25 text-[var(--text)] font-medium text-xs truncate max-w-full"
+                title={title}
+              >
+                <span className="flex-shrink-0 text-[var(--primary)] opacity-80" aria-hidden>#</span>
+                <span className="truncate">{title}</span>
+              </span>
               <span className="text-[10px] text-[var(--text-muted)] whitespace-nowrap">
                 {t('pick_card.picks_odds', { n: String(totalPicks), odds: Number(totalOdds).toFixed(2) })}
               </span>

@@ -486,12 +486,25 @@ export class AccumulatorsService {
     };
   }
 
-  async getMarketplace(userId: number, includeAllListings = false, options?: { limit?: number; offset?: number; sport?: string; tipsterUsername?: string }) {
+  async getMarketplace(
+    userId: number,
+    includeAllListings = false,
+    options?: {
+      limit?: number;
+      offset?: number;
+      sport?: string;
+      tipsterUsername?: string;
+      showPending?: boolean;
+      showNotStated?: boolean;
+      showSettled?: boolean;
+    },
+  ) {
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
     const offset = Math.max(options?.offset ?? 0, 0);
+    const adminFilterMode = options?.showPending !== undefined || options?.showNotStated !== undefined || options?.showSettled !== undefined;
 
-    // Admin with includeAll: show all coupons (active, removed, sold, expired) so they can delete settled/archived
-    const marketplaceWhere = includeAllListings ? {} : { status: 'active' as const };
+    // Always exclude removed listings (status !== 'active'). Removed/deleted coupons not shown.
+    const marketplaceWhere = { status: 'active' as const };
     const rows = await this.marketplaceRepo.find({
       where: marketplaceWhere,
       select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount'],
@@ -503,7 +516,7 @@ export class AccumulatorsService {
     }
 
     const ticketWhere: any = { id: In(accIds) };
-    if (!includeAllListings) {
+    if (!adminFilterMode && !includeAllListings) {
       ticketWhere.status = 'active';
       ticketWhere.result = 'pending';
     }
@@ -537,21 +550,40 @@ export class AccumulatorsService {
     });
 
     const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
-
-    // Filter out coupons where any fixture has already started (unless includeAllListings for admin)
     const now = new Date();
-    const validTickets = includeAllListings ? enrichedTickets : enrichedTickets.filter(ticket => {
-      if (!ticket.picks || ticket.picks.length === 0) return false;
-      const hasStartedFixture = ticket.picks.some((pick: any) => {
-        if (!pick.matchDate) return false;
-        return new Date(pick.matchDate) <= now;
+
+    let validTickets: typeof enrichedTickets;
+    if (adminFilterMode) {
+      const showPending = options!.showPending !== false;
+      const showNotStated = options!.showNotStated !== false;
+      const showSettled = options!.showSettled === true;
+      validTickets = enrichedTickets.filter((ticket) => {
+        if (!ticket.picks || ticket.picks.length === 0) return false;
+        const hasStartedFixture = ticket.picks.some((pick: any) => {
+          if (!pick.matchDate) return false;
+          return new Date(pick.matchDate) <= now;
+        });
+        const result = (ticket.result || 'pending').toLowerCase();
+        const isPending = result === 'pending' && !hasStartedFixture;
+        const isNotStated = result === 'pending' && hasStartedFixture;
+        const isSettled = ['won', 'lost', 'void'].includes(result);
+        return (showPending && isPending) || (showNotStated && isNotStated) || (showSettled && isSettled);
       });
-      return !hasStartedFixture;
-    });
+    } else {
+      // Non-admin or legacy: filter out coupons where any fixture has already started (unless includeAllListings)
+      validTickets = includeAllListings ? enrichedTickets : enrichedTickets.filter((ticket) => {
+        if (!ticket.picks || ticket.picks.length === 0) return false;
+        const hasStartedFixture = ticket.picks.some((pick: any) => {
+          if (!pick.matchDate) return false;
+          return new Date(pick.matchDate) <= now;
+        });
+        return !hasStartedFixture;
+      });
+    }
 
     const total = validTickets.length;
     if (enrichedTickets.length > 0 && validTickets.length === 0) {
-      this.logger.debug(`getMarketplace: ${enrichedTickets.length} coupons filtered out (fixtures started)`);
+      this.logger.debug(`getMarketplace: ${enrichedTickets.length} coupons filtered out`);
     }
     const paginated = validTickets.slice(offset, offset + limit);
     const items = await this.enrichWithTipsterMetadata(paginated, rows, userId);

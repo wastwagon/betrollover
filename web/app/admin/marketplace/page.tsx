@@ -48,7 +48,9 @@ export default function AdminMarketplacePage() {
   const router = useRouter();
   const [picks, setPicks] = useState<Accumulator[]>([]);
   const [loading, setLoading] = useState(true);
-  const [includeAll, setIncludeAll] = useState(false);
+  const [showPending, setShowPending] = useState(true);
+  const [showNotStated, setShowNotStated] = useState(true);
+  const [showSettled, setShowSettled] = useState(false);
   const [tipsterUsername, setTipsterUsername] = useState<string>('');
   const [tipsters, setTipsters] = useState<MarketplaceTipster[]>([]);
   const [fixing, setFixing] = useState(false);
@@ -69,9 +71,11 @@ export default function AdminMarketplacePage() {
     }
     setLoading(true);
     const params = new URLSearchParams();
-    if (includeAll) params.set('includeAll', 'true');
+    params.set('showPending', String(showPending));
+    params.set('showNotStated', String(showNotStated));
+    params.set('showSettled', String(showSettled));
     if (tipsterUsername) params.set('tipsterUsername', tipsterUsername);
-    const url = `${getApiUrl()}/accumulators/marketplace${params.toString() ? `?${params.toString()}` : ''}`;
+    const url = `${getApiUrl()}/accumulators/marketplace?${params.toString()}`;
     fetch(url, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => (r.ok ? r.json() : {}))
       .then((data: { items?: Accumulator[] } | Accumulator[]) => {
@@ -80,7 +84,7 @@ export default function AdminMarketplacePage() {
       })
       .catch(() => setPicks([]))
       .finally(() => setLoading(false));
-  }, [router, includeAll, tipsterUsername]);
+  }, [router, showPending, showNotStated, showSettled, tipsterUsername]);
 
   const loadTipsters = useCallback(() => {
     const token = localStorage.getItem('token');
@@ -168,20 +172,37 @@ export default function AdminMarketplacePage() {
             Same data as user marketplace. Review listings and fix duplicates.{' '}
             <Link href="/marketplace" className="text-[var(--primary)] hover:underline">View as customer →</Link>
           </p>
-          <div className="flex flex-wrap items-center gap-4 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-            <label className="flex items-center gap-3 cursor-pointer">
+          <div className="flex flex-wrap items-center gap-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+            <span className="text-sm font-medium text-amber-900 dark:text-amber-100">Show coupons:</span>
+            <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                checked={includeAll}
-                onChange={(e) => setIncludeAll(e.target.checked)}
-                className="w-5 h-5 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
+                checked={showPending}
+                onChange={(e) => setShowPending(e.target.checked)}
+                className="w-4 h-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
               />
-              <span className="text-base font-medium text-amber-900 dark:text-amber-100">
-                Show all coupons (including started, settled, removed)
-              </span>
+              <span className="text-sm font-medium text-amber-900 dark:text-amber-100">Pending</span>
             </label>
-            <span className="text-sm text-amber-800 dark:text-amber-200">
-              — Check this to see and delete archived/settled coupons
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showNotStated}
+                onChange={(e) => setShowNotStated(e.target.checked)}
+                className="w-4 h-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
+              />
+              <span className="text-sm font-medium text-amber-900 dark:text-amber-100">Not stated</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showSettled}
+                onChange={(e) => setShowSettled(e.target.checked)}
+                className="w-4 h-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
+              />
+              <span className="text-sm font-medium text-amber-900 dark:text-amber-100">Settled</span>
+            </label>
+            <span className="text-xs text-amber-800 dark:text-amber-200">
+              Removed/deleted coupons never shown. Settled hidden by default.
             </span>
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -259,10 +280,8 @@ export default function AdminMarketplacePage() {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No picks on marketplace</h3>
             <p className="text-gray-600 dark:text-gray-400">
               {tipsterUsername
-                ? `No coupons for this tipster.${includeAll ? '' : ' Try "Show all" to include archived/settled.'}`
-                : includeAll
-                  ? 'No active listings found.'
-                  : 'No purchasable picks. Try "Show all" to see started/settled coupons.'}
+                ? 'No coupons for this tipster with the selected filters.'
+                : 'No coupons match the selected filters (Pending / Not stated / Settled).'}
             </p>
           </div>
         )}

@@ -64,21 +64,30 @@ export class AccumulatorsController {
   getMarketplace(
     @CurrentUser() user: User,
     @Query('includeAll') includeAll?: string,
+    @Query('showPending') showPending?: string,
+    @Query('showNotStated') showNotStated?: string,
+    @Query('showSettled') showSettled?: string,
     @Query('sport') sport?: string,
     @Query('tipsterUsername') tipsterUsername?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
     const isAdmin = user.role === 'admin';
-    const includeAllListings = isAdmin && includeAll === 'true';
+    const includeAllListings = isAdmin && includeAll === 'true' && showPending === undefined && showNotStated === undefined && showSettled === undefined;
     const limitVal = limit != null ? Math.min(Math.max(parseInt(limit, 10) || 24, 1), 100) : undefined;
     const offsetVal = offset != null ? Math.max(parseInt(offset, 10) || 0, 0) : undefined;
-    return this.accumulatorsService.getMarketplace(user.id, includeAllListings, {
+    const opts: Parameters<typeof this.accumulatorsService.getMarketplace>[2] = {
       limit: limitVal,
       offset: offsetVal,
       sport: sport || undefined,
       tipsterUsername: isAdmin ? tipsterUsername || undefined : undefined,
-    });
+    };
+    if (isAdmin) {
+      opts.showPending = showPending === undefined ? true : showPending !== 'false';
+      opts.showNotStated = showNotStated === undefined ? true : showNotStated !== 'false';
+      opts.showSettled = showSettled === 'true';
+    }
+    return this.accumulatorsService.getMarketplace(user.id, includeAllListings, opts);
   }
 
   @Get('featured')
