@@ -124,6 +124,8 @@ const fr: Record<string, string> = {
   // ── Home page ────────────────────────────────────────────────────────────
   'home.hero_title': 'Suivez les pronostics d\'experts. Suivez les résultats.',
   'home.hero_subtitle': "Marketplace de tipsters pour un public mondial. Tous les grands sports — football, basketball, tennis, MMA, rugby et plus. Découvrez des pronostics d'experts et suivez les performances.",
+  'home.hero_escrow_line': 'Chaque coupon est protégé par escrow — s\'il perd, le montant payé est remboursé sur votre portefeuille.',
+  'home.hero_informational_note': 'Les pronostics et coupons sont à titre informatif et éducatif uniquement. BetRollover n\'est pas un bookmaker ni un opérateur de paris. 18 ans et plus.',
   'home.hero_cta_primary': 'Voir les Pronostics',
   'home.hero_cta_secondary': 'Devenir Tipster',
   'home.hero_badge': 'Approuvé par les passionnés de sport',
@@ -134,6 +136,8 @@ const fr: Record<string, string> = {
   'home.free_tip': 'Pronostic Gratuit du Jour',
   'home.free_tip_sub': "Le pronostic gratuit d'aujourd'hui de notre meilleur tipster",
   'home.how_it_works': 'Comment Ça Marche',
+  'home.for_buyers': 'Pour les acheteurs',
+  'home.for_sellers': 'Pour les vendeurs',
   'home.how_it_works_sub': 'Commencez en Trois Étapes Simples',
   'home.escrow_note': "Pas d'abonnement. Pas de frais cachés. Payez uniquement pour les pronostics que vous voulez — chaque coupon est protégé par escrow.",
   'home.step1_title': 'Parcourir & Comparer',

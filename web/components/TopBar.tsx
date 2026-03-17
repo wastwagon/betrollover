@@ -178,6 +178,16 @@ function TopBarSwitchers() {
 export function TopBar() {
   const slipCount = useSlipCount();
   const t = useT();
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReduceMotion(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   const disclaimerText = [
     t('topbar.disclaimer_1'),
@@ -189,17 +199,24 @@ export function TopBar() {
 
   return (
     <div className="relative z-[60] w-full bg-slate-800 text-slate-200 text-xs sm:text-sm border-b border-slate-700/60 overflow-hidden safe-area-inset-top">
-      <div className="flex items-center justify-between h-9 px-3 sm:px-4 gap-2">
-        {/* Scrolling disclaimer */}
-          <div className="flex-1 min-w-0 overflow-hidden">
-          <div className="animate-marquee whitespace-nowrap inline-block" style={{ display: 'inline-block' }}>
-            <span className="inline-block px-6">
-              {disclaimerText}
-            </span>
-            <span className="inline-block px-6" aria-hidden>
-              {disclaimerText}
-            </span>
-          </div>
+      <div className="flex items-center justify-between min-h-9 h-auto sm:h-9 py-1 sm:py-0 px-3 sm:px-4 gap-2">
+        {/* Scrolling disclaimer — seamless loop; static scroll when prefers-reduced-motion */}
+        <div className="flex-1 min-w-0 overflow-hidden">
+          {reduceMotion ? (
+            <div className="overflow-x-auto overflow-y-hidden [-webkit-overflow-scrolling:touch] pb-0.5">
+              <p className="whitespace-nowrap pr-4 text-slate-300 leading-snug">{disclaimerText}</p>
+            </div>
+          ) : (
+            <>
+              <p className="sr-only">{disclaimerText}</p>
+              <div className="overflow-hidden" aria-hidden="true">
+                <div className="animate-marquee whitespace-nowrap inline-flex will-change-transform">
+                  <span className="inline-block shrink-0 px-6">{disclaimerText}</span>
+                  <span className="inline-block shrink-0 px-6">{disclaimerText}</span>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Right: socials | live support | cart | currency | language */}

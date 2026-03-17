@@ -124,6 +124,8 @@ const en = {
   // ── Home page ────────────────────────────────────────────────────────────
   'home.hero_title': 'Follow expert picks. Track real results.',
   'home.hero_subtitle': "Tipster marketplace for a global audience. All major sports — football, basketball, tennis, MMA, rugby and more. Discover expert picks, track performance, and make informed decisions.",
+  'home.hero_escrow_line': 'Every coupon is escrow-protected — if it loses, the amount you paid is refunded to your wallet.',
+  'home.hero_informational_note': 'Picks and coupons are for information and education only. BetRollover is not a bookmaker or betting operator. 18+ only.',
   'home.hero_cta_primary': 'Browse Picks',
   'home.hero_cta_secondary': 'Become a Tipster',
   'home.hero_badge': 'Trusted by sports enthusiasts',
@@ -134,6 +136,8 @@ const en = {
   'home.free_tip': 'Free Tip of the Day',
   'home.free_tip_sub': "Today's complimentary pick from our top tipster",
   'home.how_it_works': 'How It Works',
+  'home.for_buyers': 'For buyers',
+  'home.for_sellers': 'For sellers',
   'home.how_it_works_sub': 'Start in Three Simple Steps',
   'home.escrow_note': 'No subscriptions. No hidden fees. Pay only for the picks you want — every coupon is escrow-protected.',
   'home.step1_title': 'Browse & Compare',

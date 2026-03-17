@@ -209,8 +209,11 @@ export function HomeHero() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 lg:py-28">
         <h1 className="sr-only">{t('home.hero_title')}</h1>
         <div className="text-center max-w-3xl mx-auto mb-14 md:mb-16">
-          <p className="text-lg sm:text-xl md:text-2xl text-white/95 leading-relaxed font-medium mb-8 md:mb-10 animate-fade-in-up px-1">
+          <p className="text-lg sm:text-xl md:text-2xl text-white/95 leading-relaxed font-medium mb-4 md:mb-5 animate-fade-in-up px-1">
             {t('home.hero_subtitle')}
+          </p>
+          <p className="text-sm sm:text-base text-white/85 leading-snug mb-8 md:mb-10 animate-fade-in-up px-1 max-w-2xl mx-auto">
+            {t('home.hero_escrow_line')}
           </p>
           {/* Sport pills row */}
           <div className="flex flex-wrap items-center justify-center gap-2 mb-8 animate-fade-in-up animate-delay-100">
@@ -246,6 +249,9 @@ export function HomeHero() {
               {t('home.hero_cta_primary')}
             </Link>
           </div>
+          <p className="text-[11px] sm:text-xs text-white/60 mt-6 sm:mt-7 max-w-xl mx-auto leading-relaxed px-2">
+            {t('home.hero_informational_note')}
+          </p>
         </div>
 
         {/* Compact KPI Dashboard - 6 cards: platform + leading ROI + paid out */}

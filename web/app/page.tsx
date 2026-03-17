@@ -50,24 +50,15 @@ export default async function HomePage() {
             <Link href="/community" className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors">💬 {t('nav.community')}</Link>
           </div>
         </section>
-        <HomePopularTipsters />
-        <section id="free-tip-of-the-day">
-          <HomeFreeTipOfTheDay />
-        </section>
-        <HomePopularEvents />
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <AdSlot zoneSlug="between-sections" fullWidth className="w-full" />
-        </div>
-        <HomePublicChatRooms />
-        {/* How It Works */}
+        {/* How It Works — placed high so escrow and buyer/seller flows are visible without long scroll */}
         <section className="py-10 sm:py-14 md:py-20 px-4 sm:px-6 lg:px-8 border-t border-[var(--border)]">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-8 sm:mb-12 px-1">
               <span className="inline-block px-3 py-1.5 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-3">{t('home.how_it_works')}</span>
               <h2 className="text-base font-semibold text-[var(--text)] mb-3 sm:text-lg md:text-xl leading-snug">{t('home.how_it_works_sub')}</h2>
               <p className="text-[var(--text-muted)] text-sm sm:text-base max-w-xl mx-auto leading-relaxed">{t('home.escrow_note')}</p>
+              <p className="text-xs sm:text-sm font-semibold text-[var(--primary)] uppercase tracking-wide mt-4 mb-1" aria-hidden="true">{t('home.for_buyers')}</p>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-6">
               <div className="flex flex-col items-center text-center rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 backdrop-blur-sm p-5 sm:p-6 shadow-sm">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-emerald-500/15 border-2 border-emerald-500/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mb-4 sm:mb-5 shrink-0">1</div>
@@ -85,7 +76,6 @@ export default async function HomePage() {
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('home.step3_desc')}</p>
               </div>
             </div>
-
             <div className="mt-8 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-emerald-50/40 dark:from-slate-800/50 dark:to-emerald-900/20 border border-[var(--border)] flex items-start sm:items-center gap-3 sm:gap-4 min-h-0">
                 <span className="text-3xl flex-shrink-0">📰</span>
@@ -107,9 +97,9 @@ export default async function HomePage() {
                 </Link>
               </div>
             </div>
-
             <div className="mt-10 sm:mt-14 pt-10 sm:pt-12 border-t border-[var(--border)]">
               <div className="text-center mb-8 sm:mb-10 px-1">
+                <p className="text-xs sm:text-sm font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide mb-2" aria-hidden="true">{t('home.for_sellers')}</p>
                 <span className="inline-block px-3 py-1.5 rounded-full bg-violet-500/15 text-violet-600 dark:text-violet-300 text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-3">
                   {t('home.tipster_flow_badge')}
                 </span>
@@ -122,23 +112,17 @@ export default async function HomePage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                 <div className="flex flex-col items-center text-center rounded-2xl border border-violet-500/15 dark:border-violet-800/30 bg-gradient-to-b from-violet-500/[0.06] to-[var(--card)]/80 p-5 sm:p-6 shadow-sm">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-violet-500/15 border-2 border-violet-500/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-violet-600 dark:text-violet-400 mb-4 sm:mb-5 shrink-0">
-                    1
-                  </div>
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-violet-500/15 border-2 border-violet-500/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-violet-600 dark:text-violet-400 mb-4 sm:mb-5 shrink-0">1</div>
                   <h3 className="text-sm sm:text-base font-semibold text-[var(--text)] mb-2">{t('home.tipster_step1_title')}</h3>
                   <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">{t('home.tipster_step1_desc')}</p>
                 </div>
                 <div className="flex flex-col items-center text-center rounded-2xl border border-teal-500/15 dark:border-teal-800/30 bg-gradient-to-b from-teal-500/[0.06] to-[var(--card)]/80 p-5 sm:p-6 shadow-sm">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-teal-500/15 border-2 border-teal-500/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-teal-600 dark:text-teal-400 mb-4 sm:mb-5 shrink-0">
-                    2
-                  </div>
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-teal-500/15 border-2 border-teal-500/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-teal-600 dark:text-teal-400 mb-4 sm:mb-5 shrink-0">2</div>
                   <h3 className="text-sm sm:text-base font-semibold text-[var(--text)] mb-2">{t('home.tipster_step2_title')}</h3>
                   <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">{t('home.tipster_step2_desc')}</p>
                 </div>
                 <div className="flex flex-col items-center text-center rounded-2xl border border-emerald-500/15 dark:border-emerald-800/30 bg-gradient-to-b from-emerald-500/[0.06] to-[var(--card)]/80 p-5 sm:p-6 shadow-sm">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-emerald-500/15 border-2 border-emerald-500/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mb-4 sm:mb-5 shrink-0">
-                    3
-                  </div>
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-emerald-500/15 border-2 border-emerald-500/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mb-4 sm:mb-5 shrink-0">3</div>
                   <h3 className="text-sm sm:text-base font-semibold text-[var(--text)] mb-2">{t('home.tipster_step3_title')}</h3>
                   <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">{t('home.tipster_step3_desc')}</p>
                 </div>
@@ -154,6 +138,15 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
+        <HomePopularTipsters />
+        <section id="free-tip-of-the-day">
+          <HomeFreeTipOfTheDay />
+        </section>
+        <HomePopularEvents />
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <AdSlot zoneSlug="between-sections" fullWidth className="w-full" />
+        </div>
+        <HomePublicChatRooms />
 
         {/* Sports We Cover */}
         <section className="py-14 md:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 to-emerald-50/30 dark:from-slate-900/60 dark:to-slate-800/40 border-t border-[var(--border)]">
