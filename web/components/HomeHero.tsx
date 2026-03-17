@@ -209,8 +209,11 @@ export function HomeHero() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 lg:py-28">
         <h1 className="sr-only">{t('home.hero_title')}</h1>
         <div className="text-center max-w-3xl mx-auto mb-14 md:mb-16">
+          <p className="text-lg sm:text-xl md:text-2xl text-white/95 leading-relaxed font-medium mb-8 md:mb-10 animate-fade-in-up px-1">
+            {t('home.hero_subtitle')}
+          </p>
           {/* Sport pills row */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-8 animate-fade-in-up">
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-8 animate-fade-in-up animate-delay-100">
             {[
               { icon: '⚽', labelKey: 'nav.football' },
               { icon: '🏀', labelKey: 'nav.basketball' },
