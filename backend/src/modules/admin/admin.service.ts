@@ -230,7 +230,8 @@ export class AdminService {
 
   /**
    * Permanently delete a user and all their data (picks, purchases, wallet, escrow, etc.).
-   * Database ON DELETE CASCADE removes related rows. Not allowed for admin users.
+   * Also deletes their tipster row so they disappear from the tipsters list (Google/Apple users
+   * and other human tipsters). DB ON DELETE CASCADE / SET NULL handles related rows.
    */
   async deleteUser(adminId: number, userId: number): Promise<{ deleted: boolean }> {
     const user = await this.usersRepo.findOne({ where: { id: userId } });
@@ -238,6 +239,9 @@ export class AdminService {
     if (user.role === 'admin') throw new ForbiddenException('Cannot delete an admin user');
 
     await this.authService.logoutAllForUser(userId);
+    // Remove tipster row so deleted user no longer appears in tipsters list (tipsters.user_id is ON DELETE SET NULL, so we must delete the tipster explicitly)
+    const tipsterRepo = this.dataSource.getRepository(Tipster);
+    await tipsterRepo.delete({ userId });
     await this.usersRepo.delete(userId);
     await this.auditService.log(adminId, 'user_deleted', 'user', userId, {
       email: user.email,

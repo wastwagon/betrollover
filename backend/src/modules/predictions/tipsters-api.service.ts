@@ -170,6 +170,8 @@ export class TipstersApiService {
     const qb = this.tipsterRepo
       .createQueryBuilder('t')
       .where('t.isActive = :active', { active: true })
+      // Exclude orphaned human tipsters (user deleted; user_id set to null by ON DELETE SET NULL)
+      .andWhere('(t.isAi = true OR t.userId IS NOT NULL)')
       .select([
         't.id',
         't.username',
