@@ -228,7 +228,7 @@ export function PickCard({
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-xs text-[var(--text)] truncate" title={tipster ? `${t('pick_card.tipster')}: ${tipster.displayName}` : t('pick_card.tipster')}>
+                  <p className="font-medium text-xs text-[var(--text)] truncate" title={tipster ? `${t('pick_card.tipster')}: ${tipster.displayName}` : t('pick_card.tipster')}>
                     {tipster?.displayName || t('pick_card.tipster')}
                   </p>
                   <div className="flex items-center gap-1.5 mt-0">
@@ -263,7 +263,7 @@ export function PickCard({
           {/* Coupon Title & Summary - compact single block */}
           <div className="mb-2">
             <div className="flex items-baseline justify-between gap-2 flex-wrap">
-              <h2 className="font-semibold text-sm text-[var(--text)] truncate">{title}</h2>
+              <h2 className="font-medium text-xs text-[var(--text)] truncate">{title}</h2>
               <span className="text-[10px] text-[var(--text-muted)] whitespace-nowrap">
                 {t('pick_card.picks_odds', { n: String(totalPicks), odds: Number(totalOdds).toFixed(2) })}
               </span>
@@ -418,7 +418,7 @@ export function PickCard({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="sticky top-0 bg-[var(--card)] border-b border-[var(--border)] px-6 py-4 flex items-center justify-between z-10">
-              <h3 className="text-xl font-bold text-[var(--text)]">{t('pick_card.coupon_details')}</h3>
+              <h3 className="text-base font-semibold text-[var(--text)]">{t('pick_card.coupon_details')}</h3>
               <button
                 onClick={() => setShowDetailsModal(false)}
                 className="text-[var(--text-muted)] hover:text-[var(--text)] text-2xl leading-none"
@@ -435,7 +435,7 @@ export function PickCard({
                       {tipster.rank <= 3 ? getRankIcon(tipster.rank) : tipster.rank}
                     </div>
                     <div>
-                      <p className="font-semibold text-lg text-[var(--text)]">{tipster.displayName}</p>
+                      <p className="font-medium text-base text-[var(--text)]">{tipster.displayName}</p>
                       <div className="flex items-center gap-4 mt-1">
                         <span className="text-sm text-[var(--text-muted)]">
                           {t('pick_card.picks_count', { n: String(tipster.totalPicks) })}
@@ -454,7 +454,7 @@ export function PickCard({
 
               {/* Coupon Info */}
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-[var(--text)] mb-2">{title}</h2>
+                <h2 className="text-base font-semibold text-[var(--text)] mb-2">{title}</h2>
                 <div className="flex items-center gap-4 mb-4">
                   <span className="text-sm text-[var(--text-muted)]">
                     {t('pick_card.picks_odds', { n: String(totalPicks), odds: Number(totalOdds).toFixed(2) })}
@@ -559,7 +559,7 @@ export function PickCard({
             <div className="sticky top-0 bg-gradient-to-r from-emerald-500 to-green-600 text-white px-6 py-4 flex items-center justify-between z-10 rounded-t-2xl">
               <div className="flex items-center gap-3">
                 <span className="text-3xl">🎉</span>
-                <h3 className="text-xl font-bold">{t('pick_card.coupon_unlocked')}</h3>
+                <h3 className="text-base font-semibold">{t('pick_card.coupon_unlocked')}</h3>
               </div>
               <button
                 onClick={() => {
@@ -602,7 +602,7 @@ export function PickCard({
                   </div>
                 )}
 
-                <h2 className="text-xl font-bold text-[var(--text)] mb-3">{title}</h2>
+                <h2 className="text-base font-semibold text-[var(--text)] mb-3">{title}</h2>
                 <div className="flex items-center gap-4 mb-4">
                   <span className="text-sm text-[var(--text-muted)]">
                     {t('pick_card.picks_odds', { n: String(totalPicks), odds: Number(totalOdds).toFixed(2) })}

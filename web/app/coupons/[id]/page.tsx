@@ -188,7 +188,7 @@ function ReviewsSection({ couponId, isPurchased, isSettled }: { couponId: number
   return (
     <section className="max-w-4xl mx-auto px-4 pb-10 mt-8">
       <div className="flex items-center gap-3 mb-4">
-        <h2 className="text-lg font-bold text-[var(--text)]">Buyer Reviews</h2>
+        <h2 className="text-base font-semibold text-[var(--text)]">Buyer Reviews</h2>
         {data && data.total > 0 && (
           <span className="flex items-center gap-1.5 text-sm text-[var(--text-muted)]">
             <StarRow rating={Math.round(data.avg)} />
@@ -393,7 +393,7 @@ export default function CouponDetailPage() {
                 )}
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)] leading-tight mb-1">
+              <h1 className="text-lg sm:text-xl font-semibold text-[var(--text)] leading-tight mb-1">
                 {coupon.title}
               </h1>
 
@@ -454,7 +454,7 @@ export default function CouponDetailPage() {
             )}
 
             {/* ── Picks ── */}
-            <h2 className="text-base font-bold text-[var(--text)] mb-3">
+            <h2 className="text-sm font-semibold text-[var(--text)] mb-3">
               Picks ({coupon.picks.length})
             </h2>
 
@@ -554,7 +554,7 @@ export default function CouponDetailPage() {
 
             {/* Odds breakdown */}
             <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 mb-6">
-              <h3 className="text-sm font-bold text-[var(--text)] mb-3">Odds Breakdown</h3>
+              <h3 className="text-sm font-semibold text-[var(--text)] mb-3">Odds Breakdown</h3>
               <div className="space-y-2">
                 {coupon.picks.map((p, idx) => (
                   <div key={idx} className="flex items-center justify-between text-sm">
@@ -569,8 +569,8 @@ export default function CouponDetailPage() {
                   </div>
                 ))}
                 <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between">
-                  <span className="text-sm font-bold text-[var(--text)]">Total Odds</span>
-                  <span className="text-lg font-bold text-[var(--primary)] tabular-nums">
+                  <span className="text-sm font-semibold text-[var(--text)]">Total Odds</span>
+                  <span className="text-base font-semibold text-[var(--primary)] tabular-nums">
                     {Number(coupon.totalOdds).toFixed(2)}
                   </span>
                 </div>
@@ -587,7 +587,7 @@ export default function CouponDetailPage() {
               <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-hidden shadow-sm">
                 <div className="p-5">
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-2xl font-bold text-[var(--primary)]">
+                    <span className="text-lg font-semibold text-[var(--primary)]">
                       {coupon.price === 0 ? 'Free' : `GHS ${Number(coupon.price).toFixed(2)}`}
                     </span>
                     {coupon.price > 0 && walletBalance !== null && (
@@ -672,23 +672,23 @@ export default function CouponDetailPage() {
                       )}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-bold text-[var(--text)] truncate">{coupon.tipster.displayName}</p>
+                      <p className="text-sm font-semibold text-[var(--text)] truncate">{coupon.tipster.displayName}</p>
                       <p className="text-xs text-[var(--text-muted)]">@{coupon.tipster.username}</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-3 gap-2 mb-3">
                     <div className="text-center">
-                      <p className="text-base font-bold text-[var(--text)]">
+                      <p className="text-sm font-semibold text-[var(--text)]">
                         {coupon.tipster.winRate != null ? `${Number(coupon.tipster.winRate).toFixed(0)}%` : '—'}
                       </p>
                       <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Win Rate</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-base font-bold text-[var(--text)]">{coupon.tipster.totalPicks}</p>
+                      <p className="text-sm font-semibold text-[var(--text)]">{coupon.tipster.totalPicks}</p>
                       <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Total</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-base font-bold text-[var(--text)]">#{coupon.tipster.rank}</p>
+                      <p className="text-sm font-semibold text-[var(--text)]">#{coupon.tipster.rank}</p>
                       <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Rank</p>
                     </div>
                   </div>
