@@ -6,6 +6,8 @@ import { FixtureOdd } from '../fixtures/entities/fixture-odd.entity';
 import { Tipster } from './entities/tipster.entity';
 import { Prediction } from './entities/prediction.entity';
 import { PredictionFixture } from './entities/prediction-fixture.entity';
+import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
+import { AccumulatorPick } from '../accumulators/entities/accumulator-pick.entity';
 import { AI_TIPSTERS, AiTipsterConfig, AiTipsterPersonality } from '../../config/ai-tipsters.config';
 import { ApiPredictionsService, ApiFixturePredictions } from '../fixtures/api-predictions.service';
 import { OddsSyncService } from '../fixtures/odds-sync.service';
@@ -78,6 +80,10 @@ export class PredictionEngineService {
     private predictionRepo: Repository<Prediction>,
     @InjectRepository(PredictionFixture)
     private predictionFixtureRepo: Repository<PredictionFixture>,
+    @InjectRepository(AccumulatorTicket)
+    private ticketRepo: Repository<AccumulatorTicket>,
+    @InjectRepository(AccumulatorPick)
+    private pickRepo: Repository<AccumulatorPick>,
     private apiPredictionsService: ApiPredictionsService,
     private oddsSyncService: OddsSyncService,
     private dataSource: DataSource,
@@ -96,6 +102,40 @@ export class PredictionEngineService {
         predictionDate: Between(start, end),
       },
     });
+  }
+
+  /**
+   * Fixture IDs already used by any AI tipster on marketplace for the given date range.
+   * Used to avoid assigning the same fixture to another tipster on re-runs (catch-up or manual).
+   */
+  private async getAlreadyUsedFixtureIdsForDate(startOfDay: Date, endOfDay: Date): Promise<Set<number>> {
+    const aiTipsters = await this.tipsterRepo.find({
+      where: { isAi: true },
+      select: ['userId'],
+    });
+    const userIds = aiTipsters.map((t) => t.userId).filter((id): id is number => id != null);
+    if (userIds.length === 0) return new Set();
+
+    const tickets = await this.ticketRepo.find({
+      where: {
+        userId: In(userIds),
+        isMarketplace: true,
+        createdAt: Between(startOfDay, endOfDay),
+      },
+      select: ['id'],
+    });
+    const ticketIds = tickets.map((t) => t.id);
+    if (ticketIds.length === 0) return new Set();
+
+    const picks = await this.pickRepo.find({
+      where: { accumulatorId: In(ticketIds) },
+      select: ['fixtureId'],
+    });
+    const set = new Set<number>();
+    for (const p of picks) {
+      if (p.fixtureId != null) set.add(p.fixtureId);
+    }
+    return set;
   }
 
   /**
@@ -160,12 +200,16 @@ export class PredictionEngineService {
     this.logger.log(`Generated predictions for ${fixturePredictions.length} fixtures`);
 
     // 6. For each tipster, create single-fixture coupons only (up to max_daily_predictions).
-    // Global usedFixtureIds: once a fixture is used by any tipster, no other tipster can use it (avoids Gambler + Under 2.5 Daily picking same fixtures).
+    // Global usedFixtureIds: once a fixture is used by any tipster, no other tipster can use it (avoids duplicate fixture+market across AI tipsters).
+    // Seed from existing marketplace coupons for this date so re-runs (e.g. catch-up or manual) do not assign the same fixture to another tipster.
     const allPredictions: TipsterPredictionResult[] = [];
     const tipsterByUsername = new Map<string, Tipster>();
     const dbTipsters = await this.tipsterRepo.find({ where: { isAi: true } });
     for (const t of dbTipsters) tipsterByUsername.set(t.username, t);
-    const usedFixtureIds = new Set<number>();
+    const usedFixtureIds = await this.getAlreadyUsedFixtureIdsForDate(startOfDay, endOfDay);
+    if (usedFixtureIds.size > 0) {
+      this.logger.log(`Seeded usedFixtureIds with ${usedFixtureIds.size} fixture(s) already on marketplace for ${dateStr}`);
+    }
 
     for (const tipsterConfig of AI_TIPSTERS) {
       if (!this.shouldTipsterPostToday(tipsterConfig)) continue;
