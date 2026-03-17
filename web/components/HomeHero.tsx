@@ -207,16 +207,10 @@ export function HomeHero() {
       />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 lg:py-28">
+        <h1 className="sr-only">{t('home.hero_title')}</h1>
         <div className="text-center max-w-3xl mx-auto mb-14 md:mb-16">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-white tracking-tight mb-5 animate-fade-in-up drop-shadow-sm [text-shadow:0_1px_2px_rgba(0,0,0,0.2)]">
-            {t('home.hero_title')}
-          </h1>
-          <p className="text-lg md:text-xl text-slate-300 mb-6 leading-relaxed max-w-2xl mx-auto animate-fade-in-up animate-delay-100">
-            {t('home.hero_subtitle')}
-          </p>
-
           {/* Sport pills row */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-8 animate-fade-in-up animate-delay-150">
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-8 animate-fade-in-up">
             {[
               { icon: '⚽', labelKey: 'nav.football' },
               { icon: '🏀', labelKey: 'nav.basketball' },
