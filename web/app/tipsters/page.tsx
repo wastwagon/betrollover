@@ -176,7 +176,7 @@ export default function TipstersPage() {
               href="/dashboard/subscription-packages"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
             >
-              <span aria-hidden>📦</span> {t('dashboard.my_packages', 'My Packages')}
+              <span aria-hidden>📦</span> {t('tipster.subscription_packages')}
             </Link>
           )}
         </div>
