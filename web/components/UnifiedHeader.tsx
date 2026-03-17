@@ -91,7 +91,6 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
   const [unreadCount,      setUnreadCount]      = useState(0);
   const [openMenu,         setOpenMenu]         = useState<MenuKey>(null);
   const [mobileOpen,       setMobileOpen]       = useState(false);
-  const [mobileSection,    setMobileSection]    = useState<MenuKey>(null);
 
   const hoverTimeout  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const headerRef     = useRef<HTMLElement>(null);
@@ -121,9 +120,14 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
   const closeAll = useCallback(() => setOpenMenu(null), []);
 
   useEffect(() => {
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') closeAll(); }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') { closeAll(); setMobileOpen(false); }
+    }
     function onClick(e: MouseEvent) {
-      if (headerRef.current && !headerRef.current.contains(e.target as Node)) closeAll();
+      if (headerRef.current && !headerRef.current.contains(e.target as Node)) {
+        closeAll();
+        setMobileOpen(false);
+      }
     }
     document.addEventListener('keydown', onKey);
     document.addEventListener('mousedown', onClick);
@@ -562,223 +566,69 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               </div>
             )}
 
-            {/* Mobile hamburger */}
-            <button
-              type="button"
-              aria-label="Toggle mobile menu"
-              aria-expanded={mobileOpen}
-              onClick={() => setMobileOpen(o => !o)}
-              className="lg:hidden p-2.5 rounded-xl text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {mobileOpen
-                  ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* ──────────────── Mobile menu ──────────────── */}
-        {mobileOpen && (
-          <div className="lg:hidden border-t border-slate-200 bg-white max-h-[80vh] overflow-y-auto">
-            <nav className="px-4 py-4 space-y-1" aria-label="Mobile navigation">
-
-              {/* Home */}
-              <Link href="/" onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${isActive(pathname, '/') ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700 hover:bg-slate-50'}`}>
-                🏠 {t('header.home')}
-              </Link>
-
-              {/* Browse section */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setMobileSection(mobileSection === 'browse' ? null : 'browse')}
-                  className="flex items-center justify-between w-full px-4 py-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all"
-                  aria-expanded={mobileSection === 'browse'}
-                >
-                  <span>🎟️ {t('header.browse_coupons')}</span>
-                  <NavChevron open={mobileSection === 'browse'} />
-                </button>
-                {mobileSection === 'browse' && (
-                  <div className="ml-4 mt-1 space-y-1 border-l-2 border-emerald-100 pl-3">
-                    {[
-                      { href: '/marketplace',      label: t('nav.marketplace'),      icon: '🛒' },
-                      { href: '/coupons/archive',  label: t('header.settled_archive'),  icon: '📦' },
-                      { href: '/leaderboard',      label: t('nav.leaderboard'),      icon: '🏆' },
-                    ].map(item => (
-                      <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
-                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all ${isActive(pathname, item.href) ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}>
-                        <span>{item.icon}</span>{item.label}
-                      </Link>
-                    ))}
-                    <div className="px-3 py-2">
-                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1.5">{t('header.sports')}</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {SPORTS.map(s => (
-                          <Link key={s.label} href={s.href} onClick={() => setMobileOpen(false)}
-                            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-xs font-semibold text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors">
-                            {s.icon} {s.label}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Tipsters section */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setMobileSection(mobileSection === 'tipsters' ? null : 'tipsters')}
-                  className="flex items-center justify-between w-full px-4 py-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all"
-                  aria-expanded={mobileSection === 'tipsters'}
-                >
-                  <span>👥 Tipsters</span>
-                  <NavChevron open={mobileSection === 'tipsters'} />
-                </button>
-                {mobileSection === 'tipsters' && (
-                  <div className="ml-4 mt-1 space-y-1 border-l-2 border-emerald-100 pl-3">
-                    {[
-                      { href: '/tipsters',    label: 'Browse Tipsters',        icon: '🔍' },
-                      { href: '/leaderboard', label: 'Leaderboard',            icon: '🏆' },
-                      { href: '/create-pick', label: 'Create Coupon',          icon: '🎯' },
-                      { href: '/dashboard/subscription-packages', label: 'My Packages', icon: '📦' },
-                    ].map(item => (
-                      <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
-                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all ${isActive(pathname, item.href) ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}>
-                        <span>{item.icon}</span>{item.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Discover section */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setMobileSection(mobileSection === 'discover' ? null : 'discover')}
-                  className="flex items-center justify-between w-full px-4 py-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all"
-                  aria-expanded={mobileSection === 'discover'}
-                >
-                  <span>🔭 {t('nav.discover')}</span>
-                  <NavChevron open={mobileSection === 'discover'} />
-                </button>
-                {mobileSection === 'discover' && (
-                  <div className="ml-4 mt-1 space-y-1 border-l-2 border-emerald-100 pl-3">
-                    {[
-                      { href: '/discover',              label: t('nav.discover'),       icon: '🔭' },
-                      { href: '/learn',                 label: t('nav.learn'),         icon: '📖' },
-                      { href: '/news',                  label: t('nav.news'),           icon: '📰' },
-                      { href: '/resources',             label: t('nav.guides'),         icon: '📚' },
-                      { href: '/how-it-works',          label: t('home.how_it_works'),  icon: '📖' },
-                      { href: '/community',             label: t('nav.community'),      icon: '💬' },
-                      { href: '/about',                 label: t('nav.about'),          icon: 'ℹ️' },
-                      { href: '/contact',               label: t('nav.contact'),        icon: '✉️' },
-                      { href: '/responsible-gambling',  label: t('resp.headline'),       icon: '🛡️' },
-                      { href: '/terms',                 label: t('auth.terms'),          icon: '📋' },
-                      { href: '/privacy',               label: t('auth.privacy'),       icon: '🔒' },
-                    ].map(item => (
-                      <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
-                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all ${isActive(pathname, item.href) ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}>
-                        <span>{item.icon}</span>{item.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Dashboard (auth) */}
-              {isSignedIn && (
-                <Link href="/dashboard" onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${isActive(pathname, '/dashboard') ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700 hover:bg-slate-50'}`}>
-                  📊 Dashboard
-                </Link>
-              )}
-
-              {/* Create Coupon CTA (auth) */}
-              {isSignedIn && (
-                <Link href="/create-pick" onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                  </svg>
-                  {t('nav.create_coupon')}
-                  {slipCount !== undefined && slipCount > 0 && (
-                    <span className="min-w-[18px] h-[18px] flex items-center justify-center text-[9px] font-bold bg-white/25 rounded-full">{slipCount}</span>
-                  )}
-                </Link>
-              )}
-
-              {/* Auth account section (mobile) */}
-              {isSignedIn && (
-                <div className="mt-2 pt-3 border-t border-slate-100">
+            {/* Mobile: Account only (no hamburger) — primary nav is bottom bar + in-page smart buttons */}
+            <div className="lg:hidden flex items-center gap-2">
+              {isSignedIn ? (
+                <div className="relative">
                   <button
                     type="button"
-                    onClick={() => setMobileSection(mobileSection === 'account' ? null : 'account')}
-                    className="flex items-center justify-between w-full px-4 py-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all"
-                    aria-expanded={mobileSection === 'account'}
-                    aria-label={mobileSection === 'account' ? 'Close account menu' : 'Open account menu'}
+                    aria-label={t('header.account')}
+                    aria-expanded={mobileOpen}
+                    aria-haspopup="true"
+                    onClick={() => setMobileOpen(o => !o)}
+                    className="p-2.5 rounded-xl text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors border border-[var(--border)] bg-[var(--card)]"
                   >
-                    <span>👤 My Account</span>
-                    <NavChevron open={mobileSection === 'account'} />
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                   </button>
-                  {mobileSection === 'account' && (
-                    <div className="ml-4 mt-1 space-y-1 border-l-2 border-emerald-100 pl-3">
+                  {mobileOpen && (
+                    <div className="absolute right-0 top-full mt-1 w-64 rounded-2xl bg-white dark:bg-slate-800 shadow-xl border border-[var(--border)] py-2 z-50 animate-mega-in" aria-label={t('header.account')}>
                       {balance !== null && (
-                        <div className="px-3 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200/60 text-sm font-bold text-emerald-700 mb-1">
-                          💰 Balance: {format(balance).primary}
-                          {currency.code !== 'GHS' && (
-                            <span className="block text-[11px] font-normal opacity-80">GHS {Number(balance ?? 0).toFixed(2)}</span>
-                          )}
+                        <div className="px-4 py-2.5 mx-2 mb-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200/60">
+                          <p className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400">Balance</p>
+                          <p className="text-sm font-bold text-emerald-800 dark:text-emerald-200">{format(balance).primary}</p>
                         </div>
                       )}
                       {[
-                        { href: '/profile',       label: 'My Profile',      icon: '👤' },
-                        { href: '/wallet',        label: 'Wallet',          icon: '💰' },
-                        { href: '/earnings',      label: 'Earnings',        icon: '📈' },
-                        { href: '/my-picks',      label: 'My Picks',        icon: '🎯' },
-                        { href: '/my-purchases',  label: 'My Purchases',    icon: '🛍️' },
-                        { href: '/subscriptions', label: 'Subscriptions',   icon: '🔔' },
-                        { href: '/notifications', label: `Notifications${unreadCount > 0 ? ` (${unreadCount})` : ''}`, icon: '🛎️' },
+                        { href: '/dashboard',      icon: '📊', label: t('nav.dashboard') },
+                        { href: '/profile',       icon: '👤', label: t('profile.title') },
+                        { href: '/wallet',        icon: '💰', label: t('nav.wallet') },
+                        { href: '/earnings',      icon: '📈', label: t('nav.earnings') },
+                        { href: '/my-picks',      icon: '🎯', label: t('nav.my_picks') },
+                        { href: '/my-purchases',  icon: '🛍️', label: t('my_purchases.title') },
+                        { href: '/subscriptions', icon: '🔔', label: t('dashboard.card_subscriptions') },
+                        { href: '/notifications', icon: '🛎️', label: `${t('nav.notifications')}${unreadCount > 0 ? ` (${unreadCount})` : ''}` },
                       ].map(item => (
                         <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
-                          className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all ${isActive(pathname, item.href) ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}>
+                          className={`flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium ${isActive(pathname, item.href) ? 'text-emerald-700 bg-emerald-50 dark:bg-emerald-900/20' : 'text-[var(--text)] hover:bg-[var(--card)]'}`}>
                           <span>{item.icon}</span>{item.label}
                         </Link>
                       ))}
                       <button
                         type="button"
-                        onClick={signOut}
-                        className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
-                        aria-label="Sign out of your account"
+                        onClick={() => { signOut(); setMobileOpen(false); }}
+                        className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        aria-label={t('auth.logout')}
                       >
-                        <span aria-hidden>🚪</span> Sign Out
+                        <span aria-hidden>🚪</span> {t('auth.logout')}
                       </button>
                     </div>
                   )}
                 </div>
-              )}
-
-              {/* Guest actions (mobile) */}
-              {!isSignedIn && (
-                <div className="flex gap-3 pt-3">
-                  <Link href="/login" onClick={() => setMobileOpen(false)}
-                    className="flex-1 py-3 text-center rounded-xl font-semibold text-sm border-2 border-slate-200 text-slate-700 hover:border-emerald-300 hover:text-emerald-700 transition-all">
+              ) : (
+                <>
+                  <Link href="/login" className="px-3 py-2 rounded-xl text-sm font-semibold text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors">
                     {t('nav.login')}
                   </Link>
-                  <Link href="/register" onClick={() => setMobileOpen(false)}
-                    className="flex-1 py-3 text-center rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md">
+                  <Link href="/register" className="px-3 py-2 rounded-xl text-sm font-bold bg-[var(--primary)] text-white hover:opacity-90 transition-opacity">
                     {t('nav.register')}
                   </Link>
-                </div>
+                </>
               )}
-            </nav>
+            </div>
           </div>
-        )}
+        </div>
       </header>
     </>
   );

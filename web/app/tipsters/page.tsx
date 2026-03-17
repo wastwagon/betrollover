@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { TipsterCard, type TipsterCardData } from '@/components/TipsterCard';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
@@ -53,7 +54,12 @@ export default function TipstersPage() {
   const [sportFilter, setSportFilter] = useState<SportFilter>('all');
   const [sortBy, setSortBy] = useState<'roi' | 'win_rate' | 'total_profit' | 'follower_count'>('roi');
   const [followLoading, setFollowLoading] = useState<number | null>(null);
+  const [isSignedIn, setIsSignedIn] = useState(false);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
+
+  useEffect(() => {
+    setIsSignedIn(!!localStorage.getItem('token'));
+  }, []);
 
   const fetchTipsters = useCallback(
     (searchTerm?: string, sort?: string, periodVal?: Period, sport?: SportFilter) => {
@@ -148,8 +154,31 @@ export default function TipstersPage() {
           tagline={t('seo.tipsters_desc')}
         />
         {/* Full-width ad */}
-        <div className="mb-8 w-full">
+        <div className="mb-6 w-full">
           <AdSlot zoneSlug="tipsters-full" fullWidth className="w-full max-w-3xl mx-auto" />
+        </div>
+        {/* Contextual smart buttons — no hamburger needed */}
+        <div className="flex flex-wrap items-center gap-2 mb-6">
+          <Link
+            href="/leaderboard"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+          >
+            <span aria-hidden>🏆</span> {t('nav.leaderboard')}
+          </Link>
+          <Link
+            href="/create-pick"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--primary)]/50 bg-[var(--primary)]/10 text-sm font-medium text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors"
+          >
+            <span aria-hidden>🎯</span> {t('nav.create_coupon')}
+          </Link>
+          {isSignedIn && (
+            <Link
+              href="/dashboard/subscription-packages"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            >
+              <span aria-hidden>📦</span> {t('dashboard.my_packages', 'My Packages')}
+            </Link>
+          )}
         </div>
         <div className="mb-8">
           {/* Sport filter pills */}

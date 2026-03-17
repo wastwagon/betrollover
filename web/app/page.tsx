@@ -40,6 +40,16 @@ export default async function HomePage() {
         <div className="max-w-4xl mx-auto px-4 py-4">
           <AdSlot zoneSlug="home-below-hero" fullWidth className="w-full" />
         </div>
+        {/* Quick links — key destinations without hamburger */}
+        <section className="max-w-4xl mx-auto px-4 pb-6" aria-label="Quick links">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Link href="/marketplace" className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors">🛒 {t('nav.marketplace')}</Link>
+            <Link href="/tipsters" className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors">👥 {t('nav.tipsters')}</Link>
+            <Link href="/discover" className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors">🔭 {t('nav.discover')}</Link>
+            <Link href="/leaderboard" className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors">🏆 {t('nav.leaderboard')}</Link>
+            <Link href="/community" className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors">💬 {t('nav.community')}</Link>
+          </div>
+        </section>
         <HomePopularTipsters />
         <section id="free-tip-of-the-day">
           <HomeFreeTipOfTheDay />

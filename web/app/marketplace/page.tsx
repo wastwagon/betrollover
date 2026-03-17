@@ -328,12 +328,21 @@ export default function MarketplacePage() {
               title={t('marketplace.title')}
               tagline={t('marketplace.subtitle')}
             />
-            <Link
-              href="/coupons/archive"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors self-start sm:self-auto flex-shrink-0"
-            >
-              📦 Settled Archive →
-            </Link>
+            {/* Contextual smart buttons — no hamburger needed */}
+            <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto flex-shrink-0">
+              <Link
+                href="/coupons/archive"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+              >
+                <span aria-hidden>📦</span> {t('header.settled_archive')}
+              </Link>
+              <Link
+                href="/leaderboard"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+              >
+                <span aria-hidden>🏆</span> {t('nav.leaderboard')}
+              </Link>
+            </div>
           </div>
 
           {/* Full-width ad */}

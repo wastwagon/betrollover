@@ -160,6 +160,21 @@ function DiscoverContent() {
               <span className="text-sm font-medium text-[var(--primary)] group-hover:underline">{t('discover.platform_howto_link')}</span>
             </Link>
           </div>
+
+          {/* More — contextual links (no hamburger needed) */}
+          <div className="mt-6 pt-6 border-t border-[var(--border)]">
+            <h3 className="text-sm font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('discover.more', 'More')}</h3>
+            <div className="flex flex-wrap gap-2">
+              <Link href="/community" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">💬 {t('nav.community')}</Link>
+              <Link href="/news" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">📰 {t('nav.news')}</Link>
+              <Link href="/resources" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">📚 {t('nav.guides')}</Link>
+              <Link href="/about" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">ℹ️ {t('nav.about')}</Link>
+              <Link href="/contact" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">✉️ {t('nav.contact')}</Link>
+              <Link href="/responsible-gambling" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">🛡️ {t('resp.headline')}</Link>
+              <Link href="/terms" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">📋 {t('auth.terms')}</Link>
+              <Link href="/privacy" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">🔒 {t('auth.privacy')}</Link>
+            </div>
+          </div>
         </section>
 
         {/* Sport filter row — shared between tabs */}

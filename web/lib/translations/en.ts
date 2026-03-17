@@ -1135,6 +1135,7 @@ const en = {
   'earnings.deducted': 'deducted',
   'earnings.gross_minus_fee': 'Gross GHS {gross} − fee GHS {fee} = net GHS {net}',
   'discover.hub_title': 'Your Hub for Sports Insights',
+  'discover.more': 'More',
   'discover.hub_desc': 'Explore the latest sports news, transfer rumours, and confirmed deals from top leagues worldwide. Our news section keeps you ahead with breaking stories across football, basketball, rugby, MMA, and more — while our tipster guides help you understand odds, bankroll management, and how to evaluate picks.',
   'discover.news_transfers': 'News & Transfers',
   'discover.news_transfers_desc': 'Breaking sports news, transfer rumours, confirmed deals, and injury updates across all sports we cover.',

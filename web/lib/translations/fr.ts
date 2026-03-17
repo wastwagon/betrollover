@@ -1135,6 +1135,7 @@ const fr: Record<string, string> = {
   'earnings.deducted': 'déduit',
   'earnings.gross_minus_fee': 'Brut GHS {gross} − frais GHS {fee} = net GHS {net}',
   'discover.hub_title': 'Votre Hub d\'Insights Sportifs',
+  'discover.more': 'Plus',
   'discover.hub_desc': 'Explorez les dernières actualités sportives, rumeurs de transferts et accords confirmés des meilleures ligues mondiales. Notre section actualités vous tient informé avec les dernières infos sur le football, basket, rugby, MMA et plus — tandis que nos guides tipsters vous aident à comprendre les cotes, la gestion du bankroll et comment évaluer les pronostics.',
   'discover.news_transfers': 'Actualités & Transferts',
   'discover.news_transfers_desc': 'Actualités sportives, rumeurs de transferts, accords confirmés et mises à jour blessures sur tous les sports que nous couvrons.',
