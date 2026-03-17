@@ -163,7 +163,7 @@ function DiscoverContent() {
 
           {/* More — contextual links (no hamburger needed) */}
           <div className="mt-6 pt-6 border-t border-[var(--border)]">
-            <h3 className="text-sm font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('discover.more', 'More')}</h3>
+            <h3 className="text-sm font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('discover.more')}</h3>
             <div className="flex flex-wrap gap-2">
               <Link href="/community" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">💬 {t('nav.community')}</Link>
               <Link href="/news" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">📰 {t('nav.news')}</Link>
