@@ -365,19 +365,31 @@ export default function CouponDetailPage() {
       <UnifiedHeader />
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-10">
 
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-[var(--text-muted)] mb-6 flex-wrap">
-          <Link href="/coupons" className="hover:text-[var(--primary)] transition-colors">Coupons</Link>
-          <span>/</span>
-          <span className="text-[var(--text)] truncate max-w-[240px]">{coupon.title}</span>
+        {/* Breadcrumb — premium (only place coupon title is shown) */}
+        <nav
+          className="flex items-center gap-2 py-2.5 px-3 rounded-xl bg-[var(--card)] border border-[var(--border)] mb-6 text-sm shadow-sm"
+          aria-label="Breadcrumb"
+        >
+          <Link
+            href="/coupons"
+            className="inline-flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors font-medium"
+          >
+            <span className="text-base opacity-70" aria-hidden>🎫</span>
+            Coupons
+          </Link>
+          <span className="text-[var(--border)] select-none" aria-hidden>/</span>
+          <span className="text-[var(--text)] font-semibold truncate max-w-[280px] px-2 py-0.5 rounded-md bg-[var(--primary)]/10 border border-[var(--primary)]/20" title={coupon.title}>
+            {coupon.title}
+          </span>
         </nav>
+        <h1 className="sr-only">{coupon.title}</h1>
 
         <div className="flex flex-col lg:flex-row gap-8">
 
           {/* ── Main content ── */}
           <div className="flex-1 min-w-0">
 
-            {/* Header */}
+            {/* Header — tags + stats (title lives in breadcrumb only) */}
             <div className="mb-6">
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 {sportMeta && (
@@ -393,12 +405,8 @@ export default function CouponDetailPage() {
                 )}
               </div>
 
-              <h1 className="text-lg sm:text-xl font-semibold text-[var(--text)] leading-tight mb-1">
-                {coupon.title}
-              </h1>
-
               {/* Stats row */}
-              <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-[var(--text-muted)]">
+              <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--text-muted)]">
                 <span className="flex items-center gap-1">
                   <span className="font-semibold text-[var(--text)]">{coupon.picks.length}</span> picks
                 </span>
