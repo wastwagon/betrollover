@@ -231,9 +231,9 @@ export class SettlementService {
       where: { pickId: accumulatorId, status: 'held' },
     });
 
-    // Load platform commission rate (default 10%)
+    // Load platform commission rate (default 30% — must match Terms)
     const apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
-    const commissionRate = Math.min(50, Math.max(0, Number(apiSettings?.platformCommissionRate ?? 10.0)));
+    const commissionRate = Math.min(50, Math.max(0, Number(apiSettings?.platformCommissionRate ?? 30.0)));
 
     const processedUsers = new Set<number>();
     let totalCommission = 0;

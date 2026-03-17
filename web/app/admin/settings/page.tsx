@@ -44,7 +44,7 @@ export default function AdminSettingsPage() {
   const [syncingOdds, setSyncingOdds] = useState(false);
   const [minimumROI, setMinimumROI] = useState<number>(20.0);
   const [savingROI, setSavingROI] = useState(false);
-  const [commissionRate, setCommissionRate] = useState<number>(10.0);
+  const [commissionRate, setCommissionRate] = useState<number>(30.0);
   const [savingCommission, setSavingCommission] = useState(false);
   const [migrationStatus, setMigrationStatus] = useState<{ applied: { filename: string; appliedAt: string }[]; pending: string[] } | null>(null);
   const [migrationStatusLoaded, setMigrationStatusLoaded] = useState(false);

@@ -9,7 +9,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: `How It Works | ${SITE_NAME}`,
   description:
-    `How BetRollover works: escrow-protected picks, transparent settlement, verified tipsters. Buy tips with confidence — refunded if they lose. Create coupons and earn from your expertise.`,
+    `How BetRollover works: escrow-protected picks, transparent settlement. Same account to buy or sell — 20% ROI unlocks paid coupons. Refunded if picks lose.`,
   alternates: {
     canonical: `${SITE_URL}/how-it-works`,
     languages: getAlternates('/how-it-works'),
@@ -17,116 +17,133 @@ export const metadata: Metadata = {
   openGraph: {
     url: `${SITE_URL}/how-it-works`,
     title: `How It Works | ${SITE_NAME}`,
-    description: 'Escrow-protected picks, transparent settlement, verified tipsters. Refunded if tips lose.',
+    description: 'Escrow-protected picks. Sell paid coupons at 20% ROI — no application. Refunded if picks lose.',
   },
 };
 
-const HOW_IT_WORKS_FAQS = [
-  {
-    question: 'How does escrow protection work for buyers?',
-    answer: 'When you purchase a tipster coupon, your payment is held in escrow. The tipster does not receive it until the coupon settles. If the tipster\'s picks lose, your purchase is refunded to your wallet automatically.',
-  },
-  {
-    question: 'What happens if my tipster\'s picks lose?',
-    answer: 'If the tipster\'s picks lose, your purchase is refunded in full to your wallet. You only pay when the picks win.',
-  },
-  {
-    question: 'How do tipsters get verified?',
-    answer: 'All tipsters on BetRollover are verified. We check identity and ensure compliance with our terms. Performance stats (win rate, ROI, streak) are calculated from settled coupons only.',
-  },
-  {
-    question: 'How does settlement work?',
-    answer: 'We use official data sources (API-Sports, The Odds API) to fetch match results. Each pick is marked won, lost, or void. A coupon wins only if all non-void picks win.',
-  },
-  {
-    question: 'How do tipsters earn from their picks?',
-    answer: 'When someone buys your coupon, funds are held in escrow until the coupon settles. If your picks win, you receive your share minus platform commission. If they lose, the buyer is refunded.',
-  },
-];
+function ListItem({ text }: { text: string }) {
+  const sep = ' — ';
+  const i = text.indexOf(sep);
+  if (i === -1) return <>{text}</>;
+  return (
+    <>
+      <strong>{text.slice(0, i)}</strong>
+      {sep}
+      {text.slice(i + sep.length)}
+    </>
+  );
+}
+
+function faqKeys() {
+  return [
+    { q: 'how_it_works.faq_escrow_q', a: 'how_it_works.faq_escrow_a' },
+    { q: 'how_it_works.faq_lose_q', a: 'how_it_works.faq_lose_a' },
+    { q: 'how_it_works.faq_sell_q', a: 'how_it_works.faq_sell_a' },
+    { q: 'how_it_works.faq_settle_q', a: 'how_it_works.faq_settle_a' },
+    { q: 'how_it_works.faq_earn_q', a: 'how_it_works.faq_earn_a' },
+  ] as const;
+}
 
 export default async function HowItWorksPage() {
   const locale = await getLocale();
   const t = buildT(locale);
 
+  const faqs = faqKeys().map(({ q, a }) => ({
+    question: t(q),
+    answer: t(a),
+  }));
+
+  const buyerSteps = [
+    t('how_it_works.buyers_li1'),
+    t('how_it_works.buyers_li2'),
+    t('how_it_works.buyers_li3'),
+    t('how_it_works.buyers_li4'),
+  ];
+  const tipsterSteps = [
+    t('how_it_works.tipsters_li1'),
+    t('how_it_works.tipsters_li2'),
+    t('how_it_works.tipsters_li3'),
+    t('how_it_works.tipsters_li4'),
+  ];
+
   return (
     <div className="min-h-screen bg-[var(--bg)]">
-      <FaqJsonLd faqs={HOW_IT_WORKS_FAQS} />
+      <FaqJsonLd faqs={faqs} />
       <UnifiedHeader />
 
       <main>
-        <article className="max-w-3xl mx-auto px-6 py-12">
-          <p className="text-xs font-bold uppercase tracking-widest text-[var(--primary)] mb-3">
+        <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-14">
+          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[var(--primary)] mb-2 sm:mb-3">
             Transparency
           </p>
-          <h1 className="text-xl md:text-2xl font-semibold text-[var(--text)] mb-4">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-[var(--text)] mb-3 sm:mb-4 leading-tight">
             How BetRollover Works
           </h1>
-          <p className="text-[var(--text-muted)] text-lg leading-relaxed mb-10">
-            We built BetRollover to be transparent and fair. Here&apos;s how escrow, settlement, and tipster verification work.
+          <p className="text-[var(--text-muted)] text-sm sm:text-base md:text-lg leading-relaxed mb-8 sm:mb-10">
+            {t('how_it_works.page_lead')}
           </p>
 
-          <div className="prose prose-slate max-w-none text-[var(--text)] space-y-10 leading-relaxed">
+          <div className="prose prose-slate max-w-none text-[var(--text)] space-y-8 sm:space-y-10 leading-relaxed text-sm sm:text-[15px]">
 
-            <section>
-              <h2 className="text-xl font-semibold mb-3">For Buyers: Escrow Protection</h2>
-              <ol className="list-decimal pl-6 space-y-3">
-                <li><strong>Browse & choose</strong> — Find verified tipsters and coupons in the marketplace. Every coupon shows win rate, ROI, and past performance.</li>
-                <li><strong>Pay into escrow</strong> — When you purchase, your payment is held securely in escrow. The tipster does not receive it until the coupon settles.</li>
-                <li><strong>Coupon settles</strong> — After all matches finish, we fetch official results and settle the coupon (won, lost, or void).</li>
-                <li><strong>Refund if lost</strong> — If the tipster&apos;s picks lose, your purchase is refunded to your wallet. If they win, the tipster earns their share.</li>
+            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/40 p-4 sm:p-6 md:p-7">
+              <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-3 sm:mb-4 capitalize text-[var(--text)]">{t('how_it_works.buyers_h2')}</h2>
+              <ol className="list-decimal pl-4 sm:pl-6 space-y-3 sm:space-y-4 marker:text-[var(--primary)] marker:font-semibold">
+                {buyerSteps.map((item) => (
+                  <li key={item.slice(0, 48)}>
+                    <ListItem text={item} />
+                  </li>
+                ))}
               </ol>
             </section>
 
-            <section>
-              <h2 className="text-xl font-semibold mb-3">For Tipsters: Earn From Your Picks</h2>
-              <ol className="list-decimal pl-6 space-y-3">
-                <li><strong>Get verified</strong> — Apply to become a tipster. We verify your identity and ensure you meet our standards.</li>
-                <li><strong>Create coupons</strong> — Build coupons from football, basketball, tennis, MMA, and more. Set your price (including free).</li>
-                <li><strong>Sales go to escrow</strong> — When someone buys your coupon, the funds are held in escrow until the coupon settles.</li>
-                <li><strong>Earn on wins</strong> — If your picks win, you receive your share (minus platform commission). If they lose, the buyer is refunded.</li>
+            <section className="rounded-2xl border border-violet-500/15 dark:border-violet-800/25 bg-gradient-to-br from-violet-500/[0.05] to-[var(--card)]/60 p-4 sm:p-6 md:p-7">
+              <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-3 sm:mb-4 capitalize text-[var(--text)]">{t('how_it_works.tipsters_h2')}</h2>
+              <ol className="list-decimal pl-4 sm:pl-6 space-y-3 sm:space-y-4 marker:text-violet-600 dark:marker:text-violet-400 marker:font-semibold">
+                {tipsterSteps.map((item) => (
+                  <li key={item.slice(0, 48)}>
+                    <ListItem text={item} />
+                  </li>
+                ))}
               </ol>
             </section>
 
-            <section>
-              <h2 className="text-xl font-semibold mb-3">Settlement: How We Determine Results</h2>
-              <p>
-                We use official data sources (API-Sports for football and volleyball, The Odds API for other sports) to fetch match results. 
-                Each pick is marked won, lost, or void based on the actual outcome. A coupon wins only if all non-void picks win.
-              </p>
+            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/30 p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">{t('how_it_works.settlement_h2')}</h2>
+              <p className="m-0 text-[var(--text-muted)] leading-relaxed">{t('how_it_works.settlement_p')}</p>
             </section>
 
-            <section>
-              <h2 className="text-xl font-semibold mb-3">Tipster Verification</h2>
-              <p>
-                All tipsters on BetRollover are verified. We check identity and ensure compliance with our terms. 
-                Performance stats (win rate, ROI, streak) are calculated from settled coupons only — no manipulation.
-              </p>
+            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/30 p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">{t('how_it_works.verification_h2')}</h2>
+              <p className="m-0 text-[var(--text-muted)] leading-relaxed">{t('how_it_works.verification_p')}</p>
             </section>
 
             <section id="faq" className="scroll-mt-24">
-              <h2 className="text-xl font-semibold mb-4">{t('how_it_works.faq_title')}</h2>
-              <ul className="space-y-4 list-none pl-0">
-                {HOW_IT_WORKS_FAQS.map((faq, i) => (
-                  <li key={i} className="border-b border-[var(--border)] pb-4 last:border-0 last:pb-0">
-                    <h3 className="text-sm font-semibold text-[var(--text)] mb-1">{faq.question}</h3>
-                    <p className="text-sm text-[var(--text-muted)] leading-relaxed">{faq.answer}</p>
+              <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-4 sm:mb-5">{t('how_it_works.faq_title')}</h2>
+              <ul className="space-y-3 sm:space-y-4 list-none pl-0">
+                {faqs.map((faq, i) => (
+                  <li
+                    key={i}
+                    className="rounded-xl border border-[var(--border)] bg-[var(--card)]/50 p-4 sm:p-5 shadow-sm"
+                  >
+                    <h3 className="text-sm sm:text-[15px] font-semibold text-[var(--text)] mb-2 leading-snug">{faq.question}</h3>
+                    <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed m-0">{faq.answer}</p>
                   </li>
                 ))}
               </ul>
             </section>
 
-            <div className="mt-10 p-5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/40">
-              <p className="font-semibold text-[var(--text)] mb-2">Ready to get started?</p>
-              <div className="flex flex-wrap gap-3">
+            <div className="mt-8 sm:mt-10 p-4 sm:p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 ring-1 ring-emerald-500/10">
+              <p className="font-semibold text-[var(--text)] mb-3 sm:mb-4 text-sm sm:text-base">Ready to get started?</p>
+              <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3">
                 <Link
                   href="/marketplace"
-                  className="px-4 py-2 rounded-lg bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors"
+                  className="inline-flex items-center justify-center min-h-[44px] px-5 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors w-full sm:w-auto"
                 >
                   Browse Marketplace
                 </Link>
                 <Link
                   href="/register"
-                  className="px-4 py-2 rounded-lg border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                  className="inline-flex items-center justify-center min-h-[44px] px-5 rounded-xl border-2 border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto bg-[var(--card)]/50"
                 >
                   Create Account
                 </Link>

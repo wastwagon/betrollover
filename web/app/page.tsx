@@ -60,52 +60,97 @@ export default async function HomePage() {
         </div>
         <HomePublicChatRooms />
         {/* How It Works */}
-        <section className="py-14 md:py-20 px-4 sm:px-6 lg:px-8 border-t border-[var(--border)]">
+        <section className="py-10 sm:py-14 md:py-20 px-4 sm:px-6 lg:px-8 border-t border-[var(--border)]">
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12">
-              <span className="inline-block px-3 py-1 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-xs font-semibold uppercase tracking-wide mb-3">{t('home.how_it_works')}</span>
-              <h2 className="text-base font-semibold text-[var(--text)] mb-3 sm:text-lg md:text-xl">{t('home.how_it_works_sub')}</h2>
-              <p className="text-[var(--text-muted)] text-base max-w-xl mx-auto">{t('home.escrow_note')}</p>
+            <div className="text-center mb-8 sm:mb-12 px-1">
+              <span className="inline-block px-3 py-1.5 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-3">{t('home.how_it_works')}</span>
+              <h2 className="text-base font-semibold text-[var(--text)] mb-3 sm:text-lg md:text-xl leading-snug">{t('home.how_it_works_sub')}</h2>
+              <p className="text-[var(--text-muted)] text-sm sm:text-base max-w-xl mx-auto leading-relaxed">{t('home.escrow_note')}</p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8 md:gap-6">
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-2xl bg-emerald-500/15 border-2 border-emerald-500/30 flex items-center justify-center text-2xl font-bold text-emerald-600 dark:text-emerald-400 mb-5">1</div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-6">
+              <div className="flex flex-col items-center text-center rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 backdrop-blur-sm p-5 sm:p-6 shadow-sm">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-emerald-500/15 border-2 border-emerald-500/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mb-4 sm:mb-5 shrink-0">1</div>
                 <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('home.step1_title')}</h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('home.step1_desc')}</p>
               </div>
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-2xl bg-blue-500/15 border-2 border-blue-500/30 flex items-center justify-center text-2xl font-bold text-blue-600 dark:text-blue-400 mb-5">2</div>
+              <div className="flex flex-col items-center text-center rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 backdrop-blur-sm p-5 sm:p-6 shadow-sm">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-blue-500/15 border-2 border-blue-500/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 mb-4 sm:mb-5 shrink-0">2</div>
                 <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('home.step2_title')}</h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('home.step2_desc')}</p>
               </div>
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border-2 border-amber-500/30 flex items-center justify-center text-2xl font-bold text-amber-600 dark:text-amber-400 mb-5">3</div>
+              <div className="flex flex-col items-center text-center rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 backdrop-blur-sm p-5 sm:p-6 shadow-sm">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-amber-500/15 border-2 border-amber-500/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400 mb-4 sm:mb-5 shrink-0">3</div>
                 <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('home.step3_title')}</h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('home.step3_desc')}</p>
               </div>
             </div>
 
-            <div className="mt-12 grid sm:grid-cols-2 gap-4">
-              <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-emerald-50/40 dark:from-slate-800/50 dark:to-emerald-900/20 border border-[var(--border)] flex items-center gap-4">
+            <div className="mt-8 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-emerald-50/40 dark:from-slate-800/50 dark:to-emerald-900/20 border border-[var(--border)] flex items-start sm:items-center gap-3 sm:gap-4 min-h-0">
                 <span className="text-3xl flex-shrink-0">📰</span>
                 <div>
                   <h3 className="text-sm font-semibold text-[var(--text)] mb-0.5">{t('home.news_guides_title')}</h3>
                   <p className="text-xs text-[var(--text-muted)] leading-relaxed">{t('home.news_guides_desc')}</p>
                 </div>
               </div>
-              <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-blue-50/40 dark:from-slate-800/50 dark:to-blue-900/20 border border-[var(--border)] flex items-center justify-between gap-4">
-                <div>
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-blue-50/40 dark:from-slate-800/50 dark:to-blue-900/20 border border-[var(--border)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="min-w-0 flex-1">
                   <h3 className="text-sm font-semibold text-[var(--text)] mb-0.5">{t('home.explore_cta_title')}</h3>
-                  <p className="text-xs text-[var(--text-muted)]">{t('home.explore_cta_desc')}</p>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">{t('home.explore_cta_desc')}</p>
                 </div>
                 <Link
                   href="/discover"
-                  className="px-4 py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-all shadow-md whitespace-nowrap shrink-0"
+                  className="inline-flex items-center justify-center px-4 py-3 sm:py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-all shadow-md w-full sm:w-auto min-h-[44px] sm:min-h-0 shrink-0"
                 >
                   {t('home.explore_cta_btn')}
                 </Link>
               </div>
+            </div>
+
+            <div className="mt-10 sm:mt-14 pt-10 sm:pt-12 border-t border-[var(--border)]">
+              <div className="text-center mb-8 sm:mb-10 px-1">
+                <span className="inline-block px-3 py-1.5 rounded-full bg-violet-500/15 text-violet-600 dark:text-violet-300 text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-3">
+                  {t('home.tipster_flow_badge')}
+                </span>
+                <h2 className="text-base font-semibold text-[var(--text)] mb-3 sm:text-lg md:text-xl leading-snug">
+                  {t('home.tipster_flow_title')}
+                </h2>
+                <p className="text-[var(--text-muted)] text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+                  {t('home.tipster_flow_sub')}
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                <div className="flex flex-col items-center text-center rounded-2xl border border-violet-500/15 dark:border-violet-800/30 bg-gradient-to-b from-violet-500/[0.06] to-[var(--card)]/80 p-5 sm:p-6 shadow-sm">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-violet-500/15 border-2 border-violet-500/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-violet-600 dark:text-violet-400 mb-4 sm:mb-5 shrink-0">
+                    1
+                  </div>
+                  <h3 className="text-sm sm:text-base font-semibold text-[var(--text)] mb-2">{t('home.tipster_step1_title')}</h3>
+                  <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">{t('home.tipster_step1_desc')}</p>
+                </div>
+                <div className="flex flex-col items-center text-center rounded-2xl border border-teal-500/15 dark:border-teal-800/30 bg-gradient-to-b from-teal-500/[0.06] to-[var(--card)]/80 p-5 sm:p-6 shadow-sm">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-teal-500/15 border-2 border-teal-500/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-teal-600 dark:text-teal-400 mb-4 sm:mb-5 shrink-0">
+                    2
+                  </div>
+                  <h3 className="text-sm sm:text-base font-semibold text-[var(--text)] mb-2">{t('home.tipster_step2_title')}</h3>
+                  <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">{t('home.tipster_step2_desc')}</p>
+                </div>
+                <div className="flex flex-col items-center text-center rounded-2xl border border-emerald-500/15 dark:border-emerald-800/30 bg-gradient-to-b from-emerald-500/[0.06] to-[var(--card)]/80 p-5 sm:p-6 shadow-sm">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-emerald-500/15 border-2 border-emerald-500/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mb-4 sm:mb-5 shrink-0">
+                    3
+                  </div>
+                  <h3 className="text-sm sm:text-base font-semibold text-[var(--text)] mb-2">{t('home.tipster_step3_title')}</h3>
+                  <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">{t('home.tipster_step3_desc')}</p>
+                </div>
+              </div>
+              <p className="text-center mt-6 sm:mt-8">
+                <Link
+                  href="/how-it-works"
+                  className="inline-flex items-center justify-center min-h-[44px] px-4 text-sm font-semibold text-[var(--primary)] hover:underline rounded-lg"
+                >
+                  {t('discover.platform_howto_link')}
+                </Link>
+              </p>
             </div>
           </div>
         </section>

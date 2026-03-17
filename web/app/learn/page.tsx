@@ -47,7 +47,7 @@ export default async function LearnPage() {
                   <dt className="font-semibold text-[var(--text)]">Escrow</dt>
                   <dd className="mt-1 text-[var(--text-muted)]">
                     Your payment is held by the platform until the coupon settles. The tipster does not receive it until results are in. 
-                    If the picks lose, you get a full refund. Escrow protects buyers and keeps tipsters accountable.
+                    If the picks lose, the amount you paid for the coupon is refunded to your wallet. Escrow protects buyers and keeps tipsters accountable.
                   </dd>
                 </div>
                 <div>

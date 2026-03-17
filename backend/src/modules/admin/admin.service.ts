@@ -330,7 +330,7 @@ export class AdminService {
       lastTestDate: apiSettings?.lastTestDate || null,
       isActive: apiSettings?.isActive || false,
       minimumROI: Number(apiSettings?.minimumROI ?? 20.0),
-      platformCommissionRate: Number(apiSettings?.platformCommissionRate ?? 10.0),
+      platformCommissionRate: Number(apiSettings?.platformCommissionRate ?? 30.0),
       currency: 'GHS',
       country: 'Ghana',
       appName: 'BetRollover',
