@@ -98,6 +98,31 @@ When the deployment shows **Finished**, open **https://betrollover.com**.
 
 ---
 
+## Orphan tipsters (deleted users still in list)
+
+If users you deleted in Admin still appear on the **Tipsters** page (e.g. Google/Apple sign-ups):
+
+1. **Redeploy** so the latest API is running (delete now removes the tipster row and the list API hides orphans).
+2. To **clean existing orphans** in the DB once, open **Terminal** in Coolify for this resource and run (replace container name if different):
+
+   ```bash
+   docker exec -i betrollover-postgres psql -U betrollover -d betrollover -c "
+   DELETE FROM tipsters
+   WHERE is_ai = false
+     AND (user_id IS NULL OR NOT EXISTS (SELECT 1 FROM users u WHERE u.id = tipsters.user_id));
+   "
+   ```
+
+   Or from your machine if you have the repo and container name:
+
+   ```bash
+   docker exec -i <postgres-container-name> psql -U betrollover -d betrollover < database/scripts/clean-orphan-tipsters.sql
+   ```
+
+After that, the tipsters list will no longer show those entries.
+
+---
+
 ## Build fails with exit 255
 
 If deployment fails with **Command execution failed (exit code 255)** during the Docker build:

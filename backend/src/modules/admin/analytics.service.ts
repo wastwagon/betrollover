@@ -971,12 +971,11 @@ export class AnalyticsService {
     const startDate = new Date(Date.now() - days * 86_400_000);
     const rows = await this.purchasesRepo
       .createQueryBuilder('p')
-      .innerJoin('p.pick', 'at')
       .select("TO_CHAR(p.purchasedAt, 'YYYY-MM-DD')", 'date')
-      .addSelect('COALESCE(SUM(at.price), 0)', 'revenue')
+      .addSelect('COALESCE(SUM(p.purchasePrice), 0)', 'revenue')
       .addSelect('COUNT(*)', 'purchases')
       .where('p.purchasedAt >= :startDate', { startDate })
-      .andWhere('at.price > 0')
+      .andWhere('p.purchasePrice > 0')
       .groupBy("TO_CHAR(p.purchasedAt, 'YYYY-MM-DD')")
       .orderBy('date', 'ASC')
       .getRawMany();
