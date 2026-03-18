@@ -1,6 +1,16 @@
 /** @type {import('next').NextConfig} */
+/** Set NEXT_BUILD_LOW_MEMORY=1 in Docker/Coolify to limit static-gen parallelism (avoids OOM on small VPS). */
+const lowMemBuild = process.env.NEXT_BUILD_LOW_MEMORY === '1';
+
 const nextConfig = {
   reactStrictMode: true,
+  ...(lowMemBuild && {
+    experimental: {
+      // Fewer parallel workers during static generation — avoids OOM on 2–4GB build hosts (Coolify/Docker)
+      cpus: 1,
+      memoryBasedWorkersCount: true,
+    },
+  }),
   images: {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
