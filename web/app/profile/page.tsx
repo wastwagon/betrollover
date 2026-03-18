@@ -9,7 +9,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 import { useT } from '@/context/LanguageContext';
 
-import { getApiUrl, getAvatarUrl } from '@/lib/site-config';
+import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 
 interface Profile {
   id: number;
@@ -276,6 +276,7 @@ export default function ProfilePage() {
                         width={96}
                         height={96}
                         className="w-full h-full object-cover"
+                        unoptimized={shouldUnoptimizeGoogleAvatar(avatarSrc)}
                         onError={() => setAvatarError(true)}
                       />
                     ) : (

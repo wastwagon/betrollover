@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { AdminSidebar } from '@/components/AdminSidebar';
-import { getApiUrl, getAvatarUrl } from '@/lib/site-config';
+import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 
 const API_URL = getApiUrl();
 
@@ -326,6 +326,9 @@ export default function AdminUsersPage() {
                                   width={40}
                                   height={40}
                                   className="w-full h-full object-cover absolute inset-0"
+                                  unoptimized={shouldUnoptimizeGoogleAvatar(
+                                    u.avatar.startsWith('http') ? u.avatar : getAvatarUrl(u.avatar, 40)
+                                  )}
                                   onError={() => setAvatarErrors((prev) => new Set(prev).add(u.id))}
                                 />
                               ) : null}

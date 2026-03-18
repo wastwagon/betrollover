@@ -19,7 +19,11 @@ const nextConfig = {
       { protocol: 'http', hostname: 'localhost', port: '6001', pathname: '/**' },
       { protocol: 'https', hostname: 'betrollover.com', pathname: '/**' },
       { protocol: 'https', hostname: 'media.api-sports.io', pathname: '/**' },
-      // Google OAuth profile photos (next/image 400 if host not in list)
+      // Google OAuth (explicit + wildcard — some deployments mismatch ** only)
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'lh4.googleusercontent.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'lh5.googleusercontent.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'lh6.googleusercontent.com', pathname: '/**' },
       { protocol: 'https', hostname: '**.googleusercontent.com', pathname: '/**' },
     ],
   },

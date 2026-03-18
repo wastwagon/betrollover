@@ -9,7 +9,7 @@ import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { useT } from '@/context/LanguageContext';
-import { getApiUrl, getAvatarUrl } from '@/lib/site-config';
+import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 
 type Period = 'all_time' | 'monthly' | 'weekly';
 type SportFilter = 'all' | 'football' | 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football';
@@ -212,6 +212,7 @@ export default function LeaderboardPage() {
                           alt={entry.display_name}
                           width={40} height={40}
                           className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                          unoptimized={shouldUnoptimizeGoogleAvatar(avatarSrc)}
                         />
                       ) : (
                         <div className="w-10 h-10 rounded-full border-2 border-white shadow-sm bg-emerald-100 flex items-center justify-center text-sm font-bold text-emerald-700">

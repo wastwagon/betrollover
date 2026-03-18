@@ -13,7 +13,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { useToast } from '@/hooks/useToast';
 import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
-import { getApiUrl, getAvatarUrl } from '@/lib/site-config';
+import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { PersonJsonLd } from '@/components/PersonJsonLd';
 import { useT } from '@/context/LanguageContext';
 
@@ -375,6 +375,7 @@ export default function TipsterProfilePage() {
                     width={80}
                     height={80}
                     className="w-full h-full object-cover"
+                    unoptimized={shouldUnoptimizeGoogleAvatar(getAvatarUrl(tipster.avatar_url, 80))}
                     onError={() => setAvatarError(true)}
                   />
                 ) : (

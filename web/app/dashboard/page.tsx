@@ -10,7 +10,7 @@ import { AdminSidebar } from '@/components/AdminSidebar';
 import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 
-import { getApiUrl, getAvatarUrl } from '@/lib/site-config';
+import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { PickCard } from '@/components/PickCard';
 import { useCurrency } from '@/context/CurrencyContext';
 
@@ -696,7 +696,14 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
                           className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--bg)]/70 hover:bg-teal-50/60 border border-[var(--border)]/60 transition-colors"
                         >
                           {t.avatarUrl ? (
-                            <Image src={getAvatarUrl(t.avatarUrl, 24)!} alt="" width={24} height={24} className="w-6 h-6 rounded-full object-cover" />
+                            <Image
+                              src={getAvatarUrl(t.avatarUrl, 24)!}
+                              alt=""
+                              width={24}
+                              height={24}
+                              className="w-6 h-6 rounded-full object-cover"
+                              unoptimized={shouldUnoptimizeGoogleAvatar(getAvatarUrl(t.avatarUrl, 24))}
+                            />
                           ) : (
                             <span className="w-6 h-6 rounded-full bg-[var(--primary-light)] flex items-center justify-center text-xs font-bold text-[var(--primary)]">
                               {t.displayName?.charAt(0)?.toUpperCase() || '?'}

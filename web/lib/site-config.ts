@@ -99,6 +99,16 @@ export function getAvatarUrl(avatarPath: string | null | undefined, size = 96): 
   return `${getApiBaseUrl()}${path}`;
 }
 
+/**
+ * Google OAuth avatars (lh3.googleusercontent.com, etc.): Next.js /_next/image
+ * fetches server-side; Google often blocks or rejects those requests → 400 in the browser.
+ * Use unoptimized on next/image so the browser loads the URL directly.
+ */
+export function shouldUnoptimizeGoogleAvatar(src: string | null | undefined): boolean {
+  if (!src || typeof src !== 'string') return false;
+  return /googleusercontent\.com/i.test(src);
+}
+
 /** Build ad image URL. Relative paths (e.g. /uploads/ads/xxx.jpg) become full API URL. */
 export function getAdImageUrl(imageUrl: string | null | undefined): string | null {
   if (!imageUrl) return null;

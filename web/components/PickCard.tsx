@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getAvatarUrl } from '@/lib/site-config';
+import { getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { TeamBadge } from './TeamBadge';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useT } from '@/context/LanguageContext';
@@ -219,6 +219,7 @@ export function PickCard({
                       width={28}
                       height={28}
                       className="w-full h-full object-cover"
+                      unoptimized={shouldUnoptimizeGoogleAvatar(getAvatarUrl(tipster.avatarUrl, 28))}
                       onError={() => setAvatarError(true)}
                     />
                   </div>

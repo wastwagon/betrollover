@@ -8,7 +8,7 @@ import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
 import { TeamBadge } from '@/components/TeamBadge';
-import { getApiUrl, getAvatarUrl } from '@/lib/site-config';
+import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Pick {
@@ -671,6 +671,7 @@ export default function CouponDetailPage() {
                           alt={coupon.tipster.displayName}
                           width={40} height={40}
                           className="w-full h-full object-cover"
+                          unoptimized={shouldUnoptimizeGoogleAvatar(getAvatarUrl(coupon.tipster.avatarUrl, 40))}
                           onError={() => setAvatarError(true)}
                         />
                       ) : (

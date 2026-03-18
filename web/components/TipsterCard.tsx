@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getAvatarUrl } from '@/lib/site-config';
+import { getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 
 export interface TipsterCardData {
@@ -55,6 +55,7 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
                 width={48}
                 height={48}
                 className="w-full h-full object-cover"
+                unoptimized={shouldUnoptimizeGoogleAvatar(getAvatarUrl(tipster.avatar_url!, 48))}
                 onError={() => setAvatarError(true)}
               />
             ) : (
