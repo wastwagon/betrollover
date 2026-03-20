@@ -127,12 +127,13 @@ export class AuthService {
   async appleLogin(
     idToken: string,
     clientFirstNames?: { email?: string; name?: { firstName?: string; lastName?: string } },
+    nonceExpected?: string,
   ): Promise<ReturnType<AuthService['login']> extends Promise<infer R> ? R : never> {
     const clientId = this.config.get<string>('APPLE_CLIENT_ID');
     if (!clientId?.trim()) {
       throw new UnauthorizedException('Apple sign-in is not configured.');
     }
-    let payload: { sub?: string; email?: string; email_verified?: boolean | string };
+    let payload: { sub?: string; email?: string; email_verified?: boolean | string; nonce?: string };
     try {
       const decoded = jwt.decode(idToken.trim(), { complete: true }) as { header?: { kid?: string }; payload?: Record<string, unknown> } | null;
       if (!decoded?.header?.kid || !decoded?.payload) throw new Error('Invalid token structure');
@@ -152,6 +153,7 @@ export class AuthService {
         sub: verified.sub as string,
         email: verified.email as string | undefined,
         email_verified: verified.email_verified as boolean | string | undefined,
+        nonce: verified.nonce as string | undefined,
       };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -160,6 +162,9 @@ export class AuthService {
     }
     const sub = payload.sub;
     if (!sub) throw new UnauthorizedException('Invalid Apple token: missing subject.');
+    if (nonceExpected?.trim() && payload.nonce !== nonceExpected.trim()) {
+      throw new UnauthorizedException('Invalid Apple sign-in token. Please try again.');
+    }
 
     let user: User | null = await this.usersService.findByProviderAppleId(sub);
     if (user) {

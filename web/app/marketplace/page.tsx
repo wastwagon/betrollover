@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useT } from '@/context/LanguageContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
@@ -350,6 +351,21 @@ export default function MarketplacePage() {
             <AdSlot zoneSlug="marketplace-full" fullWidth className="w-full" />
           </div>
 
+          <div className="relative mb-4 rounded-2xl overflow-hidden border border-[var(--border)] h-28 sm:h-36 md:h-40 bg-[var(--card)]">
+            <Image
+              src="/images/marketing/marketplace-strip.png"
+              alt=""
+              fill
+              className="object-cover object-center"
+              sizes="(max-width: 768px) 100vw, 1200px"
+              unoptimized
+            />
+            <div
+              className="absolute inset-0 bg-gradient-to-r from-[var(--bg)]/85 via-[var(--bg)]/20 to-transparent pointer-events-none"
+              aria-hidden
+            />
+          </div>
+
           {/* Sport tabs — scrollable on mobile */}
           <div className="flex gap-2 mb-4 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
             {([
@@ -439,7 +455,8 @@ export default function MarketplacePage() {
                 description={t('marketplace.no_picks_sub')}
                 actionLabel={t('nav.create_coupon')}
                 actionHref="/create-pick"
-                icon="🛒"
+                imageSrc="/images/marketing/marketplace-strip.png"
+                imageAlt=""
               />
             </div>
           )}

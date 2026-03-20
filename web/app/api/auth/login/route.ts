@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Server-side: prefer BACKEND_URL (Docker internal) over NEXT_PUBLIC_API_URL (browser-facing)
 const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:6001';
+const OAUTH_TOKEN_COOKIE = 'br_oauth_token';
 
 /** Build redirect base URL: prefer APP_URL so redirects always go to the correct host/port (avoids localhost:3000 vs 6002 confusion) */
 function getRedirectBase(request: NextRequest): string {
@@ -74,8 +75,15 @@ export async function POST(request: NextRequest) {
     }
 
     const redirectUrl = new URL('/dashboard', base);
-    redirectUrl.searchParams.set('token', token);
-    return NextResponse.redirect(redirectUrl, 302);
+    const response = NextResponse.redirect(redirectUrl, 302);
+    response.cookies.set(OAUTH_TOKEN_COOKIE, token, {
+      httpOnly: true,
+      secure: request.nextUrl.protocol === 'https:' || process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 120,
+      path: '/',
+    });
+    return response;
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Login failed';
     const stack = e instanceof Error ? e.stack : undefined;

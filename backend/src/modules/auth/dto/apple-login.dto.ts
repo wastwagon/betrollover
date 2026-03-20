@@ -20,4 +20,8 @@ export class AppleLoginDto {
   @ValidateNested()
   @Type(() => AppleUserDto)
   user?: AppleUserDto;
+
+  @IsOptional()
+  @IsString()
+  nonce?: string;
 }

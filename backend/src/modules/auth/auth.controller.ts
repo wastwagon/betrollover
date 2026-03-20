@@ -27,7 +27,7 @@ export class AuthController {
   @Post('apple')
   @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 per min per IP
   async appleLogin(@Body() dto: AppleLoginDto) {
-    return this.authService.appleLogin(dto.id_token, dto.user);
+    return this.authService.appleLogin(dto.id_token, dto.user, dto.nonce);
   }
 
   @Post('login')

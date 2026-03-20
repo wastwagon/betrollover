@@ -51,5 +51,13 @@ uploads/
 # Misc
 *.tsbuildinfo
 
+# Apple APNs auth keys (never commit)
+*.p8
+AuthKey_*.p8
+
 # DB dumps (for VPS transfer)
 database/dump/
+
+# Mobile deep-link verification (fill from Play Console / Apple; inject via CI or `git add -f` if private repo)
+web/public/.well-known/assetlinks.json
+web/public/.well-known/apple-app-site-association

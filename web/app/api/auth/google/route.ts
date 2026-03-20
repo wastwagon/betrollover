@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:6001';
+const OAUTH_TOKEN_COOKIE = 'br_oauth_token';
 
 function getRedirectBase(request: NextRequest): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
@@ -51,12 +52,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.redirect(loginUrl, 302);
     }
 
-    dashboardUrl.searchParams.set('token', token);
     const redirectTo = typeof body?.redirect === 'string' && body.redirect.startsWith('/')
       ? new URL(body.redirect, base)
       : dashboardUrl;
-    redirectTo.searchParams.set('token', token);
-    return NextResponse.redirect(redirectTo, 302);
+    const response = NextResponse.redirect(redirectTo, 302);
+    response.cookies.set(OAUTH_TOKEN_COOKIE, token, {
+      httpOnly: true,
+      secure: request.nextUrl.protocol === 'https:' || process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 120,
+      path: '/',
+    });
+    return response;
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Google sign-in failed';
     loginUrl.searchParams.set('error', msg);

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "684849546897",
+    "project_id": "betrollover",
+    "storage_bucket": "betrollover.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:684849546897:android:5740de8d6d680d0d0ee130",
+        "android_client_info": {
+          "package_name": "com.betrollover.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAGX9x1OaHg1ghIlYZBuXQI0TuiH4uAUm8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

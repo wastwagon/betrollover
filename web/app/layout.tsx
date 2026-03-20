@@ -47,8 +47,11 @@ export const metadata: Metadata = {
   publisher: SITE_NAME,
   formatDetection: { email: false, address: false, telephone: false },
   icons: {
-    icon: '/BetRollover-logo.png',
-    shortcut: '/BetRollover-logo.png',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/BetRollover-logo.png', type: 'image/png', sizes: '512x512' },
+    ],
+    shortcut: '/favicon.svg',
     apple: '/BetRollover-logo.png',
   },
   manifest: '/manifest.json',
@@ -60,17 +63,14 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     title: `Verified Sports Tips | Football, Basketball & More — ${SITE_NAME}`,
     description: SITE_DESCRIPTION,
-    images: [
-      { url: '/og-image.png', width: 1200, height: 630, alt: `${SITE_NAME} — Ghana-based tipster marketplace for a global audience` },
-      { url: '/BetRollover-logo.png', width: 512, height: 512, alt: SITE_NAME },
-    ],
+    images: [{ url: '/og-image.png', type: 'image/png', width: 1200, height: 630, alt: `${SITE_NAME} — verified sports tips marketplace` }],
   },
   twitter: {
     card: 'summary_large_image',
     title: `Verified Sports Tips | Football, Basketball & More — ${SITE_NAME}`,
     description: SITE_DESCRIPTION,
     creator: '@betrollover',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: `${SITE_NAME} — Ghana-based tipster marketplace for a global audience` }],
+    images: [{ url: '/og-image.png', type: 'image/png', alt: `${SITE_NAME} — verified sports tips marketplace` }],
   },
   robots: {
     index: true,

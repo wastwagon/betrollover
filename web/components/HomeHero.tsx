@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getApiUrl } from '@/lib/site-config';
@@ -208,50 +209,63 @@ export function HomeHero() {
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 lg:py-28">
         <h1 className="sr-only">{t('home.hero_title')}</h1>
-        <div className="text-center max-w-3xl mx-auto mb-14 md:mb-16">
-          <p className="text-lg sm:text-xl md:text-2xl text-white/95 leading-relaxed font-medium mb-4 md:mb-5 animate-fade-in-up px-1">
-            {t('home.hero_subtitle')}
-          </p>
-          <p className="text-sm sm:text-base text-white/85 leading-snug mb-8 md:mb-10 animate-fade-in-up px-1 max-w-2xl mx-auto">
-            {t('home.hero_escrow_line')}
-          </p>
-          {/* Sport pills row */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-8 animate-fade-in-up animate-delay-100">
-            {[
-              { icon: '⚽', labelKey: 'nav.football' },
-              { icon: '🏀', labelKey: 'nav.basketball' },
-              { icon: '🏉', labelKey: 'nav.rugby' },
-              { icon: '🥊', labelKey: 'nav.mma' },
-              { icon: '🏐', labelKey: 'nav.volleyball' },
-              { icon: '🏒', labelKey: 'nav.hockey' },
-              { icon: '🏈', labelKey: 'nav.american_football' },
-              { icon: '🎾', labelKey: 'nav.tennis' },
-            ].map(({ icon, labelKey }) => (
-              <span key={labelKey} className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500/30 border border-emerald-400/50 text-emerald-200 text-sm font-semibold backdrop-blur-sm">
-                {icon} {t(labelKey)}
-              </span>
-            ))}
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-center mb-14 md:mb-16">
+          <div className="order-2 lg:order-1 text-center lg:text-left max-w-3xl mx-auto lg:mx-0">
+            <p className="text-lg sm:text-xl md:text-2xl text-white/95 leading-relaxed font-medium mb-4 md:mb-5 animate-fade-in-up px-1 lg:px-0">
+              {t('home.hero_subtitle')}
+            </p>
+            <p className="text-sm sm:text-base text-white/85 leading-snug mb-8 md:mb-10 animate-fade-in-up px-1 lg:px-0 max-w-2xl mx-auto lg:mx-0">
+              {t('home.hero_escrow_line')}
+            </p>
+            {/* Sport pills row */}
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-8 animate-fade-in-up animate-delay-100">
+              {[
+                { icon: '⚽', labelKey: 'nav.football' },
+                { icon: '🏀', labelKey: 'nav.basketball' },
+                { icon: '🏉', labelKey: 'nav.rugby' },
+                { icon: '🥊', labelKey: 'nav.mma' },
+                { icon: '🏐', labelKey: 'nav.volleyball' },
+                { icon: '🏒', labelKey: 'nav.hockey' },
+                { icon: '🏈', labelKey: 'nav.american_football' },
+                { icon: '🎾', labelKey: 'nav.tennis' },
+              ].map(({ icon, labelKey }) => (
+                <span key={labelKey} className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500/30 border border-emerald-400/50 text-emerald-200 text-sm font-semibold backdrop-blur-sm">
+                  {icon} {t(labelKey)}
+                </span>
+              ))}
+            </div>
 
-          <div className="flex flex-wrap gap-4 justify-center animate-fade-in-up animate-delay-200">
-            {!isLoggedIn && (
+            <div className="flex flex-wrap gap-4 justify-center lg:justify-start animate-fade-in-up animate-delay-200">
+              {!isLoggedIn && (
+                <Link
+                  href="/register"
+                  className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold hover:from-emerald-400 hover:to-emerald-500 hover:scale-105 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:shadow-xl"
+                >
+                  {t('home.join_cta')}
+                </Link>
+              )}
               <Link
-                href="/register"
-                className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold hover:from-emerald-400 hover:to-emerald-500 hover:scale-105 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:shadow-xl"
+                href="/marketplace"
+                className="px-8 py-3.5 rounded-xl border-2 border-white/50 bg-white/10 text-white font-semibold hover:bg-white/20 hover:border-white/70 transition-all duration-200 backdrop-blur-sm"
               >
-                {t('home.join_cta')}
+                {t('home.hero_cta_primary')}
               </Link>
-            )}
-            <Link
-              href="/marketplace"
-              className="px-8 py-3.5 rounded-xl border-2 border-white/50 bg-white/10 text-white font-semibold hover:bg-white/20 hover:border-white/70 transition-all duration-200 backdrop-blur-sm"
-            >
-              {t('home.hero_cta_primary')}
-            </Link>
+            </div>
+            <p className="text-[11px] sm:text-xs text-white/60 mt-6 sm:mt-7 max-w-xl mx-auto lg:mx-0 leading-relaxed px-2 lg:px-0">
+              {t('home.hero_informational_note')}
+            </p>
           </div>
-          <p className="text-[11px] sm:text-xs text-white/60 mt-6 sm:mt-7 max-w-xl mx-auto leading-relaxed px-2">
-            {t('home.hero_informational_note')}
-          </p>
+          <div className="order-1 lg:order-2 flex justify-center lg:justify-end px-2 lg:px-0">
+            <Image
+              src="/images/marketing/hero-panel.png"
+              alt=""
+              width={640}
+              height={427}
+              priority
+              unoptimized
+              className="w-full max-w-lg rounded-2xl shadow-2xl shadow-black/40 object-contain"
+            />
+          </div>
         </div>
 
         {/* Compact KPI Dashboard - 6 cards: platform + leading ROI + paid out */}

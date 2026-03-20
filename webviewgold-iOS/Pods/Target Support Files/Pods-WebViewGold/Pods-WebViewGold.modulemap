@@ -1,0 +1,6 @@
+framework module Pods_WebViewGold {
+  umbrella header "Pods-WebViewGold-umbrella.h"
+
+  export *
+  module * { export * }
+}

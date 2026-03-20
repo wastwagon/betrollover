@@ -103,7 +103,7 @@ export function GoogleSignInButton({
           }),
           redirect: 'follow',
         });
-        if (res.url && (res.url.includes('token=') || res.url.includes('/dashboard'))) {
+        if (res.url && (res.url.includes('/dashboard') || res.url.includes('/login'))) {
           window.location.href = res.url;
           return;
         }

@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useT } from '@/context/LanguageContext';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { DashboardShell } from '@/components/DashboardShell';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { PageHeader } from '@/components/PageHeader';
@@ -78,7 +78,6 @@ interface Purchase {
 
 function DashboardContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const t = useT();
   const { format } = useCurrency();
   const [user, setUser] = useState<User | null>(null);
@@ -126,76 +125,92 @@ function DashboardContent() {
   };
 
   useEffect(() => {
-    const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-    const tokenFromUrl = params?.get('token') ?? searchParams.get('token');
-    if (tokenFromUrl && typeof window !== 'undefined') {
-      localStorage.setItem('token', tokenFromUrl);
-      window.history.replaceState({}, '', '/dashboard');
-    }
-    const token = tokenFromUrl || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-    const headers = { Authorization: `Bearer ${token}` };
-    const apiUrl = getApiUrl();
+    const initAuth = async () => {
+      let token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token && typeof window !== 'undefined') {
+        try {
+          const sessionRes = await fetch('/api/auth/session-token', { method: 'GET' });
+          if (sessionRes.ok) {
+            const sessionData = await sessionRes.json().catch(() => ({ token: null }));
+            if (typeof sessionData?.token === 'string' && sessionData.token.trim()) {
+              const nextToken = sessionData.token.trim();
+              token = nextToken;
+              localStorage.setItem('token', nextToken);
+            }
+          }
+        } catch {
+          // Ignore transient session exchange issues and fall back to login redirect.
+        }
+      }
 
-    // Check auth first: 401 → clear token and redirect to login immediately (avoids multiple 401s)
-    fetch(`${apiUrl}/users/me`, { headers })
-      .then((r) => {
-        if (r.status === 401) {
-          localStorage.removeItem('token');
-          router.push('/login');
-          return Promise.reject(new Error('Unauthorized'));
-        }
-        return r.ok ? r.json() : Promise.reject();
-      })
-      .then((u) => {
-        if (!u) return;
-        setUser(u);
-        const isAdmin = u.role === 'admin';
-        return Promise.all([
-          Promise.resolve(u),
-          isAdmin ? fetch(`${apiUrl}/admin/stats`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null) : Promise.resolve(null),
-          fetch(`${apiUrl}/tipster/stats`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-          fetch(`${apiUrl}/wallet/balance`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-          isAdmin ? fetch(`${apiUrl}/admin/settings`, { headers })
-            .then((r) => (r.ok ? r.json() : null))
-            .catch(() => null)
-            .then((settings) => settings?.minimumROI !== undefined ? settings.minimumROI : 20.0) : Promise.resolve(20.0),
-          fetch(`${apiUrl}/accumulators/purchased`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
-          fetch(`${apiUrl}/tipsters/feed?limit=10`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
-          fetch(`${apiUrl}/tipsters/me/following`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
-          fetch(`${apiUrl}/notifications?limit=50`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
-        ]);
-      })
-      .then((result) => {
-        if (!result) return;
-        const [u, s, ts, wallet, minROI, purchasedData, feedData, followingData, notifData] = result;
-        if (u.role === 'admin') setStats(s || {});
-        setTipsterStats(ts || { totalPicks: 0, wonPicks: 0, lostPicks: 0, winRate: 0, totalEarnings: 0, roi: 0 });
-        if (wallet) setWalletBalance(Number(wallet.balance));
-        setMinimumROI(minROI);
-        const purchasesList = Array.isArray(purchasedData) ? purchasedData : [];
-        setPurchases(purchasesList.slice(0, 5));
-        const totalSpent = purchasesList.reduce((sum: number, p: Purchase) => sum + Number(p.purchasePrice || 0), 0);
-        const active = purchasesList.filter((p: Purchase) =>
-          p.pick && p.pick.status === 'active' && p.pick.result === 'pending'
-        ).length;
-        setPurchaseStats({ total: purchasesList.length, totalSpent, active });
-        setFeedPicks(Array.isArray(feedData) ? feedData : []);
-        setFollowing(Array.isArray(followingData) ? followingData : []);
-        const notifList = Array.isArray(notifData) ? notifData : [];
-        setUnreadNotifications(notifList.filter((n: { read?: boolean }) => !n.read).length);
-      })
-      .catch((err) => {
-        if (err?.message !== 'Unauthorized') {
-          localStorage.removeItem('token');
-          router.push('/login');
-        }
-      })
-      .finally(() => setLoading(false));
-  }, [router, searchParams]);
+      if (!token) {
+        router.push('/login');
+        setLoading(false);
+        return;
+      }
+
+      const headers = { Authorization: `Bearer ${token}` };
+      const apiUrl = getApiUrl();
+
+      // Check auth first: 401 → clear token and redirect to login immediately (avoids multiple 401s)
+      fetch(`${apiUrl}/users/me`, { headers })
+        .then((r) => {
+          if (r.status === 401) {
+            localStorage.removeItem('token');
+            router.push('/login');
+            return Promise.reject(new Error('Unauthorized'));
+          }
+          return r.ok ? r.json() : Promise.reject();
+        })
+        .then((u) => {
+          if (!u) return;
+          setUser(u);
+          const isAdmin = u.role === 'admin';
+          return Promise.all([
+            Promise.resolve(u),
+            isAdmin ? fetch(`${apiUrl}/admin/stats`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null) : Promise.resolve(null),
+            fetch(`${apiUrl}/tipster/stats`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+            fetch(`${apiUrl}/wallet/balance`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+            isAdmin ? fetch(`${apiUrl}/admin/settings`, { headers })
+              .then((r) => (r.ok ? r.json() : null))
+              .catch(() => null)
+              .then((settings) => settings?.minimumROI !== undefined ? settings.minimumROI : 20.0) : Promise.resolve(20.0),
+            fetch(`${apiUrl}/accumulators/purchased`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+            fetch(`${apiUrl}/tipsters/feed?limit=10`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+            fetch(`${apiUrl}/tipsters/me/following`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+            fetch(`${apiUrl}/notifications?limit=50`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+          ]);
+        })
+        .then((result) => {
+          if (!result) return;
+          const [u, s, ts, wallet, minROI, purchasedData, feedData, followingData, notifData] = result;
+          if (u.role === 'admin') setStats(s || {});
+          setTipsterStats(ts || { totalPicks: 0, wonPicks: 0, lostPicks: 0, winRate: 0, totalEarnings: 0, roi: 0 });
+          if (wallet) setWalletBalance(Number(wallet.balance));
+          setMinimumROI(minROI);
+          const purchasesList = Array.isArray(purchasedData) ? purchasedData : [];
+          setPurchases(purchasesList.slice(0, 5));
+          const totalSpent = purchasesList.reduce((sum: number, p: Purchase) => sum + Number(p.purchasePrice || 0), 0);
+          const active = purchasesList.filter((p: Purchase) =>
+            p.pick && p.pick.status === 'active' && p.pick.result === 'pending'
+          ).length;
+          setPurchaseStats({ total: purchasesList.length, totalSpent, active });
+          setFeedPicks(Array.isArray(feedData) ? feedData : []);
+          setFollowing(Array.isArray(followingData) ? followingData : []);
+          const notifList = Array.isArray(notifData) ? notifData : [];
+          setUnreadNotifications(notifList.filter((n: { read?: boolean }) => !n.read).length);
+        })
+        .catch((err) => {
+          if (err?.message !== 'Unauthorized') {
+            localStorage.removeItem('token');
+            router.push('/login');
+          }
+        })
+        .finally(() => setLoading(false));
+    };
+
+    void initAuth();
+  }, [router]);
 
   if (loading) {
     return (

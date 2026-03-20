@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#4FaFFf</color>
+    <color name="colorPrimaryDark">#0F7FFC</color> <!-- Used for Color of the Status Bar-->
+    <color name="colorAccent">#6A6A6A</color> <!-- Used for Color of the Loading Sign and Dialogue Buttons -->
+    <color name="launchLoadingSignBackground">#FFFFFF</color> <!-- Background Color for Loading Sign Screen on launch -->
+    <color name="colorWhite">#FFFFFF</color>
+    <!-- BetRollover splash — white (brand); pair with blackStatusBarText on splash activities -->
+    <color name="splash_screen_background">#FFFFFF</color>
+    <color name="colorTransparent">#00FFFFFF</color>
+    <!-- Adaptive icon background behind @mipmap/ic_launcher_foreground; set to #10b981 if your logo is white/light -->
+    <color name="ic_launcher_background">#FFFFFF</color>
+    <color name="player_icon_tint">#CECECE</color> <!-- Video player icon tint -->
+</resources>

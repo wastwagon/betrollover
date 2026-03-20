@@ -3,6 +3,7 @@ import { randomBytes } from 'crypto';
 
 const APPLE_AUTH_URL = 'https://appleid.apple.com/auth/authorize';
 const APPLE_STATE_COOKIE = 'apple_oauth_state';
+const APPLE_NONCE_COOKIE = 'apple_oauth_nonce';
 
 function getRedirectBase(request: NextRequest): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
@@ -28,6 +29,7 @@ export async function GET(request: NextRequest) {
   const base = getRedirectBase(request);
   const redirectUri = `${base}/api/auth/apple/callback`;
   const state = randomBytes(24).toString('hex');
+  const nonce = randomBytes(24).toString('hex');
 
   const params = new URLSearchParams({
     client_id: clientId,
@@ -36,11 +38,19 @@ export async function GET(request: NextRequest) {
     response_mode: 'form_post',
     scope: 'name email',
     state,
+    nonce,
   });
 
   const response = NextResponse.redirect(`${APPLE_AUTH_URL}?${params.toString()}`, 302);
   // SameSite=None + Secure so cookie is sent when Apple POSTs back (cross-site form POST)
   response.cookies.set(APPLE_STATE_COOKIE, state, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none',
+    maxAge: 600,
+    path: '/',
+  });
+  response.cookies.set(APPLE_NONCE_COOKIE, nonce, {
     httpOnly: true,
     secure: true,
     sameSite: 'none',

@@ -974,8 +974,8 @@ const en = {
   'terms.questions': 'Questions? Contact us at',
 
   // ── Auth pages ───────────────────────────────────────────────────────────
-  'auth.welcome_back': 'Welcome back',
-  'auth.sign_in_desc': 'Sign in to access your dashboard',
+  'auth.welcome_back': 'Welcome back to BetRollover',
+  'auth.sign_in_desc': 'Sign in to access your BetRollover dashboard',
   'auth.invalid_credentials': 'Invalid email or password',
   'auth.server_error': 'Unable to connect to server. Please try again.',
   'auth.retry': 'Try again',

@@ -50,6 +50,14 @@ const nextConfig = {
       },
     ];
     const rules = [
+      // App Links / Universal Links verification: short cache so cert/bundle updates propagate
+      {
+        source: '/.well-known/:path*',
+        headers: [
+          ...securityHeaders,
+          { key: 'Cache-Control', value: 'public, max-age=600, s-maxage=600' },
+        ],
+      },
       {
         source: '/:path*',
         headers: securityHeaders,
@@ -77,6 +85,21 @@ const nextConfig = {
       return [{ source: '/api-proxy/:path*', destination: `${api}/:path*` }];
     }
     return [];
+  },
+  /**
+   * Canonical host: apex `betrollover.com` (matches WebView HOME_URL / SITE_URL).
+   * Set SKIP_WWW_REDIRECT=1 to disable if you must serve www as primary during migration.
+   */
+  async redirects() {
+    if (process.env.SKIP_WWW_REDIRECT === '1') return [];
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.betrollover.com' }],
+        destination: 'https://betrollover.com/:path*',
+        permanent: true,
+      },
+    ];
   },
 };
 

@@ -151,6 +151,11 @@ if (cd web && npm run build --silent 2>&1); then
 else
   fail "Web build FAILED"
 fi
+if [ -f web/public/.well-known/assetlinks.json ] && [ -f web/public/.well-known/apple-app-site-association ]; then
+  ok "Mobile deep-link static files present (web/public/.well-known/)"
+else
+  warn "No deep-link files in public/.well-known/ — production should set Coolify env: ANDROID_SHA256_CERT_FINGERPRINT + APPLE_TEAM_ID (see docs/COOLIFY_WEBVIEWGOLD_LAUNCH.md); after deploy: bash scripts/check-deep-links-remote.sh"
+fi
 echo ""
 
 # ──────────────────────────────────────────────

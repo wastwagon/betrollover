@@ -974,8 +974,8 @@ const fr: Record<string, string> = {
   'terms.questions': 'Des questions ? Contactez-nous à',
 
   // ── Auth pages ───────────────────────────────────────────────────────────
-  'auth.welcome_back': 'Bon retour',
-  'auth.sign_in_desc': 'Connectez-vous pour accéder à votre tableau de bord',
+  'auth.welcome_back': 'Bon retour sur BetRollover',
+  'auth.sign_in_desc': 'Connectez-vous pour accéder à votre tableau de bord BetRollover',
   'auth.invalid_credentials': 'E-mail ou mot de passe incorrect',
   'auth.server_error': 'Impossible de se connecter au serveur. Veuillez réessayer.',
   'auth.retry': 'Réessayer',

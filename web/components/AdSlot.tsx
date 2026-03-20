@@ -17,7 +17,7 @@ interface AdCampaign {
 interface AdSlotProps {
   zoneSlug: string;
   className?: string;
-  /** Full-width banner (728×90) layout */
+  /** Wide banner zone — still fluid on mobile (no fixed 728px min-width). */
   fullWidth?: boolean;
 }
 
@@ -45,13 +45,14 @@ export function AdSlot({ zoneSlug, className = '', fullWidth = false }: AdSlotPr
     fetch(`${getApiUrl()}/ads/impression/${ad.id}`, { method: 'POST' }).catch(() => {});
   }, [ad?.id]);
 
-  const placeholderSize = fullWidth ? { minWidth: 728, minHeight: 90 } : { minWidth: 300, minHeight: 250 };
+  /** Never use fixed minWidth (e.g. 728px) — it breaks mobile and causes horizontal overflow. */
+  const shell = `w-full max-w-full min-w-0 box-border ${className}`;
+  const placeholderMinH = fullWidth ? 'min-h-[72px] sm:min-h-[90px]' : 'min-h-[200px] sm:min-h-[250px]';
 
   if (loading) {
     return (
       <div
-        className={`rounded-xl border-2 border-dashed border-[var(--border)] bg-[var(--bg)] flex items-center justify-center ${className}`}
-        style={placeholderSize}
+        className={`${shell} rounded-xl border-2 border-dashed border-[var(--border)] bg-[var(--bg)] flex items-center justify-center ${placeholderMinH}`}
       >
         <span className="text-sm text-[var(--text-muted)]">Loading...</span>
       </div>
@@ -61,20 +62,19 @@ export function AdSlot({ zoneSlug, className = '', fullWidth = false }: AdSlotPr
   if (!ad) {
     return (
       <div
-        className={`rounded-xl border-2 border-dashed border-[var(--border)] bg-[var(--bg)] flex flex-col items-center justify-center gap-2 p-4 ${className}`}
-        style={placeholderSize}
+        className={`${shell} rounded-xl border-2 border-dashed border-[var(--border)] bg-[var(--bg)] flex flex-col items-center justify-center gap-2 p-4 text-center ${placeholderMinH}`}
       >
         <span className="text-xs text-[var(--text-muted)] font-medium">Advertise here</span>
         <a
           href={TELEGRAM_ADS_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-medium transition-colors"
+          className="inline-flex max-w-full items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-medium transition-colors"
         >
           {TELEGRAM_ICON}
-          <span>Contact on Telegram</span>
+          <span className="truncate">Contact on Telegram</span>
         </a>
-        <span className="text-[10px] text-[var(--text-muted)]">Interested in advertising?</span>
+        <span className="text-[10px] text-[var(--text-muted)] max-w-full px-1">Interested in advertising?</span>
       </div>
     );
   }
@@ -83,22 +83,26 @@ export function AdSlot({ zoneSlug, className = '', fullWidth = false }: AdSlotPr
     fetch(`${getApiUrl()}/ads/click/${ad.id}`, { method: 'POST' }).catch(() => {});
   };
 
+  const imgW = ad.width && ad.width > 0 ? ad.width : 300;
+  const imgH = ad.height && ad.height > 0 ? ad.height : 250;
+
   return (
-    <div className={className}>
+    <div className={shell}>
       <Link
         href={ad.targetUrl}
         target="_blank"
         rel="noopener noreferrer sponsored"
         onClick={handleClick}
-        className="block rounded-xl overflow-hidden border border-[var(--border)] hover:border-[var(--primary)]/30 transition-colors"
+        className="block w-full max-w-full rounded-xl overflow-hidden border border-[var(--border)] hover:border-[var(--primary)]/30 transition-colors"
       >
         <Image
           src={getAdImageUrl(ad.imageUrl) || ad.imageUrl}
           alt={`Ad: ${ad.advertiserName}`}
-          width={ad.width || 300}
-          height={ad.height || 250}
-          className="w-full h-auto"
-          style={{ maxWidth: ad.width || 300, maxHeight: ad.height || 250, objectFit: 'contain' }}
+          width={imgW}
+          height={imgH}
+          sizes="(max-width: 768px) 100vw, 728px"
+          className="w-full h-auto max-w-full object-contain"
+          style={{ maxHeight: fullWidth ? 'min(120px, 40vw)' : Math.min(imgH, 400) }}
           unoptimized
         />
       </Link>

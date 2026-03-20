@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="17156" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <device id="retina4_7" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="17125"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <resources>
+        <image name="SplashBrand" width="1024" height="1024"/>
+    </resources>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="EHf-IW-A2E">
+            <objects>
+                <viewController id="01J-lp-oVM" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="SplashBrand" translatesAutoresizingMaskIntoConstraints="NO" id="pCu-Fm-vzc">
+                                <rect key="frame" x="127.5" y="259" width="120" height="133"/>
+                            </imageView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
+                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <!-- Match Config.scaleSplashImage (60% of min safe width/height) -->
+                            <constraint firstItem="pCu-Fm-vzc" firstAttribute="width" secondItem="6Tk-OE-BBY" secondAttribute="width" multiplier="0.6" relation="lessThanOrEqual" id="splash-cap-w"/>
+                            <constraint firstItem="pCu-Fm-vzc" firstAttribute="width" secondItem="6Tk-OE-BBY" secondAttribute="height" multiplier="0.6" relation="lessThanOrEqual" id="splash-cap-h"/>
+                            <constraint firstItem="pCu-Fm-vzc" firstAttribute="width" secondItem="6Tk-OE-BBY" secondAttribute="width" multiplier="0.6" priority="900" id="splash-pref-w"/>
+                            <constraint firstItem="pCu-Fm-vzc" firstAttribute="width" secondItem="6Tk-OE-BBY" secondAttribute="height" multiplier="0.6" priority="899" id="splash-pref-h"/>
+                            <constraint firstItem="pCu-Fm-vzc" firstAttribute="height" secondItem="pCu-Fm-vzc" secondAttribute="width" multiplier="1" id="splash-aspect"/>
+                            <constraint firstItem="pCu-Fm-vzc" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="splash-cx"/>
+                            <constraint firstItem="pCu-Fm-vzc" firstAttribute="centerY" secondItem="6Tk-OE-BBY" secondAttribute="centerY" id="splash-cy"/>
+                            <constraint firstItem="pCu-Fm-vzc" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="16" id="splash-lead"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="pCu-Fm-vzc" secondAttribute="trailing" constant="16" id="splash-trail"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="52" y="374.66266866566718"/>
+        </scene>
+    </scenes>
+</document>

@@ -67,6 +67,11 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Prevent accidental horizontal page scroll on narrow viewports (e.g. mis-sized ads). */
+html {
+  overflow-x: clip;
+}
+
 /* Base styles */
 body {
   background-color: var(--bg);

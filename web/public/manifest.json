@@ -23,35 +23,27 @@
       "purpose": "any"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/og-image.png",
-      "sizes": "1200x630",
-      "type": "image/png",
-      "label": "BetRollover Homepage"
-    }
-  ],
   "shortcuts": [
     {
       "name": "Marketplace",
       "short_name": "Picks",
       "description": "Browse verified tipster picks",
       "url": "/marketplace",
-      "icons": [{ "src": "/BetRollover-logo.png", "sizes": "512x512" }]
+      "icons": [{ "src": "/BetRollover-logo.png", "sizes": "512x512", "type": "image/png" }]
     },
     {
       "name": "My Dashboard",
       "short_name": "Dashboard",
       "description": "Your tipster dashboard",
       "url": "/dashboard",
-      "icons": [{ "src": "/BetRollover-logo.png", "sizes": "512x512" }]
+      "icons": [{ "src": "/BetRollover-logo.png", "sizes": "512x512", "type": "image/png" }]
     },
     {
       "name": "Wallet",
       "short_name": "Wallet",
       "description": "Check balance & transactions",
       "url": "/wallet",
-      "icons": [{ "src": "/BetRollover-logo.png", "sizes": "512x512" }]
+      "icons": [{ "src": "/BetRollover-logo.png", "sizes": "512x512", "type": "image/png" }]
     }
   ]
 }

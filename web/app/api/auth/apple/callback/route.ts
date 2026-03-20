@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
 const APPLE_STATE_COOKIE = 'apple_oauth_state';
+const APPLE_NONCE_COOKIE = 'apple_oauth_nonce';
+const OAUTH_TOKEN_COOKIE = 'br_oauth_token';
 
 function getRedirectBase(request: NextRequest): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
@@ -33,6 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     const cookieState = request.cookies.get(APPLE_STATE_COOKIE)?.value;
+    const cookieNonce = request.cookies.get(APPLE_NONCE_COOKIE)?.value;
     if (!state || !cookieState || state !== cookieState) {
       loginUrl.searchParams.set('error', 'Invalid state. Please try again.');
       return NextResponse.redirect(loginUrl, 302);
@@ -50,7 +53,7 @@ export async function POST(request: NextRequest) {
     const res = await fetch(`${BACKEND_URL}/api/v1/auth/apple`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id_token: idToken, user }),
+      body: JSON.stringify({ id_token: idToken, user, nonce: cookieNonce }),
     });
 
     const raw = await res.text();
@@ -72,9 +75,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.redirect(loginUrl, 302);
     }
 
-    dashboardUrl.searchParams.set('token', token);
     const response = NextResponse.redirect(dashboardUrl, 302);
     response.cookies.delete(APPLE_STATE_COOKIE);
+    response.cookies.delete(APPLE_NONCE_COOKIE);
+    response.cookies.set(OAUTH_TOKEN_COOKIE, token, {
+      httpOnly: true,
+      secure: request.nextUrl.protocol === 'https:' || process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 120,
+      path: '/',
+    });
     return response;
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Apple sign-in failed';
