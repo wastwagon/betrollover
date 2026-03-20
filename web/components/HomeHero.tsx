@@ -171,7 +171,6 @@ export function HomeHero() {
           alt=""
           fill
           priority
-          unoptimized
           className="object-cover object-center"
           sizes="100vw"
         />

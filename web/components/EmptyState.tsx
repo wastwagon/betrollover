@@ -33,7 +33,6 @@ export function EmptyState({
           alt={imageAlt}
           width={320}
           height={200}
-          unoptimized
           className="mb-6 max-w-full h-auto rounded-xl object-contain border border-[var(--border)] bg-[var(--card)]/50"
         />
       ) : (
