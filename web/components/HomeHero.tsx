@@ -163,109 +163,54 @@ export function HomeHero() {
   ];
 
   return (
-    <section className="relative overflow-hidden min-h-[640px]">
-      {/* Brighter base gradient - appealing dark with teal/emerald warmth */}
+    <section className="relative overflow-hidden min-h-[560px] md:min-h-[640px]">
+      {/* Full-bleed hero artwork — replaces previous CSS gradients */}
+      <div className="absolute inset-0">
+        <Image
+          src="/images/marketing/hero-panel.png"
+          alt=""
+          fill
+          priority
+          unoptimized
+          className="object-cover object-center"
+          sizes="100vw"
+        />
+      </div>
+      {/* Readability overlay so text & KPI cards stay legible on any artwork */}
       <div
-        className="absolute inset-0 bg-gradient-to-br from-slate-800 via-teal-900/90 to-slate-800"
-        aria-hidden="true"
-      />
-      {/* Animated gradient mesh - livelier emerald glow */}
-      <div
-        className="absolute inset-0 bg-[radial-gradient(ellipse_90%_60%_at_50%_-10%,rgba(16,185,129,0.35),rgba(5,150,105,0.12),transparent_60%)] animate-gradient-shift"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_80%_30%,rgba(16,185,129,0.2),transparent_55%)]"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_15%_70%,rgba(5,150,105,0.15),transparent_55%)]"
-        aria-hidden="true"
-      />
-      {/* Animated floating orbs */}
-      <div
-        className="absolute top-[15%] left-[20%] w-80 h-80 bg-emerald-400/20 rounded-full blur-3xl animate-orb-drift"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute bottom-[20%] right-[25%] w-72 h-72 bg-emerald-500/25 rounded-full blur-3xl animate-float-slow"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[350px] bg-teal-400/15 rounded-full blur-3xl animate-float-slower"
-        aria-hidden="true"
-      />
-      {/* Subtle grid overlay for depth */}
-      <div
-        className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black_20%,transparent_100%)]"
-        aria-hidden="true"
-      />
-      {/* Soft dot pattern for premium background texture */}
-      <div
-        className="absolute inset-0 opacity-[0.04] [mask-image:radial-gradient(ellipse_100%_80%_at_50%_50%,black_40%,transparent_100%)]"
-        style={{ backgroundImage: 'radial-gradient(circle at center, white 1px, transparent 1px)', backgroundSize: '24px 24px' }}
+        className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/45 to-black/65"
         aria-hidden="true"
       />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 lg:py-28">
         <h1 className="sr-only">{t('home.hero_title')}</h1>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-center mb-14 md:mb-16">
-          <div className="order-2 lg:order-1 text-center lg:text-left max-w-3xl mx-auto lg:mx-0">
-            <p className="text-lg sm:text-xl md:text-2xl text-white/95 leading-relaxed font-medium mb-4 md:mb-5 animate-fade-in-up px-1 lg:px-0">
-              {t('home.hero_subtitle')}
-            </p>
-            <p className="text-sm sm:text-base text-white/85 leading-snug mb-8 md:mb-10 animate-fade-in-up px-1 lg:px-0 max-w-2xl mx-auto lg:mx-0">
-              {t('home.hero_escrow_line')}
-            </p>
-            {/* Sport pills row */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-8 animate-fade-in-up animate-delay-100">
-              {[
-                { icon: '⚽', labelKey: 'nav.football' },
-                { icon: '🏀', labelKey: 'nav.basketball' },
-                { icon: '🏉', labelKey: 'nav.rugby' },
-                { icon: '🥊', labelKey: 'nav.mma' },
-                { icon: '🏐', labelKey: 'nav.volleyball' },
-                { icon: '🏒', labelKey: 'nav.hockey' },
-                { icon: '🏈', labelKey: 'nav.american_football' },
-                { icon: '🎾', labelKey: 'nav.tennis' },
-              ].map(({ icon, labelKey }) => (
-                <span key={labelKey} className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500/30 border border-emerald-400/50 text-emerald-200 text-sm font-semibold backdrop-blur-sm">
-                  {icon} {t(labelKey)}
-                </span>
-              ))}
-            </div>
+        <div className="text-center max-w-3xl mx-auto mb-14 md:mb-16">
+          <p className="text-lg sm:text-xl md:text-2xl text-white/95 leading-relaxed font-medium mb-4 md:mb-5 animate-fade-in-up drop-shadow-sm">
+            {t('home.hero_subtitle')}
+          </p>
+          <p className="text-sm sm:text-base text-white/90 leading-snug mb-8 md:mb-10 animate-fade-in-up max-w-2xl mx-auto drop-shadow-sm">
+            {t('home.hero_escrow_line')}
+          </p>
 
-            <div className="flex flex-wrap gap-4 justify-center lg:justify-start animate-fade-in-up animate-delay-200">
-              {!isLoggedIn && (
-                <Link
-                  href="/register"
-                  className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold hover:from-emerald-400 hover:to-emerald-500 hover:scale-105 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:shadow-xl"
-                >
-                  {t('home.join_cta')}
-                </Link>
-              )}
+          <div className="flex flex-wrap gap-4 justify-center animate-fade-in-up animate-delay-100">
+            {!isLoggedIn && (
               <Link
-                href="/marketplace"
-                className="px-8 py-3.5 rounded-xl border-2 border-white/50 bg-white/10 text-white font-semibold hover:bg-white/20 hover:border-white/70 transition-all duration-200 backdrop-blur-sm"
+                href="/register"
+                className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold hover:from-emerald-400 hover:to-emerald-500 hover:scale-105 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:shadow-xl"
               >
-                {t('home.hero_cta_primary')}
+                {t('home.join_cta')}
               </Link>
-            </div>
-            <p className="text-[11px] sm:text-xs text-white/60 mt-6 sm:mt-7 max-w-xl mx-auto lg:mx-0 leading-relaxed px-2 lg:px-0">
-              {t('home.hero_informational_note')}
-            </p>
+            )}
+            <Link
+              href="/marketplace"
+              className="px-8 py-3.5 rounded-xl border-2 border-white/50 bg-white/10 text-white font-semibold hover:bg-white/20 hover:border-white/70 transition-all duration-200 backdrop-blur-sm"
+            >
+              {t('home.hero_cta_primary')}
+            </Link>
           </div>
-          <div className="order-1 lg:order-2 flex justify-center lg:justify-end px-2 lg:px-0">
-            <Image
-              src="/images/marketing/hero-panel.png"
-              alt=""
-              width={640}
-              height={427}
-              priority
-              unoptimized
-              className="w-full max-w-lg rounded-2xl shadow-2xl shadow-black/40 object-contain"
-            />
-          </div>
+          <p className="text-[11px] sm:text-xs text-white/70 mt-6 sm:mt-7 max-w-xl mx-auto leading-relaxed px-2 drop-shadow-sm">
+            {t('home.hero_informational_note')}
+          </p>
         </div>
 
         {/* Compact KPI Dashboard - 6 cards: platform + leading ROI + paid out */}

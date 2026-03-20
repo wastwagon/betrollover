@@ -123,7 +123,7 @@ const fr: Record<string, string> = {
 
   // ── Home page ────────────────────────────────────────────────────────────
   'home.hero_title': 'Suivez les pronostics d\'experts. Suivez les résultats.',
-  'home.hero_subtitle': "Marketplace de tipsters pour un public mondial. Tous les grands sports — football, basketball, tennis, MMA, rugby et plus. Découvrez des pronostics d'experts et suivez les performances.",
+  'home.hero_subtitle': "Marketplace de tipsters pour un public mondial. Découvrez des pronostics d'experts, suivez les performances et prenez des décisions éclairées.",
   'home.hero_escrow_line': 'Chaque coupon est protégé par escrow — s\'il perd, le montant payé est remboursé sur votre portefeuille.',
   'home.hero_informational_note': 'Les pronostics et coupons sont à titre informatif et éducatif uniquement. BetRollover n\'est pas un bookmaker ni un opérateur de paris. 18 ans et plus.',
   'home.hero_cta_primary': 'Voir les Pronostics',

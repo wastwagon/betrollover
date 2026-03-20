@@ -123,7 +123,7 @@ const en = {
 
   // ── Home page ────────────────────────────────────────────────────────────
   'home.hero_title': 'Follow expert picks. Track real results.',
-  'home.hero_subtitle': "Tipster marketplace for a global audience. All major sports — football, basketball, tennis, MMA, rugby and more. Discover expert picks, track performance, and make informed decisions.",
+  'home.hero_subtitle': 'Tipster marketplace for a global audience. Discover expert picks, track performance, and make informed decisions.',
   'home.hero_escrow_line': 'Every coupon is escrow-protected — if it loses, the amount you paid is refunded to your wallet.',
   'home.hero_informational_note': 'Picks and coupons are for information and education only. BetRollover is not a bookmaker or betting operator. 18+ only.',
   'home.hero_cta_primary': 'Browse Picks',
