@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
@@ -37,11 +38,44 @@ export function TipsterFollowersModal({
   onFollowersMutate,
 }: TipsterFollowersModalProps) {
   const t = useT();
+  const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [followers, setFollowers] = useState<TipsterFollowerRow[]>([]);
   const [actionUserId, setActionUserId] = useState<number | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  /** Lock page scroll when open; pad body by scrollbar width to avoid horizontal layout jump (common flicker). */
+  useEffect(() => {
+    if (!open) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtmlOverflow = html.style.overflow;
+    const prevBodyOverflow = body.style.overflow;
+    const prevBodyPaddingRight = body.style.paddingRight;
+    const gap = window.innerWidth - html.clientWidth;
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    if (gap > 0) body.style.paddingRight = `${gap}px`;
+    return () => {
+      html.style.overflow = prevHtmlOverflow;
+      body.style.overflow = prevBodyOverflow;
+      body.style.paddingRight = prevBodyPaddingRight;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
 
   const load = useCallback(() => {
     if (!open || !tipsterUsername) return;
@@ -96,12 +130,19 @@ export function TipsterFollowersModal({
     }
   };
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="followers-modal-title">
-      <button type="button" className="absolute inset-0 bg-black/50 backdrop-blur-sm" aria-label={t('common.close')} onClick={onClose} />
-      <div className="relative w-full sm:max-w-md max-h-[85vh] sm:max-h-[80vh] rounded-t-2xl sm:rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-xl flex flex-col">
+  const modal = (
+    <div
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="followers-modal-title"
+      style={{ isolation: 'isolate' }}
+    >
+      {/* Solid scrim only — backdrop-blur causes repaint flicker on many mobile GPUs */}
+      <button type="button" className="absolute inset-0 bg-black/55" aria-label={t('common.close')} onClick={onClose} />
+      <div className="relative z-[1] w-full sm:max-w-md max-h-[85vh] sm:max-h-[80vh] rounded-t-2xl sm:rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-xl flex flex-col">
         <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-[var(--border)]">
           <h2 id="followers-modal-title" className="text-base font-semibold text-[var(--text)] truncate pr-2">
             {tipsterDisplayName
@@ -119,7 +160,10 @@ export function TipsterFollowersModal({
           </button>
         </div>
 
-        <div className="overflow-y-auto flex-1 px-3 py-3 sm:px-4">
+        <div
+          className="overflow-y-auto flex-1 min-h-[120px] px-3 py-3 sm:px-4 overscroll-contain"
+          style={{ WebkitOverflowScrolling: 'touch' as const }}
+        >
           {loading && <p className="text-sm text-[var(--text-muted)] text-center py-8">{t('common.loading')}</p>}
           {!loading && error && <p className="text-sm text-red-600 dark:text-red-400 text-center py-6">{error}</p>}
           {!loading && !error && followers.length === 0 && (
@@ -186,6 +230,8 @@ export function TipsterFollowersModal({
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }
 
 /** Clickable follower count — opens modal (use outside `<Link>` to avoid nested navigation). */
