@@ -175,11 +175,6 @@ export function HomeHero() {
           sizes="100vw"
         />
       </div>
-      {/* Light scrim — keeps text readable without hiding the hero artwork */}
-      <div
-        className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/15 to-black/40"
-        aria-hidden="true"
-      />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 lg:py-28">
         <h1 className="sr-only">{t('home.hero_title')}</h1>
