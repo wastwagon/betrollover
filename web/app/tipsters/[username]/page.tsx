@@ -69,7 +69,6 @@ interface TipsterProfile {
     display_name: string;
     avatar_url: string | null;
     bio: string | null;
-    is_ai: boolean;
     total_predictions: number;
     total_wins: number;
     total_losses: number;
@@ -412,11 +411,6 @@ export default function TipsterProfilePage() {
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-2">
                 <h1 className="text-lg sm:text-xl font-semibold text-[var(--text)]">{tipster.display_name}</h1>
-                {tipster.is_ai && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300 border border-violet-200 dark:border-violet-700/40">
-                    🤖 {t('tipster.ai_tipster')}
-                  </span>
-                )}
                 {tipster.leaderboard_rank != null && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                     🏆 {t('tipster.rank_prefix')}{tipster.leaderboard_rank}

@@ -13,7 +13,6 @@ export interface TipsterCardData {
   display_name: string;
   avatar_url: string | null;
   bio: string | null;
-  is_ai?: boolean;
   roi: number;
   win_rate: number;
   current_streak: number;
