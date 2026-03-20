@@ -443,6 +443,7 @@ const fr: Record<string, string> = {
   'tipster.roi': 'ROI',
   'tipster.followers': 'Abonnés',
   'tipster.follow': 'Suivre',
+  'tipster.unfollow': 'Se désabonner',
   'tipster.following': 'Abonné',
   'tipster.picks_by': 'Pronostics de {name}',
   'tipster.no_picks': 'Aucun pronostic actif',

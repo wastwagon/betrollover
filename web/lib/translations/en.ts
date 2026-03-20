@@ -443,6 +443,7 @@ const en = {
   'tipster.roi': 'ROI',
   'tipster.followers': 'Followers',
   'tipster.follow': 'Follow',
+  'tipster.unfollow': 'Unfollow',
   'tipster.following': 'Following',
   'tipster.picks_by': 'Picks by {name}',
   'tipster.no_picks': 'No active picks',

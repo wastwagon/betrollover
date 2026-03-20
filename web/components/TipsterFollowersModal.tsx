@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -39,15 +39,27 @@ export function TipsterFollowersModal({
 }: TipsterFollowersModalProps) {
   const t = useT();
   const [mounted, setMounted] = useState(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [followers, setFollowers] = useState<TipsterFollowerRow[]>([]);
   const [actionUserId, setActionUserId] = useState<number | null>(null);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!open) {
+      setFeedback(null);
+      if (feedbackTimerRef.current) {
+        clearTimeout(feedbackTimerRef.current);
+        feedbackTimerRef.current = null;
+      }
+    }
+  }, [open]);
 
   /** Lock page scroll when open; pad body by scrollbar width to avoid horizontal layout jump (common flicker). */
   useEffect(() => {
@@ -123,6 +135,13 @@ export function TipsterFollowersModal({
         setFollowers((prev) =>
           prev.map((f) => (f.user_id === row.user_id ? { ...f, you_follow_them: next } : f)),
         );
+        const msg = next ? t('tipster.toast_following') : t('tipster.toast_unfollowed');
+        setFeedback(msg);
+        if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+        feedbackTimerRef.current = setTimeout(() => {
+          setFeedback(null);
+          feedbackTimerRef.current = null;
+        }, 3500);
         onFollowersMutate?.();
       }
     } finally {
@@ -159,6 +178,15 @@ export function TipsterFollowersModal({
             ✕
           </button>
         </div>
+
+        {feedback ? (
+          <div
+            className="px-4 py-2 text-sm font-medium text-emerald-800 dark:text-emerald-200 bg-emerald-50 dark:bg-emerald-900/30 border-b border-emerald-200/60 dark:border-emerald-800/50"
+            role="status"
+          >
+            {feedback}
+          </div>
+        ) : null}
 
         <div
           className="overflow-y-auto flex-1 min-h-[120px] px-3 py-3 sm:px-4 overscroll-contain"
@@ -213,13 +241,18 @@ export function TipsterFollowersModal({
                       type="button"
                       disabled={actionUserId === row.user_id}
                       onClick={() => toggleFollow(row)}
+                      aria-label={row.you_follow_them ? t('tipster.unfollow') : t('tipster.follow')}
                       className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
                         row.you_follow_them
-                          ? 'bg-[var(--border)] text-[var(--text-muted)] hover:bg-gray-300 dark:hover:bg-gray-600'
+                          ? 'bg-[var(--border)] text-[var(--text)] hover:bg-red-500/15 hover:text-red-600 dark:hover:text-red-400 border border-[var(--border)]'
                           : 'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]'
                       }`}
                     >
-                      {actionUserId === row.user_id ? '…' : row.you_follow_them ? t('tipster.following') : t('tipster.follow')}
+                      {actionUserId === row.user_id
+                        ? '…'
+                        : row.you_follow_them
+                          ? t('tipster.unfollow')
+                          : t('tipster.follow')}
                     </button>
                   )}
                 </li>
