@@ -16,6 +16,7 @@ import { SuccessToast } from '@/components/SuccessToast';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { PersonJsonLd } from '@/components/PersonJsonLd';
 import { useT } from '@/context/LanguageContext';
+import { FollowersCountButton } from '@/components/TipsterFollowersModal';
 
 interface Pick {
   id?: number;
@@ -108,6 +109,18 @@ export default function TipsterProfilePage() {
   const [subscribedPackageIds, setSubscribedPackageIds] = useState<Set<number>>(new Set());
   const [reviewSummary, setReviewSummary] = useState<{ avg: number; total: number } | null>(null);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
+
+  const refetchProfile = () => {
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    fetch(`${getApiUrl()}/tipsters/${encodeURIComponent(username)}`, { headers })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((p) => {
+        if (p) setProfile(p);
+      })
+      .catch(() => {});
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -409,11 +422,13 @@ export default function TipsterProfilePage() {
                     🏆 {t('tipster.rank_prefix')}{tipster.leaderboard_rank}
                   </span>
                 )}
-                {tipster.follower_count != null && tipster.follower_count > 0 && (
-                  <span className="text-sm text-[var(--text-muted)]">
-                    {t(tipster.follower_count === 1 ? 'tipster.x_follower' : 'tipster.x_followers', { n: String(tipster.follower_count) })}
-                  </span>
-                )}
+                <FollowersCountButton
+                  count={tipster.follower_count ?? 0}
+                  tipsterUsername={tipster.username}
+                  tipsterDisplayName={tipster.display_name}
+                  className="text-sm text-[var(--text-muted)]"
+                  onFollowersMutate={refetchProfile}
+                />
               </div>
               {/* Sport specialization badges */}
               {availableSports.length > 0 && (

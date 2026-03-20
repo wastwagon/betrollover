@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
+import { FollowersCountButton } from '@/components/TipsterFollowersModal';
 
 export interface TipsterCardData {
   id: number;
@@ -45,39 +46,43 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
       className={`card-gradient rounded-2xl shadow-lg overflow-hidden hover:shadow-xl hover:shadow-[var(--primary)]/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col ${className}`}
     >
       <div className="p-3 sm:p-4 flex flex-col flex-1">
-        {/* Header - link to profile */}
-        <Link href={`/tipsters/${tipster.username}`} className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3 group">
-          <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-[var(--bg)] border border-[var(--border)]">
-            {showAvatar ? (
-              <Image
-                src={getAvatarUrl(tipster.avatar_url!, 48)!}
-                alt={tipster.display_name}
-                width={48}
-                height={48}
-                className="w-full h-full object-cover"
-                unoptimized={shouldUnoptimizeGoogleAvatar(getAvatarUrl(tipster.avatar_url!, 48))}
-                onError={() => setAvatarError(true)}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-sm sm:text-lg font-bold text-[var(--primary)] bg-[var(--primary-light)]">
-                {tipster.display_name.charAt(0).toUpperCase()}
-              </div>
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-semibold text-sm sm:text-base text-[var(--text)] truncate">{tipster.display_name}</h3>
+        {/* Header — avatar + name link; follower count is separate (opens list) */}
+        <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
+          <Link href={`/tipsters/${tipster.username}`} className="flex-shrink-0 group">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-[var(--bg)] border border-[var(--border)]">
+              {showAvatar ? (
+                <Image
+                  src={getAvatarUrl(tipster.avatar_url!, 48)!}
+                  alt={tipster.display_name}
+                  width={48}
+                  height={48}
+                  className="w-full h-full object-cover"
+                  unoptimized={shouldUnoptimizeGoogleAvatar(getAvatarUrl(tipster.avatar_url!, 48))}
+                  onError={() => setAvatarError(true)}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-sm sm:text-lg font-bold text-[var(--primary)] bg-[var(--primary-light)]">
+                  {tipster.display_name.charAt(0).toUpperCase()}
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-2 sm:gap-3 mt-0.5 text-[10px] sm:text-xs text-[var(--text-muted)]">
+          </Link>
+          <div className="min-w-0 flex-1">
+            <Link href={`/tipsters/${tipster.username}`} className="block group">
+              <h3 className="font-semibold text-sm sm:text-base text-[var(--text)] truncate">{tipster.display_name}</h3>
+            </Link>
+            <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1 mt-0.5 text-[10px] sm:text-xs text-[var(--text-muted)]">
               {tipster.leaderboard_rank != null && (
                 <span>{t('tipster.rank_prefix')}{tipster.leaderboard_rank}</span>
               )}
-              {tipster.follower_count != null && tipster.follower_count > 0 && (
-                <span>{t(tipster.follower_count === 1 ? 'tipster.x_follower' : 'tipster.x_followers', { n: String(tipster.follower_count) })}</span>
-              )}
+              <FollowersCountButton
+                count={tipster.follower_count ?? 0}
+                tipsterUsername={tipster.username}
+                tipsterDisplayName={tipster.display_name}
+              />
             </div>
           </div>
-        </Link>
+        </div>
 
         {/* Bio */}
         {tipster.bio && (

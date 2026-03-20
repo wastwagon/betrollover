@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { TipsterFollow } from './entities/tipster-follow.entity';
 import { Tipster } from './entities/tipster.entity';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -68,5 +68,82 @@ export class TipsterFollowService {
       displayName: f.tipster.displayName,
       avatarUrl: f.tipster.avatarUrl,
     }));
+  }
+
+  /**
+   * Users who follow this tipster (newest first). Optional viewer id adds follow-back hints.
+   */
+  async getFollowersOfTipster(
+    tipsterUsername: string,
+    viewerUserId: number | undefined,
+    limit: number,
+    offset: number,
+  ): Promise<{
+    total: number;
+    followers: Array<{
+      user_id: number;
+      display_name: string;
+      username: string;
+      avatar_url: string | null;
+      tipster_username: string | null;
+      tipster_id: number | null;
+      you_follow_them: boolean;
+      is_self: boolean;
+      followed_at: string;
+    }>;
+  }> {
+    const tipster = await this.tipsterRepo.findOne({ where: { username: tipsterUsername } });
+    if (!tipster) throw new NotFoundException('Tipster not found');
+
+    const [rows, total] = await this.followRepo.findAndCount({
+      where: { tipsterId: tipster.id },
+      relations: ['user'],
+      order: { followedAt: 'DESC' },
+      take: limit,
+      skip: offset,
+    });
+
+    const followerUserIds = rows.map((r) => r.userId);
+    let tipsterByUserId = new Map<number, { id: number; username: string }>();
+    if (followerUserIds.length > 0) {
+      const tipstersForUsers = await this.tipsterRepo.find({
+        where: { userId: In(followerUserIds) },
+        select: { id: true, userId: true, username: true },
+      });
+      tipsterByUserId = new Map(
+        tipstersForUsers.filter((t) => t.userId != null).map((t) => [t.userId as number, { id: t.id, username: t.username }]),
+      );
+    }
+
+    let followingTipsterIds = new Set<number>();
+    if (viewerUserId && tipsterByUserId.size > 0) {
+      const tipsterIds = [...tipsterByUserId.values()].map((x) => x.id);
+      const vf = await this.followRepo.find({
+        where: { userId: viewerUserId, tipsterId: In(tipsterIds) },
+        select: { tipsterId: true },
+      });
+      followingTipsterIds = new Set(vf.map((f) => f.tipsterId));
+    }
+
+    return {
+      total,
+      followers: rows.map((r) => {
+        const tinfo = tipsterByUserId.get(r.userId);
+        const tipsterId = tinfo?.id ?? null;
+        const tipsterUsernameOut = tinfo?.username ?? null;
+        const youFollow = tipsterId != null && followingTipsterIds.has(tipsterId);
+        return {
+          user_id: r.userId,
+          display_name: r.user.displayName,
+          username: r.user.username,
+          avatar_url: r.user.avatar,
+          tipster_username: tipsterUsernameOut,
+          tipster_id: tipsterId,
+          you_follow_them: youFollow,
+          is_self: viewerUserId != null && r.userId === viewerUserId,
+          followed_at: r.followedAt.toISOString(),
+        };
+      }),
+    };
   }
 }

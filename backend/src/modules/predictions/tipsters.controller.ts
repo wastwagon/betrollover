@@ -34,6 +34,20 @@ export class TipstersController {
     return this.followService.getFollowedTipsters(user.id);
   }
 
+  /** List users following this tipster (public; optional auth for follow-back state). */
+  @Get(':username/followers')
+  @UseGuards(OptionalJwtGuard)
+  async getTipsterFollowers(
+    @Param('username') username: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+    @CurrentUser() user?: User | null,
+  ) {
+    const limitVal = Math.min(Math.max(parseInt(limit || '50', 10) || 50, 1), 100);
+    const offsetVal = Math.max(parseInt(offset || '0', 10) || 0, 0);
+    return this.followService.getFollowersOfTipster(username, user?.id, limitVal, offsetVal);
+  }
+
   @Get()
   @UseGuards(OptionalJwtGuard)
   async getTipsters(
