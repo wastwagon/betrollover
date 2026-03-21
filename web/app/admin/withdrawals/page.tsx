@@ -348,7 +348,8 @@ export default function AdminWithdrawalsPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Withdrawals Management</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Review and process withdrawal requests. Rejecting or cancelling refunds the user&apos;s wallet. Users receive email updates when the status changes.
+            Review and process withdrawal requests. <strong>Reject</strong> records a <strong>Rejected</strong> status (optional reason shown to the user).{' '}
+            <strong>Cancel &amp; refund</strong> records <strong>Cancelled</strong> — use when stopping the payout without a formal rejection (e.g. duplicate request). Both refund the debited amount. Users get email and in-app updates.
           </p>
         </div>
 
@@ -390,6 +391,7 @@ export default function AdminWithdrawalsPage() {
             <option value="processing">Processing</option>
             <option value="completed">Completed</option>
             <option value="failed">Failed</option>
+            <option value="rejected">Rejected</option>
             <option value="cancelled">Cancelled</option>
           </select>
         </div>
@@ -463,7 +465,9 @@ export default function AdminWithdrawalsPage() {
                                 {adminWithdrawalStatusLabel(w.status)}
                               </span>
                               {w.failureReason && (
-                                <p className="text-xs text-red-500 mt-1 max-w-[120px] truncate" title={w.failureReason}>{w.failureReason}</p>
+                                <p className="text-xs text-red-600 dark:text-red-400 mt-1 max-w-[min(100%,240px)] break-words leading-snug" title={w.failureReason}>
+                                  {w.failureReason}
+                                </p>
                               )}
                             </td>
                             <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
@@ -511,8 +515,9 @@ export default function AdminWithdrawalsPage() {
                                   </button>
                                   <button
                                     type="button"
+                                    title="Marks the request as Cancelled (not Rejected). Refunds the wallet — use for duplicates or if the user asked to stop, without implying a formal decline."
                                     onClick={() => {
-                                      if (confirm('Cancel this withdrawal and refund the user?')) {
+                                      if (confirm('Cancel this withdrawal and refund the user? Status will be Cancelled (not Rejected).')) {
                                         void updateStatus(w.id, 'cancelled', 'Cancelled by admin');
                                       }
                                     }}
@@ -555,7 +560,7 @@ export default function AdminWithdrawalsPage() {
                                   <div className="flex gap-2">
                                     <button
                                       type="button"
-                                      onClick={() => void updateStatus(w.id, 'failed', action.reason || undefined)}
+                                      onClick={() => void updateStatus(w.id, 'rejected', action.reason || undefined)}
                                       className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold"
                                     >
                                       Confirm Reject

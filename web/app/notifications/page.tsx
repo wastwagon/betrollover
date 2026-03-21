@@ -28,6 +28,7 @@ const TYPE_META: Record<string, { icon: string; color: string }> = {
   withdrawal:  { icon: '🏦', color: 'text-violet-600' },
   withdrawal_done: { icon: '✅', color: 'text-emerald-600' },
   withdrawal_failed: { icon: '⚠️', color: 'text-red-600' },
+  withdrawal_rejected: { icon: '🚫', color: 'text-orange-600' },
   system:      { icon: '📣', color: 'text-slate-500' },
   follow:      { icon: '👥', color: 'text-cyan-600' },
   subscription:{ icon: '⭐', color: 'text-yellow-500' },

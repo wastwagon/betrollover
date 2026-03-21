@@ -53,6 +53,16 @@ export const NOTIFICATION_TYPES = {
     ctaText: 'View Wallet',
     category: 'wallet',
   },
+  withdrawal_rejected: {
+    icon: 'alert',
+    defaultSubject: 'Withdrawal Rejected',
+    emailSubject: (ctx: Record<string, string>) =>
+      ctx.reason
+        ? `Withdrawal declined (GHS ${ctx.amount || '0'})`
+        : `Withdrawal declined: GHS ${ctx.amount || '0'}`,
+    ctaText: 'View Wallet',
+    category: 'wallet',
+  },
   coupon_sold: {
     icon: 'cart',
     defaultSubject: 'Coupon Sold',

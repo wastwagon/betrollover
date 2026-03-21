@@ -1131,7 +1131,7 @@ export class AnalyticsService {
         .getRawMany(),
     ]);
 
-    const statuses = ['pending', 'processing', 'completed', 'failed', 'cancelled'];
+    const statuses = ['pending', 'processing', 'completed', 'failed', 'rejected', 'cancelled'];
     const byStatus: Record<string, { count: number; ghs: number }> = {};
     for (const s of statuses) {
       byStatus[s] = { count: 0, ghs: 0 };

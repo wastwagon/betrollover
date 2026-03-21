@@ -618,30 +618,52 @@ function WalletContent() {
                       w.updatedAt &&
                       w.updatedAt !== w.createdAt &&
                       new Date(w.updatedAt).getTime() !== new Date(w.createdAt).getTime();
+                    const reasonTitle =
+                      w.status === 'rejected'
+                        ? t('wallet.rejection_reason')
+                        : w.status === 'failed'
+                          ? t('wallet.failure_reason')
+                          : null;
                     return (
-                      <li key={w.id} className="flex items-start justify-between gap-3 py-2.5 border-b border-[var(--border)] last:border-0">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-[var(--text)]">
-                            {w.currency ?? 'GHS'} {Number(w.amount).toFixed(2)}
-                          </p>
-                          <p className="text-xs text-[var(--text-muted)]">
-                            {formatDate(w.createdAt)}
-                            {w.reference && <span className="ml-1 font-mono opacity-60">· {w.reference.slice(0, 12)}</span>}
-                          </p>
-                          {showUpdated && (
-                            <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
-                              {t('wallet.withdrawal_updated')}: {formatDateTime(w.updatedAt!)}
+                      <li key={w.id} className="flex flex-col gap-2 py-3 border-b border-[var(--border)] last:border-0">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-[var(--text)]">
+                              {w.currency ?? 'GHS'} {Number(w.amount).toFixed(2)}
                             </p>
-                          )}
-                          {w.failureReason && (
-                            <p className="text-xs text-red-500 mt-0.5">{w.failureReason}</p>
-                          )}
+                            <p className="text-xs text-[var(--text-muted)]">
+                              {formatDate(w.createdAt)}
+                              {w.reference && <span className="ml-1 font-mono opacity-60">· {w.reference.slice(0, 12)}</span>}
+                            </p>
+                            {showUpdated && (
+                              <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                                {t('wallet.withdrawal_updated')}: {formatDateTime(w.updatedAt!)}
+                              </p>
+                            )}
+                          </div>
+                          <span
+                            className={`inline-flex shrink-0 items-center rounded-lg border px-2 py-0.5 text-xs font-semibold ${walletWithdrawalStatusBadgeClass(w.status)}`}
+                          >
+                            {statusLabel}
+                          </span>
                         </div>
-                        <span
-                          className={`inline-flex shrink-0 items-center rounded-lg border px-2 py-0.5 text-xs font-semibold ${walletWithdrawalStatusBadgeClass(w.status)}`}
-                        >
-                          {statusLabel}
-                        </span>
+                        {w.failureReason && (w.status === 'rejected' || w.status === 'failed') && (
+                          <div
+                            className={`rounded-xl border px-3 py-2 text-sm ${
+                              w.status === 'rejected'
+                                ? 'border-orange-300/80 bg-orange-50 text-orange-950 dark:border-orange-800/60 dark:bg-orange-950/40 dark:text-orange-100'
+                                : 'border-red-300/80 bg-red-50 text-red-950 dark:border-red-900/50 dark:bg-red-950/35 dark:text-red-100'
+                            }`}
+                          >
+                            {reasonTitle && (
+                              <p className="text-[10px] font-bold uppercase tracking-wide opacity-90 mb-1">{reasonTitle}</p>
+                            )}
+                            <p className="leading-relaxed break-words">{w.failureReason}</p>
+                          </div>
+                        )}
+                        {w.failureReason && w.status !== 'rejected' && w.status !== 'failed' && (
+                          <p className="text-xs text-[var(--text-muted)] break-words">{w.failureReason}</p>
+                        )}
                       </li>
                     );
                   })}

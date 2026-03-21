@@ -1116,25 +1116,39 @@ export class AdminService {
   async updateWithdrawalStatus(adminId: number, id: number, status: string, failureReason?: string) {
     const withdrawal = await this.withdrawalRepo.findOne({ where: { id } });
     if (!withdrawal) throw new NotFoundException('Withdrawal not found');
-    const terminal = new Set(['completed', 'failed', 'cancelled']);
+    const terminal = new Set(['completed', 'failed', 'cancelled', 'rejected']);
     if (terminal.has(withdrawal.status)) {
       throw new BadRequestException('This withdrawal is already finalized and cannot be changed.');
     }
-    const allowed = new Set(['completed', 'failed', 'cancelled']);
+    const allowed = new Set(['completed', 'failed', 'cancelled', 'rejected']);
     if (!allowed.has(status)) {
-      throw new BadRequestException('Invalid status. Use completed, failed, or cancelled.');
+      throw new BadRequestException('Invalid status. Use completed, failed, rejected, or cancelled.');
     }
     const payout = await this.payoutMethodRepo.findOne({ where: { id: withdrawal.payoutMethodId } });
     withdrawal.status = status;
     if (failureReason) withdrawal.failureReason = failureReason;
     await this.withdrawalRepo.save(withdrawal);
-    if (status === 'failed' || status === 'cancelled') {
+    if (status === 'failed' || status === 'rejected' || status === 'cancelled') {
       await this.walletService.credit(withdrawal.userId, Number(withdrawal.amount), 'refund', withdrawal.reference || undefined, 'Withdrawal refunded');
-      const title = status === 'cancelled' ? 'Withdrawal Cancelled' : 'Withdrawal Rejected';
-      const verb = status === 'cancelled' ? 'was cancelled' : 'was not completed';
+      let title: string;
+      let verb: string;
+      let notifType: 'withdrawal_failed' | 'withdrawal_rejected';
+      if (status === 'cancelled') {
+        title = 'Withdrawal Cancelled';
+        verb = 'was cancelled';
+        notifType = 'withdrawal_failed';
+      } else if (status === 'rejected') {
+        title = 'Withdrawal rejected';
+        verb = 'was rejected';
+        notifType = 'withdrawal_rejected';
+      } else {
+        title = 'Withdrawal failed';
+        verb = 'could not be completed';
+        notifType = 'withdrawal_failed';
+      }
       await this.notificationsService.create({
         userId: withdrawal.userId,
-        type: 'withdrawal_failed',
+        type: notifType,
         title,
         message: `Your withdrawal of ${withdrawal.currency || 'GHS'} ${Number(withdrawal.amount).toFixed(2)} ${verb}. A refund has been credited to your wallet.${failureReason ? ` Reason: ${failureReason}` : ''}`,
         link: '/wallet',
