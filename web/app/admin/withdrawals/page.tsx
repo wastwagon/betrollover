@@ -18,6 +18,8 @@ interface PayoutMethod {
   manualDetails?: string | null;
   provider?: string | null;
   bankCode?: string | null;
+  /** Paystack / internal recipient id — admin list only */
+  recipientCode?: string | null;
 }
 
 interface Withdrawal {
@@ -32,7 +34,14 @@ interface Withdrawal {
   failureReason: string | null;
   createdAt: string;
   updatedAt?: string;
-  user?: { id: number; displayName: string; email: string } | null;
+  user?: {
+    id: number;
+    displayName: string;
+    email: string;
+    role?: string;
+    walletBalance?: number;
+    walletCurrency?: string;
+  } | null;
   payoutMethod?: PayoutMethod | null;
 }
 
@@ -49,7 +58,7 @@ function formatPayoutInfo(pm: PayoutMethod | null | undefined): string {
     try {
       const d = JSON.parse(pm.manualDetails);
       const parts: string[] = [pm.displayName];
-      if (d.walletAddress) parts.push(`${d.cryptoCurrency ?? 'Crypto'}: ${d.walletAddress.slice(0, 12)}…`);
+      if (d.walletAddress) parts.push(`${d.cryptoCurrency ?? 'Crypto'}: ${String(d.walletAddress).slice(0, 12)}…`);
       if (d.phone) parts.push(`Phone: ${d.phone}`);
       if (d.accountNumber) parts.push(`Acc: ${d.accountNumber}`);
       if (d.bankName) parts.push(`Bank: ${d.bankName}`);
@@ -60,6 +69,197 @@ function formatPayoutInfo(pm: PayoutMethod | null | undefined): string {
   }
   return [pm.displayName, pm.accountMasked, pm.type !== 'mobile_money' ? pm.type : null]
     .filter(Boolean).join(' · ');
+}
+
+function parseManualDetailsJson(manual: string | null | undefined): Record<string, string> | null {
+  if (!manual?.trim()) return null;
+  try {
+    const o = JSON.parse(manual) as unknown;
+    if (typeof o !== 'object' || o === null || Array.isArray(o)) return null;
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(o as Record<string, unknown>)) {
+      if (v != null && typeof v !== 'object') out[k] = String(v);
+    }
+    return out;
+  } catch {
+    return null;
+  }
+}
+
+function humanizeKey(key: string): string {
+  return key
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, (s) => s.toUpperCase())
+    .trim();
+}
+
+async function copyText(label: string, text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    alert(`${label} copied`);
+  } catch {
+    alert(text);
+  }
+}
+
+function DetailRow({
+  label,
+  value,
+  mono,
+  copyLabel,
+}: {
+  label: string;
+  value: string | null | undefined;
+  mono?: boolean;
+  copyLabel?: string;
+}) {
+  if (value == null || value === '') return null;
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3 py-2 border-b border-gray-100 dark:border-gray-700/80 last:border-0">
+      <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 shrink-0 sm:w-36">{label}</span>
+      <div className="flex-1 min-w-0 flex items-start gap-2">
+        <span className={`text-sm text-gray-900 dark:text-gray-100 break-all ${mono ? 'font-mono text-[13px]' : ''}`}>
+          {value}
+        </span>
+        {copyLabel && (
+          <button
+            type="button"
+            onClick={() => void copyText(copyLabel, value)}
+            className="shrink-0 text-xs text-red-600 dark:text-red-400 hover:underline font-medium"
+          >
+            Copy
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PayoutDetailModal({ w, onClose }: { w: Withdrawal; onClose: () => void }) {
+  const pm = w.payoutMethod;
+  const parsed = parseManualDetailsJson(pm?.manualDetails ?? undefined);
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="payout-detail-title"
+      onClick={onClose}
+      onKeyDown={(e) => e.key === 'Escape' && onClose()}
+    >
+      <div
+        className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sticky top-0 flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur">
+          <h2 id="payout-detail-title" className="text-lg font-bold text-gray-900 dark:text-white">
+            Payout details · Withdrawal #{w.id}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+          >
+            Close
+          </button>
+        </div>
+
+        <div className="px-5 py-4 space-y-5">
+          <section>
+            <h3 className="text-xs font-bold uppercase tracking-wide text-red-600 dark:text-red-400 mb-2">Request</h3>
+            <DetailRow label="Amount" value={`${w.currency || 'GHS'} ${Number(w.amount).toFixed(2)}`} />
+            <DetailRow label="Status" value={w.status} />
+            <DetailRow label="Reference" value={w.reference ?? undefined} mono copyLabel="Reference" />
+            <DetailRow label="Paystack transfer" value={w.paystackTransferCode ?? undefined} mono copyLabel="Transfer code" />
+            <DetailRow label="Failure reason" value={w.failureReason ?? undefined} />
+          </section>
+
+          <section>
+            <h3 className="text-xs font-bold uppercase tracking-wide text-red-600 dark:text-red-400 mb-2">User</h3>
+            <DetailRow
+              label="Account type"
+              value={
+                w.user?.role === 'tipster'
+                  ? 'Tipster'
+                  : w.user?.role === 'admin'
+                    ? 'Admin'
+                    : w.user?.role
+                      ? String(w.user.role)
+                      : 'User'
+              }
+            />
+            <DetailRow label="Name" value={w.user?.displayName ?? undefined} />
+            <DetailRow label="Email" value={w.user?.email ?? undefined} copyLabel="Email" />
+            <DetailRow label="User ID" value={String(w.userId)} />
+            <div className="mt-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/80 px-4 py-3">
+              <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-200 uppercase tracking-wide mb-1">
+                Wallet balance (current)
+              </p>
+              <p className="text-xl font-bold text-emerald-900 dark:text-emerald-100">
+                {w.user?.walletCurrency ?? 'GHS'}{' '}
+                {(w.user?.walletBalance ?? 0).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </p>
+              <p className="text-[11px] text-emerald-800/80 dark:text-emerald-300/80 mt-2 leading-snug">
+                Total in-app wallet now. For pending or processing withdrawals, the requested amount is already deducted from this balance.
+              </p>
+            </div>
+          </section>
+
+          {pm && (
+            <section>
+              <h3 className="text-xs font-bold uppercase tracking-wide text-red-600 dark:text-red-400 mb-2">Payout method</h3>
+              <DetailRow label="Type" value={pm.type} />
+              <DetailRow label="Display name" value={pm.displayName} />
+              <DetailRow label="Provider" value={pm.provider ?? undefined} />
+              <DetailRow label="Bank code" value={pm.bankCode ?? undefined} mono />
+              <DetailRow label="Country" value={pm.country ?? undefined} />
+              <DetailRow label="Currency" value={pm.currency ?? undefined} />
+              <DetailRow label="Account (masked)" value={pm.accountMasked ?? undefined} mono />
+              <DetailRow
+                label="Recipient code"
+                value={pm.recipientCode ?? undefined}
+                mono
+                copyLabel="Recipient code"
+              />
+            </section>
+          )}
+
+          {parsed && Object.keys(parsed).length > 0 && (
+            <section>
+              <h3 className="text-xs font-bold uppercase tracking-wide text-red-600 dark:text-red-400 mb-2">
+                Saved payout details
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                Full numbers and addresses from the user&apos;s payout profile (manual / bank / crypto).
+              </p>
+              {Object.entries(parsed).map(([k, v]) => (
+                <DetailRow
+                  key={k}
+                  label={humanizeKey(k)}
+                  value={v}
+                  mono={/phone|account|wallet|address|number|iban|swift/i.test(k)}
+                  copyLabel={humanizeKey(k)}
+                />
+              ))}
+            </section>
+          )}
+
+          {pm?.manualDetails && !parsed && (
+            <section>
+              <h3 className="text-xs font-bold uppercase tracking-wide text-amber-600 mb-2">Raw manual details</h3>
+              <pre className="text-xs font-mono bg-gray-100 dark:bg-gray-800 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-all">
+                {pm.manualDetails}
+              </pre>
+            </section>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function formatDate(s: string) {
@@ -77,6 +277,7 @@ export default function AdminWithdrawalsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [actionState, setActionState] = useState<Record<number, ActionState>>({});
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [detailWithdrawal, setDetailWithdrawal] = useState<Withdrawal | null>(null);
 
   const fetchData = (pg = page) => {
     const token = localStorage.getItem('token');
@@ -100,6 +301,15 @@ export default function AdminWithdrawalsPage() {
 
   useEffect(() => { fetchData(page); }, [page, userIdFilter, statusFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /** Keep payout detail modal in sync when the list refetches (e.g. wallet balance after approve/reject). */
+  useEffect(() => {
+    setDetailWithdrawal((prev) => {
+      if (!prev) return null;
+      const fresh = withdrawals.find((x) => x.id === prev.id);
+      return fresh ?? prev;
+    });
+  }, [withdrawals]);
+
   const updateStatus = async (id: number, status: string, failureReason?: string) => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -111,13 +321,9 @@ export default function AdminWithdrawalsPage() {
         body: JSON.stringify({ status, failureReason }),
       });
       if (res.ok) {
-        const updated = await res.json();
-        setWithdrawals((prev) =>
-          prev.map((w) =>
-            w.id === id ? { ...updated, user: w.user, payoutMethod: w.payoutMethod } : w
-          )
-        );
+        await res.json().catch(() => ({}));
         setActionState((prev) => ({ ...prev, [id]: { type: 'none' } }));
+        fetchData(page);
       } else {
         const err = await res.json().catch(() => ({}));
         alert(typeof err?.message === 'string' ? err.message : 'Failed to update status');
@@ -220,14 +426,37 @@ export default function AdminWithdrawalsPage() {
                           <tr key={w.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                             <td className="px-5 py-4 whitespace-nowrap text-sm font-mono text-gray-500 dark:text-gray-400">#{w.id}</td>
                             <td className="px-5 py-4 text-sm">
-                              <p className="font-medium text-gray-900 dark:text-white">{w.user?.displayName ?? `User #${w.userId}`}</p>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="font-medium text-gray-900 dark:text-white">{w.user?.displayName ?? `User #${w.userId}`}</p>
+                                {w.user?.role === 'tipster' && (
+                                  <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 dark:bg-amber-900/50 dark:text-amber-100">
+                                    Tipster
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-xs text-gray-500 dark:text-gray-400">{w.user?.email}</p>
+                              <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mt-1 tabular-nums">
+                                Wallet: {w.user?.walletCurrency ?? 'GHS'}{' '}
+                                {(w.user?.walletBalance ?? 0).toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </p>
                             </td>
                             <td className="px-5 py-4 whitespace-nowrap text-sm font-bold text-red-600 dark:text-red-400">
                               {w.currency || 'GHS'} {Number(w.amount).toFixed(2)}
                             </td>
-                            <td className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300 max-w-[200px] truncate" title={formatPayoutInfo(w.payoutMethod)}>
-                              {formatPayoutInfo(w.payoutMethod)}
+                            <td className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300 max-w-[min(100%,280px)]">
+                              <p className="line-clamp-2 break-words" title={formatPayoutInfo(w.payoutMethod)}>
+                                {formatPayoutInfo(w.payoutMethod)}
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => setDetailWithdrawal(w)}
+                                className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:underline"
+                              >
+                                View full payout details
+                              </button>
                             </td>
                             <td className="px-5 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${adminWithdrawalStatusBadgeClass(w.status)}`}>
@@ -371,6 +600,10 @@ export default function AdminWithdrawalsPage() {
               </>
             )}
           </div>
+        )}
+
+        {detailWithdrawal && (
+          <PayoutDetailModal w={detailWithdrawal} onClose={() => setDetailWithdrawal(null)} />
         )}
       </main>
     </div>

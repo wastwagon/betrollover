@@ -1067,19 +1067,32 @@ export class AdminService {
     // Load payout methods and users for display (admin manual fulfill)
     const payoutIds = [...new Set(withdrawals.map((w) => w.payoutMethodId))];
     const userIds = [...new Set(withdrawals.map((w) => w.userId))];
-    const [payouts, users] = await Promise.all([
+    const [payouts, users, wallets] = await Promise.all([
       payoutIds.length ? this.payoutMethodRepo.find({ where: { id: In(payoutIds) } }) : [],
       userIds.length ? this.usersRepo.find({ where: { id: In(userIds) } }) : [],
+      userIds.length ? this.walletsRepo.find({ where: { userId: In(userIds) } }) : [],
     ]);
     const payoutMap = new Map(payouts.map((p) => [p.id, p]));
     const userMap = new Map(users.map((u) => [u.id, u]));
+    const walletMap = new Map(wallets.map((wal) => [wal.userId, wal]));
 
     const items = withdrawals.map((w) => {
       const payout = payoutMap.get(w.payoutMethodId);
       const u = userMap.get(w.userId);
+      const wallet = walletMap.get(w.userId);
       return {
         ...w,
-        user: u ? { id: u.id, displayName: u.displayName, email: u.email } : null,
+        user: u
+          ? {
+            id: u.id,
+            displayName: u.displayName,
+            email: u.email,
+            role: u.role,
+            /** Current wallet balance (withdrawal amount already debited while request is open) */
+            walletBalance: wallet != null ? Number(wallet.balance) : 0,
+            walletCurrency: wallet?.currency ?? 'GHS',
+          }
+          : null,
         payoutMethod: payout
           ? {
             type: payout.type,
@@ -1090,6 +1103,8 @@ export class AdminService {
             manualDetails: payout.manualDetails,
             provider: payout.provider,
             bankCode: payout.bankCode,
+            /** Paystack recipient code / manual reference — admin-only for fulfillment */
+            recipientCode: payout.recipientCode,
           }
           : null,
       };
