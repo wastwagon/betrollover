@@ -145,6 +145,23 @@ interface CommissionRevenue {
   }>;
 }
 
+interface WalletAnalytics {
+  period: { start: string; end: string };
+  deposits: { completedCount: number; completedGhs: number };
+  withdrawals: {
+    inQueue: { count: number; ghs: number };
+    byStatus: Record<string, { count: number; ghs: number }>;
+    requestedInPeriod: { count: number; ghs: number };
+    completedInPeriod: { count: number; ghs: number };
+    avgCompletionHours: number | null;
+  };
+  daily: {
+    deposits: { date: string; amount: number; count: number }[];
+    withdrawalRequests: { date: string; amount: number; count: number }[];
+    withdrawalCompleted: { date: string; amount: number; count: number }[];
+  };
+}
+
 const SPORT_COLORS: Record<string, string> = {
   Football:          '#10b981',
   Basketball:        '#f97316',
@@ -192,9 +209,10 @@ export default function AdminAnalyticsPage() {
   const [revenueTrend, setRevenueTrend] = useState<RevenueTrendPoint[]>([]);
   const [topTipstersBySport, setTopTipstersBySport] = useState<TopTipsterBySport[]>([]);
   const [commissionRevenue, setCommissionRevenue] = useState<CommissionRevenue | null>(null);
+  const [walletAnalytics, setWalletAnalytics] = useState<WalletAnalytics | null>(null);
   const [chatStats, setChatStats] = useState<{ totalMessages: number; todayMessages: number; flaggedMessages: number; activeBans: number; roomBreakdown: { name: string; icon: string; count: number }[] } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'revenue' | 'users' | 'picks' | 'engagement' | 'visitors' | 'ai' | 'sports'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'revenue' | 'users' | 'picks' | 'engagement' | 'visitors' | 'ai' | 'sports' | 'wallet'>('overview');
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d'>('30d');
 
   useEffect(() => {
@@ -268,8 +286,11 @@ export default function AdminAnalyticsPage() {
       fetch(`${getApiUrl()}/admin/analytics/commission-revenue`, { headers })
         .then((r) => (r.ok ? r.json() : null))
         .catch(() => null),
+      fetch(`${getApiUrl()}/admin/analytics/wallet?startDate=${startDate}&endDate=${endDate}`, { headers })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null),
     ])
-      .then(([ts, f, ub, rev, pp, eng, rt, ai, coh, ret, vis, sb, rt2, ttbs, commRev]) => {
+      .then(([ts, f, ub, rev, pp, eng, rt, ai, coh, ret, vis, sb, rt2, ttbs, commRev, wallet]) => {
         setTimeSeries(ts);
         setFunnel(f);
         setUserBehavior(ub);
@@ -285,6 +306,7 @@ export default function AdminAnalyticsPage() {
         setRevenueTrend(Array.isArray(rt2) ? rt2 : []);
         setTopTipstersBySport(Array.isArray(ttbs) ? ttbs : []);
         setCommissionRevenue(commRev ?? null);
+        setWalletAnalytics(wallet ?? null);
 
         // Fetch chat stats separately (non-blocking)
         fetch(`${getApiUrl()}/chat/admin/flagged?page=1`, { headers })
@@ -490,7 +512,7 @@ export default function AdminAnalyticsPage() {
 
         {/* Tabs */}
         <div className="flex gap-3 mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
-          {(['overview', 'sports', 'revenue', 'users', 'picks', 'engagement', 'visitors', 'ai'] as const).map((tab) => (
+          {(['overview', 'wallet', 'sports', 'revenue', 'users', 'picks', 'engagement', 'visitors', 'ai'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -500,7 +522,7 @@ export default function AdminAnalyticsPage() {
                   : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
-              {tab === 'sports' ? '🌍 Sports' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'sports' ? '🌍 Sports' : tab === 'wallet' ? '💰 Wallet' : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
         </div>
@@ -628,6 +650,123 @@ export default function AdminAnalyticsPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Wallet & cashflow tab */}
+        {activeTab === 'wallet' && walletAnalytics && (
+          <div className="space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Period: <strong>{walletAnalytics.period.start}</strong> → <strong>{walletAnalytics.period.end}</strong>
+                {' · '}Matches the date range selector above.
+              </p>
+              <Link
+                href="/admin/withdrawals"
+                className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+              >
+                Open withdrawals queue →
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl p-5 text-white shadow-lg">
+                <p className="text-xs font-semibold opacity-90 uppercase tracking-wider mb-1">Deposits (completed)</p>
+                <p className="text-2xl font-bold">GHS {walletAnalytics.deposits.completedGhs.toFixed(2)}</p>
+                <p className="text-xs opacity-80 mt-1">{walletAnalytics.deposits.completedCount} payments</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 shadow">
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Withdrawals requested</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">GHS {walletAnalytics.withdrawals.requestedInPeriod.ghs.toFixed(2)}</p>
+                <p className="text-xs text-gray-500 mt-1">{walletAnalytics.withdrawals.requestedInPeriod.count} requests</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 shadow">
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Withdrawals completed</p>
+                <p className="text-2xl font-bold text-emerald-600">GHS {walletAnalytics.withdrawals.completedInPeriod.ghs.toFixed(2)}</p>
+                <p className="text-xs text-gray-500 mt-1">{walletAnalytics.withdrawals.completedInPeriod.count} settled</p>
+              </div>
+              <div className="bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-200 dark:border-amber-800/40 p-5 shadow">
+                <p className="text-xs text-amber-800 dark:text-amber-200 uppercase tracking-wider mb-1">In queue now</p>
+                <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">GHS {walletAnalytics.withdrawals.inQueue.ghs.toFixed(2)}</p>
+                <p className="text-xs text-amber-700/80 mt-1">{walletAnalytics.withdrawals.inQueue.count} pending / processing</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 shadow md:col-span-2 lg:col-span-2">
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Avg. time to complete</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {walletAnalytics.withdrawals.avgCompletionHours != null
+                    ? `${walletAnalytics.withdrawals.avgCompletionHours} h`
+                    : '—'}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">For withdrawals marked completed in this period</p>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Withdrawal volume by status (requested in period)</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Amount (GHS) and count for each status where the request was created in the selected range.</p>
+              <div style={{ height: 280 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={['pending', 'processing', 'completed', 'failed', 'cancelled'].map((s) => ({
+                      name: s,
+                      ghs: walletAnalytics.withdrawals.byStatus[s]?.ghs ?? 0,
+                      count: walletAnalytics.withdrawals.byStatus[s]?.count ?? 0,
+                    }))}
+                    margin={{ top: 8, right: 8, left: 8, bottom: 24 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 10 }} />
+                    <Tooltip
+                      formatter={(v: number | undefined, name: string | undefined) => [
+                        name === 'ghs' ? `GHS ${(v ?? 0).toFixed(2)}` : (v ?? 0),
+                        name === 'ghs' ? 'Amount (GHS)' : 'Count',
+                      ]}
+                    />
+                    <Bar dataKey="ghs" fill="#10b981" name="ghs" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="count" fill="#6366f1" name="count" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Deposits (GHS / day)</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Completed deposits by day</p>
+                <SimpleChart
+                  data={walletAnalytics.daily.deposits.map((d) => ({ date: d.date, value: Math.round(d.amount * 100) / 100 }))}
+                  color="green"
+                  valueLabel="GHS"
+                  height={220}
+                />
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Withdrawal requests (GHS / day)</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">New requests by created date (any status)</p>
+                <SimpleChart
+                  data={walletAnalytics.daily.withdrawalRequests.map((d) => ({ date: d.date, value: Math.round(d.amount * 100) / 100 }))}
+                  color="orange"
+                  valueLabel="GHS"
+                  height={220}
+                />
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 lg:col-span-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Completed withdrawals (GHS / day)</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">By completion date (when status became completed)</p>
+                <SimpleChart
+                  data={walletAnalytics.daily.withdrawalCompleted.map((d) => ({ date: d.date, value: Math.round(d.amount * 100) / 100 }))}
+                  color="purple"
+                  valueLabel="GHS"
+                  height={220}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50/50 dark:bg-amber-900/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+              <strong>Note:</strong> Overview time-series &quot;Withdrawals&quot; chart only counts <strong>completed</strong> payouts by request date.
+              This tab adds queue depth, status mix, completion timing, and daily request vs completion views.
+            </div>
           </div>
         )}
 

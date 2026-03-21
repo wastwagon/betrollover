@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
+import { usePendingWithdrawalCount } from '@/hooks/usePendingWithdrawalCount';
 
 type NavItemId = 'home' | 'marketplace' | 'tipsters' | 'create' | 'wallet' | 'account';
 
@@ -93,6 +94,7 @@ function shouldHideNav(pathname: string): boolean {
 export function MobileBottomNav() {
   const pathname = usePathname();
   const { t } = useLanguage();
+  const pendingWithdrawalCount = usePendingWithdrawalCount();
 
   if (shouldHideNav(pathname)) return null;
 
@@ -136,7 +138,14 @@ export function MobileBottomNav() {
                 className={`${linkClass} relative ${active ? 'text-[var(--primary)] bg-[var(--primary)]/8' : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/30'}`}
               >
                 {active && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-[var(--primary)]" aria-hidden />}
-                <Icon active={active} />
+                <span className="relative inline-flex">
+                  <Icon active={active} />
+                  {item.id === 'wallet' && pendingWithdrawalCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-0.5 flex items-center justify-center text-[8px] font-bold bg-amber-500 text-white rounded-full ring-2 ring-[var(--card)]">
+                      {pendingWithdrawalCount > 9 ? '9+' : pendingWithdrawalCount}
+                    </span>
+                  )}
+                </span>
                 <span className={`text-[10px] font-medium truncate w-full text-center ${active ? 'font-semibold' : ''}`}>
                   {t(item.labelKey)}
                 </span>

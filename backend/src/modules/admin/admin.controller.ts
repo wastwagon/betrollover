@@ -540,7 +540,7 @@ export class AdminController {
   @Patch('smtp-settings')
   async updateSmtpSettings(
     @CurrentUser() user: User,
-    @Body() body: { host?: string; port?: number; username?: string; password?: string; encryption?: string; fromEmail?: string; fromName?: string },
+    @Body() body: { host?: string; port?: number; username?: string; password?: string; encryption?: string; fromEmail?: string; fromName?: string; adminNotificationEmail?: string | null },
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.adminService.updateSmtpSettings(body);
@@ -1066,5 +1066,17 @@ export class AdminController {
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.analyticsService.getTopTipstersBySport(limit ? parseInt(limit, 10) : 5);
+  }
+
+  @Get('analytics/wallet')
+  async getWalletAnalytics(
+    @CurrentUser() user: User,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const start = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const end = endDate ? new Date(endDate) : new Date();
+    return this.analyticsService.getWalletAnalytics(start, end);
   }
 }

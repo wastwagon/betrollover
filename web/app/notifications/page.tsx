@@ -26,13 +26,18 @@ const TYPE_META: Record<string, { icon: string; color: string }> = {
   refund:      { icon: '💸', color: 'text-amber-600' },
   payout:      { icon: '💰', color: 'text-emerald-600' },
   withdrawal:  { icon: '🏦', color: 'text-violet-600' },
+  withdrawal_done: { icon: '✅', color: 'text-emerald-600' },
+  withdrawal_failed: { icon: '⚠️', color: 'text-red-600' },
   system:      { icon: '📣', color: 'text-slate-500' },
   follow:      { icon: '👥', color: 'text-cyan-600' },
   subscription:{ icon: '⭐', color: 'text-yellow-500' },
 };
 
 function getTypeMeta(type: string) {
-  return TYPE_META[type?.toLowerCase()] ?? { icon: '🔔', color: 'text-slate-500' };
+  const lower = type?.toLowerCase() ?? '';
+  if (TYPE_META[lower]) return TYPE_META[lower];
+  if (lower.includes('withdrawal')) return { icon: '💸', color: 'text-violet-600' };
+  return { icon: '🔔', color: 'text-slate-500' };
 }
 
 export default function NotificationsPage() {

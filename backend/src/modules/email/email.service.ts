@@ -344,7 +344,8 @@ export class EmailService {
 
   /**
    * Send admin-only notification. Uses templates when type is provided.
-   * Sends to all users with role=admin.
+   * Sends to: all users with role=admin, plus optional inbox from smtp_settings.adminNotificationEmail,
+   * plus comma-separated ADMIN_NOTIFICATION_EMAIL env (deduplicated).
    */
   async sendAdminNotification(
     data:
@@ -352,7 +353,14 @@ export class EmailService {
       | { subject: string; message: string; link?: string },
   ) {
     const admins = await this.usersService.getAdminEmails();
-    if (admins.length === 0) return { sent: 0 };
+    const settingsRow = await this.smtpRepo.findOne({ where: { id: 1 } });
+    const envExtra = (process.env.ADMIN_NOTIFICATION_EMAIL || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const inbox = settingsRow?.adminNotificationEmail?.trim();
+    const recipients = [...new Set([...admins, ...(inbox ? [inbox] : []), ...envExtra])];
+    if (recipients.length === 0) return { sent: 0 };
 
     let subject: string;
     let message: string;
@@ -419,7 +427,7 @@ export class EmailService {
 </html>`;
 
     let sent = 0;
-    for (const to of admins) {
+    for (const to of recipients) {
       const result = await this.send({ to, subject, text: message, html });
       if (result.sent) sent++;
     }

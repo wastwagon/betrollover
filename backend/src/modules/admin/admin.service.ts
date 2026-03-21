@@ -854,6 +854,7 @@ export class AdminService {
       encryption: s.encryption,
       fromEmail: s.fromEmail,
       fromName: s.fromName,
+      adminNotificationEmail: s.adminNotificationEmail ?? '',
     };
   }
 
@@ -865,6 +866,7 @@ export class AdminService {
     encryption?: string;
     fromEmail?: string;
     fromName?: string;
+    adminNotificationEmail?: string | null;
   }) {
     let s = await this.smtpRepo.findOne({ where: { id: 1 } });
     if (!s) {
@@ -885,6 +887,10 @@ export class AdminService {
     if (data.encryption !== undefined) s.encryption = data.encryption;
     if (data.fromEmail !== undefined) s.fromEmail = data.fromEmail;
     if (data.fromName !== undefined) s.fromName = data.fromName;
+    if (data.adminNotificationEmail !== undefined) {
+      const t = typeof data.adminNotificationEmail === 'string' ? data.adminNotificationEmail.trim() : '';
+      s.adminNotificationEmail = t || null;
+    }
     await this.smtpRepo.save(s);
     return this.getSmtpSettings();
   }
@@ -1092,21 +1098,32 @@ export class AdminService {
 
   async updateWithdrawalStatus(adminId: number, id: number, status: string, failureReason?: string) {
     const withdrawal = await this.withdrawalRepo.findOne({ where: { id } });
-    if (!withdrawal) return null;
+    if (!withdrawal) throw new NotFoundException('Withdrawal not found');
+    const terminal = new Set(['completed', 'failed', 'cancelled']);
+    if (terminal.has(withdrawal.status)) {
+      throw new BadRequestException('This withdrawal is already finalized and cannot be changed.');
+    }
+    const allowed = new Set(['completed', 'failed', 'cancelled']);
+    if (!allowed.has(status)) {
+      throw new BadRequestException('Invalid status. Use completed, failed, or cancelled.');
+    }
     const payout = await this.payoutMethodRepo.findOne({ where: { id: withdrawal.payoutMethodId } });
     withdrawal.status = status;
     if (failureReason) withdrawal.failureReason = failureReason;
     await this.withdrawalRepo.save(withdrawal);
     if (status === 'failed' || status === 'cancelled') {
       await this.walletService.credit(withdrawal.userId, Number(withdrawal.amount), 'refund', withdrawal.reference || undefined, 'Withdrawal refunded');
+      const title = status === 'cancelled' ? 'Withdrawal Cancelled' : 'Withdrawal Rejected';
+      const verb = status === 'cancelled' ? 'was cancelled' : 'was not completed';
       await this.notificationsService.create({
         userId: withdrawal.userId,
         type: 'withdrawal_failed',
-        title: 'Withdrawal Rejected',
-        message: `Your withdrawal of ${withdrawal.currency || 'GHS'} ${Number(withdrawal.amount).toFixed(2)} was not completed. A refund has been credited.${failureReason ? ` Reason: ${failureReason}` : ''}`,
+        title,
+        message: `Your withdrawal of ${withdrawal.currency || 'GHS'} ${Number(withdrawal.amount).toFixed(2)} ${verb}. A refund has been credited to your wallet.${failureReason ? ` Reason: ${failureReason}` : ''}`,
         link: '/wallet',
         icon: 'alert',
         sendEmail: true,
+        alwaysSendEmail: true,
         metadata: { amount: Number(withdrawal.amount).toFixed(2), reason: failureReason ?? '' },
       }).catch(() => {});
     } else if (status === 'completed') {
@@ -1118,6 +1135,7 @@ export class AdminService {
         link: '/wallet',
         icon: 'wallet',
         sendEmail: true,
+        alwaysSendEmail: true,
         metadata: { amount: Number(withdrawal.amount).toFixed(2) },
       }).catch(() => {});
     }

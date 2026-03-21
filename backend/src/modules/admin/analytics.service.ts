@@ -1051,4 +1051,143 @@ export class AnalyticsService {
     }
     return result;
   }
+
+  /**
+   * Wallet & withdrawal analytics: deposits vs withdrawals, status mix, queue depth, completion time.
+   */
+  async getWalletAnalytics(startDate: Date, endDate: Date) {
+    const start = new Date(startDate);
+    start.setUTCHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setUTCHours(23, 59, 59, 999);
+
+    const format = 'YYYY-MM-DD';
+
+    const [
+      depositsSummary,
+      byStatusRows,
+      inQueueRow,
+      avgCompletionRow,
+      dailyDeposits,
+      dailyWithdrawalRequests,
+      dailyWithdrawalCompleted,
+    ] = await Promise.all([
+      this.depositsRepo
+        .createQueryBuilder('d')
+        .select('COUNT(*)', 'count')
+        .addSelect('COALESCE(SUM(d.amount), 0)', 'amount')
+        .where('d.createdAt BETWEEN :start AND :end', { start, end })
+        .andWhere('d.status = :st', { st: 'completed' })
+        .getRawOne(),
+      this.withdrawalsRepo
+        .createQueryBuilder('w')
+        .select('w.status', 'status')
+        .addSelect('COUNT(*)', 'count')
+        .addSelect('COALESCE(SUM(w.amount), 0)', 'amount')
+        .where('w.createdAt BETWEEN :start AND :end', { start, end })
+        .groupBy('w.status')
+        .getRawMany(),
+      this.withdrawalsRepo
+        .createQueryBuilder('w')
+        .select('COUNT(*)', 'count')
+        .addSelect('COALESCE(SUM(w.amount), 0)', 'amount')
+        .where('w.status IN (:...st)', { st: ['pending', 'processing'] })
+        .getRawOne(),
+      this.withdrawalsRepo
+        .createQueryBuilder('w')
+        .select('AVG(EXTRACT(EPOCH FROM (w.updatedAt - w.createdAt)) / 3600.0)', 'avgHours')
+        .where('w.status = :st', { st: 'completed' })
+        .andWhere('w.updatedAt BETWEEN :start AND :end', { start, end })
+        .andWhere('w.updatedAt > w.createdAt')
+        .getRawOne(),
+      this.depositsRepo
+        .createQueryBuilder('d')
+        .select(`TO_CHAR(d.createdAt, '${format}')`, 'date')
+        .addSelect('SUM(d.amount)', 'amount')
+        .addSelect('COUNT(*)', 'count')
+        .where('d.createdAt BETWEEN :start AND :end', { start, end })
+        .andWhere('d.status = :st', { st: 'completed' })
+        .groupBy(`TO_CHAR(d.createdAt, '${format}')`)
+        .orderBy('date', 'ASC')
+        .getRawMany(),
+      this.withdrawalsRepo
+        .createQueryBuilder('w')
+        .select(`TO_CHAR(w.createdAt, '${format}')`, 'date')
+        .addSelect('COUNT(*)', 'count')
+        .addSelect('COALESCE(SUM(w.amount), 0)', 'amount')
+        .where('w.createdAt BETWEEN :start AND :end', { start, end })
+        .groupBy(`TO_CHAR(w.createdAt, '${format}')`)
+        .orderBy('date', 'ASC')
+        .getRawMany(),
+      this.withdrawalsRepo
+        .createQueryBuilder('w')
+        .select(`TO_CHAR(w.updatedAt, '${format}')`, 'date')
+        .addSelect('COALESCE(SUM(w.amount), 0)', 'amount')
+        .addSelect('COUNT(*)', 'count')
+        .where('w.updatedAt BETWEEN :start AND :end', { start, end })
+        .andWhere('w.status = :st', { st: 'completed' })
+        .groupBy(`TO_CHAR(w.updatedAt, '${format}')`)
+        .orderBy('date', 'ASC')
+        .getRawMany(),
+    ]);
+
+    const statuses = ['pending', 'processing', 'completed', 'failed', 'cancelled'];
+    const byStatus: Record<string, { count: number; ghs: number }> = {};
+    for (const s of statuses) {
+      byStatus[s] = { count: 0, ghs: 0 };
+    }
+    for (const r of byStatusRows) {
+      const st = r.status as string;
+      if (byStatus[st]) {
+        byStatus[st] = {
+          count: parseInt(r.count, 10),
+          ghs: parseFloat(r.amount || '0'),
+        };
+      }
+    }
+
+    const requestedInPeriod = Object.values(byStatus).reduce(
+      (a, b) => ({ count: a.count + b.count, ghs: a.ghs + b.ghs }),
+      { count: 0, ghs: 0 },
+    );
+
+    const completedInPeriod = byStatus.completed;
+
+    const avgH = avgCompletionRow?.avgHours != null ? parseFloat(String(avgCompletionRow.avgHours)) : null;
+
+    return {
+      period: { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) },
+      deposits: {
+        completedCount: parseInt(depositsSummary?.count ?? '0', 10),
+        completedGhs: parseFloat(depositsSummary?.amount ?? '0'),
+      },
+      withdrawals: {
+        inQueue: {
+          count: parseInt(inQueueRow?.count ?? '0', 10),
+          ghs: parseFloat(inQueueRow?.amount ?? '0'),
+        },
+        byStatus,
+        requestedInPeriod,
+        completedInPeriod: { count: completedInPeriod.count, ghs: completedInPeriod.ghs },
+        avgCompletionHours: avgH != null && !Number.isNaN(avgH) ? Math.round(avgH * 10) / 10 : null,
+      },
+      daily: {
+        deposits: dailyDeposits.map((r) => ({
+          date: r.date,
+          amount: parseFloat(r.amount || '0'),
+          count: parseInt(r.count, 10),
+        })),
+        withdrawalRequests: dailyWithdrawalRequests.map((r) => ({
+          date: r.date,
+          amount: parseFloat(r.amount || '0'),
+          count: parseInt(r.count, 10),
+        })),
+        withdrawalCompleted: dailyWithdrawalCompleted.map((r) => ({
+          date: r.date,
+          amount: parseFloat(r.amount || '0'),
+          count: parseInt(r.count, 10),
+        })),
+      },
+    };
+  }
 }

@@ -32,6 +32,10 @@ export class SmtpSettings {
   @Column({ length: 255, default: 'BetRollover' })
   fromName: string;
 
+  /** Inbox for admin-only alerts; merged with all users with role=admin when sending. */
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  adminNotificationEmail: string | null = null;
+
   @CreateDateColumn()
   createdAt: Date;
 

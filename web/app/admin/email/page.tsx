@@ -14,6 +14,7 @@ interface SmtpSettings {
   encryption: string;
   fromEmail: string;
   fromName: string;
+  adminNotificationEmail: string;
 }
 
 export default function AdminEmailPage() {
@@ -27,6 +28,7 @@ export default function AdminEmailPage() {
     encryption: 'SSL',
     fromEmail: 'noreply@betrollover.com',
     fromName: 'BetRollover',
+    adminNotificationEmail: '',
   });
   const [testEmail, setTestEmail] = useState('');
   const [loading, setLoading] = useState(true);
@@ -50,6 +52,7 @@ export default function AdminEmailPage() {
             encryption: data.encryption || 'SSL',
             fromEmail: data.fromEmail || 'noreply@betrollover.com',
             fromName: data.fromName || 'BetRollover',
+            adminNotificationEmail: data.adminNotificationEmail ?? '',
           });
         }
       })
@@ -223,6 +226,19 @@ export default function AdminEmailPage() {
                     <option value="SSL">SSL (port 465)</option>
                     <option value="TLS">TLS (port 587)</option>
                   </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Admin notification inbox</label>
+                  <input
+                    type="email"
+                    value={form.adminNotificationEmail}
+                    onChange={(e) => setForm((f) => ({ ...f, adminNotificationEmail: e.target.value }))}
+                    placeholder="ops@yourcompany.com"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Receives platform alerts (withdrawal requests, support tickets, etc.) in addition to every account with the admin role. Leave blank to use only admin accounts. You can also set <code className="text-[11px] bg-gray-100 dark:bg-gray-700 px-1 rounded">ADMIN_NOTIFICATION_EMAIL</code> on the server (comma-separated).
+                  </p>
                 </div>
                 <button
                   onClick={save}

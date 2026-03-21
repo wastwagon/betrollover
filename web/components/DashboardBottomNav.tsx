@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { usePendingWithdrawalCount } from '@/hooks/usePendingWithdrawalCount';
 
 type FoldId = 'picks' | 'account' | null;
 
@@ -78,6 +79,7 @@ export function DashboardBottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [openFold, setOpenFold] = useState<FoldId>(null);
+  const pendingWithdrawalCount = usePendingWithdrawalCount();
 
   const handleFoldAction = (item: { href: string | null; isAction?: boolean }) => {
     if (item.isAction) {
@@ -199,8 +201,15 @@ export function DashboardBottomNav() {
                     onClick={() => setOpenFold(null)}
                     className="flex items-center gap-4 p-4 rounded-2xl bg-[var(--bg-warm)] hover:bg-[var(--primary-light)] border border-[var(--border)] hover:border-[var(--primary)]/30 transition-all group"
                   >
-                    <span className="text-2xl group-hover:scale-110 transition-transform">{child.icon}</span>
-                    <div>
+                    <span className="text-2xl group-hover:scale-110 transition-transform relative shrink-0">
+                      {child.icon}
+                      {child.href === '/wallet' && pendingWithdrawalCount > 0 && (
+                        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 flex items-center justify-center text-[9px] font-bold bg-amber-500 text-white rounded-full">
+                          {pendingWithdrawalCount > 9 ? '9+' : pendingWithdrawalCount}
+                        </span>
+                      )}
+                    </span>
+                    <div className="min-w-0 flex-1">
                       <span className="font-semibold text-[var(--text)] block">{child.label}</span>
                       <span className="text-xs text-[var(--text-muted)]">{child.desc}</span>
                     </div>

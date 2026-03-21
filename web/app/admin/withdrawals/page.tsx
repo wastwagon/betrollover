@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
+import {
+  adminWithdrawalStatusBadgeClass,
+  adminWithdrawalStatusLabel,
+} from '@/lib/withdrawal-status';
 
 interface PayoutMethod {
   type: string;
@@ -27,19 +31,17 @@ interface Withdrawal {
   paystackTransferCode: string | null;
   failureReason: string | null;
   createdAt: string;
+  updatedAt?: string;
   user?: { id: number; displayName: string; email: string } | null;
   payoutMethod?: PayoutMethod | null;
 }
 
 type ActionState = { type: 'none' } | { type: 'confirming_approve' } | { type: 'rejecting'; reason: string };
 
-const STATUS_BADGE: Record<string, string> = {
-  completed:  'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-  pending:    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
-  processing: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
-  failed:     'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
-  cancelled:  'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-};
+/** Admin can complete, fail, or cancel while the request is still open (manual = pending; Paystack path = processing). */
+function canAdminActOnWithdrawal(status: string): boolean {
+  return status === 'pending' || status === 'processing';
+}
 
 function formatPayoutInfo(pm: PayoutMethod | null | undefined): string {
   if (!pm) return '—';
@@ -74,6 +76,7 @@ export default function AdminWithdrawalsPage() {
   const [userIdFilter, setUserIdFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [actionState, setActionState] = useState<Record<number, ActionState>>({});
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   const fetchData = (pg = page) => {
     const token = localStorage.getItem('token');
@@ -100,21 +103,27 @@ export default function AdminWithdrawalsPage() {
   const updateStatus = async (id: number, status: string, failureReason?: string) => {
     const token = localStorage.getItem('token');
     if (!token) return;
-    const res = await fetch(`${getApiUrl()}/admin/withdrawals/${id}/status`, {
-      method: 'PATCH',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status, failureReason }),
-    });
-    if (res.ok) {
-      const updated = await res.json();
-      setWithdrawals((prev) =>
-        prev.map((w) =>
-          w.id === id ? { ...updated, user: w.user, payoutMethod: w.payoutMethod } : w
-        )
-      );
-      setActionState((prev) => ({ ...prev, [id]: { type: 'none' } }));
-    } else {
-      alert('Failed to update status');
+    setUpdatingId(id);
+    try {
+      const res = await fetch(`${getApiUrl()}/admin/withdrawals/${id}/status`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, failureReason }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setWithdrawals((prev) =>
+          prev.map((w) =>
+            w.id === id ? { ...updated, user: w.user, payoutMethod: w.payoutMethod } : w
+          )
+        );
+        setActionState((prev) => ({ ...prev, [id]: { type: 'none' } }));
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(typeof err?.message === 'string' ? err.message : 'Failed to update status');
+      }
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -122,7 +131,7 @@ export default function AdminWithdrawalsPage() {
   const setAction = (id: number, state: ActionState) =>
     setActionState((prev) => ({ ...prev, [id]: state }));
 
-  const pendingCount = withdrawals.filter((w) => w.status === 'pending').length;
+  const awaitingActionCount = withdrawals.filter((w) => canAdminActOnWithdrawal(w.status)).length;
   const totalAmountOnPage = withdrawals.reduce((s, w) => s + Number(w.amount), 0);
 
   return (
@@ -132,7 +141,9 @@ export default function AdminWithdrawalsPage() {
 
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Withdrawals Management</h1>
-          <p className="text-gray-600 dark:text-gray-400">Review and process tipster withdrawal requests. Rejecting a withdrawal automatically refunds the tipster&apos;s wallet.</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            Review and process withdrawal requests. Rejecting or cancelling refunds the user&apos;s wallet. Users receive email updates when the status changes.
+          </p>
         </div>
 
         {/* Stats */}
@@ -143,9 +154,9 @@ export default function AdminWithdrawalsPage() {
             <p className="text-xs opacity-70 mt-1">all time</p>
           </div>
           <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-2xl shadow-xl p-6 text-white">
-            <p className="text-sm opacity-90 mb-1">Pending (this page)</p>
-            <p className="text-3xl font-bold">{pendingCount}</p>
-            <p className="text-xs opacity-70 mt-1">awaiting action</p>
+            <p className="text-sm opacity-90 mb-1">Awaiting action (this page)</p>
+            <p className="text-3xl font-bold">{awaitingActionCount}</p>
+            <p className="text-xs opacity-70 mt-1">pending or processing</p>
           </div>
           <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-2xl shadow-xl p-6 text-white">
             <p className="text-sm opacity-90 mb-1">Amount (this page)</p>
@@ -204,6 +215,7 @@ export default function AdminWithdrawalsPage() {
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                       {withdrawals.map((w) => {
                         const action = getAction(w.id);
+                        const rowBusy = updatingId === w.id;
                         return (
                           <tr key={w.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                             <td className="px-5 py-4 whitespace-nowrap text-sm font-mono text-gray-500 dark:text-gray-400">#{w.id}</td>
@@ -218,8 +230,8 @@ export default function AdminWithdrawalsPage() {
                               {formatPayoutInfo(w.payoutMethod)}
                             </td>
                             <td className="px-5 py-4 whitespace-nowrap">
-                              <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${STATUS_BADGE[w.status] ?? 'bg-slate-100 text-slate-600'}`}>
-                                {w.status}
+                              <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${adminWithdrawalStatusBadgeClass(w.status)}`}>
+                                {adminWithdrawalStatusLabel(w.status)}
                               </span>
                               {w.failureReason && (
                                 <p className="text-xs text-red-500 mt-1 max-w-[120px] truncate" title={w.failureReason}>{w.failureReason}</p>
@@ -228,31 +240,56 @@ export default function AdminWithdrawalsPage() {
                             <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                               {formatDate(w.createdAt)}
                               {w.reference && <p className="text-xs font-mono opacity-60">{w.reference.slice(0, 14)}</p>}
+                              {w.updatedAt &&
+                                w.createdAt &&
+                                new Date(w.updatedAt).getTime() !== new Date(w.createdAt).getTime() && (
+                                  <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+                                    Updated {formatDate(w.updatedAt)}
+                                  </p>
+                                )}
+                              {w.paystackTransferCode && (
+                                <p className="text-[10px] font-mono text-gray-400 dark:text-gray-500 mt-0.5 truncate max-w-[140px]" title={w.paystackTransferCode}>
+                                  PS: {w.paystackTransferCode.slice(0, 18)}
+                                  {w.paystackTransferCode.length > 18 ? '…' : ''}
+                                </p>
+                              )}
                             </td>
 
                             {/* Inline action cell */}
                             <td className="px-5 py-4 min-w-[180px]">
-                              {w.status !== 'pending' ? (
+                              {rowBusy ? (
+                                <span className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center gap-1">
+                                  <span className="inline-block h-3 w-3 rounded-full border-2 border-gray-400 border-t-transparent animate-spin" aria-hidden />
+                                  Updating…
+                                </span>
+                              ) : !canAdminActOnWithdrawal(w.status) ? (
                                 <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
                               ) : action.type === 'none' ? (
-                                <div className="flex gap-2">
+                                <div className="flex flex-wrap gap-2">
                                   <button
+                                    type="button"
                                     onClick={() => setAction(w.id, { type: 'confirming_approve' })}
                                     className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-semibold transition-colors"
                                   >
                                     ✓ Approve
                                   </button>
                                   <button
+                                    type="button"
                                     onClick={() => setAction(w.id, { type: 'rejecting', reason: '' })}
                                     className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors"
                                   >
                                     ✗ Reject
                                   </button>
                                   <button
-                                    onClick={() => setAction(w.id, { type: 'rejecting', reason: 'Cancelled by admin' })}
+                                    type="button"
+                                    onClick={() => {
+                                      if (confirm('Cancel this withdrawal and refund the user?')) {
+                                        void updateStatus(w.id, 'cancelled', 'Cancelled by admin');
+                                      }
+                                    }}
                                     className="px-3 py-1.5 rounded-lg bg-gray-500 hover:bg-gray-600 text-white text-xs font-semibold transition-colors"
                                   >
-                                    ✗ Cancel
+                                    Cancel & refund
                                   </button>
                                 </div>
                               ) : action.type === 'confirming_approve' ? (
@@ -260,12 +297,14 @@ export default function AdminWithdrawalsPage() {
                                   <p className="text-xs font-semibold text-green-700 dark:text-green-400">Confirm payment was sent?</p>
                                   <div className="flex gap-2">
                                     <button
-                                      onClick={() => updateStatus(w.id, 'completed')}
+                                      type="button"
+                                      onClick={() => void updateStatus(w.id, 'completed')}
                                       className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-semibold"
                                     >
                                       Yes, Approve
                                     </button>
                                     <button
+                                      type="button"
                                       onClick={() => setAction(w.id, { type: 'none' })}
                                       className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 dark:text-gray-300 text-xs hover:bg-gray-50 dark:hover:bg-gray-700"
                                     >
@@ -286,12 +325,14 @@ export default function AdminWithdrawalsPage() {
                                   />
                                   <div className="flex gap-2">
                                     <button
-                                      onClick={() => updateStatus(w.id, 'failed', action.reason || undefined)}
+                                      type="button"
+                                      onClick={() => void updateStatus(w.id, 'failed', action.reason || undefined)}
                                       className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold"
                                     >
                                       Confirm Reject
                                     </button>
                                     <button
+                                      type="button"
                                       onClick={() => setAction(w.id, { type: 'none' })}
                                       className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 dark:text-gray-300 text-xs hover:bg-gray-50 dark:hover:bg-gray-700"
                                     >

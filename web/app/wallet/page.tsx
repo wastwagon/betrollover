@@ -10,8 +10,15 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
+import {
+  withdrawalStatusLabelKey,
+  walletWithdrawalStatusBadgeClass,
+} from '@/lib/withdrawal-status';
 import type { BalanceResponse } from '@betrollover/shared-types';
 import { useCurrency } from '@/context/CurrencyContext';
+import { useToast } from '@/hooks/useToast';
+import { PENDING_WITHDRAWALS_INVALIDATE } from '@/hooks/usePendingWithdrawalCount';
+import { SuccessToast } from '@/components/SuccessToast';
 
 interface Transaction {
   id: number;
@@ -40,6 +47,8 @@ interface Withdrawal {
   reference?: string | null;
   failureReason?: string | null;
   createdAt: string;
+  /** Present from API when column exists — shows last status change */
+  updatedAt?: string;
 }
 
 function WalletContent() {
@@ -47,6 +56,7 @@ function WalletContent() {
   const searchParams = useSearchParams();
   const t = useT();
   const { format, currency } = useCurrency();
+  const { showSuccess, clearSuccess, success: toastSuccess } = useToast();
   const [user, setUser] = useState<{ role: string; emailVerifiedAt?: string | null } | null>(null);
   const [balance, setBalance] = useState<BalanceResponse | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -188,6 +198,13 @@ function WalletContent() {
         throw new Error(msg);
       }
       setWithdrawAmount('');
+      const okMsg = typeof data?.message === 'string' && data.message.trim()
+        ? data.message.trim()
+        : t('wallet.withdrawal_request_success');
+      showSuccess(okMsg);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event(PENDING_WITHDRAWALS_INVALIDATE));
+      }
       loadData();
     } catch (e) {
       setWithdrawError(e instanceof Error ? e.message : t('wallet.withdrawal_failed'));
@@ -273,20 +290,25 @@ function WalletContent() {
     }
   };
 
-  const isTipster = user?.role === 'tipster' || user?.role === 'admin';
+  const canWithdraw =
+    user?.role === 'tipster' || user?.role === 'admin' || user?.role === 'user';
+  const withdrawSectionTitle =
+    user?.role === 'tipster' ? t('wallet.withdraw_earnings') : t('wallet.withdraw_funds');
   const pendingWithdrawal = withdrawals.find((w) => w.status === 'pending' || w.status === 'processing');
 
   function formatDate(s: string) {
     return new Date(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
-  const STATUS_STYLES: Record<string, string> = {
-    completed:  'text-emerald-600',
-    pending:    'text-amber-500',
-    processing: 'text-blue-500',
-    failed:     'text-red-500',
-    cancelled:  'text-slate-400',
-  };
+  function formatDateTime(s: string) {
+    return new Date(s).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
 
   return (
     <DashboardShell>
@@ -346,18 +368,25 @@ function WalletContent() {
               </div>
             </div>
 
-            {isTipster && (
+            {canWithdraw && (
               <div id="withdraw" className="card-gradient rounded-2xl p-5 shadow-lg scroll-mt-24">
-                <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('wallet.withdraw_earnings')}</h2>
+                <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{withdrawSectionTitle}</h2>
 
                 {/* Pending withdrawal warning */}
                 {pendingWithdrawal && (
                   <div className="mb-3 p-3 rounded-xl border border-amber-400/50 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 text-sm flex items-start gap-2">
                     <span className="text-base">⏳</span>
-                    <div>
-                      <span className="font-semibold">Withdrawal in progress — </span>
-                      {(pendingWithdrawal.currency ?? 'GHS')} {Number(pendingWithdrawal.amount).toFixed(2)} is{' '}
-                      <span className="font-medium">{pendingWithdrawal.status}</span>. Please wait for it to complete before requesting another.
+                    <div className="space-y-1">
+                      <p>
+                        <span className="font-semibold">{t('wallet.withdrawal_in_progress')}</span>
+                        {(pendingWithdrawal.currency ?? 'GHS')} {Number(pendingWithdrawal.amount).toFixed(2)}
+                        {' — '}
+                        <span className="font-medium">{t(withdrawalStatusLabelKey(pendingWithdrawal.status))}</span>
+                        . {t('wallet.withdrawal_notify_hint')}
+                      </p>
+                      <Link href="/notifications" className="text-xs underline opacity-90 hover:opacity-100">
+                        {t('wallet.view_notifications_link')}
+                      </Link>
                     </div>
                   </div>
                 )}
@@ -578,30 +607,44 @@ function WalletContent() {
               </div>
             )}
 
-            {/* Withdrawal history — always visible for tipsters */}
-            {isTipster && withdrawals.length > 0 && (
+            {/* Withdrawal history — anyone who can withdraw */}
+            {canWithdraw && withdrawals.length > 0 && (
               <div className="card-gradient rounded-2xl p-5 shadow-lg">
                 <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('wallet.withdrawal_history')}</h2>
                 <ul className="space-y-2">
-                  {withdrawals.slice(0, 8).map((w) => (
-                    <li key={w.id} className="flex items-center justify-between gap-3 py-2.5 border-b border-[var(--border)] last:border-0">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-[var(--text)]">
-                          {w.currency ?? 'GHS'} {Number(w.amount).toFixed(2)}
-                        </p>
-                        <p className="text-xs text-[var(--text-muted)]">
-                          {formatDate(w.createdAt)}
-                          {w.reference && <span className="ml-1 font-mono opacity-60">· {w.reference.slice(0, 12)}</span>}
-                        </p>
-                        {w.failureReason && (
-                          <p className="text-xs text-red-500 mt-0.5">{w.failureReason}</p>
-                        )}
-                      </div>
-                      <span className={`text-sm font-semibold capitalize ${STATUS_STYLES[w.status] ?? 'text-[var(--text-muted)]'}`}>
-                        {w.status}
-                      </span>
-                    </li>
-                  ))}
+                  {withdrawals.slice(0, 8).map((w) => {
+                    const statusLabel = t(withdrawalStatusLabelKey(w.status));
+                    const showUpdated =
+                      w.updatedAt &&
+                      w.updatedAt !== w.createdAt &&
+                      new Date(w.updatedAt).getTime() !== new Date(w.createdAt).getTime();
+                    return (
+                      <li key={w.id} className="flex items-start justify-between gap-3 py-2.5 border-b border-[var(--border)] last:border-0">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-[var(--text)]">
+                            {w.currency ?? 'GHS'} {Number(w.amount).toFixed(2)}
+                          </p>
+                          <p className="text-xs text-[var(--text-muted)]">
+                            {formatDate(w.createdAt)}
+                            {w.reference && <span className="ml-1 font-mono opacity-60">· {w.reference.slice(0, 12)}</span>}
+                          </p>
+                          {showUpdated && (
+                            <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                              {t('wallet.withdrawal_updated')}: {formatDateTime(w.updatedAt!)}
+                            </p>
+                          )}
+                          {w.failureReason && (
+                            <p className="text-xs text-red-500 mt-0.5">{w.failureReason}</p>
+                          )}
+                        </div>
+                        <span
+                          className={`inline-flex shrink-0 items-center rounded-lg border px-2 py-0.5 text-xs font-semibold ${walletWithdrawalStatusBadgeClass(w.status)}`}
+                        >
+                          {statusLabel}
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}
@@ -651,6 +694,7 @@ function WalletContent() {
         )}
         </div>
       </div>
+      {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
     </DashboardShell>
   );
 }

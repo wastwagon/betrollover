@@ -13,6 +13,7 @@ import { AdSlot } from '@/components/AdSlot';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { PickCard } from '@/components/PickCard';
 import { useCurrency } from '@/context/CurrencyContext';
+import { usePendingWithdrawalCount } from '@/hooks/usePendingWithdrawalCount';
 
 interface FollowedTipster {
   id: number;
@@ -97,6 +98,7 @@ function DashboardContent() {
   const [following, setFollowing] = useState<FollowedTipster[]>([]);
   const [feedPurchasing, setFeedPurchasing] = useState<number | null>(null);
   const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
+  const pendingWithdrawalCount = usePendingWithdrawalCount();
 
   const runSettlement = async () => {
     const token = localStorage.getItem('token');
@@ -529,12 +531,25 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
                 href="/wallet#withdraw"
                 className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
               >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                <span className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
                   💸
+                  {pendingWithdrawalCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-[var(--card)]">
+                      {pendingWithdrawalCount > 9 ? '9+' : pendingWithdrawalCount}
+                    </span>
+                  )}
                 </span>
                 <div className="min-w-0">
                   <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_withdrawals')}</span>
-                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_withdrawals_desc')}</span>
+                  <span className="text-sm text-[var(--text-muted)]">
+                    {t('dashboard.card_withdrawals_desc')}
+                    {pendingWithdrawalCount > 0 && (
+                      <span className="text-amber-600 dark:text-amber-400 font-medium">
+                        {' · '}
+                        {t('dashboard.pending_withdrawal_hint', { n: String(pendingWithdrawalCount) })}
+                      </span>
+                    )}
+                  </span>
                 </div>
               </Link>
               <Link

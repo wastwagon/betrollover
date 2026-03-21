@@ -9,6 +9,7 @@ import { getApiUrl } from '@/lib/site-config';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { trackEvent } from '@/lib/analytics';
+import { usePendingWithdrawalCount } from '@/hooks/usePendingWithdrawalCount';
 
 /* ─── Types ─────────────────────────────────────────────── */
 interface Notification { id: number; isRead: boolean }
@@ -90,6 +91,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
   const [isSignedIn,       setIsSignedIn]       = useState(false);
   const [balance,          setBalance]          = useState<number | null>(null);
   const [unreadCount,      setUnreadCount]      = useState(0);
+  const pendingWithdrawalCount = usePendingWithdrawalCount();
   const [openMenu,         setOpenMenu]         = useState<MenuKey>(null);
   const [mobileOpen,       setMobileOpen]       = useState(false);
   const [mounted,           setMounted]          = useState(false);
@@ -495,9 +497,14 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                 {balance !== null && (
                   <Link
                     href="/wallet"
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 transition-all"
-                    aria-label={`Wallet balance: ${format(balance).primary}`}
+                    className="relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 transition-all"
+                    aria-label={`Wallet balance: ${format(balance).primary}${pendingWithdrawalCount > 0 ? `, ${pendingWithdrawalCount} withdrawal(s) in progress` : ''}`}
                   >
+                    {pendingWithdrawalCount > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] flex items-center justify-center text-[9px] font-bold bg-amber-500 text-white rounded-full ring-2 ring-white dark:ring-slate-900">
+                        {pendingWithdrawalCount > 9 ? '9+' : pendingWithdrawalCount}
+                      </span>
+                    )}
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                     </svg>
@@ -558,10 +565,26 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                           {[
                             { href: '/profile',       icon: '👤', label: t('profile.title'),       desc: t('profile.tagline') },
                             { href: '/dashboard',     icon: '📊', label: t('nav.dashboard'),         desc: t('dashboard.subtitle') },
-                            { href: '/wallet',        icon: '💰', label: t('nav.wallet'),            desc: t('dashboard.wallet_desc') },
+                            {
+                              href: '/wallet',
+                              icon: '💰',
+                              label: t('nav.wallet'),
+                              desc: t('dashboard.wallet_desc'),
+                              badge: pendingWithdrawalCount > 0 ? String(pendingWithdrawalCount) : undefined,
+                              badgeColor: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+                            },
                             { href: '/earnings',      icon: '📈', label: t('nav.earnings'),          desc: t('earnings.subtitle') },
-                          ].map(item => (
-                            <MegaLink key={item.href} href={item.href} icon={item.icon} label={item.label} desc={item.desc} onClick={closeAll} />
+                          ].map((item) => (
+                            <MegaLink
+                              key={item.href}
+                              href={item.href}
+                              icon={item.icon}
+                              label={item.label}
+                              desc={item.desc}
+                              badge={'badge' in item && item.badge ? item.badge : undefined}
+                              badgeColor={'badgeColor' in item && item.badgeColor ? item.badgeColor : undefined}
+                              onClick={closeAll}
+                            />
                           ))}
                         </div>
                         {/* Col 2 — Picks & Subscriptions */}
@@ -664,16 +687,28 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                         </div>
                         {/* Menu items — min-h-0 lets flex child scroll instead of overflowing */}
                         <nav className="flex-1 min-h-0 overflow-y-auto py-2 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' as const }}>
-                          {[
+                          {([
                             { href: '/dashboard',      icon: '📊', label: t('nav.dashboard') },
                             { href: '/profile',       icon: '👤', label: t('profile.title') },
-                            { href: '/wallet',        icon: '💰', label: t('nav.wallet') },
+                            {
+                              href: '/wallet',
+                              icon: '💰',
+                              label: t('nav.wallet'),
+                              badge: pendingWithdrawalCount > 0 ? String(pendingWithdrawalCount) : undefined,
+                              badgeClass: 'bg-amber-500',
+                            },
                             { href: '/earnings',      icon: '📈', label: t('nav.earnings') },
                             { href: '/my-picks',      icon: '🎯', label: t('nav.my_picks') },
                             { href: '/my-purchases',  icon: '🛍️', label: t('my_purchases.title') },
                             { href: '/subscriptions', icon: '🔔', label: t('dashboard.card_subscriptions') },
-                            { href: '/notifications', icon: '🛎️', label: t('nav.notifications'), badge: unreadCount > 0 ? String(unreadCount) : undefined },
-                          ].map(item => (
+                            {
+                              href: '/notifications',
+                              icon: '🛎️',
+                              label: t('nav.notifications'),
+                              badge: unreadCount > 0 ? String(unreadCount) : undefined,
+                              badgeClass: 'bg-red-500',
+                            },
+                          ]).map((item) => (
                             <Link
                               key={item.href}
                               href={item.href}
@@ -686,8 +721,8 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                             >
                               <span className="text-lg" aria-hidden>{item.icon}</span>
                               <span className="flex-1">{item.label}</span>
-                              {item.badge && (
-                                <span className="min-w-[20px] h-5 flex items-center justify-center text-xs font-bold bg-red-500 text-white rounded-full">
+                              {'badge' in item && item.badge && (
+                                <span className={`min-w-[20px] h-5 flex items-center justify-center text-xs font-bold text-white rounded-full ${'badgeClass' in item && item.badgeClass ? item.badgeClass : 'bg-red-500'}`}>
                                   {item.badge}
                                 </span>
                               )}

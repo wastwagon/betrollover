@@ -515,9 +515,8 @@ export class WalletService {
     if (!emailVerifiedAt) {
       throw new ForbiddenException('Please verify your email before requesting a withdrawal.');
     }
-    // Users and tipsters have same privileges (either can withdraw)
     if (user.role !== UserRole.TIPSTER && user.role !== UserRole.ADMIN && user.role !== UserRole.USER) {
-      throw new ForbiddenException('Only tipsters can withdraw');
+      throw new ForbiddenException('Withdrawals are not available for your account type.');
     }
 
     const minAmount = 5;
@@ -598,6 +597,7 @@ export class WalletService {
         link: '/wallet',
         icon: 'wallet',
         sendEmail: true,
+        alwaysSendEmail: true,
         metadata: { amount: amount.toFixed(2) },
       }).catch(() => { });
 
@@ -616,6 +616,7 @@ export class WalletService {
         link: '/wallet',
         icon: 'alert',
         sendEmail: true,
+        alwaysSendEmail: true,
         metadata: { amount: amount.toFixed(2) },
       }).catch(() => { });
 
