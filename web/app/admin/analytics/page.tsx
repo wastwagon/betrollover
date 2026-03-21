@@ -344,7 +344,7 @@ export default function AdminAnalyticsPage() {
     return (
       <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
         <AdminSidebar />
-        <main className="flex-1 p-6 md:p-8 md:ml-56 flex items-center justify-center">
+        <main className="admin-main-sibling flex-1 w-full min-w-0 overflow-x-hidden p-6 md:p-8 md:ml-56 flex items-center justify-center">
           <div className="w-10 h-10 rounded-full border-4 border-red-500 border-t-transparent animate-spin" />
         </main>
       </div>
@@ -354,7 +354,7 @@ export default function AdminAnalyticsPage() {
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <AdminSidebar />
-      <main className="flex-1 p-6 md:p-8 md:ml-56">
+      <main className="admin-main-sibling flex-1 w-full min-w-0 overflow-x-hidden p-6 md:p-8 md:ml-56">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Advanced Analytics</h1>

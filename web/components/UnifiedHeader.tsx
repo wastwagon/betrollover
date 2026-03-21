@@ -101,6 +101,17 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
     setMounted(true);
   }, []);
 
+  /** Mobile drawer: backdrop was full-screen `absolute inset-0` over the panel in some browsers, eating taps. Also force client nav so links always work from the portal. */
+  const onMobileAccountNav = useCallback(
+    (href: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+      setMobileOpen(false);
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+      e.preventDefault();
+      router.push(href);
+    },
+    [router],
+  );
+
   /* ── Lock body scroll when mobile sidebar open ───────── */
   useEffect(() => {
     if (!mobileOpen) return;
@@ -614,22 +625,18 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                   </button>
                   {mobileOpen && mounted && createPortal(
                     <div
-                      className="fixed inset-0 z-[100] flex"
+                      className="fixed inset-0 z-[100] flex flex-row"
                       role="dialog"
                       aria-modal="true"
                       aria-labelledby="mobile-account-menu-title"
                     >
-                      {/* Backdrop */}
-                      <button
-                        type="button"
-                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                        aria-label={t('common.close')}
-                        onClick={() => setMobileOpen(false)}
-                      />
-                      {/* Sidebar — slides from left; safe-area for notch/home indicator */}
+                      {/* Sidebar first — backdrop must NOT overlap this strip (was intercepting all taps) */}
                       <div
-                        className="relative z-[1] w-[280px] sm:w-[320px] max-w-[85vw] h-full min-h-[100dvh] bg-[var(--card)] border-r border-[var(--border)] shadow-2xl flex flex-col animate-slide-in-left"
-                        style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+                        className="relative z-10 w-[280px] sm:w-[320px] max-w-[85vw] shrink-0 h-full min-h-[100dvh] min-h-screen bg-[var(--card)] border-r border-[var(--border)] shadow-2xl flex flex-col animate-slide-in-left pointer-events-auto"
+                        style={{
+                          paddingTop: 'max(0px, env(safe-area-inset-top, 0px))',
+                          paddingBottom: 'max(0px, env(safe-area-inset-bottom, 0px))',
+                        }}
                       >
                         {/* Header with balance */}
                         <div className="px-4 pt-6 pb-4 border-b border-[var(--border)] shrink-0">
@@ -670,7 +677,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                             <Link
                               key={item.href}
                               href={item.href}
-                              onClick={() => setMobileOpen(false)}
+                              onClick={onMobileAccountNav(item.href)}
                               className={`flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors ${
                                 isActive(pathname, item.href)
                                   ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border-r-2 border-emerald-600'
@@ -700,6 +707,14 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                           </button>
                         </div>
                       </div>
+                      {/* Backdrop only beside the drawer — full-screen overlay no longer covers links */}
+                      <button
+                        type="button"
+                        className="flex-1 min-w-0 min-h-0 self-stretch bg-black/50"
+                        style={{ backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
+                        aria-label={t('common.close')}
+                        onClick={() => setMobileOpen(false)}
+                      />
                     </div>,
                     document.body
                   )}

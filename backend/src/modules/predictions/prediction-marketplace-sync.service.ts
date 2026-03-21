@@ -8,6 +8,7 @@ import { Prediction } from './entities/prediction.entity';
 import { PredictionFixture } from './entities/prediction-fixture.entity';
 import { Tipster } from './entities/tipster.entity';
 import { TipstersSetupService } from './tipsters-setup.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 /** Format selectedOutcome for display (e.g. over25 -> Over 2.5) */
 function formatOutcome(outcome: string | null): string {
@@ -42,6 +43,7 @@ export class PredictionMarketplaceSyncService {
     @InjectRepository(Tipster)
     private tipsterRepo: Repository<Tipster>,
     private tipstersSetup: TipstersSetupService,
+    private notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -130,6 +132,23 @@ export class PredictionMarketplaceSyncService {
       predictionId: prediction.id,
       maxPurchases: 999999,
     });
+
+    const freshTipster = await this.tipsterRepo.findOne({
+      where: { id: tipster.id },
+      select: ['id', 'userId', 'displayName'],
+    });
+    if (freshTipster?.userId) {
+      await this.notificationsService
+        .notifyFollowersOfNewCoupon({
+          tipsterId: freshTipster.id,
+          tipsterUserId: freshTipster.userId,
+          tipsterDisplayName: freshTipster.displayName,
+          pickTitle: title,
+          price: 0,
+          accumulatorId: ticket.id,
+        })
+        .catch((e) => this.logger.warn(`Follower notify after AI sync: ${(e as Error).message}`));
+    }
 
     this.logger.log(`Synced prediction ${prediction.id} to marketplace as accumulator ${ticket.id}`);
     return { accumulatorId: ticket.id };

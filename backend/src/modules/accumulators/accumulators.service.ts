@@ -18,7 +18,6 @@ import { TipsterService } from '../tipster/tipster.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
-import { TipsterFollow } from '../predictions/entities/tipster-follow.entity';
 import { ReferralsService } from '../referrals/referrals.service';
 
 /** Sports that use sport_events table (eventId) rather than fixtures (fixtureId) */
@@ -90,8 +89,6 @@ export class AccumulatorsService {
     private apiSettingsRepo: Repository<ApiSettings>,
     @InjectRepository(Tipster)
     private tipsterRepo: Repository<Tipster>,
-    @InjectRepository(TipsterFollow)
-    private tipsterFollowRepo: Repository<TipsterFollow>,
     private walletService: WalletService,
     private notificationsService: NotificationsService,
     private emailService: EmailService,
@@ -332,32 +329,33 @@ export class AccumulatorsService {
         },
       }).catch(() => { });
 
-      // Notify followers that this tipster posted a new pick (email)
       const tipster = await this.tipsterRepo.findOne({ where: { userId }, select: ['id', 'displayName'] });
       if (tipster) {
-        const follows = await this.tipsterFollowRepo.find({
-          where: { tipsterId: tipster.id },
-          select: ['userId'],
+        await this.notificationsService.notifyFollowersOfNewCoupon({
+          tipsterId: tipster.id,
+          tipsterUserId: userId,
+          tipsterDisplayName: tipster.displayName || creatorName,
+          pickTitle: ticket.title,
+          price,
+          accumulatorId: ticket.id,
         });
-        const followerIds = follows.map((f) => f.userId).filter((id) => id !== userId);
-        const tipsterName = tipster.displayName || creatorName;
-        const pickLink = `/marketplace`;
-        for (const followerId of followerIds) {
-          this.notificationsService.create({
-            userId: followerId,
-            type: 'new_pick_from_followed',
-            title: 'New Pick from Tipster You Follow',
-            message: `${tipsterName} posted a new pick "${ticket.title}"${price > 0 ? ` at GHS ${price.toFixed(2)}` : ' (free)'}.`,
-            link: pickLink,
-            icon: 'bell',
-            sendEmail: true,
-            metadata: { tipsterName, pickTitle: ticket.title },
-          }).catch(() => {});
-        }
       }
     } else if (dto.placement === 'subscription' && (dto.subscriptionPackageIds?.length ?? 0) > 0) {
-      // Subscription-only: add coupon to packages (no marketplace entry)
+      // Subscription-only: add coupon to packages (no marketplace listing) — still notify followers
       await this.subscriptionsService.addCouponToPackages(ticket.id, dto.subscriptionPackageIds!);
+      const creator = await this.usersRepo.findOne({ where: { id: userId }, select: ['displayName', 'username'] });
+      const creatorName = creator?.displayName || creator?.username || 'Tipster';
+      const tipster = await this.tipsterRepo.findOne({ where: { userId }, select: ['id', 'displayName'] });
+      if (tipster) {
+        await this.notificationsService.notifyFollowersOfNewCoupon({
+          tipsterId: tipster.id,
+          tipsterUserId: userId,
+          tipsterDisplayName: tipster.displayName || creatorName,
+          pickTitle: ticket.title,
+          price,
+          accumulatorId: ticket.id,
+        });
+      }
     }
 
     return this.getById(ticket.id);

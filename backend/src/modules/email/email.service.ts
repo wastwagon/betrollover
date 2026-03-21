@@ -328,7 +328,7 @@ export class EmailService {
             </td>
           </tr>
         </table>
-        <p style="font-size:11px;color:#94a3b8;text-align:center;margin-top:24px;">You received this because you have email notifications enabled.</p>
+        <p style="font-size:11px;color:#94a3b8;text-align:center;margin-top:24px;">${data.metadata?.followerAlert === '1' ? 'You received this because you follow this tipster on BetRollover.' : 'You received this because you have email notifications enabled.'}</p>
       </td>
     </tr>
   </table>

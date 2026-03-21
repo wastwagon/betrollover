@@ -64,7 +64,7 @@ export default function AdminAuditLogPage() {
   return (
     <div className="flex min-h-screen bg-[var(--bg)]">
       <AdminSidebar />
-      <main className="flex-1 pl-56 pr-6 py-8">
+      <main className="admin-main-sibling flex-1 w-full min-w-0 overflow-x-hidden px-4 pb-8 pt-4 md:pl-8 md:pr-8 md:py-8 md:ml-56">
         <div className="max-w-5xl mx-auto">
           <h1 className="text-2xl font-bold text-[var(--text)] mb-2">Audit log</h1>
           <p className="text-sm text-[var(--text-muted)] mb-6">

@@ -232,13 +232,13 @@ function DashboardContent() {
     return (
       <div className="flex min-h-screen bg-[var(--bg)]">
         <AdminSidebar />
-        <main className="flex-1 overflow-auto md:ml-56">
-          <div className="p-4 md:p-6">
-            <h1 className="text-2xl font-bold text-[var(--text)] mb-6">
+        <main className="admin-main-sibling flex-1 w-full min-w-0 overflow-x-hidden overflow-y-auto md:ml-56">
+          <div className="px-4 pb-8 pt-4 md:p-6 max-w-[1600px] mx-auto w-full">
+            <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)] mb-4 sm:mb-6 break-words">
               Welcome, {user?.displayName || 'Administrator'}!
             </h1>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
               <StatCard title="Total Users" value={stats?.users?.total ?? 0} icon="👥" />
               <StatCard title="Tipsters" value={stats?.users?.tipsters ?? 0} icon="🎯" />
               <StatCard title="Wallets" value={stats?.wallets?.count ?? 0} icon="💰" />
@@ -250,13 +250,13 @@ function DashboardContent() {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
               <StatCard title={t("dashboard.total_picks")} value={stats?.picks?.total ?? 0} icon="🎯" />
               <StatCard title="Active Marketplace" value={stats?.picks?.activeMarketplace ?? 0} icon="🛒" />
               <StatCard title="Escrow Held (GHS)" value={stats?.escrow?.held ?? 0} icon="🔒" format="currency" />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
               <StatCard title="Total Purchases" value={stats?.purchases?.total ?? 0} icon="🛍️" />
               <StatCard title="Revenue (GHS)" value={stats?.purchases?.revenue ?? 0} icon="💵" format="currency" />
               <StatCard title="Pending Deposits" value={stats?.deposits?.pending ?? 0} icon="💳" />
@@ -269,14 +269,14 @@ function DashboardContent() {
             </div>
 
             {/* Sports Overview */}
-            <div className="mb-8 bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-[var(--text)]">Sports Overview</h2>
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-300">
+            <div className="mb-6 sm:mb-8 bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] p-4 sm:p-6">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+                <h2 className="text-base sm:text-lg font-semibold text-[var(--text)]">Sports Overview</h2>
+                <span className="inline-flex w-fit items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-300">
                   🌍 Multi-Sport Expansion
                 </span>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-3">
                 {[
                   { icon: '⚽', sport: 'Football' },
                   { icon: '🏀', sport: 'Basketball' },
@@ -301,11 +301,11 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
               </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Quick Actions — two columns of links */}
-              <div className="bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] p-6">
-                <h2 className="text-lg font-semibold text-[var(--text)] mb-4">{t("dashboard.quick_actions")}</h2>
-                <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              {/* Quick Actions — single column on narrow phones for readability */}
+              <div className="bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] p-4 sm:p-6 min-w-0">
+                <h2 className="text-base sm:text-lg font-semibold text-[var(--text)] mb-3 sm:mb-4">{t("dashboard.quick_actions")}</h2>
+                <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-1.5">
                   {[
                     { href: '/admin/users',          icon: '👥', label: 'Users' },
                     { href: '/admin/marketplace',     icon: '🛒', label: 'Marketplace' },
@@ -332,15 +332,15 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
                     <Link
                       key={href}
                       href={href}
-                      className="flex items-center gap-2 py-2 px-3 rounded-lg text-sm bg-[var(--bg)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] font-medium transition-colors"
+                      className="flex items-center gap-2 py-2.5 min-h-[44px] px-3 rounded-lg text-sm bg-[var(--bg)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] font-medium transition-colors active:opacity-90"
                     >
-                      <span>{icon}</span><span className="truncate">{label}</span>
+                      <span className="shrink-0">{icon}</span><span className="truncate min-w-0">{label}</span>
                     </Link>
                   ))}
                   <button
                     onClick={runSettlement}
                     disabled={settling}
-                    className="flex items-center gap-2 py-2 px-3 rounded-lg text-sm bg-[var(--bg)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] font-medium text-left disabled:opacity-50 transition-colors col-span-2"
+                    className="flex items-center gap-2 py-2.5 min-h-[44px] px-3 rounded-lg text-sm bg-[var(--bg)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] font-medium text-left disabled:opacity-50 transition-colors min-[420px]:col-span-2"
                   >
                     <span>⚡</span><span>{settling ? 'Running Settlement…' : 'Run Settlement Now'}</span>
                   </button>
@@ -348,8 +348,8 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
               </div>
 
               {/* Platform Info */}
-              <div className="bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] p-6">
-                <h2 className="text-lg font-semibold text-[var(--text)] mb-4">Platform Overview</h2>
+              <div className="bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] p-4 sm:p-6 min-w-0">
+                <h2 className="text-base sm:text-lg font-semibold text-[var(--text)] mb-3 sm:mb-4">Platform Overview</h2>
                 <dl className="space-y-0 text-sm divide-y divide-[var(--border)]">
                   {[
                     { label: 'Admin',         value: user?.displayName ?? '—' },
@@ -365,11 +365,11 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
                     { label: 'Multi-Sport Sync', value: undefined, link: { href: '/admin/sports', text: 'View Sync Status →' } },
                     { label: 'Fixtures',       value: undefined, link: { href: '/admin/fixtures', text: 'View & Sync →' } },
                   ].map(({ label, value, link, highlight }) => (
-                    <div key={label} className="flex justify-between py-2">
-                      <dt className="text-[var(--text-muted)]">{label}</dt>
-                      <dd className={`font-medium text-right ${highlight ? 'text-amber-600' : 'text-[var(--text)]'}`}>
+                    <div key={label} className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-baseline py-2.5 sm:py-2">
+                      <dt className="text-[var(--text-muted)] shrink-0">{label}</dt>
+                      <dd className={`font-medium sm:text-right min-w-0 break-words ${highlight ? 'text-amber-600' : 'text-[var(--text)]'}`}>
                         {link ? (
-                          <Link href={link.href} className="text-[var(--primary)] hover:underline">{link.text}</Link>
+                          <Link href={link.href} className="text-[var(--primary)] hover:underline inline-block">{link.text}</Link>
                         ) : value}
                       </dd>
                     </div>

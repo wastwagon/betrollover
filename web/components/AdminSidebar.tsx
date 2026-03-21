@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 const menuItems = [
   { href: '/', icon: '🏠', label: 'Home' },
@@ -31,8 +31,27 @@ const menuItems = [
   { href: '/admin/settings', icon: '⚙️', label: 'Settings' },
 ];
 
-function SidebarContent({ onItemClick }: { onItemClick: () => void }) {
+function SidebarContent({
+  onItemClick,
+  linkMode = 'default',
+}: {
+  onItemClick: () => void;
+  /** Mobile drawer: avoid full-screen backdrop eating taps + force client navigation from portal */
+  linkMode?: 'default' | 'spa-push';
+}) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const onNavLink = useCallback(
+    (href: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+      onItemClick();
+      if (linkMode !== 'spa-push') return;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+      e.preventDefault();
+      router.push(href);
+    },
+    [onItemClick, linkMode, router],
+  );
 
   return (
     <>
@@ -40,7 +59,7 @@ function SidebarContent({ onItemClick }: { onItemClick: () => void }) {
         <div className="flex items-center justify-between">
           <Link
             href="/dashboard"
-            onClick={onItemClick}
+            onClick={onNavLink('/dashboard')}
             className="font-bold text-lg text-[var(--text)] hover:text-[var(--primary)] transition-colors"
           >
             BetRollover Admin
@@ -54,7 +73,7 @@ function SidebarContent({ onItemClick }: { onItemClick: () => void }) {
             <Link
               key={item.href}
               href={item.href}
-              onClick={onItemClick}
+              onClick={onNavLink(item.href)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                 isActive ? 'bg-[var(--primary)] text-white' : 'text-[var(--text-muted)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)]'
               }`}
@@ -68,9 +87,14 @@ function SidebarContent({ onItemClick }: { onItemClick: () => void }) {
       <div className="p-3 border-t border-[var(--border)] shrink-0">
         <Link
           href="/"
-          onClick={() => {
+          onClick={(e) => {
             localStorage.removeItem('token');
             onItemClick();
+            if (linkMode === 'spa-push') {
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+              e.preventDefault();
+              router.push('/');
+            }
           }}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[var(--text-muted)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] transition-colors"
         >
@@ -109,7 +133,7 @@ export function AdminSidebar() {
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-[60] p-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)] text-[var(--text)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] transition-colors shadow-lg"
+        className="md:hidden fixed left-4 z-[60] p-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)] text-[var(--text)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] transition-colors shadow-lg top-[calc(env(safe-area-inset-top,0px)+2.75rem)]"
         aria-label="Open admin menu"
         aria-expanded={mobileOpen}
       >
@@ -120,31 +144,24 @@ export function AdminSidebar() {
 
       {/* Desktop sidebar — always visible on md+ */}
       <aside className="hidden md:flex w-56 min-h-screen bg-[var(--card)] border-r border-[var(--border)] flex-col fixed left-0 top-0 bottom-0 z-50 shadow-card">
-        <SidebarContent onItemClick={() => {}} />
+        <SidebarContent onItemClick={() => {}} linkMode="default" />
       </aside>
 
-      {/* Mobile drawer — portal to body, slides from left */}
+      {/* Mobile drawer — portal; drawer first, backdrop only beside it (no overlay on menu taps) */}
       {mobileOpen && mounted && createPortal(
         <div
-          className="fixed inset-0 z-[100] flex md:hidden"
+          className="fixed inset-0 z-[100] flex flex-row md:hidden"
           role="dialog"
           aria-modal="true"
           aria-label="Admin navigation menu"
         >
-          {/* Backdrop */}
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            aria-label="Close menu"
-            onClick={() => setMobileOpen(false)}
-          />
-          {/* Sidebar drawer */}
           <div
-            className="relative z-[1] w-[280px] sm:w-[320px] max-w-[85vw] h-full min-h-[100dvh] bg-[var(--card)] border-r border-[var(--border)] shadow-2xl flex flex-col animate-slide-in-left"
-            style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
-            onClick={(e) => e.stopPropagation()}
+            className="relative z-10 w-[280px] sm:w-[320px] max-w-[85vw] shrink-0 h-full min-h-[100dvh] min-h-screen bg-[var(--card)] border-r border-[var(--border)] shadow-2xl flex flex-col animate-slide-in-left pointer-events-auto"
+            style={{
+              paddingTop: 'max(0px, env(safe-area-inset-top, 0px))',
+              paddingBottom: 'max(0px, env(safe-area-inset-bottom, 0px))',
+            }}
           >
-            {/* Header with close button */}
             <div className="p-4 border-b border-[var(--border)] shrink-0">
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-semibold text-[var(--text)]">BetRollover Admin</h2>
@@ -160,9 +177,15 @@ export function AdminSidebar() {
                 </button>
               </div>
             </div>
-            {/* Menu content */}
-            <SidebarContent onItemClick={handleItemClick} />
+            <SidebarContent onItemClick={handleItemClick} linkMode="spa-push" />
           </div>
+          <button
+            type="button"
+            className="flex-1 min-w-0 min-h-0 self-stretch bg-black/50"
+            style={{ backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
+            aria-label="Close menu"
+            onClick={() => setMobileOpen(false)}
+          />
         </div>,
         document.body
       )}

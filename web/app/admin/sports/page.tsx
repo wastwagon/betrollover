@@ -251,7 +251,7 @@ export default function AdminSportsPage() {
   return (
     <div className="flex min-h-screen bg-[var(--bg)]">
       <AdminSidebar />
-      <main className="flex-1 overflow-auto md:ml-56">
+      <main className="admin-main-sibling flex-1 w-full min-w-0 overflow-x-auto md:ml-56">
         <div className="p-4 md:p-6 max-w-6xl">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-[var(--text)] mb-1">Multi-Sport Management</h1>

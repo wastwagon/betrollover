@@ -4,12 +4,13 @@ import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
 import { Notification } from './entities/notification.entity';
 import { User } from '../users/entities/user.entity';
+import { TipsterFollow } from '../predictions/entities/tipster-follow.entity';
 import { EmailModule } from '../email/email.module';
 import { PushModule } from '../push/push.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Notification, User]),
+    TypeOrmModule.forFeature([Notification, User, TipsterFollow]),
     EmailModule,
     PushModule,
   ],

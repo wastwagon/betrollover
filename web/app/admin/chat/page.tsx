@@ -178,7 +178,7 @@ export default function AdminChatPage() {
     <div className="min-h-screen flex bg-gray-950 text-white">
       <AdminSidebar />
 
-      <main className="flex-1 p-6 max-w-5xl">
+      <main className="admin-main-sibling flex-1 w-full min-w-0 overflow-x-hidden p-4 pt-4 md:p-6 md:ml-56 max-w-5xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">Chat Moderation</h1>
           <p className="text-gray-400 text-sm mt-1">Manage community chat rooms, moderate messages, and handle user bans.</p>

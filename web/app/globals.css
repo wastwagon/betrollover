@@ -203,6 +203,18 @@ body {
   animation: slideInLeft 0.25s ease-out both;
 }
 
+/* Admin pages: main content clears fixed menu button (below site TopBar) on small screens */
+/* WebViewGold/Android: env() fallback value (0px) handles Android WebView gracefully */
+/* iOS: env(safe-area-inset-top) returns actual inset; Android: returns 0px (fallback) */
+@media (max-width: 767.98px) {
+  main.admin-main-sibling {
+    /* Base padding for Android (env() returns 0px fallback) */
+    padding-top: max(1.5rem, 5.75rem);
+    /* iOS: adds safe-area-inset-top when available (env() returns real value) */
+    padding-top: max(1.5rem, calc(env(safe-area-inset-top, 0px) + 5.75rem));
+  }
+}
+
 /* Safe area insets for mobile notch/home bar */
 .safe-area-inset-top {
   padding-top: env(safe-area-inset-top, 0);
