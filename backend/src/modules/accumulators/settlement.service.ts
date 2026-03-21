@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
+import { Repository, In, DataSource, EntityManager } from 'typeorm';
 import { AccumulatorTicket } from './entities/accumulator-ticket.entity';
 import { AccumulatorPick } from './entities/accumulator-pick.entity';
 import { EscrowFund } from './entities/escrow-fund.entity';
@@ -48,6 +48,8 @@ export class SettlementService {
     private walletService: WalletService,
     private notificationsService: NotificationsService,
     private tipsterService: TipsterService,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) { }
 
   /**
@@ -61,25 +63,14 @@ export class SettlementService {
     return this.runSettlement();
   }
 
-  /**
-   * Settle picks for finished fixtures. Call periodically (e.g. cron every 4h) or via POST /admin/settlement/run.
-   *
-   * Flow:
-   * 1. Find finished fixtures: status=FT OR (has scores + match_date > 2h ago) — catches missed API updates
-   * 2. Update any non-FT fixtures with scores to status=FT
-   * 3. For each pending pick on those fixtures, determine won/lost via determinePickResult
-   * 4. For tickets where all picks are settled, set ticket result (won/lost/void) and status
-   * 5. If marketplace coupon with price > 0: settle escrow (payout tipster or refund buyer)
-   *
-   * Supported markets: Match Winner, Double Chance, BTTS, Over/Under 1.5/2.5/3.5, Correct Score.
-   * Unmatched predictions log a warning so new market types can be added.
-   */
-  async runSettlement(): Promise<{
-    picksUpdated: number;
-    ticketsSettled: number;
+  private async loadFinishedFixtureAndEventMaps(twoHoursAgo: Date): Promise<{
+    finishedFixtures: Fixture[];
+    fixtureMap: Map<number, Fixture>;
+    fixtureIds: number[];
+    eventsWithScores: SportEvent[];
+    eventMap: Map<number, SportEvent>;
+    eventIds: number[];
   }> {
-    // Get all finished fixtures: status FT, OR has scores and match was >2h ago (catch missed updates)
-    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
     const [ftFixtures, scoredPastFixtures] = await Promise.all([
       this.fixtureRepo.find({
         where: { status: 'FT' },
@@ -109,11 +100,6 @@ export class SettlementService {
       .filter((f) => f.homeScore !== null && f.awayScore !== null)
       .map((f) => f.id);
 
-    this.logger.debug(
-      `Settlement: ${fixtureIds.length} finished fixtures, ${finishedFixtures.length} total`,
-    );
-
-    // Finished sport_events (all non-football sports) for event-based picks
     const finishedEvents = await this.sportEventRepo.find({
       where: [
         { sport: 'basketball', status: 'FT' },
@@ -129,6 +115,278 @@ export class SettlementService {
     const eventsWithScores = finishedEvents.filter((e) => e.homeScore != null && e.awayScore != null);
     const eventIds = eventsWithScores.map((e) => e.id);
     const eventMap = new Map(eventsWithScores.map((e) => [e.id, e]));
+    const fixtureMap = new Map(finishedFixtures.map((f) => [f.id, f]));
+
+    return {
+      finishedFixtures,
+      fixtureMap,
+      fixtureIds,
+      eventsWithScores,
+      eventMap,
+      eventIds,
+    };
+  }
+
+  /**
+   * Re-grade picks already marked won/lost/void using current fixture/event scores; updates coupon outcome and
+   * escrow when the result flips (e.g. wrong score while API quota was exhausted). Run after scores are correct.
+   */
+  async reconcileMisgradedSettlements(): Promise<{
+    picksRegraded: number;
+    ticketsOutcomeChanged: number;
+    escrowTicketsAdjusted: number;
+    errors: string[];
+  }> {
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    const { fixtureMap, fixtureIds, eventMap, eventIds } = await this.loadFinishedFixtureAndEventMaps(twoHoursAgo);
+
+    type Computed = 'won' | 'lost' | 'void';
+    const deltas: { pickId: number; accumulatorId: number; computed: Computed }[] = [];
+
+    if (fixtureIds.length > 0) {
+      const picks = await this.pickRepo.find({
+        where: { fixtureId: In(fixtureIds), result: In(['won', 'lost', 'void']) },
+      });
+      for (const pick of picks) {
+        const fix = fixtureMap.get(pick.fixtureId!);
+        if (!fix || fix.homeScore == null || fix.awayScore == null) continue;
+        const computed = determinePickResult(
+          pick.prediction,
+          fix.homeScore,
+          fix.awayScore,
+          fix.homeTeamName,
+          fix.awayTeamName,
+        );
+        if (!computed || computed === pick.result) continue;
+        deltas.push({ pickId: pick.id, accumulatorId: pick.accumulatorId, computed });
+      }
+    }
+
+    if (eventIds.length > 0) {
+      const picks = await this.pickRepo.find({
+        where: { eventId: In(eventIds), result: In(['won', 'lost', 'void']) },
+      });
+      for (const pick of picks) {
+        const evt = eventMap.get(pick.eventId!);
+        if (!evt || evt.homeScore == null || evt.awayScore == null) continue;
+        const computed = determinePickResult(
+          pick.prediction,
+          evt.homeScore,
+          evt.awayScore,
+          evt.homeTeam,
+          evt.awayTeam,
+        );
+        if (!computed || computed === pick.result) continue;
+        deltas.push({ pickId: pick.id, accumulatorId: pick.accumulatorId, computed });
+      }
+    }
+
+    const ticketIds = [...new Set(deltas.map((d) => d.accumulatorId))];
+    const errors: string[] = [];
+    let picksRegraded = 0;
+    let ticketsOutcomeChanged = 0;
+    let escrowTicketsAdjusted = 0;
+
+    for (const ticketId of ticketIds) {
+      const ticketDeltas = deltas.filter((d) => d.accumulatorId === ticketId);
+      try {
+        const summary = await this.dataSource.transaction(async (manager) => {
+          const pRepo = manager.getRepository(AccumulatorPick);
+          const tRepo = manager.getRepository(AccumulatorTicket);
+
+          for (const d of ticketDeltas) {
+            await pRepo.update({ id: d.pickId }, { result: d.computed });
+          }
+
+          const ticket = await tRepo.findOne({ where: { id: ticketId } });
+          if (!ticket) {
+            return { picks: ticketDeltas.length, changed: false, escrow: false };
+          }
+
+          const picks = await pRepo.find({ where: { accumulatorId: ticketId } });
+          if (!picks.length || !picks.every((p) => p.result !== 'pending')) {
+            return { picks: ticketDeltas.length, changed: false, escrow: false };
+          }
+
+          const newAgg = this.aggregateTicketResult(picks);
+          if (newAgg === ticket.result) {
+            return { picks: ticketDeltas.length, changed: false, escrow: false };
+          }
+
+          const oldResult = ticket.result;
+          let escrowAdjusted = false;
+          if (ticket.isMarketplace && Number(ticket.price) > 0 && this.escrowWalletFlipNeeded(oldResult, newAgg)) {
+            const titleRow = await tRepo.findOne({ where: { id: ticketId }, select: ['title'] });
+            const title = titleRow?.title ?? `Pick #${ticketId}`;
+            if (oldResult === 'won') {
+              await this.escrowWonToLostOrVoid(manager, ticketId, ticket.userId, title, newAgg === 'void');
+              escrowAdjusted = true;
+            } else if (newAgg === 'won') {
+              await this.escrowLostOrVoidToWon(manager, ticketId, ticket.userId, title);
+              escrowAdjusted = true;
+            }
+          }
+
+          await tRepo.update({ id: ticketId }, { result: newAgg, status: newAgg });
+          return { picks: ticketDeltas.length, changed: true, escrow: escrowAdjusted };
+        });
+
+        picksRegraded += summary.picks;
+        if (summary.changed) ticketsOutcomeChanged += 1;
+        if (summary.escrow) escrowTicketsAdjusted += 1;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        errors.push(`Ticket ${ticketId}: ${msg}`);
+        this.logger.warn(`Reconcile failed for ticket ${ticketId}: ${msg}`);
+      }
+    }
+
+    if (picksRegraded > 0) {
+      this.logger.log(
+        `Reconcile: ${picksRegraded} pick(s) regraded, ${ticketsOutcomeChanged} coupon(s) outcome updated, ${escrowTicketsAdjusted} escrow adjustment(s)`,
+      );
+    }
+
+    return { picksRegraded, ticketsOutcomeChanged, escrowTicketsAdjusted, errors };
+  }
+
+  private aggregateTicketResult(picks: AccumulatorPick[]): 'won' | 'lost' | 'void' {
+    const hasLost = picks.some((p) => p.result === 'lost');
+    const hasVoid = picks.some((p) => p.result === 'void');
+    return hasLost ? 'lost' : hasVoid ? 'void' : 'won';
+  }
+
+  private escrowWalletFlipNeeded(oldResult: string, newResult: string): boolean {
+    return (oldResult === 'won') !== (newResult === 'won');
+  }
+
+  private async escrowLostOrVoidToWon(
+    manager: EntityManager,
+    ticketId: number,
+    sellerId: number,
+    title: string,
+  ): Promise<void> {
+    const eRepo = manager.getRepository(EscrowFund);
+    const funds = await eRepo.find({ where: { pickId: ticketId, status: 'refunded' } });
+    if (funds.length === 0) {
+      const released = await eRepo.find({ where: { pickId: ticketId, status: 'released' } });
+      if (released.length > 0) {
+        throw new Error('Escrow already released for this coupon; aborting win reconciliation');
+      }
+      return;
+    }
+
+    const apiRow = await manager.getRepository(ApiSettings).findOne({ where: { id: 1 } });
+    const commissionRate = Math.min(50, Math.max(0, Number(apiRow?.platformCommissionRate ?? 30.0)));
+    const processedUsers = new Set<number>();
+
+    for (const f of funds) {
+      if (processedUsers.has(f.userId)) {
+        this.logger.warn(`Duplicate escrow row for user ${f.userId} on pick ${ticketId}; skipping duplicate in reconcile`);
+        continue;
+      }
+      const gross = Number(f.amount);
+      await this.walletService.debit(
+        f.userId,
+        gross,
+        'settlement_correction',
+        `reconcile-debit-refund-${ticketId}-u${f.userId}`,
+        `Score correction: reclaim mistaken refund for "${title}"`,
+        manager,
+      );
+      const commission = Number((gross * commissionRate / 100).toFixed(2));
+      const netPayout = Number((gross - commission).toFixed(2));
+      await this.walletService.credit(
+        sellerId,
+        netPayout,
+        'payout',
+        `reconcile-payout-${ticketId}-u${f.userId}`,
+        `Score correction payout for "${title}"`,
+        manager,
+      );
+      processedUsers.add(f.userId);
+      f.status = 'released';
+      await eRepo.save(f);
+    }
+  }
+
+  private async escrowWonToLostOrVoid(
+    manager: EntityManager,
+    ticketId: number,
+    sellerId: number,
+    title: string,
+    isVoid: boolean,
+  ): Promise<void> {
+    const eRepo = manager.getRepository(EscrowFund);
+    const funds = await eRepo.find({ where: { pickId: ticketId, status: 'released' } });
+    if (funds.length === 0) {
+      const refunded = await eRepo.find({ where: { pickId: ticketId, status: 'refunded' } });
+      if (refunded.length > 0) {
+        throw new Error('Escrow already refunded for this coupon; aborting reversal');
+      }
+      return;
+    }
+
+    const apiRow = await manager.getRepository(ApiSettings).findOne({ where: { id: 1 } });
+    const commissionRate = Math.min(50, Math.max(0, Number(apiRow?.platformCommissionRate ?? 30.0)));
+    const processedUsers = new Set<number>();
+
+    for (const f of funds) {
+      if (processedUsers.has(f.userId)) {
+        this.logger.warn(`Duplicate escrow row for user ${f.userId} on pick ${ticketId}; skipping duplicate in reconcile`);
+        continue;
+      }
+      const gross = Number(f.amount);
+      const commission = Number((gross * commissionRate / 100).toFixed(2));
+      const netPayout = Number((gross - commission).toFixed(2));
+      await this.walletService.debit(
+        sellerId,
+        netPayout,
+        'settlement_correction',
+        `reconcile-rev-payout-${ticketId}-u${f.userId}`,
+        `Score correction: reverse payout for "${title}"`,
+        manager,
+      );
+      await this.walletService.credit(
+        f.userId,
+        gross,
+        'refund',
+        `reconcile-recredit-buyer-${ticketId}-u${f.userId}`,
+        isVoid
+          ? `Score correction: refund for voided "${title}"`
+          : `Score correction: refund for lost "${title}"`,
+        manager,
+      );
+      processedUsers.add(f.userId);
+      f.status = 'refunded';
+      await eRepo.save(f);
+    }
+  }
+
+  /**
+   * Settle picks for finished fixtures. Call periodically (e.g. cron every 4h) or via POST /admin/settlement/run.
+   *
+   * Flow:
+   * 1. Find finished fixtures: status=FT OR (has scores + match_date > 2h ago) — catches missed API updates
+   * 2. Update any non-FT fixtures with scores to status=FT
+   * 3. For each pending pick on those fixtures, determine won/lost via determinePickResult
+   * 4. For tickets where all picks are settled, set ticket result (won/lost/void) and status
+   * 5. If marketplace coupon with price > 0: settle escrow (payout tipster or refund buyer)
+   *
+   * Supported markets: Match Winner, Double Chance, BTTS, Over/Under 1.5/2.5/3.5, Correct Score.
+   * Unmatched predictions log a warning so new market types can be added.
+   */
+  async runSettlement(): Promise<{
+    picksUpdated: number;
+    ticketsSettled: number;
+  }> {
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    const { fixtureMap, fixtureIds, eventMap, eventIds, finishedFixtures, eventsWithScores } =
+      await this.loadFinishedFixtureAndEventMaps(twoHoursAgo);
+
+    this.logger.debug(
+      `Settlement: ${fixtureIds.length} finished fixtures, ${finishedFixtures.length} total`,
+    );
 
     const pendingFixturePicks = fixtureIds.length > 0
       ? await this.pickRepo.find({ where: { fixtureId: In(fixtureIds), result: 'pending' } })
@@ -141,7 +399,6 @@ export class SettlementService {
       `Settlement: ${eventsWithScores.length} finished sport_events, ${pendingFixturePicks.length} pending fixture picks, ${pendingEventPicks.length} pending event picks`,
     );
 
-    const fixtureMap = new Map(finishedFixtures.map((f) => [f.id, f]));
     let picksUpdated = 0;
 
     // Auto-void picks on fixtures that are postponed/cancelled (no result, match date in past)

@@ -715,6 +715,14 @@ export class AdminService {
    * Run full settlement: sync Odds API results + API-Sports volleyball results,
    * then settle picks on finished fixtures/events.
    */
+  /**
+   * Re-grade settled coupons when fixture/event scores were corrected after a mistaken settlement (e.g. API quota).
+   * Does not fetch new results — run Fetch Results first if needed.
+   */
+  async runSettlementReconcile() {
+    return this.settlementService.reconcileMisgradedSettlements();
+  }
+
   async runSettlement() {
     const [oddsSync, volleyballSync] = await Promise.all([
       this.oddsApiSettlementService.syncResults(),

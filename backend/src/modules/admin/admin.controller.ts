@@ -117,6 +117,13 @@ export class AdminController {
     return this.adminService.runSettlement();
   }
 
+  /** Re-grade already-settled picks vs current DB scores; adjusts wallets when coupon outcome flips (wrong score / API issues). */
+  @Post('settlement/reconcile')
+  async runSettlementReconcile(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.adminService.runSettlementReconcile();
+  }
+
   /** Manually settle a sport event (e.g. when Odds API doesn't return it — matches >3 days old) */
   @Post('sport-events/:id/settle')
   async manuallySettleEvent(

@@ -50,8 +50,15 @@ export default function AdminFixturesPage() {
   const [syncing, setSyncing] = useState(false);
   const [fetchingResults, setFetchingResults] = useState(false);
   const [settling, setSettling] = useState(false);
+  const [reconciling, setReconciling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resultMsg, setResultMsg] = useState<{ updated: number; settled?: number } | null>(null);
+  const [reconcileMsg, setReconcileMsg] = useState<{
+    picksRegraded: number;
+    ticketsOutcomeChanged: number;
+    escrowTicketsAdjusted: number;
+    errors: string[];
+  } | null>(null);
   const [syncResult, setSyncResult] = useState<{ fixtures: number; leagues: number } | null>(null);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({ countries: [], tournaments: [], leagues: [] });
   const [selectedCountry, setSelectedCountry] = useState('');
@@ -263,6 +270,36 @@ export default function AdminFixturesPage() {
     }
   };
 
+  const reconcileSettledCoupons = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setReconciling(true);
+    setError(null);
+    setReconcileMsg(null);
+    try {
+      const res = await fetch(`${getApiUrl()}/admin/settlement/reconcile`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = res.ok ? await res.json().catch(() => null) : null;
+      if (res.ok && data) {
+        setReconcileMsg({
+          picksRegraded: data.picksRegraded ?? 0,
+          ticketsOutcomeChanged: data.ticketsOutcomeChanged ?? 0,
+          escrowTicketsAdjusted: data.escrowTicketsAdjusted ?? 0,
+          errors: Array.isArray(data.errors) ? data.errors : [],
+        });
+        load();
+      } else {
+        setError('Reconcile failed. Ensure you are admin and the backend is up.');
+      }
+    } catch {
+      setError('Network error during reconcile.');
+    } finally {
+      setReconciling(false);
+    }
+  };
+
   const sync = async () => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -451,7 +488,7 @@ export default function AdminFixturesPage() {
           <div className="flex flex-wrap gap-3">
             <button
               onClick={sync}
-              disabled={syncing || fetchingResults || settling}
+              disabled={syncing || fetchingResults || settling || reconciling}
               className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 disabled:opacity-50 transition-all shadow-md"
             >
               {syncing ? (
@@ -466,14 +503,14 @@ export default function AdminFixturesPage() {
             </button>
             <button
               onClick={() => syncOdds(false)}
-              disabled={syncing || fetchingResults || settling}
+              disabled={syncing || fetchingResults || settling || reconciling}
               className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 transition-all shadow-md"
             >
               Sync Odds (new only)
             </button>
             <button
               onClick={() => syncOdds(true)}
-              disabled={syncing || fetchingResults || settling}
+              disabled={syncing || fetchingResults || settling || reconciling}
               title="Re-fetch odds for all upcoming fixtures (BTTS, Correct Score, etc.)"
               className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-emerald-600 to-emerald-700 text-white hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 transition-all shadow-md"
             >
@@ -481,7 +518,7 @@ export default function AdminFixturesPage() {
             </button>
             <button
               onClick={() => syncOdds(false, 500)}
-              disabled={syncing || fetchingResults || settling}
+              disabled={syncing || fetchingResults || settling || reconciling}
               title="Sync odds for up to 500 fixtures that don't have odds yet (use after enabling all leagues)"
               className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-cyan-600 to-cyan-700 text-white hover:from-cyan-700 hover:to-cyan-800 disabled:opacity-50 transition-all shadow-md"
             >
@@ -496,7 +533,7 @@ export default function AdminFixturesPage() {
           <div className="flex flex-wrap gap-3 items-start">
             <button
               onClick={fetchResults}
-              disabled={syncing || fetchingResults || settling}
+              disabled={syncing || fetchingResults || settling || reconciling}
               title="Fetch scores for finished matches from API-Sports (same as the cron, but manual)"
               className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 disabled:opacity-50 transition-all shadow-md"
             >
@@ -512,7 +549,7 @@ export default function AdminFixturesPage() {
             </button>
             <button
               onClick={fetchResultsAndSettle}
-              disabled={syncing || fetchingResults || settling}
+              disabled={syncing || fetchingResults || settling || reconciling}
               title="Fetch results from API-Sports, then immediately settle pending coupons. Use when matches have finished but coupons are still pending."
               className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-violet-600 to-violet-700 text-white hover:from-violet-700 hover:to-violet-800 disabled:opacity-50 transition-all shadow-md"
             >
@@ -520,18 +557,57 @@ export default function AdminFixturesPage() {
                 <span className="flex items-center gap-2">
                   <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <path className="opacity-75" fill="currentColor" d="M 4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                   {settling ? 'Settling coupons…' : 'Fetching results…'}
                 </span>
               ) : '⚡ Fetch Results & Settle Coupons'}
             </button>
+            <button
+              type="button"
+              onClick={reconcileSettledCoupons}
+              disabled={syncing || fetchingResults || settling || reconciling}
+              title="After scores are corrected in the DB, re-grade settled picks and fix escrow if the coupon should have won instead of lost (or vice versa). Does not fetch from the API."
+              className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-rose-600 to-rose-700 text-white hover:from-rose-700 hover:to-rose-800 disabled:opacity-50 transition-all shadow-md"
+            >
+              {reconciling ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Reconciling…
+                </span>
+              ) : (
+                '↩ Reconcile settled coupons'
+              )}
+            </button>
             <p className="w-full text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               Use when matches have finished but coupons are still &quot;pending&quot;. The cron runs every 5 min — this forces it immediately.
+              {' '}
+              <strong className="text-gray-600 dark:text-gray-300">Reconcile</strong> is for when scores were wrong at settlement (e.g. API quota): fetch correct scores first, then run it — it updates already-settled coupons and wallets if the outcome flips.
             </p>
           </div>
         </div>
 
+        {reconcileMsg && !error && (
+          <div className="mb-6 bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 rounded-lg p-4 text-rose-900 dark:text-rose-100 shadow-md">
+            <div className="font-medium space-y-1">
+              <p>
+                Reconcile: <strong>{reconcileMsg.picksRegraded}</strong> pick{reconcileMsg.picksRegraded !== 1 ? 's' : ''} regraded,{' '}
+                <strong>{reconcileMsg.ticketsOutcomeChanged}</strong> coupon{reconcileMsg.ticketsOutcomeChanged !== 1 ? 's' : ''} outcome updated,{' '}
+                <strong>{reconcileMsg.escrowTicketsAdjusted}</strong> escrow adjustment{reconcileMsg.escrowTicketsAdjusted !== 1 ? 's' : ''}.
+              </p>
+              {reconcileMsg.errors.length > 0 && (
+                <ul className="list-disc pl-5 text-sm text-rose-800 dark:text-rose-200">
+                  {reconcileMsg.errors.map((e) => (
+                    <li key={e}>{e}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
         {resultMsg && !error && (
           <div className="mb-6 bg-violet-50 dark:bg-violet-900/20 border-l-4 border-violet-500 rounded-lg p-4 text-violet-800 dark:text-violet-200 shadow-md">
             <div className="flex items-center gap-2">
