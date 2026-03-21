@@ -11,6 +11,19 @@ import {
   AdminNotificationType,
 } from './admin-notification-templates.config';
 
+/** Premium transactional palette — dark surround, gold accent, crisp card */
+const BR = {
+  outerBg:
+    'background:linear-gradient(165deg,#05070d 0%,#0c1224 42%,#080b14 100%);',
+  cardBg: '#fafbfc',
+  gold: '#c9a227',
+  goldSoft: 'rgba(201,162,39,0.35)',
+  ink: '#0f172a',
+  muted: '#64748b',
+  line: '#e2e8f0',
+  adminInk: '#0c1224',
+} as const;
+
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
@@ -20,6 +33,56 @@ export class EmailService {
     private smtpRepo: Repository<SmtpSettings>,
     private usersService: UsersService,
   ) { }
+
+  private escapeEmailText(s: string): string {
+    return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  /**
+   * Shared premium shell: gradient backdrop, gold hairline, elevated card.
+   */
+  private premiumDocument(innerRows: string, footerExtra?: string): string {
+    const foot = footerExtra
+      ? `<p style="font-size:11px;color:#64748b;margin:20px 0 0;text-align:center;line-height:1.5;">${footerExtra}</p>`
+      : '';
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light dark"/>
+</head>
+<body style="margin:0;padding:0;${BR.outerBg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:520px;background:${BR.cardBg};border-radius:20px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);border:1px solid ${BR.goldSoft};">
+          <tr>
+            <td style="height:5px;background:linear-gradient(90deg,#8b6914,#e8d48b,#c9a227,#e8d48b,#8b6914);"></td>
+          </tr>
+          ${innerRows}
+        </table>
+        <p style="font-size:11px;color:#64748b;margin:24px 0 0;text-align:center;letter-spacing:0.06em;text-transform:uppercase;">BetRollover</p>
+        ${foot}
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+  }
+
+  private brandHeader(eyebrow: string, title: string, subtitle?: string): string {
+    const sub = subtitle
+      ? `<p style="font-size:15px;color:${BR.muted};margin:12px 0 0;line-height:1.5;">${subtitle}</p>`
+      : '';
+    return `<tr>
+  <td style="padding:36px 36px 8px;text-align:center;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.28em;color:${BR.gold};text-transform:uppercase;">${eyebrow}</div>
+    <h1 style="font-size:22px;font-weight:700;color:${BR.ink};margin:14px 0 0;letter-spacing:-0.02em;">${title}</h1>
+    ${sub}
+  </td>
+</tr>`;
+  }
 
   private async getFromWithSettings(): Promise<string> {
     const settings = await this.smtpRepo.findOne({ where: { id: 1 } });
@@ -126,75 +189,110 @@ export class EmailService {
     return { sent: false, error: lastError };
   }
 
-  async sendPurchaseConfirmation(to: string, pickTitle: string, amount: number) {
-    return this.send({
-      to,
-      subject: `Purchase confirmed: ${pickTitle}`,
-      text: `You purchased "${pickTitle}" for GHS ${amount.toFixed(2)}. Funds are held in escrow until settlement.`,
-    });
+  /**
+   * Premium purchase receipt (transactional). Sent on every successful marketplace purchase.
+   */
+  async sendPurchaseConfirmation(to: string, pickTitle: string, amount: number, pickId?: number) {
+    const appUrl = process.env.APP_URL || 'http://localhost:6002';
+    const safeTitle = this.escapeEmailText(pickTitle);
+    const ctaPath = pickId != null ? `/coupons/${pickId}` : '/my-purchases';
+    const ctaUrl = `${appUrl}${ctaPath}`;
+    const amountLabel = amount > 0 ? `GHS ${amount.toFixed(2)}` : 'Free pick';
+    const subject = `Receipt · ${pickTitle}`;
+
+    const inner = `${this.brandHeader('Purchase confirmed', 'You\'re in', 'Your pick is secured. Funds stay in escrow until the result is settled.')}
+<tr>
+  <td style="padding:8px 36px 28px;">
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f1f5f9;border-radius:14px;border:1px solid ${BR.line};">
+      <tr>
+        <td style="padding:20px 22px;">
+          <p style="margin:0 0 8px;font-size:12px;font-weight:600;color:${BR.muted};text-transform:uppercase;letter-spacing:0.06em;">Pick</p>
+          <p style="margin:0;font-size:17px;font-weight:600;color:${BR.ink};line-height:1.4;">${safeTitle}</p>
+          <p style="margin:16px 0 0;font-size:12px;font-weight:600;color:${BR.muted};text-transform:uppercase;letter-spacing:0.06em;">Amount</p>
+          <p style="margin:6px 0 0;font-size:24px;font-weight:700;color:${BR.ink};letter-spacing:-0.02em;">${amountLabel}</p>
+          ${amount > 0 ? `<p style="margin:14px 0 0;font-size:13px;color:${BR.muted};line-height:1.55;">Your wallet was debited; the tipster is paid after settlement minus platform fees where applicable.</p>` : ''}
+        </td>
+      </tr>
+    </table>
+    <div style="text-align:center;margin-top:26px;">
+      <a href="${ctaUrl}" style="display:inline-block;background:linear-gradient(180deg,#d4af37,#b8941f);color:#0c1224;padding:14px 32px;text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(201,162,39,0.35);">View pick</a>
+    </div>
+  </td>
+</tr>`;
+
+    const html = this.premiumDocument(inner);
+    const text = `Purchase confirmed\n\nPick: ${pickTitle}\nAmount: ${amountLabel}\nFunds remain in escrow until settlement.\n\nOpen: ${ctaUrl}\n\n— BetRollover`;
+    return this.send({ to, subject, text, html });
   }
 
   async sendPickApproved(to: string, pickTitle: string) {
+    const safe = this.escapeEmailText(pickTitle);
+    const inner = `${this.brandHeader('Marketplace', 'Pick live', `“${safe}” is on the marketplace.`)}
+<tr><td style="padding:8px 36px 36px;text-align:center;">
+  <p style="font-size:15px;color:${BR.muted};line-height:1.6;margin:0;">You’ll receive settlement and payout emails when results are in.</p>
+</td></tr>`;
     return this.send({
       to,
       subject: `Pick approved: ${pickTitle}`,
-      text: `Your pick "${pickTitle}" has been approved and is now live on the marketplace.`,
+      text: `Your pick "${pickTitle}" has been approved and is now live.`,
+      html: this.premiumDocument(inner),
     });
   }
 
   async sendPickRejected(to: string, pickTitle: string) {
+    const safe = this.escapeEmailText(pickTitle);
+    const inner = `${this.brandHeader('Marketplace', 'Pick not published', `We couldn’t list “${safe}”.`)}
+<tr><td style="padding:8px 36px 36px;text-align:center;">
+  <p style="font-size:15px;color:${BR.muted};line-height:1.6;margin:0;">Contact support if you need more detail.</p>
+</td></tr>`;
     return this.send({
       to,
       subject: `Pick not approved: ${pickTitle}`,
       text: `Your pick "${pickTitle}" was not approved.`,
+      html: this.premiumDocument(inner),
     });
   }
 
   async sendTipsterApproved(to: string) {
+    const inner = `${this.brandHeader('Tipster', 'Account active', 'You can create picks. Paid listings require meeting the platform minimum ROI.')}
+<tr><td style="padding:8px 36px 36px;text-align:center;">
+  <p style="font-size:15px;color:${BR.muted};line-height:1.6;margin:0;">Post free picks to build your record if you’re below the threshold.</p>
+</td></tr>`;
     return this.send({
       to,
-      subject: 'Tipster request approved',
-      text: 'Your tipster request has been approved. You can now create and sell picks!',
+      subject: 'Your tipster account is active',
+      text: 'Your tipster account is active. You can create picks. Paid picks require meeting the platform minimum ROI.',
+      html: this.premiumDocument(inner),
     });
   }
 
   async sendTipsterRejected(to: string) {
+    const inner = `${this.brandHeader('Tipster', 'Status update', 'We could not enable tipster selling on your account at this time.')}
+<tr><td style="padding:8px 36px 36px;text-align:center;">
+  <p style="font-size:15px;color:${BR.muted};line-height:1.6;margin:0;">Eligibility follows platform rules and ROI requirements. Reply via support if you have questions.</p>
+</td></tr>`;
     return this.send({
       to,
-      subject: 'Tipster request not approved',
-      text: 'Your tipster request was not approved. Contact support for more info.',
+      subject: 'Tipster status update',
+      text: 'We could not enable tipster selling on your account. Contact support for details.',
+      html: this.premiumDocument(inner),
     });
   }
 
   async sendRegistrationOtp(to: string, code: string) {
     const expiryMinutes = 10;
-    const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your verification code</title>
-</head>
-<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f1f5f9;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto;padding:32px 16px;">
-    <tr>
-      <td style="background:#fff;border-radius:16px;padding:40px;box-shadow:0 4px 6px rgba(0,0,0,0.1);text-align:center;">
-        <div style="font-size:22px;font-weight:700;color:#0f172a;margin-bottom:8px;">BetRollover</div>
-        <p style="font-size:16px;color:#64748b;margin:0 0 24px;">Enter this code to complete your registration:</p>
-        <p style="font-size:32px;font-weight:700;letter-spacing:8px;color:#10b981;margin:16px 0;">${code}</p>
-        <p style="font-size:13px;color:#94a3b8;">Valid for ${expiryMinutes} minutes. Do not share this code.</p>
-        <p style="font-size:12px;color:#cbd5e1;margin-top:32px;">— BetRollover Team</p>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+    const inner = `${this.brandHeader('Security', 'Verify it’s you', 'Enter the code below to finish signing up.')}
+<tr>
+  <td style="padding:8px 36px 32px;text-align:center;">
+    <p style="font-size:36px;font-weight:800;letter-spacing:0.35em;color:${BR.ink};margin:8px 0 20px;">${this.escapeEmailText(code)}</p>
+    <p style="font-size:13px;color:${BR.muted};margin:0;">Valid for ${expiryMinutes} minutes. Do not share this code.</p>
+  </td>
+</tr>`;
     return this.send({
       to,
       subject: 'Your BetRollover verification code',
       text: `Your verification code is: ${code}\n\nValid for ${expiryMinutes} minutes. Do not share this code.\n\n— BetRollover`,
-      html,
+      html: this.premiumDocument(inner),
     });
   }
 
@@ -202,84 +300,58 @@ export class EmailService {
     const expiryMinutes = 10;
     const appUrl = process.env.APP_URL || 'http://localhost:6002';
     const resetUrl = `${appUrl}/forgot-password?email=${encodeURIComponent(to)}&code=${code}`;
-
-    const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Password reset code</title>
-</head>
-<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f1f5f9;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto;padding:32px 16px;">
-    <tr>
-      <td style="background:#fff;border-radius:16px;padding:40px;box-shadow:0 4px 6px rgba(0,0,0,0.1);text-align:center;">
-        <div style="font-size:22px;font-weight:700;color:#0f172a;margin-bottom:8px;">BetRollover</div>
-        <p style="font-size:16px;color:#64748b;margin:0 0 24px;">Use this code to reset your password:</p>
-        <p style="font-size:32px;font-weight:700;letter-spacing:8px;color:#10b981;margin:16px 0;">${code}</p>
-        <a href="${resetUrl}" style="display:inline-block;background:#10b981;color:#fff;padding:14px 28px;text-decoration:none;border-radius:10px;font-weight:600;font-size:15px;margin:16px 0;">Reset Password Now</a>
-        <p style="font-size:13px;color:#94a3b8;">Valid for ${expiryMinutes} minutes. If you didn't request this, ignore this email.</p>
-        <p style="font-size:12px;color:#cbd5e1;margin-top:32px;">— BetRollover Team</p>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+    const inner = `${this.brandHeader('Security', 'Reset your password', 'Use the code or the secure link below.')}
+<tr>
+  <td style="padding:8px 36px 28px;text-align:center;">
+    <p style="font-size:34px;font-weight:800;letter-spacing:0.3em;color:${BR.ink};margin:8px 0 20px;">${this.escapeEmailText(code)}</p>
+    <a href="${resetUrl}" style="display:inline-block;background:linear-gradient(180deg,#d4af37,#b8941f);color:#0c1224;padding:14px 28px;text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;">Open reset page</a>
+    <p style="font-size:13px;color:${BR.muted};margin:20px 0 0;">Valid for ${expiryMinutes} minutes. If you didn’t request this, ignore this email.</p>
+  </td>
+</tr>`;
     return this.send({
       to,
       subject: 'BetRollover password reset code',
-      text: `Your password reset code is: ${code}\n\nReset link: ${resetUrl}\n\nValid for ${expiryMinutes} minutes. If you didn't request this, ignore this email.\n\n— BetRollover`,
-      html,
+      text: `Your password reset code is: ${code}\n\nReset link: ${resetUrl}\n\nValid for ${expiryMinutes} minutes.\n\n— BetRollover`,
+      html: this.premiumDocument(inner),
     });
   }
 
   async sendVerificationEmail(to: string, verifyUrl: string, displayName?: string) {
-    const name = displayName || 'there';
-    const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verify your email</title>
-</head>
-<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f1f5f9;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto;padding:32px 16px;">
-    <tr>
-      <td style="background:#fff;border-radius:16px;padding:40px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-        <div style="font-size:22px;font-weight:700;color:#0f172a;margin-bottom:8px;">BetRollover</div>
-        <p style="font-size:16px;color:#334155;margin:0 0 24px;">Hi ${name},</p>
-        <p style="font-size:16px;color:#64748b;margin:0 0 24px;">Please verify your email by clicking the button below:</p>
-        <a href="${verifyUrl}" style="display:inline-block;background:#10b981;color:#fff;padding:14px 28px;text-decoration:none;border-radius:10px;font-weight:600;font-size:15px;">Verify Email</a>
-        <p style="font-size:13px;color:#94a3b8;margin-top:24px;">Or copy this link: ${verifyUrl}</p>
-        <p style="font-size:12px;color:#cbd5e1;margin-top:32px;">The link expires in 24 hours.<br>— BetRollover Team</p>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+    const name = this.escapeEmailText(displayName || 'there');
+    const inner = `${this.brandHeader('Account', 'Confirm your email', `Hi ${name}, one tap to unlock wallet and picks.`)}
+<tr>
+  <td style="padding:8px 36px 36px;text-align:center;">
+    <a href="${verifyUrl}" style="display:inline-block;background:linear-gradient(180deg,#d4af37,#b8941f);color:#0c1224;padding:14px 32px;text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;">Verify email</a>
+    <p style="font-size:12px;color:${BR.muted};margin:22px 0 0;word-break:break-all;">${this.escapeEmailText(verifyUrl)}</p>
+    <p style="font-size:12px;color:${BR.muted};margin:16px 0 0;">Link expires in 24 hours.</p>
+  </td>
+</tr>`;
     return this.send({
       to,
       subject: 'Verify your BetRollover email',
-      text: `Hi ${name},\n\nPlease verify your email by clicking this link:\n${verifyUrl}\n\nThe link expires in 24 hours.\n\n— BetRollover`,
-      html,
+      text: `Hi ${displayName || 'there'},\n\nVerify your email:\n${verifyUrl}\n\nExpires in 24 hours.\n\n— BetRollover`,
+      html: this.premiumDocument(inner),
     });
   }
 
   async sendSettlement(to: string, pickTitle: string, won: boolean) {
+    const safe = this.escapeEmailText(pickTitle);
+    const inner = `${this.brandHeader('Settlement', won ? 'Pick won' : 'Pick settled', `“${safe}”`)}
+<tr><td style="padding:8px 36px 36px;text-align:center;">
+  <p style="font-size:15px;color:${BR.muted};line-height:1.6;margin:0;">${won ? 'Nice hit — check your wallet for any refunds or winnings.' : 'Refund processing depends on the result — see your purchases.'}</p>
+</td></tr>`;
     return this.send({
       to,
       subject: won ? `Pick won: ${pickTitle}` : `Pick settled: ${pickTitle}`,
       text: won
         ? `Your purchased pick "${pickTitle}" won!`
-        : `Your purchased pick "${pickTitle}" lost. Refund has been sent to your wallet.`,
+        : `Your purchased pick "${pickTitle}" settled. Check your wallet for refunds if applicable.`,
+      html: this.premiumDocument(inner),
     });
   }
 
   /**
-   * Send a notification email with professional HTML template.
-   * Uses notification-types.config for subject, CTA text, and category-based styling.
+   * In-app notification email with premium card + category accent bar.
    */
   async sendNotificationEmail(to: string, data: {
     type: string;
@@ -294,46 +366,38 @@ export class EmailService {
     const ctaText = getCtaText(data.type);
     const accentColor = getCategoryColor(data.type);
     const safeMessage = (data.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
-    const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${subject}</title>
-</head>
-<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;background:#f1f5f9;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;padding:32px 16px;">
-    <tr>
-      <td>
-        <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1),0 2px 4px -2px rgba(0,0,0,0.1);overflow:hidden;">
-          <tr>
-            <td style="background:${accentColor};padding:24px 32px;text-align:center;">
-              <div style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">BetRollover</div>
-              <div style="font-size:13px;color:rgba(255,255,255,0.9);margin-top:4px;">${data.title}</div>
-            </tr>
-          </tr>
-          <tr>
-            <td style="padding:32px;">
-              <p style="font-size:16px;line-height:1.65;color:#334155;margin:0 0 24px;">${safeMessage}</p>
-              ${data.link ? `
-              <a href="${ctaUrl}" style="display:inline-block;background:${accentColor};color:#fff;padding:14px 28px;text-decoration:none;border-radius:10px;font-weight:600;font-size:15px;">${ctaText}</a>
-              ` : ''}
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:24px 32px;border-top:1px solid #e2e8f0;">
-              <p style="font-size:12px;color:#94a3b8;margin:0;">— BetRollover Team</p>
-              <p style="font-size:11px;color:#cbd5e1;margin:8px 0 0 0;">Manage email preferences in your account settings.</p>
-            </td>
-          </tr>
-        </table>
-        <p style="font-size:11px;color:#94a3b8;text-align:center;margin-top:24px;">${data.metadata?.followerAlert === '1' ? 'You received this because you follow this tipster on BetRollover.' : 'You received this because you have email notifications enabled.'}</p>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+    const safeTitle = this.escapeEmailText(data.title);
+
+    const inner = `<tr>
+  <td style="height:4px;background:${accentColor};"></td>
+</tr>
+<tr>
+  <td style="padding:32px 32px 8px;text-align:center;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.22em;color:${accentColor};text-transform:uppercase;">BetRollover</div>
+    <h1 style="font-size:20px;font-weight:700;color:${BR.ink};margin:12px 0 0;letter-spacing:-0.02em;">${safeTitle}</h1>
+  </td>
+</tr>
+<tr>
+  <td style="padding:8px 32px 28px;">
+    <p style="font-size:16px;line-height:1.65;color:#334155;margin:0 0 22px;">${safeMessage}</p>
+    ${data.link ? `
+    <div style="text-align:center;">
+      <a href="${ctaUrl}" style="display:inline-block;background:linear-gradient(180deg,${accentColor},${accentColor});color:#fff;padding:13px 26px;text-decoration:none;border-radius:12px;font-weight:600;font-size:15px;box-shadow:0 4px 14px rgba(15,23,42,0.12);">${ctaText}</a>
+    </div>` : ''}
+  </td>
+</tr>
+<tr>
+  <td style="padding:18px 28px 28px;border-top:1px solid ${BR.line};">
+    <p style="font-size:12px;color:#94a3b8;margin:0;">— BetRollover</p>
+    <p style="font-size:11px;color:#cbd5e1;margin:8px 0 0 0;">Manage email preferences in your account settings.</p>
+  </td>
+</tr>`;
+
+    const footNote =
+      data.metadata?.followerAlert === '1'
+        ? 'You received this because you follow this tipster.'
+        : 'You received this because email notifications are enabled for your account.';
+    const html = this.premiumDocument(inner, footNote);
     return this.send({
       to,
       subject,
@@ -343,9 +407,7 @@ export class EmailService {
   }
 
   /**
-   * Send admin-only notification. Uses templates when type is provided.
-   * Sends to: all users with role=admin, plus optional inbox from smtp_settings.adminNotificationEmail,
-   * plus comma-separated ADMIN_NOTIFICATION_EMAIL env (deduplicated).
+   * Admin-only notification. Uses templates when type is provided.
    */
   async sendAdminNotification(
     data:
@@ -389,42 +451,32 @@ export class EmailService {
     const appUrl = process.env.APP_URL || 'http://localhost:6002';
     const ctaUrl = link.startsWith('http') ? link : `${appUrl}${link}`;
     const safeMessage = (message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
-    const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${subject}</title>
-</head>
-<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f1f5f9;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;padding:32px 16px;">
-    <tr>
-      <td>
-        <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;box-shadow:0 4px 6px rgba(0,0,0,0.1);overflow:hidden;">
-          <tr>
-            <td style="background:${accentColor};padding:24px 32px;text-align:center;">
-              <div style="font-size:22px;font-weight:700;color:#ffffff;">BetRollover Admin</div>
-              <div style="font-size:13px;color:rgba(255,255,255,0.9);margin-top:4px;">${subject}</div>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:32px;">
-              <p style="font-size:16px;line-height:1.65;color:#334155;margin:0 0 24px;">${safeMessage}</p>
-              <a href="${ctaUrl}" style="display:inline-block;background:${accentColor};color:#fff;padding:14px 28px;text-decoration:none;border-radius:10px;font-weight:600;font-size:15px;">${ctaText}</a>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:24px 32px;border-top:1px solid #e2e8f0;">
-              <p style="font-size:12px;color:#94a3b8;margin:0;">— BetRollover System</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+    const safeSubject = this.escapeEmailText(subject);
+
+    const inner = `<tr>
+  <td style="height:4px;background:${accentColor};"></td>
+</tr>
+<tr>
+  <td style="padding:28px 32px 8px;text-align:center;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.22em;color:${accentColor};text-transform:uppercase;">Admin</div>
+    <h1 style="font-size:18px;font-weight:700;color:${BR.adminInk};margin:12px 0 0;">${safeSubject}</h1>
+  </td>
+</tr>
+<tr>
+  <td style="padding:8px 32px 24px;">
+    <p style="font-size:15px;line-height:1.65;color:#334155;margin:0 0 20px;">${safeMessage}</p>
+    <div style="text-align:center;">
+      <a href="${ctaUrl}" style="display:inline-block;background:${accentColor};color:#fff;padding:13px 26px;text-decoration:none;border-radius:12px;font-weight:600;font-size:14px;">${ctaText}</a>
+    </div>
+  </td>
+</tr>
+<tr>
+  <td style="padding:16px 28px 26px;border-top:1px solid ${BR.line};">
+    <p style="font-size:11px;color:#94a3b8;margin:0;">BetRollover system message · not forwarded to users</p>
+  </td>
+</tr>`;
+
+    const html = this.premiumDocument(inner);
 
     let sent = 0;
     for (const to of recipients) {

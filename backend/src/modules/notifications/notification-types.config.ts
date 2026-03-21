@@ -84,15 +84,47 @@ export const NOTIFICATION_TYPES = {
   tipster_approved: {
     icon: 'check',
     defaultSubject: 'Tipster Approved',
-    emailSubject: () => 'You\'re now a tipster! Start creating picks.',
+    emailSubject: () => 'Your tipster account is active — create picks and track your ROI',
     ctaText: 'Create Pick',
     category: 'account',
   },
   tipster_rejected: {
     icon: 'x',
-    defaultSubject: 'Tipster Request Rejected',
-    emailSubject: () => 'Tipster request not approved',
+    defaultSubject: 'Tipster Status Update',
+    emailSubject: () => 'Update on your tipster status',
     ctaText: 'Go to Dashboard',
+    category: 'account',
+  },
+  subscription: {
+    icon: 'star',
+    defaultSubject: 'Subscription Active',
+    emailSubject: (ctx: Record<string, string>) =>
+      ctx.packageName ? `You're subscribed to ${ctx.packageName}` : 'Your subscription is active',
+    ctaText: 'View Subscriptions',
+    category: 'marketplace',
+  },
+  subscription_refund: {
+    icon: 'refund',
+    defaultSubject: 'Subscription Refunded',
+    emailSubject: (ctx: Record<string, string>) =>
+      ctx.packageName ? `Refund: ${ctx.packageName} (ROI guarantee)` : 'Subscription refund credited',
+    ctaText: 'View Subscriptions',
+    category: 'wallet',
+  },
+  subscription_payout: {
+    icon: 'wallet',
+    defaultSubject: 'Subscription Payout',
+    emailSubject: (ctx: Record<string, string>) =>
+      ctx.packageName ? `Payout received: ${ctx.packageName}` : 'Subscription payout to your wallet',
+    ctaText: 'View Dashboard',
+    category: 'wallet',
+  },
+  support: {
+    icon: 'info',
+    defaultSubject: 'Support Update',
+    emailSubject: (ctx: Record<string, string>) =>
+      ctx.ticketSubject ? `Support: ${ctx.ticketSubject.slice(0, 80)}` : 'Your support ticket was updated',
+    ctaText: 'View Support',
     category: 'account',
   },
   system_announcement: {

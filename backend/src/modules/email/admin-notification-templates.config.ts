@@ -6,8 +6,10 @@ export const ADMIN_NOTIFICATION_TEMPLATES = {
   withdrawal_request: {
     subject: (ctx: { amount: string; displayName: string }) =>
       `Withdrawal request: GHS ${ctx.amount} from ${ctx.displayName}`,
-    message: (ctx: { displayName: string; email: string; amount: string }) =>
-      `${ctx.displayName} (${ctx.email}) has requested a withdrawal of GHS ${ctx.amount}. The transfer is being processed via Paystack.`,
+    message: (ctx: { displayName: string; email: string; amount: string; manual?: boolean }) =>
+      ctx.manual
+        ? `${ctx.displayName} (${ctx.email}) has requested a withdrawal of GHS ${ctx.amount}. Payout is manual — review and process in Admin → Withdrawals.`
+        : `${ctx.displayName} (${ctx.email}) has requested a withdrawal of GHS ${ctx.amount}. Paystack transfer may be in progress or completed automatically.`,
     ctaText: 'View Withdrawals',
     link: '/admin/withdrawals',
     accentColor: '#64748b',

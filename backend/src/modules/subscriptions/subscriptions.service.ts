@@ -121,6 +121,7 @@ export class SubscriptionsService {
         link: '/dashboard/subscriptions',
         icon: 'star',
         sendEmail: true,
+        metadata: { packageName: pkg.name },
       })
       .catch(() => {});
 

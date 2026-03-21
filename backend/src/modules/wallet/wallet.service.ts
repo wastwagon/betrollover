@@ -541,6 +541,11 @@ export class WalletService {
       `Withdrawal to ${payout.displayName}`,
     );
 
+    const isManualPayout =
+      payout.type === 'manual' ||
+      payout.type === 'crypto' ||
+      payout.recipientCode?.startsWith?.('manual_');
+
     const withdrawal = await this.withdrawalRepo.save({
       userId: user.id,
       payoutMethodId: payout.id,
@@ -556,15 +561,11 @@ export class WalletService {
         amount: amount.toFixed(2),
         displayName: user.displayName,
         email: user.email,
-        manual: payout.type === 'manual',
+        manual: isManualPayout,
       },
     }).catch(() => { });
 
     // Manual: admin will process (manual, crypto, or bank without Paystack)
-    const isManualPayout =
-      payout.type === 'manual' ||
-      payout.type === 'crypto' ||
-      payout.recipientCode?.startsWith?.('manual_');
     if (isManualPayout) {
       return {
         withdrawal,

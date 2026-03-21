@@ -101,7 +101,8 @@ export class SupportService {
       message: `Your ticket "${ticket.subject}" has been updated. ${data.response.slice(0, 120)}`,
       link: '/support',
       icon: 'info',
-      sendEmail: false,
+      sendEmail: true,
+      metadata: { ticketSubject: ticket.subject },
     }).catch(() => {});
 
     await this.auditService.log(adminId, 'support_ticket_resolve', 'support_ticket', String(ticketId), {

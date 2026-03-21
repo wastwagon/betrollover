@@ -106,6 +106,7 @@ export class SubscriptionSettlementService {
           link: '/dashboard/subscriptions',
           icon: 'refund',
           sendEmail: true,
+          metadata: { packageName: pkg.name },
         })
         .catch(() => {});
     } else {
@@ -128,6 +129,7 @@ export class SubscriptionSettlementService {
           link: '/dashboard',
           icon: 'wallet',
           sendEmail: true,
+          metadata: { packageName: pkg.name },
         })
         .catch(() => {});
     }

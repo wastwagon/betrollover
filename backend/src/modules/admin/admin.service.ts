@@ -808,7 +808,8 @@ export class AdminService {
       userId,
       type: 'tipster_approved',
       title: 'Tipster Approved',
-      message: 'Your tipster request has been approved. You can now create and sell picks!',
+      message:
+        'Your tipster account is active. You can create and sell picks. Selling paid picks requires meeting the platform minimum ROI — check your dashboard for your stats.',
       link: '/create-pick',
       icon: 'check',
       sendEmail: true,
@@ -949,8 +950,9 @@ export class AdminService {
     await this.notificationsService.create({
       userId,
       type: 'tipster_rejected',
-      title: 'Tipster Request Rejected',
-      message: 'Your tipster request was not approved. Contact support for more info.',
+      title: 'Tipster Status Update',
+      message:
+        'Your tipster access was not granted in this review. Tipster eligibility follows platform rules and ROI requirements. Contact support if you need help.',
       link: '/dashboard',
       icon: 'x',
       sendEmail: true,

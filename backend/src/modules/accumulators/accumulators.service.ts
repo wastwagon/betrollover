@@ -1180,7 +1180,7 @@ export class AccumulatorsService {
         this.referralsService.creditOnFirstPurchase(buyerId).catch(() => {});
       }
 
-      // Outside of heavy DB work, trigger notifications
+      // In-app notification; receipt email is sendPurchaseConfirmation (premium template, always sent)
       this.notificationsService.create({
         userId: buyerId,
         type: 'purchase',
@@ -1188,9 +1188,20 @@ export class AccumulatorsService {
         message: `You purchased "${ticket.title}". Funds are held in escrow until the pick settles.`,
         link: `/my-purchases`,
         icon: 'cart',
-        sendEmail: true,
+        sendEmail: false,
         metadata: { pickTitle: ticket.title },
       }).catch(() => { });
+
+      this.usersRepo
+        .findOne({ where: { id: buyerId }, select: ['email'] })
+        .then((buyer) => {
+          if (buyer?.email) {
+            this.emailService
+              .sendPurchaseConfirmation(buyer.email, ticket.title, price, accumulatorId)
+              .catch(() => {});
+          }
+        })
+        .catch(() => {});
 
       const sellerId = ticket.userId;
       if (sellerId && sellerId !== buyerId) {
