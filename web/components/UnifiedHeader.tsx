@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -91,9 +92,33 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
   const [unreadCount,      setUnreadCount]      = useState(0);
   const [openMenu,         setOpenMenu]         = useState<MenuKey>(null);
   const [mobileOpen,       setMobileOpen]       = useState(false);
+  const [mounted,           setMounted]          = useState(false);
 
   const hoverTimeout  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const headerRef     = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  /* ── Lock body scroll when mobile sidebar open ───────── */
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtmlOverflow = html.style.overflow;
+    const prevBodyOverflow = body.style.overflow;
+    const prevBodyPaddingRight = body.style.paddingRight;
+    const gap = window.innerWidth - html.clientWidth;
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    if (gap > 0) body.style.paddingRight = `${gap}px`;
+    return () => {
+      html.style.overflow = prevHtmlOverflow;
+      body.style.overflow = prevBodyOverflow;
+      body.style.paddingRight = prevBodyPaddingRight;
+    };
+  }, [mobileOpen]);
 
   /* ── Auth / data ─────────────────────────────────────── */
   useEffect(() => {
@@ -231,13 +256,18 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
   /* ─────────────────────────────────────────────────────── */
   return (
     <>
-      {/* Inject keyframe animation */}
+      {/* Inject keyframe animations */}
       <style>{`
         @keyframes megaIn {
           from { opacity:0; transform:translateX(-50%) translateY(-6px); }
           to   { opacity:1; transform:translateX(-50%) translateY(0); }
         }
+        @keyframes slideInLeft {
+          from { transform: translateX(-100%); }
+          to   { transform: translateX(0); }
+        }
         .animate-mega-in { animation: megaIn 0.18s ease both; }
+        .animate-slide-in-left { animation: slideInLeft 0.25s ease-out both; }
       `}</style>
 
       <header
@@ -569,7 +599,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
             {/* Mobile: Account only (no hamburger) — primary nav is bottom bar + in-page smart buttons */}
             <div className="lg:hidden flex items-center gap-2">
               {isSignedIn ? (
-                <div className="relative">
+                <>
                   <button
                     type="button"
                     aria-label={t('header.account')}
@@ -582,40 +612,98 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </button>
-                  {mobileOpen && (
-                    <div className="absolute right-0 top-full mt-1 w-64 rounded-2xl bg-white dark:bg-slate-800 shadow-xl border border-[var(--border)] py-2 z-50 animate-mega-in" aria-label={t('header.account')}>
-                      {balance !== null && (
-                        <div className="px-4 py-2.5 mx-2 mb-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200/60">
-                          <p className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400">Balance</p>
-                          <p className="text-sm font-bold text-emerald-800 dark:text-emerald-200">{format(balance).primary}</p>
-                        </div>
-                      )}
-                      {[
-                        { href: '/dashboard',      icon: '📊', label: t('nav.dashboard') },
-                        { href: '/profile',       icon: '👤', label: t('profile.title') },
-                        { href: '/wallet',        icon: '💰', label: t('nav.wallet') },
-                        { href: '/earnings',      icon: '📈', label: t('nav.earnings') },
-                        { href: '/my-picks',      icon: '🎯', label: t('nav.my_picks') },
-                        { href: '/my-purchases',  icon: '🛍️', label: t('my_purchases.title') },
-                        { href: '/subscriptions', icon: '🔔', label: t('dashboard.card_subscriptions') },
-                        { href: '/notifications', icon: '🛎️', label: `${t('nav.notifications')}${unreadCount > 0 ? ` (${unreadCount})` : ''}` },
-                      ].map(item => (
-                        <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
-                          className={`flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium ${isActive(pathname, item.href) ? 'text-emerald-700 bg-emerald-50 dark:bg-emerald-900/20' : 'text-[var(--text)] hover:bg-[var(--card)]'}`}>
-                          <span>{item.icon}</span>{item.label}
-                        </Link>
-                      ))}
+                  {mobileOpen && mounted && createPortal(
+                    <div
+                      className="fixed inset-0 z-[100] flex"
+                      role="dialog"
+                      aria-modal="true"
+                      aria-labelledby="mobile-account-menu-title"
+                    >
+                      {/* Backdrop */}
                       <button
                         type="button"
-                        onClick={() => { signOut(); setMobileOpen(false); }}
-                        className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        aria-label={t('auth.logout')}
+                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                        aria-label={t('common.close')}
+                        onClick={() => setMobileOpen(false)}
+                      />
+                      {/* Sidebar — slides from left; safe-area for notch/home indicator */}
+                      <div
+                        className="relative z-[1] w-[280px] sm:w-[320px] max-w-[85vw] h-full min-h-[100dvh] bg-[var(--card)] border-r border-[var(--border)] shadow-2xl flex flex-col animate-slide-in-left"
+                        style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
                       >
-                        <span aria-hidden>🚪</span> {t('auth.logout')}
-                      </button>
-                    </div>
+                        {/* Header with balance */}
+                        <div className="px-4 pt-6 pb-4 border-b border-[var(--border)] shrink-0">
+                          <div className="flex items-center justify-between mb-4">
+                            <h2 id="mobile-account-menu-title" className="text-base font-semibold text-[var(--text)]">
+                              {t('header.account')}
+                            </h2>
+                            <button
+                              type="button"
+                              onClick={() => setMobileOpen(false)}
+                              className="shrink-0 rounded-lg p-2 text-[var(--text-muted)] hover:bg-[var(--bg)] hover:text-[var(--text)]"
+                              aria-label={t('common.close')}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                          {balance !== null && (
+                            <div className="px-3 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200/60">
+                              <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400 mb-1">
+                                {t('nav.wallet')}
+                              </p>
+                              <p className="text-lg font-bold text-emerald-800 dark:text-emerald-200">{format(balance).primary}</p>
+                            </div>
+                          )}
+                        </div>
+                        {/* Menu items — min-h-0 lets flex child scroll instead of overflowing */}
+                        <nav className="flex-1 min-h-0 overflow-y-auto py-2 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' as const }}>
+                          {[
+                            { href: '/dashboard',      icon: '📊', label: t('nav.dashboard') },
+                            { href: '/profile',       icon: '👤', label: t('profile.title') },
+                            { href: '/wallet',        icon: '💰', label: t('nav.wallet') },
+                            { href: '/earnings',      icon: '📈', label: t('nav.earnings') },
+                            { href: '/my-picks',      icon: '🎯', label: t('nav.my_picks') },
+                            { href: '/my-purchases',  icon: '🛍️', label: t('my_purchases.title') },
+                            { href: '/subscriptions', icon: '🔔', label: t('dashboard.card_subscriptions') },
+                            { href: '/notifications', icon: '🛎️', label: t('nav.notifications'), badge: unreadCount > 0 ? String(unreadCount) : undefined },
+                          ].map(item => (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              onClick={() => setMobileOpen(false)}
+                              className={`flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors ${
+                                isActive(pathname, item.href)
+                                  ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border-r-2 border-emerald-600'
+                                  : 'text-[var(--text)] hover:bg-[var(--bg)]'
+                              }`}
+                            >
+                              <span className="text-lg" aria-hidden>{item.icon}</span>
+                              <span className="flex-1">{item.label}</span>
+                              {item.badge && (
+                                <span className="min-w-[20px] h-5 flex items-center justify-center text-xs font-bold bg-red-500 text-white rounded-full">
+                                  {item.badge}
+                                </span>
+                              )}
+                            </Link>
+                          ))}
+                        </nav>
+                        {/* Sign out — shrink-0 so it always stays visible */}
+                        <div className="px-4 py-3 border-t border-[var(--border)] shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => { signOut(); setMobileOpen(false); }}
+                            className="flex items-center gap-3 w-full px-4 py-3 text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                            aria-label={t('auth.logout')}
+                          >
+                            <span aria-hidden>🚪</span>
+                            <span>{t('auth.logout')}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>,
+                    document.body
                   )}
-                </div>
+                </>
               ) : (
                 <>
                   <Link href="/login" className="px-3 py-2 rounded-xl text-sm font-semibold text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors">

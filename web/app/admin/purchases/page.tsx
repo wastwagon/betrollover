@@ -12,6 +12,25 @@ interface Purchase {
   accumulatorId: number;
   purchasePrice: number;
   purchasedAt: string;
+  buyerDisplayName?: string | null;
+  buyerUsername?: string | null;
+  buyerEmail?: string | null;
+  tipsterDisplayName?: string | null;
+  tipsterUsername?: string | null;
+  tipsterUserId?: number | null;
+  pickTitle?: string | null;
+}
+
+function formatPerson(
+  displayName: string | null | undefined,
+  username: string | null | undefined,
+  id: number,
+  email?: string | null
+) {
+  const name = displayName?.trim() || username || `User #${id}`;
+  const handle = username ? `@${username}` : null;
+  const sub = [handle, email ? email : null].filter(Boolean).join(' · ');
+  return { name, sub: sub || `#${id}` };
 }
 
 export default function AdminPurchasesPage() {
@@ -103,27 +122,49 @@ export default function AdminPurchasesPage() {
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gradient-to-r from-red-600 to-red-700">
                       <tr>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">ID</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">User ID</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Accumulator ID</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Price</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Date</th>
+                        <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">ID</th>
+                        <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider min-w-[10rem]">Buyer</th>
+                        <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider min-w-[10rem]">Tipster</th>
+                        <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Coupon</th>
+                        <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Price</th>
+                        <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Date</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                      {purchases.map((p) => (
+                      {purchases.map((p) => {
+                        const buyer = formatPerson(p.buyerDisplayName, p.buyerUsername, p.userId, p.buyerEmail);
+                        const tipsterId = p.tipsterUserId ?? 0;
+                        const tipster = tipsterId
+                          ? formatPerson(p.tipsterDisplayName, p.tipsterUsername, tipsterId)
+                          : { name: '—', sub: 'No coupon link' };
+                        return (
                         <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{p.id}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{p.userId}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{p.accumulatorId}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600 dark:text-green-400">
+                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{p.id}</td>
+                          <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
+                            <div className="font-medium">{buyer.name}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{buyer.sub}</div>
+                          </td>
+                          <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
+                            <div className="font-medium">{tipster.name}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{tipster.sub}</div>
+                          </td>
+                          <td className="px-4 py-4 text-sm text-gray-900 dark:text-white max-w-[14rem]">
+                            <div className="font-mono text-xs text-gray-600 dark:text-gray-300">#{p.accumulatorId}</div>
+                            {p.pickTitle ? (
+                              <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={p.pickTitle}>
+                                {p.pickTitle}
+                              </div>
+                            ) : null}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm font-semibold text-green-600 dark:text-green-400">
                             GHS {Number(p.purchasePrice).toFixed(2)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                             {new Date(p.purchasedAt).toLocaleString()}
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

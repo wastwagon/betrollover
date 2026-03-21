@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 
@@ -14,6 +13,25 @@ interface EscrowFund {
   status: string;
   reference: string;
   createdAt: string;
+  buyerDisplayName?: string | null;
+  buyerUsername?: string | null;
+  buyerEmail?: string | null;
+  tipsterDisplayName?: string | null;
+  tipsterUsername?: string | null;
+  tipsterUserId?: number | null;
+  pickTitle?: string | null;
+}
+
+function formatPerson(
+  displayName: string | null | undefined,
+  username: string | null | undefined,
+  id: number,
+  email?: string | null
+) {
+  const name = displayName?.trim() || username || `User #${id}`;
+  const handle = username ? `@${username}` : null;
+  const sub = [handle, email ? email : null].filter(Boolean).join(' · ');
+  return { name, sub: sub || `#${id}` };
 }
 
 export default function AdminEscrowPage() {
@@ -86,20 +104,41 @@ export default function AdminEscrowPage() {
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                   <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
                     <tr>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">User ID</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Pick ID</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Amount</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                      <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider min-w-[10rem]">Buyer</th>
+                      <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider min-w-[10rem]">Tipster</th>
+                      <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Pick</th>
+                      <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Amount</th>
+                      <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                      <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Date</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {funds.map((f) => (
+                    {funds.map((f) => {
+                      const buyer = formatPerson(f.buyerDisplayName, f.buyerUsername, f.userId, f.buyerEmail);
+                      const tipsterId = f.tipsterUserId ?? 0;
+                      const tipster = tipsterId
+                        ? formatPerson(f.tipsterDisplayName, f.tipsterUsername, tipsterId)
+                        : { name: '—', sub: 'Unknown' };
+                      return (
                       <tr key={f.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{f.userId}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{f.pickId}</td>
-                        <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-900 dark:text-white">GHS {Number(f.amount).toFixed(2)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
+                          <div className="font-medium">{buyer.name}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{buyer.sub}</div>
+                        </td>
+                        <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
+                          <div className="font-medium">{tipster.name}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{tipster.sub}</div>
+                        </td>
+                        <td className="px-4 py-4 text-sm text-gray-900 dark:text-white max-w-[14rem]">
+                          <div className="font-mono text-xs text-gray-600 dark:text-gray-300">#{f.pickId}</div>
+                          {f.pickTitle ? (
+                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={f.pickTitle}>
+                              {f.pickTitle}
+                            </div>
+                          ) : null}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap font-semibold text-gray-900 dark:text-white">GHS {Number(f.amount).toFixed(2)}</td>
+                        <td className="px-4 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                             f.status === 'held' 
                               ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200' 
@@ -110,11 +149,12 @@ export default function AdminEscrowPage() {
                             {f.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                           {new Date(f.createdAt).toLocaleString()}
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

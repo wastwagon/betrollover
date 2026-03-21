@@ -278,9 +278,48 @@ export class AdminService {
   }
 
   async getEscrow() {
-    return this.escrowRepo.find({
+    const funds = await this.escrowRepo.find({
       order: { createdAt: 'DESC' },
       take: 100,
+    });
+    if (funds.length === 0) return [];
+
+    const buyerIds = [...new Set(funds.map((f) => f.userId))];
+    const pickIds = [...new Set(funds.map((f) => f.pickId))];
+    const tickets =
+      pickIds.length > 0
+        ? await this.ticketRepo.find({
+            where: { id: In(pickIds) },
+            select: ['id', 'userId', 'title'],
+          })
+        : [];
+    const tipsterUserIds = [...new Set(tickets.map((t) => t.userId))];
+    const allUserIds = [...new Set([...buyerIds, ...tipsterUserIds])];
+    const users =
+      allUserIds.length > 0
+        ? await this.usersRepo.find({
+            where: { id: In(allUserIds) },
+            select: ['id', 'displayName', 'username', 'email'],
+          })
+        : [];
+    const userMap = new Map(users.map((u) => [u.id, u]));
+    const ticketMap = new Map(tickets.map((t) => [t.id, t]));
+
+    return funds.map((f) => {
+      const ticket = ticketMap.get(f.pickId);
+      const tipsterUserId = ticket?.userId;
+      const buyer = userMap.get(f.userId);
+      const tipster = tipsterUserId != null ? userMap.get(tipsterUserId) : undefined;
+      return {
+        ...f,
+        buyerDisplayName: buyer?.displayName ?? null,
+        buyerUsername: buyer?.username ?? null,
+        buyerEmail: buyer?.email ?? null,
+        tipsterDisplayName: tipster?.displayName ?? null,
+        tipsterUsername: tipster?.username ?? null,
+        tipsterUserId: tipsterUserId ?? null,
+        pickTitle: ticket?.title ?? null,
+      };
     });
   }
 
@@ -937,7 +976,50 @@ export class AdminService {
     const qb = this.purchasedRepo.createQueryBuilder('p').orderBy('p.purchasedAt', 'DESC');
     if (params.userId) qb.andWhere('p.userId = :userId', { userId: params.userId });
     if (params.accumulatorId) qb.andWhere('p.accumulatorId = :accumulatorId', { accumulatorId: params.accumulatorId });
-    const [items, total] = await qb.skip(skip).take(limit).getManyAndCount();
+    const [rows, total] = await qb.skip(skip).take(limit).getManyAndCount();
+
+    if (rows.length === 0) {
+      return { items: [], total, page, limit, totalPages: Math.ceil(total / limit) };
+    }
+
+    const buyerIds = [...new Set(rows.map((r) => r.userId))];
+    const accIds = [...new Set(rows.map((r) => r.accumulatorId))];
+    const tickets =
+      accIds.length > 0
+        ? await this.ticketRepo.find({
+            where: { id: In(accIds) },
+            select: ['id', 'userId', 'title'],
+          })
+        : [];
+    const tipsterUserIds = [...new Set(tickets.map((t) => t.userId))];
+    const allUserIds = [...new Set([...buyerIds, ...tipsterUserIds])];
+    const users =
+      allUserIds.length > 0
+        ? await this.usersRepo.find({
+            where: { id: In(allUserIds) },
+            select: ['id', 'displayName', 'username', 'email'],
+          })
+        : [];
+    const userMap = new Map(users.map((u) => [u.id, u]));
+    const ticketMap = new Map(tickets.map((t) => [t.id, t]));
+
+    const items = rows.map((p) => {
+      const ticket = ticketMap.get(p.accumulatorId);
+      const tipsterUserId = ticket?.userId;
+      const buyer = userMap.get(p.userId);
+      const tipster = tipsterUserId != null ? userMap.get(tipsterUserId) : undefined;
+      return {
+        ...p,
+        buyerDisplayName: buyer?.displayName ?? null,
+        buyerUsername: buyer?.username ?? null,
+        buyerEmail: buyer?.email ?? null,
+        tipsterDisplayName: tipster?.displayName ?? null,
+        tipsterUsername: tipster?.username ?? null,
+        tipsterUserId: tipsterUserId ?? null,
+        pickTitle: ticket?.title ?? null,
+      };
+    });
+
     return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 

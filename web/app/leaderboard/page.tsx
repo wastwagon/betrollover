@@ -56,13 +56,13 @@ export default function LeaderboardPage() {
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
+    // Always use /leaderboard so the # column is position in this list (rank 1,2,3…),
+    // matching "Top Performing Tipsters" on the home page. /tipsters returns leaderboard_rank
+    // from DB (global) while sorting by live ROI — numbers then disagree with row order.
     const params = new URLSearchParams({ limit: '50' });
     if (p !== 'all_time') params.set('period', p);
     if (s !== 'all') params.set('sport', s);
-
-    const endpoint = p !== 'all_time'
-      ? `${getApiUrl()}/leaderboard?${params}`
-      : `${getApiUrl()}/tipsters?${params}&sort_by=roi&order=desc`;
+    const endpoint = `${getApiUrl()}/leaderboard?${params}`;
 
     fetch(endpoint, { headers })
       .then(r => r.ok ? r.json() : { leaderboard: [], tipsters: [] })

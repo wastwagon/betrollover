@@ -189,6 +189,20 @@ body {
   animation: slide-up 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
+/* Sidebar slide-in from left */
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.25s ease-out both;
+}
+
 /* Safe area insets for mobile notch/home bar */
 .safe-area-inset-top {
   padding-top: env(safe-area-inset-top, 0);
