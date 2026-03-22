@@ -86,6 +86,56 @@ export class TipstersApiService {
     return statsMap;
   }
 
+  /** Settled marketplace coupons in the current calendar week/month (same ROI basis as computeStatsFromTickets). */
+  private async computeStatsFromTicketsInPeriod(
+    userIds: number[],
+    period: 'monthly' | 'weekly',
+    sport?: string,
+  ): Promise<Map<number, { total: number; won: number; lost: number; winRate: number; roi: number }>> {
+    if (userIds.length === 0) return new Map();
+    const qb = this.ticketRepo
+      .createQueryBuilder('t')
+      .select('t.userId', 'userId')
+      .addSelect('COUNT(*)', 'total')
+      .addSelect('SUM(CASE WHEN t.result = :won THEN 1 ELSE 0 END)', 'won')
+      .addSelect('SUM(CASE WHEN t.result = :lost THEN 1 ELSE 0 END)', 'lost')
+      .addSelect('COALESCE(SUM(CASE WHEN t.result = :won THEN t.totalOdds ELSE 0 END), 0)', 'totalOddsWon')
+      .where('t.userId IN (:...userIds)', { userIds })
+      .andWhere('t.result IN (:...settled)', { settled: ['won', 'lost'] })
+      .setParameter('won', 'won')
+      .setParameter('lost', 'lost');
+
+    if (period === 'monthly') {
+      qb.andWhere("t.updated_at >= DATE_TRUNC('month', CURRENT_TIMESTAMP)");
+    } else {
+      qb.andWhere("t.updated_at >= DATE_TRUNC('week', CURRENT_TIMESTAMP)");
+    }
+
+    if (sport) {
+      const displayName = sport.charAt(0).toUpperCase() + sport.slice(1).replace('_', ' ');
+      qb.andWhere('LOWER(t.sport) = LOWER(:sport)', { sport: displayName });
+    }
+
+    qb.groupBy('t.userId');
+    const rows = await qb.getRawMany();
+
+    const statsMap = new Map<number, { total: number; won: number; lost: number; winRate: number; roi: number }>();
+    for (const row of rows) {
+      const userId = Number(row.userId);
+      const total = Number(row.total) || 0;
+      const won = Number(row.won) || 0;
+      const lost = Number(row.lost) || 0;
+      const settled = won + lost;
+      const winRate = settled > 0 ? (won / settled) * 100 : 0;
+      const totalOddsWon = Number(row.totalOddsWon) || 0;
+      const totalInvestment = settled;
+      const totalReturns = won > 0 ? totalOddsWon : 0;
+      const roi = totalInvestment > 0 ? ((totalReturns - totalInvestment) / totalInvestment) * 100 : 0;
+      statsMap.set(userId, { total, won, lost, winRate, roi });
+    }
+    return statsMap;
+  }
+
   /**
    * Recompute tipster stats from accumulator_tickets and persist to tipsters table.
    * Used after admin deletes a coupon to keep ROI, win rate, streak, etc. in sync.
@@ -274,7 +324,8 @@ export class TipstersApiService {
       const bVal = b[sortCol as keyof typeof b] ?? 0;
       return asc ? Number(aVal) - Number(bVal) : Number(bVal) - Number(aVal);
     });
-    return mapped;
+    // Position in this response matches the active sort (ROI, win rate, etc.); do not use persisted global rank here.
+    return mapped.map((row, i) => ({ ...row, leaderboard_rank: i + 1 }));
   }
 
   async getTipsterProfile(username: string) {
@@ -621,9 +672,49 @@ export class TipstersApiService {
       }
     }
 
-    const sorted = Array.from(merged.values())
-      .filter((e) => e.cnt > 0 || e.profit !== 0)
-      .sort((a, b) => b.profit - a.profit)
+    const candidates = Array.from(merged.values()).filter((e) => e.cnt > 0 || e.profit !== 0);
+    const tipsterIds = candidates.map((e) => e.id);
+    const tipsterRows =
+      tipsterIds.length > 0
+        ? await this.tipsterRepo.find({
+            where: { id: In(tipsterIds) },
+            select: ['id', 'userId'],
+          })
+        : [];
+    const idToUserId = new Map(tipsterRows.map((t) => [t.id, t.userId]));
+    const humanUserIds = [...new Set(tipsterRows.map((t) => t.userId).filter((id): id is number => id != null))];
+    const periodTicketStats = await this.computeStatsFromTicketsInPeriod(humanUserIds, options.period, options.sport);
+
+    const enriched = candidates.map((r) => {
+      const userId = idToUserId.get(r.id) ?? null;
+      const human = userId != null ? periodTicketStats.get(userId) : undefined;
+      if (human && human.total > 0) {
+        return {
+          ...r,
+          roi: human.roi,
+          win_rate: human.winRate,
+          total_predictions: human.total,
+          total_wins: human.won,
+          total_losses: human.lost,
+        };
+      }
+      const settled = r.cnt;
+      const wins = r.wins;
+      const losses = Math.max(0, settled - wins);
+      const winRate = settled > 0 ? (wins / settled) * 100 : 0;
+      const roi = settled > 0 ? (r.profit / settled) * 100 : 0;
+      return {
+        ...r,
+        roi,
+        win_rate: winRate,
+        total_predictions: settled,
+        total_wins: wins,
+        total_losses: losses,
+      };
+    });
+
+    const sorted = enriched
+      .sort((a, b) => (b.roi ?? 0) - (a.roi ?? 0) || b.profit - a.profit || (b.win_rate ?? 0) - (a.win_rate ?? 0))
       .slice(0, options.limit);
 
     return sorted.map((r, i) => ({
@@ -631,8 +722,13 @@ export class TipstersApiService {
       username: r.username,
       display_name: r.display_name,
       avatar_url: r.avatar_url,
-      monthly_predictions: r.cnt,
-      monthly_wins: r.wins,
+      roi: r.roi,
+      win_rate: r.win_rate,
+      total_predictions: r.total_predictions,
+      total_wins: r.total_wins,
+      total_losses: r.total_losses,
+      monthly_predictions: r.total_predictions,
+      monthly_wins: r.total_wins,
       monthly_profit: r.profit,
       rank: i + 1,
     }));
