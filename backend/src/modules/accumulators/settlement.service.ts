@@ -289,7 +289,7 @@ export class SettlementService {
       await this.walletService.debit(
         f.userId,
         gross,
-        'settlement_correction',
+        'settle_adj',
         `reconcile-debit-refund-${ticketId}-u${f.userId}`,
         `Score correction: reclaim mistaken refund for "${title}"`,
         manager,
@@ -342,7 +342,7 @@ export class SettlementService {
       await this.walletService.debit(
         sellerId,
         netPayout,
-        'settlement_correction',
+        'settle_adj',
         `reconcile-rev-payout-${ticketId}-u${f.userId}`,
         `Score correction: reverse payout for "${title}"`,
         manager,

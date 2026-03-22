@@ -1,4 +1,4 @@
-import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { FixtureUpdateService } from './fixture-update.service';
@@ -16,15 +16,14 @@ import { SyncStatus } from './entities/sync-status.entity';
 /**
  * Scheduled Jobs for Fixture Updates & Syncing
  *
- * Schedule consolidated to 12 AM window:
- * - 12:00 AM: Daily fixture sync (7 days ahead)
- * - 1:00 AM: Odds force refresh + AI prediction generation (ready before 4–5 AM fixtures)
- * - 2:00 AM: Fixture archive + Prediction catch-up (if none for today)
+ * Full fixture import (enabled leagues, 7 UTC days) runs every 6 hours (00:00, 06:00, 12:00, 18:00 server local time)
+ * so newly published fixtures appear without waiting for a single daily run. ~28 API calls/day for dates — fine on Pro/Ultra.
+ * Also: 1:00 AM odds force + AI predictions (after midnight import), 2:00 AM archive + prediction catch-up.
  *
  * Set ENABLE_FOOTBALL_SYNC=false to skip football API (e.g. when using prod server).
  */
 @Injectable()
-export class FixtureSchedulerService {
+export class FixtureSchedulerService implements OnModuleInit {
   private readonly logger = new Logger(FixtureSchedulerService.name);
 
   constructor(
@@ -45,6 +44,22 @@ export class FixtureSchedulerService {
     private dataSource: DataSource,
     private configService: ConfigService,
   ) { }
+
+  onModuleInit(): void {
+    if (!this.isSchedulingEnabled()) {
+      this.logger.warn(
+        'ENABLE_SCHEDULING is not "true" — all fixture/odds cron jobs are OFF. ' +
+          'Set ENABLE_SCHEDULING=true on the API host or you must use Admin → Sync Fixtures manually.',
+      );
+      return;
+    }
+    if (!this.isFootballSyncEnabled()) {
+      this.logger.warn(
+        'ENABLE_FOOTBALL_SYNC is false — automatic football fixture import is OFF. ' +
+          'Set ENABLE_FOOTBALL_SYNC=true for scheduled imports.',
+      );
+    }
+  }
 
   private isSchedulingEnabled(): boolean {
     const enabled = this.configService.get('ENABLE_SCHEDULING') === 'true';
@@ -152,39 +167,37 @@ export class FixtureSchedulerService {
   }
 
   /**
-   * Daily fixture sync (runs at 12 AM server time)
-   * Syncs fixtures for next 7 days from enabled leagues.
-   * Then syncs odds (Tier 1/2 markets) for up to 80 fixtures without odds, soonest first.
-   * Skipped when ENABLE_FOOTBALL_SYNC=false (e.g. football runs on prod, avoid credits here).
+   * Full fixture import every 6 hours (00:00, 06:00, 12:00, 18:00 server local time).
+   * Same work as manual "Sync Fixtures": next 7 UTC days, enabled leagues only, then odds pass inside FootballSyncService.sync().
+   * Skipped when ENABLE_FOOTBALL_SYNC=false.
    */
-  @Cron('0 0 * * *') // Every day at 12 AM (set TZ env if you need a specific timezone)
-  async handleDailyFixtureSync() {
+  @Cron('0 */6 * * *')
+  async handlePeriodicFullFixtureSync() {
     if (!this.isSchedulingEnabled()) return;
     if (!this.isFootballSyncEnabled()) {
       this.logger.debug('Football sync disabled (ENABLE_FOOTBALL_SYNC=false), skipping');
       return;
     }
     if (await this.isSyncRunning('fixtures')) {
-      this.logger.warn('Daily fixture sync already running, skipping this run');
+      this.logger.warn('Fixture sync already running, skipping this tick');
       return;
     }
-    this.logger.log('Running scheduled daily fixture sync (7 days ahead)...');
+    this.logger.log('Running scheduled full fixture sync (7 days, enabled leagues)...');
     await this.updateSyncStatus('fixtures', 'running');
     try {
       const result = await this.footballSyncService.sync();
       this.logger.log(
-        `Daily sync completed: ${result.fixtures} fixtures synced for next 7 days, ${result.leagues} leagues`
+        `Scheduled fixture sync completed: ${result.fixtures} fixtures, ${result.leagues} leagues, odds pass ${result.odds ?? 0}`,
       );
       if (result.leagues > 0 && result.fixtures === 0) {
         this.logger.warn(
-          'No fixtures synced despite enabled leagues. Check API key (Admin → API Settings) and API-Football status.'
+          'No fixtures synced despite enabled leagues. Check API key (Admin → API Settings) and API-Football status.',
         );
       }
       await this.updateSyncStatus('fixtures', 'success', result.fixtures, null, result.leagues);
-      // Odds-first sync: fixtures already include odds. Update odds status.
       await this.updateSyncStatus('odds', 'success', result.odds ?? 0);
     } catch (error: any) {
-      this.logger.error('Error in daily fixture sync', error);
+      this.logger.error('Error in scheduled fixture sync', error);
       await this.updateSyncStatus('fixtures', 'error', 0, error.message);
     }
   }

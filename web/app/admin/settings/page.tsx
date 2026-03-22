@@ -1034,8 +1034,14 @@ export default function AdminSettingsPage() {
                   {/* Automatic Sync Info */}
                   <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
                     <p className="text-xs text-blue-800 dark:text-blue-200">
-                      <strong>Automatic Sync Schedule:</strong> Fixtures sync daily at 6 AM for the next 7 days (industry best practice). 
-                      Odds sync every 2 hours. Live fixtures update every 15 minutes. Finished fixtures update every 30 minutes.
+                      <strong>Automatic Sync Schedule:</strong> Full fixture import (same as &quot;Sync Fixtures&quot;) runs{' '}
+                      <strong>every 6 hours</strong> at 00:00, 06:00, 12:00, and 18:00 <strong>server local time</strong>. Set{' '}
+                      <code className="text-xs">TZ</code> on the API host (e.g. <code className="text-xs">Africa/Accra</code>) if
+                      those ticks should follow your region. Requires <code className="text-xs">ENABLE_SCHEDULING=true</code>.
+                      On startup, the API logs a warning if scheduling or football sync is disabled — check host logs if nothing
+                      updates automatically. Free/serverless hosts that sleep still need always-on or an external uptime ping so
+                      the process can run crons. Only <strong>enabled</strong> leagues are stored. Odds sync every 2 hours. Live
+                      updates every 5 minutes; finished results every 5 minutes.
                     </p>
                   </div>
                 </div>

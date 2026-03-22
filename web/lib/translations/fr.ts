@@ -883,7 +883,7 @@ const fr: Record<string, string> = {
   'create_pick.available_fixtures': '{n} matchs disponibles',
   'create_pick.no_fixtures': 'Aucun match à venir',
   'create_pick.no_fixtures_filtered': 'Aucun match ne correspond à vos filtres',
-  'create_pick.fixtures_sync': 'Les matchs se synchronisent automatiquement chaque jour à 6h pour les 7 prochains jours.',
+  'create_pick.fixtures_sync': 'Les matchs se synchronisent automatiquement toutes les 6 heures (heure du serveur) pour les 7 prochains jours — activez la planification sur l’API.',
   'create_pick.fixtures_sync_filtered': 'Essayez d\'ajuster vos filtres. Les matchs se synchronisent automatiquement chaque jour pour les 7 prochains jours.',
   'create_pick.go_dashboard': 'Aller au Tableau de Bord',
   'create_pick.pick_slip': 'Bulletin de Pronostics',

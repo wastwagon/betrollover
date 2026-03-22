@@ -883,7 +883,7 @@ const en = {
   'create_pick.available_fixtures': '{n} available fixtures',
   'create_pick.no_fixtures': 'No upcoming fixtures',
   'create_pick.no_fixtures_filtered': 'No fixtures match your filters',
-  'create_pick.fixtures_sync': 'Fixtures sync automatically daily at 6 AM for the next 7 days.',
+  'create_pick.fixtures_sync': 'Fixtures import automatically every 6 hours (server time) for the next 7 days — enable scheduling on the API host.',
   'create_pick.fixtures_sync_filtered': 'Try adjusting your filters. Fixtures sync automatically daily for the next 7 days.',
   'create_pick.go_dashboard': 'Go to Dashboard',
   'create_pick.pick_slip': 'Pick Slip',
