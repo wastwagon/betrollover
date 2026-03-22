@@ -23,8 +23,10 @@ export interface Fixture {
   oddsError?: string;
   league?: {
     id: number;
+    apiId?: number;
     name: string;
     country: string | null;
+    season?: number | null;
   } | null;
 }
 

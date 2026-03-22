@@ -1,6 +1,7 @@
 'use client';
 
 import { TeamBadge } from '@/components/TeamBadge';
+import { LeagueInsightsPanel } from '@/components/LeagueInsightsPanel';
 import type { Fixture, FixtureOdd } from '../types';
 import { groupOddsByMarket, MARKET_ORDER, filterCorrectScoreOdds } from '../odds-utils';
 import { formatMarketValue, formatFixtureDateTime } from '../utils/format';
@@ -88,6 +89,16 @@ export function FootballFixtureCard({
           )}
         </div>
       </div>
+
+      {fixture.league?.apiId != null && (
+        <div className="px-4 pb-3 border-t border-[var(--border)]">
+          <LeagueInsightsPanel
+            leagueApiId={fixture.league.apiId}
+            season={fixture.league.season ?? null}
+            subtitle={fixture.leagueName || fixture.league.name}
+          />
+        </div>
+      )}
 
       {showOdds && (
         <div className="px-4 pb-4 pt-0 border-t border-[var(--border)]">

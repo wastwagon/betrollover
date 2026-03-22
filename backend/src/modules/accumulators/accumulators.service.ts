@@ -365,7 +365,25 @@ export class AccumulatorsService {
     const fixtureIds = [...new Set(tickets.flatMap((t) => (t.picks || []).map((p) => p.fixtureId).filter(Boolean) as number[]))];
     const eventIds = [...new Set(tickets.flatMap((t) => (t.picks || []).map((p) => p.eventId).filter(Boolean) as number[]))];
     const fixtures = fixtureIds.length > 0
-      ? await this.fixtureRepo.find({ where: { id: In(fixtureIds) }, select: ['id', 'homeScore', 'awayScore', 'status', 'homeTeamLogo', 'awayTeamLogo', 'homeTeamName', 'awayTeamName', 'homeCountryCode', 'awayCountryCode'] })
+      ? await this.fixtureRepo.find({
+          where: { id: In(fixtureIds) },
+          relations: ['league'],
+          select: {
+            id: true,
+            leagueId: true,
+            homeScore: true,
+            awayScore: true,
+            status: true,
+            homeTeamLogo: true,
+            awayTeamLogo: true,
+            homeTeamName: true,
+            awayTeamName: true,
+            homeCountryCode: true,
+            awayCountryCode: true,
+            leagueName: true,
+            league: { id: true, apiId: true, name: true, country: true, season: true },
+          },
+        })
       : [];
     const sportEvents = eventIds.length > 0
       ? await this.sportEventRepo.find({ where: { id: In(eventIds) }, select: ['id', 'homeScore', 'awayScore', 'status', 'homeTeamLogo', 'awayTeamLogo', 'homeTeam', 'awayTeam', 'homeCountryCode', 'awayCountryCode'] })
@@ -379,6 +397,7 @@ export class AccumulatorsService {
         const evt = p.eventId ? eventMap.get(p.eventId) : null;
         const src = fix || evt;
         const fixAny = src as any;
+        const league = fix?.league;
         return {
           ...p,
           homeScore: src?.homeScore ?? null,
@@ -391,6 +410,10 @@ export class AccumulatorsService {
           awayTeamName: fixAny?.awayTeamName ?? fixAny?.awayTeam ?? null,
           homeCountryCode: fixAny?.homeCountryCode ?? null,
           awayCountryCode: fixAny?.awayCountryCode ?? null,
+          leagueApiId: league?.apiId ?? null,
+          leagueSeason: league?.season ?? null,
+          leagueCountry: league?.country ?? null,
+          leagueLabel: fixAny?.leagueName ?? league?.name ?? null,
         };
       }),
     })) as T[];

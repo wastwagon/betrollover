@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -9,6 +9,7 @@ import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
 import { TeamBadge } from '@/components/TeamBadge';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
+import { LeagueInsightsPanel } from '@/components/LeagueInsightsPanel';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Pick {
@@ -28,6 +29,9 @@ interface Pick {
   awayTeamName?: string | null;
   homeCountryCode?: string | null;
   awayCountryCode?: string | null;
+  leagueApiId?: number | null;
+  leagueSeason?: number | null;
+  leagueLabel?: string | null;
 }
 
 interface Tipster {
@@ -333,6 +337,24 @@ export default function CouponDetailPage() {
     });
   };
 
+  const insightLeagues = useMemo(() => {
+    const picks = coupon?.picks ?? [];
+    const map = new Map<number, { season: number | null; label: string }>();
+    for (const p of picks) {
+      const ps = (p.sport || '').toLowerCase();
+      if (ps !== 'football') continue;
+      const id = p.leagueApiId;
+      if (id == null) continue;
+      if (!map.has(id)) {
+        map.set(id, {
+          season: p.leagueSeason ?? null,
+          label: p.leagueLabel || `League ${id}`,
+        });
+      }
+    }
+    return [...map.entries()];
+  }, [coupon?.picks]);
+
   if (loading) return <CouponDetailSkeleton />;
 
   if (!coupon) {
@@ -590,6 +612,22 @@ export default function CouponDetailPage() {
           <aside className="lg:w-72 flex-shrink-0">
             <div className="sticky top-24 space-y-4">
               <AdSlot zoneSlug="coupon-detail-sidebar" />
+
+              {insightLeagues.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider px-1">
+                    League context
+                  </p>
+                  {insightLeagues.map(([apiId, meta]) => (
+                    <LeagueInsightsPanel
+                      key={apiId}
+                      leagueApiId={apiId}
+                      season={meta.season}
+                      subtitle={meta.label}
+                    />
+                  ))}
+                </div>
+              )}
 
               {/* Purchase / receipt card */}
               <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-hidden shadow-sm">

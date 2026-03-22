@@ -1,7 +1,9 @@
 import { Controller, Get, Post, Param, Query, UseGuards, ParseIntPipe, Logger } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { FixturesService } from './fixtures.service';
+import { LeagueInsightsService } from './league-insights.service';
 import { OddsSyncService } from './odds-sync.service';
 import { FixtureUpdateService } from './fixture-update.service';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,6 +16,7 @@ export class FixturesController {
 
   constructor(
     private readonly fixturesService: FixturesService,
+    private readonly leagueInsightsService: LeagueInsightsService,
     private readonly oddsSyncService: OddsSyncService,
     private readonly fixtureUpdateService: FixtureUpdateService,
     @InjectRepository(SyncStatus)
@@ -48,6 +51,20 @@ export class FixturesController {
   @UseGuards(JwtAuthGuard)
   getLeagues() {
     return this.fixturesService.getLeagues();
+  }
+
+  /**
+   * League table + top scorers (API-Football), cached ~45m in DB to protect quota.
+   * Auth required (same as fixture list). Throttled per IP.
+   */
+  @Get('leagues/:leagueApiId/insights')
+  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  getLeagueInsights(
+    @Param('leagueApiId', ParseIntPipe) leagueApiId: number,
+    @Query('season') season?: string,
+  ) {
+    return this.leagueInsightsService.getInsights(leagueApiId, season);
   }
 
   @Get('filters')

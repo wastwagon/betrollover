@@ -7,6 +7,7 @@ import { League } from './entities/league.entity';
 import { EnabledLeague } from './entities/enabled-league.entity';
 import { MarketConfig } from './entities/market-config.entity';
 import { SyncStatus } from './entities/sync-status.entity';
+import { LeagueInsightCache } from './entities/league-insight-cache.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { FixturesController } from './fixtures.controller';
 import { FixturesService } from './fixtures.service';
@@ -16,6 +17,7 @@ import { FixtureSchedulerService } from './fixture-scheduler.service';
 import { OddsSyncService } from './odds-sync.service';
 import { MarketFilterService } from './market-filter.service';
 import { ApiPredictionsService } from './api-predictions.service';
+import { LeagueInsightsService } from './league-insights.service';
 import { AccumulatorsModule } from '../accumulators/accumulators.module';
 import { PredictionsModule } from '../predictions/predictions.module';
 import { VolleyballModule } from '../volleyball/volleyball.module';
@@ -30,6 +32,7 @@ import { VolleyballModule } from '../volleyball/volleyball.module';
       EnabledLeague,
       MarketConfig,
       SyncStatus,
+      LeagueInsightCache,
       ApiSettings,
     ]),
     forwardRef(() => AccumulatorsModule), // For SettlementService (avoid circular dependency)
@@ -45,6 +48,7 @@ import { VolleyballModule } from '../volleyball/volleyball.module';
     OddsSyncService,
     MarketFilterService,
     ApiPredictionsService,
+    LeagueInsightsService,
   ],
   exports: [
     FixturesService,

@@ -843,7 +843,9 @@ export default function AdminSettingsPage() {
                     <div>
                       <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Database migrations</h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                        Pending migrations run automatically on API startup. You can run them here or mark existing DB as up to date.
+                        Pending SQL files matching <code className="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">NNN_description.sql</code> in{' '}
+                        <code className="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">database/migrations</code> run automatically: on Docker/Coolify they run in the
+                        container entrypoint (before Node starts), then the API runs any still-pending migrations at bootstrap. This panel shows status and lets you run or mark applied manually.
                       </p>
                     </div>
                   </div>
@@ -897,7 +899,7 @@ export default function AdminSettingsPage() {
                       </button>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
-                      Use &quot;Mark all as applied&quot; only when this database was already migrated manually (e.g. first production deploy). New migrations (010–021) run automatically on every API start.
+                      Use &quot;Mark all as applied&quot; only when this database was already migrated manually (e.g. imported dump or first production deploy) so the tracker matches reality without re-running SQL. Normal deploys do not need this.
                     </p>
                   </>
                 ) : (
