@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
 import { usePendingWithdrawalCount } from '@/hooks/usePendingWithdrawalCount';
 
-type NavItemId = 'home' | 'marketplace' | 'tipsters' | 'create' | 'wallet' | 'account';
+type NavItemId = 'home' | 'marketplace' | 'leagues' | 'tipsters' | 'create' | 'wallet' | 'account';
 
 interface NavItem {
   id: NavItemId;
@@ -40,6 +40,14 @@ function TipstersIcon({ active }: { active?: boolean }) {
     </svg>
   );
 }
+/** League tables — grid / standings metaphor */
+function LeaguesIcon({ active }: { active?: boolean }) {
+  return (
+    <svg className="w-6 h-6 shrink-0" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={active ? 0 : 1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+    </svg>
+  );
+}
 function CreateIcon({ active }: { active?: boolean }) {
   return (
     <svg className="w-6 h-6 shrink-0" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -65,6 +73,7 @@ function UserIcon({ active }: { active?: boolean }) {
 const NAV_ITEMS: Omit<NavItem, 'Icon'>[] = [
   { id: 'home', href: '/', labelKey: 'header.home', tabletOnly: false, primary: false },
   { id: 'marketplace', href: '/marketplace', labelKey: 'nav.marketplace', tabletOnly: false, primary: false },
+  { id: 'leagues', href: '/league-tables', labelKey: 'nav.league_tables_short', tabletOnly: false, primary: false },
   { id: 'tipsters', href: '/tipsters', labelKey: 'nav.tipsters', tabletOnly: false, primary: false },
   { id: 'create', href: '/create-pick', labelKey: 'nav.coupon', tabletOnly: false, primary: true },
   { id: 'wallet', href: '/wallet', labelKey: 'nav.wallet', tabletOnly: true, primary: false },
@@ -74,6 +83,7 @@ const NAV_ITEMS: Omit<NavItem, 'Icon'>[] = [
 const ICONS: Record<NavItemId, (p: { active?: boolean }) => JSX.Element> = {
   home: HomeIcon,
   marketplace: ShopIcon,
+  leagues: LeaguesIcon,
   tipsters: TipstersIcon,
   create: CreateIcon,
   wallet: WalletIcon,
@@ -106,13 +116,14 @@ export function MobileBottomNav() {
       style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
     >
       {/* Floating bar — iOS/Android style */}
-      <div className="max-w-lg mx-auto rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-[0_-2px_20px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.2)]">
-        <div className="flex items-center justify-around min-h-[56px] px-1">
+      <div className="w-full max-w-lg mx-auto rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-[0_-2px_20px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.2)]">
+        <div className="flex flex-nowrap items-stretch gap-0.5 overflow-x-auto overscroll-x-contain scrollbar-hide snap-x snap-mandatory px-1 min-h-[56px] py-0.5">
           {NAV_ITEMS.map((item) => {
             const active = isActive(pathname, item.href);
             const Icon = ICONS[item.id];
             const baseClass = item.tabletOnly ? 'hidden md:flex' : 'flex';
-            const linkClass = `${baseClass} flex-col items-center justify-center flex-1 min-w-0 gap-1 py-2.5 px-1 rounded-xl transition-all duration-200 active:scale-95 min-h-[52px]`;
+            const slotW = item.primary ? 'w-[4.75rem] sm:w-[5rem]' : 'w-[4.1rem] sm:w-[4.35rem]';
+            const linkClass = `${baseClass} flex-col items-center justify-center shrink-0 snap-center ${slotW} gap-1 py-2 px-0.5 rounded-xl transition-all duration-200 active:scale-[0.98] min-h-[52px] touch-manipulation`;
 
             if (item.primary) {
               return (

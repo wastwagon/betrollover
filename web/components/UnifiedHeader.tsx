@@ -690,6 +690,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                         <nav className="flex-1 min-h-0 overflow-y-auto py-2 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' as const }}>
                           {([
                             { href: '/dashboard',      icon: '📊', label: t('nav.dashboard') },
+                            { href: '/league-tables', icon: '📋', label: t('nav.league_tables') },
                             { href: '/profile',       icon: '👤', label: t('profile.title') },
                             {
                               href: '/wallet',
@@ -767,6 +768,31 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               )}
             </div>
           </div>
+
+          {/* Mobile / tablet: discoverability without mega menus */}
+          <nav
+            className="lg:hidden border-t border-slate-100/90 flex gap-2 overflow-x-auto overscroll-x-contain scrollbar-hide py-2.5 -mx-4 px-3 sm:-mx-6 sm:px-4 snap-x snap-mandatory"
+            aria-label={t('nav.browse')}
+          >
+            {[
+              { href: '/marketplace', label: t('nav.marketplace') },
+              { href: '/league-tables', label: t('nav.league_tables_short') },
+              { href: '/tipsters', label: t('nav.tipsters') },
+              { href: '/discover', label: t('nav.discover') },
+            ].map((q) => (
+              <Link
+                key={q.href}
+                href={q.href}
+                className={`shrink-0 snap-start inline-flex items-center min-h-[44px] px-3.5 rounded-full text-xs font-bold border transition-colors touch-manipulation ${
+                  isActive(pathname, q.href)
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                    : 'bg-slate-50 text-slate-700 border-slate-200/80 hover:border-emerald-300 hover:text-emerald-800'
+                }`}
+              >
+                {q.label}
+              </Link>
+            ))}
+          </nav>
         </div>
       </header>
     </>

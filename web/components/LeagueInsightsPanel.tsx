@@ -149,11 +149,11 @@ export function LeagueInsightsPanel({
       )}
 
       {isFull && (
-        <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--card)]/40 flex flex-wrap items-center justify-between gap-2">
+        <div className="px-3 sm:px-4 py-3 border-b border-[var(--border)] bg-[var(--card)]/40 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-lg" aria-hidden>📊</span>
             <div className="min-w-0">
-              <h2 className="text-sm font-bold text-[var(--text)] truncate">{headline}</h2>
+              <h2 className="text-base sm:text-sm font-bold text-[var(--text)] truncate">{headline}</h2>
               {data?.season != null && (
                 <p className="text-xs text-[var(--text-muted)]">Season {data.season}</p>
               )}
@@ -163,24 +163,26 @@ export function LeagueInsightsPanel({
       )}
 
       {panelOpen && (
-        <div className={`${isFull ? 'px-4 py-4' : 'border-t border-[var(--border)] px-3 pb-3 pt-2'}`}>
+        <div className={`${isFull ? 'px-3 sm:px-4 py-4' : 'border-t border-[var(--border)] px-3 pb-3 pt-2'}`}>
           {err && (
             <p className="text-xs text-amber-700 dark:text-amber-400 mb-2">{err}</p>
           )}
 
-          <div className="flex gap-1 mb-2">
-            {(['table', 'scorers'] as const).map((t) => (
+          <div className="flex flex-wrap items-stretch gap-2 mb-3">
+            {(['table', 'scorers'] as const).map((tb) => (
               <button
-                key={t}
+                key={tb}
                 type="button"
-                onClick={() => setTab(t)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
-                  tab === t
+                onClick={() => setTab(tb)}
+                className={`rounded-xl font-semibold transition-colors touch-manipulation ${
+                  isFull ? 'min-h-[44px] px-4 text-sm' : 'px-2.5 py-1 rounded-lg text-xs'
+                } ${
+                  tab === tb
                     ? 'bg-[var(--primary)] text-white'
                     : 'bg-[var(--card)] text-[var(--text-muted)] border border-[var(--border)]'
                 }`}
               >
-                {t === 'table' ? 'Table' : 'Top scorers'}
+                {tb === 'table' ? 'Table' : 'Top scorers'}
               </button>
             ))}
             <button
@@ -190,7 +192,11 @@ export function LeagueInsightsPanel({
                 void load();
               }}
               disabled={loading}
-              className="ml-auto text-xs font-medium text-[var(--primary)] hover:underline disabled:opacity-50"
+              className={`ml-auto font-medium text-[var(--primary)] hover:underline disabled:opacity-50 touch-manipulation ${
+                isFull
+                  ? 'min-h-[44px] min-w-[44px] px-3 inline-flex items-center justify-center rounded-xl border border-[var(--primary)]/30 text-sm'
+                  : 'text-xs'
+              }`}
             >
               {loading ? 'Loading…' : 'Refresh'}
             </button>
@@ -202,7 +208,7 @@ export function LeagueInsightsPanel({
 
           {data && tab === 'table' && (
             <div
-              className={`overflow-auto rounded-lg border border-[var(--border)] ${isFull ? 'max-h-[min(70vh,640px)]' : 'max-h-64'}`}
+              className={`overflow-auto rounded-lg border border-[var(--border)] touch-pan-x ${isFull ? 'max-h-[min(75vh,720px)] sm:max-h-[min(70vh,640px)]' : 'max-h-64'}`}
             >
               {data.standings.length === 0 ? (
                 <p className="p-3 text-xs text-[var(--text-muted)]">No table data.</p>
@@ -210,28 +216,28 @@ export function LeagueInsightsPanel({
                 data.standings.map((g, gi) => (
                   <div key={gi}>
                     {g.group && (
-                      <div className="sticky top-0 bg-[var(--card)] px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)] border-b border-[var(--border)]">
+                      <div className="sticky top-0 bg-[var(--card)] px-2 py-1.5 text-[10px] sm:text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)] border-b border-[var(--border)]">
                         {g.group}
                       </div>
                     )}
-                    <table className="w-full text-[11px]">
+                    <table className="w-full text-xs sm:text-[11px] min-w-[280px]">
                       <thead>
                         <tr className="text-left text-[var(--text-muted)] border-b border-[var(--border)] bg-[var(--card)]">
-                          <th className="px-2 py-1.5 w-8">#</th>
-                          <th className="px-2 py-1.5">Team</th>
-                          <th className="px-2 py-1.5 w-8">P</th>
-                          <th className="px-2 py-1.5 w-8">GD</th>
-                          <th className="px-2 py-1.5 w-8">Pts</th>
+                          <th className="px-2 py-2 sm:py-1.5 w-8">#</th>
+                          <th className="px-2 py-2 sm:py-1.5">Team</th>
+                          <th className="px-2 py-2 sm:py-1.5 w-8">P</th>
+                          <th className="px-2 py-2 sm:py-1.5 w-8">GD</th>
+                          <th className="px-2 py-2 sm:py-1.5 w-8">Pts</th>
                         </tr>
                       </thead>
                       <tbody>
                         {g.table.map((row) => (
                           <tr key={`${gi}-${row.rank}-${row.teamName}`} className="border-b border-[var(--border)]/60 last:border-0">
-                            <td className="px-2 py-1 text-[var(--text-muted)]">{row.rank}</td>
-                            <td className="px-2 py-1 font-medium text-[var(--text)] truncate max-w-[140px]">{row.teamName}</td>
-                            <td className="px-2 py-1 text-[var(--text-muted)]">{row.played}</td>
-                            <td className="px-2 py-1 text-[var(--text-muted)]">{row.goalsDiff ?? '—'}</td>
-                            <td className="px-2 py-1 font-semibold text-[var(--text)]">{row.points}</td>
+                            <td className="px-2 py-2 sm:py-1 text-[var(--text-muted)]">{row.rank}</td>
+                            <td className="px-2 py-2 sm:py-1 font-medium text-[var(--text)] truncate max-w-[min(52vw,220px)] sm:max-w-[140px]">{row.teamName}</td>
+                            <td className="px-2 py-2 sm:py-1 text-[var(--text-muted)]">{row.played}</td>
+                            <td className="px-2 py-2 sm:py-1 text-[var(--text-muted)]">{row.goalsDiff ?? '—'}</td>
+                            <td className="px-2 py-2 sm:py-1 font-semibold text-[var(--text)]">{row.points}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -244,27 +250,27 @@ export function LeagueInsightsPanel({
 
           {data && tab === 'scorers' && (
             <div
-              className={`overflow-auto rounded-lg border border-[var(--border)] ${isFull ? 'max-h-[min(70vh,640px)]' : 'max-h-64'}`}
+              className={`overflow-auto rounded-lg border border-[var(--border)] touch-pan-x ${isFull ? 'max-h-[min(75vh,720px)] sm:max-h-[min(70vh,640px)]' : 'max-h-64'}`}
             >
               {data.topScorers.length === 0 ? (
                 <p className="p-3 text-xs text-[var(--text-muted)]">No scorer data.</p>
               ) : (
-                <table className="w-full text-[11px]">
+                <table className="w-full text-xs sm:text-[11px] min-w-[260px]">
                   <thead>
                     <tr className="text-left text-[var(--text-muted)] border-b border-[var(--border)] bg-[var(--card)]">
-                      <th className="px-2 py-1.5 w-8">#</th>
-                      <th className="px-2 py-1.5">Player</th>
-                      <th className="px-2 py-1.5 hidden sm:table-cell">Team</th>
-                      <th className="px-2 py-1.5 w-10">G</th>
+                      <th className="px-2 py-2 sm:py-1.5 w-8">#</th>
+                      <th className="px-2 py-2 sm:py-1.5">Player</th>
+                      <th className="px-2 py-2 sm:py-1.5 hidden sm:table-cell">Team</th>
+                      <th className="px-2 py-2 sm:py-1.5 w-10">G</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.topScorers.map((row) => (
                       <tr key={`${row.rank}-${row.playerName}`} className="border-b border-[var(--border)]/60 last:border-0">
-                        <td className="px-2 py-1 text-[var(--text-muted)]">{row.rank}</td>
-                        <td className="px-2 py-1 font-medium text-[var(--text)] truncate max-w-[120px]">{row.playerName}</td>
-                        <td className="px-2 py-1 text-[var(--text-muted)] truncate max-w-[100px] hidden sm:table-cell">{row.teamName}</td>
-                        <td className="px-2 py-1 font-semibold">{row.goals ?? '—'}</td>
+                        <td className="px-2 py-2 sm:py-1 text-[var(--text-muted)]">{row.rank}</td>
+                        <td className="px-2 py-2 sm:py-1 font-medium text-[var(--text)] truncate max-w-[min(48vw,200px)] sm:max-w-[120px]">{row.playerName}</td>
+                        <td className="px-2 py-2 sm:py-1 text-[var(--text-muted)] truncate max-w-[100px] hidden sm:table-cell">{row.teamName}</td>
+                        <td className="px-2 py-2 sm:py-1 font-semibold">{row.goals ?? '—'}</td>
                       </tr>
                     ))}
                   </tbody>

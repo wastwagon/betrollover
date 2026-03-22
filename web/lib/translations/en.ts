@@ -25,6 +25,8 @@ const en = {
   'nav.contact': 'Contact',
   'nav.marketplace': 'Marketplace',
   'nav.league_tables': 'League tables',
+  /** Bottom nav — short label */
+  'nav.league_tables_short': 'Tables',
   'nav.dashboard': 'Dashboard',
   'nav.login': 'Sign In',
   'nav.register': 'Get Started Free',
@@ -296,6 +298,7 @@ const en = {
   'league_stats.sign_in_note': 'Loading table and scorer data requires a signed-in account (protects our API quota).',
   'league_stats.select_hint': 'Choose a country and league above, or search by league name.',
   'league_stats.directory_error': 'Could not load the league list. Please refresh or try again later.',
+  'league_stats.sign_in_cta': 'Sign in to load data',
 
   // ── Pick Card ────────────────────────────────────────────────────────────
   'pick.picks_count': '{n} picks',

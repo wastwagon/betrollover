@@ -25,6 +25,21 @@ export default function LeagueTablesPage() {
   const [leagueQuery, setLeagueQuery] = useState('');
   const [selectedApiId, setSelectedApiId] = useState<number>(0);
   const [seasonOverride, setSeasonOverride] = useState('');
+  const [signedIn, setSignedIn] = useState(false);
+
+  useEffect(() => {
+    const syncToken = () => setSignedIn(typeof window !== 'undefined' && !!localStorage.getItem('token'));
+    syncToken();
+    const onVis = () => {
+      if (document.visibilityState === 'visible') syncToken();
+    };
+    window.addEventListener('storage', syncToken);
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      window.removeEventListener('storage', syncToken);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,7 +103,7 @@ export default function LeagueTablesPage() {
   return (
     <div className="min-h-screen bg-[var(--bg)] flex flex-col">
       <UnifiedHeader />
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 md:py-8 pb-16">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 md:py-8 pb-24 lg:pb-16">
         <PageHeader
           label={t('league_stats.breadcrumb')}
           title={t('league_stats.title')}
@@ -105,11 +120,11 @@ export default function LeagueTablesPage() {
           </p>
         )}
 
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 md:p-6 shadow-sm space-y-4 mb-6">
+        <div className="rounded-none sm:rounded-2xl border-x-0 sm:border-x border-y border-[var(--border)] sm:border bg-[var(--card)] p-4 sm:p-4 md:p-6 shadow-sm space-y-4 mb-6 -mx-4 px-4 sm:mx-0 sm:px-4 md:px-6">
           <h2 className="text-sm font-bold uppercase tracking-wide text-[var(--text-muted)]">
             {t('league_stats.filters_heading')}
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-4">
             <div className="space-y-1.5">
               <label htmlFor="lt-country" className="text-sm font-medium text-[var(--text)]">
                 {t('league_stats.country')}
@@ -121,7 +136,7 @@ export default function LeagueTablesPage() {
                   setCountryFilter(e.target.value);
                   setSelectedApiId(0);
                 }}
-                className="w-full px-3 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                className="w-full min-h-[48px] px-3 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] touch-manipulation"
               >
                 <option value="">{t('league_stats.all_countries')}</option>
                 {countries.map((c) => (
@@ -142,7 +157,7 @@ export default function LeagueTablesPage() {
                 placeholder={t('league_stats.search_league_placeholder')}
                 value={leagueQuery}
                 onChange={(e) => setLeagueQuery(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                className="w-full min-h-[48px] px-3 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] touch-manipulation"
               />
             </div>
             <div className="space-y-1.5 md:col-span-2">
@@ -153,7 +168,7 @@ export default function LeagueTablesPage() {
                 id="lt-league"
                 value={selectedApiId || ''}
                 onChange={(e) => setSelectedApiId(Number(e.target.value) || 0)}
-                className="w-full px-3 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                className="w-full min-h-[48px] px-3 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] touch-manipulation"
               >
                 <option value="">{t('league_stats.choose_league')}</option>
                 {leaguesFiltered.map((l) => (
@@ -182,18 +197,31 @@ export default function LeagueTablesPage() {
                 }
                 value={seasonOverride}
                 onChange={(e) => setSeasonOverride(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                className="w-full max-w-[200px] px-3 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                className="w-full max-w-none sm:max-w-[200px] min-h-[48px] px-3 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] touch-manipulation"
               />
             </div>
           </div>
         </div>
 
-        <p className="text-sm text-[var(--text-muted)] mb-4 leading-relaxed">
-          {t('league_stats.sign_in_note')}{' '}
-          <Link href="/login?redirect=/league-tables" className="text-[var(--primary)] font-semibold hover:underline">
-            {t('nav.login')}
-          </Link>
-        </p>
+        {!signedIn && (
+          <div className="mb-4 space-y-3">
+            <Link
+              href="/login?redirect=/league-tables"
+              className="sm:hidden flex items-center justify-center w-full min-h-[48px] rounded-xl bg-[var(--primary)] text-white font-bold text-sm shadow-md active:scale-[0.99] touch-manipulation"
+            >
+              {t('league_stats.sign_in_cta')}
+            </Link>
+            <p className="hidden sm:block text-sm text-[var(--text-muted)] leading-relaxed">
+              {t('league_stats.sign_in_note')}{' '}
+              <Link href="/login?redirect=/league-tables" className="text-[var(--primary)] font-semibold hover:underline">
+                {t('nav.login')}
+              </Link>
+            </p>
+            <p className="sm:hidden text-xs text-[var(--text-muted)] leading-relaxed text-center px-1">
+              {t('league_stats.sign_in_note')}
+            </p>
+          </div>
+        )}
 
         <LeagueInsightsPanel
           layout="full"

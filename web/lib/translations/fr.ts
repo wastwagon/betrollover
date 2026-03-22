@@ -25,6 +25,7 @@ const fr: Record<string, string> = {
   'nav.contact': 'Contact',
   'nav.marketplace': 'Marché',
   'nav.league_tables': 'Classements',
+  'nav.league_tables_short': 'Ligues',
   'nav.dashboard': 'Tableau de Bord',
   'nav.login': 'Se Connecter',
   'nav.register': 'Commencer Gratuitement',
@@ -296,6 +297,7 @@ const fr: Record<string, string> = {
   'league_stats.sign_in_note': 'Le chargement du classement et des buteurs nécessite un compte connecté (protection du quota API).',
   'league_stats.select_hint': 'Choisissez un pays et une ligue ci-dessus, ou recherchez par nom.',
   'league_stats.directory_error': 'Impossible de charger la liste des ligues. Réessayez plus tard.',
+  'league_stats.sign_in_cta': 'Connexion pour charger',
 
   // ── Pick Card ────────────────────────────────────────────────────────────
   'pick.picks_count': '{n} pronostics',
