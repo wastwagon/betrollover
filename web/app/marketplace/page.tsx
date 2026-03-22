@@ -93,16 +93,37 @@ export default function MarketplacePage() {
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
   const [sortBy, setSortBy] = useState<SortBy>('newest');
   const [sportFilter, setSportFilter] = useState<string>('');
+  const [tipsterSearch, setTipsterSearch] = useState('');
+  const [debouncedTipster, setDebouncedTipster] = useState('');
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedTipster(tipsterSearch.trim()), 350);
+    return () => clearTimeout(id);
+  }, [tipsterSearch]);
   const [followedTipsterUsernames, setFollowedTipsterUsernames] = useState<Set<string>>(new Set());
   const [followLoading, setFollowLoading] = useState<string | null>(null);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
 
-  // Sync sport filter from URL on load and when URL changes (e.g. mega menu link, back/forward)
+  // Sync sport + tipster search from URL (shareable links, back/forward)
   useEffect(() => {
     const sport = searchParams.get('sport');
     const value = sport && VALID_SPORT_KEYS.has(sport) ? sport : '';
     setSportFilter(value);
+    const tip = searchParams.get('tipster') || '';
+    setTipsterSearch(tip);
+    setDebouncedTipster(tip);
   }, [searchParams]);
+
+  // Keep URL in sync with filters (debounced tipster avoids history spam while typing)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const p = new URLSearchParams();
+    if (sportFilter) p.set('sport', sportFilter);
+    if (debouncedTipster) p.set('tipster', debouncedTipster);
+    const qs = p.toString();
+    const next = qs ? `/marketplace?${qs}` : '/marketplace';
+    const cur = `${window.location.pathname}${window.location.search}`;
+    if (cur !== next) router.replace(next, { scroll: false });
+  }, [sportFilter, debouncedTipster, router]);
 
   const handleFollow = async (username: string) => {
     const token = localStorage.getItem('token');
@@ -167,13 +188,18 @@ export default function MarketplacePage() {
     return list;
   }, [picks, priceFilter, sortBy, followedTipsterUsernames]);
 
+  const tipsterParam = useMemo(
+    () => (debouncedTipster ? `&tipsterSearch=${encodeURIComponent(debouncedTipster)}` : ''),
+    [debouncedTipster],
+  );
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     const sportParam = sportFilter ? `&sport=${encodeURIComponent(sportFilter)}` : '';
 
     if (!token) {
       // Guest: use public marketplace (free + paid listings; login required to purchase/claim)
-      fetch(`${API_URL}/accumulators/marketplace/public?limit=24${sportParam}`)
+      fetch(`${API_URL}/accumulators/marketplace/public?limit=24${sportParam}${tipsterParam}`)
         .then((r) => (r.ok ? r.json() : { items: [], total: 0, hasMore: false }))
         .then((data) => {
           const items = data?.items ?? [];
@@ -193,7 +219,7 @@ export default function MarketplacePage() {
 
     // Logged in: fetch marketplace, wallet, purchased, user, following
     Promise.all([
-      fetch(`${API_URL}/accumulators/marketplace?limit=24${sportParam}`, {
+      fetch(`${API_URL}/accumulators/marketplace?limit=24${sportParam}${tipsterParam}`, {
         headers: { Authorization: `Bearer ${token}` },
       }).then((r) => (r.ok ? r.json() : { items: [], total: 0, hasMore: false })),
       fetch(`${API_URL}/wallet/balance`, {
@@ -233,7 +259,7 @@ export default function MarketplacePage() {
         showError(err);
       })
       .finally(() => setLoading(false));
-  }, [router, sportFilter, showError]);
+  }, [router, sportFilter, tipsterParam, showError]);
 
   const recordView = (id: number) => {
     fetch(`${API_URL}/accumulators/${id}/view`, { method: 'POST' }).catch(() => {});
@@ -244,8 +270,8 @@ export default function MarketplacePage() {
     const token = localStorage.getItem('token');
     const sportParam = sportFilter ? `&sport=${encodeURIComponent(sportFilter)}` : '';
     const url = token
-      ? `${API_URL}/accumulators/marketplace?limit=24&offset=${picks.length}${sportParam}`
-      : `${API_URL}/accumulators/marketplace/public?limit=24&offset=${picks.length}${sportParam}`;
+      ? `${API_URL}/accumulators/marketplace?limit=24&offset=${picks.length}${sportParam}${tipsterParam}`
+      : `${API_URL}/accumulators/marketplace/public?limit=24&offset=${picks.length}${sportParam}${tipsterParam}`;
     setLoadingMore(true);
     try {
       const res = await fetch(url, {
@@ -382,12 +408,7 @@ export default function MarketplacePage() {
               <button
                 key={key}
                 type="button"
-                onClick={() => {
-                  setSportFilter(key);
-                  // Always use /marketplace so the bar never shows /marketplace/rugby when switching sport
-                  const url = key ? `/marketplace?sport=${encodeURIComponent(key)}` : '/marketplace';
-                  router.replace(url, { scroll: false });
-                }}
+                onClick={() => setSportFilter(key)}
                 className={`flex-shrink-0 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
                   sportFilter === key
                     ? 'bg-[var(--primary)] text-white shadow-md'
@@ -399,9 +420,31 @@ export default function MarketplacePage() {
             ))}
           </div>
 
-          {/* Filters */}
-          {!loading && picks.length > 0 && (
+          {/* Filters — show after load so empty search results still have controls */}
+          {!loading && (
             <div className="flex flex-wrap items-center gap-3 mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 flex-1 min-w-[200px] max-w-md">
+                <label htmlFor="marketplace-tipster-search" className="text-sm font-medium text-[var(--text)] shrink-0">
+                  {t('marketplace.tipster_search_label')}
+                </label>
+                <div className="relative flex-1 min-w-0">
+                  <input
+                    id="marketplace-tipster-search"
+                    type="search"
+                    enterKeyHint="search"
+                    autoComplete="off"
+                    placeholder={t('marketplace.tipster_search_placeholder')}
+                    value={tipsterSearch}
+                    onChange={(e) => setTipsterSearch(e.target.value)}
+                    className="w-full px-3 py-2 pr-24 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                  />
+                  {tipsterSearch.trim() !== debouncedTipster && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[var(--text-muted)] pointer-events-none">
+                      {t('marketplace.tipster_search_loading')}
+                    </span>
+                  )}
+                </div>
+              </div>
               <div className="flex items-center gap-2">
                 <label className="text-sm font-medium text-[var(--text)]">Price</label>
                 <select
@@ -430,11 +473,13 @@ export default function MarketplacePage() {
                   <option value="tipster-rank">Tipster rank</option>
                 </select>
               </div>
-              {(priceFilter !== 'all' || sortBy !== 'newest') && (
+              {(priceFilter !== 'all' || sortBy !== 'newest' || debouncedTipster) && (
                 <button
+                  type="button"
                   onClick={() => {
                     setPriceFilter('all');
                     setSortBy('newest');
+                    setTipsterSearch('');
                   }}
                   className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                 >
@@ -450,10 +495,20 @@ export default function MarketplacePage() {
           {!loading && picks.length === 0 && (
             <div className="card-gradient rounded-2xl">
               <EmptyState
-                title={t('marketplace.no_picks')}
-                description={t('marketplace.no_picks_sub')}
-                actionLabel={t('nav.create_coupon')}
-                actionHref="/create-pick"
+                title={debouncedTipster ? t('marketplace.no_tipster_matches') : t('marketplace.no_picks')}
+                description={
+                  debouncedTipster ? t('marketplace.tipster_search_empty_hint') : t('marketplace.no_picks_sub')
+                }
+                actionLabel={debouncedTipster ? t('common.clear') : t('nav.create_coupon')}
+                actionHref={debouncedTipster ? undefined : '/create-pick'}
+                onActionClick={
+                  debouncedTipster
+                    ? () => {
+                        setTipsterSearch('');
+                        setDebouncedTipster('');
+                      }
+                    : undefined
+                }
                 imageSrc="/images/marketing/marketplace-strip.png"
                 imageAlt=""
               />
@@ -468,6 +523,7 @@ export default function MarketplacePage() {
                 onActionClick={() => {
                   setPriceFilter('all');
                   setSortBy('newest');
+                  setTipsterSearch('');
                 }}
                 icon="🔍"
               />

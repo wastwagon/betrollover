@@ -507,6 +507,38 @@ export class AccumulatorsService {
     };
   }
 
+  /**
+   * Resolve user IDs for marketplace tipster filter: exact username (case-insensitive) or partial username / display name.
+   * Returns null when query is empty (caller should not filter). Returns [] when no users match (caller should return no tickets).
+   */
+  private async resolveUserIdsByTipsterSearch(q: string): Promise<number[] | null> {
+    const raw = q.trim().slice(0, 80);
+    if (!raw) return null;
+    const escaped = raw.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+    const likePat = `%${escaped}%`;
+    const rows = await this.usersRepo
+      .createQueryBuilder('u')
+      .select(['u.id'])
+      .where('LOWER(TRIM(u.username)) = LOWER(TRIM(:exact))', { exact: raw })
+      .orWhere(`u.username ILIKE :like ESCAPE '\\'`, { like: likePat })
+      .orWhere(`COALESCE(u.displayName, '') ILIKE :like ESCAPE '\\'`, { like: likePat })
+      .getMany();
+    return [...new Set(rows.map((u) => u.id))];
+  }
+
+  private applyTipsterFilterToTicketWhere(ticketWhere: Record<string, unknown>, ids: number[] | null): void {
+    if (ids === null) return;
+    if (ids.length === 0) {
+      ticketWhere.userId = -1;
+      return;
+    }
+    if (ids.length === 1) {
+      ticketWhere.userId = ids[0];
+    } else {
+      ticketWhere.userId = In(ids);
+    }
+  }
+
   async getMarketplace(
     userId: number,
     includeAllListings = false,
@@ -515,6 +547,7 @@ export class AccumulatorsService {
       offset?: number;
       sport?: string;
       tipsterUsername?: string;
+      tipsterSearch?: string;
       showPending?: boolean;
       showNotStated?: boolean;
       showSettled?: boolean;
@@ -546,7 +579,10 @@ export class AccumulatorsService {
         where: { username: options.tipsterUsername },
         select: ['id'],
       });
-      if (tipsterUser) ticketWhere.userId = tipsterUser.id;
+      ticketWhere.userId = tipsterUser?.id ?? -1;
+    } else if (options?.tipsterSearch) {
+      const ids = await this.resolveUserIdsByTipsterSearch(options.tipsterSearch);
+      this.applyTipsterFilterToTicketWhere(ticketWhere, ids);
     }
     if (options?.sport) {
       const SPORT_DISPLAY_MAP: Record<string, string> = {
@@ -619,6 +655,7 @@ export class AccumulatorsService {
     offset?: number;
     sport?: string;
     freeOnly?: boolean;
+    tipsterSearch?: string;
   }) {
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
     const offset = Math.max(options?.offset ?? 0, 0);
@@ -644,6 +681,10 @@ export class AccumulatorsService {
       };
       const s = options.sport.toLowerCase();
       ticketWhere.sport = SPORT_DISPLAY_MAP[s] ?? options.sport;
+    }
+    if (options?.tipsterSearch) {
+      const ids = await this.resolveUserIdsByTipsterSearch(options.tipsterSearch);
+      this.applyTipsterFilterToTicketWhere(ticketWhere, ids);
     }
     const tickets = await this.ticketRepo.find({
       where: ticketWhere,

@@ -48,14 +48,17 @@ export class AccumulatorsController {
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
     @Query('freeOnly') freeOnly?: string,
+    @Query('tipsterSearch') tipsterSearch?: string,
   ) {
     const limitVal = limit != null ? Math.min(Math.max(parseInt(limit, 10) || 24, 1), 100) : undefined;
     const offsetVal = offset != null ? Math.max(parseInt(offset, 10) || 0, 0) : undefined;
+    const tipQ = tipsterSearch?.trim();
     return this.accumulatorsService.getMarketplacePublicList({
       limit: limitVal,
       offset: offsetVal,
       sport: sport || undefined,
       freeOnly: freeOnly === 'true',
+      tipsterSearch: tipQ || undefined,
     });
   }
 
@@ -69,6 +72,7 @@ export class AccumulatorsController {
     @Query('showSettled') showSettled?: string,
     @Query('sport') sport?: string,
     @Query('tipsterUsername') tipsterUsername?: string,
+    @Query('tipsterSearch') tipsterSearch?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
@@ -76,11 +80,13 @@ export class AccumulatorsController {
     const includeAllListings = isAdmin && includeAll === 'true' && showPending === undefined && showNotStated === undefined && showSettled === undefined;
     const limitVal = limit != null ? Math.min(Math.max(parseInt(limit, 10) || 24, 1), 100) : undefined;
     const offsetVal = offset != null ? Math.max(parseInt(offset, 10) || 0, 0) : undefined;
+    const tipQ = tipsterSearch?.trim();
     const opts: Parameters<typeof this.accumulatorsService.getMarketplace>[2] = {
       limit: limitVal,
       offset: offsetVal,
       sport: sport || undefined,
       tipsterUsername: isAdmin ? tipsterUsername || undefined : undefined,
+      tipsterSearch: tipQ || undefined,
     };
     if (isAdmin) {
       opts.showPending = showPending === undefined ? true : showPending !== 'false';
