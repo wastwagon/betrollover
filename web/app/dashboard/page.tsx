@@ -211,7 +211,13 @@ function DashboardContent() {
             typeof couponSpendData.couponRefundsToWallet === 'number' &&
             typeof couponSpendData.netOutOfPocketOnCoupons === 'number'
           ) {
-            setCouponSpendSummary(couponSpendData as CouponSpendSummaryResponse);
+            const sub =
+              typeof couponSpendData.subscriptionRefundsToWallet === 'number'
+                ? couponSpendData.subscriptionRefundsToWallet
+                : 0;
+            const oth =
+              typeof couponSpendData.otherRefundsToWallet === 'number' ? couponSpendData.otherRefundsToWallet : 0;
+            setCouponSpendSummary({ ...(couponSpendData as CouponSpendSummaryResponse), subscriptionRefundsToWallet: sub, otherRefundsToWallet: oth });
           } else {
             setCouponSpendSummary(null);
           }
@@ -917,6 +923,18 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
                 />
                 <StatCard title={t('status.active')} value={purchaseStats.active} icon="⏳" variant="slate" glass index={7} />
               </div>
+              {couponSpendSummary &&
+                (couponSpendSummary.subscriptionRefundsToWallet > 0 || couponSpendSummary.otherRefundsToWallet > 0) && (
+                  <p className="text-xs text-[var(--text-muted)] mt-3 px-0.5 leading-relaxed">
+                    {t('dashboard.other_refunds_note', {
+                      subscription: format(couponSpendSummary.subscriptionRefundsToWallet).primary,
+                      other: format(couponSpendSummary.otherRefundsToWallet).primary,
+                    })}{' '}
+                    <Link href="/wallet" className="text-[var(--primary)] hover:underline font-medium">
+                      {t('dashboard.other_refunds_wallet_link')}
+                    </Link>
+                  </p>
+                )}
             </section>
           )}
 

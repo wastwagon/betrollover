@@ -402,7 +402,11 @@ const en = {
   'dashboard.total_spent': 'Gross coupon spend',
   'dashboard.total_spent_hint': 'Sum of all coupon prices. Refunds from lost/void coupons are credited to your wallet separately.',
   'dashboard.net_coupon_spend': 'Net on coupons',
-  'dashboard.net_coupon_spend_hint': 'Gross coupon spend minus pick refunds returned to your wallet (lost, void, admin removal, etc.).',
+  'dashboard.net_coupon_spend_hint':
+    'Gross coupon spend minus pick-related refunds only. Subscription or withdrawal refunds are listed separately below.',
+  'dashboard.other_refunds_note':
+    'Other refunds credited to your wallet (not counted in net on coupons): {subscription} from subscriptions, {other} from other sources.',
+  'dashboard.other_refunds_wallet_link': 'Wallet →',
   'dashboard.net_coupon_spend_unavailable': 'Load failed — open Wallet for transaction history.',
   'dashboard.earn_ready': 'You Can Sell Coupons & Earn',
   'dashboard.earn_build_roi': 'Build ROI to Start Earning',
@@ -619,6 +623,8 @@ const en = {
   'wallet.coupon_spend_title': 'Marketplace coupons (wallet)',
   'wallet.coupon_spend_body':
     'You paid {gross} for coupon purchases. {refunds} was refunded to this wallet from lost, voided, or removed coupons. Net out-of-pocket on coupons: {net}.',
+  'wallet.coupon_spend_extras':
+    'Separate totals: {subscription} subscription refunds (e.g. ROI guarantee), {other} other refunds (e.g. withdrawal reversal). These do not change “net on coupons” above.',
   'wallet.verify_email': 'Verify your email to deposit, withdraw, or add payout methods.',
   'wallet.resend_verify': 'Resend verification email →',
   'wallet.amount_placeholder': 'Amount (GHS)',

@@ -401,7 +401,11 @@ const fr: Record<string, string> = {
   'dashboard.total_spent': 'Dépense brute (coupons)',
   'dashboard.total_spent_hint': 'Somme des prix des coupons. Les remboursements (perdus/annulés) sont crédités sur votre portefeuille à part.',
   'dashboard.net_coupon_spend': 'Net sur les coupons',
-  'dashboard.net_coupon_spend_hint': 'Dépense brute moins les remboursements liés aux coupons retournés sur votre portefeuille.',
+  'dashboard.net_coupon_spend_hint':
+    'Dépense brute moins les remboursements liés aux coupons uniquement. Les remboursements d’abonnement ou de retrait sont indiqués séparément.',
+  'dashboard.other_refunds_note':
+    'Autres remboursements crédités (non inclus dans le net sur coupons) : {subscription} abonnements, {other} autres.',
+  'dashboard.other_refunds_wallet_link': 'Portefeuille →',
   'dashboard.net_coupon_spend_unavailable': 'Chargement impossible — voir l’historique du portefeuille.',
   'dashboard.earn_ready': 'Vous pouvez vendre des coupons et gagner',
   'dashboard.earn_build_roi': 'Construisez votre ROI pour commencer à gagner',
@@ -618,6 +622,8 @@ const fr: Record<string, string> = {
   'wallet.coupon_spend_title': 'Coupons marketplace (portefeuille)',
   'wallet.coupon_spend_body':
     'Vous avez payé {gross} pour des coupons. {refunds} ont été remboursés sur ce portefeuille (perdus, annulés ou retirés). Net dépensé sur les coupons : {net}.',
+  'wallet.coupon_spend_extras':
+    'À part : {subscription} remboursements d’abonnement (ex. garantie ROI), {other} autres remboursements (ex. annulation de retrait). Ils ne modifient pas le « net sur coupons » ci-dessus.',
   'wallet.verify_email': 'Vérifiez votre email pour déposer, retirer ou ajouter des moyens de paiement.',
   'wallet.resend_verify': 'Renvoyer l\'email de vérification →',
   'wallet.amount_placeholder': 'Montant (GHS)',

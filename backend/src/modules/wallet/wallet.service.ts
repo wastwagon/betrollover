@@ -67,29 +67,46 @@ export class WalletService {
   }
 
   /**
-   * Marketplace coupon purchases vs refunds credited back (wallet rows with reference pick-*).
-   * Additive summary for dashboard clarity — does not change balances or existing purchase APIs.
+   * Marketplace coupon purchases vs refunds credited back.
+   * - Gross: purchase debits with pick-* references.
+   * - Coupon refunds: refund credits tied to picks (pick-* or score-correction recredit buyers).
+   * - subscriptionRefundsToWallet / otherRefundsToWallet: separate stats so totals stay explainable.
    */
   async getCouponSpendSummary(userId: number): Promise<{
     grossCouponPurchases: number;
     couponRefundsToWallet: number;
     netOutOfPocketOnCoupons: number;
+    subscriptionRefundsToWallet: number;
+    otherRefundsToWallet: number;
   }> {
-    const rows: Array<{ gross: string; refunds: string }> = await this.txRepo.query(
-      `SELECT
-        COALESCE(SUM(CASE WHEN type = 'purchase' AND reference LIKE 'pick-%' AND amount < 0 THEN ABS(amount::numeric) ELSE 0 END), 0)::text AS gross,
-        COALESCE(SUM(CASE WHEN type = 'refund' AND reference LIKE 'pick-%' AND amount > 0 THEN amount::numeric ELSE 0 END), 0)::text AS refunds
+    const rows: Array<{ gross: string; coupon_refunds: string; sub_refunds: string; other_refunds: string }> =
+      await this.txRepo.query(
+        `SELECT
+        COALESCE(SUM(CASE WHEN type = 'purchase' AND COALESCE(reference, '') LIKE 'pick-%' AND amount < 0 THEN ABS(amount::numeric) ELSE 0 END), 0)::text AS gross,
+        COALESCE(SUM(CASE WHEN type = 'refund' AND amount > 0 AND (
+            COALESCE(reference, '') LIKE 'pick-%' OR COALESCE(reference, '') LIKE 'reconcile-recredit-buyer-%'
+          ) THEN amount::numeric ELSE 0 END), 0)::text AS coupon_refunds,
+        COALESCE(SUM(CASE WHEN type = 'refund' AND amount > 0 AND COALESCE(reference, '') LIKE 'sub-%' THEN amount::numeric ELSE 0 END), 0)::text AS sub_refunds,
+        COALESCE(SUM(CASE WHEN type = 'refund' AND amount > 0
+          AND COALESCE(reference, '') NOT LIKE 'pick-%'
+          AND COALESCE(reference, '') NOT LIKE 'reconcile-recredit-buyer-%'
+          AND COALESCE(reference, '') NOT LIKE 'sub-%'
+          THEN amount::numeric ELSE 0 END), 0)::text AS other_refunds
        FROM wallet_transactions
        WHERE user_id = $1 AND status = 'completed'`,
-      [userId],
-    );
+        [userId],
+      );
     const gross = Number(rows[0]?.gross ?? 0) || 0;
-    const refunds = Number(rows[0]?.refunds ?? 0) || 0;
+    const refunds = Number(rows[0]?.coupon_refunds ?? 0) || 0;
     const net = Number((gross - refunds).toFixed(2));
+    const subRefunds = Number(rows[0]?.sub_refunds ?? 0) || 0;
+    const otherRefunds = Number(rows[0]?.other_refunds ?? 0) || 0;
     return {
       grossCouponPurchases: gross,
       couponRefundsToWallet: refunds,
       netOutOfPocketOnCoupons: net,
+      subscriptionRefundsToWallet: subRefunds,
+      otherRefundsToWallet: otherRefunds,
     };
   }
 

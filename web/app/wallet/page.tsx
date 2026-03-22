@@ -110,7 +110,10 @@ function WalletContent() {
           typeof couponSpend.couponRefundsToWallet === 'number' &&
           typeof couponSpend.netOutOfPocketOnCoupons === 'number'
         ) {
-          setCouponSpendSummary(couponSpend as CouponSpendSummaryResponse);
+          const sub =
+            typeof couponSpend.subscriptionRefundsToWallet === 'number' ? couponSpend.subscriptionRefundsToWallet : 0;
+          const oth = typeof couponSpend.otherRefundsToWallet === 'number' ? couponSpend.otherRefundsToWallet : 0;
+          setCouponSpendSummary({ ...(couponSpend as CouponSpendSummaryResponse), subscriptionRefundsToWallet: sub, otherRefundsToWallet: oth });
         } else {
           setCouponSpendSummary(null);
         }
@@ -684,18 +687,30 @@ function WalletContent() {
               </div>
             )}
 
-            {couponSpendSummary && (couponSpendSummary.grossCouponPurchases > 0 || couponSpendSummary.couponRefundsToWallet > 0) && (
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 p-4 mb-4 text-sm text-[var(--text-muted)]">
-                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">{t('wallet.coupon_spend_title')}</p>
-                <p className="leading-relaxed">
-                  {t('wallet.coupon_spend_body', {
-                    gross: format(couponSpendSummary.grossCouponPurchases).primary,
-                    refunds: format(couponSpendSummary.couponRefundsToWallet).primary,
-                    net: format(couponSpendSummary.netOutOfPocketOnCoupons).primary,
-                  })}
-                </p>
-              </div>
-            )}
+            {couponSpendSummary &&
+              (couponSpendSummary.grossCouponPurchases > 0 ||
+                couponSpendSummary.couponRefundsToWallet > 0 ||
+                couponSpendSummary.subscriptionRefundsToWallet > 0 ||
+                couponSpendSummary.otherRefundsToWallet > 0) && (
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 p-4 mb-4 text-sm text-[var(--text-muted)]">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">{t('wallet.coupon_spend_title')}</p>
+                  <p className="leading-relaxed">
+                    {t('wallet.coupon_spend_body', {
+                      gross: format(couponSpendSummary.grossCouponPurchases).primary,
+                      refunds: format(couponSpendSummary.couponRefundsToWallet).primary,
+                      net: format(couponSpendSummary.netOutOfPocketOnCoupons).primary,
+                    })}
+                  </p>
+                  {(couponSpendSummary.subscriptionRefundsToWallet > 0 || couponSpendSummary.otherRefundsToWallet > 0) && (
+                    <p className="leading-relaxed mt-2 pt-2 border-t border-[var(--border)] text-xs">
+                      {t('wallet.coupon_spend_extras', {
+                        subscription: format(couponSpendSummary.subscriptionRefundsToWallet).primary,
+                        other: format(couponSpendSummary.otherRefundsToWallet).primary,
+                      })}
+                    </p>
+                  )}
+                </div>
+              )}
 
             <div className="card-gradient rounded-2xl p-5 shadow-lg">
               <div className="flex items-center justify-between mb-3">
