@@ -328,6 +328,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                         <div className="my-2 border-t border-slate-100" />
                         <SectionLabel>{t('header.section_platform')}</SectionLabel>
                         <MegaLink href="/leaderboard" icon="🏆" label={t('nav.leaderboard')}   desc={t('header.desc_leaderboard')}      onClick={closeAll} />
+                        <MegaLink href="/league-tables" icon="📊" label={t('nav.league_tables')} desc={t('header.desc_league_tables')} onClick={closeAll} />
                         <MegaLink href="/tipsters"    icon="👥" label={t('nav.top_tipsters')} desc={t('header.desc_find_tipsters')} onClick={closeAll} />
                       </div>
 

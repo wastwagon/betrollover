@@ -27,6 +27,7 @@ export function AppFooter() {
             <h3 className="font-semibold mb-3 text-[var(--text)]">{t('footer.platform')}</h3>
             <ul className="space-y-2 text-sm text-[var(--text-muted)]">
               <li><Link href="/marketplace" className="hover:text-[var(--primary)] transition-colors">{t('nav.marketplace')}</Link></li>
+              <li><Link href="/league-tables" className="hover:text-[var(--primary)] transition-colors">{t('nav.league_tables')}</Link></li>
               <li><Link href="/how-it-works" className="hover:text-[var(--primary)] transition-colors">{t('home.how_it_works')}</Link></li>
               <li><Link href="/coupons/archive" className="hover:text-[var(--primary)] transition-colors">{t('header.settled_archive')}</Link></li>
               <li><Link href="/tipsters" className="hover:text-[var(--primary)] transition-colors">{t('nav.top_tipsters')}</Link></li>

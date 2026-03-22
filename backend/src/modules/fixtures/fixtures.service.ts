@@ -168,6 +168,36 @@ export class FixturesService {
     });
   }
 
+  /**
+   * Public list for league tables / top scorers picker (no secrets).
+   * Restricted to enabled leagues with bookmaker_tier = 'core' (reliable odds/data coverage).
+   */
+  async getLeaguesDirectoryPublic(): Promise<{
+    leagues: { apiId: number; name: string; country: string | null; season: number | null }[];
+  }> {
+    const enabledCore = await this.enabledLeagueRepo.find({
+      where: { isActive: true, bookmakerTier: 'core' },
+      order: { priority: 'ASC' },
+      select: ['apiId'],
+    });
+    const apiIds = enabledCore.map((l) => l.apiId);
+    if (apiIds.length === 0) {
+      return { leagues: [] };
+    }
+    const rows = await this.leagueRepo.find({
+      where: { apiId: In(apiIds) },
+      order: { name: 'ASC' },
+    });
+    return {
+      leagues: rows.map((l) => ({
+        apiId: l.apiId,
+        name: l.name,
+        country: l.country,
+        season: l.season,
+      })),
+    };
+  }
+
   async getFilterOptions() {
     const enabledLeagues = await this.enabledLeagueRepo.find({
       where: { isActive: true },

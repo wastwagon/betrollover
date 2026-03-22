@@ -47,6 +47,14 @@ export class FixturesController {
     );
   }
 
+  /** Enabled leagues for country / competition pickers (no auth). Throttled. */
+  @Get('leagues/directory')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 120, ttl: 60000 } })
+  getLeaguesDirectory() {
+    return this.fixturesService.getLeaguesDirectoryPublic();
+  }
+
   @Get('leagues')
   @UseGuards(JwtAuthGuard)
   getLeagues() {

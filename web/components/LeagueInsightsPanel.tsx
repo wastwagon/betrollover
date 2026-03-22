@@ -44,9 +44,21 @@ interface LeagueInsightsPanelProps {
   season?: number | null;
   subtitle?: string;
   className?: string;
+  /** `full` = always open, loads immediately (dedicated stats page). */
+  layout?: 'accordion' | 'full';
+  /** When `layout="full"` and no `leagueApiId`, shown inside the dashed placeholder. */
+  selectionEmptyHint?: string;
 }
 
-export function LeagueInsightsPanel({ leagueApiId, season, subtitle, className = '' }: LeagueInsightsPanelProps) {
+export function LeagueInsightsPanel({
+  leagueApiId,
+  season,
+  subtitle,
+  className = '',
+  layout = 'accordion',
+  selectionEmptyHint,
+}: LeagueInsightsPanelProps) {
+  const isFull = layout === 'full';
   const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState<Tab>('table');
   const [data, setData] = useState<LeagueInsightsData | null>(null);
@@ -80,41 +92,78 @@ export function LeagueInsightsPanel({ leagueApiId, season, subtitle, className =
   }, [leagueApiId, season]);
 
   useEffect(() => {
+    if (isFull) return;
     if (expanded && data == null && !loading && !localErr) {
       void load();
     }
-  }, [expanded, data, loading, localErr, load]);
+  }, [isFull, expanded, data, loading, localErr, load]);
 
   useEffect(() => {
+    if (!isFull || !leagueApiId) return;
     setData(null);
     setLocalErr(null);
-  }, [leagueApiId, season]);
+    void load();
+  }, [isFull, leagueApiId, season, load]);
+
+  useEffect(() => {
+    if (isFull) return;
+    setData(null);
+    setLocalErr(null);
+  }, [isFull, leagueApiId, season]);
 
   const err = localErr || data?.error;
   const headline = data?.leagueName || subtitle || 'League';
+  const panelOpen = isFull || expanded;
+
+  if (isFull && !leagueApiId) {
+    return (
+      <div
+        className={`rounded-xl border border-dashed border-[var(--border)] bg-[var(--card)]/50 px-4 py-10 text-center text-sm text-[var(--text-muted)] ${className}`}
+      >
+        {selectionEmptyHint ||
+          'Select a country and league to load the table and top scorers.'}
+      </div>
+    );
+  }
 
   return (
     <div className={`rounded-xl border border-[var(--border)] bg-[var(--bg)] overflow-hidden ${className}`}>
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-[var(--text)] hover:bg-[var(--primary-light)]/30 transition-colors"
-      >
-        <span className="flex items-center gap-2 min-w-0">
-          <span className="text-base" aria-hidden>📊</span>
-          <span className="truncate">League table & top scorers</span>
-          {expanded && (
-            <span className="text-xs font-normal text-[var(--text-muted)] truncate hidden sm:inline">
-              · {headline}
-              {data?.season ? ` (${data.season})` : ''}
-            </span>
-          )}
-        </span>
-        <span className="text-[var(--text-muted)] text-xs shrink-0">{expanded ? '▲' : '▼'}</span>
-      </button>
+      {!isFull && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-[var(--text)] hover:bg-[var(--primary-light)]/30 transition-colors"
+        >
+          <span className="flex items-center gap-2 min-w-0">
+            <span className="text-base" aria-hidden>📊</span>
+            <span className="truncate">League table & top scorers</span>
+            {expanded && (
+              <span className="text-xs font-normal text-[var(--text-muted)] truncate hidden sm:inline">
+                · {headline}
+                {data?.season ? ` (${data.season})` : ''}
+              </span>
+            )}
+          </span>
+          <span className="text-[var(--text-muted)] text-xs shrink-0">{expanded ? '▲' : '▼'}</span>
+        </button>
+      )}
 
-      {expanded && (
-        <div className="border-t border-[var(--border)] px-3 pb-3 pt-2">
+      {isFull && (
+        <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--card)]/40 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-lg" aria-hidden>📊</span>
+            <div className="min-w-0">
+              <h2 className="text-sm font-bold text-[var(--text)] truncate">{headline}</h2>
+              {data?.season != null && (
+                <p className="text-xs text-[var(--text-muted)]">Season {data.season}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {panelOpen && (
+        <div className={`${isFull ? 'px-4 py-4' : 'border-t border-[var(--border)] px-3 pb-3 pt-2'}`}>
           {err && (
             <p className="text-xs text-amber-700 dark:text-amber-400 mb-2">{err}</p>
           )}
@@ -152,7 +201,9 @@ export function LeagueInsightsPanel({ leagueApiId, season, subtitle, className =
           )}
 
           {data && tab === 'table' && (
-            <div className="max-h-64 overflow-auto rounded-lg border border-[var(--border)]">
+            <div
+              className={`overflow-auto rounded-lg border border-[var(--border)] ${isFull ? 'max-h-[min(70vh,640px)]' : 'max-h-64'}`}
+            >
               {data.standings.length === 0 ? (
                 <p className="p-3 text-xs text-[var(--text-muted)]">No table data.</p>
               ) : (
@@ -192,7 +243,9 @@ export function LeagueInsightsPanel({ leagueApiId, season, subtitle, className =
           )}
 
           {data && tab === 'scorers' && (
-            <div className="max-h-64 overflow-auto rounded-lg border border-[var(--border)]">
+            <div
+              className={`overflow-auto rounded-lg border border-[var(--border)] ${isFull ? 'max-h-[min(70vh,640px)]' : 'max-h-64'}`}
+            >
               {data.topScorers.length === 0 ? (
                 <p className="p-3 text-xs text-[var(--text-muted)]">No scorer data.</p>
               ) : (
