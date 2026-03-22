@@ -402,7 +402,15 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       {/* Col 2 — Become a Tipster */}
                       <div className="flex-1 py-3 px-2">
                         <SectionLabel>{t('header.section_become_tipster')}</SectionLabel>
-                        <MegaLink href="/register"    icon="🚀" label={t('nav.register')}          desc={t('auth.register_subtitle')}  onClick={closeAll} />
+                        {!isSignedIn && (
+                          <MegaLink
+                            href="/register"
+                            icon="🚀"
+                            label={t('nav.register')}
+                            desc={t('auth.register_subtitle')}
+                            onClick={closeAll}
+                          />
+                        )}
                         <MegaLink href="/create-pick" icon="🎯" label={t('nav.create_coupon')}        desc={t('create_pick.tagline')} onClick={closeAll} />
                         <MegaLink href="/dashboard/subscription-packages" icon="📦" label={t('tipster.subscription_packages')} desc={t('tipster.subscription_packages_desc')} onClick={closeAll} />
                         <div className="mt-3 mx-1 p-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 text-white">
