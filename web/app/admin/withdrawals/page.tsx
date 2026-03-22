@@ -212,6 +212,10 @@ function PayoutDetailModal({ w, onClose }: { w: Withdrawal; onClose: () => void 
           {pm && (
             <section>
               <h3 className="text-xs font-bold uppercase tracking-wide text-red-600 dark:text-red-400 mb-2">Payout method</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-snug">
+                <strong>Account (masked)</strong> is only a short fingerprint (last digits), not encryption — it matches lists and logs safely.
+                Use <strong>Saved payout details</strong> below for the full phone or account number when you send the transfer.
+              </p>
               <DetailRow label="Type" value={pm.type} />
               <DetailRow label="Display name" value={pm.displayName} />
               <DetailRow label="Provider" value={pm.provider ?? undefined} />
