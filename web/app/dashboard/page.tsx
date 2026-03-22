@@ -46,7 +46,7 @@ interface User {
 interface Stats {
   users?: { total: number; tipsters: number };
   wallets?: { count: number; totalBalance: number };
-  picks?: { total: number; pending: number; approved: number; activeMarketplace?: number };
+  picks?: { total: number; pending: number; approved: number; activeMarketplace?: number; liveMarketplace?: number };
   escrow?: { held: number };
   purchases?: {
     total: number;
@@ -269,7 +269,18 @@ function DashboardContent() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
               <StatCard title={t("dashboard.total_picks")} value={stats?.picks?.total ?? 0} icon="🎯" />
-              <StatCard title="Active Marketplace" value={stats?.picks?.activeMarketplace ?? 0} icon="🛒" />
+              <StatCard
+                title="Marketplace listings (active)"
+                hint="pick_marketplace rows with status active. Includes coupons that are no longer buyable (match started or settled) until listing is removed."
+                value={stats?.picks?.activeMarketplace ?? 0}
+                icon="🛒"
+              />
+              <StatCard
+                title="Live on marketplace (buyable)"
+                hint="Same logic as public homepage: active listing + coupon pending + no fixture kickoff yet."
+                value={stats?.picks?.liveMarketplace ?? 0}
+                icon="🎫"
+              />
               <StatCard title="Escrow Held (GHS)" value={stats?.escrow?.held ?? 0} icon="🔒" format="currency" />
             </div>
 
@@ -400,7 +411,14 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
                     { label: 'Email',         value: user?.email ?? '—' },
                     { label: 'Members',   value: stats?.users?.total != null ? `${stats.users.total}` : '—' },
                     { label: 'Active tipsters',      value: stats?.users?.tipsters != null ? `${stats.users.tipsters}` : '—' },
-                    { label: 'Active Coupons', value: stats?.picks?.activeMarketplace != null ? `${stats.picks.activeMarketplace}` : '—' },
+                    {
+                      label: 'Active listing rows',
+                      value: stats?.picks?.activeMarketplace != null ? `${stats.picks.activeMarketplace}` : '—',
+                    },
+                    {
+                      label: 'Live buyable (homepage)',
+                      value: stats?.picks?.liveMarketplace != null ? `${stats.picks.liveMarketplace}` : '—',
+                    },
                     { label: 'Escrow Held',   value: stats?.escrow?.held != null ? `GHS ${Number(stats.escrow.held).toFixed(2)}` : '—' },
                     { label: 'Gross revenue (all purchases)',       value: stats?.purchases?.revenue != null ? `GHS ${Number(stats.purchases.revenue).toFixed(2)}` : '—' },
                     { label: 'Marketplace revenue',       value: stats?.purchases?.marketplaceRevenue != null ? `GHS ${Number(stats.purchases.marketplaceRevenue).toFixed(2)}` : '—' },

@@ -34,6 +34,7 @@ import { ResultTrackerService } from '../predictions/result-tracker.service';
 import { SyncStatus } from '../fixtures/entities/sync-status.entity';
 import { AuditService } from '../audit/audit.service';
 import { clampPlatformCommissionPercent } from '../../common/platform-commission';
+import { AccumulatorsService } from '../accumulators/accumulators.service';
 
 @Injectable()
 export class AdminService {
@@ -90,6 +91,7 @@ export class AdminService {
     private predictionFixtureRepo: Repository<PredictionFixture>,
     private tipstersApiService: TipstersApiService,
     private resultTrackerService: ResultTrackerService,
+    private readonly accumulatorsService: AccumulatorsService,
   ) { }
 
   async getStats() {
@@ -104,9 +106,10 @@ export class AdminService {
         .then((r) => Number(r?.total ?? 0)),
     ]);
 
-    const [totalPicks, activeMarketplace] = await Promise.all([
+    const [totalPicks, activeMarketplace, liveMarketplace] = await Promise.all([
       this.ticketRepo.count(),
       this.marketplaceRepo.count({ where: { status: 'active' } }),
+      this.accumulatorsService.getLiveMarketplaceCount(),
     ]);
 
     const [totalPurchases, totalDeposits, totalWithdrawals, pendingDeposits, pendingWithdrawals] = await Promise.all([
@@ -140,7 +143,7 @@ export class AdminService {
     return {
       users: { total: memberAccounts, tipsters: activeTipsterProfiles },
       wallets: { count: totalWallets, totalBalance },
-      picks: { total: totalPicks, activeMarketplace },
+      picks: { total: totalPicks, activeMarketplace, liveMarketplace },
       escrow: { held: escrowHeld },
       purchases: {
         total: totalPurchases,
