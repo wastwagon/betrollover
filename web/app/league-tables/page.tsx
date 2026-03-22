@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useT } from '@/context/LanguageContext';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
@@ -9,10 +10,12 @@ import { PageHeader } from '@/components/PageHeader';
 import { LeagueInsightsPanel } from '@/components/LeagueInsightsPanel';
 import { AdSlot } from '@/components/AdSlot';
 import { getApiUrl } from '@/lib/site-config';
+import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 
 type LeagueRow = { apiId: number; name: string; country: string | null; season: number | null };
 
 export default function LeagueTablesPage() {
+  const pathname = usePathname();
   const t = useT();
   const [rows, setRows] = useState<LeagueRow[]>([]);
   const [directoryFailed, setDirectoryFailed] = useState(false);
@@ -29,12 +32,14 @@ export default function LeagueTablesPage() {
       if (document.visibilityState === 'visible') syncToken();
     };
     window.addEventListener('storage', syncToken);
+    window.addEventListener(AUTH_STORAGE_SYNC, syncToken);
     document.addEventListener('visibilitychange', onVis);
     return () => {
       window.removeEventListener('storage', syncToken);
+      window.removeEventListener(AUTH_STORAGE_SYNC, syncToken);
       document.removeEventListener('visibilitychange', onVis);
     };
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     let cancelled = false;

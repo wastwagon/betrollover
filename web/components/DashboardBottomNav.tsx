@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { usePendingWithdrawalCount } from '@/hooks/usePendingWithdrawalCount';
+import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 
 type FoldId = 'picks' | 'account' | null;
 
@@ -85,6 +86,7 @@ export function DashboardBottomNav() {
     if (item.isAction) {
       setOpenFold(null);
       localStorage.removeItem('token');
+      emitAuthStorageSync();
       router.push('/');
       router.refresh();
     } else if (item.href) {

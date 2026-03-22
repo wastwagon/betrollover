@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { getApiUrl } from '@/lib/site-config';
+import { AUTH_STORAGE_SYNC, emitAuthStorageSync } from '@/lib/auth-storage-sync';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { trackEvent } from '@/lib/analytics';
@@ -136,9 +137,40 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
   }, [mobileOpen]);
 
   /* ── Auth / data ─────────────────────────────────────── */
+  const syncAuth = useCallback(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const next = !!token;
+    setIsSignedIn(next);
+    if (!next) {
+      setBalance(null);
+      setUnreadCount(0);
+    }
+  }, []);
+
   useEffect(() => {
-    setIsSignedIn(!!localStorage.getItem('token'));
-  }, [pathname]);
+    syncAuth();
+  }, [pathname, syncAuth]);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'token' || e.key === null) syncAuth();
+    };
+    const onFocus = () => syncAuth();
+    const onVis = () => {
+      if (document.visibilityState === 'visible') syncAuth();
+    };
+    const onSameTab = () => syncAuth();
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVis);
+    window.addEventListener(AUTH_STORAGE_SYNC, onSameTab);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVis);
+      window.removeEventListener(AUTH_STORAGE_SYNC, onSameTab);
+    };
+  }, [syncAuth]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -200,7 +232,8 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
   const signOut = () => {
     localStorage.removeItem('token');
-    setIsSignedIn(false); setMobileOpen(false);
+    emitAuthStorageSync();
+    setMobileOpen(false);
     router.push('/'); router.refresh();
   };
 

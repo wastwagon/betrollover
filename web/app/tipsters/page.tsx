@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { TipsterCard, type TipsterCardData } from '@/components/TipsterCard';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
@@ -15,6 +15,7 @@ import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
 import { useT } from '@/context/LanguageContext';
 import { getApiUrl } from '@/lib/site-config';
+import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 
 type Period = 'all_time' | 'monthly' | 'weekly';
 type SportFilter = 'all' | 'football' | 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football';
@@ -47,6 +48,7 @@ function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: numb
 
 export default function TipstersPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const t = useT();
   const [tipsters, setTipsters] = useState<TipsterCardData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,8 +61,18 @@ export default function TipstersPage() {
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
 
   useEffect(() => {
-    setIsSignedIn(!!localStorage.getItem('token'));
-  }, []);
+    const sync = () => setIsSignedIn(!!localStorage.getItem('token'));
+    sync();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'token' || e.key === null) sync();
+    };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener(AUTH_STORAGE_SYNC, sync);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener(AUTH_STORAGE_SYNC, sync);
+    };
+  }, [pathname]);
 
   const fetchTipsters = useCallback(
     (searchTerm?: string, sort?: string, periodVal?: Period, sport?: SportFilter) => {

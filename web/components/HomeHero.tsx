@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { useCurrency } from '@/context/CurrencyContext';
+import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 
 interface PublicStats {
   verifiedTipsters: number;
@@ -113,6 +115,7 @@ const STAT_HINT_KEYS: Record<StatKey, string> = {
 
 export function HomeHero() {
   const t = useT();
+  const pathname = usePathname();
   const { format } = useCurrency();
   const [stats, setStats] = useState<PublicStats | null>(null);
   const [leadingTipster, setLeadingTipster] = useState<LeadingTipsterStats>({ winRate: null, roi: null });
@@ -155,11 +158,18 @@ export function HomeHero() {
   }, []);
 
   useEffect(() => {
-    setIsLoggedIn(!!(typeof window !== 'undefined' && localStorage.getItem('token')));
-    const onStorage = () => setIsLoggedIn(!!localStorage.getItem('token'));
+    const sync = () => setIsLoggedIn(!!(typeof window !== 'undefined' && localStorage.getItem('token')));
+    sync();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'token' || e.key === null) sync();
+    };
     window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
+    window.addEventListener(AUTH_STORAGE_SYNC, sync);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener(AUTH_STORAGE_SYNC, sync);
+    };
+  }, [pathname]);
 
   const s = stats || defaultStats;
   const paidOutFormatted = format(s.totalPaidOut).primary;

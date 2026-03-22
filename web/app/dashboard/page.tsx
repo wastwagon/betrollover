@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
+import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 import { PickCard } from '@/components/PickCard';
 import { useCurrency } from '@/context/CurrencyContext';
 import { usePendingWithdrawalCount } from '@/hooks/usePendingWithdrawalCount';
@@ -145,6 +146,7 @@ function DashboardContent() {
               const nextToken = sessionData.token.trim();
               token = nextToken;
               localStorage.setItem('token', nextToken);
+              emitAuthStorageSync();
             }
           }
         } catch {
@@ -166,6 +168,7 @@ function DashboardContent() {
         .then((r) => {
           if (r.status === 401) {
             localStorage.removeItem('token');
+            emitAuthStorageSync();
             router.push('/login');
             return Promise.reject(new Error('Unauthorized'));
           }
@@ -230,6 +233,7 @@ function DashboardContent() {
         .catch((err) => {
           if (err?.message !== 'Unauthorized') {
             localStorage.removeItem('token');
+            emitAuthStorageSync();
             router.push('/login');
           }
         })

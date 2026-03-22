@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
 import { getApiUrl } from '@/lib/site-config';
+import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 
 const mainNavItems = [
   { href: '/', label: 'Home' },
@@ -118,6 +119,7 @@ export function AppHeader({ slipCount }: AppHeaderProps) {
 
   const handleSignOut = () => {
     localStorage.removeItem('token');
+    emitAuthStorageSync();
     setMobileMenuOpen(false);
     router.push('/');
     router.refresh();

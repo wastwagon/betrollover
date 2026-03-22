@@ -10,6 +10,7 @@ import { AdSlot } from '@/components/AdSlot';
 import { useT } from '@/context/LanguageContext';
 
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
+import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 
 interface Profile {
   id: number;
@@ -108,6 +109,7 @@ export default function ProfilePage() {
       });
     } finally {
       localStorage.removeItem('token');
+      emitAuthStorageSync();
       setLogoutAllLoading(false);
       router.push('/login');
     }
@@ -190,6 +192,7 @@ export default function ProfilePage() {
       if (res.ok) {
         localStorage.removeItem('token');
         localStorage.removeItem('refresh_token');
+        emitAuthStorageSync();
         router.push('/?deleted=1');
         return;
       }

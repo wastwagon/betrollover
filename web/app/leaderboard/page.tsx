@@ -10,6 +10,7 @@ import { AdSlot } from '@/components/AdSlot';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { useT } from '@/context/LanguageContext';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
+import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 
 type Period = 'all_time' | 'monthly' | 'weekly';
 type SportFilter = 'all' | 'football' | 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football';
@@ -56,8 +57,15 @@ export default function LeaderboardPage() {
   useEffect(() => {
     const sync = () => setLoggedIn(!!(typeof window !== 'undefined' && localStorage.getItem('token')));
     sync();
-    window.addEventListener('storage', sync);
-    return () => window.removeEventListener('storage', sync);
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'token' || e.key === null) sync();
+    };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener(AUTH_STORAGE_SYNC, sync);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener(AUTH_STORAGE_SYNC, sync);
+    };
   }, [pathname]);
 
   const fetchLeaderboard = useCallback((p: Period, s: SportFilter) => {

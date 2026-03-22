@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
+import { AUTH_STORAGE_SYNC, emitAuthStorageSync } from '@/lib/auth-storage-sync';
 
 const navLinks = [
   { href: '/marketplace', label: 'Marketplace' },
@@ -20,11 +21,22 @@ export function SiteHeader() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    setIsSignedIn(!!localStorage.getItem('token'));
+    const sync = () => setIsSignedIn(!!localStorage.getItem('token'));
+    sync();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'token' || e.key === null) sync();
+    };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener(AUTH_STORAGE_SYNC, sync);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener(AUTH_STORAGE_SYNC, sync);
+    };
   }, [pathname]);
 
   const handleSignOut = () => {
     localStorage.removeItem('token');
+    emitAuthStorageSync();
     setIsSignedIn(false);
     setMobileMenuOpen(false);
     router.push('/');

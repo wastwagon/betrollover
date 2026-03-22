@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useT } from '@/context/LanguageContext';
+import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 
 /** Home marketing card: register for guests, dashboard CTA when already signed in. */
 export function HomeJoinCtaCard() {
@@ -14,8 +15,15 @@ export function HomeJoinCtaCard() {
   useEffect(() => {
     const sync = () => setLoggedIn(!!(typeof window !== 'undefined' && localStorage.getItem('token')));
     sync();
-    window.addEventListener('storage', sync);
-    return () => window.removeEventListener('storage', sync);
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'token' || e.key === null) sync();
+    };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener(AUTH_STORAGE_SYNC, sync);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener(AUTH_STORAGE_SYNC, sync);
+    };
   }, [pathname]);
 
   if (loggedIn) {

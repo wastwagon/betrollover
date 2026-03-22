@@ -8,6 +8,7 @@ import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { AppleSignInButton } from '@/components/AppleSignInButton';
 import { getApiUrl } from '@/lib/site-config';
+import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 
 function RegisterForm() {
   const router = useRouter();
@@ -88,6 +89,7 @@ function RegisterForm() {
       if (!res.ok) throw new Error(data.message || t('auth.registration_failed'));
       try { (await import('@/lib/analytics')).trackEvent('registration_completed'); } catch { /* noop */ }
       localStorage.setItem('token', data.access_token);
+      emitAuthStorageSync();
       router.push('/dashboard');
       router.refresh();
     } catch (err) {

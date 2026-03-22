@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { getApiUrl } from '@/lib/site-config';
+import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 
 export const PENDING_WITHDRAWALS_INVALIDATE = 'betrollover-pending-withdrawals-invalidate';
 
@@ -78,13 +79,16 @@ export function usePendingWithdrawalCount(): number {
     };
     const onFocus = () => refresh();
     const onInvalidate = () => refresh();
+    const onAuthSync = () => refresh();
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('focus', onFocus);
     window.addEventListener(PENDING_WITHDRAWALS_INVALIDATE, onInvalidate);
+    window.addEventListener(AUTH_STORAGE_SYNC, onAuthSync);
     return () => {
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('focus', onFocus);
       window.removeEventListener(PENDING_WITHDRAWALS_INVALIDATE, onInvalidate);
+      window.removeEventListener(AUTH_STORAGE_SYNC, onAuthSync);
     };
   }, [refresh]);
 

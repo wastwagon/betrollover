@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 
 const menuItems = [
   { href: '/', icon: '🏠', label: 'Home' },
@@ -89,6 +90,7 @@ function SidebarContent({
           href="/"
           onClick={(e) => {
             localStorage.removeItem('token');
+            emitAuthStorageSync();
             onItemClick();
             if (linkMode === 'spa-push') {
               if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;

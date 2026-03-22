@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { AppFooter } from '@/components/AppFooter';
 import { getApiUrl } from '@/lib/site-config';
+import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 
 export default function AdminLayout({
   children,
@@ -34,6 +35,7 @@ export default function AdminLayout({
       })
       .catch(() => {
         localStorage.removeItem('token');
+        emitAuthStorageSync();
         router.replace('/login');
         setAllowed(false);
       });

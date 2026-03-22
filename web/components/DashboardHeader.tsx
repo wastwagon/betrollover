@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getApiUrl } from '@/lib/site-config';
+import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 import { useCurrency } from '@/context/CurrencyContext';
 
 interface Notification {
@@ -32,6 +33,7 @@ export function DashboardHeader() {
 
   const handleSignOut = () => {
     localStorage.removeItem('token');
+    emitAuthStorageSync();
     router.push('/');
     router.refresh();
   };

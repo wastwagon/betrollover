@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
+import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 
 const API_URL = getApiUrl();
 
@@ -188,6 +189,7 @@ export default function AdminUsersPage() {
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.token) {
         localStorage.setItem('token', data.token);
+        emitAuthStorageSync();
         // Full page redirect so app re-initializes with new token
         window.location.href = '/dashboard';
         return;
