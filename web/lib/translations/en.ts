@@ -282,7 +282,7 @@ const en = {
   // ── League tables & top scorers (dedicated page) ─────────────────────────
   'league_stats.breadcrumb': 'Stats',
   'league_stats.title': 'League tables & top scorers',
-  'league_stats.subtitle': 'Pick a country and competition for standings and top scorers. We only list core-tier leagues (major competitions with reliable bookmaker and API coverage). Data is cached to save quota.',
+  'league_stats.subtitle': 'Choose a competition for standings and top scorers. We only list core-tier leagues (major competitions with reliable bookmaker and API coverage). Data is cached to save quota.',
   'league_stats.filters_heading': 'Find a competition',
   'league_stats.country': 'Country / region',
   'league_stats.all_countries': 'All countries',
@@ -291,12 +291,16 @@ const en = {
   'league_stats.search_league_placeholder': 'Type league name…',
   'league_stats.league': 'League',
   'league_stats.choose_league': 'Choose a league…',
-  'league_stats.league_help': 'Only major competitions we classify as core (strong bookmaker coverage and reliable data). We do not list every enabled league. Narrow by country or search by name.',
+  'league_stats.league_help': 'Only major competitions we classify as core (strong bookmaker coverage and reliable data). We do not list every enabled league.',
   'league_stats.season_optional': 'Season (optional)',
   'league_stats.season_placeholder': 'Default from DB: {year}',
   'league_stats.season_placeholder_empty': 'e.g. 2025',
+  'league_stats.season_placeholder_auto': 'Clear = API picks current season',
+  'league_stats.season_loading': 'Loading season…',
+  'league_stats.season_auto_help':
+    'Filled from the API when you pick a league—no calendar year is hardcoded in the app. Clear the field so each load uses the server-resolved current season.',
   'league_stats.sign_in_note': 'Loading table and scorer data requires a signed-in account (protects our API quota).',
-  'league_stats.select_hint': 'Choose a country and league above, or search by league name.',
+  'league_stats.select_hint': 'Choose a league above to load the table and top scorers.',
   'league_stats.directory_error': 'Could not load the league list. Please refresh or try again later.',
   'league_stats.sign_in_cta': 'Sign in to load data',
 

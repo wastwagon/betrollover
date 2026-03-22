@@ -29,6 +29,16 @@ interface SyncStatus {
   lastSyncCount: number;
 }
 
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
+/** ISO → `YYYY-MM-DD HH:mm:ss` in the viewer's local timezone (consistent padding, 24h). */
+function formatSyncTimestamp(iso: string | null): string {
+  if (!iso) return 'Never';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+}
+
 export default function AdminSettingsPage() {
   const router = useRouter();
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -933,29 +943,21 @@ export default function AdminSettingsPage() {
                   {/* Sync Status Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     {syncStatuses.map((status) => {
-                      const getStatusColor = (s: string) => {
-                        if (s === 'success') return 'emerald';
-                        if (s === 'error') return 'red';
-                        if (s === 'running') return 'blue';
-                        return 'gray';
-                      };
-                      const color = getStatusColor(status.status);
-                      const lastSync = status.lastSyncAt 
-                        ? new Date(status.lastSyncAt).toLocaleString('en-US', {
-                            year: 'numeric',
-                            month: 'numeric',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit',
-                            hour12: true,
-                          })
-                        : 'Never';
+                      const borderClass =
+                        status.status === 'success'
+                          ? 'border-emerald-200 dark:border-emerald-800'
+                          : status.status === 'error'
+                            ? 'border-red-200 dark:border-red-800'
+                            : status.status === 'running'
+                              ? 'border-blue-200 dark:border-blue-800'
+                              : 'border-gray-200 dark:border-gray-600';
+
+                      const lastSync = formatSyncTimestamp(status.lastSyncAt);
 
                       return (
                         <div
                           key={status.id}
-                          className={`bg-white dark:bg-gray-700 rounded-xl p-4 border-2 border-${color}-200 dark:border-${color}-800`}
+                          className={`bg-white dark:bg-gray-700 rounded-xl p-4 border-2 ${borderClass}`}
                         >
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 capitalize">
@@ -1037,13 +1039,16 @@ export default function AdminSettingsPage() {
                   <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
                     <p className="text-xs text-blue-800 dark:text-blue-200">
                       <strong>Automatic Sync Schedule:</strong> Full fixture import (same as &quot;Sync Fixtures&quot;) runs{' '}
-                      <strong>every 6 hours</strong> at 00:00, 06:00, 12:00, and 18:00 <strong>server local time</strong>. Set{' '}
+                      <strong>every 6 hours</strong> at 00:00, 06:00, 12:00, and 18:00 <strong>server local time</strong>.{' '}
+                      <strong>AI predictions</strong> generate daily at <strong>00:05</strong> (server local time).{' '}
+                      <strong>Odds force refresh</strong> runs at <strong>23:45</strong> so markets are primed before that run. Set{' '}
                       <code className="text-xs">TZ</code> on the API host (e.g. <code className="text-xs">Africa/Accra</code>) if
                       those ticks should follow your region. Requires <code className="text-xs">ENABLE_SCHEDULING=true</code>.
                       On startup, the API logs a warning if scheduling or football sync is disabled — check host logs if nothing
                       updates automatically. Free/serverless hosts that sleep still need always-on or an external uptime ping so
                       the process can run crons. Only <strong>enabled</strong> leagues are stored. Odds sync every 2 hours. Live
-                      updates every 5 minutes; finished results every 5 minutes.
+                      updates every 5 minutes; finished results every 5 minutes. Last sync times below use your browser&apos;s local
+                      timezone, <strong>YYYY-MM-DD HH:mm:ss</strong> (24-hour).
                     </p>
                   </div>
                 </div>

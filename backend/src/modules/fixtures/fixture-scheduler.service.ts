@@ -18,7 +18,7 @@ import { SyncStatus } from './entities/sync-status.entity';
  *
  * Full fixture import (enabled leagues, 7 UTC days) runs every 6 hours (00:00, 06:00, 12:00, 18:00 server local time)
  * so newly published fixtures appear without waiting for a single daily run. ~28 API calls/day for dates — fine on Pro/Ultra.
- * Also: 1:00 AM odds force + AI predictions (after midnight import), 2:00 AM archive + prediction catch-up.
+ * Also: 23:45 odds force (primes markets), 00:05 AI predictions, 2:00 AM archive + prediction catch-up.
  *
  * Set ENABLE_FOOTBALL_SYNC=false to skip football API (e.g. when using prod server).
  */
@@ -263,10 +263,10 @@ export class FixtureSchedulerService implements OnModuleInit {
   }
 
   /**
-   * Daily force refresh of odds (runs at 1 AM)
+   * Daily force refresh of odds (23:45 — before midnight prediction run)
    * Re-syncs 50 soonest upcoming fixtures to apply latest Tier 1/2 market filter.
    */
-  @Cron('0 1 * * *') // Every day at 1 AM
+  @Cron('45 23 * * *')
   async handleOddsForceRefresh() {
     if (!this.isSchedulingEnabled()) return;
     if (await this.isSyncRunning('odds_refresh')) {
@@ -315,10 +315,10 @@ export class FixtureSchedulerService implements OnModuleInit {
   }
 
   /**
-   * Daily prediction generation (runs at 1 AM server time)
-   * Generates AI tipster predictions for today. Ready before early fixtures (4–5 AM).
+   * Daily prediction generation (00:05 server local time — just after midnight / 00:00 fixture tick)
+   * Generates AI tipster predictions for today. Odds force runs 23:45 prior calendar evening.
    */
-  @Cron('0 1 * * *')
+  @Cron('5 0 * * *')
   async handleDailyPredictionGeneration() {
     if (!this.isSchedulingEnabled()) return;
     if (await this.isSyncRunning('predictions')) {
@@ -339,7 +339,7 @@ export class FixtureSchedulerService implements OnModuleInit {
 
   /**
    * Catch-up: if no predictions for today by 2 AM, run generation again.
-   * Handles cases where 1 AM run failed or fixtures/odds weren't ready.
+   * Handles cases where midnight run failed or fixtures/odds weren't ready.
    */
   @Cron('0 2 * * *')
   async handlePredictionCatchUp() {

@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { useCurrency } from '@/context/CurrencyContext';
-import { HomeHeroBackdrop } from '@/components/HomeHeroBackdrop';
 
 interface PublicStats {
   verifiedTipsters: number;
@@ -164,7 +163,26 @@ export function HomeHero() {
 
   return (
     <section className="relative overflow-hidden min-h-[520px] sm:min-h-[560px] md:min-h-[640px]">
-      <HomeHeroBackdrop />
+      {/* Photoreal hero — AVIF (~40KB) + WebP (~52KB) @ 1376×768; no SVG collage */}
+      <div className="absolute inset-0">
+        {/* eslint-disable-next-line @next/next/no-img-element -- static AVIF/WebP pair; avoids optimizer re-encoding */}
+        <picture className="absolute inset-0 block h-full min-h-full w-full">
+          <source srcSet="/images/marketing/hero-cinematic.avif" type="image/avif" />
+          <img
+            src="/images/marketing/hero-cinematic.webp"
+            alt=""
+            width={1376}
+            height={768}
+            className="absolute inset-0 h-full w-full object-cover object-center"
+            fetchPriority="high"
+            decoding="sync"
+          />
+        </picture>
+        <div
+          className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/30 pointer-events-none"
+          aria-hidden
+        />
+      </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 lg:py-28">
         <h1 className="sr-only">{t('home.hero_title')}</h1>

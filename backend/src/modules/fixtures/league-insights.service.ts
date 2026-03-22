@@ -55,6 +55,8 @@ interface CachedStandingsPayload {
   groups: StandingsGroup[];
   leagueName?: string | null;
   country?: string | null;
+  /** Bumped when standings JSON shape/parser changes (re-fetch once). */
+  v?: number;
 }
 
 interface CachedScorersPayload {
@@ -125,16 +127,18 @@ export class LeagueInsightsService {
     const r = raw as {
       response?: Array<{
         league?: { name?: string; country?: string };
-        standings?: Array<{ group?: string | null; table?: unknown[] }>;
+        /** API-Football: array of groups; each group is an array of standing rows (not `{ table }`). */
+        standings?: unknown[];
       }>;
     };
     const block = r?.response?.[0];
     const leagueName = block?.league?.name ?? null;
     const country = block?.league?.country ?? null;
     const groups: StandingsGroup[] = [];
-    for (const s of block?.standings ?? []) {
+
+    const pushGroup = (groupLabel: string | null, rowList: unknown[]) => {
       const table: StandingsTableRow[] = [];
-      for (const row of s?.table ?? []) {
+      for (const row of rowList) {
         const tr = row as Record<string, unknown>;
         const team = tr.team as Record<string, unknown> | undefined;
         const all = tr.all as Record<string, unknown> | undefined;
@@ -159,7 +163,21 @@ export class LeagueInsightsService {
           goalsDiff: tr.goalsDiff != null ? Number(tr.goalsDiff) : gf - ga,
         });
       }
-      groups.push({ group: s?.group != null && s.group !== 'null' ? String(s.group) : null, table });
+      groups.push({ group: groupLabel, table });
+    };
+
+    for (const s of block?.standings ?? []) {
+      if (Array.isArray(s)) {
+        const g0 = s[0] as Record<string, unknown> | undefined;
+        const gLabel =
+          g0?.group != null && String(g0.group) !== 'null' ? String(g0.group) : null;
+        pushGroup(gLabel, s);
+        continue;
+      }
+      if (s && typeof s === 'object' && Array.isArray((s as { table?: unknown[] }).table)) {
+        const so = s as { group?: string | null; table: unknown[] };
+        pushGroup(so.group != null && so.group !== 'null' ? String(so.group) : null, so.table);
+      }
     }
     return { groups, leagueName, country };
   }
@@ -209,6 +227,7 @@ export class LeagueInsightsService {
       groups: parsed.groups,
       leagueName: parsed.leagueName,
       country: parsed.country,
+      v: 2,
     };
   }
 
@@ -265,7 +284,16 @@ export class LeagueInsightsService {
     let scorersPayload: CachedScorersPayload;
     let fetchError: string | undefined;
 
-    const needStandings = !standRow || !this.isFresh(standRow.fetchedAt);
+    const standPayloadPreview = standRow?.payload as unknown as CachedStandingsPayload | undefined;
+    const hasStandingsRows = (standPayloadPreview?.groups ?? []).some((g) => (g.table ?? []).length > 0);
+    /** Old parser stored empty tables; re-fetch until cache carries v>=2. */
+    const legacyStandingsCache =
+      !!standRow && !hasStandingsRows && (standPayloadPreview?.v ?? 0) < 2;
+
+    const needStandings =
+      !standRow ||
+      !this.isFresh(standRow.fetchedAt) ||
+      (legacyStandingsCache && !!apiKey);
     const needScorers = !scoreRow || !this.isFresh(scoreRow.fetchedAt);
 
     if (!needStandings && standRow) {

@@ -55,6 +55,18 @@ export class FixturesController {
     return this.fixturesService.getLeaguesDirectoryPublic();
   }
 
+  /**
+   * Current API season for a league (DB then API-Football /leagues?id=…). Public, throttled.
+   * Used to pre-fill league tables UI without hardcoding calendar years.
+   */
+  @Get('leagues/:leagueApiId/season')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 120, ttl: 60000 } })
+  async getLeagueCurrentSeason(@Param('leagueApiId', ParseIntPipe) leagueApiId: number) {
+    const season = await this.leagueInsightsService.resolveSeason(leagueApiId);
+    return { leagueApiId, season };
+  }
+
   @Get('leagues')
   @UseGuards(JwtAuthGuard)
   getLeagues() {

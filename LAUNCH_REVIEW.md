@@ -17,10 +17,10 @@ Comprehensive review of flows, automations, conflicts, and duplicates before lau
 | `0 6 * * *` | Daily fixture sync | Sync next 7 days of fixtures |
 | `0 6 * * *` | Transfers sync | News/transfers from API-Football |
 | `30 6 * * *` | Smart Coupon generation | Generate daily Smart Coupons |
-| `0 7 * * *` | Odds force refresh | Re-sync odds for 50 soonest fixtures |
+| `45 23 * * *` | Odds force refresh | Re-sync odds for 50 soonest fixtures (before midnight predictions) |
 | `0 7 * * *` | Injuries sync | News/injuries from API-Football |
-| `0 9 * * *` | AI prediction generation | Generate daily AI tipster predictions |
-| `0 11 * * *` | Prediction catch-up | Re-run if no predictions by 11 AM |
+| `5 0 * * *` | AI prediction generation | Generate daily AI tipster predictions (00:05 server time) |
+| `0 2 * * *` | Prediction catch-up | Re-run if no predictions by 2 AM |
 | `30 0,6,12,18 * * *` | Leaderboard update | Recompute tipster rankings |
 | `0 23 * * *` | ResultTrackerService (daily) | Additional AI prediction check |
 

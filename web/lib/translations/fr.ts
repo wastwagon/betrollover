@@ -281,7 +281,7 @@ const fr: Record<string, string> = {
   // ── League tables & top scorers (dedicated page) ─────────────────────────
   'league_stats.breadcrumb': 'Stats',
   'league_stats.title': 'Classements & meilleurs buteurs',
-  'league_stats.subtitle': 'Choisissez un pays et une compétition pour le classement et les buteurs. Seules les ligues « core » (grandes compétitions, couverture fiable) sont listées. Données mises en cache pour le quota API.',
+  'league_stats.subtitle': 'Choisissez une compétition pour le classement et les buteurs. Seules les ligues « core » (grandes compétitions, couverture fiable) sont listées. Données mises en cache pour le quota API.',
   'league_stats.filters_heading': 'Trouver une compétition',
   'league_stats.country': 'Pays / région',
   'league_stats.all_countries': 'Tous les pays',
@@ -290,12 +290,16 @@ const fr: Record<string, string> = {
   'league_stats.search_league_placeholder': 'Nom de la ligue…',
   'league_stats.league': 'Ligue',
   'league_stats.choose_league': 'Choisir une ligue…',
-  'league_stats.league_help': 'Uniquement les grandes compétitions classées « core » (forte couverture bookmakers et données fiables). Toutes les ligues activées ne sont pas listées. Filtrez par pays ou recherchez par nom.',
+  'league_stats.league_help': 'Uniquement les grandes compétitions classées « core » (forte couverture bookmakers et données fiables). Toutes les ligues activées ne sont pas listées.',
   'league_stats.season_optional': 'Saison (optionnel)',
   'league_stats.season_placeholder': 'Par défaut (BD) : {year}',
   'league_stats.season_placeholder_empty': 'ex. 2025',
+  'league_stats.season_placeholder_auto': 'Vider = saison actuelle (API)',
+  'league_stats.season_loading': 'Chargement de la saison…',
+  'league_stats.season_auto_help':
+    'Rempli via l’API quand vous choisissez une ligue—aucune année n’est codée en dur. Effacez le champ pour que chaque chargement utilise la saison courante résolue par le serveur.',
   'league_stats.sign_in_note': 'Le chargement du classement et des buteurs nécessite un compte connecté (protection du quota API).',
-  'league_stats.select_hint': 'Choisissez un pays et une ligue ci-dessus, ou recherchez par nom.',
+  'league_stats.select_hint': 'Choisissez une ligue ci-dessus pour charger le classement et les buteurs.',
   'league_stats.directory_error': 'Impossible de charger la liste des ligues. Réessayez plus tard.',
   'league_stats.sign_in_cta': 'Connexion pour charger',
 

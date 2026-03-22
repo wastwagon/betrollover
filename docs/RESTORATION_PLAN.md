@@ -88,7 +88,7 @@ Then: **Admin → Fixtures → Sync Fixtures**
 | Finished fixture update | `*/5 * * * *` | Every 5 min – fetches FT results for past matches |
 | Daily fixture sync | `0 0 * * *` | 12 AM – full fixture sync (skipped if ENABLE_FOOTBALL_SYNC=false) |
 | Odds sync | `0 */2 * * *` | Every 2 hours – odds for upcoming fixtures without odds |
-| Odds refresh | `0 1 * * *` | 1 AM – force refresh odds (BTTS, Correct Score, etc.) |
+| Odds refresh | `45 23 * * *` | 23:45 – force refresh odds (BTTS, Correct Score, etc.) before midnight predictions |
 
 ### 3.3 API Usage
 

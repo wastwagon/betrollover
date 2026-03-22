@@ -45,8 +45,8 @@
 | Finished fixture update | Every 5 min | `FixtureSchedulerService` | Cron | → SettlementService.checkAndSettleAccumulators |
 | Daily fixture sync | 12 AM | `FixtureSchedulerService` | Cron | FootballSyncService.sync() — 7 days ahead. Skipped if ENABLE_FOOTBALL_SYNC=false |
 | Odds sync | Every 2h | `FixtureSchedulerService` | Cron | Up to 100 fixtures without odds |
-| Odds force refresh | 1 AM | `FixtureSchedulerService` | Cron | Re-sync 50 soonest fixtures |
-| Prediction generation | 1 AM | `FixtureSchedulerService` | Cron | AI tipsters — ready before 4–5 AM fixtures |
+| Odds force refresh | 23:45 | `FixtureSchedulerService` | Cron | Re-sync 50 soonest fixtures (before midnight predictions) |
+| Prediction generation | 00:05 | `FixtureSchedulerService` | Cron | AI tipsters — server local time |
 | Prediction catch-up | 2 AM | `FixtureSchedulerService` | Cron | If no predictions for today |
 | Fixture archive | 2 AM | `FixtureSchedulerService` | Cron | Move 90+ day fixtures to archive |
 | Periodic settlement | Every 30 min | `FixtureSchedulerService` | Cron | SettlementService.runSettlement |
@@ -234,10 +234,12 @@ Withdrawal: User → request → Admin → Paystack transfer → notification
 
 ### 6.1 Schedule Overlap (Resolved)
 
-All syncs consolidated to 12 AM window:
-- 12:00–12:55 AM: Football, non-football sports, transfers
-- 1:00 AM: Odds refresh, AI predictions, injuries
-- 2:00 AM: Archive, prediction catch-up
+Night window (server local time):
+- 23:45: Odds force refresh (50 soonest fixtures)
+- 00:00 (and every 6h): Full football fixture import
+- 00:05: AI prediction generation
+- 00:xx: Other sport syncs staggered in the midnight hour where configured
+- 02:00: Fixture archive, prediction catch-up if needed
 
 ### 6.2 Football vs Non-Football Sync
 

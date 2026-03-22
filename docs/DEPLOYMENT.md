@@ -223,8 +223,8 @@ Once running, these cron jobs handle data freshness automatically:
 | Job | Schedule | What it does |
 |-----|----------|--------------|
 | Football fixture sync | 12 AM daily | 7 days ahead. Skipped if `ENABLE_FOOTBALL_SYNC=false` |
-| Odds force refresh | 1 AM | Re-sync 50 soonest fixtures |
-| AI prediction generation | 1 AM | Ready before 4–5 AM fixtures |
+| Odds force refresh | 23:45 | Re-sync 50 soonest fixtures (before midnight predictions) |
+| AI prediction generation | 00:05 | Daily AI tipster run |
 | Non-football sports | 12:15–12:50 AM | Basketball, Rugby, MMA, Volleyball, Hockey, Amer. Football, Tennis |
 | Transfers / Injuries | 12:55 AM / 1:05 AM | API-Sports news |
 | Football live/finished | Every 5 min | Scores + settlement |
