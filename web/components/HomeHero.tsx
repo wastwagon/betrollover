@@ -1,11 +1,11 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { useCurrency } from '@/context/CurrencyContext';
+import { HomeHeroBackdrop } from '@/components/HomeHeroBackdrop';
 
 interface PublicStats {
   verifiedTipsters: number;
@@ -163,18 +163,8 @@ export function HomeHero() {
   ];
 
   return (
-    <section className="relative overflow-hidden min-h-[560px] md:min-h-[640px]">
-      {/* Full-bleed hero artwork — replaces previous CSS gradients */}
-      <div className="absolute inset-0">
-        <Image
-          src="/images/marketing/hero-panel.png"
-          alt=""
-          fill
-          priority
-          className="object-cover object-center"
-          sizes="100vw"
-        />
-      </div>
+    <section className="relative overflow-hidden min-h-[520px] sm:min-h-[560px] md:min-h-[640px]">
+      <HomeHeroBackdrop />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 lg:py-28">
         <h1 className="sr-only">{t('home.hero_title')}</h1>

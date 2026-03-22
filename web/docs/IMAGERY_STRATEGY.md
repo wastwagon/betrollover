@@ -4,7 +4,7 @@
 
 | Area | What you use today |
 |------|-------------------|
-| **Home hero** | CSS gradients, blur “orbs”, **no raster hero** — strong look, zero image weight. |
+| **Home hero** | `HomeHeroBackdrop`: CSS mesh + inline SVG — editorial stadium/pitch read, **zero hero image bytes**. |
 | **Home “how it works”** | **Inline SVG** components (`HomeStepArtwork`) — sharp at any size, no HTTP requests. |
 | **Marketplace / tipsters / picks** | `next/image` on **avatars, team badges, pick visuals**, news covers, discover cards. |
 | **Ads** | `next/image` with **`unoptimized`** (good: avoids optimizer quirks on random upload formats). |
