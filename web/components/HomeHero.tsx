@@ -13,6 +13,11 @@ interface PublicStats {
   successfulPurchases: number;
   winRate: number;
   totalPaidOut: number;
+  /** Gross buyer stakes on wins (optional; net tipster pay is totalPaidOut) */
+  grossWinningStakesGhs?: number;
+  statsScope?: string;
+  platformCommissionPercent?: number;
+  metricNotes?: Record<string, string>;
 }
 
 const defaultStats: PublicStats = {
@@ -39,7 +44,7 @@ interface LeadingTipsterStats {
   roi: number | null;
 }
 
-/** Six stats: platform counts + leading ROI + paid out (escrow settled) */
+/** Six stats: platform counts + leading ROI + net paid to tipsters (wallet payouts) */
 type StatKey =
   | 'verified'
   | 'coupons'
@@ -94,6 +99,16 @@ const statConfigBase: Record<
     border: 'border-cyan-500/40',
     iconBg: 'bg-cyan-500/25 text-cyan-300',
   },
+};
+
+/** Native tooltips: how each KPI is computed (hover). */
+const STAT_HINT_KEYS: Record<StatKey, string> = {
+  verified: 'home.stats_hint_tipsters',
+  coupons: 'home.stats_hint_coupons',
+  couponsBought: 'home.stats_hint_coupons_bought',
+  leadingRoi: 'home.stats_hint_leading_roi',
+  marketplace: 'home.stats_hint_marketplace',
+  paidOut: 'home.stats_hint_paid_out',
 };
 
 export function HomeHero() {
@@ -222,6 +237,7 @@ export function HomeHero() {
             return (
               <div
                 key={item.key}
+                title={t(STAT_HINT_KEYS[item.key])}
                 className={`group relative overflow-hidden rounded-xl backdrop-blur-sm border ${cfg.bg} ${cfg.border} px-3 py-2.5 md:px-4 md:py-3 hover:opacity-90 transition-all duration-300 animate-fade-in-up`}
                 style={{ animationDelay: `${300 + idx * 60}ms`, animationFillMode: 'both' as const }}
               >

@@ -19,6 +19,8 @@ import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { ReferralsService } from '../referrals/referrals.service';
+import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity';
+import { clampPlatformCommissionPercent } from '../../common/platform-commission';
 
 /** Sports that use sport_events table (eventId) rather than fixtures (fixtureId) */
 const SPORT_EVENT_SPORTS = new Set(['basketball', 'rugby', 'mma', 'volleyball', 'hockey', 'american_football', 'tennis']);
@@ -89,6 +91,8 @@ export class AccumulatorsService {
     private apiSettingsRepo: Repository<ApiSettings>,
     @InjectRepository(Tipster)
     private tipsterRepo: Repository<Tipster>,
+    @InjectRepository(WalletTransaction)
+    private walletTxRepo: Repository<WalletTransaction>,
     private walletService: WalletService,
     private notificationsService: NotificationsService,
     private emailService: EmailService,
@@ -1065,46 +1069,103 @@ export class AccumulatorsService {
   }
 
   /**
-   * Total amount released from escrow when winning coupons were settled (paid out to tipsters).
-   * Used for "Paid Out" homepage stat.
+   * Gross buyer stakes released from escrow on wins (before platform fee). Transparency only.
    */
-  async getTotalEscrowSettled(): Promise<number> {
+  async getTotalGrossWinningEscrowReleased(): Promise<number> {
     const result = await this.escrowRepo
       .createQueryBuilder('e')
       .select('COALESCE(SUM(e.amount), 0)', 'total')
       .where("e.status = 'released'")
       .getRawOne<{ total: string }>();
-    return Math.round(Number(result?.total ?? 0));
+    return Number(Number(result?.total ?? 0).toFixed(2));
+  }
+
+  /**
+   * Net GHS credited to tipster wallets from pick settlements (type payout, after platform fee).
+   * Matches settlement.service wallet credits — this is the real "paid out to tipsters" figure.
+   */
+  async getTotalNetTipsterPayouts(): Promise<number> {
+    const result = await this.walletTxRepo
+      .createQueryBuilder('w')
+      .select('COALESCE(SUM(w.amount), 0)', 'total')
+      .where("w.type = 'payout'")
+      .andWhere("w.status = 'completed'")
+      .andWhere('w.amount > 0')
+      .getRawOne<{ total: string }>();
+    return Number(Number(result?.total ?? 0).toFixed(2));
+  }
+
+  /** Marketplace purchases only (coupon was listed on pick_marketplace). */
+  async getMarketplacePurchaseCount(): Promise<number> {
+    const result = await this.dataSource.query(
+      `SELECT COUNT(*)::int AS cnt
+       FROM user_purchased_picks up
+       INNER JOIN pick_marketplace pm ON pm.accumulator_id = up.accumulator_id`,
+    );
+    return Number(result[0]?.cnt ?? 0);
+  }
+
+  /** Settled marketplace coupons only (won + lost) for a public win rate that matches the marketplace. */
+  async getMarketplaceSettledWinLoss(): Promise<{ won: number; lost: number }> {
+    const rows = await this.dataSource.query(
+      `SELECT
+         (SELECT COUNT(DISTINCT t.id)::int FROM accumulator_tickets t
+          INNER JOIN pick_marketplace pm ON pm.accumulator_id = t.id
+          WHERE t.result = 'won') AS won,
+         (SELECT COUNT(DISTINCT t.id)::int FROM accumulator_tickets t
+          INNER JOIN pick_marketplace pm ON pm.accumulator_id = t.id
+          WHERE t.result = 'lost') AS lost`,
+    );
+    const row = rows[0] ?? {};
+    return { won: Number(row.won ?? 0), lost: Number(row.lost ?? 0) };
   }
 
   /** Public stats for homepage - no auth required */
   async getPublicStats() {
     const [
-      tipsterCount,
+      apiSettingsRow,
+      activeTipstersCount,
       publishedCouponsCount,
       liveMarketplaceCount,
-      purchaseCount,
-      totalEscrowSettled,
-      wonPicks,
-      lostPicks,
+      marketplacePurchaseCount,
+      netTipsterPayouts,
+      grossWinningEscrow,
+      { won: wonMarketplace, lost: lostMarketplace },
     ] = await Promise.all([
-      this.usersRepo.count({ where: [{ role: UserRole.TIPSTER }, { role: UserRole.USER }] }),
+      this.apiSettingsRepo.findOne({ where: { id: 1 } }),
+      this.tipsterRepo.count({ where: { isActive: true } }),
       this.getPublishedCouponsCount(),
       this.getLiveMarketplaceCount(),
-      this.purchasedRepo.count(),
-      this.getTotalEscrowSettled(),
-      this.ticketRepo.count({ where: { result: 'won' } }),
-      this.ticketRepo.count({ where: { result: 'lost' } }),
+      this.getMarketplacePurchaseCount(),
+      this.getTotalNetTipsterPayouts(),
+      this.getTotalGrossWinningEscrowReleased(),
+      this.getMarketplaceSettledWinLoss(),
     ]);
-    const settled = wonPicks + lostPicks;
-    const winRate = settled > 0 ? Math.round((wonPicks / settled) * 100) : 0;
+    const settled = wonMarketplace + lostMarketplace;
+    const winRate = settled > 0 ? Math.round((wonMarketplace / settled) * 100) : 0;
+    const platformCommissionPercent = clampPlatformCommissionPercent(apiSettingsRow?.platformCommissionRate);
     return {
-      verifiedTipsters: tipsterCount,
+      verifiedTipsters: activeTipstersCount,
       totalPicks: publishedCouponsCount,
       activePicks: liveMarketplaceCount,
-      successfulPurchases: purchaseCount,
+      successfulPurchases: marketplacePurchaseCount,
       winRate,
-      totalPaidOut: totalEscrowSettled,
+      /** Net to tipsters after platform commission (wallet payout credits). */
+      totalPaidOut: netTipsterPayouts,
+      /** Gross buyer stakes on winning settlements (not net tipster pay). */
+      grossWinningStakesGhs: grossWinningEscrow,
+      /** All counts above are marketplace-scoped where noted in metricNotes. */
+      statsScope: 'marketplace' as const,
+      platformCommissionPercent,
+      metricNotes: {
+        verifiedTipsters: 'tipsters.is_active = true (includes listed AI tipsters)',
+        totalPicks: 'DISTINCT coupons ever on pick_marketplace',
+        activePicks: 'Live buyable listings (active + pending coupon + no started fixture)',
+        successfulPurchases: 'user_purchased_picks joined to pick_marketplace',
+        winRate: 'Marketplace-listed coupons: won / (won + lost)',
+        totalPaidOut: 'SUM(wallet_transactions.amount) type=payout, status=completed, amount>0',
+        grossWinningStakesGhs: 'SUM(escrow_funds.amount) where status=released',
+      },
     };
   }
 

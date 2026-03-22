@@ -53,6 +53,7 @@ const TX_TYPE_KEYS: Record<string, string> = {
   withdrawal: 'earnings.tx_withdrawal',
   purchase:   'earnings.tx_purchase',
   credit:     'wallet.credit',
+  adjustment: 'earnings.tx_admin_adjustment',
 };
 
 const TX_COLOR: Record<string, string> = {
@@ -63,6 +64,7 @@ const TX_COLOR: Record<string, string> = {
   withdrawal: 'text-red-500',
   purchase:   'text-slate-500',
   credit:     'text-teal-600',
+  adjustment: 'text-red-500',
 };
 
 const TX_ICON: Record<string, string> = {
@@ -73,6 +75,7 @@ const TX_ICON: Record<string, string> = {
   withdrawal: '💸',
   purchase:   '🛒',
   credit:     '✨',
+  adjustment: '⚙️',
 };
 
 const RESULT_STYLE: Record<string, string> = {
@@ -141,9 +144,14 @@ export default function EarningsPage() {
     [transactions]
   );
 
-  // Total platform commission deducted (informational — not a wallet debit)
+  // Real platform commission only (pick settlement rows use reference commission-pick-*)
   const totalCommissionDeducted = useMemo(() =>
-    transactions.filter(t => t.type === 'commission' && t.status === 'completed')
+    transactions.filter(
+      t =>
+        t.type === 'commission' &&
+        t.status === 'completed' &&
+        (t.reference?.startsWith('commission-') ?? false),
+    )
       .reduce((s, t) => s + Number(t.amount), 0),
     [transactions]
   );
@@ -193,7 +201,8 @@ export default function EarningsPage() {
 
   const filteredTx = useMemo(() => {
     if (txFilter === 'payout') return transactions.filter(t => t.type === 'payout');
-    if (txFilter === 'commission') return transactions.filter(t => t.type === 'commission');
+    if (txFilter === 'commission')
+      return transactions.filter(t => t.type === 'commission' && (t.reference?.startsWith('commission-') ?? false));
     if (txFilter === 'withdrawal') return transactions.filter(t => t.type === 'withdrawal');
     return transactions;
   }, [transactions, txFilter]);
@@ -475,9 +484,14 @@ export default function EarningsPage() {
           ) : (
             <ul className="divide-y divide-[var(--border)]">
               {filteredTx.slice(0, 50).map((tx) => {
-                const isCredit = ['payout', 'deposit', 'refund', 'credit'].includes(tx.type);
-                const isCommission = tx.type === 'commission';
-                const colorClass = TX_COLOR[tx.type] ?? 'text-[var(--text)]';
+                const isPlatformFee =
+                  tx.type === 'commission' && (tx.reference?.startsWith('commission-') ?? false);
+                const isMisclassifiedCredit =
+                  tx.type === 'commission' && !isPlatformFee && Number(tx.amount) > 0;
+                const isCredit =
+                  ['payout', 'deposit', 'refund', 'credit'].includes(tx.type) || isMisclassifiedCredit;
+                const displayType = isMisclassifiedCredit ? 'credit' : tx.type;
+                const colorClass = TX_COLOR[displayType] ?? 'text-[var(--text)]';
                 // For payout rows, look up the commission that was deducted for the same pick
                 const matchedCommission = tx.type === 'payout' && tx.reference
                   ? commissionByRef.get(tx.reference) ?? null
@@ -485,14 +499,17 @@ export default function EarningsPage() {
                 const gross = matchedCommission !== null
                   ? Number(tx.amount) + matchedCommission
                   : null;
+                const rawAmt = Number(tx.amount);
+                const amtMag = Math.abs(rawAmt);
+                const amtSign = isPlatformFee ? '−' : rawAmt > 0 ? '+' : '−';
                 return (
-                  <li key={tx.id} className={`flex items-center gap-4 px-5 py-3.5 ${isCommission ? 'bg-amber-50/40 dark:bg-amber-900/5' : ''}`}>
+                  <li key={tx.id} className={`flex items-center gap-4 px-5 py-3.5 ${isPlatformFee ? 'bg-amber-50/40 dark:bg-amber-900/5' : ''}`}>
                     <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-base bg-[var(--bg)] border border-[var(--border)]">
-                      {TX_ICON[tx.type] ?? '↔'}
+                      {TX_ICON[displayType] ?? '↔'}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-[var(--text)] truncate">
-                        {TX_TYPE_KEYS[tx.type] ? t(TX_TYPE_KEYS[tx.type]) : tx.type}
+                        {TX_TYPE_KEYS[displayType] ? t(TX_TYPE_KEYS[displayType]) : displayType}
                       </p>
                       <p className="text-xs text-[var(--text-muted)]">
                         {formatDate(tx.createdAt)}
@@ -509,16 +526,16 @@ export default function EarningsPage() {
                       )}
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className={`text-sm font-bold tabular-nums ${isCredit ? 'text-emerald-600' : isCommission ? 'text-amber-600' : colorClass}`}>
-                        {isCommission ? '−' : isCredit ? '+' : '−'}GHS {Number(tx.amount).toFixed(2)}
+                      <p className={`text-sm font-bold tabular-nums ${isCredit ? 'text-emerald-600' : isPlatformFee ? 'text-amber-600' : colorClass}`}>
+                        {amtSign}GHS {amtMag.toFixed(2)}
                       </p>
                       <p className={`text-[10px] capitalize mt-0.5 ${
-                        tx.status === 'completed' ? (isCommission ? 'text-amber-600' : 'text-emerald-600')
+                        tx.status === 'completed' ? (isPlatformFee ? 'text-amber-600' : 'text-emerald-600')
                           : tx.status === 'pending' || tx.status === 'processing' ? 'text-amber-600'
                           : tx.status === 'failed' ? 'text-red-500'
                           : 'text-[var(--text-muted)]'
                       }`}>
-                        {isCommission ? t('earnings.deducted') : tx.status}
+                        {isPlatformFee ? t('earnings.deducted') : tx.status}
                       </p>
                     </div>
                   </li>

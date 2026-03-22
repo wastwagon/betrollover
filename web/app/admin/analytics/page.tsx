@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line, PieChart, Pie, Cell, Legend,
+  LineChart, Line, ComposedChart, PieChart, Pie, Cell, Legend,
 } from 'recharts';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
@@ -80,6 +80,10 @@ interface RealTimeStats {
   picks: { last24h: number; last7d: number; last30d: number };
   purchases: { last24h: number; last7d: number; last30d: number };
   revenue: { last24h: number; last7d: number; last30d: number };
+  marketplace?: {
+    purchases: { last24h: number; last7d: number; last30d: number };
+    revenue: { last24h: number; last7d: number; last30d: number };
+  };
 }
 
 interface AiDashboardMetrics {
@@ -118,6 +122,8 @@ interface RevenueTrendPoint {
   date: string;
   revenue: number;
   purchases: number;
+  marketplaceRevenue?: number;
+  marketplacePurchases?: number;
 }
 
 interface TopTipsterBySport {
@@ -303,7 +309,13 @@ export default function AdminAnalyticsPage() {
         setRetention(ret);
         setVisitorStats(vis);
         setSportBreakdown(Array.isArray(sb) ? sb : []);
-        setRevenueTrend(Array.isArray(rt2) ? rt2 : []);
+        setRevenueTrend(
+          (Array.isArray(rt2) ? rt2 : []).map((row: RevenueTrendPoint) => ({
+            ...row,
+            marketplaceRevenue: row.marketplaceRevenue ?? 0,
+            marketplacePurchases: row.marketplacePurchases ?? 0,
+          })),
+        );
         setTopTipstersBySport(Array.isArray(ttbs) ? ttbs : []);
         setCommissionRevenue(commRev ?? null);
         setWalletAnalytics(wallet ?? null);
@@ -431,11 +443,12 @@ export default function AdminAnalyticsPage() {
 
         {/* Real-time Stats */}
         {realTime && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white">
-              <p className="text-sm opacity-90 mb-1">Users (24h)</p>
+              <p className="text-sm opacity-90 mb-1">New members (24h)</p>
               <p className="text-3xl font-bold">{realTime.users.last24h}</p>
               <p className="text-xs opacity-75 mt-2">{realTime.users.last7d} this week</p>
+              <p className="text-[10px] opacity-70 mt-2 leading-snug">User + tipster roles; excludes admins.</p>
             </div>
             <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl p-6 text-white">
               <p className="text-sm opacity-90 mb-1">Picks (24h)</p>
@@ -443,14 +456,38 @@ export default function AdminAnalyticsPage() {
               <p className="text-xs opacity-75 mt-2">{realTime.picks.last7d} this week</p>
             </div>
             <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-xl p-6 text-white">
-              <p className="text-sm opacity-90 mb-1">Purchases (24h)</p>
+              <p className="text-sm opacity-90 mb-1">Purchases — all (24h)</p>
               <p className="text-3xl font-bold">{realTime.purchases.last24h}</p>
               <p className="text-xs opacity-75 mt-2">{realTime.purchases.last7d} this week</p>
+              <p className="text-[10px] opacity-70 mt-2 leading-snug">Every successful checkout (any channel).</p>
             </div>
             <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl p-6 text-white">
-              <p className="text-sm opacity-90 mb-1">Coupon Revenue (24h)</p>
+              <p className="text-sm opacity-90 mb-1">Gross revenue — all (24h)</p>
               <p className="text-3xl font-bold">GHS {(realTime.revenue.last24h ?? 0).toFixed(2)}</p>
               <p className="text-xs opacity-75 mt-2">GHS {(realTime.revenue.last7d ?? 0).toFixed(2)} this week</p>
+              <p className="text-[10px] opacity-70 mt-2 leading-snug">Sum of purchase prices (all paths). Not net tipster pay or platform fee.</p>
+            </div>
+            <div className="bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl shadow-xl p-6 text-white">
+              <p className="text-sm opacity-90 mb-1">Marketplace purchases (24h)</p>
+              <p className="text-3xl font-bold">
+                {realTime.marketplace == null ? '—' : realTime.marketplace.purchases.last24h}
+              </p>
+              <p className="text-xs opacity-75 mt-2">
+                {realTime.marketplace != null ? `${realTime.marketplace.purchases.last7d} this week` : '—'}
+              </p>
+              <p className="text-[10px] opacity-70 mt-2 leading-snug">Joined to pick_marketplace — same scope as public homepage.</p>
+            </div>
+            <div className="bg-gradient-to-br from-amber-600 to-rose-600 rounded-2xl shadow-xl p-6 text-white">
+              <p className="text-sm opacity-90 mb-1">Marketplace revenue (24h)</p>
+              <p className="text-3xl font-bold">
+                {realTime.marketplace != null ? `GHS ${realTime.marketplace.revenue.last24h.toFixed(2)}` : '—'}
+              </p>
+              <p className="text-xs opacity-75 mt-2">
+                {realTime.marketplace != null
+                  ? `GHS ${realTime.marketplace.revenue.last7d.toFixed(2)} this week`
+                  : '—'}
+              </p>
+              <p className="text-[10px] opacity-70 mt-2 leading-snug">Gross spend on marketplace-listed coupons only.</p>
             </div>
           </div>
         )}
@@ -461,7 +498,7 @@ export default function AdminAnalyticsPage() {
             <div className="md:col-span-1 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-2xl shadow-xl p-5 text-white">
               <p className="text-xs font-semibold opacity-90 uppercase tracking-wider mb-1">Commission (All Time)</p>
               <p className="text-2xl font-bold">GHS {commissionRevenue.allTime.toFixed(2)}</p>
-              <p className="text-xs opacity-80 mt-1">Platform revenue from settlements</p>
+              <p className="text-xs opacity-80 mt-1">Pick wins only — wallet rows with reference commission-pick-*</p>
             </div>
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow p-5">
               <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Last 30 Days</p>
@@ -1393,20 +1430,79 @@ export default function AdminAnalyticsPage() {
                 {revenueTrend.length > 0 && (
                   <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Revenue Trend</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Daily paid pick revenue (GHS)</p>
-                    <ResponsiveContainer width="100%" height={220}>
-                      <LineChart data={revenueTrend}>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                      Green / amber = GHS (left axis). Purple / violet = purchase counts (right axis).
+                    </p>
+                    <ResponsiveContainer width="100%" height={260}>
+                      <ComposedChart data={revenueTrend}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v: string) => v.slice(5)} />
-                        <YAxis tickFormatter={(v: number) => `GHS ${v}`} tick={{ fontSize: 11 }} />
+                        <YAxis
+                          yAxisId="ghs"
+                          tickFormatter={(v: number) => `GHS ${v}`}
+                          tick={{ fontSize: 11 }}
+                          width={56}
+                        />
+                        <YAxis
+                          yAxisId="cnt"
+                          orientation="right"
+                          allowDecimals={false}
+                          tick={{ fontSize: 11 }}
+                          width={36}
+                        />
                         <Tooltip
-                          formatter={(v: any, name: any) => [name === 'revenue' ? `GHS ${Number(v).toFixed(2)}` : v, name === 'revenue' ? 'Revenue' : 'Purchases'] as any}
+                          formatter={(v: any, name: any) => {
+                            const label = String(name ?? '');
+                            const n = Number(v);
+                            if (
+                              label.includes('GHS') ||
+                              label.includes('revenue') ||
+                              label === 'Gross (all)' ||
+                              label === 'Marketplace (GHS)'
+                            )
+                              return [`GHS ${n.toFixed(2)}`, label];
+                            return [String(Math.round(n)), label];
+                          }}
                           contentStyle={{ borderRadius: 8, fontSize: 13 }}
                         />
                         <Legend />
-                        <Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} dot={false} name="revenue" />
-                        <Line type="monotone" dataKey="purchases" stroke="#6366f1" strokeWidth={2} dot={false} name="purchases" />
-                      </LineChart>
+                        <Line
+                          yAxisId="ghs"
+                          type="monotone"
+                          dataKey="revenue"
+                          stroke="#10b981"
+                          strokeWidth={2}
+                          dot={false}
+                          name="Gross (all)"
+                        />
+                        <Line
+                          yAxisId="ghs"
+                          type="monotone"
+                          dataKey="marketplaceRevenue"
+                          stroke="#f59e0b"
+                          strokeWidth={2}
+                          dot={false}
+                          name="Marketplace (GHS)"
+                        />
+                        <Line
+                          yAxisId="cnt"
+                          type="monotone"
+                          dataKey="purchases"
+                          stroke="#6366f1"
+                          strokeWidth={1.5}
+                          dot={false}
+                          name="Purchases (all)"
+                        />
+                        <Line
+                          yAxisId="cnt"
+                          type="monotone"
+                          dataKey="marketplacePurchases"
+                          stroke="#a855f7"
+                          strokeWidth={1.5}
+                          dot={false}
+                          name="Purchases (MP)"
+                        />
+                      </ComposedChart>
                     </ResponsiveContainer>
                   </div>
                 )}

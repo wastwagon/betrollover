@@ -12,6 +12,7 @@ import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TipsterService } from '../tipster/tipster.service';
 import { determinePickResult } from './settlement-logic';
+import { clampPlatformCommissionPercent } from '../../common/platform-commission';
 
 /** Market types and selection formats we support for settlement. See determinePickResult. */
 export const SETTLEMENT_SUPPORTED_MARKETS = [
@@ -277,7 +278,7 @@ export class SettlementService {
     }
 
     const apiRow = await manager.getRepository(ApiSettings).findOne({ where: { id: 1 } });
-    const commissionRate = Math.min(50, Math.max(0, Number(apiRow?.platformCommissionRate ?? 30.0)));
+    const commissionRate = clampPlatformCommissionPercent(apiRow?.platformCommissionRate);
     const processedUsers = new Set<number>();
 
     for (const f of funds) {
@@ -328,7 +329,7 @@ export class SettlementService {
     }
 
     const apiRow = await manager.getRepository(ApiSettings).findOne({ where: { id: 1 } });
-    const commissionRate = Math.min(50, Math.max(0, Number(apiRow?.platformCommissionRate ?? 30.0)));
+    const commissionRate = clampPlatformCommissionPercent(apiRow?.platformCommissionRate);
     const processedUsers = new Set<number>();
 
     for (const f of funds) {
@@ -490,7 +491,7 @@ export class SettlementService {
 
     // Load platform commission rate (default 30% — must match Terms)
     const apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
-    const commissionRate = Math.min(50, Math.max(0, Number(apiSettings?.platformCommissionRate ?? 30.0)));
+    const commissionRate = clampPlatformCommissionPercent(apiSettings?.platformCommissionRate);
 
     const processedUsers = new Set<number>();
     let totalCommission = 0;

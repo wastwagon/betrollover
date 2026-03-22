@@ -26,6 +26,7 @@ interface Transaction {
   amount: number;
   status: string;
   description: string | null;
+  reference?: string | null;
   createdAt: string;
 }
 
@@ -681,15 +682,18 @@ function WalletContent() {
               ) : (
                 <ul className="space-y-1">
                   {transactions.map((tx) => {
-                    const isCommission = tx.type === 'commission';
-                    const isCredit = ['payout','deposit','refund','credit'].includes(tx.type);
-                    const TX_ICON: Record<string, string> = { payout:'💰', commission:'🏛', refund:'↩', deposit:'⬆', withdrawal:'💸', purchase:'🛒', credit:'✨' };
-                    const TX_LABEL: Record<string, string> = { payout: t('wallet.net_payout'), commission: t('wallet.commission'), refund: t('wallet.refund'), deposit: t('wallet.deposit'), withdrawal: t('wallet.withdrawal'), purchase: t('wallet.purchase'), credit: t('wallet.credit') };
+                    const isRealCommission = tx.type === 'commission' && (tx.reference?.startsWith('commission-') ?? false);
+                    const isMisclassifiedCredit = tx.type === 'commission' && !isRealCommission && Number(tx.amount) > 0;
+                    const isCommission = isRealCommission;
+                    const isCredit = ['payout','deposit','refund','credit'].includes(tx.type) || isMisclassifiedCredit;
+                    const displayType = isMisclassifiedCredit ? 'credit' : tx.type;
+                    const TX_ICON: Record<string, string> = { payout:'💰', commission:'🏛', refund:'↩', deposit:'⬆', withdrawal:'💸', purchase:'🛒', credit:'✨', adjustment:'⚙️' };
+                    const TX_LABEL: Record<string, string> = { payout: t('wallet.net_payout'), commission: t('wallet.commission'), refund: t('wallet.refund'), deposit: t('wallet.deposit'), withdrawal: t('wallet.withdrawal'), purchase: t('wallet.purchase'), credit: t('wallet.credit'), adjustment: t('wallet.adjustment') };
                     return (
                       <li key={tx.id} className={`flex items-center gap-3 py-2 border-b border-[var(--border)] last:border-0 ${isCommission ? 'opacity-70' : ''}`}>
-                        <span className="text-base w-6 text-center flex-shrink-0">{TX_ICON[tx.type] ?? '↔'}</span>
+                        <span className="text-base w-6 text-center flex-shrink-0">{TX_ICON[displayType] ?? '↔'}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm text-[var(--text)]">{TX_LABEL[tx.type] ?? tx.type}</p>
+                          <p className="font-medium text-sm text-[var(--text)]">{TX_LABEL[displayType] ?? displayType}</p>
                           <p className="text-xs text-[var(--text-muted)] truncate">{tx.description || new Date(tx.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short' })}</p>
                         </div>
                         <div className="text-right flex-shrink-0">
@@ -705,7 +709,7 @@ function WalletContent() {
                   })}
                 </ul>
               )}
-              {transactions.some(tx => tx.type === 'commission') && (
+              {transactions.some(tx => tx.type === 'commission' && (tx.reference?.startsWith('commission-') ?? false)) && (
                 <p className="text-[10px] text-[var(--text-muted)] mt-3 pt-2 border-t border-[var(--border)]">
                   {t('wallet.platform_fee_note')}
                   <Link href="/earnings" className="ml-1 text-amber-600 hover:underline">{t('wallet.view_full_breakdown')}</Link>

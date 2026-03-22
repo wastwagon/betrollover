@@ -54,6 +54,7 @@ export class TipsterService {
       .select('SUM(t.amount)', 'total')
       .where('t.user_id = :userId', { userId })
       .andWhere('t.type = :type', { type: 'payout' })
+      .andWhere('t.amount > 0')
       .getRawOne();
 
     const totalEarnings = Number(payouts?.total ?? 0);

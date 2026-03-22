@@ -48,7 +48,12 @@ interface Stats {
   wallets?: { count: number; totalBalance: number };
   picks?: { total: number; pending: number; approved: number; activeMarketplace?: number };
   escrow?: { held: number };
-  purchases?: { total: number; revenue: number };
+  purchases?: {
+    total: number;
+    revenue: number;
+    marketplaceCount?: number;
+    marketplaceRevenue?: number;
+  };
   deposits?: { total: number; pending: number };
   withdrawals?: { total: number; pending: number };
 }
@@ -241,8 +246,18 @@ function DashboardContent() {
             </h1>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-              <StatCard title="Total Users" value={stats?.users?.total ?? 0} icon="👥" />
-              <StatCard title="Tipsters" value={stats?.users?.tipsters ?? 0} icon="🎯" />
+              <StatCard
+                title="Member accounts"
+                hint="Users with role user or tipster (excludes admins)."
+                value={stats?.users?.total ?? 0}
+                icon="👥"
+              />
+              <StatCard
+                title="Active tipster profiles"
+                hint="tipsters.is_active — matches public homepage count."
+                value={stats?.users?.tipsters ?? 0}
+                icon="🎯"
+              />
               <StatCard title="Wallets" value={stats?.wallets?.count ?? 0} icon="💰" />
               <StatCard
                 title="Total Balance (GHS)"
@@ -259,8 +274,35 @@ function DashboardContent() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-              <StatCard title="Total Purchases" value={stats?.purchases?.total ?? 0} icon="🛍️" />
-              <StatCard title="Revenue (GHS)" value={stats?.purchases?.revenue ?? 0} icon="💵" format="currency" />
+              <StatCard
+                title="Total purchases"
+                hint="All coupon checkouts (includes non-marketplace paths)."
+                value={stats?.purchases?.total ?? 0}
+                icon="🛍️"
+              />
+              <StatCard
+                title="Gross purchase revenue"
+                hint="Sum of purchase prices (not platform commission or net tipster pay)."
+                value={stats?.purchases?.revenue ?? 0}
+                icon="💵"
+                format="currency"
+              />
+              <StatCard
+                title="Marketplace purchases"
+                hint="Joined to pick_marketplace — aligns with public homepage."
+                value={stats?.purchases?.marketplaceCount ?? 0}
+                icon="🛒"
+              />
+              <StatCard
+                title="Marketplace revenue (GHS)"
+                hint="Gross spend on marketplace-listed coupons only."
+                value={stats?.purchases?.marketplaceRevenue ?? 0}
+                icon="📊"
+                format="currency"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
               <StatCard title="Pending Deposits" value={stats?.deposits?.pending ?? 0} icon="💳" />
               <StatCard
                 title="Pending Withdrawals"
@@ -356,11 +398,12 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
                   {[
                     { label: 'Admin',         value: user?.displayName ?? '—' },
                     { label: 'Email',         value: user?.email ?? '—' },
-                    { label: 'Total Users',   value: stats?.users?.total != null ? `${stats.users.total}` : '—' },
-                    { label: 'Tipsters',      value: stats?.users?.tipsters != null ? `${stats.users.tipsters}` : '—' },
+                    { label: 'Members',   value: stats?.users?.total != null ? `${stats.users.total}` : '—' },
+                    { label: 'Active tipsters',      value: stats?.users?.tipsters != null ? `${stats.users.tipsters}` : '—' },
                     { label: 'Active Coupons', value: stats?.picks?.activeMarketplace != null ? `${stats.picks.activeMarketplace}` : '—' },
                     { label: 'Escrow Held',   value: stats?.escrow?.held != null ? `GHS ${Number(stats.escrow.held).toFixed(2)}` : '—' },
-                    { label: 'Revenue',       value: stats?.purchases?.revenue != null ? `GHS ${Number(stats.purchases.revenue).toFixed(2)}` : '—' },
+                    { label: 'Gross revenue (all purchases)',       value: stats?.purchases?.revenue != null ? `GHS ${Number(stats.purchases.revenue).toFixed(2)}` : '—' },
+                    { label: 'Marketplace revenue',       value: stats?.purchases?.marketplaceRevenue != null ? `GHS ${Number(stats.purchases.marketplaceRevenue).toFixed(2)}` : '—' },
                     { label: 'Pending Deposits', value: stats?.deposits?.pending != null ? `${stats.deposits.pending}` : '—', highlight: (stats?.deposits?.pending ?? 0) > 0 },
                     { label: 'Pending Withdrawals', value: stats?.withdrawals?.pending != null ? `${stats.withdrawals.pending}` : '—', highlight: (stats?.withdrawals?.pending ?? 0) > 0 },
                     { label: 'Sports Active',  value: '7 / 7 Live' },
@@ -984,6 +1027,7 @@ function StatCard({
   glass = false,
   index = 0,
   displayValue,
+  hint,
 }: {
   title: string;
   value: number;
@@ -996,6 +1040,8 @@ function StatCard({
   index?: number;
   /** When set (e.g. user currency formatted), shown instead of value. Admin dashboard does not pass this. */
   displayValue?: string;
+  /** Short definition for admin clarity (shown under title). */
+  hint?: string;
 }) {
   const display = displayValue ?? (format === 'currency' ? value.toFixed(2) : value.toString());
   const variantStyles = {
@@ -1022,6 +1068,7 @@ function StatCard({
         <span className="text-xl sm:text-2xl font-bold text-[var(--text)] tabular-nums truncate">{display}{suffix}</span>
       </div>
       <p className="text-xs sm:text-sm font-medium text-[var(--text-muted)] mt-2 sm:mt-3">{title}</p>
+      {hint ? <p className="text-[10px] sm:text-xs text-[var(--text-muted)]/80 mt-1 leading-snug">{hint}</p> : null}
     </div>
   );
 

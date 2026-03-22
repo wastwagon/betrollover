@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { getApiUrl } from '@/lib/site-config';
 import { useCurrency } from '@/context/CurrencyContext';
+import { useT } from '@/context/LanguageContext';
 
 interface PublicStats {
   verifiedTipsters: number;
@@ -12,6 +13,10 @@ interface PublicStats {
   successfulPurchases: number;
   winRate: number;
   totalPaidOut: number;
+  grossWinningStakesGhs?: number;
+  statsScope?: string;
+  platformCommissionPercent?: number;
+  metricNotes?: Record<string, string>;
 }
 
 const defaultStats: PublicStats = {
@@ -31,6 +36,7 @@ function formatNumber(n: number): string {
 
 export function HomeStats() {
   const { format } = useCurrency();
+  const t = useT();
   const [stats, setStats] = useState<PublicStats | null>(null);
 
   useEffect(() => {
@@ -42,12 +48,12 @@ export function HomeStats() {
 
   const s = stats || defaultStats;
 
-  const items = [
-    { value: formatNumber(s.verifiedTipsters), label: 'Verified Tipsters' },
-    { value: formatNumber(s.totalPicks), label: 'Coupons Published' },
-    { value: formatNumber(s.successfulPurchases), label: 'Coupons Bought' },
-    { value: `${s.winRate}%`, label: 'Win Rate' },
-    { value: format(s.totalPaidOut).primary, label: 'Paid Out' },
+  const items: { value: string; label: string; hint: string }[] = [
+    { value: formatNumber(s.verifiedTipsters), label: t('home.stats_tipsters'), hint: t('home.stats_hint_tipsters') },
+    { value: formatNumber(s.totalPicks), label: t('home.stats_picks'), hint: t('home.stats_hint_coupons') },
+    { value: formatNumber(s.successfulPurchases), label: t('home.stats_coupons_bought'), hint: t('home.stats_hint_coupons_bought') },
+    { value: `${s.winRate}%`, label: t('home.stats_marketplace_win_rate'), hint: t('home.stats_hint_win_rate') },
+    { value: format(s.totalPaidOut).primary, label: t('home.stats_paid_out'), hint: t('home.stats_hint_paid_out') },
   ];
 
   return (
@@ -55,7 +61,7 @@ export function HomeStats() {
       <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
           {items.map((item) => (
-            <div key={item.label} className="text-center group">
+            <div key={item.label} className="text-center group" title={item.hint}>
               <p className="text-lg font-semibold text-[var(--primary)] tabular-nums group-hover:scale-105 transition-transform">{item.value}</p>
               <p className="text-xs text-[var(--text-muted)] mt-0.5 font-medium">{item.label}</p>
             </div>

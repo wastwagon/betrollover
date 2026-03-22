@@ -22,6 +22,7 @@ import { SportEvent } from '../sport-events/entities/sport-event.entity';
 import { User } from '../users/entities/user.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
+import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity';
 @Module({
   imports: [
     UsersModule,
@@ -37,6 +38,7 @@ import { Tipster } from '../predictions/entities/tipster.entity';
       User,
       ApiSettings,
       Tipster,
+      WalletTransaction,
     ]),
     WalletModule,
     NotificationsModule,

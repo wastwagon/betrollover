@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, ForbiddenException, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, DataSource, Between } from 'typeorm';
+import { Repository, In, DataSource, Between, Like } from 'typeorm';
 import { AuthService } from '../auth/auth.service';
 import { User, UserRole, UserStatus } from '../users/entities/user.entity';
 import { UserWallet } from '../wallet/entities/user-wallet.entity';
@@ -33,6 +33,7 @@ import { TipstersApiService } from '../predictions/tipsters-api.service';
 import { ResultTrackerService } from '../predictions/result-tracker.service';
 import { SyncStatus } from '../fixtures/entities/sync-status.entity';
 import { AuditService } from '../audit/audit.service';
+import { clampPlatformCommissionPercent } from '../../common/platform-commission';
 
 @Injectable()
 export class AdminService {
@@ -92,9 +93,9 @@ export class AdminService {
   ) { }
 
   async getStats() {
-    // All users (except admin) are tipsters - merged model
-    const [totalTipsters, totalWallets, totalBalance] = await Promise.all([
+    const [memberAccounts, activeTipsterProfiles, totalWallets, totalBalance] = await Promise.all([
       this.usersRepo.count({ where: [{ role: UserRole.USER }, { role: UserRole.TIPSTER }] }),
+      this.dataSource.getRepository(Tipster).count({ where: { isActive: true } }),
       this.walletsRepo.count(),
       this.walletsRepo
         .createQueryBuilder('w')
@@ -129,12 +130,24 @@ export class AdminService {
       .getRawOne()
       .then((r) => Number(r?.total ?? 0));
 
+    const mpRows = await this.dataSource.query(
+      `SELECT COUNT(*)::int AS cnt, COALESCE(SUM(up.purchase_price), 0) AS rev
+       FROM user_purchased_picks up
+       INNER JOIN pick_marketplace pm ON pm.accumulator_id = up.accumulator_id`,
+    );
+    const mpRow = mpRows[0] ?? {};
+
     return {
-      users: { total: totalTipsters, tipsters: totalTipsters },
+      users: { total: memberAccounts, tipsters: activeTipsterProfiles },
       wallets: { count: totalWallets, totalBalance },
       picks: { total: totalPicks, activeMarketplace },
       escrow: { held: escrowHeld },
-      purchases: { total: totalPurchases, revenue: totalRevenue },
+      purchases: {
+        total: totalPurchases,
+        revenue: totalRevenue,
+        marketplaceCount: Number(mpRow.cnt ?? 0),
+        marketplaceRevenue: Number(Number(mpRow.rev ?? 0).toFixed(2)),
+      },
       deposits: { total: totalDeposits, pending: pendingDeposits },
       withdrawals: { total: totalWithdrawals, pending: pendingWithdrawals },
     };
@@ -178,7 +191,8 @@ export class AdminService {
               ),
               this.dataSource.query(
                 `SELECT COALESCE(SUM(amount),0) AS total FROM wallet_transactions
-                 WHERE user_id=$1 AND type='commission' AND status='completed'`,
+                 WHERE user_id=$1 AND type='commission' AND status='completed'
+                   AND reference LIKE 'commission-%'`,
                 [u.id],
               ),
               this.dataSource.query(
@@ -278,11 +292,16 @@ export class AdminService {
   }
 
   async getEscrow() {
+    const apiRow = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
+    const commissionRate = clampPlatformCommissionPercent(apiRow?.platformCommissionRate);
+
     const funds = await this.escrowRepo.find({
       order: { createdAt: 'DESC' },
       take: 100,
     });
-    if (funds.length === 0) return [];
+    if (funds.length === 0) {
+      return { commissionRatePercent: commissionRate, funds: [] };
+    }
 
     const buyerIds = [...new Set(funds.map((f) => f.userId))];
     const pickIds = [...new Set(funds.map((f) => f.pickId))];
@@ -305,11 +324,20 @@ export class AdminService {
     const userMap = new Map(users.map((u) => [u.id, u]));
     const ticketMap = new Map(tickets.map((t) => [t.id, t]));
 
-    return funds.map((f) => {
+    const splitForGross = (gross: number) => {
+      const fee = Number(((gross * commissionRate) / 100).toFixed(2));
+      const net = Number((gross - fee).toFixed(2));
+      return { platformCommissionGhs: fee, tipsterShareGhs: net };
+    };
+
+    const rows = funds.map((f) => {
       const ticket = ticketMap.get(f.pickId);
       const tipsterUserId = ticket?.userId;
       const buyer = userMap.get(f.userId);
       const tipster = tipsterUserId != null ? userMap.get(tipsterUserId) : undefined;
+      const gross = Number(f.amount);
+      const refunded = f.status === 'refunded';
+      const split = refunded ? { platformCommissionGhs: 0, tipsterShareGhs: 0 } : splitForGross(gross);
       return {
         ...f,
         buyerDisplayName: buyer?.displayName ?? null,
@@ -319,8 +347,18 @@ export class AdminService {
         tipsterUsername: tipster?.username ?? null,
         tipsterUserId: tipsterUserId ?? null,
         pickTitle: ticket?.title ?? null,
+        tipsterShareGhs: split.tipsterShareGhs,
+        platformCommissionGhs: split.platformCommissionGhs,
+        /** If pick wins / held: projected split. Released: same numbers as settlement. Refunded: zeros. */
+        escrowBreakdownNote: refunded
+          ? 'refunded'
+          : f.status === 'held'
+            ? 'if_won'
+            : 'released',
       };
     });
+
+    return { commissionRatePercent: commissionRate, funds: rows };
   }
 
   async getWallets() {
@@ -369,7 +407,7 @@ export class AdminService {
       lastTestDate: apiSettings?.lastTestDate || null,
       isActive: apiSettings?.isActive || false,
       minimumROI: Number(apiSettings?.minimumROI ?? 20.0),
-      platformCommissionRate: Number(apiSettings?.platformCommissionRate ?? 30.0),
+      platformCommissionRate: clampPlatformCommissionPercent(apiSettings?.platformCommissionRate),
       currency: 'GHS',
       country: 'Ghana',
       appName: 'BetRollover',
@@ -415,18 +453,24 @@ export class AdminService {
     const [allTime, last30d, last7d, recentTransactions] = await Promise.all([
       this.txRepo.createQueryBuilder('t')
         .select('COALESCE(SUM(t.amount), 0)', 'total')
-        .where("t.type = 'commission' AND t.status = 'completed'")
+        .where("t.type = 'commission' AND t.status = 'completed' AND t.reference LIKE 'commission-%'")
         .getRawOne<{ total: string }>(),
       this.txRepo.createQueryBuilder('t')
         .select('COALESCE(SUM(t.amount), 0)', 'total')
-        .where("t.type = 'commission' AND t.status = 'completed' AND t.created_at >= :d", { d: d30 })
+        .where(
+          "t.type = 'commission' AND t.status = 'completed' AND t.reference LIKE 'commission-%' AND t.created_at >= :d",
+          { d: d30 },
+        )
         .getRawOne<{ total: string }>(),
       this.txRepo.createQueryBuilder('t')
         .select('COALESCE(SUM(t.amount), 0)', 'total')
-        .where("t.type = 'commission' AND t.status = 'completed' AND t.created_at >= :d", { d: d7 })
+        .where(
+          "t.type = 'commission' AND t.status = 'completed' AND t.reference LIKE 'commission-%' AND t.created_at >= :d",
+          { d: d7 },
+        )
         .getRawOne<{ total: string }>(),
       this.txRepo.find({
-        where: { type: 'commission', status: 'completed' },
+        where: { type: 'commission', status: 'completed', reference: Like('commission-%') },
         order: { createdAt: 'DESC' },
         take: 50,
         select: ['id', 'amount', 'reference', 'description', 'createdAt', 'userId'],
@@ -1311,19 +1355,19 @@ export class AdminService {
 
   // Wallet Management
   async adjustWalletBalance(userId: number, amount: number, reason: string) {
+    if (amount === 0) {
+      const wallet = await this.walletsRepo.findOne({ where: { userId } });
+      if (!wallet) throw new BadRequestException('Wallet not found');
+      return wallet;
+    }
+    const ref = `admin-adjust-${Date.now()}-${userId}`;
+    if (amount > 0) {
+      await this.walletService.credit(userId, amount, 'credit', ref, reason);
+    } else {
+      await this.walletService.debit(userId, Math.abs(amount), 'adjustment', ref, reason);
+    }
     const wallet = await this.walletsRepo.findOne({ where: { userId } });
     if (!wallet) throw new BadRequestException('Wallet not found');
-    const currentBalance = Number(wallet.balance);
-    wallet.balance = Number((currentBalance + amount).toFixed(2));
-    await this.walletsRepo.save(wallet);
-    await this.txRepo.save({
-      userId,
-      type: amount > 0 ? 'commission' : 'payout',
-      amount,
-      currency: 'GHS',
-      status: 'completed',
-      description: reason,
-    });
     return wallet;
   }
 

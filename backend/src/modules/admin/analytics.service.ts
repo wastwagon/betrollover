@@ -542,12 +542,44 @@ export class AnalyticsService {
     };
   }
 
+
+  /** Purchases tied to a marketplace listing (same scope as public homepage stats). */
+  private async mpPurchasesSince(since: Date): Promise<number> {
+    return this.purchasesRepo
+      .createQueryBuilder('p')
+      .where('p.purchasedAt >= :since', { since })
+      .andWhere(
+        `EXISTS (SELECT 1 FROM pick_marketplace pm WHERE pm.accumulator_id = p.accumulator_id)`,
+      )
+      .getCount();
+  }
+
+  private async mpRevenueSince(since: Date): Promise<number> {
+    const r = await this.purchasesRepo
+      .createQueryBuilder('p')
+      .select('COALESCE(SUM(p.purchasePrice), 0)', 'total')
+      .where('p.purchasedAt >= :since', { since })
+      .andWhere(
+        `EXISTS (SELECT 1 FROM pick_marketplace pm WHERE pm.accumulator_id = p.accumulator_id)`,
+      )
+      .getRawOne();
+    return parseFloat(String((r as { total?: string })?.total ?? '0'));
+  }
+
   // Real-time stats
   async getRealTimeStats() {
     const now = new Date();
     const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const memberRoles = [UserRole.USER, UserRole.TIPSTER];
+    const countNewMembersSince = (since: Date) =>
+      this.usersRepo
+        .createQueryBuilder('u')
+        .where('u.createdAt >= :since', { since })
+        .andWhere('u.role IN (:...roles)', { roles: memberRoles })
+        .getCount();
 
     const [
       users24h,
@@ -560,10 +592,16 @@ export class AnalyticsService {
       revenue24h,
       revenue7d,
       revenue30d,
+      mpPurchases24h,
+      mpPurchases7d,
+      mpPurchases30d,
+      mpRevenue24h,
+      mpRevenue7d,
+      mpRevenue30d,
     ] = await Promise.all([
-      this.usersRepo.count({ where: { createdAt: MoreThanOrEqual(last24Hours), role: UserRole.USER } }),
-      this.usersRepo.count({ where: { createdAt: MoreThanOrEqual(last7Days), role: UserRole.USER } }),
-      this.usersRepo.count({ where: { createdAt: MoreThanOrEqual(last30Days), role: UserRole.USER } }),
+      countNewMembersSince(last24Hours),
+      countNewMembersSince(last7Days),
+      countNewMembersSince(last30Days),
       (async () => {
         const [t24, t7, t30, p24, p7, p30] = await Promise.all([
           this.ticketsRepo.count({ where: { createdAt: MoreThanOrEqual(last24Hours) } }),
@@ -600,6 +638,13 @@ export class AnalyticsService {
         .where('p.purchasedAt >= :date', { date: last30Days })
         .getRawOne()
         .then((r) => parseFloat(r?.total || '0')),
+
+      this.mpPurchasesSince(last24Hours),
+      this.mpPurchasesSince(last7Days),
+      this.mpPurchasesSince(last30Days),
+      this.mpRevenueSince(last24Hours),
+      this.mpRevenueSince(last7Days),
+      this.mpRevenueSince(last30Days),
     ]);
 
     return {
@@ -607,6 +652,10 @@ export class AnalyticsService {
       picks: { last24h: picksResult.last24h, last7d: picksResult.last7d, last30d: picksResult.last30d },
       purchases: { last24h: purchases24h, last7d: purchases7d, last30d: purchases30d },
       revenue: { last24h: revenue24h, last7d: revenue7d, last30d: revenue30d },
+      marketplace: {
+        purchases: { last24h: mpPurchases24h, last7d: mpPurchases7d, last30d: mpPurchases30d },
+        revenue: { last24h: mpRevenue24h, last7d: mpRevenue7d, last30d: mpRevenue30d },
+      },
     };
   }
 
@@ -967,24 +1016,68 @@ export class AnalyticsService {
   /**
    * Daily revenue trend for the last N days, optionally broken down by sport.
    */
-  async getRevenueTrend(days = 30): Promise<Array<{ date: string; revenue: number; purchases: number }>> {
+  async getRevenueTrend(days = 30): Promise<
+    Array<{
+      date: string;
+      revenue: number;
+      purchases: number;
+      marketplaceRevenue: number;
+      marketplacePurchases: number;
+    }>
+  > {
     const startDate = new Date(Date.now() - days * 86_400_000);
-    const rows = await this.purchasesRepo
-      .createQueryBuilder('p')
-      .select("TO_CHAR(p.purchasedAt, 'YYYY-MM-DD')", 'date')
-      .addSelect('COALESCE(SUM(p.purchasePrice), 0)', 'revenue')
-      .addSelect('COUNT(*)', 'purchases')
-      .where('p.purchasedAt >= :startDate', { startDate })
-      .andWhere('p.purchasePrice > 0')
-      .groupBy("TO_CHAR(p.purchasedAt, 'YYYY-MM-DD')")
-      .orderBy('date', 'ASC')
-      .getRawMany();
+    const [allRows, mpRows] = await Promise.all([
+      this.purchasesRepo
+        .createQueryBuilder('p')
+        .select("TO_CHAR(p.purchasedAt, 'YYYY-MM-DD')", 'date')
+        .addSelect('COALESCE(SUM(p.purchasePrice), 0)', 'revenue')
+        .addSelect('COUNT(*)', 'purchases')
+        .where('p.purchasedAt >= :startDate', { startDate })
+        .andWhere('p.purchasePrice > 0')
+        .groupBy("TO_CHAR(p.purchasedAt, 'YYYY-MM-DD')")
+        .orderBy('date', 'ASC')
+        .getRawMany(),
+      this.purchasesRepo
+        .createQueryBuilder('p')
+        .select("TO_CHAR(p.purchasedAt, 'YYYY-MM-DD')", 'date')
+        .addSelect('COALESCE(SUM(p.purchasePrice), 0)', 'revenue')
+        .addSelect('COUNT(*)', 'purchases')
+        .where('p.purchasedAt >= :startDate', { startDate })
+        .andWhere('p.purchasePrice > 0')
+        .andWhere(
+          `EXISTS (SELECT 1 FROM pick_marketplace pm WHERE pm.accumulator_id = p.accumulator_id)`,
+        )
+        .groupBy("TO_CHAR(p.purchasedAt, 'YYYY-MM-DD')")
+        .orderBy('date', 'ASC')
+        .getRawMany(),
+    ]);
 
-    return rows.map((r) => ({
-      date: r.date,
-      revenue: Math.round(Number(r.revenue) * 100) / 100,
-      purchases: Number(r.purchases) || 0,
-    }));
+    const byDate = new Map<
+      string,
+      { revenue: number; purchases: number; marketplaceRevenue: number; marketplacePurchases: number }
+    >();
+
+    const touch = (date: string) => {
+      if (!byDate.has(date)) {
+        byDate.set(date, { revenue: 0, purchases: 0, marketplaceRevenue: 0, marketplacePurchases: 0 });
+      }
+      return byDate.get(date)!;
+    };
+
+    for (const r of allRows) {
+      const row = touch(r.date);
+      row.revenue = Math.round(Number(r.revenue) * 100) / 100;
+      row.purchases = Number(r.purchases) || 0;
+    }
+    for (const r of mpRows) {
+      const row = touch(r.date);
+      row.marketplaceRevenue = Math.round(Number(r.revenue) * 100) / 100;
+      row.marketplacePurchases = Number(r.purchases) || 0;
+    }
+
+    return [...byDate.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, v]) => ({ date, ...v }));
   }
 
   /**

@@ -20,6 +20,9 @@ interface EscrowFund {
   tipsterUsername?: string | null;
   tipsterUserId?: number | null;
   pickTitle?: string | null;
+  tipsterShareGhs?: number;
+  platformCommissionGhs?: number;
+  escrowBreakdownNote?: 'refunded' | 'if_won' | 'released';
 }
 
 function formatPerson(
@@ -37,6 +40,7 @@ function formatPerson(
 export default function AdminEscrowPage() {
   const router = useRouter();
   const [funds, setFunds] = useState<EscrowFund[]>([]);
+  const [commissionRatePercent, setCommissionRatePercent] = useState<number>(30);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,8 +52,20 @@ export default function AdminEscrowPage() {
     fetch(`${getApiUrl()}/admin/escrow`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => setFunds(Array.isArray(data) ? data : []))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setFunds(data);
+          return;
+        }
+        if (data && typeof data === 'object' && Array.isArray(data.funds)) {
+          setFunds(data.funds);
+          const p = Number(data.commissionRatePercent);
+          if (!Number.isNaN(p)) setCommissionRatePercent(p);
+          return;
+        }
+        setFunds([]);
+      })
       .catch(() => setFunds([]))
       .finally(() => setLoading(false));
   }, [router]);
@@ -64,7 +80,12 @@ export default function AdminEscrowPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Escrow Funds</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Funds held until picks settle. Released to tipster on win, refunded on loss.
+            Funds held until picks settle. Released to tipster on win, refunded on loss. Split on a win uses the
+            platform rate below (tipster net + platform fee = gross escrow per buyer).
+          </p>
+          <p className="mt-2 text-sm font-medium text-amber-800 dark:text-amber-200">
+            Current platform commission rate: {commissionRatePercent.toFixed(1)}% (tipster receives{' '}
+            {(100 - commissionRatePercent).toFixed(1)}% of gross on wins)
           </p>
         </div>
 
@@ -107,7 +128,13 @@ export default function AdminEscrowPage() {
                       <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider min-w-[10rem]">Buyer</th>
                       <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider min-w-[10rem]">Tipster</th>
                       <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Pick</th>
-                      <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Amount</th>
+                      <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Gross</th>
+                      <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider min-w-[7rem]">
+                        Tipster (net)
+                      </th>
+                      <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider min-w-[7rem]">
+                        Platform fee
+                      </th>
                       <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Status</th>
                       <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Date</th>
                     </tr>
@@ -138,6 +165,28 @@ export default function AdminEscrowPage() {
                           ) : null}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap font-semibold text-gray-900 dark:text-white">GHS {Number(f.amount).toFixed(2)}</td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="font-semibold text-emerald-700 dark:text-emerald-300">
+                            GHS {(f.tipsterShareGhs ?? 0).toFixed(2)}
+                          </div>
+                          {f.escrowBreakdownNote === 'if_won' && (
+                            <div className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">if pick wins</div>
+                          )}
+                          {f.escrowBreakdownNote === 'refunded' && (
+                            <div className="text-[10px] text-gray-500 dark:text-gray-400">— to tipster</div>
+                          )}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="font-semibold text-amber-700 dark:text-amber-300">
+                            GHS {(f.platformCommissionGhs ?? 0).toFixed(2)}
+                          </div>
+                          {f.escrowBreakdownNote === 'if_won' && (
+                            <div className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">if pick wins</div>
+                          )}
+                          {f.escrowBreakdownNote === 'refunded' && (
+                            <div className="text-[10px] text-gray-500 dark:text-gray-400">— no fee</div>
+                          )}
+                        </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                             f.status === 'held' 
