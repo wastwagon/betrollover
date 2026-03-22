@@ -18,6 +18,14 @@ const SORT_COLUMNS: Record<string, string> = {
   total_predictions: 'totalPredictions',
 };
 
+/** Browse / leaderboard ordering: measurable performance first; never rank empty profiles above tipsters with settled picks. */
+function tipsterListingActivityTier(row: { total_wins?: number; total_losses?: number; total_predictions?: number }): number {
+  const settled = (row.total_wins ?? 0) + (row.total_losses ?? 0) > 0;
+  if (settled) return 0;
+  if ((row.total_predictions ?? 0) > 0) return 1;
+  return 2;
+}
+
 @Injectable()
 export class TipstersApiService {
   constructor(
@@ -242,7 +250,11 @@ export class TipstersApiService {
         't.leaderboardRank',
       ])
       .orderBy(`t.${SORT_COLUMNS[options.sortBy] || 'roi'}`, options.order.toUpperCase() as 'ASC' | 'DESC')
-      .take(options.limit);
+      .take(
+        options.search?.trim()
+          ? Math.min(200, Math.max(options.limit * 4, options.limit + 20))
+          : Math.min(400, Math.max(options.limit * 25, options.limit + 50)),
+      );
 
     if (options.isAi !== undefined) {
       qb.andWhere('t.isAi = :isAi', { isAi: options.isAi });
@@ -259,6 +271,19 @@ export class TipstersApiService {
     const tipsters = await qb.getMany();
     const humanUserIds = tipsters.filter((t) => t.userId != null).map((t) => t.userId!);
     const ticketStatsMap = await this.computeStatsFromTickets(humanUserIds, options.sport);
+
+    const aiTipsterIds = tipsters.filter((t) => t.isAi).map((t) => t.id);
+    let predictionCountByTipsterId = new Map<number, number>();
+    if (aiTipsterIds.length > 0) {
+      const predRows = await this.predictionRepo
+        .createQueryBuilder('p')
+        .select('p.tipsterId', 'tipsterId')
+        .addSelect('COUNT(*)', 'cnt')
+        .where('p.tipsterId IN (:...ids)', { ids: aiTipsterIds })
+        .groupBy('p.tipsterId')
+        .getRawMany();
+      predictionCountByTipsterId = new Map(predRows.map((r) => [Number(r.tipsterId), Number(r.cnt) || 0]));
+    }
 
     const tipsterIds = tipsters.map((t) => t.id);
     const followerCountMap = new Map<number, number>();
@@ -287,7 +312,11 @@ export class TipstersApiService {
 
     const mapped = tipsters.map((t) => {
       const ticketStats = t.userId != null ? ticketStatsMap.get(t.userId) : null;
-      const totalPredictions = ticketStats ? ticketStats.total : t.totalPredictions;
+      const totalPredictions = ticketStats
+        ? ticketStats.total
+        : t.isAi
+          ? (predictionCountByTipsterId.get(t.id) ?? t.totalPredictions)
+          : t.totalPredictions;
       const totalWins = ticketStats ? ticketStats.won : t.totalWins;
       const totalLosses = ticketStats ? ticketStats.lost : t.totalLosses;
       const winRate = ticketStats ? ticketStats.winRate : Number(t.winRate);
@@ -320,12 +349,22 @@ export class TipstersApiService {
     const sortCol = options.sortBy || 'roi';
     const asc = options.order === 'asc';
     mapped.sort((a, b) => {
-      const aVal = a[sortCol as keyof typeof a] ?? 0;
-      const bVal = b[sortCol as keyof typeof b] ?? 0;
-      return asc ? Number(aVal) - Number(bVal) : Number(bVal) - Number(aVal);
+      const tierA = tipsterListingActivityTier(a);
+      const tierB = tipsterListingActivityTier(b);
+      if (tierA !== tierB) return tierA - tierB;
+      const aVal = Number(a[sortCol as keyof typeof a] ?? 0);
+      const bVal = Number(b[sortCol as keyof typeof b] ?? 0);
+      const cmp = asc ? aVal - bVal : bVal - aVal;
+      if (cmp !== 0) return cmp;
+      return (b.follower_count ?? 0) - (a.follower_count ?? 0);
     });
-    // Position in this response matches the active sort (ROI, win rate, etc.); do not use persisted global rank here.
-    return mapped.map((row, i) => ({ ...row, leaderboard_rank: i + 1 }));
+
+    const sliced = mapped.slice(0, options.limit);
+    let rankCounter = 0;
+    return sliced.map((row) => ({
+      ...row,
+      leaderboard_rank: tipsterListingActivityTier(row) === 0 ? ++rankCounter : null,
+    }));
   }
 
   async getTipsterProfile(username: string) {
@@ -572,7 +611,7 @@ export class TipstersApiService {
       });
 
       const sorted = entries
-        .filter((e) => (e.total_predictions ?? 0) > 0 || (e.total_wins ?? 0) + (e.total_losses ?? 0) > 0)
+        .filter((e) => (e.total_wins ?? 0) + (e.total_losses ?? 0) > 0)
         .sort((a, b) => (b.roi ?? 0) - (a.roi ?? 0))
         .slice(0, options.limit);
 
@@ -713,7 +752,8 @@ export class TipstersApiService {
       };
     });
 
-    const sorted = enriched
+    const withSettled = enriched.filter((r) => (r.total_wins ?? 0) + (r.total_losses ?? 0) > 0);
+    const sorted = withSettled
       .sort((a, b) => (b.roi ?? 0) - (a.roi ?? 0) || b.profit - a.profit || (b.win_rate ?? 0) - (a.win_rate ?? 0))
       .slice(0, options.limit);
 
