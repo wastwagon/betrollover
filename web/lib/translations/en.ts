@@ -254,6 +254,9 @@ const en = {
   'home.stats_members': 'Members',
   'home.join_cta': 'Join BetRollover Today',
   'home.join_subtitle': 'Free to join. Start following expert picks immediately.',
+  'home.join_card_logged_title': "You're signed in",
+  'home.join_card_logged_sub': 'Open your dashboard for purchases, wallet, and picks.',
+  'home.join_card_logged_btn': 'Go to dashboard',
   'home.view_marketplace': 'View Marketplace',
   'home.see_tipsters': 'See All Tipsters',
 
@@ -402,6 +405,8 @@ const en = {
   'dashboard.total_spent': 'Total spent',
   'dashboard.total_spent_hint':
     'Only winning coupons — you were refunded for lost or voided ones, so that money is available to spend again.',
+  'dashboard.pending_escrow_note':
+    '{amount} is held in escrow for active picks that are still awaiting results.',
   'dashboard.earn_ready': 'You Can Sell Coupons & Earn',
   'dashboard.earn_build_roi': 'Build ROI to Start Earning',
   'dashboard.earn_meets_min': 'ROI {roi}% meets minimum ({min}%). Sell picks and earn from every purchase.',
@@ -875,6 +880,9 @@ const en = {
   'seo.tipsters_desc': "Browse verified tipsters ranked by win rate and ROI. All global sports. Follow your favourites and track their streak. Ghana-based, global audience.",
   'seo.leaderboard_title': 'Tipster Leaderboard | Top Performers by ROI & Win Rate',
   'seo.leaderboard_desc': 'See the top-performing tipsters ranked by ROI, win rate, and streak. Filter by sport and time period to find the best picks.',
+  'leaderboard.empty_logged_sub':
+    'No tipsters match this filter right now. Try another period or sport, or browse all profiles.',
+  'leaderboard.empty_logged_cta': 'Browse all tipsters',
   'seo.discover_title': 'Discover Sports News & Tipster Guides',
   'seo.discover_desc': 'Transfer news, injury reports, and expert tipster strategy guides across all major global sports — football, basketball, tennis, MMA and more.',
   'seo.news_title': 'Sports News | Transfers, Injuries & Match Previews',

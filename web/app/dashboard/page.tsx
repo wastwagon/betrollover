@@ -98,6 +98,8 @@ function DashboardContent() {
     total: number;
     totalSpent: number;
     active: number;
+    /** Purchase prices for coupons still pending (escrow held). */
+    pendingEscrowAmount: number;
   } | null>(null);
   const [feedPicks, setFeedPicks] = useState<FeedPick[]>([]);
   const [following, setFollowing] = useState<FollowedTipster[]>([]);
@@ -206,7 +208,20 @@ function DashboardContent() {
           const active = purchasesList.filter((p: Purchase) =>
             p.pick && p.pick.status === 'active' && p.pick.result === 'pending'
           ).length;
-          setPurchaseStats({ total: purchasesList.length, totalSpent, active });
+          const pendingEscrowAmount = purchasesList.reduce(
+            (sum: number, p: Purchase) =>
+              sum +
+              (p.pick?.status === 'active' && p.pick?.result === 'pending'
+                ? Number(p.purchasePrice || 0)
+                : 0),
+            0,
+          );
+          setPurchaseStats({
+            total: purchasesList.length,
+            totalSpent,
+            active,
+            pendingEscrowAmount,
+          });
           setFeedPicks(Array.isArray(feedData) ? feedData : []);
           setFollowing(Array.isArray(followingData) ? followingData : []);
           const notifList = Array.isArray(notifData) ? notifData : [];
@@ -894,6 +909,13 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
                 />
                 <StatCard title={t('status.active')} value={purchaseStats.active} icon="⏳" variant="slate" glass index={6} />
               </div>
+              {purchaseStats.pendingEscrowAmount > 0 && (
+                <p className="text-xs text-[var(--text-muted)] mt-3 px-0.5 leading-relaxed">
+                  {t('dashboard.pending_escrow_note', {
+                    amount: format(purchaseStats.pendingEscrowAmount).primary,
+                  })}
+                </p>
+              )}
             </section>
           )}
 

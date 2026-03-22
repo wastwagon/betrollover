@@ -49,6 +49,8 @@ interface UserBehavior {
     grossPurchaseTotal: number;
     /** Matches user dashboard “Total spent” — winning coupons only. */
     spentOnWinningCoupons: number;
+    /** Legacy alias of spentOnWinningCoupons from API. */
+    totalSpent?: number;
   }[];
 }
 

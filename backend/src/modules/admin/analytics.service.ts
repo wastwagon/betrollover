@@ -303,16 +303,20 @@ export class AnalyticsService {
       returningUsers,
       avgPicksPerUser,
       avgPurchasesPerUser,
-      topUsers: topUsers.map((u) => ({
-        userId: u.userId,
-        purchaseCount: parseInt(u.purchaseCount ?? (u as Record<string, string>).purchasecount ?? '0', 10),
-        grossPurchaseTotal: parseFloat(
-          u.grossPurchaseTotal ?? (u as Record<string, string>).grosspurchasetotal ?? '0',
-        ),
-        spentOnWinningCoupons: parseFloat(
+      topUsers: topUsers.map((u) => {
+        const spentOnWinningCoupons = parseFloat(
           u.spentOnWinningCoupons ?? (u as Record<string, string>).spentonwinningcoupons ?? '0',
-        ),
-      })),
+        );
+        return {
+          userId: u.userId,
+          purchaseCount: parseInt(u.purchaseCount ?? (u as Record<string, string>).purchasecount ?? '0', 10),
+          grossPurchaseTotal: parseFloat(
+            u.grossPurchaseTotal ?? (u as Record<string, string>).grosspurchasetotal ?? '0',
+          ),
+          spentOnWinningCoupons,
+          totalSpent: spentOnWinningCoupons,
+        };
+      }),
     };
   }
 

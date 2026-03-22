@@ -253,6 +253,9 @@ const fr: Record<string, string> = {
   'home.stats_members': 'Membres',
   'home.join_cta': "Rejoindre BetRollover Aujourd'hui",
   'home.join_subtitle': 'Gratuit pour rejoindre. Commencez à suivre des pronostics immédiatement.',
+  'home.join_card_logged_title': 'Vous êtes connecté',
+  'home.join_card_logged_sub': 'Ouvrez votre tableau de bord : achats, portefeuille et pronostics.',
+  'home.join_card_logged_btn': 'Aller au tableau de bord',
   'home.view_marketplace': 'Voir le Marché',
   'home.see_tipsters': 'Voir Tous les Tipsters',
 
@@ -401,6 +404,8 @@ const fr: Record<string, string> = {
   'dashboard.total_spent': 'Total dépensé',
   'dashboard.total_spent_hint':
     'Uniquement les coupons gagnants — les perdus ou annulés sont remboursés, cet argent peut être réutilisé.',
+  'dashboard.pending_escrow_note':
+    'Montant en escrow : {amount} (pronostics actifs en attente de résultat).',
   'dashboard.earn_ready': 'Vous pouvez vendre des coupons et gagner',
   'dashboard.earn_build_roi': 'Construisez votre ROI pour commencer à gagner',
   'dashboard.earn_meets_min': 'ROI {roi}% atteint le minimum ({min}%). Vendez des pronostics et gagnez à chaque achat.',
@@ -874,6 +879,9 @@ const fr: Record<string, string> = {
   'seo.tipsters_desc': "Parcourez des tipsters vérifiés classés par taux de victoire et ROI. Tous les sports mondiaux. Basée au Ghana, public mondial.",
   'seo.leaderboard_title': 'Classement des Tipsters | Meilleurs Performers par ROI',
   'seo.leaderboard_desc': "Découvrez les tipsters les plus performants classés par ROI, taux de victoire et série. Filtrez par sport et période pour trouver les meilleurs pronostics.",
+  'leaderboard.empty_logged_sub':
+    'Aucun tipster ne correspond à ce filtre pour le moment. Essayez une autre période ou un autre sport, ou parcourez tous les profils.',
+  'leaderboard.empty_logged_cta': 'Voir tous les tipsters',
   'seo.discover_title': "Découvrir les Actualités Sportives & Guides Tipsters",
   'seo.discover_desc': "Restez informé avec les actualités des transferts, rapports de blessures et guides stratégiques pour tipsters experts en football, basketball, tennis, MMA et plus.",
   'seo.news_title': "Actualités Sportives | Transferts, Blessures & Aperçus",

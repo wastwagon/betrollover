@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
@@ -45,11 +45,20 @@ function RankBadge({ rank }: { rank: number }) {
 
 export default function LeaderboardPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const t = useT();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>('all_time');
   const [sport, setSport] = useState<SportFilter>('all');
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setLoggedIn(!!(typeof window !== 'undefined' && localStorage.getItem('token')));
+    sync();
+    window.addEventListener('storage', sync);
+    return () => window.removeEventListener('storage', sync);
+  }, [pathname]);
 
   const fetchLeaderboard = useCallback((p: Period, s: SportFilter) => {
     setLoading(true);
@@ -167,10 +176,21 @@ export default function LeaderboardPage() {
           <div className="text-center py-16 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
             <p className="text-4xl mb-3">🏆</p>
             <p className="text-[var(--text)] font-semibold">{t('common.no_results')}</p>
-            <p className="text-[var(--text-muted)] text-sm mt-1">{t('home.join_subtitle')}</p>
-            <Link href="/register" className="mt-4 inline-block px-6 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold text-sm hover:bg-[var(--primary-hover)] transition-colors">
-              {t('nav.register')} →
-            </Link>
+            <p className="text-[var(--text-muted)] text-sm mt-1 max-w-md mx-auto">
+              {loggedIn ? t('leaderboard.empty_logged_sub') : t('home.join_subtitle')}
+            </p>
+            {loggedIn ? (
+              <Link
+                href="/tipsters"
+                className="mt-4 inline-block px-6 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold text-sm hover:bg-[var(--primary-hover)] transition-colors"
+              >
+                {t('leaderboard.empty_logged_cta')} →
+              </Link>
+            ) : (
+              <Link href="/register" className="mt-4 inline-block px-6 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold text-sm hover:bg-[var(--primary-hover)] transition-colors">
+                {t('nav.register')} →
+              </Link>
+            )}
           </div>
         ) : (
           <div className="space-y-2">
