@@ -14,7 +14,7 @@ import {
   withdrawalStatusLabelKey,
   walletWithdrawalStatusBadgeClass,
 } from '@/lib/withdrawal-status';
-import type { BalanceResponse } from '@betrollover/shared-types';
+import type { BalanceResponse, CouponSpendSummaryResponse } from '@betrollover/shared-types';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useToast } from '@/hooks/useToast';
 import { PENDING_WITHDRAWALS_INVALIDATE } from '@/hooks/usePendingWithdrawalCount';
@@ -64,6 +64,7 @@ function WalletContent() {
   const [payoutMethods, setPayoutMethods] = useState<PayoutMethod[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [couponSpendSummary, setCouponSpendSummary] = useState<CouponSpendSummaryResponse | null>(null);
   const [depositAmount, setDepositAmount] = useState('');
   const [depositLoading, setDepositLoading] = useState(false);
   const [depositError, setDepositError] = useState<string | null>(null);
@@ -95,13 +96,24 @@ function WalletContent() {
       fetch(`${apiUrl}/users/me`, { headers }).then((r) => (r.ok ? r.json() : null)),
       fetch(`${apiUrl}/wallet/balance`, { headers }).then((r) => r.ok ? r.json() : null),
       fetch(`${apiUrl}/wallet/transactions`, { headers }).then((r) => r.ok ? r.json() : []),
+      fetch(`${apiUrl}/wallet/coupon-spend-summary`, { headers }).then((r) => (r.ok ? r.json() : null)),
       fetch(`${apiUrl}/wallet/payout-methods`, { headers }).then((r) => r.ok ? r.json() : []),
       fetch(`${apiUrl}/wallet/withdrawals`, { headers }).then((r) => r.ok ? r.json() : []),
     ])
-      .then(([u, bal, txs, payouts, wdrs]) => {
+      .then(([u, bal, txs, couponSpend, payouts, wdrs]) => {
         setUser(u);
         setBalance(bal || { balance: 0, currency: 'GHS' });
         setTransactions(Array.isArray(txs) ? txs : []);
+        if (
+          couponSpend &&
+          typeof couponSpend.grossCouponPurchases === 'number' &&
+          typeof couponSpend.couponRefundsToWallet === 'number' &&
+          typeof couponSpend.netOutOfPocketOnCoupons === 'number'
+        ) {
+          setCouponSpendSummary(couponSpend as CouponSpendSummaryResponse);
+        } else {
+          setCouponSpendSummary(null);
+        }
         setPayoutMethods(Array.isArray(payouts) ? payouts : []);
         setWithdrawals(Array.isArray(wdrs) ? wdrs : []);
       })
@@ -669,6 +681,19 @@ function WalletContent() {
                     );
                   })}
                 </ul>
+              </div>
+            )}
+
+            {couponSpendSummary && (couponSpendSummary.grossCouponPurchases > 0 || couponSpendSummary.couponRefundsToWallet > 0) && (
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 p-4 mb-4 text-sm text-[var(--text-muted)]">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">{t('wallet.coupon_spend_title')}</p>
+                <p className="leading-relaxed">
+                  {t('wallet.coupon_spend_body', {
+                    gross: format(couponSpendSummary.grossCouponPurchases).primary,
+                    refunds: format(couponSpendSummary.couponRefundsToWallet).primary,
+                    net: format(couponSpendSummary.netOutOfPocketOnCoupons).primary,
+                  })}
+                </p>
               </div>
             )}
 

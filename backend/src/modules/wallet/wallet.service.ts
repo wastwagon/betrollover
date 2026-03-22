@@ -66,6 +66,33 @@ export class WalletService {
     });
   }
 
+  /**
+   * Marketplace coupon purchases vs refunds credited back (wallet rows with reference pick-*).
+   * Additive summary for dashboard clarity — does not change balances or existing purchase APIs.
+   */
+  async getCouponSpendSummary(userId: number): Promise<{
+    grossCouponPurchases: number;
+    couponRefundsToWallet: number;
+    netOutOfPocketOnCoupons: number;
+  }> {
+    const rows: Array<{ gross: string; refunds: string }> = await this.txRepo.query(
+      `SELECT
+        COALESCE(SUM(CASE WHEN type = 'purchase' AND reference LIKE 'pick-%' AND amount < 0 THEN ABS(amount::numeric) ELSE 0 END), 0)::text AS gross,
+        COALESCE(SUM(CASE WHEN type = 'refund' AND reference LIKE 'pick-%' AND amount > 0 THEN amount::numeric ELSE 0 END), 0)::text AS refunds
+       FROM wallet_transactions
+       WHERE user_id = $1 AND status = 'completed'`,
+      [userId],
+    );
+    const gross = Number(rows[0]?.gross ?? 0) || 0;
+    const refunds = Number(rows[0]?.refunds ?? 0) || 0;
+    const net = Number((gross - refunds).toFixed(2));
+    return {
+      grossCouponPurchases: gross,
+      couponRefundsToWallet: refunds,
+      netOutOfPocketOnCoupons: net,
+    };
+  }
+
   async debit(
     userId: number,
     amount: number,

@@ -399,7 +399,11 @@ const en = {
   'dashboard.follow_tipsters': 'Follow tipsters to see their latest picks here.',
   'dashboard.purchase_summary': 'Purchase Summary',
   'dashboard.purchases': 'Purchases',
-  'dashboard.total_spent': 'Total Spent',
+  'dashboard.total_spent': 'Gross coupon spend',
+  'dashboard.total_spent_hint': 'Sum of all coupon prices. Refunds from lost/void coupons are credited to your wallet separately.',
+  'dashboard.net_coupon_spend': 'Net on coupons',
+  'dashboard.net_coupon_spend_hint': 'Gross coupon spend minus pick refunds returned to your wallet (lost, void, admin removal, etc.).',
+  'dashboard.net_coupon_spend_unavailable': 'Load failed — open Wallet for transaction history.',
   'dashboard.earn_ready': 'You Can Sell Coupons & Earn',
   'dashboard.earn_build_roi': 'Build ROI to Start Earning',
   'dashboard.earn_meets_min': 'ROI {roi}% meets minimum ({min}%). Sell picks and earn from every purchase.',
@@ -432,7 +436,10 @@ const en = {
   'my_purchases.filter_pending': 'Pending',
   'my_purchases.filter_won': 'Won',
   'my_purchases.filter_lost': 'Lost',
+  'my_purchases.filter_void': 'Void',
   'my_purchases.filter_refunded': 'Refunded',
+  'my_purchases.escrow_refund_note':
+    'Lost coupons count as Lost; voided coupons as Void. Both are refunded to your wallet automatically — see Wallet for refund lines.',
   'my_purchases.no_filter_match': 'No picks match this filter',
   'my_purchases.no_filter_match_desc': 'Try selecting a different result or sport filter.',
 
@@ -609,6 +616,9 @@ const en = {
   'wallet.amount': 'Amount',
   'wallet.currency_note': 'For reference only. All transactions are in GHS.',
   'wallet.tagline': 'Deposit, withdraw, and track transactions',
+  'wallet.coupon_spend_title': 'Marketplace coupons (wallet)',
+  'wallet.coupon_spend_body':
+    'You paid {gross} for coupon purchases. {refunds} was refunded to this wallet from lost, voided, or removed coupons. Net out-of-pocket on coupons: {net}.',
   'wallet.verify_email': 'Verify your email to deposit, withdraw, or add payout methods.',
   'wallet.resend_verify': 'Resend verification email →',
   'wallet.amount_placeholder': 'Amount (GHS)',

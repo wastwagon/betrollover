@@ -63,7 +63,7 @@ const RESULT_FILTERS = [
   { key: 'pending', labelKey: 'my_purchases.filter_pending' as const, icon: '⏳' },
   { key: 'won',     labelKey: 'my_purchases.filter_won' as const,     icon: '✅' },
   { key: 'lost',    labelKey: 'my_purchases.filter_lost' as const,    icon: '❌' },
-  { key: 'refunded',labelKey: 'my_purchases.filter_refunded' as const,icon: '💸' },
+  { key: 'void',    labelKey: 'my_purchases.filter_void' as const,    icon: '↩️' },
 ] as const;
 type ResultFilter = typeof RESULT_FILTERS[number]['key'];
 
@@ -131,11 +131,11 @@ export default function MyPurchasesPage() {
   const stats = useMemo(() => {
     const all = purchases.filter((p) => p.pick);
     return {
-      total:    all.length,
-      won:      all.filter((p) => p.pick?.result === 'won').length,
-      lost:     all.filter((p) => p.pick?.result === 'lost').length,
-      pending:  all.filter((p) => p.pick?.result === 'pending').length,
-      refunded: all.filter((p) => p.pick?.result === 'refunded').length,
+      total:   all.length,
+      won:     all.filter((p) => p.pick?.result === 'won').length,
+      lost:    all.filter((p) => p.pick?.result === 'lost').length,
+      pending: all.filter((p) => p.pick?.result === 'pending').length,
+      void:    all.filter((p) => p.pick?.result === 'void').length,
     };
   }, [purchases]);
 
@@ -153,8 +153,7 @@ export default function MyPurchasesPage() {
   const filtered = useMemo(() => {
     return purchases.filter((p) => {
       if (!p.pick) return false;
-      const resultMatch =
-        resultFilter === 'all' || p.pick.result === resultFilter;
+      const resultMatch = resultFilter === 'all' || p.pick.result === resultFilter;
       const sportMatch =
         sportFilter === 'all' || p.pick.sport === sportFilter;
       return resultMatch && sportMatch;
@@ -174,7 +173,7 @@ export default function MyPurchasesPage() {
           />
           <p className="text-sm text-[var(--text-muted)] mb-4 flex items-center gap-2">
             <span aria-hidden>🛡</span>
-            Lost or voided coupons are automatically refunded to your wallet. No claims needed.
+            {t('my_purchases.escrow_refund_note')}
           </p>
 
           <div className="mb-4">
@@ -208,10 +207,13 @@ export default function MyPurchasesPage() {
                 const count =
                   key === 'all'
                     ? stats.total
-                    : key === 'won' ? stats.won
-                    : key === 'lost' ? stats.lost
-                    : key === 'pending' ? stats.pending
-                    : stats.refunded;
+                    : key === 'won'
+                      ? stats.won
+                      : key === 'lost'
+                        ? stats.lost
+                        : key === 'pending'
+                          ? stats.pending
+                          : stats.void;
                 return (
                   <button
                     key={key}
