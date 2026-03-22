@@ -1092,7 +1092,28 @@ export class AdminService {
     if (params.userId) qb.andWhere('d.userId = :userId', { userId: params.userId });
     if (params.status) qb.andWhere('d.status = :status', { status: params.status });
     const [items, total] = await qb.skip(skip).take(limit).getManyAndCount();
-    return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
+    if (items.length === 0) {
+      return { items: [], total, page, limit, totalPages: Math.ceil(total / limit) || 1 };
+    }
+    const userIds = [...new Set(items.map((d) => d.userId))];
+    const users =
+      userIds.length > 0
+        ? await this.usersRepo.find({
+            where: { id: In(userIds) },
+            select: ['id', 'displayName', 'username', 'email'],
+          })
+        : [];
+    const userMap = new Map(users.map((u) => [u.id, u]));
+    const enriched = items.map((d) => {
+      const u = userMap.get(d.userId);
+      return {
+        ...d,
+        userDisplayName: u?.displayName ?? null,
+        userUsername: u?.username ?? null,
+        userEmail: u?.email ?? null,
+      };
+    });
+    return { items: enriched, total, page, limit, totalPages: Math.ceil(total / limit) || 1 };
   }
 
   async updateDepositStatus(id: number, status: string) {

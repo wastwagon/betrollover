@@ -14,6 +14,9 @@ interface Deposit {
   status: string;
   paystackReference: string | null;
   createdAt: string;
+  userDisplayName?: string | null;
+  userUsername?: string | null;
+  userEmail?: string | null;
 }
 
 export default function AdminDepositsPage() {
@@ -137,7 +140,9 @@ export default function AdminDepositsPage() {
                     <thead className="bg-gradient-to-r from-red-600 to-red-700">
                       <tr>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">ID</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">User ID</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider min-w-[12rem]">
+                          User / tipster
+                        </th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Amount</th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Reference</th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
@@ -149,7 +154,20 @@ export default function AdminDepositsPage() {
                       {deposits.map((d) => (
                         <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{d.id}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{d.userId}</td>
+                          <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                            <div className="font-semibold">
+                              {d.userDisplayName?.trim() || d.userUsername || `User #${d.userId}`}
+                            </div>
+                            {d.userUsername ? (
+                              <div className="text-xs text-gray-500 dark:text-gray-400">@{d.userUsername}</div>
+                            ) : null}
+                            {d.userEmail ? (
+                              <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[14rem]" title={d.userEmail}>
+                                {d.userEmail}
+                              </div>
+                            ) : null}
+                            <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 font-mono">ID {d.userId}</div>
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600 dark:text-green-400">
                             {d.currency} {Number(d.amount).toFixed(2)}
                           </td>
