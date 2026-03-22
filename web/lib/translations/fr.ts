@@ -398,15 +398,9 @@ const fr: Record<string, string> = {
   'dashboard.follow_tipsters': 'Suivez des tipsters pour voir leurs derniers pronostics ici.',
   'dashboard.purchase_summary': 'Résumé des Achats',
   'dashboard.purchases': 'Achats',
-  'dashboard.total_spent': 'Dépense brute (coupons)',
-  'dashboard.total_spent_hint': 'Somme des prix des coupons. Les remboursements (perdus/annulés) sont crédités sur votre portefeuille à part.',
-  'dashboard.net_coupon_spend': 'Net sur les coupons',
-  'dashboard.net_coupon_spend_hint':
-    'Dépense brute moins les remboursements liés aux coupons uniquement. Les remboursements d’abonnement ou de retrait sont indiqués séparément.',
-  'dashboard.other_refunds_note':
-    'Autres remboursements crédités (non inclus dans le net sur coupons) : {subscription} abonnements, {other} autres.',
-  'dashboard.other_refunds_wallet_link': 'Portefeuille →',
-  'dashboard.net_coupon_spend_unavailable': 'Chargement impossible — voir l’historique du portefeuille.',
+  'dashboard.total_spent': 'Total dépensé',
+  'dashboard.total_spent_hint':
+    'Uniquement les coupons gagnants — les perdus ou annulés sont remboursés, cet argent peut être réutilisé.',
   'dashboard.earn_ready': 'Vous pouvez vendre des coupons et gagner',
   'dashboard.earn_build_roi': 'Construisez votre ROI pour commencer à gagner',
   'dashboard.earn_meets_min': 'ROI {roi}% atteint le minimum ({min}%). Vendez des pronostics et gagnez à chaque achat.',
@@ -442,7 +436,7 @@ const fr: Record<string, string> = {
   'my_purchases.filter_void': 'Annulés',
   'my_purchases.filter_refunded': 'Remboursés',
   'my_purchases.escrow_refund_note':
-    'Les coupons perdus apparaissent dans Perdus ; les annulés dans Annulés. Les deux sont remboursés sur le portefeuille — voir l’historique du portefeuille.',
+    'Les coupons perdus ou annulés sont remboursés sur votre portefeuille pour être réutilisés.',
   'my_purchases.no_filter_match': 'Aucun pronostic ne correspond à ce filtre',
   'my_purchases.no_filter_match_desc': 'Essayez un autre filtre de résultat ou de sport.',
 
@@ -619,11 +613,6 @@ const fr: Record<string, string> = {
   'wallet.amount': 'Montant',
   'wallet.currency_note': 'À titre indicatif uniquement. Toutes les transactions sont en GHS.',
   'wallet.tagline': 'Déposer, retirer et suivre les transactions',
-  'wallet.coupon_spend_title': 'Coupons marketplace (portefeuille)',
-  'wallet.coupon_spend_body':
-    'Vous avez payé {gross} pour des coupons. {refunds} ont été remboursés sur ce portefeuille (perdus, annulés ou retirés). Net dépensé sur les coupons : {net}.',
-  'wallet.coupon_spend_extras':
-    'À part : {subscription} remboursements d’abonnement (ex. garantie ROI), {other} autres remboursements (ex. annulation de retrait). Ils ne modifient pas le « net sur coupons » ci-dessus.',
   'wallet.verify_email': 'Vérifiez votre email pour déposer, retirer ou ajouter des moyens de paiement.',
   'wallet.resend_verify': 'Renvoyer l\'email de vérification →',
   'wallet.amount_placeholder': 'Montant (GHS)',

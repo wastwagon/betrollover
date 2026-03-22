@@ -14,7 +14,6 @@ import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/sit
 import { PickCard } from '@/components/PickCard';
 import { useCurrency } from '@/context/CurrencyContext';
 import { usePendingWithdrawalCount } from '@/hooks/usePendingWithdrawalCount';
-import type { CouponSpendSummaryResponse } from '@betrollover/shared-types';
 
 interface FollowedTipster {
   id: number;
@@ -100,7 +99,6 @@ function DashboardContent() {
     totalSpent: number;
     active: number;
   } | null>(null);
-  const [couponSpendSummary, setCouponSpendSummary] = useState<CouponSpendSummaryResponse | null>(null);
   const [feedPicks, setFeedPicks] = useState<FeedPick[]>([]);
   const [following, setFollowing] = useState<FollowedTipster[]>([]);
   const [feedPurchasing, setFeedPurchasing] = useState<number | null>(null);
@@ -185,7 +183,6 @@ function DashboardContent() {
               .catch(() => null)
               .then((settings) => settings?.minimumROI !== undefined ? settings.minimumROI : 20.0) : Promise.resolve(20.0),
             fetch(`${apiUrl}/accumulators/purchased`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
-            fetch(`${apiUrl}/wallet/coupon-spend-summary`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
             fetch(`${apiUrl}/tipsters/feed?limit=10`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
             fetch(`${apiUrl}/tipsters/me/following`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
             fetch(`${apiUrl}/notifications?limit=50`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
@@ -193,34 +190,23 @@ function DashboardContent() {
         })
         .then((result) => {
           if (!result) return;
-          const [u, s, ts, wallet, minROI, purchasedData, couponSpendData, feedData, followingData, notifData] = result;
+          const [u, s, ts, wallet, minROI, purchasedData, feedData, followingData, notifData] = result;
           if (u.role === 'admin') setStats(s || {});
           setTipsterStats(ts || { totalPicks: 0, wonPicks: 0, lostPicks: 0, winRate: 0, totalEarnings: 0, roi: 0 });
           if (wallet) setWalletBalance(Number(wallet.balance));
           setMinimumROI(minROI);
           const purchasesList = Array.isArray(purchasedData) ? purchasedData : [];
           setPurchases(purchasesList.slice(0, 5));
-          const totalSpent = purchasesList.reduce((sum: number, p: Purchase) => sum + Number(p.purchasePrice || 0), 0);
+          /** Money that stayed with the marketplace: winning coupons only (lost/void are refunded to wallet). */
+          const totalSpent = purchasesList.reduce(
+            (sum: number, p: Purchase) =>
+              sum + (p.pick?.result === 'won' ? Number(p.purchasePrice || 0) : 0),
+            0,
+          );
           const active = purchasesList.filter((p: Purchase) =>
             p.pick && p.pick.status === 'active' && p.pick.result === 'pending'
           ).length;
           setPurchaseStats({ total: purchasesList.length, totalSpent, active });
-          if (
-            couponSpendData &&
-            typeof couponSpendData.grossCouponPurchases === 'number' &&
-            typeof couponSpendData.couponRefundsToWallet === 'number' &&
-            typeof couponSpendData.netOutOfPocketOnCoupons === 'number'
-          ) {
-            const sub =
-              typeof couponSpendData.subscriptionRefundsToWallet === 'number'
-                ? couponSpendData.subscriptionRefundsToWallet
-                : 0;
-            const oth =
-              typeof couponSpendData.otherRefundsToWallet === 'number' ? couponSpendData.otherRefundsToWallet : 0;
-            setCouponSpendSummary({ ...(couponSpendData as CouponSpendSummaryResponse), subscriptionRefundsToWallet: sub, otherRefundsToWallet: oth });
-          } else {
-            setCouponSpendSummary(null);
-          }
           setFeedPicks(Array.isArray(feedData) ? feedData : []);
           setFollowing(Array.isArray(followingData) ? followingData : []);
           const notifList = Array.isArray(notifData) ? notifData : [];
@@ -893,48 +879,21 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
           {purchaseStats !== null && (
             <section className="mb-6 sm:mb-8">
               <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">{t('dashboard.purchase_summary')}</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                 <StatCard title={t('dashboard.purchases')} value={purchaseStats.total} icon="🛍️" variant="slate" link="/my-purchases" glass index={4} />
                 <StatCard
                   title={t('dashboard.total_spent')}
-                  value={couponSpendSummary?.grossCouponPurchases ?? purchaseStats.totalSpent}
+                  value={purchaseStats.totalSpent}
                   icon="💸"
                   format="currency"
-                  displayValue={format(couponSpendSummary?.grossCouponPurchases ?? purchaseStats.totalSpent).primary}
+                  displayValue={format(purchaseStats.totalSpent).primary}
                   variant="slate"
                   glass
                   index={5}
                   hint={t('dashboard.total_spent_hint')}
                 />
-                <StatCard
-                  title={t('dashboard.net_coupon_spend')}
-                  value={couponSpendSummary?.netOutOfPocketOnCoupons ?? 0}
-                  icon="📉"
-                  format="currency"
-                  displayValue={
-                    couponSpendSummary
-                      ? format(couponSpendSummary.netOutOfPocketOnCoupons).primary
-                      : '—'
-                  }
-                  variant="slate"
-                  glass
-                  index={6}
-                  hint={couponSpendSummary ? t('dashboard.net_coupon_spend_hint') : t('dashboard.net_coupon_spend_unavailable')}
-                />
-                <StatCard title={t('status.active')} value={purchaseStats.active} icon="⏳" variant="slate" glass index={7} />
+                <StatCard title={t('status.active')} value={purchaseStats.active} icon="⏳" variant="slate" glass index={6} />
               </div>
-              {couponSpendSummary &&
-                (couponSpendSummary.subscriptionRefundsToWallet > 0 || couponSpendSummary.otherRefundsToWallet > 0) && (
-                  <p className="text-xs text-[var(--text-muted)] mt-3 px-0.5 leading-relaxed">
-                    {t('dashboard.other_refunds_note', {
-                      subscription: format(couponSpendSummary.subscriptionRefundsToWallet).primary,
-                      other: format(couponSpendSummary.otherRefundsToWallet).primary,
-                    })}{' '}
-                    <Link href="/wallet" className="text-[var(--primary)] hover:underline font-medium">
-                      {t('dashboard.other_refunds_wallet_link')}
-                    </Link>
-                  </p>
-                )}
             </section>
           )}
 

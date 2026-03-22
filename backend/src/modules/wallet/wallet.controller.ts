@@ -34,13 +34,6 @@ export class WalletController {
     return this.walletService.getTransactions(user.id);
   }
 
-  /** Gross marketplace coupon debits, pick-related refunds, and net (additive; safe for live clients). */
-  @Get('coupon-spend-summary')
-  @UseGuards(JwtAuthGuard)
-  async getCouponSpendSummary(@CurrentUser() user: { id: number }) {
-    return this.walletService.getCouponSpendSummary(user.id);
-  }
-
   @Get('deposit/verify')
   @UseGuards(JwtAuthGuard)
   async verifyDeposit(@CurrentUser() user: { id: number }, @Query('ref') ref: string) {
