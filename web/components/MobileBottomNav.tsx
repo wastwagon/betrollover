@@ -50,7 +50,7 @@ function UserIcon({ active }: { active?: boolean }) {
   );
 }
 
-/** Five items below lg (no Tables; wallet from Dashboard). League tables: header pills / Discover. */
+/** Touch nav: hidden from 2xl up (wide desktop uses header only). Below 2xl includes phones & tablets (13\" iPad landscape is often >1024px). */
 const NAV_ITEMS: NavItem[] = [
   { id: 'home', href: '/', labelKey: 'header.home', primary: false },
   { id: 'marketplace', href: '/marketplace', labelKey: 'nav.marketplace', primary: false },
@@ -67,7 +67,8 @@ const ICONS: Record<NavItemId, (p: { active?: boolean }) => JSX.Element> = {
   account: UserIcon,
 };
 
-const HIDE_PATHS = ['/login', '/register', '/forgot-password', '/verify-email', '/admin'];
+/** Admin only — auth pages keep bottom nav so tablets can reach Home/Marketplace without the desktop mega-header. */
+const HIDE_PATHS = ['/admin'];
 
 function isActive(pathname: string, href: string): boolean {
   if (href === '/') return pathname === '/';
@@ -88,7 +89,7 @@ export function MobileBottomNav() {
     <nav
       role="navigation"
       aria-label="Main"
-      className="fixed bottom-0 left-0 right-0 z-40 lg:hidden px-2 pb-2 pt-2"
+      className="fixed bottom-0 left-0 right-0 z-40 2xl:hidden px-2 pb-2 pt-2"
       style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
     >
       {/* Floating bar — iOS/Android style */}
