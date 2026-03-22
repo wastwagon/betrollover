@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
@@ -50,7 +52,7 @@ function UserIcon({ active }: { active?: boolean }) {
   );
 }
 
-/** Touch nav: hidden from 2xl up (wide desktop uses header only). Below 2xl includes phones & tablets (13\" iPad landscape is often >1024px). */
+/** Touch nav: visible below xl (1280px). Hidden on laptop/desktop — they use the full header. Portaled to document.body so position:fixed pins to the viewport (avoids “floating” mid-page if a parent uses transform). */
 const NAV_ITEMS: NavItem[] = [
   { id: 'home', href: '/', labelKey: 'header.home', primary: false },
   { id: 'marketplace', href: '/marketplace', labelKey: 'nav.marketplace', primary: false },
@@ -82,18 +84,23 @@ function shouldHideNav(pathname: string): boolean {
 export function MobileBottomNav() {
   const pathname = usePathname();
   const { t } = useLanguage();
+  const [mounted, setMounted] = useState(false);
 
-  if (shouldHideNav(pathname)) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  return (
+  if (!mounted || shouldHideNav(pathname)) return null;
+
+  const nav = (
     <nav
       role="navigation"
       aria-label="Main"
-      className="fixed bottom-0 left-0 right-0 z-40 2xl:hidden px-2 pb-2 pt-2"
+      className="fixed inset-x-0 bottom-0 z-50 xl:hidden px-2 sm:px-4 pt-2"
       style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
     >
       {/* Floating bar — iOS/Android style */}
-      <div className="w-full max-w-lg mx-auto rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-[0_-2px_20px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.2)]">
+      <div className="w-full max-w-lg md:max-w-2xl mx-auto rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-[0_-2px_20px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.2)]">
         <div className="flex flex-nowrap items-stretch gap-0.5 overflow-x-auto overscroll-x-contain scrollbar-hide snap-x snap-mandatory px-1 min-h-[56px] py-0.5">
           {NAV_ITEMS.map((item) => {
             const active = isActive(pathname, item.href);
@@ -138,4 +145,6 @@ export function MobileBottomNav() {
       </div>
     </nav>
   );
+
+  return createPortal(nav, document.body);
 }
