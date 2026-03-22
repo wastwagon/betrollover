@@ -98,6 +98,8 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
   const hoverTimeout  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const headerRef     = useRef<HTMLElement>(null);
+  /** Mobile account drawer is portaled to `document.body`, so it is NOT under `headerRef`. Without this, document `mousedown` treats every tap in the drawer as "outside the header" and closes the menu before `click` / `router.push` — especially noticeable in iOS WKWebView (WebViewGold). */
+  const mobileAccountDrawerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -161,15 +163,20 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') { closeAll(); setMobileOpen(false); }
     }
-    function onClick(e: MouseEvent) {
-      if (headerRef.current && !headerRef.current.contains(e.target as Node)) {
+    function onPointerDown(e: PointerEvent) {
+      const t = e.target as Node;
+      if (mobileAccountDrawerRef.current?.contains(t)) return;
+      if (headerRef.current && !headerRef.current.contains(t)) {
         closeAll();
         setMobileOpen(false);
       }
     }
     document.addEventListener('keydown', onKey);
-    document.addEventListener('mousedown', onClick);
-    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('mousedown', onClick); };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('pointerdown', onPointerDown, true);
+    };
   }, [closeAll]);
 
   // Close mega menu on route change
@@ -649,6 +656,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                   </button>
                   {mobileOpen && mounted && createPortal(
                     <div
+                      ref={mobileAccountDrawerRef}
                       className="fixed inset-0 z-[100] flex flex-row"
                       role="dialog"
                       aria-modal="true"

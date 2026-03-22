@@ -291,7 +291,8 @@ static let showFullScreenAd = false //Set to "true" to activate AdMob interstiti
     
 static let showadAfterX = 5 //Show AdMob interstitial ads each X website requests/loads OR taps -> depending on incrementWithTaps setting
     
-static let incrementWithTaps = true // Set to "true" to switch from ads after X website requests to ads after X taps on the screen
+// BetRollover: keep false while showFullScreenAd is false. True injects a body touchstart → custom URL on every tap and can break clicks in WKWebView (menus, Sign out). Set true only if you enable fullscreen ads and want tap-based ad triggers.
+static let incrementWithTaps = false
 
 static let enableRewardedAds = false //Set to "true" to enable AdMob rewarded ads. Required to be "true" even for manual activation of ads.
     
