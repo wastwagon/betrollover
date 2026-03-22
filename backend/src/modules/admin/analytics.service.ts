@@ -282,9 +282,15 @@ export class AnalyticsService {
       
       this.purchasesRepo
         .createQueryBuilder('p')
+        .leftJoin(AccumulatorTicket, 'ticket', 'ticket.id = p.accumulatorId')
         .select('p.userId', 'userId')
         .addSelect('COUNT(*)', 'purchaseCount')
-        .addSelect('SUM(p.purchasePrice)', 'totalSpent')
+        .addSelect('SUM(p.purchasePrice)', 'grossPurchaseTotal')
+        .addSelect(
+          `SUM(CASE WHEN ticket.result = :won THEN p.purchasePrice ELSE 0 END)`,
+          'spentOnWinningCoupons',
+        )
+        .setParameter('won', 'won')
         .groupBy('p.userId')
         .orderBy('COUNT(*)', 'DESC')
         .limit(10)
@@ -300,7 +306,12 @@ export class AnalyticsService {
       topUsers: topUsers.map((u) => ({
         userId: u.userId,
         purchaseCount: parseInt(u.purchaseCount ?? (u as Record<string, string>).purchasecount ?? '0', 10),
-        totalSpent: parseFloat(u.totalSpent ?? (u as Record<string, string>).totalspent ?? '0'),
+        grossPurchaseTotal: parseFloat(
+          u.grossPurchaseTotal ?? (u as Record<string, string>).grosspurchasetotal ?? '0',
+        ),
+        spentOnWinningCoupons: parseFloat(
+          u.spentOnWinningCoupons ?? (u as Record<string, string>).spentonwinningcoupons ?? '0',
+        ),
       })),
     };
   }

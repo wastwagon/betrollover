@@ -64,7 +64,8 @@ export default function AdminPurchasesPage() {
       .finally(() => setLoading(false));
   }, [router, page, userIdFilter, accumulatorIdFilter]);
 
-  const totalRevenue = purchases.reduce((sum, p) => sum + Number(p.purchasePrice), 0);
+  /** Sum of prices on this page only (not full platform total). */
+  const pageSubtotalGross = purchases.reduce((sum, p) => sum + Number(p.purchasePrice), 0);
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
@@ -76,8 +77,12 @@ export default function AdminPurchasesPage() {
         </div>
 
         <div className="mb-6 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-xl p-6 text-white">
-          <p className="text-sm opacity-90 mb-1">Total Revenue</p>
-          <p className="text-3xl font-bold">GHS {totalRevenue.toFixed(2)}</p>
+          <p className="text-sm opacity-90 mb-1">Gross subtotal (this page)</p>
+          <p className="text-3xl font-bold">GHS {pageSubtotalGross.toFixed(2)}</p>
+          <p className="text-xs opacity-85 mt-2 leading-snug max-w-xl">
+            Sum of listed purchase prices only. Platform-wide gross is under Admin → Analytics. Buyer “Total spent” on the user
+            dashboard counts winning coupons only (lost/void are refunded).
+          </p>
         </div>
 
         <div className="mb-6 flex gap-4">

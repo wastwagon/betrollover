@@ -42,7 +42,14 @@ interface UserBehavior {
   returningUsers: number;
   avgPicksPerUser: number;
   avgPurchasesPerUser: number;
-  topUsers: { userId: number; purchaseCount: number; totalSpent: number }[];
+  topUsers: {
+    userId: number;
+    purchaseCount: number;
+    /** Sum of all purchase rows (same as historical “gross”). */
+    grossPurchaseTotal: number;
+    /** Matches user dashboard “Total spent” — winning coupons only. */
+    spentOnWinningCoupons: number;
+  }[];
 }
 
 interface RevenueAnalytics {
@@ -968,16 +975,27 @@ export default function AdminAnalyticsPage() {
                 </div>
 
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Users by Purchases</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Top Users by Purchases</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 leading-snug">
+                    Spent on wins = user dashboard “Total spent” (lost/void refunded). Gross = sum of all purchase prices.
+                  </p>
                   {userBehavior.topUsers && userBehavior.topUsers.length > 0 ? (
                     <div className="space-y-3">
                       {userBehavior.topUsers.map((user, i) => (
-                        <div key={i} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div key={i} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                           <div>
                             <p className="font-medium text-gray-900 dark:text-white">User #{user.userId}</p>
                             <p className="text-sm text-gray-600 dark:text-gray-400">{user.purchaseCount} purchases</p>
                           </div>
-                          <p className="font-semibold text-green-600 dark:text-green-400">GHS {(user.totalSpent ?? 0).toFixed(2)}</p>
+                          <div className="text-right text-sm">
+                            <p className="font-semibold text-green-600 dark:text-green-400">
+                              GHS {(user.spentOnWinningCoupons ?? 0).toFixed(2)}{' '}
+                              <span className="text-xs font-normal text-gray-500 dark:text-gray-400">on wins</span>
+                            </p>
+                            <p className="text-gray-600 dark:text-gray-400 text-xs">
+                              GHS {(user.grossPurchaseTotal ?? 0).toFixed(2)} gross
+                            </p>
+                          </div>
                         </div>
                       ))}
                     </div>
