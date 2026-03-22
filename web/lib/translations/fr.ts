@@ -499,6 +499,7 @@ const fr: Record<string, string> = {
   'tipster.sort_followers': 'Trier par Abonnés',
   'tipster.streak': 'Série',
   'tipster.rank_prefix': 'Rang #',
+  'tipster.leaderboard_rank_title': 'Classement général (tri par ROI)',
   'tipster.x_follower': '{n} abonné',
   'tipster.x_followers': '{n} abonnés',
   'tipster.followers_title': 'Abonnés',

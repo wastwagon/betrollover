@@ -500,6 +500,7 @@ const en = {
   'tipster.sort_followers': 'Sort by Followers',
   'tipster.streak': 'Streak',
   'tipster.rank_prefix': 'Rank #',
+  'tipster.leaderboard_rank_title': 'All-time leaderboard position (sorted by ROI)',
   'tipster.x_follower': '{n} follower',
   'tipster.x_followers': '{n} followers',
   'tipster.followers_title': 'Followers',

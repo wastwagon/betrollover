@@ -49,6 +49,98 @@ export class TipstersApiService {
     private fixtureRepo: Repository<Fixture>,
   ) {}
 
+  /**
+   * All-time leaderboard rows sorted by live ROI (ticket-backed stats for humans).
+   * Same ordering as GET /leaderboard?period=all_time — do not use tipsters.leaderboardRank for user-facing rank.
+   */
+  private async computeAllTimeLeaderboardSortedEntries(sport?: string): Promise<{
+    tipsters: Array<
+      Pick<
+        Tipster,
+        | 'id'
+        | 'username'
+        | 'displayName'
+        | 'avatarUrl'
+        | 'userId'
+        | 'totalPredictions'
+        | 'totalWins'
+        | 'totalLosses'
+        | 'winRate'
+        | 'roi'
+        | 'totalProfit'
+        | 'leaderboardRank'
+      >
+    >;
+    sorted: Array<{
+      id: number;
+      username: string;
+      display_name: string;
+      avatar_url: string | null;
+      roi: number;
+      win_rate: number;
+      total_predictions: number;
+      total_wins: number;
+      total_losses: number;
+      total_profit: number;
+      leaderboard_rank: number | null;
+    }>;
+  }> {
+    const tipsters = await this.tipsterRepo.find({
+      where: { isActive: true },
+      select: [
+        'id',
+        'username',
+        'displayName',
+        'avatarUrl',
+        'userId',
+        'totalPredictions',
+        'totalWins',
+        'totalLosses',
+        'winRate',
+        'roi',
+        'totalProfit',
+        'leaderboardRank',
+      ],
+    });
+    const humanUserIds = tipsters.filter((t) => t.userId != null).map((t) => t.userId!);
+    const ticketStatsMap = await this.computeStatsFromTickets(humanUserIds, sport);
+
+    const entries = tipsters.map((t) => {
+      const ticketStats = t.userId != null ? ticketStatsMap.get(t.userId) : null;
+      const totalPredictions = ticketStats ? ticketStats.total : t.totalPredictions;
+      const totalWins = ticketStats ? ticketStats.won : t.totalWins;
+      const totalLosses = ticketStats ? ticketStats.lost : t.totalLosses;
+      const winRate = ticketStats ? ticketStats.winRate : Number(t.winRate);
+      const roi = ticketStats ? ticketStats.roi : Number(t.roi);
+      return {
+        id: t.id,
+        username: t.username,
+        display_name: t.displayName,
+        avatar_url: t.avatarUrl,
+        roi,
+        win_rate: winRate,
+        total_predictions: totalPredictions,
+        total_wins: totalWins,
+        total_losses: totalLosses,
+        total_profit: Number(t.totalProfit),
+        leaderboard_rank: t.leaderboardRank,
+      };
+    });
+
+    const sorted = entries
+      .filter((e) => (e.total_wins ?? 0) + (e.total_losses ?? 0) > 0)
+      .sort((a, b) => (b.roi ?? 0) - (a.roi ?? 0));
+
+    return { tipsters, sorted };
+  }
+
+  private async getAllTimeLeaderboardRankMap(sport?: string): Promise<Map<number, number>> {
+    const { sorted } = await this.computeAllTimeLeaderboardSortedEntries(sport);
+    const map = new Map<number, number>();
+    sorted.forEach((e, i) => map.set(e.id, i + 1));
+    return map;
+  }
+
   /** Compute stats from accumulator_tickets for human tipsters (userId) - matches Marketplace logic */
   private async computeStatsFromTickets(userIds: number[], sport?: string): Promise<
     Map<number, { total: number; won: number; lost: number; winRate: number; roi: number; currentStreak: number; bestStreak: number }>
@@ -394,6 +486,8 @@ export class TipstersApiService {
     );
 
     const followerCount = await this.followRepo.count({ where: { tipsterId: tipster.id } });
+    const allTimeRankMap = await this.getAllTimeLeaderboardRankMap();
+    const liveLeaderboardRank = allTimeRankMap.get(tipster.id) ?? null;
 
     return {
       tipster: {
@@ -415,7 +509,7 @@ export class TipstersApiService {
         best_streak: bestStreak,
         total_profit: Number(tipster.totalProfit),
         avg_odds: Number(tipster.avgOdds),
-        leaderboard_rank: tipster.leaderboardRank,
+        leaderboard_rank: liveLeaderboardRank,
         follower_count: followerCount,
         last_prediction_date: tipster.lastPredictionDate,
         join_date: tipster.joinDate,
@@ -468,6 +562,8 @@ export class TipstersApiService {
       where: { id: tipster.userId },
       select: ['id', 'displayName', 'username', 'avatar'],
     });
+    const allTimeRankMap = await this.getAllTimeLeaderboardRankMap();
+    const liveRank = allTimeRankMap.get(tipster.id) ?? 0;
 
     // Enrich picks with fixture scores (FT scoreline) for settled coupons
     const fixtureIds = [...new Set(validTickets.flatMap((t) => (t.picks || []).map((p) => p.fixtureId).filter(Boolean) as number[]))];
@@ -500,7 +596,7 @@ export class TipstersApiService {
             totalPicks: totalPredictions,
             wonPicks: totalWins,
             lostPicks: totalLosses,
-            rank: tipster.leaderboardRank ?? 0,
+            rank: liveRank,
           }
         : null,
     }));
@@ -554,6 +650,8 @@ export class TipstersApiService {
     });
     const priceMap = new Map(rows.map((r) => [r.accumulatorId, Number(r.price)]));
     const purchaseCountMap = new Map(rows.map((r) => [r.accumulatorId, r.purchaseCount || 0]));
+    const allTimeRankMap = await this.getAllTimeLeaderboardRankMap();
+    const liveRank = allTimeRankMap.get(tipster.id) ?? 0;
 
     return deduped.map((ticket) => ({
       ...ticket,
@@ -569,7 +667,7 @@ export class TipstersApiService {
             totalPicks: totalPredictions,
             wonPicks: totalWins,
             lostPicks: totalLosses,
-            rank: tipster.leaderboardRank ?? 0,
+            rank: liveRank,
           }
         : null,
     }));
@@ -581,40 +679,8 @@ export class TipstersApiService {
     sport?: string;
   }) {
     if (options.period === 'all_time') {
-      const tipsters = await this.tipsterRepo.find({
-        where: { isActive: true },
-        select: ['id', 'username', 'displayName', 'avatarUrl', 'userId', 'totalPredictions', 'totalWins', 'totalLosses', 'winRate', 'roi', 'totalProfit', 'leaderboardRank'],
-      });
-      const humanUserIds = tipsters.filter((t) => t.userId != null).map((t) => t.userId!);
-      const ticketStatsMap = await this.computeStatsFromTickets(humanUserIds, options.sport);
-
-      const entries = tipsters.map((t) => {
-        const ticketStats = t.userId != null ? ticketStatsMap.get(t.userId) : null;
-        const totalPredictions = ticketStats ? ticketStats.total : t.totalPredictions;
-        const totalWins = ticketStats ? ticketStats.won : t.totalWins;
-        const totalLosses = ticketStats ? ticketStats.lost : t.totalLosses;
-        const winRate = ticketStats ? ticketStats.winRate : Number(t.winRate);
-        const roi = ticketStats ? ticketStats.roi : Number(t.roi);
-        return {
-          id: t.id,
-          username: t.username,
-          display_name: t.displayName,
-          avatar_url: t.avatarUrl,
-          roi,
-          win_rate: winRate,
-          total_predictions: totalPredictions,
-          total_wins: totalWins,
-          total_losses: totalLosses,
-          total_profit: Number(t.totalProfit),
-          leaderboard_rank: t.leaderboardRank,
-        };
-      });
-
-      const sorted = entries
-        .filter((e) => (e.total_wins ?? 0) + (e.total_losses ?? 0) > 0)
-        .sort((a, b) => (b.roi ?? 0) - (a.roi ?? 0))
-        .slice(0, options.limit);
-
+      const { tipsters, sorted: sortedAll } = await this.computeAllTimeLeaderboardSortedEntries(options.sport);
+      const sorted = sortedAll.slice(0, options.limit);
       const ranked = sorted.map((e, i) => ({ ...e, rank: i + 1 }));
 
       // Enrich with review averages (by user_id from tipster entity)
@@ -785,10 +851,12 @@ export class TipstersApiService {
 
     const tipsters = await this.tipsterRepo.find({
       where: { id: In(tipsterIds) },
-      select: ['id', 'userId', 'username', 'displayName', 'avatarUrl', 'winRate', 'leaderboardRank'],
+      select: ['id', 'userId', 'username', 'displayName', 'avatarUrl', 'winRate'],
     });
     const followedUserIds = tipsters.filter((t) => t.userId != null).map((t) => t.userId!);
     if (followedUserIds.length === 0) return [];
+
+    const allTimeRankMap = await this.getAllTimeLeaderboardRankMap();
 
     const tickets = await this.ticketRepo.find({
       where: {
@@ -817,7 +885,7 @@ export class TipstersApiService {
           username: t.username,
           avatarUrl: t.avatarUrl,
           winRate: Number(t.winRate),
-          rank: t.leaderboardRank ?? 0,
+          rank: allTimeRankMap.get(t.id) ?? 0,
         });
       }
     }
