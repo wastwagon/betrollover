@@ -3,17 +3,12 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
-import { usePendingWithdrawalCount } from '@/hooks/usePendingWithdrawalCount';
-
-type NavItemId = 'home' | 'marketplace' | 'leagues' | 'tipsters' | 'create' | 'wallet' | 'account';
+type NavItemId = 'home' | 'marketplace' | 'tipsters' | 'create' | 'account';
 
 interface NavItem {
   id: NavItemId;
   href: string;
   labelKey: string;
-  Icon: (p: { active?: boolean }) => JSX.Element;
-  /** Show on tablet (md) only */
-  tabletOnly?: boolean;
   /** Center primary CTA style */
   primary?: boolean;
 }
@@ -40,25 +35,10 @@ function TipstersIcon({ active }: { active?: boolean }) {
     </svg>
   );
 }
-/** League tables — grid / standings metaphor */
-function LeaguesIcon({ active }: { active?: boolean }) {
-  return (
-    <svg className="w-6 h-6 shrink-0" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={active ? 0 : 1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-    </svg>
-  );
-}
 function CreateIcon({ active }: { active?: boolean }) {
   return (
     <svg className="w-6 h-6 shrink-0" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-    </svg>
-  );
-}
-function WalletIcon({ active }: { active?: boolean }) {
-  return (
-    <svg className="w-6 h-6 shrink-0" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={active ? 0 : 1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
     </svg>
   );
 }
@@ -70,23 +50,20 @@ function UserIcon({ active }: { active?: boolean }) {
   );
 }
 
-const NAV_ITEMS: Omit<NavItem, 'Icon'>[] = [
-  { id: 'home', href: '/', labelKey: 'header.home', tabletOnly: false, primary: false },
-  { id: 'marketplace', href: '/marketplace', labelKey: 'nav.marketplace', tabletOnly: false, primary: false },
-  { id: 'leagues', href: '/league-tables', labelKey: 'nav.league_tables_short', tabletOnly: false, primary: false },
-  { id: 'tipsters', href: '/tipsters', labelKey: 'nav.tipsters', tabletOnly: false, primary: false },
-  { id: 'create', href: '/create-pick', labelKey: 'nav.coupon', tabletOnly: false, primary: true },
-  { id: 'wallet', href: '/wallet', labelKey: 'nav.wallet', tabletOnly: true, primary: false },
-  { id: 'account', href: '/dashboard', labelKey: 'nav.dashboard', tabletOnly: false, primary: false },
+/** Five items below lg (no Tables; wallet from Dashboard). League tables: header pills / Discover. */
+const NAV_ITEMS: NavItem[] = [
+  { id: 'home', href: '/', labelKey: 'header.home', primary: false },
+  { id: 'marketplace', href: '/marketplace', labelKey: 'nav.marketplace', primary: false },
+  { id: 'tipsters', href: '/tipsters', labelKey: 'nav.tipsters', primary: false },
+  { id: 'create', href: '/create-pick', labelKey: 'nav.coupon', primary: true },
+  { id: 'account', href: '/dashboard', labelKey: 'nav.dashboard', primary: false },
 ];
 
 const ICONS: Record<NavItemId, (p: { active?: boolean }) => JSX.Element> = {
   home: HomeIcon,
   marketplace: ShopIcon,
-  leagues: LeaguesIcon,
   tipsters: TipstersIcon,
   create: CreateIcon,
-  wallet: WalletIcon,
   account: UserIcon,
 };
 
@@ -104,7 +81,6 @@ function shouldHideNav(pathname: string): boolean {
 export function MobileBottomNav() {
   const pathname = usePathname();
   const { t } = useLanguage();
-  const pendingWithdrawalCount = usePendingWithdrawalCount();
 
   if (shouldHideNav(pathname)) return null;
 
@@ -121,9 +97,8 @@ export function MobileBottomNav() {
           {NAV_ITEMS.map((item) => {
             const active = isActive(pathname, item.href);
             const Icon = ICONS[item.id];
-            const baseClass = item.tabletOnly ? 'hidden md:flex' : 'flex';
             const slotW = item.primary ? 'w-[4.75rem] sm:w-[5rem]' : 'w-[4.1rem] sm:w-[4.35rem]';
-            const linkClass = `${baseClass} flex-col items-center justify-center shrink-0 snap-center ${slotW} gap-1 py-2 px-0.5 rounded-xl transition-all duration-200 active:scale-[0.98] min-h-[52px] touch-manipulation`;
+            const linkClass = `flex flex-col items-center justify-center shrink-0 snap-center ${slotW} gap-1 py-2 px-0.5 rounded-xl transition-all duration-200 active:scale-[0.98] min-h-[52px] touch-manipulation`;
 
             if (item.primary) {
               return (
@@ -151,11 +126,6 @@ export function MobileBottomNav() {
                 {active && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-[var(--primary)]" aria-hidden />}
                 <span className="relative inline-flex">
                   <Icon active={active} />
-                  {item.id === 'wallet' && pendingWithdrawalCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-0.5 flex items-center justify-center text-[8px] font-bold bg-amber-500 text-white rounded-full ring-2 ring-[var(--card)]">
-                      {pendingWithdrawalCount > 9 ? '9+' : pendingWithdrawalCount}
-                    </span>
-                  )}
                 </span>
                 <span className={`text-[10px] font-medium truncate w-full text-center ${active ? 'font-semibold' : ''}`}>
                   {t(item.labelKey)}
