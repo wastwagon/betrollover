@@ -82,7 +82,7 @@ export const NOTIFICATION_TYPES = {
     defaultSubject: 'New Pick from Followed Tipster',
     emailSubject: (ctx: Record<string, string>) => `${ctx.tipsterName || 'A tipster'} you follow posted a new pick`,
     ctaText: 'View Marketplace',
-    category: 'social',
+    category: 'marketplace',
   },
   leaderboard_rank_up: {
     icon: 'trophy',
@@ -148,11 +148,12 @@ export const NOTIFICATION_TYPES = {
 
 export type NotificationTypeKey = keyof typeof NOTIFICATION_TYPES;
 
+/** Align with web `globals.css` --primary (#10b981) / --primary-hover (#059669). Social uses same green (no pink). */
 const CATEGORY_COLORS: Record<string, string> = {
   marketplace: '#10b981',
   wallet: '#3b82f6',
   account: '#8b5cf6',
-  social: '#ec4899',
+  social: '#10b981',
   achievement: '#f59e0b',
   system: '#64748b',
 };

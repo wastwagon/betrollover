@@ -38,6 +38,22 @@ export class EmailService {
     return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
+  private escapeHtmlAttr(s: string): string {
+    return (s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/</g, '&lt;');
+  }
+
+  /** Public logo on APP_URL; override with EMAIL_LOGO_URL if needed (absolute URL). */
+  private getLogoUrl(): string {
+    const custom = process.env.EMAIL_LOGO_URL?.trim();
+    if (custom) return custom;
+    const appUrl = (process.env.APP_URL || 'https://betrollover.com').replace(/\/$/, '');
+    return `${appUrl}/BetRollover-logo.png`;
+  }
+
   /**
    * Shared premium shell: gradient backdrop, gold hairline, elevated card.
    */
@@ -72,11 +88,17 @@ export class EmailService {
   }
 
   private brandHeader(eyebrow: string, title: string, subtitle?: string): string {
+    const logoSrc = this.escapeHtmlAttr(this.getLogoUrl());
     const sub = subtitle
       ? `<p style="font-size:15px;color:${BR.muted};margin:12px 0 0;line-height:1.5;">${subtitle}</p>`
       : '';
     return `<tr>
-  <td style="padding:36px 36px 8px;text-align:center;">
+  <td style="padding:28px 36px 0;text-align:center;">
+    <img src="${logoSrc}" alt="BetRollover" width="132" style="max-width:160px;width:132px;height:auto;display:block;margin:0 auto;border:0;outline:none;" />
+  </td>
+</tr>
+<tr>
+  <td style="padding:16px 36px 8px;text-align:center;">
     <div style="font-size:11px;font-weight:700;letter-spacing:0.28em;color:${BR.gold};text-transform:uppercase;">${eyebrow}</div>
     <h1 style="font-size:22px;font-weight:700;color:${BR.ink};margin:14px 0 0;letter-spacing:-0.02em;">${title}</h1>
     ${sub}
@@ -365,16 +387,28 @@ export class EmailService {
     const subject = getEmailSubject(data.type, data.title, data.metadata);
     const ctaText = getCtaText(data.type);
     const accentColor = getCategoryColor(data.type);
+    const logoSrc = this.escapeHtmlAttr(this.getLogoUrl());
     const safeMessage = (data.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
     const safeTitle = this.escapeEmailText(data.title);
+    const ctaGradient =
+      accentColor === '#10b981'
+        ? 'linear-gradient(180deg,#10b981,#059669)'
+        : `linear-gradient(180deg,${accentColor},${accentColor})`;
+    const ctaShadow =
+      accentColor === '#10b981' ? '0 4px 14px rgba(5,150,105,0.25)' : '0 4px 14px rgba(15,23,42,0.12)';
+    const safeCtaUrl = this.escapeHtmlAttr(ctaUrl);
 
     const inner = `<tr>
   <td style="height:4px;background:${accentColor};"></td>
 </tr>
 <tr>
-  <td style="padding:32px 32px 8px;text-align:center;">
-    <div style="font-size:11px;font-weight:700;letter-spacing:0.22em;color:${accentColor};text-transform:uppercase;">BetRollover</div>
-    <h1 style="font-size:20px;font-weight:700;color:${BR.ink};margin:12px 0 0;letter-spacing:-0.02em;">${safeTitle}</h1>
+  <td style="padding:24px 32px 0;text-align:center;">
+    <img src="${logoSrc}" alt="BetRollover" width="140" style="max-width:168px;width:140px;height:auto;display:block;margin:0 auto;border:0;outline:none;" />
+  </td>
+</tr>
+<tr>
+  <td style="padding:16px 32px 8px;text-align:center;">
+    <h1 style="font-size:20px;font-weight:700;color:${BR.ink};margin:0;letter-spacing:-0.02em;">${safeTitle}</h1>
   </td>
 </tr>
 <tr>
@@ -382,7 +416,7 @@ export class EmailService {
     <p style="font-size:16px;line-height:1.65;color:#334155;margin:0 0 22px;">${safeMessage}</p>
     ${data.link ? `
     <div style="text-align:center;">
-      <a href="${ctaUrl}" style="display:inline-block;background:linear-gradient(180deg,${accentColor},${accentColor});color:#fff;padding:13px 26px;text-decoration:none;border-radius:12px;font-weight:600;font-size:15px;box-shadow:0 4px 14px rgba(15,23,42,0.12);">${ctaText}</a>
+      <a href="${safeCtaUrl}" style="display:inline-block;background:${ctaGradient};color:#fff;padding:13px 26px;text-decoration:none;border-radius:12px;font-weight:600;font-size:15px;box-shadow:${ctaShadow};">${ctaText}</a>
     </div>` : ''}
   </td>
 </tr>
@@ -453,11 +487,17 @@ export class EmailService {
     const safeMessage = (message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
     const safeSubject = this.escapeEmailText(subject);
 
+    const logoSrc = this.escapeHtmlAttr(this.getLogoUrl());
     const inner = `<tr>
   <td style="height:4px;background:${accentColor};"></td>
 </tr>
 <tr>
-  <td style="padding:28px 32px 8px;text-align:center;">
+  <td style="padding:20px 32px 0;text-align:center;">
+    <img src="${logoSrc}" alt="BetRollover" width="120" style="max-width:140px;width:120px;height:auto;display:block;margin:0 auto;border:0;outline:none;" />
+  </td>
+</tr>
+<tr>
+  <td style="padding:12px 32px 8px;text-align:center;">
     <div style="font-size:11px;font-weight:700;letter-spacing:0.22em;color:${accentColor};text-transform:uppercase;">Admin</div>
     <h1 style="font-size:18px;font-weight:700;color:${BR.adminInk};margin:12px 0 0;">${safeSubject}</h1>
   </td>

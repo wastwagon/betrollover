@@ -32,6 +32,8 @@ describe('notification-types.config', () => {
     it('should return color for known type (via category)', () => {
       expect(getCategoryColor('purchase')).toBe('#10b981'); // marketplace category
       expect(getCategoryColor('deposit_success')).toBe('#3b82f6'); // wallet category
+      expect(getCategoryColor('new_pick_from_followed')).toBe('#10b981'); // marketplace (followed tipster pick)
+      expect(getCategoryColor('new_follower')).toBe('#10b981'); // social → brand green
     });
   });
 
