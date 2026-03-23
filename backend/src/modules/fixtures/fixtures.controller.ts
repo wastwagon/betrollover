@@ -9,6 +9,7 @@ import { FixtureUpdateService } from './fixture-update.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SyncStatus } from './entities/sync-status.entity';
+import { SYNC_LOOKAHEAD_DAYS } from '../../config/api-limits.config';
 
 @Controller('fixtures')
 export class FixturesController {
@@ -192,14 +193,8 @@ export class FixturesController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   async syncOddsManual(
     @Query('force') force?: string,
-    @Query('limit') limitParam?: string,
+    @Query('limit') _limitParam?: string,
   ) {
-    // Optional limit for full backfill (e.g. limit=500). Cap at 500 to avoid timeouts.
-    const batchLimit = Math.min(
-      Math.max(parseInt(limitParam || '0', 10) || 0, 0),
-      500,
-    ) || undefined;
-
     await this.syncStatusRepo.upsert(
       { syncType: 'odds', status: 'running' },
       ['syncType'],
@@ -207,10 +202,8 @@ export class FixturesController {
 
     try {
       const now = new Date();
-      const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const lookaheadEnd = new Date(now.getTime() + SYNC_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
       const forceRefresh = force === 'true' || force === '1';
-      const defaultLimit = forceRefresh ? 150 : 200;
-      const limit = batchLimit ?? defaultLimit;
 
       let fixtureIds: number[];
 
@@ -219,9 +212,8 @@ export class FixturesController {
           .createQueryBuilder('f')
           .where("f.status IN ('NS', 'TBD')")
           .andWhere('f.match_date >= :now', { now })
-          .andWhere('f.match_date <= :sevenDaysLater', { sevenDaysLater })
+          .andWhere('f.match_date <= :lookaheadEnd', { lookaheadEnd })
           .orderBy('f.match_date', 'ASC')
-          .limit(limit)
           .getMany();
         fixtureIds = allFixtures.map(f => f.id);
       } else {
@@ -230,7 +222,7 @@ export class FixturesController {
           .innerJoin('f.odds', 'o')
           .where("f.status IN ('NS', 'TBD')")
           .andWhere('f.match_date >= :now', { now })
-          .andWhere('f.match_date <= :sevenDaysLater', { sevenDaysLater })
+          .andWhere('f.match_date <= :lookaheadEnd', { lookaheadEnd })
           .select('f.id')
           .getMany();
         const fixturesWithOddsIds = fixturesWithOdds.map(f => f.id);
@@ -238,11 +230,10 @@ export class FixturesController {
           .createQueryBuilder('f')
           .where("f.status IN ('NS', 'TBD')")
           .andWhere('f.match_date >= :now', { now })
-          .andWhere('f.match_date <= :sevenDaysLater', { sevenDaysLater })
+          .andWhere('f.match_date <= :lookaheadEnd', { lookaheadEnd })
           .getMany();
         fixtureIds = allFixtures
           .filter(f => !fixturesWithOddsIds.includes(f.id))
-          .slice(0, limit)
           .map(f => f.id);
       }
       

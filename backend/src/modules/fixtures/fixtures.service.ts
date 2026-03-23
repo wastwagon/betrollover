@@ -7,6 +7,7 @@ import { League } from './entities/league.entity';
 import { EnabledLeague } from './entities/enabled-league.entity';
 import { FootballSyncService } from './football-sync.service';
 import { OddsSyncService } from './odds-sync.service';
+import { SYNC_LOOKAHEAD_DAYS } from '../../config/api-limits.config';
 
 // Expose fixtureRepo for controller use
 declare module './fixtures.service' {
@@ -214,7 +215,7 @@ export class FixturesService {
     // Countries that have fixtures with odds in the next 7 days (use enabled_leagues.country to match list() filtering)
     const leagueIds = leagueRecords.map((l) => l.id);
     const now = new Date();
-    const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const lookaheadEnd = new Date(now.getTime() + SYNC_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
 
     let apiIdsWithFixtures: number[] = [];
     if (leagueIds.length > 0) {
@@ -224,7 +225,7 @@ export class FixturesService {
         .innerJoin('f.league', 'l')
         .where("f.status IN ('NS', 'TBD')")
         .andWhere('f.match_date >= :now', { now })
-        .andWhere('f.match_date <= :end', { end: sevenDaysLater })
+        .andWhere('f.match_date <= :end', { end: lookaheadEnd })
         .andWhere('f.league_id IN (:...leagueIds)', { leagueIds })
         .select('DISTINCT l.apiId', 'apiId')
         .getRawMany();

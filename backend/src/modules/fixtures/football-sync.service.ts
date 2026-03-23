@@ -11,7 +11,6 @@ import { OddsSyncService } from './odds-sync.service';
 import { getSportApiBaseUrl } from '../../config/sports.config';
 import {
   getSyncDates,
-  MAX_FOOTBALL_ODDS_FIXTURES,
   MAX_LEAGUE_BACKFILL_PER_RUN,
   SYNC_LOOKAHEAD_DAYS,
 } from '../../config/api-limits.config';
@@ -250,7 +249,6 @@ export class FootballSyncService {
       .andWhere('f.match_date <= :end', { end: sevenDaysLater })
       .andWhere('o.id IS NULL')
       .orderBy('f.match_date', 'ASC')
-      .limit(MAX_FOOTBALL_ODDS_FIXTURES)
       .getMany();
 
     let oddsCount = 0;

@@ -66,7 +66,7 @@ export class VolleyballSyncService {
 
     const now = new Date();
     const sevenDaysLater = new Date(now.getTime() + SYNC_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
-    const withoutOdds = await this.sportEventRepo
+    const withoutOddsQb = this.sportEventRepo
       .createQueryBuilder('e')
       .leftJoin('e.odds', 'o')
       .where("e.sport = 'volleyball'")
@@ -74,9 +74,11 @@ export class VolleyballSyncService {
       .andWhere('e.eventDate >= :now', { now })
       .andWhere('e.eventDate <= :end', { end: sevenDaysLater })
       .andWhere('o.id IS NULL')
-      .orderBy('e.eventDate', 'ASC')
-      .limit(MAX_ODDS_EVENTS_PER_RUN)
-      .getMany();
+      .orderBy('e.eventDate', 'ASC');
+    if (MAX_ODDS_EVENTS_PER_RUN > 0) {
+      withoutOddsQb.limit(MAX_ODDS_EVENTS_PER_RUN);
+    }
+    const withoutOdds = await withoutOddsQb.getMany();
 
     let oddsCount = 0;
     for (const event of withoutOdds) {

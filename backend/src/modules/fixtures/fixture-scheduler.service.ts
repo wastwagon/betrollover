@@ -12,11 +12,12 @@ import { Repository, DataSource } from 'typeorm';
 import { Fixture } from './entities/fixture.entity';
 import { FixtureArchive } from './entities/fixture-archive.entity';
 import { SyncStatus } from './entities/sync-status.entity';
+import { SYNC_LOOKAHEAD_DAYS } from '../../config/api-limits.config';
 
 /**
  * Scheduled Jobs for Fixture Updates & Syncing
  *
- * Full fixture import (enabled leagues, 7 UTC days) runs every 6 hours (00:00, 06:00, 12:00, 18:00 server local time)
+ * Full fixture import (enabled leagues, 3 UTC days) runs every 6 hours (00:00, 06:00, 12:00, 18:00 server local time)
  * so newly published fixtures appear without waiting for a single daily run. ~28 API calls/day for dates — fine on Pro/Ultra.
  * Also: 23:45 odds force (primes markets), 00:05 AI predictions, 2:00 AM archive + prediction catch-up.
  *
@@ -204,7 +205,7 @@ export class FixtureSchedulerService implements OnModuleInit {
 
   /**
    * Sync odds for upcoming fixtures (runs every 2 hours)
-   * Pre-loads odds for fixtures up to 7 days ahead that don't have odds yet (max 50 per run).
+   * Pre-loads odds for fixtures up to 7 days ahead that don't have odds yet.
    * Prioritizes soonest matches. Uses Tier 1/2 market filter (BTTS, Correct Score, HT/FT).
    */
   @Cron('0 */2 * * *') // Every 2 hours
@@ -218,14 +219,14 @@ export class FixtureSchedulerService implements OnModuleInit {
     await this.updateSyncStatus('odds', 'running');
     try {
       const now = new Date();
-      const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const lookaheadEnd = new Date(now.getTime() + SYNC_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
 
       const fixturesWithOdds = await this.fixtureRepo
         .createQueryBuilder('f')
         .innerJoin('f.odds', 'o')
         .where("f.status IN ('NS', 'TBD')")
         .andWhere('f.match_date >= :now', { now })
-        .andWhere('f.match_date <= :sevenDaysLater', { sevenDaysLater })
+        .andWhere('f.match_date <= :lookaheadEnd', { lookaheadEnd })
         .select('f.id')
         .getMany();
 
@@ -236,13 +237,12 @@ export class FixtureSchedulerService implements OnModuleInit {
         .createQueryBuilder('f')
         .where("f.status IN ('NS', 'TBD')")
         .andWhere('f.match_date >= :now', { now })
-        .andWhere('f.match_date <= :sevenDaysLater', { sevenDaysLater })
+        .andWhere('f.match_date <= :lookaheadEnd', { lookaheadEnd })
         .orderBy('f.match_date', 'ASC')
         .getMany();
 
       const fixtures = allFixtures
-        .filter(f => !fixturesWithOddsIds.includes(f.id))
-        .slice(0, 100);
+        .filter(f => !fixturesWithOddsIds.includes(f.id));
 
       if (fixtures.length > 0) {
         const fixtureIds = fixtures.map(f => f.id);
@@ -264,7 +264,7 @@ export class FixtureSchedulerService implements OnModuleInit {
 
   /**
    * Daily force refresh of odds (23:45 — before midnight prediction run)
-   * Re-syncs 50 soonest upcoming fixtures to apply latest Tier 1/2 market filter.
+   * Re-syncs upcoming fixtures to apply latest Tier 1/2 market filter.
    */
   @Cron('45 23 * * *')
   async handleOddsForceRefresh() {
@@ -280,15 +280,14 @@ export class FixtureSchedulerService implements OnModuleInit {
     );
     try {
       const now = new Date();
-      const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const lookaheadEnd = new Date(now.getTime() + SYNC_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
 
       const allFixtures = await this.fixtureRepo
         .createQueryBuilder('f')
         .where("f.status IN ('NS', 'TBD')")
         .andWhere('f.match_date >= :now', { now })
-        .andWhere('f.match_date <= :sevenDaysLater', { sevenDaysLater })
+        .andWhere('f.match_date <= :lookaheadEnd', { lookaheadEnd })
         .orderBy('f.match_date', 'ASC')
-        .limit(50)
         .getMany();
 
       const fixtureIds = allFixtures.map(f => f.id);

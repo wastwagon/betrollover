@@ -60,6 +60,14 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-in-production}
       # API-Sports key — reads from .env (leave empty in .env to disable live fetching in dev)
       API_SPORTS_KEY: ${API_SPORTS_KEY:-}
+      API_SPORTS_PLAN: ${API_SPORTS_PLAN:-ultra}
+      API_SYNC_LOOKAHEAD_DAYS: ${API_SYNC_LOOKAHEAD_DAYS:-3}
+      API_MAX_ODDS_EVENTS_PER_RUN: ${API_MAX_ODDS_EVENTS_PER_RUN:-0}
+      API_MAX_FOOTBALL_ODDS_FIXTURES: ${API_MAX_FOOTBALL_ODDS_FIXTURES:-0}
+      API_MAX_LEAGUE_BACKFILL_PER_RUN: ${API_MAX_LEAGUE_BACKFILL_PER_RUN:-100}
+      API_CALL_DELAY_MS: ${API_CALL_DELAY_MS:-50}
+      API_PREDICTION_DELAY_MS: ${API_PREDICTION_DELAY_MS:-50}
+      API_MAX_FIXTURES_UPDATE_PER_RUN: ${API_MAX_FIXTURES_UPDATE_PER_RUN:-200}
       # The Odds API key — all sports except football (basketball, rugby, mma, hockey, american football, tennis)
       ODDS_API_KEY: ${ODDS_API_KEY:-}
       TENNIS_ODDS_API_KEY: ${TENNIS_ODDS_API_KEY:-}  # legacy fallback — use ODDS_API_KEY going forward
