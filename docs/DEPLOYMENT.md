@@ -130,6 +130,7 @@ For all future deploys (code updates):
    - `053_add_support_tickets.sql` — `support_tickets` table (user-to-admin help/dispute tickets)
    - `054_add_referrals.sql` — `referral_codes`, `referral_conversions` tables, `referred_by_code` on users (invite & earn system)
    - `055_add_chat_system.sql` — `chat_rooms` (10 pre-seeded sport rooms), `chat_messages`, `chat_reactions`, `chat_reports`, `chat_bans` tables; `chat_warnings` column on users (community chat system)
+   - `073_withdrawal_status_rejected.sql` — allows `rejected` on `withdrawal_requests.status` (admin **Reject** previously hit a DB CHECK error → HTTP 500)
 5. No manual intervention needed — the runner handles it automatically
 
 To manually run migrations (e.g. if runner failed):

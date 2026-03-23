@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS withdrawal_requests (
   payout_method_id INT NOT NULL REFERENCES payout_methods(id) ON DELETE RESTRICT,
   amount DECIMAL(10,2) NOT NULL,
   currency VARCHAR(3) DEFAULT 'GHS',
-  status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+  status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'cancelled', 'rejected')),
   reference VARCHAR(100) UNIQUE,
   paystack_transfer_code VARCHAR(100),
   failure_reason TEXT,
