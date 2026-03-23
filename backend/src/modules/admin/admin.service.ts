@@ -411,10 +411,78 @@ export class AdminService {
       isActive: apiSettings?.isActive || false,
       minimumROI: Number(apiSettings?.minimumROI ?? 20.0),
       platformCommissionRate: clampPlatformCommissionPercent(apiSettings?.platformCommissionRate),
+      streamAlertThresholds: this.mapStreamAlertThresholds(apiSettings),
       currency: 'GHS',
       country: 'Ghana',
       appName: 'BetRollover',
     };
+  }
+
+  private mapStreamAlertThresholds(row: ApiSettings | null): {
+    warnActiveConnections: number;
+    criticalActiveConnections: number;
+    warnEventsPerMinute: number;
+    warnAvgPayloadBytes: number;
+    warnStaleSeconds: number;
+    criticalStaleSeconds: number;
+  } {
+    return {
+      warnActiveConnections: Number(row?.streamWarnActiveConnections ?? 120),
+      criticalActiveConnections: Number(row?.streamCriticalActiveConnections ?? 250),
+      warnEventsPerMinute: Number(row?.streamWarnEventsPerMinute ?? 80),
+      warnAvgPayloadBytes: Number(row?.streamWarnAvgPayloadBytes ?? 10_000),
+      warnStaleSeconds: Number(row?.streamWarnStaleSeconds ?? 90),
+      criticalStaleSeconds: Number(row?.streamCriticalStaleSeconds ?? 180),
+    };
+  }
+
+  async updateStreamAlertThresholds(body: {
+    warnActiveConnections: number;
+    criticalActiveConnections: number;
+    warnEventsPerMinute: number;
+    warnAvgPayloadBytes: number;
+    warnStaleSeconds: number;
+    criticalStaleSeconds: number;
+  }): Promise<{
+    warnActiveConnections: number;
+    criticalActiveConnections: number;
+    warnEventsPerMinute: number;
+    warnAvgPayloadBytes: number;
+    warnStaleSeconds: number;
+    criticalStaleSeconds: number;
+  }> {
+    const w = Math.floor(Number(body.warnActiveConnections));
+    const c = Math.floor(Number(body.criticalActiveConnections));
+    const em = Math.floor(Number(body.warnEventsPerMinute));
+    const ap = Math.floor(Number(body.warnAvgPayloadBytes));
+    const ws = Math.floor(Number(body.warnStaleSeconds));
+    const cs = Math.floor(Number(body.criticalStaleSeconds));
+    const nums = [w, c, em, ap, ws, cs];
+    if (nums.some((n) => !Number.isFinite(n) || n < 1)) {
+      throw new BadRequestException('All stream alert thresholds must be integers ≥ 1');
+    }
+    if (w >= c) {
+      throw new BadRequestException('warnActiveConnections must be less than criticalActiveConnections');
+    }
+    if (ws >= cs) {
+      throw new BadRequestException('warnStaleSeconds must be less than criticalStaleSeconds');
+    }
+    if (c > 500_000 || em > 10_000 || ap > 10_000_000 || cs > 86400) {
+      throw new BadRequestException('One or more threshold values exceed safe maximums');
+    }
+
+    let apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
+    if (!apiSettings) {
+      apiSettings = this.apiSettingsRepo.create({ id: 1 });
+    }
+    apiSettings.streamWarnActiveConnections = w;
+    apiSettings.streamCriticalActiveConnections = c;
+    apiSettings.streamWarnEventsPerMinute = em;
+    apiSettings.streamWarnAvgPayloadBytes = ap;
+    apiSettings.streamWarnStaleSeconds = ws;
+    apiSettings.streamCriticalStaleSeconds = cs;
+    await this.apiSettingsRepo.save(apiSettings);
+    return this.mapStreamAlertThresholds(apiSettings);
   }
 
   async updateMinimumROI(minimumROI: number): Promise<ApiSettings> {

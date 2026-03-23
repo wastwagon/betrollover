@@ -302,6 +302,38 @@ export default function CouponDetailPage() {
     }).catch(() => setCoupon(null)).finally(() => setLoading(false));
   }, [id, router]);
 
+  useEffect(() => {
+    if (!coupon || coupon.result !== 'pending') return;
+    const poll = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      const token = localStorage.getItem('token');
+      if (!token) {
+        fetch(`${getApiUrl()}/accumulators/${id}/public`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d) => {
+            if (d) setCoupon(d);
+          })
+          .catch(() => {});
+        return;
+      }
+      fetch(`${getApiUrl()}/accumulators/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (d) setCoupon(d);
+        })
+        .catch(() => {});
+    };
+    const interval = setInterval(poll, 45_000);
+    const onVis = () => {
+      if (document.visibilityState === 'visible') poll();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, [coupon?.result, id]);
+
   const handlePurchase = async () => {
     const token = localStorage.getItem('token');
     if (!token) { router.push(`/login?redirect=/coupons/${id}`); return; }

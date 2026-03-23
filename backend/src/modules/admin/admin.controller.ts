@@ -511,6 +511,37 @@ export class AdminController {
     return this.adminService.updateCommissionRate(body.platformCommissionRate);
   }
 
+  /** Persist live-scores SSE alert thresholds (shared across admins). */
+  @Patch('settings/stream-alert-thresholds')
+  async updateStreamAlertThresholds(
+    @CurrentUser() user: User,
+    @Body()
+    body: {
+      warnActiveConnections: number;
+      criticalActiveConnections: number;
+      warnEventsPerMinute: number;
+      warnAvgPayloadBytes: number;
+      warnStaleSeconds: number;
+      criticalStaleSeconds: number;
+    },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const keys = [
+      'warnActiveConnections',
+      'criticalActiveConnections',
+      'warnEventsPerMinute',
+      'warnAvgPayloadBytes',
+      'warnStaleSeconds',
+      'criticalStaleSeconds',
+    ] as const;
+    for (const k of keys) {
+      if (body?.[k] === undefined || body?.[k] === null || typeof body[k] !== 'number') {
+        throw new BadRequestException(`Missing or invalid numeric field: ${k}`);
+      }
+    }
+    return this.adminService.updateStreamAlertThresholds(body);
+  }
+
   @Get('analytics/commission-revenue')
   async getCommissionRevenue(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');

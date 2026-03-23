@@ -17,9 +17,9 @@ import { SYNC_LOOKAHEAD_DAYS } from '../../config/api-limits.config';
 /**
  * Scheduled Jobs for Fixture Updates & Syncing
  *
- * Full fixture import (enabled leagues, 3 UTC days) runs every 6 hours (00:00, 06:00, 12:00, 18:00 server local time)
+ * Full fixture import (enabled leagues, lookahead window) runs every 6 hours (00:00, 06:00, 12:00, 18:00 server local time)
  * so newly published fixtures appear without waiting for a single daily run. ~28 API calls/day for dates — fine on Pro/Ultra.
- * Also: 23:45 odds force (primes markets), 00:05 AI predictions, 2:00 AM archive + prediction catch-up.
+ * Live + finished fixture sync about every minute (Ultra); periodic settlement every minute. Also: 23:45 odds force, 00:05 AI predictions, 2:00 AM archive + prediction catch-up.
  *
  * Set ENABLE_FOOTBALL_SYNC=false to skip football API (e.g. when using prod server).
  */
@@ -115,17 +115,31 @@ export class FixtureSchedulerService implements OnModuleInit {
     return true;
   }
 
+  /** Small timing helper for cron observability in logs. */
+  private async timedRun<T>(label: string, fn: () => Promise<T>): Promise<T> {
+    const startedAt = Date.now();
+    try {
+      return await fn();
+    } finally {
+      const elapsedMs = Date.now() - startedAt;
+      this.logger.debug(`${label} completed in ${elapsedMs}ms`);
+    }
+  }
+
   /**
-   * Update live fixtures every 5 minutes. Skips if previous run still in progress.
+   * Update live fixtures every minute (Ultra-friendly; one /fixtures/live API call per run).
+   * Skips if previous run still in progress.
    */
-  @Cron('*/5 * * * *') // Every 5 minutes
+  @Cron('*/1 * * * *')
   async handleLiveFixtureUpdate() {
     if (!this.isSchedulingEnabled()) return;
     if (await this.isSyncRunning('live')) return;
     this.logger.debug('Running scheduled live fixture update...');
     await this.updateSyncStatus('live', 'running');
     try {
-      const result = await this.fixtureUpdateService.updateLiveFixtures();
+      const result = await this.timedRun('live fixture sync', async () =>
+        this.fixtureUpdateService.updateLiveFixtures(),
+      );
       if (result.updated > 0) {
         this.logger.log(`Updated ${result.updated} live fixtures`);
         await this.updateSyncStatus('live', 'success', result.updated);
@@ -142,16 +156,19 @@ export class FixtureSchedulerService implements OnModuleInit {
   }
 
   /**
-   * Update finished fixtures every 5 minutes. Skips if previous run still in progress.
+   * Update finished fixtures every minute (pending picks first; batches API ids).
+   * Skips if previous run still in progress.
    */
-  @Cron('*/5 * * * *') // Every 5 minutes
+  @Cron('*/1 * * * *')
   async handleFinishedFixtureUpdate() {
     if (!this.isSchedulingEnabled()) return;
     if (await this.isSyncRunning('finished')) return;
     this.logger.debug('Running scheduled finished fixture update...');
     await this.updateSyncStatus('finished', 'running');
     try {
-      const result = await this.fixtureUpdateService.updateFinishedFixtures();
+      const result = await this.timedRun('finished fixture sync', async () =>
+        this.fixtureUpdateService.updateFinishedFixtures(),
+      );
       if (result.updated > 0) {
         this.logger.log(`Updated ${result.updated} finished fixtures`);
         await this.updateSyncStatus('finished', 'success', result.updated);
@@ -452,20 +469,29 @@ export class FixtureSchedulerService implements OnModuleInit {
   }
 
   /**
-   * Periodic settlement check (every 30 minutes)
-   * Ensures all coupons and accumulators are settled even if fixture updates skipped.
+   * Periodic settlement check (every minute).
+   * Ensures coupons and accumulators settle soon after results sync; idempotent.
    */
-  @Cron('*/30 * * * *')
+  @Cron('*/1 * * * *')
   async handlePeriodicSettlement() {
     if (!this.isSchedulingEnabled()) return;
+    if (await this.isSyncRunning('settlement')) {
+      this.logger.debug('Periodic settlement already running, skipping');
+      return;
+    }
     this.logger.debug('Running periodic settlement check...');
+    await this.updateSyncStatus('settlement', 'running');
     try {
-      const result = await this.settlementService.runSettlement();
+      const result = await this.timedRun('periodic settlement', async () =>
+        this.settlementService.runSettlement(),
+      );
       if (result.ticketsSettled > 0) {
         this.logger.log(`Periodic settlement: ${result.ticketsSettled} tickets settled`);
       }
+      await this.updateSyncStatus('settlement', 'success', result.ticketsSettled);
     } catch (error: any) {
       this.logger.error('Error in periodic settlement', error);
+      await this.updateSyncStatus('settlement', 'error', 0, error.message);
     }
   }
 

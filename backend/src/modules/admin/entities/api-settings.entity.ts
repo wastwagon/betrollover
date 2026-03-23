@@ -36,6 +36,24 @@ export class ApiSettings {
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 30.0 })
   platformCommissionRate: number = 30.0;
 
+  @Column({ type: 'int', name: 'stream_warn_active_connections', default: 120 })
+  streamWarnActiveConnections: number = 120;
+
+  @Column({ type: 'int', name: 'stream_critical_active_connections', default: 250 })
+  streamCriticalActiveConnections: number = 250;
+
+  @Column({ type: 'int', name: 'stream_warn_events_per_minute', default: 80 })
+  streamWarnEventsPerMinute: number = 80;
+
+  @Column({ type: 'int', name: 'stream_warn_avg_payload_bytes', default: 10_000 })
+  streamWarnAvgPayloadBytes: number = 10_000;
+
+  @Column({ type: 'int', name: 'stream_warn_stale_seconds', default: 90 })
+  streamWarnStaleSeconds: number = 90;
+
+  @Column({ type: 'int', name: 'stream_critical_stale_seconds', default: 180 })
+  streamCriticalStaleSeconds: number = 180;
+
   @CreateDateColumn()
   createdAt: Date;
 

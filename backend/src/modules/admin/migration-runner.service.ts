@@ -190,8 +190,14 @@ export class MigrationRunnerService {
         stdio: ['pipe', 'pipe', 'pipe'],
       });
     } catch (psqlErr: any) {
-      // Only fall back when psql command not found (e.g. not in PATH)
-      const isPsqlNotFound = psqlErr?.code === 'ENOENT' || psqlErr?.message?.includes('spawn psql');
+      // Fall back when psql is unavailable in runtime image (ENOENT, spawn failure, or shell "psql: not found")
+      const stderr = String(psqlErr?.stderr || '');
+      const message = String(psqlErr?.message || '');
+      const isPsqlNotFound =
+        psqlErr?.code === 'ENOENT' ||
+        message.includes('spawn psql') ||
+        stderr.includes('psql: not found') ||
+        message.includes('psql: not found');
       if (isPsqlNotFound) {
         this.logger.warn(`psql not available, using DataSource fallback for ${filename}`);
         const sql = fs.readFileSync(filePath, 'utf8');

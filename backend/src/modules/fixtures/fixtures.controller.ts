@@ -1,5 +1,7 @@
-import { Controller, Get, Post, Param, Query, UseGuards, ParseIntPipe, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, UseGuards, ParseIntPipe, Logger, Sse, MessageEvent } from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Observable, defer, from, interval, of } from 'rxjs';
+import { catchError, exhaustMap, filter, finalize, map, startWith, tap } from 'rxjs/operators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { FixturesService } from './fixtures.service';
@@ -14,6 +16,12 @@ import { SYNC_LOOKAHEAD_DAYS } from '../../config/api-limits.config';
 @Controller('fixtures')
 export class FixturesController {
   private readonly logger = new Logger(FixturesController.name);
+  private readonly liveStreamStartedAt = Date.now();
+  private liveStreamActiveConnections = 0;
+  private liveStreamTotalConnections = 0;
+  private liveStreamTotalEvents = 0;
+  private liveStreamTotalPayloadBytes = 0;
+  private liveStreamLastEventAt: string | null = null;
 
   constructor(
     private readonly fixturesService: FixturesService,
@@ -54,6 +62,154 @@ export class FixturesController {
   @Throttle({ default: { limit: 120, ttl: 60000 } })
   getLeaguesDirectory() {
     return this.fixturesService.getLeaguesDirectoryPublic();
+  }
+
+  /**
+   * Live + upcoming (NS/TBD) + recently finished matches in the platform catalog (enabled leagues, fixtures with odds).
+   * No global feed — only DB-backed fixtures. Public, throttled.
+   * `lookaheadDays` matches coupon fixture window (default: platform SYNC_LOOKAHEAD_DAYS).
+   */
+  @Get('platform/live-scores')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 120, ttl: 60000 } })
+  getPlatformLiveScores(
+    @Query('archiveHours') archiveHours?: string,
+    @Query('lookaheadDays') lookaheadDays?: string,
+  ) {
+    const raw = archiveHours ? parseInt(archiveHours, 10) : 48;
+    const h = Number.isFinite(raw) ? Math.min(Math.max(raw, 1), 168) : 48;
+    const ldRaw = lookaheadDays ? parseInt(lookaheadDays, 10) : NaN;
+    const ld = Number.isFinite(ldRaw) ? Math.min(Math.max(ldRaw, 1), 14) : undefined;
+    return this.fixturesService.getPlatformLiveScores({ archiveHours: h, lookaheadDays: ld });
+  }
+
+  /**
+   * SSE stream for platform-scoped live scores.
+   * First emit is a full snapshot; subsequent emits are deltas only.
+   */
+  @Sse('platform/live-scores/stream')
+  streamPlatformLiveScores(
+    @Query('archiveHours') archiveHours?: string,
+    @Query('lookaheadDays') lookaheadDays?: string,
+  ): Observable<MessageEvent> {
+    const raw = archiveHours ? parseInt(archiveHours, 10) : 48;
+    const h = Number.isFinite(raw) ? Math.min(Math.max(raw, 1), 168) : 48;
+    const ldRaw = lookaheadDays ? parseInt(lookaheadDays, 10) : NaN;
+    const ld = Number.isFinite(ldRaw) ? Math.min(Math.max(ldRaw, 1), 14) : undefined;
+    let prevLiveSig = new Map<number, string>();
+    let prevRecentSig = new Map<number, string>();
+    let prevUpcomingSig = new Map<number, string>();
+    let streamPrimed = false;
+
+    /** Include matchDate so NS→live transitions and kickoff changes emit deltas. */
+    const rowSig = (row: any) =>
+      `${row?.id}|${row?.status ?? ''}|${row?.homeScore ?? ''}|${row?.awayScore ?? ''}|${row?.syncedAt ?? ''}|${row?.matchDate ?? ''}`;
+
+    return defer(() => {
+      this.liveStreamActiveConnections += 1;
+      this.liveStreamTotalConnections += 1;
+      return interval(20_000).pipe(
+        startWith(0),
+        exhaustMap(() =>
+          from(this.fixturesService.getPlatformLiveScores({ archiveHours: h, lookaheadDays: ld })),
+        ),
+        map((payload) => {
+        const live = Array.isArray(payload?.live) ? payload.live : [];
+        const recent = Array.isArray(payload?.recent) ? payload.recent : [];
+        const upcoming = Array.isArray((payload as any)?.upcoming) ? (payload as any).upcoming : [];
+        const nextLiveSig = new Map<number, string>();
+        const nextRecentSig = new Map<number, string>();
+        const nextUpcomingSig = new Map<number, string>();
+        for (const row of live) nextLiveSig.set(Number((row as any).id), rowSig(row));
+        for (const row of recent) nextRecentSig.set(Number((row as any).id), rowSig(row));
+        for (const row of upcoming) nextUpcomingSig.set(Number((row as any).id), rowSig(row));
+
+        if (!streamPrimed) {
+          streamPrimed = true;
+          prevLiveSig = nextLiveSig;
+          prevRecentSig = nextRecentSig;
+          prevUpcomingSig = nextUpcomingSig;
+          return { type: 'live-scores-snapshot', data: payload } as MessageEvent;
+        }
+
+        const liveUpserts = live.filter((row) => prevLiveSig.get(Number((row as any).id)) !== rowSig(row));
+        const recentUpserts = recent.filter((row) => prevRecentSig.get(Number((row as any).id)) !== rowSig(row));
+        const upcomingUpserts = upcoming.filter(
+          (row: Record<string, unknown>) =>
+            prevUpcomingSig.get(Number((row as any).id)) !== rowSig(row),
+        );
+        const liveRemovedIds = [...prevLiveSig.keys()].filter((id) => !nextLiveSig.has(id));
+        const recentRemovedIds = [...prevRecentSig.keys()].filter((id) => !nextRecentSig.has(id));
+        const upcomingRemovedIds = [...prevUpcomingSig.keys()].filter((id) => !nextUpcomingSig.has(id));
+
+        prevLiveSig = nextLiveSig;
+        prevRecentSig = nextRecentSig;
+        prevUpcomingSig = nextUpcomingSig;
+
+        const hasChanges =
+          liveUpserts.length > 0 ||
+          recentUpserts.length > 0 ||
+          upcomingUpserts.length > 0 ||
+          liveRemovedIds.length > 0 ||
+          recentRemovedIds.length > 0 ||
+          upcomingRemovedIds.length > 0;
+        if (!hasChanges) return null;
+
+        return {
+          type: 'live-scores-delta',
+          data: {
+            generatedAt: payload.generatedAt,
+            delta: {
+              liveUpserts,
+              recentUpserts,
+              upcomingUpserts,
+              liveRemovedIds,
+              recentRemovedIds,
+              upcomingRemovedIds,
+            },
+          },
+        } as MessageEvent;
+        }),
+        filter((event): event is MessageEvent => event !== null),
+        tap((event) => {
+          this.liveStreamTotalEvents += 1;
+          this.liveStreamLastEventAt = new Date().toISOString();
+          const bytes = Buffer.byteLength(JSON.stringify(event.data ?? {}), 'utf8');
+          this.liveStreamTotalPayloadBytes += bytes;
+        }),
+        catchError((error: any) =>
+          of({
+            type: 'error',
+            data: { message: error?.message || 'stream error' },
+          } as MessageEvent),
+        ),
+        finalize(() => {
+          this.liveStreamActiveConnections = Math.max(0, this.liveStreamActiveConnections - 1);
+        }),
+      );
+    });
+  }
+
+  /** Admin metrics for live-scores SSE capacity/throughput monitoring. */
+  @Get('platform/live-scores/stream/metrics')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  getPlatformLiveScoresStreamMetrics() {
+    const uptimeSeconds = Math.max(1, Math.floor((Date.now() - this.liveStreamStartedAt) / 1000));
+    const uptimeMinutes = uptimeSeconds / 60;
+    return {
+      activeConnections: this.liveStreamActiveConnections,
+      totalConnections: this.liveStreamTotalConnections,
+      totalEvents: this.liveStreamTotalEvents,
+      totalPayloadBytes: this.liveStreamTotalPayloadBytes,
+      avgEventsPerMinute: Number((this.liveStreamTotalEvents / uptimeMinutes).toFixed(2)),
+      avgPayloadBytesPerEvent:
+        this.liveStreamTotalEvents > 0
+          ? Math.round(this.liveStreamTotalPayloadBytes / this.liveStreamTotalEvents)
+          : 0,
+      startedAt: new Date(this.liveStreamStartedAt).toISOString(),
+      uptimeSeconds,
+      lastEventAt: this.liveStreamLastEventAt,
+    };
   }
 
   /**
@@ -286,8 +442,7 @@ export class FixturesController {
 
   /**
    * Manually fetch results for past football matches that are not yet marked FT.
-   * Mirrors what the every-5-min cron does but can be triggered on demand by admin.
-   * Use when a match has finished but settlement hasn't run yet.
+   * Mirrors the scheduled result sync; use when a match has finished but settlement hasn't run yet.
    */
   @Post('sync/results')
   @UseGuards(JwtAuthGuard, AdminGuard)

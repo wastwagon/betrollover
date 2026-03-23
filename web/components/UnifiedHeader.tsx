@@ -364,6 +364,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       <div className="w-64 border-r border-slate-100 py-3 px-2">
                         <SectionLabel>{t('header.section_coupons_picks')}</SectionLabel>
                         <MegaLink href="/marketplace"     icon="🛒" label={t("nav.marketplace")}      desc={t('header.desc_marketplace')}    onClick={closeAll} />
+                        <MegaLink href="/live-scores"     icon="📡" label={t('nav.live_scores')}     desc={t('header.desc_live_scores')}     onClick={closeAll} />
                         <MegaLink href="/coupons/archive" icon="📦" label={t('header.settled_archive')}  desc={t('header.settled_archive_desc')}        onClick={closeAll} />
                         <div className="my-2 border-t border-slate-100" />
                         <SectionLabel>{t('header.section_platform')}</SectionLabel>
@@ -825,6 +826,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
           >
             {[
               { href: '/marketplace', label: t('nav.marketplace') },
+              { href: '/live-scores', label: t('nav.live_scores_short') },
               { href: '/league-tables', label: t('nav.league_tables_short') },
               { href: '/tipsters', label: t('nav.tipsters') },
               { href: '/discover', label: t('nav.discover') },

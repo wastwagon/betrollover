@@ -90,9 +90,13 @@ export class FixturesService {
       const start = new Date(Date.UTC(y, m - 1, day, 0, 0, 0, 0));
       const end = new Date(Date.UTC(y, m - 1, day, 23, 59, 59, 999));
       qb.andWhere('f.match_date BETWEEN :start AND :end', { start, end });
-    } else if (days && days > 0) {
+    } else {
+      // Enforce platform lookahead window (72h by default) even when caller passes larger days.
+      const effectiveDays = days && days > 0
+        ? Math.min(days, SYNC_LOOKAHEAD_DAYS)
+        : SYNC_LOOKAHEAD_DAYS;
       const now = new Date();
-      const end = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+      const end = new Date(now.getTime() + effectiveDays * 24 * 60 * 60 * 1000);
       qb.andWhere('f.match_date <= :end', { end });
     }
     if (leagueId) {
@@ -212,7 +216,7 @@ export class FixturesService {
       order: { country: 'ASC', name: 'ASC' },
     });
 
-    // Countries that have fixtures with odds in the next 7 days (use enabled_leagues.country to match list() filtering)
+    // Countries that have fixtures with odds in the configured lookahead window.
     const leagueIds = leagueRecords.map((l) => l.id);
     const now = new Date();
     const lookaheadEnd = new Date(now.getTime() + SYNC_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
@@ -252,7 +256,7 @@ export class FixturesService {
       return (a || '').localeCompare(b || '');
     });
 
-    // Only leagues with fixtures (odds) in next 7 days - same as countries
+    // Only leagues with fixtures (odds) in the configured lookahead window - same as countries
     const apiIdsWithFixturesSet = new Set(apiIdsWithFixtures);
     const leaguesWithFixtures = leagueRecords.filter((l) => apiIdsWithFixturesSet.has(l.apiId));
 
@@ -333,5 +337,94 @@ export class FixturesService {
   async backfillHomeAwayTeamNames(): Promise<{ fixed: number }> {
     const fixed = await this.syncService.backfillHomeAwayTeamNames();
     return { fixed };
+  }
+
+  /** In-play short codes from API-Football (same family as fixture-update live sync). */
+  private static readonly PLATFORM_LIVE_STATUSES = ['1H', 'HT', '2H', 'ET', 'P', 'BT'] as const;
+
+  /**
+   * Live scores for fixtures already in the platform catalog: enabled leagues + at least one stored odd.
+   * Does not list random matches outside the DB. Used by the public Live Scores page.
+   *
+   * - **live**: in-play statuses (1H, HT, 2H, …)
+   * - **upcoming**: NS/TBD with kickoff within `lookaheadDays` (aligned with coupon lookahead window)
+   * - **recent**: FT within `archiveHours`
+   */
+  async getPlatformLiveScores(opts: { archiveHours: number; lookaheadDays?: number }): Promise<{
+    live: Record<string, unknown>[];
+    upcoming: Record<string, unknown>[];
+    recent: Record<string, unknown>[];
+    generatedAt: string;
+  }> {
+    const enabledLeagues = await this.enabledLeagueRepo.find({
+      where: { isActive: true },
+      select: ['apiId'],
+    });
+    const enabledApiIds = enabledLeagues.map((l) => l.apiId);
+    const leagueRecords = await this.leagueRepo.find({
+      where: { apiId: In(enabledApiIds) },
+      select: ['id'],
+    });
+    const leagueDbIds = leagueRecords.map((l) => l.id);
+    if (leagueDbIds.length === 0) {
+      return { live: [], upcoming: [], recent: [], generatedAt: new Date().toISOString() };
+    }
+
+    const lookaheadDays = Math.min(Math.max(opts.lookaheadDays ?? SYNC_LOOKAHEAD_DAYS, 1), 14);
+    const now = new Date();
+    const archiveCutoff = new Date(now.getTime() - opts.archiveHours * 60 * 60 * 1000);
+    const lookaheadEnd = new Date(now.getTime() + lookaheadDays * 24 * 60 * 60 * 1000);
+    const liveStatuses = [...FixturesService.PLATFORM_LIVE_STATUSES];
+
+    const baseQb = () =>
+      this.fixtureRepo
+        .createQueryBuilder('f')
+        .leftJoinAndSelect('f.league', 'league')
+        .where('f.leagueId IN (:...leagueDbIds)', { leagueDbIds })
+        .andWhere('EXISTS (SELECT 1 FROM fixture_odds o WHERE o.fixture_id = f.id)');
+
+    const liveRows = await baseQb()
+      .andWhere('f.status IN (:...liveStatuses)', { liveStatuses })
+      .orderBy('f.matchDate', 'ASC')
+      .getMany();
+
+    const upcomingRows = await baseQb()
+      .andWhere("f.status IN ('NS', 'TBD')")
+      .andWhere('f.matchDate >= :now', { now })
+      .andWhere('f.matchDate <= :lookaheadEnd', { lookaheadEnd })
+      .orderBy('f.matchDate', 'ASC')
+      .take(200)
+      .getMany();
+
+    const recentRows = await baseQb()
+      .andWhere("f.status = 'FT'")
+      .andWhere('f.matchDate >= :archiveCutoff', { archiveCutoff })
+      .orderBy('f.matchDate', 'DESC')
+      .take(100)
+      .getMany();
+
+    const mapRow = (f: Fixture) => ({
+      id: f.id,
+      apiId: f.apiId,
+      homeTeamName: f.homeTeamName,
+      awayTeamName: f.awayTeamName,
+      homeTeamLogo: f.homeTeamLogo,
+      awayTeamLogo: f.awayTeamLogo,
+      leagueName: f.leagueName,
+      leagueApiId: f.league?.apiId ?? null,
+      country: f.league?.country ?? null,
+      matchDate: f.matchDate?.toISOString?.() ?? f.matchDate,
+      status: f.status,
+      homeScore: f.homeScore,
+      awayScore: f.awayScore,
+      syncedAt: f.syncedAt?.toISOString?.() ?? f.syncedAt,
+    });
+
+    return {
+      live: liveRows.map(mapRow),
+      upcoming: upcomingRows.map(mapRow),
+      recent: recentRows.map(mapRow),
+      generatedAt: new Date().toISOString(),
+    };
   }
 }

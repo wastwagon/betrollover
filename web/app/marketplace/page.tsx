@@ -193,6 +193,11 @@ export default function MarketplacePage() {
     [debouncedTipster],
   );
 
+  const hasPendingMarketplace = useMemo(
+    () => picks.some((p) => p.result === 'pending'),
+    [picks],
+  );
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     const sportParam = sportFilter ? `&sport=${encodeURIComponent(sportFilter)}` : '';
@@ -260,6 +265,39 @@ export default function MarketplacePage() {
       })
       .finally(() => setLoading(false));
   }, [router, sportFilter, tipsterParam, showError]);
+
+  /** Refresh coupon cards while any listing is still pending (visibility-aware, 45s). */
+  useEffect(() => {
+    if (!hasPendingMarketplace) return;
+    const sportParam = sportFilter ? `&sport=${encodeURIComponent(sportFilter)}` : '';
+    const poll = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      const token = localStorage.getItem('token');
+      const url = token
+        ? `${API_URL}/accumulators/marketplace?limit=24${sportParam}${tipsterParam}`
+        : `${API_URL}/accumulators/marketplace/public?limit=24${sportParam}${tipsterParam}`;
+      fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+        .then((r) => (r.ok ? r.json() : { items: [], total: 0, hasMore: false }))
+        .then((data) => {
+          const items = data?.items ?? (Array.isArray(data) ? data : []);
+          const totalCount = data?.total ?? items.length;
+          const hasMoreFlag = data?.hasMore ?? false;
+          setPicks(items);
+          setTotal(totalCount);
+          setHasMore(hasMoreFlag);
+        })
+        .catch(() => {});
+    };
+    const id = setInterval(poll, 45_000);
+    const onVis = () => {
+      if (document.visibilityState === 'visible') poll();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, [hasPendingMarketplace, sportFilter, tipsterParam]);
 
   const recordView = (id: number) => {
     fetch(`${API_URL}/accumulators/${id}/view`, { method: 'POST' }).catch(() => {});

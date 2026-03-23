@@ -25,8 +25,10 @@ const en = {
   'nav.contact': 'Contact',
   'nav.marketplace': 'Marketplace',
   'nav.league_tables': 'League tables',
-  /** Bottom nav — short label */
+  /** Bottom nav — short labels */
   'nav.league_tables_short': 'Tables',
+  'nav.live_scores': 'Live scores',
+  'nav.live_scores_short': 'Live',
   'nav.dashboard': 'Dashboard',
   'nav.login': 'Sign In',
   'nav.register': 'Get Started Free',
@@ -814,6 +816,7 @@ const en = {
   'header.desc_privacy': 'How we protect your data',
   'header.age_disclaimer': 'BetRollover is an educational tipster platform. Use responsibly and within your means.',
   'header.desc_marketplace': 'Browse & buy verified tips',
+  'header.desc_live_scores': 'Scores for matches on this platform (catalog only)',
   'header.desc_league_tables': 'Standings & top scorers by league',
   'header.desc_leaderboard': 'Top tipsters by ROI & wins',
   'header.desc_find_tipsters': 'Browse verified tipster profiles',
@@ -827,6 +830,32 @@ const en = {
   'header.escrow_box': 'Every coupon is backed by our escrow system. Buyers get refunded on lost picks.',
   'resources.new_to_platform': 'New to the platform?',
   'resources.page_title': 'Guides & Resources',
+
+  // ── Live scores (platform catalog) ───────────────────────────────────────
+  'live_scores.page_title': 'Live scores',
+  'live_scores.tagline':
+    'Matches from our catalog only — not a global feed. Live, upcoming (not started), and recently finished fixtures with odds.',
+  'live_scores.in_play': 'In play',
+  'live_scores.not_started': 'Not started',
+  'live_scores.recent': 'Recently finished',
+  'live_scores.empty_live': 'No matches in play from our catalog right now.',
+  'live_scores.empty_upcoming': 'No upcoming matches in our catalog for the selected window.',
+  'live_scores.empty_recent': 'No finished matches in the last 48 hours.',
+  'live_scores.search_label': 'Search fixtures',
+  'live_scores.search_placeholder': 'Search by team or competition…',
+  'live_scores.clear_search': 'Clear search',
+  'live_scores.filter_hint': 'Countries and competitions listed here only appear when we have fixtures in those groups.',
+  'live_scores.matching_fixtures': 'matching fixtures',
+  'live_scores.country': 'Country',
+  'live_scores.all_countries': 'All countries',
+  'live_scores.world_international': 'World (international)',
+  'live_scores.competition': 'Competition',
+  'live_scores.all_competitions': 'All competitions',
+  'live_scores.clear_filters': 'Clear filters',
+  'live_scores.vs_score': '— : —',
+  'live_scores.footer_hint': 'Live stream pushes updates first; if streaming drops, this page falls back to ~45s refresh while visible. Backend sync runs about every minute.',
+  'live_scores.load_error': 'Could not load live scores. Try again shortly.',
+  'live_scores.no_match_filters': 'No fixtures match your search or filters. Try clearing filters or a shorter search.',
 
   // ── Errors ───────────────────────────────────────────────────────────────
   'error.not_found': 'Page Not Found',

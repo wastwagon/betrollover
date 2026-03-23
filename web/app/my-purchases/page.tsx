@@ -123,7 +123,7 @@ export default function MyPurchasesPage() {
         .then((r) => (r.ok ? r.json() : []))
         .then((data) => setPurchases(Array.isArray(data) ? data : []))
         .catch(() => {});
-    }, 60_000);
+    }, 45_000);
     return () => clearInterval(interval);
   }, [purchases, loading]);
 

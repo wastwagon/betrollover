@@ -43,7 +43,39 @@ interface EnableLeaguesResult {
   leagues: { apiId: number; name: string; country: string }[];
 }
 
+interface LiveStreamMetrics {
+  activeConnections: number;
+  totalConnections: number;
+  totalEvents: number;
+  totalPayloadBytes: number;
+  avgEventsPerMinute: number;
+  avgPayloadBytesPerEvent: number;
+  startedAt: string;
+  uptimeSeconds: number;
+  lastEventAt: string | null;
+}
+
+interface StreamAlertThresholds {
+  warnActiveConnections: number;
+  criticalActiveConnections: number;
+  warnEventsPerMinute: number;
+  warnAvgPayloadBytes: number;
+  warnStaleSeconds: number;
+  criticalStaleSeconds: number;
+}
+
+const DEFAULT_STREAM_THRESHOLDS: StreamAlertThresholds = {
+  warnActiveConnections: 120,
+  criticalActiveConnections: 250,
+  warnEventsPerMinute: 80,
+  warnAvgPayloadBytes: 10_000,
+  warnStaleSeconds: 90,
+  criticalStaleSeconds: 180,
+};
+
 export default function AdminFixturesPage() {
+  const LOOKAHEAD_DAYS = 3;
+  const LOOKAHEAD_HOURS = LOOKAHEAD_DAYS * 24;
   const router = useRouter();
   const [fixtures, setFixtures] = useState<DbFixture[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,6 +100,75 @@ export default function AdminFixturesPage() {
   const [enablingLeagues, setEnablingLeagues] = useState(false);
   const [enableLeaguesResult, setEnableLeaguesResult] = useState<EnableLeaguesResult | null>(null);
   const [enabledLeaguesCount, setEnabledLeaguesCount] = useState<number | null>(null);
+  const [streamMetrics, setStreamMetrics] = useState<LiveStreamMetrics | null>(null);
+  const [streamThresholds, setStreamThresholds] = useState<StreamAlertThresholds>(DEFAULT_STREAM_THRESHOLDS);
+  const [savingStreamThresholds, setSavingStreamThresholds] = useState(false);
+  const [streamThresholdError, setStreamThresholdError] = useState<string | null>(null);
+
+  const streamHealth = useMemo(() => {
+    if (!streamMetrics) return null;
+    const now = Date.now();
+    const lastEventAgeSec = streamMetrics.lastEventAt
+      ? Math.floor((now - new Date(streamMetrics.lastEventAt).getTime()) / 1000)
+      : null;
+
+    const alerts: { level: 'warn' | 'critical'; text: string }[] = [];
+    if (streamMetrics.activeConnections >= streamThresholds.criticalActiveConnections) {
+      alerts.push({ level: 'critical', text: `High active stream load (${streamMetrics.activeConnections})` });
+    } else if (streamMetrics.activeConnections >= streamThresholds.warnActiveConnections) {
+      alerts.push({ level: 'warn', text: `Rising active stream load (${streamMetrics.activeConnections})` });
+    }
+
+    if (streamMetrics.avgEventsPerMinute >= streamThresholds.warnEventsPerMinute) {
+      alerts.push({ level: 'warn', text: `Event throughput spike (${streamMetrics.avgEventsPerMinute}/min)` });
+    }
+
+    if (streamMetrics.avgPayloadBytesPerEvent >= streamThresholds.warnAvgPayloadBytes) {
+      alerts.push({ level: 'warn', text: `Large average payload (${streamMetrics.avgPayloadBytesPerEvent} B/event)` });
+    }
+
+    if (lastEventAgeSec != null && lastEventAgeSec >= streamThresholds.criticalStaleSeconds) {
+      alerts.push({ level: 'critical', text: `No stream events for ${lastEventAgeSec}s` });
+    } else if (lastEventAgeSec != null && lastEventAgeSec >= streamThresholds.warnStaleSeconds) {
+      alerts.push({ level: 'warn', text: `Stream quiet for ${lastEventAgeSec}s` });
+    }
+
+    const critical = alerts.some((a) => a.level === 'critical');
+    return { alerts, critical, lastEventAgeSec };
+  }, [streamMetrics, streamThresholds]);
+
+  const loadStreamThresholds = useCallback(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    fetch(`${getApiUrl()}/admin/settings`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const t = data?.streamAlertThresholds;
+        if (t && typeof t.warnActiveConnections === 'number') {
+          setStreamThresholds({
+            warnActiveConnections: t.warnActiveConnections,
+            criticalActiveConnections: t.criticalActiveConnections,
+            warnEventsPerMinute: t.warnEventsPerMinute,
+            warnAvgPayloadBytes: t.warnAvgPayloadBytes,
+            warnStaleSeconds: t.warnStaleSeconds,
+            criticalStaleSeconds: t.criticalStaleSeconds,
+          });
+          setStreamThresholdError(null);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.removeItem('admin.streamAlertThresholds');
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const competitionOptions = useMemo(() => {
     const leagues = filterOptions.leagues || [];
@@ -87,7 +188,7 @@ export default function AdminFixturesPage() {
     if (!token) return;
     setLoading(true);
     const params = new URLSearchParams();
-    params.set('days', '7');
+    params.set('days', String(LOOKAHEAD_DAYS));
     if (selectedCountry) params.set('country', selectedCountry);
     if (selectedCompetition) params.set('league', selectedCompetition);
     fetch(`${getApiUrl()}/fixtures?${params.toString()}`, {
@@ -128,7 +229,7 @@ export default function AdminFixturesPage() {
       .catch(() => {});
   }, []);
 
-  // Reset country/competition if no longer in filtered list (e.g. no fixtures in next 7 days)
+  // Reset country/competition if no longer in filtered list (e.g. no fixtures in next 72 hours)
   useEffect(() => {
     const countries = filterOptions.countries || [];
     const leagues = filterOptions.leagues || [];
@@ -169,11 +270,68 @@ export default function AdminFixturesPage() {
       .catch(() => setEnabledLeaguesCount(null));
   }, []);
 
+  const loadStreamMetrics = useCallback(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    fetch(`${getApiUrl()}/fixtures/platform/live-scores/stream/metrics`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setStreamMetrics(data))
+      .catch(() => setStreamMetrics(null));
+  }, []);
+
   useEffect(() => {
     if (!localStorage.getItem('token')) return;
     loadDiagnostic();
     loadEnabledLeaguesCount();
-  }, [loadDiagnostic, loadEnabledLeaguesCount]);
+    loadStreamMetrics();
+    loadStreamThresholds();
+  }, [loadDiagnostic, loadEnabledLeaguesCount, loadStreamMetrics, loadStreamThresholds]);
+
+  useEffect(() => {
+    if (!localStorage.getItem('token')) return;
+    const id = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      loadStreamMetrics();
+    }, 20_000);
+    return () => clearInterval(id);
+  }, [loadStreamMetrics]);
+
+  const saveStreamThresholdsToServer = async (next: StreamAlertThresholds) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setSavingStreamThresholds(true);
+    setStreamThresholdError(null);
+    try {
+      const res = await fetch(`${getApiUrl()}/admin/settings/stream-alert-thresholds`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(next),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setStreamThresholdError(err.message || 'Failed to save thresholds');
+        loadStreamThresholds();
+        return;
+      }
+      const saved = await res.json();
+      setStreamThresholds({
+        warnActiveConnections: saved.warnActiveConnections,
+        criticalActiveConnections: saved.criticalActiveConnections,
+        warnEventsPerMinute: saved.warnEventsPerMinute,
+        warnAvgPayloadBytes: saved.warnAvgPayloadBytes,
+        warnStaleSeconds: saved.warnStaleSeconds,
+        criticalStaleSeconds: saved.criticalStaleSeconds,
+      });
+    } catch {
+      setStreamThresholdError('Network error while saving thresholds');
+      loadStreamThresholds();
+    } finally {
+      setSavingStreamThresholds(false);
+    }
+  };
 
   const enableAllLeaguesFromApi = async () => {
     const token = localStorage.getItem('token');
@@ -330,7 +488,7 @@ export default function AdminFixturesPage() {
     }
   };
 
-  const syncOdds = async (force = false, limit?: number) => {
+  const syncOdds = async (force = false) => {
     const token = localStorage.getItem('token');
     if (!token) return;
     setSyncing(true);
@@ -339,7 +497,6 @@ export default function AdminFixturesPage() {
     try {
       const params = new URLSearchParams();
       if (force) params.set('force', 'true');
-      if (limit && limit > 0) params.set('limit', String(Math.min(limit, 500)));
       const url = `${getApiUrl()}/fixtures/sync/odds${params.toString() ? `?${params.toString()}` : ''}`;
       const res = await fetch(url, {
         method: 'POST',
@@ -370,7 +527,7 @@ export default function AdminFixturesPage() {
             Upcoming matches from API-Sports. Sync and manage fixtures for your platform.
           </p>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Showing <strong className="text-gray-900 dark:text-white">{fixtures.length}</strong> upcoming fixture{fixtures.length !== 1 ? 's' : ''} for next 7 days
+            Showing <strong className="text-gray-900 dark:text-white">{fixtures.length}</strong> upcoming fixture{fixtures.length !== 1 ? 's' : ''} for next {LOOKAHEAD_HOURS} hours
             {syncResult && syncResult.fixtures > 0 && (
               <span className="ml-2 text-emerald-600 dark:text-emerald-400">
                 (Last sync: {syncResult.fixtures} fixtures{syncResult.leagues > 0 ? `, ${syncResult.leagues} leagues` : ''})
@@ -450,6 +607,165 @@ export default function AdminFixturesPage() {
             )}
           </div>
 
+          {/* Live scores stream observability */}
+          <div className="mt-4 p-5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Live stream metrics</h2>
+              <button
+                type="button"
+                onClick={loadStreamMetrics}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Refresh
+              </button>
+            </div>
+            {streamHealth && streamHealth.alerts.length > 0 && (
+              <div
+                className={`mb-3 rounded-lg border px-3 py-2 text-sm ${
+                  streamHealth.critical
+                    ? 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-200'
+                    : 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-200'
+                }`}
+              >
+                <p className="font-semibold mb-1">Stream alerts</p>
+                <ul className="list-disc pl-4 space-y-0.5">
+                  {streamHealth.alerts.map((a) => (
+                    <li key={a.text}>{a.text}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {!streamMetrics ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">Metrics unavailable right now.</p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <div className="rounded-lg bg-gray-50 dark:bg-gray-700/40 p-3">
+                  <p className="text-gray-500 dark:text-gray-400">Active connections</p>
+                  <p className="text-xl font-bold text-gray-900 dark:text-white">{streamMetrics.activeConnections}</p>
+                </div>
+                <div className="rounded-lg bg-gray-50 dark:bg-gray-700/40 p-3">
+                  <p className="text-gray-500 dark:text-gray-400">Total connections</p>
+                  <p className="text-xl font-bold text-gray-900 dark:text-white">{streamMetrics.totalConnections}</p>
+                </div>
+                <div className="rounded-lg bg-gray-50 dark:bg-gray-700/40 p-3">
+                  <p className="text-gray-500 dark:text-gray-400">Events/min</p>
+                  <p className="text-xl font-bold text-gray-900 dark:text-white">{streamMetrics.avgEventsPerMinute}</p>
+                </div>
+                <div className="rounded-lg bg-gray-50 dark:bg-gray-700/40 p-3">
+                  <p className="text-gray-500 dark:text-gray-400">Avg payload/event</p>
+                  <p className="text-xl font-bold text-gray-900 dark:text-white">{streamMetrics.avgPayloadBytesPerEvent} B</p>
+                </div>
+                <div className="rounded-lg bg-gray-50 dark:bg-gray-700/40 p-3 col-span-2">
+                  <p className="text-gray-500 dark:text-gray-400">Total payload</p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">{streamMetrics.totalPayloadBytes.toLocaleString()} B</p>
+                </div>
+                <div className="rounded-lg bg-gray-50 dark:bg-gray-700/40 p-3 col-span-2">
+                  <p className="text-gray-500 dark:text-gray-400">Last event</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {streamMetrics.lastEventAt ? new Date(streamMetrics.lastEventAt).toLocaleString() : 'No events yet'}
+                  </p>
+                  {streamHealth?.lastEventAgeSec != null && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Age: {streamHealth.lastEventAgeSec}s
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Alert thresholds</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                Stored in the database for all admins. Apply migration <code className="text-[10px]">074_stream_alert_thresholds</code> on production before saving.
+              </p>
+              {streamThresholdError && (
+                <p className="text-xs text-red-600 dark:text-red-400 mb-2">{streamThresholdError}</p>
+              )}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <label className="text-xs text-gray-600 dark:text-gray-400">
+                  Warn active
+                  <input
+                    type="number"
+                    min={1}
+                    value={streamThresholds.warnActiveConnections}
+                    onChange={(e) => setStreamThresholds((s) => ({ ...s, warnActiveConnections: Math.max(1, Number(e.target.value) || 1) }))}
+                    className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1 text-sm text-gray-900 dark:text-white"
+                  />
+                </label>
+                <label className="text-xs text-gray-600 dark:text-gray-400">
+                  Critical active
+                  <input
+                    type="number"
+                    min={1}
+                    value={streamThresholds.criticalActiveConnections}
+                    onChange={(e) => setStreamThresholds((s) => ({ ...s, criticalActiveConnections: Math.max(1, Number(e.target.value) || 1) }))}
+                    className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1 text-sm text-gray-900 dark:text-white"
+                  />
+                </label>
+                <label className="text-xs text-gray-600 dark:text-gray-400">
+                  Warn events/min
+                  <input
+                    type="number"
+                    min={1}
+                    value={streamThresholds.warnEventsPerMinute}
+                    onChange={(e) => setStreamThresholds((s) => ({ ...s, warnEventsPerMinute: Math.max(1, Number(e.target.value) || 1) }))}
+                    className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1 text-sm text-gray-900 dark:text-white"
+                  />
+                </label>
+                <label className="text-xs text-gray-600 dark:text-gray-400">
+                  Warn payload (B)
+                  <input
+                    type="number"
+                    min={1}
+                    value={streamThresholds.warnAvgPayloadBytes}
+                    onChange={(e) => setStreamThresholds((s) => ({ ...s, warnAvgPayloadBytes: Math.max(1, Number(e.target.value) || 1) }))}
+                    className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1 text-sm text-gray-900 dark:text-white"
+                  />
+                </label>
+                <label className="text-xs text-gray-600 dark:text-gray-400">
+                  Warn stale (s)
+                  <input
+                    type="number"
+                    min={1}
+                    value={streamThresholds.warnStaleSeconds}
+                    onChange={(e) => setStreamThresholds((s) => ({ ...s, warnStaleSeconds: Math.max(1, Number(e.target.value) || 1) }))}
+                    className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1 text-sm text-gray-900 dark:text-white"
+                  />
+                </label>
+                <label className="text-xs text-gray-600 dark:text-gray-400">
+                  Critical stale (s)
+                  <input
+                    type="number"
+                    min={1}
+                    value={streamThresholds.criticalStaleSeconds}
+                    onChange={(e) => setStreamThresholds((s) => ({ ...s, criticalStaleSeconds: Math.max(1, Number(e.target.value) || 1) }))}
+                    className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1 text-sm text-gray-900 dark:text-white"
+                  />
+                </label>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => saveStreamThresholdsToServer(streamThresholds)}
+                  disabled={savingStreamThresholds}
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                >
+                  {savingStreamThresholds ? 'Saving…' : 'Save thresholds'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStreamThresholds(DEFAULT_STREAM_THRESHOLDS);
+                    void saveStreamThresholdsToServer(DEFAULT_STREAM_THRESHOLDS);
+                  }}
+                  disabled={savingStreamThresholds}
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                >
+                  Reset defaults
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <label className="text-gray-600 dark:text-gray-400 text-sm font-medium">Country</label>
             <select
@@ -517,12 +833,12 @@ export default function AdminFixturesPage() {
               Force Refresh Odds
             </button>
             <button
-              onClick={() => syncOdds(false, 500)}
+              onClick={() => syncOdds(true)}
               disabled={syncing || fetchingResults || settling || reconciling}
-              title="Sync odds for up to 500 fixtures that don't have odds yet (use after enabling all leagues)"
+              title="Re-fetch odds for all upcoming fixtures in the configured 72-hour window."
               className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-cyan-600 to-cyan-700 text-white hover:from-cyan-700 hover:to-cyan-800 disabled:opacity-50 transition-all shadow-md"
             >
-              Sync odds (backfill up to 500)
+              Sync odds (backfill all)
             </button>
           </div>
         </div>
@@ -583,7 +899,7 @@ export default function AdminFixturesPage() {
               )}
             </button>
             <p className="w-full text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Use when matches have finished but coupons are still &quot;pending&quot;. The cron runs every 5 min — this forces it immediately.
+              Use when matches have finished but coupons are still &quot;pending&quot;. Scheduled sync runs about every minute — this forces it immediately.
               {' '}
               <strong className="text-gray-600 dark:text-gray-300">Reconcile</strong> is for when scores were wrong at settlement (e.g. API quota): fetch correct scores first, then run it — it updates already-settled coupons and wallets if the outcome flips.
             </p>
@@ -664,7 +980,7 @@ export default function AdminFixturesPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No fixtures for next 7 days</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No fixtures for next {LOOKAHEAD_HOURS} hours</h3>
             <p className="text-gray-600 dark:text-gray-400">Click Sync to fetch fixtures from API-Sports.</p>
           </div>
         )}

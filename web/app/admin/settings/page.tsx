@@ -15,6 +15,14 @@ interface Settings {
   isActive?: boolean;
   minimumROI?: number;
   platformCommissionRate?: number;
+  streamAlertThresholds?: {
+    warnActiveConnections: number;
+    criticalActiveConnections: number;
+    warnEventsPerMinute: number;
+    warnAvgPayloadBytes: number;
+    warnStaleSeconds: number;
+    criticalStaleSeconds: number;
+  };
   currency: string;
   country: string;
   appName: string;
@@ -1047,9 +1055,27 @@ export default function AdminSettingsPage() {
                       On startup, the API logs a warning if scheduling or football sync is disabled — check host logs if nothing
                       updates automatically. Free/serverless hosts that sleep still need always-on or an external uptime ping so
                       the process can run crons. Only <strong>enabled</strong> leagues are stored. Odds sync every 2 hours. Live
-                      updates every 5 minutes; finished results every 5 minutes. Last sync times below use your browser&apos;s local
+                      updates about every minute; finished results about every minute; settlement about every minute. Last sync times below use your browser&apos;s local
                       timezone, <strong>YYYY-MM-DD HH:mm:ss</strong> (24-hour).
                     </p>
+                  </div>
+
+                  <div className="mt-4 p-3 bg-cyan-50 dark:bg-cyan-900/20 rounded-xl border border-cyan-200 dark:border-cyan-800">
+                    <p className="text-sm font-semibold text-cyan-900 dark:text-cyan-100 mb-1">
+                      Live scores stream (SSE)
+                    </p>
+                    <p className="text-xs text-cyan-800 dark:text-cyan-200 mb-2">
+                      Alert thresholds for the live stream metrics panel are stored in the database (
+                      <code className="text-[10px]">api_settings</code>) and apply to every admin. Run migration{' '}
+                      <code className="text-[10px]">074_stream_alert_thresholds</code> once, then edit values on Fixtures.
+                    </p>
+                    <Link
+                      href="/admin/fixtures"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-700 dark:text-cyan-300 hover:underline"
+                    >
+                      Open Fixtures — Live stream metrics
+                      <span aria-hidden>→</span>
+                    </Link>
                   </div>
                 </div>
               </div>
