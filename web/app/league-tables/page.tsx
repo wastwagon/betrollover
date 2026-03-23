@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useT } from '@/context/LanguageContext';
@@ -14,16 +14,17 @@ import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 
 type LeagueRow = { apiId: number; name: string; country: string | null; season: number | null };
 
+/** API-Football — English Premier League (default competition on this page). */
+const DEFAULT_LEAGUE_TABLE_API_ID = 39;
+
 export default function LeagueTablesPage() {
   const pathname = usePathname();
   const t = useT();
   const [rows, setRows] = useState<LeagueRow[]>([]);
   const [directoryFailed, setDirectoryFailed] = useState(false);
   const [selectedApiId, setSelectedApiId] = useState<number>(0);
-  /** Shown in the season field; empty = let the API pick the current season on each insights request. */
-  const [seasonInput, setSeasonInput] = useState('');
-  const [seasonResolving, setSeasonResolving] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
+  const defaultLeagueAppliedRef = useRef(false);
 
   useEffect(() => {
     const syncToken = () => setSignedIn(typeof window !== 'undefined' && !!localStorage.getItem('token'));
@@ -62,62 +63,33 @@ export default function LeagueTablesPage() {
     };
   }, []);
 
+  /** First load: pre-select Premier League when the directory includes it (user can change). */
   useEffect(() => {
-    if (!selectedApiId) {
-      setSeasonInput('');
-      setSeasonResolving(false);
-      return;
+    if (rows.length === 0) return;
+    if (defaultLeagueAppliedRef.current) return;
+    defaultLeagueAppliedRef.current = true;
+    if (selectedApiId !== 0) return;
+    if (rows.some((l) => l.apiId === DEFAULT_LEAGUE_TABLE_API_ID)) {
+      setSelectedApiId(DEFAULT_LEAGUE_TABLE_API_ID);
     }
-    let cancelled = false;
-    setSeasonResolving(true);
-    fetch(`${getApiUrl()}/fixtures/leagues/${selectedApiId}/season`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-      .then((data: { season?: number | null }) => {
-        if (cancelled) return;
-        const apiSeason = data?.season;
-        const dirSeason = rows.find((l) => l.apiId === selectedApiId)?.season ?? null;
-        const pick =
-          apiSeason != null && apiSeason > 1990
-            ? apiSeason
-            : dirSeason != null && dirSeason > 1990
-              ? dirSeason
-              : null;
-        setSeasonInput(pick != null ? String(pick) : '');
-      })
-      .catch(() => {
-        if (cancelled) return;
-        const dirSeason = rows.find((l) => l.apiId === selectedApiId)?.season ?? null;
-        setSeasonInput(dirSeason != null && dirSeason > 1990 ? String(dirSeason) : '');
-      })
-      .finally(() => {
-        if (!cancelled) setSeasonResolving(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedApiId, rows]);
+  }, [rows, selectedApiId]);
 
   const leaguesSorted = useMemo(() => {
-    return [...rows].sort((a, b) => {
+    const sorted = [...rows].sort((a, b) => {
       const ca = (a.country || '').toLowerCase();
       const cb = (b.country || '').toLowerCase();
       if (ca !== cb) return ca.localeCompare(cb);
       return a.name.localeCompare(b.name);
     });
+    const pl = sorted.find((l) => l.apiId === DEFAULT_LEAGUE_TABLE_API_ID);
+    if (!pl) return sorted;
+    return [pl, ...sorted.filter((l) => l.apiId !== DEFAULT_LEAGUE_TABLE_API_ID)];
   }, [rows]);
 
   const selectedLeague = useMemo(
     () => rows.find((l) => l.apiId === selectedApiId) ?? null,
     [rows, selectedApiId],
   );
-
-  /** When null, insights endpoint resolves season from DB/API (no hardcoded year). */
-  const seasonForInsights = useMemo(() => {
-    const raw = seasonInput.trim();
-    if (!raw) return null;
-    const n = parseInt(raw, 10);
-    return Number.isFinite(n) && n > 1990 ? n : null;
-  }, [seasonInput]);
 
   return (
     <div className="min-h-screen bg-[var(--bg)] flex flex-col">
@@ -143,51 +115,27 @@ export default function LeagueTablesPage() {
           <h2 className="text-sm font-bold uppercase tracking-wide text-[var(--text-muted)]">
             {t('league_stats.filters_heading')}
           </h2>
-          <div className="grid grid-cols-1 gap-5 md:gap-4">
-            <div className="space-y-1.5">
-              <label htmlFor="lt-league" className="text-sm font-medium text-[var(--text)]">
-                {t('league_stats.league')}
-              </label>
-              <select
-                id="lt-league"
-                value={selectedApiId || ''}
-                onChange={(e) => setSelectedApiId(Number(e.target.value) || 0)}
-                className="w-full min-h-[48px] px-3 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] touch-manipulation"
-              >
-                <option value="">{t('league_stats.choose_league')}</option>
-                {leaguesSorted.map((l) => (
-                  <option key={l.apiId} value={l.apiId}>
-                    {l.name}
-                    {l.country ? ` · ${l.country}` : ''} (ID {l.apiId})
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-[var(--text-muted)] leading-snug">
-                {t('league_stats.league_help')}
-              </p>
-            </div>
-            <div className="space-y-1.5">
-              <label htmlFor="lt-season" className="text-sm font-medium text-[var(--text)]">
-                {t('league_stats.season_optional')}
-              </label>
-              <input
-                id="lt-season"
-                type="text"
-                inputMode="numeric"
-                placeholder={
-                  seasonResolving && !seasonInput.trim()
-                    ? t('league_stats.season_loading')
-                    : t('league_stats.season_placeholder_auto')
-                }
-                value={seasonInput}
-                disabled={!selectedApiId || seasonResolving}
-                onChange={(e) => setSeasonInput(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                className="w-full max-w-none sm:max-w-[200px] min-h-[48px] px-3 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] touch-manipulation disabled:opacity-60"
-              />
-              <p className="text-xs text-[var(--text-muted)] leading-snug">
-                {t('league_stats.season_auto_help')}
-              </p>
-            </div>
+          <div className="space-y-1.5">
+            <label htmlFor="lt-league" className="text-sm font-medium text-[var(--text)]">
+              {t('league_stats.league')}
+            </label>
+            <select
+              id="lt-league"
+              value={selectedApiId || ''}
+              onChange={(e) => setSelectedApiId(Number(e.target.value) || 0)}
+              className="w-full min-h-[48px] px-3 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] touch-manipulation"
+            >
+              <option value="">{t('league_stats.choose_league')}</option>
+              {leaguesSorted.map((l) => (
+                <option key={l.apiId} value={l.apiId}>
+                  {l.name}
+                  {l.country ? ` · ${l.country}` : ''} (ID {l.apiId})
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-[var(--text-muted)] leading-snug">
+              {t('league_stats.league_help')}
+            </p>
           </div>
         </div>
 
@@ -214,7 +162,6 @@ export default function LeagueTablesPage() {
         <LeagueInsightsPanel
           layout="full"
           leagueApiId={selectedApiId}
-          season={seasonForInsights}
           subtitle={selectedLeague?.name}
           selectionEmptyHint={t('league_stats.select_hint')}
         />

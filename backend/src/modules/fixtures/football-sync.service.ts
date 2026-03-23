@@ -9,6 +9,7 @@ import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { OddsSyncService } from './odds-sync.service';
 
 import { getSportApiBaseUrl } from '../../config/sports.config';
+import { normalizeFixtureElapsed } from './fixture-status-elapsed.util';
 import {
   getSyncDates,
   MAX_LEAGUE_BACKFILL_PER_RUN,
@@ -231,6 +232,7 @@ export class FootballSyncService {
               status: fix.status?.short || 'NS',
               homeScore: f.goals?.home ?? null,
               awayScore: f.goals?.away ?? null,
+              statusElapsed: normalizeFixtureElapsed(fix.status?.short, fix.status?.elapsed),
               syncedAt: new Date(),
             },
             ['apiId'],

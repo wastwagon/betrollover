@@ -103,7 +103,7 @@ export class FixturesController {
 
     /** Include matchDate so NS→live transitions and kickoff changes emit deltas. */
     const rowSig = (row: any) =>
-      `${row?.id}|${row?.status ?? ''}|${row?.homeScore ?? ''}|${row?.awayScore ?? ''}|${row?.syncedAt ?? ''}|${row?.matchDate ?? ''}`;
+      `${row?.id}|${row?.status ?? ''}|${row?.statusElapsed ?? ''}|${row?.homeScore ?? ''}|${row?.awayScore ?? ''}|${row?.syncedAt ?? ''}|${row?.matchDate ?? ''}`;
 
     return defer(() => {
       this.liveStreamActiveConnections += 1;
@@ -240,8 +240,10 @@ export class FixturesController {
   getLeagueInsights(
     @Param('leagueApiId', ParseIntPipe) leagueApiId: number,
     @Query('season') season?: string,
+    @Query('refresh') refresh?: string,
   ) {
-    return this.leagueInsightsService.getInsights(leagueApiId, season);
+    const forceRefresh = refresh === '1' || refresh === 'true' || refresh === 'yes';
+    return this.leagueInsightsService.getInsights(leagueApiId, season, forceRefresh);
   }
 
   @Get('filters')

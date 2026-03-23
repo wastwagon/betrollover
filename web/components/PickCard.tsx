@@ -7,6 +7,7 @@ import { getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { TeamBadge } from './TeamBadge';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useT } from '@/context/LanguageContext';
+import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 
 interface Pick {
   id?: number;
@@ -17,6 +18,8 @@ interface Pick {
   homeScore?: number | null;
   awayScore?: number | null;
   fixtureStatus?: string | null;
+  /** Live minute from API when fixture is in-play */
+  fixtureStatusElapsed?: number | null;
   status?: string;
   /** Pick-level result (won/lost/void) - when set, match is finished */
   result?: string;
@@ -316,7 +319,9 @@ export function PickCard({
                   const pickSettled = ['won', 'lost'].includes(p.result || '');
                   const isStarted = matchDate ? matchDate <= new Date() : false;
                   const hasLiveScore = p.homeScore != null && p.awayScore != null;
-                  const isLive = !pickSettled && ['1H', '2H', 'HT', 'ET', 'P', 'LIVE'].includes(p.fixtureStatus || '');
+                  const isLive =
+                    !pickSettled &&
+                    ['1H', '2H', 'HT', 'ET', 'P', 'BT', 'LIVE'].includes(p.fixtureStatus || '');
                   const isFinished = pickSettled || ['FT', 'AET', 'PEN'].includes(p.fixtureStatus || '');
                   return (
                     <li key={i} className="flex flex-col gap-0 text-[11px]">
@@ -340,7 +345,9 @@ export function PickCard({
                             {isFinished
                               ? (hasLiveScore ? `🏁 FT ${p.homeScore}-${p.awayScore}` : '🏁 FT')
                               : isLive
-                                ? (hasLiveScore ? `🔴 Live ${p.homeScore}-${p.awayScore}` : '🔴 Live')
+                                ? (hasLiveScore
+                                    ? `🔴 ${formatLiveFixturePeriod(p.fixtureStatus, p.fixtureStatusElapsed)} ${p.homeScore}-${p.awayScore}`
+                                    : `🔴 ${formatLiveFixturePeriod(p.fixtureStatus, p.fixtureStatusElapsed)}`)
                                 : isStarted
                                   ? '⏱ Started'
                                   : matchDate

@@ -9,6 +9,7 @@ import { EnabledLeague } from './entities/enabled-league.entity';
 import { MarketFilterService } from './market-filter.service';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { getSportApiBaseUrl } from '../../config/sports.config';
+import { normalizeFixtureElapsed } from './fixture-status-elapsed.util';
 
 @Injectable()
 export class OddsSyncService {
@@ -216,6 +217,7 @@ export class OddsSyncService {
               status: fix.status?.short || 'NS',
               homeScore: item.goals?.home ?? null,
               awayScore: item.goals?.away ?? null,
+              statusElapsed: normalizeFixtureElapsed(fix.status?.short, fix.status?.elapsed),
               syncedAt: new Date(),
             },
             ['apiId'],

@@ -45,6 +45,10 @@ export class Fixture {
   @Column({ length: 20, default: 'NS' })
   status: string;
 
+  /** API-Football live minute (`status.elapsed`); null when not in-play. */
+  @Column({ type: 'smallint', nullable: true, name: 'status_elapsed' })
+  statusElapsed: number | null = null;
+
   @Column({ type: 'int', nullable: true })
   homeScore: number | null = null;
 

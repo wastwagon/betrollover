@@ -9,6 +9,7 @@ import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
 import { TeamBadge } from '@/components/TeamBadge';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
+import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { LeagueInsightsPanel } from '@/components/LeagueInsightsPanel';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -23,6 +24,7 @@ interface Pick {
   homeScore?: number | null;
   awayScore?: number | null;
   fixtureStatus?: string | null;
+  fixtureStatusElapsed?: number | null;
   homeTeamLogo?: string | null;
   awayTeamLogo?: string | null;
   homeTeamName?: string | null;
@@ -528,7 +530,9 @@ export default function CouponDetailPage() {
                   pick.sport.charAt(0).toUpperCase() + pick.sport.slice(1).replace('_', ' ')
                 ] ?? SPORT_META[pick.sport] : null;
                 const hasScore = pick.homeScore != null && pick.awayScore != null;
-                const isLive = pick.fixtureStatus === 'live' || pick.fixtureStatus === '1H' || pick.fixtureStatus === '2H';
+                const isLive =
+                  pick.fixtureStatus === 'live' ||
+                  ['1H', '2H', 'HT', 'ET', 'P', 'BT'].includes(pick.fixtureStatus || '');
 
                 return (
                   <div
@@ -578,8 +582,8 @@ export default function CouponDetailPage() {
                         <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-muted)]">
                           {pick.matchDate && <span>{formatDateTime(pick.matchDate)}</span>}
                           {isLive && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 font-bold text-[10px]">
-                              🔴 LIVE
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 font-bold text-[10px] tabular-nums">
+                              🔴 {formatLiveFixturePeriod(pick.fixtureStatus, pick.fixtureStatusElapsed)}
                             </span>
                           )}
                           {pickSport && coupon.sport === 'Multi-Sport' && (

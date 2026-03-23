@@ -10,6 +10,7 @@ import { Inject } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 
 import { getSportApiBaseUrl } from '../../config/sports.config';
+import { normalizeFixtureElapsed } from './fixture-status-elapsed.util';
 import {
   MAX_FIXTURES_TO_UPDATE_PER_RUN,
   RESULTS_FETCH_BATCH_SIZE,
@@ -131,12 +132,14 @@ export class FixtureUpdateService {
         const fix = fixtureData.fixture;
         const goals = fixtureData.goals;
 
+        const short = fix.status?.short ?? '';
         await this.fixtureRepo.update(
           { id: dbId },
           {
-            status: fix.status.short,
+            status: short,
             homeScore: goals?.home ?? null,
             awayScore: goals?.away ?? null,
+            statusElapsed: normalizeFixtureElapsed(short, fix.status?.elapsed),
             syncedAt: new Date(),
           }
         );
@@ -261,6 +264,7 @@ export class FixtureUpdateService {
               status,
               homeScore: goals.home,
               awayScore: goals.away,
+              statusElapsed: normalizeFixtureElapsed(status, fix?.status?.elapsed),
               syncedAt: new Date(),
             },
           );
@@ -269,7 +273,7 @@ export class FixtureUpdateService {
           // Postponed/cancelled: update status so settlement can void linked picks
           await this.fixtureRepo.update(
             { id: dbId },
-            { status, syncedAt: new Date() },
+            { status, statusElapsed: null, syncedAt: new Date() },
           );
           updated++;
         }

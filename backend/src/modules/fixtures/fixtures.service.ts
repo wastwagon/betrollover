@@ -415,6 +415,7 @@ export class FixturesService {
       country: f.league?.country ?? null,
       matchDate: f.matchDate?.toISOString?.() ?? f.matchDate,
       status: f.status,
+      statusElapsed: f.statusElapsed ?? null,
       homeScore: f.homeScore,
       awayScore: f.awayScore,
       syncedAt: f.syncedAt?.toISOString?.() ?? f.syncedAt,

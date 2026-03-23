@@ -65,7 +65,7 @@ export function LeagueInsightsPanel({
   const [loading, setLoading] = useState(false);
   const [localErr, setLocalErr] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (opts?: { refresh?: boolean }) => {
     const token = localStorage.getItem('token');
     if (!token) {
       setLocalErr('Sign in to view live league table and top scorers.');
@@ -74,8 +74,11 @@ export function LeagueInsightsPanel({
     setLoading(true);
     setLocalErr(null);
     try {
-      const q = season != null && season > 1990 ? `?season=${season}` : '';
-      const r = await fetch(`${getApiUrl()}/fixtures/leagues/${leagueApiId}/insights${q}`, {
+      const params = new URLSearchParams();
+      if (season != null && season > 1990) params.set('season', String(season));
+      if (opts?.refresh) params.set('refresh', '1');
+      const qs = params.toString();
+      const r = await fetch(`${getApiUrl()}/fixtures/leagues/${leagueApiId}/insights${qs ? `?${qs}` : ''}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!r.ok) {
@@ -189,7 +192,7 @@ export function LeagueInsightsPanel({
               type="button"
               onClick={() => {
                 setData(null);
-                void load();
+                void load({ refresh: true });
               }}
               disabled={loading}
               className={`ml-auto font-medium text-[var(--primary)] hover:underline disabled:opacity-50 touch-manipulation ${

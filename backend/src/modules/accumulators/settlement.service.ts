@@ -93,7 +93,7 @@ export class SettlementService {
       if (f.homeScore != null && f.awayScore != null && !seen.has(f.id)) {
         seen.add(f.id);
         finishedFixtures.push(f);
-        await this.fixtureRepo.update({ id: f.id }, { status: 'FT' });
+        await this.fixtureRepo.update({ id: f.id }, { status: 'FT', statusElapsed: null });
       }
     }
 

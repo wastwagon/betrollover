@@ -11,6 +11,17 @@ import { safeJson } from '../../common/fetch-json.util';
 const CACHE_TTL_MS = 45 * 60 * 1000;
 const TOP_SCORER_LIMIT = 18;
 
+/** API-Sports returns HTTP 200 with `errors: { ... }` and empty `response` when the key is missing, plan blocks the endpoint, etc. */
+function assertApiFootballNoErrors(json: unknown, context: string): void {
+  if (!json || typeof json !== 'object') return;
+  const o = json as Record<string, unknown>;
+  const err = o.errors;
+  if (err && typeof err === 'object' && !Array.isArray(err) && Object.keys(err).length > 0) {
+    const parts = Object.entries(err as Record<string, unknown>).map(([k, v]) => `${k}: ${String(v)}`);
+    throw new Error(`${context}: ${parts.join('; ')}`);
+  }
+}
+
 export interface StandingsTableRow {
   rank: number;
   teamName: string;
@@ -126,7 +137,12 @@ export class LeagueInsightsService {
   private parseStandingsResponse(raw: unknown): { groups: StandingsGroup[]; leagueName: string | null; country: string | null } {
     const r = raw as {
       response?: Array<{
-        league?: { name?: string; country?: string };
+        league?: {
+          name?: string;
+          country?: string;
+          /** Newer API-Football responses nest standings here (was also on block root). */
+          standings?: unknown[];
+        };
         /** API-Football: array of groups; each group is an array of standing rows (not `{ table }`). */
         standings?: unknown[];
       }>;
@@ -138,17 +154,22 @@ export class LeagueInsightsService {
 
     const pushGroup = (groupLabel: string | null, rowList: unknown[]) => {
       const table: StandingsTableRow[] = [];
-      for (const row of rowList) {
-        const tr = row as Record<string, unknown>;
+      const rows = rowList.filter(
+        (r): r is Record<string, unknown> =>
+          r != null && typeof r === 'object' && !Array.isArray(r) && 'team' in r,
+      );
+      for (const row of rows) {
+        const tr = row;
         const team = tr.team as Record<string, unknown> | undefined;
         const all = tr.all as Record<string, unknown> | undefined;
         const goals = tr.goals as Record<string, unknown> | undefined;
+        const allGoals = all?.goals as Record<string, unknown> | undefined;
         const played = Number(all?.played ?? 0);
         const win = Number(all?.win ?? 0);
         const draw = Number(all?.draw ?? 0);
         const loss = Number(all?.lose ?? all?.loss ?? 0);
-        const gf = Number(goals?.for ?? 0);
-        const ga = Number(goals?.against ?? 0);
+        const gf = Number(goals?.for ?? allGoals?.for ?? 0);
+        const ga = Number(goals?.against ?? allGoals?.against ?? 0);
         table.push({
           rank: Number(tr.rank ?? table.length + 1),
           teamName: String(team?.name ?? '—'),
@@ -166,12 +187,15 @@ export class LeagueInsightsService {
       groups.push({ group: groupLabel, table });
     };
 
-    for (const s of block?.standings ?? []) {
+    const standingsBlocks = block?.standings ?? block?.league?.standings ?? [];
+    for (const s of standingsBlocks) {
       if (Array.isArray(s)) {
-        const g0 = s[0] as Record<string, unknown> | undefined;
+        /** Flatten occasional double-nested arrays from API (`[[{team…},…]]`). */
+        const flatRows = s.flat(Infinity) as unknown[];
+        const g0 = flatRows[0] as Record<string, unknown> | undefined;
         const gLabel =
           g0?.group != null && String(g0.group) !== 'null' ? String(g0.group) : null;
-        pushGroup(gLabel, s);
+        pushGroup(gLabel, flatRows);
         continue;
       }
       if (s && typeof s === 'object' && Array.isArray((s as { table?: unknown[] }).table)) {
@@ -222,12 +246,13 @@ export class LeagueInsightsService {
       throw new Error(`standings HTTP ${res.status}`);
     }
     const json = await safeJson(res);
+    assertApiFootballNoErrors(json, 'standings');
     const parsed = this.parseStandingsResponse(json);
     return {
       groups: parsed.groups,
       leagueName: parsed.leagueName,
       country: parsed.country,
-      v: 2,
+      v: 3,
     };
   }
 
@@ -240,10 +265,11 @@ export class LeagueInsightsService {
       throw new Error(`topscorers HTTP ${res.status}`);
     }
     const json = await safeJson(res);
+    assertApiFootballNoErrors(json, 'topscorers');
     return { rows: this.parseTopScorersResponse(json) };
   }
 
-  async getInsights(leagueApiId: number, seasonQuery?: string): Promise<LeagueInsightsDto> {
+  async getInsights(leagueApiId: number, seasonQuery?: string, forceRefresh = false): Promise<LeagueInsightsDto> {
     const season = await this.resolveSeason(leagueApiId, seasonQuery);
     if (season == null) {
       return {
@@ -286,15 +312,17 @@ export class LeagueInsightsService {
 
     const standPayloadPreview = standRow?.payload as unknown as CachedStandingsPayload | undefined;
     const hasStandingsRows = (standPayloadPreview?.groups ?? []).some((g) => (g.table ?? []).length > 0);
-    /** Old parser stored empty tables; re-fetch until cache carries v>=2. */
+    /** Old parser stored empty tables; re-fetch until cache carries v>=3 (league.standings + all.goals). */
     const legacyStandingsCache =
-      !!standRow && !hasStandingsRows && (standPayloadPreview?.v ?? 0) < 2;
+      !!standRow && !hasStandingsRows && (standPayloadPreview?.v ?? 0) < 3;
 
     const needStandings =
+      forceRefresh ||
       !standRow ||
       !this.isFresh(standRow.fetchedAt) ||
       (legacyStandingsCache && !!apiKey);
-    const needScorers = !scoreRow || !this.isFresh(scoreRow.fetchedAt);
+    const needScorers =
+      forceRefresh || !scoreRow || !this.isFresh(scoreRow.fetchedAt);
 
     if (!needStandings && standRow) {
       standingsPayload = (standRow.payload as unknown as CachedStandingsPayload) ?? { groups: [] };
@@ -367,6 +395,21 @@ export class LeagueInsightsService {
     const hasStandingsData = (standingsPayload.groups ?? []).some((g) => g.table.length > 0);
     const hasScorersData = (scorersPayload.rows ?? []).length > 0;
 
+    const emptyHint =
+      !hasStandingsData &&
+      !hasScorersData &&
+      !fetchError &&
+      networkUsed
+        ? 'No standings rows returned for this league/season. Confirm the season year (e.g. 2025–26 is season 2025) and that API-Football includes standings for this competition.'
+        : undefined;
+
+    const errorMessage =
+      fetchError && !hasStandingsData && !hasScorersData
+        ? fetchError
+        : emptyHint
+          ? emptyHint
+          : undefined;
+
     return {
       leagueApiId,
       season,
@@ -376,7 +419,7 @@ export class LeagueInsightsService {
       topScorers: scorersPayload.rows ?? [],
       cachedAt: new Date().toISOString(),
       fromCache,
-      ...(fetchError && !hasStandingsData && !hasScorersData ? { error: fetchError } : {}),
+      ...(errorMessage ? { error: errorMessage } : {}),
     };
   }
 }

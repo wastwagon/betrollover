@@ -7,6 +7,7 @@ import { AppFooter } from '@/components/AppFooter';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { useDebounce } from '@/hooks/useDebounce';
+import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 
 interface Row {
   id: number;
@@ -17,6 +18,8 @@ interface Row {
   country?: string | null;
   matchDate: string;
   status: string;
+  /** API-Football live minute when in-play */
+  statusElapsed?: number | null;
   homeScore: number | null;
   awayScore: number | null;
   syncedAt?: string | null;
@@ -510,8 +513,8 @@ export default function LiveScoresPage() {
                         <span className="text-lg font-bold tabular-nums text-[var(--text)]">
                           {row.homeScore ?? '—'} : {row.awayScore ?? '—'}
                         </span>
-                        <span className="text-xs font-bold uppercase px-2 py-1 rounded-full bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-200">
-                          {row.status}
+                        <span className="text-xs font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-200 tabular-nums">
+                          {formatLiveFixturePeriod(row.status, row.statusElapsed)}
                         </span>
                       </div>
                     </li>
