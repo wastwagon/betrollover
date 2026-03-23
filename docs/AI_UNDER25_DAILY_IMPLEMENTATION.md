@@ -56,4 +56,4 @@ Predictions come from API-Football (`/predictions?fixture=...`). Key is read fro
 - Admin → Settings → API Sports Key, or  
 - Environment variable `API_SPORTS_KEY`.
 
-Set the key (e.g. `06208ae679202aa04a8478d479645756`) in one of those so fixtures get predictions and odds.
+Set `API_SPORTS_KEY` (from the API-Football dashboard) in one of those so fixtures get predictions and odds.

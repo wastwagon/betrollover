@@ -21,7 +21,7 @@ x-apisports-key: YOUR_API_KEY
 **Example (curl):**
 ```bash
 curl -X GET "https://v3.football.api-sports.io/predictions?fixture=1035009" \
-  -H "x-apisports-key: 06208ae679202aa04a8478d479645756"
+  -H "x-apisports-key: YOUR_KEY_FROM_API_FOOTBALL_DASHBOARD"
 ```
 
 ---

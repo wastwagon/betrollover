@@ -2,7 +2,7 @@
  * Standalone test: use API key to fetch fixtures, predictions, and odds from API-Football.
  * Verifies we can get under-2.5 data suitable for coupons (no DB required).
  * Usage: API_SPORTS_KEY=yourkey npx ts-node -r tsconfig-paths/register scripts/test-predictions-api.ts
- *    Or: npx ts-node -r tsconfig-paths/register scripts/test-predictions-api.ts 06208ae679202aa04a8478d479645756
+ *    Or: npx ts-node -r tsconfig-paths/register scripts/test-predictions-api.ts <your-api-football-key>
  */
 
 const BASE = 'https://v3.football.api-sports.io';
