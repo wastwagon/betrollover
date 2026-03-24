@@ -89,6 +89,35 @@ export class AdminController {
     return this.accumulatorsService.getMarketplaceTipsters();
   }
 
+  @Get('subscriptions/tipsters')
+  async getAdminSubscriptionTipsters(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.subscriptionsService.listAdminSubscriptionTipsters();
+  }
+
+  @Get('subscriptions')
+  async listAdminSubscriptions(
+    @CurrentUser() user: User,
+    @Query('status') status?: string,
+    @Query('tipsterUserId') tipsterUserIdRaw?: string,
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const tipsterUserId =
+      tipsterUserIdRaw != null && tipsterUserIdRaw !== ''
+        ? parseInt(tipsterUserIdRaw, 10)
+        : undefined;
+    return this.subscriptionsService.listAdminSubscriptions({
+      status: status || undefined,
+      tipsterUserId: tipsterUserId != null && !Number.isNaN(tipsterUserId) ? tipsterUserId : undefined,
+    });
+  }
+
+  @Delete('subscriptions/:id')
+  async adminDeleteSubscription(@CurrentUser() user: User, @Param('id', ParseIntPipe) id: number) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.subscriptionsService.adminDeleteSubscription(id);
+  }
+
   @Post('setup/ai-tipsters')
   async initializeAiTipsters(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
@@ -569,23 +598,6 @@ export class AdminController {
       throw new BadRequestException('minimumWinRate (number 0–100) is required');
     }
     return this.adminService.updateMinimumWinRate(body.minimumWinRate);
-  }
-
-  @Patch('settings/tipster-below-threshold-cooldown-hours')
-  async updateTipsterBelowThresholdCooldownHours(
-    @CurrentUser() user: User,
-    @Body() body: { tipsterBelowThresholdCooldownHours: number },
-  ) {
-    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
-    if (
-      body?.tipsterBelowThresholdCooldownHours === undefined ||
-      body?.tipsterBelowThresholdCooldownHours === null ||
-      typeof body.tipsterBelowThresholdCooldownHours !== 'number' ||
-      Number.isNaN(body.tipsterBelowThresholdCooldownHours)
-    ) {
-      throw new BadRequestException('tipsterBelowThresholdCooldownHours (number 1–168) is required');
-    }
-    return this.adminService.updateTipsterBelowThresholdCooldownHours(body.tipsterBelowThresholdCooldownHours);
   }
 
   @Patch('settings/max-coupons-per-day')

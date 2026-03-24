@@ -32,13 +32,6 @@ export const NOTIFICATION_TYPES = {
     ctaText: 'Create Free Pick',
     category: 'account',
   },
-  tipster_below_selling_thresholds: {
-    icon: 'alert',
-    defaultSubject: 'Paid Pick Requirements Not Met',
-    emailSubject: () => 'Your stats no longer meet paid pick requirements — use free picks until you recover',
-    ctaText: 'Create Pick',
-    category: 'account',
-  },
   deposit_success: {
     icon: 'wallet',
     defaultSubject: 'Deposit Received',

@@ -1,7 +1,6 @@
 import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { Notification } from './entities/notification.entity';
 import { User } from '../users/entities/user.entity';
 import { TipsterFollow } from '../predictions/entities/tipster-follow.entity';
@@ -14,9 +13,6 @@ const PUSH_NOTIFICATION_TYPES = new Set([
   'pick_published', 'new_pick_from_followed', 'settlement', 'subscription_payout',
 ]);
 
-/** Fallback if `api_settings.tipster_below_threshold_cooldown_hours` is missing (matches entity default). */
-const DEFAULT_TIPSTER_BELOW_THRESHOLD_COOLDOWN_HOURS = 72;
-
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
@@ -24,8 +20,6 @@ export class NotificationsService {
   constructor(
     @InjectRepository(Notification)
     private repo: Repository<Notification>,
-    @InjectRepository(ApiSettings)
-    private apiSettingsRepo: Repository<ApiSettings>,
     @InjectRepository(User)
     private userRepo: Repository<User>,
     @InjectRepository(TipsterFollow)
@@ -141,54 +135,6 @@ export class NotificationsService {
       }
     }
     return n;
-  }
-
-  /**
-   * One alert per cooldown window while ROI/win rate stay under platform minimums.
-   * Enforcement still applies on every create-pick; this only limits notification fatigue.
-   */
-  private async getTipsterBelowThresholdCooldownMs(): Promise<number> {
-    const row = await this.apiSettingsRepo.findOne({
-      where: { id: 1 },
-      select: ['tipsterBelowThresholdCooldownHours'],
-    });
-    const raw = row?.tipsterBelowThresholdCooldownHours;
-    const h = Math.floor(Number(raw ?? DEFAULT_TIPSTER_BELOW_THRESHOLD_COOLDOWN_HOURS));
-    const clamped = Math.min(168, Math.max(1, Number.isFinite(h) ? h : DEFAULT_TIPSTER_BELOW_THRESHOLD_COOLDOWN_HOURS));
-    return clamped * 60 * 60 * 1000;
-  }
-
-  async createTipsterBelowSellingThresholdIfDue(params: {
-    userId: number;
-    title: string;
-    message: string;
-    link?: string;
-    icon?: string;
-    sendEmail?: boolean;
-  }): Promise<{ created: boolean }> {
-    const cooldownMs = await this.getTipsterBelowThresholdCooldownMs();
-    const recent = await this.repo.findOne({
-      where: { userId: params.userId, type: 'tipster_below_selling_thresholds' },
-      order: { createdAt: 'DESC' },
-      select: ['id', 'createdAt'],
-    });
-    const elapsed = recent ? Date.now() - new Date(recent.createdAt).getTime() : Infinity;
-    if (elapsed < cooldownMs) {
-      this.logger.debug(
-        `Skipped tipster_below_selling_thresholds for user ${params.userId} (last ${Math.round(elapsed / 3600000)}h ago, cooldown ${Math.round(cooldownMs / 3600000)}h)`,
-      );
-      return { created: false };
-    }
-    await this.create({
-      userId: params.userId,
-      type: 'tipster_below_selling_thresholds',
-      title: params.title,
-      message: params.message,
-      link: params.link,
-      icon: params.icon ?? 'alert',
-      sendEmail: params.sendEmail ?? true,
-    });
-    return { created: true };
   }
 
   /**

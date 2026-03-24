@@ -21,6 +21,13 @@ export class AccumulatorsController {
     return this.accumulatorsService.getMyAccumulators(user.id, sport || undefined);
   }
 
+  /** Coupons created today (UTC) vs admin daily cap; remaining = null when unlimited / exempt. */
+  @Get('daily-coupon-quota')
+  @UseGuards(JwtAuthGuard)
+  getDailyCouponQuota(@CurrentUser() user: { id: number }) {
+    return this.accumulatorsService.getDailyCouponQuota(user.id);
+  }
+
   @Get('purchased')
   @UseGuards(JwtAuthGuard)
   getPurchased(@CurrentUser() user: { id: number }) {

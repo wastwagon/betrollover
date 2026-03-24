@@ -1018,6 +1018,11 @@ const en = {
   'create_pick.paid_marketplace_your_stats': 'Your settled stats: ROI {roi}% · Win rate {wr}%.',
   'create_pick.paid_marketplace_ready': 'You meet both minimums for a paid listing.',
   'create_pick.paid_marketplace_not_ready': 'Set price to 0 (free) until both minimums are met.',
+  'coupon_quota.exempt': 'Daily coupon limit does not apply to your account.',
+  'coupon_quota.unlimited_platform': 'No daily coupon limit is set — unlimited per UTC day.',
+  'coupon_quota.remaining':
+    '{remaining} coupons left today (UTC) of {max} ({used} created). Limit resets at {resetTime}.',
+  'coupon_quota.at_limit': 'Daily limit reached ({max} per UTC day). You can create more after {resetTime}.',
   'create_pick.vip_same_bar':
     'VIP packages use the same {minRoi}% ROI and {minWr}% win rate minimums. Subscriber-only coupons with a price also require both minimums.',
   'create_pick.create_btn': 'Create Pick',

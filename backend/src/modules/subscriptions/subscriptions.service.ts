@@ -11,6 +11,7 @@ import { TipsterSubscriptionPackage } from './entities/tipster-subscription-pack
 import { Subscription } from './entities/subscription.entity';
 import { SubscriptionEscrow } from './entities/subscription-escrow.entity';
 import { SubscriptionCouponAccess } from './entities/subscription-coupon-access.entity';
+import { RoiGuaranteeRefund } from './entities/roi-guarantee-refund.entity';
 import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { Tipster } from '../predictions/entities/tipster.entity';
@@ -452,5 +453,149 @@ export class SubscriptionsService {
     sub.status = 'cancelled';
     await this.subscriptionRepo.save(sub);
     return { ok: true, message: 'Subscription will end at period end. No further charges.' };
+  }
+
+  /** Tipsters who have at least one subscription package (for admin filters). */
+  async listAdminSubscriptionTipsters(): Promise<
+    Array<{ tipsterUserId: number; username: string; displayName: string }>
+  > {
+    const pkgs = await this.packageRepo.find({ select: ['tipsterUserId'] });
+    const userIds = [...new Set(pkgs.map((p) => p.tipsterUserId).filter((id) => Number.isFinite(id)))];
+    if (userIds.length === 0) return [];
+    const tipsters = await this.tipsterRepo.find({
+      where: { userId: In(userIds) },
+      select: ['userId', 'username', 'displayName'],
+      order: { displayName: 'ASC' },
+    });
+    return tipsters
+      .filter((t) => t.userId != null)
+      .map((t) => ({
+        tipsterUserId: t.userId as number,
+        username: t.username,
+        displayName: t.displayName,
+      }));
+  }
+
+  async listAdminSubscriptions(filters: { status?: string; tipsterUserId?: number }): Promise<
+    Array<{
+      id: number;
+      status: string;
+      startedAt: Date;
+      endsAt: Date;
+      amountPaid: number;
+      createdAt: Date;
+      escrowStatus: string | null;
+      subscriber: { id: number; username: string; displayName: string };
+      package: { id: number; name: string; price: number; tipsterUserId: number };
+      tipster: { username: string; displayName: string; avatarUrl: string | null } | null;
+    }>
+  > {
+    const qb = this.subscriptionRepo
+      .createQueryBuilder('s')
+      .leftJoinAndSelect('s.user', 'subscriber')
+      .leftJoinAndSelect('s.package', 'pkg')
+      .orderBy('s.createdAt', 'DESC')
+      .take(500);
+    if (filters.status && filters.status !== 'all') {
+      qb.andWhere('s.status = :st', { st: filters.status });
+    }
+    if (filters.tipsterUserId != null && Number.isFinite(filters.tipsterUserId)) {
+      qb.andWhere('pkg.tipsterUserId = :tid', { tid: filters.tipsterUserId });
+    }
+    const rows = await qb.getMany();
+    const tipsterUserIds = [...new Set(rows.map((r) => r.package?.tipsterUserId).filter((id): id is number => typeof id === 'number'))];
+    const tipsters =
+      tipsterUserIds.length > 0
+        ? await this.tipsterRepo.find({
+            where: { userId: In(tipsterUserIds) },
+            select: ['userId', 'username', 'displayName', 'avatarUrl'],
+          })
+        : [];
+    const tipMap = new Map(tipsters.filter((t) => t.userId != null).map((t) => [t.userId as number, t]));
+    const subIds = rows.map((r) => r.id);
+    const escrows =
+      subIds.length > 0
+        ? await this.escrowRepo.find({ where: { subscriptionId: In(subIds) } })
+        : [];
+    const escMap = new Map(escrows.map((e) => [e.subscriptionId, e]));
+    return rows.map((s) => {
+      const pkg = s.package;
+      const tipsterUserId = pkg.tipsterUserId;
+      const t = tipMap.get(tipsterUserId);
+      const esc = escMap.get(s.id);
+      return {
+        id: s.id,
+        status: s.status,
+        startedAt: s.startedAt,
+        endsAt: s.endsAt,
+        amountPaid: Number(s.amountPaid),
+        createdAt: s.createdAt,
+        escrowStatus: esc?.status ?? null,
+        subscriber: {
+          id: s.user.id,
+          username: s.user.username,
+          displayName: s.user.displayName,
+        },
+        package: {
+          id: pkg.id,
+          name: pkg.name,
+          price: Number(pkg.price),
+          tipsterUserId,
+        },
+        tipster: t
+          ? { username: t.username, displayName: t.displayName, avatarUrl: t.avatarUrl ?? null }
+          : null,
+      };
+    });
+  }
+
+  /**
+   * Remove a subscriber row. If escrow is still held, refunds the subscriber first.
+   * If escrow was already released to the tipster, no wallet movement (payout already happened).
+   */
+  async adminDeleteSubscription(subscriptionId: number): Promise<{
+    ok: boolean;
+    refundedAmount: number | null;
+    message: string;
+  }> {
+    const sub = await this.subscriptionRepo.findOne({
+      where: { id: subscriptionId },
+      relations: ['package'],
+    });
+    if (!sub) throw new NotFoundException('Subscription not found');
+    const userId = sub.userId;
+    const pkgName = sub.package?.name ?? 'VIP package';
+    const escrow = await this.escrowRepo.findOne({ where: { subscriptionId } });
+    let refundDue = 0;
+    if (escrow?.status === 'held') {
+      refundDue = Number(escrow.amount);
+    }
+
+    await this.subscriptionRepo.manager.transaction(async (em) => {
+      await em.delete(RoiGuaranteeRefund, { subscriptionId });
+      const row = await em.findOne(Subscription, { where: { id: subscriptionId } });
+      if (row) await em.remove(row);
+    });
+
+    if (refundDue > 0) {
+      await this.walletService.credit(
+        userId,
+        refundDue,
+        'refund',
+        `admin-sub-del-${subscriptionId}`,
+        `Admin removed subscription: ${pkgName}`,
+      );
+    }
+
+    return {
+      ok: true,
+      refundedAmount: refundDue > 0 ? refundDue : null,
+      message:
+        refundDue > 0
+          ? `Subscription removed. GHS ${refundDue.toFixed(2)} refunded to the subscriber (held escrow).`
+          : escrow?.status === 'released'
+            ? 'Subscription removed. Escrow had already been released to the tipster; no refund issued.'
+            : 'Subscription removed.',
+    };
   }
 }

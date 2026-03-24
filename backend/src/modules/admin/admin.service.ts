@@ -411,10 +411,6 @@ export class AdminService {
       isActive: apiSettings?.isActive || false,
       minimumROI: Number(apiSettings?.minimumROI ?? 20.0),
       minimumWinRate: Number(apiSettings?.minimumWinRate ?? 45.0),
-      tipsterBelowThresholdCooldownHours: Math.min(
-        168,
-        Math.max(1, Math.floor(Number(apiSettings?.tipsterBelowThresholdCooldownHours ?? 72))),
-      ),
       maxCouponsPerDay: Math.max(0, Math.floor(Number(apiSettings?.maxCouponsPerDay ?? 0))),
       platformCommissionRate: clampPlatformCommissionPercent(apiSettings?.platformCommissionRate),
       streamAlertThresholds: this.mapStreamAlertThresholds(apiSettings),
@@ -512,19 +508,6 @@ export class AdminService {
       apiSettings = this.apiSettingsRepo.create({ id: 1 });
     }
     apiSettings.minimumWinRate = minimumWinRate;
-    return this.apiSettingsRepo.save(apiSettings);
-  }
-
-  async updateTipsterBelowThresholdCooldownHours(hours: number): Promise<ApiSettings> {
-    const h = Math.floor(Number(hours));
-    if (!Number.isFinite(h) || h < 1 || h > 168) {
-      throw new BadRequestException('Cooldown must be between 1 and 168 hours');
-    }
-    let apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
-    if (!apiSettings) {
-      apiSettings = this.apiSettingsRepo.create({ id: 1 });
-    }
-    apiSettings.tipsterBelowThresholdCooldownHours = h;
     return this.apiSettingsRepo.save(apiSettings);
   }
 

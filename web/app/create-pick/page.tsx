@@ -17,6 +17,11 @@ import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
 import { getApiUrl } from '@/lib/site-config';
 import { fetchSellingThresholds, type SellingThresholds } from '@/lib/selling-thresholds';
+import {
+  fetchDailyCouponQuota,
+  formatQuotaResetUtc,
+  type DailyCouponQuota,
+} from '@/lib/daily-coupon-quota';
 import { useSlipCart } from '@/context/SlipCartContext';
 import type { Fixture, FixtureOdd, SportEventItem, CreatePickSport, FilterOptions } from './types';
 import { SportLoadingSpinner } from './components/SportLoadingSpinner';
@@ -73,6 +78,7 @@ export default function CreatePickPage() {
   const [teamSearch, setTeamSearch] = useState<string>('');
   const [slipSheetOpen, setSlipSheetOpen] = useState(false);
   const [sellTh, setSellTh] = useState<SellingThresholds | null>(null);
+  const [dailyQuota, setDailyQuota] = useState<DailyCouponQuota | null>(null);
   const [myTipStats, setMyTipStats] = useState<{ roi: number; winRate: number } | null>(null);
   const [sportLeague, setSportLeague] = useState<string>('');
   const debouncedTeamSearch = useDebounce(teamSearch, 500); // Debounce team search by 500ms
@@ -453,6 +459,12 @@ export default function CreatePickPage() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
+    void fetchDailyCouponQuota(token).then(setDailyQuota);
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
     fetch(`${getApiUrl()}/tipster/stats`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
@@ -665,6 +677,12 @@ export default function CreatePickPage() {
     router.push('/my-picks');
   };
 
+  const atDailyLimit =
+    dailyQuota != null &&
+    dailyQuota.remaining === 0 &&
+    !dailyQuota.exempt &&
+    dailyQuota.maxPerDay > 0;
+
   return (
     <DashboardShell slipCount={selections.length}>
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
@@ -676,6 +694,38 @@ export default function CreatePickPage() {
             title={t('create_pick.title')}
             tagline={t('create_pick.tagline')}
           />
+          {dailyQuota && (
+            <div
+              className={`mb-4 rounded-xl border px-4 py-3 text-sm ${
+                atDailyLimit
+                  ? 'border-red-200 bg-red-50/80 text-red-900 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-100'
+                  : 'border-cyan-200/80 bg-cyan-50/50 text-[var(--text)] dark:border-cyan-900/40 dark:bg-cyan-950/20'
+              }`}
+              role="status"
+            >
+              {dailyQuota.exempt ? (
+                <p className="font-medium">{t('coupon_quota.exempt')}</p>
+              ) : dailyQuota.maxPerDay <= 0 ? (
+                <p className="font-medium">{t('coupon_quota.unlimited_platform')}</p>
+              ) : atDailyLimit ? (
+                <p className="font-medium">
+                  {t('coupon_quota.at_limit', {
+                    max: String(dailyQuota.maxPerDay),
+                    resetTime: formatQuotaResetUtc(dailyQuota.resetsAtUtc) || dailyQuota.resetsAtUtc,
+                  })}
+                </p>
+              ) : (
+                <p className="font-medium">
+                  {t('coupon_quota.remaining', {
+                    remaining: String(dailyQuota.remaining ?? 0),
+                    max: String(dailyQuota.maxPerDay),
+                    used: String(dailyQuota.usedToday),
+                    resetTime: formatQuotaResetUtc(dailyQuota.resetsAtUtc) || dailyQuota.resetsAtUtc,
+                  })}
+                </p>
+              )}
+            </div>
+          )}
           <div className="mb-4">
             <AdSlot zoneSlug="create-pick-full" fullWidth className="w-full" />
           </div>
@@ -1344,7 +1394,7 @@ export default function CreatePickPage() {
                       )}
                       <button
                         onClick={submit}
-                        disabled={submitting || selections.length === 0 || !title.trim()}
+                        disabled={submitting || selections.length === 0 || !title.trim() || atDailyLimit}
                         className="w-full py-3 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white hover:shadow-lg hover:shadow-[var(--primary)]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
                       >
                         {submitting && <LoadingSpinner size="sm" />}
@@ -1570,7 +1620,7 @@ export default function CreatePickPage() {
                 )}
                 <button
                   onClick={() => submit()}
-                  disabled={submitting || selections.length === 0 || !title.trim()}
+                  disabled={submitting || selections.length === 0 || !title.trim() || atDailyLimit}
                   className="w-full py-4 rounded-xl font-bold text-base bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-teal-500/30 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] transition-all flex items-center justify-center gap-2 touch-manipulation min-h-[52px]"
                 >
                   {submitting && <LoadingSpinner size="sm" />}

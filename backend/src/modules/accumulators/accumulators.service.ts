@@ -1475,4 +1475,36 @@ export class AccumulatorsService {
     const tip = await this.tipsterRepo.findOne({ where: { userId }, select: ['id', 'isAi'] });
     return !!tip?.isAi;
   }
+
+  /** How many coupons this user may still create before end of current UTC day (for UI). */
+  async getDailyCouponQuota(userId: number): Promise<{
+    maxPerDay: number;
+    usedToday: number;
+    remaining: number | null;
+    exempt: boolean;
+    resetsAtUtc: string;
+  }> {
+    const policy = await this.loadSellingPolicy();
+    const exempt = await this.isExemptFromDailyCouponLimit(userId);
+    const usedToday = await this.countCouponsCreatedUtcToday(userId);
+    const { end } = this.utcDayBounds();
+    const resetsAtUtc = end.toISOString();
+    if (exempt || policy.maxCouponsPerDay <= 0) {
+      return {
+        maxPerDay: policy.maxCouponsPerDay,
+        usedToday,
+        remaining: null,
+        exempt,
+        resetsAtUtc,
+      };
+    }
+    const remaining = Math.max(0, policy.maxCouponsPerDay - usedToday);
+    return {
+      maxPerDay: policy.maxCouponsPerDay,
+      usedToday,
+      remaining,
+      exempt: false,
+      resetsAtUtc,
+    };
+  }
 }

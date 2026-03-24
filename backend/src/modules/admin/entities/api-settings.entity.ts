@@ -36,10 +36,6 @@ export class ApiSettings {
   @Column({ type: 'decimal', precision: 5, scale: 2, name: 'minimum_win_rate', default: 45.0 })
   minimumWinRate: number = 45.0;
 
-  /** Min hours between duplicate "below paid thresholds" tipster notifications (1–168). */
-  @Column({ type: 'int', name: 'tipster_below_threshold_cooldown_hours', default: 72 })
-  tipsterBelowThresholdCooldownHours: number = 72;
-
   /** Max coupons per UTC day per human tipster; 0 = unlimited. AI tipsters exempt at application layer. */
   @Column({ type: 'int', name: 'max_coupons_per_day', default: 0 })
   maxCouponsPerDay: number = 0;

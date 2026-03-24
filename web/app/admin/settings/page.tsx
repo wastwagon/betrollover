@@ -15,8 +15,6 @@ interface Settings {
   isActive?: boolean;
   minimumROI?: number;
   minimumWinRate?: number;
-  /** Hours between duplicate "below paid thresholds" tipster alerts (1–168). */
-  tipsterBelowThresholdCooldownHours?: number;
   maxCouponsPerDay?: number;
   platformCommissionRate?: number;
   streamAlertThresholds?: {
@@ -68,8 +66,6 @@ export default function AdminSettingsPage() {
   const [savingROI, setSavingROI] = useState(false);
   const [minimumWinRate, setMinimumWinRate] = useState<number>(45.0);
   const [savingWinRate, setSavingWinRate] = useState(false);
-  const [tipsterBelowThresholdCooldownHours, setTipsterBelowThresholdCooldownHours] = useState<number>(72);
-  const [savingThresholdCooldown, setSavingThresholdCooldown] = useState(false);
   const [maxCouponsPerDay, setMaxCouponsPerDay] = useState<number>(0);
   const [savingCouponLimit, setSavingCouponLimit] = useState(false);
   const [commissionRate, setCommissionRate] = useState<number>(30.0);
@@ -112,9 +108,6 @@ export default function AdminSettingsPage() {
         setSettings(data);
         if (data?.minimumROI !== undefined) setMinimumROI(data.minimumROI);
         if (data?.minimumWinRate !== undefined) setMinimumWinRate(data.minimumWinRate);
-        if (data?.tipsterBelowThresholdCooldownHours !== undefined) {
-          setTipsterBelowThresholdCooldownHours(data.tipsterBelowThresholdCooldownHours);
-        }
         if (data?.maxCouponsPerDay !== undefined) setMaxCouponsPerDay(data.maxCouponsPerDay);
         if (data?.platformCommissionRate !== undefined) setCommissionRate(data.platformCommissionRate);
         return data;
@@ -1232,77 +1225,6 @@ export default function AdminSettingsPage() {
                     className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
                   >
                     {savingWinRate ? 'Saving...' : 'Save minimum win rate'}
-                  </button>
-                </div>
-
-                {/* Below-threshold tipster alert cooldown */}
-                <div className="bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/20 dark:to-rose-800/20 rounded-2xl shadow-lg border-2 border-rose-200 dark:border-rose-800 p-6 hover:shadow-xl transition-all">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Below-threshold alert cooldown</h3>
-                    <span className="text-2xl">🔕</span>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Minimum hours between repeated in-app and email alerts when a tipster&apos;s ROI or win rate stays under
-                    your minimums (paid marketplace or subscriber picks). Enforcement on create-pick is unchanged; this
-                    only limits notification spam.
-                  </p>
-                  <div className="flex items-center gap-3 mb-4">
-                    <input
-                      type="number"
-                      min={1}
-                      max={168}
-                      step={1}
-                      value={tipsterBelowThresholdCooldownHours}
-                      onChange={(e) =>
-                        setTipsterBelowThresholdCooldownHours(
-                          Math.min(168, Math.max(1, parseInt(e.target.value, 10) || 1)),
-                        )
-                      }
-                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
-                    />
-                    <span className="text-gray-600 dark:text-gray-400 font-medium whitespace-nowrap">hours</span>
-                  </div>
-                  <button
-                    onClick={async () => {
-                      const token = localStorage.getItem('token');
-                      if (!token) return;
-                      setSavingThresholdCooldown(true);
-                      try {
-                        const res = await fetch(`${getApiUrl()}/admin/settings/tipster-below-threshold-cooldown-hours`, {
-                          method: 'PATCH',
-                          headers: {
-                            Authorization: `Bearer ${token}`,
-                            'Content-Type': 'application/json',
-                          },
-                          body: JSON.stringify({ tipsterBelowThresholdCooldownHours }),
-                        });
-                        if (res.ok) {
-                          alert('Below-threshold cooldown updated successfully');
-                          const settingsRes = await fetch(`${getApiUrl()}/admin/settings`, {
-                            headers: { Authorization: `Bearer ${token}` },
-                            cache: 'no-store',
-                          });
-                          if (settingsRes.ok) {
-                            const data = await settingsRes.json();
-                            setSettings(data);
-                            if (data.tipsterBelowThresholdCooldownHours !== undefined) {
-                              setTipsterBelowThresholdCooldownHours(data.tipsterBelowThresholdCooldownHours);
-                            }
-                          }
-                        } else {
-                          const error = await res.json().catch(() => ({}));
-                          alert((error as { message?: string }).message || 'Failed to update cooldown');
-                        }
-                      } catch (e: unknown) {
-                        alert(e instanceof Error ? e.message : 'Failed to update cooldown');
-                      } finally {
-                        setSavingThresholdCooldown(false);
-                      }
-                    }}
-                    disabled={savingThresholdCooldown}
-                    className="w-full px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
-                  >
-                    {savingThresholdCooldown ? 'Saving...' : 'Save cooldown'}
                   </button>
                 </div>
 

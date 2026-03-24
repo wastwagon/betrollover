@@ -12,6 +12,7 @@ import { AdSlot } from '@/components/AdSlot';
 
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { parseSellingThresholds } from '@/lib/selling-thresholds';
+import { parseDailyCouponQuota, formatQuotaResetUtc, type DailyCouponQuota } from '@/lib/daily-coupon-quota';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 import { PickCard } from '@/components/PickCard';
 import { useCurrency } from '@/context/CurrencyContext';
@@ -109,6 +110,7 @@ function DashboardContent() {
   const [following, setFollowing] = useState<FollowedTipster[]>([]);
   const [feedPurchasing, setFeedPurchasing] = useState<number | null>(null);
   const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
+  const [dailyQuota, setDailyQuota] = useState<DailyCouponQuota | null>(null);
   const pendingWithdrawalCount = usePendingWithdrawalCount();
 
   const runSettlement = async () => {
@@ -197,11 +199,16 @@ function DashboardContent() {
               .catch(() => []),
             fetch(`${apiUrl}/tipsters/me/following`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
             fetch(`${apiUrl}/notifications?limit=50`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+            fetch(`${apiUrl}/accumulators/daily-coupon-quota`, { headers, cache: 'no-store' })
+              .then((r) => (r.ok ? r.json() : null))
+              .then((j) => parseDailyCouponQuota(j))
+              .catch(() => null),
           ]);
         })
         .then((result) => {
           if (!result) return;
-          const [u, s, ts, wallet, thresholds, purchasedData, feedData, vipFeedData, followingData, notifData] = result;
+          const [u, s, ts, wallet, thresholds, purchasedData, feedData, vipFeedData, followingData, notifData, quota] =
+            result;
           if (u.role === 'admin') setStats(s || {});
           setTipsterStats(ts || { totalPicks: 0, wonPicks: 0, lostPicks: 0, winRate: 0, totalEarnings: 0, roi: 0 });
           if (wallet) setWalletBalance(Number(wallet.balance));
@@ -237,6 +244,7 @@ function DashboardContent() {
           setFollowing(Array.isArray(followingData) ? followingData : []);
           const notifList = Array.isArray(notifData) ? notifData : [];
           setUnreadNotifications(notifList.filter((n: { read?: boolean }) => !n.read).length);
+          setDailyQuota(quota);
         })
         .catch((err) => {
           if (err?.message !== 'Unauthorized') {
@@ -505,6 +513,39 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
             </div>
             <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 flex-shrink-0">→</span>
           </Link>
+
+          {dailyQuota && (
+            <div
+              className={`mb-4 sm:mb-5 rounded-2xl border px-4 py-3 text-sm ${
+                dailyQuota.remaining === 0 && !dailyQuota.exempt && dailyQuota.maxPerDay > 0
+                  ? 'border-red-200 bg-red-50/80 text-red-900 dark:border-red-900/50 dark:bg-red-950/25 dark:text-red-100'
+                  : 'border-cyan-200/70 bg-cyan-50/40 text-[var(--text)] dark:border-cyan-900/40 dark:bg-cyan-950/15'
+              }`}
+              role="status"
+            >
+              {dailyQuota.exempt ? (
+                <p className="font-medium">{t('coupon_quota.exempt')}</p>
+              ) : dailyQuota.maxPerDay <= 0 ? (
+                <p className="font-medium">{t('coupon_quota.unlimited_platform')}</p>
+              ) : dailyQuota.remaining === 0 ? (
+                <p className="font-medium">
+                  {t('coupon_quota.at_limit', {
+                    max: String(dailyQuota.maxPerDay),
+                    resetTime: formatQuotaResetUtc(dailyQuota.resetsAtUtc) || dailyQuota.resetsAtUtc,
+                  })}
+                </p>
+              ) : (
+                <p className="font-medium">
+                  {t('coupon_quota.remaining', {
+                    remaining: String(dailyQuota.remaining ?? 0),
+                    max: String(dailyQuota.maxPerDay),
+                    used: String(dailyQuota.usedToday),
+                    resetTime: formatQuotaResetUtc(dailyQuota.resetsAtUtc) || dailyQuota.resetsAtUtc,
+                  })}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Quick Actions — large touch targets, premium cards */}
           <section className="mb-6 sm:mb-8">

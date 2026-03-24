@@ -1017,6 +1017,11 @@ const fr: Record<string, string> = {
   'create_pick.paid_marketplace_your_stats': 'Vos stats réglées : ROI {roi} % · Taux de victoire {wr} %.',
   'create_pick.paid_marketplace_ready': 'Vous remplissez les deux minimums pour une vente payante.',
   'create_pick.paid_marketplace_not_ready': 'Mettez le prix à 0 (gratuit) jusqu\'à ce que les deux minimums soient atteints.',
+  'coupon_quota.exempt': 'La limite quotidienne de coupons ne s’applique pas à votre compte.',
+  'coupon_quota.unlimited_platform': 'Aucune limite quotidienne n’est définie — illimité par jour UTC.',
+  'coupon_quota.remaining':
+    '{remaining} coupon(s) restant(s) aujourd’hui (UTC) sur {max} ({used} créé(s)). Réinitialisation à {resetTime}.',
+  'coupon_quota.at_limit': 'Limite quotidienne atteinte ({max} par jour UTC). Réessayez après {resetTime}.',
   'create_pick.vip_same_bar':
     'Les forfaits VIP utilisent les mêmes minimums {minRoi} % ROI et {minWr} % de réussite. Les coupons réservés aux abonnés avec un prix exigent aussi les deux minimums.',
   'create_pick.create_btn': 'Créer le Pronostic',
