@@ -83,6 +83,7 @@ export default function AdminFixturesPage() {
   const PAGE_SIZE = 200;
   const router = useRouter();
   const [fixtures, setFixtures] = useState<DbFixture[]>([]);
+  const [allFixtures, setAllFixtures] = useState<DbFixture[]>([]);
   const [page, setPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -111,6 +112,7 @@ export default function AdminFixturesPage() {
   const [streamThresholds, setStreamThresholds] = useState<StreamAlertThresholds>(DEFAULT_STREAM_THRESHOLDS);
   const [savingStreamThresholds, setSavingStreamThresholds] = useState(false);
   const [streamThresholdError, setStreamThresholdError] = useState<string | null>(null);
+  const totalPages = Math.max(1, Math.ceil(allFixtures.length / PAGE_SIZE));
 
   const streamHealth = useMemo(() => {
     if (!streamMetrics) return null;
@@ -196,8 +198,6 @@ export default function AdminFixturesPage() {
     setLoading(true);
     const params = new URLSearchParams();
     params.set('days', String(LOOKAHEAD_DAYS));
-    params.set('limit', String(PAGE_SIZE + 1));
-    params.set('offset', String((page - 1) * PAGE_SIZE));
     if (selectedCountry) params.set('country', selectedCountry);
     if (selectedCompetition) params.set('league', selectedCompetition);
     fetch(`${getApiUrl()}/fixtures?${params.toString()}`, {
@@ -207,19 +207,26 @@ export default function AdminFixturesPage() {
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
         const rows = Array.isArray(data) ? data : [];
-        setHasNextPage(rows.length > PAGE_SIZE);
-        setFixtures(rows.slice(0, PAGE_SIZE));
+        setAllFixtures(rows);
       })
       .catch(() => {
+        setAllFixtures([]);
         setFixtures([]);
         setHasNextPage(false);
       })
       .finally(() => setLoading(false));
-  }, [selectedCountry, selectedCompetition, page]);
+  }, [selectedCountry, selectedCompetition]);
 
   useEffect(() => {
     setPage(1);
   }, [selectedCountry, selectedCompetition]);
+
+  useEffect(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    setFixtures(allFixtures.slice(start, end));
+    setHasNextPage(end < allFixtures.length);
+  }, [allFixtures, page]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -547,7 +554,7 @@ export default function AdminFixturesPage() {
             Upcoming matches from API-Sports. Sync and manage fixtures for your platform.
           </p>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Showing page <strong className="text-gray-900 dark:text-white">{page}</strong> · <strong className="text-gray-900 dark:text-white">{fixtures.length}</strong> fixture{fixtures.length !== 1 ? 's' : ''} (up to {PAGE_SIZE}/page) for next {LOOKAHEAD_HOURS} hours
+            Showing page <strong className="text-gray-900 dark:text-white">{page}</strong> of <strong className="text-gray-900 dark:text-white">{totalPages}</strong> · <strong className="text-gray-900 dark:text-white">{allFixtures.length}</strong> fixture{allFixtures.length !== 1 ? 's' : ''} total for next {LOOKAHEAD_HOURS} hours
             {syncResult && syncResult.fixtures > 0 && (
               <span className="ml-2 text-emerald-600 dark:text-emerald-400">
                 (Last sync: {syncResult.fixtures} fixtures{syncResult.leagues > 0 ? `, ${syncResult.leagues} leagues` : ''})
@@ -1014,7 +1021,7 @@ export default function AdminFixturesPage() {
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between gap-3">
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                Page {page}
+                Page {page} of {totalPages}
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -1028,7 +1035,7 @@ export default function AdminFixturesPage() {
                 <button
                   type="button"
                   onClick={() => setPage((p) => p + 1)}
-                  disabled={!hasNextPage}
+                  disabled={!hasNextPage || page >= totalPages}
                   className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-50"
                 >
                   Next
