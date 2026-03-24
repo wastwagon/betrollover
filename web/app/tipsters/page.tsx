@@ -43,6 +43,7 @@ function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: numb
     leaderboard_rank: rank,
     follower_count: 0,
     is_following: false,
+    vip_package_id: (entry.vip_package_id as number | null | undefined) ?? null,
   };
 }
 

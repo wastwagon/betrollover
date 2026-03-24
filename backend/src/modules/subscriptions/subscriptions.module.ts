@@ -12,10 +12,13 @@ import { SubscriptionSettlementService } from './subscription-settlement.service
 import { UsersModule } from '../users/users.module';
 import { WalletModule } from '../wallet/wallet.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { TipsterModule } from '../tipster/tipster.module';
+import { User } from '../users/entities/user.entity';
 
 @Module({
   imports: [
     UsersModule,
+    TipsterModule,
     TypeOrmModule.forFeature([
       TipsterSubscriptionPackage,
       Subscription,
@@ -23,6 +26,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
       SubscriptionCouponAccess,
       RoiGuaranteeRefund,
       Tipster,
+      User,
     ]),
     WalletModule,
     NotificationsModule,

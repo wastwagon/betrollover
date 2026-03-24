@@ -57,7 +57,7 @@ export default function CreatePickPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState(0);
-  const [placement, setPlacement] = useState<'marketplace' | 'subscription' | 'both'>('both');
+  const [placement, setPlacement] = useState<'marketplace' | 'subscription'>('marketplace');
   const [subscriptionPackageIds, setSubscriptionPackageIds] = useState<number[]>([]);
   const [myPackages, setMyPackages] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -437,6 +437,12 @@ export default function CreatePickPage() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (placement === 'subscription' && myPackages.length === 1) {
+      setSubscriptionPackageIds([myPackages[0].id]);
+    }
+  }, [placement, myPackages]);
+
   const loadFixtureOdds = async (f: Fixture) => {
     // If odds already loaded, skip
     if (f.odds && f.odds.length > 0) return;
@@ -585,6 +591,10 @@ export default function CreatePickPage() {
       setError('Enter a title');
       return;
     }
+    if (placement === 'subscription' && subscriptionPackageIds.length === 0) {
+      setError('Select your VIP package or create one in Subscription packages.');
+      return;
+    }
     setError(null);
     setSubmitting(true);
     const token = localStorage.getItem('token');
@@ -598,9 +608,9 @@ export default function CreatePickPage() {
         title: title.trim(),
         description: description.trim() || undefined,
         price: Number(price) || 0,
-        isMarketplace: placement === 'marketplace' || placement === 'both',
-        placement: placement,
-        subscriptionPackageIds: (placement === 'subscription' || placement === 'both') ? subscriptionPackageIds : undefined,
+        isMarketplace: placement === 'marketplace',
+        placement,
+        subscriptionPackageIds: placement === 'subscription' ? subscriptionPackageIds : undefined,
         // 'multi' when coupon spans more than one sport; otherwise the single sport
         sport: (() => {
           const sports = new Set(selections.map((s) => s.sport ?? 'football'));
@@ -1232,14 +1242,17 @@ export default function CreatePickPage() {
                         <label className="block text-xs font-medium text-[var(--text)] mb-1">Placement</label>
                         <select
                           value={placement}
-                          onChange={(e) => setPlacement(e.target.value as 'marketplace' | 'subscription' | 'both')}
+                          onChange={(e) => {
+                            const v = e.target.value as 'marketplace' | 'subscription';
+                            setPlacement(v);
+                            if (v === 'marketplace') setSubscriptionPackageIds([]);
+                          }}
                           className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border)] bg-[var(--card)]"
                         >
                           <option value="marketplace">Marketplace only</option>
-                          <option value="subscription">Subscription only</option>
-                          <option value="both">Both marketplace & subscription</option>
+                          <option value="subscription">VIP / subscription only</option>
                         </select>
-                        {(placement === 'subscription' || placement === 'both') && myPackages.length > 0 && (
+                        {placement === 'subscription' && myPackages.length > 0 && (
                           <div className="mt-2 space-y-1">
                             <span className="text-xs text-[var(--text-muted)]">Add to packages:</span>
                             {myPackages.map((p) => (
@@ -1258,7 +1271,7 @@ export default function CreatePickPage() {
                             ))}
                           </div>
                         )}
-                        {(placement === 'subscription' || placement === 'both') && myPackages.length === 0 && (
+                        {placement === 'subscription' && myPackages.length === 0 && (
                           <p className="text-xs text-[var(--text-muted)] mt-1">
                             <Link href="/dashboard/subscription-packages" className="text-[var(--primary)] hover:underline">Create subscription packages</Link> first.
                           </p>
@@ -1418,14 +1431,41 @@ export default function CreatePickPage() {
                   <label className="block text-sm font-medium text-[var(--text)] mb-1">Placement</label>
                   <select
                     value={placement}
-                    onChange={(e) => setPlacement(e.target.value as 'marketplace' | 'subscription' | 'both')}
+                    onChange={(e) => {
+                      const v = e.target.value as 'marketplace' | 'subscription';
+                      setPlacement(v);
+                      if (v === 'marketplace') setSubscriptionPackageIds([]);
+                    }}
                     className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
                   >
                     <option value="marketplace">Marketplace only</option>
-                    <option value="subscription">Subscription only</option>
-                    <option value="both">Both marketplace & subscription</option>
+                    <option value="subscription">VIP / subscription only</option>
                   </select>
                 </div>
+                {placement === 'subscription' && myPackages.length > 0 && (
+                  <div className="space-y-1">
+                    <span className="text-sm text-[var(--text-muted)]">Add to package:</span>
+                    {myPackages.map((p) => (
+                      <label key={p.id} className="flex items-center gap-2 cursor-pointer text-sm">
+                        <input
+                          type="checkbox"
+                          checked={subscriptionPackageIds.includes(p.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) setSubscriptionPackageIds((prev) => [...prev, p.id]);
+                            else setSubscriptionPackageIds((prev) => prev.filter((id) => id !== p.id));
+                          }}
+                          className="w-4 h-4 rounded border-[var(--border)]"
+                        />
+                        <span>{p.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+                {placement === 'subscription' && myPackages.length === 0 && (
+                  <p className="text-sm text-[var(--text-muted)]">
+                    <Link href="/dashboard/subscription-packages" className="text-[var(--primary)] hover:underline">Create a VIP package</Link> first.
+                  </p>
+                )}
                 {error && (
                   <div className="bg-red-50 border border-red-200 rounded-xl p-3">
                     <p className="text-red-700 text-sm">{error}</p>

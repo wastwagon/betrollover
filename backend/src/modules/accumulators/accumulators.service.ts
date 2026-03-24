@@ -47,7 +47,7 @@ export interface CreateAccumulatorDto {
    * Used only for display; each selection carries its own `sport` for routing.
    */
   sport?: string;
-  /** Placement: 'marketplace' | 'subscription' | 'both' (default: marketplace) */
+  /** Placement: 'marketplace' | 'subscription' (default: marketplace). 'both' is rejected. */
   placement?: string;
   /** If placement includes subscription: package IDs to add coupon to */
   subscriptionPackageIds?: number[];
@@ -164,10 +164,31 @@ export class AccumulatorsService {
 
     // Default price to 0 (free) if not provided or invalid
     const price = dto.price && dto.price > 0 ? dto.price : 0;
-    const placement = (dto.placement || 'marketplace') as string;
+    const rawPlacement = (dto.placement || 'marketplace').toLowerCase().trim();
+    if (rawPlacement === 'both') {
+      throw new BadRequestException('Choose either marketplace or subscription — not both.');
+    }
+    const placementNorm: 'marketplace' | 'subscription' =
+      rawPlacement === 'subscription' ? 'subscription' : 'marketplace';
+
+    if (placementNorm === 'subscription') {
+      if (dto.isMarketplace) {
+        throw new BadRequestException('Subscription-only coupons cannot be listed on the marketplace.');
+      }
+      if (!(dto.subscriptionPackageIds?.length)) {
+        throw new BadRequestException('Select your VIP package for subscription-only coupons.');
+      }
+    } else {
+      if (!dto.isMarketplace) {
+        throw new BadRequestException('Marketplace placement requires listing on the marketplace.');
+      }
+      if ((dto.subscriptionPackageIds?.length ?? 0) > 0) {
+        throw new BadRequestException('Marketplace coupons cannot be linked to a subscription package.');
+      }
+    }
 
     // ROI check: only for paid picks sold on marketplace. Skip for subscription-only (access via subscription package).
-    if (price > 0 && placement !== 'subscription') {
+    if (price > 0 && placementNorm !== 'subscription') {
       const user = await this.usersRepo.findOne({ where: { id: userId } });
       if (!user) throw new NotFoundException('User not found');
 
@@ -293,21 +314,15 @@ export class AccumulatorsService {
     }
 
     if (dto.isMarketplace) {
-      const placement = (dto.placement || 'marketplace') as string;
-      const subPackageIds = dto.subscriptionPackageIds ?? [];
-      const firstPackageId = subPackageIds[0] ?? null;
       await this.marketplaceRepo.save({
         accumulatorId: ticket.id,
         sellerId: userId,
         price: dto.price,
         status: 'active',
         maxPurchases: dto.price === 0 ? 999999 : 999999,
-        placement: ['marketplace', 'subscription', 'both'].includes(placement) ? placement : 'marketplace',
-        subscriptionPackageId: firstPackageId,
+        placement: 'marketplace',
+        subscriptionPackageId: null,
       });
-      if ((placement === 'subscription' || placement === 'both') && subPackageIds.length > 0) {
-        await this.subscriptionsService.addCouponToPackages(ticket.id, subPackageIds);
-      }
       await this.notificationsService.create({
         userId,
         type: 'pick_published',
@@ -344,9 +359,9 @@ export class AccumulatorsService {
           accumulatorId: ticket.id,
         });
       }
-    } else if (dto.placement === 'subscription' && (dto.subscriptionPackageIds?.length ?? 0) > 0) {
+    } else if (placementNorm === 'subscription' && (dto.subscriptionPackageIds?.length ?? 0) > 0) {
       // Subscription-only: add coupon to packages (no marketplace listing) — still notify followers
-      await this.subscriptionsService.addCouponToPackages(ticket.id, dto.subscriptionPackageIds!);
+      await this.subscriptionsService.addCouponToPackages(ticket.id, dto.subscriptionPackageIds!, userId);
       const creator = await this.usersRepo.findOne({ where: { id: userId }, select: ['displayName', 'username'] });
       const creatorName = creator?.displayName || creator?.username || 'Tipster';
       const tipster = await this.tipsterRepo.findOne({ where: { userId }, select: ['id', 'displayName'] });

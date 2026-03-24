@@ -103,6 +103,7 @@ function DashboardContent() {
     pendingEscrowAmount: number;
   } | null>(null);
   const [feedPicks, setFeedPicks] = useState<FeedPick[]>([]);
+  const [vipFeedPicks, setVipFeedPicks] = useState<FeedPick[]>([]);
   const [following, setFollowing] = useState<FollowedTipster[]>([]);
   const [feedPurchasing, setFeedPurchasing] = useState<number | null>(null);
   const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
@@ -189,13 +190,16 @@ function DashboardContent() {
               .then((settings) => settings?.minimumROI !== undefined ? settings.minimumROI : 20.0) : Promise.resolve(20.0),
             fetch(`${apiUrl}/accumulators/purchased`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
             fetch(`${apiUrl}/tipsters/feed?limit=10`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+            fetch(`${apiUrl}/accumulators/subscription-feed?limit=8`, { headers })
+              .then((r) => (r.ok ? r.json().then((d: { items?: FeedPick[] }) => d?.items ?? []) : []))
+              .catch(() => []),
             fetch(`${apiUrl}/tipsters/me/following`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
             fetch(`${apiUrl}/notifications?limit=50`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
           ]);
         })
         .then((result) => {
           if (!result) return;
-          const [u, s, ts, wallet, minROI, purchasedData, feedData, followingData, notifData] = result;
+          const [u, s, ts, wallet, minROI, purchasedData, feedData, vipFeedData, followingData, notifData] = result;
           if (u.role === 'admin') setStats(s || {});
           setTipsterStats(ts || { totalPicks: 0, wonPicks: 0, lostPicks: 0, winRate: 0, totalEarnings: 0, roi: 0 });
           if (wallet) setWalletBalance(Number(wallet.balance));
@@ -226,6 +230,7 @@ function DashboardContent() {
             pendingEscrowAmount,
           });
           setFeedPicks(Array.isArray(feedData) ? feedData : []);
+          setVipFeedPicks(Array.isArray(vipFeedData) ? vipFeedData : []);
           setFollowing(Array.isArray(followingData) ? followingData : []);
           const notifList = Array.isArray(notifData) ? notifData : [];
           setUnreadNotifications(notifList.filter((n: { read?: boolean }) => !n.read).length);
@@ -686,6 +691,18 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
                 </div>
               </Link>
               <Link
+                href="/subscriptions/marketplace"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+              >
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                  💎
+                </span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_vip_marketplace')}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_vip_marketplace_desc')}</span>
+                </div>
+              </Link>
+              <Link
                 href="/leaderboard"
                 className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
               >
@@ -793,6 +810,60 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
                   glass
                   index={3}
                 />
+              </div>
+            </section>
+          )}
+
+          {/* VIP subscription picks */}
+          {vipFeedPicks.length > 0 && (
+            <section className="mb-6 sm:mb-8">
+              <div className="flex flex-wrap items-baseline justify-between gap-2 mb-2 sm:mb-3 px-0.5">
+                <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                  {t('dashboard.vip_picks_section_title')}
+                </h2>
+                <Link
+                  href="/subscriptions"
+                  className="text-xs font-medium text-[var(--primary)] hover:underline"
+                >
+                  {t('dashboard.vip_picks_see_all')}
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                {vipFeedPicks.slice(0, 4).map((pick) => {
+                  const tip = pick.tipster;
+                  const tipster = tip
+                    ? {
+                        id: tip.id ?? 0,
+                        displayName: tip.displayName,
+                        username: tip.username,
+                        avatarUrl: tip.avatarUrl ?? null,
+                        winRate: tip.winRate,
+                        totalPicks: tip.totalPicks ?? 0,
+                        wonPicks: tip.wonPicks ?? 0,
+                        lostPicks: tip.lostPicks ?? 0,
+                        rank: tip.rank ?? 0,
+                      }
+                    : null;
+                  return (
+                    <PickCard
+                      key={`vip-${pick.id}`}
+                      id={pick.id}
+                      title={pick.title}
+                      totalPicks={pick.totalPicks}
+                      totalOdds={pick.totalOdds}
+                      price={pick.price}
+                      purchaseCount={pick.purchaseCount}
+                      picks={pick.picks || []}
+                      tipster={tipster}
+                      isPurchased
+                      canPurchase={false}
+                      walletBalance={null}
+                      onPurchase={() => {}}
+                      viewOnly
+                      purchasing={false}
+                    />
+                  );
+                })}
               </div>
             </section>
           )}

@@ -13,6 +13,7 @@ import { FixturesModule } from '../fixtures/fixtures.module';
 import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
 import { AccumulatorPick } from '../accumulators/entities/accumulator-pick.entity';
 import { PickMarketplace } from '../accumulators/entities/pick-marketplace.entity';
+import { TipsterSubscriptionPackage } from '../subscriptions/entities/tipster-subscription-package.entity';
 import { PredictionEngineService } from './prediction-engine.service';
 import { PredictionMarketplaceSyncService } from './prediction-marketplace-sync.service';
 import { ResultTrackerService } from './result-tracker.service';
@@ -39,6 +40,7 @@ import { LeaderboardController } from './leaderboard.controller';
       AccumulatorTicket,
       AccumulatorPick,
       PickMarketplace,
+      TipsterSubscriptionPackage,
     ]),
     forwardRef(() => FixturesModule),
   ],

@@ -22,6 +22,8 @@ export interface TipsterCardData {
   leaderboard_rank?: number | null;
   follower_count?: number;
   is_following?: boolean;
+  /** Active VIP subscription package id from API; omit or null if none. */
+  vip_package_id?: number | null;
 }
 
 interface TipsterCardProps {
@@ -100,20 +102,30 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
           </div>
         </div>
 
-        {/* Follow Button */}
-        {onFollow && (
-          <button
-            onClick={(e) => { e.preventDefault(); onFollow(); }}
-            disabled={followLoading}
-            className={`mt-auto w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-colors disabled:opacity-70 ${
-              tipster.is_following
-                ? 'bg-[var(--border)] text-[var(--text-muted)] hover:bg-gray-300 dark:hover:bg-gray-600'
-                : 'bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white'
-            }`}
-          >
-            {followLoading ? '...' : tipster.is_following ? t('tipster.following') : t('tipster.follow')}
-          </button>
-        )}
+        {/* Follow + Join VIP */}
+        <div className="mt-auto flex flex-col gap-2">
+          {tipster.vip_package_id != null && tipster.vip_package_id > 0 && (
+            <Link
+              href={`/subscriptions/checkout?packageId=${tipster.vip_package_id}`}
+              className="w-full text-center px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-semibold text-xs sm:text-sm bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-400/40 hover:bg-amber-500/25 transition-colors"
+            >
+              Join VIP
+            </Link>
+          )}
+          {onFollow && (
+            <button
+              onClick={(e) => { e.preventDefault(); onFollow(); }}
+              disabled={followLoading}
+              className={`w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-colors disabled:opacity-70 ${
+                tipster.is_following
+                  ? 'bg-[var(--border)] text-[var(--text-muted)] hover:bg-gray-300 dark:hover:bg-gray-600'
+                  : 'bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white'
+              }`}
+            >
+              {followLoading ? '...' : tipster.is_following ? t('tipster.following') : t('tipster.follow')}
+            </button>
+          )}
+        </div>
       </div>
     </article>
   );

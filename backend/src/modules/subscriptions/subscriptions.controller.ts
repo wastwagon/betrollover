@@ -14,6 +14,20 @@ export class SubscriptionsController {
     return this.subscriptionsService.createPackage(user.id, dto);
   }
 
+  /** Public: browse all active VIP packages (tipster performance included). */
+  @Get('marketplace')
+  listMarketplace(
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    const l = limit ? parseInt(limit, 10) : undefined;
+    const o = offset ? parseInt(offset, 10) : undefined;
+    return this.subscriptionsService.getMarketplacePackages({
+      limit: Number.isFinite(l) ? l : undefined,
+      offset: Number.isFinite(o) ? o : undefined,
+    });
+  }
+
   @Get('packages')
   getPackages(@Query('tipsterId') tipsterId?: string) {
     const id = tipsterId ? parseInt(tipsterId, 10) : null;

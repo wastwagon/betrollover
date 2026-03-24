@@ -10,6 +10,7 @@ import { AccumulatorPick } from '../accumulators/entities/accumulator-pick.entit
 import { PickMarketplace } from '../accumulators/entities/pick-marketplace.entity';
 import { User } from '../users/entities/user.entity';
 import { Fixture } from '../fixtures/entities/fixture.entity';
+import { TipsterSubscriptionPackage } from '../subscriptions/entities/tipster-subscription-package.entity';
 
 const SORT_COLUMNS: Record<string, string> = {
   roi: 'roi',
@@ -47,7 +48,24 @@ export class TipstersApiService {
     private usersRepo: Repository<User>,
     @InjectRepository(Fixture)
     private fixtureRepo: Repository<Fixture>,
+    @InjectRepository(TipsterSubscriptionPackage)
+    private subscriptionPackageRepo: Repository<TipsterSubscriptionPackage>,
   ) {}
+
+  /** At most one active package per tipster (DB-enforced); map user id → package id. */
+  private async loadActiveVipPackageIdsByUserIds(userIds: number[]): Promise<Map<number, number>> {
+    if (userIds.length === 0) return new Map();
+    const unique = [...new Set(userIds)];
+    const rows = await this.subscriptionPackageRepo.find({
+      where: { tipsterUserId: In(unique), status: 'active' },
+      select: ['id', 'tipsterUserId'],
+    });
+    const m = new Map<number, number>();
+    for (const r of rows) {
+      m.set(r.tipsterUserId, r.id);
+    }
+    return m;
+  }
 
   /**
    * All-time leaderboard rows sorted by live ROI (ticket-backed stats for humans).
@@ -362,6 +380,7 @@ export class TipstersApiService {
 
     const tipsters = await qb.getMany();
     const humanUserIds = tipsters.filter((t) => t.userId != null).map((t) => t.userId!);
+    const vipPackageMap = await this.loadActiveVipPackageIdsByUserIds(humanUserIds);
     const ticketStatsMap = await this.computeStatsFromTickets(humanUserIds, options.sport);
 
     const aiTipsterIds = tipsters.filter((t) => t.isAi).map((t) => t.id);
@@ -435,6 +454,7 @@ export class TipstersApiService {
         leaderboard_rank: t.leaderboardRank,
         follower_count: followerCountMap.get(t.id) ?? 0,
         is_following: followingSet.has(t.id),
+        vip_package_id: t.userId != null ? vipPackageMap.get(t.userId) ?? null : null,
       };
     });
 
@@ -683,10 +703,15 @@ export class TipstersApiService {
       const sorted = sortedAll.slice(0, options.limit);
       const ranked = sorted.map((e, i) => ({ ...e, rank: i + 1 }));
 
-      // Enrich with review averages (by user_id from tipster entity)
       const tipsterUserIds = ranked
         .map((e) => tipsters.find((t) => t.username === e.username)?.userId)
         .filter((id): id is number => id != null);
+      const vipMap = await this.loadActiveVipPackageIdsByUserIds([...new Set(tipsterUserIds)]);
+      const withVip = ranked.map((e) => {
+        const uid = tipsters.find((t) => t.username === e.username)?.userId;
+        return { ...e, vip_package_id: uid != null ? vipMap.get(uid) ?? null : null };
+      });
+
       if (tipsterUserIds.length > 0) {
         try {
           const revRows: Array<{ tipster_id: number; avg: string; cnt: string }> = await this.tipsterRepo.query(
@@ -695,14 +720,14 @@ export class TipstersApiService {
             [tipsterUserIds],
           );
           const revMap = new Map(revRows.map((r) => [Number(r.tipster_id), { avg: Number(r.avg), cnt: Number(r.cnt) }]));
-          return ranked.map((e) => {
+          return withVip.map((e) => {
             const uid = tipsters.find((t) => t.username === e.username)?.userId;
             const rv = uid != null ? revMap.get(uid) : undefined;
             return { ...e, avg_rating: rv?.avg ?? null, review_count: rv?.cnt ?? null };
           });
         } catch { /* coupon_reviews not yet available */ }
       }
-      return ranked;
+      return withVip;
     }
 
     const dateFilter =
@@ -823,21 +848,30 @@ export class TipstersApiService {
       .sort((a, b) => (b.roi ?? 0) - (a.roi ?? 0) || b.profit - a.profit || (b.win_rate ?? 0) - (a.win_rate ?? 0))
       .slice(0, options.limit);
 
-    return sorted.map((r, i) => ({
-      id: r.id,
-      username: r.username,
-      display_name: r.display_name,
-      avatar_url: r.avatar_url,
-      roi: r.roi,
-      win_rate: r.win_rate,
-      total_predictions: r.total_predictions,
-      total_wins: r.total_wins,
-      total_losses: r.total_losses,
-      monthly_predictions: r.total_predictions,
-      monthly_wins: r.total_wins,
-      monthly_profit: r.profit,
-      rank: i + 1,
-    }));
+    const periodVipUids = [
+      ...new Set(sorted.map((r) => idToUserId.get(r.id)).filter((id): id is number => id != null)),
+    ];
+    const periodVipMap = await this.loadActiveVipPackageIdsByUserIds(periodVipUids);
+
+    return sorted.map((r, i) => {
+      const uid = idToUserId.get(r.id) ?? null;
+      return {
+        id: r.id,
+        username: r.username,
+        display_name: r.display_name,
+        avatar_url: r.avatar_url,
+        roi: r.roi,
+        win_rate: r.win_rate,
+        total_predictions: r.total_predictions,
+        total_wins: r.total_wins,
+        total_losses: r.total_losses,
+        monthly_predictions: r.total_predictions,
+        monthly_wins: r.total_wins,
+        monthly_profit: r.profit,
+        rank: i + 1,
+        vip_package_id: uid != null ? periodVipMap.get(uid) ?? null : null,
+      };
+    });
   }
 
   /** Feed of marketplace picks from tipsters the user follows (for dashboard) */

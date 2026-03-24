@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { PickCard } from '@/components/PickCard';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getApiUrl } from '@/lib/site-config';
+import { useT } from '@/context/LanguageContext';
 
 interface Subscription {
   id: number;
@@ -32,6 +33,7 @@ interface FeedPick {
 }
 
 export default function SubscriptionsPage() {
+  const t = useT();
   const router = useRouter();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [feedPicks, setFeedPicks] = useState<FeedPick[]>([]);
@@ -83,18 +85,36 @@ export default function SubscriptionsPage() {
         {activeSubs.length === 0 ? (
           <div className="glass-card rounded-2xl p-8 text-center border border-[var(--border)]">
             <p className="text-[var(--text-muted)] mb-4">No active subscriptions yet.</p>
-            <p className="text-sm text-[var(--text-muted)] mb-6">Subscribe to tipsters to see their subscription-only coupons here.</p>
-            <Link
-              href="/tipsters"
-              className="inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
-            >
-              Browse Tipsters
-            </Link>
+            <p className="text-sm text-[var(--text-muted)] mb-6">
+              Subscribe to tipsters to see their subscription-only coupons here.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+              <Link
+                href="/subscriptions/marketplace"
+                className="inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
+              >
+                {t('subscriptions.empty_cta_vip_marketplace')}
+              </Link>
+              <Link
+                href="/tipsters"
+                className="inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-warm)]"
+              >
+                {t('subscriptions.empty_cta_tipsters')}
+              </Link>
+            </div>
           </div>
         ) : (
           <>
             <section className="mb-8">
-              <h2 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">Active subscriptions</h2>
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <h2 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">Active subscriptions</h2>
+                <Link
+                  href="/subscriptions/marketplace"
+                  className="text-xs font-medium text-[var(--primary)] hover:underline"
+                >
+                  {t('subscriptions.browse_more_vip')}
+                </Link>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {activeSubs.map((s) => (
                   <div
@@ -120,14 +140,14 @@ export default function SubscriptionsPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {feedPicks.map((pick) => {
-                    const t = pick.tipster;
-                    const tipster = t
+                    const tipMeta = pick.tipster;
+                    const tipster = tipMeta
                       ? {
                           id: 0,
-                          displayName: t.displayName,
-                          username: t.username,
-                          avatarUrl: t.avatarUrl ?? null,
-                          winRate: t.winRate,
+                          displayName: tipMeta.displayName,
+                          username: tipMeta.username,
+                          avatarUrl: tipMeta.avatarUrl ?? null,
+                          winRate: tipMeta.winRate,
                           totalPicks: 0,
                           wonPicks: 0,
                           lostPicks: 0,
