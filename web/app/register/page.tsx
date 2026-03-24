@@ -100,71 +100,40 @@ function RegisterForm() {
   }
 
   const inputBase =
-    'w-full pl-12 pr-4 py-3.5 rounded-xl border-2 border-slate-200 bg-white/80 backdrop-blur-sm text-[var(--text)] placeholder:text-slate-400 focus:border-[var(--primary)] focus:ring-4 focus:ring-[var(--primary)]/20 focus:bg-white transition-all duration-300 ease-out shadow-sm hover:border-slate-300';
-  const inputIcon = 'absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none';
+    'w-full pl-11 pr-4 py-3 rounded-lg border border-slate-200/90 dark:border-slate-600 bg-white dark:bg-slate-950/40 text-[var(--text)] placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/15 transition-colors';
+  const inputIcon = 'absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-400 pointer-events-none';
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-mesh pointer-events-none" />
+    <div className="min-h-screen bg-[var(--bg)] relative">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.4] dark:opacity-[0.2]"
+        aria-hidden
+        style={{
+          background:
+            'radial-gradient(ellipse 80% 50% at 50% -20%, rgb(16 185 129 / 0.12), transparent 55%)',
+        }}
+      />
       <UnifiedHeader />
       <main className="section-ux-register-main">
-        {/* Left column - Branding panel (hidden on mobile) */}
-        <div className="hidden lg:flex lg:w-[45%] xl:w-[42%] flex-col justify-between bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 p-10 xl:p-14 text-white relative overflow-hidden">
-          {/* Subtle pattern overlay */}
-          <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
-          <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-12">
-              <span className="text-xl font-semibold tracking-tight">BetRollover</span>
-            </div>
-            <h2 className="text-xl xl:text-2xl font-semibold leading-tight max-w-sm">
-              Join Ghana&apos;s trusted tipster marketplace — for a global audience
-            </h2>
-            <p className="mt-4 text-emerald-100/90 text-base leading-relaxed max-w-sm">
-              Verified tipsters. Escrow-protected picks. Track performance across football, basketball, tennis & more.
-            </p>
-          </div>
-          <ul className="space-y-4 relative z-10">
-            {[
-              { icon: '✓', text: 'Escrow-protected — refunded if tips lose' },
-              { icon: '✓', text: 'Verified tipsters with live ROI & win rate' },
-              { icon: '✓', text: 'Multi-sport: football, basketball, MMA & more' },
-            ].map((item, i) => (
-              <li key={i} className="flex items-center gap-3 text-emerald-50/95">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-sm font-bold">{item.icon}</span>
-                <span>{item.text}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Right column - Form */}
-        <div className="section-ux-register-column">
-          {/* Mobile-only value strip */}
-          <div className="lg:hidden w-full max-w-md mb-6 flex flex-wrap gap-2 justify-center">
-            {['Escrow-protected', 'Verified tipsters', 'Multi-sport'].map((label) => (
-              <span key={label} className="shrink-0 px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">
-                {label}
-              </span>
-            ))}
-          </div>
-          <div className="w-full max-w-md lg:max-w-lg">
-            <div className="relative bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl shadow-slate-200/50 border border-slate-100 p-8 md:p-10 overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[var(--primary)] via-emerald-400 to-[var(--primary)]" />
-              <div className="text-center mb-8">
-                <h1 className="text-xl md:text-2xl font-semibold text-[var(--text)] tracking-tight">{t('auth.create_account')}</h1>
-                <p className="mt-2 text-[var(--text-muted)] text-base">
+        <div className="relative w-full max-w-[440px]">
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white/90 dark:bg-slate-900/60 backdrop-blur-sm shadow-[0_1px_2px_rgb(0_0_0/0.04),0_24px_48px_-12px_rgb(0_0_0/0.08)] dark:shadow-[0_24px_48px_-12px_rgb(0_0_0/0.35)] px-8 py-10 sm:px-10 sm:py-11">
+              <div className="text-center mb-9">
+                <h1 className="text-[1.65rem] sm:text-3xl font-semibold text-[var(--text)] tracking-[-0.02em] leading-tight">
+                  {t('auth.create_account')}
+                </h1>
+                <p className="mt-2.5 text-sm text-[var(--text-muted)] leading-relaxed">
                   {step === 'email' ? t('auth.verify_email_first') : t('auth.complete_registration')}
                 </p>
               </div>
 
               <GoogleSignInButton variant="signup" className="mb-4" disabled={loading} />
               <AppleSignInButton variant="signup" className="mb-6" disabled={loading} />
-              <div className="relative my-4">
+              <div className="relative my-5">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200" />
+                  <div className="w-full border-t border-slate-200/80 dark:border-slate-600/60" />
                 </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-3 bg-white text-[var(--text-muted)]">{t('auth.or_continue_with')}</span>
+                <div className="relative flex justify-center text-xs uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                  <span className="px-3 bg-white/90 dark:bg-slate-900/60">{t('auth.or_continue_with')}</span>
                 </div>
               </div>
 
@@ -196,7 +165,7 @@ function RegisterForm() {
                 <button
                   type="submit"
                   disabled={otpLoading || !email.trim()}
-                  className="w-full py-4 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-lg transition-all duration-300"
+                  className="w-full py-3.5 rounded-lg text-[15px] font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-45 disabled:pointer-events-none transition-colors"
                 >
                   {otpLoading ? t('auth.sending') : t('auth.send_code')}
                 </button>
@@ -204,7 +173,7 @@ function RegisterForm() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Full width: email badge + OTP */}
-                <div className="rounded-xl bg-gradient-to-r from-emerald-50 to-slate-50 border border-emerald-100 px-4 py-3 flex items-center gap-2 flex-wrap">
+                <div className="rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-600/60 px-4 py-3 flex items-center gap-2 flex-wrap">
                   <span className="text-sm text-[var(--text)] font-medium truncate flex-1 min-w-0">{email}</span>
                   <span className="text-xs text-emerald-600 font-semibold shrink-0">✓ {t('auth.email_verified')}</span>
                   <button
@@ -431,21 +400,20 @@ function RegisterForm() {
                 <button
                   type="submit"
                   disabled={loading || !otpCode || !dateOfBirth || password !== confirmPassword}
-                  className="w-full py-4 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-lg transition-all duration-300"
+                  className="w-full py-3.5 rounded-lg text-[15px] font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-45 disabled:pointer-events-none transition-colors"
                 >
                   {loading ? t('auth.creating_account') : t('auth.register')}
                 </button>
               </form>
             )}
 
-            <p className="text-center text-sm text-[var(--text-muted)] mt-8 pt-6 border-t border-slate-100">
+            <p className="text-center text-sm text-[var(--text-muted)] mt-9 pt-7 border-t border-slate-100 dark:border-slate-700/80">
               {t('auth.already_have_account')}{' '}
-              <Link href="/login" className="text-[var(--primary)] font-semibold hover:underline">
+              <Link href="/login" className="text-[var(--primary)] font-semibold hover:underline underline-offset-2">
                 {t('auth.login')}
               </Link>
             </p>
           </div>
-        </div>
         </div>
       </main>
     </div>

@@ -308,18 +308,23 @@ function DashboardContent() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-              <StatCard title={t("dashboard.total_picks")} value={stats?.picks?.total ?? 0} icon="🎯" />
               <StatCard
-                title="Marketplace listings (active)"
-                hint="pick_marketplace rows with status active. Includes coupons that are no longer buyable (match started or settled) until listing is removed."
-                value={stats?.picks?.activeMarketplace ?? 0}
-                icon="🛒"
+                title={t('admin.stats_all_coupons_title')}
+                hint={t('admin.stats_all_coupons_hint')}
+                value={stats?.picks?.total ?? 0}
+                icon="📋"
               />
               <StatCard
-                title="Live on marketplace (buyable)"
-                hint="Same logic as public homepage: active listing + coupon pending + no fixture kickoff yet."
+                title={t('admin.stats_marketplace_buyable_title')}
+                hint={t('admin.stats_marketplace_buyable_hint')}
                 value={stats?.picks?.liveMarketplace ?? 0}
                 icon="🎫"
+              />
+              <StatCard
+                title={t('admin.stats_marketplace_active_title')}
+                hint={t('admin.stats_marketplace_active_hint')}
+                value={stats?.picks?.activeMarketplace ?? 0}
+                icon="🛒"
               />
               <StatCard title="Escrow Held (GHS)" value={stats?.escrow?.held ?? 0} icon="🔒" format="currency" />
             </div>

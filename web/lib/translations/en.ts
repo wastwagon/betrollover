@@ -364,6 +364,16 @@ const en = {
   'dashboard.tip_performance': 'Your picks are performing well. Keep it up!',
   'dashboard.tipster_label': 'Tipster Dashboard',
   'dashboard.tagline': 'Your performance, picks, and earnings at a glance.',
+  // Admin home — coupon vs marketplace listing counts (different tables; numbers often differ)
+  'admin.stats_all_coupons_title': 'All coupons (platform)',
+  'admin.stats_all_coupons_hint':
+    'Every tipster coupon in the database (one row per coupon). Not the same as marketplace listing rows.',
+  'admin.stats_marketplace_buyable_title': 'Buyable on marketplace now',
+  'admin.stats_marketplace_buyable_hint':
+    'What shoppers can purchase today: listed, coupon still pending, and kickoff not started. Same logic as the public homepage.',
+  'admin.stats_marketplace_active_title': 'Listing rows marked active',
+  'admin.stats_marketplace_active_hint':
+    'Coupons still tied to an active marketplace row. Often higher than “buyable” because started or settled games can stay listed until removed in Admin → Marketplace.',
   'dashboard.card_hub': 'Your hub',
   'dashboard.card_create_desc': 'Share tips & earn',
   'dashboard.card_my_picks_desc': 'View & manage',

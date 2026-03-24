@@ -363,6 +363,15 @@ const fr: Record<string, string> = {
   'dashboard.tip_performance': 'Vos pronostics performent bien. Continuez ainsi !',
   'dashboard.tipster_label': 'Tableau de Bord Tipster',
   'dashboard.tagline': 'Vos performances, pronostics et revenus en un coup d\'œil.',
+  'admin.stats_all_coupons_title': 'Tous les coupons (plateforme)',
+  'admin.stats_all_coupons_hint':
+    'Chaque coupon tipster en base (une ligne par coupon). Ce n’est pas le nombre de lignes sur la marketplace.',
+  'admin.stats_marketplace_buyable_title': 'Achetables sur la marketplace',
+  'admin.stats_marketplace_buyable_hint':
+    'Ce que les acheteurs peuvent acheter : publié, coupon encore en attente, coup d’envoi non commencé. Même logique que la page d’accueil.',
+  'admin.stats_marketplace_active_title': 'Lignes marketplace « actives »',
+  'admin.stats_marketplace_active_hint':
+    'Souvent plus élevé que « achetables » : matchs déjà commencés ou terminés peuvent rester listés jusqu’à suppression (Admin → Marketplace).',
   'dashboard.card_hub': 'Votre hub',
   'dashboard.card_create_desc': 'Partagez des pronostics et gagnez',
   'dashboard.card_my_picks_desc': 'Voir et gérer',

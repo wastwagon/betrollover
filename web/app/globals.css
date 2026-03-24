@@ -263,13 +263,9 @@ body {
     @apply flex-1 w-full min-w-0 overflow-x-auto md:ml-56;
   }
 
-  /** Register split page */
+  /** Register — single centered column */
   .section-ux-register-main {
-    @apply relative flex min-h-[calc(100vh-64px)];
-  }
-
-  .section-ux-register-column {
-    @apply flex-1 flex flex-col items-center justify-center px-6 py-12 lg:py-16;
+    @apply relative flex flex-col items-center justify-center w-full min-h-[calc(100vh-64px)] px-5 sm:px-6 py-14 md:py-20;
   }
 }
 
