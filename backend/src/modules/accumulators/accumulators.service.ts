@@ -117,6 +117,16 @@ export class AccumulatorsService {
       throw new BadRequestException(`You already have a coupon with the title "${dto.title}". Please use a different title.`);
     }
 
+    const policy = await this.loadSellingPolicy();
+    if (policy.maxCouponsPerDay > 0 && !(await this.isExemptFromDailyCouponLimit(userId))) {
+      const todayCount = await this.countCouponsCreatedUtcToday(userId);
+      if (todayCount >= policy.maxCouponsPerDay) {
+        throw new BadRequestException(
+          `Daily coupon limit reached (${policy.maxCouponsPerDay} per UTC day). You can create more after midnight UTC.`,
+        );
+      }
+    }
+
     if (dto.title.length > 255) {
       throw new BadRequestException('Title must be 255 characters or less');
     }
@@ -187,26 +197,24 @@ export class AccumulatorsService {
       }
     }
 
-    // ROI check: only for paid picks sold on marketplace. Skip for subscription-only (access via subscription package).
-    if (price > 0 && placementNorm !== 'subscription') {
+    // ROI + win rate: any paid coupon (marketplace or subscription-only). Aligns with VIP package rules.
+    if (price > 0) {
       const user = await this.usersRepo.findOne({ where: { id: userId } });
       if (!user) throw new NotFoundException('User not found');
 
-      // Get minimum ROI from settings (fallback to 20 if table/row missing)
-      let minimumROI = 20.0;
-      try {
-        const apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
-        minimumROI = Number(apiSettings?.minimumROI ?? 20.0);
-      } catch {
-        this.logger.warn('Could not load minimumROI from api_settings, using default 20');
-      }
-
-      // Get user's stats and ROI
       const stats = await this.tipsterService.getStats(userId, user.role);
-
-      if (stats.roi < minimumROI) {
+      const roiOk = stats.roi >= policy.minimumROI;
+      const wrOk = stats.winRate >= policy.minimumWinRate;
+      if (!roiOk || !wrOk) {
+        const parts: string[] = [];
+        if (!roiOk) {
+          parts.push(`ROI ${stats.roi.toFixed(2)}% (minimum ${policy.minimumROI}%)`);
+        }
+        if (!wrOk) {
+          parts.push(`win rate ${stats.winRate}% (minimum ${policy.minimumWinRate}%)`);
+        }
         throw new BadRequestException(
-          `You need a minimum ROI of ${minimumROI}% to sell paid coupons. Your current ROI is ${stats.roi.toFixed(2)}%. Continue creating free picks to improve your ROI.`
+          `Paid coupons require both minimum ROI and win rate (marketplace or VIP subscribers). Current: ${parts.join('; ')}. Use price 0 (free) until your settled results meet every requirement.`,
         );
       }
     }
@@ -1422,5 +1430,49 @@ export class AccumulatorsService {
       await this.marketplaceRepo.save(listing);
     }
     return { success: true };
+  }
+
+  private utcDayBounds(): { start: Date; end: Date } {
+    const now = new Date();
+    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+    const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+    return { start, end };
+  }
+
+  private async loadSellingPolicy(): Promise<{
+    minimumROI: number;
+    minimumWinRate: number;
+    maxCouponsPerDay: number;
+  }> {
+    let minimumROI = 20.0;
+    let minimumWinRate = 45.0;
+    let maxCouponsPerDay = 0;
+    try {
+      const apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
+      minimumROI = Number(apiSettings?.minimumROI ?? 20.0);
+      minimumWinRate = Number(apiSettings?.minimumWinRate ?? 45.0);
+      maxCouponsPerDay = Math.max(0, Math.floor(Number(apiSettings?.maxCouponsPerDay ?? 0)));
+    } catch {
+      this.logger.warn('Could not load api_settings for selling policy, using defaults');
+    }
+    return { minimumROI, minimumWinRate, maxCouponsPerDay };
+  }
+
+  private async countCouponsCreatedUtcToday(userId: number): Promise<number> {
+    const { start, end } = this.utcDayBounds();
+    return this.ticketRepo
+      .createQueryBuilder('t')
+      .where('t.userId = :userId', { userId })
+      .andWhere('t.createdAt >= :start', { start })
+      .andWhere('t.createdAt < :end', { end })
+      .getCount();
+  }
+
+  /** Admins and AI tipster accounts are exempt (automated sync can create many coupons). */
+  private async isExemptFromDailyCouponLimit(userId: number): Promise<boolean> {
+    const user = await this.usersRepo.findOne({ where: { id: userId }, select: ['id', 'role'] });
+    if (user?.role === 'admin') return true;
+    const tip = await this.tipsterRepo.findOne({ where: { userId }, select: ['id', 'isAi'] });
+    return !!tip?.isAi;
   }
 }

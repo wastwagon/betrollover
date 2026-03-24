@@ -553,10 +553,51 @@ export class AdminController {
     @Body() body: { minimumROI: number },
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
-    if (!body?.minimumROI || typeof body.minimumROI !== 'number') {
+    if (body?.minimumROI === undefined || body?.minimumROI === null || typeof body.minimumROI !== 'number' || Number.isNaN(body.minimumROI)) {
       throw new BadRequestException('Minimum ROI is required');
     }
     return this.adminService.updateMinimumROI(body.minimumROI);
+  }
+
+  @Patch('settings/minimum-win-rate')
+  async updateMinimumWinRate(
+    @CurrentUser() user: User,
+    @Body() body: { minimumWinRate: number },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    if (body?.minimumWinRate === undefined || body?.minimumWinRate === null || typeof body.minimumWinRate !== 'number' || Number.isNaN(body.minimumWinRate)) {
+      throw new BadRequestException('minimumWinRate (number 0–100) is required');
+    }
+    return this.adminService.updateMinimumWinRate(body.minimumWinRate);
+  }
+
+  @Patch('settings/tipster-below-threshold-cooldown-hours')
+  async updateTipsterBelowThresholdCooldownHours(
+    @CurrentUser() user: User,
+    @Body() body: { tipsterBelowThresholdCooldownHours: number },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    if (
+      body?.tipsterBelowThresholdCooldownHours === undefined ||
+      body?.tipsterBelowThresholdCooldownHours === null ||
+      typeof body.tipsterBelowThresholdCooldownHours !== 'number' ||
+      Number.isNaN(body.tipsterBelowThresholdCooldownHours)
+    ) {
+      throw new BadRequestException('tipsterBelowThresholdCooldownHours (number 1–168) is required');
+    }
+    return this.adminService.updateTipsterBelowThresholdCooldownHours(body.tipsterBelowThresholdCooldownHours);
+  }
+
+  @Patch('settings/max-coupons-per-day')
+  async updateMaxCouponsPerDay(
+    @CurrentUser() user: User,
+    @Body() body: { maxCouponsPerDay: number },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    if (body?.maxCouponsPerDay === undefined || body?.maxCouponsPerDay === null || typeof body.maxCouponsPerDay !== 'number' || Number.isNaN(body.maxCouponsPerDay)) {
+      throw new BadRequestException('maxCouponsPerDay (number 0–500, 0 = unlimited) is required');
+    }
+    return this.adminService.updateMaxCouponsPerDay(body.maxCouponsPerDay);
   }
 
   @Patch('settings/commission-rate')

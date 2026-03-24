@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
+import { parseSellingThresholds } from '@/lib/selling-thresholds';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 import { PickCard } from '@/components/PickCard';
 import { useCurrency } from '@/context/CurrencyContext';
@@ -94,6 +95,7 @@ function DashboardContent() {
   const [loading, setLoading] = useState(true);
   const [settling, setSettling] = useState(false);
   const [minimumROI, setMinimumROI] = useState<number | null>(null);
+  const [minimumWinRate, setMinimumWinRate] = useState<number | null>(null);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [purchaseStats, setPurchaseStats] = useState<{
     total: number;
@@ -184,10 +186,10 @@ function DashboardContent() {
             isAdmin ? fetch(`${apiUrl}/admin/stats`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null) : Promise.resolve(null),
             fetch(`${apiUrl}/tipster/stats`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
             fetch(`${apiUrl}/wallet/balance`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-            isAdmin ? fetch(`${apiUrl}/admin/settings`, { headers })
+            fetch(`${apiUrl}/tipster/selling-thresholds`, { cache: 'no-store' })
               .then((r) => (r.ok ? r.json() : null))
               .catch(() => null)
-              .then((settings) => settings?.minimumROI !== undefined ? settings.minimumROI : 20.0) : Promise.resolve(20.0),
+              .then((th) => parseSellingThresholds(th)),
             fetch(`${apiUrl}/accumulators/purchased`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
             fetch(`${apiUrl}/tipsters/feed?limit=10`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
             fetch(`${apiUrl}/accumulators/subscription-feed?limit=8`, { headers })
@@ -199,11 +201,12 @@ function DashboardContent() {
         })
         .then((result) => {
           if (!result) return;
-          const [u, s, ts, wallet, minROI, purchasedData, feedData, vipFeedData, followingData, notifData] = result;
+          const [u, s, ts, wallet, thresholds, purchasedData, feedData, vipFeedData, followingData, notifData] = result;
           if (u.role === 'admin') setStats(s || {});
           setTipsterStats(ts || { totalPicks: 0, wonPicks: 0, lostPicks: 0, winRate: 0, totalEarnings: 0, roi: 0 });
           if (wallet) setWalletBalance(Number(wallet.balance));
-          setMinimumROI(minROI);
+          setMinimumROI(thresholds.minimumROI);
+          setMinimumWinRate(thresholds.minimumWinRate);
           const purchasesList = Array.isArray(purchasedData) ? purchasedData : [];
           setPurchases(purchasesList.slice(0, 5));
           /** Money that stayed with the marketplace: winning coupons only (lost/void are refunded to wallet). */
@@ -994,12 +997,16 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
             </section>
           )}
 
-          {/* Earning Badge — premium CTA */}
-          {tipsterStats && minimumROI !== null && (
+          {/* Earning Badge — premium CTA (paid marketplace requires min ROI + min win rate) */}
+          {tipsterStats && minimumROI !== null && minimumWinRate !== null && (
             <section className="mb-6 sm:mb-8">
+              {(() => {
+                const canSellPaid =
+                  tipsterStats.roi >= minimumROI && tipsterStats.winRate >= minimumWinRate;
+                return (
               <div
                 className={`rounded-2xl sm:rounded-3xl overflow-hidden transition-all duration-300 shadow-lg ${
-                  tipsterStats.roi >= minimumROI
+                  canSellPaid
                     ? 'bg-gradient-to-br from-emerald-50 via-white to-teal-50/80 border border-emerald-200/90 shadow-emerald-200/20'
                     : 'bg-gradient-to-br from-amber-50 via-white to-orange-50/60 border border-amber-200/90 shadow-amber-200/20'
                 }`}
@@ -1009,34 +1016,44 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
                     <div className="flex items-start gap-4 sm:gap-5 flex-1 min-w-0">
                       <div
                         className={`flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center text-xl sm:text-2xl shadow-md ${
-                          tipsterStats.roi >= minimumROI ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'
+                          canSellPaid ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'
                         }`}
                       >
-                        {tipsterStats.roi >= minimumROI ? '💰' : '📈'}
+                        {canSellPaid ? '💰' : '📈'}
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3
                           className={`text-lg sm:text-xl font-bold mb-1.5 ${
-                            tipsterStats.roi >= minimumROI ? 'text-emerald-900' : 'text-amber-900'
+                            canSellPaid ? 'text-emerald-900' : 'text-amber-900'
                           }`}
                         >
-                          {tipsterStats.roi >= minimumROI ? t('dashboard.earn_ready') : t('dashboard.earn_build_roi')}
+                          {canSellPaid ? t('dashboard.earn_ready') : t('dashboard.earn_build_performance')}
                         </h3>
                         <p
                           className={`text-sm leading-relaxed ${
-                            tipsterStats.roi >= minimumROI ? 'text-emerald-800/90' : 'text-amber-800/90'
+                            canSellPaid ? 'text-emerald-800/90' : 'text-amber-800/90'
                           }`}
                         >
-                          {tipsterStats.roi >= minimumROI ? (
-                            t('dashboard.earn_meets_min', { roi: tipsterStats.roi.toFixed(2), min: String(minimumROI) })
+                          {canSellPaid ? (
+                            t('dashboard.earn_meets_both', {
+                              roi: tipsterStats.roi.toFixed(2),
+                              wr: String(tipsterStats.winRate),
+                              minRoi: String(minimumROI),
+                              minWr: String(minimumWinRate),
+                            })
                           ) : (
-                            t('dashboard.earn_below_min', { roi: tipsterStats.roi.toFixed(2), min: String(minimumROI) })
+                            t('dashboard.earn_below_detail', {
+                              roi: tipsterStats.roi.toFixed(2),
+                              minRoi: String(minimumROI),
+                              wr: String(tipsterStats.winRate),
+                              minWr: String(minimumWinRate),
+                            })
                           )}
                         </p>
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-3 sm:flex-nowrap md:flex-shrink-0">
-                      {tipsterStats.roi >= minimumROI ? (
+                      {canSellPaid ? (
                         <>
                           <Link
                             href="/create-pick"
@@ -1063,6 +1080,8 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
                   </div>
                 </div>
               </div>
+                );
+              })()}
             </section>
           )}
 

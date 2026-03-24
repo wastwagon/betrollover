@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
+import { fetchSellingThresholds, type SellingThresholds, SELLING_THRESHOLDS_FALLBACK } from '@/lib/selling-thresholds';
 import { useT } from '@/context/LanguageContext';
 
 interface MarketplaceItem {
@@ -46,6 +47,11 @@ export default function SubscriptionMarketplacePage() {
   const t = useT();
   const [items, setItems] = useState<MarketplaceItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [thresholds, setThresholds] = useState<SellingThresholds>(SELLING_THRESHOLDS_FALLBACK);
+
+  useEffect(() => {
+    void fetchSellingThresholds().then(setThresholds);
+  }, []);
 
   useEffect(() => {
     const apiUrl = getApiUrl();
@@ -206,7 +212,10 @@ export default function SubscriptionMarketplacePage() {
         )}
 
         <p className="text-xs text-[var(--text-muted)] mt-8 text-center max-w-2xl mx-auto leading-relaxed">
-          {t('subscriptions.marketplace_footnote')}
+          {t('subscriptions.marketplace_footnote', {
+            minRoi: String(thresholds.minimumROI),
+            minWr: String(thresholds.minimumWinRate),
+          })}
         </p>
       </main>
       <AppFooter />

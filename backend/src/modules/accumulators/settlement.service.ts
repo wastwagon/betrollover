@@ -233,7 +233,16 @@ export class SettlementService {
         });
 
         picksRegraded += summary.picks;
-        if (summary.changed) ticketsOutcomeChanged += 1;
+        if (summary.changed) {
+          ticketsOutcomeChanged += 1;
+          const t = await this.ticketRepo.findOne({
+            where: { id: ticketId },
+            select: ['price', 'userId'],
+          });
+          if (t && Number(t.price) > 0) {
+            await this.notifyTipsterIfBelowSellingThresholds(t.userId);
+          }
+        }
         if (summary.escrow) escrowTicketsAdjusted += 1;
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -471,9 +480,13 @@ export class SettlementService {
       await this.ticketRepo.save(ticket);
       ticketsSettled++;
 
-      if (ticket.isMarketplace && ticket.price > 0) {
+      const priceNum = Number(ticket.price);
+      if (ticket.isMarketplace && priceNum > 0) {
         const fullTicket = await this.ticketRepo.findOne({ where: { id: ticket.id }, select: ['title'] });
         await this.settleEscrow(ticket.id, ticket.userId, ticket.result, fullTicket?.title ?? `Pick #${ticket.id}`);
+      } else if (!ticket.isMarketplace && priceNum > 0) {
+        // Paid subscriber-only coupons: no marketplace escrow, same threshold notice as after paid escrow settlement
+        await this.notifyTipsterIfBelowSellingThresholds(ticket.userId);
       }
     }
 
@@ -598,24 +611,40 @@ export class SettlementService {
       sendEmail: true,
     }).catch(() => { });
 
-    // Notify tipster if ROI fell below minimum (they can only post free picks until it improves)
+    await this.notifyTipsterIfBelowSellingThresholds(sellerId);
+  }
+
+  /** After stats change from a settled paid pick (marketplace escrow or subscriber-priced), warn if below platform minimums. */
+  private async notifyTipsterIfBelowSellingThresholds(sellerId: number): Promise<void> {
     const user = await this.userRepo.findOne({ where: { id: sellerId }, select: ['role'] });
-    if (user?.role === 'tipster' || user?.role === 'admin' || user?.role === 'user') {
-      const apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
-      const minimumROI = Number(apiSettings?.minimumROI ?? 20.0);
-      const stats = await this.tipsterService.getStats(sellerId, user.role);
-      const settled = stats.wonPicks + stats.lostPicks;
-      if (stats.roi < minimumROI && settled > 0) {
-        await this.notificationsService.create({
-          userId: sellerId,
-          type: 'roi_below_minimum',
-          title: 'ROI Below Minimum',
-          message: `Your ROI (${stats.roi.toFixed(2)}%) is below the minimum ${minimumROI}%. You can only post free picks until you improve your ROI. Keep posting free picks to build your track record.`,
-          link: '/create-pick',
-          icon: 'alert',
-          sendEmail: true,
-        }).catch(() => { });
-      }
+    if (user?.role !== 'tipster' && user?.role !== 'admin' && user?.role !== 'user') {
+      return;
     }
+    const apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
+    const minimumROI = Number(apiSettings?.minimumROI ?? 20.0);
+    const minimumWinRate = Number(apiSettings?.minimumWinRate ?? 45.0);
+    const stats = await this.tipsterService.getStats(sellerId, user.role);
+    const settled = stats.wonPicks + stats.lostPicks;
+    if (settled <= 0) return;
+    const roiLow = stats.roi < minimumROI;
+    const wrLow = stats.winRate < minimumWinRate;
+    if (!roiLow && !wrLow) return;
+    const parts: string[] = [];
+    if (roiLow) {
+      parts.push(`ROI ${stats.roi.toFixed(2)}% is below the minimum ${minimumROI}%`);
+    }
+    if (wrLow) {
+      parts.push(`win rate ${stats.winRate}% is below the minimum ${minimumWinRate}%`);
+    }
+    await this.notificationsService
+      .createTipsterBelowSellingThresholdIfDue({
+        userId: sellerId,
+        title: 'Paid Pick Requirements Not Met',
+        message: `${parts.join('; ')}. You can only publish picks with price 0 (free) until both ROI and win rate meet the platform minimums again. Keep posting free picks to rebuild your track record.`,
+        link: '/create-pick',
+        icon: 'alert',
+        sendEmail: true,
+      })
+      .catch(() => { });
   }
 }

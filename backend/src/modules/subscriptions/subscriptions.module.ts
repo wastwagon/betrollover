@@ -14,6 +14,7 @@ import { WalletModule } from '../wallet/wallet.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { TipsterModule } from '../tipster/tipster.module';
 import { User } from '../users/entities/user.entity';
+import { ApiSettings } from '../admin/entities/api-settings.entity';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { User } from '../users/entities/user.entity';
       RoiGuaranteeRefund,
       Tipster,
       User,
+      ApiSettings,
     ]),
     WalletModule,
     NotificationsModule,

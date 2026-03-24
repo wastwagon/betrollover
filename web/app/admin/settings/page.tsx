@@ -14,6 +14,10 @@ interface Settings {
   lastTestDate?: string | null;
   isActive?: boolean;
   minimumROI?: number;
+  minimumWinRate?: number;
+  /** Hours between duplicate "below paid thresholds" tipster alerts (1–168). */
+  tipsterBelowThresholdCooldownHours?: number;
+  maxCouponsPerDay?: number;
   platformCommissionRate?: number;
   streamAlertThresholds?: {
     warnActiveConnections: number;
@@ -62,6 +66,12 @@ export default function AdminSettingsPage() {
   const [syncingOdds, setSyncingOdds] = useState(false);
   const [minimumROI, setMinimumROI] = useState<number>(20.0);
   const [savingROI, setSavingROI] = useState(false);
+  const [minimumWinRate, setMinimumWinRate] = useState<number>(45.0);
+  const [savingWinRate, setSavingWinRate] = useState(false);
+  const [tipsterBelowThresholdCooldownHours, setTipsterBelowThresholdCooldownHours] = useState<number>(72);
+  const [savingThresholdCooldown, setSavingThresholdCooldown] = useState(false);
+  const [maxCouponsPerDay, setMaxCouponsPerDay] = useState<number>(0);
+  const [savingCouponLimit, setSavingCouponLimit] = useState(false);
   const [commissionRate, setCommissionRate] = useState<number>(30.0);
   const [savingCommission, setSavingCommission] = useState(false);
   const [migrationStatus, setMigrationStatus] = useState<{ applied: { filename: string; appliedAt: string }[]; pending: string[] } | null>(null);
@@ -101,6 +111,11 @@ export default function AdminSettingsPage() {
       .then((data) => {
         setSettings(data);
         if (data?.minimumROI !== undefined) setMinimumROI(data.minimumROI);
+        if (data?.minimumWinRate !== undefined) setMinimumWinRate(data.minimumWinRate);
+        if (data?.tipsterBelowThresholdCooldownHours !== undefined) {
+          setTipsterBelowThresholdCooldownHours(data.tipsterBelowThresholdCooldownHours);
+        }
+        if (data?.maxCouponsPerDay !== undefined) setMaxCouponsPerDay(data.maxCouponsPerDay);
         if (data?.platformCommissionRate !== undefined) setCommissionRate(data.platformCommissionRate);
         return data;
       })
@@ -1090,7 +1105,7 @@ export default function AdminSettingsPage() {
                 </svg>
                 Platform Configuration
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {/* Minimum ROI Card */}
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-2xl shadow-lg border-2 border-blue-200 dark:border-blue-800 p-6 hover:shadow-xl transition-all">
                   <div className="flex items-center justify-between mb-4">
@@ -1153,6 +1168,205 @@ export default function AdminSettingsPage() {
                     className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
                   >
                     {savingROI ? 'Saving...' : 'Save Minimum ROI'}
+                  </button>
+                </div>
+
+                {/* Minimum win rate (paid marketplace) */}
+                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 rounded-2xl shadow-lg border-2 border-emerald-200 dark:border-emerald-800 p-6 hover:shadow-xl transition-all">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Minimum win rate</h3>
+                    <span className="text-2xl">🎯</span>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Tipsters need this win rate (settled picks) to list paid coupons on the marketplace. If ROI or win rate
+                    drops below the minimum, only free coupons are allowed until both recover.
+                  </p>
+                  <div className="flex items-center gap-3 mb-4">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={minimumWinRate}
+                      onChange={(e) => setMinimumWinRate(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                    <span className="text-gray-600 dark:text-gray-400 font-medium">%</span>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      const token = localStorage.getItem('token');
+                      if (!token) return;
+                      setSavingWinRate(true);
+                      try {
+                        const res = await fetch(`${getApiUrl()}/admin/settings/minimum-win-rate`, {
+                          method: 'PATCH',
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({ minimumWinRate }),
+                        });
+                        if (res.ok) {
+                          alert('Minimum win rate updated successfully');
+                          const settingsRes = await fetch(`${getApiUrl()}/admin/settings`, {
+                            headers: { Authorization: `Bearer ${token}` },
+                            cache: 'no-store',
+                          });
+                          if (settingsRes.ok) {
+                            const data = await settingsRes.json();
+                            setSettings(data);
+                            if (data.minimumWinRate !== undefined) setMinimumWinRate(data.minimumWinRate);
+                          }
+                        } else {
+                          const error = await res.json().catch(() => ({}));
+                          alert((error as { message?: string }).message || 'Failed to update minimum win rate');
+                        }
+                      } catch (e: unknown) {
+                        alert(e instanceof Error ? e.message : 'Failed to update minimum win rate');
+                      } finally {
+                        setSavingWinRate(false);
+                      }
+                    }}
+                    disabled={savingWinRate}
+                    className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
+                  >
+                    {savingWinRate ? 'Saving...' : 'Save minimum win rate'}
+                  </button>
+                </div>
+
+                {/* Below-threshold tipster alert cooldown */}
+                <div className="bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/20 dark:to-rose-800/20 rounded-2xl shadow-lg border-2 border-rose-200 dark:border-rose-800 p-6 hover:shadow-xl transition-all">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Below-threshold alert cooldown</h3>
+                    <span className="text-2xl">🔕</span>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Minimum hours between repeated in-app and email alerts when a tipster&apos;s ROI or win rate stays under
+                    your minimums (paid marketplace or subscriber picks). Enforcement on create-pick is unchanged; this
+                    only limits notification spam.
+                  </p>
+                  <div className="flex items-center gap-3 mb-4">
+                    <input
+                      type="number"
+                      min={1}
+                      max={168}
+                      step={1}
+                      value={tipsterBelowThresholdCooldownHours}
+                      onChange={(e) =>
+                        setTipsterBelowThresholdCooldownHours(
+                          Math.min(168, Math.max(1, parseInt(e.target.value, 10) || 1)),
+                        )
+                      }
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
+                    />
+                    <span className="text-gray-600 dark:text-gray-400 font-medium whitespace-nowrap">hours</span>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      const token = localStorage.getItem('token');
+                      if (!token) return;
+                      setSavingThresholdCooldown(true);
+                      try {
+                        const res = await fetch(`${getApiUrl()}/admin/settings/tipster-below-threshold-cooldown-hours`, {
+                          method: 'PATCH',
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({ tipsterBelowThresholdCooldownHours }),
+                        });
+                        if (res.ok) {
+                          alert('Below-threshold cooldown updated successfully');
+                          const settingsRes = await fetch(`${getApiUrl()}/admin/settings`, {
+                            headers: { Authorization: `Bearer ${token}` },
+                            cache: 'no-store',
+                          });
+                          if (settingsRes.ok) {
+                            const data = await settingsRes.json();
+                            setSettings(data);
+                            if (data.tipsterBelowThresholdCooldownHours !== undefined) {
+                              setTipsterBelowThresholdCooldownHours(data.tipsterBelowThresholdCooldownHours);
+                            }
+                          }
+                        } else {
+                          const error = await res.json().catch(() => ({}));
+                          alert((error as { message?: string }).message || 'Failed to update cooldown');
+                        }
+                      } catch (e: unknown) {
+                        alert(e instanceof Error ? e.message : 'Failed to update cooldown');
+                      } finally {
+                        setSavingThresholdCooldown(false);
+                      }
+                    }}
+                    disabled={savingThresholdCooldown}
+                    className="w-full px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
+                  >
+                    {savingThresholdCooldown ? 'Saving...' : 'Save cooldown'}
+                  </button>
+                </div>
+
+                {/* Max coupons per UTC day (anti-spam) */}
+                <div className="bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-900/20 dark:to-violet-800/20 rounded-2xl shadow-lg border-2 border-violet-200 dark:border-violet-800 p-6 hover:shadow-xl transition-all">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Coupons per day</h3>
+                    <span className="text-2xl">📅</span>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Maximum coupons a tipster can create per UTC day. Use <strong>0</strong> for unlimited. AI tipsters are
+                    exempt so automated predictions are not blocked.
+                  </p>
+                  <div className="flex items-center gap-3 mb-4">
+                    <input
+                      type="number"
+                      min="0"
+                      max="500"
+                      step="1"
+                      value={maxCouponsPerDay}
+                      onChange={(e) => setMaxCouponsPerDay(Math.min(500, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    />
+                    <span className="text-gray-600 dark:text-gray-400 font-medium whitespace-nowrap">/ day</span>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      const token = localStorage.getItem('token');
+                      if (!token) return;
+                      setSavingCouponLimit(true);
+                      try {
+                        const res = await fetch(`${getApiUrl()}/admin/settings/max-coupons-per-day`, {
+                          method: 'PATCH',
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({ maxCouponsPerDay }),
+                        });
+                        if (res.ok) {
+                          alert('Daily coupon limit updated successfully');
+                          const settingsRes = await fetch(`${getApiUrl()}/admin/settings`, {
+                            headers: { Authorization: `Bearer ${token}` },
+                            cache: 'no-store',
+                          });
+                          if (settingsRes.ok) {
+                            const data = await settingsRes.json();
+                            setSettings(data);
+                            if (data.maxCouponsPerDay !== undefined) setMaxCouponsPerDay(data.maxCouponsPerDay);
+                          }
+                        } else {
+                          const error = await res.json().catch(() => ({}));
+                          alert((error as { message?: string }).message || 'Failed to update daily limit');
+                        }
+                      } catch (e: unknown) {
+                        alert(e instanceof Error ? e.message : 'Failed to update daily limit');
+                      } finally {
+                        setSavingCouponLimit(false);
+                      }
+                    }}
+                    disabled={savingCouponLimit}
+                    className="w-full px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
+                  >
+                    {savingCouponLimit ? 'Saving...' : 'Save daily limit'}
                   </button>
                 </div>
 

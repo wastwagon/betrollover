@@ -4,22 +4,28 @@ import { FaqJsonLd } from '@/components/FaqJsonLd';
 import Link from 'next/link';
 import { getLocale, buildT } from '@/lib/i18n';
 import { SITE_URL, SITE_NAME, getAlternates } from '@/lib/site-config';
+import { fetchSellingThresholds } from '@/lib/selling-thresholds';
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: `How It Works | ${SITE_NAME}`,
-  description:
-    `How BetRollover works: escrow-protected picks, transparent settlement. Same account to buy or sell — 20% ROI unlocks paid coupons. Refunded if picks lose.`,
-  alternates: {
-    canonical: `${SITE_URL}/how-it-works`,
-    languages: getAlternates('/how-it-works'),
-  },
-  openGraph: {
-    url: `${SITE_URL}/how-it-works`,
+export async function generateMetadata(): Promise<Metadata> {
+  const th = await fetchSellingThresholds({ revalidate: 300 });
+  const minRoi = String(th.minimumROI);
+  const minWr = String(th.minimumWinRate);
+  const description = `How BetRollover works: escrow-protected picks, transparent settlement. Same account to buy or sell — ${minRoi}% ROI and ${minWr}% win rate unlock paid marketplace coupons (admin-set). Refunded if picks lose.`;
+  return {
     title: `How It Works | ${SITE_NAME}`,
-    description: 'Escrow-protected picks. Sell paid coupons at 20% ROI — no application. Refunded if picks lose.',
-  },
-};
+    description,
+    alternates: {
+      canonical: `${SITE_URL}/how-it-works`,
+      languages: getAlternates('/how-it-works'),
+    },
+    openGraph: {
+      url: `${SITE_URL}/how-it-works`,
+      title: `How It Works | ${SITE_NAME}`,
+      description,
+    },
+  };
+}
 
 function ListItem({ text }: { text: string }) {
   const sep = ' — ';
@@ -34,24 +40,19 @@ function ListItem({ text }: { text: string }) {
   );
 }
 
-function faqKeys() {
-  return [
-    { q: 'how_it_works.faq_escrow_q', a: 'how_it_works.faq_escrow_a' },
-    { q: 'how_it_works.faq_lose_q', a: 'how_it_works.faq_lose_a' },
-    { q: 'how_it_works.faq_sell_q', a: 'how_it_works.faq_sell_a' },
-    { q: 'how_it_works.faq_settle_q', a: 'how_it_works.faq_settle_a' },
-    { q: 'how_it_works.faq_earn_q', a: 'how_it_works.faq_earn_a' },
-  ] as const;
-}
-
 export default async function HowItWorksPage() {
   const locale = await getLocale();
   const t = buildT(locale);
+  const th = await fetchSellingThresholds({ revalidate: 300 });
+  const sellVars = { minRoi: String(th.minimumROI), minWr: String(th.minimumWinRate) };
 
-  const faqs = faqKeys().map(({ q, a }) => ({
-    question: t(q),
-    answer: t(a),
-  }));
+  const faqs = [
+    { question: t('how_it_works.faq_escrow_q'), answer: t('how_it_works.faq_escrow_a') },
+    { question: t('how_it_works.faq_lose_q'), answer: t('how_it_works.faq_lose_a') },
+    { question: t('how_it_works.faq_sell_q'), answer: t('how_it_works.faq_sell_a', sellVars) },
+    { question: t('how_it_works.faq_settle_q'), answer: t('how_it_works.faq_settle_a') },
+    { question: t('how_it_works.faq_earn_q'), answer: t('how_it_works.faq_earn_a') },
+  ];
 
   const buyerSteps = [
     t('how_it_works.buyers_li1'),
@@ -61,7 +62,7 @@ export default async function HowItWorksPage() {
   ];
   const tipsterSteps = [
     t('how_it_works.tipsters_li1'),
-    t('how_it_works.tipsters_li2'),
+    t('how_it_works.tipsters_li2', sellVars),
     t('how_it_works.tipsters_li3'),
     t('how_it_works.tipsters_li4'),
   ];
@@ -114,7 +115,7 @@ export default async function HowItWorksPage() {
 
             <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/30 p-4 sm:p-6">
               <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">{t('how_it_works.verification_h2')}</h2>
-              <p className="m-0 text-[var(--text-muted)] leading-relaxed">{t('how_it_works.verification_p')}</p>
+              <p className="m-0 text-[var(--text-muted)] leading-relaxed">{t('how_it_works.verification_p', sellVars)}</p>
             </section>
 
             <section id="faq" className="scroll-mt-24">

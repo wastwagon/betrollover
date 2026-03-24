@@ -9,6 +9,8 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { SuccessToast } from '@/components/SuccessToast';
 import { useToast } from '@/hooks/useToast';
 import { getApiUrl } from '@/lib/site-config';
+import { useT } from '@/context/LanguageContext';
+import { fetchSellingThresholds, SELLING_THRESHOLDS_FALLBACK, type SellingThresholds } from '@/lib/selling-thresholds';
 
 interface SubscriptionPackage {
   id: number;
@@ -22,7 +24,9 @@ interface SubscriptionPackage {
 
 export default function SubscriptionPackagesPage() {
   const router = useRouter();
+  const t = useT();
   const [packages, setPackages] = useState<SubscriptionPackage[]>([]);
+  const [thresholds, setThresholds] = useState<SellingThresholds>(SELLING_THRESHOLDS_FALLBACK);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const { showSuccess, clearSuccess, success: toastSuccess } = useToast();
@@ -32,6 +36,10 @@ export default function SubscriptionPackagesPage() {
     durationDays: '30',
     roiGuaranteeMin: '',
   });
+
+  useEffect(() => {
+    void fetchSellingThresholds().then(setThresholds);
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -116,8 +124,11 @@ export default function SubscriptionPackagesPage() {
           title="VIP subscription package"
           tagline="One active VIP channel per tipster. Subscribers pay from wallet; funds follow your escrow rules."
         />
-        <p className="text-sm text-[var(--text-muted)] mb-4 max-w-xl border border-amber-200/80 bg-amber-50/50 dark:bg-amber-950/20 rounded-xl px-4 py-3">
-          You need at least <strong className="text-[var(--text)]">20% ROI</strong> (from your settled coupons) to create a VIP package — same standard as selling paid picks on the marketplace.
+        <p className="text-sm text-[var(--text-muted)] mb-4 max-w-xl border border-amber-200/80 bg-amber-50/50 dark:bg-amber-950/20 rounded-xl px-4 py-3 leading-relaxed">
+          {t('subscriptions.vip_create_eligibility', {
+            minRoi: String(thresholds.minimumROI),
+            minWr: String(thresholds.minimumWinRate),
+          })}
         </p>
 
         {packages.length > 0 && (

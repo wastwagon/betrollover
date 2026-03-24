@@ -16,9 +16,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { User } from '../users/entities/user.entity';
 import { TipsterService } from '../tipster/tipster.service';
+import { ApiSettings } from '../admin/entities/api-settings.entity';
 
-/** Same bar as paid marketplace coupons — tipsters below this ROI cannot sell VIP packages. */
-const MIN_ROI_FOR_SUBSCRIPTION_PACKAGE = 20;
 const DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_MIN = 20;
 const DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_ENABLED = true;
 
@@ -60,6 +59,8 @@ export class SubscriptionsService {
     private readonly tipsterService: TipsterService,
     private readonly walletService: WalletService,
     private readonly notificationsService: NotificationsService,
+    @InjectRepository(ApiSettings)
+    private readonly apiSettingsRepo: Repository<ApiSettings>,
   ) {}
 
   async countSubscriptionCouponsInWindow(packageId: number, windowDays: number): Promise<number> {
@@ -98,9 +99,27 @@ export class SubscriptionsService {
     const user = await this.usersRepo.findOne({ where: { id: tipsterUserId }, select: ['id', 'role'] });
     if (!user) throw new NotFoundException('User not found');
     const stats = await this.tipsterService.getStats(tipsterUserId, user.role);
-    if (stats.roi < MIN_ROI_FOR_SUBSCRIPTION_PACKAGE) {
+    let minimumROI = 20.0;
+    let minimumWinRate = 45.0;
+    try {
+      const row = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
+      minimumROI = Number(row?.minimumROI ?? 20.0);
+      minimumWinRate = Number(row?.minimumWinRate ?? 45.0);
+    } catch {
+      /* use defaults */
+    }
+    const roiOk = stats.roi >= minimumROI;
+    const wrOk = stats.winRate >= minimumWinRate;
+    if (!roiOk || !wrOk) {
+      const parts: string[] = [];
+      if (!roiOk) {
+        parts.push(`ROI ${stats.roi.toFixed(2)}% (minimum ${minimumROI}%)`);
+      }
+      if (!wrOk) {
+        parts.push(`win rate ${stats.winRate}% (minimum ${minimumWinRate}%)`);
+      }
       throw new BadRequestException(
-        `You need a minimum ROI of ${MIN_ROI_FOR_SUBSCRIPTION_PACKAGE}% to offer a VIP subscription package. Your current ROI is ${stats.roi.toFixed(2)}%.`,
+        `VIP packages require the same performance minimums as paid marketplace coupons. Current: ${parts.join('; ')}. Improve with free picks until both metrics qualify.`,
       );
     }
 

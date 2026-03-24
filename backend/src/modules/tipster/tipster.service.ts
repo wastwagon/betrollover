@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
 import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity';
-import { UserRole } from '../users/entities/user.entity';
+import { ApiSettings } from '../admin/entities/api-settings.entity';
 
 @Injectable()
 export class TipsterService {
@@ -12,6 +12,8 @@ export class TipsterService {
     private ticketRepo: Repository<AccumulatorTicket>,
     @InjectRepository(WalletTransaction)
     private txRepo: Repository<WalletTransaction>,
+    @InjectRepository(ApiSettings)
+    private apiSettingsRepo: Repository<ApiSettings>,
   ) {}
 
   async getStats(userId: number, role: string) {
@@ -67,5 +69,18 @@ export class TipsterService {
       totalEarnings: Math.round(totalEarnings * 100) / 100,
       roi,
     };
+  }
+
+  /** Public thresholds for paid marketplace coupons (no secrets). */
+  async getSellingThresholds(): Promise<{ minimumROI: number; minimumWinRate: number }> {
+    try {
+      const row = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
+      return {
+        minimumROI: Number(row?.minimumROI ?? 20.0),
+        minimumWinRate: Number(row?.minimumWinRate ?? 45.0),
+      };
+    } catch {
+      return { minimumROI: 20.0, minimumWinRate: 45.0 };
+    }
   }
 }

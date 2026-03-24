@@ -61,9 +61,9 @@ const errorMappings: ErrorMapping[] = [
     action: 'Make sure all required fields are filled correctly',
   },
   {
-    pattern: /roi|minimum/i,
-    message: 'You need to improve your ROI before selling paid coupons',
-    action: 'Continue creating free picks to build your track record',
+    pattern: /Daily coupon limit reached/i,
+    message: 'Daily coupon limit reached',
+    action: 'You can create more coupons after midnight UTC, or contact support if you need a higher limit',
   },
   {
     pattern: /cannot purchase your own|own pick|own coupon|own slip/i,

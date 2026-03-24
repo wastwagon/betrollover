@@ -20,6 +20,7 @@ import { HomeFreeTipOfTheDay } from '@/components/HomeFreeTipOfTheDay';
 import { HomePublicChatRooms } from '@/components/HomePublicChatRooms';
 import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, getAlternates } from '@/lib/site-config';
+import { fetchSellingThresholds } from '@/lib/selling-thresholds';
 import { getLocale, buildT } from '@/lib/i18n';
 import type { Metadata } from 'next';
 
@@ -40,6 +41,8 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const locale = await getLocale();
   const t = buildT(locale);
+  const th = await fetchSellingThresholds({ revalidate: 300 });
+  const sellVars = { minRoi: String(th.minimumROI), minWr: String(th.minimumWinRate) };
 
   return (
     <div className="min-h-screen bg-[var(--bg)]">
@@ -127,10 +130,10 @@ export default async function HomePage() {
                   {t('home.tipster_flow_badge')}
                 </span>
                 <h2 className="text-base font-semibold text-[var(--text)] mb-3 sm:text-lg md:text-xl leading-snug">
-                  {t('home.tipster_flow_title')}
+                  {t('home.tipster_flow_title', sellVars)}
                 </h2>
                 <p className="text-[var(--text-muted)] text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-                  {t('home.tipster_flow_sub')}
+                  {t('home.tipster_flow_sub', sellVars)}
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
@@ -147,8 +150,8 @@ export default async function HomePage() {
                     <ArtworkSellerRoi className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-teal-600 dark:text-teal-400" />
                     <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-teal-500/15 border border-teal-500/30 text-sm font-bold text-teal-700 dark:text-teal-300">2</span>
                   </div>
-                  <h3 className="text-sm sm:text-base font-semibold text-[var(--text)] mb-2">{t('home.tipster_step2_title')}</h3>
-                  <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">{t('home.tipster_step2_desc')}</p>
+                  <h3 className="text-sm sm:text-base font-semibold text-[var(--text)] mb-2">{t('home.tipster_step2_title', sellVars)}</h3>
+                  <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">{t('home.tipster_step2_desc', sellVars)}</p>
                 </div>
                 <div className="flex flex-col items-center text-center rounded-2xl border border-emerald-500/15 dark:border-emerald-800/30 bg-gradient-to-b from-emerald-500/[0.06] to-[var(--card)]/80 p-5 sm:p-6 shadow-sm">
                   <div className="flex flex-col items-center gap-2 mb-3 w-full">
@@ -302,7 +305,7 @@ export default async function HomePage() {
                   {t('home.feature_verified_title')}
                 </h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                  {t('home.feature_verified_desc')}
+                  {t('home.feature_verified_desc', sellVars)}
                 </p>
               </div>
 

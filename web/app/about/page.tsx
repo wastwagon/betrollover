@@ -3,6 +3,7 @@ import { AppFooter } from '@/components/AppFooter';
 import Link from 'next/link';
 import { getLocale, buildT } from '@/lib/i18n';
 import { SITE_URL, SITE_NAME, getAlternates } from '@/lib/site-config';
+import { fetchSellingThresholds } from '@/lib/selling-thresholds';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -18,6 +19,8 @@ export const metadata: Metadata = {
 export default async function AboutPage() {
   const locale = await getLocale();
   const t = buildT(locale);
+  const th = await fetchSellingThresholds({ revalidate: 300 });
+  const sellVars = { minRoi: String(th.minimumROI), minWr: String(th.minimumWinRate) };
 
   return (
     <div className="min-h-screen bg-[var(--bg)]">
@@ -52,7 +55,7 @@ export default async function AboutPage() {
 
             <section>
               <h2 className="text-xl font-semibold mb-3">{t('about.tipster_status_title')}</h2>
-              <p>{t('about.tipster_status_desc')}</p>
+              <p>{t('about.tipster_status_desc', sellVars)}</p>
             </section>
 
             <section>

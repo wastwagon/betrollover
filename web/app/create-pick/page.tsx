@@ -16,6 +16,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
 import { getApiUrl } from '@/lib/site-config';
+import { fetchSellingThresholds, type SellingThresholds } from '@/lib/selling-thresholds';
 import { useSlipCart } from '@/context/SlipCartContext';
 import type { Fixture, FixtureOdd, SportEventItem, CreatePickSport, FilterOptions } from './types';
 import { SportLoadingSpinner } from './components/SportLoadingSpinner';
@@ -71,6 +72,8 @@ export default function CreatePickPage() {
   const [selectedLeague, setSelectedLeague] = useState<string>('');
   const [teamSearch, setTeamSearch] = useState<string>('');
   const [slipSheetOpen, setSlipSheetOpen] = useState(false);
+  const [sellTh, setSellTh] = useState<SellingThresholds | null>(null);
+  const [myTipStats, setMyTipStats] = useState<{ roi: number; winRate: number } | null>(null);
   const [sportLeague, setSportLeague] = useState<string>('');
   const debouncedTeamSearch = useDebounce(teamSearch, 500); // Debounce team search by 500ms
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({ countries: [], tournaments: [], leagues: [] });
@@ -442,6 +445,26 @@ export default function CreatePickPage() {
       setSubscriptionPackageIds([myPackages[0].id]);
     }
   }, [placement, myPackages]);
+
+  useEffect(() => {
+    void fetchSellingThresholds().then(setSellTh);
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    fetch(`${getApiUrl()}/tipster/stats`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && typeof d.roi === 'number' && typeof d.winRate === 'number') {
+          setMyTipStats({ roi: d.roi, winRate: d.winRate });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const loadFixtureOdds = async (f: Fixture) => {
     // If odds already loaded, skip
@@ -1225,6 +1248,35 @@ export default function CreatePickPage() {
                           rows={2}
                         />
                       </div>
+                      {sellTh &&
+                        (placement === 'marketplace' || (placement === 'subscription' && price > 0)) && (
+                        <div className="rounded-lg border border-amber-200/80 bg-amber-50/40 dark:bg-amber-950/25 px-3 py-2 space-y-1.5">
+                          <p className="text-[11px] font-semibold text-[var(--text)]">{t('create_pick.paid_marketplace_rules_title')}</p>
+                          <p className="text-[10px] text-[var(--text-muted)] leading-snug">
+                            {t('create_pick.paid_marketplace_rules_body', {
+                              minRoi: String(sellTh.minimumROI),
+                              minWr: String(sellTh.minimumWinRate),
+                            })}
+                          </p>
+                          {price > 0 && myTipStats && (
+                            <p
+                              className={`text-[10px] font-medium leading-snug ${
+                                myTipStats.roi >= sellTh.minimumROI && myTipStats.winRate >= sellTh.minimumWinRate
+                                  ? 'text-emerald-700 dark:text-emerald-300'
+                                  : 'text-amber-800 dark:text-amber-200'
+                              }`}
+                            >
+                              {t('create_pick.paid_marketplace_your_stats', {
+                                roi: myTipStats.roi.toFixed(2),
+                                wr: String(myTipStats.winRate),
+                              })}{' '}
+                              {myTipStats.roi >= sellTh.minimumROI && myTipStats.winRate >= sellTh.minimumWinRate
+                                ? t('create_pick.paid_marketplace_ready')
+                                : t('create_pick.paid_marketplace_not_ready')}
+                            </p>
+                          )}
+                        </div>
+                      )}
                       <div>
                         <label className="block text-xs font-medium text-[var(--text)] mb-1">
                           {t('create_pick.price_label')} <span className="text-[var(--text-muted)]">{t('create_pick.price_note')}</span>
@@ -1274,6 +1326,14 @@ export default function CreatePickPage() {
                         {placement === 'subscription' && myPackages.length === 0 && (
                           <p className="text-xs text-[var(--text-muted)] mt-1">
                             <Link href="/dashboard/subscription-packages" className="text-[var(--primary)] hover:underline">Create subscription packages</Link> first.
+                          </p>
+                        )}
+                        {sellTh && placement === 'subscription' && price === 0 && (
+                          <p className="text-[10px] text-[var(--text-muted)] mt-2 leading-snug">
+                            {t('create_pick.vip_same_bar', {
+                              minRoi: String(sellTh.minimumROI),
+                              minWr: String(sellTh.minimumWinRate),
+                            })}
                           </p>
                         )}
                       </div>
@@ -1416,6 +1476,35 @@ export default function CreatePickPage() {
                     rows={2}
                   />
                 </div>
+                {sellTh &&
+                  (placement === 'marketplace' || (placement === 'subscription' && price > 0)) && (
+                  <div className="rounded-xl border border-amber-200/80 bg-amber-50/40 dark:bg-amber-950/25 px-3 py-2.5 space-y-1.5">
+                    <p className="text-xs font-semibold text-[var(--text)]">{t('create_pick.paid_marketplace_rules_title')}</p>
+                    <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                      {t('create_pick.paid_marketplace_rules_body', {
+                        minRoi: String(sellTh.minimumROI),
+                        minWr: String(sellTh.minimumWinRate),
+                      })}
+                    </p>
+                    {price > 0 && myTipStats && (
+                      <p
+                        className={`text-xs font-medium leading-relaxed ${
+                          myTipStats.roi >= sellTh.minimumROI && myTipStats.winRate >= sellTh.minimumWinRate
+                            ? 'text-emerald-700 dark:text-emerald-300'
+                            : 'text-amber-800 dark:text-amber-200'
+                        }`}
+                      >
+                        {t('create_pick.paid_marketplace_your_stats', {
+                          roi: myTipStats.roi.toFixed(2),
+                          wr: String(myTipStats.winRate),
+                        })}{' '}
+                        {myTipStats.roi >= sellTh.minimumROI && myTipStats.winRate >= sellTh.minimumWinRate
+                          ? t('create_pick.paid_marketplace_ready')
+                          : t('create_pick.paid_marketplace_not_ready')}
+                      </p>
+                    )}
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-[var(--text)] mb-1">{t('create_pick.price_label')} {t('create_pick.price_note')}</label>
                   <input
@@ -1464,6 +1553,14 @@ export default function CreatePickPage() {
                 {placement === 'subscription' && myPackages.length === 0 && (
                   <p className="text-sm text-[var(--text-muted)]">
                     <Link href="/dashboard/subscription-packages" className="text-[var(--primary)] hover:underline">Create a VIP package</Link> first.
+                  </p>
+                )}
+                {sellTh && placement === 'subscription' && price === 0 && (
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                    {t('create_pick.vip_same_bar', {
+                      minRoi: String(sellTh.minimumROI),
+                      minWr: String(sellTh.minimumWinRate),
+                    })}
                   </p>
                 )}
                 {error && (
