@@ -390,6 +390,14 @@ export class EmailService {
     const logoSrc = this.escapeHtmlAttr(this.getLogoUrl());
     const safeMessage = (data.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
     const safeTitle = this.escapeEmailText(data.title);
+    const tipsterFormLine = data.metadata?.tipsterForm
+      ? `<p style="font-size:13px;color:${BR.muted};margin:0 0 16px;padding:10px 12px;background:#f8fafc;border:1px solid ${BR.line};border-radius:10px;">${this.escapeEmailText(
+          data.metadata.tipsterForm,
+        )}</p>`
+      : '';
+    const tipsterFormTrustNote = data.metadata?.tipsterForm
+      ? `<p style="font-size:11px;color:${BR.muted};margin:0 0 14px;">Stats source: BetRollover tipster performance table. Performance can change as new picks settle.</p>`
+      : '';
     const ctaGradient =
       accentColor === '#10b981'
         ? 'linear-gradient(180deg,#10b981,#059669)'
@@ -413,6 +421,8 @@ export class EmailService {
 </tr>
 <tr>
   <td style="padding:8px 32px 28px;">
+    ${tipsterFormLine}
+    ${tipsterFormTrustNote}
     <p style="font-size:16px;line-height:1.65;color:#334155;margin:0 0 22px;">${safeMessage}</p>
     ${data.link ? `
     <div style="text-align:center;">
@@ -436,6 +446,122 @@ export class EmailService {
       to,
       subject,
       text: data.message,
+      html,
+    });
+  }
+
+  /**
+   * Rich coupon-card email used for new pick alerts.
+   * Includes full coupon details so users can read without opening the app.
+   */
+  async sendCouponCardEmail(
+    to: string,
+    data: {
+      tipsterName: string;
+      couponTitle: string;
+      tipsterForm?: string;
+      tipsterFormAsOf?: string;
+      totalOdds: number;
+      price: number;
+      link: string;
+      legs: Array<{
+        matchDescription: string;
+        prediction: string;
+        odds: number;
+        matchDate?: string | null;
+      }>;
+      isSubscription?: boolean;
+    },
+  ) {
+    const appUrl = process.env.APP_URL || 'http://localhost:6002';
+    const ctaUrl = data.link.startsWith('http') ? data.link : `${appUrl}${data.link}`;
+    const tipsterName = this.escapeEmailText(data.tipsterName || 'Tipster');
+    const couponTitle = this.escapeEmailText(data.couponTitle || 'New Pick');
+    const priceLabel = Number(data.price) > 0 ? `GHS ${Number(data.price).toFixed(2)}` : 'Free';
+    const totalOddsLabel = Number(data.totalOdds || 0).toFixed(3);
+    const accessLabel = data.isSubscription ? 'Subscribers only' : 'Public marketplace';
+    const asOfLabel = data.tipsterFormAsOf
+      ? new Date(data.tipsterFormAsOf).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })
+      : null;
+    const tipsterFormLine = data.tipsterForm
+      ? `<div style="margin:12px 0 14px;padding:10px 12px;background:#f8fafc;border:1px solid ${BR.line};border-radius:10px;">
+          <p style="margin:0;font-size:13px;color:${BR.muted};">${this.escapeEmailText(data.tipsterForm)}</p>
+          ${
+            asOfLabel
+              ? `<p style="margin:6px 0 0;font-size:11px;color:${BR.muted};">As of: ${this.escapeEmailText(asOfLabel)}</p>`
+              : ''
+          }
+          <p style="margin:6px 0 0;font-size:11px;color:${BR.muted};">Stats source: BetRollover tipster performance table.</p>
+          <p style="margin:4px 0 0;font-size:11px;color:${BR.muted};">Performance can change as new picks settle.</p>
+        </div>`
+      : '';
+
+    const legsHtml = (data.legs || [])
+      .slice(0, 20)
+      .map((leg, idx) => {
+        const match = this.escapeEmailText(leg.matchDescription || 'Match');
+        const prediction = this.escapeEmailText(leg.prediction || 'Prediction');
+        const odds = Number(leg.odds || 0).toFixed(3);
+        const kickoff = leg.matchDate
+          ? new Date(leg.matchDate).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })
+          : null;
+        return `<tr>
+  <td style="padding:14px 16px;border-top:1px solid ${BR.line};">
+    <p style="margin:0;font-size:13px;font-weight:700;color:${BR.ink};">Leg ${idx + 1}: ${match}</p>
+    <p style="margin:6px 0 0;font-size:13px;color:#334155;">${prediction} · <strong>@ ${odds}</strong></p>
+    ${kickoff ? `<p style="margin:6px 0 0;font-size:12px;color:${BR.muted};">Kickoff: ${this.escapeEmailText(kickoff)}</p>` : ''}
+  </td>
+</tr>`;
+      })
+      .join('');
+
+    const inner = `${this.brandHeader(
+      'New coupon alert',
+      couponTitle,
+      `${tipsterName} just published a new coupon.${tipsterFormLine ? ' ' : ''}`,
+    )}
+<tr>
+  <td style="padding:8px 36px 26px;">
+    ${tipsterFormLine}
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f1f5f9;border-radius:14px;border:1px solid ${BR.line};overflow:hidden;">
+      <tr>
+        <td style="padding:16px;">
+          <p style="margin:0;font-size:12px;color:${BR.muted};text-transform:uppercase;letter-spacing:0.06em;">Access</p>
+          <p style="margin:6px 0 0;font-size:15px;font-weight:700;color:${BR.ink};">${this.escapeEmailText(accessLabel)}</p>
+          <p style="margin:14px 0 0;font-size:12px;color:${BR.muted};text-transform:uppercase;letter-spacing:0.06em;">Price</p>
+          <p style="margin:6px 0 0;font-size:18px;font-weight:700;color:${BR.ink};">${this.escapeEmailText(priceLabel)}</p>
+          <p style="margin:14px 0 0;font-size:12px;color:${BR.muted};text-transform:uppercase;letter-spacing:0.06em;">Total Odds</p>
+          <p style="margin:6px 0 0;font-size:22px;font-weight:800;color:${BR.ink};letter-spacing:-0.02em;">${this.escapeEmailText(totalOddsLabel)}</p>
+        </td>
+      </tr>
+      ${legsHtml || `<tr><td style="padding:14px 16px;border-top:1px solid ${BR.line};font-size:13px;color:${BR.muted};">No leg details available.</td></tr>`}
+    </table>
+    <div style="text-align:center;margin-top:24px;">
+      <a href="${this.escapeHtmlAttr(ctaUrl)}" style="display:inline-block;background:linear-gradient(180deg,#d4af37,#b8941f);color:#0c1224;padding:14px 30px;text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(201,162,39,0.35);">Open Coupon</a>
+    </div>
+  </td>
+</tr>`;
+
+    const html = this.premiumDocument(inner, 'You received this because pick email alerts are enabled for your account.');
+    const textLegs = (data.legs || [])
+      .slice(0, 20)
+      .map(
+        (leg, i) =>
+          `${i + 1}. ${leg.matchDescription} | ${leg.prediction} @ ${Number(leg.odds || 0).toFixed(3)}${
+            leg.matchDate ? ` | ${new Date(leg.matchDate).toISOString()}` : ''
+          }`,
+      )
+      .join('\n');
+    const text = `New coupon from ${data.tipsterName}\n${
+      data.tipsterForm
+        ? `\n${data.tipsterForm}${asOfLabel ? `\nAs of: ${asOfLabel}` : ''}\nStats source: BetRollover tipster performance table.\nPerformance can change as new picks settle.\n`
+        : '\n'
+    }\nTitle: ${data.couponTitle}\nAccess: ${accessLabel}\nPrice: ${priceLabel}\nTotal Odds: ${totalOddsLabel}\n\n${textLegs}\n\nOpen: ${ctaUrl}\n\n— BetRollover`;
+
+    return this.send({
+      to,
+      subject: `${data.tipsterName} posted: ${data.couponTitle}`,
+      text,
       html,
     });
   }

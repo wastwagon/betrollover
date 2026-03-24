@@ -549,6 +549,10 @@ const en = {
   'subscriptions.picks_record': 'Record',
   'subscriptions.picks_total': 'total',
   'subscriptions.roi_guarantee_label': 'ROI guarantee threshold',
+  'subscriptions.roi_commitment_committed': 'Committed',
+  'subscriptions.roi_commitment_not_committed': 'Not committed',
+  'subscriptions.roi_target_delivery': 'Target ROI delivery: {n}',
+  'subscriptions.roi_target_unpublished': 'No target ROI commitment published for this package yet.',
   'subscriptions.subscribe_cta': 'Subscribe',
   'subscriptions.marketplace_footnote':
     'Only tipsters with at least 20% ROI can create a VIP package. Stats shown reflect settled coupon performance.',

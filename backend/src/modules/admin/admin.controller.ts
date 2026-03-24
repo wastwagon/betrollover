@@ -28,6 +28,7 @@ import { AdsService } from '../ads/ads.service';
 import { AccumulatorsService } from '../accumulators/accumulators.service';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { UpdateApiSportsKeyDto, TestApiSportsConnectionDto } from './dto/api-sports.dto';
 
 @Controller('admin')
@@ -58,6 +59,7 @@ export class AdminController {
     private readonly resourcesService: ResourcesService,
     private readonly adsService: AdsService,
     private readonly accumulatorsService: AccumulatorsService,
+    private readonly subscriptionsService: SubscriptionsService,
     private readonly dataSource: DataSource,
   ) { }
 
@@ -91,6 +93,64 @@ export class AdminController {
   async initializeAiTipsters(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.tipstersSetup.initializeAiTipsters();
+  }
+
+  @Get('ai-tipsters/subscription-packages')
+  async getAiTipsterPackages(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.subscriptionsService.getAdminAiPackages();
+  }
+
+  @Patch('ai-tipsters/subscription-packages/:id')
+  async updateAiTipsterPackage(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+    @Body()
+    body: {
+      name?: string;
+      price?: number;
+      durationDays?: number;
+      roiGuaranteeMin?: number | null;
+      roiGuaranteeEnabled?: boolean;
+      status?: 'active' | 'inactive';
+    },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    if (body.name !== undefined && (!body.name || !body.name.trim())) {
+      throw new BadRequestException('name cannot be empty');
+    }
+    if (body.price !== undefined && (!Number.isFinite(Number(body.price)) || Number(body.price) < 0)) {
+      throw new BadRequestException('price must be a non-negative number');
+    }
+    if (
+      body.durationDays !== undefined &&
+      (!Number.isFinite(Number(body.durationDays)) || Number(body.durationDays) < 1 || Number(body.durationDays) > 365)
+    ) {
+      throw new BadRequestException('durationDays must be between 1 and 365');
+    }
+    if (body.status !== undefined && !['active', 'inactive'].includes(body.status)) {
+      throw new BadRequestException("status must be 'active' or 'inactive'");
+    }
+    return this.subscriptionsService.updatePackageByAdmin(id, {
+      name: body.name?.trim(),
+      price: body.price !== undefined ? Number(body.price) : undefined,
+      durationDays: body.durationDays !== undefined ? Number(body.durationDays) : undefined,
+      roiGuaranteeMin: body.roiGuaranteeMin ?? undefined,
+      roiGuaranteeEnabled: body.roiGuaranteeEnabled,
+      status: body.status,
+    });
+  }
+
+  @Patch('ai-tipsters/subscription-packages/bulk/status')
+  async bulkSetAiTipsterPackageStatus(
+    @CurrentUser() user: User,
+    @Body() body: { status: 'active' | 'inactive' },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    if (!body?.status || !['active', 'inactive'].includes(body.status)) {
+      throw new BadRequestException("status must be 'active' or 'inactive'");
+    }
+    return this.subscriptionsService.setAllAiPackageStatuses(body.status);
   }
 
   @Post('predictions/sync-to-marketplace')
@@ -824,12 +884,33 @@ export class AdminController {
     @Query('userId') userId?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('audience') audience?: 'followers' | 'subscribers',
+    @Query('deliveryMode') deliveryMode?: 'teaser' | 'detailed_card',
+    @Query('type') type?: string,
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.adminService.getAllNotifications({
       userId: userId ? parseInt(userId, 10) : undefined,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
+      audience,
+      deliveryMode,
+      type,
+    });
+  }
+
+  @Get('notifications/delivery-audit')
+  async getNotificationDeliveryAudit(
+    @CurrentUser() user: User,
+    @Query('limit') limit?: string,
+    @Query('audience') audience?: 'followers' | 'subscribers',
+    @Query('deliveryMode') deliveryMode?: 'teaser' | 'detailed_card',
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.adminService.getNotificationDeliveryAudit({
+      limit: limit ? parseInt(limit, 10) : undefined,
+      audience,
+      deliveryMode,
     });
   }
 

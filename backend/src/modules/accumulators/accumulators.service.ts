@@ -357,22 +357,46 @@ export class AccumulatorsService {
           pickTitle: ticket.title,
           price,
           accumulatorId: ticket.id,
+          couponCard:
+            price === 0
+              ? {
+                  totalOdds: Number(ticket.totalOdds),
+                  isSubscription: false,
+                  legs: dto.selections.map((s) => ({
+                    matchDescription: s.matchDescription,
+                    prediction: s.prediction,
+                    odds: Number(s.odds),
+                    matchDate: s.matchDate || null,
+                  })),
+                }
+              : undefined,
         });
       }
     } else if (placementNorm === 'subscription' && (dto.subscriptionPackageIds?.length ?? 0) > 0) {
-      // Subscription-only: add coupon to packages (no marketplace listing) — still notify followers
+      // Subscription-only: add coupon to packages (no marketplace listing)
       await this.subscriptionsService.addCouponToPackages(ticket.id, dto.subscriptionPackageIds!, userId);
       const creator = await this.usersRepo.findOne({ where: { id: userId }, select: ['displayName', 'username'] });
       const creatorName = creator?.displayName || creator?.username || 'Tipster';
       const tipster = await this.tipsterRepo.findOne({ where: { userId }, select: ['id', 'displayName'] });
       if (tipster) {
-        await this.notificationsService.notifyFollowersOfNewCoupon({
-          tipsterId: tipster.id,
+        const subscriberUserIds = await this.subscriptionsService.getActiveSubscriberUserIdsForPackages(
+          dto.subscriptionPackageIds!,
+        );
+        await this.notificationsService.notifyUsersOfSubscriptionCoupon({
+          recipientUserIds: subscriberUserIds,
           tipsterUserId: userId,
           tipsterDisplayName: tipster.displayName || creatorName,
           pickTitle: ticket.title,
-          price,
           accumulatorId: ticket.id,
+          couponCard: {
+            totalOdds: Number(ticket.totalOdds),
+            legs: dto.selections.map((s) => ({
+              matchDescription: s.matchDescription,
+              prediction: s.prediction,
+              odds: Number(s.odds),
+              matchDate: s.matchDate || null,
+            })),
+          },
         });
       }
     }

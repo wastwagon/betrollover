@@ -504,6 +504,9 @@ export default function TipsterProfilePage() {
               {subscriptionPackages.map((pkg) => {
                 const isSubscribed = subscribedPackageIds.has(pkg.id);
                 const canSubscribe = !isSubscribed && (pkg.price === 0 || (walletBalance !== null && walletBalance >= pkg.price));
+                const hasCommittedRoi = pkg.roiGuaranteeEnabled && pkg.roiGuaranteeMin != null;
+                const committedRoiValue =
+                  pkg.roiGuaranteeMin != null ? `${Number(pkg.roiGuaranteeMin).toFixed(1)}%` : '—';
                 return (
                   <div
                     key={pkg.id}
@@ -511,9 +514,29 @@ export default function TipsterProfilePage() {
                   >
                     <h3 className="font-semibold text-[var(--text)] mb-1">{pkg.name}</h3>
                     <p className="text-lg font-semibold text-[var(--primary)] mb-2">GHS {Number(pkg.price).toFixed(2)}<span className="text-sm font-normal text-[var(--text-muted)]">/{pkg.durationDays}d</span></p>
-                    {pkg.roiGuaranteeEnabled && pkg.roiGuaranteeMin != null && (
-                      <p className="text-xs text-[var(--text-muted)] mb-3">{t('tipster.roi_guarantee', { n: String(pkg.roiGuaranteeMin) })}</p>
-                    )}
+                    <div className="mb-3 rounded-lg border border-emerald-200/60 dark:border-emerald-700/40 bg-white/70 dark:bg-gray-900/30 px-3 py-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                          {t('subscriptions.roi_guarantee_label')}
+                        </span>
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                            hasCommittedRoi
+                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                              : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'
+                          }`}
+                        >
+                          {hasCommittedRoi
+                            ? t('subscriptions.roi_commitment_committed')
+                            : t('subscriptions.roi_commitment_not_committed')}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[var(--text)] mt-1">
+                        {hasCommittedRoi
+                          ? t('subscriptions.roi_target_delivery', { n: committedRoiValue })
+                          : t('subscriptions.roi_target_unpublished')}
+                      </p>
+                    </div>
                     {isSubscribed ? (
                       <span className="inline-flex px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 text-sm font-medium">{t('tipster.subscribed')}</span>
                     ) : (

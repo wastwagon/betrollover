@@ -19,6 +19,8 @@ import { TipsterService } from '../tipster/tipster.service';
 
 /** Same bar as paid marketplace coupons — tipsters below this ROI cannot sell VIP packages. */
 const MIN_ROI_FOR_SUBSCRIPTION_PACKAGE = 20;
+const DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_MIN = 20;
+const DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_ENABLED = true;
 
 export interface CreatePackageDto {
   name: string;
@@ -26,6 +28,15 @@ export interface CreatePackageDto {
   durationDays?: number;
   roiGuaranteeMin?: number | null;
   roiGuaranteeEnabled?: boolean;
+}
+
+export interface UpdatePackageDto {
+  name?: string;
+  price?: number;
+  durationDays?: number;
+  roiGuaranteeMin?: number | null;
+  roiGuaranteeEnabled?: boolean;
+  status?: 'active' | 'inactive';
 }
 
 /** Max subscription-placement coupons per package per rolling window (window = package duration days). */
@@ -106,8 +117,8 @@ export class SubscriptionsService {
       name: dto.name,
       price: dto.price,
       durationDays: dto.durationDays ?? 30,
-      roiGuaranteeMin: dto.roiGuaranteeMin ?? null,
-      roiGuaranteeEnabled: dto.roiGuaranteeEnabled ?? false,
+      roiGuaranteeMin: dto.roiGuaranteeMin ?? DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_MIN,
+      roiGuaranteeEnabled: dto.roiGuaranteeEnabled ?? DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_ENABLED,
       status: 'active',
     });
     return this.packageRepo.save(pkg);
@@ -227,6 +238,75 @@ export class SubscriptionsService {
     return pkg;
   }
 
+  async getAdminAiPackages() {
+    const aiTipsters = await this.tipsterRepo.find({
+      where: { isAi: true },
+      select: ['id', 'userId', 'username', 'displayName', 'avatarUrl', 'isActive'],
+      order: { id: 'ASC' },
+    });
+    const userIds = aiTipsters.map((t) => t.userId).filter((id): id is number => typeof id === 'number');
+    const pkgs = userIds.length
+      ? await this.packageRepo.find({
+          where: { tipsterUserId: In(userIds) },
+          order: { createdAt: 'DESC' },
+        })
+      : [];
+    const packageByUserId = new Map<number, TipsterSubscriptionPackage>();
+    for (const p of pkgs) {
+      if (!packageByUserId.has(p.tipsterUserId)) packageByUserId.set(p.tipsterUserId, p);
+    }
+    return aiTipsters.map((t) => ({
+      tipster: {
+        id: t.id,
+        userId: t.userId,
+        username: t.username,
+        displayName: t.displayName,
+        avatarUrl: t.avatarUrl,
+        isActive: t.isActive,
+      },
+      package: t.userId ? packageByUserId.get(t.userId) ?? null : null,
+    }));
+  }
+
+  async updatePackageByAdmin(packageId: number, dto: UpdatePackageDto) {
+    const pkg = await this.getPackage(packageId);
+    if (dto.name !== undefined) pkg.name = dto.name.trim();
+    if (dto.price !== undefined) pkg.price = dto.price;
+    if (dto.durationDays !== undefined) pkg.durationDays = dto.durationDays;
+    if (dto.roiGuaranteeEnabled !== undefined) pkg.roiGuaranteeEnabled = dto.roiGuaranteeEnabled;
+    if (dto.roiGuaranteeMin !== undefined) pkg.roiGuaranteeMin = dto.roiGuaranteeMin;
+    if (dto.status !== undefined) pkg.status = dto.status;
+    if (pkg.status === 'active') {
+      if (pkg.roiGuaranteeEnabled !== true) {
+        throw new BadRequestException('Active subscription packages must have ROI commitment enabled');
+      }
+      if (pkg.roiGuaranteeMin == null) {
+        pkg.roiGuaranteeMin = DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_MIN;
+      }
+    }
+    return this.packageRepo.save(pkg);
+  }
+
+  async setAllAiPackageStatuses(status: 'active' | 'inactive') {
+    const aiTipsters = await this.tipsterRepo.find({
+      where: { isAi: true },
+      select: ['userId'],
+    });
+    const userIds = aiTipsters
+      .map((t) => t.userId)
+      .filter((id): id is number => typeof id === 'number');
+    if (userIds.length === 0) {
+      return { updated: 0 };
+    }
+    const result = await this.packageRepo
+      .createQueryBuilder()
+      .update(TipsterSubscriptionPackage)
+      .set({ status })
+      .where('tipster_user_id IN (:...userIds)', { userIds })
+      .execute();
+    return { updated: result.affected ?? 0 };
+  }
+
   async subscribe(userId: number, packageId: number) {
     const pkg = await this.getPackage(packageId);
     if (pkg.status !== 'active') {
@@ -309,6 +389,23 @@ export class SubscriptionsService {
       relations: ['package'],
       order: { createdAt: 'DESC' },
     });
+  }
+
+  /** Active subscriber user IDs for one or more packages (excludes expired/cancelled). */
+  async getActiveSubscriberUserIdsForPackages(packageIds: number[]): Promise<number[]> {
+    if (!packageIds?.length) return [];
+    const now = new Date();
+    const rows = await this.subscriptionRepo.find({
+      where: {
+        packageId: In(packageIds),
+        status: 'active',
+      },
+      select: ['userId', 'endsAt'],
+    });
+    const activeIds = rows
+      .filter((s) => !s.endsAt || new Date(s.endsAt) > now)
+      .map((s) => s.userId);
+    return [...new Set(activeIds)];
   }
 
   /** Add coupon to subscription packages (called when tipster creates coupon with subscription placement) */

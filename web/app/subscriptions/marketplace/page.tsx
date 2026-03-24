@@ -90,6 +90,9 @@ export default function SubscriptionMarketplacePage() {
               const settled = (perf?.wonPicks ?? 0) + (perf?.lostPicks ?? 0);
               const roiDisplay = settled > 0 && perf ? `${Number(perf.roi).toFixed(1)}%` : '—';
               const wrDisplay = settled > 0 && perf ? `${Number(perf.winRate).toFixed(1)}%` : '—';
+              const hasCommittedRoi = pkg.roiGuaranteeEnabled && pkg.roiGuaranteeMin != null;
+              const committedRoiValue =
+                pkg.roiGuaranteeMin != null ? `${Number(pkg.roiGuaranteeMin).toFixed(1)}%` : '—';
 
               return (
                 <article
@@ -165,11 +168,29 @@ export default function SubscriptionMarketplacePage() {
                         GHS {Number(pkg.price).toFixed(2)}{' '}
                         <span className="text-sm font-normal text-[var(--text-muted)]">/ {pkg.durationDays}d</span>
                       </p>
-                      {pkg.roiGuaranteeEnabled && pkg.roiGuaranteeMin != null && (
-                        <p className="text-xs text-[var(--text-muted)] mt-1">
-                          {t('subscriptions.roi_guarantee_label')}: {Number(pkg.roiGuaranteeMin)}%
+                      <div className="mt-2 rounded-lg border border-[var(--border)] bg-[var(--bg-warm)]/70 px-3 py-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                            {t('subscriptions.roi_guarantee_label')}
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                              hasCommittedRoi
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'
+                            }`}
+                          >
+                            {hasCommittedRoi
+                              ? t('subscriptions.roi_commitment_committed')
+                              : t('subscriptions.roi_commitment_not_committed')}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[var(--text)] mt-1">
+                          {hasCommittedRoi
+                            ? t('subscriptions.roi_target_delivery', { n: committedRoiValue })
+                            : t('subscriptions.roi_target_unpublished')}
                         </p>
-                      )}
+                      </div>
                       <Link
                         href={`/subscriptions/checkout?packageId=${pkg.id}`}
                         className="mt-3 w-full inline-flex items-center justify-center py-2.5 rounded-xl font-semibold text-sm bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors"

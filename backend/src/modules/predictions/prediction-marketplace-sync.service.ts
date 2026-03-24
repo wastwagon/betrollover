@@ -146,6 +146,16 @@ export class PredictionMarketplaceSyncService {
           pickTitle: title,
           price: 0,
           accumulatorId: ticket.id,
+          couponCard: {
+            totalOdds: Number(ticket.totalOdds),
+            isSubscription: false,
+            legs: fixtures.map((f) => ({
+              matchDescription: `${f.homeTeam} vs ${f.awayTeam}`,
+              prediction: formatOutcome(f.selectedOutcome),
+              odds: Number(f.selectionOdds),
+              matchDate: f.matchDate ? new Date(f.matchDate).toISOString() : null,
+            })),
+          },
         })
         .catch((e) => this.logger.warn(`Follower notify after AI sync: ${(e as Error).message}`));
     }

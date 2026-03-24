@@ -1084,14 +1084,75 @@ export class AdminService {
   }
 
   // Notifications Management
-  async getAllNotifications(params: { userId?: number; limit?: number; page?: number }) {
+  async getAllNotifications(params: {
+    userId?: number;
+    limit?: number;
+    page?: number;
+    audience?: 'followers' | 'subscribers';
+    deliveryMode?: 'teaser' | 'detailed_card';
+    type?: string;
+  }) {
     const page = Math.max(1, params.page ?? 1);
     const limit = Math.min(100, params.limit ?? 50);
     const skip = (page - 1) * limit;
     const qb = this.notificationRepo.createQueryBuilder('n').orderBy('n.createdAt', 'DESC');
     if (params.userId) qb.andWhere('n.userId = :userId', { userId: params.userId });
+    if (params.type) qb.andWhere('n.type = :type', { type: params.type });
+    if (params.audience) {
+      qb.andWhere(`n.metadata ->> 'audience' = :audience`, { audience: params.audience });
+    }
+    if (params.deliveryMode) {
+      qb.andWhere(`n.metadata ->> 'deliveryMode' = :deliveryMode`, { deliveryMode: params.deliveryMode });
+    }
     const [items, total] = await qb.skip(skip).take(limit).getManyAndCount();
     return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
+  }
+
+  /** Focused audit endpoint for coupon notification routing verification. */
+  async getNotificationDeliveryAudit(params?: {
+    limit?: number;
+    audience?: 'followers' | 'subscribers';
+    deliveryMode?: 'teaser' | 'detailed_card';
+  }) {
+    const limit = Math.min(200, Math.max(params?.limit ?? 100, 1));
+    const qb = this.notificationRepo
+      .createQueryBuilder('n')
+      .select([
+        'n.id AS id',
+        'n.userId AS "userId"',
+        'n.type AS type',
+        'n.title AS title',
+        'n.link AS link',
+        'n.createdAt AS "createdAt"',
+        `n.metadata ->> 'audience' AS audience`,
+        `n.metadata ->> 'deliveryMode' AS "deliveryMode"`,
+        `n.metadata ->> 'tipsterName' AS "tipsterName"`,
+        `n.metadata ->> 'pickTitle' AS "pickTitle"`,
+      ])
+      .where(`(n.metadata ->> 'audience') IS NOT NULL`)
+      .orderBy('n.createdAt', 'DESC')
+      .limit(limit);
+
+    if (params?.audience) {
+      qb.andWhere(`n.metadata ->> 'audience' = :audience`, { audience: params.audience });
+    }
+    if (params?.deliveryMode) {
+      qb.andWhere(`n.metadata ->> 'deliveryMode' = :deliveryMode`, { deliveryMode: params.deliveryMode });
+    }
+
+    const items = await qb.getRawMany();
+    const summaryRows = await this.notificationRepo
+      .createQueryBuilder('n')
+      .select(`n.metadata ->> 'audience'`, 'audience')
+      .addSelect(`n.metadata ->> 'deliveryMode'`, 'deliveryMode')
+      .addSelect('COUNT(*)::int', 'count')
+      .where(`(n.metadata ->> 'audience') IS NOT NULL`)
+      .groupBy(`n.metadata ->> 'audience'`)
+      .addGroupBy(`n.metadata ->> 'deliveryMode'`)
+      .orderBy('count', 'DESC')
+      .getRawMany();
+
+    return { items, summary: summaryRows };
   }
 
   async deleteNotification(id: number) {

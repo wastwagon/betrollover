@@ -53,6 +53,7 @@ import { TennisModule } from '../tennis/tennis.module';
 import { OddsApiModule } from '../odds-api/odds-api.module';
 import { SyncStatus } from '../fixtures/entities/sync-status.entity';
 import { AuditModule } from '../audit/audit.module';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -102,6 +103,7 @@ import { AuditModule } from '../audit/audit.module';
     AmericanFootballModule,
     TennisModule,
     OddsApiModule,
+    SubscriptionsModule,
   ],
   controllers: [AdminController, AnalyticsTrackingController],
   providers: [AdminService, AnalyticsService, AnalyticsTrackingService, MigrationRunnerService, SeedRunnerService, SyncHealthService],

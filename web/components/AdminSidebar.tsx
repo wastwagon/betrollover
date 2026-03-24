@@ -11,6 +11,7 @@ const menuItems = [
   { href: '/dashboard', icon: '📊', label: 'Dashboard' },
   { href: '/admin/analytics', icon: '📈', label: 'Analytics' },
   { href: '/admin/ai-predictions', icon: '🤖', label: 'AI Predictions' },
+  { href: '/admin/ai-tipster-packages', icon: '📦', label: 'AI Packages' },
   { href: '/admin/users', icon: '👥', label: 'Users' },
   { href: '/admin/marketplace', icon: '🛒', label: 'Marketplace' },
   { href: '/admin/purchases', icon: '🛍️', label: 'Purchases' },
