@@ -68,7 +68,10 @@ export default function CreatePickPage() {
   const [myPackages, setMyPackages] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  /** Fixture list / API fetch only — never reuse for publish validation (avoids “Error loading fixtures” for business rules). */
+  const [fixtureError, setFixtureError] = useState<string | null>(null);
+  /** Title, selections, paid thresholds, or POST /accumulators validation. */
+  const [formError, setFormError] = useState<string | null>(null);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
   // Removed step state - slip widget is always visible on the right
   const [loadingOdds, setLoadingOdds] = useState<Set<number>>(new Set());
@@ -83,6 +86,31 @@ export default function CreatePickPage() {
   const [sportLeague, setSportLeague] = useState<string>('');
   const debouncedTeamSearch = useDebounce(teamSearch, 500); // Debounce team search by 500ms
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({ countries: [], tournaments: [], leagues: [] });
+
+  const atDailyLimit =
+    dailyQuota != null &&
+    dailyQuota.remaining === 0 &&
+    !dailyQuota.exempt &&
+    dailyQuota.maxPerDay > 0;
+
+  /** Paid (price > 0) requires settled ROI + win rate ≥ admin minimums. Server enforces too — keep in sync. */
+  const paidSaleAllowed = useMemo(() => {
+    const p = Number(price) || 0;
+    if (p <= 0) return true;
+    if (!sellTh || !myTipStats) return false;
+    return myTipStats.roi >= sellTh.minimumROI && myTipStats.winRate >= sellTh.minimumWinRate;
+  }, [price, sellTh, myTipStats]);
+
+  const subscriptionMissingPackages =
+    placement === 'subscription' && subscriptionPackageIds.length === 0;
+
+  const createPickDisabled =
+    submitting ||
+    selections.length === 0 ||
+    !title.trim() ||
+    atDailyLimit ||
+    !paidSaleAllowed ||
+    subscriptionMissingPackages;
 
   // Competition dropdown: filter by country
   const competitionOptions = useMemo(() => {
@@ -395,7 +423,7 @@ export default function CreatePickPage() {
       }
       // All users can create picks now - no role check needed
       setLoading(true);
-      setError(null);
+      setFixtureError(null);
       try {
         const params = new URLSearchParams();
         params.append('days', '7'); // Match fixture sync window (7 days)
@@ -407,7 +435,7 @@ export default function CreatePickPage() {
         if (!fixRes.ok) {
           const errorText = await fixRes.text().catch(() => '');
           const errorMessage = formatError(new Error(`Failed to load fixtures: ${fixRes.status}`));
-          setError(errorMessage);
+          setFixtureError(errorMessage);
           showError(new Error(`Failed to load fixtures: ${fixRes.status}`));
           setFixtures([]);
           return;
@@ -417,11 +445,11 @@ export default function CreatePickPage() {
         setFixtures(Array.isArray(data) ? data : []);
         if (!Array.isArray(data) || data.length === 0) {
           // Don't show error, just empty state - user can change filters
-          setError(null);
+          setFixtureError(null);
         }
       } catch (err: any) {
         const errorMessage = formatError(err);
-        setError(errorMessage);
+        setFixtureError(errorMessage);
         showError(err);
         setFixtures([]);
       } finally {
@@ -619,18 +647,27 @@ export default function CreatePickPage() {
 
   const submit = async () => {
     if (selections.length === 0) {
-      setError('Add at least one selection');
+      setFormError('Add at least one selection');
       return;
     }
     if (!title.trim()) {
-      setError('Enter a title');
+      setFormError('Enter a title');
       return;
     }
     if (placement === 'subscription' && subscriptionPackageIds.length === 0) {
-      setError('Select your VIP package or create one in Subscription packages.');
+      setFormError('Select your VIP package or create one in Subscription packages.');
       return;
     }
-    setError(null);
+    const priceNum = Number(price) || 0;
+    if (priceNum > 0 && !paidSaleAllowed) {
+      setFormError(
+        sellTh && myTipStats
+          ? `Paid coupons require minimum ROI ${sellTh.minimumROI}% and win rate ${sellTh.minimumWinRate}%. Set price to 0 (free) or improve your settled stats.`
+          : 'Loading your stats — wait a moment, or set price to 0 (free) to publish.',
+      );
+      return;
+    }
+    setFormError(null);
     setSubmitting(true);
     const token = localStorage.getItem('token');
     const res = await fetch(`${getApiUrl()}/accumulators`, {
@@ -666,22 +703,18 @@ export default function CreatePickPage() {
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       const msg = err?.message || err?.error || 'Failed to create pick';
-      // Prefer backend message for 4xx (validation); use formatError for generic 5xx
       const errorMessage = res.status >= 500 ? formatError(new Error(msg)) : (msg || formatError(new Error(msg)));
-      setError(errorMessage);
-      showError(new Error(msg));
+      setFormError(errorMessage);
+      // Avoid duplicate toast for expected 4xx validation; toast only for server errors.
+      if (res.status >= 500) {
+        showError(new Error(msg));
+      }
       return;
     }
     showSuccess('Pick created successfully!');
     clearCart();
     router.push('/my-picks');
   };
-
-  const atDailyLimit =
-    dailyQuota != null &&
-    dailyQuota.remaining === 0 &&
-    !dailyQuota.exempt &&
-    dailyQuota.maxPerDay > 0;
 
   return (
     <DashboardShell slipCount={selections.length}>
@@ -987,17 +1020,18 @@ export default function CreatePickPage() {
                 ? <SportEmptyState emoji="🎾" label="No upcoming tennis matches with odds" hint="Tennis data syncs daily at 08:30. Odds are available for ATP/WTA tour events." />
                 : <SportEmptyState emoji="🎾" label="No matches match your filters" hint="Try clearing the Competition filter or changing your search." />
             )}
-            {error && (
+            {fixtureError && (
               <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
                 <div className="flex items-start gap-3">
                   <span className="text-xl flex-shrink-0">⚠️</span>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-red-900 dark:text-red-200 mb-1">Error Loading Fixtures</h4>
-                    <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+                    <h4 className="font-semibold text-red-900 dark:text-red-200 mb-1">{t('create_pick.fixture_load_error_title')}</h4>
+                    <p className="text-sm text-red-800 dark:text-red-300">{fixtureError}</p>
+                    <p className="text-xs text-red-700/90 dark:text-red-300/90 mt-2">{t('create_pick.fixture_load_error_hint')}</p>
                     <button
+                      type="button"
                       onClick={() => {
-                        setError(null);
-                        // Retry loading
+                        setFixtureError(null);
                         const token = localStorage.getItem('token');
                         if (token) {
                           const headers = { Authorization: `Bearer ${token}` };
@@ -1012,11 +1046,11 @@ export default function CreatePickPage() {
                             .then((data) => {
                               if (Array.isArray(data)) {
                                 setFixtures(data);
-                                setError(null);
+                                setFixtureError(null);
                               }
                             })
                             .catch((err) => {
-                              setError(formatError(err));
+                              setFixtureError(formatError(err));
                               showError(err);
                             })
                             .finally(() => setLoading(false));
@@ -1030,7 +1064,7 @@ export default function CreatePickPage() {
                 </div>
               </div>
             )}
-            {!loading && !error && sport === 'football' && availableFixtures.length === 0 && fixtures.length === 0 && (
+            {!loading && !fixtureError && sport === 'football' && availableFixtures.length === 0 && fixtures.length === 0 && (
               <div className="bg-[var(--card)] rounded-card border border-[var(--border)] p-6">
                 <EmptyState
                   title={
@@ -1058,7 +1092,7 @@ export default function CreatePickPage() {
                 />
               </div>
             )}
-            {!loading && !error && sport === 'football' && availableFixtures.length === 0 && fixtures.length > 0 && (
+            {!loading && !fixtureError && sport === 'football' && availableFixtures.length === 0 && fixtures.length > 0 && (
               <div className="bg-[var(--card)] rounded-card border border-[var(--border)] p-6">
                 <EmptyState
                   title="All fixtures have started"
@@ -1281,7 +1315,10 @@ export default function CreatePickPage() {
                         <input
                           type="text"
                           value={title}
-                          onChange={(e) => setTitle(e.target.value)}
+                          onChange={(e) => {
+                            setTitle(e.target.value);
+                            setFormError(null);
+                          }}
                           placeholder="e.g. Saturday Banker"
                           className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-shadow"
                         />
@@ -1335,10 +1372,16 @@ export default function CreatePickPage() {
                           type="number"
                           min={0}
                           value={price || ''}
-                          onChange={(e) => setPrice(Number(e.target.value) || 0)}
+                          onChange={(e) => {
+                            setPrice(Number(e.target.value) || 0);
+                            setFormError(null);
+                          }}
                           placeholder="0"
                           className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-shadow"
                         />
+                        {Number(price) > 0 && sellTh && myTipStats && !paidSaleAllowed && (
+                          <p className="text-[11px] text-amber-800 dark:text-amber-200 mt-1.5 leading-snug">{t('create_pick.paid_price_blocked_hint')}</p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-[var(--text)] mb-1">Placement</label>
@@ -1347,6 +1390,7 @@ export default function CreatePickPage() {
                           onChange={(e) => {
                             const v = e.target.value as 'marketplace' | 'subscription';
                             setPlacement(v);
+                            setFormError(null);
                             if (v === 'marketplace') setSubscriptionPackageIds([]);
                           }}
                           className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border)] bg-[var(--card)]"
@@ -1363,6 +1407,7 @@ export default function CreatePickPage() {
                                   type="checkbox"
                                   checked={subscriptionPackageIds.includes(p.id)}
                                   onChange={(e) => {
+                                    setFormError(null);
                                     if (e.target.checked) setSubscriptionPackageIds((prev) => [...prev, p.id]);
                                     else setSubscriptionPackageIds((prev) => prev.filter((id) => id !== p.id));
                                   }}
@@ -1387,14 +1432,19 @@ export default function CreatePickPage() {
                           </p>
                         )}
                       </div>
-                      {error && (
-                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-2">
-                          <p className="text-red-800 dark:text-red-200 text-xs">{error}</p>
+                      {formError && (
+                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                          <p className="text-[11px] font-semibold text-red-900 dark:text-red-200 mb-1">{t('create_pick.publish_error_title')}</p>
+                          <p className="text-red-800 dark:text-red-200 text-xs">{formError}</p>
                         </div>
                       )}
+                      {createPickDisabled && selections.length > 0 && !submitting && (
+                        <p className="text-[10px] text-[var(--text-muted)] leading-snug">{t('create_pick.desktop_create_hint')}</p>
+                      )}
                       <button
+                        type="button"
                         onClick={submit}
-                        disabled={submitting || selections.length === 0 || !title.trim() || atDailyLimit}
+                        disabled={createPickDisabled}
                         className="w-full py-3 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white hover:shadow-lg hover:shadow-[var(--primary)]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
                       >
                         {submitting && <LoadingSpinner size="sm" />}
@@ -1419,13 +1469,21 @@ export default function CreatePickPage() {
           <button
             type="button"
             onClick={() => setSlipSheetOpen(true)}
-            className="w-full flex items-center justify-between gap-3 px-5 py-4 rounded-2xl bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-teal-500/30 active:scale-[0.99] transition-transform touch-manipulation"
+            className={`w-full flex items-center justify-between gap-3 px-5 py-4 rounded-2xl bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-teal-500/30 active:scale-[0.99] transition-transform touch-manipulation ${
+              createPickDisabled && selections.length > 0 ? 'opacity-85' : ''
+            }`}
+            aria-label="Open pick slip to review and create"
           >
             <div className="flex items-center gap-3">
               <span className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">📝</span>
               <div className="text-left">
                 <p className="font-semibold text-sm">{selections.length} selection{selections.length !== 1 ? 's' : ''}</p>
                 <p className="text-xs text-white/85">Total @ {totalOdds.toFixed(2)}</p>
+                {createPickDisabled && selections.length > 0 && (
+                  <p className="text-[10px] text-white/75 mt-0.5 max-w-[200px] leading-tight">
+                    {t('create_pick.slip_bar_hint')}
+                  </p>
+                )}
               </div>
             </div>
             <span className="font-bold text-base">Review & Create</span>
@@ -1511,7 +1569,10 @@ export default function CreatePickPage() {
                   <input
                     type="text"
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={(e) => {
+                      setTitle(e.target.value);
+                      setFormError(null);
+                    }}
                     placeholder="e.g. Saturday Banker"
                     className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
                   />
@@ -1561,10 +1622,16 @@ export default function CreatePickPage() {
                     type="number"
                     min={0}
                     value={price || ''}
-                    onChange={(e) => setPrice(Number(e.target.value) || 0)}
+                    onChange={(e) => {
+                      setPrice(Number(e.target.value) || 0);
+                      setFormError(null);
+                    }}
                     placeholder="0"
                     className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
                   />
+                  {Number(price) > 0 && sellTh && myTipStats && !paidSaleAllowed && (
+                    <p className="text-xs text-amber-800 dark:text-amber-200 mt-2 leading-snug">{t('create_pick.paid_price_blocked_hint')}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--text)] mb-1">Placement</label>
@@ -1573,6 +1640,7 @@ export default function CreatePickPage() {
                     onChange={(e) => {
                       const v = e.target.value as 'marketplace' | 'subscription';
                       setPlacement(v);
+                      setFormError(null);
                       if (v === 'marketplace') setSubscriptionPackageIds([]);
                     }}
                     className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
@@ -1590,6 +1658,7 @@ export default function CreatePickPage() {
                           type="checkbox"
                           checked={subscriptionPackageIds.includes(p.id)}
                           onChange={(e) => {
+                            setFormError(null);
                             if (e.target.checked) setSubscriptionPackageIds((prev) => [...prev, p.id]);
                             else setSubscriptionPackageIds((prev) => prev.filter((id) => id !== p.id));
                           }}
@@ -1613,14 +1682,19 @@ export default function CreatePickPage() {
                     })}
                   </p>
                 )}
-                {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-                    <p className="text-red-700 text-sm">{error}</p>
+                {formError && (
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3">
+                    <p className="text-xs font-semibold text-red-900 dark:text-red-200 mb-1">{t('create_pick.publish_error_title')}</p>
+                    <p className="text-red-700 dark:text-red-300 text-sm">{formError}</p>
                   </div>
                 )}
+                {createPickDisabled && selections.length > 0 && !submitting && (
+                  <p className="text-xs text-[var(--text-muted)] leading-snug">{t('create_pick.desktop_create_hint')}</p>
+                )}
                 <button
+                  type="button"
                   onClick={() => submit()}
-                  disabled={submitting || selections.length === 0 || !title.trim() || atDailyLimit}
+                  disabled={createPickDisabled}
                   className="w-full py-4 rounded-xl font-bold text-base bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-teal-500/30 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] transition-all flex items-center justify-center gap-2 touch-manipulation min-h-[52px]"
                 >
                   {submitting && <LoadingSpinner size="sm" />}

@@ -1047,6 +1047,13 @@ const en = {
     'VIP packages use the same {minRoi}% ROI and {minWr}% win rate minimums. Subscriber-only coupons with a price also require both minimums.',
   'create_pick.create_btn': 'Create Pick',
   'create_pick.creating': 'Creating Pick...',
+  'create_pick.fixture_load_error_title': "Couldn't load fixtures",
+  'create_pick.fixture_load_error_hint': 'Check your connection or try again. If this keeps happening, the fixture service may be temporarily unavailable.',
+  'create_pick.publish_error_title': 'Paid listing requirements',
+  'create_pick.paid_price_blocked_hint':
+    'Free pick: set price to 0. Paid pick: reach the minimum settled ROI and win rate shown above first.',
+  'create_pick.slip_bar_hint': 'Open to add title, price, and packages — Create stays off until requirements are met.',
+  'create_pick.desktop_create_hint': 'Fill title, placement, and price rules above — Create enables when everything is valid.',
   'create_pick.enable_notifications': 'Enable notifications',
   'create_pick.notifications_desc': 'Get alerts for new picks, subscriptions, and settlements.',
   'create_pick.enable': 'Enable',

@@ -1045,6 +1045,16 @@ const fr: Record<string, string> = {
     'Les forfaits VIP utilisent les mêmes minimums {minRoi} % ROI et {minWr} % de réussite. Les coupons réservés aux abonnés avec un prix exigent aussi les deux minimums.',
   'create_pick.create_btn': 'Créer le Pronostic',
   'create_pick.creating': 'Création en cours...',
+  'create_pick.fixture_load_error_title': 'Impossible de charger les matchs',
+  'create_pick.fixture_load_error_hint':
+    'Vérifiez votre connexion ou réessayez. Si le problème continue, le service des matchs est peut-être indisponible.',
+  'create_pick.publish_error_title': 'Exigences pour une vente payante',
+  'create_pick.paid_price_blocked_hint':
+    'Gratuit : mettez le prix à 0. Payant : atteignez d’abord le ROI et le taux de victoire minimum indiqués ci-dessus.',
+  'create_pick.slip_bar_hint':
+    'Ouvrez pour titre, prix et forfaits — Créer reste désactivé tant que les exigences ne sont pas remplies.',
+  'create_pick.desktop_create_hint':
+    'Renseignez le titre, le placement et le prix ci-dessus — Créer s’active lorsque tout est valide.',
   'create_pick.enable_notifications': 'Activer les notifications',
   'create_pick.notifications_desc': 'Recevez des alertes pour les nouveaux pronostics, abonnements et règlements.',
   'create_pick.enable': 'Activer',
