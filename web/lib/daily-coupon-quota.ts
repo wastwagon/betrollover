@@ -38,10 +38,10 @@ export async function fetchDailyCouponQuota(token: string): Promise<DailyCouponQ
 export function formatQuotaResetUtc(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
+  // Do not mix dateStyle/timeStyle with timeZoneName — engines throw RangeError: Invalid option.
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: 'medium',
     timeStyle: 'short',
     timeZone: 'UTC',
-    timeZoneName: 'short',
   }).format(d);
 }
