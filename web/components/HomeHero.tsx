@@ -1,12 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { useCurrency } from '@/context/CurrencyContext';
-import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 
 interface PublicStats {
   verifiedTipsters: number;
@@ -115,11 +112,9 @@ const STAT_HINT_KEYS: Record<StatKey, string> = {
 
 export function HomeHero() {
   const t = useT();
-  const pathname = usePathname();
   const { format } = useCurrency();
   const [stats, setStats] = useState<PublicStats | null>(null);
   const [leadingTipster, setLeadingTipster] = useState<LeadingTipsterStats>({ winRate: null, roi: null });
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const fetchStats = () => {
     Promise.all([
@@ -157,20 +152,6 @@ export function HomeHero() {
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, []);
 
-  useEffect(() => {
-    const sync = () => setIsLoggedIn(!!(typeof window !== 'undefined' && localStorage.getItem('token')));
-    sync();
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === 'token' || e.key === null) sync();
-    };
-    window.addEventListener('storage', onStorage);
-    window.addEventListener(AUTH_STORAGE_SYNC, sync);
-    return () => {
-      window.removeEventListener('storage', onStorage);
-      window.removeEventListener(AUTH_STORAGE_SYNC, sync);
-    };
-  }, [pathname]);
-
   const s = stats || defaultStats;
   const paidOutFormatted = format(s.totalPaidOut).primary;
 
@@ -187,7 +168,7 @@ export function HomeHero() {
   ];
 
   return (
-    <section className="relative overflow-hidden min-h-[520px] sm:min-h-[560px] md:min-h-[640px]">
+    <section className="relative overflow-hidden min-h-[380px] sm:min-h-[420px] md:min-h-[480px]">
       {/* Photoreal hero — AVIF (~40KB) + WebP (~52KB) @ 1376×768; no SVG collage */}
       <div className="absolute inset-0">
         {/* eslint-disable-next-line @next/next/no-img-element -- static AVIF/WebP pair; avoids optimizer re-encoding */}
@@ -209,37 +190,8 @@ export function HomeHero() {
         />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 lg:py-28">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 lg:py-20">
         <h1 className="sr-only">{t('home.hero_title')}</h1>
-        <div className="text-center max-w-3xl mx-auto mb-14 md:mb-16">
-          <p className="text-lg sm:text-xl md:text-2xl text-white leading-relaxed font-medium mb-4 md:mb-5 animate-fade-in-up [text-shadow:0_1px_2px_rgba(0,0,0,0.85),0_2px_12px_rgba(0,0,0,0.45)]">
-            {t('home.hero_subtitle')}
-          </p>
-          <p className="text-sm sm:text-base text-white/95 leading-snug mb-8 md:mb-10 animate-fade-in-up max-w-2xl mx-auto [text-shadow:0_1px_2px_rgba(0,0,0,0.8),0_2px_8px_rgba(0,0,0,0.4)]">
-            {t('home.hero_escrow_line')}
-          </p>
-
-          <div className="flex flex-wrap gap-4 justify-center animate-fade-in-up animate-delay-100">
-            {!isLoggedIn && (
-              <Link
-                href="/register"
-                className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold hover:from-emerald-400 hover:to-emerald-500 hover:scale-105 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:shadow-xl"
-              >
-                {t('home.join_cta')}
-              </Link>
-            )}
-            <Link
-              href="/marketplace"
-              className="px-8 py-3.5 rounded-xl border-2 border-white/50 bg-white/10 text-white font-semibold hover:bg-white/20 hover:border-white/70 transition-all duration-200 backdrop-blur-sm"
-            >
-              {t('home.hero_cta_primary')}
-            </Link>
-          </div>
-          <p className="text-[11px] sm:text-xs text-white/85 mt-6 sm:mt-7 max-w-xl mx-auto leading-relaxed px-2 [text-shadow:0_1px_2px_rgba(0,0,0,0.75)]">
-            {t('home.hero_informational_note')}
-          </p>
-        </div>
-
         {/* Compact KPI Dashboard - 6 cards: platform + leading ROI + paid out */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
           {statItems.map((item, idx) => {

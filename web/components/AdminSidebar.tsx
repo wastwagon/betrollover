@@ -14,7 +14,7 @@ const menuItems = [
   { href: '/admin/ai-tipster-packages', icon: '📦', label: 'AI Packages' },
   { href: '/admin/users', icon: '👥', label: 'Users' },
   { href: '/admin/marketplace', icon: '🛒', label: 'Marketplace' },
-  { href: '/admin/subscriptions', icon: '⭐', label: 'Subscriptions' },
+  { href: '/admin/subscriptions', icon: '⭐', label: 'VIP subscribers' },
   { href: '/admin/purchases', icon: '🛍️', label: 'Purchases' },
   { href: '/admin/deposits', icon: '💳', label: 'Deposits' },
   { href: '/admin/withdrawals', icon: '💸', label: 'Withdrawals' },

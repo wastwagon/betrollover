@@ -84,9 +84,10 @@ export default function SubscriptionsPage() {
 
         {activeSubs.length === 0 ? (
           <div className="glass-card rounded-2xl p-8 text-center border border-[var(--border)]">
-            <p className="text-[var(--text-muted)] mb-4">No active subscriptions yet.</p>
-            <p className="text-sm text-[var(--text-muted)] mb-6">
-              Subscribe to tipsters to see their subscription-only coupons here.
+            <p className="text-[var(--text)] font-medium mb-2">{t('subscriptions.page_empty_title')}</p>
+            <p className="text-sm text-[var(--text-muted)] mb-3">{t('subscriptions.page_empty_sub')}</p>
+            <p className="text-sm text-[var(--text-muted)] mb-6 max-w-[28rem] mx-auto leading-relaxed">
+              {t('subscriptions.page_empty_hint')}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
               <Link

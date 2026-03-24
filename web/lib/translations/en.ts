@@ -24,6 +24,8 @@ const en = {
   'nav.about': 'About Us',
   'nav.contact': 'Contact',
   'nav.marketplace': 'Marketplace',
+  'nav.coupons_and_picks': 'Coupons & Picks',
+  'nav.picks_marketplace': 'Picks Marketplace',
   'nav.subscription_marketplace': 'VIP subscriptions',
   'nav.league_tables': 'League tables',
   /** Bottom nav — short labels */
@@ -31,6 +33,7 @@ const en = {
   'nav.live_scores': 'Live scores',
   'nav.live_scores_short': 'Live',
   'nav.dashboard': 'Dashboard',
+  'nav.subscriptions': 'Subscribe',
   'nav.login': 'Sign In',
   'nav.register': 'Get Started Free',
   'nav.logout': 'Sign Out',
@@ -389,8 +392,13 @@ const en = {
   'dashboard.card_vip_marketplace_desc': 'Browse and buy tipster VIP plans',
   'dashboard.vip_picks_section_title': 'VIP picks',
   'dashboard.vip_picks_see_all': 'All subscriptions →',
-  'subscriptions.empty_cta_vip_marketplace': 'Browse VIP subscriptions',
+  'subscriptions.empty_cta_vip_marketplace': 'Find VIP plans',
   'subscriptions.empty_cta_tipsters': 'Browse tipsters',
+  'subscriptions.page_empty_title': 'No active subscriptions yet.',
+  'subscriptions.page_empty_sub':
+    'Subscription-only coupons from tipsters you follow will show up here.',
+  'subscriptions.page_empty_hint':
+    'You have not joined a VIP plan yet. Use the options below to open the VIP shop or browse tipsters and subscribe — that is how you add one.',
   'subscriptions.browse_more_vip': 'Browse more VIP plans',
   'dashboard.card_leaderboard': 'Leaderboard',
   'dashboard.card_leaderboard_desc': 'See top tipster rankings',
@@ -821,6 +829,7 @@ const en = {
   'footer.disclaimer': 'BetRollover is an educational tipster platform — not a betting company. Picks are shared for informational purposes only. Neither BetRollover nor tipsters are liable for any losses incurred by acting on picks. Use responsibly.',
   'footer.rights': 'All rights reserved.',
   'footer.resources': 'Resources',
+  'footer.discover': 'Discover',
 
   // ── Header (nav dropdowns, section labels, descriptions) ─────────────────
   'header.section_explore': 'Explore',
@@ -853,7 +862,8 @@ const en = {
   'header.desc_find_tipsters': 'Browse verified tipster profiles',
   'header.browse_marketplace': 'Browse Marketplace →',
   'header.live_now': 'Live Now',
-  'header.all_sports_live': 'All 7 Sports Live',
+  'header.all_sports_live': 'Core sports live',
+  'header.sports_coverage_highlight': 'Football · Basketball · Tennis',
   'header.account': 'Account',
   'header.browse_coupons': 'Browse Coupons',
   'header.home': 'Home',

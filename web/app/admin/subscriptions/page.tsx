@@ -121,12 +121,20 @@ export default function AdminSubscriptionsPage() {
       <AdminSidebar />
       <main className="admin-main-sibling flex-1 w-full min-w-0 overflow-x-hidden p-6 md:p-8 md:ml-56">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Subscription manager</h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Review VIP subscriptions (subscriber → tipster package). Remove rows when you need to reverse access or
-            clean up bad data.{' '}
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">VIP subscriber purchases</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-3">
+            Each row is a <strong className="text-gray-800 dark:text-gray-200">real checkout</strong>: a user who paid
+            for a tipster&apos;s VIP plan. This is <strong className="text-gray-800 dark:text-gray-200">not</strong> the
+            list of plans for sale — that&apos;s the public{' '}
+            <Link href="/subscriptions/marketplace" className="text-[var(--primary)] hover:underline font-medium">
+              VIP marketplace
+            </Link>
+            , which shows published packages even when no one has bought yet.
+          </p>
+          <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
+            Remove rows here when you need to reverse access or clean up bad data.{' '}
             <Link href="/subscriptions/marketplace" className="text-[var(--primary)] hover:underline">
-              View as customer →
+              View VIP shop as customer →
             </Link>
           </p>
           <div className="flex flex-wrap items-center gap-4 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
@@ -184,11 +192,13 @@ export default function AdminSubscriptionsPage() {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-3xl">
               ⭐
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No subscriptions</h3>
-            <p className="text-gray-600 dark:text-gray-400">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              {tipsterUserId || statusFilter !== 'all' ? 'No matching purchases' : 'No VIP purchases yet'}
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto">
               {tipsterUserId || statusFilter !== 'all'
                 ? 'Nothing matches the current filters.'
-                : 'No subscription rows in the database yet.'}
+                : 'Nobody has completed a VIP subscription checkout yet. The public VIP marketplace can still list published plans for sale — those are packages, not customer purchases.'}
             </p>
           </div>
         )}

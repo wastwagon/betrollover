@@ -16,7 +16,7 @@ import { usePendingWithdrawalCount } from '@/hooks/usePendingWithdrawalCount';
 interface Notification { id: number; isRead: boolean }
 interface UnifiedHeaderProps { slipCount?: number }
 
-type MenuKey = 'browse' | 'tipsters' | 'discover' | 'account' | null;
+type MenuKey = 'browse' | 'tipsters' | 'account' | null;
 
 function isActive(pathname: string, href: string) {
   if (href === '/') return pathname === '/';
@@ -26,14 +26,9 @@ function isActive(pathname: string, href: string) {
 /* ─── Sport coverage data ────────────────────────────────── */
 /** Friendly URLs: /marketplace/rugby etc. (redirect to ?sport= in [sport] route) */
 const SPORTS = [
-  { icon: '⚽', label: 'Football',        href: '/marketplace/football' },
-  { icon: '🏀', label: 'Basketball',      href: '/marketplace/basketball' },
-  { icon: '🏉', label: 'Rugby',           href: '/marketplace/rugby' },
-  { icon: '🥊', label: 'MMA',             href: '/marketplace/mma' },
-  { icon: '🏐', label: 'Volleyball',      href: '/marketplace/volleyball' },
-  { icon: '🏒', label: 'Hockey',          href: '/marketplace/hockey' },
-  { icon: '🏈', label: 'Amer. Football',  href: '/marketplace/american_football' },
-  { icon: '🎾', label: 'Tennis',          href: '/marketplace/tennis' },
+  { icon: '⚽', label: 'Football',   href: '/marketplace/football' },
+  { icon: '🏀', label: 'Basketball', href: '/marketplace/basketball' },
+  { icon: '🎾', label: 'Tennis',     href: '/marketplace/tennis' },
 ];
 
 /* ─── NavChevron ─────────────────────────────────────────── */
@@ -69,7 +64,7 @@ function MegaLink({
             <span className={`inline-flex items-center flex-shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${badgeColor}`}>{badge}</span>
           )}
         </div>
-        {desc && <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{desc}</p>}
+        {desc && <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">{desc}</p>}
       </div>
     </Link>
   );
@@ -78,7 +73,33 @@ function MegaLink({
 /* ─── SectionLabel ───────────────────────────────────────── */
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="px-3 pt-2 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">{children}</p>
+    <p className="px-3 pt-2 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500">{children}</p>
+  );
+}
+
+/** Single-line nav row (no description) — for compact dropdowns */
+function CompactNavLink({
+  href,
+  icon,
+  label,
+  onClick,
+}: {
+  href: string;
+  icon: string;
+  label: string;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-800 hover:bg-emerald-50 hover:text-emerald-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+    >
+      <span className="text-base leading-none w-6 text-center flex-shrink-0" aria-hidden>
+        {icon}
+      </span>
+      <span className="min-w-0 leading-snug">{label}</span>
+    </Link>
   );
 }
 
@@ -237,34 +258,53 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
     router.push('/'); router.refresh();
   };
 
-  /* ── Mega panel wrappers ──────────────────────────────── */
-  const MegaWrapper = ({ children }: { children: React.ReactNode }) => (
+  /** Wider compact dropdown for account (right-aligned under trigger) */
+  const AccountDropdown = ({
+    children,
+    panelId,
+    labelledBy,
+  }: {
+    children: React.ReactNode;
+    panelId: string;
+    labelledBy: string;
+  }) => (
     <div
-      className="absolute top-full left-1/2 -translate-x-1/2 mt-0 z-50 animate-mega-in"
+      className="absolute right-0 top-full z-50 pt-1.5 animate-dropdown-in"
       onMouseEnter={cancelClose}
       onMouseLeave={closeAfterDelay}
     >
-      {/* Arrow */}
-      <div className="flex justify-center -mb-px">
-        <div className="w-3 h-3 bg-white border-l border-t border-slate-200/80 rotate-45 shadow-sm" />
-      </div>
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200/80 overflow-hidden ring-1 ring-black/5">
+      <div
+        id={panelId}
+        role="region"
+        aria-labelledby={labelledBy}
+        className="w-[min(calc(100vw-2rem),32.5rem)] max-h-[min(80vh,40rem)] overflow-y-auto overscroll-contain rounded-xl bg-white shadow-xl border border-slate-200/90 ring-1 ring-black/5"
+      >
         {children}
       </div>
     </div>
   );
 
-  const MegaWrapperRight = ({ children }: { children: React.ReactNode }) => (
+  /** Compact dropdown under the trigger — not a wide mega-panel */
+  const NavDropdown = ({
+    children,
+    panelId,
+    labelledBy,
+  }: {
+    children: React.ReactNode;
+    panelId: string;
+    labelledBy: string;
+  }) => (
     <div
-      className="absolute top-full right-0 mt-0 z-50 animate-mega-in"
+      className="absolute left-0 top-full z-50 pt-1.5 animate-dropdown-in"
       onMouseEnter={cancelClose}
       onMouseLeave={closeAfterDelay}
     >
-      {/* Arrow (right-aligned) */}
-      <div className="flex justify-end pr-6 -mb-px">
-        <div className="w-3 h-3 bg-white border-l border-t border-slate-200/80 rotate-45 shadow-sm" />
-      </div>
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200/80 overflow-hidden ring-1 ring-black/5">
+      <div
+        id={panelId}
+        role="region"
+        aria-labelledby={labelledBy}
+        className="w-[min(calc(100vw-2rem),22rem)] max-h-[min(80vh,36rem)] overflow-y-auto overscroll-contain rounded-xl bg-white shadow-xl border border-slate-200/90 ring-1 ring-black/5"
+      >
         {children}
       </div>
     </div>
@@ -276,15 +316,17 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
   }: { menuKey?: MenuKey; label: string; href?: string }) => {
     const active = href ? isActive(pathname, href) : false;
     const isOpen = menuKey ? openMenu === menuKey : false;
-    const cls = `flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-150 select-none ${
+    const triggerId = menuKey ? `main-nav-${menuKey}-trigger` : undefined;
+    const panelId = menuKey ? `main-nav-${menuKey}-panel` : undefined;
+    const cls = `flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-150 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/70 focus-visible:ring-offset-2 ${
       active || isOpen
-        ? 'text-emerald-700 bg-emerald-50 border border-emerald-200/60'
-        : 'text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/60'
+        ? 'text-emerald-800 bg-emerald-50 border border-emerald-300/80'
+        : 'text-slate-700 hover:text-emerald-800 hover:bg-emerald-50/80 border border-transparent'
     }`;
 
     if (href && !menuKey) {
       return (
-        <Link href={href} className={cls}>
+        <Link href={href} className={cls} aria-current={active ? 'page' : undefined}>
           {label}
         </Link>
       );
@@ -292,8 +334,10 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
     return (
       <button
         type="button"
+        id={triggerId}
         aria-expanded={isOpen}
         aria-haspopup="true"
+        aria-controls={panelId}
         className={cls}
         onMouseEnter={() => openAfterDelay(menuKey!)}
         onMouseLeave={closeAfterDelay}
@@ -311,15 +355,15 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
     <>
       {/* Inject keyframe animations */}
       <style>{`
-        @keyframes megaIn {
-          from { opacity:0; transform:translateX(-50%) translateY(-6px); }
-          to   { opacity:1; transform:translateX(-50%) translateY(0); }
+        @keyframes dropdownIn {
+          from { opacity: 0; transform: translateY(-4px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         @keyframes slideInLeft {
           from { transform: translateX(-100%); }
           to   { transform: translateX(0); }
         }
-        .animate-mega-in { animation: megaIn 0.18s ease both; }
+        .animate-dropdown-in { animation: dropdownIn 0.16s ease both; }
         .animate-slide-in-left { animation: slideInLeft 0.25s ease-out both; }
       `}</style>
 
@@ -349,70 +393,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               {/* Home */}
               <NavBtn href="/" label="Home" />
 
-              {/* Browse ▾ */}
-              <div className="relative"
-                onMouseEnter={() => openAfterDelay('browse')}
-                onMouseLeave={closeAfterDelay}
-              >
-                <NavBtn menuKey="browse" label={t('nav.browse')} />
-
-                {openMenu === 'browse' && (
-                  <MegaWrapper>
-                    <div className="flex w-[860px]">
-
-                      {/* Col 1 — Coupons & Picks */}
-                      <div className="w-64 border-r border-slate-100 py-3 px-2">
-                        <SectionLabel>{t('header.section_coupons_picks')}</SectionLabel>
-                        <MegaLink href="/marketplace"     icon="🛒" label={t("nav.marketplace")}      desc={t('header.desc_marketplace')}    onClick={closeAll} />
-                        <MegaLink href="/subscriptions/marketplace" icon="💎" label={t('nav.subscription_marketplace')} desc={t('header.desc_subscription_marketplace')} onClick={closeAll} />
-                        <MegaLink href="/live-scores"     icon="📡" label={t('nav.live_scores')}     desc={t('header.desc_live_scores')}     onClick={closeAll} />
-                        <MegaLink href="/coupons/archive" icon="📦" label={t('header.settled_archive')}  desc={t('header.settled_archive_desc')}        onClick={closeAll} />
-                        <div className="my-2 border-t border-slate-100" />
-                        <SectionLabel>{t('header.section_platform')}</SectionLabel>
-                        <MegaLink href="/leaderboard" icon="🏆" label={t('nav.leaderboard')}   desc={t('header.desc_leaderboard')}      onClick={closeAll} />
-                        <MegaLink href="/league-tables" icon="📊" label={t('nav.league_tables')} desc={t('header.desc_league_tables')} onClick={closeAll} />
-                        <MegaLink href="/tipsters"    icon="👥" label={t('nav.top_tipsters')} desc={t('header.desc_find_tipsters')} onClick={closeAll} />
-                      </div>
-
-                      {/* Col 2 — Sports Coverage (3-column grid so labels never wrap) */}
-                      <div className="flex-1 py-3 px-2">
-                        <SectionLabel>{t('header.section_sports_coverage')}</SectionLabel>
-                        <div className="grid grid-cols-2 gap-0.5">
-                          {SPORTS.map(s => (
-                            <MegaLink
-                              key={s.label}
-                              href={s.href}
-                              icon={s.icon}
-                              label={s.label}
-                              onClick={closeAll}
-                            />
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Col 3 — Highlight panel */}
-                      <div className="w-52 bg-gradient-to-br from-emerald-600 to-teal-700 text-white py-5 px-4 flex flex-col justify-between">
-                        <div>
-                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/20 text-[10px] font-bold uppercase tracking-wide mb-3">
-                            🔥 {t('header.live_now')}
-                          </span>
-                          <p className="text-sm font-bold leading-snug mb-1">{t('header.all_sports_live')}</p>
-                          <p className="text-xs text-emerald-100 leading-relaxed">
-                            Football · Basketball · Rugby · MMA · Volleyball · Hockey · Amer. Football
-                          </p>
-                        </div>
-                        <Link
-                          href="/marketplace"
-                          onClick={closeAll}
-                          className="mt-4 block text-center text-xs font-bold py-2 rounded-xl bg-white text-emerald-700 hover:bg-emerald-50 transition-colors"
-                        >
-                          {t('header.browse_marketplace')}
-                        </Link>
-                      </div>
-                    </div>
-                  </MegaWrapper>
-                )}
-              </div>
+              <NavBtn href="/marketplace" label={t('nav.coupons_and_picks')} />
 
               {/* Tipsters ▾ */}
               <div className="relative"
@@ -422,86 +403,109 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                 <NavBtn menuKey="tipsters" label={t("nav.tipsters")} />
 
                 {openMenu === 'tipsters' && (
-                  <MegaWrapper>
-                    <div className="flex w-[620px]">
-
-                      {/* Col 1 */}
-                      <div className="w-64 border-r border-slate-100 py-3 px-2">
-                        <SectionLabel>{t('header.section_discover_tipsters')}</SectionLabel>
-                        <MegaLink href="/tipsters"              icon="🔍" label={t('nav.browse')}    desc={t('discover.subtitle')}  onClick={closeAll} />
-                        <MegaLink href="/leaderboard"           icon="🏆" label={t('nav.leaderboard')}   desc={t('header.desc_leaderboard')} onClick={closeAll} />
-                        <MegaLink href="/tipsters?sort=winRate" icon="📈" label={t('tipster.top_win_rate')}  desc={t('tipster.desc_win_rate')}   onClick={closeAll} />
-                        <MegaLink href="/tipsters?sort=roi"     icon="💹" label={t('tipster.best_roi')}      desc={t('tipster.desc_roi')}      onClick={closeAll} />
-                      </div>
-
-                      {/* Col 2 — Become a Tipster */}
-                      <div className="flex-1 py-3 px-2">
-                        <SectionLabel>{t('header.section_become_tipster')}</SectionLabel>
-                        {!isSignedIn && (
-                          <MegaLink
-                            href="/register"
-                            icon="🚀"
-                            label={t('nav.register')}
-                            desc={t('auth.register_subtitle')}
-                            onClick={closeAll}
-                          />
-                        )}
-                        <MegaLink href="/create-pick" icon="🎯" label={t('nav.create_coupon')}        desc={t('create_pick.tagline')} onClick={closeAll} />
-                        <MegaLink href="/dashboard/subscription-packages" icon="📦" label={t('tipster.subscription_packages')} desc={t('tipster.subscription_packages_desc')} onClick={closeAll} />
-                        <div className="mt-3 mx-1 p-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 text-white">
-                          <p className="text-xs font-bold mb-1">🛡️ {t('home.feature_escrow_title')}</p>
-                          <p className="text-[11px] text-slate-300 leading-relaxed">{t('header.escrow_box')}</p>
-                        </div>
-                      </div>
+                  <NavDropdown panelId="main-nav-tipsters-panel" labelledBy="main-nav-tipsters-trigger">
+                    <div className="py-1 px-1">
+                      <SectionLabel>{t('header.section_discover_tipsters')}</SectionLabel>
+                      <CompactNavLink href="/tipsters" icon="🔍" label={t('nav.browse')} onClick={closeAll} />
+                      <CompactNavLink href="/leaderboard" icon="🏆" label={t('nav.leaderboard')} onClick={closeAll} />
+                      <CompactNavLink
+                        href="/tipsters?sort=winRate"
+                        icon="📈"
+                        label={t('tipster.top_win_rate')}
+                        onClick={closeAll}
+                      />
+                      <CompactNavLink href="/tipsters?sort=roi" icon="💹" label={t('tipster.best_roi')} onClick={closeAll} />
                     </div>
-                  </MegaWrapper>
+
+                    <div className="py-1 px-1 border-t border-slate-100">
+                      <SectionLabel>{t('header.section_become_tipster')}</SectionLabel>
+                      {!isSignedIn && (
+                        <CompactNavLink href="/register" icon="🚀" label={t('nav.register')} onClick={closeAll} />
+                      )}
+                      <CompactNavLink href="/create-pick" icon="🎯" label={t('nav.create_coupon')} onClick={closeAll} />
+                      <CompactNavLink
+                        href="/dashboard/subscription-packages"
+                        icon="📦"
+                        label={t('tipster.subscription_packages')}
+                        onClick={closeAll}
+                      />
+                    </div>
+
+                    <div className="mx-2 mb-2 mt-1 p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 text-white">
+                      <p className="text-xs font-bold mb-1">
+                        <span aria-hidden>🛡️ </span>
+                        {t('home.feature_escrow_title')}
+                      </p>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">{t('header.escrow_box')}</p>
+                    </div>
+                  </NavDropdown>
                 )}
               </div>
 
-              {/* Discover ▾ */}
+              {/* Browse ▾ */}
               <div className="relative"
-                onMouseEnter={() => openAfterDelay('discover')}
+                onMouseEnter={() => openAfterDelay('browse')}
                 onMouseLeave={closeAfterDelay}
               >
-                <NavBtn menuKey="discover" label={t("nav.discover")} />
+                <NavBtn menuKey="browse" label={t('nav.browse')} />
 
-                {openMenu === 'discover' && (
-                  <MegaWrapper>
-                    <div className="flex w-[660px]">
+                {openMenu === 'browse' && (
+                  <NavDropdown panelId="main-nav-browse-panel" labelledBy="main-nav-browse-trigger">
+                    <div className="py-1 px-1">
+                      <SectionLabel>{t('header.section_coupons_picks')}</SectionLabel>
+                      <CompactNavLink
+                        href="/marketplace"
+                        icon="🛒"
+                        label={t('nav.picks_marketplace')}
+                        onClick={closeAll}
+                      />
+                      <CompactNavLink
+                        href="/subscriptions/marketplace"
+                        icon="💎"
+                        label={t('nav.subscription_marketplace')}
+                        onClick={closeAll}
+                      />
+                      <CompactNavLink href="/live-scores" icon="📡" label={t('nav.live_scores')} onClick={closeAll} />
+                      <CompactNavLink
+                        href="/coupons/archive"
+                        icon="📦"
+                        label={t('header.settled_archive')}
+                        onClick={closeAll}
+                      />
+                    </div>
 
-                      {/* Col 1 — Content */}
-                      <div className="w-64 border-r border-slate-100 py-3 px-2">
-                        <SectionLabel>{t('header.section_explore')}</SectionLabel>
-                        <MegaLink href="/discover"  icon="🔭" label={t('nav.discover')} desc={t('discover.subtitle')} onClick={closeAll} />
-                        <MegaLink href="/learn"     icon="📖" label={t('nav.learn')}   desc={t('learn.nav_desc')} onClick={closeAll} />
-                        <MegaLink href="/news"      icon="📰" label={t('nav.news')}   desc={t('header.desc_news')} onClick={closeAll} />
-                        <MegaLink href="/resources" icon="📚" label={t('nav.guides')}  desc={t('header.desc_strategy')}                onClick={closeAll} />
-                        <div className="my-2 border-t border-slate-100" />
-                        <SectionLabel>{t('header.section_platform_info')}</SectionLabel>
-                        <MegaLink href="/how-it-works" icon="📖" label={t('home.how_it_works')} desc={t('header.desc_how_it_works')} onClick={closeAll} />
-                        <MegaLink href="/community" icon="💬" label={t('nav.community')} desc={t('header.desc_community')} onClick={closeAll} />
-                        <MegaLink href="/about"   icon="ℹ️" label={t('nav.about')}   desc={t('header.desc_about')}        onClick={closeAll} />
-                        <MegaLink href="/contact" icon="✉️" label={t('nav.contact')} desc={t('header.desc_contact')} onClick={closeAll} />
-                      </div>
+                    <div className="py-1 px-1 border-t border-slate-100">
+                      <SectionLabel>{t('header.section_platform')}</SectionLabel>
+                      <CompactNavLink href="/leaderboard" icon="🏆" label={t('nav.leaderboard')} onClick={closeAll} />
+                      <CompactNavLink href="/league-tables" icon="📊" label={t('nav.league_tables')} onClick={closeAll} />
+                      <CompactNavLink href="/tipsters" icon="👥" label={t('nav.top_tipsters')} onClick={closeAll} />
+                    </div>
 
-                      {/* Col 2 — Trust & Legal */}
-                      <div className="flex-1 py-3 px-2">
-                        <SectionLabel>{t('header.section_trust_safety')}</SectionLabel>
-                        <MegaLink href="/responsible-gambling" icon="🛡️" label={t('resp.headline')} desc={t('header.desc_responsible')} onClick={closeAll} />
-                        <MegaLink href="/terms"   icon="📋" label={t('auth.terms')}   desc={t('header.desc_terms')} onClick={closeAll} />
-                        <MegaLink href="/privacy" icon="🔒" label={t('auth.privacy')} desc={t('header.desc_privacy')}    onClick={closeAll} />
-                        <div className="mt-3 mx-1 p-3 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100">
-                          <p className="text-xs font-bold text-emerald-800 mb-1">{t('resp.age_title')}</p>
-                          <p className="text-[11px] text-slate-500 leading-relaxed">{t('header.age_disclaimer')}</p>
-                        </div>
+                    <div className="px-3 py-3 bg-slate-50/90 border-t border-slate-100">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">
+                        {t('header.section_sports_coverage')}
+                      </p>
+                      <p className="text-[11px] text-slate-600 mb-2.5 leading-snug">{t('header.sports_coverage_highlight')}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {SPORTS.map((s) => (
+                          <Link
+                            key={s.href}
+                            href={s.href}
+                            onClick={closeAll}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-sm hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+                          >
+                            <span aria-hidden>{s.icon}</span>
+                            {s.label}
+                          </Link>
+                        ))}
                       </div>
                     </div>
-                  </MegaWrapper>
+                  </NavDropdown>
                 )}
               </div>
 
               {/* Dashboard (auth only) */}
-              {isSignedIn && <NavBtn href="/dashboard" label={t("nav.dashboard")} />}
+              {isSignedIn && <NavBtn href="/subscriptions" label={t('nav.subscriptions')} />}
 
               {/* Divider */}
               <div className="w-px h-6 bg-slate-200 mx-1.5" />
@@ -589,13 +593,15 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                 >
                   <button
                     type="button"
+                    id="main-nav-account-trigger"
                     aria-expanded={openMenu === 'account'}
                     aria-haspopup="true"
+                    aria-controls="main-nav-account-panel"
                     aria-label="My account"
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/70 focus-visible:ring-offset-2 ${
                       openMenu === 'account'
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
-                        : 'text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/60'
+                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-300/80'
+                        : 'text-slate-700 hover:text-emerald-800 hover:bg-emerald-50/80 border border-transparent'
                     }`}
                     onMouseEnter={() => openAfterDelay('account')}
                     onClick={() => setOpenMenu(openMenu === 'account' ? null : 'account')}
@@ -608,7 +614,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                   </button>
 
                   {openMenu === 'account' && (
-                    <MegaWrapperRight>
+                    <AccountDropdown panelId="main-nav-account-panel" labelledBy="main-nav-account-trigger">
                       <div className="flex w-[520px]">
                         {/* Col 1 — Profile & Activity */}
                         <div className="w-64 border-r border-slate-100 py-4 px-2">
@@ -675,7 +681,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                           </button>
                         </div>
                       </div>
-                    </MegaWrapperRight>
+                    </AccountDropdown>
                   )}
                 </div>
               </div>
@@ -826,11 +832,11 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
             aria-label={t('nav.browse')}
           >
             {[
-              { href: '/marketplace', label: t('nav.marketplace') },
+              { href: '/marketplace', label: t('nav.coupons_and_picks') },
               { href: '/live-scores', label: t('nav.live_scores_short') },
               { href: '/league-tables', label: t('nav.league_tables_short') },
               { href: '/tipsters', label: t('nav.tipsters') },
-              { href: '/discover', label: t('nav.discover') },
+              { href: '/learn', label: t('nav.learn') },
             ].map((q) => (
               <Link
                 key={q.href}
