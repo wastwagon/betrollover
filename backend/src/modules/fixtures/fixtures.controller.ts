@@ -43,6 +43,9 @@ export class FixturesController {
     @Query('category') category?: string,
     @Query('bookmaker_tier') bookmakerTier?: string,
     @Query('include_odds') includeOdds?: string,
+    @Query('include_no_odds') includeNoOdds?: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
   ) {
     return this.fixturesService.list(
       date,
@@ -53,6 +56,9 @@ export class FixturesController {
       category,
       bookmakerTier,
       includeOdds === 'true' || includeOdds === '1',
+      includeNoOdds === 'true' || includeNoOdds === '1',
+      limit ? parseInt(limit, 10) : undefined,
+      offset ? parseInt(offset, 10) : undefined,
     );
   }
 

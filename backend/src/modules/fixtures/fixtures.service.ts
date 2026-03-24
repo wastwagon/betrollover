@@ -40,6 +40,9 @@ export class FixturesService {
     category?: string,
     bookmakerTier?: string,
     includeOdds = false,
+    includeNoOdds = false,
+    limit?: number,
+    offset?: number,
   ) {
     const enabledWhere: { isActive: boolean; category?: string; bookmakerTier?: string } = {
       isActive: true,
@@ -111,8 +114,15 @@ export class FixturesService {
       );
     }
 
-    // Only show fixtures that have at least one odd (Tier 1/Tier 2) - avoid fixtures with no odds
-    qb.andWhere('EXISTS (SELECT 1 FROM fixture_odds o WHERE o.fixture_id = f.id)');
+    // Default behavior keeps odds-backed fixtures only; admin can request full coverage.
+    if (!includeNoOdds) {
+      qb.andWhere('EXISTS (SELECT 1 FROM fixture_odds o WHERE o.fixture_id = f.id)');
+    }
+
+    const safeLimit = Math.min(Math.max(limit ?? 0, 0), 1000);
+    const safeOffset = Math.max(offset ?? 0, 0);
+    if (safeLimit > 0) qb.take(safeLimit);
+    if (safeOffset > 0) qb.skip(safeOffset);
 
     const fixtures = await qb.orderBy('f.match_date', 'ASC').getMany();
 

@@ -54,6 +54,12 @@ function extractCountryCodes(item: any): { home: string | null; away: string | n
 @Injectable()
 export class FootballSyncService {
   private readonly logger = new Logger(FootballSyncService.name);
+  private static readonly MAX_FIXTURE_PAGES_PER_DATE = 20;
+
+  private shouldCleanupNoOddsFixtures(): boolean {
+    const raw = (process.env.CLEANUP_NO_ODDS_FIXTURES || '').toLowerCase().trim();
+    return raw === 'true' || raw === '1' || raw === 'yes';
+  }
 
   constructor(
     @InjectRepository(Fixture)
@@ -79,6 +85,56 @@ export class FootballSyncService {
       this.logger.warn('Failed to get API key from database, using env var', error.message);
       return process.env.API_SPORTS_KEY || '';
     }
+  }
+
+  /**
+   * Fetch fixtures for a specific date.
+   * NOTE: On this API account/version, /fixtures rejects `page` and returns:
+   *   { errors: { page: 'The Page field do not exist.' } }
+   * so we intentionally do a single no-page call here.
+   */
+  private async fetchAllFixturesByDate(
+    date: string,
+    headers: Record<string, string>,
+  ): Promise<any[]> {
+    const url = `${getSportApiBaseUrl('football')}/fixtures?date=${date}`;
+    const res = await fetch(url, { headers });
+    const data = await safeJson<any>(res);
+    if (data?.errors && Object.keys(data.errors).length > 0) {
+      this.logger.warn(`API error for ${date}: ${JSON.stringify(data.errors)}`);
+      return [];
+    }
+    return Array.isArray(data?.response) ? data.response : [];
+  }
+
+  /** Fetch all paginated odds rows for a specific date. */
+  private async fetchAllOddsByDate(
+    date: string,
+    headers: Record<string, string>,
+  ): Promise<any[]> {
+    const base = `${getSportApiBaseUrl('football')}/odds?date=${date}`;
+    const all: any[] = [];
+    let page = 1;
+    let totalPages = 1;
+    let safety = 0;
+
+    while (page <= totalPages && safety < FootballSyncService.MAX_FIXTURE_PAGES_PER_DATE) {
+      safety++;
+      const res = await fetch(`${base}&page=${page}`, { headers });
+      const data = await safeJson<any>(res);
+      if (data?.errors && Object.keys(data.errors).length > 0) {
+        this.logger.warn(`Odds API error for ${date} page ${page}: ${JSON.stringify(data.errors)}`);
+        break;
+      }
+      const items = Array.isArray(data?.response) ? data.response : [];
+      all.push(...items);
+      const current = Number(data?.paging?.current || page);
+      const total = Number(data?.paging?.total || 1);
+      totalPages = Number.isFinite(total) && total > 0 ? total : 1;
+      if (!data?.paging || current >= totalPages || items.length === 0) break;
+      page = current + 1;
+    }
+    return all;
   }
 
   async sync(): Promise<{ fixtures: number; odds: number; leagues: number }> {
@@ -186,14 +242,7 @@ export class FootballSyncService {
     let fixturesCount = 0;
 
     for (const date of dates) {
-      // API-Football fixtures endpoint does NOT support 'page' param - fetch once per date
-      const res = await fetch(`${getSportApiBaseUrl('football')}/fixtures?date=${date}`, { headers });
-      const data = await safeJson<any>(res);
-      if (data.errors && Object.keys(data.errors).length > 0) {
-        this.logger.warn(`API error for ${date}: ${JSON.stringify(data.errors)}`);
-        continue;
-      }
-      const raw = data.response || [];
+      const raw = await this.fetchAllFixturesByDate(date, headers);
       const items = raw.filter(
         (f: any) => f.league?.id && enabledSet.has(f.league.id),
       );
@@ -259,12 +308,26 @@ export class FootballSyncService {
       oddsCount = result.synced;
     }
 
+    // Coverage booster: pull odds by date (paginated) and upsert any remaining odds-backed fixtures.
+    // This is often more complete than per-fixture calls on some API plans/windows.
+    const oddsFirst = await this.oddsSyncService.syncOddsFirst(dates);
+    if (oddsFirst.fixtures > 0) {
+      this.logger.log(
+        `Odds-by-date booster synced ${oddsFirst.fixtures} fixture(s) and ${oddsFirst.odds} odd row(s), skipped ${oddsFirst.skipped}`,
+      );
+    }
+    oddsCount += oddsFirst.fixtures;
+
     // Backfill: fix fixtures with "Home vs Away" by fetching details from API
     await this.backfillHomeAwayTeamNames(headers, now, sevenDaysLater);
 
     // Don't bloat DB: remove upcoming fixtures that still have no odds (not referenced by picks)
-    const removed = await this.deleteUpcomingFixturesWithoutOdds();
-    if (removed > 0) this.logger.log(`Cleaned up ${removed} upcoming fixture(s) without odds`);
+    if (this.shouldCleanupNoOddsFixtures()) {
+      const removed = await this.deleteUpcomingFixturesWithoutOdds();
+      if (removed > 0) this.logger.log(`Cleaned up ${removed} upcoming fixture(s) without odds`);
+    } else {
+      this.logger.debug('Skipped no-odds fixture cleanup (CLEANUP_NO_ODDS_FIXTURES is not enabled)');
+    }
 
     return { fixtures: fixturesCount, odds: oddsCount };
   }
@@ -274,6 +337,7 @@ export class FootballSyncService {
    * Keeps the database lean (no fixtures without odds).
    */
   async deleteUpcomingFixturesWithoutOdds(): Promise<number> {
+    if (!this.shouldCleanupNoOddsFixtures()) return 0;
     const now = new Date();
     const sevenDaysLater = new Date(now.getTime() + SYNC_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
     const toDelete = await this.fixtureRepo
@@ -301,6 +365,10 @@ export class FootballSyncService {
     message?: string;
     dates: string[];
     apiTotalFixtures: number;
+    apiFixturesWithOdds: number;
+    apiCoveragePercent: number;
+    apiEnabledLeagueFixturesWithOdds: number;
+    apiEnabledCoveragePercent: number;
     apiLeagues: { apiId: number; name: string; country: string; fixtureCount: number }[];
     enabledLeagueIds: number[];
     enabledCount: number;
@@ -315,6 +383,10 @@ export class FootballSyncService {
         message: 'API key missing. Set in Admin → Settings or API_SPORTS_KEY env.',
         dates: [],
         apiTotalFixtures: 0,
+        apiFixturesWithOdds: 0,
+        apiCoveragePercent: 0,
+        apiEnabledLeagueFixturesWithOdds: 0,
+        apiEnabledCoveragePercent: 0,
         apiLeagues: [],
         enabledLeagueIds: [],
         enabledCount: 0,
@@ -327,12 +399,19 @@ export class FootballSyncService {
     const dates = getSyncDates();
     const byLeague = new Map<number, { name: string; country: string; count: number }>();
     let apiTotal = 0;
+    const apiFixtureIds = new Set<number>();
+    const apiFixtureLeagueById = new Map<number, number>();
+    const apiOddsFixtureIds = new Set<number>();
     for (const date of dates) {
-      const res = await fetch(`${getSportApiBaseUrl('football')}/fixtures?date=${date}`, { headers });
-      const data = await safeJson<any>(res);
-      const raw = (data?.response || []) as any[];
+      const raw = await this.fetchAllFixturesByDate(date, headers);
+      const oddsRows = await this.fetchAllOddsByDate(date, headers);
       apiTotal += raw.length;
       for (const f of raw) {
+        const fixtureId = f?.fixture?.id;
+        if (typeof fixtureId === 'number') {
+          apiFixtureIds.add(fixtureId);
+          if (typeof f?.league?.id === 'number') apiFixtureLeagueById.set(fixtureId, f.league.id);
+        }
         const league = f.league;
         if (!league?.id) continue;
         const id = league.id;
@@ -342,6 +421,10 @@ export class FootballSyncService {
         const entry = byLeague.get(id)!;
         entry.count++;
       }
+      for (const row of oddsRows) {
+        const fixtureId = row?.fixture?.id;
+        if (typeof fixtureId === 'number') apiOddsFixtureIds.add(fixtureId);
+      }
     }
     const enabled = await this.enabledLeagueRepo.find({
       where: { isActive: true },
@@ -349,6 +432,15 @@ export class FootballSyncService {
     });
     const enabledIds = enabled.map((l) => l.apiId);
     const enabledSet = new Set(enabledIds);
+    const apiFixturesWithOdds = [...apiFixtureIds].filter((id) => apiOddsFixtureIds.has(id)).length;
+    const apiCoveragePercent =
+      apiFixtureIds.size > 0 ? Number(((apiFixturesWithOdds / apiFixtureIds.size) * 100).toFixed(1)) : 0;
+    const enabledFixtureIds = [...apiFixtureIds].filter((id) => enabledSet.has(apiFixtureLeagueById.get(id) || -1));
+    const apiEnabledLeagueFixturesWithOdds = enabledFixtureIds.filter((id) => apiOddsFixtureIds.has(id)).length;
+    const apiEnabledCoveragePercent =
+      enabledFixtureIds.length > 0
+        ? Number(((apiEnabledLeagueFixturesWithOdds / enabledFixtureIds.length) * 100).toFixed(1))
+        : 0;
     const inApiNotEnabled = [...byLeague.entries()]
       .filter(([id]) => !enabledSet.has(id))
       .map(([apiId, info]) => ({ apiId, name: info.name, country: info.country, fixtureCount: info.count }))
@@ -378,6 +470,10 @@ export class FootballSyncService {
       ok: true,
       dates,
       apiTotalFixtures: apiTotal,
+      apiFixturesWithOdds,
+      apiCoveragePercent,
+      apiEnabledLeagueFixturesWithOdds,
+      apiEnabledCoveragePercent,
       apiLeagues,
       enabledLeagueIds: enabledIds,
       enabledCount: enabledIds.length,
@@ -412,9 +508,7 @@ export class FootballSyncService {
     const dates = getSyncDates();
     const byLeague = new Map<number, { name: string; country: string }>();
     for (const date of dates) {
-      const res = await fetch(`${getSportApiBaseUrl('football')}/fixtures?date=${date}`, { headers });
-      const data = await safeJson<any>(res);
-      const raw = (data?.response || []) as any[];
+      const raw = await this.fetchAllFixturesByDate(date, headers);
       for (const f of raw) {
         const league = f.league;
         if (!league?.id) continue;

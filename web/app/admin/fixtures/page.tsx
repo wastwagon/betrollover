@@ -27,6 +27,10 @@ interface SyncDiagnostic {
   message?: string;
   dates: string[];
   apiTotalFixtures: number;
+  apiFixturesWithOdds: number;
+  apiCoveragePercent: number;
+  apiEnabledLeagueFixturesWithOdds: number;
+  apiEnabledCoveragePercent: number;
   apiLeagues: { apiId: number; name: string; country: string; fixtureCount: number }[];
   enabledLeagueIds: number[];
   enabledCount: number;
@@ -76,8 +80,11 @@ const DEFAULT_STREAM_THRESHOLDS: StreamAlertThresholds = {
 export default function AdminFixturesPage() {
   const LOOKAHEAD_DAYS = 3;
   const LOOKAHEAD_HOURS = LOOKAHEAD_DAYS * 24;
+  const PAGE_SIZE = 200;
   const router = useRouter();
   const [fixtures, setFixtures] = useState<DbFixture[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [fetchingResults, setFetchingResults] = useState(false);
@@ -189,6 +196,8 @@ export default function AdminFixturesPage() {
     setLoading(true);
     const params = new URLSearchParams();
     params.set('days', String(LOOKAHEAD_DAYS));
+    params.set('limit', String(PAGE_SIZE + 1));
+    params.set('offset', String((page - 1) * PAGE_SIZE));
     if (selectedCountry) params.set('country', selectedCountry);
     if (selectedCompetition) params.set('league', selectedCompetition);
     fetch(`${getApiUrl()}/fixtures?${params.toString()}`, {
@@ -196,9 +205,20 @@ export default function AdminFixturesPage() {
       cache: 'no-store',
     })
       .then((r) => (r.ok ? r.json() : []))
-      .then((data) => setFixtures(Array.isArray(data) ? data : []))
-      .catch(() => setFixtures([]))
+      .then((data) => {
+        const rows = Array.isArray(data) ? data : [];
+        setHasNextPage(rows.length > PAGE_SIZE);
+        setFixtures(rows.slice(0, PAGE_SIZE));
+      })
+      .catch(() => {
+        setFixtures([]);
+        setHasNextPage(false);
+      })
       .finally(() => setLoading(false));
+  }, [selectedCountry, selectedCompetition, page]);
+
+  useEffect(() => {
+    setPage(1);
   }, [selectedCountry, selectedCompetition]);
 
   useEffect(() => {
@@ -527,7 +547,7 @@ export default function AdminFixturesPage() {
             Upcoming matches from API-Sports. Sync and manage fixtures for your platform.
           </p>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Showing <strong className="text-gray-900 dark:text-white">{fixtures.length}</strong> upcoming fixture{fixtures.length !== 1 ? 's' : ''} for next {LOOKAHEAD_HOURS} hours
+            Showing page <strong className="text-gray-900 dark:text-white">{page}</strong> · <strong className="text-gray-900 dark:text-white">{fixtures.length}</strong> fixture{fixtures.length !== 1 ? 's' : ''} (up to {PAGE_SIZE}/page) for next {LOOKAHEAD_HOURS} hours
             {syncResult && syncResult.fixtures > 0 && (
               <span className="ml-2 text-emerald-600 dark:text-emerald-400">
                 (Last sync: {syncResult.fixtures} fixtures{syncResult.leagues > 0 ? `, ${syncResult.leagues} leagues` : ''})
@@ -552,6 +572,12 @@ export default function AdminFixturesPage() {
                 <div className="flex flex-wrap gap-4">
                   <span className="text-gray-700 dark:text-gray-300">
                     <strong>API total:</strong> {diagnostic.apiTotalFixtures} fixtures from {diagnostic.apiLeagues.length} leagues
+                  </span>
+                  <span className="text-gray-700 dark:text-gray-300">
+                    <strong>API with odds:</strong> {diagnostic.apiFixturesWithOdds} ({diagnostic.apiCoveragePercent}% coverage)
+                  </span>
+                  <span className="text-gray-700 dark:text-gray-300">
+                    <strong>Enabled-league API with odds:</strong> {diagnostic.apiEnabledLeagueFixturesWithOdds} ({diagnostic.apiEnabledCoveragePercent}%)
                   </span>
                   <span className="text-gray-700 dark:text-gray-300">
                     <strong>You have:</strong> {diagnostic.enabledCount} leagues enabled → <strong>{diagnostic.dbUpcomingCount}</strong> fixtures in DB
@@ -986,6 +1012,29 @@ export default function AdminFixturesPage() {
         )}
         {!loading && fixtures.length > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between gap-3">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Page {page}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-50"
+                >
+                  Prev
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={!hasNextPage}
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
