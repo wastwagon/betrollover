@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
@@ -202,7 +203,14 @@ export default function AdminAiTipsterPackagesPage() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">AI Tipster Packages</h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Edit each AI tipster subscription package and toggle publish on/off safely.
+              Edit each AI tipster subscription package and toggle publish on/off safely.{' '}
+              <span className="text-gray-500 dark:text-gray-500">
+                (Customer purchase rows after checkout are on{' '}
+                <Link href="/admin/subscriptions" className="text-[var(--primary)] hover:underline font-medium">
+                  VIP subscribers
+                </Link>
+                .)
+              </span>
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

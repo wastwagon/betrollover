@@ -137,6 +137,16 @@ export default function AdminSubscriptionsPage() {
               View VIP shop as customer →
             </Link>
           </p>
+          <div className="mb-4 p-4 rounded-xl bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800">
+            <p className="text-sm text-gray-800 dark:text-gray-200">
+              <strong>AI tipster subscription packages</strong> — publish on/off per tipster, bulk on/off, and
+              initialize/repair packages — live under{' '}
+              <Link href="/admin/ai-tipster-packages" className="text-[var(--primary)] font-semibold hover:underline">
+                Admin → AI Packages
+              </Link>
+              . This page only lists <em>customers who completed checkout</em>, not catalog or toggles.
+            </p>
+          </div>
           <div className="flex flex-wrap items-center gap-4 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
             <label className="text-sm font-medium text-amber-900 dark:text-amber-100">Status:</label>
             <select
