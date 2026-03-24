@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
-type NavItemId = 'home' | 'marketplace' | 'tipsters' | 'create' | 'account';
+type NavItemId = 'home' | 'marketplace' | 'tipsters' | 'create' | 'subscribe';
 
 interface NavItem {
   id: NavItemId;
@@ -44,10 +44,11 @@ function CreateIcon({ active }: { active?: boolean }) {
     </svg>
   );
 }
-function UserIcon({ active }: { active?: boolean }) {
+/** VIP / subscription hub — aligns with desktop “Subscribe” */
+function SubscribeIcon({ active }: { active?: boolean }) {
   return (
     <svg className="w-6 h-6 shrink-0" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={active ? 0 : 1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
     </svg>
   );
 }
@@ -55,10 +56,10 @@ function UserIcon({ active }: { active?: boolean }) {
 /** Touch nav: visible below xl (1280px). Hidden on laptop/desktop — they use the full header. Portaled to document.body so position:fixed pins to the viewport (avoids “floating” mid-page if a parent uses transform). */
 const NAV_ITEMS: NavItem[] = [
   { id: 'home', href: '/', labelKey: 'header.home', primary: false },
-  { id: 'marketplace', href: '/marketplace', labelKey: 'nav.marketplace', primary: false },
+  { id: 'marketplace', href: '/marketplace', labelKey: 'nav.coupons_and_picks', primary: false },
   { id: 'tipsters', href: '/tipsters', labelKey: 'nav.tipsters', primary: false },
   { id: 'create', href: '/create-pick', labelKey: 'nav.coupon', primary: true },
-  { id: 'account', href: '/dashboard', labelKey: 'nav.dashboard', primary: false },
+  { id: 'subscribe', href: '/subscriptions/marketplace', labelKey: 'nav.subscriptions', primary: false },
 ];
 
 const ICONS: Record<NavItemId, (p: { active?: boolean }) => JSX.Element> = {
@@ -66,7 +67,7 @@ const ICONS: Record<NavItemId, (p: { active?: boolean }) => JSX.Element> = {
   marketplace: ShopIcon,
   tipsters: TipstersIcon,
   create: CreateIcon,
-  account: UserIcon,
+  subscribe: SubscribeIcon,
 };
 
 /** Admin only — auth pages keep bottom nav so tablets can reach Home/Marketplace without the desktop mega-header. */

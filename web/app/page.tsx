@@ -182,7 +182,7 @@ export default async function HomePage() {
               <p className="text-[var(--text-muted)] text-base max-w-xl mx-auto">{t('home.sports_sub')}</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
               {([
                 {
                   icon: '⚽', name: 'Football', accent: 'border-emerald-400/60',
@@ -193,31 +193,6 @@ export default async function HomePage() {
                   icon: '🏀', name: 'Basketball', accent: 'border-orange-400/60',
                   desc: 'NBA, EuroLeague, and leagues worldwide. Moneyline, spreads, and totals across 420+ competitions.',
                   markets: ['Moneyline', 'Spreads', 'Totals', 'Props'],
-                },
-                {
-                  icon: '🏉', name: 'Rugby', accent: 'border-amber-400/60',
-                  desc: 'Rugby Union & League worldwide — UK, South Africa, Australia and more. Match winner, handicap, totals.',
-                  markets: ['Match Winner', 'Handicap', 'Totals'],
-                },
-                {
-                  icon: '🥊', name: 'MMA / Combat', accent: 'border-red-400/60',
-                  desc: 'UFC, ONE Championship & Bellator. Fight winner, method of victory, and round-by-round predictions.',
-                  markets: ['Fight Winner', 'Method', 'Round'],
-                },
-                {
-                  icon: '🏐', name: 'Volleyball', accent: 'border-blue-400/60',
-                  desc: 'Olympic tournaments and major leagues worldwide. Match winner, set totals, and handicap markets.',
-                  markets: ['Match Winner', 'Set Totals', 'Handicap'],
-                },
-                {
-                  icon: '🏒', name: 'Ice Hockey', accent: 'border-cyan-400/60',
-                  desc: 'NHL, KHL & international leagues. Puck line, moneyline, over/under goals — 100+ leagues tracked.',
-                  markets: ['Moneyline', 'Puck Line', 'Over/Under'],
-                },
-                {
-                  icon: '🏈', name: 'American Football', accent: 'border-purple-400/60',
-                  desc: 'NFL, NCAA & college football. Point spread, moneyline, totals, and division matchups.',
-                  markets: ['Spread', 'Moneyline', 'Totals'],
                 },
                 {
                   icon: '🎾', name: 'Tennis', accent: 'border-yellow-400/60',

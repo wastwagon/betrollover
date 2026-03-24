@@ -371,15 +371,10 @@ function DashboardContent() {
                   🌍 Multi-Sport Expansion
                 </span>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 max-w-xl">
                 {[
                   { icon: '⚽', sport: 'Football' },
                   { icon: '🏀', sport: 'Basketball' },
-                  { icon: '🏉', sport: 'Rugby' },
-                  { icon: '🥊', sport: 'MMA' },
-                  { icon: '🏐', sport: 'Volleyball' },
-                  { icon: '🏒', sport: 'Hockey' },
-                  { icon: '🏈', sport: 'Amer. Football' },
                   { icon: '🎾', sport: 'Tennis' },
                 ].map(({ icon, sport }) => (
                   <div
@@ -392,7 +387,8 @@ function DashboardContent() {
                 ))}
               </div>
               <p className="text-xs text-[var(--text-muted)] mt-3">
-All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, American Football &amp; Tennis. API-Sports sync enabled for all.
+                Core sports: Football, Basketball, Tennis. Additional sports (Rugby, MMA, Volleyball, Hockey, American
+                Football, etc.) may still appear in fixtures and marketplace where sync is configured.
               </p>
             </div>
 
@@ -814,11 +810,6 @@ All 8 sports active — Football, Basketball, Rugby, MMA, Volleyball, Hockey, Am
                     {[
                       { icon: '⚽', label: 'Football' },
                       { icon: '🏀', label: 'Basketball' },
-                      { icon: '🏉', label: 'Rugby' },
-                      { icon: '🥊', label: 'MMA' },
-                      { icon: '🏐', label: 'Volleyball' },
-                      { icon: '🏒', label: 'Hockey' },
-                      { icon: '🏈', label: 'Amer. Ftball' },
                       { icon: '🎾', label: 'Tennis' },
                     ].map(({ icon, label }) => (
                       <div

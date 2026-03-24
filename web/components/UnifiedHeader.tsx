@@ -23,14 +23,6 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + '/');
 }
 
-/* ─── Sport coverage data ────────────────────────────────── */
-/** Friendly URLs: /marketplace/rugby etc. (redirect to ?sport= in [sport] route) */
-const SPORTS = [
-  { icon: '⚽', label: 'Football',   href: '/marketplace/football' },
-  { icon: '🏀', label: 'Basketball', href: '/marketplace/basketball' },
-  { icon: '🎾', label: 'Tennis',     href: '/marketplace/tennis' },
-];
-
 /* ─── NavChevron ─────────────────────────────────────────── */
 function NavChevron({ open }: { open: boolean }) {
   return (
@@ -214,7 +206,19 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') { closeAll(); setMobileOpen(false); }
+      if (e.key === 'Escape') {
+        setOpenMenu((prev) => {
+          if (prev) {
+            queueMicrotask(() => {
+              const id =
+                prev === 'account' ? 'main-nav-account-trigger' : `main-nav-${prev}-trigger`;
+              document.getElementById(id)?.focus();
+            });
+          }
+          return null;
+        });
+        setMobileOpen(false);
+      }
     }
     function onPointerDown(e: PointerEvent) {
       const t = e.target as Node;
@@ -391,7 +395,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
             <nav className="hidden lg:flex items-center gap-0.5" aria-label="Main navigation">
 
               {/* Home */}
-              <NavBtn href="/" label="Home" />
+              <NavBtn href="/" label={t('header.home')} />
 
               <NavBtn href="/marketplace" label={t('nav.coupons_and_picks')} />
 
@@ -480,32 +484,14 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       <CompactNavLink href="/league-tables" icon="📊" label={t('nav.league_tables')} onClick={closeAll} />
                       <CompactNavLink href="/tipsters" icon="👥" label={t('nav.top_tipsters')} onClick={closeAll} />
                     </div>
-
-                    <div className="px-3 py-3 bg-slate-50/90 border-t border-slate-100">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">
-                        {t('header.section_sports_coverage')}
-                      </p>
-                      <p className="text-[11px] text-slate-600 mb-2.5 leading-snug">{t('header.sports_coverage_highlight')}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {SPORTS.map((s) => (
-                          <Link
-                            key={s.href}
-                            href={s.href}
-                            onClick={closeAll}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-sm hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
-                          >
-                            <span aria-hidden>{s.icon}</span>
-                            {s.label}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
                   </NavDropdown>
                 )}
               </div>
 
-              {/* Dashboard (auth only) */}
-              {isSignedIn && <NavBtn href="/subscriptions" label={t('nav.subscriptions')} />}
+              {/* Subscriptions → VIP marketplace (auth-only in header; public page) */}
+              {isSignedIn && (
+                <NavBtn href="/subscriptions/marketplace" label={t('nav.subscriptions')} />
+              )}
 
               {/* Divider */}
               <div className="w-px h-6 bg-slate-200 mx-1.5" />
