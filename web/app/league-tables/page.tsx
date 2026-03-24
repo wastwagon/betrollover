@@ -94,7 +94,7 @@ export default function LeagueTablesPage() {
   return (
     <div className="min-h-screen bg-[var(--bg)] flex flex-col">
       <UnifiedHeader />
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 md:py-8 pb-24 lg:pb-16">
+      <main className="section-ux-league-shell">
         <PageHeader
           label={t('league_stats.breadcrumb')}
           title={t('league_stats.title')}

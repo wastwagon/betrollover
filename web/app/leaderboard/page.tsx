@@ -114,7 +114,7 @@ export default function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <UnifiedHeader />
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <main className="section-ux-page-mid">
 
         {/* Header */}
         <div className="mb-8">

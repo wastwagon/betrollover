@@ -24,7 +24,7 @@ export default function ConverterPage() {
     <div className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--text)]">
       <UnifiedHeader />
 
-      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-10">
+      <main className="section-ux-page-sm flex-1 w-full">
         <div className="mb-8">
           <nav className="text-xs text-[var(--text-muted)] mb-3">
             <Link href="/" className="hover:underline">Home</Link>

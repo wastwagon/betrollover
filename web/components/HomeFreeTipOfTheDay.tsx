@@ -91,7 +91,7 @@ export function HomeFreeTipOfTheDay() {
   if (loading) {
     return (
       <section className="py-12 md:py-16 border-t border-[var(--border)] bg-[var(--bg)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="section-ux-gutter-wide">
           <h2 className="text-base font-semibold text-[var(--text)] mb-4 sm:mb-6 sm:text-lg md:text-xl">Free Tip of the Day</h2>
           <div className="max-w-md h-64 rounded-2xl bg-[var(--card)] animate-pulse" />
         </div>
@@ -108,7 +108,7 @@ export function HomeFreeTipOfTheDay() {
 
   return (
     <section className="py-12 md:py-16 border-t border-[var(--border)] bg-gradient-to-br from-amber-50/50 dark:from-amber-950/20 to-[var(--bg)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="section-ux-gutter-wide">
         <div className="flex items-center justify-between mb-6">
           <div>
             <div className="flex items-center gap-2 mb-2">

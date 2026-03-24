@@ -28,7 +28,7 @@ export default async function TermsPage() {
       <UnifiedHeader />
 
       <main>
-        <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-14">
+        <article className="section-ux-prose">
           <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[var(--primary)] mb-2 sm:mb-3">
             {t('privacy.legal')}
           </p>

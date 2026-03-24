@@ -53,7 +53,7 @@ function VerifyEmailContent() {
 
   return (
     <AppShell>
-      <div className="max-w-md mx-auto px-4 py-20 text-center">
+      <div className="section-ux-auth-narrow">
         {loading ? (
           <div className="animate-pulse">
             <div className="w-16 h-16 rounded-full bg-[var(--primary)]/20 mx-auto mb-6" />
@@ -126,7 +126,7 @@ export default function VerifyEmailPage() {
     <Suspense
       fallback={
         <AppShell>
-          <div className="max-w-md mx-auto px-4 py-20 text-center">
+          <div className="section-ux-auth-narrow">
             <div className="animate-pulse">
               <div className="w-16 h-16 rounded-full bg-[var(--primary)]/20 mx-auto mb-6" />
               <p className="text-[var(--text-muted)]">Loading...</p>

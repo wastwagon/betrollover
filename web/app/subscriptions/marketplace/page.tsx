@@ -26,6 +26,8 @@ interface MarketplaceItem {
     username: string;
     displayName: string;
     avatarUrl: string | null;
+    /** Present when API returns it (human vs AI badge). */
+    isAi?: boolean;
     bio: string | null;
     profileRoi: number | null;
     profileWinRate: number | null;
@@ -65,7 +67,7 @@ export default function SubscriptionMarketplacePage() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <UnifiedHeader />
-      <main className="max-w-6xl mx-auto px-4 py-8 md:py-12">
+      <main className="section-ux-page">
         <PageHeader
           label={t('nav.subscription_marketplace')}
           title={t('subscriptions.marketplace_title')}
@@ -101,10 +103,10 @@ export default function SubscriptionMarketplacePage() {
                 pkg.roiGuaranteeMin != null ? `${Number(pkg.roiGuaranteeMin).toFixed(1)}%` : '—';
 
               return (
-                <article
-                  key={pkg.id}
-                  className="card-gradient rounded-2xl border border-[var(--border)] shadow-lg overflow-hidden flex flex-col hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
-                >
+      <article
+        key={pkg.id}
+        className="card-gradient rounded-2xl border border-[var(--border)] shadow-lg overflow-hidden flex flex-col hover:shadow-xl hover:-translate-y-px transition-[box-shadow,transform] duration-200 ease-out"
+      >
                   <div className="p-4 sm:p-5 flex flex-col flex-1">
                     <div className="flex items-start gap-3 mb-3">
                       <Link href={tip ? `/tipsters/${tip.username}` : '#'} className="flex-shrink-0">
@@ -126,9 +128,16 @@ export default function SubscriptionMarketplacePage() {
                         </div>
                       </Link>
                       <div className="min-w-0 flex-1">
-                        <Link href={tip ? `/tipsters/${tip.username}` : '#'} className="font-semibold text-[var(--text)] truncate block">
-                          {tip?.displayName ?? 'Tipster'}
-                        </Link>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Link href={tip ? `/tipsters/${tip.username}` : '#'} className="font-semibold text-[var(--text)] truncate block">
+                            {tip?.displayName ?? 'Tipster'}
+                          </Link>
+                          {tip?.isAi === true && (
+                            <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-200">
+                              AI
+                            </span>
+                          )}
+                        </div>
                         {tip?.username && (
                           <p className="text-xs text-[var(--text-muted)]">@{tip.username}</p>
                         )}

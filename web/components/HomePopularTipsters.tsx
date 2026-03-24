@@ -48,7 +48,7 @@ export function HomePopularTipsters() {
 
   return (
     <section className="py-12 md:py-16 bg-[var(--bg)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="section-ux-gutter-wide">
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <h2 className="text-lg font-bold text-[var(--text)] sm:text-xl md:text-2xl">{t('home.featured_tipsters')}</h2>
           <Link href="/tipsters" className="text-xs font-medium text-emerald-600 hover:text-emerald-700 hover:underline sm:text-sm">

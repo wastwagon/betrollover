@@ -96,7 +96,7 @@ export default function AdminAdsCreatePage() {
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <AdminSidebar />
-      <main className="admin-main-sibling flex-1 w-full min-w-0 overflow-x-hidden p-6 md:p-8 md:ml-56">
+      <main className="admin-main-sibling section-ux-admin-main">
         <Link href="/admin/ads" className="text-sm text-[var(--primary)] hover:underline mb-6 inline-block">
           ← Back to Ads
         </Link>

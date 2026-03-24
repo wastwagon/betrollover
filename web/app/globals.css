@@ -132,6 +132,147 @@ body {
   }
 }
 
+/* ── Section UX: semantic rhythm (presentational; tokens only) ── */
+@layer utilities {
+  /** Hero KPI strip — mobile-first vertical breathing room */
+  .section-ux-hero {
+    @apply px-4 sm:px-6 lg:px-8 pt-12 pb-16 sm:pt-14 sm:pb-16 md:pt-16 md:pb-20 lg:pt-20 lg:pb-24;
+  }
+
+  /** max-w-6xl column — tipsters list, VIP marketplace, tipster profile shell */
+  .section-ux-page {
+    @apply max-w-6xl mx-auto px-4 pt-8 pb-10 md:pt-12 md:pb-14;
+  }
+
+  /** max-w-7xl — news, discover, resources, coupon archive */
+  .section-ux-page-wide {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-10 md:pt-12 md:pb-14;
+  }
+
+  /** max-w-5xl — leaderboard, earnings, coupon detail */
+  .section-ux-page-mid {
+    @apply max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-10 md:pt-12 md:pb-14;
+  }
+
+  /** Horizontal gutter only — nested blocks under a full-width main */
+  .section-ux-gutter {
+    @apply max-w-6xl mx-auto px-4;
+  }
+
+  /** DashboardShell primary scroll column */
+  .section-ux-dashboard-shell {
+    @apply w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 md:py-6 pb-24;
+  }
+
+  /** Dashboard home — slightly taller vertical rhythm */
+  .section-ux-dashboard-shell-spacious {
+    @apply w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 sm:py-6 md:py-8 pb-24;
+  }
+
+  /** Verify-email / narrow auth message column */
+  .section-ux-auth-narrow {
+    @apply max-w-md mx-auto px-4 py-20 text-center;
+  }
+
+  /** max-w-3xl — support, live-scores */
+  .section-ux-page-narrow {
+    @apply max-w-3xl mx-auto px-4 sm:px-6 pt-8 pb-10 md:pt-12 md:pb-14;
+  }
+
+  /** Legal / long-form marketing copy */
+  .section-ux-prose {
+    @apply max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-14;
+  }
+
+  /** max-w-7xl horizontal — home bento (section may omit outer px) */
+  .section-ux-gutter-wide {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /** Centered width caps (parent often supplies section padding) */
+  .section-ux-cap-4xl {
+    @apply max-w-4xl mx-auto;
+  }
+
+  .section-ux-cap-5xl {
+    @apply max-w-5xl mx-auto;
+  }
+
+  /** Full-width ad rails on the home column */
+  .section-ux-rail-4xl {
+    @apply max-w-4xl mx-auto px-4 py-4;
+  }
+
+  /** max-w-4xl + horizontal padding — coupon reviews, nested blocks */
+  .section-ux-gutter-4xl {
+    @apply max-w-4xl mx-auto px-4;
+  }
+
+  /** Empty / not-found hero */
+  .section-ux-empty {
+    @apply max-w-3xl mx-auto px-4 py-20 text-center;
+  }
+
+  /** Resource article, odds converter */
+  .section-ux-page-sm {
+    @apply max-w-2xl mx-auto px-4 sm:px-6 py-10;
+  }
+
+  /** League tables — bottom padding for mobile tab bar */
+  .section-ux-league-shell {
+    @apply flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 md:py-8 pb-24 lg:pb-16;
+  }
+
+  /** Community chat split layout */
+  .section-ux-community-shell {
+    @apply relative flex-1 flex max-w-7xl mx-auto w-full px-4 py-6 gap-4;
+  }
+
+  /** Login / forgot-password card column */
+  .section-ux-auth-main {
+    @apply relative flex flex-col items-center justify-center px-6 py-20;
+  }
+
+  /**
+   * Admin (AdminSidebar): keep `admin-main-sibling` on <main> — globals.css uses it for mobile offset.
+   * These utilities only replace the repeated flex/padding tail.
+   */
+  .section-ux-admin-main {
+    @apply flex-1 w-full min-w-0 overflow-x-hidden p-6 md:p-8 md:ml-56;
+  }
+
+  .section-ux-admin-main-scroll {
+    @apply flex-1 w-full min-w-0 overflow-x-hidden overflow-y-auto p-6 md:p-8 md:ml-56;
+  }
+
+  .section-ux-admin-main-audit {
+    @apply flex-1 w-full min-w-0 overflow-x-hidden px-4 pb-8 pt-4 md:pl-8 md:pr-8 md:py-8 md:ml-56;
+  }
+
+  .section-ux-admin-chat {
+    @apply flex-1 w-full min-w-0 overflow-x-hidden p-4 pt-4 md:p-6 md:ml-56 max-w-5xl;
+  }
+
+  /** Admin dashboard home — padding lives in inner max-w wrapper */
+  .section-ux-admin-shell {
+    @apply flex-1 w-full min-w-0 overflow-x-hidden overflow-y-auto md:ml-56;
+  }
+
+  /** Wide horizontal tables (sports sync) — inner column supplies padding */
+  .section-ux-admin-main-wide {
+    @apply flex-1 w-full min-w-0 overflow-x-auto md:ml-56;
+  }
+
+  /** Register split page */
+  .section-ux-register-main {
+    @apply relative flex min-h-[calc(100vh-64px)];
+  }
+
+  .section-ux-register-column {
+    @apply flex-1 flex flex-col items-center justify-center px-6 py-12 lg:py-16;
+  }
+}
+
 /* Modern card - clean, subtle depth */
 .card-gradient {
   background: var(--card);
@@ -235,6 +376,12 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  /* Ensure staggered fades still read as visible (no stuck opacity) */
+  .animate-fade-in-up {
+    opacity: 1 !important;
+    transform: none !important;
   }
 }
 

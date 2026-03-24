@@ -105,7 +105,7 @@ export default function SubscriptionPackagesPage() {
   if (loading) {
     return (
       <DashboardShell>
-        <div className="w-full px-4 sm:px-5 md:px-6 py-6 pb-24">
+        <div className="section-ux-dashboard-shell">
           <LoadingSkeleton count={2} variant="list" />
         </div>
       </DashboardShell>
@@ -115,7 +115,7 @@ export default function SubscriptionPackagesPage() {
   return (
     <DashboardShell>
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
-      <div className="w-full px-4 sm:px-5 md:px-6 py-6 pb-24">
+      <div className="section-ux-dashboard-shell">
         <Link href="/dashboard" className="text-sm text-[var(--primary)] hover:underline mb-4 inline-block">
           ← Dashboard
         </Link>

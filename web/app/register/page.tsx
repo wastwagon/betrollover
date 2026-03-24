@@ -107,7 +107,7 @@ function RegisterForm() {
     <div className="min-h-screen bg-[var(--bg)] relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-mesh pointer-events-none" />
       <UnifiedHeader />
-      <main className="relative flex min-h-[calc(100vh-64px)]">
+      <main className="section-ux-register-main">
         {/* Left column - Branding panel (hidden on mobile) */}
         <div className="hidden lg:flex lg:w-[45%] xl:w-[42%] flex-col justify-between bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 p-10 xl:p-14 text-white relative overflow-hidden">
           {/* Subtle pattern overlay */}
@@ -138,7 +138,7 @@ function RegisterForm() {
         </div>
 
         {/* Right column - Form */}
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 lg:py-16">
+        <div className="section-ux-register-column">
           {/* Mobile-only value strip */}
           <div className="lg:hidden w-full max-w-md mb-6 flex flex-wrap gap-2 justify-center">
             {['Escrow-protected', 'Verified tipsters', 'Multi-sport'].map((label) => (

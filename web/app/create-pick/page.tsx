@@ -688,7 +688,7 @@ export default function CreatePickPage() {
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
-        <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 md:py-6 pb-24">
+        <div className="section-ux-dashboard-shell">
           <PageHeader
             label={t('create_pick.title')}
             title={t('create_pick.title')}

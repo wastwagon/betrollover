@@ -3,7 +3,7 @@ export default function TipstersLoading() {
     <div className="min-h-screen bg-[var(--bg)]">
       <div className="sticky top-0 z-50 h-16 bg-[var(--card)] border-b border-[var(--border)]" />
 
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-8 pb-24 max-w-7xl mx-auto">
+      <div className="section-ux-page pb-24">
         {/* Page header */}
         <div className="mb-6">
           <div className="h-3 w-24 rounded-full bg-[var(--border)] animate-pulse mb-2" />

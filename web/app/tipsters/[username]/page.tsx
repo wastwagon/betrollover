@@ -310,7 +310,7 @@ export default function TipsterProfilePage() {
     return (
       <div className="min-h-screen bg-[var(--bg)]">
         <UnifiedHeader />
-        <main className="max-w-6xl mx-auto px-4 py-8">
+        <main className="section-ux-page">
           <LoadingSkeleton count={3} className="space-y-6" />
         </main>
         <AppFooter />
@@ -322,7 +322,7 @@ export default function TipsterProfilePage() {
     return (
       <div className="min-h-screen bg-[var(--bg)]">
         <UnifiedHeader />
-        <main className="max-w-6xl mx-auto px-4 py-8">
+        <main className="section-ux-page">
           <EmptyState
             title={t('tipster.not_found')}
             description={t('tipster.not_found_sub')}
@@ -367,7 +367,7 @@ export default function TipsterProfilePage() {
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <UnifiedHeader />
       <main className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
-        <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
+        <div className="section-ux-page">
           <Link href="/tipsters" className="text-sm text-[var(--primary)] hover:underline mb-4 inline-block">
             {t('tipster.back_to_tipsters')}
           </Link>
@@ -498,7 +498,7 @@ export default function TipsterProfilePage() {
         </div>
 
         {subscriptionPackages.length > 0 && (
-          <section className="max-w-6xl mx-auto px-4 mb-10">
+          <section className="section-ux-gutter mb-10">
             <h2 className="text-lg font-semibold text-[var(--text)] mb-4">{t('tipster.subscription_packages')}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {subscriptionPackages.map((pkg) => {
@@ -555,7 +555,7 @@ export default function TipsterProfilePage() {
           </section>
         )}
 
-        <section className="max-w-6xl mx-auto px-4 mb-12">
+        <section className="section-ux-gutter mb-12">
           {/* Active / Archive tabs */}
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <div className="inline-flex p-1 rounded-xl bg-white/80 dark:bg-gray-800/80 border border-emerald-200/60 dark:border-emerald-700/40 shadow-sm">

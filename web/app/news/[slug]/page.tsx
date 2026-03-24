@@ -63,7 +63,7 @@ function ArticleSkeleton() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <UnifiedHeader />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="section-ux-page-wide">
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1 space-y-4">
             <div className="h-6 w-32 rounded-xl bg-[var(--card)] skeleton" />
@@ -118,7 +118,7 @@ export default function NewsArticlePage() {
     return (
       <div className="min-h-screen bg-[var(--bg)]">
         <UnifiedHeader />
-        <main className="max-w-3xl mx-auto px-4 py-20 text-center">
+        <main className="section-ux-empty">
           <p className="text-5xl mb-4">📰</p>
           <h1 className="text-lg font-semibold text-[var(--text)] mb-3">{t('news.article_not_found')}</h1>
           <p className="text-[var(--text-muted)] mb-6">{t('news.article_not_found_desc')}</p>
@@ -145,7 +145,7 @@ export default function NewsArticlePage() {
         slug={article.slug}
       />
       <UnifiedHeader />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
+      <main className="section-ux-page-wide">
 
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-[var(--text-muted)] mb-6 flex-wrap">

@@ -343,7 +343,7 @@ export default function LiveScoresPage() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <UnifiedHeader />
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 md:py-10">
+      <main className="section-ux-page-narrow">
         <nav className="text-sm text-[var(--text-muted)] mb-4">
           <Link href="/marketplace" className="hover:text-[var(--primary)]">
             {t('nav.marketplace')}

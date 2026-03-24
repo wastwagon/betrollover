@@ -66,7 +66,7 @@ export default function InvitePage() {
 
   return (
     <DashboardShell>
-      <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 md:py-6 pb-24 max-w-2xl mx-auto">
+      <div className="section-ux-dashboard-shell max-w-2xl mx-auto">
 
         <div className="mb-8">
           <p className="text-xs font-semibold text-[var(--primary)] uppercase tracking-wider mb-1">{t('invite.grow_together')}</p>

@@ -40,7 +40,7 @@ export default function ResourceItemPage() {
     return (
       <div className="min-h-screen bg-[var(--bg)]">
         <UnifiedHeader />
-        <main className="max-w-3xl mx-auto px-4 py-12">
+        <main className="section-ux-page-narrow">
           <div className="h-8 w-48 rounded bg-[var(--card)] skeleton mb-6" />
           <div className="h-4 w-full rounded bg-[var(--card)] skeleton mb-4" />
           <div className="h-4 w-full rounded bg-[var(--card)] skeleton" />
@@ -54,7 +54,7 @@ export default function ResourceItemPage() {
     return (
       <div className="min-h-screen bg-[var(--bg)]">
         <UnifiedHeader />
-        <main className="max-w-3xl mx-auto px-4 py-12 text-center">
+        <main className="section-ux-page-narrow text-center">
           <h1 className="text-lg font-semibold text-[var(--text)] mb-4">{t('discover.resource_not_found')}</h1>
           <Link href="/discover?tab=guides" className="text-[var(--primary)] hover:underline">
             {t('discover.back_to_discover')}
@@ -71,7 +71,7 @@ export default function ResourceItemPage() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <UnifiedHeader />
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10">
+      <main className="section-ux-page-sm">
         <Link
           href="/discover?tab=guides"
           className="inline-flex items-center gap-1 text-sm text-[var(--primary)] hover:underline mb-8 transition-colors"

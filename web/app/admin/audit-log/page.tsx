@@ -64,8 +64,8 @@ export default function AdminAuditLogPage() {
   return (
     <div className="flex min-h-screen bg-[var(--bg)]">
       <AdminSidebar />
-      <main className="admin-main-sibling flex-1 w-full min-w-0 overflow-x-hidden px-4 pb-8 pt-4 md:pl-8 md:pr-8 md:py-8 md:ml-56">
-        <div className="max-w-5xl mx-auto">
+      <main className="admin-main-sibling section-ux-admin-main-audit">
+        <div className="section-ux-cap-5xl">
           <h1 className="text-2xl font-bold text-[var(--text)] mb-2">Audit log</h1>
           <p className="text-sm text-[var(--text-muted)] mb-6">
             Recent admin actions (user changes, withdrawals, support, content). For compliance and debugging.

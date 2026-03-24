@@ -83,7 +83,7 @@ export default function AdminSupportPage() {
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
       <AdminSidebar />
-      <main className="admin-main-sibling flex-1 w-full min-w-0 overflow-x-hidden overflow-y-auto p-6 md:p-8 md:ml-56">
+      <main className="admin-main-sibling section-ux-admin-main-scroll">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Support Inbox</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-0.5">Review and respond to user tickets.</p>

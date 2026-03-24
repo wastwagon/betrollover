@@ -29,7 +29,7 @@ export function HomePublicChatRooms() {
 
   return (
     <section className="py-14 md:py-20 px-4 sm:px-6 lg:px-8 border-t border-[var(--border)]">
-      <div className="max-w-5xl mx-auto">
+      <div className="section-ux-cap-5xl">
         <div className="text-center mb-10">
           <span className="inline-block px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs font-semibold uppercase tracking-wide mb-3">
             Community

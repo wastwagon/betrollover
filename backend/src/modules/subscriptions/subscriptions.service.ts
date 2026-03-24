@@ -183,6 +183,7 @@ export class SubscriptionsService {
         'displayName',
         'avatarUrl',
         'bio',
+        'isAi',
         'roi',
         'winRate',
         'totalPredictions',
@@ -230,6 +231,7 @@ export class SubscriptionsService {
               displayName: t.displayName,
               avatarUrl: t.avatarUrl,
               bio: t.bio,
+              isAi: !!t.isAi,
               profileRoi: t.roi != null ? Number(t.roi) : null,
               profileWinRate: t.winRate != null ? Number(t.winRate) : null,
               totalPredictions: t.totalPredictions,
@@ -457,14 +459,14 @@ export class SubscriptionsService {
 
   /** Tipsters who have at least one subscription package (for admin filters). */
   async listAdminSubscriptionTipsters(): Promise<
-    Array<{ tipsterUserId: number; username: string; displayName: string }>
+    Array<{ tipsterUserId: number; username: string; displayName: string; isAi: boolean }>
   > {
     const pkgs = await this.packageRepo.find({ select: ['tipsterUserId'] });
     const userIds = [...new Set(pkgs.map((p) => p.tipsterUserId).filter((id) => Number.isFinite(id)))];
     if (userIds.length === 0) return [];
     const tipsters = await this.tipsterRepo.find({
       where: { userId: In(userIds) },
-      select: ['userId', 'username', 'displayName'],
+      select: ['userId', 'username', 'displayName', 'isAi'],
       order: { displayName: 'ASC' },
     });
     return tipsters
@@ -473,10 +475,15 @@ export class SubscriptionsService {
         tipsterUserId: t.userId as number,
         username: t.username,
         displayName: t.displayName,
+        isAi: !!t.isAi,
       }));
   }
 
-  async listAdminSubscriptions(filters: { status?: string; tipsterUserId?: number }): Promise<
+  async listAdminSubscriptions(filters: {
+    status?: string;
+    tipsterUserId?: number;
+    tipsterKind?: 'human' | 'ai' | 'all';
+  }): Promise<
     Array<{
       id: number;
       status: string;
@@ -486,8 +493,30 @@ export class SubscriptionsService {
       createdAt: Date;
       escrowStatus: string | null;
       subscriber: { id: number; username: string; displayName: string };
-      package: { id: number; name: string; price: number; tipsterUserId: number };
-      tipster: { username: string; displayName: string; avatarUrl: string | null } | null;
+      package: {
+        id: number;
+        name: string;
+        price: number;
+        durationDays: number;
+        roiGuaranteeMin: number | null;
+        roiGuaranteeEnabled: boolean;
+        tipsterUserId: number;
+      };
+      tipster: {
+        username: string;
+        displayName: string;
+        avatarUrl: string | null;
+        isAi: boolean;
+      } | null;
+      /** Same settled-pick stats as VIP marketplace (per tipster). */
+      performance: {
+        roi: number;
+        winRate: number;
+        totalPicks: number;
+        wonPicks: number;
+        lostPicks: number;
+        totalEarnings: number;
+      } | null;
     }>
   > {
     const qb = this.subscriptionRepo
@@ -508,21 +537,37 @@ export class SubscriptionsService {
       tipsterUserIds.length > 0
         ? await this.tipsterRepo.find({
             where: { userId: In(tipsterUserIds) },
-            select: ['userId', 'username', 'displayName', 'avatarUrl'],
+            select: ['userId', 'username', 'displayName', 'avatarUrl', 'isAi'],
           })
         : [];
     const tipMap = new Map(tipsters.filter((t) => t.userId != null).map((t) => [t.userId as number, t]));
+    const userRows =
+      tipsterUserIds.length > 0
+        ? await this.usersRepo.find({
+            where: { id: In(tipsterUserIds) },
+            select: ['id', 'role'],
+          })
+        : [];
+    const roleByUserId = new Map(userRows.map((u) => [u.id, u.role]));
+    const statsByUserId = new Map<number, Awaited<ReturnType<TipsterService['getStats']>>>();
+    await Promise.all(
+      tipsterUserIds.map(async (uid) => {
+        const role = roleByUserId.get(uid) ?? 'user';
+        statsByUserId.set(uid, await this.tipsterService.getStats(uid, role));
+      }),
+    );
     const subIds = rows.map((r) => r.id);
     const escrows =
       subIds.length > 0
         ? await this.escrowRepo.find({ where: { subscriptionId: In(subIds) } })
         : [];
     const escMap = new Map(escrows.map((e) => [e.subscriptionId, e]));
-    return rows.map((s) => {
+    const mapped = rows.map((s) => {
       const pkg = s.package;
       const tipsterUserId = pkg.tipsterUserId;
       const t = tipMap.get(tipsterUserId);
       const esc = escMap.get(s.id);
+      const perf = statsByUserId.get(tipsterUserId);
       return {
         id: s.id,
         status: s.status,
@@ -540,13 +585,39 @@ export class SubscriptionsService {
           id: pkg.id,
           name: pkg.name,
           price: Number(pkg.price),
+          durationDays: pkg.durationDays,
+          roiGuaranteeMin: pkg.roiGuaranteeMin != null ? Number(pkg.roiGuaranteeMin) : null,
+          roiGuaranteeEnabled: !!pkg.roiGuaranteeEnabled,
           tipsterUserId,
         },
         tipster: t
-          ? { username: t.username, displayName: t.displayName, avatarUrl: t.avatarUrl ?? null }
+          ? {
+              username: t.username,
+              displayName: t.displayName,
+              avatarUrl: t.avatarUrl ?? null,
+              isAi: !!t.isAi,
+            }
+          : null,
+        performance: perf
+          ? {
+              roi: perf.roi,
+              winRate: perf.winRate,
+              totalPicks: perf.totalPicks,
+              wonPicks: perf.wonPicks,
+              lostPicks: perf.lostPicks,
+              totalEarnings: perf.totalEarnings,
+            }
           : null,
       };
     });
+    const kind = filters.tipsterKind ?? 'all';
+    if (kind === 'human') {
+      return mapped.filter((r) => r.tipster && !r.tipster.isAi);
+    }
+    if (kind === 'ai') {
+      return mapped.filter((r) => r.tipster?.isAi === true);
+    }
+    return mapped;
   }
 
   /**

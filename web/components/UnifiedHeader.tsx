@@ -375,7 +375,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
         ref={headerRef}
         className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-xl border-b border-slate-200/70 shadow-sm"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="section-ux-gutter-wide">
           <div className="flex items-center justify-between h-[4.5rem]">
 
             {/* ── Logo ── */}

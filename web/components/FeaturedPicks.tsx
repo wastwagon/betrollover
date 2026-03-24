@@ -52,7 +52,7 @@ export function FeaturedPicks() {
   return (
     <section className="py-12 md:py-16 bg-[var(--card)] border-y border-[var(--border)] relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--accent)]/5 to-transparent pointer-events-none" />
-      <div className="relative max-w-6xl mx-auto px-6">
+      <div className="relative section-ux-gutter">
         <div className="text-center mb-8">
           <h2 className="text-base md:text-lg font-semibold text-[var(--text)]">Marketplace Coupons</h2>
           <p className="mt-1 text-sm text-[var(--text-muted)]">Browse and purchase from verified tipsters</p>

@@ -84,7 +84,7 @@ function CheckoutContent() {
   if (loading) {
     return (
       <DashboardShell>
-        <div className="w-full px-4 sm:px-5 md:px-6 py-6 pb-24 max-w-lg mx-auto">
+        <div className="section-ux-dashboard-shell max-w-lg mx-auto">
           <LoadingSkeleton count={3} variant="list" />
         </div>
       </DashboardShell>
@@ -96,7 +96,7 @@ function CheckoutContent() {
 
   return (
     <DashboardShell>
-      <div className="w-full px-4 sm:px-5 md:px-6 py-6 pb-24 max-w-lg mx-auto">
+      <div className="section-ux-dashboard-shell max-w-lg mx-auto">
         <Link href="/tipsters" className="text-sm text-[var(--primary)] hover:underline mb-4 inline-block">
           ← Tipsters
         </Link>
@@ -151,7 +151,7 @@ export default function SubscriptionCheckoutPage() {
     <Suspense
       fallback={
         <DashboardShell>
-          <div className="w-full px-4 py-6 pb-24 max-w-lg mx-auto">
+          <div className="section-ux-dashboard-shell max-w-lg mx-auto">
             <LoadingSkeleton count={3} variant="list" />
           </div>
         </DashboardShell>

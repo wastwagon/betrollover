@@ -51,12 +51,12 @@ export default async function HomePage() {
 
       <main className="bg-[var(--bg)]">
         <HomeHero />
-        <div className="max-w-4xl mx-auto px-4 py-4">
+        <div className="section-ux-rail-4xl">
           <AdSlot zoneSlug="home-below-hero" fullWidth className="w-full" />
         </div>
         {/* How It Works — placed high so escrow and buyer/seller flows are visible without long scroll */}
         <section className="py-10 sm:py-14 md:py-20 px-4 sm:px-6 lg:px-8 border-t border-[var(--border)]">
-          <div className="max-w-4xl mx-auto">
+          <div className="section-ux-cap-4xl">
             <div className="text-center mb-8 sm:mb-12 px-1">
               <span className="inline-block px-3 py-1.5 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-3">{t('home.how_it_works')}</span>
               <h2 className="text-base font-semibold text-[var(--text)] mb-3 sm:text-lg md:text-xl leading-snug">{t('home.how_it_works_sub')}</h2>
@@ -168,21 +168,21 @@ export default async function HomePage() {
           <HomeFreeTipOfTheDay />
         </section>
         <HomePopularEvents />
-        <div className="max-w-4xl mx-auto px-4 py-4">
+        <div className="section-ux-rail-4xl">
           <AdSlot zoneSlug="between-sections" fullWidth className="w-full" />
         </div>
         <HomePublicChatRooms />
 
         {/* Sports We Cover */}
         <section className="py-14 md:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 to-emerald-50/30 dark:from-slate-900/60 dark:to-slate-800/40 border-t border-[var(--border)]">
-          <div className="max-w-5xl mx-auto">
+          <div className="section-ux-cap-5xl">
             <div className="text-center mb-10">
               <span className="inline-block px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold uppercase tracking-wide mb-3">{t('nav.sports')}</span>
               <h2 className="text-base font-semibold text-[var(--text)] mb-3 sm:text-lg md:text-xl">{t('home.sports_title')}</h2>
               <p className="text-[var(--text-muted)] text-base max-w-xl mx-auto">{t('home.sports_sub')}</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 section-ux-cap-4xl">
               {([
                 {
                   icon: '⚽', name: 'Football', accent: 'border-emerald-400/60',
@@ -217,7 +217,7 @@ export default async function HomePage() {
 
         {/* Platform Features — Bento Grid */}
         <section className="py-14 md:py-20 border-t border-[var(--border)]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="section-ux-gutter-wide">
 
             {/* Section header */}
             <div className="text-center mb-10">

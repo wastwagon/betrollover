@@ -121,7 +121,7 @@ function DiscoverContent() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <UnifiedHeader />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="section-ux-page-wide">
         <PageHeader
           label={t('nav.discover')}
           title={t('discover.title')}
@@ -496,7 +496,7 @@ export default function DiscoverPage() {
     <Suspense fallback={
       <div className="min-h-screen bg-[var(--bg)]">
         <UnifiedHeader />
-        <main className="max-w-7xl mx-auto px-4 py-12">
+        <main className="section-ux-page-wide">
           <div className="h-12 w-64 rounded-xl bg-[var(--card)] skeleton mb-6" />
           <div className="h-8 w-full rounded bg-[var(--card)] skeleton" />
         </main>

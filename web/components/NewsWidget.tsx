@@ -29,7 +29,7 @@ export function NewsWidget() {
 
   return (
     <section className="py-12 md:py-16 bg-[var(--bg)]">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="section-ux-gutter">
         <div className="flex justify-between items-end mb-6">
           <div>
             <h2 className="text-base md:text-lg font-semibold text-[var(--text)]">Latest News</h2>

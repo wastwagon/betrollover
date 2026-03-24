@@ -111,7 +111,7 @@ export default function NotificationsPage() {
   if (loading) {
     return (
       <DashboardShell>
-        <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 md:py-6 pb-24">
+        <div className="section-ux-dashboard-shell">
           <LoadingSkeleton count={4} variant="list" />
         </div>
       </DashboardShell>
@@ -121,7 +121,7 @@ export default function NotificationsPage() {
   return (
     <DashboardShell>
       <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
-        <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 md:py-6 pb-24">
+        <div className="section-ux-dashboard-shell">
 
           {/* ─── Header row ──────────────────────────────── */}
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6">

@@ -64,7 +64,7 @@ export default function SubscriptionsPage() {
   if (loading) {
     return (
       <DashboardShell>
-        <div className="w-full px-4 sm:px-5 md:px-6 py-6 pb-24">
+        <div className="section-ux-dashboard-shell">
           <LoadingSkeleton count={4} variant="cards" />
         </div>
       </DashboardShell>
@@ -75,7 +75,7 @@ export default function SubscriptionsPage() {
 
   return (
     <DashboardShell>
-      <div className="w-full px-4 sm:px-5 md:px-6 py-6 pb-24">
+      <div className="section-ux-dashboard-shell">
         <PageHeader
           label="Subscriptions"
           title="My Subscriptions"

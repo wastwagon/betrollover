@@ -3,7 +3,7 @@ export default function LeaderboardLoading() {
     <div className="min-h-screen bg-[var(--bg)]">
       <div className="sticky top-0 z-50 h-16 bg-[var(--card)] border-b border-[var(--border)]" />
 
-      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-8 pb-24">
+      <div className="section-ux-page-mid pb-24">
         {/* Page header */}
         <div className="mb-6">
           <div className="h-3 w-24 rounded-full bg-[var(--border)] animate-pulse mb-2" />

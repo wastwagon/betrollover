@@ -55,7 +55,7 @@ export default async function ContactPage() {
       <UnifiedHeader />
 
       <main>
-        <article className="max-w-3xl mx-auto px-6 py-12">
+        <article className="section-ux-prose">
           <p className="text-xs font-bold uppercase tracking-widest text-[var(--primary)] mb-3">
             {t('contact.badge')}
           </p>

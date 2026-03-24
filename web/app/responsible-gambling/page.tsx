@@ -39,7 +39,7 @@ export default async function ResponsibleGamblingPage() {
       <UnifiedHeader />
 
       <main>
-        <article className="max-w-3xl mx-auto px-6 py-12">
+        <article className="section-ux-prose">
           <h1 className="text-xl md:text-2xl font-semibold text-[var(--text)] mb-6">
             {t('resp.headline')}
           </h1>

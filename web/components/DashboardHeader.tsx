@@ -40,7 +40,7 @@ export function DashboardHeader() {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-xl border-b border-[var(--border)] safe-area-inset-top">
-      <div className="max-w-7xl mx-auto px-4 sm:px-5 md:px-6 h-14 flex items-center justify-between">
+      <div className="section-ux-gutter-wide h-14 flex items-center justify-between">
         <Link
           href="/dashboard"
           className="flex items-center gap-2.5 font-semibold text-[var(--text)] hover:opacity-90 transition-opacity shrink-0"

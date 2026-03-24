@@ -190,7 +190,7 @@ export function HomeHero() {
         />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 lg:py-20">
+      <div className="relative max-w-7xl mx-auto section-ux-hero">
         <h1 className="sr-only">{t('home.hero_title')}</h1>
         {/* Compact KPI Dashboard - 6 cards: platform + leading ROI + paid out */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
@@ -200,7 +200,7 @@ export function HomeHero() {
               <div
                 key={item.key}
                 title={t(STAT_HINT_KEYS[item.key])}
-                className={`group relative overflow-hidden rounded-xl backdrop-blur-sm border ${cfg.bg} ${cfg.border} px-3 py-2.5 md:px-4 md:py-3 hover:opacity-90 transition-all duration-300 animate-fade-in-up`}
+                className={`group relative overflow-hidden rounded-xl backdrop-blur-sm border ${cfg.bg} ${cfg.border} px-3 py-2.5 md:px-4 md:py-3 hover:opacity-90 transition-all duration-200 ease-out animate-fade-in-up`}
                 style={{ animationDelay: `${300 + idx * 60}ms`, animationFillMode: 'both' as const }}
               >
                 <div className="flex items-center gap-2 min-w-0">

@@ -88,7 +88,7 @@ function ForgotPasswordForm() {
         <div className="min-h-screen bg-[var(--bg)] relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-mesh pointer-events-none" />
             <UnifiedHeader />
-            <main className="relative flex flex-col items-center justify-center px-6 py-20">
+            <main className="section-ux-auth-main">
                 <div className="w-full max-w-md">
                     <div className="bg-white rounded-2xl shadow-xl border border-[var(--border)] p-8 md:p-10">
                         <div className="text-center mb-8">

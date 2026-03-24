@@ -56,15 +56,15 @@ export function ContentPage({ slug, fallbackTitle }: { slug: string; fallbackTit
       <UnifiedHeader />
 
       <main>
-        <article className="max-w-3xl mx-auto px-6 py-12">
-        <h1 className="text-xl md:text-2xl font-semibold text-[var(--text)] mb-6">
-          {page.title || fallbackTitle}
-        </h1>
-        <div className="prose prose-slate max-w-none">
-          <div className="text-[var(--text)] whitespace-pre-wrap leading-relaxed">
-            {page.content}
+        <article className="section-ux-prose">
+          <h1 className="text-xl md:text-2xl font-semibold text-[var(--text)] mb-6">
+            {page.title || fallbackTitle}
+          </h1>
+          <div className="prose prose-slate max-w-none">
+            <div className="text-[var(--text)] whitespace-pre-wrap leading-relaxed">
+              {page.content}
+            </div>
           </div>
-        </div>
         </article>
 
         <div className="mt-16">

@@ -4,7 +4,7 @@ export default function MarketplaceLoading() {
       {/* Header skeleton */}
       <div className="sticky top-0 z-50 h-16 bg-[var(--card)] border-b border-[var(--border)]" />
 
-      <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 md:py-6 pb-24">
+      <div className="section-ux-dashboard-shell">
         {/* Page header */}
         <div className="mb-6">
           <div className="h-3 w-24 rounded-full bg-[var(--border)] animate-pulse mb-2" />

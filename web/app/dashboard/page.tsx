@@ -279,7 +279,7 @@ function DashboardContent() {
     return (
       <div className="flex min-h-screen bg-[var(--bg)]">
         <AdminSidebar />
-        <main className="admin-main-sibling flex-1 w-full min-w-0 overflow-x-hidden overflow-y-auto md:ml-56">
+        <main className="admin-main-sibling section-ux-admin-shell">
           <div className="px-4 pb-8 pt-4 md:p-6 max-w-[1600px] mx-auto w-full">
             <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)] mb-4 sm:mb-6 break-words">
               Welcome, {user?.displayName || 'Administrator'}!
@@ -486,7 +486,7 @@ function DashboardContent() {
     <DashboardShell>
       {/* Premium dashboard: mobile-first background and layout */}
       <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] relative">
-        <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 sm:py-6 md:py-8 pb-24">
+        <div className="section-ux-dashboard-shell-spacious">
           <PageHeader
             label={t('dashboard.tipster_label')}
             title={`${t('dashboard.welcome')}, ${user?.displayName || 'User'}`}

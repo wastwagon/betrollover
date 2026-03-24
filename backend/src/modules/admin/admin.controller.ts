@@ -100,15 +100,19 @@ export class AdminController {
     @CurrentUser() user: User,
     @Query('status') status?: string,
     @Query('tipsterUserId') tipsterUserIdRaw?: string,
+    @Query('tipsterKind') tipsterKind?: string,
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     const tipsterUserId =
       tipsterUserIdRaw != null && tipsterUserIdRaw !== ''
         ? parseInt(tipsterUserIdRaw, 10)
         : undefined;
+    const kind =
+      tipsterKind === 'human' || tipsterKind === 'ai' ? (tipsterKind as 'human' | 'ai') : 'all';
     return this.subscriptionsService.listAdminSubscriptions({
       status: status || undefined,
       tipsterUserId: tipsterUserId != null && !Number.isNaN(tipsterUserId) ? tipsterUserId : undefined,
+      tipsterKind: kind,
     });
   }
 

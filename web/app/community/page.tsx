@@ -256,7 +256,7 @@ function CommunityPageInner() {
     <div className="min-h-screen flex flex-col bg-gray-950 text-white">
       <UnifiedHeader />
 
-      <div className="relative flex-1 flex max-w-7xl mx-auto w-full px-4 py-6 gap-4" style={{ height: 'calc(100vh - 140px)' }}>
+      <div className="section-ux-community-shell" style={{ height: 'calc(100vh - 140px)' }}>
         {/* Active users bar - top center */}
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-800/95 border border-gray-700 text-sm text-gray-300 shadow-lg">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" aria-hidden />

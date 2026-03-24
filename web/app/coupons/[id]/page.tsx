@@ -111,7 +111,7 @@ function CouponDetailSkeleton() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <UnifiedHeader />
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+      <main className="section-ux-page-mid">
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1 space-y-4">
             <div className="h-5 w-24 rounded skeleton bg-[var(--card)]" />
@@ -192,7 +192,7 @@ function ReviewsSection({ couponId, isPurchased, isSettled }: { couponId: number
   };
 
   return (
-    <section className="max-w-4xl mx-auto px-4 pb-10 mt-8">
+    <section className="section-ux-gutter-4xl pb-10 mt-8">
       <div className="flex items-center gap-3 mb-4">
         <h2 className="text-base font-semibold text-[var(--text)]">Buyer Reviews</h2>
         {data && data.total > 0 && (
@@ -395,7 +395,7 @@ export default function CouponDetailPage() {
     return (
       <div className="min-h-screen bg-[var(--bg)]">
         <UnifiedHeader />
-        <main className="max-w-3xl mx-auto px-4 py-20 text-center">
+        <main className="section-ux-empty">
           <p className="text-5xl mb-4">🎫</p>
           <h1 className="text-lg font-semibold text-[var(--text)] mb-3">Coupon not found</h1>
           <p className="text-[var(--text-muted)] mb-6">This coupon may have been removed or the link is invalid.</p>
@@ -419,7 +419,7 @@ export default function CouponDetailPage() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <UnifiedHeader />
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-10">
+      <main className="section-ux-page-mid">
 
         {/* Breadcrumb — premium (only place coupon title is shown) */}
         <nav

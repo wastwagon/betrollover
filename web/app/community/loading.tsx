@@ -2,7 +2,7 @@ export default function CommunityLoading() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-950 text-white">
       <div className="h-16 bg-white/5 border-b border-white/10 animate-pulse" />
-      <div className="flex-1 flex max-w-7xl mx-auto w-full px-4 py-6 gap-4">
+      <div className="section-ux-community-shell flex-1">
         {/* Sidebar skeleton */}
         <aside className="w-64 shrink-0 hidden md:flex flex-col gap-2">
           <div className="h-4 w-16 bg-gray-800 rounded animate-pulse mb-2" />

@@ -105,7 +105,7 @@ function NewsContent() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <UnifiedHeader />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <main className="section-ux-page-wide">
 
         <PageHeader
           label={t('news.page_label')}
@@ -269,7 +269,7 @@ export default function NewsPage() {
     <Suspense fallback={
       <div className="min-h-screen bg-[var(--bg)]">
         <UnifiedHeader />
-        <main className="max-w-7xl mx-auto px-4 py-12">
+        <main className="section-ux-page-wide">
           <div className="h-10 w-48 rounded-xl bg-[var(--card)] skeleton mb-4" />
           <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-36 rounded-2xl bg-[var(--card)] skeleton" />)}</div>
         </main>

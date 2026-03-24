@@ -132,7 +132,7 @@ export function AppHeader({ slipCount }: AppHeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-xl border-b border-[var(--border)] shadow-sm">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+      <div className="section-ux-gutter-wide">
         <div className="flex items-center justify-between h-14">
           {/* Logo - links to main site home */}
           <Link

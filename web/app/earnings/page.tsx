@@ -224,7 +224,7 @@ export default function EarningsPage() {
     return (
       <div className="min-h-screen bg-[var(--bg)]">
         <UnifiedHeader />
-        <main className="max-w-5xl mx-auto px-4 py-10 space-y-6">
+        <main className="section-ux-page-mid space-y-6">
           {[1,2,3].map(i => <div key={i} className="h-32 rounded-2xl skeleton bg-[var(--card)]" />)}
         </main>
       </div>
@@ -234,7 +234,7 @@ export default function EarningsPage() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <UnifiedHeader />
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-12">
+      <main className="section-ux-page-mid">
 
         {/* Header */}
         <div className="mb-8">

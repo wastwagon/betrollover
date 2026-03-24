@@ -117,7 +117,7 @@ export default function ResourcesPage() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <UnifiedHeader />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <main className="section-ux-page-wide">
 
         <PageHeader
           label={t('nav.guides')}

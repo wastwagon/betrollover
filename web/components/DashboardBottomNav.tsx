@@ -101,7 +101,7 @@ export function DashboardBottomNav() {
         className="fixed bottom-0 left-0 right-0 z-50 md:static md:shrink-0 border-t md:border-t-0 md:border-b border-[var(--border)] bg-white/95 backdrop-blur-xl shadow-[0_-4px_12px_-4px_rgba(0,0,0,0.08)] md:shadow-none"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0px)' }}
       >
-        <div className="max-w-7xl mx-auto flex items-center justify-around md:justify-center md:gap-2 h-16 md:h-12">
+        <div className="section-ux-gutter-wide flex items-center justify-around md:justify-center md:gap-2 h-16 md:h-12">
           {navItems.map((item) => {
             const isActive =
               item.href === pathname ||
