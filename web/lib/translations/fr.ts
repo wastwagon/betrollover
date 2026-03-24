@@ -552,7 +552,7 @@ const fr: Record<string, string> = {
   'subscriptions.roi_commitment_committed': 'Engagé',
   'subscriptions.roi_commitment_not_committed': 'Non engagé',
   'subscriptions.roi_target_delivery': 'Objectif de ROI livré : {n}',
-  'subscriptions.roi_target_unpublished': 'Aucun engagement de ROI n'a encore été publié pour ce forfait.',
+  'subscriptions.roi_target_unpublished': 'Aucun engagement de ROI n\'a encore été publié pour ce forfait.',
   'subscriptions.subscribe_cta': 'S’abonner',
   'subscriptions.marketplace_footnote':
     'Seuls les tipsters avec au moins 20 % de ROI peuvent créer un forfait VIP. Les stats reflètent les coupons réglés.',
