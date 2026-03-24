@@ -45,6 +45,23 @@ async function bootstrap() {
     process.exit(1);
   }
 
+  const appUrlRaw = process.env.APP_URL?.trim();
+  if (isProduction && appUrlRaw) {
+    try {
+      const u = new URL(appUrlRaw);
+      if (u.hostname.startsWith('api.')) {
+        logger.error(
+          '❌ APP_URL must be the frontend origin (e.g. https://betrollover.com), not the API host. ' +
+            'If APP_URL is set to api.*, browsers sending Origin: https://betrollover.com will get CORS failures.',
+        );
+        process.exit(1);
+      }
+    } catch {
+      logger.error('❌ APP_URL is not a valid URL. Use e.g. https://betrollover.com');
+      process.exit(1);
+    }
+  }
+
   if (!jwtSecret) {
     logger.warn('⚠️  WARNING: JWT_SECRET not set, using default secret (NOT SECURE FOR PRODUCTION)');
   }
@@ -74,6 +91,8 @@ async function bootstrap() {
       contentSecurityPolicy: false, // Disable CSP to avoid breaking inline scripts; add later if needed
       crossOriginEmbedderPolicy: false, // Allow external embeds (e.g. Paystack)
       crossOriginOpenerPolicy: false, // Allow Google Sign-In / OAuth popups (postMessage)
+      // Default CORP can interfere with cross-origin fetches; CORS already governs API access.
+      crossOriginResourcePolicy: false,
     }),
   );
 
@@ -121,7 +140,7 @@ async function bootstrap() {
   if (isProduction) {
     // Production: Only allow specific domains. APP_URL = frontend origin (e.g. https://betrollover.com)
     // so that api.betrollover.com can accept requests from betrollover.com.
-    const appUrl = process.env.APP_URL;
+    const appUrl = process.env.APP_URL?.trim();
     if (appUrl) {
       const cleanUrl = appUrl.replace(/\/$/, '');
       allowedOrigins.push(cleanUrl);
@@ -136,7 +155,7 @@ async function bootstrap() {
     }
 
     // Add any additional production domains from env
-    const additionalOrigins = process.env.CORS_ORIGINS?.split(',').map(o => o.trim()).filter(Boolean);
+    const additionalOrigins = process.env.CORS_ORIGINS?.split(',').map((o) => o.trim()).filter(Boolean);
     if (additionalOrigins) {
       additionalOrigins.forEach(origin => {
         const clean = origin.replace(/\/$/, '');
@@ -152,8 +171,10 @@ async function bootstrap() {
     }
 
     if (allowedOrigins.length === 0) {
-      logger.warn('⚠️  No CORS origins configured for production. Set APP_URL or CORS_ORIGINS.');
-      logger.warn('   Example: APP_URL=https://betrollover.com (so the frontend can call the API).');
+      logger.error(
+        '❌ No CORS origins in production. Set APP_URL to your frontend origin (e.g. https://betrollover.com).',
+      );
+      process.exit(1);
     }
   } else {
     // Development: Allow localhost with specific ports
@@ -165,8 +186,16 @@ async function bootstrap() {
       'http://localhost:3001',
       /^https?:\/\/localhost:(6000|6001|6002|3000|3001|5173|8080)$/,
     );
-    if (process.env.APP_URL) {
-      allowedOrigins.push(process.env.APP_URL.replace(/\/$/, ''));
+    const devAppUrl = process.env.APP_URL?.trim();
+    if (devAppUrl) {
+      const clean = devAppUrl.replace(/\/$/, '');
+      allowedOrigins.push(clean);
+      if (clean.includes('//www.')) {
+        allowedOrigins.push(clean.replace('//www.', '//'));
+      } else if (clean.includes('://')) {
+        const parts = clean.split('://');
+        allowedOrigins.push(`${parts[0]}://www.${parts[1]}`);
+      }
     }
   }
 
@@ -183,8 +212,12 @@ async function bootstrap() {
       'X-Session-Id',
       'X-Tipster-Id',
       'X-Requested-With',
-      'Accept'
+      'Accept',
+      'Accept-Language',
+      'sentry-trace',
+      'baggage',
     ],
+    maxAge: 86400,
   });
 
   logger.log(`CORS whitelisted origins: ${uniqueOrigins.join(', ')}`);

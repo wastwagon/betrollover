@@ -131,8 +131,9 @@ export default function AdminSubscriptionsPage() {
   const [tipsterUserId, setTipsterUserId] = useState<string>('');
   const [tipsterKind, setTipsterKind] = useState<string>('all');
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deletingPackageId, setDeletingPackageId] = useState<number | null>(null);
 
-  useEffect(() => {
+  const loadCatalog = useCallback(() => {
     const apiUrl = getApiUrl();
     setCatalogLoading(true);
     fetch(`${apiUrl}/subscriptions/marketplace?limit=100`)
@@ -141,6 +142,10 @@ export default function AdminSubscriptionsPage() {
       .catch(() => setCatalogItems([]))
       .finally(() => setCatalogLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadCatalog();
+  }, [loadCatalog]);
 
   const loadTipsters = useCallback(() => {
     const token = localStorage.getItem('token');
@@ -212,6 +217,40 @@ export default function AdminSubscriptionsPage() {
     }
   };
 
+  const handleDeleteCatalogPackage = async (row: CatalogItem) => {
+    const pkg = row.package;
+    const tip = row.tipster;
+    const kind = tip?.isAi ? 'AI' : 'Human';
+    const tipLabel = tip?.displayName ?? 'Tipster';
+    if (
+      !confirm(
+        `Remove this package from the VIP marketplace?\n\n• Package: ${pkg.name}\n• Tipster (${kind}): ${tipLabel}\n\nIt will be unpublished (no new subscribers). Existing subscribers keep access until their period ends. You can republish from the tipster dashboard or Admin → AI tipster packages.`,
+      )
+    ) {
+      return;
+    }
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setDeletingPackageId(pkg.id);
+    try {
+      const res = await fetch(`${getApiUrl()}/admin/subscriptions/packages/${pkg.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        alert((data as { message?: string }).message || 'Package removed from marketplace.');
+        loadCatalog();
+      } else {
+        alert((data as { message?: string }).message || 'Remove failed');
+      }
+    } catch {
+      alert('Remove failed');
+    } finally {
+      setDeletingPackageId(null);
+    }
+  };
+
   const renderCatalogCard = (row: CatalogItem) => {
     const pkg = row.package;
     const tip = row.tipster;
@@ -224,12 +263,19 @@ export default function AdminSubscriptionsPage() {
     const isAi = !!tip?.isAi;
 
     return (
-      <article
-        key={pkg.id}
-        className="card-gradient rounded-2xl border border-[var(--border)] shadow-lg overflow-hidden flex flex-col"
-      >
-        <div className="p-4 sm:p-5 flex flex-col flex-1">
-          <div className="flex items-start gap-3 mb-3">
+      <div key={pkg.id} className="relative">
+        <article className="card-gradient rounded-2xl border border-[var(--border)] shadow-lg overflow-hidden flex flex-col hover:shadow-xl hover:-translate-y-px transition-[box-shadow,transform] duration-200 ease-out">
+          <button
+            type="button"
+            onClick={() => handleDeleteCatalogPackage(row)}
+            disabled={deletingPackageId === pkg.id}
+            className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium disabled:opacity-50 z-10 shadow"
+            title="Remove package from VIP marketplace"
+          >
+            {deletingPackageId === pkg.id ? 'Removing…' : 'Delete'}
+          </button>
+          <div className="p-4 sm:p-5 flex flex-col flex-1">
+          <div className="flex items-start gap-3 mb-3 pr-14">
             <div className="flex-shrink-0">
               <div className="w-14 h-14 rounded-full overflow-hidden bg-[var(--bg)] border border-[var(--border)]">
                 {tip?.avatarUrl ? (
@@ -321,7 +367,8 @@ export default function AdminSubscriptionsPage() {
             </p>
           </div>
         </div>
-      </article>
+        </article>
+      </div>
     );
   };
 
@@ -474,8 +521,10 @@ export default function AdminSubscriptionsPage() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Subscription manager</h1>
           <p className="text-gray-600 dark:text-gray-400 mb-3">
             <strong className="text-gray-800 dark:text-gray-200">Marketplace catalog</strong> mirrors the public VIP shop
-            (human + AI tipsters). <strong className="text-gray-800 dark:text-gray-200">VIP subscribers</strong> lists real
-            checkouts — remove a row to revoke access (refunds held escrow like coupons).
+            (human + AI tipsters). Use <strong className="text-gray-800 dark:text-gray-200">Delete</strong> on a card to
+            unpublish that package from the shop (existing subscribers keep access until their period ends).{' '}
+            <strong className="text-gray-800 dark:text-gray-200">VIP subscribers</strong> lists real checkouts — remove a
+            row to revoke access (refunds held escrow like coupons).
           </p>
           <div className="flex flex-wrap gap-2 mb-4">
             <Link

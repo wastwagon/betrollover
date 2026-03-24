@@ -116,6 +116,16 @@ export class AdminController {
     });
   }
 
+  /** Remove a package from the public VIP catalog (sets status inactive). Must be registered before DELETE subscriptions/:id. */
+  @Delete('subscriptions/packages/:packageId')
+  async adminDeactivateSubscriptionPackage(
+    @CurrentUser() user: User,
+    @Param('packageId', ParseIntPipe) packageId: number,
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.subscriptionsService.adminDeactivateSubscriptionPackage(packageId);
+  }
+
   @Delete('subscriptions/:id')
   async adminDeleteSubscription(@CurrentUser() user: User, @Param('id', ParseIntPipe) id: number) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');

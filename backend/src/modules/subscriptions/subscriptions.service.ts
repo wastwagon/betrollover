@@ -290,6 +290,16 @@ export class SubscriptionsService {
     }));
   }
 
+  /** Unpublish a VIP package (human or AI). Does not cancel existing subscriber periods. */
+  async adminDeactivateSubscriptionPackage(packageId: number): Promise<{ ok: boolean; message: string }> {
+    await this.updatePackageByAdmin(packageId, { status: 'inactive' });
+    return {
+      ok: true,
+      message:
+        'Package removed from the VIP marketplace. Existing subscribers keep access until their period ends. You can turn it back on from the tipster dashboard or Admin → AI tipster packages.',
+    };
+  }
+
   async updatePackageByAdmin(packageId: number, dto: UpdatePackageDto) {
     const pkg = await this.getPackage(packageId);
     if (dto.name !== undefined) pkg.name = dto.name.trim();
