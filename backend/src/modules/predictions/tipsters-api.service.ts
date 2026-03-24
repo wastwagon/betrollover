@@ -204,6 +204,14 @@ export class TipstersApiService {
     return statsMap;
   }
 
+  /**
+   * Stats from accumulator_tickets — same basis as GET /tipsters/:username and listings.
+   * Use for VIP marketplace and any surface that must match the public profile.
+   */
+  async getPublicTicketStatsForUsers(userIds: number[]) {
+    return this.computeStatsFromTickets(userIds);
+  }
+
   /** Settled marketplace coupons in the current calendar week/month (same ROI basis as computeStatsFromTickets). */
   private async computeStatsFromTicketsInPeriod(
     userIds: number[],

@@ -17,6 +17,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { User } from '../users/entities/user.entity';
 import { TipsterService } from '../tipster/tipster.service';
+import { TipstersApiService } from '../predictions/tipsters-api.service';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 
 const DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_MIN = 20;
@@ -58,6 +59,7 @@ export class SubscriptionsService {
     @InjectRepository(User)
     private readonly usersRepo: Repository<User>,
     private readonly tipsterService: TipsterService,
+    private readonly tipstersApi: TipstersApiService,
     private readonly walletService: WalletService,
     private readonly notificationsService: NotificationsService,
     @InjectRepository(ApiSettings)
@@ -97,9 +99,12 @@ export class SubscriptionsService {
   }
 
   async createPackage(tipsterUserId: number, dto: CreatePackageDto) {
-    const user = await this.usersRepo.findOne({ where: { id: tipsterUserId }, select: ['id', 'role'] });
+    const user = await this.usersRepo.findOne({ where: { id: tipsterUserId }, select: ['id'] });
     if (!user) throw new NotFoundException('User not found');
-    const stats = await this.tipsterService.getStats(tipsterUserId, user.role);
+    const ticketMap = await this.tipstersApi.getPublicTicketStatsForUsers([tipsterUserId]);
+    const ts = ticketMap.get(tipsterUserId);
+    const roi = ts?.roi ?? 0;
+    const winRate = ts?.winRate ?? 0;
     let minimumROI = 20.0;
     let minimumWinRate = 45.0;
     try {
@@ -109,15 +114,15 @@ export class SubscriptionsService {
     } catch {
       /* use defaults */
     }
-    const roiOk = stats.roi >= minimumROI;
-    const wrOk = stats.winRate >= minimumWinRate;
+    const roiOk = roi >= minimumROI;
+    const wrOk = winRate >= minimumWinRate;
     if (!roiOk || !wrOk) {
       const parts: string[] = [];
       if (!roiOk) {
-        parts.push(`ROI ${stats.roi.toFixed(2)}% (minimum ${minimumROI}%)`);
+        parts.push(`ROI ${roi.toFixed(2)}% (minimum ${minimumROI}%)`);
       }
       if (!wrOk) {
-        parts.push(`win rate ${stats.winRate}% (minimum ${minimumWinRate}%)`);
+        parts.push(`win rate ${winRate.toFixed(1)}% (minimum ${minimumWinRate}%)`);
       }
       throw new BadRequestException(
         `VIP packages require the same performance minimums as paid marketplace coupons. Current: ${parts.join('; ')}. Improve with free picks until both metrics qualify.`,
@@ -176,45 +181,38 @@ export class SubscriptionsService {
     const tipsterUserIds = [...new Set(pkgs.map((p) => p.tipsterUserId))];
     const tipsters = await this.tipsterRepo.find({
       where: { userId: In(tipsterUserIds) },
-      select: [
-        'id',
-        'userId',
-        'username',
-        'displayName',
-        'avatarUrl',
-        'bio',
-        'isAi',
-        'roi',
-        'winRate',
-        'totalPredictions',
-        'totalWins',
-        'totalLosses',
-        'currentStreak',
-        'bestStreak',
-      ],
+      select: ['id', 'userId', 'username', 'displayName', 'avatarUrl', 'bio', 'isAi'],
     });
     const userIdToTipster = new Map<number, Tipster>();
     for (const t of tipsters) {
       if (t.userId != null) userIdToTipster.set(t.userId, t);
     }
-    const userRows =
-      tipsterUserIds.length > 0
-        ? await this.usersRepo.find({
-            where: { id: In(tipsterUserIds) },
-            select: ['id', 'role'],
-          })
-        : [];
-    const roleByUserId = new Map(userRows.map((u) => [u.id, u.role]));
-    const statsByUserId = new Map<number, Awaited<ReturnType<TipsterService['getStats']>>>();
-    await Promise.all(
-      tipsterUserIds.map(async (uid) => {
-        const role = roleByUserId.get(uid) ?? 'user';
-        statsByUserId.set(uid, await this.tipsterService.getStats(uid, role));
-      }),
+    const ticketStatsMap = await this.tipstersApi.getPublicTicketStatsForUsers(tipsterUserIds);
+    const earningsEntries = await Promise.all(
+      tipsterUserIds.map(async (uid) => [uid, await this.tipsterService.getTotalPayoutEarnings(uid)] as const),
     );
+    const earningsByUserId = new Map<number, number>(earningsEntries);
     const items = pkgs.map((pkg) => {
       const t = userIdToTipster.get(pkg.tipsterUserId);
-      const perf = statsByUserId.get(pkg.tipsterUserId);
+      const ts = ticketStatsMap.get(pkg.tipsterUserId);
+      const earnings = earningsByUserId.get(pkg.tipsterUserId) ?? 0;
+      const performance = ts
+        ? {
+            roi: ts.roi,
+            winRate: ts.winRate,
+            totalPicks: ts.total,
+            wonPicks: ts.won,
+            lostPicks: ts.lost,
+            totalEarnings: earnings,
+          }
+        : {
+            roi: 0,
+            winRate: 0,
+            totalPicks: 0,
+            wonPicks: 0,
+            lostPicks: 0,
+            totalEarnings: earnings,
+          };
       return {
         package: {
           id: pkg.id,
@@ -232,23 +230,14 @@ export class SubscriptionsService {
               avatarUrl: t.avatarUrl,
               bio: t.bio,
               isAi: !!t.isAi,
-              profileRoi: t.roi != null ? Number(t.roi) : null,
-              profileWinRate: t.winRate != null ? Number(t.winRate) : null,
-              totalPredictions: t.totalPredictions,
-              currentStreak: t.currentStreak ?? 0,
-              bestStreak: t.bestStreak ?? 0,
+              profileRoi: ts != null ? Number(ts.roi) : null,
+              profileWinRate: ts != null ? Number(ts.winRate) : null,
+              totalPredictions: ts?.total ?? 0,
+              currentStreak: ts?.currentStreak ?? 0,
+              bestStreak: ts?.bestStreak ?? 0,
             }
           : null,
-        performance: perf
-          ? {
-              roi: perf.roi,
-              winRate: perf.winRate,
-              totalPicks: perf.totalPicks,
-              wonPicks: perf.wonPicks,
-              lostPicks: perf.lostPicks,
-              totalEarnings: perf.totalEarnings,
-            }
-          : null,
+        performance,
       };
     });
     return { items, total, hasMore: offset + items.length < total };
@@ -551,21 +540,11 @@ export class SubscriptionsService {
           })
         : [];
     const tipMap = new Map(tipsters.filter((t) => t.userId != null).map((t) => [t.userId as number, t]));
-    const userRows =
-      tipsterUserIds.length > 0
-        ? await this.usersRepo.find({
-            where: { id: In(tipsterUserIds) },
-            select: ['id', 'role'],
-          })
-        : [];
-    const roleByUserId = new Map(userRows.map((u) => [u.id, u.role]));
-    const statsByUserId = new Map<number, Awaited<ReturnType<TipsterService['getStats']>>>();
-    await Promise.all(
-      tipsterUserIds.map(async (uid) => {
-        const role = roleByUserId.get(uid) ?? 'user';
-        statsByUserId.set(uid, await this.tipsterService.getStats(uid, role));
-      }),
+    const ticketStatsMap = await this.tipstersApi.getPublicTicketStatsForUsers(tipsterUserIds);
+    const earningsEntries = await Promise.all(
+      tipsterUserIds.map(async (uid) => [uid, await this.tipsterService.getTotalPayoutEarnings(uid)] as const),
     );
+    const earningsByUserId = new Map<number, number>(earningsEntries);
     const subIds = rows.map((r) => r.id);
     const escrows =
       subIds.length > 0
@@ -577,7 +556,25 @@ export class SubscriptionsService {
       const tipsterUserId = pkg.tipsterUserId;
       const t = tipMap.get(tipsterUserId);
       const esc = escMap.get(s.id);
-      const perf = statsByUserId.get(tipsterUserId);
+      const ts = ticketStatsMap.get(tipsterUserId);
+      const earnings = earningsByUserId.get(tipsterUserId) ?? 0;
+      const performance = ts
+        ? {
+            roi: ts.roi,
+            winRate: ts.winRate,
+            totalPicks: ts.total,
+            wonPicks: ts.won,
+            lostPicks: ts.lost,
+            totalEarnings: earnings,
+          }
+        : {
+            roi: 0,
+            winRate: 0,
+            totalPicks: 0,
+            wonPicks: 0,
+            lostPicks: 0,
+            totalEarnings: earnings,
+          };
       return {
         id: s.id,
         status: s.status,
@@ -608,16 +605,7 @@ export class SubscriptionsService {
               isAi: !!t.isAi,
             }
           : null,
-        performance: perf
-          ? {
-              roi: perf.roi,
-              winRate: perf.winRate,
-              totalPicks: perf.totalPicks,
-              wonPicks: perf.wonPicks,
-              lostPicks: perf.lostPicks,
-              totalEarnings: perf.totalEarnings,
-            }
-          : null,
+        performance,
       };
     });
     const kind = filters.tipsterKind ?? 'all';

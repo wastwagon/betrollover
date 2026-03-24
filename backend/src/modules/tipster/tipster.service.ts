@@ -16,6 +16,18 @@ export class TipsterService {
     private apiSettingsRepo: Repository<ApiSettings>,
   ) {}
 
+  /** Sum of positive payout wallet transactions for a tipster (marketplace / subscription earnings display). */
+  async getTotalPayoutEarnings(userId: number): Promise<number> {
+    const payouts = await this.txRepo
+      .createQueryBuilder('t')
+      .select('SUM(t.amount)', 'total')
+      .where('t.user_id = :userId', { userId })
+      .andWhere('t.type = :type', { type: 'payout' })
+      .andWhere('t.amount > 0')
+      .getRawOne();
+    return Math.round(Number(payouts?.total ?? 0) * 100) / 100;
+  }
+
   async getStats(userId: number, role: string) {
     // All users are now tipsters - no role check needed
     const tickets = await this.ticketRepo.find({
@@ -51,22 +63,14 @@ export class TipsterService {
       ? Math.round(((totalReturns - totalInvestment) / totalInvestment) * 100 * 100) / 100
       : 0;
 
-    const payouts = await this.txRepo
-      .createQueryBuilder('t')
-      .select('SUM(t.amount)', 'total')
-      .where('t.user_id = :userId', { userId })
-      .andWhere('t.type = :type', { type: 'payout' })
-      .andWhere('t.amount > 0')
-      .getRawOne();
-
-    const totalEarnings = Number(payouts?.total ?? 0);
+    const totalEarnings = await this.getTotalPayoutEarnings(userId);
 
     return {
       totalPicks,
       wonPicks,
       lostPicks,
       winRate,
-      totalEarnings: Math.round(totalEarnings * 100) / 100,
+      totalEarnings,
       roi,
     };
   }

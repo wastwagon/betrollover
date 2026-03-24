@@ -13,6 +13,7 @@ import { UsersModule } from '../users/users.module';
 import { WalletModule } from '../wallet/wallet.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { TipsterModule } from '../tipster/tipster.module';
+import { PredictionsModule } from '../predictions/predictions.module';
 import { User } from '../users/entities/user.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 
@@ -20,6 +21,7 @@ import { ApiSettings } from '../admin/entities/api-settings.entity';
   imports: [
     UsersModule,
     TipsterModule,
+    PredictionsModule,
     TypeOrmModule.forFeature([
       TipsterSubscriptionPackage,
       Subscription,
