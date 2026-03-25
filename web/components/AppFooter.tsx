@@ -14,7 +14,7 @@ export function AppFooter() {
       <div className="section-ux-gutter-wide py-12">
         <AdSlot zoneSlug="footer" fullWidth className="flex justify-center mb-8 w-full max-w-4xl mx-auto" />
 
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8 border-b border-[var(--border)] pb-8">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8 border-b border-[var(--border)] pb-8">
           <div>
             <h3 className="font-semibold mb-3 text-[var(--text)]">{t('footer.company')}</h3>
             <ul className="space-y-2 text-sm text-[var(--text-muted)]">
@@ -65,12 +65,12 @@ export function AppFooter() {
               </li>
             </ul>
           </div>
-          <div className="col-span-2 md:col-span-1">
+          <div>
             <h3 className="font-semibold mb-3 text-[var(--text)]">{t('footer.discover')}</h3>
             <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2 mt-1">
               {t('header.section_explore')}
             </p>
-            <ul className="space-y-2 text-sm text-[var(--text-muted)] mb-5">
+            <ul className="space-y-2 text-sm text-[var(--text-muted)]">
               <li>
                 <Link href="/discover" className={footerLinkClass}>
                   {t('nav.discover')}
@@ -107,9 +107,9 @@ export function AppFooter() {
                 </Link>
               </li>
             </ul>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
-              {t('header.section_platform_info')}
-            </p>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-3 text-[var(--text)]">{t('header.section_platform_info')}</h3>
             <ul className="space-y-2 text-sm text-[var(--text-muted)] mb-5">
               <li>
                 <Link href="/how-it-works" className={footerLinkClass}>
