@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "npm run build --prefix ../packages/shared-types && next build",
+    "build:docker": "npm run build --prefix ../packages/shared-types && next build --no-lint",
     "start": "next start",
     "lint": "next lint",
     "test:e2e": "playwright test",

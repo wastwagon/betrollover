@@ -101,6 +101,8 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+        # Optional: raise if web build OOMs on a large builder (e.g. 2048). Lower only if host is tight.
+        BUILD_NODE_MAX_OLD_SPACE_SIZE: ${BUILD_NODE_MAX_OLD_SPACE_SIZE:-1536}
     container_name: betrollover-web
     restart: unless-stopped
     environment:

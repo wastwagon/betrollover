@@ -134,50 +134,26 @@ async function bootstrap() {
     }),
   );
 
-  // CORS configuration - environment-specific
+  // CORS: APP_URL + CORS_ORIGINS (comma-separated) in every environment; www/non-www variants included.
+  // Production must have at least one origin string after merge (validateConfig already requires APP_URL).
   const allowedOrigins: (string | RegExp)[] = [];
 
+  const addOriginWithWwwVariants = (raw: string) => {
+    const clean = raw.replace(/\/$/, '');
+    if (!clean) return;
+    allowedOrigins.push(clean);
+    if (clean.includes('//www.')) {
+      allowedOrigins.push(clean.replace('//www.', '//'));
+    } else if (clean.includes('://')) {
+      const parts = clean.split('://');
+      allowedOrigins.push(`${parts[0]}://www.${parts[1]}`);
+    }
+  };
+
   if (isProduction) {
-    // Production: Only allow specific domains. APP_URL = frontend origin (e.g. https://betrollover.com)
-    // so that api.betrollover.com can accept requests from betrollover.com.
     const appUrl = process.env.APP_URL?.trim();
-    if (appUrl) {
-      const cleanUrl = appUrl.replace(/\/$/, '');
-      allowedOrigins.push(cleanUrl);
-
-      // Automatically add www if missing (or vice-versa)
-      if (cleanUrl.includes('//www.')) {
-        allowedOrigins.push(cleanUrl.replace('//www.', '//'));
-      } else if (cleanUrl.includes('://')) {
-        const parts = cleanUrl.split('://');
-        allowedOrigins.push(`${parts[0]}://www.${parts[1]}`);
-      }
-    }
-
-    // Add any additional production domains from env
-    const additionalOrigins = process.env.CORS_ORIGINS?.split(',').map((o) => o.trim()).filter(Boolean);
-    if (additionalOrigins) {
-      additionalOrigins.forEach(origin => {
-        const clean = origin.replace(/\/$/, '');
-        allowedOrigins.push(clean);
-        // Add www/non-www for these too
-        if (clean.includes('//www.')) {
-          allowedOrigins.push(clean.replace('//www.', '//'));
-        } else if (clean.includes('://')) {
-          const parts = clean.split('://');
-          allowedOrigins.push(`${parts[0]}://www.${parts[1]}`);
-        }
-      });
-    }
-
-    if (allowedOrigins.length === 0) {
-      logger.error(
-        '❌ No CORS origins in production. Set APP_URL to your frontend origin (e.g. https://betrollover.com).',
-      );
-      process.exit(1);
-    }
+    if (appUrl) addOriginWithWwwVariants(appUrl);
   } else {
-    // Development: Allow localhost with specific ports
     allowedOrigins.push(
       'http://localhost:6000',
       'http://localhost:6001',
@@ -187,20 +163,21 @@ async function bootstrap() {
       /^https?:\/\/localhost:(6000|6001|6002|3000|3001|5173|8080)$/,
     );
     const devAppUrl = process.env.APP_URL?.trim();
-    if (devAppUrl) {
-      const clean = devAppUrl.replace(/\/$/, '');
-      allowedOrigins.push(clean);
-      if (clean.includes('//www.')) {
-        allowedOrigins.push(clean.replace('//www.', '//'));
-      } else if (clean.includes('://')) {
-        const parts = clean.split('://');
-        allowedOrigins.push(`${parts[0]}://www.${parts[1]}`);
-      }
-    }
+    if (devAppUrl) addOriginWithWwwVariants(devAppUrl);
   }
 
-  // Deduplicate origins
-  const uniqueOrigins = [...new Set(allowedOrigins.map(o => (typeof o === 'string' ? o : o.toString())))];
+  const extraOrigins = process.env.CORS_ORIGINS?.split(',').map((o) => o.trim()).filter(Boolean) ?? [];
+  extraOrigins.forEach((o) => addOriginWithWwwVariants(o));
+
+  const stringOriginCount = allowedOrigins.filter((o) => typeof o === 'string').length;
+  if (isProduction && stringOriginCount === 0) {
+    logger.error(
+      '❌ No CORS origins in production. Set APP_URL to your frontend origin (e.g. https://betrollover.com) and/or CORS_ORIGINS.',
+    );
+    process.exit(1);
+  }
+
+  const uniqueStringOrigins = [...new Set(allowedOrigins.filter((o): o is string => typeof o === 'string'))];
 
   app.enableCors({
     origin: allowedOrigins.length > 0 ? allowedOrigins : false,
@@ -220,7 +197,10 @@ async function bootstrap() {
     maxAge: 86400,
   });
 
-  logger.log(`CORS whitelisted origins: ${uniqueOrigins.join(', ')}`);
+  logger.log(
+    `CORS whitelisted origins: ${uniqueStringOrigins.join(', ')}` +
+      (!isProduction ? ' (+ localhost port regex)' : ''),
+  );
 
   // Swagger API docs at /docs — disabled in production to avoid exposing API schema
   if (!isProduction) {

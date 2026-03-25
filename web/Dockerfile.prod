@@ -3,14 +3,15 @@
 # NEXT_PUBLIC_* must be set at build time - pass as ARG in Coolify/docker-compose
 #
 # Exit 255 during `next build` on Coolify is usually OOM or timeout after compile:
-# - Use host with 4GB+ RAM for web build, OR raise Coolify build timeout (e.g. 15–20 min).
-# - Heap 3072MB + Docker overhead often OOMs a 4GB VPS; we use 2048MB + low-memory workers.
+# - Coolify often runs `docker compose build` for api+web in parallel — two Node heaps at once.
+# - Use a builder with 6–8GB RAM, OR raise Coolify build timeout (e.g. 20+ min), OR deploy api/web as separate resources.
+# - Default heap 1536MB: 2048MB + parallel api build frequently OOM-kills the web step on 4GB hosts.
 FROM node:20-alpine AS builder
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_BUILD_LOW_MEMORY=1
-# Stay under typical 4GB Docker build limits (leave headroom for OS + static page gen spikes)
-ENV NODE_OPTIONS=--max-old-space-size=2048
+ARG BUILD_NODE_MAX_OLD_SPACE_SIZE=1536
+ENV NODE_OPTIONS=--max-old-space-size=${BUILD_NODE_MAX_OLD_SPACE_SIZE}
 
 # Build shared-types first (web depends on file:../packages/shared-types)
 COPY packages/shared-types /packages/shared-types
@@ -28,7 +29,8 @@ COPY web/package*.json ./
 RUN npm ci
 
 COPY web/ ./
-RUN npm run build
+# --no-lint via build:docker saves memory/time in CI (run lint in GitHub Actions / locally)
+RUN npm run build:docker
 
 # Production stage
 FROM node:20-alpine AS runner

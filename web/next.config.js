@@ -41,7 +41,7 @@ const nextConfig = {
         value: [
           "default-src 'self'",
           "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://js.paystack.co",
-          "style-src 'self' 'unsafe-inline'",
+          "style-src 'self' 'unsafe-inline' https://accounts.google.com",
           "connect-src 'self' https: wss:",
           "frame-src 'self' https://accounts.google.com https://appleid.apple.com https://js.paystack.co",
           "img-src 'self' data: https: blob:",
