@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TipsterSubscriptionPackage } from './entities/tipster-subscription-package.entity';
 import { Subscription } from './entities/subscription.entity';
@@ -21,7 +21,8 @@ import { ApiSettings } from '../admin/entities/api-settings.entity';
   imports: [
     UsersModule,
     TipsterModule,
-    PredictionsModule,
+    // PredictionsModule ↔ FixturesModule ↔ AccumulatorsModule ↔ SubscriptionsModule cycle
+    forwardRef(() => PredictionsModule),
     TypeOrmModule.forFeature([
       TipsterSubscriptionPackage,
       Subscription,

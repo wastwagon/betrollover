@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccumulatorTicket } from './entities/accumulator-ticket.entity';
 import { AccumulatorPick } from './entities/accumulator-pick.entity';
@@ -45,7 +45,7 @@ import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity'
     EmailModule,
     FootballModule,
     TipsterModule,
-    SubscriptionsModule,
+    forwardRef(() => SubscriptionsModule),
     ReferralsModule,
   ],
   controllers: [AccumulatorsController],
