@@ -412,6 +412,7 @@ export class AdminService {
       minimumROI: Number(apiSettings?.minimumROI ?? 20.0),
       minimumWinRate: Number(apiSettings?.minimumWinRate ?? 45.0),
       maxCouponsPerDay: Math.max(0, Math.floor(Number(apiSettings?.maxCouponsPerDay ?? 0))),
+      aiMarketplaceCouponPrice: Math.round(Number(apiSettings?.aiMarketplaceCouponPrice ?? 5.0) * 100) / 100,
       platformCommissionRate: clampPlatformCommissionPercent(apiSettings?.platformCommissionRate),
       streamAlertThresholds: this.mapStreamAlertThresholds(apiSettings),
       currency: 'GHS',
@@ -508,6 +509,19 @@ export class AdminService {
       apiSettings = this.apiSettingsRepo.create({ id: 1 });
     }
     apiSettings.minimumWinRate = minimumWinRate;
+    return this.apiSettingsRepo.save(apiSettings);
+  }
+
+  async updateAiMarketplaceCouponPrice(aiMarketplaceCouponPrice: number): Promise<ApiSettings> {
+    if (aiMarketplaceCouponPrice < 0 || aiMarketplaceCouponPrice > 10000) {
+      throw new BadRequestException('AI marketplace coupon price must be between 0 and 10000 GHS (0 = always free)');
+    }
+    const rounded = Math.round(Number(aiMarketplaceCouponPrice) * 100) / 100;
+    let apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
+    if (!apiSettings) {
+      apiSettings = this.apiSettingsRepo.create({ id: 1 });
+    }
+    apiSettings.aiMarketplaceCouponPrice = rounded;
     return this.apiSettingsRepo.save(apiSettings);
   }
 

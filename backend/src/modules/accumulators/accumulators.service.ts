@@ -409,7 +409,73 @@ export class AccumulatorsService {
       }
     }
 
-    return this.getById(ticket.id);
+    return this.getById(ticket.id, userId);
+  }
+
+  /**
+   * Strip pick details for paid marketplace coupons when still pending and viewer is not seller and has not purchased.
+   * Once settled (won/lost/void), full picks are public for transparency. Seller / purchasers always see full picks.
+   * Internal callers use viewer undefined or forceFullPicks.
+   */
+  private buildRedactedPicksForCoupon(picks: Array<{ id?: number }>): Array<Record<string, unknown>> {
+    const list = picks || [];
+    return list.map((p, i) => ({
+      id: p.id,
+      redacted: true,
+      matchDescription: `Selection ${i + 1}`,
+      prediction: '—',
+      odds: null,
+      matchDate: null,
+      result: 'pending',
+      status: 'pending',
+      homeScore: null,
+      awayScore: null,
+      fixtureStatus: null,
+      homeTeamName: null,
+      awayTeamName: null,
+      homeTeamLogo: null,
+      awayTeamLogo: null,
+    }));
+  }
+
+  private async applyCouponPickVisibility(
+    payload: Record<string, unknown>,
+    ticket: AccumulatorTicket,
+    listingRow: PickMarketplace | null,
+    viewerUserId?: number | null,
+    opts?: { forceFullPicks?: boolean },
+  ): Promise<Record<string, unknown>> {
+    if (opts?.forceFullPicks) {
+      return { ...payload, picksRevealed: true };
+    }
+    const effectivePrice =
+      listingRow && listingRow.status === 'active'
+        ? Number(listingRow.price)
+        : Number(ticket.price ?? 0);
+    if (effectivePrice <= 0) {
+      return { ...payload, picksRevealed: true };
+    }
+    const settled = ['won', 'lost', 'void'].includes((ticket.result || 'pending').toLowerCase());
+    if (settled) {
+      return { ...payload, picksRevealed: true };
+    }
+    if (viewerUserId == null) {
+      return { ...payload, picksRevealed: true };
+    }
+    if (ticket.userId === viewerUserId) {
+      return { ...payload, picksRevealed: true };
+    }
+    const purchased = await this.purchasedRepo.findOne({
+      where: { userId: viewerUserId, accumulatorId: ticket.id },
+    });
+    if (purchased) {
+      return { ...payload, picksRevealed: true };
+    }
+    return {
+      ...payload,
+      picksRevealed: false,
+      picks: this.buildRedactedPicksForCoupon((payload.picks as Array<{ id?: number }>) || []),
+    };
   }
 
   private async enrichPicksWithFixtureScores<T extends { picks?: Array<{ fixtureId?: number | null; eventId?: number | null }> }>(tickets: T[]): Promise<T[]> {
@@ -472,7 +538,11 @@ export class AccumulatorsService {
     })) as T[];
   }
 
-  async getById(id: number) {
+  async getById(
+    id: number,
+    viewerUserId?: number | null,
+    opts?: { forceFullPicks?: boolean },
+  ) {
     const ticket = await this.ticketRepo.findOne({
       where: { id },
       relations: ['picks'],
@@ -483,10 +553,11 @@ export class AccumulatorsService {
     // Include tipster metadata and marketplace row so the detail page has full context
     const row = await this.marketplaceRepo.findOne({
       where: { accumulatorId: id },
-      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount'],
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
     });
     const [withTipster] = await this.enrichWithTipsterMetadata([enriched], row ? [row] : []);
-    return withTipster ?? enriched;
+    const base = (withTipster ?? enriched) as Record<string, unknown>;
+    return this.applyCouponPickVisibility(base, ticket, row, viewerUserId ?? undefined, opts);
   }
 
   async getMyAccumulators(userId: number, sport?: string) {
@@ -758,14 +829,31 @@ export class AccumulatorsService {
   }
 
   /**
-   * Public coupon by id (no login). Allowed only for free (price=0) marketplace coupons.
+   * Public coupon by id (no login).
+   * - Pending: only free (price 0) coupons with an active marketplace listing (unchanged).
+   * - Settled (won/lost/void): any marketplace coupon so guests can see results and tipster quality (drives sign-ups).
    */
   async getByIdPublic(id: number) {
-    const row = await this.marketplaceRepo.findOne({
-      where: { accumulatorId: id, status: 'active' },
-      select: ['accumulatorId', 'price'],
+    const ticket = await this.ticketRepo.findOne({
+      where: { id },
+      select: ['id', 'isMarketplace', 'result', 'status', 'price'],
     });
-    if (!row || Number(row.price) !== 0) return null;
+    if (!ticket?.isMarketplace) return null;
+
+    const row = await this.marketplaceRepo.findOne({
+      where: { accumulatorId: id },
+      select: ['accumulatorId', 'price', 'status'],
+    });
+
+    const settled = ['won', 'lost', 'void'].includes((ticket.result || 'pending').toLowerCase());
+    if (settled) {
+      return this.getById(id);
+    }
+
+    if (!row || row.status !== 'active') return null;
+    const listingPrice = Number(row.price);
+    if (listingPrice !== 0) return null;
+
     return this.getById(id);
   }
 
@@ -1393,7 +1481,7 @@ export class AccumulatorsService {
         }).catch(() => { });
       }
 
-      return this.getById(accumulatorId);
+      return this.getById(accumulatorId, buyerId, { forceFullPicks: true });
     });
   }
 

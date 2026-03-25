@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sync AI predictions to marketplace (free by default)
+# Sync AI predictions to marketplace (paid when ROI + win rate meet admin minimums and AI coupon price > 0)
 # Run after: migration 029, setup/ai-tipsters, and predictions/generate
 # Usage: ./scripts/sync-predictions-to-marketplace.sh
 
@@ -29,4 +29,4 @@ echo "Logged in. Syncing..."
 RESP=$(curl -s -X POST "$API_URL/admin/predictions/sync-to-marketplace" -H "Authorization: Bearer $TOKEN")
 echo "$RESP" | head -c 500
 echo ""
-echo "Done. All AI coupons are free on marketplace unless admin sets a price."
+echo "Done. Pricing follows Admin → Settings (minimum ROI / win rate + AI coupon price)."

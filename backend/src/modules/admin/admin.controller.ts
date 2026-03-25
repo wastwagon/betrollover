@@ -626,6 +626,23 @@ export class AdminController {
     return this.adminService.updateMaxCouponsPerDay(body.maxCouponsPerDay);
   }
 
+  @Patch('settings/ai-marketplace-coupon-price')
+  async updateAiMarketplaceCouponPrice(
+    @CurrentUser() user: User,
+    @Body() body: { aiMarketplaceCouponPrice: number },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    if (
+      body?.aiMarketplaceCouponPrice === undefined ||
+      body?.aiMarketplaceCouponPrice === null ||
+      typeof body.aiMarketplaceCouponPrice !== 'number' ||
+      Number.isNaN(body.aiMarketplaceCouponPrice)
+    ) {
+      throw new BadRequestException('aiMarketplaceCouponPrice (number 0–10000 GHS, 0 = AI coupons always free) is required');
+    }
+    return this.adminService.updateAiMarketplaceCouponPrice(body.aiMarketplaceCouponPrice);
+  }
+
   @Patch('settings/commission-rate')
   async updateCommissionRate(
     @CurrentUser() user: User,

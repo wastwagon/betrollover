@@ -143,8 +143,8 @@ export class AccumulatorsController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  getById(@Param('id', ParseIntPipe) id: number) {
-    return this.accumulatorsService.getById(id);
+  getById(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
+    return this.accumulatorsService.getById(id, user.id);
   }
 
   @Post(':id/purchase')

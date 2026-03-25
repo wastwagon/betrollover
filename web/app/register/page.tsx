@@ -90,7 +90,15 @@ function RegisterForm() {
       try { (await import('@/lib/analytics')).trackEvent('registration_completed'); } catch { /* noop */ }
       localStorage.setItem('token', data.access_token);
       emitAuthStorageSync();
-      router.push('/dashboard');
+      const rawRedirect = searchParams.get('redirect');
+      const safe =
+        rawRedirect &&
+        rawRedirect.startsWith('/') &&
+        !rawRedirect.startsWith('//') &&
+        !rawRedirect.includes('://')
+          ? rawRedirect
+          : '/dashboard';
+      router.push(safe);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : t('auth.registration_failed'));

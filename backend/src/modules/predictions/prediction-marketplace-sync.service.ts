@@ -9,6 +9,7 @@ import { PredictionFixture } from './entities/prediction-fixture.entity';
 import { Tipster } from './entities/tipster.entity';
 import { TipstersSetupService } from './tipsters-setup.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { ApiSettings } from '../admin/entities/api-settings.entity';
 
 /** Format selectedOutcome for display (e.g. over25 -> Over 2.5) */
 function formatOutcome(outcome: string | null): string {
@@ -42,12 +43,33 @@ export class PredictionMarketplaceSyncService {
     private predictionFixtureRepo: Repository<PredictionFixture>,
     @InjectRepository(Tipster)
     private tipsterRepo: Repository<Tipster>,
+    @InjectRepository(ApiSettings)
+    private apiSettingsRepo: Repository<ApiSettings>,
     private tipstersSetup: TipstersSetupService,
     private notificationsService: NotificationsService,
   ) {}
 
+  /** Same minimum ROI / win rate as human paid coupons; optional GHS price for qualifying AI tipsters. */
+  private async loadAiMarketplacePricing(): Promise<{
+    minimumROI: number;
+    minimumWinRate: number;
+    aiMarketplaceCouponPrice: number;
+  }> {
+    try {
+      const row = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
+      return {
+        minimumROI: Number(row?.minimumROI ?? 20.0),
+        minimumWinRate: Number(row?.minimumWinRate ?? 45.0),
+        aiMarketplaceCouponPrice: Math.max(0, Math.round(Number(row?.aiMarketplaceCouponPrice ?? 5.0) * 100) / 100),
+      };
+    } catch {
+      return { minimumROI: 20.0, minimumWinRate: 45.0, aiMarketplaceCouponPrice: 5.0 };
+    }
+  }
+
   /**
-   * Sync a prediction to the marketplace (free by default).
+   * Sync a prediction to the marketplace.
+   * Price is 0 unless platform minimum ROI + win rate are met and ai_marketplace_coupon_price > 0 (admin settings).
    * Creates accumulator_ticket, accumulator_picks, pick_marketplace.
    * Skips if tipster has no userId (not yet linked to user).
    */
@@ -63,6 +85,17 @@ export class PredictionMarketplaceSyncService {
         return null;
       }
     }
+
+    const policy = await this.loadAiMarketplacePricing();
+    const tipsterStats = await this.tipsterRepo.findOne({
+      where: { id: tipster.id },
+      select: ['id', 'roi', 'winRate'],
+    });
+    const roi = Number(tipsterStats?.roi ?? 0);
+    const winRate = Number(tipsterStats?.winRate ?? 0);
+    const meetsThresholds = roi >= policy.minimumROI && winRate >= policy.minimumWinRate;
+    const listPrice =
+      meetsThresholds && policy.aiMarketplaceCouponPrice > 0 ? policy.aiMarketplaceCouponPrice : 0;
 
     const existing = await this.marketplaceRepo.findOne({
       where: { predictionId: prediction.id },
@@ -103,7 +136,7 @@ export class PredictionMarketplaceSyncService {
       sport: 'Football',
       totalPicks: fixtures.length,
       totalOdds: Math.round(totalOdds * 1000) / 1000,
-      price: 0,
+      price: listPrice,
       status: 'active',
       result: 'pending',
       isMarketplace: true,
@@ -127,7 +160,7 @@ export class PredictionMarketplaceSyncService {
     await this.marketplaceRepo.save({
       accumulatorId: ticket.id,
       sellerId: tipster.userId,
-      price: 0,
+      price: listPrice,
       status: 'active',
       predictionId: prediction.id,
       maxPurchases: 999999,
@@ -144,18 +177,22 @@ export class PredictionMarketplaceSyncService {
           tipsterUserId: freshTipster.userId,
           tipsterDisplayName: freshTipster.displayName,
           pickTitle: title,
-          price: 0,
+          price: listPrice,
           accumulatorId: ticket.id,
-          couponCard: {
-            totalOdds: Number(ticket.totalOdds),
-            isSubscription: false,
-            legs: fixtures.map((f) => ({
-              matchDescription: `${f.homeTeam} vs ${f.awayTeam}`,
-              prediction: formatOutcome(f.selectedOutcome),
-              odds: Number(f.selectionOdds),
-              matchDate: f.matchDate ? new Date(f.matchDate).toISOString() : null,
-            })),
-          },
+          // Match human marketplace: detailed leg email only for free coupons; paid = teaser only (no picks in email).
+          couponCard:
+            listPrice === 0
+              ? {
+                  totalOdds: Number(ticket.totalOdds),
+                  isSubscription: false,
+                  legs: fixtures.map((f) => ({
+                    matchDescription: `${f.homeTeam} vs ${f.awayTeam}`,
+                    prediction: formatOutcome(f.selectedOutcome),
+                    odds: Number(f.selectionOdds),
+                    matchDate: f.matchDate ? new Date(f.matchDate).toISOString() : null,
+                  })),
+                }
+              : undefined,
         })
         .catch((e) => this.logger.warn(`Follower notify after AI sync: ${(e as Error).message}`));
     }

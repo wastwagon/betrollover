@@ -44,6 +44,19 @@ export class ApiSettings {
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 30.0 })
   platformCommissionRate: number = 30.0;
 
+  /**
+   * GHS price for AI tipster coupons on marketplace when tipster ROI + win rate meet minimumROI + minimumWinRate.
+   * 0 = AI coupons always list as free (same thresholds still apply for future use; price step is skipped).
+   */
+  @Column({
+    type: 'decimal',
+    precision: 8,
+    scale: 2,
+    name: 'ai_marketplace_coupon_price',
+    default: 5.0,
+  })
+  aiMarketplaceCouponPrice: number = 5.0;
+
   @Column({ type: 'int', name: 'stream_warn_active_connections', default: 120 })
   streamWarnActiveConnections: number = 120;
 

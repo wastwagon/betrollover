@@ -15,6 +15,8 @@ import { LeagueInsightsPanel } from '@/components/LeagueInsightsPanel';
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Pick {
   id?: number;
+  /** API sets true when paid coupon legs are hidden (teaser only). */
+  redacted?: boolean;
   sport?: string;
   matchDescription?: string;
   prediction?: string;
@@ -54,6 +56,8 @@ interface Coupon {
   sport?: string;
   totalOdds: number;
   totalPicks: number;
+  /** false = API withheld leg details until purchase (paid marketplace). */
+  picksRevealed?: boolean;
   price: number;
   purchaseCount?: number;
   status?: string;
@@ -264,18 +268,21 @@ export default function CouponDetailPage() {
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const [copied, setCopied] = useState(false);
+  /** false = browsing as guest (public coupon); true = logged in */
+  const [isAuthed, setIsAuthed] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
 
     if (!token) {
-      // Guest: try public endpoint (free coupons only)
+      // Guest: public endpoint — pending free coupons, or any settled marketplace coupon
       fetch(`${getApiUrl()}/accumulators/${id}/public`)
         .then((r) => (r.ok ? r.json() : null))
         .then((couponData) => {
           if (couponData) {
             setCoupon(couponData);
             setIsPurchased(false);
+            setIsAuthed(false);
           } else {
             router.push(`/login?redirect=/coupons/${id}`);
           }
@@ -285,6 +292,7 @@ export default function CouponDetailPage() {
       return;
     }
 
+    setIsAuthed(true);
     const headers = { Authorization: `Bearer ${token}` };
     Promise.all([
       fetch(`${getApiUrl()}/accumulators/${id}`, { headers })
@@ -350,6 +358,12 @@ export default function CouponDetailPage() {
         try { (await import('@/lib/analytics')).trackEvent('coupon_purchased', { couponId: id }, token); } catch { /* noop */ }
         setIsPurchased(true);
         setPurchaseSuccess(true);
+        try {
+          const purchasedCoupon = await res.json();
+          if (purchasedCoupon && typeof purchasedCoupon === 'object' && Array.isArray(purchasedCoupon.picks)) {
+            setCoupon(purchasedCoupon);
+          }
+        } catch { /* body may be empty */ }
         const w = await fetch(`${getApiUrl()}/wallet/balance`, { headers: { Authorization: `Bearer ${token}` } });
         if (w.ok) { const d = await w.json(); setWalletBalance(Number(d.balance)); }
       } else {
@@ -410,11 +424,18 @@ export default function CouponDetailPage() {
 
   const sportMeta = coupon.sport ? (SPORT_META[coupon.sport] ?? SPORT_META['Multi-Sport']) : null;
   const resultStyle = COUPON_STATUS_STYLE[coupon.result ?? 'pending'] ?? COUPON_STATUS_STYLE.pending;
-  const wonPicks = coupon.picks.filter(p => p.result === 'won').length;
-  const lostPicks = coupon.picks.filter(p => p.result === 'lost').length;
+  const pickCount = coupon.totalPicks ?? coupon.picks.length;
+  const couponPending = (coupon.result ?? 'pending').toLowerCase() === 'pending';
+  const picksHidden =
+    couponPending &&
+    Number(coupon.price) > 0 &&
+    (coupon.picksRevealed === false ||
+      (coupon.picksRevealed === undefined && !isPurchased));
+  const wonPicks = picksHidden ? 0 : coupon.picks.filter(p => p.result === 'won').length;
+  const lostPicks = picksHidden ? 0 : coupon.picks.filter(p => p.result === 'lost').length;
   const settledPicks = wonPicks + lostPicks;
   const canPurchase = !isPurchased && (coupon.price === 0 || (walletBalance !== null && walletBalance >= coupon.price));
-  const isSettled = coupon.result === 'won' || coupon.result === 'lost';
+  const isSettled = ['won', 'lost', 'void'].includes((coupon.result ?? 'pending').toLowerCase());
 
   return (
     <div className="min-h-screen bg-[var(--bg)]">
@@ -464,7 +485,7 @@ export default function CouponDetailPage() {
               {/* Stats row */}
               <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--text-muted)]">
                 <span className="flex items-center gap-1">
-                  <span className="font-semibold text-[var(--text)]">{coupon.picks.length}</span> picks
+                  <span className="font-semibold text-[var(--text)]">{pickCount}</span> picks
                 </span>
                 <span className="flex items-center gap-1">
                   Total odds: <span className="font-semibold text-[var(--text)] ml-1">{Number(coupon.totalOdds).toFixed(2)}</span>
@@ -473,7 +494,7 @@ export default function CouponDetailPage() {
                   <span className="flex items-center gap-1">
                     <span className="text-emerald-600 font-semibold">{wonPicks}W</span>
                     <span className="text-red-500 font-semibold">{lostPicks}L</span>
-                    <span className="text-[var(--text-muted)]">/ {coupon.picks.length} picks</span>
+                    <span className="text-[var(--text-muted)]">/ {pickCount} picks</span>
                   </span>
                 )}
                 {coupon.purchaseCount != null && coupon.purchaseCount > 0 && (
@@ -498,20 +519,48 @@ export default function CouponDetailPage() {
 
             {/* Settlement result banner */}
             {isSettled && (
-              <div className={`mb-6 p-4 rounded-2xl border flex items-start gap-3 ${
-                coupon.result === 'won'
-                  ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700/40'
-                  : 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700/40'
-              }`}>
-                <span className="text-2xl">{coupon.result === 'won' ? '🏆' : '❌'}</span>
+              <div
+                className={`mb-6 p-4 rounded-2xl border flex items-start gap-3 ${
+                  coupon.result === 'won'
+                    ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700/40'
+                    : coupon.result === 'void'
+                      ? 'bg-slate-50 dark:bg-slate-900/30 border-slate-200 dark:border-slate-600/50'
+                      : 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700/40'
+                }`}
+              >
+                <span className="text-2xl">
+                  {coupon.result === 'won' ? '🏆' : coupon.result === 'void' ? '—' : '❌'}
+                </span>
                 <div>
-                  <p className={`font-semibold ${coupon.result === 'won' ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-800 dark:text-red-300'}`}>
-                    {coupon.result === 'won' ? 'Coupon Won!' : 'Coupon Lost — Refund Processed'}
+                  <p
+                    className={`font-semibold ${
+                      coupon.result === 'won'
+                        ? 'text-emerald-800 dark:text-emerald-300'
+                        : coupon.result === 'void'
+                          ? 'text-slate-800 dark:text-slate-200'
+                          : 'text-red-800 dark:text-red-300'
+                    }`}
+                  >
+                    {coupon.result === 'won'
+                      ? 'Coupon Won!'
+                      : coupon.result === 'void'
+                        ? 'Coupon voided'
+                        : 'Coupon Lost — Refund Processed'}
                   </p>
-                  <p className={`text-sm mt-0.5 ${coupon.result === 'won' ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}`}>
+                  <p
+                    className={`text-sm mt-0.5 ${
+                      coupon.result === 'won'
+                        ? 'text-emerald-700 dark:text-emerald-400'
+                        : coupon.result === 'void'
+                          ? 'text-slate-600 dark:text-slate-400'
+                          : 'text-red-700 dark:text-red-400'
+                    }`}
+                  >
                     {coupon.result === 'won'
                       ? 'All picks in this coupon landed. This tipster delivered.'
-                      : 'This coupon has been settled. Escrow has automatically refunded all purchasers.'}
+                      : coupon.result === 'void'
+                        ? 'One or more matches were voided or cancelled. Check your wallet for any refunds.'
+                        : 'This coupon has been settled. Escrow has automatically refunded all purchasers.'}
                   </p>
                 </div>
               </div>
@@ -519,129 +568,176 @@ export default function CouponDetailPage() {
 
             {/* ── Picks ── */}
             <h2 className="text-sm font-semibold text-[var(--text)] mb-3">
-              Picks ({coupon.picks.length})
+              Picks ({pickCount})
             </h2>
 
-            <div className="space-y-3 mb-8">
-              {coupon.picks.map((pick, idx) => {
-                const pickResult = pick.result ?? 'pending';
-                const pickStyle = RESULT_STYLE[pickResult] ?? RESULT_STYLE.pending;
-                const pickSport = pick.sport ? SPORT_META[
-                  pick.sport.charAt(0).toUpperCase() + pick.sport.slice(1).replace('_', ' ')
-                ] ?? SPORT_META[pick.sport] : null;
-                const hasScore = pick.homeScore != null && pick.awayScore != null;
-                const isLive =
-                  pick.fixtureStatus === 'live' ||
-                  ['1H', '2H', 'HT', 'ET', 'P', 'BT'].includes(pick.fixtureStatus || '');
-
-                return (
-                  <div
-                    key={pick.id ?? idx}
-                    className={`rounded-2xl border p-4 transition-all ${
-                      pickResult === 'won' ? 'border-emerald-200 bg-emerald-50/50 dark:bg-emerald-900/10'
-                        : pickResult === 'lost' ? 'border-red-200 bg-red-50/50 dark:bg-red-900/10'
-                        : 'border-[var(--border)] bg-[var(--card)]'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-
-                        {/* Teams with logos */}
-                        {(pick.homeTeamName || pick.matchDescription) && (
-                          <div className="flex items-center gap-2 mb-2">
-                            {(pick.homeTeamLogo || pick.homeCountryCode) && (
-                              <TeamBadge
-                                logo={pick.homeTeamLogo}
-                                countryCode={pick.homeCountryCode}
-                                name={pick.homeTeamName ?? ''}
-                                size={22}
-                              />
-                            )}
-                            <span className="text-sm font-semibold text-[var(--text)] truncate">
-                              {pick.homeTeamName && pick.awayTeamName
-                                ? `${pick.homeTeamName} vs ${pick.awayTeamName}`
-                                : pick.matchDescription}
-                            </span>
-                            {(pick.awayTeamLogo || pick.awayCountryCode) && (
-                              <TeamBadge
-                                logo={pick.awayTeamLogo}
-                                countryCode={pick.awayCountryCode}
-                                name={pick.awayTeamName ?? ''}
-                                size={22}
-                              />
-                            )}
-                          </div>
-                        )}
-
-                        {/* Prediction */}
-                        <p className="text-xs text-[var(--text-muted)] mb-1">
-                          {pick.prediction}
+            {picksHidden ? (
+              <>
+                <div className="mb-4 p-4 rounded-2xl bg-amber-50/90 dark:bg-amber-950/25 border border-amber-200 dark:border-amber-800/50 flex gap-3">
+                  <span className="text-2xl shrink-0" aria-hidden>
+                    🔒
+                  </span>
+                  <div>
+                    <p className="font-semibold text-[var(--text)]">Selections are locked</p>
+                    <p className="text-sm text-[var(--text-muted)] mt-0.5 leading-relaxed">
+                      Purchase this coupon to see matches, markets, and odds for each leg. Combined total odds are shown
+                      above for reference — same as on the marketplace card.
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-2 mb-8">
+                  {coupon.picks.map((pick, idx) => (
+                    <div
+                      key={pick.id ?? idx}
+                      className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 p-4 flex items-center gap-3"
+                    >
+                      <span className="text-lg opacity-60" aria-hidden>
+                        🔒
+                      </span>
+                      <div>
+                        <p className="text-sm font-medium text-[var(--text)]">
+                          {pick.redacted ? pick.matchDescription || `Selection ${idx + 1}` : `Selection ${idx + 1}`}
                         </p>
-
-                        {/* Date + live indicator */}
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-muted)]">
-                          {pick.matchDate && <span>{formatDateTime(pick.matchDate)}</span>}
-                          {isLive && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 font-bold text-[10px] tabular-nums">
-                              🔴 {formatLiveFixturePeriod(pick.fixtureStatus, pick.fixtureStatusElapsed)}
-                            </span>
-                          )}
-                          {pickSport && coupon.sport === 'Multi-Sport' && (
-                            <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold border ${pickSport.color}`}>
-                              {pickSport.icon} {pickSport.label}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                        {/* Odds */}
-                        <span className="text-sm font-bold text-[var(--text)]">
-                          {Number(pick.odds).toFixed(2)}
-                        </span>
-
-                        {/* Score */}
-                        {hasScore && (
-                          <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]">
-                            {pick.homeScore} – {pick.awayScore}
-                          </span>
-                        )}
-
-                        {/* Result badge */}
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${pickStyle}`}>
-                          {RESULT_ICON[pickResult]} {pickResult}
-                        </span>
+                        <p className="text-xs text-[var(--text-muted)] mt-0.5">Hidden until purchase</p>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Odds breakdown */}
-            <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 mb-6">
-              <h3 className="text-sm font-semibold text-[var(--text)] mb-3">Odds Breakdown</h3>
-              <div className="space-y-2">
-                {coupon.picks.map((p, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-sm">
-                    <span className="text-[var(--text-muted)] truncate max-w-[280px]">
-                      {p.homeTeamName && p.awayTeamName
-                        ? `${p.homeTeamName} vs ${p.awayTeamName}`
-                        : p.matchDescription}
-                    </span>
-                    <span className="font-semibold text-[var(--text)] ml-4 tabular-nums">
-                      {Number(p.odds).toFixed(2)}
-                    </span>
-                  </div>
-                ))}
-                <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between">
-                  <span className="text-sm font-semibold text-[var(--text)]">Total Odds</span>
-                  <span className="text-base font-semibold text-[var(--primary)] tabular-nums">
-                    {Number(coupon.totalOdds).toFixed(2)}
-                  </span>
+                  ))}
                 </div>
-              </div>
-            </div>
+                <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 mb-6">
+                  <h3 className="text-sm font-semibold text-[var(--text)] mb-2">Odds breakdown</h3>
+                  <p className="text-sm text-[var(--text-muted)] mb-3">
+                    Per-leg odds unlock after you purchase.
+                  </p>
+                  <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between">
+                    <span className="text-sm font-semibold text-[var(--text)]">Total odds</span>
+                    <span className="text-base font-semibold text-[var(--primary)] tabular-nums">
+                      {Number(coupon.totalOdds).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-3 mb-8">
+                  {coupon.picks.map((pick, idx) => {
+                    const pickResult = pick.result ?? 'pending';
+                    const pickStyle = RESULT_STYLE[pickResult] ?? RESULT_STYLE.pending;
+                    const pickSport = pick.sport
+                      ? SPORT_META[
+                          pick.sport.charAt(0).toUpperCase() + pick.sport.slice(1).replace('_', ' ')
+                        ] ?? SPORT_META[pick.sport]
+                      : null;
+                    const hasScore = pick.homeScore != null && pick.awayScore != null;
+                    const isLive =
+                      pick.fixtureStatus === 'live' ||
+                      ['1H', '2H', 'HT', 'ET', 'P', 'BT'].includes(pick.fixtureStatus || '');
+
+                    return (
+                      <div
+                        key={pick.id ?? idx}
+                        className={`rounded-2xl border p-4 transition-all ${
+                          pickResult === 'won'
+                            ? 'border-emerald-200 bg-emerald-50/50 dark:bg-emerald-900/10'
+                            : pickResult === 'lost'
+                              ? 'border-red-200 bg-red-50/50 dark:bg-red-900/10'
+                              : 'border-[var(--border)] bg-[var(--card)]'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            {(pick.homeTeamName || pick.matchDescription) && (
+                              <div className="flex items-center gap-2 mb-2">
+                                {(pick.homeTeamLogo || pick.homeCountryCode) && (
+                                  <TeamBadge
+                                    logo={pick.homeTeamLogo}
+                                    countryCode={pick.homeCountryCode}
+                                    name={pick.homeTeamName ?? ''}
+                                    size={22}
+                                  />
+                                )}
+                                <span className="text-sm font-semibold text-[var(--text)] truncate">
+                                  {pick.homeTeamName && pick.awayTeamName
+                                    ? `${pick.homeTeamName} vs ${pick.awayTeamName}`
+                                    : pick.matchDescription}
+                                </span>
+                                {(pick.awayTeamLogo || pick.awayCountryCode) && (
+                                  <TeamBadge
+                                    logo={pick.awayTeamLogo}
+                                    countryCode={pick.awayCountryCode}
+                                    name={pick.awayTeamName ?? ''}
+                                    size={22}
+                                  />
+                                )}
+                              </div>
+                            )}
+
+                            <p className="text-xs text-[var(--text-muted)] mb-1">{pick.prediction}</p>
+
+                            <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-muted)]">
+                              {pick.matchDate && <span>{formatDateTime(pick.matchDate)}</span>}
+                              {isLive && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 font-bold text-[10px] tabular-nums">
+                                  🔴 {formatLiveFixturePeriod(pick.fixtureStatus, pick.fixtureStatusElapsed)}
+                                </span>
+                              )}
+                              {pickSport && coupon.sport === 'Multi-Sport' && (
+                                <span
+                                  className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold border ${pickSport.color}`}
+                                >
+                                  {pickSport.icon} {pickSport.label}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                            <span className="text-sm font-bold text-[var(--text)]">
+                              {Number(pick.odds).toFixed(2)}
+                            </span>
+
+                            {hasScore && (
+                              <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]">
+                                {pick.homeScore} – {pick.awayScore}
+                              </span>
+                            )}
+
+                            <span
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${pickStyle}`}
+                            >
+                              {RESULT_ICON[pickResult]} {pickResult}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 mb-6">
+                  <h3 className="text-sm font-semibold text-[var(--text)] mb-3">Odds Breakdown</h3>
+                  <div className="space-y-2">
+                    {coupon.picks.map((p, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-sm">
+                        <span className="text-[var(--text-muted)] truncate max-w-[280px]">
+                          {p.homeTeamName && p.awayTeamName
+                            ? `${p.homeTeamName} vs ${p.awayTeamName}`
+                            : p.matchDescription}
+                        </span>
+                        <span className="font-semibold text-[var(--text)] ml-4 tabular-nums">
+                          {Number(p.odds).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                    <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between">
+                      <span className="text-sm font-semibold text-[var(--text)]">Total Odds</span>
+                      <span className="text-base font-semibold text-[var(--primary)] tabular-nums">
+                        {Number(coupon.totalOdds).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* ── Sidebar ── */}
@@ -665,7 +761,7 @@ export default function CouponDetailPage() {
                 </div>
               )}
 
-              {/* Purchase / receipt card */}
+              {/* Purchase / receipt card — guests on settled coupons see sign-up CTA instead */}
               <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-hidden shadow-sm">
                 <div className="p-5">
                   <div className="flex items-center justify-between mb-4">
@@ -679,7 +775,32 @@ export default function CouponDetailPage() {
                     )}
                   </div>
 
-                  {isPurchased ? (
+                  {!isAuthed && isSettled ? (
+                    <div className="space-y-3">
+                      <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+                        This coupon is settled — full results are visible above. Create a free account to follow tipsters,
+                        buy live picks, and use your wallet with escrow protection.
+                      </p>
+                      <Link
+                        href={`/register?redirect=/marketplace`}
+                        className="block w-full py-3 rounded-xl bg-[var(--primary)] text-white font-bold text-sm text-center hover:bg-[var(--primary-hover)] transition-colors"
+                      >
+                        Create account
+                      </Link>
+                      <Link
+                        href="/marketplace"
+                        className="block w-full py-2.5 rounded-xl border border-[var(--border)] text-[var(--text)] font-semibold text-sm text-center hover:bg-[var(--bg)] transition-colors"
+                      >
+                        Browse marketplace →
+                      </Link>
+                      <Link
+                        href={`/login?redirect=/coupons/${id}`}
+                        className="block text-center text-sm text-[var(--primary)] hover:underline"
+                      >
+                        Already have an account? Log in
+                      </Link>
+                    </div>
+                  ) : isPurchased ? (
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700/40">
                         <span className="text-emerald-600 text-lg">✓</span>
@@ -813,7 +934,7 @@ export default function CouponDetailPage() {
         </div>
 
         {/* ── Reviews Section ──────────────────────────────────────────── */}
-        <ReviewsSection couponId={coupon.id} isPurchased={isPurchased} isSettled={coupon.result === 'won' || coupon.result === 'lost'} />
+        <ReviewsSection couponId={coupon.id} isPurchased={isPurchased} isSettled={isSettled} />
 
       </main>
       <AppFooter />
