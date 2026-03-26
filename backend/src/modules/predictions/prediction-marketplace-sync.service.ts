@@ -10,6 +10,7 @@ import { Tipster } from './entities/tipster.entity';
 import { TipstersSetupService } from './tipsters-setup.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
+import { TipsterService } from '../tipster/tipster.service';
 
 /** Format selectedOutcome for display (e.g. over25 -> Over 2.5) */
 function formatOutcome(outcome: string | null): string {
@@ -47,6 +48,7 @@ export class PredictionMarketplaceSyncService {
     private apiSettingsRepo: Repository<ApiSettings>,
     private tipstersSetup: TipstersSetupService,
     private notificationsService: NotificationsService,
+    private tipsterService: TipsterService,
   ) {}
 
   /** Same minimum ROI / win rate as human paid coupons; optional GHS price for qualifying AI tipsters. */
@@ -87,12 +89,12 @@ export class PredictionMarketplaceSyncService {
     }
 
     const policy = await this.loadAiMarketplacePricing();
-    const tipsterStats = await this.tipsterRepo.findOne({
-      where: { id: tipster.id },
-      select: ['id', 'roi', 'winRate'],
-    });
-    const roi = Number(tipsterStats?.roi ?? 0);
-    const winRate = Number(tipsterStats?.winRate ?? 0);
+    // Same basis as human paid coupons (accumulators.create) and marketplace listings:
+    // ROI / win rate from settled accumulator tickets — not tipsters.roi/winRate, which the
+    // prediction tracker maintains with a different formula (pending picks dilute win rate).
+    const ticketStats = await this.tipsterService.getStats(tipster.userId!, 'user');
+    const roi = ticketStats.roi;
+    const winRate = ticketStats.winRate;
     const meetsThresholds = roi >= policy.minimumROI && winRate >= policy.minimumWinRate;
     const listPrice =
       meetsThresholds && policy.aiMarketplaceCouponPrice > 0 ? policy.aiMarketplaceCouponPrice : 0;

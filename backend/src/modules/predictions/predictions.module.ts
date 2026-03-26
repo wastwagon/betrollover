@@ -25,9 +25,11 @@ import { TipstersSetupService } from './tipsters-setup.service';
 import { TipstersController } from './tipsters.controller';
 import { PredictionsController } from './predictions.controller';
 import { LeaderboardController } from './leaderboard.controller';
+import { TipsterModule } from '../tipster/tipster.module';
 
 @Module({
   imports: [
+    TipsterModule,
     NotificationsModule,
     TypeOrmModule.forFeature([
       Tipster,
