@@ -4,6 +4,7 @@
  */
 const en = {
   // ── Navigation ──────────────────────────────────────────────────────────
+  'nav.home': 'Home',
   'nav.browse': 'Browse',
   'nav.sports': 'Sports',
   'nav.football': 'Football',
@@ -160,6 +161,8 @@ const en = {
   'home.explore_cta_title': 'Ready to explore?',
   'home.explore_cta_desc': 'Discover sports news, tipster guides, and platform resources.',
   'how_it_works.faq_title': 'Frequently Asked Questions',
+  'how_it_works.page_label': 'Transparency',
+  'how_it_works.page_h1': 'How BetRollover Works',
   'how_it_works.page_lead': 'Here\'s how escrow, settlement, and selling coupons work — same accounts for everyone who buys or sells.',
   'how_it_works.buyers_h2': 'For buyers: escrow protection',
   'how_it_works.buyers_li1': 'Browse & choose — Find tipsters and coupons in the marketplace. Every coupon shows win rate, ROI, and past performance.',
@@ -939,7 +942,14 @@ const en = {
   'contact.feedback_desc': "Bug reports, feature ideas, or general comments about the product. We read every message.",
   'contact.response_note': "We aim to respond within 24 hours on business days. For account-specific issues, please log in and use the in-app support ticket system — it's faster.",
 
+  // ── Tools ───────────────────────────────────────────────────────────────────
+  'tools.badge': 'Tools',
+  'tools.converter_title': 'GHS Currency Converter',
+  'tools.converter_tagline':
+    'Convert Ghana Cedi to major currencies. For reference only — all platform transactions are in GHS.',
+
   // ── Responsible use page ──────────────────────────────────────────────────
+  'resp.page_label': 'Responsible gambling',
   'resp.headline': 'Responsible Use',
   'resp.commitment_title': 'Our Commitment',
   'resp.commitment_desc': 'BetRollover is an educational tipster platform — not a betting site. We provide sports picks and tipster performance data strictly for informational and entertainment purposes. We are committed to promoting responsible use of our platform and responsible behaviour by our users in any associated activity.',

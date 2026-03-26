@@ -1,4 +1,5 @@
 import { UnifiedHeader } from '@/components/UnifiedHeader';
+import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { SITE_URL, SITE_NAME, getAlternates } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
@@ -28,15 +29,13 @@ export default async function TermsPage() {
       <UnifiedHeader />
 
       <main>
-        <article className="section-ux-prose">
-          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[var(--primary)] mb-2 sm:mb-3">
-            {t('privacy.legal')}
-          </p>
-          <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-[var(--text)] mb-2 leading-tight">{t('terms.title')}</h1>
-          <p className="text-xs sm:text-sm text-[var(--text-muted)] mb-8 sm:mb-10">
-            {t('privacy.effective')}: {EFFECTIVE_DATE}
-          </p>
-
+        <div className="section-ux-page">
+          <PageHeader
+            label={t('privacy.legal')}
+            title={t('terms.title')}
+            tagline={`${t('privacy.effective')}: ${EFFECTIVE_DATE}`}
+          />
+          <article className="section-ux-prose">
           <div className="prose prose-slate max-w-none text-[var(--text)] space-y-7 sm:space-y-9 leading-relaxed text-sm sm:text-[15px]">
 
             <section>
@@ -144,6 +143,7 @@ export default async function TermsPage() {
 
           </div>
         </article>
+        </div>
 
         <div className="mt-16">
           <AppFooter />

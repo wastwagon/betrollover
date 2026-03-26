@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
+import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
 import { useT } from '@/context/LanguageContext';
@@ -96,21 +97,24 @@ function SupportContent() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <UnifiedHeader />
-      <main className="section-ux-page-narrow">
-
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold text-[var(--primary)] uppercase tracking-wider mb-1">{t('support.help_centre')}</p>
-            <h1 className="text-lg sm:text-xl font-semibold text-[var(--text)]">{t('support.title')}</h1>
-            <p className="text-[var(--text-muted)] mt-1 text-sm">{t('support.raise_prompt')}</p>
-          </div>
-          <button
-            onClick={() => { setShowForm(!showForm); setSuccess(false); }}
-            className="flex-shrink-0 px-5 py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors"
-          >
-            {showForm ? t('support.cancel') : t('support.new_ticket_btn')}
-          </button>
-        </div>
+      <main className="section-ux-page">
+        <PageHeader
+          label={t('support.help_centre')}
+          title={t('support.title')}
+          tagline={t('support.raise_prompt')}
+          action={
+            <button
+              type="button"
+              onClick={() => {
+                setShowForm(!showForm);
+                setSuccess(false);
+              }}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white text-teal-800 text-sm font-semibold hover:bg-teal-50 transition-colors shadow-sm"
+            >
+              {showForm ? t('support.cancel') : t('support.new_ticket_btn')}
+            </button>
+          }
+        />
 
         <div className="mb-6">
           <AdSlot zoneSlug="support-full" fullWidth className="w-full max-w-3xl" />

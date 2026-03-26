@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
+import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 import { useT } from '@/context/LanguageContext';
 import { getApiUrl } from '@/lib/site-config';
@@ -67,14 +68,11 @@ export default function InvitePage() {
   return (
     <DashboardShell>
       <div className="section-ux-dashboard-shell max-w-2xl mx-auto">
-
-        <div className="mb-8">
-          <p className="text-xs font-semibold text-[var(--primary)] uppercase tracking-wider mb-1">{t('invite.grow_together')}</p>
-          <h1 className="text-lg sm:text-xl font-semibold text-[var(--text)]">{t('invite.invite_earn')}</h1>
-          <p className="text-[var(--text-muted)] mt-1 text-sm">
-            {t('invite.invite_desc', { amount: stats?.rewardPerReferral?.toFixed(2) ?? '5.00' })}
-          </p>
-        </div>
+        <PageHeader
+          label={t('invite.grow_together')}
+          title={t('invite.invite_earn')}
+          tagline={t('invite.invite_desc', { amount: stats?.rewardPerReferral?.toFixed(2) ?? '5.00' })}
+        />
 
         <div className="mb-6">
           <AdSlot zoneSlug="invite-full" fullWidth className="w-full max-w-3xl" />

@@ -5,10 +5,13 @@ import Link from 'next/link';
 import { useCurrency } from '@/context/CurrencyContext';
 import { CURRENCIES } from '@/lib/currency';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
+import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
+import { useT } from '@/context/LanguageContext';
 
 export default function ConverterPage() {
+  const t = useT();
   const { rates } = useCurrency();
   const [amount, setAmount] = useState('25');
 
@@ -24,17 +27,26 @@ export default function ConverterPage() {
     <div className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--text)]">
       <UnifiedHeader />
 
-      <main className="section-ux-page-sm flex-1 w-full">
-        <div className="mb-8">
-          <nav className="text-xs text-[var(--text-muted)] mb-3">
-            <Link href="/" className="hover:underline">Home</Link>
-            <span className="mx-1">›</span>
-            <span>Currency Converter</span>
-          </nav>
-          <h1 className="text-3xl font-bold mb-2">GHS Currency Converter</h1>
-          <p className="text-[var(--text-muted)]">
-            Convert Ghana Cedi to major currencies. For reference only — all platform transactions are in GHS.
-          </p>
+      <main className="section-ux-page flex-1 w-full">
+        <PageHeader
+          label={t('tools.badge')}
+          title={t('tools.converter_title')}
+          tagline={t('tools.converter_tagline')}
+        />
+
+        <div className="flex flex-wrap items-center gap-2 mb-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+          >
+            {t('nav.home')}
+          </Link>
+          <Link
+            href="/wallet"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+          >
+            {t('nav.wallet')}
+          </Link>
         </div>
 
         <div className="mb-6">

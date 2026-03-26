@@ -1,4 +1,5 @@
 import { UnifiedHeader } from '@/components/UnifiedHeader';
+import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import Link from 'next/link';
 import { getLocale, buildT } from '@/lib/i18n';
@@ -27,17 +28,9 @@ export default async function AboutPage() {
       <UnifiedHeader />
 
       <main>
-        <article className="section-ux-prose">
-          <p className="text-xs font-bold uppercase tracking-widest text-[var(--primary)] mb-3">
-            {t('nav.about')}
-          </p>
-          <h1 className="text-xl md:text-2xl font-semibold text-[var(--text)] mb-4">
-            {t('about.headline')}
-          </h1>
-          <p className="text-[var(--text-muted)] text-lg leading-relaxed mb-10">
-            {t('about.intro')}
-          </p>
-
+        <div className="section-ux-page">
+          <PageHeader label={t('nav.about')} title={t('about.headline')} tagline={t('about.intro')} />
+          <article className="section-ux-prose">
           <div className="prose prose-slate max-w-none text-[var(--text)] space-y-10 leading-relaxed">
 
             <section>
@@ -93,6 +86,7 @@ export default async function AboutPage() {
 
           </div>
         </article>
+        </div>
 
         <div className="mt-16">
           <AppFooter />

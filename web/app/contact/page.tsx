@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
+import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { SITE_NAME, SITE_URL, getAlternates } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
@@ -55,15 +56,9 @@ export default async function ContactPage() {
       <UnifiedHeader />
 
       <main>
-        <article className="section-ux-prose">
-          <p className="text-xs font-bold uppercase tracking-widest text-[var(--primary)] mb-3">
-            {t('contact.badge')}
-          </p>
-          <h1 className="text-xl md:text-2xl font-semibold text-[var(--text)] mb-4">{t('contact.headline')}</h1>
-          <p className="text-[var(--text-muted)] text-lg leading-relaxed mb-10">
-            {t('contact.intro')}
-          </p>
-
+        <div className="section-ux-page">
+          <PageHeader label={t('contact.badge')} title={t('contact.headline')} tagline={t('contact.intro')} />
+          <article className="section-ux-prose">
           <div className="prose prose-slate max-w-none text-[var(--text)] space-y-8 leading-relaxed">
 
             <div className="grid sm:grid-cols-2 gap-4">
@@ -136,6 +131,7 @@ export default async function ContactPage() {
 
           </div>
         </article>
+        </div>
 
         <div className="mt-16">
           <AppFooter />

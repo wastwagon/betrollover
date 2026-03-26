@@ -4,6 +4,7 @@
  */
 const fr: Record<string, string> = {
   // ── Navigation ──────────────────────────────────────────────────────────
+  'nav.home': 'Accueil',
   'nav.browse': 'Parcourir',
   'nav.sports': 'Sports',
   'nav.football': 'Football',
@@ -159,6 +160,8 @@ const fr: Record<string, string> = {
   'home.explore_cta_title': 'Prêt à explorer ?',
   'home.explore_cta_desc': 'Découvrez les actualités sportives, les guides des tipsters et les ressources de la plateforme.',
   'how_it_works.faq_title': 'Questions fréquentes',
+  'how_it_works.page_label': 'Transparence',
+  'how_it_works.page_h1': 'Comment fonctionne BetRollover',
   'how_it_works.page_lead': 'Voici comment fonctionnent l\'escrow, le règlement et la vente de coupons — le même compte pour acheter ou vendre.',
   'how_it_works.buyers_h2': 'Pour les acheteurs : protection escrow',
   'how_it_works.buyers_li1': 'Parcourir & choisir — Trouvez tipsters et coupons sur le marché. Chaque coupon affiche taux de victoire, ROI et historique.',
@@ -937,7 +940,14 @@ const fr: Record<string, string> = {
   'contact.feedback_desc': "Rapports de bugs, idées de fonctionnalités ou commentaires généraux sur le produit. Nous lisons chaque message.",
   'contact.response_note': "Nous visons à répondre dans les 24 heures les jours ouvrables. Pour les problèmes spécifiques à votre compte, connectez-vous et utilisez le système de tickets de support intégré — c'est plus rapide.",
 
+  // ── Tools ───────────────────────────────────────────────────────────────────
+  'tools.badge': 'Outils',
+  'tools.converter_title': 'Convertisseur GHS',
+  'tools.converter_tagline':
+    'Convertissez le cedi ghanéen en grandes devises. À titre indicatif uniquement — toutes les transactions sont en GHS.',
+
   // ── Responsible use page ──────────────────────────────────────────────────
+  'resp.page_label': 'Jeu responsable',
   'resp.headline': 'Utilisation Responsable',
   'resp.commitment_title': 'Notre Engagement',
   'resp.commitment_desc': "BetRollover est une plateforme éducative de tipsters — pas un site de paris. Nous fournissons des pronostics sportifs et des données de performance de tipsters strictement à des fins d'information et de divertissement. Nous nous engageons à promouvoir une utilisation responsable de notre plateforme et un comportement responsable de nos utilisateurs dans toute activité associée.",

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
+import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
@@ -343,17 +344,33 @@ export default function LiveScoresPage() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <UnifiedHeader />
-      <main className="section-ux-page-narrow">
-        <nav className="text-sm text-[var(--text-muted)] mb-4">
-          <Link href="/marketplace" className="hover:text-[var(--primary)]">
-            {t('nav.marketplace')}
-          </Link>
-          <span className="mx-2 opacity-50">/</span>
-          <span className="text-[var(--text)] font-medium">{t('live_scores.page_title')}</span>
-        </nav>
+      <main className="section-ux-page">
+        <PageHeader
+          label={t('nav.live_scores')}
+          title={t('live_scores.page_title')}
+          tagline={t('live_scores.tagline')}
+        />
 
-        <h1 className="text-2xl md:text-3xl font-bold text-[var(--text)] mb-2">{t('live_scores.page_title')}</h1>
-        <p className="text-sm text-[var(--text-muted)] mb-6 max-w-xl">{t('live_scores.tagline')}</p>
+        <div className="flex flex-wrap items-center gap-2 mb-6">
+          <Link
+            href="/marketplace"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+          >
+            <span aria-hidden>🛒</span> {t('nav.marketplace')}
+          </Link>
+          <Link
+            href="/leaderboard"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+          >
+            <span aria-hidden>🏆</span> {t('nav.leaderboard')}
+          </Link>
+          <Link
+            href="/create-pick"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--primary)]/50 bg-[var(--primary)]/10 text-sm font-medium text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors"
+          >
+            <span aria-hidden>🎯</span> {t('nav.create_coupon')}
+          </Link>
+        </div>
 
         {loading && (
           <div className="space-y-3">

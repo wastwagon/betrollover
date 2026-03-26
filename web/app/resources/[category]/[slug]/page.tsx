@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useT } from '@/context/LanguageContext';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
+import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
 
@@ -71,35 +72,31 @@ export default function ResourceItemPage() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <UnifiedHeader />
-      <main className="section-ux-page-sm">
-        <Link
-          href="/discover?tab=guides"
-          className="inline-flex items-center gap-1 text-sm text-[var(--primary)] hover:underline mb-8 transition-colors"
-        >
-          ← {t('discover.back_to_discover')}
-        </Link>
+      <main className="section-ux-page">
+        <PageHeader
+          label={typeLabel}
+          title={item.title}
+          tagline={
+            [
+              item.category?.name,
+              item.durationMinutes ? t('discover.min_read', { n: String(item.durationMinutes) }) : '',
+            ]
+              .filter(Boolean)
+              .join(' · ') || undefined
+          }
+        />
+        <div className="flex flex-wrap items-center gap-2 mb-6">
+          <Link
+            href="/discover?tab=guides"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+          >
+            ← {t('discover.back_to_discover')}
+          </Link>
+        </div>
         <div className="mb-6">
           <AdSlot zoneSlug="resource-item-full" fullWidth className="w-full max-w-3xl" />
         </div>
         <article className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-6 sm:p-8 shadow-sm">
-          <div className="flex flex-wrap items-center gap-2 mb-3">
-            <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-[var(--primary)]/10 text-[var(--primary)]">
-              {typeLabel}
-            </span>
-            {item.durationMinutes && (
-              <span className="text-sm text-[var(--text-muted)]">
-                {t('discover.min_read', { n: String(item.durationMinutes) })}
-              </span>
-            )}
-            {item.category?.name && (
-              <span className="text-sm text-[var(--text-muted)]">
-                · {item.category.name}
-              </span>
-            )}
-          </div>
-          <h1 className="text-lg md:text-xl font-semibold text-[var(--text)] leading-tight mb-6">
-            {item.title}
-          </h1>
           <div className="prose prose-slate prose-sm max-w-none text-[var(--text)] text-[15px] leading-relaxed [&>p]:mb-4">
             {(item.content || '').trim()
               ? item.content.split(/\n\n+/).map((p, i) => <p key={i}>{p}</p>)

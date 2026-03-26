@@ -1,4 +1,5 @@
 import { UnifiedHeader } from '@/components/UnifiedHeader';
+import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
 import Link from 'next/link';
@@ -73,17 +74,13 @@ export default async function HowItWorksPage() {
       <UnifiedHeader />
 
       <main>
-        <article className="section-ux-prose">
-          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[var(--primary)] mb-2 sm:mb-3">
-            Transparency
-          </p>
-          <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-[var(--text)] mb-3 sm:mb-4 leading-tight">
-            How BetRollover Works
-          </h1>
-          <p className="text-[var(--text-muted)] text-sm sm:text-base md:text-lg leading-relaxed mb-8 sm:mb-10">
-            {t('how_it_works.page_lead')}
-          </p>
-
+        <div className="section-ux-page">
+          <PageHeader
+            label={t('how_it_works.page_label')}
+            title={t('how_it_works.page_h1')}
+            tagline={t('how_it_works.page_lead')}
+          />
+          <article className="section-ux-prose">
           <div className="prose prose-slate max-w-none text-[var(--text)] space-y-8 sm:space-y-10 leading-relaxed text-sm sm:text-[15px]">
 
             <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/40 p-4 sm:p-6 md:p-7">
@@ -153,6 +150,7 @@ export default async function HowItWorksPage() {
 
           </div>
         </article>
+        </div>
 
         <div className="mt-16">
           <AppFooter />

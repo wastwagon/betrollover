@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useT } from '@/context/LanguageContext';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
+import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
 import { ArticleJsonLd } from '@/components/ArticleJsonLd';
@@ -132,7 +133,6 @@ export default function NewsArticlePage() {
   }
 
   const sportLabel = article.sport ? getSportLabel(t, article.sport) : '';
-  const categoryColor = CATEGORY_COLORS[article.category] ?? 'bg-slate-100 text-slate-600';
   const categoryLabel = getCategoryLabel(t, article.category);
 
   return (
@@ -146,52 +146,38 @@ export default function NewsArticlePage() {
       />
       <UnifiedHeader />
       <main className="section-ux-page-wide">
+        <PageHeader
+          label={categoryLabel}
+          title={article.title}
+          tagline={
+            article.excerpt?.trim() ||
+            [article.sport ? `${SPORT_ICONS[article.sport]} ${sportLabel}` : '', article.publishedAt ? formatDate(article.publishedAt) : '']
+              .filter(Boolean)
+              .join(' · ') ||
+            undefined
+          }
+        />
 
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-[var(--text-muted)] mb-6 flex-wrap">
-          <Link href="/news" className="hover:text-[var(--primary)] transition-colors">{t('nav.news')}</Link>
-          <span>/</span>
-          {article.sport && (
-            <>
-              <Link href={`/news?sport=${article.sport}`} className="hover:text-[var(--primary)] transition-colors">
-                {SPORT_ICONS[article.sport]} {sportLabel}
-              </Link>
-              <span>/</span>
-            </>
-          )}
-          <span className="truncate max-w-[200px] text-[var(--text)]">{article.title}</span>
-        </nav>
+        <div className="flex flex-wrap items-center gap-2 mb-6">
+          <Link
+            href="/news"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+          >
+            ← {t('nav.news')}
+          </Link>
+          {article.sport ? (
+            <Link
+              href={`/news?sport=${article.sport}`}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            >
+              {SPORT_ICONS[article.sport]} {sportLabel}
+            </Link>
+          ) : null}
+        </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
           {/* ── Article ── */}
           <article className="flex-1 min-w-0">
-
-            {/* Badges */}
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${categoryColor}`}>
-                {categoryLabel}
-              </span>
-              {article.sport && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--primary-light)] text-[var(--primary)]">
-                  {SPORT_ICONS[article.sport]} {sportLabel}
-                </span>
-              )}
-              {article.publishedAt && (
-                <span className="text-sm text-[var(--text-muted)]">{formatDate(article.publishedAt)}</span>
-              )}
-            </div>
-
-            {/* Title */}
-            <h1 className="text-lg sm:text-xl font-semibold text-[var(--text)] leading-tight mb-4">
-              {article.title}
-            </h1>
-
-            {/* Excerpt / lead */}
-            {article.excerpt && (
-              <p className="text-lg text-[var(--text-muted)] leading-relaxed mb-6 border-l-4 border-[var(--primary)]/40 pl-4">
-                {article.excerpt}
-              </p>
-            )}
 
             {/* Hero image */}
             {article.imageUrl && (

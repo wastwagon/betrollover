@@ -6,6 +6,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useT } from '@/context/LanguageContext';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
+import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
 import { getApiUrl } from '@/lib/site-config';
@@ -224,7 +225,7 @@ export default function EarningsPage() {
     return (
       <div className="min-h-screen bg-[var(--bg)]">
         <UnifiedHeader />
-        <main className="section-ux-page-mid space-y-6">
+        <main className="section-ux-page space-y-6">
           {[1,2,3].map(i => <div key={i} className="h-32 rounded-2xl skeleton bg-[var(--card)]" />)}
         </main>
       </div>
@@ -234,14 +235,12 @@ export default function EarningsPage() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <UnifiedHeader />
-      <main className="section-ux-page-mid">
-
-        {/* Header */}
-        <div className="mb-8">
-          <p className="text-xs font-semibold text-[var(--primary)] uppercase tracking-wider mb-1">{t('earnings.title')}</p>
-          <h1 className="text-lg sm:text-xl font-semibold text-[var(--text)]">{t('earnings.subtitle')}</h1>
-          <p className="text-[var(--text-muted)] mt-1">{t('earnings.track_desc_full')}</p>
-        </div>
+      <main className="section-ux-page">
+        <PageHeader
+          label={t('earnings.title')}
+          title={t('earnings.subtitle')}
+          tagline={t('earnings.track_desc_full')}
+        />
 
         <div className="mb-6">
           <AdSlot zoneSlug="earnings-full" fullWidth className="w-full max-w-3xl" />

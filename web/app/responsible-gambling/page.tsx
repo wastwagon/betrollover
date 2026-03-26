@@ -1,4 +1,5 @@
 import { UnifiedHeader } from '@/components/UnifiedHeader';
+import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { SITE_URL, SITE_NAME, getAlternates } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
@@ -39,11 +40,13 @@ export default async function ResponsibleGamblingPage() {
       <UnifiedHeader />
 
       <main>
-        <article className="section-ux-prose">
-          <h1 className="text-xl md:text-2xl font-semibold text-[var(--text)] mb-6">
-            {t('resp.headline')}
-          </h1>
-
+        <div className="section-ux-page">
+          <PageHeader
+            label={t('resp.page_label')}
+            title={t('resp.headline')}
+            tagline={t('resp.commitment_desc')}
+          />
+          <article className="section-ux-prose">
           <div className="prose prose-slate max-w-none text-[var(--text)] space-y-6 leading-relaxed">
             <section>
               <h2 className="text-xl font-semibold mt-8 mb-3">{t('resp.commitment_title')}</h2>
@@ -98,6 +101,7 @@ export default async function ResponsibleGamblingPage() {
             </div>
           </div>
         </article>
+        </div>
 
         <div className="mt-16">
           <AppFooter />

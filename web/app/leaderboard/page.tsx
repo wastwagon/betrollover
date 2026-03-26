@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
+import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
@@ -114,15 +115,26 @@ export default function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <UnifiedHeader />
-      <main className="section-ux-page-mid">
+      <main className="section-ux-page">
+        <PageHeader
+          label={t('nav.leaderboard')}
+          title={t('seo.leaderboard_title').split(' | ')[0]}
+          tagline={t('seo.leaderboard_desc')}
+        />
 
-        {/* Header */}
-        <div className="mb-8">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold uppercase tracking-wide mb-3">
-            🏆 {t('nav.leaderboard')}
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--text)] mb-2">{t('seo.leaderboard_title').split(' | ')[0]}</h1>
-          <p className="text-[var(--text-muted)] text-lg">{t('seo.leaderboard_desc')}</p>
+        <div className="flex flex-wrap items-center gap-2 mb-6">
+          <Link
+            href="/tipsters"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+          >
+            <span aria-hidden>👤</span> {t('nav.tipsters')}
+          </Link>
+          <Link
+            href="/create-pick"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--primary)]/50 bg-[var(--primary)]/10 text-sm font-medium text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors"
+          >
+            <span aria-hidden>🎯</span> {t('nav.create_coupon')}
+          </Link>
         </div>
 
         {/* Period tabs */}

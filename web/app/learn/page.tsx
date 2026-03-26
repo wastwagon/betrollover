@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
+import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { SITE_NAME } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
@@ -11,17 +12,13 @@ export default async function LearnPage() {
     <div className="min-h-screen bg-[var(--bg)]">
       <UnifiedHeader />
       <main>
-        <article className="section-ux-prose">
-          <p className="text-xs font-bold uppercase tracking-widest text-[var(--primary)] mb-3">
-            {t('learn.education')}
-          </p>
-          <h1 className="text-xl md:text-2xl font-semibold text-[var(--text)] mb-4">
-            {t('learn.page_title')}
-          </h1>
-          <p className="text-lg text-[var(--text-muted)] leading-relaxed mb-10">
-            {t('learn.page_intro', { site: SITE_NAME })}
-          </p>
-
+        <div className="section-ux-page">
+          <PageHeader
+            label={t('learn.education')}
+            title={t('learn.page_title')}
+            tagline={t('learn.page_intro', { site: SITE_NAME })}
+          />
+          <article className="section-ux-prose">
           <div className="prose prose-slate max-w-none text-[var(--text)] space-y-12 leading-relaxed">
 
             <section>
@@ -158,6 +155,7 @@ export default async function LearnPage() {
             </div>
           </div>
         </article>
+        </div>
         <div className="mt-16">
           <AppFooter />
         </div>
