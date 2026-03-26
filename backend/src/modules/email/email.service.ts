@@ -396,7 +396,7 @@ export class EmailService {
         )}</p>`
       : '';
     const tipsterFormTrustNote = data.metadata?.tipsterForm
-      ? `<p style="font-size:11px;color:${BR.muted};margin:0 0 14px;">Stats source: BetRollover tipster performance table. Performance can change as new picks settle.</p>`
+      ? `<p style="font-size:11px;color:${BR.muted};margin:0 0 14px;">Stats source: settled coupon results on BetRollover. Performance can change as new picks settle.</p>`
       : '';
     const ctaGradient =
       accentColor === '#10b981'
@@ -491,7 +491,7 @@ export class EmailService {
               ? `<p style="margin:6px 0 0;font-size:11px;color:${BR.muted};">As of: ${this.escapeEmailText(asOfLabel)}</p>`
               : ''
           }
-          <p style="margin:6px 0 0;font-size:11px;color:${BR.muted};">Stats source: BetRollover tipster performance table.</p>
+          <p style="margin:6px 0 0;font-size:11px;color:${BR.muted};">Stats source: settled coupon results on BetRollover.</p>
           <p style="margin:4px 0 0;font-size:11px;color:${BR.muted};">Performance can change as new picks settle.</p>
         </div>`
       : '';
@@ -554,7 +554,7 @@ export class EmailService {
       .join('\n');
     const text = `New coupon from ${data.tipsterName}\n${
       data.tipsterForm
-        ? `\n${data.tipsterForm}${asOfLabel ? `\nAs of: ${asOfLabel}` : ''}\nStats source: BetRollover tipster performance table.\nPerformance can change as new picks settle.\n`
+        ? `\n${data.tipsterForm}${asOfLabel ? `\nAs of: ${asOfLabel}` : ''}\nStats source: settled coupon results on BetRollover.\nPerformance can change as new picks settle.\n`
         : '\n'
     }\nTitle: ${data.couponTitle}\nAccess: ${accessLabel}\nPrice: ${priceLabel}\nTotal Odds: ${totalOddsLabel}\n\n${textLegs}\n\nOpen: ${ctaUrl}\n\n— BetRollover`;
 

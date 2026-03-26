@@ -34,7 +34,8 @@ interface Notification {
   title: string;
   message: string;
   link: string | null;
-  isRead: boolean;
+  isRead?: boolean;
+  read?: boolean;
   createdAt: string;
 }
 
@@ -125,7 +126,7 @@ export function AppHeader({ slipCount }: AppHeaderProps) {
     router.refresh();
   };
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const unreadCount = notifications.filter((n) => !(n.isRead ?? n.read ?? false)).length;
 
   const isInGroup = (children: { href: string }[]) =>
     children.some((c) => c.href === pathname);

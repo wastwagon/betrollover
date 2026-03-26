@@ -139,15 +139,15 @@ export class SubscriptionSettlementService {
     await this.subRepo.save(sub);
   }
 
-  /** Win rate (0-100) for tipster's settled marketplace picks in period. Used for ROI guarantee. */
+  /** ROI % for tipster's settled marketplace coupons in period (same basis as marketplace stats). */
   private async computeRoiForPeriod(tipsterUserId: number, start: Date, end: Date): Promise<number> {
     const result = await this.dataSource.query(
       `
       SELECT
         COALESCE(
-          (SUM(CASE WHEN t.result = 'won' THEN 1 ELSE 0 END)::float / NULLIF(COUNT(*), 0)) * 100,
+          ((COALESCE(SUM(CASE WHEN t.result = 'won' THEN t.total_odds ELSE 0 END), 0) - NULLIF(COUNT(*), 0)) / NULLIF(COUNT(*), 0)) * 100,
           -100
-        ) as win_rate
+        ) as roi
       FROM accumulator_tickets t
       WHERE t.user_id = $1
         AND t.is_marketplace = true
@@ -158,6 +158,6 @@ export class SubscriptionSettlementService {
       [tipsterUserId, start, end],
     );
     const row = Array.isArray(result) && result.length > 0 ? result[0] : null;
-    return row && typeof row === 'object' && 'win_rate' in row ? Number(row.win_rate) : -100;
+    return row && typeof row === 'object' && 'roi' in row ? Number(row.roi) : -100;
   }
 }

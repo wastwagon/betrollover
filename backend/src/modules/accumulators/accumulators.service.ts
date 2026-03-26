@@ -460,7 +460,11 @@ export class AccumulatorsService {
       return { ...payload, picksRevealed: true };
     }
     if (viewerUserId == null) {
-      return { ...payload, picksRevealed: true };
+      return {
+        ...payload,
+        picksRevealed: false,
+        picks: this.buildRedactedPicksForCoupon((payload.picks as Array<{ id?: number }>) || []),
+      };
     }
     if (ticket.userId === viewerUserId) {
       return { ...payload, picksRevealed: true };
@@ -687,12 +691,108 @@ export class AccumulatorsService {
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
     const offset = Math.max(options?.offset ?? 0, 0);
     const adminFilterMode = options?.showPending !== undefined || options?.showNotStated !== undefined || options?.showSettled !== undefined;
+    const now = new Date();
+
+    // Optimized path for normal user marketplace view (pending + not started only).
+    // Keeps admin/diagnostic behavior untouched below.
+    if (!adminFilterMode && !includeAllListings) {
+      const qb = this.ticketRepo
+        .createQueryBuilder('t')
+        .innerJoin(PickMarketplace, 'pm', "pm.accumulator_id = t.id AND pm.status = 'active'")
+        .where("t.status = 'active'")
+        .andWhere("t.result = 'pending'")
+        .andWhere(
+          `NOT EXISTS (
+            SELECT 1
+            FROM accumulator_picks ap
+            WHERE ap.accumulator_id = t.id
+              AND ap.match_date IS NOT NULL
+              AND ap.match_date <= :now
+          )`,
+          { now },
+        );
+
+      if (options?.tipsterUsername) {
+        const tipsterUser = await this.usersRepo.findOne({
+          where: { username: options.tipsterUsername },
+          select: ['id'],
+        });
+        qb.andWhere('t.user_id = :uid', { uid: tipsterUser?.id ?? -1 });
+      } else if (options?.tipsterSearch) {
+        const ids = await this.resolveUserIdsByTipsterSearch(options.tipsterSearch);
+        if (ids != null) {
+          if (ids.length === 0) {
+            return { items: [], total: 0, hasMore: false };
+          }
+          qb.andWhere('t.user_id IN (:...ids)', { ids });
+        }
+      }
+
+      if (options?.sport) {
+        const SPORT_DISPLAY_MAP: Record<string, string> = {
+          football: 'Football',
+          basketball: 'Basketball',
+          rugby: 'Rugby',
+          mma: 'MMA',
+          volleyball: 'Volleyball',
+          hockey: 'Hockey',
+          american_football: 'American Football',
+          tennis: 'Tennis',
+          multi: 'Multi-Sport',
+          'multi-sport': 'Multi-Sport',
+        };
+        const s = options.sport.toLowerCase();
+        qb.andWhere('t.sport = :sport', { sport: SPORT_DISPLAY_MAP[s] ?? options.sport });
+      }
+
+      const totalRow = await qb.clone().select('COUNT(DISTINCT t.id)', 'cnt').getRawOne<{ cnt: string }>();
+      const total = Number(totalRow?.cnt ?? 0);
+      if (total === 0) return { items: [], total: 0, hasMore: false };
+
+      const idRows = await qb
+        .clone()
+        .select('t.id', 'id')
+        .orderBy('t.created_at', 'DESC')
+        .offset(offset)
+        .limit(limit)
+        .getRawMany<{ id: number }>();
+      const pageIds = idRows.map((r) => Number(r.id)).filter(Boolean);
+      if (pageIds.length === 0) return { items: [], total, hasMore: false };
+
+      const tickets = await this.ticketRepo.find({
+        where: { id: In(pageIds) },
+        relations: ['picks'],
+      });
+      const order = new Map(pageIds.map((id, i) => [id, i]));
+      tickets.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+
+      const rows = await this.marketplaceRepo.find({
+        where: { accumulatorId: In(pageIds), status: 'active' },
+        select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
+      });
+
+      const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
+      const itemsWithMeta = await this.enrichWithTipsterMetadata(enrichedTickets, rows, userId);
+      const rowByAccId = new Map(rows.map((r) => [r.accumulatorId, r]));
+      const ticketById = new Map(enrichedTickets.map((t) => [t.id, t]));
+      const items = await Promise.all(
+        itemsWithMeta.map((item) =>
+          this.applyCouponPickVisibility(
+            item as Record<string, unknown>,
+            ticketById.get((item as { id: number }).id)!,
+            rowByAccId.get((item as { id: number }).id) ?? null,
+            userId,
+          ),
+        ),
+      );
+      return { items, total, hasMore: offset + items.length < total };
+    }
 
     // Always exclude removed listings (status !== 'active'). Removed/deleted coupons not shown.
     const marketplaceWhere = { status: 'active' as const };
     const rows = await this.marketplaceRepo.find({
       where: marketplaceWhere,
-      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount'],
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
     });
     const accIds = rows.map((r) => r.accumulatorId);
     if (accIds.length === 0) {
@@ -738,8 +838,6 @@ export class AccumulatorsService {
     });
 
     const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
-    const now = new Date();
-
     let validTickets: typeof enrichedTickets;
     if (adminFilterMode) {
       const showPending = options!.showPending !== false;
@@ -774,7 +872,22 @@ export class AccumulatorsService {
       this.logger.debug(`getMarketplace: ${enrichedTickets.length} coupons filtered out`);
     }
     const paginated = validTickets.slice(offset, offset + limit);
-    const items = await this.enrichWithTipsterMetadata(paginated, rows, userId);
+    const rowByAccId = new Map(rows.map((r) => [r.accumulatorId, r]));
+    const rowsForPaginated = paginated
+      .map((t) => rowByAccId.get(t.id))
+      .filter((r): r is PickMarketplace => !!r);
+    const itemsWithMeta = await this.enrichWithTipsterMetadata(paginated, rowsForPaginated, userId);
+    const ticketById = new Map(paginated.map((t) => [t.id, t]));
+    const items = await Promise.all(
+      itemsWithMeta.map((item) =>
+        this.applyCouponPickVisibility(
+          item as Record<string, unknown>,
+          ticketById.get((item as { id: number }).id)!,
+          rowByAccId.get((item as { id: number }).id) ?? null,
+          userId,
+        ),
+      ),
+    );
     return { items, total, hasMore: offset + items.length < total };
   }
 
@@ -791,48 +904,91 @@ export class AccumulatorsService {
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
     const offset = Math.max(options?.offset ?? 0, 0);
 
-    let rows = await this.marketplaceRepo.find({
-      where: { status: 'active' },
-      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount'],
-    });
-    if (options?.freeOnly) {
-      rows = rows.filter((r) => Number(r.price) === 0);
-    }
-    const accIds = rows.map((r) => r.accumulatorId);
-    if (accIds.length === 0) {
-      return { items: [], total: 0, hasMore: false };
-    }
+    const now = new Date();
+    const qb = this.ticketRepo
+      .createQueryBuilder('t')
+      .innerJoin(PickMarketplace, 'pm', "pm.accumulator_id = t.id AND pm.status = 'active'")
+      .where("t.status = 'active'")
+      .andWhere("t.result = 'pending'")
+      .andWhere(
+        `NOT EXISTS (
+          SELECT 1
+          FROM accumulator_picks ap
+          WHERE ap.accumulator_id = t.id
+            AND ap.match_date IS NOT NULL
+            AND ap.match_date <= :now
+        )`,
+        { now },
+      );
 
-    const ticketWhere: any = { id: In(accIds), status: 'active', result: 'pending' };
+    if (options?.freeOnly) {
+      qb.andWhere('pm.price = 0');
+    }
     if (options?.sport) {
       const SPORT_DISPLAY_MAP: Record<string, string> = {
-        football: 'Football', basketball: 'Basketball', rugby: 'Rugby', mma: 'MMA',
-        volleyball: 'Volleyball', hockey: 'Hockey', american_football: 'American Football',
-        tennis: 'Tennis', multi: 'Multi-Sport', 'multi-sport': 'Multi-Sport',
+        football: 'Football',
+        basketball: 'Basketball',
+        rugby: 'Rugby',
+        mma: 'MMA',
+        volleyball: 'Volleyball',
+        hockey: 'Hockey',
+        american_football: 'American Football',
+        tennis: 'Tennis',
+        multi: 'Multi-Sport',
+        'multi-sport': 'Multi-Sport',
       };
       const s = options.sport.toLowerCase();
-      ticketWhere.sport = SPORT_DISPLAY_MAP[s] ?? options.sport;
+      qb.andWhere('t.sport = :sport', { sport: SPORT_DISPLAY_MAP[s] ?? options.sport });
     }
     if (options?.tipsterSearch) {
       const ids = await this.resolveUserIdsByTipsterSearch(options.tipsterSearch);
-      this.applyTipsterFilterToTicketWhere(ticketWhere, ids);
+      if (ids != null) {
+        if (ids.length === 0) return { items: [], total: 0, hasMore: false };
+        qb.andWhere('t.user_id IN (:...ids)', { ids });
+      }
     }
+
+    const totalRow = await qb.clone().select('COUNT(DISTINCT t.id)', 'cnt').getRawOne<{ cnt: string }>();
+    const total = Number(totalRow?.cnt ?? 0);
+    if (total === 0) return { items: [], total: 0, hasMore: false };
+
+    const idRows = await qb
+      .clone()
+      .select('t.id', 'id')
+      .orderBy('t.created_at', 'DESC')
+      .offset(offset)
+      .limit(limit)
+      .getRawMany<{ id: number }>();
+    const pageIds = idRows.map((r) => Number(r.id)).filter(Boolean);
+    if (pageIds.length === 0) return { items: [], total, hasMore: false };
+
     const tickets = await this.ticketRepo.find({
-      where: ticketWhere,
+      where: { id: In(pageIds) },
       relations: ['picks'],
-      order: { createdAt: 'DESC' },
     });
+    const order = new Map(pageIds.map((id, i) => [id, i]));
+    tickets.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
     const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
-    const now = new Date();
-    const validTickets = enrichedTickets.filter((ticket: any) => {
-      if (!ticket.picks?.length) return false;
-      return !ticket.picks.some((pick: any) => pick.matchDate && new Date(pick.matchDate) <= now);
+
+    const rowsForPaginated = await this.marketplaceRepo.find({
+      where: { accumulatorId: In(pageIds), status: 'active' },
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
     });
-    const total = validTickets.length;
-    const paginated = validTickets.slice(offset, offset + limit);
-    const rowsForPaginated = paginated.map((t) => rows.find((r) => r.accumulatorId === t.id)).filter(Boolean) as PickMarketplace[];
-    const items = await this.enrichWithTipsterMetadata(paginated, rowsForPaginated);
-    return { items, total, hasMore: offset + paginated.length < total };
+
+    const itemsWithMeta = await this.enrichWithTipsterMetadata(enrichedTickets, rowsForPaginated);
+    const rowByAccId = new Map(rowsForPaginated.map((r) => [r.accumulatorId, r]));
+    const ticketById = new Map(enrichedTickets.map((t) => [t.id, t]));
+    const items = await Promise.all(
+      itemsWithMeta.map((item) =>
+        this.applyCouponPickVisibility(
+          item as Record<string, unknown>,
+          ticketById.get((item as { id: number }).id)!,
+          rowByAccId.get((item as { id: number }).id) ?? null,
+          undefined,
+        ),
+      ),
+    );
+    return { items, total, hasMore: offset + items.length < total };
   }
 
   /**

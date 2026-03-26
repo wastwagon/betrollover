@@ -8,6 +8,15 @@ import { User } from '../users/entities/user.entity';
 export class AccumulatorsController {
   constructor(private readonly accumulatorsService: AccumulatorsService) {}
 
+  /** Compatibility envelope: keep camelCase and provide snake_case aliases. */
+  private withPageAliases<T extends { items: unknown[]; total: number; hasMore: boolean }>(payload: T) {
+    return {
+      ...payload,
+      has_more: payload.hasMore,
+      total_count: payload.total,
+    };
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard)
   create(@CurrentUser() user: User, @Body() dto: CreateAccumulatorDto) {
@@ -36,21 +45,22 @@ export class AccumulatorsController {
 
   @Get('subscription-feed')
   @UseGuards(JwtAuthGuard)
-  getSubscriptionFeed(
+  async getSubscriptionFeed(
     @CurrentUser() user: { id: number },
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
     const limitVal = limit != null ? Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100) : undefined;
     const offsetVal = offset != null ? Math.max(parseInt(offset, 10) || 0, 0) : undefined;
-    return this.accumulatorsService.getSubscriptionFeed(user.id, {
+    const data = await this.accumulatorsService.getSubscriptionFeed(user.id, {
       limit: limitVal,
       offset: offsetVal,
     });
+    return this.withPageAliases(data);
   }
 
   @Get('marketplace/public')
-  getMarketplacePublic(
+  async getMarketplacePublic(
     @Query('sport') sport?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
@@ -60,18 +70,19 @@ export class AccumulatorsController {
     const limitVal = limit != null ? Math.min(Math.max(parseInt(limit, 10) || 24, 1), 100) : undefined;
     const offsetVal = offset != null ? Math.max(parseInt(offset, 10) || 0, 0) : undefined;
     const tipQ = tipsterSearch?.trim();
-    return this.accumulatorsService.getMarketplacePublicList({
+    const data = await this.accumulatorsService.getMarketplacePublicList({
       limit: limitVal,
       offset: offsetVal,
       sport: sport || undefined,
       freeOnly: freeOnly === 'true',
       tipsterSearch: tipQ || undefined,
     });
+    return this.withPageAliases(data);
   }
 
   @Get('marketplace')
   @UseGuards(JwtAuthGuard)
-  getMarketplace(
+  async getMarketplace(
     @CurrentUser() user: User,
     @Query('includeAll') includeAll?: string,
     @Query('showPending') showPending?: string,
@@ -100,7 +111,8 @@ export class AccumulatorsController {
       opts.showNotStated = showNotStated === undefined ? true : showNotStated !== 'false';
       opts.showSettled = showSettled === 'true';
     }
-    return this.accumulatorsService.getMarketplace(user.id, includeAllListings, opts);
+    const data = await this.accumulatorsService.getMarketplace(user.id, includeAllListings, opts);
+    return this.withPageAliases(data);
   }
 
   @Get('featured')

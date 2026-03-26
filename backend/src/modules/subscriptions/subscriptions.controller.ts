@@ -8,6 +8,15 @@ import { SubscriptionsService, CreatePackageDto } from './subscriptions.service'
 export class SubscriptionsController {
   constructor(private readonly subscriptionsService: SubscriptionsService) {}
 
+  /** Compatibility envelope: keep camelCase and provide snake_case aliases. */
+  private withPageAliases<T extends { items: unknown[]; total: number; hasMore: boolean }>(payload: T) {
+    return {
+      ...payload,
+      has_more: payload.hasMore,
+      total_count: payload.total,
+    };
+  }
+
   @Post('packages')
   @UseGuards(JwtAuthGuard)
   createPackage(@CurrentUser() user: User, @Body() dto: CreatePackageDto) {
@@ -16,16 +25,17 @@ export class SubscriptionsController {
 
   /** Public: browse all active VIP packages (tipster performance included). */
   @Get('marketplace')
-  listMarketplace(
+  async listMarketplace(
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
     const l = limit ? parseInt(limit, 10) : undefined;
     const o = offset ? parseInt(offset, 10) : undefined;
-    return this.subscriptionsService.getMarketplacePackages({
+    const data = await this.subscriptionsService.getMarketplacePackages({
       limit: Number.isFinite(l) ? l : undefined,
       offset: Number.isFinite(o) ? o : undefined,
     });
+    return this.withPageAliases(data);
   }
 
   @Get('packages')

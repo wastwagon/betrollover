@@ -839,7 +839,7 @@ export default function CouponDetailPage() {
                         </div>
                       </div>
                       <Link
-                        href="/dashboard/subscriptions"
+                        href="/subscriptions"
                         className="block text-center text-sm text-[var(--primary)] hover:underline"
                       >
                         Manage subscriptions →

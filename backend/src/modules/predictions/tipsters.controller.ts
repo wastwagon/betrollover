@@ -74,7 +74,7 @@ export class TipstersController {
       search: search?.trim() || undefined,
       sport: sportVal,
     });
-    return { total: tipsters.length, tipsters };
+    return { total: tipsters.length, total_count: tipsters.length, tipsters };
   }
 
   @Get(':username')

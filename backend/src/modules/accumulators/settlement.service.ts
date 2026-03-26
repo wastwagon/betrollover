@@ -450,12 +450,22 @@ export class SettlementService {
 
     const allPendingTickets = await this.ticketRepo.find({
       where: { result: 'pending' },
-      select: ['id', 'userId', 'isMarketplace', 'price'],
+      select: ['id', 'userId', 'isMarketplace', 'price', 'title'],
     });
+    const pendingTicketIds = allPendingTickets.map((t) => t.id);
+    const pendingTicketPicks = pendingTicketIds.length
+      ? await this.pickRepo.find({ where: { accumulatorId: In(pendingTicketIds) } })
+      : [];
+    const picksByTicketId = new Map<number, AccumulatorPick[]>();
+    for (const p of pendingTicketPicks) {
+      const list = picksByTicketId.get(p.accumulatorId) ?? [];
+      list.push(p);
+      picksByTicketId.set(p.accumulatorId, list);
+    }
 
     let ticketsSettled = 0;
     for (const ticket of allPendingTickets) {
-      const picks = await this.pickRepo.find({ where: { accumulatorId: ticket.id } });
+      const picks = picksByTicketId.get(ticket.id) ?? [];
       const allSettled = picks.length > 0 && picks.every((p) => p.result !== 'pending');
       if (!allSettled) continue;
 
@@ -468,8 +478,7 @@ export class SettlementService {
 
       const priceNum = Number(ticket.price);
       if (ticket.isMarketplace && priceNum > 0) {
-        const fullTicket = await this.ticketRepo.findOne({ where: { id: ticket.id }, select: ['title'] });
-        await this.settleEscrow(ticket.id, ticket.userId, ticket.result, fullTicket?.title ?? `Pick #${ticket.id}`);
+        await this.settleEscrow(ticket.id, ticket.userId, ticket.result, ticket.title ?? `Pick #${ticket.id}`);
       }
     }
 

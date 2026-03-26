@@ -5,12 +5,13 @@ import { Notification } from './entities/notification.entity';
 import { User } from '../users/entities/user.entity';
 import { TipsterFollow } from '../predictions/entities/tipster-follow.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
+import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
 import { EmailService } from '../email/email.service';
 import { PushService } from '../push/push.service';
 
 const PUSH_NOTIFICATION_TYPES = new Set([
   'subscription', 'subscription_refund', 'subscription_payout',
-  'pick_published', 'new_pick_from_followed', 'settlement', 'subscription_payout',
+  'pick_published', 'new_pick_from_followed', 'settlement',
 ]);
 
 @Injectable()
@@ -26,6 +27,8 @@ export class NotificationsService {
     private tipsterFollowRepo: Repository<TipsterFollow>,
     @InjectRepository(Tipster)
     private tipsterRepo: Repository<Tipster>,
+    @InjectRepository(AccumulatorTicket)
+    private ticketRepo: Repository<AccumulatorTicket>,
     private emailService: EmailService,
     @Optional() private pushService?: PushService,
   ) {}
@@ -40,14 +43,30 @@ export class NotificationsService {
   } | null> {
     const tipster = await this.tipsterRepo.findOne({
       where: { userId: tipsterUserId },
-      select: ['winRate', 'roi', 'currentStreak', 'totalPredictions', 'updatedAt'],
+      select: ['id', 'currentStreak'],
     });
     if (!tipster) return null;
-    const winRate = Number(tipster.winRate ?? 0).toFixed(1);
-    const roi = Number(tipster.roi ?? 0).toFixed(2);
+    // Align email form metrics with marketplace/profile stats: settled tickets basis.
+    const row = await this.ticketRepo
+      .createQueryBuilder('t')
+      .select('COUNT(*)', 'total')
+      .addSelect('SUM(CASE WHEN t.result = :won THEN 1 ELSE 0 END)', 'won')
+      .addSelect('SUM(CASE WHEN t.result = :lost THEN 1 ELSE 0 END)', 'lost')
+      .addSelect('COALESCE(SUM(CASE WHEN t.result = :won THEN t.totalOdds ELSE 0 END), 0)', 'totalOddsWon')
+      .where('t.userId = :userId', { userId: tipsterUserId })
+      .setParameter('won', 'won')
+      .setParameter('lost', 'lost')
+      .getRawOne<{ total: string; won: string; lost: string; totalOddsWon: string }>();
+    const total = Number(row?.total ?? 0);
+    const won = Number(row?.won ?? 0);
+    const lost = Number(row?.lost ?? 0);
+    const settled = won + lost;
+    const totalOddsWon = Number(row?.totalOddsWon ?? 0);
+    const winRate = (settled > 0 ? (won / settled) * 100 : 0).toFixed(1);
+    const roi = (settled > 0 ? ((totalOddsWon - settled) / settled) * 100 : 0).toFixed(2);
     const streak = Number(tipster.currentStreak ?? 0);
-    const totalPicks = String(Number(tipster.totalPredictions ?? 0));
-    const asOf = (tipster.updatedAt ?? new Date()).toISOString();
+    const totalPicks = String(total);
+    const asOf = new Date().toISOString();
     const streakLabel = streak >= 0 ? `W${streak}` : `L${Math.abs(streak)}`;
     return {
       label: `Form: ${winRate}% Win Rate · ROI ${roi}% · Streak ${streakLabel} · ${totalPicks} picks`,
@@ -60,12 +79,14 @@ export class NotificationsService {
   }
 
   async list(userId: number, limit = 20) {
-    return this.repo.find({
+    const items = await this.repo.find({
       where: { userId },
       order: { createdAt: 'DESC' },
       take: limit,
       select: ['id', 'type', 'title', 'message', 'link', 'icon', 'isRead', 'createdAt'],
     });
+    // Backward-compatible alias (`read`) while `isRead` remains canonical.
+    return items.map((n) => ({ ...n, read: n.isRead }));
   }
 
   async markRead(userId: number, id: number) {

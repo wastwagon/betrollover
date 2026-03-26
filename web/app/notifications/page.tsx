@@ -16,8 +16,13 @@ interface Notification {
   title: string;
   message: string;
   link: string | null;
-  isRead: boolean;
+  isRead?: boolean;
+  read?: boolean;
   createdAt: string;
+}
+
+function isNotificationRead(n: Notification): boolean {
+  return n.isRead ?? n.read ?? false;
 }
 
 const TYPE_META: Record<string, { icon: string; color: string }> = {
@@ -84,7 +89,7 @@ export default function NotificationsPage() {
   };
 
   const markAllRead = async () => {
-    const unread = items.filter((n) => !n.isRead);
+    const unread = items.filter((n) => !isNotificationRead(n));
     if (unread.length === 0) return;
     setMarkingAll(true);
     const token = localStorage.getItem('token');
@@ -101,10 +106,10 @@ export default function NotificationsPage() {
     setMarkingAll(false);
   };
 
-  const unreadCount = useMemo(() => items.filter((n) => !n.isRead).length, [items]);
+  const unreadCount = useMemo(() => items.filter((n) => !isNotificationRead(n)).length, [items]);
 
   const displayed = useMemo(
-    () => (filter === 'unread' ? items.filter((n) => !n.isRead) : items),
+    () => (filter === 'unread' ? items.filter((n) => !isNotificationRead(n)) : items),
     [items, filter],
   );
 
@@ -190,7 +195,7 @@ export default function NotificationsPage() {
                 const content = (
                   <div
                     className={`card-gradient rounded-2xl p-4 transition-all duration-200 hover:shadow-md ${
-                      !n.isRead
+                      !isNotificationRead(n)
                         ? 'border-l-4 border-l-[var(--primary)]'
                         : 'opacity-75 hover:opacity-100'
                     }`}
@@ -204,14 +209,14 @@ export default function NotificationsPage() {
                       {/* Body */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <p className={`text-sm font-semibold ${n.isRead ? 'text-[var(--text)]' : 'text-[var(--text)]'}`}>
+                          <p className={`text-sm font-semibold ${isNotificationRead(n) ? 'text-[var(--text)]' : 'text-[var(--text)]'}`}>
                             {n.title}
                           </p>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <span className="text-[10px] text-[var(--text-muted)] whitespace-nowrap">
                               {timeAgo(n.createdAt)}
                             </span>
-                            {!n.isRead && (
+                            {!isNotificationRead(n) && (
                               <span className="w-2 h-2 rounded-full bg-[var(--primary)] flex-shrink-0" />
                             )}
                           </div>
@@ -221,7 +226,7 @@ export default function NotificationsPage() {
                         </p>
                         {/* Actions row */}
                         <div className="flex items-center gap-3 mt-2">
-                          {!n.isRead && (
+                          {!isNotificationRead(n) && (
                             <button
                               type="button"
                               onClick={(e) => {

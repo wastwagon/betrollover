@@ -97,22 +97,27 @@ export class FixtureSchedulerService implements OnModuleInit {
     await this.syncStatusRepo.upsert(payload as any, ['syncType']);
   }
 
-  /** Skip if this sync type is already running (avoids overlapping runs). Treats running > 1 hour as stale (e.g. crash). */
-  private async isSyncRunning(syncType: string): Promise<boolean> {
-    const row = await this.syncStatusRepo.findOne({
-      where: { syncType },
-      select: ['status', 'updatedAt'],
-    });
-    if (row?.status !== 'running') return false;
-    const updatedAt = row.updatedAt as Date | undefined;
-    if (updatedAt) {
-      const staleMs = 60 * 60 * 1000; // 1 hour
-      if (Date.now() - new Date(updatedAt).getTime() > staleMs) {
-        this.logger.warn(`${syncType} sync was running for >1h (stale), allowing new run`);
-        return false;
-      }
-    }
-    return true;
+  /**
+   * Atomically claim a sync lock by switching status to "running".
+   * Prevents multi-instance overlap by doing lock acquisition in one SQL statement.
+   * A stale running lock (>1h) is considered claimable.
+   */
+  private async tryStartSync(syncType: string): Promise<boolean> {
+    const staleBefore = new Date(Date.now() - 60 * 60 * 1000);
+    const rows = await this.dataSource.query(
+      `
+      INSERT INTO sync_status (sync_type, status, last_sync_count, updated_at)
+      VALUES ($1, 'running', 0, NOW())
+      ON CONFLICT (sync_type)
+      DO UPDATE SET
+        status = 'running',
+        updated_at = NOW()
+      WHERE sync_status.status <> 'running' OR sync_status.updated_at < $2
+      RETURNING id
+      `,
+      [syncType, staleBefore],
+    );
+    return Array.isArray(rows) && rows.length > 0;
   }
 
   /** Small timing helper for cron observability in logs. */
@@ -126,6 +131,23 @@ export class FixtureSchedulerService implements OnModuleInit {
     }
   }
 
+  /** Try to run settlement once; skip if another settlement run is already active. */
+  private async runSettlementIfIdle(reason: string): Promise<void> {
+    if (!(await this.tryStartSync('settlement'))) {
+      this.logger.debug(`Settlement already running, skip trigger from ${reason}`);
+      return;
+    }
+    try {
+      const result = await this.timedRun(`settlement (${reason})`, async () =>
+        this.settlementService.checkAndSettleAccumulators(),
+      );
+      await this.updateSyncStatus('settlement', 'success', result.ticketsSettled);
+    } catch (error: any) {
+      this.logger.error(`Error in settlement trigger (${reason})`, error);
+      await this.updateSyncStatus('settlement', 'error', 0, error?.message ?? 'unknown error');
+    }
+  }
+
   /**
    * Update live fixtures every minute (Ultra-friendly; one /fixtures/live API call per run).
    * Skips if previous run still in progress.
@@ -133,9 +155,8 @@ export class FixtureSchedulerService implements OnModuleInit {
   @Cron('*/1 * * * *')
   async handleLiveFixtureUpdate() {
     if (!this.isSchedulingEnabled()) return;
-    if (await this.isSyncRunning('live')) return;
+    if (!(await this.tryStartSync('live'))) return;
     this.logger.debug('Running scheduled live fixture update...');
-    await this.updateSyncStatus('live', 'running');
     try {
       const result = await this.timedRun('live fixture sync', async () =>
         this.fixtureUpdateService.updateLiveFixtures(),
@@ -144,8 +165,8 @@ export class FixtureSchedulerService implements OnModuleInit {
         this.logger.log(`Updated ${result.updated} live fixtures`);
         await this.updateSyncStatus('live', 'success', result.updated);
 
-        // Trigger settlement check for updated fixtures
-        await this.settlementService.checkAndSettleAccumulators();
+        // Trigger settlement check for updated fixtures (guarded from overlap)
+        await this.runSettlementIfIdle('live');
       } else {
         await this.updateSyncStatus('live', 'success', 0);
       }
@@ -162,9 +183,8 @@ export class FixtureSchedulerService implements OnModuleInit {
   @Cron('*/1 * * * *')
   async handleFinishedFixtureUpdate() {
     if (!this.isSchedulingEnabled()) return;
-    if (await this.isSyncRunning('finished')) return;
+    if (!(await this.tryStartSync('finished'))) return;
     this.logger.debug('Running scheduled finished fixture update...');
-    await this.updateSyncStatus('finished', 'running');
     try {
       const result = await this.timedRun('finished fixture sync', async () =>
         this.fixtureUpdateService.updateFinishedFixtures(),
@@ -173,8 +193,8 @@ export class FixtureSchedulerService implements OnModuleInit {
         this.logger.log(`Updated ${result.updated} finished fixtures`);
         await this.updateSyncStatus('finished', 'success', result.updated);
 
-        // Trigger settlement check immediately after fixture updates
-        await this.settlementService.checkAndSettleAccumulators();
+        // Trigger settlement check immediately after fixture updates (guarded from overlap)
+        await this.runSettlementIfIdle('finished');
       } else {
         await this.updateSyncStatus('finished', 'success', 0);
       }
@@ -196,12 +216,11 @@ export class FixtureSchedulerService implements OnModuleInit {
       this.logger.debug('Football sync disabled (ENABLE_FOOTBALL_SYNC=false), skipping');
       return;
     }
-    if (await this.isSyncRunning('fixtures')) {
+    if (!(await this.tryStartSync('fixtures'))) {
       this.logger.warn('Fixture sync already running, skipping this tick');
       return;
     }
     this.logger.log('Running scheduled full fixture sync (7 days, enabled leagues)...');
-    await this.updateSyncStatus('fixtures', 'running');
     try {
       const result = await this.footballSyncService.sync();
       this.logger.log(
@@ -228,12 +247,11 @@ export class FixtureSchedulerService implements OnModuleInit {
   @Cron('0 */2 * * *') // Every 2 hours
   async handleOddsSync() {
     if (!this.isSchedulingEnabled()) return;
-    if (await this.isSyncRunning('odds')) {
+    if (!(await this.tryStartSync('odds'))) {
       this.logger.debug('Odds sync already running, skipping');
       return;
     }
     this.logger.debug('Running scheduled odds sync for upcoming fixtures...');
-    await this.updateSyncStatus('odds', 'running');
     try {
       const now = new Date();
       const lookaheadEnd = new Date(now.getTime() + SYNC_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
@@ -286,15 +304,11 @@ export class FixtureSchedulerService implements OnModuleInit {
   @Cron('45 23 * * *')
   async handleOddsForceRefresh() {
     if (!this.isSchedulingEnabled()) return;
-    if (await this.isSyncRunning('odds_refresh')) {
+    if (!(await this.tryStartSync('odds_refresh'))) {
       this.logger.debug('Odds force refresh already running, skipping');
       return;
     }
     this.logger.log('Running daily odds force refresh (BTTS, Correct Score, etc.)...');
-    await this.syncStatusRepo.upsert(
-      { syncType: 'odds_refresh', status: 'running' },
-      ['syncType'],
-    );
     try {
       const now = new Date();
       const lookaheadEnd = new Date(now.getTime() + SYNC_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
@@ -337,12 +351,11 @@ export class FixtureSchedulerService implements OnModuleInit {
   @Cron('5 0 * * *')
   async handleDailyPredictionGeneration() {
     if (!this.isSchedulingEnabled()) return;
-    if (await this.isSyncRunning('predictions')) {
+    if (!(await this.tryStartSync('predictions'))) {
       this.logger.warn('Prediction generation already running, skipping');
       return;
     }
     this.logger.log('Running scheduled daily prediction generation...');
-    await this.updateSyncStatus('predictions', 'running');
     try {
       const result = await this.predictionEngine.generateDailyPredictionsForAllTipsters();
       this.logger.log(`Prediction generation completed: ${result.length} predictions`);
@@ -365,12 +378,11 @@ export class FixtureSchedulerService implements OnModuleInit {
       this.logger.debug(`Catch-up skipped: ${count} predictions already exist for today`);
       return;
     }
-    if (await this.isSyncRunning('predictions')) {
+    if (!(await this.tryStartSync('predictions'))) {
       this.logger.warn('Prediction generation already running, skipping catch-up');
       return;
     }
     this.logger.log('Catch-up: no predictions for today, running generation...');
-    await this.updateSyncStatus('predictions', 'running');
     try {
       const result = await this.predictionEngine.generateDailyPredictionsForAllTipsters();
       this.logger.log(`Catch-up completed: ${result.length} predictions`);
@@ -389,12 +401,11 @@ export class FixtureSchedulerService implements OnModuleInit {
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async handleFixtureArchive() {
     if (!this.isSchedulingEnabled()) return;
-    if (await this.isSyncRunning('archive')) {
+    if (!(await this.tryStartSync('archive'))) {
       this.logger.debug('Fixture archive already running, skipping');
       return;
     }
     this.logger.log('Running scheduled fixture archive (90+ days old, not referenced by picks)...');
-    await this.updateSyncStatus('archive', 'running');
     try {
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - 90);
@@ -450,15 +461,14 @@ export class FixtureSchedulerService implements OnModuleInit {
   @Cron('0 */2 * * *')
   async handleVolleyballResultsUpdate() {
     if (!this.isSchedulingEnabled()) return;
-    if (await this.isSyncRunning('volleyball_results')) return;
+    if (!(await this.tryStartSync('volleyball_results'))) return;
     this.logger.debug('Running volleyball results update...');
-    await this.updateSyncStatus('volleyball_results', 'running');
     try {
       const result = await this.volleyballSyncService.updateFinishedVolleyball();
       if (result.updated > 0) {
         this.logger.log(`Updated ${result.updated} volleyball result(s)`);
         await this.updateSyncStatus('volleyball_results', 'success', result.updated);
-        await this.settlementService.checkAndSettleAccumulators();
+        await this.runSettlementIfIdle('volleyball_results');
       } else {
         await this.updateSyncStatus('volleyball_results', 'success', 0);
       }
@@ -475,12 +485,11 @@ export class FixtureSchedulerService implements OnModuleInit {
   @Cron('*/1 * * * *')
   async handlePeriodicSettlement() {
     if (!this.isSchedulingEnabled()) return;
-    if (await this.isSyncRunning('settlement')) {
+    if (!(await this.tryStartSync('settlement'))) {
       this.logger.debug('Periodic settlement already running, skipping');
       return;
     }
     this.logger.debug('Running periodic settlement check...');
-    await this.updateSyncStatus('settlement', 'running');
     try {
       const result = await this.timedRun('periodic settlement', async () =>
         this.settlementService.runSettlement(),
