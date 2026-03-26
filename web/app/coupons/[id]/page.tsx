@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -10,7 +10,6 @@ import { AdSlot } from '@/components/AdSlot';
 import { TeamBadge } from '@/components/TeamBadge';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
-import { LeagueInsightsPanel } from '@/components/LeagueInsightsPanel';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Pick {
@@ -387,40 +386,6 @@ export default function CouponDetailPage() {
     });
   };
 
-  const insightLeagues = useMemo(() => {
-    const picks = coupon?.picks ?? [];
-    const map = new Map<number, { season: number | null; label: string }>();
-    for (const p of picks) {
-      const ps = (p.sport || '').toLowerCase();
-      if (ps !== 'football' && ps !== 'soccer') continue;
-      const rawId = p.leagueApiId as number | string | null | undefined;
-      const id = typeof rawId === 'number' ? rawId : rawId != null ? Number(rawId) : NaN;
-      if (!Number.isFinite(id)) continue;
-      if (!map.has(id)) {
-        map.set(id, {
-          season: p.leagueSeason != null ? Number(p.leagueSeason) : null,
-          label: (p.leagueLabel && String(p.leagueLabel).trim()) || `League ${id}`,
-        });
-      }
-    }
-    return [...map.entries()];
-  }, [coupon?.picks]);
-
-  const [insightLeagueKey, setInsightLeagueKey] = useState<string | null>(null);
-  useEffect(() => {
-    if (insightLeagues.length === 0) {
-      setInsightLeagueKey(null);
-      return;
-    }
-    const keys = insightLeagues.map(([apiId]) => String(apiId));
-    setInsightLeagueKey((prev) => (prev && keys.includes(prev) ? prev : keys[0]!));
-  }, [insightLeagues]);
-
-  const selectedInsight =
-    insightLeagueKey != null
-      ? insightLeagues.find(([apiId]) => String(apiId) === insightLeagueKey)
-      : insightLeagues[0];
-
   if (loading) return <CouponDetailSkeleton />;
 
   if (!coupon) {
@@ -767,37 +732,6 @@ export default function CouponDetailPage() {
           <aside className="lg:w-72 flex-shrink-0">
             <div className="sticky top-24 space-y-4">
               <AdSlot zoneSlug="coupon-detail-sidebar" />
-
-              {insightLeagues.length > 0 && selectedInsight && (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider px-1">
-                    League context
-                  </p>
-                  {insightLeagues.length > 1 && (
-                    <label htmlFor="coupon-insight-league" className="block px-1">
-                      <span className="sr-only">Competition for table and scorers</span>
-                      <select
-                        id="coupon-insight-league"
-                        value={insightLeagueKey ?? String(selectedInsight[0])}
-                        onChange={(e) => setInsightLeagueKey(e.target.value)}
-                        className="w-full text-sm rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] px-3 py-2 font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                      >
-                        {insightLeagues.map(([apiId, meta]) => (
-                          <option key={apiId} value={String(apiId)}>
-                            {meta.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
-                  <LeagueInsightsPanel
-                    key={selectedInsight[0]}
-                    leagueApiId={selectedInsight[0]}
-                    season={selectedInsight[1].season}
-                    subtitle={selectedInsight[1].label}
-                  />
-                </div>
-              )}
 
               {/* Purchase / receipt card — guests on settled coupons see sign-up CTA instead */}
               <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-hidden shadow-sm">
