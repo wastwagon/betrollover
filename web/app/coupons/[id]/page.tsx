@@ -58,6 +58,8 @@ interface Coupon {
   totalPicks: number;
   /** false = API withheld leg details until purchase (paid marketplace). */
   picksRevealed?: boolean;
+  /** true when access to paid picks is unlocked via an active subscription to this tipster. */
+  accessViaSubscription?: boolean;
   price: number;
   purchaseCount?: number;
   status?: string;
@@ -436,6 +438,11 @@ export default function CouponDetailPage() {
   const settledPicks = wonPicks + lostPicks;
   const canPurchase = !isPurchased && (coupon.price === 0 || (walletBalance !== null && walletBalance >= coupon.price));
   const isSettled = ['won', 'lost', 'void'].includes((coupon.result ?? 'pending').toLowerCase());
+  const hasNonPurchaseAccess =
+    couponPending &&
+    Number(coupon.price) > 0 &&
+    coupon.picksRevealed === true &&
+    !isPurchased;
 
   return (
     <div className="min-h-screen bg-[var(--bg)]">
@@ -814,6 +821,28 @@ export default function CouponDetailPage() {
                         className="block text-center text-sm text-[var(--primary)] hover:underline"
                       >
                         View in My Purchases →
+                      </Link>
+                    </div>
+                  ) : hasNonPurchaseAccess ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/40">
+                        <span className="text-blue-600 text-lg">✓</span>
+                        <div>
+                          <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">
+                            {coupon.accessViaSubscription ? 'Access via subscription' : 'Access granted'}
+                          </p>
+                          <p className="text-xs text-blue-700 dark:text-blue-400">
+                            {coupon.accessViaSubscription
+                              ? 'Your active subscription unlocks this paid coupon.'
+                              : 'You can view this paid coupon without buying it.'}
+                          </p>
+                        </div>
+                      </div>
+                      <Link
+                        href="/dashboard/subscriptions"
+                        className="block text-center text-sm text-[var(--primary)] hover:underline"
+                      >
+                        Manage subscriptions →
                       </Link>
                     </div>
                   ) : (

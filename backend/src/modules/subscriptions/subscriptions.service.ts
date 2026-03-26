@@ -12,6 +12,7 @@ import { Subscription } from './entities/subscription.entity';
 import { SubscriptionEscrow } from './entities/subscription-escrow.entity';
 import { SubscriptionCouponAccess } from './entities/subscription-coupon-access.entity';
 import { RoiGuaranteeRefund } from './entities/roi-guarantee-refund.entity';
+import { PickMarketplace } from '../accumulators/entities/pick-marketplace.entity';
 import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { Tipster } from '../predictions/entities/tipster.entity';
@@ -54,6 +55,8 @@ export class SubscriptionsService {
     private readonly escrowRepo: Repository<SubscriptionEscrow>,
     @InjectRepository(SubscriptionCouponAccess)
     private readonly couponAccessRepo: Repository<SubscriptionCouponAccess>,
+    @InjectRepository(PickMarketplace)
+    private readonly marketplaceRepo: Repository<PickMarketplace>,
     @InjectRepository(Tipster)
     private readonly tipsterRepo: Repository<Tipster>,
     @InjectRepository(User)
@@ -390,17 +393,43 @@ export class SubscriptionsService {
   }
 
   async getMySubscriptionCoupons(userId: number) {
+    const now = new Date();
     const subs = await this.subscriptionRepo.find({
       where: { userId, status: 'active' },
       relations: ['package'],
     });
     if (subs.length === 0) return [];
-    const packageIds = subs.map((s) => s.packageId);
-    const accessRows = await this.couponAccessRepo.find({
-      where: { subscriptionPackageId: In(packageIds) },
-      relations: ['accumulator'],
-    });
-    const accumulatorIds = [...new Set(accessRows.map((a) => a.accumulatorId))];
+
+    const activeSubs = subs.filter((s) => !s.endsAt || new Date(s.endsAt) > now);
+    if (activeSubs.length === 0) return [];
+
+    const packageIds = activeSubs.map((s) => s.packageId);
+    const tipsterUserIds = [...new Set(activeSubs.map((s) => s.package.tipsterUserId))];
+
+    // 1) Explicit subscription-only coupons linked to subscribed packages.
+    const accessRows = packageIds.length
+      ? await this.couponAccessRepo.find({
+          where: { subscriptionPackageId: In(packageIds) },
+          relations: ['accumulator'],
+        })
+      : [];
+
+    // 2) Marketplace coupons from subscribed tipsters (AI/human), so subscribers
+    // can see paid marketplace posts from tipsters they actively subscribe to.
+    const marketplaceRows = tipsterUserIds.length
+      ? await this.marketplaceRepo.find({
+          where: { sellerId: In(tipsterUserIds), status: 'active' },
+          select: ['accumulatorId'],
+          order: { createdAt: 'DESC' },
+        })
+      : [];
+
+    const accumulatorIds = [
+      ...new Set([
+        ...accessRows.map((a) => a.accumulatorId),
+        ...marketplaceRows.map((m) => m.accumulatorId),
+      ]),
+    ];
     return accumulatorIds;
   }
 
@@ -427,6 +456,20 @@ export class SubscriptionsService {
       .filter((s) => !s.endsAt || new Date(s.endsAt) > now)
       .map((s) => s.userId);
     return [...new Set(activeIds)];
+  }
+
+  /** True when user has an active (not expired) subscription to any package owned by this tipster user. */
+  async hasActiveSubscriptionToTipster(userId: number, tipsterUserId: number): Promise<boolean> {
+    const now = new Date();
+    const count = await this.subscriptionRepo
+      .createQueryBuilder('s')
+      .innerJoin('s.package', 'pkg')
+      .where('s.userId = :userId', { userId })
+      .andWhere('s.status = :status', { status: 'active' })
+      .andWhere('pkg.tipsterUserId = :tipsterUserId', { tipsterUserId })
+      .andWhere('(s.endsAt IS NULL OR s.endsAt > :now)', { now })
+      .getCount();
+    return count > 0;
   }
 
   /** Add coupon to subscription packages (called when tipster creates coupon with subscription placement) */

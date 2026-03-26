@@ -465,6 +465,13 @@ export class AccumulatorsService {
     if (ticket.userId === viewerUserId) {
       return { ...payload, picksRevealed: true };
     }
+    const hasSubscriptionAccess = await this.subscriptionsService.hasActiveSubscriptionToTipster(
+      viewerUserId,
+      ticket.userId,
+    );
+    if (hasSubscriptionAccess) {
+      return { ...payload, picksRevealed: true, accessViaSubscription: true };
+    }
     const purchased = await this.purchasedRepo.findOne({
       where: { userId: viewerUserId, accumulatorId: ticket.id },
     });
@@ -1391,6 +1398,14 @@ export class AccumulatorsService {
         if (existing) throw new BadRequestException('You have already purchased this pick');
 
         const price = Number(listing.price);
+        if (
+          price > 0 &&
+          (await this.subscriptionsService.hasActiveSubscriptionToTipster(buyerId, ticket.userId))
+        ) {
+          throw new BadRequestException(
+            'You already have active subscription access to this tipster. No purchase is needed.',
+          );
+        }
         if (price > 0) {
           await this.walletService.debit(
             buyerId,
