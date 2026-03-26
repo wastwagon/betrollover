@@ -10,6 +10,8 @@ interface FootballFixtureCardProps {
   fixture: Fixture;
   isLoadingOdds: boolean;
   isCollapsed: boolean;
+  /** When false, hides the league table/scorers accordion (e.g. duplicate league already shown on an earlier card). Default true. */
+  showLeagueInsights?: boolean;
   onLoadOdds: (fixture: Fixture) => void;
   onToggleCollapsed: (fixtureId: number) => void;
   onAddSelection: (fixture: Fixture, odd: FixtureOdd) => void;
@@ -19,6 +21,7 @@ export function FootballFixtureCard({
   fixture,
   isLoadingOdds,
   isCollapsed,
+  showLeagueInsights = true,
   onLoadOdds,
   onToggleCollapsed,
   onAddSelection,
@@ -90,7 +93,7 @@ export function FootballFixtureCard({
         </div>
       </div>
 
-      {fixture.league?.apiId != null && (
+      {showLeagueInsights && fixture.league?.apiId != null && (
         <div className="px-4 pb-3 border-t border-[var(--border)]">
           <LeagueInsightsPanel
             leagueApiId={fixture.league.apiId}

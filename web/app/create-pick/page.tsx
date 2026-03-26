@@ -211,6 +211,17 @@ export default function CreatePickPage() {
     });
   }, [fixtures]);
 
+  /** One league insights block per competition — avoid repeated accordions when many fixtures share a league. */
+  const firstFixtureIdPerLeagueApi = useMemo(() => {
+    const firstByApi = new Map<number, number>();
+    for (const f of availableFixtures) {
+      const apiId = f.league?.apiId;
+      if (apiId == null) continue;
+      if (!firstByApi.has(apiId)) firstByApi.set(apiId, f.id);
+    }
+    return firstByApi;
+  }, [availableFixtures]);
+
   // Reset sport-specific filters when switching sports (slip keeps accumulating across sports)
   useEffect(() => {
     setSportLeague('');
@@ -1111,6 +1122,9 @@ export default function CreatePickPage() {
                     fixture={f}
                     isLoadingOdds={loadingOdds.has(f.id)}
                     isCollapsed={collapsedOdds.has(f.id)}
+                    showLeagueInsights={
+                      f.league?.apiId == null || firstFixtureIdPerLeagueApi.get(f.league.apiId) === f.id
+                    }
                     onLoadOdds={loadFixtureOdds}
                     onToggleCollapsed={(id) =>
                       setCollapsedOdds((prev) => {

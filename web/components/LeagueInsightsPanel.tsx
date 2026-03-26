@@ -116,6 +116,8 @@ export function LeagueInsightsPanel({
 
   const err = localErr || data?.error;
   const headline = data?.leagueName || subtitle || 'League';
+  /** Shown in collapsed accordion so multiple panels on one page are not visually identical. */
+  const collapsedLeagueHint = subtitle?.trim() || (leagueApiId ? `League #${leagueApiId}` : null);
   const panelOpen = isFull || expanded;
 
   if (isFull && !leagueApiId) {
@@ -137,17 +139,28 @@ export function LeagueInsightsPanel({
           onClick={() => setExpanded((v) => !v)}
           className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-[var(--text)] hover:bg-[var(--primary-light)]/30 transition-colors"
         >
-          <span className="flex items-center gap-2 min-w-0">
-            <span className="text-base" aria-hidden>📊</span>
-            <span className="truncate">League table & top scorers</span>
+          <span className="flex flex-col items-start gap-0.5 min-w-0">
+            <span className="flex items-center gap-2 min-w-0 w-full">
+              <span className="text-base shrink-0" aria-hidden>📊</span>
+              <span className="truncate text-left">
+                {collapsedLeagueHint ? (
+                  <>
+                    <span className="text-[var(--text)]">{collapsedLeagueHint}</span>
+                    <span className="font-normal text-[var(--text-muted)]"> · Table & scorers</span>
+                  </>
+                ) : (
+                  'League table & top scorers'
+                )}
+              </span>
+            </span>
             {expanded && (
-              <span className="text-xs font-normal text-[var(--text-muted)] truncate hidden sm:inline">
-                · {headline}
+              <span className="text-xs font-normal text-[var(--text-muted)] truncate pl-7 w-full text-left hidden sm:block">
+                {headline}
                 {data?.season ? ` (${data.season})` : ''}
               </span>
             )}
           </span>
-          <span className="text-[var(--text-muted)] text-xs shrink-0">{expanded ? '▲' : '▼'}</span>
+          <span className="text-[var(--text-muted)] text-xs shrink-0 self-center">{expanded ? '▲' : '▼'}</span>
         </button>
       )}
 
