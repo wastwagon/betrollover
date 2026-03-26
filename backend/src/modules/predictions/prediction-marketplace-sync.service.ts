@@ -103,7 +103,25 @@ export class PredictionMarketplaceSyncService {
       where: { predictionId: prediction.id },
     });
     if (existing) {
-      this.logger.log(`Prediction ${prediction.id} already on marketplace (accumulator ${existing.accumulatorId})`);
+      // Re-evaluate price (e.g. after deploy fixes stats source or admin threshold changes). Only adjust active pending listings.
+      const ticket = await this.ticketRepo.findOne({
+        where: { id: existing.accumulatorId },
+        select: ['id', 'price', 'status', 'result'],
+      });
+      if (
+        ticket &&
+        ticket.status === 'active' &&
+        ticket.result === 'pending' &&
+        Number(ticket.price) !== listPrice
+      ) {
+        await this.ticketRepo.update(ticket.id, { price: listPrice });
+        await this.marketplaceRepo.update({ id: existing.id }, { price: listPrice });
+        this.logger.log(
+          `Updated AI listing price for prediction ${prediction.id} (accumulator ${ticket.id}): ${ticket.price} -> ${listPrice} GHS`,
+        );
+      } else {
+        this.logger.log(`Prediction ${prediction.id} already on marketplace (accumulator ${existing.accumulatorId})`);
+      }
       return { accumulatorId: existing.accumulatorId };
     }
 
