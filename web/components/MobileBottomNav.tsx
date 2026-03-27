@@ -100,8 +100,8 @@ export function MobileBottomNav() {
       className="fixed inset-x-0 bottom-0 z-50 xl:hidden px-2 sm:px-4 pt-2"
       style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
     >
-      {/* Floating bar — iOS/Android style */}
-      <div className="w-full max-w-lg md:max-w-2xl mx-auto rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-[0_-2px_20px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.2)]">
+      {/* Narrow max-width + centered only on small phones; sm+ (large phones, iPad) uses full width so the bar is not a short pill in the middle. */}
+      <div className="w-full max-w-lg mx-auto sm:max-w-none sm:mx-0 rounded-2xl sm:rounded-t-2xl sm:rounded-b-none bg-[var(--card)] border border-[var(--border)] shadow-[0_-2px_20px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.2)]">
         <div className="flex flex-nowrap items-stretch gap-0.5 overflow-x-auto overscroll-x-contain scrollbar-hide snap-x snap-mandatory px-1 min-h-[56px] py-0.5">
           {NAV_ITEMS.map((item) => {
             const active = isActive(pathname, item.href);
