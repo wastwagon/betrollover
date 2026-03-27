@@ -29,7 +29,44 @@ export function AnalyticsBeacon() {
 
   useEffect(() => {
     const page = pathname || '/';
-    track(page);
+    let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const run = () => {
+      if (!cancelled) track(page);
+    };
+
+    // Defer non-critical analytics slightly to avoid competing with above-the-fold work.
+    // Prefer idle callback when available, with a small timeout fallback.
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+      const onVisible = () => {
+        document.removeEventListener('visibilitychange', onVisible);
+        run();
+      };
+      document.addEventListener('visibilitychange', onVisible, { once: true });
+      return () => {
+        cancelled = true;
+        document.removeEventListener('visibilitychange', onVisible);
+      };
+    }
+
+    const win = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    if (typeof win.requestIdleCallback === 'function') {
+      const idleId = win.requestIdleCallback(() => run(), { timeout: 1500 });
+      return () => {
+        cancelled = true;
+        if (typeof win.cancelIdleCallback === 'function') win.cancelIdleCallback(idleId);
+      };
+    }
+
+    timeoutId = setTimeout(run, 250);
+    return () => {
+      cancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [pathname]);
 
   return null;
