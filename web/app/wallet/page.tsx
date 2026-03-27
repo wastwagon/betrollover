@@ -85,6 +85,7 @@ function WalletContent() {
   });
   const [payoutLoading, setPayoutLoading] = useState(false);
   const [payoutError, setPayoutError] = useState<string | null>(null);
+  const continuePathFromQuery = searchParams.get('continue');
 
   const loadData = () => {
     const token = localStorage.getItem('token');
@@ -121,6 +122,12 @@ function WalletContent() {
     loadData();
   }, [router]);
 
+  // Persist a post-top-up return path for seamless checkout continuation.
+  useEffect(() => {
+    if (!continuePathFromQuery) return;
+    sessionStorage.setItem('wallet.afterTopupContinue', continuePathFromQuery);
+  }, [continuePathFromQuery]);
+
   // Handle callback from Paystack: verify deposit (credits if webhook hasn't fired) then refresh
   useEffect(() => {
     const deposit = searchParams.get('deposit');
@@ -134,7 +141,16 @@ function WalletContent() {
           .then((r) => r.json())
           .finally(() => loadData());
       }
-      router.replace('/wallet', { scroll: false });
+      const nextPath = sessionStorage.getItem('wallet.afterTopupContinue');
+      if (nextPath) {
+        sessionStorage.removeItem('wallet.afterTopupContinue');
+        const withAutoSubscribe = nextPath.includes('?')
+          ? `${nextPath}&autoSubscribe=1`
+          : `${nextPath}?autoSubscribe=1`;
+        router.replace(withAutoSubscribe, { scroll: false });
+      } else {
+        router.replace('/wallet', { scroll: false });
+      }
     }
   }, [searchParams, router]);
 

@@ -231,6 +231,7 @@ async function bootstrap() {
     await migrationRunner.ensureAgeVerifiedColumn();
     await migrationRunner.ensureDateOfBirthColumn();
     await migrationRunner.ensureTeamLogoAndCountryColumns();
+    await migrationRunner.ensureSubscriptionEscrowAuditColumns();
   } catch (err: any) {
     logger.error(`Migration bootstrap failed: ${err?.message || err}`);
     if (isProduction) {
@@ -241,6 +242,7 @@ async function bootstrap() {
       await migrationRunner.ensureAgeVerifiedColumn();
       await migrationRunner.ensureDateOfBirthColumn();
       await migrationRunner.ensureTeamLogoAndCountryColumns();
+      await migrationRunner.ensureSubscriptionEscrowAuditColumns();
     } catch {
       // best-effort schema fix
     }

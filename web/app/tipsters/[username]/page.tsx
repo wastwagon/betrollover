@@ -185,14 +185,16 @@ export default function TipsterProfilePage() {
 
   const handleSubscribe = async (packageId: number) => {
     const token = localStorage.getItem('token');
+    const checkoutPath = `/subscriptions/checkout?packageId=${packageId}&fromTipster=${encodeURIComponent(username)}`;
     if (!token) {
-      router.push(`/login?redirect=/tipsters/${username}`);
+      router.push(`/login?redirect=${encodeURIComponent(checkoutPath)}`);
       return;
     }
     const pkg = subscriptionPackages.find((p) => p.id === packageId);
     if (!pkg) return;
-    if (walletBalance !== null && pkg.price > 0 && walletBalance < pkg.price) {
-      showError(new Error(t('tipster.insufficient_balance')));
+    // Unknown balance or insufficient funds: route to checkout where top-up+return flow is handled.
+    if (pkg.price > 0 && (walletBalance === null || walletBalance < pkg.price)) {
+      router.push(checkoutPath);
       return;
     }
     setSubscribeLoading(packageId);
@@ -503,7 +505,7 @@ export default function TipsterProfilePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {subscriptionPackages.map((pkg) => {
                 const isSubscribed = subscribedPackageIds.has(pkg.id);
-                const canSubscribe = !isSubscribed && (pkg.price === 0 || (walletBalance !== null && walletBalance >= pkg.price));
+                const needsTopUp = pkg.price > 0 && (walletBalance === null || walletBalance < pkg.price);
                 const hasCommittedRoi = pkg.roiGuaranteeEnabled && pkg.roiGuaranteeMin != null;
                 const committedRoiValue =
                   pkg.roiGuaranteeMin != null ? `${Number(pkg.roiGuaranteeMin).toFixed(1)}%` : '—';
@@ -540,13 +542,20 @@ export default function TipsterProfilePage() {
                     {isSubscribed ? (
                       <span className="inline-flex px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 text-sm font-medium">{t('tipster.subscribed')}</span>
                     ) : (
-                      <button
-                        onClick={() => handleSubscribe(pkg.id)}
-                        disabled={!canSubscribe || subscribeLoading === pkg.id}
-                        className="w-full py-2.5 px-4 rounded-lg font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {subscribeLoading === pkg.id ? '...' : t('tipster.subscribe')}
-                      </button>
+                      <>
+                        <button
+                          onClick={() => handleSubscribe(pkg.id)}
+                          disabled={subscribeLoading === pkg.id}
+                          className="w-full py-2.5 px-4 rounded-lg font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {subscribeLoading === pkg.id ? '...' : t('tipster.subscribe')}
+                        </button>
+                        {needsTopUp && (
+                          <p className="mt-2 text-xs text-[var(--text-muted)]">
+                            {t('tipster.insufficient_balance')}
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
                 );

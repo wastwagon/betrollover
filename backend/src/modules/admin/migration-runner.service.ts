@@ -129,6 +129,45 @@ export class MigrationRunnerService {
     }
   }
 
+  /**
+   * Ensure subscription_escrow audit columns (082). Fixes admin escrow / projections if migration was skipped.
+   * Backfills commission_rate_percent_at_purchase for held rows from api_settings.
+   */
+  async ensureSubscriptionEscrowAuditColumns(): Promise<void> {
+    try {
+      await this.dataSource.query(
+        `ALTER TABLE subscription_escrow ADD COLUMN IF NOT EXISTS commission_rate_percent_at_purchase DECIMAL(5,2) NULL`,
+      );
+      await this.dataSource.query(
+        `ALTER TABLE subscription_escrow ADD COLUMN IF NOT EXISTS released_tipster_net DECIMAL(10,2) NULL`,
+      );
+      await this.dataSource.query(
+        `ALTER TABLE subscription_escrow ADD COLUMN IF NOT EXISTS released_platform_fee DECIMAL(10,2) NULL`,
+      );
+      await this.dataSource.query(
+        `ALTER TABLE subscription_escrow ADD COLUMN IF NOT EXISTS released_commission_rate_percent DECIMAL(5,2) NULL`,
+      );
+      await this.dataSource.query(
+        `
+        UPDATE subscription_escrow se
+        SET commission_rate_percent_at_purchase = COALESCE(
+          (
+            SELECT LEAST(50::numeric, GREATEST(0::numeric, COALESCE(platform_commission_rate, 30::numeric)))
+            FROM api_settings
+            WHERE id = 1
+            LIMIT 1
+          ),
+          30::numeric
+        )
+        WHERE se.status = 'held'
+          AND se.commission_rate_percent_at_purchase IS NULL
+        `,
+      );
+    } catch (err: any) {
+      this.logger.warn(`ensureSubscriptionEscrowAuditColumns failed (non-fatal): ${err?.message || err}`);
+    }
+  }
+
   /** Run all pending migrations (numeric-prefix .sql files not in applied_migrations). */
   async runPending(): Promise<{ applied: string[]; skipped: number; errors: string[] }> {
     const applied: string[] = [];

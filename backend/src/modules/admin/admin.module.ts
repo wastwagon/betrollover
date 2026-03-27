@@ -54,6 +54,7 @@ import { OddsApiModule } from '../odds-api/odds-api.module';
 import { SyncStatus } from '../fixtures/entities/sync-status.entity';
 import { AuditModule } from '../audit/audit.module';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
+import { SubscriptionEscrow } from '../subscriptions/entities/subscription-escrow.entity';
 
 @Module({
   imports: [
@@ -71,6 +72,7 @@ import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
       PickMarketplace,
       PickReaction,
       EscrowFund,
+      SubscriptionEscrow,
       TipsterRequest,
       Notification,
       UserPurchasedPick,

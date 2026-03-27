@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -61,6 +61,11 @@ interface AdminSubscriptionRow {
   amountPaid: number;
   createdAt: string;
   escrowStatus: string | null;
+  escrowGrossAmount?: number | null;
+  escrowCommissionRateAtPurchase?: number | null;
+  escrowReleasedTipsterNet?: number | null;
+  escrowReleasedPlatformFee?: number | null;
+  escrowReleasedCommissionRate?: number | null;
   subscriber: { id: number; username: string; displayName: string };
   package: {
     id: number;
@@ -102,6 +107,26 @@ function formatShort(iso: string) {
   return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+function formatMoney(value: number | null | undefined) {
+  if (value == null || Number.isNaN(value)) return '—';
+  return `GHS ${Number(value).toFixed(2)}`;
+}
+
+function formatDateOnly(value: string): string {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString(undefined, { dateStyle: 'medium' });
+}
+
+function escapeCsvCell(value: unknown): string {
+  const raw = value == null ? '' : String(value);
+  if (raw.includes('"') || raw.includes(',') || raw.includes('\n')) {
+    return `"${raw.replace(/"/g, '""')}"`;
+  }
+  return raw;
+}
+
 function AiHumanBadge({ isAi }: { isAi: boolean }) {
   return (
     <span
@@ -120,6 +145,7 @@ export default function AdminSubscriptionsPage() {
   const router = useRouter();
   const t = useT();
   const [tab, setTab] = useState<TabId>('catalog');
+  const REVIEWED_SESSION_KEY = 'admin.vip-subscriptions.reviewed.ids';
 
   const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(true);
@@ -130,6 +156,13 @@ export default function AdminSubscriptionsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [tipsterUserId, setTipsterUserId] = useState<string>('');
   const [tipsterKind, setTipsterKind] = useState<string>('all');
+  const [createdFrom, setCreatedFrom] = useState<string>('');
+  const [createdTo, setCreatedTo] = useState<string>('');
+  const [showOnlyEndedHeld, setShowOnlyEndedHeld] = useState(false);
+  const [showOnlyMissingSnapshots, setShowOnlyMissingSnapshots] = useState(false);
+  const [reconcileMode, setReconcileMode] = useState(false);
+  const [reviewedIds, setReviewedIds] = useState<number[]>([]);
+  const [hideReviewed, setHideReviewed] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deletingPackageId, setDeletingPackageId] = useState<number | null>(null);
 
@@ -167,6 +200,8 @@ export default function AdminSubscriptionsPage() {
     if (statusFilter && statusFilter !== 'all') params.set('status', statusFilter);
     if (tipsterUserId) params.set('tipsterUserId', tipsterUserId);
     if (tipsterKind && tipsterKind !== 'all') params.set('tipsterKind', tipsterKind);
+    if (createdFrom) params.set('createdFrom', createdFrom);
+    if (createdTo) params.set('createdTo', createdTo);
     const q = params.toString();
     const url = `${getApiUrl()}/admin/subscriptions${q ? `?${q}` : ''}`;
     fetch(url, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
@@ -174,7 +209,7 @@ export default function AdminSubscriptionsPage() {
       .then((data) => setRows(Array.isArray(data) ? data : []))
       .catch(() => setRows([]))
       .finally(() => setLoading(false));
-  }, [router, statusFilter, tipsterUserId, tipsterKind]);
+  }, [router, statusFilter, tipsterUserId, tipsterKind, createdFrom, createdTo]);
 
   useEffect(() => {
     loadTipsters();
@@ -183,6 +218,218 @@ export default function AdminSubscriptionsPage() {
   useEffect(() => {
     loadRows();
   }, [loadRows]);
+
+  useEffect(() => {
+    if (reconcileMode && statusFilter !== 'ended') {
+      setStatusFilter('ended');
+    }
+  }, [reconcileMode, statusFilter]);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(REVIEWED_SESSION_KEY);
+      if (!raw) return;
+      const ids = JSON.parse(raw);
+      if (Array.isArray(ids)) {
+        const valid = ids
+          .map((v) => Number(v))
+          .filter((v) => Number.isFinite(v) && v > 0)
+          .map((v) => Math.trunc(v));
+        setReviewedIds([...new Set(valid)]);
+      }
+    } catch {
+      // ignore malformed session cache
+    }
+  }, [REVIEWED_SESSION_KEY]);
+
+  useEffect(() => {
+    sessionStorage.setItem(REVIEWED_SESSION_KEY, JSON.stringify(reviewedIds));
+  }, [REVIEWED_SESSION_KEY, reviewedIds]);
+
+  const filteredRows = useMemo(() => {
+    let out = rows;
+    if (reconcileMode) {
+      out = out.filter((r) => r.status === 'ended');
+    }
+    if (showOnlyEndedHeld) {
+      out = out.filter((r) => r.status === 'ended' && r.escrowStatus === 'held');
+    }
+    if (showOnlyMissingSnapshots) {
+      out = out.filter(
+        (r) =>
+          r.status === 'ended' &&
+          r.escrowStatus === 'released' &&
+          (r.escrowReleasedTipsterNet == null || r.escrowReleasedPlatformFee == null),
+      );
+    }
+    if (hideReviewed) {
+      const reviewed = new Set(reviewedIds);
+      out = out.filter((r) => !reviewed.has(r.id));
+    }
+    if (reconcileMode) {
+      out = [...out].sort((a, b) => {
+        const da = new Date(a.createdAt).getTime();
+        const db = new Date(b.createdAt).getTime();
+        const va = Number.isNaN(da) ? Number.MAX_SAFE_INTEGER : da;
+        const vb = Number.isNaN(db) ? Number.MAX_SAFE_INTEGER : db;
+        return va - vb;
+      });
+    }
+    return out;
+  }, [rows, showOnlyEndedHeld, showOnlyMissingSnapshots, reconcileMode, hideReviewed, reviewedIds]);
+
+  const handleExportCsv = useCallback(() => {
+    const sourceRows = filteredRows;
+    if (sourceRows.length === 0) return;
+    const headers = [
+      'subscriptionId',
+      'status',
+      'createdAt',
+      'startedAt',
+      'endsAt',
+      'subscriberId',
+      'subscriberUsername',
+      'subscriberDisplayName',
+      'tipsterUserId',
+      'tipsterUsername',
+      'tipsterDisplayName',
+      'tipsterType',
+      'packageId',
+      'packageName',
+      'packageDurationDays',
+      'amountPaid',
+      'escrowStatus',
+      'escrowGrossAmount',
+      'escrowCommissionRateAtPurchase',
+      'escrowReleasedTipsterNet',
+      'escrowReleasedPlatformFee',
+      'escrowReleasedCommissionRate',
+    ];
+    const dataLines = sourceRows.map((row) =>
+      [
+        row.id,
+        row.status,
+        row.createdAt,
+        row.startedAt,
+        row.endsAt,
+        row.subscriber.id,
+        row.subscriber.username,
+        row.subscriber.displayName,
+        row.package.tipsterUserId,
+        row.tipster?.username ?? '',
+        row.tipster?.displayName ?? '',
+        row.tipster?.isAi ? 'ai' : 'human',
+        row.package.id,
+        row.package.name,
+        row.package.durationDays,
+        row.amountPaid,
+        row.escrowStatus ?? '',
+        row.escrowGrossAmount ?? '',
+        row.escrowCommissionRateAtPurchase ?? '',
+        row.escrowReleasedTipsterNet ?? '',
+        row.escrowReleasedPlatformFee ?? '',
+        row.escrowReleasedCommissionRate ?? '',
+      ]
+        .map(escapeCsvCell)
+        .join(','),
+    );
+    const csv = [headers.join(','), ...dataLines].join('\n');
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const dateTag = new Date().toISOString().slice(0, 10);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vip-subscribers-${dateTag}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [filteredRows]);
+
+  const totals = useMemo(() => {
+    const count = filteredRows.length;
+    const gross = filteredRows.reduce((sum, r) => sum + Number(r.escrowGrossAmount ?? r.amountPaid ?? 0), 0);
+    const releasedNet = filteredRows.reduce((sum, r) => sum + Number(r.escrowReleasedTipsterNet ?? 0), 0);
+    const platformFee = filteredRows.reduce((sum, r) => sum + Number(r.escrowReleasedPlatformFee ?? 0), 0);
+    const heldCount = filteredRows.filter((r) => r.escrowStatus === 'held').length;
+    const releasedCount = filteredRows.filter((r) => r.escrowStatus === 'released').length;
+    const refundedCount = filteredRows.filter((r) => r.escrowStatus === 'refunded').length;
+    return {
+      count,
+      gross: Number(gross.toFixed(2)),
+      releasedNet: Number(releasedNet.toFixed(2)),
+      platformFee: Number(platformFee.toFixed(2)),
+      heldCount,
+      releasedCount,
+      refundedCount,
+    };
+  }, [filteredRows]);
+
+  const unreleasedGross = Number((totals.gross - totals.releasedNet - totals.platformFee).toFixed(2));
+  const endedWithHeld = rows.filter((r) => r.status === 'ended' && r.escrowStatus === 'held').length;
+  const endedWithMissingReleasedValues = rows.filter(
+    (r) =>
+      r.status === 'ended' &&
+      r.escrowStatus === 'released' &&
+      (r.escrowReleasedTipsterNet == null || r.escrowReleasedPlatformFee == null),
+  ).length;
+
+  const toggleReviewed = useCallback((id: number) => {
+    setReviewedIds((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      return [...prev, id];
+    });
+  }, []);
+
+  const nextUnresolved = useMemo(() => {
+    const reviewed = new Set(reviewedIds);
+    return filteredRows.find((r) => {
+      if (reviewed.has(r.id)) return false;
+      const endedHeld = r.status === 'ended' && r.escrowStatus === 'held';
+      const missingSnapshot =
+        r.status === 'ended' &&
+        r.escrowStatus === 'released' &&
+        (r.escrowReleasedTipsterNet == null || r.escrowReleasedPlatformFee == null);
+      return endedHeld || missingSnapshot;
+    });
+  }, [filteredRows, reviewedIds]);
+
+  const jumpToNextUnresolved = useCallback(() => {
+    if (!nextUnresolved) return;
+    const el = document.getElementById(`sub-card-${nextUnresolved.id}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('ring-2', 'ring-amber-400');
+    window.setTimeout(() => {
+      el.classList.remove('ring-2', 'ring-amber-400');
+    }, 1800);
+  }, [nextUnresolved]);
+
+  const jumpToNextUnresolvedAfter = useCallback(
+    (currentId: number) => {
+      const reviewed = new Set(reviewedIds);
+      reviewed.add(currentId);
+      const next = filteredRows.find((r) => {
+        if (r.id === currentId) return false;
+        if (reviewed.has(r.id)) return false;
+        const endedHeld = r.status === 'ended' && r.escrowStatus === 'held';
+        const missingSnapshot =
+          r.status === 'ended' &&
+          r.escrowStatus === 'released' &&
+          (r.escrowReleasedTipsterNet == null || r.escrowReleasedPlatformFee == null);
+        return endedHeld || missingSnapshot;
+      });
+      if (!next) return;
+      const el = document.getElementById(`sub-card-${next.id}`);
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('ring-2', 'ring-amber-400');
+      window.setTimeout(() => {
+        el.classList.remove('ring-2', 'ring-amber-400');
+      }, 1800);
+    },
+    [filteredRows, reviewedIds],
+  );
 
   const handleDelete = async (row: AdminSubscriptionRow) => {
     const tip = row.tipster?.displayName ?? 'Tipster';
@@ -382,10 +629,15 @@ export default function AdminSubscriptionsPage() {
     const hasCommittedRoi = pkg.roiGuaranteeEnabled && pkg.roiGuaranteeMin != null;
     const committedRoiValue = pkg.roiGuaranteeMin != null ? `${Number(pkg.roiGuaranteeMin).toFixed(1)}%` : '—';
     const isAi = tip?.isAi ?? false;
+    const isReviewed = reviewedIds.includes(row.id);
 
     return (
-      <div key={row.id} className="relative">
-        <article className="card-gradient rounded-2xl border border-[var(--border)] shadow-lg overflow-hidden flex flex-col hover:shadow-xl hover:-translate-y-px transition-[box-shadow,transform] duration-200 ease-out">
+      <div id={`sub-card-${row.id}`} key={row.id} className="relative">
+        <article
+          className={`card-gradient rounded-2xl border shadow-lg overflow-hidden flex flex-col hover:shadow-xl hover:-translate-y-px transition-[box-shadow,transform] duration-200 ease-out ${
+            isReviewed ? 'border-emerald-300/80 dark:border-emerald-700 opacity-90' : 'border-[var(--border)]'
+          }`}
+        >
           <button
             type="button"
             onClick={() => handleDelete(row)}
@@ -430,6 +682,50 @@ export default function AdminSubscriptionsPage() {
                 <span className="text-[var(--text-muted)] font-normal">(@{row.subscriber.username})</span>
               </p>
               <p className="text-xs text-[var(--text-muted)] mt-1">Paid GHS {row.amountPaid.toFixed(2)}</p>
+            </div>
+
+            <div className="rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50/40 dark:from-blue-900/20 dark:to-cyan-900/10 border border-[var(--border)] p-3 mb-3">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">
+                Escrow breakdown
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="text-[var(--text-muted)] text-xs block">Gross</span>
+                  <span className="font-semibold text-[var(--text)]">{formatMoney(row.escrowGrossAmount)}</span>
+                </div>
+                <div>
+                  <span className="text-[var(--text-muted)] text-xs block">Rate at purchase</span>
+                  <span className="font-semibold text-[var(--text)]">
+                    {row.escrowCommissionRateAtPurchase != null
+                      ? `${Number(row.escrowCommissionRateAtPurchase).toFixed(2)}%`
+                      : '—'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[var(--text-muted)] text-xs block">Tipster net (released)</span>
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                    {formatMoney(row.escrowReleasedTipsterNet)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[var(--text-muted)] text-xs block">Platform fee (released)</span>
+                  <span className="font-semibold text-amber-700 dark:text-amber-300">
+                    {formatMoney(row.escrowReleasedPlatformFee)}
+                  </span>
+                </div>
+              </div>
+              {row.escrowStatus === 'held' ? (
+                <p className="mt-2 text-[11px] text-[var(--text-muted)]">
+                  Held escrow has projected split only; final values are written when period-end settlement releases.
+                </p>
+              ) : row.escrowStatus === 'released' ? (
+                <p className="mt-2 text-[11px] text-[var(--text-muted)]">
+                  Released rate:{' '}
+                  {row.escrowReleasedCommissionRate != null
+                    ? `${Number(row.escrowReleasedCommissionRate).toFixed(2)}%`
+                    : '—'}
+                </p>
+              ) : null}
             </div>
 
             <div className="rounded-xl bg-[var(--bg-warm)]/80 border border-[var(--border)]/60 p-3 mb-3">
@@ -483,6 +779,11 @@ export default function AdminSubscriptionsPage() {
 
               <div className="flex flex-wrap gap-2 text-xs mt-3">
                 <span className={`px-2 py-0.5 rounded-full font-medium ${statusBadgeClass(row.status)}`}>{row.status}</span>
+                {isReviewed && (
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 font-medium">
+                    Reviewed
+                  </span>
+                )}
                 {row.escrowStatus && (
                   <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 font-medium">
                     Escrow: {row.escrowStatus}
@@ -506,6 +807,29 @@ export default function AdminSubscriptionsPage() {
               >
                 View tipster profile
               </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => toggleReviewed(row.id)}
+              className={`mt-2 w-full text-center py-2 rounded-lg text-sm font-semibold border ${
+                isReviewed
+                  ? 'border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                  : 'border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+              }`}
+            >
+              {isReviewed ? 'Unmark reviewed' : 'Mark reviewed'}
+            </button>
+            {!isReviewed && (
+              <button
+                type="button"
+                onClick={() => {
+                  toggleReviewed(row.id);
+                  window.setTimeout(() => jumpToNextUnresolvedAfter(row.id), 0);
+                }}
+                className="mt-2 w-full text-center py-2 rounded-lg text-sm font-semibold border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+              >
+                Mark reviewed + next
+              </button>
             )}
           </div>
         </article>
@@ -630,10 +954,219 @@ export default function AdminSubscriptionsPage() {
                   Clear
                 </button>
               )}
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-2">Created from:</label>
+              <input
+                type="date"
+                value={createdFrom}
+                onChange={(e) => setCreatedFrom(e.target.value)}
+                className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+              />
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">to:</label>
+              <input
+                type="date"
+                value={createdTo}
+                onChange={(e) => setCreatedTo(e.target.value)}
+                className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+              />
+              {(createdFrom || createdTo) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCreatedFrom('');
+                    setCreatedTo('');
+                  }}
+                  className="text-sm text-gray-600 dark:text-gray-400 hover:underline"
+                >
+                  Clear dates
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleExportCsv}
+                disabled={loading || filteredRows.length === 0}
+                className="ml-auto inline-flex items-center rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 disabled:cursor-not-allowed text-white text-sm font-semibold px-3 py-2"
+              >
+                Export CSV
+              </button>
+              <button
+                type="button"
+                onClick={() => setHideReviewed((v) => !v)}
+                className={`inline-flex items-center rounded-lg text-sm font-semibold px-3 py-2 border ${
+                  hideReviewed
+                    ? 'bg-slate-800 text-white border-slate-800 dark:bg-slate-700 dark:border-slate-700'
+                    : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                {hideReviewed ? 'Showing unreviewed only' : 'Hide reviewed'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setReconcileMode((v) => !v);
+                  if (reconcileMode) {
+                    setShowOnlyEndedHeld(false);
+                    setShowOnlyMissingSnapshots(false);
+                  }
+                }}
+                className={`inline-flex items-center rounded-lg text-sm font-semibold px-3 py-2 border ${
+                  reconcileMode
+                    ? 'bg-amber-600 text-white border-amber-600 hover:bg-amber-700'
+                    : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                {reconcileMode ? 'Reconcile mode: on' : 'Reconcile mode'}
+              </button>
+              {reviewedIds.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setReviewedIds([])}
+                  className="inline-flex items-center rounded-lg text-sm font-semibold px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Clear reviewed ({reviewedIds.length})
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={jumpToNextUnresolved}
+                disabled={!nextUnresolved}
+                className="inline-flex items-center rounded-lg text-sm font-semibold px-3 py-2 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Jump to next unreviewed anomaly"
+              >
+                Next unresolved
+              </button>
             </div>
             <p className="text-xs text-amber-900/90 dark:text-amber-200/90 mb-4">
               Held escrow: subscriber is refunded when you delete. Released escrow: tipster was already paid; delete only removes the record.
             </p>
+            {(statusFilter !== 'all' || tipsterKind !== 'all' || tipsterUserId || createdFrom || createdTo || reconcileMode) && (
+              <div className="mb-4 flex flex-wrap gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mr-1 self-center">
+                  Active filters:
+                </span>
+                {reconcileMode && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 text-xs font-medium">
+                    Reconcile mode (ended + oldest first)
+                  </span>
+                )}
+                {statusFilter !== 'all' && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 text-xs font-medium">
+                    Status: {statusFilter}
+                  </span>
+                )}
+                {tipsterKind !== 'all' && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-200 text-xs font-medium">
+                    Type: {tipsterKind}
+                  </span>
+                )}
+                {tipsterUserId && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200 text-xs font-medium">
+                    Tipster: {tipsters.find((x) => String(x.tipsterUserId) === tipsterUserId)?.displayName ?? `#${tipsterUserId}`}
+                  </span>
+                )}
+                {(createdFrom || createdTo) && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 text-xs font-medium">
+                    Date: {createdFrom ? formatDateOnly(createdFrom) : 'Any'} to {createdTo ? formatDateOnly(createdTo) : 'Any'}
+                  </span>
+                )}
+              </div>
+            )}
+            {!loading && rows.length > 0 && (
+              <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-2">
+                <div className="rounded-lg border border-[var(--border)] bg-white dark:bg-gray-800 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">Rows</p>
+                  <p className="text-sm font-semibold text-[var(--text)]">{totals.count}</p>
+                </div>
+                <div className="rounded-lg border border-[var(--border)] bg-white dark:bg-gray-800 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">Escrow gross</p>
+                  <p className="text-sm font-semibold text-[var(--text)]">{formatMoney(totals.gross)}</p>
+                </div>
+                <div className="rounded-lg border border-[var(--border)] bg-white dark:bg-gray-800 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">Released tipster net</p>
+                  <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                    {formatMoney(totals.releasedNet)}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-[var(--border)] bg-white dark:bg-gray-800 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">Released platform fee</p>
+                  <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                    {formatMoney(totals.platformFee)}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-[var(--border)] bg-white dark:bg-gray-800 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">Escrow statuses</p>
+                  <p className="text-xs font-medium text-[var(--text)]">
+                    held {totals.heldCount} · released {totals.releasedCount} · refunded {totals.refundedCount}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-[var(--border)] bg-white dark:bg-gray-800 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">Unreleased gross</p>
+                  <p
+                    className={`text-sm font-semibold ${
+                      unreleasedGross > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-[var(--text)]'
+                    }`}
+                  >
+                    {formatMoney(unreleasedGross)}
+                  </p>
+                  {unreleasedGross > 0 ? (
+                    <p className="text-[10px] mt-1 text-amber-700 dark:text-amber-300">
+                      Non-zero balance still not released/refunded in current scope.
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            )}
+            {!loading && (endedWithHeld > 0 || endedWithMissingReleasedValues > 0) && (
+              <div className="mb-4 rounded-xl border border-amber-300/80 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-4 py-3">
+                <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">Settlement warnings</p>
+                {endedWithHeld > 0 ? (
+                  <p className="text-xs text-amber-900/90 dark:text-amber-200 mt-1">
+                    {endedWithHeld} ended subscription{endedWithHeld !== 1 ? 's' : ''} still show held escrow.
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowOnlyEndedHeld(true);
+                        setShowOnlyMissingSnapshots(false);
+                        setStatusFilter('all');
+                      }}
+                      className="ml-2 underline font-semibold hover:no-underline"
+                    >
+                      Show only these
+                    </button>
+                  </p>
+                ) : null}
+                {endedWithMissingReleasedValues > 0 ? (
+                  <p className="text-xs text-amber-900/90 dark:text-amber-200 mt-1">
+                    {endedWithMissingReleasedValues} ended/released subscription{endedWithMissingReleasedValues !== 1 ? 's' : ''} missing released net/fee snapshots.
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowOnlyEndedHeld(false);
+                        setShowOnlyMissingSnapshots(true);
+                        setStatusFilter('all');
+                      }}
+                      className="ml-2 underline font-semibold hover:no-underline"
+                    >
+                      Show only these
+                    </button>
+                  </p>
+                ) : null}
+                {(showOnlyEndedHeld || showOnlyMissingSnapshots) && (
+                  <p className="text-xs text-amber-900/90 dark:text-amber-200 mt-2">
+                    Quick warning filter active.
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowOnlyEndedHeld(false);
+                        setShowOnlyMissingSnapshots(false);
+                      }}
+                      className="ml-2 underline font-semibold hover:no-underline"
+                    >
+                      Clear quick filter
+                    </button>
+                  </p>
+                )}
+              </div>
+            )}
 
             {loading && (
               <div className="flex items-center justify-center py-12">
@@ -644,27 +1177,27 @@ export default function AdminSubscriptionsPage() {
               </div>
             )}
 
-            {!loading && rows.length === 0 && (
+            {!loading && filteredRows.length === 0 && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-3xl">
                   ⭐
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  {tipsterUserId || statusFilter !== 'all' || tipsterKind !== 'all'
+                  {tipsterUserId || statusFilter !== 'all' || tipsterKind !== 'all' || createdFrom || createdTo || showOnlyEndedHeld || showOnlyMissingSnapshots
                     ? 'No matching subscriptions'
                     : 'No subscriptions'}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto">
-                  {tipsterUserId || statusFilter !== 'all' || tipsterKind !== 'all'
+                  {tipsterUserId || statusFilter !== 'all' || tipsterKind !== 'all' || createdFrom || createdTo || showOnlyEndedHeld || showOnlyMissingSnapshots
                     ? 'Nothing matches the current filters.'
                     : 'No subscription rows in the database yet. The marketplace catalog still shows published packages for sale.'}
                 </p>
               </div>
             )}
 
-            {!loading && rows.length > 0 && (
+            {!loading && filteredRows.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {rows.map(renderPurchaseCard)}
+                {filteredRows.map(renderPurchaseCard)}
               </div>
             )}
           </>

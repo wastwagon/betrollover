@@ -10,7 +10,7 @@ import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { determinePickResult } from './settlement-logic';
-import { clampPlatformCommissionPercent } from '../../common/platform-commission';
+import { clampPlatformCommissionPercent, splitGrossForTipsterPayout } from '../../common/platform-commission';
 
 /** Market types and selection formats we support for settlement. See determinePickResult. */
 export const SETTLEMENT_SUPPORTED_MARKETS = [
@@ -507,9 +507,7 @@ export class SettlementService {
       if (!processedUsers.has(f.userId)) {
         const gross = Number(f.amount);
         if (result === 'won') {
-          // Commission deducted from tipster's gross payout
-          const commission = Number((gross * commissionRate / 100).toFixed(2));
-          const netPayout = Number((gross - commission).toFixed(2));
+          const { commission, netPayout } = splitGrossForTipsterPayout(gross, commissionRate);
           totalCommission += commission;
           totalNetPayout += netPayout;
           buyerCount++;

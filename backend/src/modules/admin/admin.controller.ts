@@ -101,6 +101,8 @@ export class AdminController {
     @Query('status') status?: string,
     @Query('tipsterUserId') tipsterUserIdRaw?: string,
     @Query('tipsterKind') tipsterKind?: string,
+    @Query('createdFrom') createdFrom?: string,
+    @Query('createdTo') createdTo?: string,
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     const tipsterUserId =
@@ -113,6 +115,8 @@ export class AdminController {
       status: status || undefined,
       tipsterUserId: tipsterUserId != null && !Number.isNaN(tipsterUserId) ? tipsterUserId : undefined,
       tipsterKind: kind,
+      createdFrom: createdFrom || undefined,
+      createdTo: createdTo || undefined,
     });
   }
 

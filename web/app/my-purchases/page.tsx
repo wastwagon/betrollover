@@ -39,6 +39,15 @@ interface Tipster {
   lostPicks: number;
 }
 
+interface VipSubscriptionRow {
+  id: number;
+  status: string;
+  startedAt: string;
+  endsAt: string;
+  amountPaid: number;
+  package?: { name: string; price: number; durationDays?: number } | null;
+}
+
 interface Purchase {
   id: number;
   accumulatorId: number;
@@ -85,6 +94,7 @@ export default function MyPurchasesPage() {
   const router = useRouter();
   const t = useT();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [vipSubscriptions, setVipSubscriptions] = useState<VipSubscriptionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [resultFilter, setResultFilter] = useState<ResultFilter>('all');
   const [sportFilter, setSportFilter] = useState<string>('all');
@@ -92,16 +102,27 @@ export default function MyPurchasesPage() {
 
   const fetchPurchases = useCallback(() => {
     const token = localStorage.getItem('token');
-    if (!token) { router.push('/login?redirect=/my-purchases'); return; }
-    return fetch(`${getApiUrl()}/accumulators/purchased`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => {
+    if (!token) {
+      router.push('/login?redirect=/my-purchases');
+      return;
+    }
+    const h = { Authorization: `Bearer ${token}` };
+    return Promise.all([
+      fetch(`${getApiUrl()}/accumulators/purchased`, { headers: h }).then((r) => {
         if (!r.ok) throw new Error(`Failed to load purchases: ${r.status}`);
         return r.json();
+      }),
+      fetch(`${getApiUrl()}/subscriptions/me`, { headers: h }).then((r) => (r.ok ? r.json() : [])),
+    ])
+      .then(([data, subs]) => {
+        setPurchases(Array.isArray(data) ? data : []);
+        setVipSubscriptions(Array.isArray(subs) ? subs : []);
       })
-      .then((data) => setPurchases(Array.isArray(data) ? data : []))
-      .catch((err) => { setPurchases([]); showError(err); })
+      .catch((err) => {
+        setPurchases([]);
+        setVipSubscriptions([]);
+        showError(err);
+      })
       .finally(() => setLoading(false));
   }, [router, showError]);
 
@@ -175,6 +196,47 @@ export default function MyPurchasesPage() {
             <span aria-hidden>🛡</span>
             {t('my_purchases.escrow_refund_note')}
           </p>
+
+          {!loading && vipSubscriptions.length > 0 && (
+            <section
+              className="mb-6 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-5 shadow-sm"
+              aria-label={t('my_purchases.vip_heading')}
+            >
+              <h2 className="text-base font-semibold text-[var(--text)] mb-1">{t('my_purchases.vip_heading')}</h2>
+              <p className="text-xs text-[var(--text-muted)] mb-3">{t('my_purchases.vip_note')}</p>
+              <ul className="space-y-2 mb-3">
+                {vipSubscriptions.map((s) => (
+                  <li
+                    key={s.id}
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-sm border-b border-[var(--border)] last:border-0 pb-2 last:pb-0"
+                  >
+                    <span className="font-medium text-[var(--text)]">{s.package?.name ?? 'VIP'}</span>
+                    <span className="text-[var(--text-muted)] text-xs sm:text-sm">
+                      <span className="capitalize">{s.status}</span>
+                      {s.endsAt ? (
+                        <>
+                          {' '}
+                          · {t('my_purchases.vip_ends')} {new Date(s.endsAt).toLocaleDateString()}
+                        </>
+                      ) : null}
+                      {s.amountPaid != null ? (
+                        <>
+                          {' '}
+                          · GHS {Number(s.amountPaid).toFixed(2)}
+                        </>
+                      ) : null}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/subscriptions"
+                className="inline-flex text-sm font-medium text-[var(--primary)] hover:underline"
+              >
+                {t('my_purchases.vip_link')} →
+              </Link>
+            </section>
+          )}
 
           <div className="mb-4">
             <AdSlot zoneSlug="my-purchases-full" fullWidth className="w-full" />
@@ -263,11 +325,23 @@ export default function MyPurchasesPage() {
           {/* ─── Content ───────────────────────────────────────── */}
           {loading && <LoadingSkeleton count={3} />}
 
-          {!loading && purchases.length === 0 && (
+          {!loading && purchases.length === 0 && vipSubscriptions.length === 0 && (
             <div className="card-gradient rounded-2xl">
               <EmptyState
                 title={t('my_purchases.no_purchases')}
                 description={t('my_purchases.no_purchases_desc')}
+                actionLabel={t('my_purchases.browse_marketplace')}
+                actionHref="/marketplace"
+                icon="🛒"
+              />
+            </div>
+          )}
+
+          {!loading && purchases.length === 0 && vipSubscriptions.length > 0 && (
+            <div className="card-gradient rounded-2xl mb-6">
+              <EmptyState
+                title={t('my_purchases.no_coupon_purchases')}
+                description={t('my_purchases.no_coupon_purchases_desc')}
                 actionLabel={t('my_purchases.browse_marketplace')}
                 actionHref="/marketplace"
                 icon="🛒"

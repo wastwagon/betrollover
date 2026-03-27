@@ -20,6 +20,7 @@ import { User } from '../users/entities/user.entity';
 import { TipsterService } from '../tipster/tipster.service';
 import { TipstersApiService } from '../predictions/tipsters-api.service';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
+import { clampPlatformCommissionPercent } from '../../common/platform-commission';
 
 const DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_MIN = 20;
 const DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_ENABLED = true;
@@ -365,10 +366,14 @@ export class SubscriptionsService {
     });
     const saved = await this.subscriptionRepo.save(sub);
 
+    const apiRow = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
+    const rateAtPurchase = clampPlatformCommissionPercent(apiRow?.platformCommissionRate);
+
     const escrow = this.escrowRepo.create({
       subscriptionId: saved.id,
       amount,
       status: 'held',
+      commissionRatePercentAtPurchase: rateAtPurchase,
     });
     await this.escrowRepo.save(escrow);
 
@@ -525,6 +530,8 @@ export class SubscriptionsService {
     status?: string;
     tipsterUserId?: number;
     tipsterKind?: 'human' | 'ai' | 'all';
+    createdFrom?: string;
+    createdTo?: string;
   }): Promise<
     Array<{
       id: number;
@@ -534,6 +541,11 @@ export class SubscriptionsService {
       amountPaid: number;
       createdAt: Date;
       escrowStatus: string | null;
+      escrowGrossAmount: number | null;
+      escrowCommissionRateAtPurchase: number | null;
+      escrowReleasedTipsterNet: number | null;
+      escrowReleasedPlatformFee: number | null;
+      escrowReleasedCommissionRate: number | null;
       subscriber: { id: number; username: string; displayName: string };
       package: {
         id: number;
@@ -572,6 +584,19 @@ export class SubscriptionsService {
     }
     if (filters.tipsterUserId != null && Number.isFinite(filters.tipsterUserId)) {
       qb.andWhere('pkg.tipsterUserId = :tid', { tid: filters.tipsterUserId });
+    }
+    if (filters.createdFrom) {
+      const from = new Date(filters.createdFrom);
+      if (!Number.isNaN(from.getTime())) {
+        qb.andWhere('s.createdAt >= :from', { from });
+      }
+    }
+    if (filters.createdTo) {
+      const to = new Date(filters.createdTo);
+      if (!Number.isNaN(to.getTime())) {
+        to.setHours(23, 59, 59, 999);
+        qb.andWhere('s.createdAt <= :to', { to });
+      }
     }
     const rows = await qb.getMany();
     const tipsterUserIds = [...new Set(rows.map((r) => r.package?.tipsterUserId).filter((id): id is number => typeof id === 'number'))];
@@ -626,6 +651,18 @@ export class SubscriptionsService {
         amountPaid: Number(s.amountPaid),
         createdAt: s.createdAt,
         escrowStatus: esc?.status ?? null,
+        escrowGrossAmount: esc?.amount != null ? Number(esc.amount) : null,
+        escrowCommissionRateAtPurchase:
+          esc?.commissionRatePercentAtPurchase != null
+            ? Number(esc.commissionRatePercentAtPurchase)
+            : null,
+        escrowReleasedTipsterNet: esc?.releasedTipsterNet != null ? Number(esc.releasedTipsterNet) : null,
+        escrowReleasedPlatformFee:
+          esc?.releasedPlatformFee != null ? Number(esc.releasedPlatformFee) : null,
+        escrowReleasedCommissionRate:
+          esc?.releasedCommissionRatePercent != null
+            ? Number(esc.releasedCommissionRatePercent)
+            : null,
         subscriber: {
           id: s.user.id,
           username: s.user.username,

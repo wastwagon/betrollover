@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
@@ -35,6 +35,8 @@ interface FeedPick {
 export default function SubscriptionsPage() {
   const t = useT();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [feedPicks, setFeedPicks] = useState<FeedPick[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,6 +74,15 @@ export default function SubscriptionsPage() {
   }
 
   const activeSubs = subscriptions.filter((s) => s.status === 'active');
+  const justSubscribed = searchParams.get('subscribed') === '1';
+
+  useEffect(() => {
+    if (!justSubscribed) return;
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete('subscribed');
+    const q = next.toString();
+    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+  }, [justSubscribed, pathname, router, searchParams]);
 
   return (
     <DashboardShell>
@@ -81,6 +92,11 @@ export default function SubscriptionsPage() {
           title="My Subscriptions"
           tagline="View coupons from tipsters you subscribe to."
         />
+        {justSubscribed && (
+          <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-700/60 dark:bg-emerald-900/20 dark:text-emerald-200 p-3 text-sm">
+            Subscription activated successfully. Your VIP access is now live.
+          </div>
+        )}
 
         {activeSubs.length === 0 ? (
           <div className="glass-card rounded-2xl p-8 text-center border border-[var(--border)]">

@@ -481,6 +481,14 @@ const en = {
     'Lost or voided coupons are refunded to your wallet so you can use that money again.',
   'my_purchases.no_filter_match': 'No picks match this filter',
   'my_purchases.no_filter_match_desc': 'Try selecting a different result or sport filter.',
+  'my_purchases.no_coupon_purchases': 'No coupon purchases yet',
+  'my_purchases.no_coupon_purchases_desc':
+    'You have VIP subscriptions below. Buy individual coupons anytime from the marketplace.',
+  'my_purchases.vip_heading': 'VIP subscriptions',
+  'my_purchases.vip_note':
+    'These are time-based packages (not single coupons). Subscription coupons and access live on the Subscriptions page.',
+  'my_purchases.vip_link': 'Open Subscriptions',
+  'my_purchases.vip_ends': 'ends',
 
   // ── Pick Card ───────────────────────────────────────────────────────────
   'pick_card.follow': 'Follow',

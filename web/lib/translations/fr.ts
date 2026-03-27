@@ -479,6 +479,14 @@ const fr: Record<string, string> = {
     'Les coupons perdus ou annulés sont remboursés sur votre portefeuille pour être réutilisés.',
   'my_purchases.no_filter_match': 'Aucun pronostic ne correspond à ce filtre',
   'my_purchases.no_filter_match_desc': 'Essayez un autre filtre de résultat ou de sport.',
+  'my_purchases.no_coupon_purchases': 'Aucun coupon acheté pour le moment',
+  'my_purchases.no_coupon_purchases_desc':
+    'Vous avez des abonnements VIP ci-dessous. Achetez des coupons à l’unité sur le marché quand vous voulez.',
+  'my_purchases.vip_heading': 'Abonnements VIP',
+  'my_purchases.vip_note':
+    'Forfaits sur une durée (pas des coupons unitaires). Les coupons d’abonnement et l’accès sont sur la page Abonnements.',
+  'my_purchases.vip_link': 'Ouvrir Abonnements',
+  'my_purchases.vip_ends': 'fin',
 
   // ── Pick Card ───────────────────────────────────────────────────────────
   'pick_card.follow': 'Suivre',

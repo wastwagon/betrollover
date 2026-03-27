@@ -33,7 +33,8 @@ import { TipstersApiService } from '../predictions/tipsters-api.service';
 import { ResultTrackerService } from '../predictions/result-tracker.service';
 import { SyncStatus } from '../fixtures/entities/sync-status.entity';
 import { AuditService } from '../audit/audit.service';
-import { clampPlatformCommissionPercent } from '../../common/platform-commission';
+import { clampPlatformCommissionPercent, splitGrossForTipsterPayout } from '../../common/platform-commission';
+import { SubscriptionEscrow } from '../subscriptions/entities/subscription-escrow.entity';
 import { AccumulatorsService } from '../accumulators/accumulators.service';
 
 @Injectable()
@@ -64,6 +65,8 @@ export class AdminService {
     private marketplaceRepo: Repository<PickMarketplace>,
     @InjectRepository(EscrowFund)
     private escrowRepo: Repository<EscrowFund>,
+    @InjectRepository(SubscriptionEscrow)
+    private subscriptionEscrowRepo: Repository<SubscriptionEscrow>,
     @InjectRepository(Notification)
     private notificationRepo: Repository<Notification>,
     @InjectRepository(UserPurchasedPick)
@@ -120,12 +123,21 @@ export class AdminService {
       this.withdrawalRepo.count({ where: { status: 'pending' } }),
     ]);
 
-    const escrowHeld = await this.escrowRepo
-      .createQueryBuilder('e')
-      .where('e.status = :status', { status: 'held' })
-      .select('COALESCE(SUM(e.amount), 0)', 'total')
-      .getRawOne()
-      .then((r) => Number(r?.total ?? 0));
+    const [escrowHeld, subscriptionEscrowHeld] = await Promise.all([
+      this.escrowRepo
+        .createQueryBuilder('e')
+        .where('e.status = :status', { status: 'held' })
+        .select('COALESCE(SUM(e.amount), 0)', 'total')
+        .getRawOne()
+        .then((r) => Number(r?.total ?? 0)),
+      this.subscriptionEscrowRepo
+        .createQueryBuilder('se')
+        .where('se.status = :status', { status: 'held' })
+        .select('COALESCE(SUM(se.amount), 0)', 'total')
+        .getRawOne()
+        .then((r) => Number(r?.total ?? 0)),
+    ]);
+    const escrowHeldTotal = Number((escrowHeld + subscriptionEscrowHeld).toFixed(2));
 
     const totalRevenue = await this.purchasedRepo
       .createQueryBuilder('p')
@@ -144,7 +156,11 @@ export class AdminService {
       users: { total: memberAccounts, tipsters: activeTipsterProfiles },
       wallets: { count: totalWallets, totalBalance },
       picks: { total: totalPicks, activeMarketplace, liveMarketplace },
-      escrow: { held: escrowHeld },
+      escrow: {
+        held: escrowHeldTotal,
+        heldPick: escrowHeld,
+        heldSubscription: subscriptionEscrowHeld,
+      },
       purchases: {
         total: totalPurchases,
         revenue: totalRevenue,
@@ -298,70 +314,148 @@ export class AdminService {
     const apiRow = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
     const commissionRate = clampPlatformCommissionPercent(apiRow?.platformCommissionRate);
 
-    const funds = await this.escrowRepo.find({
-      order: { createdAt: 'DESC' },
-      take: 100,
-    });
-    if (funds.length === 0) {
-      return { commissionRatePercent: commissionRate, funds: [] };
+    const [funds, subEscrows] = await Promise.all([
+      this.escrowRepo.find({
+        order: { createdAt: 'DESC' },
+        take: 100,
+      }),
+      this.subscriptionEscrowRepo.find({
+        order: { createdAt: 'DESC' },
+        take: 100,
+        relations: ['subscription', 'subscription.user', 'subscription.package'],
+      }),
+    ]);
+
+    let rows: Array<Record<string, unknown>> = [];
+    if (funds.length > 0) {
+      const buyerIds = [...new Set(funds.map((f) => f.userId))];
+      const pickIds = [...new Set(funds.map((f) => f.pickId))];
+      const tickets =
+        pickIds.length > 0
+          ? await this.ticketRepo.find({
+              where: { id: In(pickIds) },
+              select: ['id', 'userId', 'title'],
+            })
+          : [];
+      const tipsterUserIds = [...new Set(tickets.map((t) => t.userId))];
+      const allUserIds = [...new Set([...buyerIds, ...tipsterUserIds])];
+      const users =
+        allUserIds.length > 0
+          ? await this.usersRepo.find({
+              where: { id: In(allUserIds) },
+              select: ['id', 'displayName', 'username', 'email'],
+            })
+          : [];
+      const userMap = new Map(users.map((u) => [u.id, u]));
+      const ticketMap = new Map(tickets.map((t) => [t.id, t]));
+
+      rows = funds.map((f) => {
+        const ticket = ticketMap.get(f.pickId);
+        const tipsterUserId = ticket?.userId;
+        const buyer = userMap.get(f.userId);
+        const tipster = tipsterUserId != null ? userMap.get(tipsterUserId) : undefined;
+        const gross = Number(f.amount);
+        const refunded = f.status === 'refunded';
+        const split = refunded
+          ? { commission: 0, netPayout: 0 }
+          : splitGrossForTipsterPayout(gross, commissionRate);
+        return {
+          source: 'marketplace_pick' as const,
+          ...f,
+          buyerDisplayName: buyer?.displayName ?? null,
+          buyerUsername: buyer?.username ?? null,
+          buyerEmail: buyer?.email ?? null,
+          tipsterDisplayName: tipster?.displayName ?? null,
+          tipsterUsername: tipster?.username ?? null,
+          tipsterUserId: tipsterUserId ?? null,
+          pickTitle: ticket?.title ?? null,
+          tipsterShareGhs: split.netPayout,
+          platformCommissionGhs: split.commission,
+          escrowBreakdownNote: refunded
+            ? 'refunded'
+            : f.status === 'held'
+              ? 'if_won'
+              : 'released',
+        };
+      });
     }
 
-    const buyerIds = [...new Set(funds.map((f) => f.userId))];
-    const pickIds = [...new Set(funds.map((f) => f.pickId))];
-    const tickets =
-      pickIds.length > 0
-        ? await this.ticketRepo.find({
-            where: { id: In(pickIds) },
-            select: ['id', 'userId', 'title'],
-          })
-        : [];
-    const tipsterUserIds = [...new Set(tickets.map((t) => t.userId))];
-    const allUserIds = [...new Set([...buyerIds, ...tipsterUserIds])];
-    const users =
-      allUserIds.length > 0
+    const subBuyerIds = subEscrows
+      .map((e) => e.subscription?.userId)
+      .filter((id): id is number => typeof id === 'number');
+    const subTipsterIds = subEscrows
+      .map((e) => e.subscription?.package?.tipsterUserId)
+      .filter((id): id is number => typeof id === 'number');
+    const subUserIds = [...new Set([...subBuyerIds, ...subTipsterIds])];
+    const subUsers =
+      subUserIds.length > 0
         ? await this.usersRepo.find({
-            where: { id: In(allUserIds) },
+            where: { id: In(subUserIds) },
             select: ['id', 'displayName', 'username', 'email'],
           })
         : [];
-    const userMap = new Map(users.map((u) => [u.id, u]));
-    const ticketMap = new Map(tickets.map((t) => [t.id, t]));
+    const subUserMap = new Map(subUsers.map((u) => [u.id, u]));
 
-    const splitForGross = (gross: number) => {
-      const fee = Number(((gross * commissionRate) / 100).toFixed(2));
-      const net = Number((gross - fee).toFixed(2));
-      return { platformCommissionGhs: fee, tipsterShareGhs: net };
-    };
-
-    const rows = funds.map((f) => {
-      const ticket = ticketMap.get(f.pickId);
-      const tipsterUserId = ticket?.userId;
-      const buyer = userMap.get(f.userId);
-      const tipster = tipsterUserId != null ? userMap.get(tipsterUserId) : undefined;
-      const gross = Number(f.amount);
-      const refunded = f.status === 'refunded';
-      const split = refunded ? { platformCommissionGhs: 0, tipsterShareGhs: 0 } : splitForGross(gross);
+    const subscriptionFunds = subEscrows.map((e) => {
+      const sub = e.subscription;
+      const gross = Number(e.amount);
+      const refunded = e.status === 'refunded';
+      const storedNet = e.releasedTipsterNet != null ? Number(e.releasedTipsterNet) : null;
+      const storedFee = e.releasedPlatformFee != null ? Number(e.releasedPlatformFee) : null;
+      let tipsterShareGhs = 0;
+      let platformCommissionGhs = 0;
+      if (refunded) {
+        tipsterShareGhs = 0;
+        platformCommissionGhs = 0;
+      } else if (
+        e.status === 'released' &&
+        storedNet != null &&
+        storedFee != null &&
+        Number.isFinite(storedNet) &&
+        Number.isFinite(storedFee)
+      ) {
+        tipsterShareGhs = storedNet;
+        platformCommissionGhs = storedFee;
+      } else if (e.status === 'held') {
+        const r = clampPlatformCommissionPercent(e.commissionRatePercentAtPurchase ?? commissionRate);
+        const split = splitGrossForTipsterPayout(gross, r);
+        tipsterShareGhs = split.netPayout;
+        platformCommissionGhs = split.commission;
+      } else {
+        const r = clampPlatformCommissionPercent(e.releasedCommissionRatePercent ?? commissionRate);
+        const split = splitGrossForTipsterPayout(gross, r);
+        tipsterShareGhs = split.netPayout;
+        platformCommissionGhs = split.commission;
+      }
+      const buyer = sub ? subUserMap.get(sub.userId) : undefined;
+      const tipsterUid = sub?.package?.tipsterUserId;
+      const tipster = tipsterUid != null ? subUserMap.get(tipsterUid) : undefined;
       return {
-        ...f,
+        source: 'vip_subscription' as const,
+        id: e.id,
+        subscriptionId: sub?.id ?? null,
+        userId: sub?.userId ?? 0,
+        amount: gross,
+        status: e.status,
+        createdAt: e.createdAt,
+        packageName: sub?.package?.name ?? null,
         buyerDisplayName: buyer?.displayName ?? null,
         buyerUsername: buyer?.username ?? null,
         buyerEmail: buyer?.email ?? null,
         tipsterDisplayName: tipster?.displayName ?? null,
         tipsterUsername: tipster?.username ?? null,
-        tipsterUserId: tipsterUserId ?? null,
-        pickTitle: ticket?.title ?? null,
-        tipsterShareGhs: split.tipsterShareGhs,
-        platformCommissionGhs: split.platformCommissionGhs,
-        /** If pick wins / held: projected split. Released: same numbers as settlement. Refunded: zeros. */
+        tipsterUserId: tipsterUid ?? null,
+        tipsterShareGhs,
+        platformCommissionGhs,
         escrowBreakdownNote: refunded
           ? 'refunded'
-          : f.status === 'held'
-            ? 'if_won'
+          : e.status === 'held'
+            ? 'if_period_end'
             : 'released',
       };
     });
 
-    return { commissionRatePercent: commissionRate, funds: rows };
+    return { commissionRatePercent: commissionRate, funds: rows, subscriptionFunds };
   }
 
   async getWallets() {

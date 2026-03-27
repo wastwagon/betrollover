@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
@@ -22,6 +22,11 @@ function CheckoutContent() {
   const searchParams = useSearchParams();
   const rawId = searchParams.get('packageId');
   const packageId = rawId ? parseInt(rawId, 10) : NaN;
+  const fromTipster = searchParams.get('fromTipster');
+  const autoSubscribe = searchParams.get('autoSubscribe') === '1';
+  const continueUrl = Number.isFinite(packageId) && packageId > 0
+    ? `/subscriptions/checkout?packageId=${packageId}${fromTipster ? `&fromTipster=${encodeURIComponent(fromTipster)}` : ''}`
+    : '/subscriptions/marketplace';
 
   const [pkg, setPkg] = useState<PackageInfo | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
@@ -37,7 +42,7 @@ function CheckoutContent() {
     }
     const token = localStorage.getItem('token');
     if (!token) {
-      router.push(`/login?redirect=/subscriptions/checkout?packageId=${packageId}`);
+      router.push(`/login?redirect=${encodeURIComponent(continueUrl)}`);
       return;
     }
     const headers = { Authorization: `Bearer ${token}` };
@@ -59,7 +64,7 @@ function CheckoutContent() {
       .finally(() => setLoading(false));
   }, [packageId, router]);
 
-  const pay = async () => {
+  const pay = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!token || !pkg) return;
     setPaying(true);
@@ -75,11 +80,28 @@ function CheckoutContent() {
         setError(typeof data?.message === 'string' ? data.message : 'Payment failed');
         return;
       }
-      router.push('/subscriptions');
+      router.push('/subscriptions?subscribed=1');
     } finally {
       setPaying(false);
     }
-  };
+  }, [pkg, router]);
+
+  const price = pkg ? Number(pkg.price) : 0;
+  const canPay = pkg && balance !== null && balance >= price && price > 0;
+  const walletTopUpHref = `/wallet?continue=${encodeURIComponent(continueUrl)}`;
+  const backHref = fromTipster ? `/tipsters/${encodeURIComponent(fromTipster)}` : '/tipsters';
+  const autoAttemptKey = useMemo(
+    () => (Number.isFinite(packageId) && packageId > 0 ? `subscriptions.checkout.autoAttempted.${packageId}` : ''),
+    [packageId],
+  );
+
+  useEffect(() => {
+    if (!autoSubscribe || !canPay || paying || !autoAttemptKey) return;
+    const attempted = sessionStorage.getItem(autoAttemptKey);
+    if (attempted === '1') return;
+    sessionStorage.setItem(autoAttemptKey, '1');
+    void pay();
+  }, [autoSubscribe, canPay, paying, autoAttemptKey, pay]);
 
   if (loading) {
     return (
@@ -91,13 +113,10 @@ function CheckoutContent() {
     );
   }
 
-  const price = pkg ? Number(pkg.price) : 0;
-  const canPay = pkg && balance !== null && balance >= price && price > 0;
-
   return (
     <DashboardShell>
       <div className="section-ux-dashboard-shell max-w-lg mx-auto">
-        <Link href="/tipsters" className="text-sm text-[var(--primary)] hover:underline mb-4 inline-block">
+        <Link href={backHref} className="text-sm text-[var(--primary)] hover:underline mb-4 inline-block">
           ← Tipsters
         </Link>
         <PageHeader label="VIP" title="Join VIP" tagline="Pay from your wallet to unlock this tipster’s subscription picks." />
@@ -126,9 +145,14 @@ function CheckoutContent() {
             {balance !== null && balance < price && price > 0 && (
               <p className="text-sm text-[var(--text-muted)]">
                 Top up your wallet to subscribe.{' '}
-                <Link href="/wallet" className="text-[var(--primary)] font-medium hover:underline">
-                  Open wallet
+                <Link href={walletTopUpHref} className="text-[var(--primary)] font-medium hover:underline">
+                  Top up and continue
                 </Link>
+              </p>
+            )}
+            {autoSubscribe && canPay && (
+              <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                Wallet topped up. Completing your subscription automatically...
               </p>
             )}
             <button

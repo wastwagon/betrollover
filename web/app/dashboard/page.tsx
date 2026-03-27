@@ -51,7 +51,7 @@ interface Stats {
   users?: { total: number; tipsters: number };
   wallets?: { count: number; totalBalance: number };
   picks?: { total: number; pending: number; approved: number; activeMarketplace?: number; liveMarketplace?: number };
-  escrow?: { held: number };
+  escrow?: { held: number; heldPick?: number; heldSubscription?: number };
   purchases?: {
     total: number;
     revenue: number;
@@ -463,7 +463,17 @@ function DashboardContent() {
                       label: 'Live buyable (homepage)',
                       value: stats?.picks?.liveMarketplace != null ? `${stats.picks.liveMarketplace}` : '—',
                     },
-                    { label: 'Escrow Held',   value: stats?.escrow?.held != null ? `GHS ${Number(stats.escrow.held).toFixed(2)}` : '—' },
+                    {
+                      label: 'Escrow Held',
+                      value:
+                        stats?.escrow?.held != null
+                          ? `GHS ${Number(stats.escrow.held).toFixed(2)}${
+                              stats.escrow.heldPick != null && stats.escrow.heldSubscription != null
+                                ? ` (picks ${Number(stats.escrow.heldPick).toFixed(2)} · VIP ${Number(stats.escrow.heldSubscription).toFixed(2)})`
+                                : ''
+                            }`
+                          : '—',
+                    },
                     { label: 'Gross revenue (all purchases)',       value: stats?.purchases?.revenue != null ? `GHS ${Number(stats.purchases.revenue).toFixed(2)}` : '—' },
                     { label: 'Marketplace revenue',       value: stats?.purchases?.marketplaceRevenue != null ? `GHS ${Number(stats.purchases.marketplaceRevenue).toFixed(2)}` : '—' },
                     { label: 'Pending Deposits', value: stats?.deposits?.pending != null ? `${stats.deposits.pending}` : '—', highlight: (stats?.deposits?.pending ?? 0) > 0 },

@@ -8,3 +8,15 @@ export function clampPlatformCommissionPercent(value: unknown): number {
   if (Number.isNaN(n)) return PLATFORM_COMMISSION_DEFAULT;
   return Math.min(PLATFORM_COMMISSION_MAX, Math.max(PLATFORM_COMMISSION_MIN, n));
 }
+
+/**
+ * Split gross escrow into platform commission and tipster net payout (same rounding as marketplace pick wins).
+ */
+export function splitGrossForTipsterPayout(
+  gross: number,
+  commissionRatePercent: number,
+): { commission: number; netPayout: number } {
+  const commission = Number((gross * commissionRatePercent / 100).toFixed(2));
+  const netPayout = Number((gross - commission).toFixed(2));
+  return { commission, netPayout };
+}

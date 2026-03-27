@@ -9,6 +9,8 @@ import { TipsterSubscriptionPackage } from './entities/tipster-subscription-pack
 import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { DataSource } from 'typeorm';
+import { ApiSettings } from '../admin/entities/api-settings.entity';
+import { clampPlatformCommissionPercent, splitGrossForTipsterPayout } from '../../common/platform-commission';
 
 @Injectable()
 export class SubscriptionSettlementService {
@@ -23,6 +25,8 @@ export class SubscriptionSettlementService {
     private readonly refundRepo: Repository<RoiGuaranteeRefund>,
     @InjectRepository(TipsterSubscriptionPackage)
     private readonly packageRepo: Repository<TipsterSubscriptionPackage>,
+    @InjectRepository(ApiSettings)
+    private readonly apiSettingsRepo: Repository<ApiSettings>,
     private readonly walletService: WalletService,
     private readonly notificationsService: NotificationsService,
     private readonly dataSource: DataSource,
@@ -110,26 +114,56 @@ export class SubscriptionSettlementService {
         })
         .catch(() => {});
     } else {
+      const apiRow = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
+      const commissionRate = clampPlatformCommissionPercent(apiRow?.platformCommissionRate);
+      const { commission, netPayout } = splitGrossForTipsterPayout(amount, commissionRate);
+
       await this.walletService.credit(
         tipsterUserId,
-        amount,
+        netPayout,
         'subscription_payout',
         `sub-${sub.id}`,
-        `Subscription payout: ${pkg.name}`,
+        `Subscription payout: ${pkg.name} (gross GHS ${amount.toFixed(2)} − ${commissionRate}% platform fee)`,
       );
+      if (commission > 0) {
+        await this.walletService.recordTransaction(
+          tipsterUserId,
+          commission,
+          'commission',
+          `commission-sub-${sub.id}`,
+          `Platform commission (${commissionRate}%) on subscription "${pkg.name}"`,
+          {
+            subscriptionId: sub.id,
+            grossAmount: amount,
+            commissionRate,
+            netPayout,
+          },
+        );
+      }
       escrow.status = 'released';
       escrow.releasedAt = new Date();
+      escrow.releasedTipsterNet = netPayout;
+      escrow.releasedPlatformFee = commission;
+      escrow.releasedCommissionRatePercent = commissionRate;
 
       this.notificationsService
         .create({
           userId: tipsterUserId,
           type: 'subscription_payout',
           title: 'Subscription Payout',
-          message: `Subscription ${pkg.name} ended. GHS ${amount.toFixed(2)} released to wallet.`,
+          message:
+            commission > 0
+              ? `Subscription ${pkg.name} ended. GHS ${netPayout.toFixed(2)} credited (gross GHS ${amount.toFixed(2)} − ${commissionRate}% platform fee).`
+              : `Subscription ${pkg.name} ended. GHS ${netPayout.toFixed(2)} released to wallet.`,
           link: '/dashboard',
           icon: 'wallet',
           sendEmail: true,
-          metadata: { packageName: pkg.name },
+          metadata: {
+            packageName: pkg.name,
+            grossAmount: String(amount),
+            netPayout: String(netPayout),
+            commissionRate: String(commissionRate),
+          },
         })
         .catch(() => {});
     }
