@@ -166,7 +166,6 @@ export class NotificationsService {
     tipsterId: number;
     tipsterUserId: number;
     tipsterDisplayName: string;
-    pickTitle: string;
     price: number;
     accumulatorId: number;
     couponCard?: {
@@ -191,7 +190,7 @@ export class NotificationsService {
     const tipsterForm = await this.getTipsterFormSnapshot(params.tipsterUserId);
     const price = Number(params.price) || 0;
     const link = `/coupons/${params.accumulatorId}`;
-    const message = `${tipsterName} posted a new pick "${params.pickTitle}"${price > 0 ? ` at GHS ${price.toFixed(2)}` : ' (free)'}.`;
+    const message = `${tipsterName} posted a new pick${price > 0 ? ` at GHS ${price.toFixed(2)}` : ' (free)'}.`;
 
     for (const followerId of followerIds) {
       await this.create({
@@ -205,7 +204,7 @@ export class NotificationsService {
         alwaysSendEmail: !params.couponCard,
         metadata: {
           tipsterName,
-          pickTitle: params.pickTitle,
+          pickId: String(params.accumulatorId),
           ...(tipsterForm
             ? {
                 tipsterForm: tipsterForm.label,
@@ -230,7 +229,7 @@ export class NotificationsService {
           if (user?.email && user.emailNotifications) {
             await this.emailService.sendCouponCardEmail(user.email, {
               tipsterName,
-              couponTitle: params.pickTitle,
+              accumulatorId: params.accumulatorId,
               tipsterForm: tipsterForm?.label,
               tipsterFormAsOf: tipsterForm?.asOf,
               totalOdds: params.couponCard.totalOdds,
@@ -255,7 +254,6 @@ export class NotificationsService {
     recipientUserIds: number[];
     tipsterUserId: number;
     tipsterDisplayName: string;
-    pickTitle: string;
     accumulatorId: number;
     couponCard: {
       totalOdds: number;
@@ -272,7 +270,7 @@ export class NotificationsService {
     const tipsterName = params.tipsterDisplayName || 'A tipster';
     const tipsterForm = await this.getTipsterFormSnapshot(params.tipsterUserId);
     const link = `/coupons/${params.accumulatorId}`;
-    const message = `${tipsterName} posted a new subscribers-only coupon "${params.pickTitle}".`;
+    const message = `${tipsterName} posted a new subscribers-only coupon.`;
 
     for (const userId of recipients) {
       await this.create({
@@ -285,7 +283,7 @@ export class NotificationsService {
         sendEmail: false,
         metadata: {
           tipsterName,
-          pickTitle: params.pickTitle,
+          pickId: String(params.accumulatorId),
           ...(tipsterForm
             ? {
                 tipsterForm: tipsterForm.label,
@@ -309,7 +307,7 @@ export class NotificationsService {
         if (user?.email && user.emailNotifications) {
           await this.emailService.sendCouponCardEmail(user.email, {
             tipsterName,
-            couponTitle: params.pickTitle,
+            accumulatorId: params.accumulatorId,
             tipsterForm: tipsterForm?.label,
             tipsterFormAsOf: tipsterForm?.asOf,
             totalOdds: params.couponCard.totalOdds,

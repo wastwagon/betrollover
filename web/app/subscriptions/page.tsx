@@ -183,6 +183,7 @@ function SubscriptionsContent() {
                         key={pick.id}
                         id={pick.id}
                         title={pick.title}
+                        hideCouponTitle
                         sport={pick.sport}
                         totalPicks={pick.totalPicks}
                         totalOdds={pick.totalOdds}

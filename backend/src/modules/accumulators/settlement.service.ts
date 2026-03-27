@@ -11,6 +11,7 @@ import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { determinePickResult } from './settlement-logic';
 import { clampPlatformCommissionPercent, splitGrossForTipsterPayout } from '../../common/platform-commission';
+import { couponPublicRef } from '../../common/coupon-public-label';
 
 /** Market types and selection formats we support for settlement. See determinePickResult. */
 export const SETTLEMENT_SUPPORTED_MARKETS = [
@@ -212,13 +213,12 @@ export class SettlementService {
           const oldResult = ticket.result;
           let escrowAdjusted = false;
           if (ticket.isMarketplace && Number(ticket.price) > 0 && this.escrowWalletFlipNeeded(oldResult, newAgg)) {
-            const titleRow = await tRepo.findOne({ where: { id: ticketId }, select: ['title'] });
-            const title = titleRow?.title ?? `Pick #${ticketId}`;
+            const couponRef = couponPublicRef(ticketId);
             if (oldResult === 'won') {
-              await this.escrowWonToLostOrVoid(manager, ticketId, ticket.userId, title, newAgg === 'void');
+              await this.escrowWonToLostOrVoid(manager, ticketId, ticket.userId, couponRef, newAgg === 'void');
               escrowAdjusted = true;
             } else if (newAgg === 'won') {
-              await this.escrowLostOrVoidToWon(manager, ticketId, ticket.userId, title);
+              await this.escrowLostOrVoidToWon(manager, ticketId, ticket.userId, couponRef);
               escrowAdjusted = true;
             }
           }
@@ -260,7 +260,7 @@ export class SettlementService {
     manager: EntityManager,
     ticketId: number,
     sellerId: number,
-    title: string,
+    couponRef: string,
   ): Promise<void> {
     const eRepo = manager.getRepository(EscrowFund);
     const funds = await eRepo.find({ where: { pickId: ticketId, status: 'refunded' } });
@@ -287,7 +287,7 @@ export class SettlementService {
         gross,
         'settle_adj',
         `reconcile-debit-refund-${ticketId}-u${f.userId}`,
-        `Score correction: reclaim mistaken refund for "${title}"`,
+        `Score correction: reclaim mistaken refund for ${couponRef}`,
         manager,
       );
       const commission = Number((gross * commissionRate / 100).toFixed(2));
@@ -297,7 +297,7 @@ export class SettlementService {
         netPayout,
         'payout',
         `reconcile-payout-${ticketId}-u${f.userId}`,
-        `Score correction payout for "${title}"`,
+        `Score correction payout for ${couponRef}`,
         manager,
       );
       processedUsers.add(f.userId);
@@ -310,7 +310,7 @@ export class SettlementService {
     manager: EntityManager,
     ticketId: number,
     sellerId: number,
-    title: string,
+    couponRef: string,
     isVoid: boolean,
   ): Promise<void> {
     const eRepo = manager.getRepository(EscrowFund);
@@ -340,7 +340,7 @@ export class SettlementService {
         netPayout,
         'settle_adj',
         `reconcile-rev-payout-${ticketId}-u${f.userId}`,
-        `Score correction: reverse payout for "${title}"`,
+        `Score correction: reverse payout for ${couponRef}`,
         manager,
       );
       await this.walletService.credit(
@@ -349,8 +349,8 @@ export class SettlementService {
         'refund',
         `reconcile-recredit-buyer-${ticketId}-u${f.userId}`,
         isVoid
-          ? `Score correction: refund for voided "${title}"`
-          : `Score correction: refund for lost "${title}"`,
+          ? `Score correction: refund for voided ${couponRef}`
+          : `Score correction: refund for lost ${couponRef}`,
         manager,
       );
       processedUsers.add(f.userId);
@@ -450,7 +450,7 @@ export class SettlementService {
 
     const allPendingTickets = await this.ticketRepo.find({
       where: { result: 'pending' },
-      select: ['id', 'userId', 'isMarketplace', 'price', 'title'],
+      select: ['id', 'userId', 'isMarketplace', 'price'],
     });
     const pendingTicketIds = allPendingTickets.map((t) => t.id);
     const pendingTicketPicks = pendingTicketIds.length
@@ -478,7 +478,7 @@ export class SettlementService {
 
       const priceNum = Number(ticket.price);
       if (ticket.isMarketplace && priceNum > 0) {
-        await this.settleEscrow(ticket.id, ticket.userId, ticket.result, ticket.title ?? `Pick #${ticket.id}`);
+        await this.settleEscrow(ticket.id, ticket.userId, ticket.result, couponPublicRef(ticket.id));
       }
     }
 
@@ -489,7 +489,7 @@ export class SettlementService {
     return { picksUpdated, ticketsSettled };
   }
 
-  private async settleEscrow(accumulatorId: number, sellerId: number, result: string, title: string) {
+  private async settleEscrow(accumulatorId: number, sellerId: number, result: string, couponRef: string) {
     const funds = await this.escrowRepo.find({
       where: { pickId: accumulatorId, status: 'held' },
     });
@@ -518,7 +518,7 @@ export class SettlementService {
             netPayout,
             'payout',
             `pick-${accumulatorId}`,
-            `Payout for pick "${title}" (gross GHS ${gross.toFixed(2)} − ${commissionRate}% platform fee)`,
+            `Payout for ${couponRef} (gross GHS ${gross.toFixed(2)} − ${commissionRate}% platform fee)`,
           );
 
           // Record commission transaction for revenue analytics (does NOT change any wallet balance)
@@ -528,7 +528,7 @@ export class SettlementService {
               commission,
               'commission',
               `commission-pick-${accumulatorId}`,
-              `Platform commission (${commissionRate}%) on pick "${title}"`,
+              `Platform commission (${commissionRate}%) on ${couponRef}`,
               { pickId: accumulatorId, grossAmount: gross, commissionRate, netPayout },
             );
           }
@@ -537,11 +537,11 @@ export class SettlementService {
             userId: f.userId,
             type: 'settlement',
             title: 'Pick Won!',
-            message: `Your purchased pick "${title}" won! The tipster has been paid.`,
+            message: `Your purchased pick ${couponRef} won! The tipster has been paid.`,
             link: `/my-purchases`,
             icon: 'trophy',
             sendEmail: true,
-            metadata: { pickTitle: title, variant: 'won' },
+            metadata: { pickId: String(accumulatorId), variant: 'won' },
           }).catch(() => { });
         } else {
           // Lost or void: full refund to buyer (stake back)
@@ -551,19 +551,19 @@ export class SettlementService {
             gross,
             'refund',
             `pick-${accumulatorId}`,
-            isVoid ? `Refund for voided pick "${title}"` : `Refund for pick "${title}"`,
+            isVoid ? `Refund for voided ${couponRef}` : `Refund for ${couponRef}`,
           );
           await this.notificationsService.create({
             userId: f.userId,
             type: 'settlement',
             title: isVoid ? 'Pick Void — Refunded' : 'Pick Lost — Refunded',
             message: isVoid
-              ? `Your purchased pick "${title}" was voided (e.g. postponed/cancelled). A full refund of GHS ${gross.toFixed(2)} has been credited to your wallet.`
-              : `Your purchased pick "${title}" lost. A full refund of GHS ${gross.toFixed(2)} has been credited to your wallet.`,
+              ? `Your purchased pick ${couponRef} was voided (e.g. postponed/cancelled). A full refund of GHS ${gross.toFixed(2)} has been credited to your wallet.`
+              : `Your purchased pick ${couponRef} lost. A full refund of GHS ${gross.toFixed(2)} has been credited to your wallet.`,
             link: `/my-purchases`,
             icon: 'refund',
             sendEmail: true,
-            metadata: { pickTitle: title, variant: result, amount: gross.toFixed(2) },
+            metadata: { pickId: String(accumulatorId), variant: result, amount: gross.toFixed(2) },
           }).catch(() => { });
         }
         processedUsers.add(f.userId);
@@ -577,11 +577,11 @@ export class SettlementService {
     // Notify tipster with full breakdown
     const payoutMsg = result === 'won'
       ? totalNetPayout > 0
-        ? `Your pick "${title}" won! GHS ${totalNetPayout.toFixed(2)} credited (${buyerCount} buyer${buyerCount !== 1 ? 's' : ''} · GHS ${totalCommission.toFixed(2)} platform fee deducted).`
-        : `Your pick "${title}" won! Payout credited to your wallet.`
+        ? `Your pick ${couponRef} won! GHS ${totalNetPayout.toFixed(2)} credited (${buyerCount} buyer${buyerCount !== 1 ? 's' : ''} · GHS ${totalCommission.toFixed(2)} platform fee deducted).`
+        : `Your pick ${couponRef} won! Payout credited to your wallet.`
       : result === 'void'
-        ? `Your pick "${title}" was voided. Full refunds have been sent to buyers.`
-        : `Your pick "${title}" lost. Full refunds have been sent to buyers.`;
+        ? `Your pick ${couponRef} was voided. Full refunds have been sent to buyers.`
+        : `Your pick ${couponRef} lost. Full refunds have been sent to buyers.`;
 
     await this.notificationsService.create({
       userId: sellerId,
@@ -591,7 +591,7 @@ export class SettlementService {
       link: `/my-picks`,
       icon: result === 'won' ? 'trophy' : 'info',
       metadata: {
-        pickTitle: title,
+        pickId: String(accumulatorId),
         variant: result,
         grossAmount: String(totalNetPayout + totalCommission),
         netPayout: String(totalNetPayout),

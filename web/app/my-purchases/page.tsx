@@ -369,6 +369,7 @@ export default function MyPurchasesPage() {
                     key={p.id}
                     id={p.pick.id}
                     title={p.pick.title}
+                    hideCouponTitle
                     totalPicks={p.pick.totalPicks}
                     totalOdds={p.pick.totalOdds}
                     price={p.purchasePrice}

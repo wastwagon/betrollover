@@ -7,9 +7,9 @@ import {
 
 describe('notification-types.config', () => {
   describe('getEmailSubject', () => {
-    it('should return contextual subject for purchase', () => {
-      expect(getEmailSubject('purchase', 'Purchase Complete', { pickTitle: 'My Pick' }))
-        .toBe('Purchase confirmed: My Pick');
+    it('should return contextual subject for purchase with coupon id', () => {
+      expect(getEmailSubject('purchase', 'Purchase Complete', { pickId: '42' }))
+        .toBe('Purchase confirmed · Coupon #42');
     });
 
     it('should return fallback for unknown type', () => {

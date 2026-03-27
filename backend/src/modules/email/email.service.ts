@@ -10,6 +10,7 @@ import {
   ADMIN_NOTIFICATION_TEMPLATES,
   AdminNotificationType,
 } from './admin-notification-templates.config';
+import { couponPublicRef } from '../../common/coupon-public-label';
 
 /** Premium transactional palette — dark surround, gold accent, crisp card */
 const BR = {
@@ -214,13 +215,14 @@ export class EmailService {
   /**
    * Premium purchase receipt (transactional). Sent on every successful marketplace purchase.
    */
-  async sendPurchaseConfirmation(to: string, pickTitle: string, amount: number, pickId?: number) {
+  async sendPurchaseConfirmation(to: string, amount: number, pickId: number) {
     const appUrl = process.env.APP_URL || 'http://localhost:6002';
-    const safeTitle = this.escapeEmailText(pickTitle);
-    const ctaPath = pickId != null ? `/coupons/${pickId}` : '/my-purchases';
+    const ref = couponPublicRef(pickId);
+    const safeRef = this.escapeEmailText(ref);
+    const ctaPath = `/coupons/${pickId}`;
     const ctaUrl = `${appUrl}${ctaPath}`;
     const amountLabel = amount > 0 ? `GHS ${amount.toFixed(2)}` : 'Free pick';
-    const subject = `Receipt · ${pickTitle}`;
+    const subject = `Receipt · ${ref}`;
 
     const inner = `${this.brandHeader('Purchase confirmed', 'You\'re in', 'Your pick is secured. Funds stay in escrow until the result is settled.')}
 <tr>
@@ -228,8 +230,8 @@ export class EmailService {
     <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f1f5f9;border-radius:14px;border:1px solid ${BR.line};">
       <tr>
         <td style="padding:20px 22px;">
-          <p style="margin:0 0 8px;font-size:12px;font-weight:600;color:${BR.muted};text-transform:uppercase;letter-spacing:0.06em;">Pick</p>
-          <p style="margin:0;font-size:17px;font-weight:600;color:${BR.ink};line-height:1.4;">${safeTitle}</p>
+          <p style="margin:0 0 8px;font-size:12px;font-weight:600;color:${BR.muted};text-transform:uppercase;letter-spacing:0.06em;">Reference</p>
+          <p style="margin:0;font-size:17px;font-weight:600;color:${BR.ink};line-height:1.4;">${safeRef}</p>
           <p style="margin:16px 0 0;font-size:12px;font-weight:600;color:${BR.muted};text-transform:uppercase;letter-spacing:0.06em;">Amount</p>
           <p style="margin:6px 0 0;font-size:24px;font-weight:700;color:${BR.ink};letter-spacing:-0.02em;">${amountLabel}</p>
           ${amount > 0 ? `<p style="margin:14px 0 0;font-size:13px;color:${BR.muted};line-height:1.55;">Your wallet was debited; the tipster is paid after settlement minus platform fees where applicable.</p>` : ''}
@@ -243,34 +245,32 @@ export class EmailService {
 </tr>`;
 
     const html = this.premiumDocument(inner);
-    const text = `Purchase confirmed\n\nPick: ${pickTitle}\nAmount: ${amountLabel}\nFunds remain in escrow until settlement.\n\nOpen: ${ctaUrl}\n\n— BetRollover`;
+    const text = `Purchase confirmed\n\n${ref}\nAmount: ${amountLabel}\nFunds remain in escrow until settlement.\n\nOpen: ${ctaUrl}\n\n— BetRollover`;
     return this.send({ to, subject, text, html });
   }
 
-  async sendPickApproved(to: string, pickTitle: string) {
-    const safe = this.escapeEmailText(pickTitle);
-    const inner = `${this.brandHeader('Marketplace', 'Pick live', `“${safe}” is on the marketplace.`)}
+  async sendPickApproved(to: string, _pickTitleUnused?: string) {
+    const inner = `${this.brandHeader('Marketplace', 'Pick live', 'Your pick is on the marketplace.')}
 <tr><td style="padding:8px 36px 36px;text-align:center;">
   <p style="font-size:15px;color:${BR.muted};line-height:1.6;margin:0;">You’ll receive settlement and payout emails when results are in.</p>
 </td></tr>`;
     return this.send({
       to,
-      subject: `Pick approved: ${pickTitle}`,
-      text: `Your pick "${pickTitle}" has been approved and is now live.`,
+      subject: 'Pick approved',
+      text: 'Your pick has been approved and is now live.',
       html: this.premiumDocument(inner),
     });
   }
 
-  async sendPickRejected(to: string, pickTitle: string) {
-    const safe = this.escapeEmailText(pickTitle);
-    const inner = `${this.brandHeader('Marketplace', 'Pick not published', `We couldn’t list “${safe}”.`)}
+  async sendPickRejected(to: string, _pickTitleUnused?: string) {
+    const inner = `${this.brandHeader('Marketplace', 'Pick not published', 'We couldn’t list this pick.')}
 <tr><td style="padding:8px 36px 36px;text-align:center;">
   <p style="font-size:15px;color:${BR.muted};line-height:1.6;margin:0;">Contact support if you need more detail.</p>
 </td></tr>`;
     return this.send({
       to,
-      subject: `Pick not approved: ${pickTitle}`,
-      text: `Your pick "${pickTitle}" was not approved.`,
+      subject: 'Pick not approved',
+      text: 'Your pick was not approved.',
       html: this.premiumDocument(inner),
     });
   }
@@ -356,18 +356,19 @@ export class EmailService {
     });
   }
 
-  async sendSettlement(to: string, pickTitle: string, won: boolean) {
-    const safe = this.escapeEmailText(pickTitle);
-    const inner = `${this.brandHeader('Settlement', won ? 'Pick won' : 'Pick settled', `“${safe}”`)}
+  async sendSettlement(to: string, pickId: number, won: boolean) {
+    const ref = couponPublicRef(pickId);
+    const safe = this.escapeEmailText(ref);
+    const inner = `${this.brandHeader('Settlement', won ? 'Pick won' : 'Pick settled', safe)}
 <tr><td style="padding:8px 36px 36px;text-align:center;">
   <p style="font-size:15px;color:${BR.muted};line-height:1.6;margin:0;">${won ? 'Nice hit — check your wallet for any refunds or winnings.' : 'Refund processing depends on the result — see your purchases.'}</p>
 </td></tr>`;
     return this.send({
       to,
-      subject: won ? `Pick won: ${pickTitle}` : `Pick settled: ${pickTitle}`,
+      subject: won ? `Pick won · ${ref}` : `Pick settled · ${ref}`,
       text: won
-        ? `Your purchased pick "${pickTitle}" won!`
-        : `Your purchased pick "${pickTitle}" settled. Check your wallet for refunds if applicable.`,
+        ? `Your purchased pick (${ref}) won!`
+        : `Your purchased pick (${ref}) settled. Check your wallet for refunds if applicable.`,
       html: this.premiumDocument(inner),
     });
   }
@@ -458,7 +459,7 @@ export class EmailService {
     to: string,
     data: {
       tipsterName: string;
-      couponTitle: string;
+      accumulatorId: number;
       tipsterForm?: string;
       tipsterFormAsOf?: string;
       totalOdds: number;
@@ -476,7 +477,7 @@ export class EmailService {
     const appUrl = process.env.APP_URL || 'http://localhost:6002';
     const ctaUrl = data.link.startsWith('http') ? data.link : `${appUrl}${data.link}`;
     const tipsterName = this.escapeEmailText(data.tipsterName || 'Tipster');
-    const couponTitle = this.escapeEmailText(data.couponTitle || 'New Pick');
+    const couponHeadline = this.escapeEmailText(couponPublicRef(data.accumulatorId));
     const priceLabel = Number(data.price) > 0 ? `GHS ${Number(data.price).toFixed(2)}` : 'Free';
     const totalOddsLabel = Number(data.totalOdds || 0).toFixed(3);
     const accessLabel = data.isSubscription ? 'Subscribers only' : 'Public marketplace';
@@ -517,7 +518,7 @@ export class EmailService {
 
     const inner = `${this.brandHeader(
       'New coupon alert',
-      couponTitle,
+      couponHeadline,
       `${tipsterName} just published a new coupon.${tipsterFormLine ? ' ' : ''}`,
     )}
 <tr>
@@ -556,11 +557,11 @@ export class EmailService {
       data.tipsterForm
         ? `\n${data.tipsterForm}${asOfLabel ? `\nAs of: ${asOfLabel}` : ''}\nStats source: settled coupon results on BetRollover.\nPerformance can change as new picks settle.\n`
         : '\n'
-    }\nTitle: ${data.couponTitle}\nAccess: ${accessLabel}\nPrice: ${priceLabel}\nTotal Odds: ${totalOddsLabel}\n\n${textLegs}\n\nOpen: ${ctaUrl}\n\n— BetRollover`;
+    }\n${couponPublicRef(data.accumulatorId)}\nAccess: ${accessLabel}\nPrice: ${priceLabel}\nTotal Odds: ${totalOddsLabel}\n\n${textLegs}\n\nOpen: ${ctaUrl}\n\n— BetRollover`;
 
     return this.send({
       to,
-      subject: `${data.tipsterName} posted: ${data.couponTitle}`,
+      subject: `${data.tipsterName} posted a new coupon`,
       text,
       html,
     });

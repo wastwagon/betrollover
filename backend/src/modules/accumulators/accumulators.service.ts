@@ -335,13 +335,14 @@ export class AccumulatorsService {
         userId,
         type: 'pick_published',
         title: 'Pick Published',
-        message: price > 0
-          ? `Your pick "${ticket.title}" is now live on the marketplace at GHS ${price.toFixed(2)}.`
-          : `Your free pick "${ticket.title}" is now live on the marketplace.`,
+        message:
+          price > 0
+            ? `Your pick is now live on the marketplace at GHS ${price.toFixed(2)}.`
+            : `Your free pick is now live on the marketplace.`,
         link: '/marketplace',
         icon: 'check',
         sendEmail: true,
-        metadata: { pickTitle: ticket.title },
+        metadata: { pickId: String(ticket.id) },
       }).catch(() => { });
 
       const creator = await this.usersRepo.findOne({ where: { id: userId }, select: ['displayName', 'username'] });
@@ -349,7 +350,7 @@ export class AccumulatorsService {
       this.emailService.sendAdminNotification({
         type: 'new_coupon_posted',
         metadata: {
-          pickTitle: ticket.title,
+          couponId: ticket.id,
           creatorName,
           price,
           isFree: price === 0,
@@ -362,7 +363,6 @@ export class AccumulatorsService {
           tipsterId: tipster.id,
           tipsterUserId: userId,
           tipsterDisplayName: tipster.displayName || creatorName,
-          pickTitle: ticket.title,
           price,
           accumulatorId: ticket.id,
           couponCard:
@@ -394,7 +394,6 @@ export class AccumulatorsService {
           recipientUserIds: subscriberUserIds,
           tipsterUserId: userId,
           tipsterDisplayName: tipster.displayName || creatorName,
-          pickTitle: ticket.title,
           accumulatorId: ticket.id,
           couponCard: {
             totalOdds: Number(ticket.totalOdds),
@@ -1568,7 +1567,7 @@ export class AccumulatorsService {
             price,
             'purchase',
             `pick-${accumulatorId}`,
-            `Purchase of pick: ${ticket.title}`,
+            `Purchase: Coupon #${accumulatorId}`,
             manager,
           );
           try {
@@ -1618,11 +1617,11 @@ export class AccumulatorsService {
         userId: buyerId,
         type: 'purchase',
         title: 'Purchase Complete',
-        message: `You purchased "${ticket.title}". Funds are held in escrow until the pick settles.`,
+        message: `Your purchase is complete. Funds are held in escrow until the pick settles.`,
         link: `/my-purchases`,
         icon: 'cart',
         sendEmail: false,
-        metadata: { pickTitle: ticket.title },
+        metadata: { pickId: String(accumulatorId) },
       }).catch(() => { });
 
       this.usersRepo
@@ -1630,7 +1629,7 @@ export class AccumulatorsService {
         .then((buyer) => {
           if (buyer?.email) {
             this.emailService
-              .sendPurchaseConfirmation(buyer.email, ticket.title, price, accumulatorId)
+              .sendPurchaseConfirmation(buyer.email, price, accumulatorId)
               .catch(() => {});
           }
         })
@@ -1642,13 +1641,14 @@ export class AccumulatorsService {
           userId: sellerId,
           type: 'coupon_sold',
           title: 'Coupon Sold',
-          message: price > 0
-            ? `Someone purchased "${ticket.title}" for GHS ${price.toFixed(2)}. Funds will be released to your wallet when the pick settles.`
-            : `Someone claimed your free pick "${ticket.title}".`,
+          message:
+            price > 0
+              ? `Someone purchased your coupon for GHS ${price.toFixed(2)}. Funds will be released to your wallet when the pick settles.`
+              : `Someone claimed your free coupon.`,
           link: '/my-picks',
           icon: 'cart',
           sendEmail: true,
-          metadata: { pickTitle: ticket.title },
+          metadata: { pickId: String(accumulatorId) },
         }).catch(() => { });
       }
 

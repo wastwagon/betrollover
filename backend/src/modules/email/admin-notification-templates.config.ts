@@ -33,12 +33,12 @@ export const ADMIN_NOTIFICATION_TEMPLATES = {
     accentColor: '#8b5cf6',
   },
   new_coupon_posted: {
-    subject: (ctx: { pickTitle: string; creatorName: string }) =>
-      `New coupon: "${ctx.pickTitle}" by ${ctx.creatorName}`,
-    message: (ctx: { creatorName: string; pickTitle: string; price?: number; isFree?: boolean }) =>
+    subject: (ctx: { couponId: number; creatorName: string }) =>
+      `New coupon #${ctx.couponId} by ${ctx.creatorName}`,
+    message: (ctx: { creatorName: string; couponId: number; price?: number; isFree?: boolean }) =>
       ctx.isFree
-        ? `${ctx.creatorName} has posted a free pick "${ctx.pickTitle}" to the marketplace.`
-        : `${ctx.creatorName} has posted "${ctx.pickTitle}" at GHS ${Number(ctx.price || 0).toFixed(2)} to the marketplace.`,
+        ? `${ctx.creatorName} has posted a free pick to the marketplace (coupon #${ctx.couponId}).`
+        : `${ctx.creatorName} has posted a marketplace pick at GHS ${Number(ctx.price || 0).toFixed(2)} (coupon #${ctx.couponId}).`,
     ctaText: 'View Marketplace',
     link: '/admin/marketplace',
     accentColor: '#10b981',

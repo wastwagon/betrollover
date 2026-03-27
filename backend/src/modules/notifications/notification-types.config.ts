@@ -3,25 +3,34 @@
  * Each type maps to in-app notification + optional email (via SendGrid).
  * Professional email templates use category-based styling and contextual subjects.
  */
+function emailSubjectWithCouponRef(base: string, ctx: Record<string, string>): string {
+  const id = ctx.pickId?.trim();
+  return id ? `${base} · Coupon #${id}` : base;
+}
+
 export const NOTIFICATION_TYPES = {
   pick_published: {
     icon: 'check',
     defaultSubject: 'Pick Published',
-    emailSubject: (ctx: Record<string, string>) => `Your pick "${ctx.pickTitle || 'Pick'}" is now live`,
+    emailSubject: (ctx: Record<string, string>) =>
+      emailSubjectWithCouponRef('Your pick is now live on the marketplace', ctx),
     ctaText: 'View Marketplace',
     category: 'marketplace',
   },
   purchase: {
     icon: 'cart',
     defaultSubject: 'Purchase Complete',
-    emailSubject: (ctx: Record<string, string>) => `Purchase confirmed: ${ctx.pickTitle || 'Pick'}`,
+    emailSubject: (ctx: Record<string, string>) => emailSubjectWithCouponRef('Purchase confirmed', ctx),
     ctaText: 'View My Purchases',
     category: 'marketplace',
   },
   settlement: {
     icon: 'trophy',
     defaultSubject: 'Pick Settled',
-    emailSubject: (ctx: Record<string, string>) => ctx.variant === 'won' ? `Pick won: ${ctx.pickTitle || 'Pick'}` : `Pick settled: ${ctx.pickTitle || 'Pick'}`,
+    emailSubject: (ctx: Record<string, string>) =>
+      ctx.variant === 'won'
+        ? emailSubjectWithCouponRef('Pick won', ctx)
+        : emailSubjectWithCouponRef('Pick settled', ctx),
     ctaText: 'View My Purchases',
     category: 'marketplace',
   },
@@ -66,7 +75,7 @@ export const NOTIFICATION_TYPES = {
   coupon_sold: {
     icon: 'cart',
     defaultSubject: 'Coupon Sold',
-    emailSubject: (ctx: Record<string, string>) => `Someone purchased "${ctx.pickTitle || 'your coupon'}"`,
+    emailSubject: (ctx: Record<string, string>) => emailSubjectWithCouponRef('Someone purchased your coupon', ctx),
     ctaText: 'View Marketplace',
     category: 'marketplace',
   },

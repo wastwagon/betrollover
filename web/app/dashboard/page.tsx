@@ -902,6 +902,7 @@ function DashboardContent() {
                       key={`vip-${pick.id}`}
                       id={pick.id}
                       title={pick.title}
+                      hideCouponTitle
                       totalPicks={pick.totalPicks}
                       totalOdds={pick.totalOdds}
                       price={pick.price}
@@ -965,6 +966,7 @@ function DashboardContent() {
                               key={pick.id}
                               id={pick.id}
                               title={pick.title}
+                              hideCouponTitle
                               totalPicks={pick.totalPicks}
                               totalOdds={pick.totalOdds}
                               price={pick.price}
@@ -1160,8 +1162,7 @@ function DashboardContent() {
                           className="flex items-center justify-between gap-3 p-3 sm:p-4 rounded-xl bg-[var(--bg)]/70 hover:bg-teal-50/60 border border-transparent hover:border-teal-200/50 transition-all duration-200"
                         >
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-[var(--text)] truncate text-sm sm:text-base">{purchase.pick.title}</h3>
-                            <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-0.5">
+                            <p className="text-xs sm:text-sm text-[var(--text-muted)]">
                               {purchase.pick.totalPicks} picks · {totalOdds.toFixed(2)} odds
                             </p>
                           </div>

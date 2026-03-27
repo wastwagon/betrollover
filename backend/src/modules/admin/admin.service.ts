@@ -1564,17 +1564,17 @@ export class AdminService {
           gross,
           'refund',
           `pick-${accumulatorId}-admin-delete`,
-          `Refund: coupon deleted by admin ("${ticket.title}")`,
+          `Refund: coupon deleted by admin (Coupon #${accumulatorId})`,
         );
         await this.notificationsService.create({
           userId: f.userId,
           type: 'settlement',
           title: 'Coupon Refunded',
-          message: `A coupon you purchased ("${ticket.title}") was removed by admin. GHS ${gross.toFixed(2)} has been refunded to your wallet.`,
+          message: `A coupon you purchased was removed by admin. GHS ${gross.toFixed(2)} has been refunded to your wallet.`,
           link: '/my-purchases',
           icon: 'refund',
           sendEmail: true,
-          metadata: { pickTitle: ticket.title, amount: gross.toFixed(2) },
+          metadata: { pickId: String(accumulatorId), amount: gross.toFixed(2) },
         }).catch(() => {});
         processedUsers.add(f.userId);
       }

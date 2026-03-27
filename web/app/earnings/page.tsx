@@ -351,9 +351,6 @@ export default function EarningsPage() {
                       <Link href={`/coupons/${c.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-[var(--bg)] transition-colors group">
                         <span className="text-lg">{sportIcon}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-[var(--text)] group-hover:text-[var(--primary)] transition-colors truncate">
-                            {c.title}
-                          </p>
                           <p className="text-xs text-[var(--text-muted)]">
                             {c.purchaseCount} {c.purchaseCount !== 1 ? t('earnings.purchases') : t('earnings.purchase')} × GHS {Number(c.price).toFixed(2)}
                           </p>

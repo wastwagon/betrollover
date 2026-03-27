@@ -430,7 +430,6 @@ export default function CouponDetailPage() {
       <UnifiedHeader />
       <main className="section-ux-page-mid">
 
-        {/* Breadcrumb — premium (only place coupon title is shown) */}
         <nav
           className="flex items-center gap-2 py-2.5 px-3 rounded-xl bg-[var(--card)] border border-[var(--border)] mb-6 text-sm shadow-sm"
           aria-label="Breadcrumb"
@@ -442,19 +441,15 @@ export default function CouponDetailPage() {
             <span className="text-base opacity-70" aria-hidden>🎫</span>
             Coupons
           </Link>
-          <span className="text-[var(--border)] select-none" aria-hidden>/</span>
-          <span className="text-[var(--text)] font-semibold truncate max-w-[280px] px-2 py-0.5 rounded-md bg-[var(--primary)]/10 border border-[var(--primary)]/20" title={coupon.title}>
-            {coupon.title}
-          </span>
         </nav>
-        <h1 className="sr-only">{coupon.title}</h1>
+        <h1 className="sr-only">Coupon details</h1>
 
         <div className="flex flex-col lg:flex-row gap-8">
 
           {/* ── Main content ── */}
           <div className="flex-1 min-w-0">
 
-            {/* Header — tags + stats (title lives in breadcrumb only) */}
+            {/* Header — tags + stats */}
             <div className="mb-6">
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 {sportMeta && (
