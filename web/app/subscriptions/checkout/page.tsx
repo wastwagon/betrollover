@@ -24,6 +24,7 @@ function CheckoutContent() {
   const packageId = rawId ? parseInt(rawId, 10) : NaN;
   const fromTipster = searchParams.get('fromTipster');
   const autoSubscribe = searchParams.get('autoSubscribe') === '1';
+  const autoAttemptId = searchParams.get('autoAttemptId');
   const continueUrl = Number.isFinite(packageId) && packageId > 0
     ? `/subscriptions/checkout?packageId=${packageId}${fromTipster ? `&fromTipster=${encodeURIComponent(fromTipster)}` : ''}`
     : '/subscriptions/marketplace';
@@ -64,9 +65,9 @@ function CheckoutContent() {
       .finally(() => setLoading(false));
   }, [packageId, router]);
 
-  const pay = useCallback(async () => {
+  const pay = useCallback(async (): Promise<boolean> => {
     const token = localStorage.getItem('token');
-    if (!token || !pkg) return;
+    if (!token || !pkg) return false;
     setPaying(true);
     setError(null);
     try {
@@ -78,21 +79,28 @@ function CheckoutContent() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(typeof data?.message === 'string' ? data.message : 'Payment failed');
-        return;
+        return false;
       }
       router.push('/subscriptions?subscribed=1');
+      return true;
+    } catch {
+      setError('Could not complete subscription. Please try again.');
+      return false;
     } finally {
       setPaying(false);
     }
   }, [pkg, router]);
 
   const price = pkg ? Number(pkg.price) : 0;
-  const canPay = pkg && balance !== null && balance >= price && price > 0;
+  const canPay = pkg && balance !== null && balance >= price;
   const walletTopUpHref = `/wallet?continue=${encodeURIComponent(continueUrl)}`;
   const backHref = fromTipster ? `/tipsters/${encodeURIComponent(fromTipster)}` : '/tipsters';
   const autoAttemptKey = useMemo(
-    () => (Number.isFinite(packageId) && packageId > 0 ? `subscriptions.checkout.autoAttempted.${packageId}` : ''),
-    [packageId],
+    () =>
+      Number.isFinite(packageId) && packageId > 0 && autoAttemptId
+        ? `subscriptions.checkout.autoAttempted.${packageId}.${autoAttemptId}`
+        : '',
+    [packageId, autoAttemptId],
   );
 
   useEffect(() => {
@@ -100,7 +108,9 @@ function CheckoutContent() {
     const attempted = sessionStorage.getItem(autoAttemptKey);
     if (attempted === '1') return;
     sessionStorage.setItem(autoAttemptKey, '1');
-    void pay();
+    void pay().then((ok) => {
+      if (!ok) sessionStorage.removeItem(autoAttemptKey);
+    });
   }, [autoSubscribe, canPay, paying, autoAttemptKey, pay]);
 
   if (loading) {
@@ -141,7 +151,6 @@ function CheckoutContent() {
                 {balance !== null ? `GHS ${balance.toFixed(2)}` : '—'}
               </span>
             </div>
-            {price <= 0 && <p className="text-sm text-amber-700">This package has no price set.</p>}
             {balance !== null && balance < price && price > 0 && (
               <p className="text-sm text-[var(--text-muted)]">
                 Top up your wallet to subscribe.{' '}

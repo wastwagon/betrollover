@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
@@ -32,7 +32,7 @@ interface FeedPick {
   tipster?: { displayName: string; username: string; avatarUrl: string | null; winRate: number } | null;
 }
 
-export default function SubscriptionsPage() {
+function SubscriptionsContent() {
   const t = useT();
   const router = useRouter();
   const pathname = usePathname();
@@ -199,5 +199,21 @@ export default function SubscriptionsPage() {
         )}
       </div>
     </DashboardShell>
+  );
+}
+
+export default function SubscriptionsPage() {
+  return (
+    <Suspense
+      fallback={
+        <DashboardShell>
+          <div className="section-ux-dashboard-shell">
+            <LoadingSkeleton count={4} variant="cards" />
+          </div>
+        </DashboardShell>
+      }
+    >
+      <SubscriptionsContent />
+    </Suspense>
   );
 }

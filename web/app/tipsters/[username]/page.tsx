@@ -106,6 +106,7 @@ export default function TipsterProfilePage() {
   const [subscriptionPackages, setSubscriptionPackages] = useState<SubscriptionPackage[]>([]);
   const [subscribeLoading, setSubscribeLoading] = useState<number | null>(null);
   const [subscribedPackageIds, setSubscribedPackageIds] = useState<Set<number>>(new Set());
+  const [isAuthed, setIsAuthed] = useState(false);
   const [reviewSummary, setReviewSummary] = useState<{ avg: number; total: number } | null>(null);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
 
@@ -143,6 +144,7 @@ export default function TipsterProfilePage() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    setIsAuthed(!!token);
     if (!token) return;
     Promise.all([
       fetch(`${getApiUrl()}/wallet/balance`, { headers: { Authorization: `Bearer ${token}` } }).then((r) =>
@@ -505,7 +507,7 @@ export default function TipsterProfilePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {subscriptionPackages.map((pkg) => {
                 const isSubscribed = subscribedPackageIds.has(pkg.id);
-                const needsTopUp = pkg.price > 0 && (walletBalance === null || walletBalance < pkg.price);
+                const needsTopUp = isAuthed && pkg.price > 0 && walletBalance !== null && walletBalance < pkg.price;
                 const hasCommittedRoi = pkg.roiGuaranteeEnabled && pkg.roiGuaranteeMin != null;
                 const committedRoiValue =
                   pkg.roiGuaranteeMin != null ? `${Number(pkg.roiGuaranteeMin).toFixed(1)}%` : '—';
@@ -553,6 +555,11 @@ export default function TipsterProfilePage() {
                         {needsTopUp && (
                           <p className="mt-2 text-xs text-[var(--text-muted)]">
                             {t('tipster.insufficient_balance')}
+                          </p>
+                        )}
+                        {!isAuthed && (
+                          <p className="mt-2 text-xs text-[var(--text-muted)]">
+                            Log in to continue subscription checkout.
                           </p>
                         )}
                       </>

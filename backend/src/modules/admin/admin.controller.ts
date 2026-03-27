@@ -166,8 +166,8 @@ export class AdminController {
     if (body.name !== undefined && (!body.name || !body.name.trim())) {
       throw new BadRequestException('name cannot be empty');
     }
-    if (body.price !== undefined && (!Number.isFinite(Number(body.price)) || Number(body.price) < 0)) {
-      throw new BadRequestException('price must be a non-negative number');
+    if (body.price !== undefined && (!Number.isFinite(Number(body.price)) || Number(body.price) <= 0)) {
+      throw new BadRequestException('price must be greater than 0');
     }
     if (
       body.durationDays !== undefined &&

@@ -141,10 +141,14 @@ export class SubscriptionsService {
         'You already have an active VIP package. Archive or deactivate it before creating another.',
       );
     }
+    const normalizedPrice = Number(dto.price);
+    if (!Number.isFinite(normalizedPrice) || normalizedPrice <= 0) {
+      throw new BadRequestException('VIP package price must be greater than 0');
+    }
     const pkg = this.packageRepo.create({
       tipsterUserId,
       name: dto.name,
-      price: dto.price,
+      price: normalizedPrice,
       durationDays: dto.durationDays ?? 30,
       roiGuaranteeMin: dto.roiGuaranteeMin ?? DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_MIN,
       roiGuaranteeEnabled: dto.roiGuaranteeEnabled ?? DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_ENABLED,
@@ -296,7 +300,13 @@ export class SubscriptionsService {
   async updatePackageByAdmin(packageId: number, dto: UpdatePackageDto) {
     const pkg = await this.getPackage(packageId);
     if (dto.name !== undefined) pkg.name = dto.name.trim();
-    if (dto.price !== undefined) pkg.price = dto.price;
+    if (dto.price !== undefined) {
+      const normalizedPrice = Number(dto.price);
+      if (!Number.isFinite(normalizedPrice) || normalizedPrice <= 0) {
+        throw new BadRequestException('VIP package price must be greater than 0');
+      }
+      pkg.price = normalizedPrice;
+    }
     if (dto.durationDays !== undefined) pkg.durationDays = dto.durationDays;
     if (dto.roiGuaranteeEnabled !== undefined) pkg.roiGuaranteeEnabled = dto.roiGuaranteeEnabled;
     if (dto.roiGuaranteeMin !== undefined) pkg.roiGuaranteeMin = dto.roiGuaranteeMin;

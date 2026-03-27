@@ -87,6 +87,16 @@ function WalletContent() {
   const [payoutError, setPayoutError] = useState<string | null>(null);
   const continuePathFromQuery = searchParams.get('continue');
 
+  const normalizeInternalPath = (value: string | null): string | null => {
+    if (!value || !value.startsWith('/') || value.startsWith('//')) return null;
+    try {
+      const parsed = new URL(value, 'http://localhost');
+      return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    } catch {
+      return null;
+    }
+  };
+
   const loadData = () => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -124,8 +134,9 @@ function WalletContent() {
 
   // Persist a post-top-up return path for seamless checkout continuation.
   useEffect(() => {
-    if (!continuePathFromQuery) return;
-    sessionStorage.setItem('wallet.afterTopupContinue', continuePathFromQuery);
+    const normalized = normalizeInternalPath(continuePathFromQuery);
+    if (!normalized) return;
+    sessionStorage.setItem('wallet.afterTopupContinue', normalized);
   }, [continuePathFromQuery]);
 
   // Handle callback from Paystack: verify deposit (credits if webhook hasn't fired) then refresh
@@ -141,12 +152,12 @@ function WalletContent() {
           .then((r) => r.json())
           .finally(() => loadData());
       }
-      const nextPath = sessionStorage.getItem('wallet.afterTopupContinue');
+      const nextPath = normalizeInternalPath(sessionStorage.getItem('wallet.afterTopupContinue'));
       if (nextPath) {
         sessionStorage.removeItem('wallet.afterTopupContinue');
         const withAutoSubscribe = nextPath.includes('?')
-          ? `${nextPath}&autoSubscribe=1`
-          : `${nextPath}?autoSubscribe=1`;
+          ? `${nextPath}&autoSubscribe=1&autoAttemptId=${Date.now()}`
+          : `${nextPath}?autoSubscribe=1&autoAttemptId=${Date.now()}`;
         router.replace(withAutoSubscribe, { scroll: false });
       } else {
         router.replace('/wallet', { scroll: false });
