@@ -29,7 +29,9 @@ const en = {
   'nav.picks_marketplace': 'Picks Marketplace',
   'nav.subscription_marketplace': 'VIP subscriptions',
   'nav.league_tables': 'League tables',
-  /** Bottom nav — short labels */
+  /** Bottom nav — short labels (mobile tab bar; avoids truncation) */
+  'nav.bottom_picks': 'Picks',
+  'nav.bottom_subscribe': 'Subscribe',
   'nav.league_tables_short': 'Tables',
   'nav.live_scores': 'Live scores',
   'nav.live_scores_short': 'Live',

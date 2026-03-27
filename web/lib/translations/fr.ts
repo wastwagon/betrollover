@@ -29,6 +29,9 @@ const fr: Record<string, string> = {
   'nav.picks_marketplace': 'Marché des picks',
   'nav.subscription_marketplace': 'Abonnements VIP',
   'nav.league_tables': 'Classements',
+  /** Libellés courts — barre d’onglets mobile */
+  'nav.bottom_picks': 'Pronostics',
+  'nav.bottom_subscribe': 'S’abonner',
   'nav.league_tables_short': 'Ligues',
   'nav.live_scores': 'Scores en direct',
   'nav.live_scores_short': 'Live',

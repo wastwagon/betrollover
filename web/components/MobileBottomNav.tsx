@@ -56,10 +56,10 @@ function SubscribeIcon({ active }: { active?: boolean }) {
 /** Touch nav: visible below xl (1280px). Hidden on laptop/desktop — they use the full header. Portaled to document.body so position:fixed pins to the viewport (avoids “floating” mid-page if a parent uses transform). */
 const NAV_ITEMS: NavItem[] = [
   { id: 'home', href: '/', labelKey: 'header.home', primary: false },
-  { id: 'marketplace', href: '/marketplace', labelKey: 'nav.coupons_and_picks', primary: false },
+  { id: 'marketplace', href: '/marketplace', labelKey: 'nav.bottom_picks', primary: false },
   { id: 'tipsters', href: '/tipsters', labelKey: 'nav.tipsters', primary: false },
   { id: 'create', href: '/create-pick', labelKey: 'nav.coupon', primary: true },
-  { id: 'subscribe', href: '/subscriptions/marketplace', labelKey: 'nav.subscriptions', primary: false },
+  { id: 'subscribe', href: '/subscriptions/marketplace', labelKey: 'nav.bottom_subscribe', primary: false },
 ];
 
 const ICONS: Record<NavItemId, (p: { active?: boolean }) => JSX.Element> = {
