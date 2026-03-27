@@ -269,19 +269,22 @@ export function PickCard({
 
           {/* Coupon title (optional) & summary — title hidden on public cards when hideCouponTitle */}
           <div className="mb-2">
-            <div
-              className={`flex items-center gap-2 flex-wrap ${hideCouponTitle ? 'justify-start' : 'justify-between'}`}
-            >
-              {!hideCouponTitle && (
+            <div className="flex items-center justify-between gap-2 flex-wrap min-h-[1.875rem]">
+              {hideCouponTitle ? (
                 <span
-                  className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[var(--primary)]/10 border border-[var(--primary)]/25 text-[var(--text)] font-medium text-xs truncate max-w-full"
+                  className="flex-1 min-w-0 inline-flex items-center px-2 py-1 rounded-lg border border-transparent text-xs"
+                  aria-hidden
+                />
+              ) : (
+                <span
+                  className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[var(--primary)]/10 border border-[var(--primary)]/25 text-[var(--text)] font-medium text-xs truncate max-w-full min-w-0"
                   title={title}
                 >
                   <span className="flex-shrink-0 text-[var(--primary)] opacity-80" aria-hidden>#</span>
                   <span className="truncate">{title}</span>
                 </span>
               )}
-              <span className="text-[10px] text-[var(--text-muted)] whitespace-nowrap">
+              <span className="text-[10px] text-[var(--text-muted)] whitespace-nowrap flex-shrink-0">
                 {t('pick_card.picks_odds', { n: String(totalPicks), odds: Number(totalOdds).toFixed(2) })}
               </span>
             </div>
