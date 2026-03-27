@@ -39,7 +39,9 @@ function SubscriptionsContent() {
   const searchParams = useSearchParams();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [feedPicks, setFeedPicks] = useState<FeedPick[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [subsLoading, setSubsLoading] = useState(true);
+  const [feedLoading, setFeedLoading] = useState(true);
+  const justSubscribed = searchParams.get('subscribed') === '1';
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -49,21 +51,33 @@ function SubscriptionsContent() {
     }
     const headers = { Authorization: `Bearer ${token}` };
     const apiUrl = getApiUrl();
-    Promise.all([
-      fetch(`${apiUrl}/subscriptions/me`, { headers }).then((r) => (r.ok ? r.json() : [])),
-      fetch(`${apiUrl}/accumulators/subscription-feed?limit=20`, { headers }).then((r) =>
-        r.ok ? r.json().then((d: { items?: FeedPick[] }) => d?.items ?? []) : [],
-      ),
-    ])
-      .then(([subs, feed]) => {
+    // Keep above-the-fold content responsive by not blocking subscription render on feed fetch.
+    fetch(`${apiUrl}/subscriptions/me`, { headers })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((subs) => {
         setSubscriptions(Array.isArray(subs) ? subs : []);
+      })
+      .catch(() => {})
+      .finally(() => setSubsLoading(false));
+
+    fetch(`${apiUrl}/accumulators/subscription-feed?limit=20`, { headers })
+      .then((r) => (r.ok ? r.json().then((d: { items?: FeedPick[] }) => d?.items ?? []) : []))
+      .then((feed) => {
         setFeedPicks(Array.isArray(feed) ? feed : []);
       })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => setFeedLoading(false));
   }, [router]);
 
-  if (loading) {
+  useEffect(() => {
+    if (!justSubscribed) return;
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete('subscribed');
+    const q = next.toString();
+    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+  }, [justSubscribed, pathname, router, searchParams]);
+
+  if (subsLoading) {
     return (
       <DashboardShell>
         <div className="section-ux-dashboard-shell">
@@ -74,15 +88,6 @@ function SubscriptionsContent() {
   }
 
   const activeSubs = subscriptions.filter((s) => s.status === 'active');
-  const justSubscribed = searchParams.get('subscribed') === '1';
-
-  useEffect(() => {
-    if (!justSubscribed) return;
-    const next = new URLSearchParams(searchParams.toString());
-    next.delete('subscribed');
-    const q = next.toString();
-    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
-  }, [justSubscribed, pathname, router, searchParams]);
 
   return (
     <DashboardShell>
@@ -152,7 +157,9 @@ function SubscriptionsContent() {
 
             <section>
               <h2 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">Subscription coupons</h2>
-              {feedPicks.length === 0 ? (
+              {feedLoading ? (
+                <LoadingSkeleton count={2} variant="cards" />
+              ) : feedPicks.length === 0 ? (
                 <p className="text-[var(--text-muted)]">No coupons from subscribed tipsters yet.</p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
