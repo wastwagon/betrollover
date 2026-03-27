@@ -102,12 +102,15 @@ export function MobileBottomNav() {
     >
       {/* Narrow max-width + centered only on small phones; sm+ (large phones, iPad) uses full width so the bar is not a short pill in the middle. */}
       <div className="w-full max-w-lg mx-auto sm:max-w-none sm:mx-0 rounded-2xl sm:rounded-t-2xl sm:rounded-b-none bg-[var(--card)] border border-[var(--border)] shadow-[0_-2px_20px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.2)]">
-        <div className="flex flex-nowrap items-stretch gap-0.5 overflow-x-auto overscroll-x-contain scrollbar-hide snap-x snap-mandatory px-1 min-h-[56px] py-0.5">
+        <div className="flex w-full flex-nowrap items-stretch gap-0.5 px-1 min-h-[56px] py-0.5 max-sm:overflow-x-auto max-sm:overscroll-x-contain scrollbar-hide max-sm:snap-x max-sm:snap-mandatory sm:gap-1 sm:px-3">
           {NAV_ITEMS.map((item) => {
             const active = isActive(pathname, item.href);
             const Icon = ICONS[item.id];
-            const slotW = item.primary ? 'w-[4.75rem] sm:w-[5rem]' : 'w-[4.1rem] sm:w-[4.35rem]';
-            const linkClass = `flex flex-col items-center justify-center shrink-0 snap-center ${slotW} gap-1 py-2 px-0.5 rounded-xl transition-all duration-200 active:scale-[0.98] min-h-[52px] touch-manipulation`;
+            /** Fixed slots on narrow phones (scroll if needed); equal flex columns on sm+ so items span the full bar. */
+            const slotW = item.primary
+              ? 'w-[4.75rem] max-sm:shrink-0 sm:w-auto sm:flex-1 sm:min-w-0'
+              : 'w-[4.1rem] max-sm:shrink-0 sm:w-auto sm:flex-1 sm:min-w-0';
+            const linkClass = `flex flex-col items-center justify-center snap-center ${slotW} gap-1 py-2 px-0.5 rounded-xl transition-all duration-200 active:scale-[0.98] min-h-[52px] touch-manipulation`;
 
             if (item.primary) {
               return (
