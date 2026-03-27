@@ -113,7 +113,12 @@ export default async function RootLayout({
               <SlipCartProvider>
                 <SkipToMainContent />
                 <TopBar />
-                <div id="main-content" role="main" tabIndex={-1} className="min-h-screen pb-[calc(6rem+env(safe-area-inset-bottom,0px))] xl:pb-0">
+                <div
+                  id="main-content"
+                  role="main"
+                  tabIndex={-1}
+                  className="min-h-screen min-w-0 max-w-full overflow-x-hidden pb-[calc(6rem+env(safe-area-inset-bottom,0px))] xl:pb-0"
+                >
                   {children}
                 </div>
                 <MobileBottomNav />

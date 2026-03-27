@@ -731,7 +731,7 @@ export default function CreatePickPage() {
     <DashboardShell slipCount={selections.length}>
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
-      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
+      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden">
         <div className="section-ux-dashboard-shell">
           <PageHeader
             label={t('create_pick.title')}
@@ -773,8 +773,9 @@ export default function CreatePickPage() {
           <div className="mb-4">
             <AdSlot zoneSlug="create-pick-full" fullWidth className="w-full" />
           </div>
-          {/* Sport tabs — scrollable on mobile */}
-          <div className="flex gap-2 mb-4 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+          {/* Sport tabs — horizontal scroll contained here so the page does not pan sideways (WebView / iOS). */}
+          <div className="mb-4 w-full min-w-0 overflow-hidden">
+            <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide touch-pan-x [-webkit-overflow-scrolling:touch]">
             {([
               { key: 'football',          label: `⚽ ${t('create_pick.sport_football')}` },
               { key: 'basketball',        label: `🏀 ${t('create_pick.sport_basketball')}` },
@@ -798,6 +799,7 @@ export default function CreatePickPage() {
                 {label}
               </button>
             ))}
+            </div>
           </div>
           {selections.length > 0 && (
             <div className="flex justify-end mb-3">
@@ -862,8 +864,8 @@ export default function CreatePickPage() {
             </div>
 
             {/* Sport-specific filters / info */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-              <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 min-w-0 w-full">
+              <div className="flex flex-col gap-0.5 min-w-0">
                 <p className="text-[var(--text-muted)] text-sm">
                   {sport === 'football' && t('create_pick.click_hint')}
                   {sport !== 'football' && t('create_pick.click_hint_other')}
@@ -895,19 +897,19 @@ export default function CreatePickPage() {
                   )}
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 min-w-0 w-full">
                 {/* Football: Country + Competition filters (API-backed) */}
                 {sport === 'football' && (
                   <>
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm font-medium text-[var(--text)] whitespace-nowrap">{t('create_pick.country')}</label>
+                    <div className="flex min-w-0 max-w-full flex-1 basis-full items-center gap-2 sm:basis-auto sm:flex-initial">
+                      <label className="shrink-0 text-sm font-medium text-[var(--text)] whitespace-nowrap">{t('create_pick.country')}</label>
                       <select
                         value={selectedCountry}
                         onChange={(e) => {
                           setSelectedCountry(e.target.value);
                           setSelectedLeague('');
                         }}
-                        className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all min-w-[140px]"
+                        className="min-w-0 flex-1 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all sm:min-w-[140px] sm:flex-initial"
                       >
                         <option value="">{t('create_pick.all_countries')}</option>
                         {filterOptions.countries.map((country) => (
@@ -918,12 +920,12 @@ export default function CreatePickPage() {
                       </select>
                     </div>
                     {filterOptions.leagues.length > 0 && (
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm font-medium text-[var(--text)] whitespace-nowrap">Competition</label>
+                      <div className="flex min-w-0 max-w-full flex-1 basis-full items-center gap-2 sm:basis-auto sm:flex-initial">
+                        <label className="shrink-0 text-sm font-medium text-[var(--text)] whitespace-nowrap">Competition</label>
                         <select
                           value={competitionOptions.some((l) => String(l.id) === selectedLeague) ? selectedLeague : ''}
                           onChange={(e) => setSelectedLeague(e.target.value)}
-                          className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all min-w-[200px]"
+                          className="min-w-0 flex-1 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all sm:min-w-[200px] sm:flex-initial"
                           title={selectedCountry ? (selectedCountry === 'World' ? t('create_pick.international_only') : t('create_pick.leagues_in', { country: selectedCountry })) : t('create_pick.filter_by_league')}
                         >
                           <option value="">All competitions</option>
@@ -949,12 +951,12 @@ export default function CreatePickPage() {
 
                 {/* Non-football: Competition/League filter (client-side from loaded events) */}
                 {sport !== 'football' && uniqueSportLeagues.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-[var(--text)] whitespace-nowrap">Competition</label>
+                  <div className="flex min-w-0 max-w-full flex-1 basis-full items-center gap-2 sm:basis-auto sm:flex-initial">
+                    <label className="shrink-0 text-sm font-medium text-[var(--text)] whitespace-nowrap">Competition</label>
                     <select
                       value={sportLeague}
                       onChange={(e) => setSportLeague(e.target.value)}
-                      className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all min-w-[200px]"
+                      className="min-w-0 flex-1 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all sm:min-w-[200px] sm:flex-initial"
                     >
                       <option value="">All competitions</option>
                       {uniqueSportLeagues.map((league) => (
