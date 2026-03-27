@@ -17,6 +17,7 @@ import { FootballModule } from '../football/football.module';
 import { TipsterModule } from '../tipster/tipster.module';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { ReferralsModule } from '../referrals/referrals.module';
+import { PredictionsModule } from '../predictions/predictions.module';
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { SportEvent } from '../sport-events/entities/sport-event.entity';
 import { User } from '../users/entities/user.entity';
@@ -47,6 +48,7 @@ import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity'
     TipsterModule,
     forwardRef(() => SubscriptionsModule),
     ReferralsModule,
+    forwardRef(() => PredictionsModule),
   ],
   controllers: [AccumulatorsController],
   providers: [AccumulatorsService, SettlementService],

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, In, DataSource, EntityManager } from 'typeorm';
 import { AccumulatorTicket } from './entities/accumulator-ticket.entity';
@@ -12,6 +12,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { determinePickResult } from './settlement-logic';
 import { clampPlatformCommissionPercent, splitGrossForTipsterPayout } from '../../common/platform-commission';
 import { couponPublicRef } from '../../common/coupon-public-label';
+import { TipstersApiService } from '../predictions/tipsters-api.service';
 
 /** Market types and selection formats we support for settlement. See determinePickResult. */
 export const SETTLEMENT_SUPPORTED_MARKETS = [
@@ -47,7 +48,21 @@ export class SettlementService {
     private notificationsService: NotificationsService,
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    @Inject(forwardRef(() => TipstersApiService))
+    private readonly tipstersApiService: TipstersApiService,
   ) { }
+
+  /** Persist ROI, win rate, avg odds, streaks from accumulator_tickets (single source of truth). */
+  private async persistTipsterStatsForUserIds(userIds: Iterable<number>): Promise<void> {
+    const unique = [...new Set([...userIds].filter((id) => id != null && id > 0))];
+    for (const uid of unique) {
+      try {
+        await this.tipstersApiService.recalculateAndPersistTipsterStats(uid);
+      } catch (e) {
+        this.logger.warn(`recalculateAndPersistTipsterStats failed for user ${uid}: ${e}`);
+      }
+    }
+  }
 
   /**
    * Check and settle accumulators (optimized for frequent calls)
@@ -224,12 +239,20 @@ export class SettlementService {
           }
 
           await tRepo.update({ id: ticketId }, { result: newAgg, status: newAgg });
-          return { picks: ticketDeltas.length, changed: true, escrow: escrowAdjusted };
+          return {
+            picks: ticketDeltas.length,
+            changed: true,
+            escrow: escrowAdjusted,
+            userId: ticket.userId,
+          };
         });
 
         picksRegraded += summary.picks;
         if (summary.changed) ticketsOutcomeChanged += 1;
         if (summary.escrow) escrowTicketsAdjusted += 1;
+        if (summary.changed && summary.userId != null) {
+          await this.persistTipsterStatsForUserIds([summary.userId]);
+        }
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         errors.push(`Ticket ${ticketId}: ${msg}`);
@@ -464,6 +487,7 @@ export class SettlementService {
     }
 
     let ticketsSettled = 0;
+    const statsSyncUserIds = new Set<number>();
     for (const ticket of allPendingTickets) {
       const picks = picksByTicketId.get(ticket.id) ?? [];
       const allSettled = picks.length > 0 && picks.every((p) => p.result !== 'pending');
@@ -475,11 +499,16 @@ export class SettlementService {
       ticket.status = ticket.result;
       await this.ticketRepo.save(ticket);
       ticketsSettled++;
+      if (ticket.userId != null) statsSyncUserIds.add(ticket.userId);
 
       const priceNum = Number(ticket.price);
       if (ticket.isMarketplace && priceNum > 0) {
         await this.settleEscrow(ticket.id, ticket.userId, ticket.result, couponPublicRef(ticket.id));
       }
+    }
+
+    if (statsSyncUserIds.size > 0) {
+      await this.persistTipsterStatsForUserIds(statsSyncUserIds);
     }
 
     if (picksUpdated > 0 || ticketsSettled > 0) {

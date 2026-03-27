@@ -171,60 +171,8 @@ export class ResultTrackerService {
       settledAt: new Date(),
     });
 
-    await this.updateTipsterPerformance(
-      prediction.tipsterId,
-      status,
-      actualResult,
-      combinedOdds,
-    );
-
+    /** Tipster ROI / avg odds / win rate are persisted from accumulator_tickets in SettlementService.runSettlement */
     return true;
-  }
-
-  /**
-   * Update tipster's overall statistics
-   */
-  private async updateTipsterPerformance(
-    tipsterId: number,
-    result: string,
-    profit: number,
-    odds: number,
-  ): Promise<void> {
-    const tipster = await this.tipsterRepo.findOne({
-      where: { id: tipsterId },
-    });
-    if (!tipster) return;
-
-    const totalPredictions = tipster.totalPredictions || 0;
-    if (totalPredictions === 0) return;
-
-    const totalWins = result === 'won' ? (tipster.totalWins || 0) + 1 : (tipster.totalWins || 0);
-    const totalLosses =
-      result === 'lost' ? (tipster.totalLosses || 0) + 1 : (tipster.totalLosses || 0);
-    const currentStreak =
-      result === 'won'
-        ? Math.max(1, (tipster.currentStreak || 0) + 1)
-        : Math.min(-1, (tipster.currentStreak || 0) - 1);
-    const totalProfit = Number(tipster.totalProfit || 0) + profit;
-    const winRate = totalPredictions > 0 ? (totalWins / totalPredictions) * 100 : 0;
-    const roi = totalPredictions > 0 ? (totalProfit / totalPredictions) * 100 : 0;
-    const bestStreak = Math.max(tipster.bestStreak || 0, currentStreak);
-    const avgOdds =
-      totalPredictions > 0
-        ? (Number(tipster.avgOdds || 0) * (totalPredictions - 1) + odds) / totalPredictions
-        : odds;
-
-    await this.tipsterRepo.update(tipsterId, {
-      totalWins,
-      totalLosses,
-      winRate,
-      roi,
-      currentStreak,
-      bestStreak,
-      totalProfit,
-      avgOdds,
-      lastPredictionDate: new Date(),
-    });
   }
 
   /**

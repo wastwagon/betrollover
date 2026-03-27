@@ -264,7 +264,11 @@ export class TipstersApiService {
 
   /**
    * Recompute tipster stats from accumulator_tickets and persist to tipsters table.
-   * Used after admin deletes a coupon to keep ROI, win rate, streak, etc. in sync.
+   * Used after settlement and admin actions so persisted stats match marketplace coupons.
+   *
+   * **Avg odds:** mean of `totalOdds` (combined coupon price) over **settled** coupons only
+   * (`won` / `lost` / `void`). Pending listings are excluded so the figure reflects completed
+   * plays, not unpublished stake levels.
    */
   async recalculateAndPersistTipsterStats(userId: number): Promise<boolean> {
     const tipster = await this.tipsterRepo.findOne({ where: { userId } });
@@ -289,8 +293,10 @@ export class TipstersApiService {
     const roi = totalPredictions > 0 ? (totalProfit / totalPredictions) * 100 : 0;
     const { currentStreak, bestStreak } = await this.computeStreakFromTickets(userId);
 
-    const oddsSum = tickets.reduce((s, t) => s + Number(t.totalOdds), 0);
-    const avgOdds = totalPredictions > 0 ? oddsSum / totalPredictions : 0;
+    const finished = tickets.filter((t) => ['won', 'lost', 'void'].includes(t.result));
+    const oddsSumFinished = finished.reduce((s, t) => s + Number(t.totalOdds), 0);
+    const avgOdds =
+      finished.length > 0 ? Math.round((oddsSumFinished / finished.length) * 100) / 100 : 0;
 
     const lastTicket = tickets[tickets.length - 1];
     const lastPredictionDate = lastTicket?.createdAt ?? null;
@@ -308,6 +314,19 @@ export class TipstersApiService {
       lastPredictionDate,
     });
     return true;
+  }
+
+  /**
+   * Mean combined coupon odds (`totalOdds`) over finished coupons only — same definition as persisted `avgOdds`.
+   */
+  private async getAvgOddsFromSettledTickets(userId: number): Promise<number> {
+    const row = await this.ticketRepo
+      .createQueryBuilder('t')
+      .select('COALESCE(AVG(t.totalOdds), 0)', 'avg')
+      .where('t.userId = :uid', { uid: userId })
+      .andWhere('t.result IN (:...r)', { r: ['won', 'lost', 'void'] })
+      .getRawOne<{ avg: string }>();
+    return Math.round(Number(row?.avg ?? 0) * 100) / 100;
   }
 
   private async computeStreakFromTickets(userId: number): Promise<{ currentStreak: number; bestStreak: number }> {
@@ -517,6 +536,11 @@ export class TipstersApiService {
     const allTimeRankMap = await this.getAllTimeLeaderboardRankMap();
     const liveLeaderboardRank = allTimeRankMap.get(tipster.id) ?? null;
 
+    const avgOddsLive =
+      tipster.userId != null
+        ? await this.getAvgOddsFromSettledTickets(tipster.userId)
+        : Number(tipster.avgOdds);
+
     return {
       tipster: {
         id: tipster.id,
@@ -536,7 +560,7 @@ export class TipstersApiService {
         current_streak: currentStreak,
         best_streak: bestStreak,
         total_profit: Number(tipster.totalProfit),
-        avg_odds: Number(tipster.avgOdds),
+        avg_odds: avgOddsLive,
         leaderboard_rank: liveLeaderboardRank,
         follower_count: followerCount,
         last_prediction_date: tipster.lastPredictionDate,
