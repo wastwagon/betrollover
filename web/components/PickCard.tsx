@@ -148,6 +148,17 @@ export function PickCard({
   const isFree = price === 0;
   const showFullDetails = isFree || isPurchased || viewOnly;
 
+  const purchaseActivityLabel =
+    purchaseCount !== undefined && purchaseCount > 0
+      ? isFree
+        ? purchaseCount === 1
+          ? t('pick_card.badge_claims_one')
+          : t('pick_card.badge_claims_other', { n: String(purchaseCount) })
+        : purchaseCount === 1
+          ? t('pick_card.badge_purchases_one')
+          : t('pick_card.badge_purchases_other', { n: String(purchaseCount) })
+      : null;
+
   const statusColors: Record<string, string> = {
     pending_approval: 'bg-amber-200 text-amber-900',
     active: 'bg-emerald-200 text-emerald-900',
@@ -286,13 +297,25 @@ export function PickCard({
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-1.5 mt-1">
+              {purchaseActivityLabel && (
+                <span
+                  className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-[10px] font-bold border shadow-sm ${
+                    isFree
+                      ? 'bg-violet-50 text-violet-900 border-violet-200 dark:bg-violet-950/50 dark:text-violet-100 dark:border-violet-700/60'
+                      : 'bg-amber-50 text-amber-950 border-amber-300 dark:bg-amber-950/40 dark:text-amber-100 dark:border-amber-700/60'
+                  }`}
+                  title={isFree ? t('pick_card.badge_claims_hint') : t('pick_card.badge_purchases_hint')}
+                >
+                  <span aria-hidden className="opacity-90">
+                    {isFree ? '✓' : '🛒'}
+                  </span>
+                  {purchaseActivityLabel}
+                </span>
+              )}
               {createdAt && (
                 <span className="text-[9px] text-[var(--text-muted)]">
                   {new Date(createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </span>
-              )}
-              {purchaseCount !== undefined && purchaseCount > 0 && (
-                <span className="text-[9px] text-[var(--text-muted)]">· 🛒 {purchaseCount}</span>
               )}
               {sport && SPORT_META[sport.toLowerCase()] && (
                 <span className={`inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-medium border ${SPORT_META[sport.toLowerCase()].color}`}>

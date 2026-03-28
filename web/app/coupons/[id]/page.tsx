@@ -10,6 +10,7 @@ import { AdSlot } from '@/components/AdSlot';
 import { TeamBadge } from '@/components/TeamBadge';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
+import { useT } from '@/context/LanguageContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Pick {
@@ -258,6 +259,7 @@ function ReviewsSection({ couponId, isPurchased, isSettled }: { couponId: number
 export default function CouponDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const t = useT();
   const id = Number(params?.id);
 
   const [coupon, setCoupon] = useState<Coupon | null>(null);
@@ -487,7 +489,29 @@ export default function CouponDetailPage() {
                   </span>
                 )}
                 {coupon.purchaseCount != null && coupon.purchaseCount > 0 && (
-                  <span>{coupon.purchaseCount} purchase{coupon.purchaseCount !== 1 ? 's' : ''}</span>
+                  <span
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border shadow-sm ${
+                      Number(coupon.price) <= 0
+                        ? 'bg-violet-50 text-violet-900 border-violet-200 dark:bg-violet-950/50 dark:text-violet-100 dark:border-violet-700/60'
+                        : 'bg-amber-50 text-amber-950 border-amber-300 dark:bg-amber-950/40 dark:text-amber-100 dark:border-amber-700/60'
+                    }`}
+                    title={
+                      Number(coupon.price) <= 0
+                        ? t('pick_card.badge_claims_hint')
+                        : t('pick_card.badge_purchases_hint')
+                    }
+                  >
+                    <span aria-hidden className="opacity-90">
+                      {Number(coupon.price) <= 0 ? '✓' : '🛒'}
+                    </span>
+                    {Number(coupon.price) <= 0
+                      ? coupon.purchaseCount === 1
+                        ? t('pick_card.badge_claims_one')
+                        : t('pick_card.badge_claims_other', { n: String(coupon.purchaseCount) })
+                      : coupon.purchaseCount === 1
+                        ? t('pick_card.badge_purchases_one')
+                        : t('pick_card.badge_purchases_other', { n: String(coupon.purchaseCount) })}
+                  </span>
                 )}
               </div>
             </div>
