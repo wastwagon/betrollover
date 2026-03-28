@@ -93,8 +93,6 @@ interface PickCardProps {
   /** Buyer review summary for this coupon */
   avgRating?: number | null;
   reviewCount?: number | null;
-  /** Hide tipster-entered coupon title (still passed for backend/admin); no placeholder in UI */
-  hideCouponTitle?: boolean;
 }
 
 export function PickCard({
@@ -130,7 +128,6 @@ export function PickCard({
   followLoading = false,
   avgRating,
   reviewCount,
-  hideCouponTitle = false,
 }: PickCardProps) {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showUnveilModal, setShowUnveilModal] = useState(false);
@@ -214,7 +211,7 @@ export function PickCard({
         )}
         <div className="p-3 flex flex-col flex-1">
           {/* Tipster Performance Header - compact */}
-          {(tipster || (!hideCouponTitle && title)) && (
+          {(tipster || title) && (
             <div className="mb-2 pb-2 border-b border-[var(--border)]/80">
               <div className="flex items-center gap-2">
                 {tipster?.avatarUrl && !avatarError ? (
@@ -267,22 +264,22 @@ export function PickCard({
             </div>
           )}
 
-          {/* Coupon title (optional) & summary — title hidden on public cards when hideCouponTitle */}
+          {/* Coupon title & summary */}
           <div className="mb-2">
             <div className="flex items-center justify-between gap-2 flex-wrap min-h-[1.875rem]">
-              {hideCouponTitle ? (
+              {title ? (
                 <span
-                  className="flex-1 min-w-0 inline-flex items-center px-2 py-1 rounded-lg border border-transparent text-xs"
-                  aria-hidden
-                />
-              ) : (
-                <span
-                  className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[var(--primary)]/10 border border-[var(--primary)]/25 text-[var(--text)] font-medium text-xs truncate max-w-full min-w-0"
+                  className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[var(--primary)]/10 border border-[var(--primary)]/25 text-[var(--text)] font-medium text-xs truncate max-w-full min-w-0 flex-1"
                   title={title}
                 >
                   <span className="flex-shrink-0 text-[var(--primary)] opacity-80" aria-hidden>#</span>
                   <span className="truncate">{title}</span>
                 </span>
+              ) : (
+                <span
+                  className="flex-1 min-w-0 inline-flex items-center px-2 py-1 rounded-lg border border-transparent text-xs"
+                  aria-hidden
+                />
               )}
               <span className="text-[10px] text-[var(--text-muted)] whitespace-nowrap flex-shrink-0">
                 {t('pick_card.picks_odds', { n: String(totalPicks), odds: Number(totalOdds).toFixed(2) })}
@@ -478,9 +475,9 @@ export function PickCard({
 
               {/* Coupon Info */}
               <div className="mb-6">
-                {!hideCouponTitle && (
+                {title ? (
                   <h2 className="text-base font-semibold text-[var(--text)] mb-2">{title}</h2>
-                )}
+                ) : null}
                 <div className="flex items-center gap-4 mb-4">
                   <span className="text-sm text-[var(--text-muted)]">
                     {t('pick_card.picks_odds', { n: String(totalPicks), odds: Number(totalOdds).toFixed(2) })}
@@ -628,9 +625,9 @@ export function PickCard({
                   </div>
                 )}
 
-                {!hideCouponTitle && (
+                {title ? (
                   <h2 className="text-base font-semibold text-[var(--text)] mb-3">{title}</h2>
-                )}
+                ) : null}
                 <div className="flex items-center gap-4 mb-4">
                   <span className="text-sm text-[var(--text-muted)]">
                     {t('pick_card.picks_odds', { n: String(totalPicks), odds: Number(totalOdds).toFixed(2) })}

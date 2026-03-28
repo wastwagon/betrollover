@@ -11,7 +11,7 @@ import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { determinePickResult } from './settlement-logic';
 import { clampPlatformCommissionPercent, splitGrossForTipsterPayout } from '../../common/platform-commission';
-import { couponPublicRef } from '../../common/coupon-public-label';
+import { couponUserFacingRef } from '../../common/coupon-public-label';
 import { TipstersApiService } from '../predictions/tipsters-api.service';
 
 /** Market types and selection formats we support for settlement. See determinePickResult. */
@@ -228,7 +228,7 @@ export class SettlementService {
           const oldResult = ticket.result;
           let escrowAdjusted = false;
           if (ticket.isMarketplace && Number(ticket.price) > 0 && this.escrowWalletFlipNeeded(oldResult, newAgg)) {
-            const couponRef = couponPublicRef(ticketId);
+            const couponRef = couponUserFacingRef(ticketId, ticket.title);
             if (oldResult === 'won') {
               await this.escrowWonToLostOrVoid(manager, ticketId, ticket.userId, couponRef, newAgg === 'void');
               escrowAdjusted = true;
@@ -473,7 +473,7 @@ export class SettlementService {
 
     const allPendingTickets = await this.ticketRepo.find({
       where: { result: 'pending' },
-      select: ['id', 'userId', 'isMarketplace', 'price'],
+      select: ['id', 'userId', 'isMarketplace', 'price', 'title'],
     });
     const pendingTicketIds = allPendingTickets.map((t) => t.id);
     const pendingTicketPicks = pendingTicketIds.length
@@ -503,7 +503,7 @@ export class SettlementService {
 
       const priceNum = Number(ticket.price);
       if (ticket.isMarketplace && priceNum > 0) {
-        await this.settleEscrow(ticket.id, ticket.userId, ticket.result, couponPublicRef(ticket.id));
+        await this.settleEscrow(ticket.id, ticket.userId, ticket.result, ticket.title);
       }
     }
 
@@ -518,7 +518,14 @@ export class SettlementService {
     return { picksUpdated, ticketsSettled };
   }
 
-  private async settleEscrow(accumulatorId: number, sellerId: number, result: string, couponRef: string) {
+  private async settleEscrow(
+    accumulatorId: number,
+    sellerId: number,
+    result: string,
+    ticketTitle: string | null | undefined,
+  ) {
+    const couponRef = couponUserFacingRef(accumulatorId, ticketTitle);
+    const pickTitleMeta = ticketTitle?.trim() || '';
     const funds = await this.escrowRepo.find({
       where: { pickId: accumulatorId, status: 'held' },
     });
@@ -570,7 +577,7 @@ export class SettlementService {
             link: `/my-purchases`,
             icon: 'trophy',
             sendEmail: true,
-            metadata: { pickId: String(accumulatorId), variant: 'won' },
+            metadata: { pickId: String(accumulatorId), variant: 'won', pickTitle: pickTitleMeta },
           }).catch(() => { });
         } else {
           // Lost or void: full refund to buyer (stake back)
@@ -592,7 +599,12 @@ export class SettlementService {
             link: `/my-purchases`,
             icon: 'refund',
             sendEmail: true,
-            metadata: { pickId: String(accumulatorId), variant: result, amount: gross.toFixed(2) },
+            metadata: {
+              pickId: String(accumulatorId),
+              variant: result,
+              amount: gross.toFixed(2),
+              pickTitle: pickTitleMeta,
+            },
           }).catch(() => { });
         }
         processedUsers.add(f.userId);
@@ -621,6 +633,7 @@ export class SettlementService {
       icon: result === 'won' ? 'trophy' : 'info',
       metadata: {
         pickId: String(accumulatorId),
+        pickTitle: pickTitleMeta,
         variant: result,
         grossAmount: String(totalNetPayout + totalCommission),
         netPayout: String(totalNetPayout),

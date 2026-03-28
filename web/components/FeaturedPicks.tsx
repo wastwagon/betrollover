@@ -63,7 +63,6 @@ export function FeaturedPicks() {
               key={a.id}
               id={a.id}
               title={a.title}
-              hideCouponTitle
               totalPicks={a.totalPicks}
               totalOdds={a.totalOdds}
               price={a.price}

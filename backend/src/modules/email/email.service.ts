@@ -10,7 +10,11 @@ import {
   ADMIN_NOTIFICATION_TEMPLATES,
   AdminNotificationType,
 } from './admin-notification-templates.config';
-import { couponPublicRef } from '../../common/coupon-public-label';
+import {
+  couponEmailHeadline,
+  couponUserFacingRef,
+  truncateCouponTitleForSubject,
+} from '../../common/coupon-public-label';
 
 /** Premium transactional palette — dark surround, gold accent, crisp card */
 const BR = {
@@ -215,14 +219,14 @@ export class EmailService {
   /**
    * Premium purchase receipt (transactional). Sent on every successful marketplace purchase.
    */
-  async sendPurchaseConfirmation(to: string, amount: number, pickId: number) {
+  async sendPurchaseConfirmation(to: string, amount: number, pickId: number, pickTitle?: string | null) {
     const appUrl = process.env.APP_URL || 'http://localhost:6002';
-    const ref = couponPublicRef(pickId);
+    const ref = couponUserFacingRef(pickId, pickTitle);
     const safeRef = this.escapeEmailText(ref);
     const ctaPath = `/coupons/${pickId}`;
     const ctaUrl = `${appUrl}${ctaPath}`;
     const amountLabel = amount > 0 ? `GHS ${amount.toFixed(2)}` : 'Free pick';
-    const subject = `Receipt · ${ref}`;
+    const subject = `Receipt · ${this.escapeEmailText(couponEmailHeadline(pickId, pickTitle))}`;
 
     const inner = `${this.brandHeader('Purchase confirmed', 'You\'re in', 'Your pick is secured. Funds stay in escrow until the result is settled.')}
 <tr>
@@ -356,8 +360,8 @@ export class EmailService {
     });
   }
 
-  async sendSettlement(to: string, pickId: number, won: boolean) {
-    const ref = couponPublicRef(pickId);
+  async sendSettlement(to: string, pickId: number, won: boolean, pickTitle?: string | null) {
+    const ref = couponUserFacingRef(pickId, pickTitle);
     const safe = this.escapeEmailText(ref);
     const inner = `${this.brandHeader('Settlement', won ? 'Pick won' : 'Pick settled', safe)}
 <tr><td style="padding:8px 36px 36px;text-align:center;">
@@ -365,7 +369,9 @@ export class EmailService {
 </td></tr>`;
     return this.send({
       to,
-      subject: won ? `Pick won · ${ref}` : `Pick settled · ${ref}`,
+      subject: won
+        ? `Pick won · ${this.escapeEmailText(couponEmailHeadline(pickId, pickTitle))}`
+        : `Pick settled · ${this.escapeEmailText(couponEmailHeadline(pickId, pickTitle))}`,
       text: won
         ? `Your purchased pick (${ref}) won!`
         : `Your purchased pick (${ref}) settled. Check your wallet for refunds if applicable.`,
@@ -460,6 +466,7 @@ export class EmailService {
     data: {
       tipsterName: string;
       accumulatorId: number;
+      couponTitle: string;
       tipsterForm?: string;
       tipsterFormAsOf?: string;
       totalOdds: number;
@@ -477,7 +484,7 @@ export class EmailService {
     const appUrl = process.env.APP_URL || 'http://localhost:6002';
     const ctaUrl = data.link.startsWith('http') ? data.link : `${appUrl}${data.link}`;
     const tipsterName = this.escapeEmailText(data.tipsterName || 'Tipster');
-    const couponHeadline = this.escapeEmailText(couponPublicRef(data.accumulatorId));
+    const couponHeadline = this.escapeEmailText(couponEmailHeadline(data.accumulatorId, data.couponTitle));
     const priceLabel = Number(data.price) > 0 ? `GHS ${Number(data.price).toFixed(2)}` : 'Free';
     const totalOddsLabel = Number(data.totalOdds || 0).toFixed(3);
     const accessLabel = data.isSubscription ? 'Subscribers only' : 'Public marketplace';
@@ -557,11 +564,16 @@ export class EmailService {
       data.tipsterForm
         ? `\n${data.tipsterForm}${asOfLabel ? `\nAs of: ${asOfLabel}` : ''}\nStats source: settled coupon results on BetRollover.\nPerformance can change as new picks settle.\n`
         : '\n'
-    }\n${couponPublicRef(data.accumulatorId)}\nAccess: ${accessLabel}\nPrice: ${priceLabel}\nTotal Odds: ${totalOddsLabel}\n\n${textLegs}\n\nOpen: ${ctaUrl}\n\n— BetRollover`;
+    }\n${couponUserFacingRef(data.accumulatorId, data.couponTitle)}\nAccess: ${accessLabel}\nPrice: ${priceLabel}\nTotal Odds: ${totalOddsLabel}\n\n${textLegs}\n\nOpen: ${ctaUrl}\n\n— BetRollover`;
+
+    const subTitle = truncateCouponTitleForSubject(data.couponTitle || '', 45);
+    const subject = subTitle
+      ? `${data.tipsterName} posted: ${subTitle}`
+      : `${data.tipsterName} posted a new coupon`;
 
     return this.send({
       to,
-      subject: `${data.tipsterName} posted a new coupon`,
+      subject,
       text,
       html,
     });

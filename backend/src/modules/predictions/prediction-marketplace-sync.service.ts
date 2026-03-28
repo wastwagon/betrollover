@@ -196,6 +196,7 @@ export class PredictionMarketplaceSyncService {
           tipsterId: freshTipster.id,
           tipsterUserId: freshTipster.userId,
           tipsterDisplayName: freshTipster.displayName,
+          couponTitle: title,
           price: listPrice,
           accumulatorId: ticket.id,
           // Match human marketplace: detailed leg email only for free coupons; paid = teaser only (no picks in email).

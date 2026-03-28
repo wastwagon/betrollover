@@ -12,6 +12,15 @@ describe('notification-types.config', () => {
         .toBe('Purchase confirmed · Coupon #42');
     });
 
+    it('should include pick title in subject when provided', () => {
+      expect(
+        getEmailSubject('purchase', 'Purchase Complete', {
+          pickId: '42',
+          pickTitle: 'Weekend banker',
+        }),
+      ).toBe('Purchase confirmed · Weekend banker · #42');
+    });
+
     it('should return fallback for unknown type', () => {
       expect(getEmailSubject('unknown', 'Default Title')).toBe('Default Title');
     });

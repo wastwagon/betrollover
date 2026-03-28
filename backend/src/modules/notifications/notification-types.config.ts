@@ -3,9 +3,18 @@
  * Each type maps to in-app notification + optional email (via SendGrid).
  * Professional email templates use category-based styling and contextual subjects.
  */
+import { couponPublicRef, truncateCouponTitleForSubject } from '../../common/coupon-public-label';
+
 function emailSubjectWithCouponRef(base: string, ctx: Record<string, string>): string {
-  const id = ctx.pickId?.trim();
-  return id ? `${base} · Coupon #${id}` : base;
+  const idRaw = ctx.pickId?.trim();
+  if (!idRaw) return base;
+  const idNum = Number(idRaw);
+  if (Number.isNaN(idNum)) return base;
+  const title = ctx.pickTitle?.trim();
+  const suffix = title
+    ? `${truncateCouponTitleForSubject(title)} · #${idNum}`
+    : couponPublicRef(idNum);
+  return `${base} · ${suffix}`;
 }
 
 export const NOTIFICATION_TYPES = {
@@ -89,7 +98,15 @@ export const NOTIFICATION_TYPES = {
   new_pick_from_followed: {
     icon: 'bell',
     defaultSubject: 'New Pick from Followed Tipster',
-    emailSubject: (ctx: Record<string, string>) => `${ctx.tipsterName || 'A tipster'} you follow posted a new pick`,
+    emailSubject: (ctx: Record<string, string>) => {
+      const name = ctx.tipsterName || 'A tipster';
+      const t = ctx.pickTitle?.trim();
+      if (t) {
+        const short = truncateCouponTitleForSubject(t, 40);
+        return `${name} posted: ${short}`;
+      }
+      return `${name} you follow posted a new pick`;
+    },
     ctaText: 'View Marketplace',
     category: 'marketplace',
   },

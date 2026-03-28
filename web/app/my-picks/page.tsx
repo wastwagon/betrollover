@@ -199,7 +199,6 @@ export default function MyPicksPage() {
                   key={a.id}
                   id={a.id}
                   title={a.title}
-                  hideCouponTitle
                   sport={a.sport}
                   totalPicks={a.totalPicks}
                   totalOdds={a.totalOdds}

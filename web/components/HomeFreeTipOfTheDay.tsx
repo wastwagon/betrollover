@@ -135,7 +135,6 @@ export function HomeFreeTipOfTheDay() {
           <PickCard
             id={tip.id}
             title={tip.title}
-            hideCouponTitle
             sport={tip.sport}
             totalPicks={tip.totalPicks}
             totalOdds={tip.totalOdds}

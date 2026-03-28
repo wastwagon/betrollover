@@ -902,7 +902,6 @@ function DashboardContent() {
                       key={`vip-${pick.id}`}
                       id={pick.id}
                       title={pick.title}
-                      hideCouponTitle
                       totalPicks={pick.totalPicks}
                       totalOdds={pick.totalOdds}
                       price={pick.price}
@@ -966,7 +965,6 @@ function DashboardContent() {
                               key={pick.id}
                               id={pick.id}
                               title={pick.title}
-                              hideCouponTitle
                               totalPicks={pick.totalPicks}
                               totalOdds={pick.totalOdds}
                               price={pick.price}

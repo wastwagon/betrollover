@@ -158,7 +158,6 @@ export default function CouponsArchivePage() {
                 key={coupon.id}
                 id={coupon.id}
                 title={coupon.title}
-                hideCouponTitle
                 sport={coupon.sport}
                 totalPicks={coupon.totalPicks}
                 totalOdds={coupon.totalOdds}

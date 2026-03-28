@@ -431,18 +431,24 @@ export default function CouponDetailPage() {
       <main className="section-ux-page-mid">
 
         <nav
-          className="flex items-center gap-2 py-2.5 px-3 rounded-xl bg-[var(--card)] border border-[var(--border)] mb-6 text-sm shadow-sm"
+          className="flex flex-wrap items-center gap-2 py-2.5 px-3 rounded-xl bg-[var(--card)] border border-[var(--border)] mb-4 text-sm shadow-sm"
           aria-label="Breadcrumb"
         >
           <Link
-            href="/coupons"
+            href="/marketplace"
             className="inline-flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors font-medium"
           >
             <span className="text-base opacity-70" aria-hidden>🎫</span>
-            Coupons
+            Marketplace
           </Link>
+          <span className="text-[var(--text-muted)]" aria-hidden>
+            /
+          </span>
+          <span className="text-[var(--text)] font-medium truncate max-w-[min(100%,28rem)]" title={coupon.title}>
+            {coupon.title}
+          </span>
         </nav>
-        <h1 className="sr-only">Coupon details</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)] mb-6 tracking-tight">{coupon.title}</h1>
 
         <div className="flex flex-col lg:flex-row gap-8">
 

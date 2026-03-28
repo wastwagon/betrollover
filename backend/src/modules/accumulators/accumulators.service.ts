@@ -21,6 +21,7 @@ import { Tipster } from '../predictions/entities/tipster.entity';
 import { ReferralsService } from '../referrals/referrals.service';
 import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity';
 import { clampPlatformCommissionPercent } from '../../common/platform-commission';
+import { couponUserFacingRef } from '../../common/coupon-public-label';
 
 /** Sports that use sport_events table (eventId) rather than fixtures (fixtureId) */
 const SPORT_EVENT_SPORTS = new Set(['basketball', 'rugby', 'mma', 'volleyball', 'hockey', 'american_football', 'tennis']);
@@ -342,7 +343,7 @@ export class AccumulatorsService {
         link: '/marketplace',
         icon: 'check',
         sendEmail: true,
-        metadata: { pickId: String(ticket.id) },
+        metadata: { pickId: String(ticket.id), pickTitle: dto.title || '' },
       }).catch(() => { });
 
       const creator = await this.usersRepo.findOne({ where: { id: userId }, select: ['displayName', 'username'] });
@@ -363,6 +364,7 @@ export class AccumulatorsService {
           tipsterId: tipster.id,
           tipsterUserId: userId,
           tipsterDisplayName: tipster.displayName || creatorName,
+          couponTitle: dto.title,
           price,
           accumulatorId: ticket.id,
           couponCard:
@@ -394,6 +396,7 @@ export class AccumulatorsService {
           recipientUserIds: subscriberUserIds,
           tipsterUserId: userId,
           tipsterDisplayName: tipster.displayName || creatorName,
+          couponTitle: dto.title,
           accumulatorId: ticket.id,
           couponCard: {
             totalOdds: Number(ticket.totalOdds),
@@ -1567,7 +1570,7 @@ export class AccumulatorsService {
             price,
             'purchase',
             `pick-${accumulatorId}`,
-            `Purchase: Coupon #${accumulatorId}`,
+            `Purchase: ${couponUserFacingRef(accumulatorId, ticket.title)}`,
             manager,
           );
           try {
@@ -1621,7 +1624,7 @@ export class AccumulatorsService {
         link: `/my-purchases`,
         icon: 'cart',
         sendEmail: false,
-        metadata: { pickId: String(accumulatorId) },
+        metadata: { pickId: String(accumulatorId), pickTitle: ticket.title || '' },
       }).catch(() => { });
 
       this.usersRepo
@@ -1629,7 +1632,7 @@ export class AccumulatorsService {
         .then((buyer) => {
           if (buyer?.email) {
             this.emailService
-              .sendPurchaseConfirmation(buyer.email, price, accumulatorId)
+              .sendPurchaseConfirmation(buyer.email, price, accumulatorId, ticket.title)
               .catch(() => {});
           }
         })
@@ -1648,7 +1651,7 @@ export class AccumulatorsService {
           link: '/my-picks',
           icon: 'cart',
           sendEmail: true,
-          metadata: { pickId: String(accumulatorId) },
+          metadata: { pickId: String(accumulatorId), pickTitle: ticket.title || '' },
         }).catch(() => { });
       }
 

@@ -166,6 +166,7 @@ export class NotificationsService {
     tipsterId: number;
     tipsterUserId: number;
     tipsterDisplayName: string;
+    couponTitle: string;
     price: number;
     accumulatorId: number;
     couponCard?: {
@@ -205,6 +206,7 @@ export class NotificationsService {
         metadata: {
           tipsterName,
           pickId: String(params.accumulatorId),
+          pickTitle: params.couponTitle || '',
           ...(tipsterForm
             ? {
                 tipsterForm: tipsterForm.label,
@@ -230,6 +232,7 @@ export class NotificationsService {
             await this.emailService.sendCouponCardEmail(user.email, {
               tipsterName,
               accumulatorId: params.accumulatorId,
+              couponTitle: params.couponTitle,
               tipsterForm: tipsterForm?.label,
               tipsterFormAsOf: tipsterForm?.asOf,
               totalOdds: params.couponCard.totalOdds,
@@ -254,6 +257,7 @@ export class NotificationsService {
     recipientUserIds: number[];
     tipsterUserId: number;
     tipsterDisplayName: string;
+    couponTitle: string;
     accumulatorId: number;
     couponCard: {
       totalOdds: number;
@@ -284,6 +288,7 @@ export class NotificationsService {
         metadata: {
           tipsterName,
           pickId: String(params.accumulatorId),
+          pickTitle: params.couponTitle || '',
           ...(tipsterForm
             ? {
                 tipsterForm: tipsterForm.label,
@@ -308,6 +313,7 @@ export class NotificationsService {
           await this.emailService.sendCouponCardEmail(user.email, {
             tipsterName,
             accumulatorId: params.accumulatorId,
+            couponTitle: params.couponTitle,
             tipsterForm: tipsterForm?.label,
             tipsterFormAsOf: tipsterForm?.asOf,
             totalOdds: params.couponCard.totalOdds,
