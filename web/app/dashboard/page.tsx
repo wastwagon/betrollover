@@ -35,7 +35,7 @@ interface FeedPick {
   status: string;
   result: string;
   picks: Array<{ matchDescription?: string; prediction?: string; odds?: number; matchDate?: string }>;
-  tipster?: { id: number; displayName: string; username: string; avatarUrl: string | null; winRate: number; totalPicks: number; wonPicks: number; lostPicks: number; rank: number } | null;
+  tipster?: { id: number; displayName: string; username: string; avatarUrl: string | null; winRate: number; totalPicks: number; wonPicks: number; lostPicks: number; rank: number | null } | null;
   createdAt: string;
 }
 

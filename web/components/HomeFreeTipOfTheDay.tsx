@@ -34,7 +34,7 @@ interface Tipster {
   totalPicks?: number;
   wonPicks?: number;
   lostPicks?: number;
-  rank: number;
+  rank: number | null;
 }
 
 interface FreeTip {

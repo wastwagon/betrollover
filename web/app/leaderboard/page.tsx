@@ -12,6 +12,7 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { useT } from '@/context/LanguageContext';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
+import { tipsterRankMedal } from '@/lib/tipster-rank-ui';
 
 type Period = 'all_time' | 'monthly' | 'weekly';
 type SportFilter = 'all' | 'football' | 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football';
@@ -34,10 +35,9 @@ interface LeaderboardEntry {
   review_count?: number | null;
 }
 
-const MEDAL = ['🥇', '🥈', '🥉'];
-
 function RankBadge({ rank }: { rank: number }) {
-  if (rank <= 3) return <span className="text-2xl">{MEDAL[rank - 1]}</span>;
+  const medal = tipsterRankMedal(rank);
+  if (medal) return <span className="text-2xl">{medal}</span>;
   return (
     <span className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 text-sm font-bold">
       {rank}

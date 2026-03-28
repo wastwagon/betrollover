@@ -11,6 +11,7 @@ import { TeamBadge } from '@/components/TeamBadge';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { useT } from '@/context/LanguageContext';
+import { formatTipsterRankHash } from '@/lib/tipster-rank-ui';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Pick {
@@ -47,7 +48,7 @@ interface Tipster {
   totalPicks: number;
   wonPicks: number;
   lostPicks: number;
-  rank: number;
+  rank: number | null;
 }
 
 interface Coupon {
@@ -866,7 +867,9 @@ export default function CouponDetailPage() {
                     <div>
                       <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300">Escrow Protected</p>
                       <p className="text-xs text-emerald-700 dark:text-emerald-400 leading-relaxed mt-0.5">
-                        If this coupon loses, your purchase price is automatically refunded. No claims needed.
+                        {coupon.price === 0
+                          ? 'Free coupons are shared for information only — there is no purchase to refund.'
+                          : 'If this coupon loses, your purchase price is automatically refunded. No claims needed.'}
                       </p>
                     </div>
                   </div>
@@ -911,7 +914,9 @@ export default function CouponDetailPage() {
                       <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Total</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-sm font-semibold text-[var(--text)]">#{coupon.tipster.rank}</p>
+                      <p className="text-sm font-semibold text-[var(--text)]">
+                        {formatTipsterRankHash(coupon.tipster.rank)}
+                      </p>
                       <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Rank</p>
                     </div>
                   </div>

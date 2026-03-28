@@ -8,6 +8,7 @@ import { TeamBadge } from './TeamBadge';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useT } from '@/context/LanguageContext';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
+import { tipsterRankBadgeClass, tipsterRankBadgeContent } from '@/lib/tipster-rank-ui';
 
 interface Pick {
   id?: number;
@@ -40,7 +41,8 @@ interface Tipster {
   totalPicks: number;
   wonPicks: number;
   lostPicks: number;
-  rank: number;
+  /** Global all-time leaderboard rank; null if not on leaderboard (e.g. no settled picks). */
+  rank: number | null;
 }
 
 const SPORT_META: Record<string, { icon: string; label: string; color: string }> = {
@@ -170,21 +172,6 @@ export function PickCard({
   const displayStatus = result && ['won', 'lost', 'void'].includes(result) ? result : status;
   const statusColor = displayStatus ? statusColors[displayStatus] || 'bg-slate-100 text-slate-600' : '';
 
-  const getRankBadgeColor = (rank: number) => {
-    if (rank === 1) return 'bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-white shadow-md';
-    if (rank === 2) return 'bg-gradient-to-r from-slate-300 via-slate-400 to-slate-500 text-white shadow-md';
-    if (rank === 3) return 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-md';
-    if (rank <= 10) return 'bg-gradient-to-r from-amber-200 to-yellow-300 text-amber-900';
-    return 'bg-slate-200 text-slate-800';
-  };
-
-  const getRankIcon = (rank: number) => {
-    if (rank === 1) return '🥇';
-    if (rank === 2) return '🥈';
-    if (rank === 3) return '🥉';
-    return `#${rank}`;
-  };
-
   const handlePurchase = () => {
     onPurchase();
   };
@@ -238,8 +225,8 @@ export function PickCard({
                     />
                   </div>
                 ) : (
-                  <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold ${tipster ? getRankBadgeColor(tipster.rank) : 'bg-slate-200 text-slate-700'}`}>
-                    {tipster ? (tipster.rank <= 3 ? getRankIcon(tipster.rank) : tipster.rank) : '?'}
+                  <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold ${tipster ? tipsterRankBadgeClass(tipster.rank) : 'bg-slate-200 text-slate-700'}`}>
+                    {tipster ? tipsterRankBadgeContent(tipster.rank) : '?'}
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
@@ -475,8 +462,8 @@ export function PickCard({
               {tipster && (
                 <div className="mb-6 pb-6 border-b border-[var(--border)]">
                   <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold ${getRankBadgeColor(tipster.rank)}`}>
-                      {tipster.rank <= 3 ? getRankIcon(tipster.rank) : tipster.rank}
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold ${tipsterRankBadgeClass(tipster.rank)}`}>
+                      {tipsterRankBadgeContent(tipster.rank)}
                     </div>
                     <div>
                       <p className="font-medium text-base text-[var(--text)]">{tipster.displayName}</p>
@@ -635,8 +622,8 @@ export function PickCard({
                 {tipster && (
                   <div className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold ${getRankBadgeColor(tipster.rank)}`}>
-                        {tipster.rank <= 3 ? getRankIcon(tipster.rank) : tipster.rank}
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold ${tipsterRankBadgeClass(tipster.rank)}`}>
+                        {tipsterRankBadgeContent(tipster.rank)}
                       </div>
                       <div>
                         <p className="font-semibold text-[var(--text)]">{tipster.displayName}</p>

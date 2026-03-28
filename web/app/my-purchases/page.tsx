@@ -33,7 +33,7 @@ interface Tipster {
   username: string;
   avatarUrl?: string | null;
   winRate: number;
-  rank: number;
+  rank: number | null;
   totalPicks: number;
   wonPicks: number;
   lostPicks: number;

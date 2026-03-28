@@ -152,11 +152,41 @@ export class TipstersApiService {
     return { tipsters, sorted };
   }
 
+  /**
+   * Single pass over all-time sorted leaderboard: tipster entity id and user id → rank (1-based).
+   * Same ordering as GET /leaderboard?period=all_time (ROI). Unlisted tipsters are omitted from both maps.
+   */
+  private async getAllTimeLeaderboardRankMaps(sport?: string): Promise<{
+    byTipsterId: Map<number, number>;
+    byUserId: Map<number, number>;
+  }> {
+    const { sorted, tipsters } = await this.computeAllTimeLeaderboardSortedEntries(sport);
+    const tipsterIdToUserId = new Map<number, number>();
+    for (const t of tipsters) {
+      if (t.userId != null) tipsterIdToUserId.set(t.id, t.userId);
+    }
+    const byTipsterId = new Map<number, number>();
+    const byUserId = new Map<number, number>();
+    for (let i = 0; i < sorted.length; i++) {
+      const r = i + 1;
+      const e = sorted[i];
+      byTipsterId.set(e.id, r);
+      const uid = tipsterIdToUserId.get(e.id);
+      if (uid != null) byUserId.set(uid, r);
+    }
+    return { byTipsterId, byUserId };
+  }
+
   private async getAllTimeLeaderboardRankMap(sport?: string): Promise<Map<number, number>> {
-    const { sorted } = await this.computeAllTimeLeaderboardSortedEntries(sport);
-    const map = new Map<number, number>();
-    sorted.forEach((e, i) => map.set(e.id, i + 1));
-    return map;
+    return (await this.getAllTimeLeaderboardRankMaps(sport)).byTipsterId;
+  }
+
+  /**
+   * User id → all-time leaderboard rank (1-based), same ordering as GET /leaderboard?period=all_time.
+   * Omitted if the tipster has no settled picks (not eligible for the leaderboard list).
+   */
+  async getLeaderboardRankByUserIdMap(sport?: string): Promise<Map<number, number>> {
+    return (await this.getAllTimeLeaderboardRankMaps(sport)).byUserId;
   }
 
   /** Compute stats from accumulator_tickets for human tipsters (userId) - matches Marketplace logic */
@@ -615,7 +645,7 @@ export class TipstersApiService {
       select: ['id', 'displayName', 'username', 'avatar'],
     });
     const allTimeRankMap = await this.getAllTimeLeaderboardRankMap();
-    const liveRank = allTimeRankMap.get(tipster.id) ?? 0;
+    const liveRank = allTimeRankMap.get(tipster.id) ?? null;
 
     // Enrich picks with fixture scores (FT scoreline) for settled coupons
     const fixtureIds = [...new Set(validTickets.flatMap((t) => (t.picks || []).map((p) => p.fixtureId).filter(Boolean) as number[]))];
@@ -703,7 +733,7 @@ export class TipstersApiService {
     const priceMap = new Map(rows.map((r) => [r.accumulatorId, Number(r.price)]));
     const purchaseCountMap = new Map(rows.map((r) => [r.accumulatorId, r.purchaseCount || 0]));
     const allTimeRankMap = await this.getAllTimeLeaderboardRankMap();
-    const liveRank = allTimeRankMap.get(tipster.id) ?? 0;
+    const liveRank = allTimeRankMap.get(tipster.id) ?? null;
 
     return deduped.map((ticket) => ({
       ...ticket,
@@ -943,7 +973,10 @@ export class TipstersApiService {
     const priceMap = new Map(listingRows.map((r) => [r.accumulatorId, Number(r.price)]));
     const purchaseMap = new Map(listingRows.map((r) => [r.accumulatorId, r.purchaseCount || 0]));
 
-    const userMap = new Map<number, { displayName: string; username: string; avatarUrl: string | null; winRate: number; rank: number }>();
+    const userMap = new Map<
+      number,
+      { displayName: string; username: string; avatarUrl: string | null; winRate: number; rank: number | null }
+    >();
     for (const t of tipsters) {
       if (t.userId) {
         userMap.set(t.userId, {
@@ -951,7 +984,7 @@ export class TipstersApiService {
           username: t.username,
           avatarUrl: t.avatarUrl,
           winRate: Number(t.winRate),
-          rank: allTimeRankMap.get(t.id) ?? 0,
+          rank: allTimeRankMap.get(t.id) ?? null,
         });
       }
     }

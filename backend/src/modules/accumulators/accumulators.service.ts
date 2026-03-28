@@ -18,6 +18,7 @@ import { TipsterService } from '../tipster/tipster.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
+import { TipstersApiService } from '../predictions/tipsters-api.service';
 import { ReferralsService } from '../referrals/referrals.service';
 import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity';
 import { clampPlatformCommissionPercent } from '../../common/platform-commission';
@@ -102,6 +103,7 @@ export class AccumulatorsService {
     private subscriptionsService: SubscriptionsService,
     private referralsService: ReferralsService,
     private dataSource: DataSource,
+    private tipstersApiService: TipstersApiService,
   ) { }
 
   async create(userId: number, dto: CreateAccumulatorDto) {
@@ -1082,10 +1084,15 @@ export class AccumulatorsService {
     const tipsterIds = [...new Set(validTickets.map(t => t.userId))];
 
     // Calculate tipster stats using SQL aggregation (fixes N+1 query)
-    const tipsterStatsMap = new Map<number, { winRate: number; totalPicks: number; wonPicks: number; lostPicks: number; rank: number }>();
+    const tipsterStatsMap = new Map<
+      number,
+      { winRate: number; totalPicks: number; wonPicks: number; lostPicks: number }
+    >();
+
+    const rankByUserId =
+      tipsterIds.length > 0 ? await this.tipstersApiService.getLeaderboardRankByUserIdMap() : new Map<number, number>();
 
     if (tipsterIds.length > 0) {
-      // Use raw query for efficient aggregation instead of fetching all records
       const statsQuery = await this.ticketRepo
         .createQueryBuilder('ticket')
         .select('ticket.user_id', 'userId')
@@ -1098,36 +1105,18 @@ export class AccumulatorsService {
         .groupBy('ticket.user_id')
         .getRawMany();
 
-      // Calculate stats per tipster from aggregated results
-      const statsByTipster = new Map<number, { total: number; won: number; lost: number }>();
       statsQuery.forEach((row: any) => {
-        statsByTipster.set(Number(row.userId), {
-          total: Number(row.total) || 0,
-          won: Number(row.won) || 0,
-          lost: Number(row.lost) || 0,
-        });
-      });
-
-      // Calculate win rates and create ranking
-      const tipsterRankings = Array.from(statsByTipster.entries())
-        .map(([userId, stats]) => {
-          const settled = stats.won + stats.lost;
-          const winRate = settled > 0 ? (stats.won / settled) * 100 : 0;
-          return { userId, winRate, totalPicks: stats.total, wonPicks: stats.won, lostPicks: stats.lost };
-        })
-        .sort((a, b) => {
-          // Sort by win rate first, then by total picks
-          if (Math.abs(a.winRate - b.winRate) > 0.1) {
-            return b.winRate - a.winRate;
-          }
-          return b.totalPicks - a.totalPicks;
-        });
-
-      // Assign ranks
-      tipsterRankings.forEach((tipster, index) => {
-        tipsterStatsMap.set(tipster.userId, {
-          ...tipster,
-          rank: index + 1,
+        const userId = Number(row.userId);
+        const total = Number(row.total) || 0;
+        const won = Number(row.won) || 0;
+        const lost = Number(row.lost) || 0;
+        const settled = won + lost;
+        const winRate = settled > 0 ? (won / settled) * 100 : 0;
+        tipsterStatsMap.set(userId, {
+          winRate,
+          totalPicks: total,
+          wonPicks: won,
+          lostPicks: lost,
         });
       });
     }
@@ -1179,7 +1168,8 @@ export class AccumulatorsService {
     // Enrich tickets with tipster data
     return validTickets.map(ticket => {
       const tipster = tipsterMap.get(ticket.userId);
-      const stats = tipsterStatsMap.get(ticket.userId) || { winRate: 0, totalPicks: 0, wonPicks: 0, lostPicks: 0, rank: 0 };
+      const stats = tipsterStatsMap.get(ticket.userId) || { winRate: 0, totalPicks: 0, wonPicks: 0, lostPicks: 0 };
+      const globalRank = rankByUserId.get(ticket.userId) ?? null;
 
       return {
         ...ticket,
@@ -1199,7 +1189,7 @@ export class AccumulatorsService {
           totalPicks: stats.totalPicks,
           wonPicks: stats.wonPicks,
           lostPicks: stats.lostPicks,
-          rank: stats.rank,
+          rank: globalRank,
         } : null,
       };
     });

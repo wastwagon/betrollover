@@ -46,7 +46,7 @@ interface Tipster {
   totalPicks: number;
   wonPicks: number;
   lostPicks: number;
-  rank: number;
+  rank: number | null;
   avatarUrl?: string | null;
 }
 
