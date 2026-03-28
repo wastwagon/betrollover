@@ -1637,7 +1637,7 @@ export class AccumulatorsService {
           message:
             price > 0
               ? `Someone purchased your coupon for GHS ${price.toFixed(2)}. Funds will be released to your wallet when the pick settles.`
-              : `Someone claimed your free coupon.`,
+              : `Someone unlocked your free coupon.`,
           link: '/my-picks',
           icon: 'cart',
           sendEmail: true,

@@ -498,7 +498,7 @@ export default function CouponDetailPage() {
                     }`}
                     title={
                       Number(coupon.price) <= 0
-                        ? t('pick_card.badge_claims_hint')
+                        ? t('pick_card.badge_free_unlocks_hint')
                         : t('pick_card.badge_purchases_hint')
                     }
                   >
@@ -507,8 +507,8 @@ export default function CouponDetailPage() {
                     </span>
                     {Number(coupon.price) <= 0
                       ? coupon.purchaseCount === 1
-                        ? t('pick_card.badge_claims_one')
-                        : t('pick_card.badge_claims_other', { n: String(coupon.purchaseCount) })
+                        ? t('pick_card.badge_free_unlocks_one')
+                        : t('pick_card.badge_free_unlocks_other', { n: String(coupon.purchaseCount) })
                       : coupon.purchaseCount === 1
                         ? t('pick_card.badge_purchases_one')
                         : t('pick_card.badge_purchases_other', { n: String(coupon.purchaseCount) })}

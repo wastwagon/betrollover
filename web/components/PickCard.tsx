@@ -154,8 +154,8 @@ export function PickCard({
     purchaseCount !== undefined && purchaseCount > 0
       ? isFree
         ? purchaseCount === 1
-          ? t('pick_card.badge_claims_one')
-          : t('pick_card.badge_claims_other', { n: String(purchaseCount) })
+          ? t('pick_card.badge_free_unlocks_one')
+          : t('pick_card.badge_free_unlocks_other', { n: String(purchaseCount) })
         : purchaseCount === 1
           ? t('pick_card.badge_purchases_one')
           : t('pick_card.badge_purchases_other', { n: String(purchaseCount) })
@@ -291,7 +291,7 @@ export function PickCard({
                       ? 'bg-violet-50 text-violet-900 border-violet-200 dark:bg-violet-950/50 dark:text-violet-100 dark:border-violet-700/60'
                       : 'bg-amber-50 text-amber-950 border-amber-300 dark:bg-amber-950/40 dark:text-amber-100 dark:border-amber-700/60'
                   }`}
-                  title={isFree ? t('pick_card.badge_claims_hint') : t('pick_card.badge_purchases_hint')}
+                  title={isFree ? t('pick_card.badge_free_unlocks_hint') : t('pick_card.badge_purchases_hint')}
                 >
                   <span aria-hidden className="opacity-90">
                     {isFree ? '✓' : '🛒'}

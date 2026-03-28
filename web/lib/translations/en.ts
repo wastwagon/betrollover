@@ -502,11 +502,11 @@ const en = {
   /** Paid marketplace coupons — buyers who paid */
   'pick_card.badge_purchases_one': '1 purchase',
   'pick_card.badge_purchases_other': '{n} purchases',
-  /** Free coupons — users who claimed / unlocked */
-  'pick_card.badge_claims_one': '1 claimed',
-  'pick_card.badge_claims_other': '{n} claimed',
+  /** Free coupons — users who added/unlocked the listing (same counter as purchase_count) */
+  'pick_card.badge_free_unlocks_one': '1 unlocked',
+  'pick_card.badge_free_unlocks_other': '{n} unlocked',
   'pick_card.badge_purchases_hint': 'Paying buyers who purchased this coupon',
-  'pick_card.badge_claims_hint': 'Users who claimed this free coupon',
+  'pick_card.badge_free_unlocks_hint': 'Users who unlocked this free coupon (saved to their account)',
   'pick_card.created': 'Created',
   'pick_card.picks_odds': '{n} picks • {odds} odds',
   'pick_card.view_details': 'View Details',

@@ -225,9 +225,9 @@ export default function LeaderboardPage() {
             </div>
 
             {entries.map((entry, idx) => {
-              const winRate = entry.total_predictions > 0
-                ? Math.round((entry.total_wins / entry.total_predictions) * 100)
-                : Math.round(entry.win_rate ?? 0);
+              // Use API win_rate (settled-only won/(won+lost)). Do not use total_wins/total_predictions:
+              // total_predictions includes pending coupons, which wrongly dilutes win rate vs profile/leaderboard API.
+              const winRate = Number(entry.win_rate) || 0;
               const rank = entry.rank ?? entry.leaderboard_rank ?? idx + 1;
               const roi = entry.roi ?? 0;
               const avatarSrc = getAvatarUrl(entry.avatar_url, 48);
@@ -282,7 +282,7 @@ export default function LeaderboardPage() {
                   {/* Stats */}
                   <div className="hidden md:flex flex-col items-center">
                     <span className={`text-sm font-bold ${winRate >= 60 ? 'text-emerald-600' : winRate >= 40 ? 'text-amber-600' : 'text-[var(--text)]'}`}>
-                      {winRate}%
+                      {winRate.toFixed(1)}%
                     </span>
                     <span className="text-[10px] text-[var(--text-muted)]">win rate</span>
                   </div>
@@ -300,7 +300,7 @@ export default function LeaderboardPage() {
                   {/* Mobile stats */}
                   <div className="md:hidden flex items-center gap-3 ml-auto flex-shrink-0">
                     <span className={`text-xs font-bold ${winRate >= 60 ? 'text-emerald-600' : 'text-[var(--text)]'}`}>
-                      {winRate}% WR
+                      {winRate.toFixed(1)}% WR
                     </span>
                     <span className={`text-xs font-bold ${roi > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
                       {roi > 0 ? '+' : ''}{roi.toFixed(1)}% ROI
