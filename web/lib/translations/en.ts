@@ -221,7 +221,36 @@ const en = {
   'learn.cta_discover': 'Discover news & guides',
   'home.explore_cta_btn': 'Explore →',
   'home.sports_title': 'Sports We Cover',
-  'home.sports_sub': 'Football, Basketball, and Tennis are our core focus — one platform, the same escrow protection and verified tipster standards. More sports may appear in marketplace and live data.',
+  'home.sports_sub':
+    'Football through American football and MMA — one platform, the same escrow protection and verified tipster standards across every sport below. Tipsters can also combine picks in multi-sport coupons.',
+  'home.sport.multi_title': 'Multi-sport coupons',
+  'home.sport.football.desc':
+    'Premier League, La Liga, Champions League & 1,000+ leagues. The most-tipped sport on the platform.',
+  'home.sport.football.markets': 'Match Winner|BTTS|Over/Under|Accumulators',
+  'home.sport.basketball.desc':
+    'NBA, EuroLeague, and leagues worldwide. Moneyline, spreads, and totals across 420+ competitions.',
+  'home.sport.basketball.markets': 'Moneyline|Spreads|Totals|Props',
+  'home.sport.tennis.desc':
+    'Grand Slams, ATP & WTA Masters. Match winner, set betting, and games over/under across 200+ tournaments.',
+  'home.sport.tennis.markets': 'Match Winner|Set Betting|Games O/U',
+  'home.sport.rugby.desc':
+    'Six Nations, Rugby World Cup, and club leagues worldwide. Handicap, totals, and match-winner markets across union and league formats.',
+  'home.sport.rugby.markets': 'Handicap|Totals|Match winner|Outrights',
+  'home.sport.mma.desc':
+    'UFC and global fight cards. Moneyline, totals, and method props where available.',
+  'home.sport.mma.markets': 'Moneyline|Over/Unders|Fight props|Parlays',
+  'home.sport.volleyball.desc':
+    'Indoor and beach — national leagues and international tournaments. Match winner, set handicaps, and totals.',
+  'home.sport.volleyball.markets': 'Match winner|Set spread|Totals|Live',
+  'home.sport.hockey.desc':
+    'NHL, international play, and top European leagues. Puck line, moneyline, and totals.',
+  'home.sport.hockey.markets': 'Moneyline|Puck line|Totals|Props',
+  'home.sport.american_football.desc':
+    'NFL, college football, and more. Spreads, moneylines, and totals with the same escrow protection.',
+  'home.sport.american_football.markets': 'Spread|Moneyline|Totals|Props',
+  'home.sport.multi.desc':
+    'Build one coupon with picks from different sports — settled and refunded under the same escrow rules.',
+  'home.sport.multi.markets': 'Cross-sport|Accas|Escrow-backed|One wallet',
 
   // ── Home — Platform Features section ────────────────────────────────────
   'home.features_badge': 'Why BetRollover',

@@ -221,7 +221,36 @@ const fr: Record<string, string> = {
   'learn.cta_discover': 'Actualités et guides',
   'home.explore_cta_btn': 'Explorer →',
   'home.sports_title': 'Sports Couverts',
-  'home.sports_sub': "Football, Basketball et Tennis sont notre cœur — une seule plateforme, la même protection escrow et les mêmes standards. D'autres sports peuvent apparaître sur le marché et dans les données live.",
+  'home.sports_sub':
+    "Du football au football américain et MMA — une seule plateforme, la même protection escrow et les mêmes standards pour chaque sport ci-dessous. Les tipsters peuvent aussi combiner des pronostics en coupons multi-sports.",
+  'home.sport.multi_title': 'Coupons multi-sports',
+  'home.sport.football.desc':
+    'Premier League, La Liga, Ligue des champions et plus de 1 000 championnats. Le sport le plus couvert sur la plateforme.',
+  'home.sport.football.markets': 'Vainqueur match|Les deux marquent|Plus/Moins|Accumulateurs',
+  'home.sport.basketball.desc':
+    'NBA, Euroligue et ligues mondiales. Moneyline, écarts et totaux sur plus de 420 compétitions.',
+  'home.sport.basketball.markets': 'Moneyline|Écarts|Totaux|Props',
+  'home.sport.tennis.desc':
+    'Grands chelems, ATP et WTA Masters. Vainqueur match, sets et jeux plus/moins sur plus de 200 tournois.',
+  'home.sport.tennis.markets': 'Vainqueur match|Paris sur sets|Jeux +/-',
+  'home.sport.rugby.desc':
+    'Six Nations, Coupe du monde et championnats de clubs. Handicap, totaux et vainqueur en formats XV et XIII.',
+  'home.sport.rugby.markets': 'Handicap|Totaux|Vainqueur|Long terme',
+  'home.sport.mma.desc':
+    "UFC et grandes cartes mondiales. Moneyline, totaux et props sur la méthode lorsque disponibles.",
+  'home.sport.mma.markets': 'Moneyline|Plus/Moins|Props combat|Combinés',
+  'home.sport.volleyball.desc':
+    'Salle et plage — championnats nationaux et tournois internationaux. Vainqueur, handicaps de sets et totaux.',
+  'home.sport.volleyball.markets': 'Vainqueur|Écart sets|Totaux|Live',
+  'home.sport.hockey.desc':
+    'LNH, compétitions internationales et grandes ligues européennes. Puck line, moneyline et totaux.',
+  'home.sport.hockey.markets': 'Moneyline|Puck line|Totaux|Props',
+  'home.sport.american_football.desc':
+    'NFL, football universitaire américain et plus. Écarts, moneylines et totaux avec la même protection escrow.',
+  'home.sport.american_football.markets': 'Écart|Moneyline|Totaux|Props',
+  'home.sport.multi.desc':
+    'Un seul coupon avec des pronostics sur plusieurs sports — réglé et remboursé selon les mêmes règles escrow.',
+  'home.sport.multi.markets': 'Multi-sports|Combinés|Escrow|Un portefeuille',
 
   // ── Home — Platform Features section ────────────────────────────────────
   'home.features_badge': 'Pourquoi BetRollover',

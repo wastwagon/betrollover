@@ -183,34 +183,44 @@ export default async function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 section-ux-cap-4xl">
-              {([
-                {
-                  icon: '⚽', name: 'Football', accent: 'border-emerald-400/60',
-                  desc: 'Premier League, La Liga, Champions League & 1,000+ leagues. The most-tipped sport on the platform.',
-                  markets: ['Match Winner', 'BTTS', 'Over/Under', 'Accumulators'],
-                },
-                {
-                  icon: '🏀', name: 'Basketball', accent: 'border-orange-400/60',
-                  desc: 'NBA, EuroLeague, and leagues worldwide. Moneyline, spreads, and totals across 420+ competitions.',
-                  markets: ['Moneyline', 'Spreads', 'Totals', 'Props'],
-                },
-                {
-                  icon: '🎾', name: 'Tennis', accent: 'border-yellow-400/60',
-                  desc: 'Grand Slams, ATP & WTA Masters. Match winner, set betting, and games over/under across 200+ tournaments.',
-                  markets: ['Match Winner', 'Set Betting', 'Games O/U'],
-                },
-              ] as { icon: string; name: string; accent: string; desc: string; markets: string[] }[]).map((sport) => (
-                <div key={sport.name} className={`p-5 rounded-2xl bg-[var(--card)] border-2 ${sport.accent} shadow-sm hover:shadow-md transition-all duration-200`}>
-                  <span className="text-3xl mb-3 block">{sport.icon}</span>
-                  <h3 className="text-base font-semibold text-[var(--text)] mb-1.5">{sport.name}</h3>
-                  <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-3">{sport.desc}</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {sport.markets.map((m) => (
-                      <span key={m} className="px-2 py-0.5 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-xs font-medium">{m}</span>
-                    ))}
+              {(
+                [
+                  { id: 'football' as const, navKey: 'nav.football' as const, icon: '⚽', accent: 'border-emerald-400/60' },
+                  { id: 'basketball', navKey: 'nav.basketball', icon: '🏀', accent: 'border-orange-400/60' },
+                  { id: 'tennis', navKey: 'nav.tennis', icon: '🎾', accent: 'border-yellow-400/60' },
+                  { id: 'rugby', navKey: 'nav.rugby', icon: '🏉', accent: 'border-amber-400/60' },
+                  { id: 'mma', navKey: 'nav.mma', icon: '🥊', accent: 'border-red-400/55' },
+                  { id: 'volleyball', navKey: 'nav.volleyball', icon: '🏐', accent: 'border-blue-400/60' },
+                  { id: 'hockey', navKey: 'nav.hockey', icon: '🏒', accent: 'border-cyan-400/60' },
+                  { id: 'american_football', navKey: 'nav.american_football', icon: '🏈', accent: 'border-violet-400/60' },
+                  { id: 'multi', navKey: null, icon: '🌍', accent: 'border-teal-400/60' },
+                ] as const
+              ).map((sport) => {
+                const title =
+                  sport.navKey != null ? t(sport.navKey) : t('home.sport.multi_title');
+                const desc = t(`home.sport.${sport.id}.desc`);
+                const markets = t(`home.sport.${sport.id}.markets`).split('|');
+                return (
+                  <div
+                    key={sport.id}
+                    className={`p-5 rounded-2xl bg-[var(--card)] border-2 ${sport.accent} shadow-sm hover:shadow-md transition-all duration-200`}
+                  >
+                    <span className="text-3xl mb-3 block">{sport.icon}</span>
+                    <h3 className="text-base font-semibold text-[var(--text)] mb-1.5">{title}</h3>
+                    <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-3">{desc}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {markets.map((m) => (
+                        <span
+                          key={m}
+                          className="px-2 py-0.5 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-xs font-medium"
+                        >
+                          {m.trim()}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
