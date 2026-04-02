@@ -249,7 +249,9 @@ export default function AdminAdsPage() {
             <p className="text-gray-600 dark:text-gray-400">Manage sponsored ads and monetization.</p>
             <div className="mt-3 p-4 rounded-xl bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800">
               <p className="text-sm font-medium text-sky-800 dark:text-sky-200 mb-1">Advertising inquiries</p>
-              <p className="text-sm text-sky-700 dark:text-sky-300 mb-2">Interested companies who want to advertise in these spaces should contact us on Telegram.</p>
+              <p className="text-sm text-sky-700 dark:text-sky-300 mb-2">
+                Interested companies who want to advertise in these spaces can contact you on Telegram.
+              </p>
               <a
                 href={TELEGRAM_ADS_URL}
                 target="_blank"

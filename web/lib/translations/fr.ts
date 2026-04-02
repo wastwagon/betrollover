@@ -859,6 +859,7 @@ const fr: Record<string, string> = {
   'footer.rights': 'Tous droits réservés.',
   'footer.resources': 'Ressources',
   'footer.discover': 'Découvrir',
+  'footer.telegram_cta': 'Discuter sur Telegram',
 
   // ── Header (nav dropdowns, section labels, descriptions) ─────────────────
   'header.section_explore': 'Explorer',
@@ -996,6 +997,12 @@ const fr: Record<string, string> = {
   'seo.resources_desc': "Articles de stratégie, guides pratiques et ressources pour tipsters et passionnés de sport dans tous les sports majeurs.",
   'seo.coupons_title': "Archive des Coupons Réglés | Résultats Passés",
   'seo.coupons_desc': "Parcourez l'archive des coupons de tipsters réglés. Consultez les résultats passés, les taux de victoire et les résultats dans tous les sports.",
+  'seo.register_title': 'Créer un compte | Rejoindre la marketplace',
+  'seo.register_desc':
+    "Inscrivez-vous sur BetRollover — pronostics vérifiés, achats protégés par escrow et portefeuille multi-devises. Email, Google ou Apple.",
+  'seo.login_title': 'Connexion | BetRollover',
+  'seo.login_desc':
+    'Connectez-vous à votre compte BetRollover pour parcourir la marketplace, gérer votre portefeuille et suivre les tipsters.',
 
   // ── About page ───────────────────────────────────────────────────────────
   'about.headline': "Marketplace Multi-Sport de Tipsters — Basée au Ghana, Portée Mondiale",

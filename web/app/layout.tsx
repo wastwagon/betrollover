@@ -9,6 +9,8 @@ import { TopBar } from '@/components/TopBar';
 import { SkipToMainContent } from '@/components/SkipToMainContent';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { AnalyticsBeacon } from '@/components/AnalyticsBeacon';
+import { GoogleTagManagerNoScript } from '@/components/GoogleTagManagerNoScript';
+import { ThirdPartyTags } from '@/components/ThirdPartyTags';
 import { JsonLdScript } from '@/components/JsonLdScript';
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS } from '@/lib/site-config';
 import './globals.css';
@@ -95,17 +97,25 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
+/** Server-only: set `DISABLE_THIRD_PARTY_TAGS=1` in Coolify to stop GTM/GA without rebuilding the image. */
+function thirdPartyTagsDisabled(): boolean {
+  return process.env.DISABLE_THIRD_PARTY_TAGS === '1';
+}
+
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const locale = await getInitialLocale();
+  const offThirdParty = thirdPartyTagsDisabled();
 
   return (
     <html lang={locale} className={fontClassName}>
       <body className="min-h-screen bg-[var(--bg)] font-sans antialiased">
+        {!offThirdParty && <GoogleTagManagerNoScript />}
         <JsonLdScript />
+        <ThirdPartyTags disabled={offThirdParty} />
         <AnalyticsBeacon />
         <QueryProvider>
           <LanguageProvider initialLocale={locale}>

@@ -40,10 +40,10 @@ const nextConfig = {
         key: 'Content-Security-Policy-Report-Only',
         value: [
           "default-src 'self'",
-          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://js.paystack.co",
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://js.paystack.co https://www.googletagmanager.com https://www.google-analytics.com",
           "style-src 'self' 'unsafe-inline' https://accounts.google.com",
           "connect-src 'self' https: wss:",
-          "frame-src 'self' https://accounts.google.com https://appleid.apple.com https://js.paystack.co",
+          "frame-src 'self' https://accounts.google.com https://appleid.apple.com https://js.paystack.co https://www.googletagmanager.com",
           "img-src 'self' data: https: blob:",
           "font-src 'self' data:",
         ].join('; '),

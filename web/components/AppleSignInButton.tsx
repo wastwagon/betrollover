@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useT } from '@/context/LanguageContext';
+import { trackRegistrationStartedOnce } from '@/lib/analytics';
 
 type Variant = 'signin' | 'signup';
 
@@ -30,6 +31,9 @@ export function AppleSignInButton({
   return (
     <a
       href="/api/auth/apple"
+      onClick={() => {
+        if (variant === 'signup') trackRegistrationStartedOnce();
+      }}
       className={`min-h-[44px] w-full flex items-center justify-center gap-2 rounded-xl border-2 border-black bg-black text-white font-medium hover:bg-gray-900 focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:pointer-events-none ${className}`}
       style={{ opacity: disabled ? 0.7 : 1 }}
       aria-label={label}

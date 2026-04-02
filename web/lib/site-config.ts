@@ -24,9 +24,24 @@ export const getApiUrl = (): string => {
 
 export const SITE_NAME = 'BetRollover';
 
-/** Telegram for ads inquiries - companies interested in advertising */
+/** Validated GTM container ID for `GoogleTagManager` / noscript iframe. */
+export function getGtmContainerId(): string | null {
+  const id = process.env.NEXT_PUBLIC_GTM_ID?.trim() || '';
+  if (!id || !/^GTM-[A-Z0-9]+$/i.test(id)) return null;
+  return id;
+}
+
+/** Validated GA4 Measurement ID for direct gtag (fallback when GTM is not used). */
+export function getGaMeasurementId(): string | null {
+  const id = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || '';
+  if (!id || !/^G-[A-Z0-9]+$/i.test(id)) return null;
+  return id;
+}
+
+/** Telegram @handle (no @) — live support & advertising CTAs. Override with NEXT_PUBLIC_TELEGRAM_ADS_HANDLE. */
 export const TELEGRAM_ADS_HANDLE = process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE || 'betrollovertips';
 export const TELEGRAM_ADS_URL = `https://t.me/${TELEGRAM_ADS_HANDLE}`;
+
 export const SITE_DESCRIPTION =
   "Ghana-based tipster marketplace for a global audience. All major global sports — football, basketball, tennis, MMA, rugby, hockey and more. Verified tipsters, win rate & ROI, escrow-protected picks (refunded if tips lose). GHS & multi-currency. Worldwide coverage.";
 

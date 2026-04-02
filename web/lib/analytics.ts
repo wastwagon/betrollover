@@ -3,6 +3,20 @@
  * Page views: AnalyticsBeacon. Custom events: trackEvent.
  */
 
+const REGISTRATION_STARTED_SESSION_KEY = 'br_tracked_registration_started';
+
+/** Fires `registration_started` at most once per browser session (signup funnel). */
+export function trackRegistrationStartedOnce(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (sessionStorage.getItem(REGISTRATION_STARTED_SESSION_KEY)) return;
+    sessionStorage.setItem(REGISTRATION_STARTED_SESSION_KEY, '1');
+  } catch {
+    /* private mode / quota — still try to send one event */
+  }
+  trackEvent('registration_started');
+}
+
 export function getOrCreateSessionId(): string {
   if (typeof window === 'undefined') return '';
   const key = 'br_session_id';

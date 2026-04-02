@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState } from 'react';
 import { useT } from '@/context/LanguageContext';
+import { trackRegistrationStartedOnce } from '@/lib/analytics';
 
 declare global {
   interface Window {
@@ -91,6 +92,7 @@ export function GoogleSignInButton({
     renderedRef.current = true;
 
     const handleCredential = async (response: { credential: string }) => {
+      if (variant === 'signup') trackRegistrationStartedOnce();
       setError('');
       setLoading(true);
       try {

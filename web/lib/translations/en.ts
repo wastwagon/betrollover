@@ -861,6 +861,7 @@ const en = {
   'footer.rights': 'All rights reserved.',
   'footer.resources': 'Resources',
   'footer.discover': 'Discover',
+  'footer.telegram_cta': 'Chat on Telegram',
 
   // ── Header (nav dropdowns, section labels, descriptions) ─────────────────
   'header.section_explore': 'Explore',
@@ -999,6 +1000,12 @@ const en = {
   'seo.resources_desc': 'Strategy articles, how-to guides, and resources for tipsters and sports enthusiasts. All major global sports covered.',
   'seo.coupons_title': 'Settled Coupons Archive | Past Results',
   'seo.coupons_desc': 'Browse the archive of settled tipster coupons. Review past results, win rates, and outcomes across all sports.',
+  'seo.register_title': 'Create Account | Join the Tipster Marketplace',
+  'seo.register_desc':
+    'Sign up for BetRollover — verified sports tips, escrow-protected picks, and multi-currency wallets. Email verification, Google, or Apple.',
+  'seo.login_title': 'Sign In | BetRollover',
+  'seo.login_desc':
+    'Log in to your BetRollover account to browse the marketplace, manage your wallet, and follow tipsters.',
 
   // ── About page ───────────────────────────────────────────────────────────
   'about.headline': "Ghana-based Multi-Sport Tipster Marketplace",

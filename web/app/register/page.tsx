@@ -9,6 +9,7 @@ import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { AppleSignInButton } from '@/components/AppleSignInButton';
 import { getApiUrl } from '@/lib/site-config';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
+import { trackRegistrationStartedOnce } from '@/lib/analytics';
 
 function RegisterForm() {
   const router = useRouter();
@@ -31,6 +32,10 @@ function RegisterForm() {
     const ref = searchParams.get('ref');
     if (ref) setReferralCode(ref.toUpperCase());
   }, [searchParams]);
+
+  useEffect(() => {
+    trackRegistrationStartedOnce();
+  }, []);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');

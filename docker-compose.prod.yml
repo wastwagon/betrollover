@@ -1,12 +1,20 @@
 # BetRollover - Production stack for Coolify / VPS
 # Use this file when deploying with Coolify (Docker Compose build pack)
 #
+# Safe defaults (will not break a live app):
+# - Omit optional variables you do not use; `${VAR:-}` passes empty and the app falls back safely.
+# - GTM / GA / extra social URLs: only load when you set the matching NEXT_PUBLIC_* and rebuild the web image.
+# - CSP in next.config.js is Report-Only (does not block scripts).
+# - Emergency: on the **web** service set DISABLE_THIRD_PARTY_TAGS=1 and restart (no rebuild) to disable GTM + direct GA.
+#
 # Setup in Coolify:
 # 1. New Resource → Docker Compose
 # 2. Connect your Git repo
 # 3. Compose file: docker-compose.prod.yml (or leave default and rename)
-# 4. Set all env vars in Coolify UI before first deploy
-# 5. Assign domains: web → betrollover.com, api → api.betrollover.com
+# 4. Set env vars in Coolify (Project or Resource → Environment Variables)
+# 5. Domains: web → betrollover.com (apex), api → api.betrollover.com — match NEXT_PUBLIC_APP_URL / APP_URL / CORS_ORIGINS
+# 6. NEXT_PUBLIC_* for the browser: must be present at **web image build** time (build.args below). Changing them requires a **rebuild**.
+# 7. Web build OOM on small VPS: see web/Dockerfile.prod and BUILD_NODE_MAX_OLD_SPACE_SIZE
 
 services:
   postgres:
@@ -101,6 +109,12 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+        NEXT_PUBLIC_GTM_ID: ${NEXT_PUBLIC_GTM_ID:-}
+        NEXT_PUBLIC_GA_MEASUREMENT_ID: ${NEXT_PUBLIC_GA_MEASUREMENT_ID:-}
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
+        NEXT_PUBLIC_APPLE_CLIENT_ID: ${NEXT_PUBLIC_APPLE_CLIENT_ID:-}
+        NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+        NEXT_PUBLIC_TELEGRAM_ADS_HANDLE: ${NEXT_PUBLIC_TELEGRAM_ADS_HANDLE:-}
         # Optional: raise if web build OOMs on a large builder (e.g. 2048). Lower only if host is tight.
         BUILD_NODE_MAX_OLD_SPACE_SIZE: ${BUILD_NODE_MAX_OLD_SPACE_SIZE:-1536}
     container_name: betrollover-web
@@ -109,8 +123,16 @@ services:
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+      NEXT_PUBLIC_GTM_ID: ${NEXT_PUBLIC_GTM_ID:-}
+      NEXT_PUBLIC_GA_MEASUREMENT_ID: ${NEXT_PUBLIC_GA_MEASUREMENT_ID:-}
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
+      NEXT_PUBLIC_APPLE_CLIENT_ID: ${NEXT_PUBLIC_APPLE_CLIENT_ID:-}
+      NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+      NEXT_PUBLIC_TELEGRAM_ADS_HANDLE: ${NEXT_PUBLIC_TELEGRAM_ADS_HANDLE:-}
       # Web container calls API over internal Docker network (no need to add BACKEND_URL in Coolify)
       BACKEND_URL: http://api:3001
+      # Optional: "1" = disable GTM + GA in the browser; restart only (server env, not NEXT_PUBLIC)
+      DISABLE_THIRD_PARTY_TAGS: ${DISABLE_THIRD_PARTY_TAGS:-}
     depends_on:
       - api
     healthcheck:
