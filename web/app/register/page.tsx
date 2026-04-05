@@ -10,6 +10,7 @@ import { AppleSignInButton } from '@/components/AppleSignInButton';
 import { getApiUrl } from '@/lib/site-config';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 import { trackRegistrationStartedOnce } from '@/lib/analytics';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 function RegisterForm() {
   const router = useRouter();
@@ -58,7 +59,9 @@ function RegisterForm() {
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || t('auth.otp_send_failed'));
+      if (!res.ok) {
+        throw new Error(getApiErrorMessage(data, t('auth.otp_send_failed')));
+      }
       setOtpSent(true);
       setStep('form');
     } catch (err) {
@@ -91,7 +94,9 @@ function RegisterForm() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || t('auth.registration_failed'));
+      if (!res.ok) {
+        throw new Error(getApiErrorMessage(data, t('auth.registration_failed')));
+      }
       try { (await import('@/lib/analytics')).trackEvent('registration_completed'); } catch { /* noop */ }
       localStorage.setItem('token', data.access_token);
       emitAuthStorageSync();

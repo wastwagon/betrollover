@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:6001';
 const APPLE_STATE_COOKIE = 'apple_oauth_state';
@@ -57,19 +58,22 @@ export async function POST(request: NextRequest) {
     });
 
     const raw = await res.text();
-    let data: { access_token?: string; message?: string };
+    let data: unknown;
     try {
-      data = JSON.parse(raw);
+      data = JSON.parse(raw) as unknown;
     } catch {
       data = { message: raw || 'Invalid response' };
     }
 
     if (!res.ok) {
-      loginUrl.searchParams.set('error', data.message || `Sign-in failed (${res.status})`);
+      loginUrl.searchParams.set(
+        'error',
+        getApiErrorMessage(data, `Sign-in failed (${res.status})`),
+      );
       return NextResponse.redirect(loginUrl, 302);
     }
 
-    const token = data.access_token;
+    const token = (data as { access_token?: string }).access_token;
     if (!token) {
       loginUrl.searchParams.set('error', 'No token received');
       return NextResponse.redirect(loginUrl, 302);

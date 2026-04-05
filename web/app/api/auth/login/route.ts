@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 // Server-side: prefer BACKEND_URL (Docker internal) over NEXT_PUBLIC_API_URL (browser-facing)
 const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:6001';
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
       // For 500, backend returns generic "Internal server error" - surface actionable hint
       const errorMsg = res.status === 500
         ? 'Login failed (server error). Check API container logs on your VPS.'
-        : (data.message || `Backend error: ${res.status}`);
+        : getApiErrorMessage(data, `Backend error: ${res.status}`);
       errorUrl.searchParams.set('error', errorMsg);
       if (res.status === 500) {
         errorUrl.searchParams.set('code', '500');
