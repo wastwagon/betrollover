@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useT } from '@/context/LanguageContext';
 import { AppShell } from '@/components/AppShell';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -43,7 +44,11 @@ function VerifyEmailContent() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      setResendMessage(res.ok ? (data.message || t('auth.verification_sent')) : (data.message || t('auth.resend_failed')));
+      setResendMessage(
+        res.ok
+          ? getApiErrorMessage(data, t('auth.verification_sent'))
+          : getApiErrorMessage(data, t('auth.resend_failed')),
+      );
     } catch {
       setResendMessage(t('auth.resend_failed'));
     } finally {

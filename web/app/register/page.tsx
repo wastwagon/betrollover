@@ -235,7 +235,9 @@ function RegisterForm() {
                           body: JSON.stringify({ email: email.trim().toLowerCase() }),
                         });
                         const data = await res.json();
-                        if (!res.ok) throw new Error(data.message || t('auth.otp_send_failed'));
+                        if (!res.ok) {
+                          throw new Error(getApiErrorMessage(data, t('auth.otp_send_failed')));
+                        }
                         setOtpError('');
                       } catch (err) {
                         setOtpError(err instanceof Error ? err.message : t('auth.otp_send_failed'));

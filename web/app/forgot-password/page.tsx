@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { useT } from '@/context/LanguageContext';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 function ForgotPasswordForm() {
     const searchParams = useSearchParams();
@@ -68,7 +69,9 @@ function ForgotPasswordForm() {
                 body: JSON.stringify({ email, code, newPassword }),
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.message || 'Failed to reset password');
+            if (!res.ok) {
+                throw new Error(getApiErrorMessage(data, 'Failed to reset password'));
+            }
 
             setSuccess('Password reset successful! You can now sign in.');
             setStep('request'); // Reset to initial state or redirect

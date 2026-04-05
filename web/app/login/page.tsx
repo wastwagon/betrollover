@@ -8,6 +8,7 @@ import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { AppleSignInButton } from '@/components/AppleSignInButton';
 import { ApiErrorBanner } from '@/components/ApiErrorBanner';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 function LoginForm() {
   const t = useT();
@@ -59,7 +60,7 @@ function LoginForm() {
       // Fallback: check response status
       if (!res.ok) {
         const data = await res.json().catch(() => ({ message: 'Login failed' }));
-        setError(data.message || t('auth.invalid_credentials'));
+        setError(getApiErrorMessage(data, t('auth.invalid_credentials')));
         setLoading(false);
         return;
       }
