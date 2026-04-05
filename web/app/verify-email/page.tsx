@@ -12,7 +12,7 @@ function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   const t = useT();
-  const [result, setResult] = useState<{ verified: boolean; message: string } | null>(null);
+  const [result, setResult] = useState<{ verified?: boolean; message?: unknown } | null>(null);
   const [loading, setLoading] = useState(true);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState<string | null>(null);
@@ -25,7 +25,7 @@ function VerifyEmailContent() {
     }
     fetch(`${getApiUrl()}/auth/verify-email?token=${encodeURIComponent(token)}`)
       .then((r) => r.json())
-      .then((data) => setResult(data))
+      .then((data: unknown) => setResult(data as { verified?: boolean; message?: unknown }))
       .catch(() => setResult({ verified: false, message: 'Verification failed' }))
       .finally(() => setLoading(false));
   }, [token]);
@@ -56,6 +56,7 @@ function VerifyEmailContent() {
     }
   };
 
+  const verifiedSubtitle = result?.verified ? getApiErrorMessage(result, '') : '';
   return (
     <AppShell>
       <div className="section-ux-auth-narrow w-full min-w-0 max-w-full px-4 sm:px-0 text-center">
@@ -70,7 +71,9 @@ function VerifyEmailContent() {
               ✓
             </div>
             <h1 className="text-xl font-semibold text-[var(--text)] mb-2 min-w-0 break-words">{t('auth.email_verified_title')}</h1>
-            <p className="text-[var(--text-muted)] mb-8 min-w-0 break-words">{result.message}</p>
+            {verifiedSubtitle ? (
+              <p className="text-[var(--text-muted)] mb-8 min-w-0 break-words">{verifiedSubtitle}</p>
+            ) : null}
             <Link
               href="/dashboard"
               className="inline-block px-8 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
@@ -84,7 +87,9 @@ function VerifyEmailContent() {
               ✕
             </div>
             <h1 className="text-xl font-semibold text-[var(--text)] mb-2 min-w-0 break-words">{t('auth.verification_failed')}</h1>
-            <p className="text-[var(--text-muted)] mb-8 min-w-0 break-words">{result?.message || t('auth.invalid_token')}</p>
+            <p className="text-[var(--text-muted)] mb-8 min-w-0 break-words">
+              {result ? getApiErrorMessage(result, t('auth.invalid_token')) : t('auth.invalid_token')}
+            </p>
             <button
               type="button"
               onClick={handleResend}

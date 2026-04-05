@@ -117,7 +117,9 @@ export default function AdminEmailPage() {
       if (res.ok && data.sent) {
         setMsg('Test email sent successfully!');
       } else {
-        setMsg(data.error || 'Failed to send test email.');
+        const api = getApiErrorMessage(data, '');
+        const errField = typeof (data as { error?: unknown }).error === 'string' ? (data as { error: string }).error : '';
+        setMsg(api || errField || 'Failed to send test email.');
       }
     } finally {
       setTesting(false);

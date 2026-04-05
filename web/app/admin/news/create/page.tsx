@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 const CATEGORIES = ['news', 'transfer_rumour', 'confirmed_transfer', 'injury', 'gossip'] as const;
 const LANGUAGES = ['en', 'fr'] as const;
@@ -25,6 +26,7 @@ export default function AdminNewsCreatePage() {
     publishedAt: '',
   });
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const generateSlug = () => {
     const s = form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -36,6 +38,7 @@ export default function AdminNewsCreatePage() {
     const token = localStorage.getItem('token');
     if (!token || !form.slug || !form.title || !form.content) return;
     setSaving(true);
+    setError(null);
     try {
       const res = await fetch(`${getApiUrl()}/admin/news`, {
         method: 'POST',
@@ -48,7 +51,11 @@ export default function AdminNewsCreatePage() {
           publishedAt: form.publishedAt || null,
         }),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) router.push('/admin/news');
+      else setError(getApiErrorMessage(data, 'Create failed'));
+    } catch {
+      setError('Create failed');
     } finally {
       setSaving(false);
     }
@@ -63,6 +70,7 @@ export default function AdminNewsCreatePage() {
         </Link>
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6">Create News Article</h1>
         <form onSubmit={submit} className="max-w-2xl space-y-4">
+          {error ? <p className="text-red-600 text-sm">{error}</p> : null}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label>
             <input

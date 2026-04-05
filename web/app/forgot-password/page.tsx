@@ -47,8 +47,8 @@ function ForgotPasswordForm() {
 
             setSuccess(getApiErrorMessage(data, 'If an account exists with that email, a reset code has been sent.'));
             setStep('reset');
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Something went wrong');
         } finally {
             setLoading(false);
         }
@@ -81,8 +81,8 @@ function ForgotPasswordForm() {
             setCode('');
             setNewPassword('');
             setConfirmPassword('');
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Something went wrong');
         } finally {
             setLoading(false);
         }

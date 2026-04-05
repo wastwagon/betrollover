@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 const TYPES = ['article', 'strategy', 'tool'] as const;
 const LANGUAGES = ['en', 'fr'] as const;
@@ -89,8 +90,9 @@ export default function AdminResourceItemCreatePage() {
           publishedAt: form.publishedAt || null,
         }),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) router.push('/admin/resources');
-      else setError('Create failed');
+      else setError(getApiErrorMessage(data, 'Create failed'));
     } catch {
       setError('Create failed');
     } finally {

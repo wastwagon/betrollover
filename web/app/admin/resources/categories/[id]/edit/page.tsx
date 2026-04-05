@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 const LEVELS = ['beginner', 'intermediate', 'advanced'] as const;
 const LANGUAGES = ['en', 'fr'] as const;
@@ -33,11 +34,16 @@ export default function AdminResourceCategoryEditPage() {
     }
     if (!id) return;
     fetch(`${getApiUrl()}/admin/resources/categories/${id}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => {
-        if (!r.ok) throw new Error('Category not found');
-        return r.json();
+      .then(async (r) => {
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          setError(getApiErrorMessage(data, 'Category not found'));
+          return null;
+        }
+        return data;
       })
       .then((cat) => {
+        if (!cat) return;
         setForm({
           slug: cat.slug || '',
           name: cat.name || '',
@@ -71,8 +77,9 @@ export default function AdminResourceCategoryEditPage() {
         },
         body: JSON.stringify(form),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) router.push('/admin/resources');
-      else setError('Update failed');
+      else setError(getApiErrorMessage(data, 'Update failed'));
     } catch {
       setError('Update failed');
     } finally {

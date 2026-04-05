@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 type PackageStatus = 'active' | 'inactive';
 
@@ -89,12 +90,16 @@ export default function AdminAiTipsterPackagesPage() {
       const res = await fetch(`${getApiUrl()}/admin/ai-tipsters/subscription-packages`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error('Failed to load AI tipster packages');
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setRows([]);
+        setError(getApiErrorMessage(data, 'Failed to load AI tipster packages'));
+        return;
+      }
       setRows(Array.isArray(data) ? data : []);
-    } catch (e: any) {
+    } catch {
       setRows([]);
-      setError(e?.message || 'Failed to load AI tipster packages');
+      setError('Failed to load AI tipster packages');
     } finally {
       setLoading(false);
     }
@@ -114,10 +119,14 @@ export default function AdminAiTipsterPackagesPage() {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error('Failed to initialize AI tipsters/packages');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(getApiErrorMessage(data, 'Failed to initialize AI tipsters/packages'));
+        return;
+      }
       await loadRows();
-    } catch (e: any) {
-      setError(e?.message || 'Failed to initialize AI tipsters/packages');
+    } catch {
+      setError('Failed to initialize AI tipsters/packages');
     } finally {
       setSeeding(false);
     }
@@ -139,10 +148,14 @@ export default function AdminAiTipsterPackagesPage() {
         },
         body: JSON.stringify({ status }),
       });
-      if (!res.ok) throw new Error('Failed to update all package statuses');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(getApiErrorMessage(data, 'Failed to update all package statuses'));
+        return;
+      }
       await loadRows();
-    } catch (e: any) {
-      setError(e?.message || 'Failed to update all package statuses');
+    } catch {
+      setError('Failed to update all package statuses');
     } finally {
       setBulkUpdating(false);
     }
@@ -167,13 +180,17 @@ export default function AdminAiTipsterPackagesPage() {
           status: pkg.status,
         }),
       });
-      if (!res.ok) throw new Error('Failed to update package');
-      const updated = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(getApiErrorMessage(data, 'Failed to update package'));
+        return;
+      }
+      const updated = data;
       setRows((prev) =>
         prev.map((r) => (r.package?.id === updated.id ? { ...r, package: { ...r.package, ...updated } } : r)),
       );
-    } catch (e: any) {
-      setError(e?.message || 'Failed to update package');
+    } catch {
+      setError('Failed to update package');
     } finally {
       setSavingId(null);
     }

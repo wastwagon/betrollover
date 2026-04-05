@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 const TYPES = ['article', 'strategy', 'tool'] as const;
 const LANGUAGES = ['en', 'fr'] as const;
@@ -95,8 +96,9 @@ export default function AdminResourceItemEditPage() {
           publishedAt: form.publishedAt || null,
         }),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) router.push('/admin/resources');
-      else setError('Update failed');
+      else setError(getApiErrorMessage(data, 'Update failed'));
     } catch {
       setError('Update failed');
     } finally {

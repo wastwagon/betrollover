@@ -398,12 +398,12 @@ export default function AdminFixturesPage() {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = res.ok ? await res.json().catch(() => null) : null;
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        setResultMsg({ updated: data?.updated ?? 0 });
+        setResultMsg({ updated: (data as { updated?: number })?.updated ?? 0 });
         load();
       } else {
-        setError('Failed to fetch results. Check API_SPORTS_KEY in Admin → Settings.');
+        setError(getApiErrorMessage(data, 'Failed to fetch results. Check API_SPORTS_KEY in Admin → Settings.'));
       }
     } catch {
       setError('Failed to fetch results. Network error.');
@@ -425,9 +425,9 @@ export default function AdminFixturesPage() {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      const resData = resRes.ok ? await resRes.json().catch(() => null) : null;
+      const resData = await resRes.json().catch(() => ({}));
       if (!resRes.ok) {
-        setError('Failed to fetch results. Check API_SPORTS_KEY.');
+        setError(getApiErrorMessage(resData, 'Failed to fetch results. Check API_SPORTS_KEY.'));
         return;
       }
       setFetchingResults(false);
@@ -438,15 +438,20 @@ export default function AdminFixturesPage() {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      const settleData = settleRes.ok ? await settleRes.json().catch(() => null) : null;
+      const settleData = await settleRes.json().catch(() => ({}));
       if (settleRes.ok) {
         setResultMsg({
-          updated: resData?.updated ?? 0,
-          settled: settleData?.ticketsSettled ?? 0,
+          updated: (resData as { updated?: number })?.updated ?? 0,
+          settled: (settleData as { ticketsSettled?: number })?.ticketsSettled ?? 0,
         });
         load();
       } else {
-        setError('Results fetched but settlement failed. Try "Run Settlement Now" from Dashboard.');
+        setError(
+          getApiErrorMessage(
+            settleData,
+            'Results fetched but settlement failed. Try "Run Settlement Now" from Dashboard.',
+          ),
+        );
       }
     } catch {
       setError('Network error during fetch-and-settle.');
@@ -467,17 +472,23 @@ export default function AdminFixturesPage() {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = res.ok ? await res.json().catch(() => null) : null;
-      if (res.ok && data) {
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data && typeof data === 'object') {
+        const d = data as {
+          picksRegraded?: number;
+          ticketsOutcomeChanged?: number;
+          escrowTicketsAdjusted?: number;
+          errors?: unknown;
+        };
         setReconcileMsg({
-          picksRegraded: data.picksRegraded ?? 0,
-          ticketsOutcomeChanged: data.ticketsOutcomeChanged ?? 0,
-          escrowTicketsAdjusted: data.escrowTicketsAdjusted ?? 0,
-          errors: Array.isArray(data.errors) ? data.errors : [],
+          picksRegraded: d.picksRegraded ?? 0,
+          ticketsOutcomeChanged: d.ticketsOutcomeChanged ?? 0,
+          escrowTicketsAdjusted: d.escrowTicketsAdjusted ?? 0,
+          errors: Array.isArray(d.errors) ? d.errors : [],
         });
         load();
       } else {
-        setError('Reconcile failed. Ensure you are admin and the backend is up.');
+        setError(getApiErrorMessage(data, 'Reconcile failed. Ensure you are admin and the backend is up.'));
       }
     } catch {
       setError('Network error during reconcile.');
@@ -497,17 +508,18 @@ export default function AdminFixturesPage() {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = res.ok ? await res.json().catch(() => null) : null;
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        setSyncResult(data ? { fixtures: data.fixtures ?? 0, leagues: data.leagues ?? 0 } : null);
-        if (data?.fixtures === 0 && data?.leagues === 0) {
+        const d = data as { fixtures?: number; leagues?: number } | null;
+        setSyncResult(d ? { fixtures: d.fixtures ?? 0, leagues: d.leagues ?? 0 } : null);
+        if (d?.fixtures === 0 && d?.leagues === 0) {
           setError('Sync completed but 0 fixtures found. Check API key (Admin → Settings) and enabled leagues.');
         } else {
           setError(null);
         }
         load();
       } else {
-        setError('Sync failed. Add API_SPORTS_KEY in Admin → Settings or backend .env');
+        setError(getApiErrorMessage(data, 'Sync failed. Add API_SPORTS_KEY in Admin → Settings or backend .env'));
       }
     } catch {
       setError('Sync failed');
@@ -530,13 +542,13 @@ export default function AdminFixturesPage() {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = res.ok ? await res.json().catch(() => null) : null;
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
         load();
         loadDiagnostic();
         setError(null);
       } else {
-        setError('Odds sync failed. Check API key and API-Football status.');
+        setError(getApiErrorMessage(data, 'Odds sync failed. Check API key and API-Football status.'));
       }
     } catch {
       setError('Odds sync failed');
