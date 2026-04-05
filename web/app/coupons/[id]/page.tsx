@@ -9,6 +9,7 @@ import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
 import { TeamBadge } from '@/components/TeamBadge';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { useT } from '@/context/LanguageContext';
 import { formatTipsterRankHash } from '@/lib/tipster-rank-ui';
@@ -372,7 +373,7 @@ export default function CouponDetailPage() {
         if (w.ok) { const d = await w.json(); setWalletBalance(Number(d.balance)); }
       } else {
         const err = await res.json().catch(() => ({}));
-        setPurchaseError(err.message || 'Purchase failed. Please try again.');
+        setPurchaseError(getApiErrorMessage(err, 'Purchase failed. Please try again.'));
       }
     } catch {
       setPurchaseError('Network error. Please try again.');

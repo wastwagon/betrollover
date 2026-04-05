@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 export function BecomeTipsterCard() {
   const [status, setStatus] = useState<'idle' | 'pending' | 'rejected' | null>(null);
@@ -28,9 +29,9 @@ export function BecomeTipsterCard() {
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         setStatus(data.status === 'already_tipster' ? 'idle' : 'pending');
-        alert(data.message || 'Request submitted.');
+        alert(getApiErrorMessage(data, 'Request submitted.'));
       } else {
-        alert(data.message || 'Request failed.');
+        alert(getApiErrorMessage(data, 'Request failed.'));
       }
     } finally {
       setLoading(false);

@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 export function usePushNotifications() {
   const [supported, setSupported] = useState(false);
@@ -59,8 +60,9 @@ export function usePushNotifications() {
         body: JSON.stringify({ platform: 'web', token: subJson }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || err.message || 'Register failed');
+        const err = (await res.json().catch(() => ({}))) as { message?: unknown; error?: string };
+        const fromMsg = getApiErrorMessage(err, '');
+        throw new Error(fromMsg || err.error || 'Register failed');
       }
       setRegistered(true);
       setPermission(Notification.permission);

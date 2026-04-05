@@ -14,6 +14,7 @@ import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
 import { useT } from '@/context/LanguageContext';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 
 type Period = 'all_time' | 'monthly' | 'weekly';
@@ -143,7 +144,7 @@ export default function TipstersPage() {
           prev.map((t) => (t.id === tipster.id ? { ...t, is_following: isFollowing, follower_count: tipster.follower_count ?? 0 } : t))
         );
         const err = await res.json().catch(() => ({}));
-        showError(new Error(err.message || 'Failed to update follow'));
+        showError(new Error(getApiErrorMessage(err, 'Failed to update follow')));
       }
     } catch (e) {
       setTipsters((prev) =>

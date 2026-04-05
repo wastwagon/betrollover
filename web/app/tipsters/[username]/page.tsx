@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/useToast';
 import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 import { PersonJsonLd } from '@/components/PersonJsonLd';
 import { useT } from '@/context/LanguageContext';
 import { FollowersCountButton } from '@/components/TipsterFollowersModal';
@@ -215,7 +216,7 @@ export default function TipsterProfilePage() {
         }
       } else {
         const err = await res.json().catch(() => ({}));
-        showError(new Error(err.message || 'Subscribe failed'));
+        showError(new Error(getApiErrorMessage(err, 'Subscribe failed')));
       }
     } catch (e: any) {
       showError(e);
@@ -297,7 +298,7 @@ export default function TipsterProfilePage() {
         setUnveilCouponId(id);
       } else {
         const err = await res.json().catch(() => ({}));
-        showError(new Error(err.message || 'Purchase failed'));
+        showError(new Error(getApiErrorMessage(err, 'Purchase failed')));
       }
     } catch (e: any) {
       showError(e);

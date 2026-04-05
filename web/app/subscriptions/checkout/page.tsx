@@ -7,6 +7,7 @@ import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 interface PackageInfo {
   id: number;
@@ -78,7 +79,7 @@ function CheckoutContent() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(typeof data?.message === 'string' ? data.message : 'Payment failed');
+        setError(getApiErrorMessage(data, 'Payment failed'));
         return false;
       }
       router.push('/subscriptions?subscribed=1');

@@ -9,6 +9,7 @@ import { AdSlot } from '@/components/AdSlot';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 import { useT } from '@/context/LanguageContext';
 import {
   withdrawalStatusLabelKey,
@@ -188,7 +189,7 @@ function WalletContent() {
         body: JSON.stringify({ amount }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || t('wallet.init_failed'));
+      if (!res.ok) throw new Error(getApiErrorMessage(data, t('wallet.init_failed')));
       if (data.authorizationUrl) {
         window.location.href = data.authorizationUrl;
       } else {
@@ -296,7 +297,7 @@ function WalletContent() {
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || t('wallet.failed_add_payout'));
+      if (!res.ok) throw new Error(getApiErrorMessage(data, t('wallet.failed_add_payout')));
       setShowPayoutForm(false);
       setPayoutForm({
         type: 'mobile_money',

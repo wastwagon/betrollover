@@ -16,6 +16,7 @@ import { formatError } from '@/utils/errorMessages';
 import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 const API_URL = getApiUrl();
 
@@ -156,7 +157,7 @@ export default function MarketplacePage() {
           return next;
         });
         const err = await res.json().catch(() => ({}));
-        showError(new Error(err.message || 'Failed to update follow'));
+        showError(new Error(getApiErrorMessage(err, 'Failed to update follow')));
       }
     } catch (e) {
       setFollowedTipsterUsernames((prev) => {
@@ -387,8 +388,7 @@ export default function MarketplacePage() {
         setUnveilCouponId(id);
       } else {
         const err = await res.json().catch(() => ({}));
-        const errorMessage = err.message || 'Purchase failed';
-        showError(new Error(errorMessage));
+        showError(new Error(getApiErrorMessage(err, 'Purchase failed')));
       }
     } catch (error: any) {
       showError(error);

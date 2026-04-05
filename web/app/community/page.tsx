@@ -9,6 +9,7 @@ import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
 import { useT } from '@/context/LanguageContext';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 const ALLOWED_REACTIONS = ['👍', '❤️', '😂', '🔥'];
 const POLL_INTERVAL = 3000; // 3 s normal, slows to 8 s if idle
 
@@ -208,7 +209,7 @@ function CommunityPageInner() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.message || 'Failed to send message');
+        setError(getApiErrorMessage(data, 'Failed to send message'));
       } else {
         setMessages((prev) => {
           const exists = prev.some((m) => m.id === data.id);

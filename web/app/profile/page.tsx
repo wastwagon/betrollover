@@ -10,6 +10,7 @@ import { AdSlot } from '@/components/AdSlot';
 import { useT } from '@/context/LanguageContext';
 
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 
 interface Profile {
@@ -89,7 +90,7 @@ export default function ProfilePage() {
         setProfile((p) => (p ? { ...p, ...data } : null));
         setMsg(t('profile.updated'));
       } else {
-        setMsg(data.message || t('profile.update_failed'));
+        setMsg(getApiErrorMessage(data, t('profile.update_failed')));
       }
     } finally {
       setSaving(false);
@@ -136,6 +137,7 @@ export default function ProfilePage() {
         setAvatarUrl(data.avatar || '');
       } else {
         setAvatarError(true);
+        setMsg(getApiErrorMessage(data, t('profile.update_failed')));
       }
     } finally {
       setAvatarUploading(false);
@@ -196,7 +198,7 @@ export default function ProfilePage() {
         router.push('/?deleted=1');
         return;
       }
-      setDeleteMsg(data.message || t('profile.delete_failed'));
+      setDeleteMsg(getApiErrorMessage(data, t('profile.delete_failed')));
     } catch {
       setDeleteMsg(t('profile.delete_failed'));
     } finally {
@@ -237,7 +239,7 @@ export default function ProfilePage() {
         setPwConfirm('');
         setPwMsg(t('profile.password_updated'));
       } else {
-        setPwMsg(data.message || t('profile.change_failed'));
+        setPwMsg(getApiErrorMessage(data, t('profile.change_failed')));
       }
     } finally {
       setPwSaving(false);
