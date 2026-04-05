@@ -16,6 +16,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 import { fetchSellingThresholds, type SellingThresholds } from '@/lib/selling-thresholds';
 import {
   fetchDailyCouponQuota,
@@ -712,8 +713,11 @@ export default function CreatePickPage() {
     });
     setSubmitting(false);
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      const msg = err?.message || err?.error || 'Failed to create pick';
+      const err = (await res.json().catch(() => ({}))) as { message?: unknown; error?: string };
+      const msg =
+        getApiErrorMessage(err, '') ||
+        (typeof err?.error === 'string' ? err.error : '') ||
+        'Failed to create pick';
       const errorMessage = res.status >= 500 ? formatError(new Error(msg)) : (msg || formatError(new Error(msg)));
       setFormError(errorMessage);
       // Avoid duplicate toast for expected 4xx validation; toast only for server errors.

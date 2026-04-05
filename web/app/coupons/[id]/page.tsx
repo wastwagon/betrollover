@@ -195,7 +195,10 @@ function ReviewsSection({ couponId, isPurchased, isSettled }: { couponId: number
       body: JSON.stringify({ couponId, rating, comment: comment.trim() || undefined }),
     });
     if (r.ok) { await loadReviews(); await loadMyReview(); setComment(''); }
-    else { const d = await r.json().catch(() => ({})); setErr(d.message || 'Could not submit review'); }
+    else {
+        const d = await r.json().catch(() => ({}));
+        setErr(getApiErrorMessage(d, 'Could not submit review'));
+      }
     setSubmitting(false);
   };
 

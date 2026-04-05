@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 interface Settings {
   apiSportsConfigured: boolean;
@@ -170,7 +171,7 @@ export default function AdminSettingsPage() {
       } else {
         setAdminNotificationEmailMsg({
           type: 'error',
-          text: (data as { message?: string }).message || `Save failed (${res.status}).`,
+          text: getApiErrorMessage(data, `Save failed (${res.status}).`),
         });
       }
     } catch (e: unknown) {
@@ -258,13 +259,17 @@ export default function AdminSettingsPage() {
       const data = await res.json().catch(() => ({}));
       await loadMigrationStatus();
       if (data.applied?.length > 0) {
-        setMigrationMessage({ type: 'success', text: data.message || `Applied ${data.applied.length} migration(s).` });
+        setMigrationMessage({
+          type: 'success',
+          text: getApiErrorMessage(data, `Applied ${data.applied.length} migration(s).`),
+        });
       }
       if (data.errors?.length > 0) {
-        setMigrationMessage({ type: 'error', text: data.message || data.errors.join('; ') });
+        const errFallback = Array.isArray(data.errors) ? data.errors.join('; ') : 'Migration failed';
+        setMigrationMessage({ type: 'error', text: getApiErrorMessage(data, errFallback) });
       }
       if (data.applied?.length === 0 && !data.errors?.length) {
-        setMigrationMessage({ type: 'success', text: data.message || 'No pending migrations.' });
+        setMigrationMessage({ type: 'success', text: getApiErrorMessage(data, 'No pending migrations.') });
       }
     } catch (e: any) {
       setMigrationMessage({ type: 'error', text: e?.message || 'Failed to run migrations.' });
@@ -309,7 +314,7 @@ export default function AdminSettingsPage() {
         setTestResult({ success: true, message: 'Fixtures synced successfully!' });
       } else {
         const error = await res.json().catch(() => ({}));
-        setTestResult({ success: false, message: error.message || 'Failed to sync fixtures' });
+        setTestResult({ success: false, message: getApiErrorMessage(error, 'Failed to sync fixtures') });
       }
     } catch (e: any) {
       setTestResult({ success: false, message: e.message || 'Failed to sync fixtures' });
@@ -337,7 +342,7 @@ export default function AdminSettingsPage() {
         });
       } else {
         const error = await res.json().catch(() => ({}));
-        setTestResult({ success: false, message: error.message || 'Failed to sync odds' });
+        setTestResult({ success: false, message: getApiErrorMessage(error, 'Failed to sync odds') });
       }
     } catch (e: any) {
       setTestResult({ success: false, message: e.message || 'Failed to sync odds' });
@@ -409,7 +414,12 @@ export default function AdminSettingsPage() {
         return;
       }
       const success = res.ok && data?.sent !== false;
-      const message = data?.message || (success ? 'Test email sent! Check your inbox.' : data?.error || data?.message || `Failed to send (${res.status})`);
+      const apiLine = getApiErrorMessage(data, '');
+      const message = apiLine
+        ? apiLine
+        : success
+          ? 'Test email sent! Check your inbox.'
+          : (typeof data?.error === 'string' && data.error.trim() ? data.error : `Failed to send (${res.status})`);
       setTestEmailResult({ success, message });
     } catch (e: any) {
       setTestEmailResult({ success: false, message: e?.message || 'Network error. Check that the API is running.' });
@@ -484,7 +494,7 @@ export default function AdminSettingsPage() {
       
       if (!res.ok) {
         const error = await res.json();
-        setTestResult({ success: false, message: error.message || 'Failed to save API key' });
+        setTestResult({ success: false, message: getApiErrorMessage(error, 'Failed to save API key') });
         return;
       }
       
@@ -923,7 +933,7 @@ export default function AdminSettingsPage() {
                           setPaystackSaveResult({ success: true, message: 'Paystack settings saved.' });
                           setPaystackConfigured(data.configured || false);
                         } else {
-                          setPaystackSaveResult({ success: false, message: data.message || 'Failed to save' });
+                          setPaystackSaveResult({ success: false, message: getApiErrorMessage(data, 'Failed to save') });
                         }
                       } catch (e: any) {
                         setPaystackSaveResult({ success: false, message: e?.message || 'Network error' });
@@ -1246,7 +1256,7 @@ export default function AdminSettingsPage() {
                           }
                         } else {
                           const error = await res.json();
-                          alert(error.message || 'Failed to update minimum ROI');
+                          alert(getApiErrorMessage(error, 'Failed to update minimum ROI'));
                         }
                       } catch (e: any) {
                         alert(e.message || 'Failed to update minimum ROI');
@@ -1311,7 +1321,7 @@ export default function AdminSettingsPage() {
                           }
                         } else {
                           const error = await res.json().catch(() => ({}));
-                          alert((error as { message?: string }).message || 'Failed to update minimum win rate');
+                          alert(getApiErrorMessage(error, 'Failed to update minimum win rate'));
                         }
                       } catch (e: unknown) {
                         alert(e instanceof Error ? e.message : 'Failed to update minimum win rate');
@@ -1381,7 +1391,7 @@ export default function AdminSettingsPage() {
                           }
                         } else {
                           const error = await res.json().catch(() => ({}));
-                          alert((error as { message?: string }).message || 'Failed to update AI coupon price');
+                          alert(getApiErrorMessage(error, 'Failed to update AI coupon price'));
                         }
                       } catch (e: unknown) {
                         alert(e instanceof Error ? e.message : 'Failed to update AI coupon price');
@@ -1445,7 +1455,7 @@ export default function AdminSettingsPage() {
                           }
                         } else {
                           const error = await res.json().catch(() => ({}));
-                          alert((error as { message?: string }).message || 'Failed to update daily limit');
+                          alert(getApiErrorMessage(error, 'Failed to update daily limit'));
                         }
                       } catch (e: unknown) {
                         alert(e instanceof Error ? e.message : 'Failed to update daily limit');
@@ -1511,7 +1521,7 @@ export default function AdminSettingsPage() {
                           }
                         } else {
                           const error = await res.json().catch(() => ({}));
-                          alert(error.message || 'Failed to update commission rate');
+                          alert(getApiErrorMessage(error, 'Failed to update commission rate'));
                         }
                       } catch (e: any) {
                         alert(e.message || 'Failed to update commission rate');

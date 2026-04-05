@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 interface SportEvent {
   id: number;
@@ -144,7 +145,7 @@ export default function AdminSportsPage() {
           }
         } else {
           setSyncResults((prev) => [
-            { sport: 'results', synced: 0, error: data.message || 'Settlement failed' },
+            { sport: 'results', synced: 0, error: getApiErrorMessage(data, 'Settlement failed') },
             ...prev.slice(0, 9),
           ]);
         }
@@ -169,7 +170,7 @@ export default function AdminSportsPage() {
       const data = await res.json().catch(() => ({}));
       const synced = data.games ?? data.fights ?? data.synced ?? data.events ?? 0;
       setSyncResults((prev) => [
-        { sport, synced, error: res.ok ? undefined : (data.message || 'Sync failed') },
+        { sport, synced, error: res.ok ? undefined : getApiErrorMessage(data, 'Sync failed') },
         ...prev.slice(0, 9),
       ]);
       if (res.ok && selectedSport === sport) await loadEvents(sport);
@@ -227,7 +228,7 @@ export default function AdminSportsPage() {
         closeSettleModal();
         await loadEvents(selectedSport);
       } else {
-        setSettleError(data.message || 'Settlement failed');
+        setSettleError(getApiErrorMessage(data, 'Settlement failed'));
       }
     } catch {
       setSettleError('Network error');

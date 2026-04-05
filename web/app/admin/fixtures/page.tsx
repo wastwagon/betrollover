@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 interface DbFixture {
   id: number;
@@ -339,7 +340,7 @@ export default function AdminFixturesPage() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        setStreamThresholdError(err.message || 'Failed to save thresholds');
+        setStreamThresholdError(getApiErrorMessage(err, 'Failed to save thresholds'));
         loadStreamThresholds();
         return;
       }
@@ -371,13 +372,13 @@ export default function AdminFixturesPage() {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = res.ok ? await res.json().catch(() => null) : null;
-      if (res.ok && data) {
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
         setEnableLeaguesResult(data);
         loadEnabledLeaguesCount();
         loadDiagnostic();
       } else {
-        setError(data?.message || 'Failed to enable leagues. Check API key in Settings.');
+        setError(getApiErrorMessage(data, 'Failed to enable leagues. Check API key in Settings.'));
       }
     } catch {
       setError('Failed to enable leagues.');

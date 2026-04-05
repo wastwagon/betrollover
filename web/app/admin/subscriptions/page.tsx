@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 import { useT } from '@/context/LanguageContext';
 
 type TabId = 'catalog' | 'purchases';
@@ -452,10 +453,10 @@ export default function AdminSubscriptionsPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        alert((data as { message?: string }).message || 'Subscription removed.');
+        alert(getApiErrorMessage(data, 'Subscription removed.'));
         loadRows();
       } else {
-        alert((data as { message?: string }).message || 'Delete failed');
+        alert(getApiErrorMessage(data, 'Delete failed'));
       }
     } catch {
       alert('Delete failed');
@@ -486,10 +487,10 @@ export default function AdminSubscriptionsPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        alert((data as { message?: string }).message || 'Package removed from marketplace.');
+        alert(getApiErrorMessage(data, 'Package removed from marketplace.'));
         loadCatalog();
       } else {
-        alert((data as { message?: string }).message || 'Remove failed');
+        alert(getApiErrorMessage(data, 'Remove failed'));
       }
     } catch {
       alert('Remove failed');

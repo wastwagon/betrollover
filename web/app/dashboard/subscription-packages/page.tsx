@@ -9,6 +9,7 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { SuccessToast } from '@/components/SuccessToast';
 import { useToast } from '@/hooks/useToast';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 import { useT } from '@/context/LanguageContext';
 import { fetchSellingThresholds, SELLING_THRESHOLDS_FALLBACK, type SellingThresholds } from '@/lib/selling-thresholds';
 
@@ -95,7 +96,7 @@ export default function SubscriptionPackagesPage() {
         showSuccess('Subscription package created successfully!');
       } else {
         const err = await res.json().catch(() => ({}));
-        alert(err.message || 'Failed to create package');
+        alert(getApiErrorMessage(err, 'Failed to create package'));
       }
     } finally {
       setSubmitting(false);

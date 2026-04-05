@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 
 const API_URL = getApiUrl();
@@ -147,7 +148,7 @@ export default function AdminUsersPage() {
       if (res.ok) {
         load();
       } else {
-        setDeleteError(data?.message || 'Failed to delete user');
+        setDeleteError(getApiErrorMessage(data, 'Failed to delete user'));
       }
     } finally {
       setUpdating(null);
@@ -194,7 +195,7 @@ export default function AdminUsersPage() {
         window.location.href = '/dashboard';
         return;
       }
-      setImpersonateError(data.message || `Impersonation failed (${res.status})`);
+      setImpersonateError(getApiErrorMessage(data, `Impersonation failed (${res.status})`));
     } catch (error) {
       console.error('Impersonation failed:', error);
       setImpersonateError('Network error. Try again.');

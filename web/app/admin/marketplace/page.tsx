@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { PickCard } from '@/components/PickCard';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 interface Pick {
   id?: number;
@@ -130,7 +131,7 @@ export default function AdminMarketplacePage() {
         alert(msg);
         loadMarketplace();
       } else {
-        alert(data.message || 'Delete failed');
+        alert(getApiErrorMessage(data, 'Delete failed'));
       }
     } catch {
       alert('Delete failed');
@@ -153,7 +154,7 @@ export default function AdminMarketplacePage() {
         alert(`Fixed: ${data.titlesUpdated ?? 0} titles updated, ${data.duplicatesDeactivated ?? 0} duplicates deactivated.`);
         loadMarketplace();
       } else {
-        alert(data.message || 'Fix failed');
+        alert(getApiErrorMessage(data, 'Fix failed'));
       }
     } catch {
       alert('Fix failed');

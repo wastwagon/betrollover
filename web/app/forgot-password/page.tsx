@@ -41,9 +41,11 @@ function ForgotPasswordForm() {
                 body: JSON.stringify({ email }),
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.message || 'Failed to send reset code');
+            if (!res.ok) {
+                throw new Error(getApiErrorMessage(data, 'Failed to send reset code'));
+            }
 
-            setSuccess(data.message);
+            setSuccess(getApiErrorMessage(data, 'If an account exists with that email, a reset code has been sent.'));
             setStep('reset');
         } catch (err: any) {
             setError(err.message);

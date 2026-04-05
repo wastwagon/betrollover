@@ -9,6 +9,7 @@ import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
 import { useT } from '@/context/LanguageContext';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 interface Ticket {
   id: number;
@@ -88,7 +89,7 @@ function SupportContent() {
         fetchTickets();
       } else {
         const d = await r.json().catch(() => ({}));
-        setError(d.message || t('support.failed_submit'));
+        setError(getApiErrorMessage(d, t('support.failed_submit')));
       }
     } catch { setError(t('support.network_error')); }
     finally { setSubmitting(false); }

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 export interface LeagueInsightsData {
   leagueApiId: number;
@@ -83,7 +84,7 @@ export function LeagueInsightsPanel({
       });
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
-        throw new Error((j as { message?: string }).message || `Could not load (${r.status})`);
+        throw new Error(getApiErrorMessage(j, `Could not load (${r.status})`));
       }
       setData((await r.json()) as LeagueInsightsData);
     } catch (e: unknown) {

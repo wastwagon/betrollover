@@ -220,16 +220,14 @@ function WalletContent() {
       });
       const data = await res.json();
       if (!res.ok) {
-        let msg = data.message || 'Withdrawal failed';
+        let msg = getApiErrorMessage(data, 'Withdrawal failed');
         if (msg.toLowerCase().includes('starter business') || msg.toLowerCase().includes('third party payout')) {
           msg += ' Use "Change" to switch to Manual payout (admin processes withdrawals) or upgrade your Paystack account.';
         }
         throw new Error(msg);
       }
       setWithdrawAmount('');
-      const okMsg = typeof data?.message === 'string' && data.message.trim()
-        ? data.message.trim()
-        : t('wallet.withdrawal_request_success');
+      const okMsg = getApiErrorMessage(data, t('wallet.withdrawal_request_success'));
       showSuccess(okMsg);
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event(PENDING_WITHDRAWALS_INVALIDATE));

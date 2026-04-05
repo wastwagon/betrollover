@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 import { useT } from '@/context/LanguageContext';
 
 export interface TipsterFollowerRow {
@@ -101,7 +102,7 @@ export function TipsterFollowersModal({
       .then(async (r) => {
         if (!r.ok) {
           const err = await r.json().catch(() => ({}));
-          throw new Error(err.message || 'Failed to load followers');
+          throw new Error(getApiErrorMessage(err, 'Failed to load followers'));
         }
         return r.json();
       })

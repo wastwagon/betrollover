@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 interface Ticket {
   id: number;
@@ -74,7 +75,7 @@ export default function AdminSupportPage() {
         load();
       } else {
         const d = await r2.json().catch(() => ({}));
-        setMsg({ type: 'error', text: d.message || 'Failed to update ticket' });
+        setMsg({ type: 'error', text: getApiErrorMessage(d, 'Failed to update ticket') });
       }
     } catch { setMsg({ type: 'error', text: 'Network error' }); }
     finally { setSaving(false); }

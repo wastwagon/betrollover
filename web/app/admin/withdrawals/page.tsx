@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 import {
   adminWithdrawalStatusBadgeClass,
   adminWithdrawalStatusLabel,
@@ -330,7 +331,7 @@ export default function AdminWithdrawalsPage() {
         fetchData(page);
       } else {
         const err = await res.json().catch(() => ({}));
-        alert(typeof err?.message === 'string' ? err.message : 'Failed to update status');
+        alert(getApiErrorMessage(err, 'Failed to update status'));
       }
     } finally {
       setUpdatingId(null);

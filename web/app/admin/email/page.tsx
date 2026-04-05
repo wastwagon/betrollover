@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 interface SmtpSettings {
   host: string;
@@ -87,7 +88,7 @@ export default function AdminEmailPage() {
         setMsg('Settings saved.');
         load();
       } else {
-        setMsg(data.message || 'Save failed.');
+        setMsg(getApiErrorMessage(data, 'Save failed.'));
       }
     } finally {
       setSaving(false);

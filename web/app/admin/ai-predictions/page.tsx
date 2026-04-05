@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 
 import { getApiUrl } from '@/lib/site-config';
+import { getApiErrorMessage } from '@/lib/api-error-message';
 
 interface GenerationLog {
   id: number;
@@ -76,7 +77,7 @@ export default function AdminAiPredictionsPage() {
         setMessage({ type: data.synced > 0 ? 'success' : 'error', text: msg });
         if (data.synced > 0) await loadData();
       } else {
-        setMessage({ type: 'error', text: data.message || 'Failed to sync' });
+        setMessage({ type: 'error', text: getApiErrorMessage(data, 'Failed to sync') });
       }
     } catch (e) {
       setMessage({ type: 'error', text: (e as Error).message || 'Failed to sync' });
@@ -130,10 +131,13 @@ export default function AdminAiPredictionsPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.count !== undefined) {
-        setMessage({ type: 'success', text: data.message || `Generated ${data.count} predictions` });
+        setMessage({
+          type: 'success',
+          text: getApiErrorMessage(data, `Generated ${data.count} predictions`),
+        });
         await loadData();
       } else {
-        setMessage({ type: 'error', text: data.message || 'Failed to generate predictions' });
+        setMessage({ type: 'error', text: getApiErrorMessage(data, 'Failed to generate predictions') });
       }
     } catch (e) {
       setMessage({ type: 'error', text: (e as Error).message || 'Failed to generate predictions' });
