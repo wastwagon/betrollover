@@ -264,7 +264,7 @@ function DashboardContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] relative overflow-hidden">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] relative overflow-x-hidden w-full min-w-0 max-w-full">
         <div className="fixed inset-0 bg-gradient-mesh pointer-events-none -z-10" />
         <div className="flex flex-col items-center gap-4 animate-fade-in">
           <div className="w-12 h-12 rounded-full border-2 border-[var(--primary)] border-t-transparent animate-spin" />
@@ -280,10 +280,10 @@ function DashboardContent() {
 
   if (isAdmin) {
     return (
-      <div className="flex min-h-screen bg-[var(--bg)]">
+      <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <AdminSidebar />
-        <main className="admin-main-sibling section-ux-admin-shell">
-          <div className="px-4 pb-8 pt-4 md:p-6 max-w-[1600px] mx-auto w-full">
+        <main className="admin-main-sibling section-ux-admin-shell min-w-0">
+          <div className="px-4 pb-8 pt-4 md:p-6 max-w-[1600px] mx-auto w-full min-w-0">
             <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)] mb-4 sm:mb-6 break-words">
               Welcome, {user?.displayName || 'Administrator'}!
             </h1>
@@ -372,14 +372,14 @@ function DashboardContent() {
             </div>
 
             {/* Sports Overview */}
-            <div className="mb-6 sm:mb-8 bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] p-4 sm:p-6">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+            <div className="mb-6 sm:mb-8 bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] p-4 sm:p-6 min-w-0">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4 min-w-0 sm:gap-3">
                 <h2 className="text-base sm:text-lg font-semibold text-[var(--text)]">Sports Overview</h2>
                 <span className="inline-flex w-fit items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-300">
                   🌍 Multi-Sport Expansion
                 </span>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 max-w-xl">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 max-w-xl min-w-0">
                 {[
                   { icon: '⚽', sport: 'Football' },
                   { icon: '🏀', sport: 'Basketball' },
@@ -437,6 +437,7 @@ function DashboardContent() {
                     </Link>
                   ))}
                   <button
+                    type="button"
                     onClick={runSettlement}
                     disabled={settling}
                     className="flex items-center gap-2 py-2.5 min-h-[44px] px-3 rounded-lg text-sm bg-[var(--bg)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] font-medium text-left disabled:opacity-50 transition-colors min-[420px]:col-span-2"
@@ -482,7 +483,7 @@ function DashboardContent() {
                     { label: 'Multi-Sport Sync', value: undefined, link: { href: '/admin/sports', text: 'View Sync Status →' } },
                     { label: 'Fixtures',       value: undefined, link: { href: '/admin/fixtures', text: 'View & Sync →' } },
                   ].map(({ label, value, link, highlight }) => (
-                    <div key={label} className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-baseline py-2.5 sm:py-2">
+                    <div key={label} className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-baseline py-2.5 sm:py-2 min-w-0 sm:gap-3">
                       <dt className="text-[var(--text-muted)] shrink-0">{label}</dt>
                       <dd className={`font-medium sm:text-right min-w-0 break-words ${highlight ? 'text-amber-600' : 'text-[var(--text)]'}`}>
                         {link ? (
@@ -518,14 +519,16 @@ function DashboardContent() {
           {/* Referral CTA — invite friends & earn */}
           <Link
             href="/invite"
-            className="mb-6 flex items-center gap-4 p-4 sm:p-5 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/50 dark:to-teal-950/50 hover:shadow-md transition-shadow"
+            className="mb-6 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/50 dark:to-teal-950/50 hover:shadow-md transition-shadow"
           >
-            <span className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-2xl flex-shrink-0">🎁</span>
-            <div className="min-w-0 flex-1">
-              <span className="font-semibold text-[var(--text)] block">{t('dashboard.invite')}</span>
-              <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_invite_desc')} — {t('dashboard.invite_cta_short')}</span>
+            <div className="flex items-start gap-4 min-w-0 flex-1">
+              <span className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-2xl flex-shrink-0">🎁</span>
+              <div className="min-w-0 flex-1">
+                <span className="font-semibold text-[var(--text)] block">{t('dashboard.invite')}</span>
+                <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_invite_desc')} — {t('dashboard.invite_cta_short')}</span>
+              </div>
             </div>
-            <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 flex-shrink-0">→</span>
+            <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 flex-shrink-0 self-end sm:self-center">→</span>
           </Link>
 
           {dailyQuota && (
@@ -810,12 +813,12 @@ function DashboardContent() {
           <section className="mb-6 sm:mb-8">
             <div className="rounded-2xl sm:rounded-3xl overflow-hidden bg-gradient-to-br from-slate-800 via-teal-900/80 to-slate-800 border border-teal-500/30 shadow-lg">
               <div className="p-5 sm:p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-2xl">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
+                  <div className="flex items-start gap-4 min-w-0 flex-1">
+                    <div className="shrink-0 w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-2xl">
                       🌍
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-bold text-white text-base sm:text-lg">{t('dashboard.multisport_title')}</h3>
                       </div>
@@ -824,7 +827,7 @@ function DashboardContent() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-2 sm:flex-shrink-0">
+                  <div className="flex flex-wrap gap-2 sm:shrink-0 min-w-0">
                     {[
                       { icon: '⚽', label: 'Football' },
                       { icon: '🏀', label: 'Basketball' },
@@ -848,7 +851,7 @@ function DashboardContent() {
           {tipsterStats && (
             <section className="mb-6 sm:mb-8">
               <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">{t('dashboard.performance')}</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <StatCard title={t("dashboard.roi")} value={tipsterStats.roi} icon="📈" suffix="%" variant="teal" glass index={0} />
                 <StatCard title={t("dashboard.win_rate")} value={tipsterStats.winRate} icon="📊" suffix="%" variant="emerald" glass index={1} />
                 <StatCard title={t("dashboard.total_picks")} value={tipsterStats.totalPicks} icon="🎯" variant="amber" glass index={2} />
@@ -870,18 +873,18 @@ function DashboardContent() {
           {/* VIP subscription picks */}
           {vipFeedPicks.length > 0 && (
             <section className="mb-6 sm:mb-8">
-              <div className="flex flex-wrap items-baseline justify-between gap-2 mb-2 sm:mb-3 px-0.5">
+              <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-between sm:gap-2 mb-2 sm:mb-3 px-0.5 min-w-0">
                 <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                   {t('dashboard.vip_picks_section_title')}
                 </h2>
                 <Link
                   href="/subscriptions"
-                  className="text-xs font-medium text-[var(--primary)] hover:underline"
+                  className="text-xs font-medium text-[var(--primary)] hover:underline w-fit"
                 >
                   {t('dashboard.vip_picks_see_all')}
                 </Link>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">
                 {vipFeedPicks.slice(0, 4).map((pick) => {
                   const tip = pick.tipster;
                   const tipster = tip
@@ -984,7 +987,19 @@ function DashboardContent() {
                                     headers: { Authorization: `Bearer ${token}` },
                                   });
                                   if (res.ok) {
+                                    const purchased = await res.json().catch(() => null);
                                     setPurchases((prev) => [...prev, { id: 0, accumulatorId: pick.id, purchasePrice: pick.price, purchasedAt: new Date().toISOString(), pick: { id: pick.id, title: pick.title, totalPicks: pick.totalPicks, totalOdds: pick.totalOdds, status: pick.status, result: pick.result } }]);
+                                    const fullPicks =
+                                      purchased &&
+                                      typeof purchased === 'object' &&
+                                      Array.isArray((purchased as { picks?: unknown }).picks)
+                                        ? (purchased as { picks: FeedPick['picks'] }).picks
+                                        : null;
+                                    if (fullPicks) {
+                                      setFeedPicks((prev) =>
+                                        prev.map((p) => (p.id === pick.id ? { ...p, picks: fullPicks } : p)),
+                                      );
+                                    }
                                     const w = await fetch(`${getApiUrl()}/wallet/balance`, { headers: { Authorization: `Bearer ${token}` } });
                                     if (w.ok) {
                                       const d = await w.json();
@@ -1022,7 +1037,7 @@ function DashboardContent() {
           {purchaseStats !== null && (
             <section className="mb-6 sm:mb-8">
               <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">{t('dashboard.purchase_summary')}</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <StatCard title={t('dashboard.purchases')} value={purchaseStats.total} icon="🛍️" variant="slate" link="/my-purchases" glass index={4} />
                 <StatCard
                   title={t('dashboard.total_spent')}
@@ -1062,7 +1077,7 @@ function DashboardContent() {
                 }`}
               >
                 <div className="p-5 sm:p-6 md:p-8">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 md:gap-6">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 md:gap-6 min-w-0">
                     <div className="flex items-start gap-4 sm:gap-5 flex-1 min-w-0">
                       <div
                         className={`flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center text-xl sm:text-2xl shadow-md ${
@@ -1102,7 +1117,7 @@ function DashboardContent() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-3 sm:flex-nowrap md:flex-shrink-0">
+                    <div className="flex flex-wrap gap-3 sm:flex-nowrap md:shrink-0 min-w-0">
                       {canSellPaid ? (
                         <>
                           <Link
@@ -1138,10 +1153,10 @@ function DashboardContent() {
           {/* Recent Purchases — glass card */}
           <section className="mb-6 sm:mb-8">
             <div className="glass-card rounded-2xl sm:rounded-3xl overflow-hidden">
-              <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-[var(--border)]/80 flex items-center justify-between flex-wrap gap-2">
+              <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-[var(--border)]/80 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:flex-wrap min-w-0 sm:gap-3">
                 <h2 className="font-semibold text-[var(--text)] text-base sm:text-lg">{t('dashboard.recent_purchases')}</h2>
                 {purchases.length > 0 && (
-                  <Link href="/my-purchases" className="text-sm font-medium text-[var(--primary)] hover:underline">
+                  <Link href="/my-purchases" className="text-sm font-medium text-[var(--primary)] hover:underline w-fit">
                     {t('dashboard.view_all')}
                   </Link>
                 )}
@@ -1157,14 +1172,14 @@ function DashboardContent() {
                         <Link
                           key={purchase.id}
                           href="/my-purchases"
-                          className="flex items-center justify-between gap-3 p-3 sm:p-4 rounded-xl bg-[var(--bg)]/70 hover:bg-teal-50/60 border border-transparent hover:border-teal-200/50 transition-all duration-200"
+                          className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 p-3 sm:p-4 rounded-xl bg-[var(--bg)]/70 hover:bg-teal-50/60 border border-transparent hover:border-teal-200/50 transition-all duration-200 min-w-0"
                         >
                           <div className="flex-1 min-w-0">
                             <p className="text-xs sm:text-sm text-[var(--text-muted)]">
                               {purchase.pick.totalPicks} picks · {totalOdds.toFixed(2)} odds
                             </p>
                           </div>
-                          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                          <div className="flex items-center justify-between gap-2 sm:gap-3 shrink-0 sm:justify-end w-full sm:w-auto min-w-0">
                             <span
                               className={`px-2 sm:px-2.5 py-1 rounded-lg text-xs font-semibold ${
                                 isActive
@@ -1208,7 +1223,7 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[var(--bg)] flex items-center justify-center"><div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" /></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[var(--bg)] flex items-center justify-center w-full min-w-0 max-w-full overflow-x-hidden"><div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" /></div>}>
       <DashboardContent />
     </Suspense>
   );
@@ -1255,15 +1270,15 @@ function StatCard({
     slate: 'bg-slate-100 text-slate-600',
   };
   const baseCard = glass
-    ? `glass-card rounded-2xl p-4 sm:p-5 border border-[var(--border)]/60 hover:shadow-lg transition-all duration-200 ${variantStyles[variant]}`
-    : `rounded-2xl border border-[var(--border)] p-5 bg-white hover:shadow-lg transition-all duration-200 ${variantStyles[variant]}`;
+    ? `glass-card rounded-2xl p-4 sm:p-5 border border-[var(--border)]/60 hover:shadow-lg transition-all duration-200 min-w-0 ${variantStyles[variant]}`
+    : `rounded-2xl border border-[var(--border)] p-5 bg-white hover:shadow-lg transition-all duration-200 min-w-0 ${variantStyles[variant]}`;
   const content = (
     <div className={baseCard}>
-      <div className="flex items-start justify-between gap-2 sm:gap-3">
-        <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-base sm:text-lg flex-shrink-0 ${iconBg[variant]}`}>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3 min-w-0">
+        <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-base sm:text-lg shrink-0 ${iconBg[variant]}`}>
           {icon}
         </div>
-        <span className="text-xl sm:text-2xl font-bold text-[var(--text)] tabular-nums truncate">{display}{suffix}</span>
+        <span className="text-xl sm:text-2xl font-bold text-[var(--text)] tabular-nums truncate text-left sm:text-right sm:ml-auto">{display}{suffix}</span>
       </div>
       <p className="text-xs sm:text-sm font-medium text-[var(--text-muted)] mt-2 sm:mt-3">{title}</p>
       {hint ? <p className="text-[10px] sm:text-xs text-[var(--text-muted)]/80 mt-1 leading-snug">{hint}</p> : null}

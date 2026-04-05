@@ -59,13 +59,13 @@ export default function AdminResourceCategoryCreatePage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main">
+      <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <Link href="/admin/resources" className="text-sm text-[var(--primary)] hover:underline mb-6 inline-block">
           ← Back to Resources
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Create Resource Category</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Create Resource Category</h1>
         <p className="text-gray-600 dark:text-gray-400 mb-6">Add a new guide category (e.g. Bankroll, Odds, Strategy).</p>
         <form onSubmit={submit} className="max-w-2xl space-y-4">
           <div>
@@ -89,7 +89,7 @@ export default function AdminResourceCategoryCreatePage() {
               required
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Level</label>
               <select
@@ -135,15 +135,15 @@ export default function AdminResourceCategoryCreatePage() {
             />
           </div>
           {error && <p className="text-red-600 text-sm">{error}</p>}
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center pt-4">
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] disabled:opacity-50"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] disabled:opacity-50 text-center"
             >
               {saving ? 'Creating...' : 'Create Category'}
             </button>
-            <Link href="/admin/resources" className="px-6 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300">
+            <Link href="/admin/resources" className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300">
               Cancel
             </Link>
           </div>

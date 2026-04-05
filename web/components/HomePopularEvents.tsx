@@ -60,11 +60,11 @@ export function HomePopularEvents() {
   }, []);
 
   return (
-    <section className="py-12 md:py-16 border-t border-[var(--border)] bg-[var(--bg-warm)]">
-      <div className="section-ux-gutter-wide">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-base font-semibold text-[var(--text)] sm:text-lg md:text-xl">{t('home.popular_events')}</h2>
-          <Link href="/marketplace" className="text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline">
+    <section className="py-12 md:py-16 border-t border-[var(--border)] bg-[var(--bg-warm)] w-full min-w-0 max-w-full overflow-x-hidden">
+      <div className="section-ux-gutter-wide w-full min-w-0">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+          <h2 className="text-base font-semibold text-[var(--text)] sm:text-lg md:text-xl min-w-0">{t('home.popular_events')}</h2>
+          <Link href="/marketplace" className="text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline shrink-0 w-fit">
             {t('home.view_marketplace')} →
           </Link>
         </div>
@@ -80,10 +80,10 @@ export function HomePopularEvents() {
               <Link
                 key={e.fixtureId}
                 href="/marketplace"
-                className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-[var(--card)] border border-[var(--border)] hover:border-[var(--primary)]/50 transition-colors"
+                className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 rounded-xl bg-white dark:bg-[var(--card)] border border-[var(--border)] hover:border-[var(--primary)]/50 transition-colors min-w-0"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-[var(--text)] truncate flex items-center gap-2">
+                  <p className="font-medium text-[var(--text)] sm:truncate flex flex-wrap sm:flex-nowrap items-center gap-2 min-w-0">
                     {(e.homeTeamLogo || e.awayTeamLogo || e.homeCountryCode || e.awayCountryCode) && (
                       <span className="flex items-center gap-1 flex-shrink-0">
                         <TeamBadge logo={e.homeTeamLogo} countryCode={e.homeCountryCode} name={e.homeTeam} size={24} />
@@ -92,14 +92,14 @@ export function HomePopularEvents() {
                     )}
                     {e.homeTeam} v {e.awayTeam}
                   </p>
-                  <p className="text-sm text-[var(--text-muted)] flex items-center gap-1">
+                  <p className="text-sm text-[var(--text-muted)] flex flex-wrap items-center gap-1 min-w-0">
                     {e.sport && SPORT_ICON[e.sport] && (
                       <span className="text-xs">{SPORT_ICON[e.sport]}</span>
                     )}
                     {e.leagueName || (e.sport ? e.sport.charAt(0).toUpperCase() + e.sport.slice(1) : 'Sport')} • {formatDate(e.matchDate)}
                   </p>
                 </div>
-                <span className="px-3 py-1 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] text-sm font-medium flex-shrink-0">
+                <span className="px-3 py-1 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] text-sm font-medium flex-shrink-0 self-start sm:self-auto">
                   {e.tipCount} tips
                 </span>
               </Link>

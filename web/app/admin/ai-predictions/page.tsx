@@ -143,11 +143,11 @@ export default function AdminAiPredictionsPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main">
+      <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">AI Predictions</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">AI Predictions</h1>
           <p className="text-gray-600 dark:text-gray-400">Generate and manage AI tipster predictions from fixtures in the next 7 days.</p>
         </div>
 
@@ -166,9 +166,10 @@ export default function AdminAiPredictionsPage() {
         {/* Generate Button */}
         <div className="mb-8">
           <button
+            type="button"
             onClick={handleGenerate}
             disabled={generating}
-            className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors flex items-center gap-2"
+            className="w-full sm:w-auto justify-center px-6 py-3 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors flex items-center gap-2"
           >
             {generating ? (
               <>
@@ -190,9 +191,10 @@ export default function AdminAiPredictionsPage() {
         {/* Sync to Marketplace */}
         <div className="mb-8">
           <button
+            type="button"
             onClick={handleSyncToMarketplace}
             disabled={syncing}
-            className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors flex items-center gap-2"
+            className="w-full sm:w-auto justify-center px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors flex items-center gap-2"
           >
             {syncing ? (
               <>
@@ -264,12 +266,12 @@ export default function AdminAiPredictionsPage() {
                       key={log.id}
                       className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm"
                     >
-                      <div className="flex justify-between items-start">
-                        <span className="font-medium text-gray-900 dark:text-white">
+                      <div className="flex flex-col gap-1.5 sm:flex-row sm:justify-between sm:items-start">
+                        <span className="font-medium text-gray-900 dark:text-white min-w-0">
                           {new Date(log.log_date).toLocaleDateString()}
                         </span>
                         <span
-                          className={`px-2 py-0.5 rounded text-xs font-medium ${
+                          className={`self-start sm:self-auto px-2 py-0.5 rounded text-xs font-medium ${
                             log.status === 'success'
                               ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200'
                               : log.status === 'partial'

@@ -35,17 +35,17 @@ export default function AdminResourcesPage() {
   }, [router]);
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main">
-        <div className="mb-8 flex flex-wrap justify-between items-start gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Resource Center</h1>
+      <main className="admin-main-sibling section-ux-admin-main min-w-0">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:justify-between sm:items-start">
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Resource Center</h1>
             <p className="text-gray-600 dark:text-gray-400">Manage articles, strategies, and tools.</p>
           </div>
           <Link
             href="/admin/resources/categories/create"
-            className="px-4 py-2 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)]"
+            className="w-full sm:w-auto text-center px-4 py-2 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)]"
           >
             + Create Category
           </Link>
@@ -56,8 +56,8 @@ export default function AdminResourcesPage() {
         ) : (
           <div className="space-y-6">
             {categories.map((cat) => (
-              <div key={cat.id} className="rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6">
-                <div className="flex justify-between items-center mb-4">
+              <div key={cat.id} className="rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-4">
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                     {cat.name} ({cat.slug})
                     {cat.language && cat.language !== 'en' && (
@@ -84,9 +84,9 @@ export default function AdminResourcesPage() {
                 ) : (
                   <ul className="space-y-2">
                     {cat.items?.map((item) => (
-                      <li key={item.id} className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                        <span className="text-gray-900 dark:text-white">{item.title}</span>
-                        <span className="flex items-center gap-2">
+                      <li key={item.id} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                        <span className="text-gray-900 dark:text-white min-w-0">{item.title}</span>
+                        <span className="flex flex-wrap items-center gap-2 shrink-0">
                           <span className="text-xs text-gray-500">
                             {item.type} · {item.publishedAt ? 'Published' : 'Draft'}
                           </span>

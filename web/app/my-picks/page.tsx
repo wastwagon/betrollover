@@ -117,8 +117,8 @@ export default function MyPicksPage() {
   return (
     <DashboardShell>
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
-      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
-        <div className="section-ux-dashboard-shell">
+      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden">
+        <div className="section-ux-dashboard-shell min-w-0 max-w-full">
           <PageHeader
             label={t('my_picks.title')}
             title={t('my_picks.title')}
@@ -126,7 +126,7 @@ export default function MyPicksPage() {
             action={
               <a
                 href="/create-pick"
-                className="inline-flex items-center justify-center min-h-[40px] px-4 py-2 rounded-xl text-sm font-semibold bg-white/20 hover:bg-white/30 text-white border border-white/30 transition-colors"
+                className="inline-flex w-full sm:w-auto items-center justify-center min-h-[40px] px-4 py-2 rounded-xl text-sm font-semibold bg-white/20 hover:bg-white/30 text-white border border-white/30 transition-colors"
               >
                 {t('my_picks.create_pick')}
               </a>
@@ -139,12 +139,14 @@ export default function MyPicksPage() {
 
           {/* Sport filter tabs */}
           {!loading && picks.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1 mb-4">
+            <div className="mb-4 w-full min-w-0 overflow-hidden">
+              <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
               {SPORT_FILTER_KEYS.filter((sf) => sf.key === '' || (sportCounts[sf.key] ?? 0) > 0).map((sf) => (
                 <button
                   key={sf.key}
+                  type="button"
                   onClick={() => setSportFilter(sf.key)}
-                  className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                  className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
                     sportFilter === sf.key
                       ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
                       : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
@@ -159,6 +161,7 @@ export default function MyPicksPage() {
                   ) : null}
                 </button>
               ))}
+              </div>
             </div>
           )}
 
@@ -189,8 +192,8 @@ export default function MyPicksPage() {
           )}
 
           {!loading && filtered.length > 0 && (
-            <div className="space-y-3 pb-6">
-              <p className="text-sm text-[var(--text-muted)] mb-2">
+            <div className="space-y-3 pb-6 min-w-0 max-w-full">
+              <p className="text-sm text-[var(--text-muted)] mb-2 min-w-0 break-words">
                 {filtered.length === 1 ? t('my_picks.coupons_count', { n: '1' }) : t('my_picks.coupons_count_plural', { n: String(filtered.length) })}
                 {sportFilter ? ` · ${SPORT_DISPLAY_MAP[sportFilter] ?? sportFilter}` : ''}
               </p>

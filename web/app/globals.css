@@ -239,6 +239,7 @@ body {
 
   /**
    * Admin (AdminSidebar): keep `admin-main-sibling` on <main> — globals.css uses it for mobile offset.
+   * `/admin` layout sets `data-admin-shell`; TopBar is hidden there, so padding override is tighter.
    * These utilities only replace the repeated flex/padding tail.
    */
   .section-ux-admin-main {
@@ -353,6 +354,11 @@ body {
     padding-top: max(1.5rem, 5.75rem);
     /* iOS: adds safe-area-inset-top when available (env() returns real value) */
     padding-top: max(1.5rem, calc(env(safe-area-inset-top, 0px) + 5.75rem));
+  }
+
+  /* /admin: TopBar hidden — less top padding; hamburger sits under safe area only */
+  [data-admin-shell] main.admin-main-sibling {
+    padding-top: max(1rem, calc(env(safe-area-inset-top, 0px) + 3.25rem));
   }
 }
 

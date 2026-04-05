@@ -57,9 +57,9 @@ export function HomeStats() {
   ];
 
   return (
-    <section className="border-y border-[var(--border)] bg-gradient-to-br from-[var(--card)] via-[var(--card)] to-[var(--primary)]/5">
-      <div className="section-ux-gutter py-8">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+    <section className="border-y border-[var(--border)] bg-gradient-to-br from-[var(--card)] via-[var(--card)] to-[var(--primary)]/5 w-full min-w-0 max-w-full overflow-x-hidden">
+      <div className="section-ux-gutter py-8 w-full min-w-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 min-w-0">
           {items.map((item) => (
             <div key={item.label} className="text-center group" title={item.hint}>
               <p className="text-lg font-semibold text-[var(--primary)] tabular-nums group-hover:scale-105 transition-transform">{item.value}</p>

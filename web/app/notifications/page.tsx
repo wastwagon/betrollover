@@ -116,7 +116,7 @@ export default function NotificationsPage() {
   if (loading) {
     return (
       <DashboardShell>
-        <div className="section-ux-dashboard-shell">
+        <div className="section-ux-dashboard-shell min-w-0 max-w-full">
           <LoadingSkeleton count={4} variant="list" />
         </div>
       </DashboardShell>
@@ -125,25 +125,25 @@ export default function NotificationsPage() {
 
   return (
     <DashboardShell>
-      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
-        <div className="section-ux-dashboard-shell">
+      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden">
+        <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full">
 
           {/* ─── Header row ──────────────────────────────── */}
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6 min-w-0">
             <PageHeader
               label={t('notifications.title')}
               title={t('notifications.title')}
               tagline={t('notifications.tagline')}
             />
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0 min-w-0">
               {/* Filter tabs */}
-              <div className="flex rounded-lg border border-[var(--border)] overflow-hidden bg-[var(--card)]">
+              <div className="flex rounded-lg border border-[var(--border)] overflow-hidden bg-[var(--card)] w-full sm:w-auto">
                 {(['all', 'unread'] as const).map((f) => (
                   <button
                     key={f}
                     type="button"
                     onClick={() => setFilter(f)}
-                    className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    className={`flex-1 sm:flex-initial px-3 py-1.5 text-xs font-semibold transition-colors ${
                       filter === f
                         ? 'bg-[var(--primary)] text-white'
                         : 'text-[var(--text-muted)] hover:text-[var(--text)]'
@@ -159,7 +159,7 @@ export default function NotificationsPage() {
                   type="button"
                   onClick={markAllRead}
                   disabled={markingAll}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors disabled:opacity-50"
+                  className="w-full sm:w-auto px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors disabled:opacity-50"
                 >
                   {markingAll ? t('notifications.marking') : t('notifications.mark_all_read')}
                 </button>
@@ -189,39 +189,39 @@ export default function NotificationsPage() {
               />
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 min-w-0 max-w-full">
               {displayed.map((n) => {
                 const meta = getTypeMeta(n.type);
                 const content = (
                   <div
-                    className={`card-gradient rounded-2xl p-4 transition-all duration-200 hover:shadow-md ${
+                    className={`card-gradient rounded-2xl p-4 transition-all duration-200 hover:shadow-md min-w-0 max-w-full ${
                       !isNotificationRead(n)
                         ? 'border-l-4 border-l-[var(--primary)]'
                         : 'opacity-75 hover:opacity-100'
                     }`}
                   >
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-3 min-w-0">
                       {/* Icon */}
-                      <div className={`flex-shrink-0 w-9 h-9 rounded-full bg-[var(--bg)] flex items-center justify-center text-lg border border-[var(--border)]`}>
+                      <div className={`shrink-0 w-9 h-9 rounded-full bg-[var(--bg)] flex items-center justify-center text-lg border border-[var(--border)]`}>
                         {meta.icon}
                       </div>
 
                       {/* Body */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className={`text-sm font-semibold ${isNotificationRead(n) ? 'text-[var(--text)]' : 'text-[var(--text)]'}`}>
+                        <div className="flex items-start justify-between gap-2 min-w-0">
+                          <p className={`text-sm font-semibold min-w-0 flex-1 pr-1 break-words ${isNotificationRead(n) ? 'text-[var(--text)]' : 'text-[var(--text)]'}`}>
                             {n.title}
                           </p>
-                          <div className="flex items-center gap-2 flex-shrink-0">
+                          <div className="flex items-center gap-2 shrink-0">
                             <span className="text-[10px] text-[var(--text-muted)] whitespace-nowrap">
                               {timeAgo(n.createdAt)}
                             </span>
                             {!isNotificationRead(n) && (
-                              <span className="w-2 h-2 rounded-full bg-[var(--primary)] flex-shrink-0" />
+                              <span className="w-2 h-2 rounded-full bg-[var(--primary)] shrink-0" />
                             )}
                           </div>
                         </div>
-                        <p className="text-sm text-[var(--text-muted)] mt-0.5 leading-relaxed">
+                        <p className="text-sm text-[var(--text-muted)] mt-0.5 leading-relaxed break-words min-w-0">
                           {n.message}
                         </p>
                         {/* Actions row */}
@@ -259,7 +259,7 @@ export default function NotificationsPage() {
                     key={n.id}
                     href={n.link}
                     onClick={() => markRead(n.id)}
-                    className="block"
+                    className="block min-w-0 max-w-full"
                   >
                     {content}
                   </Link>

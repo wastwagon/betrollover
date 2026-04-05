@@ -63,25 +63,25 @@ export default function AdminNewsPage() {
   }, [router]);
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main">
-        <div className="mb-8 flex justify-between items-center flex-wrap gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">News Articles</h1>
+      <main className="admin-main-sibling section-ux-admin-main min-w-0">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start">
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">News Articles</h1>
             <p className="text-gray-600 dark:text-gray-400">Manage football news, transfers, and gossip.</p>
           </div>
-          <div className="flex gap-3">
-            <button
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto shrink-0">
+            <button type="button"
               onClick={syncTransfers}
               disabled={syncing}
-              className="px-5 py-2.5 rounded-xl border border-[var(--primary)] text-[var(--primary)] font-semibold hover:bg-[var(--primary)]/10 disabled:opacity-50"
+              className="w-full sm:w-auto text-center px-5 py-2.5 rounded-xl border border-[var(--primary)] text-[var(--primary)] font-semibold hover:bg-[var(--primary)]/10 disabled:opacity-50"
             >
               {syncing ? 'Syncing...' : 'Sync Real Transfers'}
             </button>
             <Link
               href="/admin/news/create"
-              className="px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)]"
+              className="w-full sm:w-auto text-center px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)]"
             >
               + New Article
             </Link>
@@ -112,7 +112,8 @@ export default function AdminNewsPage() {
           </div>
         ) : (
           <div className="rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <table className="w-full">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px]">
               <thead className="bg-gray-50 dark:bg-gray-700/50">
                 <tr>
                   <th className="text-left px-6 py-4 font-semibold text-gray-900 dark:text-white">Title</th>
@@ -150,6 +151,7 @@ export default function AdminNewsPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </main>

@@ -40,6 +40,7 @@ export function ErrorToast({ error, onClose, duration = 5000 }: ErrorToastProps)
           <p className="text-sm text-red-800 dark:text-red-300">{errorMessage}</p>
         </div>
         <button
+          type="button"
           onClick={() => {
             setIsVisible(false);
             setTimeout(onClose, 300);

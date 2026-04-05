@@ -152,14 +152,14 @@ function PayoutDetailModal({ w, onClose }: { w: Withdrawal; onClose: () => void 
         className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur">
-          <h2 id="payout-detail-title" className="text-lg font-bold text-gray-900 dark:text-white">
+        <div className="sticky top-0 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur">
+          <h2 id="payout-detail-title" className="text-lg font-bold text-gray-900 dark:text-white min-w-0 pr-2">
             Payout details · Withdrawal #{w.id}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="w-full sm:w-auto shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 text-center"
           >
             Close
           </button>
@@ -345,12 +345,12 @@ export default function AdminWithdrawalsPage() {
   const totalAmountOnPage = withdrawals.reduce((s, w) => s + Number(w.amount), 0);
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main">
+      <main className="admin-main-sibling section-ux-admin-main min-w-0">
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Withdrawals Management</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Withdrawals Management</h1>
           <p className="text-gray-600 dark:text-gray-400">
             Review and process withdrawal requests. <strong>Reject</strong> records a <strong>Rejected</strong> status (optional reason shown to the user).{' '}
             <strong>Cancel &amp; refund</strong> records <strong>Cancelled</strong> — use when stopping the payout without a formal rejection (e.g. duplicate request). Both refund the debited amount. Users get email and in-app updates.
@@ -358,18 +358,18 @@ export default function AdminWithdrawalsPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl shadow-xl p-4 sm:p-6 text-white">
             <p className="text-sm opacity-90 mb-1">Total Requests</p>
             <p className="text-3xl font-bold">{totalCount}</p>
             <p className="text-xs opacity-70 mt-1">all time</p>
           </div>
-          <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-2xl shadow-xl p-6 text-white">
+          <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-2xl shadow-xl p-4 sm:p-6 text-white">
             <p className="text-sm opacity-90 mb-1">Awaiting action (this page)</p>
             <p className="text-3xl font-bold">{awaitingActionCount}</p>
             <p className="text-xs opacity-70 mt-1">pending or processing</p>
           </div>
-          <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-2xl shadow-xl p-6 text-white">
+          <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-2xl shadow-xl p-4 sm:p-6 text-white">
             <p className="text-sm opacity-90 mb-1">Amount (this page)</p>
             <p className="text-3xl font-bold">GHS {totalAmountOnPage.toFixed(2)}</p>
             <p className="text-xs opacity-70 mt-1">across {withdrawals.length} requests</p>
@@ -377,18 +377,18 @@ export default function AdminWithdrawalsPage() {
         </div>
 
         {/* Filters */}
-        <div className="mb-6 flex flex-wrap gap-4">
+        <div className="mb-6 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
           <input
             type="number"
             placeholder="Filter by User ID"
             value={userIdFilter}
             onChange={(e) => { setUserIdFilter(e.target.value); setPage(1); }}
-            className="px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full sm:flex-1 sm:min-w-[160px] px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
           />
           <select
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-            className="px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full sm:w-auto px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             <option value="">All Statuses</option>
             <option value="pending">Pending</option>
@@ -588,19 +588,21 @@ export default function AdminWithdrawalsPage() {
                 </div>
 
                 {totalPages > 1 && (
-                  <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                  <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <button
+                      type="button"
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={page === 1}
-                      className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="w-full sm:w-auto px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors order-2 sm:order-1"
                     >
                       Previous
                     </button>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Page {page} of {totalPages}</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400 text-center order-1 sm:order-2">Page {page} of {totalPages}</span>
                     <button
+                      type="button"
                       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                       disabled={page === totalPages}
-                      className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="w-full sm:w-auto px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors order-3"
                     >
                       Next
                     </button>

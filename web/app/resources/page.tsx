@@ -115,9 +115,9 @@ export default function ResourcesPage() {
   const sportMeta = activeSport ? SPORT_META[activeSport] : null;
 
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
-      <main className="section-ux-page-wide">
+      <main className="section-ux-page-wide w-full min-w-0">
 
         <PageHeader
           label={t('nav.guides')}
@@ -137,7 +137,7 @@ export default function ResourcesPage() {
         </p>
 
         {/* Skill level overview cards */}
-        <div className="grid sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           {SKILL_OVERVIEW.map(card => (
             <div key={card.level} className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--primary)]/30 transition-colors">
               <p className="text-3xl mb-2">{card.icon}</p>
@@ -151,12 +151,13 @@ export default function ResourcesPage() {
         </div>
 
         {/* Sport filter row */}
-        <div className="mb-8">
+        <div className="mb-8 w-full min-w-0 overflow-hidden">
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">Filter by Sport</p>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+          <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
             {SPORT_FILTERS.map(sf => (
               <button
                 key={sf.key}
+                type="button"
                 onClick={() => setActiveSport(sf.key)}
                 className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
                   activeSport === sf.key
@@ -171,14 +172,14 @@ export default function ResourcesPage() {
         </div>
 
         {/* Main layout — guides + sidebar */}
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-8 min-w-0">
           <div className="flex-1 min-w-0">
 
             {/* Non-football coming-soon banner */}
             {sportMeta?.comingSoon && (
               <div className="mb-6 p-5 rounded-2xl border border-[var(--primary)]/20 bg-[var(--primary-light)]/10">
-                <div className="flex items-start gap-4">
-                  <span className="text-4xl">{sportMeta.icon}</span>
+                <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                  <span className="text-4xl shrink-0">{sportMeta.icon}</span>
                   <div>
                     <h3 className="font-bold text-[var(--text)] mb-1">{sportMeta.label} Guides — Coming Soon</h3>
                     <p className="text-sm text-[var(--text-muted)] mb-3">
@@ -220,18 +221,18 @@ export default function ResourcesPage() {
               <div className="space-y-8">
                 {categories.map(cat => (
                   <section key={cat.id} className="rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-hidden">
-                    <div className="px-6 py-5 border-b border-[var(--border)] flex items-center gap-3">
-                      <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-bold uppercase ${LEVEL_COLORS[cat.level] ?? 'bg-slate-100 text-slate-600'}`}>
+                    <div className="px-4 sm:px-6 py-5 border-b border-[var(--border)] flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                      <span className={`inline-flex w-fit px-2.5 py-1 rounded-lg text-xs font-bold uppercase ${LEVEL_COLORS[cat.level] ?? 'bg-slate-100 text-slate-600'}`}>
                         {LEVEL_LABELS[cat.level] ?? cat.level}
                       </span>
-                      <h2 className="text-lg font-bold text-[var(--text)]">{cat.name}</h2>
+                      <h2 className="text-lg font-bold text-[var(--text)] min-w-0">{cat.name}</h2>
                     </div>
                     {cat.description && (
                       <p className="px-6 pt-4 text-sm text-[var(--text-muted)]">{cat.description}</p>
                     )}
-                    <div className="p-6 grid sm:grid-cols-2 gap-3">
+                    <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {(cat.items ?? []).length === 0 ? (
-                        <p className="text-sm text-[var(--text-muted)] col-span-2">No items yet — check back soon.</p>
+                        <p className="text-sm text-[var(--text-muted)] sm:col-span-2">No items yet — check back soon.</p>
                       ) : (
                         (cat.items ?? []).map(item => (
                           <Link
@@ -267,7 +268,7 @@ export default function ResourcesPage() {
           </div>
 
           {/* Sidebar */}
-          <aside className="lg:w-72 flex-shrink-0">
+          <aside className="lg:w-72 flex-shrink-0 min-w-0 w-full">
             <div className="sticky top-24 space-y-4">
               <AdSlot zoneSlug="guides-sidebar" />
               <div className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)]">

@@ -163,16 +163,16 @@ export default function AdminMarketplacePage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main">
+      <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Marketplace</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Marketplace</h1>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             Same data as user marketplace. Review listings and fix duplicates.{' '}
             <Link href="/marketplace" className="text-[var(--primary)] hover:underline">View as customer →</Link>
           </p>
-          <div className="flex flex-wrap items-center gap-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+          <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
             <span className="text-sm font-medium text-amber-900 dark:text-amber-100">Show coupons:</span>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -205,12 +205,12 @@ export default function AdminMarketplacePage() {
               Removed/deleted coupons never shown. Settled hidden by default.
             </span>
           </div>
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by tipster:</label>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 shrink-0">Filter by tipster:</label>
             <select
               value={tipsterUsername}
               onChange={(e) => setTipsterUsername(e.target.value)}
-              className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+              className="w-full sm:w-auto sm:min-w-[200px] rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
             >
               <option value="">All tipsters</option>
               {tipsters.map((t) => (
@@ -231,14 +231,14 @@ export default function AdminMarketplacePage() {
           </div>
         </div>
         <div className="mb-6 flex flex-wrap gap-3">
-          <button
+          <button type="button"
             onClick={handleFixMarketplace}
             disabled={fixing}
             className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium disabled:opacity-50"
           >
             {fixing ? 'Fixing...' : 'Fix duplicates & titles'}
           </button>
-          <button
+          <button type="button"
             onClick={loadDiagnostic}
             className="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 text-white text-sm font-medium"
           >
@@ -308,7 +308,7 @@ export default function AdminMarketplacePage() {
                   className="opacity-95"
                   createdAt={a.createdAt}
                 />
-                <button
+                <button type="button"
                   onClick={() => handleDeleteCoupon(a.id, a.title)}
                   disabled={deletingId === a.id}
                   className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium disabled:opacity-50 z-10 shadow"

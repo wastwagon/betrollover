@@ -39,8 +39,8 @@ export function DashboardHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-xl border-b border-[var(--border)] safe-area-inset-top">
-      <div className="section-ux-gutter-wide h-14 flex items-center justify-between">
+    <header className="sticky top-0 z-40 w-full min-w-0 max-w-full overflow-x-hidden bg-white/95 backdrop-blur-xl border-b border-[var(--border)] safe-area-inset-top">
+      <div className="section-ux-gutter-wide h-14 flex items-center justify-between min-w-0 max-w-full gap-2">
         <Link
           href="/dashboard"
           className="flex items-center gap-2.5 font-semibold text-[var(--text)] hover:opacity-90 transition-opacity shrink-0"
@@ -51,7 +51,7 @@ export function DashboardHeader() {
           <span className="tracking-tight hidden sm:inline">BetRollover</span>
         </Link>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {balance !== null && (
             <Link
               href="/wallet"

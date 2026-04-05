@@ -70,30 +70,30 @@ export default function AdminDepositsPage() {
   const totalAmount = deposits.reduce((sum, d) => sum + Number(d.amount), 0);
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main">
+      <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Deposits Management</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Deposits Management</h1>
           <p className="text-gray-600 dark:text-gray-400">Review and approve deposit requests.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl shadow-xl p-4 sm:p-6 text-white">
             <p className="text-sm opacity-90 mb-1">Total Deposits</p>
             <p className="text-3xl font-bold">{deposits.length}</p>
           </div>
-          <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-2xl shadow-xl p-6 text-white">
+          <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-2xl shadow-xl p-4 sm:p-6 text-white">
             <p className="text-sm opacity-90 mb-1">Pending</p>
             <p className="text-3xl font-bold">{pendingCount}</p>
           </div>
-          <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-xl p-6 text-white">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-xl p-4 sm:p-6 text-white">
             <p className="text-sm opacity-90 mb-1">Total Amount</p>
             <p className="text-3xl font-bold">GHS {totalAmount.toFixed(2)}</p>
           </div>
         </div>
 
-        <div className="mb-6 flex gap-4">
+        <div className="mb-6 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
           <input
             type="number"
             placeholder="Filter by User ID"
@@ -102,7 +102,7 @@ export default function AdminDepositsPage() {
               setUserIdFilter(e.target.value);
               setPage(1);
             }}
-            className="px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full sm:flex-1 sm:min-w-[160px] px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
           />
           <select
             value={statusFilter}
@@ -110,7 +110,7 @@ export default function AdminDepositsPage() {
               setStatusFilter(e.target.value);
               setPage(1);
             }}
-            className="px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full sm:w-auto px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             <option value="">All Statuses</option>
             <option value="pending">Pending</option>
@@ -190,14 +190,16 @@ export default function AdminDepositsPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             {d.status === 'pending' && (
-                              <div className="flex gap-2">
+                              <div className="flex flex-wrap gap-2">
                                 <button
+                                  type="button"
                                   onClick={() => updateStatus(d.id, 'completed')}
                                   className="px-3 py-1 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors"
                                 >
                                   Approve
                                 </button>
                                 <button
+                                  type="button"
                                   onClick={() => updateStatus(d.id, 'failed')}
                                   className="px-3 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-colors"
                                 >
@@ -212,21 +214,23 @@ export default function AdminDepositsPage() {
                   </table>
                 </div>
                 {totalPages > 1 && (
-                  <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                  <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <button
+                      type="button"
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={page === 1}
-                      className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="w-full sm:w-auto px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors order-2 sm:order-1"
                     >
                       Previous
                     </button>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <span className="text-sm text-gray-600 dark:text-gray-400 text-center order-1 sm:order-2">
                       Page {page} of {totalPages}
                     </span>
                     <button
+                      type="button"
                       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                       disabled={page === totalPages}
-                      className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="w-full sm:w-auto px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors order-3"
                     >
                       Next
                     </button>

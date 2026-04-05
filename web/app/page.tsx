@@ -45,26 +45,26 @@ export default async function HomePage() {
   const sellVars = { minRoi: String(th.minimumROI), minWr: String(th.minimumWinRate) };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <BreadcrumbJsonLd items={[{ name: 'Home', url: SITE_URL }]} />
       <UnifiedHeader />
 
-      <main className="bg-[var(--bg)]">
+      <main className="bg-[var(--bg)] w-full min-w-0">
         <HomeHero />
-        <div className="section-ux-rail-4xl">
+        <div className="section-ux-rail-4xl w-full min-w-0">
           <AdSlot zoneSlug="home-below-hero" fullWidth className="w-full" />
         </div>
         {/* How It Works — placed high so escrow and buyer/seller flows are visible without long scroll */}
-        <section className="py-10 sm:py-14 md:py-20 px-4 sm:px-6 lg:px-8 border-t border-[var(--border)]">
-          <div className="section-ux-cap-4xl">
+        <section className="py-10 sm:py-14 md:py-20 px-4 sm:px-6 lg:px-8 border-t border-[var(--border)] w-full min-w-0 max-w-full overflow-x-hidden">
+          <div className="section-ux-cap-4xl w-full min-w-0">
             <div className="text-center mb-8 sm:mb-12 px-1">
               <span className="inline-block px-3 py-1.5 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-3">{t('home.how_it_works')}</span>
               <h2 className="text-base font-semibold text-[var(--text)] mb-3 sm:text-lg md:text-xl leading-snug">{t('home.how_it_works_sub')}</h2>
               <p className="text-[var(--text-muted)] text-sm sm:text-base max-w-xl mx-auto leading-relaxed">{t('home.escrow_note')}</p>
               <p className="text-xs sm:text-sm font-semibold text-[var(--primary)] uppercase tracking-wide mt-4 mb-1" aria-hidden="true">{t('home.for_buyers')}</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-6">
-              <div className="flex flex-col items-center text-center rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 backdrop-blur-sm p-5 sm:p-6 shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-6 min-w-0">
+              <div className="flex flex-col items-center text-center rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 backdrop-blur-sm p-5 sm:p-6 shadow-sm min-w-0">
                 <div className="flex flex-col items-center gap-2 mb-3 w-full">
                   <ArtworkBuyerBrowse className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-emerald-600 dark:text-emerald-400" />
                   <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-sm font-bold text-emerald-700 dark:text-emerald-300">1</span>
@@ -72,7 +72,7 @@ export default async function HomePage() {
                 <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('home.step1_title')}</h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('home.step1_desc')}</p>
               </div>
-              <div className="flex flex-col items-center text-center rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 backdrop-blur-sm p-5 sm:p-6 shadow-sm">
+              <div className="flex flex-col items-center text-center rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 backdrop-blur-sm p-5 sm:p-6 shadow-sm min-w-0">
                 <div className="flex flex-col items-center gap-2 mb-3 w-full">
                   <ArtworkBuyerSecure className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-blue-600 dark:text-blue-400" />
                   <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-blue-500/15 border border-blue-500/30 text-sm font-bold text-blue-700 dark:text-blue-300">2</span>
@@ -80,7 +80,7 @@ export default async function HomePage() {
                 <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('home.step2_title')}</h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('home.step2_desc')}</p>
               </div>
-              <div className="flex flex-col items-center text-center rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 backdrop-blur-sm p-5 sm:p-6 shadow-sm">
+              <div className="flex flex-col items-center text-center rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 backdrop-blur-sm p-5 sm:p-6 shadow-sm min-w-0">
                 <div className="flex flex-col items-center gap-2 mb-3 w-full">
                   <ArtworkBuyerOutcome className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-amber-600 dark:text-amber-500" />
                   <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-amber-500/15 border border-amber-500/30 text-sm font-bold text-amber-800 dark:text-amber-300">3</span>
@@ -89,15 +89,15 @@ export default async function HomePage() {
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('home.step3_desc')}</p>
               </div>
             </div>
-            <div className="mt-8 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-emerald-50/40 dark:from-slate-800/50 dark:to-emerald-900/20 border border-[var(--border)] flex items-start sm:items-center gap-3 sm:gap-4 min-h-0">
+            <div className="mt-8 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 min-w-0">
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-emerald-50/40 dark:from-slate-800/50 dark:to-emerald-900/20 border border-[var(--border)] flex items-start sm:items-center gap-3 sm:gap-4 min-h-0 min-w-0">
                 <ArtworkNewsGuides className="h-11 w-11 sm:h-12 sm:w-12 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <div>
+                <div className="min-w-0">
                   <h3 className="text-sm font-semibold text-[var(--text)] mb-0.5">{t('home.news_guides_title')}</h3>
                   <p className="text-xs text-[var(--text-muted)] leading-relaxed">{t('home.news_guides_desc')}</p>
                 </div>
               </div>
-              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-blue-50/40 dark:from-slate-800/50 dark:to-blue-900/20 border border-[var(--border)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-blue-50/40 dark:from-slate-800/50 dark:to-blue-900/20 border border-[var(--border)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
                 <div className="flex items-start gap-3 min-w-0 flex-1">
                   <ArtworkExplore className="h-11 w-11 sm:h-12 sm:w-12 shrink-0 text-blue-600 dark:text-blue-400" />
                   <div className="min-w-0">
@@ -126,8 +126,8 @@ export default async function HomePage() {
                   {t('home.tipster_flow_sub', sellVars)}
                 </p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-                <div className="flex flex-col items-center text-center rounded-2xl border border-violet-500/15 dark:border-violet-800/30 bg-gradient-to-b from-violet-500/[0.06] to-[var(--card)]/80 p-5 sm:p-6 shadow-sm">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 min-w-0">
+                <div className="flex flex-col items-center text-center rounded-2xl border border-violet-500/15 dark:border-violet-800/30 bg-gradient-to-b from-violet-500/[0.06] to-[var(--card)]/80 p-5 sm:p-6 shadow-sm min-w-0">
                   <div className="flex flex-col items-center gap-2 mb-3 w-full">
                     <ArtworkSellerAccount className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-violet-600 dark:text-violet-400" />
                     <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-violet-500/15 border border-violet-500/30 text-sm font-bold text-violet-700 dark:text-violet-300">1</span>
@@ -135,7 +135,7 @@ export default async function HomePage() {
                   <h3 className="text-sm sm:text-base font-semibold text-[var(--text)] mb-2">{t('home.tipster_step1_title')}</h3>
                   <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">{t('home.tipster_step1_desc')}</p>
                 </div>
-                <div className="flex flex-col items-center text-center rounded-2xl border border-teal-500/15 dark:border-teal-800/30 bg-gradient-to-b from-teal-500/[0.06] to-[var(--card)]/80 p-5 sm:p-6 shadow-sm">
+                <div className="flex flex-col items-center text-center rounded-2xl border border-teal-500/15 dark:border-teal-800/30 bg-gradient-to-b from-teal-500/[0.06] to-[var(--card)]/80 p-5 sm:p-6 shadow-sm min-w-0">
                   <div className="flex flex-col items-center gap-2 mb-3 w-full">
                     <ArtworkSellerRoi className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-teal-600 dark:text-teal-400" />
                     <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-teal-500/15 border border-teal-500/30 text-sm font-bold text-teal-700 dark:text-teal-300">2</span>
@@ -143,7 +143,7 @@ export default async function HomePage() {
                   <h3 className="text-sm sm:text-base font-semibold text-[var(--text)] mb-2">{t('home.tipster_step2_title', sellVars)}</h3>
                   <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">{t('home.tipster_step2_desc', sellVars)}</p>
                 </div>
-                <div className="flex flex-col items-center text-center rounded-2xl border border-emerald-500/15 dark:border-emerald-800/30 bg-gradient-to-b from-emerald-500/[0.06] to-[var(--card)]/80 p-5 sm:p-6 shadow-sm">
+                <div className="flex flex-col items-center text-center rounded-2xl border border-emerald-500/15 dark:border-emerald-800/30 bg-gradient-to-b from-emerald-500/[0.06] to-[var(--card)]/80 p-5 sm:p-6 shadow-sm min-w-0">
                   <div className="flex flex-col items-center gap-2 mb-3 w-full">
                     <ArtworkSellerPayout className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-emerald-600 dark:text-emerald-400" />
                     <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-sm font-bold text-emerald-700 dark:text-emerald-300">3</span>
@@ -164,25 +164,25 @@ export default async function HomePage() {
           </div>
         </section>
         <HomePopularTipsters />
-        <section id="free-tip-of-the-day">
+        <section id="free-tip-of-the-day" className="w-full min-w-0">
           <HomeFreeTipOfTheDay />
         </section>
         <HomePopularEvents />
-        <div className="section-ux-rail-4xl">
+        <div className="section-ux-rail-4xl w-full min-w-0">
           <AdSlot zoneSlug="between-sections" fullWidth className="w-full" />
         </div>
         <HomePublicChatRooms />
 
         {/* Sports We Cover */}
-        <section className="py-14 md:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 to-emerald-50/30 dark:from-slate-900/60 dark:to-slate-800/40 border-t border-[var(--border)]">
-          <div className="section-ux-cap-5xl">
+        <section className="py-14 md:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 to-emerald-50/30 dark:from-slate-900/60 dark:to-slate-800/40 border-t border-[var(--border)] w-full min-w-0 max-w-full overflow-x-hidden">
+          <div className="section-ux-cap-5xl w-full min-w-0">
             <div className="text-center mb-10">
               <span className="inline-block px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold uppercase tracking-wide mb-3">{t('nav.sports')}</span>
               <h2 className="text-base font-semibold text-[var(--text)] mb-3 sm:text-lg md:text-xl">{t('home.sports_title')}</h2>
               <p className="text-[var(--text-muted)] text-base max-w-xl mx-auto">{t('home.sports_sub')}</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 section-ux-cap-4xl">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 section-ux-cap-4xl w-full min-w-0">
               {(
                 [
                   { id: 'football' as const, navKey: 'nav.football' as const, icon: '⚽', accent: 'border-emerald-400/60' },
@@ -203,7 +203,7 @@ export default async function HomePage() {
                 return (
                   <div
                     key={sport.id}
-                    className={`p-5 rounded-2xl bg-[var(--card)] border-2 ${sport.accent} shadow-sm hover:shadow-md transition-all duration-200`}
+                    className={`p-5 rounded-2xl bg-[var(--card)] border-2 ${sport.accent} shadow-sm hover:shadow-md transition-all duration-200 min-w-0`}
                   >
                     <span className="text-3xl mb-3 block">{sport.icon}</span>
                     <h3 className="text-base font-semibold text-[var(--text)] mb-1.5">{title}</h3>
@@ -226,8 +226,8 @@ export default async function HomePage() {
         </section>
 
         {/* Platform Features — Bento Grid */}
-        <section className="py-14 md:py-20 border-t border-[var(--border)]">
-          <div className="section-ux-gutter-wide">
+        <section className="py-14 md:py-20 border-t border-[var(--border)] w-full min-w-0 max-w-full overflow-x-hidden">
+          <div className="section-ux-gutter-wide w-full min-w-0">
 
             {/* Section header */}
             <div className="text-center mb-10">
@@ -237,10 +237,10 @@ export default async function HomePage() {
             </div>
 
             {/* Bento Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 min-w-0">
 
               {/* Large Card — Escrow Protection */}
-              <div className="md:col-span-2 lg:row-span-2 p-6 md:p-8 rounded-2xl bg-gradient-to-br from-[var(--primary)]/10 via-[var(--primary)]/5 to-transparent border border-[var(--border)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+              <div className="md:col-span-2 lg:row-span-2 p-6 md:p-8 rounded-2xl bg-gradient-to-br from-[var(--primary)]/10 via-[var(--primary)]/5 to-transparent border border-[var(--border)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group min-w-0">
                 <div className="flex flex-col h-full">
                   <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-hover)] flex items-center justify-center text-2xl mb-5 shadow-lg group-hover:scale-110 transition-transform">
                     🔒
@@ -272,7 +272,7 @@ export default async function HomePage() {
               </div>
 
               {/* Card — Verified Tipster Profiles */}
-              <div className="p-5 md:p-6 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+              <div className="p-5 md:p-6 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 min-w-0">
                 <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-xl mb-4 shadow-md">
                   ✓
                 </div>
@@ -285,7 +285,7 @@ export default async function HomePage() {
               </div>
 
               {/* Card — Automatic Refunds */}
-              <div className="p-5 md:p-6 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+              <div className="p-5 md:p-6 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 min-w-0">
                 <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-xl mb-4 shadow-md">
                   ↩️
                 </div>
@@ -298,9 +298,9 @@ export default async function HomePage() {
               </div>
 
               {/* Wide Card — Marketplace CTA */}
-              <div className="md:col-span-2 p-5 md:p-6 rounded-2xl bg-gradient-to-br from-[var(--bg-warm)] to-[var(--card)] border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div>
+              <div className="md:col-span-2 p-5 md:p-6 rounded-2xl bg-gradient-to-br from-[var(--bg-warm)] to-[var(--card)] border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group min-w-0">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-lg">🌍</span>
                       <h3 className="text-base font-semibold text-[var(--text)]">
@@ -313,7 +313,7 @@ export default async function HomePage() {
                   </div>
                   <Link
                     href="/marketplace"
-                    className="px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] transition-all shadow-md hover:shadow-lg whitespace-nowrap group-hover:scale-105 text-sm shrink-0"
+                    className="inline-flex justify-center px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] transition-all shadow-md hover:shadow-lg sm:whitespace-nowrap group-hover:scale-105 text-sm shrink-0 w-full sm:w-auto min-h-[44px] sm:min-h-0 items-center"
                   >
                     {t('home.feature_marketplace_btn')}
                   </Link>
@@ -321,12 +321,12 @@ export default async function HomePage() {
               </div>
 
               {/* Card — Live Performance Stats */}
-              <div className="p-5 md:p-6 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+              <div className="p-5 md:p-6 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 min-w-0">
                 <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-xl mb-4 shadow-md">
                   📊
                 </div>
-<h3 className="text-base font-semibold text-[var(--text)] mb-2">
-                {t('home.feature_stats_title')}
+                <h3 className="text-base font-semibold text-[var(--text)] mb-2">
+                  {t('home.feature_stats_title')}
                 </h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">
                   {t('home.feature_stats_desc')}
@@ -337,7 +337,7 @@ export default async function HomePage() {
               <HomeJoinCtaCard />
 
               {/* Card — Leaderboard & Rankings */}
-              <div className="p-5 md:p-6 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+              <div className="p-5 md:p-6 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 min-w-0">
                 <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-xl mb-4 shadow-md">
                   🏆
                 </div>

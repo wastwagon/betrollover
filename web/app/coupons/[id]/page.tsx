@@ -116,11 +116,11 @@ function formatDateTime(s?: string | null) {
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 function CouponDetailSkeleton() {
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
-      <main className="section-ux-page-mid">
-        <div className="flex flex-col lg:flex-row gap-8">
-          <div className="flex-1 space-y-4">
+      <main className="section-ux-page-mid w-full min-w-0 max-w-full">
+        <div className="flex flex-col lg:flex-row gap-8 min-w-0">
+          <div className="flex-1 min-w-0 space-y-4">
             <div className="h-5 w-24 rounded skeleton bg-[var(--card)]" />
             <div className="h-8 w-3/4 rounded skeleton bg-[var(--card)]" />
             <div className="h-4 w-48 rounded skeleton bg-[var(--card)]" />
@@ -128,7 +128,7 @@ function CouponDetailSkeleton() {
               {[1,2,3].map(i => <div key={i} className="h-20 rounded-2xl skeleton bg-[var(--card)]" />)}
             </div>
           </div>
-          <div className="lg:w-72 space-y-4">
+          <div className="w-full min-w-0 max-w-full lg:w-72 shrink-0 space-y-4">
             <div className="h-52 rounded-2xl skeleton bg-[var(--card)]" />
             <div className="h-36 rounded-2xl skeleton bg-[var(--card)]" />
           </div>
@@ -199,8 +199,8 @@ function ReviewsSection({ couponId, isPurchased, isSettled }: { couponId: number
   };
 
   return (
-    <section className="section-ux-gutter-4xl pb-10 mt-8">
-      <div className="flex items-center gap-3 mb-4">
+    <section className="section-ux-gutter-4xl pb-10 mt-8 min-w-0 max-w-full">
+      <div className="flex flex-wrap items-center gap-3 mb-4 min-w-0">
         <h2 className="text-base font-semibold text-[var(--text)]">Buyer Reviews</h2>
         {data && data.total > 0 && (
           <span className="flex items-center gap-1.5 text-sm text-[var(--text-muted)]">
@@ -218,10 +218,10 @@ function ReviewsSection({ couponId, isPurchased, isSettled }: { couponId: number
           <StarRow rating={rating} interactive onChange={setRating} />
           <textarea rows={3} value={comment} onChange={(e) => setComment(e.target.value)}
             placeholder="Share your experience with this pick…"
-            className="mt-3 w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-sm text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] resize-none"
+            className="mt-3 w-full min-w-0 px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-sm text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] resize-none"
           />
           {err && <p className="text-red-500 text-xs mt-1">{err}</p>}
-          <button onClick={submit} disabled={submitting}
+          <button type="button" onClick={submit} disabled={submitting}
             className="mt-3 px-5 py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] disabled:opacity-50 transition-colors">
             {submitting ? 'Submitting…' : 'Submit Review'}
           </button>
@@ -240,12 +240,12 @@ function ReviewsSection({ couponId, isPurchased, isSettled }: { couponId: number
         <div className="space-y-3">
           {data.items.map((rev) => (
             <div key={rev.id} className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-4 shadow-sm">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3 mb-1 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
                   <StarRow rating={rev.rating} />
-                  <span className="text-xs font-semibold text-[var(--text)]">{rev.reviewer?.displayName ?? 'Buyer'}</span>
+                  <span className="text-xs font-semibold text-[var(--text)] truncate">{rev.reviewer?.displayName ?? 'Buyer'}</span>
                 </div>
-                <span className="text-xs text-[var(--text-muted)]">{new Date(rev.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'2-digit' })}</span>
+                <span className="text-xs text-[var(--text-muted)] shrink-0">{new Date(rev.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'2-digit' })}</span>
               </div>
               {rev.comment && <p className="text-sm text-[var(--text-muted)] mt-1">{rev.comment}</p>}
             </div>
@@ -393,9 +393,9 @@ export default function CouponDetailPage() {
 
   if (!coupon) {
     return (
-      <div className="min-h-screen bg-[var(--bg)]">
+      <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <UnifiedHeader />
-        <main className="section-ux-empty">
+        <main className="section-ux-empty w-full min-w-0 max-w-full">
           <p className="text-5xl mb-4">🎫</p>
           <h1 className="text-lg font-semibold text-[var(--text)] mb-3">Coupon not found</h1>
           <p className="text-[var(--text-muted)] mb-6">This coupon may have been removed or the link is invalid.</p>
@@ -429,12 +429,12 @@ export default function CouponDetailPage() {
     !isPurchased;
 
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
-      <main className="section-ux-page-mid">
+      <main className="section-ux-page-mid w-full min-w-0 max-w-full">
 
         <nav
-          className="flex flex-wrap items-center gap-2 py-2.5 px-3 rounded-xl bg-[var(--card)] border border-[var(--border)] mb-4 text-sm shadow-sm"
+          className="flex flex-wrap items-center gap-2 py-2.5 px-3 rounded-xl bg-[var(--card)] border border-[var(--border)] mb-4 text-sm shadow-sm min-w-0 max-w-full"
           aria-label="Breadcrumb"
         >
           <Link
@@ -451,9 +451,9 @@ export default function CouponDetailPage() {
             {coupon.title}
           </span>
         </nav>
-        <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)] mb-6 tracking-tight">{coupon.title}</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)] mb-6 tracking-tight min-w-0 break-words">{coupon.title}</h1>
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-8 min-w-0">
 
           {/* ── Main content ── */}
           <div className="flex-1 min-w-0">
@@ -587,11 +587,11 @@ export default function CouponDetailPage() {
 
             {picksHidden ? (
               <>
-                <div className="mb-4 p-4 rounded-2xl bg-amber-50/90 dark:bg-amber-950/25 border border-amber-200 dark:border-amber-800/50 flex gap-3">
+                <div className="mb-4 p-4 rounded-2xl bg-amber-50/90 dark:bg-amber-950/25 border border-amber-200 dark:border-amber-800/50 flex gap-3 min-w-0">
                   <span className="text-2xl shrink-0" aria-hidden>
                     🔒
                   </span>
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-semibold text-[var(--text)]">Selections are locked</p>
                     <p className="text-sm text-[var(--text-muted)] mt-0.5 leading-relaxed">
                       Purchase this coupon to see matches, markets, and odds for each leg. Combined total odds are shown
@@ -603,12 +603,12 @@ export default function CouponDetailPage() {
                   {coupon.picks.map((pick, idx) => (
                     <div
                       key={pick.id ?? idx}
-                      className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 p-4 flex items-center gap-3"
+                      className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 p-4 flex items-center gap-3 min-w-0"
                     >
-                      <span className="text-lg opacity-60" aria-hidden>
+                      <span className="text-lg opacity-60 shrink-0" aria-hidden>
                         🔒
                       </span>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-sm font-medium text-[var(--text)]">
                           {pick.redacted ? pick.matchDescription || `Selection ${idx + 1}` : `Selection ${idx + 1}`}
                         </p>
@@ -622,9 +622,9 @@ export default function CouponDetailPage() {
                   <p className="text-sm text-[var(--text-muted)] mb-3">
                     Per-leg odds unlock after you purchase.
                   </p>
-                  <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between">
-                    <span className="text-sm font-semibold text-[var(--text)]">Total odds</span>
-                    <span className="text-base font-semibold text-[var(--primary)] tabular-nums">
+                  <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between gap-2 min-w-0">
+                    <span className="text-sm font-semibold text-[var(--text)] shrink-0">Total odds</span>
+                    <span className="text-base font-semibold text-[var(--primary)] tabular-nums shrink-0">
                       {Number(coupon.totalOdds).toFixed(2)}
                     </span>
                   </div>
@@ -657,7 +657,7 @@ export default function CouponDetailPage() {
                               : 'border-[var(--border)] bg-[var(--card)]'
                         }`}
                       >
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start justify-between gap-3 min-w-0">
                           <div className="flex-1 min-w-0">
                             {(pick.homeTeamName || pick.matchDescription) && (
                               <div className="flex items-center gap-2 mb-2">
@@ -704,7 +704,7 @@ export default function CouponDetailPage() {
                             </div>
                           </div>
 
-                          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                          <div className="flex flex-col items-end gap-2 shrink-0">
                             <span className="text-sm font-bold text-[var(--text)]">
                               {Number(pick.odds).toFixed(2)}
                             </span>
@@ -731,20 +731,20 @@ export default function CouponDetailPage() {
                   <h3 className="text-sm font-semibold text-[var(--text)] mb-3">Odds Breakdown</h3>
                   <div className="space-y-2">
                     {coupon.picks.map((p, idx) => (
-                      <div key={idx} className="flex items-center justify-between text-sm">
-                        <span className="text-[var(--text-muted)] truncate max-w-[280px]">
+                      <div key={idx} className="flex items-center justify-between gap-2 text-sm min-w-0">
+                        <span className="text-[var(--text-muted)] min-w-0 flex-1 truncate">
                           {p.homeTeamName && p.awayTeamName
                             ? `${p.homeTeamName} vs ${p.awayTeamName}`
                             : p.matchDescription}
                         </span>
-                        <span className="font-semibold text-[var(--text)] ml-4 tabular-nums">
+                        <span className="font-semibold text-[var(--text)] tabular-nums shrink-0">
                           {Number(p.odds).toFixed(2)}
                         </span>
                       </div>
                     ))}
-                    <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between">
-                      <span className="text-sm font-semibold text-[var(--text)]">Total Odds</span>
-                      <span className="text-base font-semibold text-[var(--primary)] tabular-nums">
+                    <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between gap-2 min-w-0">
+                      <span className="text-sm font-semibold text-[var(--text)] shrink-0">Total Odds</span>
+                      <span className="text-base font-semibold text-[var(--primary)] tabular-nums shrink-0">
                         {Number(coupon.totalOdds).toFixed(2)}
                       </span>
                     </div>
@@ -755,19 +755,19 @@ export default function CouponDetailPage() {
           </div>
 
           {/* ── Sidebar ── */}
-          <aside className="lg:w-72 flex-shrink-0">
+          <aside className="w-full min-w-0 max-w-full lg:w-72 shrink-0">
             <div className="sticky top-24 space-y-4">
               <AdSlot zoneSlug="coupon-detail-sidebar" />
 
               {/* Purchase / receipt card — guests on settled coupons see sign-up CTA instead */}
               <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-hidden shadow-sm">
                 <div className="p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-lg font-semibold text-[var(--primary)]">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3 mb-4 min-w-0">
+                    <span className="text-lg font-semibold text-[var(--primary)] tabular-nums shrink-0">
                       {coupon.price === 0 ? 'Free' : `GHS ${Number(coupon.price).toFixed(2)}`}
                     </span>
                     {coupon.price > 0 && walletBalance !== null && (
-                      <span className="text-xs text-[var(--text-muted)]">
+                      <span className="text-xs text-[var(--text-muted)] tabular-nums min-w-0 sm:text-right">
                         Balance: GHS {walletBalance.toFixed(2)}
                       </span>
                     )}
@@ -842,6 +842,7 @@ export default function CouponDetailPage() {
                         <p className="text-xs text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded-lg border border-red-200">{purchaseError}</p>
                       )}
                       <button
+                        type="button"
                         onClick={handlePurchase}
                         disabled={!canPurchase || purchasing}
                         className="w-full py-3 rounded-xl bg-[var(--primary)] text-white font-bold text-sm hover:bg-[var(--primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -902,7 +903,7 @@ export default function CouponDetailPage() {
                       <p className="text-xs text-[var(--text-muted)]">@{coupon.tipster.username}</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 mb-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
                     <div className="text-center">
                       <p className="text-sm font-semibold text-[var(--text)]">
                         {coupon.tipster.winRate != null ? `${Number(coupon.tipster.winRate).toFixed(0)}%` : '—'}
@@ -931,6 +932,7 @@ export default function CouponDetailPage() {
 
               {/* Share */}
               <button
+                type="button"
                 onClick={handleShare}
                 className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-semibold text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
               >

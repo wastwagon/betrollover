@@ -123,9 +123,9 @@ export default function AdminAdsEditPage() {
 
   if (loading || !campaign) {
     return (
-      <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
         <AdminSidebar />
-        <main className="admin-main-sibling section-ux-admin-main">
+        <main className="admin-main-sibling section-ux-admin-main min-w-0">
           <div className="py-12 text-center text-gray-600">Loading...</div>
         </main>
       </div>
@@ -133,13 +133,13 @@ export default function AdminAdsEditPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main">
+      <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <Link href="/admin/ads" className="text-sm text-[var(--primary)] hover:underline mb-6 inline-block">
           ← Back to Ads
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Edit Campaign: {campaign.advertiserName}</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6">Edit Campaign: {campaign.advertiserName}</h1>
         <form onSubmit={submit} className="max-w-2xl space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Advertiser Name *</label>
@@ -161,8 +161,8 @@ export default function AdminAdsEditPage() {
               placeholder="https://example.com/ad.jpg or upload below"
               required
             />
-            <div className="mt-2 flex items-center gap-3">
-              <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 text-sm">
+            <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+              <label className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 text-sm w-full sm:w-auto">
                 <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleImageUpload} disabled={uploading} />
                 {uploading ? 'Uploading...' : 'Or upload image'}
               </label>
@@ -195,7 +195,7 @@ export default function AdminAdsEditPage() {
               required
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cost per Click (CPC)</label>
               <input
@@ -219,7 +219,7 @@ export default function AdminAdsEditPage() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date *</label>
               <input
@@ -254,15 +254,15 @@ export default function AdminAdsEditPage() {
               <option value="ended">Ended</option>
             </select>
           </div>
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center pt-4">
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] disabled:opacity-50"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] disabled:opacity-50 text-center"
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </button>
-            <Link href="/admin/ads" className="px-6 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300">
+            <Link href="/admin/ads" className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300">
               Cancel
             </Link>
           </div>

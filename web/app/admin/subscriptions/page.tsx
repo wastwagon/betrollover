@@ -554,7 +554,7 @@ export default function AdminSubscriptionsPage() {
             <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">
               {t('subscriptions.performance_heading')}
             </p>
-            <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
               <div>
                 <span className="text-[var(--text-muted)] text-xs block">{t('tipster.roi')}</span>
                 <span className="font-bold text-emerald-600 dark:text-emerald-400">{roiDisplay}</span>
@@ -563,7 +563,7 @@ export default function AdminSubscriptionsPage() {
                 <span className="text-[var(--text-muted)] text-xs block">{t('tipster.win_rate')}</span>
                 <span className="font-bold text-[var(--text)]">{wrDisplay}</span>
               </div>
-              <div className="col-span-2">
+              <div className="sm:col-span-2">
                 <span className="text-[var(--text-muted)] text-xs block">{t('subscriptions.picks_record')}</span>
                 <span className="font-medium text-[var(--text)]">
                   {perf
@@ -580,12 +580,12 @@ export default function AdminSubscriptionsPage() {
               GHS {Number(pkg.price).toFixed(2)} <span className="text-sm font-normal text-[var(--text-muted)]">/ {pkg.durationDays}d</span>
             </p>
             <div className="mt-2 rounded-lg border border-[var(--border)] bg-[var(--bg-warm)]/70 px-3 py-2">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+              <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)] min-w-0">
                   {t('subscriptions.roi_guarantee_label')}
                 </span>
                 <span
-                  className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                  className={`self-start sm:self-auto text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
                     hasCommittedRoi
                       ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
                       : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'
@@ -688,7 +688,7 @@ export default function AdminSubscriptionsPage() {
               <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">
                 Escrow breakdown
               </p>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                 <div>
                   <span className="text-[var(--text-muted)] text-xs block">Gross</span>
                   <span className="font-semibold text-[var(--text)]">{formatMoney(row.escrowGrossAmount)}</span>
@@ -732,7 +732,7 @@ export default function AdminSubscriptionsPage() {
               <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">
                 {t('subscriptions.performance_heading')}
               </p>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                 <div>
                   <span className="text-[var(--text-muted)] text-xs block">{t('tipster.roi')}</span>
                   <span className="font-bold text-emerald-600 dark:text-emerald-400">{roiDisplay}</span>
@@ -741,7 +741,7 @@ export default function AdminSubscriptionsPage() {
                   <span className="text-[var(--text-muted)] text-xs block">{t('tipster.win_rate')}</span>
                   <span className="font-bold text-[var(--text)]">{wrDisplay}</span>
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <span className="text-[var(--text-muted)] text-xs block">{t('subscriptions.picks_record')}</span>
                   <span className="font-medium text-[var(--text)]">
                     {perf
@@ -758,12 +758,12 @@ export default function AdminSubscriptionsPage() {
                 GHS {pkg.price.toFixed(2)} <span className="text-sm font-normal text-[var(--text-muted)]">/ {pkg.durationDays}d</span>
               </p>
               <div className="mt-2 rounded-lg border border-[var(--border)] bg-[var(--bg-warm)]/70 px-3 py-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)] min-w-0">
                     {t('subscriptions.roi_guarantee_label')}
                   </span>
                   <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                    className={`self-start sm:self-auto text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
                       hasCommittedRoi
                         ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
                         : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'
@@ -838,11 +838,11 @@ export default function AdminSubscriptionsPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main max-w-[1600px] mx-auto w-full">
+      <main className="admin-main-sibling section-ux-admin-main max-w-[1600px] mx-auto w-full min-w-0">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Subscription manager</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Subscription manager</h1>
           <p className="text-gray-600 dark:text-gray-400 mb-3">
             <strong className="text-gray-800 dark:text-gray-200">Marketplace catalog</strong> mirrors the public VIP shop
             (human + AI tipsters). Use <strong className="text-gray-800 dark:text-gray-200">Delete</strong> on a card to
@@ -863,11 +863,11 @@ export default function AdminSubscriptionsPage() {
             </Link>
           </div>
 
-          <div className="flex flex-wrap gap-2 p-1 rounded-xl bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 w-fit">
+          <div className="flex flex-wrap gap-2 p-1 rounded-xl bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 w-full sm:w-fit">
             <button
               type="button"
               onClick={() => setTab('catalog')}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+              className={`flex-1 min-w-0 sm:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
                 tab === 'catalog'
                   ? 'bg-[var(--primary)] text-white shadow'
                   : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
@@ -878,7 +878,7 @@ export default function AdminSubscriptionsPage() {
             <button
               type="button"
               onClick={() => setTab('purchases')}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+              className={`flex-1 min-w-0 sm:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
                 tab === 'purchases'
                   ? 'bg-[var(--primary)] text-white shadow'
                   : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'

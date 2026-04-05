@@ -1,10 +1,10 @@
 export default function MarketplaceLoading() {
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       {/* Header skeleton */}
       <div className="sticky top-0 z-50 h-16 bg-[var(--card)] border-b border-[var(--border)]" />
 
-      <div className="section-ux-dashboard-shell">
+      <div className="section-ux-dashboard-shell w-full min-w-0">
         {/* Page header */}
         <div className="mb-6">
           <div className="h-3 w-24 rounded-full bg-[var(--border)] animate-pulse mb-2" />

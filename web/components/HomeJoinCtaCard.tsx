@@ -28,7 +28,7 @@ export function HomeJoinCtaCard() {
 
   if (loggedIn) {
     return (
-      <div className="p-5 md:p-6 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 text-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-center items-center text-center border border-slate-600/50">
+      <div className="p-5 md:p-6 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 text-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-center items-center text-center border border-slate-600/50 w-full min-w-0">
         <h3 className="text-lg font-semibold mb-1">{t('home.join_card_logged_title')}</h3>
         <p className="text-sm opacity-90 mb-4 leading-relaxed">{t('home.join_card_logged_sub')}</p>
         <Link
@@ -42,7 +42,7 @@ export function HomeJoinCtaCard() {
   }
 
   return (
-    <div className="p-5 md:p-6 rounded-2xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-hover)] text-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-center items-center text-center">
+    <div className="p-5 md:p-6 rounded-2xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-hover)] text-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-center items-center text-center w-full min-w-0">
       <h3 className="text-lg font-semibold mb-1">{t('home.join_cta')}</h3>
       <p className="text-sm opacity-85 mb-4 leading-relaxed">{t('home.join_subtitle')}</p>
       <Link

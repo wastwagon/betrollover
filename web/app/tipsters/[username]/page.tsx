@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
-import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
 import { PickCard } from '@/components/PickCard';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
@@ -267,6 +266,7 @@ export default function TipsterProfilePage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
+        const purchased = await res.json().catch(() => null);
         try { (await import('@/lib/analytics')).trackEvent('coupon_purchased', { couponId: id, tipsterUsername: username }, token); } catch { /* noop */ }
         showSuccess(t('tipster.toast_coupon_purchased'));
         setPurchasedIds((prev) => new Set([...Array.from(prev), id]));
@@ -276,6 +276,23 @@ export default function TipsterProfilePage() {
         if (walletRes.ok) {
           const data = await walletRes.json();
           setWalletBalance(Number(data.balance));
+        }
+        const fullPicks =
+          purchased &&
+          typeof purchased === 'object' &&
+          Array.isArray((purchased as { picks?: unknown }).picks)
+            ? (purchased as { picks: MarketplaceCoupon['picks'] }).picks
+            : null;
+        if (fullPicks) {
+          setProfile((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              marketplace_coupons: prev.marketplace_coupons.map((c) =>
+                c.id === id ? { ...c, picks: fullPicks } : c,
+              ),
+            };
+          });
         }
         setUnveilCouponId(id);
       } else {
@@ -312,21 +329,20 @@ export default function TipsterProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg)]">
+      <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <UnifiedHeader />
-        <main className="section-ux-page">
+        <main className="section-ux-page w-full min-w-0">
           <LoadingSkeleton count={3} className="space-y-6" />
         </main>
-        <AppFooter />
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-[var(--bg)]">
+      <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <UnifiedHeader />
-        <main className="section-ux-page">
+        <main className="section-ux-page w-full min-w-0">
           <EmptyState
             title={t('tipster.not_found')}
             description={t('tipster.not_found_sub')}
@@ -334,7 +350,6 @@ export default function TipsterProfilePage() {
             actionHref="/tipsters"
           />
         </main>
-        <AppFooter />
       </div>
     );
   }
@@ -358,7 +373,7 @@ export default function TipsterProfilePage() {
   const winRateDisplay = hasSettledPicks ? `${Number(tipster.win_rate).toFixed(1)}%` : '—';
   const roiColor = tipster.roi > 0 ? 'text-emerald-600' : tipster.roi < 0 ? 'text-red-600' : 'text-[var(--text)]';
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <PersonJsonLd
         username={tipster.username}
         displayName={tipster.display_name}
@@ -370,8 +385,8 @@ export default function TipsterProfilePage() {
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <UnifiedHeader />
-      <main className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
-        <div className="section-ux-page">
+      <main className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] w-full min-w-0">
+        <div className="section-ux-page w-full min-w-0">
           <Link href="/tipsters" className="text-sm text-[var(--primary)] hover:underline mb-4 inline-block">
             {t('tipster.back_to_tipsters')}
           </Link>
@@ -380,9 +395,9 @@ export default function TipsterProfilePage() {
             <AdSlot zoneSlug="tipster-profile-full" fullWidth className="w-full max-w-3xl" />
           </div>
 
-          <div className="rounded-2xl p-6 md:p-8 mb-8 bg-gradient-to-br from-emerald-50 via-green-50/90 to-teal-50 dark:from-emerald-900/20 dark:via-green-900/15 dark:to-teal-900/20 border border-emerald-200/60 dark:border-emerald-700/40 shadow-lg shadow-emerald-500/5">
-            <div className="flex flex-col sm:flex-row gap-6 items-start">
-              <div className="flex flex-col items-center gap-2 flex-shrink-0">
+          <div className="rounded-2xl p-6 md:p-8 mb-8 bg-gradient-to-br from-emerald-50 via-green-50/90 to-teal-50 dark:from-emerald-900/20 dark:via-green-900/15 dark:to-teal-900/20 border border-emerald-200/60 dark:border-emerald-700/40 shadow-lg shadow-emerald-500/5 min-w-0 max-w-full overflow-x-hidden">
+            <div className="flex flex-col sm:flex-row gap-6 items-start min-w-0">
+              <div className="flex flex-col items-center gap-2 shrink-0">
                 <div className="w-20 h-20 rounded-full overflow-hidden bg-white dark:bg-gray-800 border-2 border-emerald-200 dark:border-emerald-600 shadow-md">
                 {tipster.avatar_url && !avatarError ? (
                   <Image
@@ -401,9 +416,10 @@ export default function TipsterProfilePage() {
                 )}
               </div>
               <button
+                type="button"
                 onClick={handleFollow}
                 disabled={followLoading}
-                className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
+                className={`w-full sm:w-auto px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
                   is_following
                     ? 'bg-[var(--border)] text-[var(--text-muted)] hover:bg-gray-300 dark:hover:bg-gray-600'
                     : 'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]'
@@ -412,10 +428,10 @@ export default function TipsterProfilePage() {
                 {followLoading ? '...' : is_following ? t('tipster.following') : t('tipster.follow')}
               </button>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-2">
-                <h1 className="text-lg sm:text-xl font-semibold text-[var(--text)]">{tipster.display_name}</h1>
-                <span className="text-sm font-medium text-[var(--text-muted)]">@{tipster.username}</span>
+              <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-2 min-w-0">
+                <h1 className="text-lg sm:text-xl font-semibold text-[var(--text)] min-w-0 break-words">{tipster.display_name}</h1>
+                <span className="text-sm font-medium text-[var(--text-muted)] shrink-0">@{tipster.username}</span>
                 {tipster.leaderboard_rank != null && (
                   <span
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
@@ -447,7 +463,7 @@ export default function TipsterProfilePage() {
                 </div>
               )}
               {tipster.bio && <p className="text-[var(--text-muted)] mb-4">{tipster.bio}</p>}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 mb-4 min-w-0">
                 <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
                   <span className="text-xs uppercase text-[var(--text-muted)]">{t('tipster.roi')}</span>
                   <p className={`font-semibold text-base ${roiColor}`} title={!hasSettledPicks && tipster.total_predictions ? t('tipster.stats_update') : undefined}>{roiDisplay}</p>
@@ -519,12 +535,12 @@ export default function TipsterProfilePage() {
                     <h3 className="font-semibold text-[var(--text)] mb-1">{pkg.name}</h3>
                     <p className="text-lg font-semibold text-[var(--primary)] mb-2">GHS {Number(pkg.price).toFixed(2)}<span className="text-sm font-normal text-[var(--text-muted)]">/{pkg.durationDays}d</span></p>
                     <div className="mb-3 rounded-lg border border-emerald-200/60 dark:border-emerald-700/40 bg-white/70 dark:bg-gray-900/30 px-3 py-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2 min-w-0">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] min-w-0">
                           {t('subscriptions.roi_guarantee_label')}
                         </span>
                         <span
-                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                          className={`self-start sm:self-auto text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
                             hasCommittedRoi
                               ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
                               : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'
@@ -546,6 +562,7 @@ export default function TipsterProfilePage() {
                     ) : (
                       <>
                         <button
+                          type="button"
                           onClick={() => handleSubscribe(pkg.id)}
                           disabled={subscribeLoading === pkg.id}
                           className="w-full py-2.5 px-4 rounded-lg font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -573,11 +590,12 @@ export default function TipsterProfilePage() {
 
         <section className="section-ux-gutter mb-12">
           {/* Active / Archive tabs */}
-          <div className="flex flex-wrap items-center gap-2 mb-3">
-            <div className="inline-flex p-1 rounded-xl bg-white/80 dark:bg-gray-800/80 border border-emerald-200/60 dark:border-emerald-700/40 shadow-sm">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center mb-3">
+            <div className="inline-flex flex-1 min-w-0 w-full sm:w-auto max-w-full p-1 rounded-xl bg-white/80 dark:bg-gray-800/80 border border-emerald-200/60 dark:border-emerald-700/40 shadow-sm">
               <button
+                type="button"
                 onClick={() => setCouponFilter('active')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`flex-1 min-w-0 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   couponFilter === 'active'
                     ? 'bg-[var(--primary)] text-white shadow-sm'
                     : 'text-[var(--text-muted)] hover:text-[var(--text)]'
@@ -586,8 +604,9 @@ export default function TipsterProfilePage() {
                 {t('tipster.active')}
               </button>
               <button
+                type="button"
                 onClick={() => setCouponFilter('archive')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`flex-1 min-w-0 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   couponFilter === 'archive'
                     ? 'bg-[var(--primary)] text-white shadow-sm'
                     : 'text-[var(--text-muted)] hover:text-[var(--text)]'
@@ -607,6 +626,7 @@ export default function TipsterProfilePage() {
           {availableSports.length > 1 && (
             <div className="flex flex-wrap gap-2 mb-5">
               <button
+                type="button"
                 onClick={() => setSportFilter('all')}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
                   sportFilter === 'all'
@@ -621,6 +641,7 @@ export default function TipsterProfilePage() {
                 if (!meta) return null;
                 return (
                   <button
+                    type="button"
                     key={s}
                     onClick={() => setSportFilter(s)}
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
@@ -717,7 +738,6 @@ export default function TipsterProfilePage() {
         </section>
         </div>
       </main>
-      <AppFooter />
     </div>
   );
 }

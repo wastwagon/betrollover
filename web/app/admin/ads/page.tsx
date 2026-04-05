@@ -240,12 +240,12 @@ export default function AdminAdsPage() {
   }, [router]);
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main">
+      <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Ads Manager</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Ads Manager</h1>
             <p className="text-gray-600 dark:text-gray-400">Manage sponsored ads and monetization.</p>
             <div className="mt-3 p-4 rounded-xl bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800">
               <p className="text-sm font-medium text-sky-800 dark:text-sky-200 mb-1">Advertising inquiries</p>
@@ -265,19 +265,19 @@ export default function AdminAdsPage() {
               </a>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
             {campaigns.length > 0 && (
               <button
                 type="button"
                 onClick={exportCsv}
-                className="px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
                 Export CSV
               </button>
             )}
             <Link
               href="/admin/ads/create"
-              className="px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)]"
+              className="w-full sm:w-auto text-center px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)]"
             >
               + New Campaign
             </Link>
@@ -290,7 +290,7 @@ export default function AdminAdsPage() {
           <div className="space-y-8">
             {/* Overall summary */}
             {campaigns.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 min-w-0">
                 <div className="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4">
                   <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Impressions</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{totals.impressions.toLocaleString()}</p>
@@ -316,8 +316,8 @@ export default function AdminAdsPage() {
 
             {/* Charts */}
             {campaigns.length > 0 && (
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 min-w-0">
+                <div className="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 min-w-0">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Campaigns by Impressions</h3>
                   <div className="h-[280px]">
                     <ResponsiveContainer width="100%" height="100%">
@@ -350,7 +350,7 @@ export default function AdminAdsPage() {
                     </ResponsiveContainer>
                   </div>
                 </div>
-                <div className="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4">
+                <div className="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 min-w-0">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Revenue by Zone</h3>
                   <div className="h-[280px]">
                     <ResponsiveContainer width="100%" height="100%">
@@ -384,7 +384,7 @@ export default function AdminAdsPage() {
 
             <div>
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Ad Zones & Analytics</h2>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 min-w-0">
                 {zones.map((z) => {
                   const zoneCampaigns = campaigns.filter((c) => c.zoneId === z.id);
                   const totalImpressions = zoneCampaigns.reduce((s, c) => s + (c.impressions ?? 0), 0);

@@ -545,11 +545,11 @@ export default function AdminFixturesPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main">
+      <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Fixtures</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Fixtures</h1>
           <p className="text-gray-600 dark:text-gray-400">
             Upcoming matches from API-Sports. Sync and manage fixtures for your platform.
           </p>
@@ -642,7 +642,7 @@ export default function AdminFixturesPage() {
 
           {/* Live scores stream observability */}
           <div className="mt-4 p-5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
-            <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Live stream metrics</h2>
               <button
                 type="button"
@@ -671,7 +671,7 @@ export default function AdminFixturesPage() {
             {!streamMetrics ? (
               <p className="text-sm text-gray-500 dark:text-gray-400">Metrics unavailable right now.</p>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                 <div className="rounded-lg bg-gray-50 dark:bg-gray-700/40 p-3">
                   <p className="text-gray-500 dark:text-gray-400">Active connections</p>
                   <p className="text-xl font-bold text-gray-900 dark:text-white">{streamMetrics.activeConnections}</p>
@@ -688,11 +688,11 @@ export default function AdminFixturesPage() {
                   <p className="text-gray-500 dark:text-gray-400">Avg payload/event</p>
                   <p className="text-xl font-bold text-gray-900 dark:text-white">{streamMetrics.avgPayloadBytesPerEvent} B</p>
                 </div>
-                <div className="rounded-lg bg-gray-50 dark:bg-gray-700/40 p-3 col-span-2">
+                <div className="rounded-lg bg-gray-50 dark:bg-gray-700/40 p-3 col-span-full sm:col-span-2 md:col-span-2">
                   <p className="text-gray-500 dark:text-gray-400">Total payload</p>
                   <p className="text-lg font-bold text-gray-900 dark:text-white">{streamMetrics.totalPayloadBytes.toLocaleString()} B</p>
                 </div>
-                <div className="rounded-lg bg-gray-50 dark:bg-gray-700/40 p-3 col-span-2">
+                <div className="rounded-lg bg-gray-50 dark:bg-gray-700/40 p-3 col-span-full sm:col-span-2 md:col-span-2">
                   <p className="text-gray-500 dark:text-gray-400">Last event</p>
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">
                     {streamMetrics.lastEventAt ? new Date(streamMetrics.lastEventAt).toLocaleString() : 'No events yet'}
@@ -713,7 +713,7 @@ export default function AdminFixturesPage() {
               {streamThresholdError && (
                 <p className="text-xs text-red-600 dark:text-red-400 mb-2">{streamThresholdError}</p>
               )}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 <label className="text-xs text-gray-600 dark:text-gray-400">
                   Warn active
                   <input
@@ -807,7 +807,7 @@ export default function AdminFixturesPage() {
                 setSelectedCountry(e.target.value);
                 setSelectedCompetition('');
               }}
-              className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-white text-sm min-w-[160px]"
+              className="w-full sm:w-auto sm:min-w-[160px] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-white text-sm"
             >
               <option value="">All countries</option>
               <option value="World">World</option>
@@ -819,7 +819,7 @@ export default function AdminFixturesPage() {
             <select
               value={selectedCompetition}
               onChange={(e) => setSelectedCompetition(e.target.value)}
-              className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-white text-sm min-w-[200px]"
+              className="w-full sm:w-auto sm:min-w-[200px] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-white text-sm"
             >
               <option value="">All competitions</option>
               {competitionOptions.map((t) => (
@@ -835,7 +835,7 @@ export default function AdminFixturesPage() {
         <div className="mb-4">
           <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Upcoming Fixtures</p>
           <div className="flex flex-wrap gap-3">
-            <button
+            <button type="button"
               onClick={sync}
               disabled={syncing || fetchingResults || settling || reconciling}
               className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 disabled:opacity-50 transition-all shadow-md"
@@ -850,14 +850,14 @@ export default function AdminFixturesPage() {
                 </span>
               ) : '⚽ Sync Fixtures'}
             </button>
-            <button
+            <button type="button"
               onClick={() => syncOdds(false)}
               disabled={syncing || fetchingResults || settling || reconciling}
               className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 transition-all shadow-md"
             >
               Sync Odds (new only)
             </button>
-            <button
+            <button type="button"
               onClick={() => syncOdds(true)}
               disabled={syncing || fetchingResults || settling || reconciling}
               title="Re-fetch odds for all upcoming fixtures (BTTS, Correct Score, etc.)"
@@ -865,7 +865,7 @@ export default function AdminFixturesPage() {
             >
               Force Refresh Odds
             </button>
-            <button
+            <button type="button"
               onClick={() => syncOdds(true)}
               disabled={syncing || fetchingResults || settling || reconciling}
               title="Re-fetch odds for all upcoming fixtures in the configured 72-hour window."
@@ -880,7 +880,7 @@ export default function AdminFixturesPage() {
         <div className="mb-6">
           <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Results & Settlement</p>
           <div className="flex flex-wrap gap-3 items-start">
-            <button
+            <button type="button"
               onClick={fetchResults}
               disabled={syncing || fetchingResults || settling || reconciling}
               title="Fetch scores for finished matches from API-Sports (same as the cron, but manual)"
@@ -896,7 +896,7 @@ export default function AdminFixturesPage() {
                 </span>
               ) : '📥 Fetch Football Results'}
             </button>
-            <button
+            <button type="button"
               onClick={fetchResultsAndSettle}
               disabled={syncing || fetchingResults || settling || reconciling}
               title="Fetch results from API-Sports, then immediately settle pending coupons. Use when matches have finished but coupons are still pending."
@@ -1019,11 +1019,11 @@ export default function AdminFixturesPage() {
         )}
         {!loading && fixtures.length > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between gap-3">
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <span className="text-sm text-gray-600 dark:text-gray-400 text-center sm:text-left order-1">
                 Page {page} of {totalPages}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto order-2">
                 <button
                   type="button"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}

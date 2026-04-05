@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { AppFooter } from '@/components/AppFooter';
 import { getApiUrl } from '@/lib/site-config';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 
@@ -43,7 +42,7 @@ export default function AdminLayout({
 
   if (allowed === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-full border-2 border-[var(--primary)] border-t-transparent animate-spin" />
           <p className="text-[var(--text-muted)]">Loading...</p>
@@ -57,9 +56,8 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] flex flex-col">
+    <div className="min-h-screen bg-[var(--bg)] flex flex-col w-full min-w-0 max-w-full overflow-x-hidden" data-admin-shell>
       {children}
-      <AppFooter />
     </div>
   );
 }

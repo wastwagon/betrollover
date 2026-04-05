@@ -9,7 +9,6 @@ import { EmptyState } from '@/components/EmptyState';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
-import { AppFooter } from '@/components/AppFooter';
 import { useToast } from '@/hooks/useToast';
 import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
@@ -157,11 +156,11 @@ export default function TipstersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <UnifiedHeader />
-      <main className="section-ux-page">
+      <main className="section-ux-page w-full min-w-0">
         <PageHeader
           label={t('nav.tipsters')}
           title={t('seo.tipsters_title').split(' | ')[0]}
@@ -172,31 +171,31 @@ export default function TipstersPage() {
           <AdSlot zoneSlug="tipsters-full" fullWidth className="w-full max-w-3xl mx-auto" />
         </div>
         {/* Contextual smart buttons — no hamburger needed */}
-        <div className="flex flex-wrap items-center gap-2 mb-6">
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 mb-6 min-w-0 max-w-full">
           <Link
             href="/leaderboard"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
           >
             <span aria-hidden>🏆</span> {t('nav.leaderboard')}
           </Link>
           <Link
             href="/create-pick"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--primary)]/50 bg-[var(--primary)]/10 text-sm font-medium text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors"
+            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--primary)]/50 bg-[var(--primary)]/10 text-sm font-medium text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors w-full sm:w-auto"
           >
             <span aria-hidden>🎯</span> {t('nav.create_coupon')}
           </Link>
           {isSignedIn && (
             <Link
               href="/dashboard/subscription-packages"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+              className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
             >
               <span aria-hidden>📦</span> {t('tipster.subscription_packages')}
             </Link>
           )}
         </div>
-        <div className="mb-8">
+        <div className="mb-8 w-full min-w-0 max-w-full">
           {/* Sport filter pills */}
-          <div className="flex flex-wrap gap-2 mb-3">
+          <div className="flex flex-nowrap sm:flex-wrap gap-2 mb-3 w-full min-w-0 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch] sm:mx-0 sm:px-0 sm:pb-0 sm:overflow-visible">
             {([
               { key: 'all' as SportFilter,               icon: '🌍', labelKey: 'marketplace.filter_all_sports' },
               { key: 'football' as SportFilter,          icon: '⚽', labelKey: 'nav.football' },
@@ -208,9 +207,10 @@ export default function TipstersPage() {
               { key: 'american_football' as SportFilter, icon: '🏈', labelKey: 'nav.american_football' },
             ]).map((sp) => (
               <button
+                type="button"
                 key={sp.key}
                 onClick={() => setSportFilter(sp.key)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
+                className={`inline-flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
                   sportFilter === sp.key
                     ? 'bg-[var(--primary)] text-white border-[var(--primary)] shadow-sm'
                     : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
@@ -223,16 +223,17 @@ export default function TipstersPage() {
           </div>
 
           {/* Period tabs */}
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-nowrap sm:flex-wrap gap-2 mb-4 w-full min-w-0 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch] sm:mx-0 sm:px-0 sm:pb-0 sm:overflow-visible">
             {([
               { key: 'all_time' as Period,  label: t('tipster.period_alltime') },
               { key: 'monthly'  as Period,  label: t('tipster.period_monthly') },
               { key: 'weekly'   as Period,  label: t('tipster.period_weekly') },
             ]).map(({ key: p, label }) => (
               <button
+                type="button"
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`px-4 py-2.5 rounded-xl font-medium text-sm transition-colors ${
+                className={`shrink-0 px-4 py-2.5 rounded-xl font-medium text-sm transition-colors ${
                   period === p
                     ? 'bg-[var(--primary)] text-white shadow-md'
                     : 'bg-[var(--card)] text-[var(--text-muted)] hover:bg-[var(--border)] border border-[var(--border)]'
@@ -243,19 +244,19 @@ export default function TipstersPage() {
             ))}
           </div>
           {period === 'all_time' && (
-            <div className="mt-4 flex flex-col sm:flex-row gap-3 sm:items-center">
+            <div className="mt-4 flex flex-col sm:flex-row gap-3 sm:items-center min-w-0 max-w-full">
               <input
                 type="search"
                 placeholder={t('tipster.search_placeholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full max-w-md px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--text)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                className="w-full min-w-0 max-w-md px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--text)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
                 aria-label={t('common.search')}
               />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                className="w-full min-w-0 sm:w-auto sm:min-w-[200px] px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                 aria-label={t('common.filter')}
               >
                 <option value="roi">{t('tipster.sort_roi')}</option>
@@ -268,7 +269,7 @@ export default function TipstersPage() {
         </div>
 
         {loading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 min-w-0">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <LoadingSkeleton key={i} count={1} className="h-48 rounded-2xl" />
             ))}
@@ -281,7 +282,7 @@ export default function TipstersPage() {
             actionHref="/"
           />
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 min-w-0">
             {tipsters.map((t) => (
               <TipsterCard
                 key={t.id}
@@ -293,7 +294,6 @@ export default function TipstersPage() {
           </div>
         )}
       </main>
-      <AppFooter />
     </div>
   );
 }

@@ -36,7 +36,7 @@ function CopyButton({ text }: { text: string }) {
     });
   };
   return (
-    <button onClick={copy} className="flex-shrink-0 px-4 py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors">
+    <button type="button" onClick={copy} className="shrink-0 px-4 py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors">
       {copied ? t('invite.copied') : t('invite.copy')}
     </button>
   );
@@ -67,7 +67,7 @@ export default function InvitePage() {
 
   return (
     <DashboardShell>
-      <div className="section-ux-dashboard-shell max-w-2xl mx-auto">
+      <div className="section-ux-dashboard-shell max-w-2xl mx-auto w-full min-w-0 overflow-x-hidden px-4 sm:px-0">
         <PageHeader
           label={t('invite.grow_together')}
           title={t('invite.invite_earn')}
@@ -89,7 +89,7 @@ export default function InvitePage() {
         ) : (
           <div className="space-y-5">
             {/* Summary stats */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 { label: t('invite.invites_sent'), value: stats.totalReferrals },
                 { label: t('invite.reward_invite'), value: `GHS ${Number(stats.rewardPerReferral).toFixed(2)}` },
@@ -103,10 +103,10 @@ export default function InvitePage() {
             </div>
 
             {/* Referral code */}
-            <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm">
+            <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm min-w-0">
               <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">{t('invite.your_referral_code')}</p>
-              <div className="flex items-center gap-3">
-                <span className="flex-1 font-mono text-2xl font-bold text-[var(--primary)] tracking-widest">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
+                <span className="flex-1 min-w-0 font-mono text-xl sm:text-2xl font-bold text-[var(--primary)] tracking-widest break-all">
                   {stats.code}
                 </span>
                 <CopyButton text={stats.code} />
@@ -114,25 +114,25 @@ export default function InvitePage() {
             </div>
 
             {/* Share link */}
-            <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm">
+            <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm min-w-0">
               <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">{t('invite.share_link')}</p>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
                 <input
                   readOnly
                   value={shareUrl}
-                  className="flex-1 px-3 py-2 rounded-xl text-sm bg-[var(--bg)] border border-[var(--border)] text-[var(--text-muted)] truncate focus:outline-none"
+                  className="flex-1 min-w-0 px-3 py-2 rounded-xl text-sm bg-[var(--bg)] border border-[var(--border)] text-[var(--text-muted)] truncate focus:outline-none"
                 />
                 <CopyButton text={shareUrl} />
               </div>
             </div>
 
             {/* Share message */}
-            <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">{t('invite.share_message')}</p>
+            <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-2 min-w-0">
+                <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider min-w-0">{t('invite.share_message')}</p>
                 <CopyButton text={shareText} />
               </div>
-              <p className="text-sm text-[var(--text-muted)] bg-[var(--bg)] rounded-xl p-3 border border-[var(--border)] whitespace-pre-wrap">{shareText}</p>
+              <p className="text-sm text-[var(--text-muted)] bg-[var(--bg)] rounded-xl p-3 border border-[var(--border)] whitespace-pre-wrap break-words min-w-0">{shareText}</p>
             </div>
 
             {/* How it works */}
@@ -159,8 +159,8 @@ export default function InvitePage() {
                 <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('invite.your_referrals')}</p>
                 <div className="space-y-2">
                   {stats.conversions.map((c) => (
-                    <div key={c.id} className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0">
-                      <div>
+                    <div key={c.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 py-2 border-b border-[var(--border)] last:border-0 min-w-0">
+                      <div className="min-w-0">
                         <p className="text-sm font-medium text-[var(--text)]">
                           {c.referredUser?.displayName ?? t('invite.user')}
                         </p>

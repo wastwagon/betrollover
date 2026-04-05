@@ -23,10 +23,10 @@ export function EmptyState({
   imageSrc?: string;
   imageAlt?: string;
 }) {
-  const className = 'inline-flex items-center justify-center px-6 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2';
+  const className = 'inline-flex w-full max-w-xs sm:w-auto sm:max-w-none items-center justify-center px-6 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 shrink-0';
   const hasAction = actionLabel && (onActionClick || actionHref);
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-8 text-center">
+    <div className="flex flex-col items-center justify-center py-16 px-4 sm:px-8 text-center w-full min-w-0 max-w-full">
       {imageSrc ? (
         <Image
           src={imageSrc}
@@ -38,8 +38,8 @@ export function EmptyState({
       ) : (
         <span className="text-5xl mb-6" aria-hidden>{icon}</span>
       )}
-      <h3 className="text-xl font-semibold text-[var(--text)] mb-3">{title}</h3>
-      <p className="text-[var(--text-muted)] max-w-md mb-10 leading-relaxed">{description}</p>
+      <h3 className="text-xl font-semibold text-[var(--text)] mb-3 min-w-0 max-w-full break-words px-1">{title}</h3>
+      <p className="text-[var(--text-muted)] max-w-full sm:max-w-md mb-10 leading-relaxed min-w-0 break-words px-1">{description}</p>
       {hasAction && onActionClick ? (
         <button type="button" onClick={onActionClick} className={className}>
           {actionLabel}

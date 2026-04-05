@@ -342,9 +342,9 @@ export default function LiveScoresPage() {
   const showNoMatchBanner = hasActiveFilters && visibleCount === 0 && totalUnfiltered > 0;
 
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
-      <main className="section-ux-page">
+      <main className="section-ux-page w-full min-w-0">
         <PageHeader
           label={t('nav.live_scores')}
           title={t('live_scores.page_title')}
@@ -360,13 +360,13 @@ export default function LiveScoresPage() {
           </Link>
           <Link
             href="/leaderboard"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
           >
             <span aria-hidden>🏆</span> {t('nav.leaderboard')}
           </Link>
           <Link
             href="/create-pick"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--primary)]/50 bg-[var(--primary)]/10 text-sm font-medium text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors"
+            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--primary)]/50 bg-[var(--primary)]/10 text-sm font-medium text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors w-full sm:w-auto"
           >
             <span aria-hidden>🎯</span> {t('nav.create_coupon')}
           </Link>
@@ -429,17 +429,17 @@ export default function LiveScoresPage() {
                 ) : null}
               </div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 min-w-0 w-full">
                 <div className="flex flex-col gap-0.5 min-w-0">
                   <p className="text-[var(--text-muted)] text-sm">{t('live_scores.filter_hint')}</p>
                   <p className="text-[var(--text)] text-sm font-medium">
                     <strong>{visibleCount}</strong> {t('live_scores.matching_fixtures')}
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 sm:gap-2 w-full sm:w-auto sm:justify-end">
                   {countriesInData.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <label htmlFor="live-scores-country" className="text-sm font-medium text-[var(--text)] whitespace-nowrap">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 min-w-0 w-full sm:w-auto">
+                      <label htmlFor="live-scores-country" className="text-sm font-medium text-[var(--text)] sm:whitespace-nowrap shrink-0">
                         {t('live_scores.country')}
                       </label>
                       <select
@@ -449,7 +449,7 @@ export default function LiveScoresPage() {
                           setSelectedCountry(e.target.value);
                           setSelectedLeague('');
                         }}
-                        className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] min-w-[140px] max-w-[200px]"
+                        className="w-full sm:w-auto min-w-0 sm:min-w-[140px] sm:max-w-[200px] px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                       >
                         <option value="">{t('live_scores.all_countries')}</option>
                         {countriesInData.map((country) => (
@@ -461,15 +461,15 @@ export default function LiveScoresPage() {
                     </div>
                   )}
                   {competitionOptions.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <label htmlFor="live-scores-competition" className="text-sm font-medium text-[var(--text)] whitespace-nowrap">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 min-w-0 w-full sm:w-auto">
+                      <label htmlFor="live-scores-competition" className="text-sm font-medium text-[var(--text)] sm:whitespace-nowrap shrink-0">
                         {t('live_scores.competition')}
                       </label>
                       <select
                         id="live-scores-competition"
                         value={competitionOptions.some((l) => String(l.id) === selectedLeague) ? selectedLeague : ''}
                         onChange={(e) => setSelectedLeague(e.target.value)}
-                        className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] min-w-[180px] max-w-[260px]"
+                        className="w-full sm:w-auto min-w-0 sm:min-w-[180px] sm:max-w-[260px] px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                       >
                         <option value="">{t('live_scores.all_competitions')}</option>
                         {competitionOptions.map((l) => (
@@ -484,7 +484,7 @@ export default function LiveScoresPage() {
                     <button
                       type="button"
                       onClick={clearFilters}
-                      className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                      className="w-full sm:w-auto px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                     >
                       {t('live_scores.clear_filters')}
                     </button>
@@ -515,7 +515,7 @@ export default function LiveScoresPage() {
                   {filteredLive.map((row) => (
                     <li
                       key={row.id}
-                      className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm"
+                      className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm min-w-0"
                     >
                       <div className="min-w-0">
                         <p className="text-xs text-[var(--text-muted)] truncate">
@@ -553,7 +553,7 @@ export default function LiveScoresPage() {
                   {filteredUpcoming.map((row) => (
                     <li
                       key={row.id}
-                      className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm"
+                      className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm min-w-0"
                     >
                       <div className="min-w-0">
                         <p className="text-xs text-[var(--text-muted)] truncate">
@@ -589,7 +589,7 @@ export default function LiveScoresPage() {
                   {filteredRecent.map((row) => (
                     <li
                       key={row.id}
-                      className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm opacity-95"
+                      className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm opacity-95 min-w-0"
                     >
                       <div className="min-w-0">
                         <p className="text-xs text-[var(--text-muted)] truncate">

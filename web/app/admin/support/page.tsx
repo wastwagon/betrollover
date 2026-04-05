@@ -81,11 +81,11 @@ export default function AdminSupportPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main-scroll">
+      <main className="admin-main-sibling section-ux-admin-main-scroll min-w-0">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Support Inbox</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Support Inbox</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-0.5">Review and respond to user tickets.</p>
         </div>
 
@@ -110,29 +110,29 @@ export default function AdminSupportPage() {
         {/* Filter tabs */}
         <div className="flex gap-2 mb-5 flex-wrap">
           {['open','in_progress','resolved','closed'].map((s) => (
-            <button key={s} onClick={() => setStatusFilter(s)}
+            <button type="button" key={s} onClick={() => setStatusFilter(s)}
               className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors capitalize ${statusFilter === s ? 'bg-red-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-red-400'}`}>
               {s.replace('_',' ')} {stats && s in stats ? `(${stats[s as keyof Stats]})` : ''}
             </button>
           ))}
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-w-0">
           {/* Ticket list */}
           <div className="space-y-3">
             {loading ? (
               [1,2,3].map((i) => <div key={i} className="h-24 rounded-2xl bg-gray-200 dark:bg-gray-700 animate-pulse" />)
             ) : tickets.length === 0 ? (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8 text-center">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-8 text-center">
                 <p className="text-3xl mb-2">📭</p>
                 <p className="text-gray-500">No {statusFilter.replace('_',' ')} tickets</p>
               </div>
             ) : tickets.map((t) => (
-              <button key={t.id} onClick={() => { setSelected(t); setResponse(t.adminResponse ?? ''); setNewStatus(t.status === 'open' ? 'resolved' : t.status); }}
+              <button type="button" key={t.id} onClick={() => { setSelected(t); setResponse(t.adminResponse ?? ''); setNewStatus(t.status === 'open' ? 'resolved' : t.status); }}
                 className={`w-full text-left bg-white dark:bg-gray-800 rounded-2xl border p-4 shadow-sm hover:border-red-400 transition-colors ${selected?.id === t.id ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'}`}>
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">{t.subject}</p>
-                  <span className={`flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full font-semibold capitalize ${STATUS_STYLE[t.status]}`}>
+                <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between sm:gap-2 mb-1">
+                  <p className="font-semibold text-gray-900 dark:text-white text-sm min-w-0">{t.subject}</p>
+                  <span className={`self-start flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full font-semibold capitalize ${STATUS_STYLE[t.status]}`}>
                     {t.status.replace('_',' ')}
                   </span>
                 </div>
@@ -166,15 +166,15 @@ export default function AdminSupportPage() {
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
                 />
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <select value={newStatus} onChange={(e) => setNewStatus(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white">
+                  className="w-full sm:flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white">
                   <option value="in_progress">In Progress</option>
                   <option value="resolved">Resolved</option>
                   <option value="closed">Closed</option>
                 </select>
-                <button onClick={resolve} disabled={saving || !response.trim()}
-                  className="flex-1 py-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white text-sm font-semibold transition-colors">
+                <button type="button" onClick={resolve} disabled={saving || !response.trim()}
+                  className="w-full sm:flex-1 py-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white text-sm font-semibold transition-colors">
                   {saving ? 'Sending…' : 'Send & Update'}
                 </button>
               </div>

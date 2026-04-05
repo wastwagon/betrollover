@@ -1,9 +1,9 @@
 export default function TipsterProfileLoading() {
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <div className="sticky top-0 z-50 h-16 bg-[var(--card)] border-b border-[var(--border)]" />
 
-      <div className="section-ux-page pb-24">
+      <div className="section-ux-page pb-24 w-full min-w-0">
         {/* Profile header card */}
         <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-6 mb-6 animate-pulse">
           <div className="flex flex-col sm:flex-row gap-5 items-start">

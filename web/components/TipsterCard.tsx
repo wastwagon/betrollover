@@ -44,12 +44,12 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
 
   return (
     <article
-      className={`card-gradient rounded-2xl shadow-lg overflow-hidden hover:shadow-xl hover:shadow-[var(--primary)]/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col ${className}`}
+      className={`card-gradient rounded-2xl shadow-lg overflow-hidden hover:shadow-xl hover:shadow-[var(--primary)]/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col w-full min-w-0 max-w-full ${className}`}
     >
-      <div className="p-3 sm:p-4 flex flex-col flex-1">
+      <div className="p-3 sm:p-4 flex flex-col flex-1 min-w-0">
         {/* Header — avatar + name link; follower count is separate (opens list) */}
-        <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
-          <Link href={`/tipsters/${tipster.username}`} className="flex-shrink-0 group">
+        <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3 min-w-0">
+          <Link href={`/tipsters/${tipster.username}`} className="shrink-0 group">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-[var(--bg)] border border-[var(--border)]">
               {showAvatar ? (
                 <Image
@@ -91,7 +91,7 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
         )}
 
         {/* Stats */}
-        <div className="flex gap-3 sm:gap-4 mb-2 sm:mb-4">
+        <div className="flex flex-wrap gap-3 sm:gap-4 mb-2 sm:mb-4 min-w-0">
           <div className="flex flex-col">
             <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{t('tipster.roi')}</span>
             <span className={`text-xs sm:text-sm font-bold ${roiColor}`}>{roiDisplay}</span>
@@ -114,6 +114,7 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
           )}
           {onFollow && (
             <button
+              type="button"
               onClick={(e) => { e.preventDefault(); onFollow(); }}
               disabled={followLoading}
               className={`w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-colors disabled:opacity-70 ${

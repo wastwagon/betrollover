@@ -103,9 +103,9 @@ function NewsContent() {
   }, [activeCategory, activeSport, lang]);
 
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
-      <main className="section-ux-page-wide">
+      <main className="section-ux-page-wide w-full min-w-0">
 
         <PageHeader
           label={t('news.page_label')}
@@ -114,12 +114,13 @@ function NewsContent() {
         />
 
         {/* Sport filter row */}
-        <div className="mb-5">
+        <div className="mb-5 w-full min-w-0 overflow-hidden">
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">{t('news.filter_by_sport')}</p>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+          <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
             {SPORT_KEYS.map(sfKey => (
               <button
                 key={sfKey || 'all'}
+                type="button"
                 onClick={() => { setActiveSport(sfKey); pushUrl(activeCategory, sfKey); }}
                 className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
                   activeSport === sfKey
@@ -134,10 +135,12 @@ function NewsContent() {
         </div>
 
         {/* Category sub-filter */}
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1 mb-8">
+        <div className="mb-8 w-full min-w-0 overflow-hidden">
+        <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
           {CATEGORY_KEYS.map(tabKey => (
             <button
               key={tabKey}
+              type="button"
               onClick={() => { setActiveCategory(tabKey); pushUrl(tabKey, activeSport); }}
               className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
                 activeCategory === tabKey
@@ -149,9 +152,10 @@ function NewsContent() {
             </button>
           ))}
         </div>
+        </div>
 
         {/* Main layout — articles + sidebar */}
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-8 min-w-0">
           <div className="flex-1 min-w-0">
             {loading ? (
               <div className="space-y-4">
@@ -234,7 +238,7 @@ function NewsContent() {
           </div>
 
           {/* Sidebar */}
-          <aside className="lg:w-72 flex-shrink-0">
+          <aside className="lg:w-72 flex-shrink-0 min-w-0 w-full">
             <div className="sticky top-24 space-y-4">
               <AdSlot zoneSlug="news-sidebar" />
               <div className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
@@ -267,9 +271,9 @@ function NewsContent() {
 export default function NewsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[var(--bg)]">
+      <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <UnifiedHeader />
-        <main className="section-ux-page-wide">
+        <main className="section-ux-page-wide w-full min-w-0">
           <div className="h-10 w-48 rounded-xl bg-[var(--card)] skeleton mb-4" />
           <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-36 rounded-2xl bg-[var(--card)] skeleton" />)}</div>
         </main>

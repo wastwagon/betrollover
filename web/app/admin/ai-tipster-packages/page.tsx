@@ -196,12 +196,12 @@ export default function AdminAiTipsterPackagesPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">AI Tipster Packages</h1>
+      <main className="admin-main-sibling section-ux-admin-main min-w-0">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">AI Tipster Packages</h1>
             <p className="text-gray-600 dark:text-gray-400">
               Edit each AI tipster subscription package and toggle publish on/off safely.{' '}
               <span className="text-gray-500 dark:text-gray-500">
@@ -213,25 +213,25 @@ export default function AdminAiTipsterPackagesPage() {
               </span>
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto shrink-0">
+            <button type="button"
               onClick={() => bulkSetStatus('active')}
               disabled={bulkUpdating}
-              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium transition-colors"
+              className="w-full sm:w-auto px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium transition-colors text-center"
             >
               {bulkUpdating ? 'Applying...' : 'Turn All ON'}
             </button>
-            <button
+            <button type="button"
               onClick={() => bulkSetStatus('inactive')}
               disabled={bulkUpdating}
-              className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-800 disabled:opacity-60 text-white text-sm font-medium transition-colors"
+              className="w-full sm:w-auto px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-800 disabled:opacity-60 text-white text-sm font-medium transition-colors text-center"
             >
               {bulkUpdating ? 'Applying...' : 'Turn All OFF'}
             </button>
-            <button
+            <button type="button"
               onClick={runAiSetup}
               disabled={seeding}
-              className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-medium transition-colors"
+              className="w-full sm:w-auto px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-medium transition-colors text-center"
             >
               {seeding ? 'Initializing...' : 'Initialize / Repair AI Packages'}
             </button>
@@ -267,7 +267,7 @@ export default function AdminAiTipsterPackagesPage() {
 
         {!loading && (
           <div className="mb-6 flex flex-wrap items-center gap-2">
-            <button
+            <button type="button"
               onClick={() => setViewFilter('all')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 viewFilter === 'all'
@@ -277,7 +277,7 @@ export default function AdminAiTipsterPackagesPage() {
             >
               All ({rows.length})
             </button>
-            <button
+            <button type="button"
               onClick={() => setViewFilter('on')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 viewFilter === 'on'
@@ -287,7 +287,7 @@ export default function AdminAiTipsterPackagesPage() {
             >
               ON ({totalOn})
             </button>
-            <button
+            <button type="button"
               onClick={() => setViewFilter('off')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 viewFilter === 'off'
@@ -297,7 +297,7 @@ export default function AdminAiTipsterPackagesPage() {
             >
               OFF ({totalOff})
             </button>
-            <button
+            <button type="button"
               onClick={() => setViewFilter('missing')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 viewFilter === 'missing'
@@ -428,7 +428,7 @@ export default function AdminAiTipsterPackagesPage() {
                       </td>
                       <td className="px-6 py-4">
                         {row.package ? (
-                          <button
+                          <button type="button"
                             onClick={() => savePackage(row.package!)}
                             disabled={savingId === row.package.id}
                             className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-medium transition-colors"

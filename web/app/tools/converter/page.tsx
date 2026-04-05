@@ -24,26 +24,26 @@ export default function ConverterPage() {
   });
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--text)]">
+    <div className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--text)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
 
-      <main className="section-ux-page flex-1 w-full">
+      <main className="section-ux-page flex-1 w-full min-w-0">
         <PageHeader
           label={t('tools.badge')}
           title={t('tools.converter_title')}
           tagline={t('tools.converter_tagline')}
         />
 
-        <div className="flex flex-wrap items-center gap-2 mb-6">
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 mb-6">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
           >
             {t('nav.home')}
           </Link>
           <Link
             href="/wallet"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
           >
             {t('nav.wallet')}
           </Link>
@@ -58,15 +58,15 @@ export default function ConverterPage() {
           <label className="block text-sm font-semibold text-[var(--text-muted)] mb-2 uppercase tracking-wider">
             Amount in GHS (₵)
           </label>
-          <div className="flex items-center gap-3">
-            <span className="text-3xl font-bold text-[var(--primary)]">₵</span>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
+            <span className="text-3xl font-bold text-[var(--primary)] flex-shrink-0">₵</span>
             <input
               type="number"
               min="0"
               step="0.01"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="flex-1 text-3xl font-bold bg-transparent outline-none text-[var(--text)] border-b-2 border-[var(--primary)] pb-1"
+              className="flex-1 min-w-0 text-2xl sm:text-3xl font-bold bg-transparent outline-none text-[var(--text)] border-b-2 border-[var(--primary)] pb-1"
               placeholder="0.00"
             />
           </div>
@@ -77,9 +77,9 @@ export default function ConverterPage() {
           {rows.map((c) => (
             <div
               key={c.code}
-              className="flex items-center justify-between p-4 card-gradient rounded-xl border border-[var(--border)] hover:border-[var(--primary)] transition-colors"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 card-gradient rounded-xl border border-[var(--border)] hover:border-[var(--primary)] transition-colors min-w-0"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0">
                 <span className="text-2xl">{c.flag}</span>
                 <div>
                   <p className="font-semibold text-sm">{c.name}</p>

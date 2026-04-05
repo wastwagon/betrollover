@@ -373,10 +373,10 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
       <header
         ref={headerRef}
-        className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-xl border-b border-slate-200/70 shadow-sm"
+        className="sticky top-0 z-50 w-full min-w-0 max-w-full overflow-x-hidden bg-white/95 backdrop-blur-xl border-b border-slate-200/70 shadow-sm"
       >
-        <div className="section-ux-gutter-wide">
-          <div className="flex items-center justify-between h-[4.5rem]">
+        <div className="section-ux-gutter-wide min-w-0 max-w-full">
+          <div className="flex items-center justify-between h-[4.5rem] min-w-0 gap-2">
 
             {/* ── Logo ── */}
             <Link href="/" className="flex items-center gap-2.5 shrink-0 group" aria-label="BetRollover home">
@@ -674,7 +674,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
             )}
 
             {/* Mobile: Account only (no hamburger) — primary nav is bottom bar + in-page smart buttons */}
-            <div className="lg:hidden flex items-center gap-2">
+            <div className="lg:hidden flex items-center gap-1.5 sm:gap-2 shrink-0">
               {isSignedIn ? (
                 <>
                   <button
@@ -707,8 +707,8 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       >
                         {/* Header with balance */}
                         <div className="px-4 pt-6 pb-4 border-b border-[var(--border)] shrink-0">
-                          <div className="flex items-center justify-between mb-4">
-                            <h2 id="mobile-account-menu-title" className="text-base font-semibold text-[var(--text)]">
+                          <div className="flex items-center justify-between gap-2 mb-4 min-w-0">
+                            <h2 id="mobile-account-menu-title" className="text-base font-semibold text-[var(--text)] min-w-0 flex-1 truncate pr-2">
                               {t('header.account')}
                             </h2>
                             <button

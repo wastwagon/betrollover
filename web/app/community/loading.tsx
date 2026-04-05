@@ -1,6 +1,6 @@
 export default function CommunityLoading() {
   return (
-    <div className="min-h-screen flex flex-col bg-gray-950 text-white">
+    <div className="min-h-screen flex flex-col bg-gray-950 text-white w-full min-w-0 max-w-full overflow-x-hidden">
       <div className="h-16 bg-white/5 border-b border-white/10 animate-pulse" />
       <div className="section-ux-community-shell flex-1">
         {/* Sidebar skeleton */}

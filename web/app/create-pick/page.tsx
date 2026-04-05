@@ -732,7 +732,7 @@ export default function CreatePickPage() {
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden">
-        <div className="section-ux-dashboard-shell">
+        <div className="section-ux-dashboard-shell min-w-0 max-w-full">
           <PageHeader
             label={t('create_pick.title')}
             title={t('create_pick.title')}
@@ -790,7 +790,7 @@ export default function CreatePickPage() {
                 key={key}
                 type="button"
                 onClick={() => setSport(key)}
-                className={`flex-shrink-0 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                className={`shrink-0 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
                   sport === key
                     ? 'bg-[var(--primary)] text-white shadow-md'
                     : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
@@ -817,13 +817,13 @@ export default function CreatePickPage() {
           )}
 
           {/* Two-column layout: Fixtures on left, Slip widget on right */}
-          <div className="flex flex-col lg:flex-row gap-4 pb-6">
+          <div className="flex flex-col lg:flex-row gap-4 pb-6 min-w-0 w-full max-w-full">
           {/* Left Column: Fixtures */}
           <div className="flex-1 min-w-0">
             <div className="space-y-4">
             {/* Team Search */}
-            <div className="mb-4">
-              <div className="relative">
+            <div className="mb-4 min-w-0">
+              <div className="relative min-w-0">
                 <input
                   type="text"
                   placeholder={
@@ -834,7 +834,7 @@ export default function CreatePickPage() {
                   }
                   value={teamSearch}
                   onChange={(e) => setTeamSearch(e.target.value)}
-                  className="w-full px-4 py-2.5 pl-10 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all"
+                  className="w-full min-w-0 px-4 py-2.5 pl-10 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all"
                 />
                 <svg
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--text-muted)]"
@@ -851,6 +851,7 @@ export default function CreatePickPage() {
                 </svg>
                 {teamSearch && (
                   <button
+                    type="button"
                     onClick={() => setTeamSearch('')}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
                     title="Clear search"
@@ -939,6 +940,7 @@ export default function CreatePickPage() {
                     )}
                     {(selectedCountry || selectedLeague || teamSearch) && (
                       <button
+                        type="button"
                         onClick={() => { setSelectedCountry(''); setSelectedLeague(''); setTeamSearch(''); }}
                         title="Clear all filters"
                         className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
@@ -967,6 +969,7 @@ export default function CreatePickPage() {
                 )}
                 {sport !== 'football' && (sportLeague || teamSearch) && (
                   <button
+                    type="button"
                     onClick={() => { setSportLeague(''); setTeamSearch(''); }}
                     title="Clear all filters"
                     className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
@@ -1238,17 +1241,17 @@ export default function CreatePickPage() {
           </div>
 
           {/* Right Column: Fixed Slip Widget (desktop only) */}
-          <div className="hidden lg:block lg:w-96 lg:flex-shrink-0">
-            <div className="lg:sticky lg:top-4">
-              <div className="bg-gradient-to-br from-[var(--primary)]/10 via-[var(--primary)]/5 to-transparent rounded-card shadow-card border-2 border-[var(--primary)]/30 p-5 space-y-4">
+          <div className="hidden lg:block lg:w-96 lg:shrink-0 min-w-0">
+            <div className="lg:sticky lg:top-4 min-w-0">
+              <div className="bg-gradient-to-br from-[var(--primary)]/10 via-[var(--primary)]/5 to-transparent rounded-card shadow-card border-2 border-[var(--primary)]/30 p-5 space-y-4 min-w-0">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
-                    <span className="text-2xl">📝</span>
-                    {t('create_pick.pick_slip')}
+                <div className="flex items-center justify-between gap-2 mb-4 min-w-0">
+                  <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2 min-w-0 flex-1 truncate">
+                    <span className="text-2xl shrink-0">📝</span>
+                    <span className="truncate">{t('create_pick.pick_slip')}</span>
                   </h2>
                   {selections.length > 0 && (
-                    <span className="px-2.5 py-1 bg-[var(--primary)] text-white rounded-full text-xs font-semibold">
+                    <span className="shrink-0 px-2.5 py-1 bg-[var(--primary)] text-white rounded-full text-xs font-semibold">
                       {selections.length}
                     </span>
                   )}
@@ -1279,24 +1282,25 @@ export default function CreatePickPage() {
                             key={i}
                             className="bg-[var(--card)] rounded-lg p-3 border border-[var(--border)] hover:border-[var(--primary)]/50 transition-colors"
                           >
-                            <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-start justify-between gap-2 min-w-0">
                               <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-1.5 mb-0.5">
-                                  <span className="text-xs">{sportIcon}</span>
-                                  <p className="text-xs font-semibold text-[var(--text)] truncate">
+                                <div className="flex items-center gap-1.5 mb-0.5 min-w-0">
+                                  <span className="text-xs shrink-0">{sportIcon}</span>
+                                  <p className="text-xs font-semibold text-[var(--text)] truncate min-w-0">
                                     {s.matchDescription}
                                   </p>
                                 </div>
-                                <p className="text-xs text-[var(--text-muted)] mt-1">
+                                <p className="text-xs text-[var(--text-muted)] mt-1 break-words">
                                   {s.prediction}
                                 </p>
-                                <p className="text-sm font-bold text-[var(--primary)] mt-1">
+                                <p className="text-sm font-bold text-[var(--primary)] mt-1 tabular-nums">
                                   @ {s.odds.toFixed(2)}
                                 </p>
                               </div>
                               <button
+                                type="button"
                                 onClick={() => removeSelection(i)}
-                                className="flex-shrink-0 text-red-500 hover:text-red-700 transition-colors p-1"
+                                className="shrink-0 text-red-500 hover:text-red-700 transition-colors p-1"
                                 title="Remove"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1311,9 +1315,9 @@ export default function CreatePickPage() {
 
                     {/* Total Odds */}
                     <div className="bg-[var(--card)] rounded-lg p-4 border-2 border-[var(--primary)]/50">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-[var(--text-muted)]">{t('create_pick.total_odds')}</span>
-                        <span className="text-xl font-bold text-[var(--primary)]">
+                      <div className="flex items-center justify-between gap-2 mb-2 min-w-0">
+                        <span className="text-sm font-medium text-[var(--text-muted)] min-w-0">{t('create_pick.total_odds')}</span>
+                        <span className="text-xl font-bold text-[var(--primary)] tabular-nums shrink-0">
                           {totalOdds.toFixed(2)}
                         </span>
                       </div>
@@ -1479,30 +1483,30 @@ export default function CreatePickPage() {
       {/* Mobile: Sticky slip bar above nav — tap to open slip sheet */}
       {selections.length > 0 && (
         <div
-          className="lg:hidden fixed left-0 right-0 bottom-16 z-40 px-4 pb-2"
+          className="lg:hidden fixed left-0 right-0 bottom-16 z-40 px-4 pb-2 min-w-0 max-w-full"
           style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
         >
           <button
             type="button"
             onClick={() => setSlipSheetOpen(true)}
-            className={`w-full flex items-center justify-between gap-3 px-5 py-4 rounded-2xl bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-teal-500/30 active:scale-[0.99] transition-transform touch-manipulation ${
+            className={`w-full min-w-0 max-w-full flex items-center justify-between gap-2 sm:gap-3 px-4 sm:px-5 py-4 rounded-2xl bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-teal-500/30 active:scale-[0.99] transition-transform touch-manipulation ${
               createPickDisabled && selections.length > 0 ? 'opacity-85' : ''
             }`}
             aria-label="Open pick slip to review and create"
           >
-            <div className="flex items-center gap-3">
-              <span className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">📝</span>
-              <div className="text-left">
-                <p className="font-semibold text-sm">{selections.length} selection{selections.length !== 1 ? 's' : ''}</p>
-                <p className="text-xs text-white/85">Total @ {totalOdds.toFixed(2)}</p>
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+              <span className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg shrink-0">📝</span>
+              <div className="text-left min-w-0">
+                <p className="font-semibold text-sm truncate">{selections.length} selection{selections.length !== 1 ? 's' : ''}</p>
+                <p className="text-xs text-white/85 tabular-nums">Total @ {totalOdds.toFixed(2)}</p>
                 {createPickDisabled && selections.length > 0 && (
-                  <p className="text-[10px] text-white/75 mt-0.5 max-w-[200px] leading-tight">
+                  <p className="text-[10px] text-white/75 mt-0.5 max-w-full sm:max-w-[200px] leading-tight">
                     {t('create_pick.slip_bar_hint')}
                   </p>
                 )}
               </div>
             </div>
-            <span className="font-bold text-base">Review & Create</span>
+            <span className="font-bold text-sm sm:text-base shrink-0 whitespace-nowrap">Review & Create</span>
           </button>
         </div>
       )}
@@ -1515,20 +1519,21 @@ export default function CreatePickPage() {
           aria-hidden
         >
           <div
-            className="absolute bottom-0 left-0 right-0 max-h-[90vh] overflow-y-auto bg-white rounded-t-3xl shadow-2xl animate-slide-up"
+            className="absolute bottom-0 left-0 right-0 max-h-[90vh] min-w-0 max-w-full overflow-y-auto overflow-x-hidden bg-white rounded-t-3xl shadow-2xl animate-slide-up"
             onClick={(e) => e.stopPropagation()}
             style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
           >
-            <div className="sticky top-0 z-10 bg-white rounded-t-3xl pt-4 pb-3 px-4 border-b border-[var(--border)]">
+            <div className="sticky top-0 z-10 bg-white rounded-t-3xl pt-4 pb-3 px-4 border-b border-[var(--border)] min-w-0">
               <div className="w-12 h-1 rounded-full bg-[var(--border)] mx-auto mb-4" />
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
-                  <span>📝</span> {t('create_pick.pick_slip')}
+              <div className="flex items-center justify-between gap-2 min-w-0">
+                <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2 min-w-0 flex-1 truncate">
+                  <span className="shrink-0">📝</span>
+                  <span className="truncate">{t('create_pick.pick_slip')}</span>
                 </h2>
                 <button
                   type="button"
                   onClick={() => setSlipSheetOpen(false)}
-                  className="p-2 -m-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-warm)] transition-colors"
+                  className="shrink-0 p-2 -m-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-warm)] transition-colors"
                   aria-label="Close"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1550,18 +1555,19 @@ export default function CreatePickPage() {
                       key={i}
                       className="bg-[var(--bg-warm)] rounded-xl p-4 border border-[var(--border)]"
                     >
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start justify-between gap-3 min-w-0">
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 mb-0.5">
-                            <span className="text-sm">{sheetSportIcon}</span>
-                            <p className="text-sm font-semibold text-[var(--text)] truncate">{s.matchDescription}</p>
+                          <div className="flex items-center gap-1.5 mb-0.5 min-w-0">
+                            <span className="text-sm shrink-0">{sheetSportIcon}</span>
+                            <p className="text-sm font-semibold text-[var(--text)] truncate min-w-0">{s.matchDescription}</p>
                           </div>
-                          <p className="text-xs text-[var(--text-muted)] mt-1">{s.prediction}</p>
-                          <p className="text-base font-bold text-[var(--primary)] mt-2">@ {s.odds.toFixed(2)}</p>
+                          <p className="text-xs text-[var(--text-muted)] mt-1 break-words">{s.prediction}</p>
+                          <p className="text-base font-bold text-[var(--primary)] mt-2 tabular-nums">@ {s.odds.toFixed(2)}</p>
                         </div>
                         <button
+                          type="button"
                           onClick={() => removeSelection(i)}
-                          className="flex-shrink-0 p-2 rounded-lg text-red-500 hover:bg-red-50 active:bg-red-100 transition-colors touch-manipulation"
+                          className="shrink-0 p-2 rounded-lg text-red-500 hover:bg-red-50 active:bg-red-100 transition-colors touch-manipulation"
                           aria-label="Remove selection"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1573,10 +1579,10 @@ export default function CreatePickPage() {
                   );
                 })}
               </div>
-              <div className="bg-[var(--primary-light)]/50 rounded-xl p-4 border-2 border-[var(--primary)]/30">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-[var(--text-muted)]">{t('create_pick.total_odds')}</span>
-                  <span className="text-xl font-bold text-[var(--primary)]">{totalOdds.toFixed(2)}</span>
+              <div className="bg-[var(--primary-light)]/50 rounded-xl p-4 border-2 border-[var(--primary)]/30 min-w-0">
+                <div className="flex items-center justify-between gap-2 min-w-0">
+                  <span className="text-sm font-medium text-[var(--text-muted)] min-w-0">{t('create_pick.total_odds')}</span>
+                  <span className="text-xl font-bold text-[var(--primary)] tabular-nums shrink-0">{totalOdds.toFixed(2)}</span>
                 </div>
               </div>
               <div className="space-y-3 pt-2 border-t border-[var(--border)]">

@@ -184,22 +184,22 @@ export default function MyPurchasesPage() {
   return (
     <DashboardShell>
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
-      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
-        <div className="section-ux-dashboard-shell">
+      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden">
+        <div className="section-ux-dashboard-shell min-w-0 max-w-full">
 
           <PageHeader
             label={t('my_purchases.title')}
             title={t('my_purchases.title')}
             tagline={t('my_purchases.tagline')}
           />
-          <p className="text-sm text-[var(--text-muted)] mb-4 flex items-center gap-2">
+          <p className="text-sm text-[var(--text-muted)] mb-4 flex items-start gap-2 min-w-0 break-words">
             <span aria-hidden>🛡</span>
             {t('my_purchases.escrow_refund_note')}
           </p>
 
           {!loading && vipSubscriptions.length > 0 && (
             <section
-              className="mb-6 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-5 shadow-sm"
+              className="mb-6 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-5 shadow-sm min-w-0 max-w-full"
               aria-label={t('my_purchases.vip_heading')}
             >
               <h2 className="text-base font-semibold text-[var(--text)] mb-1">{t('my_purchases.vip_heading')}</h2>
@@ -208,10 +208,10 @@ export default function MyPurchasesPage() {
                 {vipSubscriptions.map((s) => (
                   <li
                     key={s.id}
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-sm border-b border-[var(--border)] last:border-0 pb-2 last:pb-0"
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-sm border-b border-[var(--border)] last:border-0 pb-2 last:pb-0 min-w-0"
                   >
-                    <span className="font-medium text-[var(--text)]">{s.package?.name ?? 'VIP'}</span>
-                    <span className="text-[var(--text-muted)] text-xs sm:text-sm">
+                    <span className="font-medium text-[var(--text)] min-w-0 break-words">{s.package?.name ?? 'VIP'}</span>
+                    <span className="text-[var(--text-muted)] text-xs sm:text-sm min-w-0 sm:text-end break-words">
                       <span className="capitalize">{s.status}</span>
                       {s.endsAt ? (
                         <>
@@ -244,7 +244,7 @@ export default function MyPurchasesPage() {
 
           {/* ─── Summary cards ─────────────────────────────────── */}
           {!loading && stats.total > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6 min-w-0">
               {[
                 { labelKey: 'my_purchases.filter_all' as const, value: stats.total,    color: 'text-[var(--primary)]' },
                 { labelKey: 'my_purchases.filter_pending' as const, value: stats.pending,  color: 'text-amber-500' },
@@ -264,7 +264,7 @@ export default function MyPurchasesPage() {
 
           {/* ─── Result filter pills ───────────────────────────── */}
           {!loading && stats.total > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-4 min-w-0 max-w-full">
               {RESULT_FILTERS.map(({ key, labelKey, icon }) => {
                 const count =
                   key === 'all'
@@ -302,7 +302,8 @@ export default function MyPurchasesPage() {
 
           {/* ─── Sport chips (only when multi-sport purchases exist) ─── */}
           {!loading && availableSports.length > 1 && (
-            <div className="flex gap-2 mb-5 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+            <div className="mb-5 w-full min-w-0 overflow-hidden">
+            <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
               {SPORT_CHIPS.filter(
                 (c) => c.key === 'all' || availableSports.includes(c.key),
               ).map(({ key, icon, labelKey }) => (
@@ -310,7 +311,7 @@ export default function MyPurchasesPage() {
                   key={key}
                   type="button"
                   onClick={() => setSportFilter(key)}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     sportFilter === key
                       ? 'bg-[var(--primary)] text-white shadow-sm'
                       : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
@@ -319,6 +320,7 @@ export default function MyPurchasesPage() {
                   {icon} {t(labelKey)}
                 </button>
               ))}
+            </div>
             </div>
           )}
 
@@ -362,7 +364,7 @@ export default function MyPurchasesPage() {
           )}
 
           {!loading && filtered.length > 0 && (
-            <div className="space-y-3 pb-6">
+            <div className="space-y-3 pb-6 min-w-0 max-w-full">
               {filtered.map((p) =>
                 p.pick ? (
                   <PickCard

@@ -132,9 +132,9 @@ export function AppHeader({ slipCount }: AppHeaderProps) {
     children.some((c) => c.href === pathname);
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-xl border-b border-[var(--border)] shadow-sm">
-      <div className="section-ux-gutter-wide">
-        <div className="flex items-center justify-between h-14">
+    <header className="sticky top-0 z-50 w-full min-w-0 max-w-full overflow-x-hidden bg-white/95 backdrop-blur-xl border-b border-[var(--border)] shadow-sm">
+      <div className="section-ux-gutter-wide min-w-0 max-w-full">
+        <div className="flex items-center justify-between h-14 min-w-0 gap-2">
           {/* Logo - links to main site home */}
           <Link
             href="/"
@@ -143,7 +143,7 @@ export function AppHeader({ slipCount }: AppHeaderProps) {
             <span className="w-9 h-9 rounded-xl bg-[var(--primary)] flex items-center justify-center text-white text-xs font-bold shadow-md group-hover:bg-[var(--primary-hover)] transition-colors">
               BR
             </span>
-            <span className="tracking-tight">BetRollover</span>
+            <span className="tracking-tight truncate">BetRollover</span>
           </Link>
 
           {/* Desktop nav - minimal, text-only with subtle active indicator */}
@@ -229,7 +229,7 @@ export function AppHeader({ slipCount }: AppHeaderProps) {
           </nav>
 
           {/* Right side - compact utilities */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             {balance !== null && (
               <Link
                 href="/wallet"
@@ -291,15 +291,15 @@ export function AppHeader({ slipCount }: AppHeaderProps) {
                       key={href}
                       href={href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium ${
+                      className={`flex items-center justify-between gap-2 min-w-0 px-4 py-3 rounded-lg text-sm font-medium ${
                         isActive
                           ? 'text-[var(--primary)] bg-[var(--primary-light)]'
                           : 'text-[var(--text)] hover:bg-[var(--bg)]'
                       }`}
                     >
-                      {item.label}
+                      <span className="min-w-0 truncate">{item.label}</span>
                       {showBadge && slipCount! > 0 && (
-                        <span className="text-[10px] font-semibold bg-[var(--primary)]/20 text-[var(--primary)] rounded-full px-2 py-0.5">
+                        <span className="shrink-0 text-[10px] font-semibold bg-[var(--primary)]/20 text-[var(--primary)] rounded-full px-2 py-0.5">
                           {slipCount}
                         </span>
                       )}
@@ -315,15 +315,15 @@ export function AppHeader({ slipCount }: AppHeaderProps) {
                       key={child.href}
                       href={child.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium ${
+                      className={`flex items-center justify-between gap-2 min-w-0 px-4 py-3 rounded-lg text-sm font-medium ${
                         isActive
                           ? 'text-[var(--primary)] bg-[var(--primary-light)]'
                           : 'text-[var(--text)] hover:bg-[var(--bg)]'
                       }`}
                     >
-                      {child.label}
+                      <span className="min-w-0 truncate">{child.label}</span>
                       {showBadge && slipCount! > 0 && (
-                        <span className="text-[10px] font-semibold bg-[var(--primary)]/20 text-[var(--primary)] rounded-full px-2 py-0.5">
+                        <span className="shrink-0 text-[10px] font-semibold bg-[var(--primary)]/20 text-[var(--primary)] rounded-full px-2 py-0.5">
                           {slipCount}
                         </span>
                       )}

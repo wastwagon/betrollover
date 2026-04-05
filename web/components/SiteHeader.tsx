@@ -44,18 +44,18 @@ export function SiteHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-xl border-b border-[var(--border)] shadow-sm">
-      <div className="section-ux-gutter-wide">
-        <div className="flex items-center justify-between h-16 md:h-18">
+    <header className="sticky top-0 z-50 w-full min-w-0 max-w-full overflow-x-hidden bg-white/95 backdrop-blur-xl border-b border-[var(--border)] shadow-sm">
+      <div className="section-ux-gutter-wide min-w-0 max-w-full">
+        <div className="flex items-center justify-between h-16 md:h-18 min-w-0 gap-2">
           {/* Logo */}
           <Link
             href="/"
-            className="flex items-center gap-2 font-bold text-xl text-[var(--text)] hover:text-[var(--primary)] transition-colors group"
+            className="flex items-center gap-2 min-w-0 flex-1 md:flex-initial font-bold text-xl text-[var(--text)] hover:text-[var(--primary)] transition-colors group"
           >
-            <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-hover)] flex items-center justify-center text-white text-sm font-extrabold shadow-md group-hover:shadow-lg transition-shadow">
+            <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-hover)] flex items-center justify-center text-white text-sm font-extrabold shadow-md group-hover:shadow-lg transition-shadow shrink-0">
               BR
             </span>
-            BetRollover
+            <span className="truncate min-w-0">BetRollover</span>
           </Link>
 
           {/* Desktop nav */}
@@ -121,7 +121,7 @@ export function SiteHeader() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] transition-colors"
+            className="md:hidden shrink-0 p-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] transition-colors"
             aria-label="Toggle menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

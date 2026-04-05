@@ -47,22 +47,22 @@ export function HomePopularTipsters() {
   }, []);
 
   return (
-    <section className="py-12 md:py-16 bg-[var(--bg)]">
-      <div className="section-ux-gutter-wide">
-        <div className="flex items-center justify-between mb-4 sm:mb-6">
-          <h2 className="text-lg font-bold text-[var(--text)] sm:text-xl md:text-2xl">{t('home.featured_tipsters')}</h2>
-          <Link href="/tipsters" className="text-xs font-medium text-emerald-600 hover:text-emerald-700 hover:underline sm:text-sm">
+    <section className="py-12 md:py-16 bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
+      <div className="section-ux-gutter-wide w-full min-w-0">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
+          <h2 className="text-lg font-bold text-[var(--text)] sm:text-xl md:text-2xl min-w-0">{t('home.featured_tipsters')}</h2>
+          <Link href="/tipsters" className="text-xs font-medium text-emerald-600 hover:text-emerald-700 hover:underline sm:text-sm shrink-0 w-fit">
             {t('home.see_tipsters')} →
           </Link>
         </div>
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 min-w-0">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="h-32 sm:h-40 rounded-2xl bg-[var(--card)] animate-pulse" />
             ))}
           </div>
         ) : tipsters.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 min-w-0">
             {tipsters.slice(0, 6).map((tipster) => (
               <TipsterCard key={tipster.username || tipster.id} tipster={tipster} />
             ))}

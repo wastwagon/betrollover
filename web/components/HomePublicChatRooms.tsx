@@ -28,8 +28,8 @@ export function HomePublicChatRooms() {
   if (loading || rooms.length === 0) return null;
 
   return (
-    <section className="py-14 md:py-20 px-4 sm:px-6 lg:px-8 border-t border-[var(--border)]">
-      <div className="section-ux-cap-5xl">
+    <section className="py-14 md:py-20 px-4 sm:px-6 lg:px-8 border-t border-[var(--border)] w-full min-w-0 max-w-full overflow-x-hidden">
+      <div className="section-ux-cap-5xl w-full min-w-0">
         <div className="text-center mb-10">
           <span className="inline-block px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs font-semibold uppercase tracking-wide mb-3">
             Community
@@ -42,7 +42,7 @@ export function HomePublicChatRooms() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 min-w-0">
           {rooms.slice(0, 10).map((room) => (
             <Link
               key={room.slug}

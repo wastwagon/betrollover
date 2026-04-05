@@ -62,21 +62,21 @@ export default function AdminAuditLogPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[var(--bg)]">
+    <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main-audit">
+      <main className="admin-main-sibling section-ux-admin-main-audit min-w-0">
         <div className="section-ux-cap-5xl">
-          <h1 className="text-2xl font-bold text-[var(--text)] mb-2">Audit log</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)] mb-2">Audit log</h1>
           <p className="text-sm text-[var(--text-muted)] mb-6">
             Recent admin actions (user changes, withdrawals, support, content). For compliance and debugging.
           </p>
 
-          <div className="mb-4 flex flex-wrap items-center gap-3">
-            <label className="text-sm font-medium text-[var(--text-muted)]">Action</label>
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <label className="text-sm font-medium text-[var(--text-muted)] shrink-0">Action</label>
             <select
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
-              className="rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] px-3 py-2 text-sm"
+              className="w-full sm:w-auto sm:min-w-[200px] rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] px-3 py-2 text-sm"
             >
               <option value="">All</option>
               {Object.entries(actionLabels).map(([value, label]) => (
@@ -86,7 +86,7 @@ export default function AdminAuditLogPage() {
             <button
               type="button"
               onClick={load}
-              className="px-4 py-2 rounded-lg bg-[var(--primary)] text-white text-sm font-medium hover:opacity-90"
+              className="w-full sm:w-auto px-4 py-2 rounded-lg bg-[var(--primary)] text-white text-sm font-medium hover:opacity-90"
             >
               Refresh
             </button>

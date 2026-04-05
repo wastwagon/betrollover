@@ -74,18 +74,18 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] relative overflow-hidden">
+    <div className="min-h-screen bg-[var(--bg)] relative overflow-hidden w-full min-w-0 max-w-full">
       <div className="absolute inset-0 bg-gradient-mesh pointer-events-none" />
       <UnifiedHeader />
-      <main className="section-ux-auth-main">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl shadow-xl border border-[var(--border)] p-8 md:p-10">
+      <main className="section-ux-auth-main w-full min-w-0 max-w-full">
+        <div className="w-full max-w-md min-w-0 mx-auto px-4 sm:px-0">
+          <div className="bg-white rounded-2xl shadow-xl border border-[var(--border)] p-6 sm:p-8 md:p-10 min-w-0 max-w-full">
             <div className="text-center mb-8">
               <h1 className="text-xl font-semibold text-[var(--text)]">{t('auth.welcome_back')}</h1>
               <p className="mt-2 text-[var(--text-muted)]">{t('auth.sign_in_desc')}</p>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
+            <form onSubmit={handleSubmit} className="space-y-5 min-w-0">
+              <div className="min-w-0">
                 <label htmlFor="email" className="block text-sm font-medium text-[var(--text)] mb-1.5">
                   {t('auth.email')}
                 </label>
@@ -98,15 +98,15 @@ function LoginForm() {
                   required
                   autoComplete="email"
                   disabled={loading}
-                  className="w-full px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200 disabled:opacity-50"
+                  className="w-full min-w-0 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200 disabled:opacity-50"
                   placeholder="you@example.com"
                 />
               </div>
-              <div>
+              <div className="min-w-0">
                 <label htmlFor="password" className="block text-sm font-medium text-[var(--text)] mb-1.5">
                   {t('auth.password')}
                 </label>
-                <div className="relative">
+                <div className="relative min-w-0">
                   <input
                     id="password"
                     name="password"
@@ -116,7 +116,7 @@ function LoginForm() {
                     required
                     autoComplete="current-password"
                     disabled={loading}
-                    className="w-full px-4 py-3 pr-12 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200 disabled:opacity-50"
+                    className="w-full min-w-0 px-4 py-3 pr-12 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200 disabled:opacity-50"
                   />
                   <button
                     type="button"
@@ -191,7 +191,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[var(--bg)] flex items-center justify-center"><div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" /></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[var(--bg)] flex items-center justify-center w-full min-w-0 max-w-full overflow-x-hidden"><div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" /></div>}>
       <LoginForm />
     </Suspense>
   );

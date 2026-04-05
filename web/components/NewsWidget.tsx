@@ -29,20 +29,20 @@ export function NewsWidget() {
 
   return (
     <section className="py-12 md:py-16 bg-[var(--bg)]">
-      <div className="section-ux-gutter">
-        <div className="flex justify-between items-end mb-6">
-          <div>
+      <div className="section-ux-gutter w-full min-w-0">
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-end mb-6">
+          <div className="min-w-0">
             <h2 className="text-base md:text-lg font-semibold text-[var(--text)]">Latest News</h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">Football news, transfers & gossip</p>
           </div>
           <Link
             href="/news"
-            className="text-sm text-[var(--primary)] font-semibold hover:underline"
+            className="text-sm text-[var(--primary)] font-semibold hover:underline shrink-0 w-fit"
           >
             View all →
           </Link>
         </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-w-0">
           {articles.slice(0, 6).map((a) => (
             <Link
               key={a.id}

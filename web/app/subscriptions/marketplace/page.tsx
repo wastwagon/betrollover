@@ -65,9 +65,9 @@ export default function SubscriptionMarketplacePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
-      <main className="section-ux-page">
+      <main className="section-ux-page w-full min-w-0">
         <PageHeader
           label={t('nav.subscription_marketplace')}
           title={t('subscriptions.marketplace_title')}
@@ -75,7 +75,7 @@ export default function SubscriptionMarketplacePage() {
         />
 
         {loading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <LoadingSkeleton key={i} count={1} className="h-80 rounded-2xl" />
             ))}
@@ -90,7 +90,7 @@ export default function SubscriptionMarketplacePage() {
             />
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
             {items.map((row) => {
               const pkg = row.package;
               const tip = row.tipster;
@@ -105,11 +105,11 @@ export default function SubscriptionMarketplacePage() {
               return (
       <article
         key={pkg.id}
-        className="card-gradient rounded-2xl border border-[var(--border)] shadow-lg overflow-hidden flex flex-col hover:shadow-xl hover:-translate-y-px transition-[box-shadow,transform] duration-200 ease-out"
+        className="card-gradient rounded-2xl border border-[var(--border)] shadow-lg overflow-hidden flex flex-col w-full min-w-0 max-w-full hover:shadow-xl hover:-translate-y-px transition-[box-shadow,transform] duration-200 ease-out"
       >
-                  <div className="p-4 sm:p-5 flex flex-col flex-1">
-                    <div className="flex items-start gap-3 mb-3">
-                      <Link href={tip ? `/tipsters/${tip.username}` : '#'} className="flex-shrink-0">
+                  <div className="p-4 sm:p-5 flex flex-col flex-1 min-w-0">
+                    <div className="flex items-start gap-3 mb-3 min-w-0">
+                      <Link href={tip ? `/tipsters/${tip.username}` : '#'} className="shrink-0">
                         <div className="w-14 h-14 rounded-full overflow-hidden bg-[var(--bg)] border border-[var(--border)]">
                           {tip?.avatarUrl ? (
                             <Image
@@ -152,7 +152,7 @@ export default function SubscriptionMarketplacePage() {
                       <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">
                         {t('subscriptions.performance_heading')}
                       </p>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                         <div>
                           <span className="text-[var(--text-muted)] text-xs block">{t('tipster.roi')}</span>
                           <span className="font-bold text-emerald-600 dark:text-emerald-400">{roiDisplay}</span>
@@ -161,7 +161,7 @@ export default function SubscriptionMarketplacePage() {
                           <span className="text-[var(--text-muted)] text-xs block">{t('tipster.win_rate')}</span>
                           <span className="font-bold text-[var(--text)]">{wrDisplay}</span>
                         </div>
-                        <div className="col-span-2">
+                        <div className="sm:col-span-2">
                           <span className="text-[var(--text-muted)] text-xs block">{t('subscriptions.picks_record')}</span>
                           <span className="font-medium text-[var(--text)]">
                             {perf
@@ -170,7 +170,7 @@ export default function SubscriptionMarketplacePage() {
                           </span>
                         </div>
                         {tip != null && (tip.currentStreak > 0 || tip.bestStreak > 0) && (
-                          <div className="col-span-2 text-xs text-[var(--text-muted)]">
+                          <div className="sm:col-span-2 text-xs text-[var(--text-muted)]">
                             {t('tipster.streak')}: {tip.currentStreak} · {t('tipster.best_streak')}: {tip.bestStreak}
                           </div>
                         )}
@@ -184,12 +184,12 @@ export default function SubscriptionMarketplacePage() {
                         <span className="text-sm font-normal text-[var(--text-muted)]">/ {pkg.durationDays}d</span>
                       </p>
                       <div className="mt-2 rounded-lg border border-[var(--border)] bg-[var(--bg-warm)]/70 px-3 py-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                        <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2 min-w-0">
+                          <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)] min-w-0">
                             {t('subscriptions.roi_guarantee_label')}
                           </span>
                           <span
-                            className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                            className={`self-start sm:self-auto shrink-0 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
                               hasCommittedRoi
                                 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
                                 : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'

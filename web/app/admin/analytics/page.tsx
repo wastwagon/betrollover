@@ -385,9 +385,9 @@ export default function AdminAnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
         <AdminSidebar />
-        <main className="admin-main-sibling section-ux-admin-main flex items-center justify-center">
+        <main className="admin-main-sibling section-ux-admin-main min-w-0 flex items-center justify-center">
           <div className="w-10 h-10 rounded-full border-4 border-red-500 border-t-transparent animate-spin" />
         </main>
       </div>
@@ -395,18 +395,18 @@ export default function AdminAnalyticsPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Advanced Analytics</h1>
+      <main className="admin-main-sibling section-ux-admin-main min-w-0">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Advanced Analytics</h1>
             <p className="text-gray-600 dark:text-gray-400">Platform insights and performance metrics.</p>
           </div>
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d')}
-            className="px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full sm:w-auto shrink-0 px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>
@@ -520,7 +520,7 @@ export default function AdminAnalyticsPage() {
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow p-5 flex flex-col justify-between">
               <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Settlements</p>
               <p className="text-xl font-bold text-gray-900 dark:text-white">{commissionRevenue.recentTransactions.length}</p>
-              <button
+              <button type="button"
                 onClick={() => setActiveTab('revenue')}
                 className="text-xs text-amber-600 hover:underline mt-auto"
               >
@@ -559,7 +559,7 @@ export default function AdminAnalyticsPage() {
         {/* Tabs */}
         <div className="flex gap-3 mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
           {(['overview', 'wallet', 'sports', 'revenue', 'users', 'picks', 'engagement', 'visitors', 'ai'] as const).map((tab) => (
-            <button
+            <button type="button"
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-6 py-3 font-semibold transition-colors border-b-2 whitespace-nowrap ${
@@ -821,9 +821,9 @@ export default function AdminAnalyticsPage() {
           <div className="space-y-6">
             {/* Commission revenue summary */}
             {commissionRevenue && (
-              <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/10 border border-amber-200 dark:border-amber-800/40 rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
+              <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/10 border border-amber-200 dark:border-amber-800/40 rounded-2xl p-4 sm:p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-4">
+                  <div className="min-w-0">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                       🏛 Platform Commission Revenue
                     </h3>
@@ -831,12 +831,12 @@ export default function AdminAnalyticsPage() {
                       Automatically deducted from tipster payouts on winning coupon settlements.
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-left sm:text-right shrink-0">
                     <p className="text-2xl font-bold text-amber-600">GHS {commissionRevenue.allTime.toFixed(2)}</p>
                     <p className="text-xs text-gray-500">All time</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 mb-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                   <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-amber-100 dark:border-amber-800/30">
                     <p className="text-xs text-gray-500 mb-1">Last 30 Days</p>
                     <p className="text-xl font-bold text-amber-600">GHS {commissionRevenue.last30d.toFixed(2)}</p>
@@ -917,12 +917,12 @@ export default function AdminAnalyticsPage() {
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Selling Picks</h3>
                     <div className="space-y-3">
                       {revenue.topSellingPicks.slice(0, 5).map((pick, i) => (
-                        <div key={i} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                          <div>
+                        <div key={i} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                          <div className="min-w-0">
                             <p className="font-medium text-gray-900 dark:text-white">Pick #{pick.pickId}</p>
                             <p className="text-sm text-gray-600 dark:text-gray-400">{pick.sales} sales</p>
                           </div>
-                          <p className="font-semibold text-green-600 dark:text-green-400">GHS {pick.revenue.toFixed(2)}</p>
+                          <p className="font-semibold text-green-600 dark:text-green-400 shrink-0">GHS {pick.revenue.toFixed(2)}</p>
                         </div>
                       ))}
                     </div>
@@ -932,12 +932,12 @@ export default function AdminAnalyticsPage() {
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Revenue by Tipster</h3>
                     <div className="space-y-3">
                       {revenue.revenueByTipster.slice(0, 5).map((tipster, i) => (
-                        <div key={i} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                          <div>
+                        <div key={i} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                          <div className="min-w-0">
                             <p className="font-medium text-gray-900 dark:text-white">Tipster #{tipster.tipsterId}</p>
                             <p className="text-sm text-gray-600 dark:text-gray-400">{tipster.sales} sales</p>
                           </div>
-                          <p className="font-semibold text-green-600 dark:text-green-400">GHS {tipster.revenue.toFixed(2)}</p>
+                          <p className="font-semibold text-green-600 dark:text-green-400 shrink-0">GHS {tipster.revenue.toFixed(2)}</p>
                         </div>
                       ))}
                     </div>
@@ -989,7 +989,7 @@ export default function AdminAnalyticsPage() {
                             <p className="font-medium text-gray-900 dark:text-white">User #{user.userId}</p>
                             <p className="text-sm text-gray-600 dark:text-gray-400">{user.purchaseCount} purchases</p>
                           </div>
-                          <div className="text-right text-sm">
+                          <div className="text-left sm:text-right text-sm shrink-0">
                             <p className="font-semibold text-green-600 dark:text-green-400">
                               GHS {(user.spentOnWinningCoupons ?? 0).toFixed(2)}{' '}
                               <span className="text-xs font-normal text-gray-500 dark:text-gray-400">on wins</span>
@@ -1052,14 +1052,14 @@ export default function AdminAnalyticsPage() {
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Performing Tipsters</h3>
               <div className="space-y-3">
                 {pickPerformance.topPerformers.map((performer, i) => (
-                  <div key={i} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <div>
+                  <div key={i} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div className="min-w-0">
                       <p className="font-medium text-gray-900 dark:text-white">Tipster #{performer.tipsterId}</p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         {performer.wonPicks}W / {performer.lostPicks}L ({performer.totalPicks} total)
                       </p>
                     </div>
-                    <p className="font-semibold text-green-600 dark:text-green-400">{(performer.winRate ?? 0).toFixed(1)}%</p>
+                    <p className="font-semibold text-green-600 dark:text-green-400 shrink-0">{(performer.winRate ?? 0).toFixed(1)}%</p>
                   </div>
                 ))}
               </div>
@@ -1122,9 +1122,9 @@ export default function AdminAnalyticsPage() {
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Logged-in sessions by traffic source</p>
                       <div className="space-y-2">
                         {visitorStats.conversionBySource.map((s) => (
-                          <div key={s.source} className="flex justify-between items-center p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-                            <span className="font-medium capitalize">{s.source}</span>
-                            <span>{s.sessions} ({s.percent}%)</span>
+                          <div key={s.source} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+                            <span className="font-medium capitalize min-w-0">{s.source}</span>
+                            <span className="shrink-0 text-sm sm:text-base">{s.sessions} ({s.percent}%)</span>
                           </div>
                         ))}
                       </div>
@@ -1157,9 +1157,9 @@ export default function AdminAnalyticsPage() {
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Countries</h3>
                         <div className="space-y-6 max-h-48 overflow-y-auto">
                           {visitorStats.byCountry.slice(0, 10).map((c) => (
-                            <div key={c.country} className="flex justify-between items-center">
-                              <span className="font-mono text-sm">{c.country === 'unknown' ? '—' : c.country}</span>
-                              <span className="font-semibold">{c.count}</span>
+                            <div key={c.country} className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between">
+                              <span className="font-mono text-sm min-w-0 break-all">{c.country === 'unknown' ? '—' : c.country}</span>
+                              <span className="font-semibold shrink-0">{c.count}</span>
                             </div>
                           ))}
                         </div>

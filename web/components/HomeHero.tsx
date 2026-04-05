@@ -168,7 +168,7 @@ export function HomeHero() {
   ];
 
   return (
-    <section className="relative overflow-hidden min-h-[380px] sm:min-h-[420px] md:min-h-[480px]">
+    <section className="relative overflow-hidden min-h-[380px] sm:min-h-[420px] md:min-h-[480px] w-full min-w-0 max-w-full">
       {/* Photoreal hero — AVIF (~40KB) + WebP (~52KB) @ 1376×768; no SVG collage */}
       <div className="absolute inset-0">
         {/* eslint-disable-next-line @next/next/no-img-element -- static AVIF/WebP pair; avoids optimizer re-encoding */}
@@ -190,10 +190,10 @@ export function HomeHero() {
         />
       </div>
 
-      <div className="relative max-w-7xl mx-auto section-ux-hero">
+      <div className="relative max-w-7xl mx-auto section-ux-hero w-full min-w-0">
         <h1 className="sr-only">{t('home.hero_title')}</h1>
         {/* Compact KPI Dashboard - 6 cards: platform + leading ROI + paid out */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
+        <div className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3 min-w-0">
           {statItems.map((item, idx) => {
             const cfg = statConfigBase[item.key];
             return (

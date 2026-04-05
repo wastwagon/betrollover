@@ -82,6 +82,9 @@ export default function AdminSettingsPage() {
   const [testEmailTo, setTestEmailTo] = useState('');
   const [testEmailLoading, setTestEmailLoading] = useState(false);
   const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [adminNotificationEmail, setAdminNotificationEmail] = useState('');
+  const [savingAdminNotificationEmail, setSavingAdminNotificationEmail] = useState(false);
+  const [adminNotificationEmailMsg, setAdminNotificationEmailMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [paystackSecretKey, setPaystackSecretKey] = useState('');
   const [paystackPublicKey, setPaystackPublicKey] = useState('');
   const [paystackMode, setPaystackMode] = useState<'live' | 'test'>('live');
@@ -127,7 +130,58 @@ export default function AdminSettingsPage() {
     loadSyncStatus();
     loadMigrationStatus();
     loadPaystackSettings();
+    loadSmtpNotificationInbox();
   }, [router]);
+
+  const loadSmtpNotificationInbox = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const res = await fetch(`${getApiUrl()}/admin/smtp-settings`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAdminNotificationEmail(typeof data?.adminNotificationEmail === 'string' ? data.adminNotificationEmail : '');
+      }
+    } catch {
+      /* noop */
+    }
+  };
+
+  const saveAdminNotificationEmail = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setSavingAdminNotificationEmail(true);
+    setAdminNotificationEmailMsg(null);
+    try {
+      const res = await fetch(`${getApiUrl()}/admin/smtp-settings`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ adminNotificationEmail: adminNotificationEmail.trim() || null }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setAdminNotificationEmailMsg({ type: 'success', text: 'Admin notification inbox saved.' });
+        await loadSmtpNotificationInbox();
+      } else {
+        setAdminNotificationEmailMsg({
+          type: 'error',
+          text: (data as { message?: string }).message || `Save failed (${res.status}).`,
+        });
+      }
+    } catch (e: unknown) {
+      setAdminNotificationEmailMsg({
+        type: 'error',
+        text: e instanceof Error ? e.message : 'Network error.',
+      });
+    } finally {
+      setSavingAdminNotificationEmail(false);
+    }
+  };
 
   const loadPaystackSettings = async () => {
     const token = localStorage.getItem('token');
@@ -453,13 +507,13 @@ export default function AdminSettingsPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main">
+      <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Platform Settings</h1>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Platform Settings</h1>
               <p className="text-gray-600 dark:text-gray-400">API keys, migrations, and platform configuration.</p>
             </div>
           </div>
@@ -474,12 +528,12 @@ export default function AdminSettingsPage() {
           </div>
         )}
         {!loading && !settings && (
-          <div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800 rounded-2xl p-8 max-w-2xl">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800 rounded-2xl p-4 sm:p-8 max-w-2xl">
             <h3 className="text-lg font-semibold text-amber-800 dark:text-amber-200 mb-2">Could not load settings</h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               The settings API may be unavailable or your session may have expired. Try refreshing the page or logging in again.
             </p>
-            <button
+            <button type="button"
               onClick={() => window.location.reload()}
               className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg"
             >
@@ -495,14 +549,14 @@ export default function AdminSettingsPage() {
                 ? 'border-emerald-200 dark:border-emerald-800' 
                 : 'border-amber-200 dark:border-amber-800'
             }`}>
-              <div className={`p-8 ${
+              <div className={`p-4 sm:p-8 ${
                 settings.apiSportsConfigured 
                   ? 'bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20' 
                   : 'bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20'
               }`}>
-                <div className="flex items-start justify-between mb-6">
-                  <div className="flex items-start gap-4">
-                    <div className={`p-3 rounded-xl ${
+                <div className="flex items-start justify-between mb-6 min-w-0">
+                  <div className="flex items-start gap-4 min-w-0 flex-1">
+                    <div className={`p-3 rounded-xl shrink-0 ${
                       settings.apiSportsConfigured 
                         ? 'bg-emerald-500 text-white' 
                         : 'bg-amber-500 text-white'
@@ -517,7 +571,7 @@ export default function AdminSettingsPage() {
                         </svg>
                       )}
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">API-Sports Football</h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                         External API integration for fixtures and match data
@@ -571,7 +625,7 @@ export default function AdminSettingsPage() {
                   {/* Usage Display */}
                   {usage && usage.limit > 0 && (
                     <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Daily API Usage</span>
                         <span className={`text-sm font-semibold ${
                           usage.remaining < usage.limit * 0.1 
@@ -632,8 +686,8 @@ export default function AdminSettingsPage() {
                   )}
 
                   {/* Action Buttons */}
-                  <div className="flex gap-3">
-                    <button
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button type="button"
                       onClick={testConnection}
                       disabled={testing || !apiKey.trim()}
                       className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
@@ -652,7 +706,7 @@ export default function AdminSettingsPage() {
                         </>
                       )}
                     </button>
-                    <button
+                    <button type="button"
                       onClick={saveApiKey}
                       disabled={saving || !apiKey.trim()}
                       className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
@@ -678,7 +732,7 @@ export default function AdminSettingsPage() {
 
             {/* SendGrid / Email Test */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-emerald-200 dark:border-emerald-800 overflow-hidden">
-              <div className="p-8 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20">
+              <div className="p-4 sm:p-8 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20">
                 <div className="flex items-start gap-4 mb-6">
                   <div className="p-3 rounded-xl bg-emerald-500 text-white">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -688,11 +742,48 @@ export default function AdminSettingsPage() {
                   <div>
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Email (SendGrid)</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Test email delivery. Configure SENDGRID_API_KEY and SMTP_FROM in .env.
+                      Test email delivery. Configure SENDGRID_API_KEY and SMTP_FROM in .env. Full SMTP and from-address settings are on{' '}
+                      <Link href="/admin/email" className="text-emerald-700 dark:text-emerald-300 font-medium underline underline-offset-2">
+                        Admin → Email / SMTP
+                      </Link>
+                      .
                     </p>
                   </div>
                 </div>
                 <div className="space-y-3">
+                  <div className="rounded-xl border-2 border-emerald-200/80 dark:border-emerald-800/80 bg-white/80 dark:bg-gray-800/80 p-4 space-y-2">
+                    <label htmlFor="admin-notification-inbox" className="block text-sm font-semibold text-gray-800 dark:text-gray-200">
+                      Admin notification inbox
+                    </label>
+                    <input
+                      id="admin-notification-inbox"
+                      type="email"
+                      value={adminNotificationEmail}
+                      onChange={(e) => setAdminNotificationEmail(e.target.value)}
+                      placeholder="ops@yourcompany.com"
+                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      Receives system alerts (withdrawals, support tickets, etc.) in addition to every user with the admin role. Optional: set{' '}
+                      <code className="text-[11px] bg-gray-100 dark:bg-gray-700 px-1 rounded">ADMIN_NOTIFICATION_EMAIL</code> on the server (comma-separated).
+                    </p>
+                    {adminNotificationEmailMsg && (
+                      <p
+                        role="status"
+                        className={`text-sm font-medium ${adminNotificationEmailMsg.type === 'success' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}
+                      >
+                        {adminNotificationEmailMsg.text}
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={saveAdminNotificationEmail}
+                      disabled={savingAdminNotificationEmail}
+                      className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors"
+                    >
+                      {savingAdminNotificationEmail ? 'Saving…' : 'Save notification inbox'}
+                    </button>
+                  </div>
                   <input
                     type="email"
                     value={testEmailTo}
@@ -713,7 +804,7 @@ export default function AdminSettingsPage() {
                       {testEmailResult.message}
                     </div>
                   )}
-                  <button
+                  <button type="button"
                     onClick={sendTestEmail}
                     disabled={testEmailLoading || !testEmailTo.trim()}
                     className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center gap-2"
@@ -742,7 +833,7 @@ export default function AdminSettingsPage() {
                 ? 'border-emerald-200 dark:border-emerald-800'
                 : 'border-amber-200 dark:border-amber-800'
             }`}>
-              <div className={`p-8 ${
+              <div className={`p-4 sm:p-8 ${
                 paystackConfigured
                   ? 'bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20'
                   : 'bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20'
@@ -811,7 +902,7 @@ export default function AdminSettingsPage() {
                       {paystackSaveResult.success ? '✓ ' : '✗ '}{paystackSaveResult.message}
                     </div>
                   )}
-                  <button
+                  <button type="button"
                     onClick={async () => {
                       const token = localStorage.getItem('token');
                       if (!token) return;
@@ -863,15 +954,15 @@ export default function AdminSettingsPage() {
 
             {/* Database migrations – auto-run on deploy; admin can run or mark applied */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-slate-200 dark:border-slate-700 overflow-hidden">
-              <div className="p-8 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900/20 dark:to-slate-800/20">
-                <div className="flex items-start justify-between mb-6">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-xl bg-slate-600 text-white">
+              <div className="p-4 sm:p-8 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900/20 dark:to-slate-800/20">
+                <div className="flex items-start justify-between mb-6 min-w-0">
+                  <div className="flex items-start gap-4 min-w-0 flex-1">
+                    <div className="p-3 rounded-xl bg-slate-600 text-white shrink-0">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
                       </svg>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Database migrations</h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                         Pending SQL files matching <code className="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">NNN_description.sql</code> in{' '}
@@ -907,7 +998,7 @@ export default function AdminSettingsPage() {
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-3">
-                      <button
+                      <button type="button"
                         onClick={runMigrations}
                         disabled={runningMigrations || (migrationStatus.pending.length === 0)}
                         className="px-5 py-2.5 bg-slate-600 hover:bg-slate-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center gap-2"
@@ -921,7 +1012,7 @@ export default function AdminSettingsPage() {
                           <>Run pending migrations</>
                         )}
                       </button>
-                      <button
+                      <button type="button"
                         onClick={markAllMigrationsApplied}
                         disabled={markAllAppliedLoading}
                         className="px-5 py-2.5 bg-slate-500 hover:bg-slate-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all"
@@ -944,15 +1035,15 @@ export default function AdminSettingsPage() {
             {/* Sync Status & Manual Sync */}
             {settings.apiSportsConfigured && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-blue-200 dark:border-blue-800 overflow-hidden">
-                <div className="p-8 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 rounded-xl bg-blue-500 text-white">
+                <div className="p-4 sm:p-8 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
+                  <div className="flex items-start justify-between mb-6 min-w-0">
+                    <div className="flex items-start gap-4 min-w-0 flex-1">
+                      <div className="p-3 rounded-xl bg-blue-500 text-white shrink-0">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Data Synchronization</h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                           Automatic sync runs daily. You can also manually sync fixtures and odds.
@@ -980,7 +1071,7 @@ export default function AdminSettingsPage() {
                           key={status.id}
                           className={`bg-white dark:bg-gray-700 rounded-xl p-4 border-2 ${borderClass}`}
                         >
-                          <div className="flex items-center justify-between mb-2">
+                          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                             <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 capitalize">
                               {status.syncType.replace(/([A-Z])/g, ' $1').trim()}
                             </span>
@@ -1016,7 +1107,7 @@ export default function AdminSettingsPage() {
 
                   {/* Manual Sync Buttons */}
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <button
+                    <button type="button"
                       onClick={syncFixtures}
                       disabled={syncingFixtures || !settings.apiSportsConfigured}
                       className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
@@ -1035,7 +1126,7 @@ export default function AdminSettingsPage() {
                         </>
                       )}
                     </button>
-                    <button
+                    <button type="button"
                       onClick={syncOdds}
                       disabled={syncingOdds || !settings.apiSportsConfigured}
                       className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
@@ -1105,8 +1196,8 @@ export default function AdminSettingsPage() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {/* Minimum ROI Card */}
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-2xl shadow-lg border-2 border-blue-200 dark:border-blue-800 p-6 hover:shadow-xl transition-all">
-                  <div className="flex items-center justify-between mb-4">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-2xl shadow-lg border-2 border-blue-200 dark:border-blue-800 p-4 sm:p-6 hover:shadow-xl transition-all">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">Minimum ROI</h3>
                     <span className="text-2xl">📊</span>
                   </div>
@@ -1126,7 +1217,7 @@ export default function AdminSettingsPage() {
                     />
                     <span className="text-gray-600 dark:text-gray-400 font-medium">%</span>
                   </div>
-                  <button
+                  <button type="button"
                     onClick={async () => {
                       const token = localStorage.getItem('token');
                       if (!token) return;
@@ -1171,8 +1262,8 @@ export default function AdminSettingsPage() {
                 </div>
 
                 {/* Minimum win rate (paid marketplace) */}
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 rounded-2xl shadow-lg border-2 border-emerald-200 dark:border-emerald-800 p-6 hover:shadow-xl transition-all">
-                  <div className="flex items-center justify-between mb-4">
+                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 rounded-2xl shadow-lg border-2 border-emerald-200 dark:border-emerald-800 p-4 sm:p-6 hover:shadow-xl transition-all">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">Minimum win rate</h3>
                     <span className="text-2xl">🎯</span>
                   </div>
@@ -1193,7 +1284,7 @@ export default function AdminSettingsPage() {
                     />
                     <span className="text-gray-600 dark:text-gray-400 font-medium">%</span>
                   </div>
-                  <button
+                  <button type="button"
                     onClick={async () => {
                       const token = localStorage.getItem('token');
                       if (!token) return;
@@ -1236,8 +1327,8 @@ export default function AdminSettingsPage() {
                 </div>
 
                 {/* AI marketplace coupon price */}
-                <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 rounded-2xl shadow-lg border-2 border-indigo-200 dark:border-indigo-800 p-6 hover:shadow-xl transition-all">
-                  <div className="flex items-center justify-between mb-4">
+                <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 rounded-2xl shadow-lg border-2 border-indigo-200 dark:border-indigo-800 p-4 sm:p-6 hover:shadow-xl transition-all">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">AI coupon price</h3>
                     <span className="text-2xl">🤖</span>
                   </div>
@@ -1261,7 +1352,7 @@ export default function AdminSettingsPage() {
                       className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
-                  <button
+                  <button type="button"
                     onClick={async () => {
                       const token = localStorage.getItem('token');
                       if (!token) return;
@@ -1306,8 +1397,8 @@ export default function AdminSettingsPage() {
                 </div>
 
                 {/* Max coupons per UTC day (anti-spam) */}
-                <div className="bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-900/20 dark:to-violet-800/20 rounded-2xl shadow-lg border-2 border-violet-200 dark:border-violet-800 p-6 hover:shadow-xl transition-all">
-                  <div className="flex items-center justify-between mb-4">
+                <div className="bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-900/20 dark:to-violet-800/20 rounded-2xl shadow-lg border-2 border-violet-200 dark:border-violet-800 p-4 sm:p-6 hover:shadow-xl transition-all">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">Coupons per day</h3>
                     <span className="text-2xl">📅</span>
                   </div>
@@ -1327,7 +1418,7 @@ export default function AdminSettingsPage() {
                     />
                     <span className="text-gray-600 dark:text-gray-400 font-medium whitespace-nowrap">/ day</span>
                   </div>
-                  <button
+                  <button type="button"
                     onClick={async () => {
                       const token = localStorage.getItem('token');
                       if (!token) return;
@@ -1370,8 +1461,8 @@ export default function AdminSettingsPage() {
                 </div>
 
                 {/* Platform Commission Rate Card */}
-                <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-2xl shadow-lg border-2 border-amber-200 dark:border-amber-800 p-6 hover:shadow-xl transition-all">
-                  <div className="flex items-center justify-between mb-4">
+                <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-2xl shadow-lg border-2 border-amber-200 dark:border-amber-800 p-4 sm:p-6 hover:shadow-xl transition-all">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">Platform Commission</h3>
                     <span className="text-2xl">💰</span>
                   </div>
@@ -1396,7 +1487,7 @@ export default function AdminSettingsPage() {
                     />
                     <span className="text-gray-600 dark:text-gray-400 font-medium">%</span>
                   </div>
-                  <button
+                  <button type="button"
                     onClick={async () => {
                       const token = localStorage.getItem('token');
                       if (!token) return;
@@ -1436,7 +1527,7 @@ export default function AdminSettingsPage() {
                 </div>
 
                 {/* Currency Card */}
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-2xl shadow-lg border-2 border-purple-200 dark:border-purple-800 p-6 hover:shadow-xl transition-all">
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-2xl shadow-lg border-2 border-purple-200 dark:border-purple-800 p-4 sm:p-6 hover:shadow-xl transition-all">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="p-3 bg-purple-500 rounded-xl text-white">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1452,7 +1543,7 @@ export default function AdminSettingsPage() {
                 </div>
 
                 {/* Country Card */}
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 rounded-2xl shadow-lg border-2 border-emerald-200 dark:border-emerald-800 p-6 hover:shadow-xl transition-all">
+                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 rounded-2xl shadow-lg border-2 border-emerald-200 dark:border-emerald-800 p-4 sm:p-6 hover:shadow-xl transition-all">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="p-3 bg-emerald-500 rounded-xl text-white">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1468,7 +1559,7 @@ export default function AdminSettingsPage() {
                 </div>
 
                 {/* App Name Card */}
-                <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-2xl shadow-lg border-2 border-red-200 dark:border-red-800 p-6 hover:shadow-xl transition-all">
+                <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-2xl shadow-lg border-2 border-red-200 dark:border-red-800 p-4 sm:p-6 hover:shadow-xl transition-all">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="p-3 bg-red-500 rounded-xl text-white">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1486,7 +1577,7 @@ export default function AdminSettingsPage() {
             </div>
 
             {/* Information Banner */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl border-2 border-blue-200 dark:border-blue-800 p-6">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl border-2 border-blue-200 dark:border-blue-800 p-4 sm:p-6">
               <div className="flex items-start gap-4">
                 <div className="p-2 bg-blue-500 rounded-lg text-white flex-shrink-0">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

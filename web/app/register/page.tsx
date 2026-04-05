@@ -113,11 +113,11 @@ function RegisterForm() {
   }
 
   const inputBase =
-    'w-full pl-11 pr-4 py-3 rounded-lg border border-slate-200/90 dark:border-slate-600 bg-white dark:bg-slate-950/40 text-[var(--text)] placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/15 transition-colors';
+    'w-full min-w-0 pl-11 pr-4 py-3 rounded-lg border border-slate-200/90 dark:border-slate-600 bg-white dark:bg-slate-950/40 text-[var(--text)] placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/15 transition-colors';
   const inputIcon = 'absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-400 pointer-events-none';
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] relative">
+    <div className="min-h-screen bg-[var(--bg)] relative w-full min-w-0 max-w-full overflow-x-hidden">
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.4] dark:opacity-[0.2]"
         aria-hidden
@@ -127,9 +127,9 @@ function RegisterForm() {
         }}
       />
       <UnifiedHeader />
-      <main className="section-ux-register-main">
-        <div className="relative w-full max-w-[440px]">
-          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white/90 dark:bg-slate-900/60 backdrop-blur-sm shadow-[0_1px_2px_rgb(0_0_0/0.04),0_24px_48px_-12px_rgb(0_0_0/0.08)] dark:shadow-[0_24px_48px_-12px_rgb(0_0_0/0.35)] px-8 py-10 sm:px-10 sm:py-11">
+      <main className="section-ux-register-main w-full min-w-0 max-w-full">
+        <div className="relative w-full max-w-[440px] min-w-0 mx-auto px-4 sm:px-0">
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white/90 dark:bg-slate-900/60 backdrop-blur-sm shadow-[0_1px_2px_rgb(0_0_0/0.04),0_24px_48px_-12px_rgb(0_0_0/0.08)] dark:shadow-[0_24px_48px_-12px_rgb(0_0_0/0.35)] px-5 py-8 sm:px-10 sm:py-11 min-w-0 max-w-full">
               <div className="text-center mb-9">
                 <h1 className="text-[1.65rem] sm:text-3xl font-semibold text-[var(--text)] tracking-[-0.02em] leading-tight">
                   {t('auth.create_account')}
@@ -151,12 +151,12 @@ function RegisterForm() {
               </div>
 
               {step === 'email' ? (
-              <form onSubmit={handleSendOtp} className="space-y-5">
-                <div>
+              <form onSubmit={handleSendOtp} className="space-y-5 min-w-0">
+                <div className="min-w-0">
                   <label htmlFor="email" className="block text-sm font-semibold text-[var(--text)] mb-2">
                     {t('auth.email_label')}
                   </label>
-                  <div className="relative">
+                  <div className="relative min-w-0">
                     <span className={inputIcon} aria-hidden>
                       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                     </span>
@@ -184,9 +184,9 @@ function RegisterForm() {
                 </button>
               </form>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-5 min-w-0">
                 {/* Full width: email badge + OTP */}
-                <div className="rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-600/60 px-4 py-3 flex items-center gap-2 flex-wrap">
+                <div className="rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-600/60 px-4 py-3 flex items-center gap-2 flex-wrap min-w-0">
                   <span className="text-sm text-[var(--text)] font-medium truncate flex-1 min-w-0">{email}</span>
                   <span className="text-xs text-emerald-600 font-semibold shrink-0">✓ {t('auth.email_verified')}</span>
                   <button
@@ -197,11 +197,11 @@ function RegisterForm() {
                     {t('auth.change')}
                   </button>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <label htmlFor="otpCode" className="block text-sm font-semibold text-[var(--text)] mb-2">
                     {t('auth.verification_code')}
                   </label>
-                  <div className="relative">
+                  <div className="relative min-w-0">
                     <span className={inputIcon} aria-hidden>
                       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                     </span>
@@ -246,12 +246,12 @@ function RegisterForm() {
                 </div>
 
                 {/* Two-column grid for form fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 min-w-0">
+                  <div className="min-w-0">
                     <label htmlFor="username" className="block text-sm font-semibold text-[var(--text)] mb-2">
                       {t('auth.username_label')}
                     </label>
-                    <div className="relative">
+                    <div className="relative min-w-0">
                       <span className={inputIcon} aria-hidden>
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                       </span>
@@ -267,11 +267,11 @@ function RegisterForm() {
                       />
                     </div>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <label htmlFor="displayName" className="block text-sm font-semibold text-[var(--text)] mb-2">
                       {t('auth.full_name')}
                     </label>
-                    <div className="relative">
+                    <div className="relative min-w-0">
                       <span className={inputIcon} aria-hidden>
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       </span>
@@ -288,11 +288,11 @@ function RegisterForm() {
                     </div>
                     <p className="mt-2 text-xs text-[var(--text-muted)]">{t('auth.name_hint')}</p>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <label htmlFor="dateOfBirth" className="block text-sm font-semibold text-[var(--text)] mb-2">
                       {t('auth.date_of_birth')}
                     </label>
-                    <div className="relative">
+                    <div className="relative min-w-0">
                       <span className={inputIcon} aria-hidden>
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                       </span>
@@ -308,11 +308,11 @@ function RegisterForm() {
                     </div>
                     <p className="mt-2 text-xs text-[var(--text-muted)]">{t('auth.must_be_18')}</p>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <label className="block text-sm font-semibold text-[var(--text)] mb-2">
                       {t('auth.referral_optional')}
                     </label>
-                    <div className="relative">
+                    <div className="relative min-w-0">
                       <span className={inputIcon} aria-hidden>
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                       </span>
@@ -330,11 +330,11 @@ function RegisterForm() {
                 </div>
 
                 {/* Full width: passwords */}
-                <div>
+                <div className="min-w-0">
                   <label htmlFor="password" className="block text-sm font-semibold text-[var(--text)] mb-2">
                     {t('auth.password_label')}
                   </label>
-                  <div className="relative">
+                  <div className="relative min-w-0">
                     <span className={inputIcon} aria-hidden>
                       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                     </span>
@@ -368,11 +368,11 @@ function RegisterForm() {
                     </button>
                   </div>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <label htmlFor="confirmPassword" className="block text-sm font-semibold text-[var(--text)] mb-2">
                     {t('auth.confirm_password_label')}
                   </label>
-                  <div className="relative">
+                  <div className="relative min-w-0">
                     <span className={inputIcon} aria-hidden>
                       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                     </span>
@@ -436,7 +436,7 @@ function RegisterForm() {
 export default function RegisterPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center w-full min-w-0 max-w-full overflow-x-hidden">
         <div className="w-8 h-8 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" />
       </div>
     }>

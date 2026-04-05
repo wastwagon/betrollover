@@ -58,12 +58,12 @@ function SidebarContent({
 
   return (
     <>
-      <div className="p-4 border-b border-[var(--border)] shrink-0">
-        <div className="flex items-center justify-between">
+      <div className="p-4 border-b border-[var(--border)] shrink-0 min-w-0">
+        <div className="flex items-center justify-between min-w-0 gap-2">
           <Link
             href="/dashboard"
             onClick={onNavLink('/dashboard')}
-            className="font-bold text-lg text-[var(--text)] hover:text-[var(--primary)] transition-colors"
+            className="font-bold text-lg text-[var(--text)] hover:text-[var(--primary)] transition-colors min-w-0 truncate"
           >
             BetRollover Admin
           </Link>
@@ -77,12 +77,12 @@ function SidebarContent({
               key={item.href}
               href={item.href}
               onClick={onNavLink(item.href)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors min-w-0 ${
                 isActive ? 'bg-[var(--primary)] text-white' : 'text-[var(--text-muted)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)]'
               }`}
             >
-              <span>{item.icon}</span>
-              <span className="text-sm font-medium">{item.label}</span>
+              <span className="shrink-0">{item.icon}</span>
+              <span className="text-sm font-medium min-w-0 truncate">{item.label}</span>
             </Link>
           );
         })}
@@ -100,10 +100,10 @@ function SidebarContent({
               router.push('/');
             }
           }}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[var(--text-muted)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] transition-colors"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[var(--text-muted)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] transition-colors min-w-0"
         >
-          <span>🚪</span>
-          <span className="text-sm font-medium">Sign Out</span>
+          <span className="shrink-0">🚪</span>
+          <span className="text-sm font-medium min-w-0 truncate">Sign Out</span>
         </Link>
       </div>
     </>
@@ -137,7 +137,7 @@ export function AdminSidebar() {
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
-        className="md:hidden fixed left-4 z-[60] p-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)] text-[var(--text)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] transition-colors shadow-lg top-[calc(env(safe-area-inset-top,0px)+2.75rem)]"
+        className="admin-mobile-nav-trigger md:hidden fixed left-4 z-[60] p-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)] text-[var(--text)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] transition-colors shadow-lg top-[calc(env(safe-area-inset-top,0px)+0.75rem)]"
         aria-label="Open admin menu"
         aria-expanded={mobileOpen}
       >
@@ -147,7 +147,7 @@ export function AdminSidebar() {
       </button>
 
       {/* Desktop sidebar — always visible on md+ */}
-      <aside className="hidden md:flex w-56 min-h-screen bg-[var(--card)] border-r border-[var(--border)] flex-col fixed left-0 top-0 bottom-0 z-50 shadow-card">
+      <aside className="hidden md:flex w-56 min-h-screen min-w-0 bg-[var(--card)] border-r border-[var(--border)] flex-col fixed left-0 top-0 bottom-0 z-50 shadow-card overflow-x-hidden">
         <SidebarContent onItemClick={() => {}} linkMode="default" />
       </aside>
 
@@ -160,15 +160,15 @@ export function AdminSidebar() {
           aria-label="Admin navigation menu"
         >
           <div
-            className="relative z-10 w-[280px] sm:w-[320px] max-w-[85vw] shrink-0 h-full min-h-[100dvh] min-h-screen bg-[var(--card)] border-r border-[var(--border)] shadow-2xl flex flex-col animate-slide-in-left pointer-events-auto"
+            className="relative z-10 w-[280px] sm:w-[320px] max-w-[85vw] shrink-0 min-w-0 h-full min-h-[100dvh] min-h-screen bg-[var(--card)] border-r border-[var(--border)] shadow-2xl flex flex-col animate-slide-in-left pointer-events-auto overflow-x-hidden"
             style={{
               paddingTop: 'max(0px, env(safe-area-inset-top, 0px))',
               paddingBottom: 'max(0px, env(safe-area-inset-bottom, 0px))',
             }}
           >
-            <div className="p-4 border-b border-[var(--border)] shrink-0">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold text-[var(--text)]">BetRollover Admin</h2>
+            <div className="p-4 border-b border-[var(--border)] shrink-0 min-w-0">
+              <div className="flex items-center justify-between gap-2 min-w-0">
+                <h2 className="text-base font-semibold text-[var(--text)] min-w-0 flex-1 truncate pr-2">BetRollover Admin</h2>
                 <button
                   type="button"
                   onClick={() => setMobileOpen(false)}

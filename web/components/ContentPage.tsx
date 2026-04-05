@@ -28,9 +28,9 @@ export function ContentPage({ slug, fallbackTitle }: { slug: string; fallbackTit
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg)]">
+      <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <UnifiedHeader />
-        <div className="flex items-center justify-center py-24">
+        <div className="flex items-center justify-center py-24 w-full min-w-0">
           <div className="w-10 h-10 rounded-full border-2 border-[var(--primary)] border-t-transparent animate-spin" />
         </div>
       </div>
@@ -39,9 +39,9 @@ export function ContentPage({ slug, fallbackTitle }: { slug: string; fallbackTit
 
   if (!page) {
     return (
-      <div className="min-h-screen bg-[var(--bg)]">
+      <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <UnifiedHeader />
-        <div className="flex flex-col items-center justify-center py-24 px-6">
+        <div className="flex flex-col items-center justify-center py-24 px-6 w-full min-w-0">
           <h1 className="text-lg font-semibold text-[var(--text)]">Page not found</h1>
           <Link href="/" className="mt-4 text-[var(--primary)] hover:underline">
             Go home
@@ -52,16 +52,16 @@ export function ContentPage({ slug, fallbackTitle }: { slug: string; fallbackTit
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
 
-      <main>
-        <article className="section-ux-prose">
+      <main className="w-full min-w-0">
+        <article className="section-ux-prose min-w-0">
           <h1 className="text-xl md:text-2xl font-semibold text-[var(--text)] mb-6">
             {page.title || fallbackTitle}
           </h1>
-          <div className="prose prose-slate max-w-none">
-            <div className="text-[var(--text)] whitespace-pre-wrap leading-relaxed">
+          <div className="prose prose-slate max-w-none min-w-0">
+            <div className="text-[var(--text)] whitespace-pre-wrap leading-relaxed min-w-0">
               {page.content}
             </div>
           </div>

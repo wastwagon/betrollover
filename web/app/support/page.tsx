@@ -95,9 +95,9 @@ function SupportContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
-      <main className="section-ux-page">
+      <main className="section-ux-page w-full min-w-0">
         <PageHeader
           label={t('support.help_centre')}
           title={t('support.title')}
@@ -179,6 +179,7 @@ function SupportContent() {
               ) : null}
               {error && <p className="text-sm text-red-500">{error}</p>}
               <button
+                type="button"
                 onClick={submit}
                 disabled={submitting}
                 className="w-full py-3 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] disabled:opacity-50 transition-colors"
@@ -203,7 +204,7 @@ function SupportContent() {
           <div className="space-y-3">
             {tickets.map((ticket) => (
               <div key={ticket.id} className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm">
-                <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3 mb-2">
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-[var(--text)] truncate">
                       {STATUS_ICON[ticket.status] ?? '📋'} {ticket.subject}
@@ -216,7 +217,7 @@ function SupportContent() {
                       · {new Date(ticket.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
                     </p>
                   </div>
-                  <span className={`flex-shrink-0 text-xs px-2.5 py-1 rounded-full font-semibold capitalize ${STATUS_STYLE[ticket.status] ?? 'bg-gray-100 text-gray-500'}`}>
+                  <span className={`self-start sm:self-auto flex-shrink-0 text-xs px-2.5 py-1 rounded-full font-semibold capitalize ${STATUS_STYLE[ticket.status] ?? 'bg-gray-100 text-gray-500'}`}>
                     {ticket.status.replace('_', ' ')}
                   </span>
                 </div>
@@ -239,7 +240,7 @@ function SupportContent() {
 export default function SupportPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center w-full min-w-0 max-w-full overflow-x-hidden">
         <div className="w-8 h-8 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" />
       </div>
     }>

@@ -84,18 +84,20 @@ export default function CouponsArchivePage() {
   const winRate = coupons.length > 0 ? Math.round((wonCount / coupons.length) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
-      <main className="section-ux-page-wide">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6">
-          <PageHeader
-            label="Archive"
-            title="Coupons Archive"
-            tagline="Historical coupons — settled results with full performance record."
-          />
+      <main className="section-ux-page-wide w-full min-w-0 max-w-full">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6 min-w-0">
+          <div className="min-w-0 flex-1 max-w-full">
+            <PageHeader
+              label="Archive"
+              title="Coupons Archive"
+              tagline="Historical coupons — settled results with full performance record."
+            />
+          </div>
           <Link
             href="/coupons"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors self-start sm:self-auto"
+            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto self-stretch sm:self-auto shrink-0"
           >
             ← Active Coupons
           </Link>
@@ -107,16 +109,16 @@ export default function CouponsArchivePage() {
 
         {/* Summary stats */}
         {!loading && coupons.length > 0 && (
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 min-w-0">
+            <div className="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center min-w-0">
               <p className="text-lg font-semibold text-[var(--text)]">{coupons.length}</p>
               <p className="text-xs text-[var(--text-muted)] mt-1">Total Settled</p>
             </div>
-            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
+            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center min-w-0">
               <p className="text-lg font-semibold text-emerald-700">{wonCount}</p>
               <p className="text-xs text-emerald-600 mt-1">Won</p>
             </div>
-            <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-center">
+            <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-center min-w-0">
               <p className="text-lg font-semibold text-red-700">{lostCount}</p>
               <p className="text-xs text-red-600 mt-1">Lost ({winRate}% win rate)</p>
             </div>
@@ -124,12 +126,14 @@ export default function CouponsArchivePage() {
         )}
 
         {/* Result filter */}
-        <div className="flex gap-2 mb-6">
+        <div className="mb-6 w-full min-w-0 overflow-hidden">
+        <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
           {(['all', 'won', 'lost'] as const).map((f) => (
             <button
               key={f}
+              type="button"
               onClick={() => setResultFilter(f)}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+              className={`shrink-0 px-4 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
                 resultFilter === f
                   ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
                   : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text)]'
@@ -139,9 +143,10 @@ export default function CouponsArchivePage() {
             </button>
           ))}
         </div>
+        </div>
 
         {loading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-w-0">
             {[1, 2, 3, 4].map((i) => <LoadingSkeleton key={i} count={1} className="h-64 rounded-2xl" />)}
           </div>
         ) : filtered.length === 0 ? (
@@ -152,7 +157,7 @@ export default function CouponsArchivePage() {
             actionHref="/coupons"
           />
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-w-0">
             {filtered.map((coupon) => (
               <PickCard
                 key={coupon.id}

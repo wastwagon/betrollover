@@ -137,7 +137,7 @@ export function LeagueInsightsPanel({
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-[var(--text)] hover:bg-[var(--primary-light)]/30 transition-colors"
+          className="w-full min-w-0 flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-[var(--text)] hover:bg-[var(--primary-light)]/30 transition-colors"
         >
           <span className="flex flex-col items-start gap-0.5 min-w-0">
             <span className="flex items-center gap-2 min-w-0 w-full">
@@ -165,7 +165,7 @@ export function LeagueInsightsPanel({
       )}
 
       {isFull && (
-        <div className="px-3 sm:px-4 py-3 border-b border-[var(--border)] bg-[var(--card)]/40 flex flex-wrap items-center justify-between gap-2">
+        <div className="px-3 sm:px-4 py-3 border-b border-[var(--border)] bg-[var(--card)]/40 flex flex-wrap items-center justify-between gap-2 min-w-0">
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-lg" aria-hidden>📊</span>
             <div className="min-w-0">

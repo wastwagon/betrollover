@@ -37,6 +37,7 @@ export function SuccessToast({ message, onClose, duration = 4000 }: SuccessToast
           <p className="text-sm font-medium text-emerald-900 dark:text-emerald-200">{message}</p>
         </div>
         <button
+          type="button"
           onClick={() => {
             setIsVisible(false);
             setTimeout(onClose, 300);

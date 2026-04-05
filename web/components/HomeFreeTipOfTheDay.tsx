@@ -90,8 +90,8 @@ export function HomeFreeTipOfTheDay() {
 
   if (loading) {
     return (
-      <section className="py-12 md:py-16 border-t border-[var(--border)] bg-[var(--bg)]">
-        <div className="section-ux-gutter-wide">
+      <section className="py-12 md:py-16 border-t border-[var(--border)] bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
+        <div className="section-ux-gutter-wide w-full min-w-0">
           <h2 className="text-base font-semibold text-[var(--text)] mb-4 sm:mb-6 sm:text-lg md:text-xl">Free Tip of the Day</h2>
           <div className="max-w-md h-64 rounded-2xl bg-[var(--card)] animate-pulse" />
         </div>
@@ -107,10 +107,10 @@ export function HomeFreeTipOfTheDay() {
   const sportMeta = SPORT_META[sportKey] ?? SPORT_META['football'];
 
   return (
-    <section className="py-12 md:py-16 border-t border-[var(--border)] bg-gradient-to-br from-amber-50/50 dark:from-amber-950/20 to-[var(--bg)]">
-      <div className="section-ux-gutter-wide">
-        <div className="flex items-center justify-between mb-6">
-          <div>
+    <section className="py-12 md:py-16 border-t border-[var(--border)] bg-gradient-to-br from-amber-50/50 dark:from-amber-950/20 to-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
+      <div className="section-ux-gutter-wide w-full min-w-0">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
+          <div className="min-w-0">
             <div className="flex items-center gap-2 mb-2">
               <span className="inline-block px-3 py-1 rounded-full bg-amber-200 dark:bg-amber-800/50 text-amber-900 dark:text-amber-100 text-xs font-semibold">
                 Free
@@ -126,12 +126,12 @@ export function HomeFreeTipOfTheDay() {
           </div>
           <Link
             href="/marketplace"
-            className="text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline"
+            className="text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline shrink-0 w-fit"
           >
             All coupons →
           </Link>
         </div>
-        <div className="max-w-lg">
+        <div className="max-w-lg w-full min-w-0">
           <PickCard
             id={tip.id}
             title={tip.title}

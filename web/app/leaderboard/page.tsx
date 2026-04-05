@@ -113,32 +113,33 @@ export default function LeaderboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
-      <main className="section-ux-page">
+      <main className="section-ux-page w-full min-w-0">
         <PageHeader
           label={t('nav.leaderboard')}
           title={t('seo.leaderboard_title').split(' | ')[0]}
           tagline={t('seo.leaderboard_desc')}
         />
 
-        <div className="flex flex-wrap items-center gap-2 mb-6">
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 mb-6 min-w-0 max-w-full">
           <Link
             href="/tipsters"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
           >
             <span aria-hidden>👤</span> {t('nav.tipsters')}
           </Link>
           <Link
             href="/create-pick"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--primary)]/50 bg-[var(--primary)]/10 text-sm font-medium text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors"
+            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--primary)]/50 bg-[var(--primary)]/10 text-sm font-medium text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors w-full sm:w-auto"
           >
             <span aria-hidden>🎯</span> {t('nav.create_coupon')}
           </Link>
         </div>
 
         {/* Period tabs */}
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="mb-4 w-full min-w-0 overflow-hidden">
+        <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
           {([
             { key: 'all_time' as Period, icon: '🏆', labelKey: 'tipster.period_alltime' },
             { key: 'monthly'  as Period, icon: '📅', labelKey: 'tipster.period_monthly' },
@@ -146,8 +147,9 @@ export default function LeaderboardPage() {
           ]).map(p => (
             <button
               key={p.key}
+              type="button"
               onClick={() => setPeriod(p.key)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+              className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                 period === p.key
                   ? 'bg-[var(--primary)] text-white shadow-md'
                   : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
@@ -157,6 +159,7 @@ export default function LeaderboardPage() {
             </button>
           ))}
         </div>
+        </div>
 
         {/* Full-width ad */}
         <div className="mb-8 w-full">
@@ -164,7 +167,8 @@ export default function LeaderboardPage() {
         </div>
 
         {/* Sport filter */}
-        <div className="flex flex-wrap gap-2 mb-8">
+        <div className="mb-8 w-full min-w-0 overflow-hidden">
+        <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
           {([
             { key: 'all' as SportFilter,               icon: '🌍', labelKey: 'marketplace.filter_all_sports' },
             { key: 'football' as SportFilter,          icon: '⚽', labelKey: 'nav.football' },
@@ -177,8 +181,9 @@ export default function LeaderboardPage() {
           ]).map(s => (
             <button
               key={s.key}
+              type="button"
               onClick={() => setSport(s.key)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+              className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
                 sport === s.key
                   ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
                   : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
@@ -187,6 +192,7 @@ export default function LeaderboardPage() {
               <span>{s.icon}</span><span>{t(s.labelKey)}</span>
             </button>
           ))}
+        </div>
         </div>
 
         {/* Table */}
@@ -213,9 +219,9 @@ export default function LeaderboardPage() {
             )}
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2 min-w-0">
             {/* Desktop table header */}
-            <div className="hidden md:grid grid-cols-[3rem_1fr_8rem_8rem_8rem_8rem] gap-4 px-4 py-2 text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
+            <div className="hidden md:grid grid-cols-[3rem_1fr_8rem_8rem_8rem_8rem] gap-4 px-4 py-2 text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] min-w-0">
               <span>#</span>
               <span>{t('nav.tipsters')}</span>
               <span className="text-center">{t('tipster.win_rate')}</span>
@@ -235,16 +241,16 @@ export default function LeaderboardPage() {
               return (
                 <div
                   key={entry.id}
-                  className={`flex md:grid md:grid-cols-[3rem_1fr_8rem_8rem_8rem_8rem] items-center gap-3 md:gap-4 px-4 py-3.5 rounded-2xl border transition-all hover:border-[var(--primary)]/30 hover:shadow-sm ${
+                  className={`flex md:grid md:grid-cols-[3rem_1fr_8rem_8rem_8rem_8rem] items-center gap-3 md:gap-4 px-4 py-3.5 rounded-2xl border transition-all hover:border-[var(--primary)]/30 hover:shadow-sm min-w-0 w-full max-w-full overflow-x-hidden ${
                     rank <= 3
                       ? 'bg-gradient-to-r from-amber-50/60 to-white border-amber-200/60'
                       : 'bg-[var(--card)] border-[var(--border)]'
                   }`}
                 >
-                  <div className="flex-shrink-0"><RankBadge rank={rank} /></div>
+                  <div className="shrink-0"><RankBadge rank={rank} /></div>
 
                   {/* Tipster info */}
-                  <Link href={`/tipsters/${entry.username}`} className="flex items-center gap-3 min-w-0 group">
+                  <Link href={`/tipsters/${entry.username}`} className="flex flex-1 items-center gap-3 min-w-0 max-w-full group md:max-w-none md:flex-initial">
                     <div className="relative w-10 h-10 flex-shrink-0">
                       {avatarSrc ? (
                         <Image
@@ -260,14 +266,14 @@ export default function LeaderboardPage() {
                         </div>
                       )}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="font-semibold text-[var(--text)] truncate group-hover:text-[var(--primary)] transition-colors">
                         {entry.display_name}
                       </p>
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-xs text-[var(--text-muted)] truncate">@{entry.username}</p>
+                      <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                        <p className="text-xs text-[var(--text-muted)] truncate min-w-0">@{entry.username}</p>
                         {entry.avg_rating != null && entry.avg_rating > 0 && (
-                          <span className="flex items-center gap-0.5">
+                          <span className="flex items-center gap-0.5 shrink-0">
                             <span className="text-amber-400 text-[10px]">★</span>
                             <span className="text-[10px] font-semibold text-amber-600">{Number(entry.avg_rating).toFixed(1)}</span>
                             {entry.review_count != null && entry.review_count > 0 && (
@@ -298,7 +304,7 @@ export default function LeaderboardPage() {
                   </div>
 
                   {/* Mobile stats */}
-                  <div className="md:hidden flex items-center gap-3 ml-auto flex-shrink-0">
+                  <div className="md:hidden flex items-center gap-2 sm:gap-3 ml-auto shrink-0">
                     <span className={`text-xs font-bold ${winRate >= 60 ? 'text-emerald-600' : 'text-[var(--text)]'}`}>
                       {winRate.toFixed(1)}% WR
                     </span>

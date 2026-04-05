@@ -253,12 +253,12 @@ function CommunityPageInner() {
   const activeRoom = rooms.find((r) => r.slug === activeSlug);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-950 text-white">
+    <div className="min-h-screen flex flex-col bg-gray-950 text-white w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
 
-      <div className="section-ux-community-shell" style={{ height: 'calc(100vh - 140px)' }}>
+      <div className="section-ux-community-shell w-full min-w-0" style={{ height: 'calc(100vh - 140px)' }}>
         {/* Active users bar - top center */}
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-800/95 border border-gray-700 text-sm text-gray-300 shadow-lg">
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 max-w-[calc(100vw-1rem)] flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-800/95 border border-gray-700 text-sm text-gray-300 shadow-lg">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" aria-hidden />
           {totalOnline !== null ? (
             <span>{totalOnline === 1 ? t('community.users_online', { count: '1' }) : t('community.users_online_plural', { count: String(totalOnline) })}</span>
@@ -273,6 +273,7 @@ function CommunityPageInner() {
           {rooms.map((room) => (
             <button
               key={room.slug}
+              type="button"
               onClick={() => router.push(`/community?room=${room.slug}`)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
                 activeSlug === room.slug
@@ -312,15 +313,15 @@ function CommunityPageInner() {
         </aside>
 
         {/* Chat panel + right ad column */}
-        <div className="flex-1 flex gap-4 min-w-0">
+        <div className="flex-1 flex gap-2 sm:gap-4 min-w-0">
           <div className="flex-1 flex flex-col bg-gray-900 rounded-xl overflow-hidden border border-gray-800 min-w-0">
 
           {/* Room header */}
-          <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">{activeRoom?.icon}</span>
-              <div>
-                <h1 className="font-bold text-white">{activeRoom?.name || 'Loading...'}</h1>
+          <div className="px-3 sm:px-4 py-3 border-b border-gray-800 flex items-center justify-between gap-2 min-w-0">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <span className="text-2xl shrink-0">{activeRoom?.icon}</span>
+              <div className="min-w-0">
+                <h1 className="font-bold text-white truncate">{activeRoom?.name || 'Loading...'}</h1>
                 {activeRoom?.description && (
                   <p className="text-xs text-gray-400">{activeRoom.description}</p>
                 )}
@@ -328,7 +329,7 @@ function CommunityPageInner() {
             </div>
             {/* Mobile room selector */}
             <select
-              className="md:hidden bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-2 py-1"
+              className="md:hidden shrink-0 min-w-0 max-w-[45%] bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-2 py-1"
               value={activeSlug}
               onChange={(e) => router.push(`/community?room=${e.target.value}`)}
             >
@@ -340,10 +341,10 @@ function CommunityPageInner() {
 
           {/* Pinned message */}
           {pinnedMsg && (
-            <div className="px-4 py-2 bg-indigo-950 border-b border-indigo-800 flex items-start gap-2">
-              <span className="text-indigo-400 text-sm">📌</span>
-              <p className="text-sm text-indigo-200 flex-1">{pinnedMsg.content}</p>
-              <span className="text-xs text-indigo-400">{pinnedMsg.user.username}</span>
+            <div className="px-4 py-2 bg-indigo-950 border-b border-indigo-800 flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-2">
+              <span className="text-indigo-400 text-sm shrink-0">📌</span>
+              <p className="text-sm text-indigo-200 flex-1 min-w-0 break-words">{pinnedMsg.content}</p>
+              <span className="text-xs text-indigo-400 shrink-0 sm:ml-auto">{pinnedMsg.user.username}</span>
             </div>
           )}
 
@@ -386,6 +387,7 @@ function CommunityPageInner() {
                         return (
                           <button
                             key={emoji}
+                            type="button"
                             onClick={() => handleReact(msg.id, emoji)}
                             className={`text-sm px-2 py-0.5 rounded-full border transition-colors ${
                               count > 0
@@ -399,8 +401,9 @@ function CommunityPageInner() {
                       })}
                       {currentUser && msg.user.id !== currentUser.id && (
                         <button
+                          type="button"
                           onClick={() => setReportingId(reportingId === msg.id ? null : msg.id)}
-                          className="opacity-0 group-hover:opacity-100 text-xs text-gray-500 hover:text-red-400 transition-all ml-1"
+                          className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-xs text-gray-500 hover:text-red-400 transition-all ml-1"
                         >
                           ⚑ Report
                         </button>
@@ -412,12 +415,13 @@ function CommunityPageInner() {
                       <div className="mt-1 flex items-center gap-2 text-sm">
                         <span className="text-gray-400">{t('community.report_confirm')}</span>
                         <button
+                          type="button"
                           onClick={() => handleReport(msg.id)}
                           className="text-red-400 hover:text-red-300 font-medium"
                         >
                           {t('community.report_yes')}
                         </button>
-                        <button onClick={() => setReportingId(null)} className="text-gray-500">
+                        <button type="button" onClick={() => setReportingId(null)} className="text-gray-500">
                           Cancel
                         </button>
                       </div>
@@ -439,7 +443,7 @@ function CommunityPageInner() {
               <p className="text-red-400 text-xs mb-2 px-1">{error}</p>
             )}
             {currentUser ? (
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
                   value={input}
@@ -447,12 +451,13 @@ function CommunityPageInner() {
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                   placeholder={`Message ${activeRoom?.name || ''}...`}
                   maxLength={500}
-                  className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="flex-1 min-w-0 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
                 <button
+                  type="button"
                   onClick={handleSend}
                   disabled={sending || !input.trim()}
-                  className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  className="w-full sm:w-auto shrink-0 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
                   {sending ? '...' : 'Send'}
                 </button>
@@ -485,7 +490,7 @@ function CommunityPageInner() {
 
 export default function CommunityPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-950 flex items-center justify-center text-white">Loading community...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-gray-950 flex items-center justify-center text-white w-full min-w-0 max-w-full overflow-x-hidden px-4 text-center">Loading community...</div>}>
       <CommunityPageInner />
     </Suspense>
   );

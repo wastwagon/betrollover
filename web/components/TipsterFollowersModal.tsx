@@ -161,9 +161,9 @@ export function TipsterFollowersModal({
     >
       {/* Solid scrim only — backdrop-blur causes repaint flicker on many mobile GPUs */}
       <button type="button" className="absolute inset-0 bg-black/55" aria-label={t('common.close')} onClick={onClose} />
-      <div className="relative z-[1] w-full sm:max-w-md max-h-[85vh] sm:max-h-[80vh] rounded-t-2xl sm:rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-xl flex flex-col">
-        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-[var(--border)]">
-          <h2 id="followers-modal-title" className="text-base font-semibold text-[var(--text)] truncate pr-2">
+      <div className="relative z-[1] w-full min-w-0 sm:max-w-md max-h-[85vh] sm:max-h-[80vh] rounded-t-2xl sm:rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-xl flex flex-col">
+        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-[var(--border)] min-w-0">
+          <h2 id="followers-modal-title" className="text-base font-semibold text-[var(--text)] min-w-0 flex-1 truncate pr-2">
             {tipsterDisplayName
               ? t('tipster.followers_of', { name: tipsterDisplayName })
               : t('tipster.followers_title')}
@@ -289,7 +289,7 @@ export function FollowersCountButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`text-left underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] rounded ${className}`}
+        className={`inline-flex min-w-0 max-w-full shrink text-left whitespace-nowrap truncate underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] rounded ${className}`}
       >
         {t(count === 1 ? 'tipster.x_follower' : 'tipster.x_followers', { n: String(count) })}
       </button>

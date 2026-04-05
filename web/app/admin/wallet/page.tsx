@@ -106,18 +106,18 @@ export default function AdminWalletPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main">
+      <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Wallet Management</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Wallet Management</h1>
           <p className="text-gray-600 dark:text-gray-400">View wallets and transaction history.</p>
         </div>
 
-        <div className="flex gap-3 mb-8">
-          <button
+        <div className="flex flex-wrap gap-3 mb-8">
+          <button type="button"
             onClick={() => setTab('wallets')}
-            className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+            className={`flex-1 min-w-[140px] sm:flex-none px-6 py-3 rounded-xl font-semibold transition-all ${
               tab === 'wallets' 
                 ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg' 
                 : 'bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -125,9 +125,9 @@ export default function AdminWalletPage() {
           >
             Wallets
           </button>
-          <button
+          <button type="button"
             onClick={() => setTab('transactions')}
-            className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+            className={`flex-1 min-w-[140px] sm:flex-none px-6 py-3 rounded-xl font-semibold transition-all ${
               tab === 'transactions' 
                 ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg' 
                 : 'bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -139,7 +139,7 @@ export default function AdminWalletPage() {
 
         {tab === 'wallets' && (
           <>
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-xl p-6 mb-6 text-white">
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-xl p-4 sm:p-6 mb-6 text-white">
               <p className="text-sm opacity-90 mb-1">Total Platform Balance</p>
               <p className="text-3xl font-bold">GHS {totalBalance.toFixed(2)}</p>
             </div>
@@ -170,13 +170,13 @@ export default function AdminWalletPage() {
                     />
                   </div>
                   <div className="flex gap-3">
-                    <button
+                    <button type="button"
                       onClick={() => adjustBalance(adjustingWallet)}
                       className="px-6 py-2 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold hover:from-red-700 hover:to-red-800 transition-all shadow-lg"
                     >
                       Apply Adjustment
                     </button>
-                    <button
+                    <button type="button"
                       onClick={() => {
                         setAdjustingWallet(null);
                         setAdjustAmount('');
@@ -199,6 +199,7 @@ export default function AdminWalletPage() {
                     <p className="text-gray-600 dark:text-gray-400 text-lg">No wallets found</p>
                   </div>
                 ) : (
+                  <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-[var(--border)]">
                     <thead className="bg-gradient-to-r from-red-600 to-red-700">
                       <tr>
@@ -229,13 +230,13 @@ export default function AdminWalletPage() {
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex gap-2">
-                              <button
+                              <button type="button"
                                 onClick={() => setAdjustingWallet(w.userId)}
                                 className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
                               >
                                 Adjust
                               </button>
-                              <button
+                              <button type="button"
                                 onClick={() => freezeWallet(w.userId, w.status !== 'frozen')}
                                 className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                                   w.status === 'frozen'
@@ -251,6 +252,7 @@ export default function AdminWalletPage() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 )}
               </div>
             )}
@@ -272,6 +274,7 @@ export default function AdminWalletPage() {
                     <p className="text-gray-600 dark:text-gray-400 text-lg">No transactions found</p>
                   </div>
                 ) : (
+                  <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gradient-to-r from-red-600 to-red-700">
                       <tr>
@@ -312,6 +315,7 @@ export default function AdminWalletPage() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 )}
               </div>
             )}

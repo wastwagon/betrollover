@@ -68,6 +68,8 @@ interface Accumulator {
   result?: string;
   avgRating?: number | null;
   reviewCount?: number | null;
+  /** Set after POST /accumulators/:id/purchase for debugging/analytics; unveil modal uses merged `picks`. */
+  purchasedTicket?: unknown;
 }
 
 interface User {
@@ -363,10 +365,24 @@ export default function MarketplacePage() {
           const walletData = await walletRes.json();
           setWalletBalance(Number(walletData.balance));
         }
-        // Update pick data
-        setPicks(prev => prev.map(p =>
-          p.id === id ? { ...p, purchased: true, purchasedTicket } : p
-        ));
+        // Merge full picks from purchase response so unveil modal shows real legs immediately (list payload is redacted until refresh).
+        setPicks((prev) =>
+          prev.map((p) => {
+            if (p.id !== id) return p;
+            const merged: Accumulator = {
+              ...p,
+              purchasedTicket,
+            };
+            if (
+              purchasedTicket &&
+              typeof purchasedTicket === 'object' &&
+              Array.isArray((purchasedTicket as { picks?: unknown }).picks)
+            ) {
+              merged.picks = (purchasedTicket as { picks: Pick[] }).picks;
+            }
+            return merged;
+          }),
+        );
         // Trigger unveil modal
         setUnveilCouponId(id);
       } else {
@@ -385,25 +401,25 @@ export default function MarketplacePage() {
     <DashboardShell>
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
-      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
+      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden">
         <div className="section-ux-dashboard-shell">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-0">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-0 min-w-0">
             <PageHeader
               label={t('nav.marketplace')}
               title={t('marketplace.title')}
               tagline={t('marketplace.subtitle')}
             />
             {/* Contextual smart buttons — no hamburger needed */}
-            <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto flex-shrink-0">
+            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto self-stretch sm:self-auto shrink-0 min-w-0">
               <Link
                 href="/coupons/archive"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
               >
                 <span aria-hidden>📦</span> {t('header.settled_archive')}
               </Link>
               <Link
                 href="/leaderboard"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
               >
                 <span aria-hidden>🏆</span> {t('nav.leaderboard')}
               </Link>
@@ -430,7 +446,8 @@ export default function MarketplacePage() {
           </div>
 
           {/* Sport tabs — scrollable on mobile */}
-          <div className="flex gap-2 mb-4 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+          <div className="mb-4 w-full min-w-0 overflow-hidden">
+          <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
             {([
               { key: '',                label: `🌍 ${t('marketplace.filter_all_sports')}` },
               { key: 'football',        label: `⚽ ${t('nav.football')}` },
@@ -457,11 +474,12 @@ export default function MarketplacePage() {
               </button>
             ))}
           </div>
+          </div>
 
           {/* Filters — show after load so empty search results still have controls */}
           {!loading && (
-            <div className="flex flex-wrap items-center gap-3 mb-4">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 flex-1 min-w-[200px] max-w-md">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end mb-4 min-w-0 max-w-full">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 flex-1 min-w-0 w-full sm:min-w-[200px] sm:max-w-md">
                 <label htmlFor="marketplace-tipster-search" className="text-sm font-medium text-[var(--text)] shrink-0">
                   {t('marketplace.tipster_search_label')}
                 </label>
@@ -483,24 +501,24 @@ export default function MarketplacePage() {
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-[var(--text)]">Price</label>
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 w-full sm:w-auto min-w-0">
+                <label className="text-sm font-medium text-[var(--text)] shrink-0">Price</label>
                 <select
                   value={priceFilter}
                   onChange={(e) => setPriceFilter(e.target.value as PriceFilter)}
-                  className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] min-w-[120px]"
+                  className="w-full sm:w-auto sm:min-w-[120px] px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                 >
                   <option value="all">All</option>
                   <option value="free">Free only</option>
                   <option value="paid">Paid only</option>
                 </select>
               </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-[var(--text)]">Sort by</label>
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 w-full sm:w-auto min-w-0">
+                <label className="text-sm font-medium text-[var(--text)] shrink-0">Sort by</label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortBy)}
-                  className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] min-w-[140px]"
+                  className="w-full sm:w-auto sm:min-w-[140px] px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                 >
                   <option value="newest">Newest first</option>
                   {followedTipsterUsernames.size > 0 && (
@@ -519,7 +537,7 @@ export default function MarketplacePage() {
                     setSortBy('newest');
                     setTipsterSearch('');
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                  className="w-full sm:w-auto px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                 >
                   Clear filters
                 </button>
@@ -568,7 +586,7 @@ export default function MarketplacePage() {
             </div>
           )}
           {!loading && filteredAndSortedPicks.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-8 min-w-0">
               {filteredAndSortedPicks.map((a) => {
                 const isPurchased = purchasedIds.has(a.id);
                 const canPurchase = a.price === 0 || (walletBalance !== null && walletBalance >= a.price);
@@ -606,11 +624,12 @@ export default function MarketplacePage() {
             </div>
           )}
           {!loading && hasMore && (
-            <div className="flex justify-center py-6">
+            <div className="flex justify-center py-6 px-1">
               <button
+                type="button"
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="px-6 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-70 transition-colors"
+                className="w-full max-w-md sm:w-auto px-6 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-70 transition-colors"
               >
                 {loadingMore ? 'Loading...' : `Load more (${picks.length} of ${total})`}
               </button>

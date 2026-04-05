@@ -25,18 +25,18 @@ export default async function PrivacyPage() {
   const t = buildT(locale);
 
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
 
-      <main>
-        <div className="section-ux-page">
+      <main className="w-full min-w-0">
+        <div className="section-ux-page w-full min-w-0">
           <PageHeader
             label={t('privacy.legal')}
             title={t('privacy.title')}
             tagline={`${t('privacy.effective')}: ${EFFECTIVE_DATE}`}
           />
-          <article className="section-ux-prose">
-          <div className="prose prose-slate max-w-none text-[var(--text)] space-y-8 leading-relaxed text-sm">
+          <article className="section-ux-prose min-w-0">
+          <div className="prose prose-slate max-w-none min-w-0 text-[var(--text)] space-y-8 leading-relaxed text-sm">
 
             <section>
               <h2 className="text-lg font-semibold mb-2">{t('privacy.section1_title')}</h2>

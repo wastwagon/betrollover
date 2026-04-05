@@ -52,16 +52,16 @@ export default async function ContactPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
 
-      <main>
-        <div className="section-ux-page">
+      <main className="w-full min-w-0">
+        <div className="section-ux-page w-full min-w-0">
           <PageHeader label={t('contact.badge')} title={t('contact.headline')} tagline={t('contact.intro')} />
-          <article className="section-ux-prose">
-          <div className="prose prose-slate max-w-none text-[var(--text)] space-y-8 leading-relaxed">
+          <article className="section-ux-prose min-w-0">
+          <div className="prose prose-slate max-w-none text-[var(--text)] space-y-8 leading-relaxed min-w-0">
 
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
               {CONTACTS.map(({ icon, label, value, href, desc }) => (
                 <a
                   key={label}

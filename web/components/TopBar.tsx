@@ -86,6 +86,7 @@ function TopBarSwitchers() {
     <>
       <div className="relative">
         <button
+          type="button"
           ref={currencyBtnRef}
           onClick={() => { setLanguageOpen(false); setCurrencyOpen((v) => !v); }}
           className={btnCls}
@@ -102,6 +103,7 @@ function TopBarSwitchers() {
         <Dropdown open={currencyOpen} onClose={() => setCurrencyOpen(false)} triggerRef={currencyBtnRef}>
           {currencies.map((c) => (
             <button
+              type="button"
               key={c.code}
               onClick={() => {
                 const prev = currency.code;
@@ -127,6 +129,7 @@ function TopBarSwitchers() {
 
       <div className="relative">
         <button
+          type="button"
           ref={languageBtnRef}
           onClick={() => { setCurrencyOpen(false); setLanguageOpen((v) => !v); }}
           className={btnCls}
@@ -143,6 +146,7 @@ function TopBarSwitchers() {
         <Dropdown open={languageOpen} onClose={() => setLanguageOpen(false)} triggerRef={languageBtnRef}>
           {languages.map((l) => (
             <button
+              type="button"
               key={l.code}
               onClick={() => {
                 switchLanguage(l.code);
@@ -166,7 +170,13 @@ function TopBarSwitchers() {
   );
 }
 
+function isAdminRoute(pathname: string | null) {
+  if (!pathname) return false;
+  return pathname.startsWith('/admin') || pathname.startsWith('/fr/admin');
+}
+
 export function TopBar() {
+  const pathname = usePathname();
   const slipCount = useSlipCount();
   const t = useT();
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -180,6 +190,10 @@ export function TopBar() {
     return () => mq.removeEventListener('change', update);
   }, []);
 
+  if (isAdminRoute(pathname)) {
+    return null;
+  }
+
   const disclaimerText = [
     t('topbar.disclaimer_1'),
     t('topbar.disclaimer_2'),
@@ -189,8 +203,8 @@ export function TopBar() {
   ].join(' • ');
 
   return (
-    <div className="relative z-[60] w-full bg-slate-800 text-slate-200 text-xs sm:text-sm border-b border-slate-700/60 overflow-hidden safe-area-inset-top">
-      <div className="flex items-center justify-between min-h-9 h-auto sm:h-9 py-1 sm:py-0 px-3 sm:px-4 gap-2">
+    <div className="relative z-[60] w-full min-w-0 max-w-full bg-slate-800 text-slate-200 text-xs sm:text-sm border-b border-slate-700/60 overflow-x-hidden safe-area-inset-top">
+      <div className="flex items-center justify-between min-h-9 h-auto sm:h-9 py-1 sm:py-0 px-3 sm:px-4 gap-2 min-w-0 max-w-full">
         {/* Scrolling disclaimer — seamless loop; static scroll when prefers-reduced-motion */}
         <div className="flex-1 min-w-0 overflow-hidden">
           {reduceMotion ? (
@@ -228,7 +242,7 @@ export function TopBar() {
           {/* Cart icon - unfinished coupon */}
           <Link
             href="/create-pick"
-            className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors ${
+            className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors shrink-0 ${
               slipCount > 0 ? 'bg-emerald-600/80 hover:bg-emerald-600 text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/60'
             }`}
             aria-label={slipCount > 0 ? `Unfinished coupon: ${slipCount} selection${slipCount !== 1 ? 's' : ''}` : 'Create coupon'}

@@ -116,7 +116,7 @@ function CheckoutContent() {
   if (loading) {
     return (
       <DashboardShell>
-        <div className="section-ux-dashboard-shell max-w-lg mx-auto">
+        <div className="section-ux-dashboard-shell max-w-lg mx-auto w-full min-w-0 max-w-full px-1 sm:px-0">
           <LoadingSkeleton count={3} variant="list" />
         </div>
       </DashboardShell>
@@ -125,7 +125,7 @@ function CheckoutContent() {
 
   return (
     <DashboardShell>
-      <div className="section-ux-dashboard-shell max-w-lg mx-auto">
+      <div className="section-ux-dashboard-shell max-w-lg mx-auto w-full min-w-0 max-w-full px-1 sm:px-0">
         <Link href={backHref} className="text-sm text-[var(--primary)] hover:underline mb-4 inline-block">
           ← Tipsters
         </Link>
@@ -138,16 +138,16 @@ function CheckoutContent() {
         )}
 
         {pkg && (
-          <div className="glass-card rounded-2xl p-6 border border-[var(--border)] space-y-4">
-            <div>
-              <h2 className="text-lg font-semibold text-[var(--text)]">{pkg.name}</h2>
-              <p className="text-2xl font-bold text-[var(--primary)] mt-2">
+          <div className="glass-card rounded-2xl p-6 border border-[var(--border)] space-y-4 min-w-0">
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold text-[var(--text)] break-words">{pkg.name}</h2>
+              <p className="text-2xl font-bold text-[var(--primary)] mt-2 tabular-nums">
                 GHS {price.toFixed(2)} / {pkg.durationDays} days
               </p>
             </div>
             <div className="text-sm text-[var(--text-muted)]">
               Wallet balance:{' '}
-              <span className="font-medium text-[var(--text)]">
+              <span className="font-medium text-[var(--text)] tabular-nums">
                 {balance !== null ? `GHS ${balance.toFixed(2)}` : '—'}
               </span>
             </div>
@@ -184,7 +184,7 @@ export default function SubscriptionCheckoutPage() {
     <Suspense
       fallback={
         <DashboardShell>
-          <div className="section-ux-dashboard-shell max-w-lg mx-auto">
+          <div className="section-ux-dashboard-shell max-w-lg mx-auto w-full min-w-0 max-w-full px-1 sm:px-0">
             <LoadingSkeleton count={3} variant="list" />
           </div>
         </DashboardShell>

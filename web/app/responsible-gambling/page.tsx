@@ -36,18 +36,18 @@ export default async function ResponsibleGamblingPage() {
       ];
 
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
 
-      <main>
-        <div className="section-ux-page">
+      <main className="w-full min-w-0">
+        <div className="section-ux-page w-full min-w-0">
           <PageHeader
             label={t('resp.page_label')}
             title={t('resp.headline')}
             tagline={t('resp.commitment_desc')}
           />
-          <article className="section-ux-prose">
-          <div className="prose prose-slate max-w-none text-[var(--text)] space-y-6 leading-relaxed">
+          <article className="section-ux-prose min-w-0">
+          <div className="prose prose-slate max-w-none min-w-0 text-[var(--text)] space-y-6 leading-relaxed">
             <section>
               <h2 className="text-xl font-semibold mt-8 mb-3">{t('resp.commitment_title')}</h2>
               <p>{t('resp.commitment_desc')}</p>

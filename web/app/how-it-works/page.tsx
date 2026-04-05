@@ -69,21 +69,21 @@ export default async function HowItWorksPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <FaqJsonLd faqs={faqs} />
       <UnifiedHeader />
 
-      <main>
-        <div className="section-ux-page">
+      <main className="w-full min-w-0">
+        <div className="section-ux-page w-full min-w-0">
           <PageHeader
             label={t('how_it_works.page_label')}
             title={t('how_it_works.page_h1')}
             tagline={t('how_it_works.page_lead')}
           />
-          <article className="section-ux-prose">
-          <div className="prose prose-slate max-w-none text-[var(--text)] space-y-8 sm:space-y-10 leading-relaxed text-sm sm:text-[15px]">
+          <article className="section-ux-prose min-w-0">
+          <div className="prose prose-slate max-w-none text-[var(--text)] space-y-8 sm:space-y-10 leading-relaxed text-sm sm:text-[15px] min-w-0">
 
-            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/40 p-4 sm:p-6 md:p-7">
+            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/40 p-4 sm:p-6 md:p-7 min-w-0">
               <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-3 sm:mb-4 capitalize text-[var(--text)]">{t('how_it_works.buyers_h2')}</h2>
               <ol className="list-decimal pl-4 sm:pl-6 space-y-3 sm:space-y-4 marker:text-[var(--primary)] marker:font-semibold">
                 {buyerSteps.map((item) => (
@@ -94,7 +94,7 @@ export default async function HowItWorksPage() {
               </ol>
             </section>
 
-            <section className="rounded-2xl border border-violet-500/15 dark:border-violet-800/25 bg-gradient-to-br from-violet-500/[0.05] to-[var(--card)]/60 p-4 sm:p-6 md:p-7">
+            <section className="rounded-2xl border border-violet-500/15 dark:border-violet-800/25 bg-gradient-to-br from-violet-500/[0.05] to-[var(--card)]/60 p-4 sm:p-6 md:p-7 min-w-0">
               <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-3 sm:mb-4 capitalize text-[var(--text)]">{t('how_it_works.tipsters_h2')}</h2>
               <ol className="list-decimal pl-4 sm:pl-6 space-y-3 sm:space-y-4 marker:text-violet-600 dark:marker:text-violet-400 marker:font-semibold">
                 {tipsterSteps.map((item) => (
@@ -105,17 +105,17 @@ export default async function HowItWorksPage() {
               </ol>
             </section>
 
-            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/30 p-4 sm:p-6">
+            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/30 p-4 sm:p-6 min-w-0">
               <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">{t('how_it_works.settlement_h2')}</h2>
               <p className="m-0 text-[var(--text-muted)] leading-relaxed">{t('how_it_works.settlement_p')}</p>
             </section>
 
-            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/30 p-4 sm:p-6">
+            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/30 p-4 sm:p-6 min-w-0">
               <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">{t('how_it_works.verification_h2')}</h2>
               <p className="m-0 text-[var(--text-muted)] leading-relaxed">{t('how_it_works.verification_p', sellVars)}</p>
             </section>
 
-            <section id="faq" className="scroll-mt-24">
+            <section id="faq" className="scroll-mt-24 min-w-0">
               <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-4 sm:mb-5">{t('how_it_works.faq_title')}</h2>
               <ul className="space-y-3 sm:space-y-4 list-none pl-0">
                 {faqs.map((faq, i) => (
@@ -130,9 +130,9 @@ export default async function HowItWorksPage() {
               </ul>
             </section>
 
-            <div className="mt-8 sm:mt-10 p-4 sm:p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 ring-1 ring-emerald-500/10">
+            <div className="mt-8 sm:mt-10 p-4 sm:p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 ring-1 ring-emerald-500/10 min-w-0">
               <p className="font-semibold text-[var(--text)] mb-3 sm:mb-4 text-sm sm:text-base">Ready to get started?</p>
-              <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 min-w-0">
                 <Link
                   href="/marketplace"
                   className="inline-flex items-center justify-center min-h-[44px] px-5 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors w-full sm:w-auto"

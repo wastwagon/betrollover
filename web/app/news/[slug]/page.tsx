@@ -62,18 +62,18 @@ function formatDate(s: string | null) {
 
 function ArticleSkeleton() {
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
-      <main className="section-ux-page-wide">
-        <div className="flex flex-col lg:flex-row gap-8">
-          <div className="flex-1 space-y-4">
+      <main className="section-ux-page-wide w-full min-w-0">
+        <div className="flex flex-col lg:flex-row gap-8 min-w-0">
+          <div className="flex-1 min-w-0 space-y-4">
             <div className="h-6 w-32 rounded-xl bg-[var(--card)] skeleton" />
             <div className="h-8 w-3/4 rounded-xl bg-[var(--card)] skeleton" />
             <div className="h-4 w-1/2 rounded-xl bg-[var(--card)] skeleton" />
             <div className="h-56 rounded-2xl bg-[var(--card)] skeleton" />
             {[1,2,3,4].map(i => <div key={i} className="h-4 rounded bg-[var(--card)] skeleton" />)}
           </div>
-          <div className="lg:w-72 space-y-4">
+          <div className="w-full lg:w-72 flex-shrink-0 min-w-0 space-y-4">
             <div className="h-[250px] rounded-xl bg-[var(--card)] skeleton" />
             <div className="h-32 rounded-xl bg-[var(--card)] skeleton" />
           </div>
@@ -117,9 +117,9 @@ export default function NewsArticlePage() {
 
   if (!article) {
     return (
-      <div className="min-h-screen bg-[var(--bg)]">
+      <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <UnifiedHeader />
-        <main className="section-ux-empty">
+        <main className="section-ux-empty w-full min-w-0 px-4 sm:px-0">
           <p className="text-5xl mb-4">📰</p>
           <h1 className="text-lg font-semibold text-[var(--text)] mb-3">{t('news.article_not_found')}</h1>
           <p className="text-[var(--text-muted)] mb-6">{t('news.article_not_found_desc')}</p>
@@ -136,7 +136,7 @@ export default function NewsArticlePage() {
   const categoryLabel = getCategoryLabel(t, article.category);
 
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <ArticleJsonLd
         title={article.title}
         excerpt={article.excerpt}
@@ -145,7 +145,7 @@ export default function NewsArticlePage() {
         slug={article.slug}
       />
       <UnifiedHeader />
-      <main className="section-ux-page-wide">
+      <main className="section-ux-page-wide w-full min-w-0">
         <PageHeader
           label={categoryLabel}
           title={article.title}
@@ -158,24 +158,24 @@ export default function NewsArticlePage() {
           }
         />
 
-        <div className="flex flex-wrap items-center gap-2 mb-6">
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 mb-6">
           <Link
             href="/news"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
           >
             ← {t('nav.news')}
           </Link>
           {article.sport ? (
             <Link
               href={`/news?sport=${article.sport}`}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+              className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
             >
               {SPORT_ICONS[article.sport]} {sportLabel}
             </Link>
           ) : null}
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-8 min-w-0">
           {/* ── Article ── */}
           <article className="flex-1 min-w-0">
 
@@ -195,7 +195,7 @@ export default function NewsArticlePage() {
             )}
 
             {/* Body */}
-            <div className="prose prose-slate max-w-none text-[var(--text)] text-[15px] leading-relaxed
+            <div className="prose prose-slate max-w-none min-w-0 text-[var(--text)] text-[15px] leading-relaxed
               [&>p]:mb-5 [&>p]:text-[var(--text)] [&>h2]:text-xl [&>h2]:font-bold [&>h2]:mt-8 [&>h2]:mb-3
               [&>h3]:text-lg [&>h3]:font-semibold [&>h3]:mt-6 [&>h3]:mb-2
               [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:mb-4 [&>li]:mb-1
@@ -235,7 +235,7 @@ export default function NewsArticlePage() {
           </article>
 
           {/* ── Sidebar ── */}
-          <aside className="lg:w-72 flex-shrink-0">
+          <aside className="w-full lg:w-72 flex-shrink-0 min-w-0">
             <div className="sticky top-24 space-y-4">
 
               <AdSlot zoneSlug="news-article-sidebar" />

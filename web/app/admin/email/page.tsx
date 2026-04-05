@@ -124,11 +124,11 @@ export default function AdminEmailPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main">
+      <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">SMTP Configuration</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">SMTP Configuration</h1>
           <p className="text-gray-600 dark:text-gray-400">Configure SendGrid or another SMTP provider for transactional emails.</p>
         </div>
 
@@ -172,7 +172,7 @@ export default function AdminEmailPage() {
               </a>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-8">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">SMTP Settings</h3>
               <div className="space-y-5">
                 <div>
@@ -240,31 +240,31 @@ export default function AdminEmailPage() {
                     Receives platform alerts (withdrawal requests, support tickets, etc.) in addition to every account with the admin role. Leave blank to use only admin accounts. You can also set <code className="text-[11px] bg-gray-100 dark:bg-gray-700 px-1 rounded">ADMIN_NOTIFICATION_EMAIL</code> on the server (comma-separated).
                   </p>
                 </div>
-                <button
+                <button type="button"
                   onClick={save}
                   disabled={saving}
-                  className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold hover:from-red-700 hover:to-red-800 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none"
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold hover:from-red-700 hover:to-red-800 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none text-center"
                 >
                   {saving ? 'Saving...' : 'Save Settings'}
                 </button>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-l-4 border-l-emerald-500 border border-gray-200 dark:border-gray-700 p-8">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-l-4 border-l-emerald-500 border border-gray-200 dark:border-gray-700 p-4 sm:p-8">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Test Email Configuration</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Send a test email to verify your SMTP configuration.</p>
-              <div className="flex gap-4 flex-wrap">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-stretch">
                 <input
                   type="email"
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}
                   placeholder="test@example.com"
-                  className="flex-1 min-w-[250px] px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                  className="w-full min-w-0 sm:flex-1 sm:min-w-[200px] px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                 />
-                <button
+                <button type="button"
                   onClick={sendTest}
                   disabled={testing}
-                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-semibold hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none"
+                  className="w-full sm:w-auto shrink-0 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-semibold hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none"
                 >
                   {testing ? 'Sending...' : 'Send Test Email'}
                 </button>

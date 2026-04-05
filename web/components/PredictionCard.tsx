@@ -161,18 +161,18 @@ export function PredictionCard({ prediction, onCopyBet, className = '', linkToDe
           {prediction.fixtures.map((fixture, idx) => (
             <div
               key={idx}
-              className="flex flex-col gap-1 p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)]"
+              className="flex flex-col gap-1 p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] min-w-0"
             >
-              <span className="text-sm font-medium text-[var(--text)]">
+              <span className="text-sm font-medium text-[var(--text)] min-w-0 break-words">
                 {fixture.home_team} vs {fixture.away_team}
               </span>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-[var(--primary)] font-semibold">
+              <div className="flex items-center justify-between gap-2 text-xs min-w-0">
+                <span className="text-[var(--primary)] font-semibold min-w-0 truncate">
                   {formatOutcome(fixture.selected_outcome)}
                 </span>
-                <span className="text-[var(--text-muted)]">@{Number(fixture.selection_odds).toFixed(2)}</span>
+                <span className="text-[var(--text-muted)] shrink-0 tabular-nums">@{Number(fixture.selection_odds).toFixed(2)}</span>
               </div>
-              <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center justify-between gap-2 flex-wrap min-w-0">
                 {fixture.league_name && (
                   <span className="text-[10px] text-[var(--text-muted)]">{fixture.league_name}</span>
                 )}
@@ -187,15 +187,15 @@ export function PredictionCard({ prediction, onCopyBet, className = '', linkToDe
         </div>
 
       {/* Footer */}
-      <div className="mt-auto pt-3 border-t border-[var(--border)] flex items-center justify-between gap-3">
-        <span className="text-sm font-bold text-[var(--text)]">
+      <div className="mt-auto pt-3 border-t border-[var(--border)] flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 min-w-0">
+        <span className="text-sm font-bold text-[var(--text)] min-w-0">
           Total Odds: {Number(prediction.combined_odds).toFixed(2)}
         </span>
         {onCopyBet && (
           <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onCopyBet(); }}
-            className="px-4 py-2 rounded-xl font-semibold text-sm bg-[var(--accent)] hover:bg-amber-600 text-white transition-colors"
             type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onCopyBet(); }}
+            className="px-4 py-2 rounded-xl font-semibold text-sm bg-[var(--accent)] hover:bg-amber-600 text-white transition-colors w-full sm:w-auto shrink-0 text-center"
           >
             Copy Bet
           </button>

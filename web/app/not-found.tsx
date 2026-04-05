@@ -22,10 +22,10 @@ export default async function NotFound() {
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] flex flex-col">
+    <div className="min-h-screen bg-[var(--bg)] flex flex-col w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
 
-      <main className="flex-1 flex flex-col items-center justify-center px-6 py-16">
+      <main className="flex-1 flex flex-col items-center justify-center px-6 py-16 w-full min-w-0">
         <div className="relative mb-6 select-none">
           <span className="text-[9rem] font-black text-[var(--border)] leading-none tracking-tighter">
             404
@@ -42,7 +42,7 @@ export default async function NotFound() {
           {t('error.not_found_desc')}
         </p>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-lg mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 w-full max-w-lg mb-10 min-w-0">
           {QUICK_LINKS.map(({ href, icon, labelKey, descKey }) => (
             <Link
               key={href}

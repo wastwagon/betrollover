@@ -53,9 +53,9 @@ function VerifyEmailContent() {
 
   return (
     <AppShell>
-      <div className="section-ux-auth-narrow">
+      <div className="section-ux-auth-narrow w-full min-w-0 max-w-full px-4 sm:px-0 text-center">
         {loading ? (
-          <div className="animate-pulse">
+          <div className="animate-pulse min-w-0">
             <div className="w-16 h-16 rounded-full bg-[var(--primary)]/20 mx-auto mb-6" />
             <p className="text-[var(--text-muted)]">{t('auth.verifying')}</p>
           </div>
@@ -64,8 +64,8 @@ function VerifyEmailContent() {
             <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-6 text-3xl">
               ✓
             </div>
-            <h1 className="text-xl font-semibold text-[var(--text)] mb-2">{t('auth.email_verified_title')}</h1>
-            <p className="text-[var(--text-muted)] mb-8">{result.message}</p>
+            <h1 className="text-xl font-semibold text-[var(--text)] mb-2 min-w-0 break-words">{t('auth.email_verified_title')}</h1>
+            <p className="text-[var(--text-muted)] mb-8 min-w-0 break-words">{result.message}</p>
             <Link
               href="/dashboard"
               className="inline-block px-8 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
@@ -78,9 +78,10 @@ function VerifyEmailContent() {
             <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-6 text-3xl">
               ✕
             </div>
-            <h1 className="text-xl font-semibold text-[var(--text)] mb-2">{t('auth.verification_failed')}</h1>
-            <p className="text-[var(--text-muted)] mb-8">{result?.message || t('auth.invalid_token')}</p>
+            <h1 className="text-xl font-semibold text-[var(--text)] mb-2 min-w-0 break-words">{t('auth.verification_failed')}</h1>
+            <p className="text-[var(--text-muted)] mb-8 min-w-0 break-words">{result?.message || t('auth.invalid_token')}</p>
             <button
+              type="button"
               onClick={handleResend}
               disabled={resendLoading}
               className="mb-4 px-6 py-2 rounded-lg font-medium bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-50"
@@ -97,11 +98,12 @@ function VerifyEmailContent() {
           </>
         ) : (
           <>
-            <h1 className="text-xl font-semibold text-[var(--text)] mb-2">{t('auth.verify_title')}</h1>
-            <p className="text-[var(--text-muted)] mb-6">
+            <h1 className="text-xl font-semibold text-[var(--text)] mb-2 min-w-0 break-words">{t('auth.verify_title')}</h1>
+            <p className="text-[var(--text-muted)] mb-6 min-w-0 break-words">
               {t('auth.verify_check_inbox')}
             </p>
             <button
+              type="button"
               onClick={handleResend}
               disabled={resendLoading}
               className="px-8 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-50"
@@ -126,7 +128,7 @@ export default function VerifyEmailPage() {
     <Suspense
       fallback={
         <AppShell>
-          <div className="section-ux-auth-narrow">
+          <div className="section-ux-auth-narrow w-full min-w-0 max-w-full px-4 sm:px-0">
             <div className="animate-pulse">
               <div className="w-16 h-16 rounded-full bg-[var(--primary)]/20 mx-auto mb-6" />
               <p className="text-[var(--text-muted)]">Loading...</p>

@@ -24,14 +24,14 @@ export default async function AboutPage() {
   const sellVars = { minRoi: String(th.minimumROI), minWr: String(th.minimumWinRate) };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
 
-      <main>
-        <div className="section-ux-page">
+      <main className="w-full min-w-0">
+        <div className="section-ux-page w-full min-w-0">
           <PageHeader label={t('nav.about')} title={t('about.headline')} tagline={t('about.intro')} />
-          <article className="section-ux-prose">
-          <div className="prose prose-slate max-w-none text-[var(--text)] space-y-10 leading-relaxed">
+          <article className="section-ux-prose min-w-0">
+          <div className="prose prose-slate max-w-none text-[var(--text)] space-y-10 leading-relaxed min-w-0">
 
             <section>
               <h2 className="text-xl font-semibold mb-3">{t('about.what_we_do')}</h2>
@@ -68,16 +68,16 @@ export default async function AboutPage() {
 
             <div className="mt-10 p-5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/40">
               <p className="font-semibold text-[var(--text)] mb-2">{t('about.ready_cta')}</p>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3">
                 <Link
                   href="/marketplace"
-                  className="px-4 py-2 rounded-lg bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors"
+                  className="inline-flex justify-center px-4 py-2 rounded-lg bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors w-full sm:w-auto"
                 >
                   {t('home.view_marketplace')}
                 </Link>
                 <Link
                   href="/register"
-                  className="px-4 py-2 rounded-lg border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                  className="inline-flex justify-center px-4 py-2 rounded-lg border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
                 >
                   {t('auth.register')}
                 </Link>

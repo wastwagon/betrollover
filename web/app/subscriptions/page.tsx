@@ -80,7 +80,7 @@ function SubscriptionsContent() {
   if (subsLoading) {
     return (
       <DashboardShell>
-        <div className="section-ux-dashboard-shell">
+        <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full overflow-x-hidden">
           <LoadingSkeleton count={4} variant="cards" />
         </div>
       </DashboardShell>
@@ -91,7 +91,7 @@ function SubscriptionsContent() {
 
   return (
     <DashboardShell>
-      <div className="section-ux-dashboard-shell">
+      <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full overflow-x-hidden">
         <PageHeader
           label="Subscriptions"
           title="My Subscriptions"
@@ -104,13 +104,13 @@ function SubscriptionsContent() {
         )}
 
         {activeSubs.length === 0 ? (
-          <div className="glass-card rounded-2xl p-8 text-center border border-[var(--border)]">
+          <div className="glass-card rounded-2xl p-8 text-center border border-[var(--border)] min-w-0 max-w-full">
             <p className="text-[var(--text)] font-medium mb-2">{t('subscriptions.page_empty_title')}</p>
             <p className="text-sm text-[var(--text-muted)] mb-3">{t('subscriptions.page_empty_sub')}</p>
             <p className="text-sm text-[var(--text-muted)] mb-6 max-w-[28rem] mx-auto leading-relaxed">
               {t('subscriptions.page_empty_hint')}
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center min-w-0 max-w-full">
               <Link
                 href="/subscriptions/marketplace"
                 className="inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
@@ -127,23 +127,23 @@ function SubscriptionsContent() {
           </div>
         ) : (
           <>
-            <section className="mb-8">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                <h2 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">Active subscriptions</h2>
+            <section className="mb-8 min-w-0 max-w-full">
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between mb-3 min-w-0">
+                <h2 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider min-w-0">Active subscriptions</h2>
                 <Link
                   href="/subscriptions/marketplace"
-                  className="text-xs font-medium text-[var(--primary)] hover:underline"
+                  className="text-xs font-medium text-[var(--primary)] hover:underline w-fit shrink-0"
                 >
                   {t('subscriptions.browse_more_vip')}
                 </Link>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 min-w-0">
                 {activeSubs.map((s) => (
                   <div
                     key={s.id}
-                    className="rounded-xl p-4 border border-[var(--border)] bg-[var(--card)]"
+                    className="rounded-xl p-4 border border-[var(--border)] bg-[var(--card)] min-w-0"
                   >
-                    <h3 className="font-semibold text-[var(--text)]">{s.package?.name ?? 'Package'}</h3>
+                    <h3 className="font-semibold text-[var(--text)] break-words">{s.package?.name ?? 'Package'}</h3>
                     <p className="text-sm text-[var(--text-muted)] mt-1">
                       Ends {new Date(s.endsAt).toLocaleDateString()}
                     </p>
@@ -155,14 +155,14 @@ function SubscriptionsContent() {
               </div>
             </section>
 
-            <section>
+            <section className="min-w-0 max-w-full">
               <h2 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">Subscription coupons</h2>
               {feedLoading ? (
                 <LoadingSkeleton count={2} variant="cards" />
               ) : feedPicks.length === 0 ? (
                 <p className="text-[var(--text-muted)]">No coupons from subscribed tipsters yet.</p>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-w-0">
                   {feedPicks.map((pick) => {
                     const tipMeta = pick.tipster;
                     const tipster = tipMeta
@@ -214,7 +214,7 @@ export default function SubscriptionsPage() {
     <Suspense
       fallback={
         <DashboardShell>
-          <div className="section-ux-dashboard-shell">
+          <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full overflow-x-hidden">
             <LoadingSkeleton count={4} variant="cards" />
           </div>
         </DashboardShell>

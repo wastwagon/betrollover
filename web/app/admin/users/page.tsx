@@ -206,11 +206,11 @@ export default function AdminUsersPage() {
   const totalPages = Math.ceil(total / 20);
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main">
+      <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Users</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Users</h1>
           <p className="text-gray-600 dark:text-gray-400">Manage users, roles, and account status.</p>
         </div>
 
@@ -224,20 +224,20 @@ export default function AdminUsersPage() {
             </h2>
             <div className="space-y-3">
               {tipsterRequests.map((r) => (
-                <div key={r.id} className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-                  <div>
+                <div key={r.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                  <div className="min-w-0">
                     <span className="font-semibold text-gray-900 dark:text-white">{r.user?.displayName ?? 'User'}</span>
-                    <span className="text-sm text-gray-600 dark:text-gray-400 ml-2">{r.user?.email}</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400 block sm:inline sm:ml-2 break-all">{r.user?.email}</span>
                   </div>
-                  <div className="flex gap-2">
-                    <button
+                  <div className="flex flex-wrap gap-2 shrink-0">
+                    <button type="button"
                       onClick={() => approveTipster(r.userId)}
                       disabled={updating === r.userId}
                       className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 text-white text-sm font-medium hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 transition-all shadow-md hover:shadow-lg"
                     >
                       Approve
                     </button>
-                    <button
+                    <button type="button"
                       onClick={() => rejectTipster(r.userId)}
                       disabled={updating === r.userId}
                       className="px-4 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 text-white text-sm font-medium hover:from-amber-700 hover:to-amber-800 disabled:opacity-50 transition-all shadow-md hover:shadow-lg"
@@ -252,41 +252,41 @@ export default function AdminUsersPage() {
         )}
 
         {impersonateError && (
-          <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 flex items-center justify-between">
-            <span>{impersonateError}</span>
-            <button onClick={() => setImpersonateError(null)} className="text-red-600 dark:text-red-400 hover:underline text-sm">Dismiss</button>
+          <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <span className="min-w-0">{impersonateError}</span>
+            <button type="button" onClick={() => setImpersonateError(null)} className="text-red-600 dark:text-red-400 hover:underline text-sm shrink-0 self-start sm:self-auto">Dismiss</button>
           </div>
         )}
 
         {deleteError && (
-          <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 flex items-center justify-between">
-            <span>{deleteError}</span>
-            <button onClick={() => setDeleteError(null)} className="text-red-600 dark:text-red-400 hover:underline text-sm">Dismiss</button>
+          <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <span className="min-w-0">{deleteError}</span>
+            <button type="button" onClick={() => setDeleteError(null)} className="text-red-600 dark:text-red-400 hover:underline text-sm shrink-0 self-start sm:self-auto">Dismiss</button>
           </div>
         )}
 
-        <div className="flex flex-wrap gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mb-6">
           <input
             type="text"
             placeholder="Search by email, username..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             onKeyDown={(e) => e.key === 'Enter' && load()}
-            className="px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-transparent w-64 shadow-sm"
+            className="w-full min-w-0 sm:flex-1 sm:max-w-md px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-transparent shadow-sm"
           />
           <select
             value={roleFilter}
             onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
-            className="px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent shadow-sm"
+            className="w-full sm:w-auto min-w-0 px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent shadow-sm"
           >
             <option value="">All roles</option>
             <option value="user">User</option>
             <option value="tipster">Tipster</option>
             <option value="admin">Admin</option>
           </select>
-          <button
+          <button type="button"
             onClick={load}
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold hover:from-red-700 hover:to-red-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold hover:from-red-700 hover:to-red-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
           >
             Search
           </button>
@@ -412,7 +412,7 @@ export default function AdminUsersPage() {
                         <div className="flex items-center gap-3">
                           {/* Login as user (any non-admin) */}
                           {u.role !== 'admin' && (
-                            <button
+                            <button type="button"
                               onClick={() => impersonateUser(u.id)}
                               disabled={impersonating !== null}
                               title="Login as this user"
@@ -430,7 +430,7 @@ export default function AdminUsersPage() {
 
                           {/* Existing suspend/activate buttons */}
                           {u.status === 'active' && u.role !== 'admin' && (
-                            <button
+                            <button type="button"
                               onClick={() => updateUser(u.id, { status: 'suspended' })}
                               disabled={updating === u.id}
                               className="text-sm font-medium text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
@@ -439,7 +439,7 @@ export default function AdminUsersPage() {
                             </button>
                           )}
                           {u.status === 'suspended' && (
-                            <button
+                            <button type="button"
                               onClick={() => updateUser(u.id, { status: 'active' })}
                               disabled={updating === u.id}
                               className="text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors"
@@ -448,7 +448,7 @@ export default function AdminUsersPage() {
                             </button>
                           )}
                           {u.role !== 'admin' && u.canDelete && (
-                            <button
+                            <button type="button"
                               onClick={() => deleteUser(u.id)}
                               disabled={updating === u.id}
                               title="Permanently delete user and all their data (picks, purchases, wallet, etc.)"
@@ -470,21 +470,21 @@ export default function AdminUsersPage() {
               </table>
             </div>
             {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-3 py-6 px-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                <button
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center sm:items-center py-6 px-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                <button type="button"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                  className="w-full sm:w-auto order-2 sm:order-1 px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                 >
                   Previous
                 </button>
-                <span className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <span className="order-1 sm:order-2 text-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 w-full sm:w-auto">
                   Page {page} of {totalPages}
                 </span>
-                <button
+                <button type="button"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className="px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                  className="w-full sm:w-auto order-3 px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                 >
                   Next
                 </button>

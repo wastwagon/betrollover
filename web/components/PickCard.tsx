@@ -264,7 +264,7 @@ export function PickCard({
 
           {/* Coupon title & summary */}
           <div className="mb-2">
-            <div className="flex items-center justify-between gap-2 flex-wrap min-h-[1.875rem]">
+            <div className="flex items-center justify-between gap-2 flex-wrap min-h-[1.875rem] min-w-0">
               {title ? (
                 <span
                   className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[var(--primary)]/10 border border-[var(--primary)]/25 text-[var(--text)] font-medium text-xs truncate max-w-full min-w-0 flex-1"
@@ -342,7 +342,7 @@ export function PickCard({
                   const isFinished = pickSettled || ['FT', 'AET', 'PEN'].includes(p.fixtureStatus || '');
                   return (
                     <li key={i} className="flex flex-col gap-0 text-[11px]">
-                      <div className="flex justify-between items-start gap-1.5">
+                      <div className="flex justify-between items-start gap-1.5 min-w-0">
                         <span className={`text-[var(--text)] font-medium truncate flex-1 flex items-center gap-1 min-w-0 ${isStarted ? 'line-through opacity-60' : ''}`}>
                           {(p.homeTeamLogo || p.awayTeamLogo || p.homeCountryCode || p.awayCountryCode) && (
                             <span className="flex items-center gap-0.5 flex-shrink-0">
@@ -420,6 +420,7 @@ export function PickCard({
               </Link>
             ) : canPurchase ? (
               <button
+                type="button"
                 onClick={handlePurchase}
                 disabled={purchasing}
                 className="w-full px-3 py-2 rounded-lg font-semibold bg-[var(--accent)] hover:bg-amber-600 text-white text-xs disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
@@ -445,12 +446,13 @@ export function PickCard({
           onClick={() => setShowDetailsModal(false)}
         >
           <div
-            className="bg-[var(--card)] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto border border-[var(--border)]"
+            className="bg-[var(--card)] rounded-2xl shadow-2xl max-w-2xl w-full min-w-0 max-h-[90vh] overflow-auto border border-[var(--border)]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-[var(--card)] border-b border-[var(--border)] px-6 py-4 flex items-center justify-between z-10">
-              <h3 className="text-base font-semibold text-[var(--text)]">{t('pick_card.coupon_details')}</h3>
+            <div className="sticky top-0 bg-[var(--card)] border-b border-[var(--border)] px-4 sm:px-6 py-4 flex items-center justify-between gap-3 z-10 min-w-0">
+              <h3 className="text-base font-semibold text-[var(--text)] min-w-0 flex-1 pr-2">{t('pick_card.coupon_details')}</h3>
               <button
+                type="button"
                 onClick={() => setShowDetailsModal(false)}
                 className="text-[var(--text-muted)] hover:text-[var(--text)] text-2xl leading-none"
               >
@@ -506,16 +508,16 @@ export function PickCard({
                     const hasScore = p.homeScore != null && p.awayScore != null;
                     const pickResult = p.result || p.status;
                     return (
-                      <li key={i} className="flex justify-between items-start p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                        <div className="flex-1 pr-4 min-w-0">
-                          <span className="text-[var(--text)] font-medium block flex items-center gap-2">
+                      <li key={i} className="flex justify-between items-start gap-2 min-w-0 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                        <div className="flex-1 pr-2 sm:pr-4 min-w-0">
+                          <span className="text-[var(--text)] font-medium flex items-center gap-2 min-w-0">
                             {(p.homeTeamLogo || p.awayTeamLogo || p.homeCountryCode || p.awayCountryCode) && (
                               <span className="flex items-center gap-1 flex-shrink-0">
                                 <TeamBadge logo={p.homeTeamLogo} countryCode={p.homeCountryCode} name={p.homeTeamName || undefined} size={20} />
                                 <TeamBadge logo={p.awayTeamLogo} countryCode={p.awayCountryCode} name={p.awayTeamName || undefined} size={20} />
                               </span>
                             )}
-                            {p.matchDescription}
+                            <span className="min-w-0 truncate">{p.matchDescription}</span>
                           </span>
                           {(hasScore || pickResult) && (
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -537,9 +539,9 @@ export function PickCard({
                             </div>
                           )}
                         </div>
-                        <div className="text-right flex-shrink-0">
-                          <span className="text-sm text-[var(--text-muted)] block">{p.prediction}</span>
-                          <span className="text-sm font-semibold text-[var(--primary)]">@{Number(p.odds || 0).toFixed(2)}</span>
+                        <div className="text-right flex-shrink-0 min-w-0">
+                          <span className="text-sm text-[var(--text-muted)] block truncate max-w-[8rem] sm:max-w-none">{p.prediction}</span>
+                          <span className="text-sm font-semibold text-[var(--primary)] tabular-nums">@{Number(p.odds || 0).toFixed(2)}</span>
                         </div>
                       </li>
                     );
@@ -552,6 +554,7 @@ export function PickCard({
                 <div className="mt-6 pt-6 border-t border-[var(--border)]">
                   {canPurchase ? (
                     <button
+                      type="button"
                       onClick={() => {
                         setShowDetailsModal(false);
                         handlePurchase();
@@ -586,15 +589,16 @@ export function PickCard({
           }}
         >
           <div
-            className="bg-gradient-to-br from-emerald-50 to-green-100 dark:from-emerald-900/20 dark:to-green-900/20 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto border-2 border-emerald-300 dark:border-emerald-700"
+            className="bg-gradient-to-br from-emerald-50 to-green-100 dark:from-emerald-900/20 dark:to-green-900/20 rounded-2xl shadow-2xl max-w-2xl w-full min-w-0 max-h-[90vh] overflow-auto border-2 border-emerald-300 dark:border-emerald-700"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-gradient-to-r from-emerald-500 to-green-600 text-white px-6 py-4 flex items-center justify-between z-10 rounded-t-2xl">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">🎉</span>
-                <h3 className="text-base font-semibold">{t('pick_card.coupon_unlocked')}</h3>
+            <div className="sticky top-0 bg-gradient-to-r from-emerald-500 to-green-600 text-white px-4 sm:px-6 py-4 flex items-center justify-between gap-3 z-10 rounded-t-2xl min-w-0">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                <span className="text-2xl sm:text-3xl shrink-0">🎉</span>
+                <h3 className="text-base font-semibold min-w-0">{t('pick_card.coupon_unlocked')}</h3>
               </div>
               <button
+                type="button"
                 onClick={() => {
                   setShowUnveilModal(false);
                   if (onUnveilClose) onUnveilClose();
@@ -654,16 +658,16 @@ export function PickCard({
                       const hasScore = p.homeScore != null && p.awayScore != null;
                       const pickResult = p.result || p.status;
                       return (
-                        <li key={i} className="flex justify-between items-start p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
-                          <div className="flex-1 pr-4 min-w-0">
-                            <span className="text-sm text-[var(--text)] font-medium block flex items-center gap-2">
+                        <li key={i} className="flex justify-between items-start gap-2 min-w-0 p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
+                          <div className="flex-1 pr-2 sm:pr-4 min-w-0">
+                            <span className="text-sm text-[var(--text)] font-medium flex items-center gap-2 min-w-0">
                               {(p.homeTeamLogo || p.awayTeamLogo || p.homeCountryCode || p.awayCountryCode) && (
                                 <span className="flex items-center gap-1 flex-shrink-0">
                                   <TeamBadge logo={p.homeTeamLogo} countryCode={p.homeCountryCode} name={p.homeTeamName || undefined} size={18} />
                                   <TeamBadge logo={p.awayTeamLogo} countryCode={p.awayCountryCode} name={p.awayTeamName || undefined} size={18} />
                                 </span>
                               )}
-                              {p.matchDescription}
+                              <span className="min-w-0 truncate">{p.matchDescription}</span>
                             </span>
                             {(hasScore || pickResult) && (
                               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -685,9 +689,9 @@ export function PickCard({
                               </div>
                             )}
                           </div>
-                          <div className="text-right flex-shrink-0">
-                            <span className="text-xs text-[var(--text-muted)] block">{p.prediction}</span>
-                            <span className="text-xs font-semibold text-[var(--primary)]">@{Number(p.odds || 0).toFixed(2)}</span>
+                          <div className="text-right flex-shrink-0 min-w-0">
+                            <span className="text-xs text-[var(--text-muted)] block truncate max-w-[7rem] sm:max-w-none">{p.prediction}</span>
+                            <span className="text-xs font-semibold text-[var(--primary)] tabular-nums">@{Number(p.odds || 0).toFixed(2)}</span>
                           </div>
                         </li>
                       );
@@ -720,6 +724,7 @@ export function PickCard({
                   {t('pick_card.view_in_my_purchases')}
                 </Link>
                 <button
+                  type="button"
                   onClick={() => {
                     setShowUnveilModal(false);
                     if (onUnveilClose) onUnveilClose();

@@ -25,9 +25,9 @@ export function SportEventCard({
   const grouped = groupOddsByMarket(odds);
 
   return (
-    <div className="bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] overflow-hidden">
-      <div className="p-4">
-        <div className="font-semibold text-[var(--text)] flex items-center gap-2 flex-wrap">
+    <div className="bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] overflow-hidden w-full min-w-0 max-w-full">
+      <div className="p-4 min-w-0">
+        <div className="font-semibold text-[var(--text)] flex items-center gap-2 flex-wrap min-w-0 break-words">
           <span className="flex items-center gap-1.5">
             <TeamBadge logo={event.homeTeamLogo} countryCode={event.homeCountryCode} name={event.homeTeam} size={20} />
             {event.homeTeam}
@@ -38,7 +38,7 @@ export function SportEventCard({
             {event.awayTeam}
           </span>
         </div>
-        <div className="text-xs text-[var(--text-muted)] mt-1">
+        <div className="text-xs text-[var(--text-muted)] mt-1 break-words min-w-0">
           {event.leagueName || leagueLabel} • {formatFixtureDateTime(event.eventDate)}
         </div>
       </div>
@@ -53,6 +53,7 @@ export function SportEventCard({
                 <div className="flex flex-wrap gap-2">
                   {(grouped[marketName] || []).map((odd) => (
                     <button
+                      type="button"
                       key={odd.id}
                       onClick={() => onAddSelection(event, odd, sport)}
                       className="px-3 py-2 rounded-lg bg-[var(--bg)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] font-medium text-sm transition-colors border border-[var(--border)] active:scale-95"

@@ -85,12 +85,12 @@ function ForgotPasswordForm() {
 
     const t = useT();
     return (
-        <div className="min-h-screen bg-[var(--bg)] relative overflow-hidden">
+        <div className="min-h-screen bg-[var(--bg)] relative overflow-x-hidden w-full min-w-0 max-w-full">
             <div className="absolute inset-0 bg-gradient-mesh pointer-events-none" />
             <UnifiedHeader />
-            <main className="section-ux-auth-main">
-                <div className="w-full max-w-md">
-                    <div className="bg-white rounded-2xl shadow-xl border border-[var(--border)] p-8 md:p-10">
+            <main className="section-ux-auth-main w-full min-w-0 max-w-full">
+                <div className="w-full max-w-md min-w-0 mx-auto px-4 sm:px-0">
+                    <div className="bg-white rounded-2xl shadow-xl border border-[var(--border)] p-6 sm:p-8 md:p-10 min-w-0 max-w-full">
                         <div className="text-center mb-8">
                             <h1 className="text-xl font-semibold text-[var(--text)]">
                                 {step === 'request' ? t('auth.forgot_title') : t('auth.forgot_reset_title')}
@@ -113,8 +113,8 @@ function ForgotPasswordForm() {
                         )}
 
                         {step === 'request' ? (
-                            <form onSubmit={handleRequestOtp} className="space-y-5">
-                                <div>
+                            <form onSubmit={handleRequestOtp} className="space-y-5 min-w-0">
+                                <div className="min-w-0">
                                     <label htmlFor="email" className="block text-sm font-medium text-[var(--text)] mb-1.5">
                                         {t('auth.email_label')}
                                     </label>
@@ -124,7 +124,7 @@ function ForgotPasswordForm() {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
-                                        className="w-full px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200"
+                                        className="w-full min-w-0 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200"
                                         placeholder="you@example.com"
                                     />
                                 </div>
@@ -137,8 +137,8 @@ function ForgotPasswordForm() {
                                 </button>
                             </form>
                         ) : (
-                            <form onSubmit={handleResetPassword} className="space-y-5">
-                                <div>
+                            <form onSubmit={handleResetPassword} className="space-y-5 min-w-0">
+                                <div className="min-w-0">
                                     <label htmlFor="code" className="block text-sm font-medium text-[var(--text)] mb-1.5">
                                         {t('auth.reset_code')}
                                     </label>
@@ -148,11 +148,11 @@ function ForgotPasswordForm() {
                                         value={code}
                                         onChange={(e) => setCode(e.target.value)}
                                         required
-                                        className="w-full px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200"
+                                        className="w-full min-w-0 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200"
                                         placeholder="123456"
                                     />
                                 </div>
-                                <div>
+                                <div className="min-w-0">
                                     <label htmlFor="newPassword" className="block text-sm font-medium text-[var(--text)] mb-1.5">
                                         {t('auth.new_password')}
                                     </label>
@@ -162,10 +162,10 @@ function ForgotPasswordForm() {
                                         value={newPassword}
                                         onChange={(e) => setNewPassword(e.target.value)}
                                         required
-                                        className="w-full px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200"
+                                        className="w-full min-w-0 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200"
                                     />
                                 </div>
-                                <div>
+                                <div className="min-w-0">
                                     <label htmlFor="confirmPassword" className="block text-sm font-medium text-[var(--text)] mb-1.5">
                                         {t('auth.confirm_password_label')}
                                     </label>
@@ -175,7 +175,7 @@ function ForgotPasswordForm() {
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         required
-                                        className="w-full px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200"
+                                        className="w-full min-w-0 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200"
                                     />
                                 </div>
                                 <button
@@ -210,7 +210,7 @@ function ForgotPasswordForm() {
 
 export default function ForgotPasswordPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-[var(--bg)] flex items-center justify-center"><div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" /></div>}>
+        <Suspense fallback={<div className="min-h-screen bg-[var(--bg)] flex items-center justify-center w-full min-w-0 max-w-full overflow-x-hidden"><div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" /></div>}>
             <ForgotPasswordForm />
         </Suspense>
     );

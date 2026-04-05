@@ -246,7 +246,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <div className="w-10 h-10 rounded-full border-2 border-[var(--primary)] border-t-transparent animate-spin" />
       </div>
     );
@@ -254,8 +254,8 @@ export default function ProfilePage() {
 
   return (
     <DashboardShell>
-      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
-        <div className="section-ux-dashboard-shell">
+      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden">
+        <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full">
           <PageHeader
             label={t('profile.title')}
             title={t('profile.title')}
@@ -266,11 +266,11 @@ export default function ProfilePage() {
             <AdSlot zoneSlug="profile-full" fullWidth className="w-full" />
           </div>
 
-          <div className="space-y-4">
-            <form onSubmit={saveProfile} className="card-gradient rounded-2xl p-5 shadow-lg animate-fade-in-up animate-delay-100">
+          <div className="space-y-4 min-w-0 max-w-full">
+            <form onSubmit={saveProfile} className="card-gradient rounded-2xl p-5 shadow-lg animate-fade-in-up animate-delay-100 min-w-0">
               <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('profile.account')}</h2>
-              <div className="flex flex-col sm:flex-row gap-6 mb-6">
-                <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col sm:flex-row gap-6 mb-6 min-w-0">
+                <div className="flex flex-col items-center gap-2 shrink-0">
                   <div className="w-24 h-24 rounded-full overflow-hidden bg-[var(--border)] flex items-center justify-center border-2 border-[var(--border)]">
                     {avatarSrc && !avatarError ? (
                       <Image
@@ -309,44 +309,44 @@ export default function ProfilePage() {
                     </button>
                   )}
                 </div>
-                <div className="flex-1 space-y-3">
-              <div>
+                <div className="flex-1 min-w-0 space-y-3">
+              <div className="min-w-0">
                 <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.email')}</label>
                 <input
                   type="email"
                   value={profile?.email || ''}
                   disabled
-                  className="w-full px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text-muted)]"
+                  className="w-full min-w-0 px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text-muted)]"
                 />
                 <p className="text-xs text-[var(--text-muted)] mt-1">{t('profile.email_cannot_change')}</p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.display_name')}</label>
                 <input
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
+                  className="w-full min-w-0 px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
                 />
               </div>
-              <div>
+              <div className="min-w-0">
                 <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.phone')}</label>
                 <input
                   type="text"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder={t('profile.optional')}
-                  className="w-full px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
+                  className="w-full min-w-0 px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
                 />
               </div>
-              <div>
+              <div className="min-w-0">
                 <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.contact_email')}</label>
                 <input
                   type="email"
                   value={contactEmail}
                   onChange={(e) => setContactEmail(e.target.value)}
                   placeholder={t('profile.contact_email_placeholder')}
-                  className="w-full px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
+                  className="w-full min-w-0 px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
                 />
                 <p className="text-xs text-[var(--text-muted)] mt-1">{t('profile.contact_email_hint')}</p>
               </div>
@@ -362,7 +362,7 @@ export default function ProfilePage() {
               </div>
             </form>
 
-          <form onSubmit={changePassword} className="card-gradient rounded-2xl p-5 shadow-lg animate-fade-in-up animate-delay-200">
+          <form onSubmit={changePassword} className="card-gradient rounded-2xl p-5 shadow-lg animate-fade-in-up animate-delay-200 min-w-0">
             <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('profile.change_password')}</h2>
             <div className="space-y-3">
               <div>
@@ -372,7 +372,7 @@ export default function ProfilePage() {
                   value={pwCurrent}
                   onChange={(e) => setPwCurrent(e.target.value)}
                   required
-                  className="w-full px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
+                  className="w-full min-w-0 px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
                 />
               </div>
               <div>
@@ -383,7 +383,7 @@ export default function ProfilePage() {
                   onChange={(e) => setPwNew(e.target.value)}
                   required
                   minLength={6}
-                  className="w-full px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
+                  className="w-full min-w-0 px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
                 />
               </div>
               <div>
@@ -393,7 +393,7 @@ export default function ProfilePage() {
                   value={pwConfirm}
                   onChange={(e) => setPwConfirm(e.target.value)}
                   required
-                  className="w-full px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
+                  className="w-full min-w-0 px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
                 />
               </div>
               {pwMsg && <p className={`text-sm ${pwMsg.startsWith(t('profile.password_updated')) ? 'text-green-600' : 'text-red-600'}`}>{pwMsg}</p>}
@@ -407,7 +407,7 @@ export default function ProfilePage() {
             </div>
           </form>
 
-          <div className="card-gradient rounded-2xl p-5 shadow-lg animate-fade-in-up animate-delay-250">
+          <div className="card-gradient rounded-2xl p-5 shadow-lg animate-fade-in-up animate-delay-250 min-w-0">
             <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('profile.logout_all_devices')}</h2>
             <p className="text-sm text-[var(--text-muted)] mb-4">{t('profile.logout_all_devices_hint')}</p>
             <button
@@ -420,18 +420,18 @@ export default function ProfilePage() {
             </button>
           </div>
 
-          <form onSubmit={deleteAccount} className="card-gradient rounded-2xl p-5 shadow-lg border border-red-200 dark:border-red-900/50 animate-fade-in-up animate-delay-300">
+          <form onSubmit={deleteAccount} className="card-gradient rounded-2xl p-5 shadow-lg border border-red-200 dark:border-red-900/50 animate-fade-in-up animate-delay-300 min-w-0">
             <h2 className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider mb-3">{t('profile.delete_account')}</h2>
             <p className="text-sm text-[var(--text-muted)] mb-4">{t('profile.delete_account_warning')}</p>
             <div className="space-y-3">
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-start gap-2 cursor-pointer min-w-0">
                 <input
                   type="checkbox"
                   checked={deleteConfirm}
                   onChange={(e) => setDeleteConfirm(e.target.checked)}
                   className="rounded border-[var(--border)]"
                 />
-                <span className="text-sm text-[var(--text)]">{t('profile.delete_confirm_checkbox')}</span>
+                <span className="text-sm text-[var(--text)] min-w-0 break-words">{t('profile.delete_confirm_checkbox')}</span>
               </label>
               <div>
                 <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.delete_confirm_password')}</label>
@@ -440,7 +440,7 @@ export default function ProfilePage() {
                   value={deletePassword}
                   onChange={(e) => setDeletePassword(e.target.value)}
                   placeholder={t('profile.current_password')}
-                  className="w-full px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
+                  className="w-full min-w-0 px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
                   disabled={!deleteConfirm}
                 />
               </div>

@@ -340,8 +340,8 @@ function WalletContent() {
 
   return (
     <DashboardShell>
-      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)]">
-        <div className="section-ux-dashboard-shell">
+      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden">
+        <div className="section-ux-dashboard-shell min-w-0 max-w-full">
           <PageHeader
             label={t('wallet.title')}
             title={t('wallet.title')}
@@ -363,8 +363,8 @@ function WalletContent() {
 
           {loading && <LoadingSkeleton count={2} variant="list" />}
           {!loading && (
-            <div className="space-y-4 pb-6">
-              <div className="card-gradient rounded-2xl p-5 shadow-lg">
+            <div className="space-y-4 pb-6 min-w-0 max-w-full">
+              <div className="card-gradient rounded-2xl p-5 shadow-lg min-w-0">
                 <p className="text-xs text-[var(--text-muted)] mb-0.5 font-medium uppercase tracking-wider">{t('wallet.balance')}</p>
               <p className="text-xl sm:text-2xl font-semibold text-[var(--primary)]">
                 {format(Number(balance?.balance ?? 0)).primary}
@@ -383,10 +383,11 @@ function WalletContent() {
                   placeholder={t('wallet.amount_placeholder')}
                   value={depositAmount}
                   onChange={(e) => setDepositAmount(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] placeholder:text-[var(--text-muted)] focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] transition-all"
+                  className="w-full min-w-0 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] placeholder:text-[var(--text-muted)] focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] transition-all"
                 />
                 {depositError && <p className="text-sm text-red-500">{depositError}</p>}
                 <button
+                  type="button"
                   onClick={handleDeposit}
                   disabled={depositLoading}
                   className="w-full px-4 py-3 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white hover:shadow-lg hover:shadow-[var(--primary)]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
@@ -397,7 +398,7 @@ function WalletContent() {
             </div>
 
             {canWithdraw && (
-              <div id="withdraw" className="card-gradient rounded-2xl p-5 shadow-lg scroll-mt-24">
+              <div id="withdraw" className="card-gradient rounded-2xl p-5 shadow-lg scroll-mt-24 min-w-0">
                 <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{withdrawSectionTitle}</h2>
 
                 {/* Pending withdrawal warning */}
@@ -552,17 +553,19 @@ function WalletContent() {
                           </>
                         )}
                         {payoutError && <p className="text-sm text-red-500">{payoutError}</p>}
-                        <div className="flex gap-2">
+                        <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                           <button
+                            type="button"
                             onClick={handleAddPayoutMethod}
                             disabled={payoutLoading}
-                            className="px-4 py-2 rounded-lg bg-[var(--primary)] text-white disabled:opacity-50"
+                            className="w-full sm:w-auto px-4 py-2 rounded-lg bg-[var(--primary)] text-white disabled:opacity-50"
                           >
                             {payoutLoading ? t('wallet.saving') : t('wallet.save')}
                           </button>
                           <button
+                            type="button"
                             onClick={() => setShowPayoutForm(false)}
-                            className="px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--text)]"
+                            className="w-full sm:w-auto px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--text)]"
                           >
                             {t('wallet.cancel')}
                           </button>
@@ -571,8 +574,9 @@ function WalletContent() {
                 ) : payoutMethods.length === 0 ? (
                   <div className="space-y-2">
                     <button
+                      type="button"
                       onClick={() => setShowPayoutForm(true)}
-                      className="px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-muted)]"
+                      className="w-full sm:w-auto px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-muted)]"
                     >
                       {t('wallet.add_payout_method')}
                     </button>
@@ -582,10 +586,10 @@ function WalletContent() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-2 p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)]">
-                      <div>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-xs font-semibold text-[var(--text-muted)] mb-0.5">Payout method</p>
-                        <p className="text-sm text-[var(--text)] font-medium">
+                        <p className="text-sm text-[var(--text)] font-medium break-words">
                           {payoutMethods[0].displayName}
                           {payoutMethods[0].accountMasked && <span className="text-[var(--text-muted)]"> · {payoutMethods[0].accountMasked}</span>}
                           <span className="ml-1 text-xs text-[var(--text-muted)]">
@@ -599,12 +603,12 @@ function WalletContent() {
                       <button
                         type="button"
                         onClick={() => setShowPayoutForm(true)}
-                        className="text-xs text-[var(--primary)] hover:underline whitespace-nowrap"
+                        className="self-start sm:self-auto shrink-0 text-xs text-[var(--primary)] hover:underline whitespace-nowrap"
                       >
                         {t('wallet.replace')}
                       </button>
                     </div>
-                    <div className="relative">
+                    <div className="relative min-w-0">
                       <input
                         type="number"
                         min={5}
@@ -614,7 +618,7 @@ function WalletContent() {
                         value={withdrawAmount}
                         onChange={(e) => setWithdrawAmount(e.target.value)}
                         disabled={!!pendingWithdrawal}
-                        className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] disabled:opacity-50"
+                        className="w-full min-w-0 px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] disabled:opacity-50"
                       />
                       {balance && (
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] pointer-events-none">
@@ -624,6 +628,7 @@ function WalletContent() {
                     </div>
                     {withdrawError && <p className="text-sm text-red-500">{withdrawError}</p>}
                     <button
+                      type="button"
                       onClick={handleWithdraw}
                       disabled={withdrawLoading || !!pendingWithdrawal}
                       className="w-full px-4 py-2 rounded-lg bg-emerald-600 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
@@ -637,7 +642,7 @@ function WalletContent() {
 
             {/* Withdrawal history — anyone who can withdraw */}
             {canWithdraw && withdrawals.length > 0 && (
-              <div className="card-gradient rounded-2xl p-5 shadow-lg">
+              <div className="card-gradient rounded-2xl p-5 shadow-lg min-w-0">
                 <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('wallet.withdrawal_history')}</h2>
                 <ul className="space-y-2">
                   {withdrawals.slice(0, 8).map((w) => {
@@ -654,9 +659,9 @@ function WalletContent() {
                           : null;
                     return (
                       <li key={w.id} className="flex flex-col gap-2 py-3 border-b border-[var(--border)] last:border-0">
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start justify-between gap-3 min-w-0">
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-[var(--text)]">
+                            <p className="text-sm font-medium text-[var(--text)] tabular-nums">
                               {w.currency ?? 'GHS'} {Number(w.amount).toFixed(2)}
                             </p>
                             <p className="text-xs text-[var(--text-muted)]">
@@ -699,10 +704,10 @@ function WalletContent() {
               </div>
             )}
 
-            <div className="card-gradient rounded-2xl p-5 shadow-lg">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">{t('wallet.recent_transactions')}</h2>
-                <Link href="/earnings" className="text-xs text-[var(--primary)] hover:underline">{t('wallet.full_earnings')}</Link>
+            <div className="card-gradient rounded-2xl p-5 shadow-lg min-w-0">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-3 min-w-0">
+                <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider min-w-0">{t('wallet.recent_transactions')}</h2>
+                <Link href="/earnings" className="text-xs text-[var(--primary)] hover:underline w-fit shrink-0">{t('wallet.full_earnings')}</Link>
               </div>
               {transactions.length === 0 ? (
                 <p className="text-[var(--text-muted)] text-sm">{t('wallet.no_transactions')}</p>
@@ -717,13 +722,15 @@ function WalletContent() {
                     const TX_ICON: Record<string, string> = { payout:'💰', commission:'🏛', refund:'↩', deposit:'⬆', withdrawal:'💸', purchase:'🛒', credit:'✨', adjustment:'⚙️' };
                     const TX_LABEL: Record<string, string> = { payout: t('wallet.net_payout'), commission: t('wallet.commission'), refund: t('wallet.refund'), deposit: t('wallet.deposit'), withdrawal: t('wallet.withdrawal'), purchase: t('wallet.purchase'), credit: t('wallet.credit'), adjustment: t('wallet.adjustment') };
                     return (
-                      <li key={tx.id} className={`flex items-center gap-3 py-2 border-b border-[var(--border)] last:border-0 ${isCommission ? 'opacity-70' : ''}`}>
-                        <span className="text-base w-6 text-center flex-shrink-0">{TX_ICON[displayType] ?? '↔'}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm text-[var(--text)]">{TX_LABEL[displayType] ?? displayType}</p>
-                          <p className="text-xs text-[var(--text-muted)] truncate">{tx.description || new Date(tx.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short' })}</p>
+                      <li key={tx.id} className={`flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 py-3 sm:py-2 border-b border-[var(--border)] last:border-0 ${isCommission ? 'opacity-70' : ''}`}>
+                        <div className="flex items-start gap-3 min-w-0 flex-1">
+                          <span className="text-base w-6 text-center shrink-0 pt-0.5">{TX_ICON[displayType] ?? '↔'}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm text-[var(--text)]">{TX_LABEL[displayType] ?? displayType}</p>
+                            <p className="text-xs text-[var(--text-muted)] truncate">{tx.description || new Date(tx.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short' })}</p>
+                          </div>
                         </div>
-                        <div className="text-right flex-shrink-0">
+                        <div className="text-right shrink-0 sm:ml-auto pl-9 sm:pl-0 tabular-nums">
                           <span className={`font-semibold text-sm tabular-nums block ${isCommission ? 'text-amber-600' : isCredit ? 'text-emerald-600' : 'text-red-500'}`}>
                             {isCommission ? '−' : isCredit ? '+' : '−'}{format(Math.abs(Number(tx.amount))).primary}
                           </span>
@@ -756,7 +763,7 @@ export default function WalletPage() {
   return (
     <Suspense fallback={
       <DashboardShell>
-        <div className="section-ux-dashboard-shell">
+        <div className="section-ux-dashboard-shell min-w-0 max-w-full">
           <LoadingSkeleton count={2} variant="list" />
         </div>
       </DashboardShell>

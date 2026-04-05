@@ -138,7 +138,7 @@ export default function SubscriptionPackagesPage() {
         )}
 
         {packages.length === 0 && (
-        <form onSubmit={handleCreate} className="glass-card rounded-2xl p-6 mb-8 border border-[var(--border)] max-w-xl">
+        <form onSubmit={handleCreate} className="glass-card rounded-2xl p-6 mb-8 border border-[var(--border)] max-w-xl w-full min-w-0">
           <h3 className="font-semibold text-[var(--text)] mb-4">New package</h3>
           <div className="space-y-4">
             <div>

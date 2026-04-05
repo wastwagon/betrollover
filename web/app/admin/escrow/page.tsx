@@ -128,11 +128,11 @@ export default function AdminEscrowPage() {
   const hasAnyRows = funds.length > 0 || subscriptionFunds.length > 0;
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main">
+      <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Escrow Funds</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Escrow Funds</h1>
           <p className="text-gray-600 dark:text-gray-400">
             <strong>Marketplace picks:</strong> funds held until coupons settle — released to the tipster on a win, refunded
             to buyers on loss/void. <strong>VIP subscriptions:</strong> funds held until the subscription period ends — then
@@ -145,15 +145,15 @@ export default function AdminEscrowPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-2xl shadow-lg border-l-4 border-amber-500 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8">
+          <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-2xl shadow-lg border-l-4 border-amber-500 p-4 sm:p-6">
             <p className="text-sm font-medium text-amber-700 dark:text-amber-300 mb-2">Total held (picks + VIP)</p>
             <p className="text-3xl font-bold text-gray-900 dark:text-white">GHS {totalHeld.toFixed(2)}</p>
             <p className="mt-2 text-xs text-amber-800/80 dark:text-amber-200/90">
               Pick escrow: GHS {totalHeldPick.toFixed(2)} · VIP subscription escrow: GHS {totalHeldSub.toFixed(2)}
             </p>
           </div>
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-2xl shadow-lg border-l-4 border-blue-500 p-6">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-2xl shadow-lg border-l-4 border-blue-500 p-4 sm:p-6">
             <p className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">Active holdings</p>
             <p className="text-3xl font-bold text-gray-900 dark:text-white">{activeHoldings}</p>
             <p className="mt-2 text-xs text-blue-800/80 dark:text-blue-200/90">

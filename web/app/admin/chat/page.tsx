@@ -175,12 +175,12 @@ export default function AdminChatPage() {
   ];
 
   return (
-    <div className="min-h-screen flex bg-gray-950 text-white">
+    <div className="min-h-screen flex bg-gray-950 text-white w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
 
-      <main className="admin-main-sibling section-ux-admin-chat">
+      <main className="admin-main-sibling section-ux-admin-chat min-w-0">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold">Chat Moderation</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Chat Moderation</h1>
           <p className="text-gray-400 text-sm mt-1">Manage community chat rooms, moderate messages, and handle user bans.</p>
         </div>
 
@@ -192,12 +192,12 @@ export default function AdminChatPage() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 border-b border-gray-800 pb-0">
+        <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-800 pb-0">
           {TABS.map((t) => (
-            <button
+            <button type="button"
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              className={`flex-1 min-w-[min(100%,9rem)] sm:flex-none px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors text-center ${
                 tab === t.id
                   ? 'border-indigo-500 text-indigo-400'
                   : 'border-transparent text-gray-400 hover:text-white'
@@ -223,8 +223,8 @@ export default function AdminChatPage() {
             ) : (
               flagged.map((msg) => (
                 <div key={msg.id} className="bg-gray-900 rounded-xl p-4 border border-gray-800">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1.5">
                         <span className="font-semibold text-sm">{msg.username}</span>
                         <span className="text-xs bg-gray-800 px-2 py-0.5 rounded text-gray-400">
@@ -242,16 +242,18 @@ export default function AdminChatPage() {
                         {new Date(msg.created_at).toLocaleString()}
                       </p>
                     </div>
-                    <div className="flex flex-col gap-2 shrink-0">
+                    <div className="flex flex-row sm:flex-col gap-2 shrink-0 w-full sm:w-auto">
                       <button
+                        type="button"
                         onClick={() => deleteMessage(msg.id)}
-                        className="bg-red-700 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg"
+                        className="flex-1 sm:flex-none bg-red-700 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg"
                       >
                         Delete
                       </button>
                       <button
+                        type="button"
                         onClick={() => openBanModal(msg.user_id, msg.username)}
-                        className="bg-gray-700 hover:bg-gray-600 text-white text-xs px-3 py-1.5 rounded-lg"
+                        className="flex-1 sm:flex-none bg-gray-700 hover:bg-gray-600 text-white text-xs px-3 py-1.5 rounded-lg"
                       >
                         Mute/Ban
                       </button>
@@ -266,10 +268,11 @@ export default function AdminChatPage() {
         {/* ── Active Bans ── */}
         {tab === 'bans' && !loading && (
           <div>
-            <div className="flex justify-end mb-4">
+            <div className="flex justify-stretch sm:justify-end mb-4">
               <button
+                type="button"
                 onClick={() => setBanModal({ userId: 0, username: '' })}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-lg"
+                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-lg text-center"
               >
                 + Issue Ban
               </button>
@@ -307,7 +310,7 @@ export default function AdminChatPage() {
                           {ban.expires_at ? new Date(ban.expires_at).toLocaleDateString() : 'Permanent'}
                         </td>
                         <td className="py-3">
-                          <button
+                          <button type="button"
                             onClick={() => liftBan(ban.user_id, ban.username)}
                             className="text-indigo-400 hover:text-indigo-300 text-xs underline"
                           >
@@ -327,8 +330,8 @@ export default function AdminChatPage() {
         {tab === 'rooms' && !loading && (
           <div className="space-y-3">
             {rooms.map((room) => (
-              <div key={room.id} className="bg-gray-900 rounded-xl p-4 border border-gray-800 flex items-center justify-between">
-                <div className="flex items-center gap-3">
+              <div key={room.id} className="bg-gray-900 rounded-xl p-4 border border-gray-800 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3 min-w-0">
                   <span className="text-2xl">{room.icon}</span>
                   <div>
                     <div className="font-medium flex items-center gap-2">
@@ -343,8 +346,9 @@ export default function AdminChatPage() {
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setEditRoom({ ...room })}
-                  className="bg-gray-700 hover:bg-gray-600 text-sm px-3 py-1.5 rounded-lg"
+                  className="w-full sm:w-auto shrink-0 bg-gray-700 hover:bg-gray-600 text-sm px-3 py-1.5 rounded-lg text-center"
                 >
                   Edit
                 </button>
@@ -378,7 +382,7 @@ export default function AdminChatPage() {
               <label className="block text-sm text-gray-400 mb-1">Action</label>
               <div className="flex gap-2">
                 {(['mute', 'ban'] as const).map((t) => (
-                  <button
+                  <button type="button"
                     key={t}
                     onClick={() => setBanType(t)}
                     className={`flex-1 py-2 rounded-lg text-sm font-medium border ${
@@ -419,13 +423,13 @@ export default function AdminChatPage() {
             </div>
 
             <div className="flex gap-3">
-              <button
+              <button type="button"
                 onClick={submitBan}
                 className="flex-1 bg-red-700 hover:bg-red-600 text-white py-2 rounded-lg font-medium text-sm"
               >
                 Confirm {banType === 'mute' ? 'Mute' : 'Ban'}
               </button>
-              <button
+              <button type="button"
                 onClick={() => setBanModal(null)}
                 className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg font-medium text-sm"
               >
@@ -464,7 +468,7 @@ export default function AdminChatPage() {
 
             <div className="mb-6 flex items-center gap-3">
               <label className="text-sm text-gray-400">Room Status</label>
-              <button
+              <button type="button"
                 onClick={() => setEditRoom({ ...editRoom, isActive: !editRoom.isActive })}
                 className={`px-4 py-1.5 rounded-lg text-sm font-medium ${
                   editRoom.isActive ? 'bg-emerald-700 text-white' : 'bg-red-800 text-white'
@@ -475,13 +479,13 @@ export default function AdminChatPage() {
             </div>
 
             <div className="flex gap-3">
-              <button
+              <button type="button"
                 onClick={saveRoom}
                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-medium text-sm"
               >
                 Save Changes
               </button>
-              <button
+              <button type="button"
                 onClick={() => setEditRoom(null)}
                 className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg font-medium text-sm"
               >

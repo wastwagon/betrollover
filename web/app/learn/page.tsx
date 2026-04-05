@@ -9,17 +9,17 @@ export default async function LearnPage() {
   const locale = await getLocale();
   const t = buildT(locale);
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
-      <main>
-        <div className="section-ux-page">
+      <main className="w-full min-w-0">
+        <div className="section-ux-page w-full min-w-0">
           <PageHeader
             label={t('learn.education')}
             title={t('learn.page_title')}
             tagline={t('learn.page_intro', { site: SITE_NAME })}
           />
-          <article className="section-ux-prose">
-          <div className="prose prose-slate max-w-none text-[var(--text)] space-y-12 leading-relaxed">
+          <article className="section-ux-prose min-w-0">
+          <div className="prose prose-slate max-w-none text-[var(--text)] space-y-12 leading-relaxed min-w-0">
 
             <section>
               <h2 className="text-xl font-semibold mb-4">{t('learn.section_platform')}</h2>
@@ -39,7 +39,7 @@ export default async function LearnPage() {
 
             <section id="glossary">
               <h2 className="text-xl font-semibold mb-4">{t('learn.section_glossary')}</h2>
-              <dl className="space-y-5">
+              <dl className="space-y-5 min-w-0">
                 <div>
                   <dt className="font-semibold text-[var(--text)]">Escrow</dt>
                   <dd className="mt-1 text-[var(--text-muted)]">
@@ -132,22 +132,22 @@ export default async function LearnPage() {
 
             <div className="mt-10 p-5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/40">
               <p className="font-semibold text-[var(--text)] mb-2">{t('learn.cta_ready')}</p>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3">
                 <Link
                   href="/marketplace"
-                  className="px-4 py-2 rounded-lg bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors"
+                  className="inline-flex justify-center px-4 py-2 rounded-lg bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors w-full sm:w-auto"
                 >
                   {t('learn.cta_marketplace')}
                 </Link>
                 <Link
                   href="/how-it-works"
-                  className="px-4 py-2 rounded-lg border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                  className="inline-flex justify-center px-4 py-2 rounded-lg border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
                 >
                   {t('learn.cta_how_it_works')}
                 </Link>
                 <Link
                   href="/discover"
-                  className="px-4 py-2 rounded-lg border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                  className="inline-flex justify-center px-4 py-2 rounded-lg border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
                 >
                   {t('learn.cta_discover')}
                 </Link>

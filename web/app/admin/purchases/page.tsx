@@ -68,15 +68,15 @@ export default function AdminPurchasesPage() {
   const pageSubtotalGross = purchases.reduce((sum, p) => sum + Number(p.purchasePrice), 0);
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main">
+      <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Purchases Management</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Purchases Management</h1>
           <p className="text-gray-600 dark:text-gray-400">View all pick purchases across the platform.</p>
         </div>
 
-        <div className="mb-6 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-xl p-6 text-white">
+        <div className="mb-6 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-xl p-4 sm:p-6 text-white">
           <p className="text-sm opacity-90 mb-1">Gross subtotal (this page)</p>
           <p className="text-3xl font-bold">GHS {pageSubtotalGross.toFixed(2)}</p>
           <p className="text-xs opacity-85 mt-2 leading-snug max-w-xl">
@@ -85,7 +85,7 @@ export default function AdminPurchasesPage() {
           </p>
         </div>
 
-        <div className="mb-6 flex gap-4">
+        <div className="mb-6 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
           <input
             type="number"
             placeholder="Filter by User ID"
@@ -94,7 +94,7 @@ export default function AdminPurchasesPage() {
               setUserIdFilter(e.target.value);
               setPage(1);
             }}
-            className="px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full sm:flex-1 sm:min-w-[160px] px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
           />
           <input
             type="number"
@@ -104,7 +104,7 @@ export default function AdminPurchasesPage() {
               setAccumulatorIdFilter(e.target.value);
               setPage(1);
             }}
-            className="px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full sm:flex-1 sm:min-w-[180px] px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
           />
         </div>
 
@@ -174,21 +174,23 @@ export default function AdminPurchasesPage() {
                   </table>
                 </div>
                 {totalPages > 1 && (
-                  <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                  <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <button
+                      type="button"
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={page === 1}
-                      className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="w-full sm:w-auto px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors order-2 sm:order-1"
                     >
                       Previous
                     </button>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <span className="text-sm text-gray-600 dark:text-gray-400 text-center order-1 sm:order-2">
                       Page {page} of {totalPages}
                     </span>
                     <button
+                      type="button"
                       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                       disabled={page === totalPages}
-                      className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="w-full sm:w-auto px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors order-3"
                     >
                       Next
                     </button>

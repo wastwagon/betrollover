@@ -119,9 +119,9 @@ function DiscoverContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
-      <main className="section-ux-page-wide">
+      <main className="section-ux-page-wide w-full min-w-0">
         <PageHeader
           label={t('nav.discover')}
           title={t('discover.title')}
@@ -129,12 +129,12 @@ function DiscoverContent() {
         />
 
         {/* SEO-rich static content */}
-        <section className="mb-8 rounded-2xl bg-[var(--card)] border border-[var(--border)] p-6 md:p-8">
+        <section className="mb-8 rounded-2xl bg-[var(--card)] border border-[var(--border)] p-6 md:p-8 min-w-0">
           <h2 className="text-base font-semibold text-[var(--text)] mb-3">{t('discover.hub_title')}</h2>
           <p className="text-[var(--text-muted)] leading-relaxed mb-4">
             {t('discover.hub_desc')}
           </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 min-w-0">
             <div className="p-4 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)]">
               <h3 className="font-semibold text-[var(--text)] mb-2">📰 {t('discover.news_transfers')}</h3>
               <p className="text-sm text-[var(--text-muted)]">{t('discover.news_transfers_desc')}</p>
@@ -178,14 +178,15 @@ function DiscoverContent() {
         </section>
 
         {/* Sport filter row — shared between tabs */}
-        <div className="mb-6">
+        <div className="mb-6 w-full min-w-0 overflow-hidden">
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">{t('news.filter_by_sport')}</p>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+          <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
             {SPORT_KEYS.map((sfKey) => (
               <button
                 key={sfKey || 'all'}
+                type="button"
                 onClick={() => handleSportChange(sfKey)}
-                className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
                   activeSport === sfKey
                     ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
                     : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--text)]'
@@ -198,16 +199,17 @@ function DiscoverContent() {
         </div>
 
         {/* Tab switcher */}
-        <div className="mb-8">
-          <div className="flex gap-2">
+        <div className="mb-8 w-full min-w-0 overflow-hidden">
+          <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
             {[
               { id: 'news' as TabId, label: t('discover.tab_news'), icon: '📰' },
               { id: 'guides' as TabId, label: t('discover.tab_guides'), icon: '📚' },
             ].map((tab) => (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => setTab(tab.id)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-colors ${
+                className={`shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-colors ${
                   activeTab === tab.id
                     ? 'bg-[var(--primary)] text-white shadow-md'
                     : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--primary)]/50 hover:text-[var(--text)]'
@@ -224,8 +226,8 @@ function DiscoverContent() {
           <AdSlot zoneSlug="discover-full" fullWidth className="w-full max-w-3xl" />
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          <div className="flex-1">
+        <div className="flex flex-col lg:flex-row gap-8 min-w-0">
+          <div className="flex-1 min-w-0">
             {activeTab === 'news' ? (
               <NewsTab sport={activeSport} />
             ) : (
@@ -291,10 +293,12 @@ function NewsTab({ sport }: { sport: NewsSport | '' }) {
   return (
     <section>
       {/* Category sub-tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1 mb-6">
+      <div className="mb-6 w-full min-w-0 overflow-hidden">
+      <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
         {tabs.map((tab) => (
           <button
             key={tab.key}
+            type="button"
             onClick={() => setActiveCategory(tab.key)}
             className={`flex-shrink-0 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
               activeCategory === tab.key
@@ -305,6 +309,7 @@ function NewsTab({ sport }: { sport: NewsSport | '' }) {
             {tab.label}
           </button>
         ))}
+      </div>
       </div>
 
       {loading ? (
@@ -441,20 +446,20 @@ function GuidesTab({ sport }: { sport: NewsSport | '' }) {
   return (
     <section className="space-y-10">
       {sportMeta && (
-        <div className="rounded-xl bg-[var(--primary-light)]/30 border border-[var(--primary)]/20 p-4 flex items-center gap-3">
-          <span className="text-2xl">{sportMeta.icon}</span>
-          <p className="text-sm text-[var(--text-muted)]">
+        <div className="rounded-xl bg-[var(--primary-light)]/30 border border-[var(--primary)]/20 p-4 flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
+          <span className="text-2xl shrink-0">{sportMeta.icon}</span>
+          <p className="text-sm text-[var(--text-muted)] min-w-0">
             These guides cover universal tipster strategy principles that apply to <strong className="text-[var(--text)]">{sportMeta.label}</strong> and all sports we cover. Sport-specific guides are coming soon.
           </p>
         </div>
       )}
       {categories.map((cat) => (
-        <div key={cat.id} className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <span className="px-3 py-1 rounded-lg text-sm font-medium bg-[var(--primary-light)] text-[var(--primary)]">
+        <div key={cat.id} className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-6 min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-6 min-w-0">
+            <span className="px-3 py-1 rounded-lg text-sm font-medium bg-[var(--primary-light)] text-[var(--primary)] w-fit">
               {getLevelLabel(t, cat.level)}
             </span>
-            <h2 className="text-xl font-semibold text-[var(--text)]">{cat.name}</h2>
+            <h2 className="text-xl font-semibold text-[var(--text)] min-w-0">{cat.name}</h2>
           </div>
           {cat.description && (
             <p className="text-[var(--text-muted)] mb-6">{cat.description}</p>
@@ -462,7 +467,7 @@ function GuidesTab({ sport }: { sport: NewsSport | '' }) {
           {cat.items?.length === 0 ? (
             <p className="text-sm text-[var(--text-muted)]">{t('discover.no_items')}</p>
           ) : (
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
               {cat.items?.map((item) => (
                 <Link
                   key={item.id}
@@ -494,9 +499,9 @@ function GuidesTab({ sport }: { sport: NewsSport | '' }) {
 export default function DiscoverPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[var(--bg)]">
+      <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <UnifiedHeader />
-        <main className="section-ux-page-wide">
+        <main className="section-ux-page-wide w-full min-w-0">
           <div className="h-12 w-64 rounded-xl bg-[var(--card)] skeleton mb-6" />
           <div className="h-8 w-full rounded bg-[var(--card)] skeleton" />
         </main>

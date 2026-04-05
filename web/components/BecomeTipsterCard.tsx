@@ -38,19 +38,20 @@ export function BecomeTipsterCard() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-6 rounded-card bg-[var(--card)] border border-[var(--border)]">
-      <span className="text-3xl mb-3">🎯</span>
-      <span className="font-semibold text-[var(--text)]">Become a Tipster</span>
-      <span className="text-sm text-[var(--text-muted)] mt-1 text-center">
+    <div className="flex flex-col items-center justify-center p-6 rounded-card bg-[var(--card)] border border-[var(--border)] w-full min-w-0 max-w-full">
+      <span className="text-3xl mb-3 shrink-0">🎯</span>
+      <span className="font-semibold text-[var(--text)] text-center min-w-0 px-1">Become a Tipster</span>
+      <span className="text-sm text-[var(--text-muted)] mt-1 text-center min-w-0 max-w-full px-1">
         {status === 'pending' && 'Request pending. Admin will review.'}
         {status === 'rejected' && 'Request was rejected. You can try again.'}
         {(status === 'idle' || status === null) && 'Create and sell picks. Request tipster access.'}
       </span>
       {(status === 'idle' || status === 'rejected' || status === null) && (
         <button
+          type="button"
           onClick={requestTipster}
           disabled={loading}
-          className="mt-4 px-4 py-2 rounded-lg bg-[var(--primary)] text-white font-medium text-sm disabled:opacity-50"
+          className="mt-4 w-full max-w-xs sm:w-auto px-4 py-2 rounded-lg bg-[var(--primary)] text-white font-medium text-sm disabled:opacity-50 shrink-0"
         >
           {loading ? 'Submitting...' : 'Request Tipster Access'}
         </button>

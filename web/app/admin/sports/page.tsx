@@ -249,20 +249,20 @@ export default function AdminSportsPage() {
   const selectedDef = SPORTS.find((s) => s.key === selectedSport);
 
   return (
-    <div className="flex min-h-screen bg-[var(--bg)]">
+    <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="admin-main-sibling section-ux-admin-main-wide">
+      <main className="admin-main-sibling section-ux-admin-main-wide min-w-0">
         <div className="p-4 md:p-6 max-w-6xl">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-[var(--text)] mb-1">Multi-Sport Management</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)] mb-1">Multi-Sport Management</h1>
             <p className="text-sm text-[var(--text-muted)]">View events and trigger sync for each sport. Football is managed via the Fixtures page.</p>
           </div>
 
           {/* Sync health panel — always shown */}
           <div className="mb-6 bg-[var(--card)] rounded-2xl border border-[var(--border)] p-4">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
               <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Sync Health Monitor</p>
-              <button
+              <button type="button"
                 onClick={loadHealth}
                 disabled={healthLoading}
                 className="text-xs text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors disabled:opacity-50"
@@ -318,7 +318,7 @@ export default function AdminSportsPage() {
           {/* Sport selector */}
           <div className="flex flex-wrap gap-2 mb-6">
             {SPORTS.map((s) => (
-              <button
+              <button type="button"
                 key={s.key}
                 onClick={() => setSelectedSport(s.key)}
                 className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${
@@ -335,7 +335,7 @@ export default function AdminSportsPage() {
 
           {/* Controls row */}
           <div className="flex flex-wrap items-center gap-3 mb-4">
-            <button
+            <button type="button"
               onClick={syncAllSports}
               disabled={syncingAll || syncing !== null}
               className="px-4 py-1.5 rounded-lg bg-emerald-700 text-white text-sm font-semibold hover:bg-emerald-800 disabled:opacity-50 transition-colors"
@@ -355,21 +355,21 @@ export default function AdminSportsPage() {
                 ))}
               </select>
             </div>
-            <button
+            <button type="button"
               onClick={() => loadEvents(selectedSport)}
               disabled={loading}
               className="px-4 py-1.5 rounded-lg bg-[var(--card)] border border-[var(--border)] text-sm font-medium hover:bg-[var(--primary-light)] hover:text-[var(--primary)] transition-colors disabled:opacity-50"
             >
               {loading ? 'Loading…' : '↻ Refresh'}
             </button>
-            <button
+            <button type="button"
               onClick={() => triggerSync(selectedSport)}
               disabled={syncing === selectedSport}
               className="px-4 py-1.5 rounded-lg bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] disabled:opacity-50 transition-colors"
             >
               {syncing === selectedSport ? 'Syncing…' : `⚡ Sync ${selectedDef?.label ?? ''}`}
             </button>
-            <button
+            <button type="button"
               onClick={() => triggerSync('results')}
               disabled={syncing === 'results' || syncingAll}
               title="Fetch completed scores from The Odds API and settle pending coupons"
@@ -405,12 +405,12 @@ export default function AdminSportsPage() {
 
           {/* Events table */}
           <div className="bg-[var(--card)] rounded-2xl border border-[var(--border)] overflow-hidden">
-            <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
-              <h2 className="font-semibold text-[var(--text)] flex items-center gap-2">
+            <div className="px-5 py-4 border-b border-[var(--border)] flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="font-semibold text-[var(--text)] flex items-center gap-2 min-w-0">
                 <span>{selectedDef?.icon}</span>
                 <span>{selectedDef?.label} Events</span>
               </h2>
-              <span className="text-sm text-[var(--text-muted)]">{events.length} events</span>
+              <span className="text-sm text-[var(--text-muted)] shrink-0">{events.length} events</span>
             </div>
 
             {loading ? (
@@ -431,7 +431,7 @@ export default function AdminSportsPage() {
                     ? <><code className="bg-[var(--border)] px-1 rounded text-xs">API_SPORTS_KEY</code> is set in your environment.</>
                     : <><code className="bg-[var(--border)] px-1 rounded text-xs">ODDS_API_KEY</code> is set in your environment.</>}
                 </p>
-                <button
+                <button type="button"
                   onClick={() => triggerSync(selectedSport)}
                   disabled={syncing === selectedSport}
                   className="px-5 py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] disabled:opacity-50 transition-colors"
