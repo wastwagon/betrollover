@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, type Ref } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -95,6 +95,90 @@ function CompactNavLink({
   );
 }
 
+const DESKTOP_MENU_Z = 80;
+
+/**
+ * Renders under document.body so panels are not clipped by ancestors with `overflow-x-hidden`
+ * (which forces overflow-y to compute to `auto` and clips absolutely positioned dropdowns).
+ */
+function DesktopMenuPortal({
+  open,
+  mounted,
+  triggerId,
+  align,
+  maxWidthPx,
+  panelId,
+  labelledBy,
+  portalRootRef,
+  cancelClose,
+  closeAfterDelay,
+  maxHeightClass,
+  children,
+}: {
+  open: boolean;
+  mounted: boolean;
+  triggerId: string;
+  align: 'left' | 'right';
+  maxWidthPx: number;
+  panelId: string;
+  labelledBy: string;
+  portalRootRef: Ref<HTMLDivElement>;
+  cancelClose: () => void;
+  closeAfterDelay: () => void;
+  maxHeightClass: string;
+  children: React.ReactNode;
+}) {
+  const [box, setBox] = useState({ top: 0, left: 0, width: maxWidthPx });
+
+  const updatePosition = useCallback(() => {
+    const el = document.getElementById(triggerId);
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const margin = 8;
+    const w = Math.min(maxWidthPx, window.innerWidth - margin * 2);
+    let left: number;
+    if (align === 'left') {
+      left = Math.min(Math.max(margin, r.left), window.innerWidth - margin - w);
+    } else {
+      left = Math.min(Math.max(margin, r.right - w), window.innerWidth - margin - w);
+    }
+    setBox({ top: r.bottom + 6, left, width: w });
+  }, [triggerId, align, maxWidthPx]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [open, updatePosition]);
+
+  if (!open || !mounted || typeof document === 'undefined') return null;
+
+  return createPortal(
+    <div
+      ref={portalRootRef}
+      className="fixed animate-dropdown-in pointer-events-auto"
+      style={{ top: box.top, left: box.left, width: box.width, zIndex: DESKTOP_MENU_Z }}
+      onMouseEnter={cancelClose}
+      onMouseLeave={closeAfterDelay}
+    >
+      <div
+        id={panelId}
+        role="region"
+        aria-labelledby={labelledBy}
+        className={`w-full ${maxHeightClass} overflow-y-auto overscroll-contain rounded-xl bg-white shadow-xl border border-slate-200/90 ring-1 ring-black/5`}
+      >
+        {children}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 /* ─── Main component ─────────────────────────────────────── */
 export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
   const pathname = usePathname();
@@ -114,6 +198,8 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
   const headerRef     = useRef<HTMLElement>(null);
   /** Mobile account drawer is portaled to `document.body`, so it is NOT under `headerRef`. Without this, document `mousedown` treats every tap in the drawer as "outside the header" and closes the menu before `click` / `router.push` — especially noticeable in iOS WKWebView (WebViewGold). */
   const mobileAccountDrawerRef = useRef<HTMLDivElement | null>(null);
+  /** Desktop Tipsters / Browse / Account menus are portaled for the same reason (overflow clipping). */
+  const desktopMenuPortalRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -223,6 +309,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
     function onPointerDown(e: PointerEvent) {
       const t = e.target as Node;
       if (mobileAccountDrawerRef.current?.contains(t)) return;
+      if (desktopMenuPortalRef.current?.contains(t)) return;
       if (headerRef.current && !headerRef.current.contains(t)) {
         closeAll();
         setMobileOpen(false);
@@ -261,58 +348,6 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
     setMobileOpen(false);
     router.push('/'); router.refresh();
   };
-
-  /** Wider compact dropdown for account (right-aligned under trigger) */
-  const AccountDropdown = ({
-    children,
-    panelId,
-    labelledBy,
-  }: {
-    children: React.ReactNode;
-    panelId: string;
-    labelledBy: string;
-  }) => (
-    <div
-      className="absolute right-0 top-full z-50 pt-1.5 animate-dropdown-in"
-      onMouseEnter={cancelClose}
-      onMouseLeave={closeAfterDelay}
-    >
-      <div
-        id={panelId}
-        role="region"
-        aria-labelledby={labelledBy}
-        className="w-[min(calc(100vw-2rem),32.5rem)] max-h-[min(80vh,40rem)] overflow-y-auto overscroll-contain rounded-xl bg-white shadow-xl border border-slate-200/90 ring-1 ring-black/5"
-      >
-        {children}
-      </div>
-    </div>
-  );
-
-  /** Compact dropdown under the trigger — not a wide mega-panel */
-  const NavDropdown = ({
-    children,
-    panelId,
-    labelledBy,
-  }: {
-    children: React.ReactNode;
-    panelId: string;
-    labelledBy: string;
-  }) => (
-    <div
-      className="absolute left-0 top-full z-50 pt-1.5 animate-dropdown-in"
-      onMouseEnter={cancelClose}
-      onMouseLeave={closeAfterDelay}
-    >
-      <div
-        id={panelId}
-        role="region"
-        aria-labelledby={labelledBy}
-        className="w-[min(calc(100vw-2rem),22rem)] max-h-[min(80vh,36rem)] overflow-y-auto overscroll-contain rounded-xl bg-white shadow-xl border border-slate-200/90 ring-1 ring-black/5"
-      >
-        {children}
-      </div>
-    </div>
-  );
 
   /* ── Desktop nav item ────────────────────────────────── */
   const NavBtn = ({
@@ -373,7 +408,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
       <header
         ref={headerRef}
-        className="sticky top-0 z-50 w-full min-w-0 max-w-full overflow-x-hidden bg-white/95 backdrop-blur-xl border-b border-slate-200/70 shadow-sm"
+        className="sticky top-0 z-50 w-full min-w-0 max-w-full bg-white/95 backdrop-blur-xl border-b border-slate-200/70 shadow-sm"
       >
         <div className="section-ux-gutter-wide min-w-0 max-w-full">
           <div className="flex items-center justify-between h-[4.5rem] min-w-0 gap-2">
@@ -400,14 +435,22 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               <NavBtn href="/marketplace" label={t('nav.coupons_and_picks')} />
 
               {/* Tipsters ▾ */}
-              <div className="relative"
-                onMouseEnter={() => openAfterDelay('tipsters')}
-                onMouseLeave={closeAfterDelay}
-              >
+              <div className="relative">
                 <NavBtn menuKey="tipsters" label={t("nav.tipsters")} />
 
-                {openMenu === 'tipsters' && (
-                  <NavDropdown panelId="main-nav-tipsters-panel" labelledBy="main-nav-tipsters-trigger">
+                <DesktopMenuPortal
+                  open={openMenu === 'tipsters'}
+                  mounted={mounted}
+                  triggerId="main-nav-tipsters-trigger"
+                  align="left"
+                  maxWidthPx={352}
+                  panelId="main-nav-tipsters-panel"
+                  labelledBy="main-nav-tipsters-trigger"
+                  portalRootRef={desktopMenuPortalRef}
+                  cancelClose={cancelClose}
+                  closeAfterDelay={closeAfterDelay}
+                  maxHeightClass="max-h-[min(80vh,36rem)]"
+                >
                     <div className="py-1 px-1">
                       <SectionLabel>{t('header.section_discover_tipsters')}</SectionLabel>
                       <CompactNavLink href="/tipsters" icon="🔍" label={t('nav.browse')} onClick={closeAll} />
@@ -442,19 +485,26 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       </p>
                       <p className="text-[11px] text-slate-300 leading-relaxed">{t('header.escrow_box')}</p>
                     </div>
-                  </NavDropdown>
-                )}
+                </DesktopMenuPortal>
               </div>
 
               {/* Browse ▾ */}
-              <div className="relative"
-                onMouseEnter={() => openAfterDelay('browse')}
-                onMouseLeave={closeAfterDelay}
-              >
+              <div className="relative">
                 <NavBtn menuKey="browse" label={t('nav.browse')} />
 
-                {openMenu === 'browse' && (
-                  <NavDropdown panelId="main-nav-browse-panel" labelledBy="main-nav-browse-trigger">
+                <DesktopMenuPortal
+                  open={openMenu === 'browse'}
+                  mounted={mounted}
+                  triggerId="main-nav-browse-trigger"
+                  align="left"
+                  maxWidthPx={352}
+                  panelId="main-nav-browse-panel"
+                  labelledBy="main-nav-browse-trigger"
+                  portalRootRef={desktopMenuPortalRef}
+                  cancelClose={cancelClose}
+                  closeAfterDelay={closeAfterDelay}
+                  maxHeightClass="max-h-[min(80vh,36rem)]"
+                >
                     <div className="py-1 px-1">
                       <SectionLabel>{t('header.section_coupons_picks')}</SectionLabel>
                       <CompactNavLink
@@ -484,8 +534,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       <CompactNavLink href="/league-tables" icon="📊" label={t('nav.league_tables')} onClick={closeAll} />
                       <CompactNavLink href="/tipsters" icon="👥" label={t('nav.top_tipsters')} onClick={closeAll} />
                     </div>
-                  </NavDropdown>
-                )}
+                </DesktopMenuPortal>
               </div>
 
               {/* Subscriptions → VIP marketplace (auth-only in header; public page) */}
@@ -573,10 +622,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                 </Link>
 
                 {/* Account ▾ */}
-                <div className="relative"
-                  onMouseEnter={() => openAfterDelay('account')}
-                  onMouseLeave={closeAfterDelay}
-                >
+                <div className="relative">
                   <button
                     type="button"
                     id="main-nav-account-trigger"
@@ -590,6 +636,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                         : 'text-slate-700 hover:text-emerald-800 hover:bg-emerald-50/80 border border-transparent'
                     }`}
                     onMouseEnter={() => openAfterDelay('account')}
+                    onMouseLeave={closeAfterDelay}
                     onClick={() => setOpenMenu(openMenu === 'account' ? null : 'account')}
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -599,9 +646,20 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                     <NavChevron open={openMenu === 'account'} />
                   </button>
 
-                  {openMenu === 'account' && (
-                    <AccountDropdown panelId="main-nav-account-panel" labelledBy="main-nav-account-trigger">
-                      <div className="flex w-[520px]">
+                  <DesktopMenuPortal
+                    open={openMenu === 'account'}
+                    mounted={mounted}
+                    triggerId="main-nav-account-trigger"
+                    align="right"
+                    maxWidthPx={520}
+                    panelId="main-nav-account-panel"
+                    labelledBy="main-nav-account-trigger"
+                    portalRootRef={desktopMenuPortalRef}
+                    cancelClose={cancelClose}
+                    closeAfterDelay={closeAfterDelay}
+                    maxHeightClass="max-h-[min(80vh,40rem)]"
+                  >
+                      <div className="flex w-full min-w-0 max-w-[520px]">
                         {/* Col 1 — Profile & Activity */}
                         <div className="w-64 border-r border-slate-100 py-4 px-2">
                           <SectionLabel>{t('header.section_my_account')}</SectionLabel>
@@ -667,8 +725,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                           </button>
                         </div>
                       </div>
-                    </AccountDropdown>
-                  )}
+                  </DesktopMenuPortal>
                 </div>
               </div>
             )}
