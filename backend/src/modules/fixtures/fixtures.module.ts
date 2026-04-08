@@ -15,6 +15,7 @@ import { FootballSyncService } from './football-sync.service';
 import { FixtureUpdateService } from './fixture-update.service';
 import { FixtureSchedulerService } from './fixture-scheduler.service';
 import { OddsSyncService } from './odds-sync.service';
+import { SyncLockService } from './sync-lock.service';
 import { MarketFilterService } from './market-filter.service';
 import { ApiPredictionsService } from './api-predictions.service';
 import { LeagueInsightsService } from './league-insights.service';
@@ -45,6 +46,7 @@ import { VolleyballModule } from '../volleyball/volleyball.module';
     FootballSyncService,
     FixtureUpdateService,
     FixtureSchedulerService,
+    SyncLockService,
     OddsSyncService,
     MarketFilterService,
     ApiPredictionsService,
@@ -54,6 +56,7 @@ import { VolleyballModule } from '../volleyball/volleyball.module';
     FixturesService,
     FixtureUpdateService,
     OddsSyncService,
+    SyncLockService,
     MarketFilterService,
     ApiPredictionsService,
   ],

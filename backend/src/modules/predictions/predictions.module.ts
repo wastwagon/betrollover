@@ -8,6 +8,7 @@ import { TipsterPerformanceLog } from './entities/tipster-performance-log.entity
 import { TipsterFollow } from './entities/tipster-follow.entity';
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { FixtureOdd } from '../fixtures/entities/fixture-odd.entity';
+import { SyncStatus } from '../fixtures/entities/sync-status.entity';
 import { User } from '../users/entities/user.entity';
 import { FixturesModule } from '../fixtures/fixtures.module';
 import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
@@ -39,6 +40,7 @@ import { TipsterModule } from '../tipster/tipster.module';
       TipsterFollow,
       Fixture,
       FixtureOdd,
+      SyncStatus,
       User,
       AccumulatorTicket,
       AccumulatorPick,

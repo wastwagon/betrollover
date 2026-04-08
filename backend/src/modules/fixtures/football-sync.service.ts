@@ -7,6 +7,7 @@ import { League } from './entities/league.entity';
 import { EnabledLeague } from './entities/enabled-league.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { OddsSyncService } from './odds-sync.service';
+import { SyncLockService } from './sync-lock.service';
 
 import { getSportApiBaseUrl } from '../../config/sports.config';
 import { normalizeFixtureElapsed } from './fixture-status-elapsed.util';
@@ -72,6 +73,7 @@ export class FootballSyncService {
     @InjectRepository(ApiSettings)
     private apiSettingsRepo: Repository<ApiSettings>,
     private oddsSyncService: OddsSyncService,
+    private syncLockService: SyncLockService,
   ) {}
 
   private async getKey(): Promise<string> {
@@ -308,20 +310,26 @@ export class FootballSyncService {
       .getMany();
 
     let oddsCount = 0;
-    if (withoutOdds.length > 0) {
-      const result = await this.oddsSyncService.syncOddsForFixtures(withoutOdds.map((x) => x.id));
-      oddsCount = result.synced;
-    }
-
-    // Coverage booster: pull odds by date (paginated) and upsert any remaining odds-backed fixtures.
-    // This is often more complete than per-fixture calls on some API plans/windows.
-    const oddsFirst = await this.oddsSyncService.syncOddsFirst(dates);
-    if (oddsFirst.fixtures > 0) {
-      this.logger.log(
-        `Odds-by-date booster synced ${oddsFirst.fixtures} fixture(s) and ${oddsFirst.odds} odd row(s), skipped ${oddsFirst.skipped}`,
+    const acquiredOdds = await this.syncLockService.tryStartSync('odds');
+    if (!acquiredOdds) {
+      this.logger.warn(
+        'Odds sync lock held elsewhere; skipping per-fixture + odds-by-date steps this run (scheduled odds job will catch up)',
       );
+    } else {
+      if (withoutOdds.length > 0) {
+        const result = await this.oddsSyncService.syncOddsForFixtures(withoutOdds.map((x) => x.id));
+        oddsCount = result.synced;
+      }
+
+      // Coverage booster: pull odds by date (paginated) and upsert any remaining odds-backed fixtures.
+      const oddsFirst = await this.oddsSyncService.syncOddsFirst(dates);
+      if (oddsFirst.fixtures > 0) {
+        this.logger.log(
+          `Odds-by-date booster synced ${oddsFirst.fixtures} fixture(s) and ${oddsFirst.odds} odd row(s), skipped ${oddsFirst.skipped}`,
+        );
+      }
+      oddsCount += oddsFirst.fixtures;
     }
-    oddsCount += oddsFirst.fixtures;
 
     // Backfill: fix fixtures with "Home vs Away" by fetching details from API
     await this.backfillHomeAwayTeamNames(headers, now, sevenDaysLater);

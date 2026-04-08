@@ -11,6 +11,11 @@ import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { getSportApiBaseUrl } from '../../config/sports.config';
 import { normalizeFixtureElapsed } from './fixture-status-elapsed.util';
 import { extractHalftimeScores } from './fixture-halftime.util';
+import { API_CALL_DELAY_MS, MAX_FOOTBALL_ODDS_FIXTURES } from '../../config/api-limits.config';
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 @Injectable()
 export class OddsSyncService {
@@ -55,6 +60,16 @@ export class OddsSyncService {
       return { synced: 0, errors: 0 };
     }
 
+    const cappedIds =
+      MAX_FOOTBALL_ODDS_FIXTURES > 0 && fixtureIds.length > MAX_FOOTBALL_ODDS_FIXTURES
+        ? fixtureIds.slice(0, MAX_FOOTBALL_ODDS_FIXTURES)
+        : fixtureIds;
+    if (cappedIds.length < fixtureIds.length) {
+      this.logger.warn(
+        `Odds sync capped: processing ${cappedIds.length}/${fixtureIds.length} fixtures (API_MAX_FOOTBALL_ODDS_FIXTURES=${MAX_FOOTBALL_ODDS_FIXTURES})`,
+      );
+    }
+
     // Load market configs
     await this.marketFilterService.loadMarketConfigs();
 
@@ -64,12 +79,16 @@ export class OddsSyncService {
 
     // Get fixtures with their API IDs
     const fixtures = await this.fixtureRepo.find({
-      where: { id: In(fixtureIds) },
+      where: { id: In(cappedIds) },
       select: ['id', 'apiId'],
     });
 
+    let idx = 0;
     for (const fixture of fixtures) {
       try {
+        if (idx++ > 0) {
+          await sleep(API_CALL_DELAY_MS);
+        }
         // Fetch odds from API
         const res = await fetch(`${getSportApiBaseUrl('football')}/odds?fixture=${fixture.apiId}`, { headers });
         
@@ -97,21 +116,20 @@ export class OddsSyncService {
           continue;
         }
 
-        // Delete existing odds for this fixture
-        await this.oddsRepo.delete({ fixtureId: fixture.id });
-
-        // Save filtered odds in one batch (no bookmaker stored, just market + value + odds)
         const syncedAt = new Date();
-        await this.oddsRepo.insert(
-          filteredOdds.map((odd) => ({
-            fixtureId: fixture.id,
-            marketName: odd.marketName,
-            marketValue: odd.marketValue,
-            odds: odd.odds,
-            bookmaker: null,
-            syncedAt,
-          })),
-        );
+        const rows = filteredOdds.map((odd) => ({
+          fixtureId: fixture.id,
+          marketName: odd.marketName,
+          marketValue: odd.marketValue,
+          odds: odd.odds,
+          bookmaker: null,
+          syncedAt,
+        }));
+
+        await this.oddsRepo.manager.transaction(async (em) => {
+          await em.delete(FixtureOdd, { fixtureId: fixture.id });
+          await em.insert(FixtureOdd, rows);
+        });
 
         synced++;
         this.logger.log(`Synced ${filteredOdds.length} odds for fixture ${fixture.apiId} (${filteredOdds.map(o => o.marketName).filter((v, i, a) => a.indexOf(v) === i).join(', ')})`);
@@ -165,8 +183,12 @@ export class OddsSyncService {
     let oddsStored = 0;
     let skipped = 0;
 
-    for (const date of dates) {
+    for (let d = 0; d < dates.length; d++) {
+      const date = dates[d];
       try {
+        if (d > 0) {
+          await sleep(API_CALL_DELAY_MS);
+        }
         const res = await fetch(`${getSportApiBaseUrl('football')}/odds?date=${date}`, { headers });
         if (!res.ok) {
           this.logger.warn(`Odds by date ${date}: ${res.status}`);
@@ -233,7 +255,6 @@ export class OddsSyncService {
           const fixtureDbId = fixtureEntity?.id;
           if (!fixtureDbId) continue;
 
-          await this.oddsRepo.delete({ fixtureId: fixtureDbId });
           const syncedAt = new Date();
           const rows = filteredOdds.map((odd) => ({
             fixtureId: fixtureDbId,
@@ -243,7 +264,10 @@ export class OddsSyncService {
             bookmaker: null,
             syncedAt,
           }));
-          await this.oddsRepo.insert(rows);
+          await this.oddsRepo.manager.transaction(async (em) => {
+            await em.delete(FixtureOdd, { fixtureId: fixtureDbId });
+            await em.insert(FixtureOdd, rows);
+          });
           oddsStored += rows.length;
           fixturesStored++;
         }

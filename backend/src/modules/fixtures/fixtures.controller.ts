@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Param, Query, UseGuards, ParseIntPipe, Logger, Sse, MessageEvent } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  UseGuards,
+  ParseIntPipe,
+  Logger,
+  Sse,
+  MessageEvent,
+  ConflictException,
+} from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { Observable, defer, from, interval, of } from 'rxjs';
 import { catchError, exhaustMap, filter, finalize, map, startWith, tap } from 'rxjs/operators';
@@ -12,6 +24,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SyncStatus } from './entities/sync-status.entity';
 import { SYNC_LOOKAHEAD_DAYS } from '../../config/api-limits.config';
+import { SyncLockService } from './sync-lock.service';
 
 @Controller('fixtures')
 export class FixturesController {
@@ -30,6 +43,7 @@ export class FixturesController {
     private readonly fixtureUpdateService: FixtureUpdateService,
     @InjectRepository(SyncStatus)
     private syncStatusRepo: Repository<SyncStatus>,
+    private syncLockService: SyncLockService,
   ) {}
 
   @Get()
@@ -340,7 +354,6 @@ export class FixturesController {
 
       return result;
     } catch (error: any) {
-      // Update status to error
       await this.syncStatusRepo.upsert(
         {
           syncType: 'fixtures',
@@ -359,10 +372,9 @@ export class FixturesController {
     @Query('force') force?: string,
     @Query('limit') _limitParam?: string,
   ) {
-    await this.syncStatusRepo.upsert(
-      { syncType: 'odds', status: 'running', lastSyncDueMissing: null, lastSyncDueStale: null },
-      ['syncType'],
-    );
+    if (!(await this.syncLockService.tryStartSync('odds'))) {
+      throw new ConflictException('Odds sync is already running. Try again shortly.');
+    }
 
     try {
       const now = new Date();
@@ -495,6 +507,7 @@ export class FixturesController {
     return fixture;
   }
 
+  /** Single-fixture odds refresh; does not take the global odds lock (avoids blocking users during bulk sync). */
   @Post(':id/odds')
   @UseGuards(JwtAuthGuard)
   async syncOdds(@Param('id', ParseIntPipe) id: number) {

@@ -11,7 +11,7 @@
  *   API_SPORTS_PLAN=ultra            Use Ultra defaults (highest limits, lowest delays)
  *   API_SYNC_LOOKAHEAD_DAYS=3        Fixture sync window (1-14)
  *   API_MAX_ODDS_EVENTS_PER_RUN=0    Max events to fetch odds for per sport sync (0 = uncapped)
- *   API_MAX_FOOTBALL_ODDS_FIXTURES=0 Max football fixtures to fetch odds for (0 = uncapped)
+ *   API_MAX_FOOTBALL_ODDS_FIXTURES=0 Max football fixtures per per-fixture /odds?fixture= sync batch (0 = uncapped)
  *   API_MAX_LEAGUE_BACKFILL_PER_RUN=50
  *   API_CALL_DELAY_MS=100            Delay between API calls (transfers, injuries)
  *   API_PREDICTION_DELAY_MS=100      Delay between prediction API calls

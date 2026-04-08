@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
+import { Repository, LessThan, In } from 'typeorm';
 import { Cron } from '@nestjs/schedule';
 import { PredictionFixture } from './entities/prediction-fixture.entity';
 import { Prediction } from './entities/prediction.entity';
@@ -65,24 +65,36 @@ export class ResultTrackerService {
       select: ['id', 'predictionId', 'fixtureId', 'selectedOutcome'],
     });
 
+    const footballFixtureIds = [
+      ...new Set(pending.map((p) => p.fixtureId).filter((id): id is number => id != null)),
+    ];
+    const fixturesById =
+      footballFixtureIds.length > 0
+        ? new Map(
+            (
+              await this.fixtureRepo.find({
+                where: { id: In(footballFixtureIds) },
+                select: [
+                  'id',
+                  'status',
+                  'homeScore',
+                  'awayScore',
+                  'homeTeamName',
+                  'awayTeamName',
+                  'htHomeScore',
+                  'htAwayScore',
+                ],
+              })
+            ).map((f) => [f.id, f] as const),
+          )
+        : new Map<number, Fixture>();
+
     let fixturesUpdated = 0;
     const settledPredictionIds = new Set<number>();
 
     for (const pf of pending) {
       if (pf.fixtureId == null) continue; // Non-football predictions handled separately (Phase 1+)
-      const fixture = await this.fixtureRepo.findOne({
-        where: { id: pf.fixtureId },
-        select: [
-          'id',
-          'status',
-          'homeScore',
-          'awayScore',
-          'homeTeamName',
-          'awayTeamName',
-          'htHomeScore',
-          'htAwayScore',
-        ],
-      });
+      const fixture = fixturesById.get(pf.fixtureId);
 
       if (!fixture || fixture.status !== 'FT') continue;
       if (fixture.homeScore == null || fixture.awayScore == null) continue;

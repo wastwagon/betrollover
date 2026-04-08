@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, Between, DataSource } from 'typeorm';
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { FixtureOdd } from '../fixtures/entities/fixture-odd.entity';
+import { SyncStatus } from '../fixtures/entities/sync-status.entity';
 import { Tipster } from './entities/tipster.entity';
 import { Prediction } from './entities/prediction.entity';
 import { PredictionFixture } from './entities/prediction-fixture.entity';
@@ -56,6 +57,8 @@ export class PredictionEngineService {
     private fixtureRepo: Repository<Fixture>,
     @InjectRepository(FixtureOdd)
     private oddsRepo: Repository<FixtureOdd>,
+    @InjectRepository(SyncStatus)
+    private syncStatusRepo: Repository<SyncStatus>,
     @InjectRepository(Tipster)
     private tipsterRepo: Repository<Tipster>,
     @InjectRepository(Prediction)
@@ -142,12 +145,20 @@ export class PredictionEngineService {
       .orderBy('f.match_date', 'ASC')
       .getMany();
 
-    // 2. Sync odds for fixtures without them (max 30, for manual runs)
+    // 2. Sync odds for fixtures without them (max 30). Skip if a global odds job is running.
     const withoutOdds = allFixtures.filter((f) => !f.odds || f.odds.length === 0);
     if (withoutOdds.length > 0) {
-      const toSync = withoutOdds.slice(0, 30).map((f) => f.id);
-      const oddsResult = await this.oddsSyncService.syncOddsForFixtures(toSync);
-      this.logger.log(`Synced odds for ${oddsResult.synced} fixtures`);
+      const oddsRow = await this.syncStatusRepo.findOne({
+        where: { syncType: 'odds' },
+        select: ['status'],
+      });
+      if (oddsRow?.status === 'running') {
+        this.logger.debug('Skipping same-day odds prefetch (global odds sync in progress)');
+      } else {
+        const toSync = withoutOdds.slice(0, 30).map((f) => f.id);
+        const oddsResult = await this.oddsSyncService.syncOddsForFixtures(toSync);
+        this.logger.log(`Synced odds for ${oddsResult.synced} fixtures`);
+      }
     }
 
     // 3. Re-fetch fixtures with odds (same day only)
