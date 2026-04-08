@@ -13,6 +13,7 @@ import { getApiErrorMessage } from '@/lib/api-error-message';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { useT } from '@/context/LanguageContext';
 import { formatTipsterRankHash } from '@/lib/tipster-rank-ui';
+import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Pick {
@@ -689,7 +690,7 @@ export default function CouponDetailPage() {
                               </div>
                             )}
 
-                            <p className="text-xs text-[var(--text-muted)] mb-1">{pick.prediction}</p>
+                            <p className="text-xs text-[var(--text-muted)] mb-1">{formatFootballOutcomeLabel(pick.prediction)}</p>
 
                             <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-muted)]">
                               {pick.matchDate && <span>{formatDateTime(pick.matchDate)}</span>}

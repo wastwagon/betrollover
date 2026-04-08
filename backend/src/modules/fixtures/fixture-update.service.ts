@@ -11,6 +11,7 @@ import { Cache } from 'cache-manager';
 
 import { getSportApiBaseUrl } from '../../config/sports.config';
 import { normalizeFixtureElapsed } from './fixture-status-elapsed.util';
+import { extractHalftimeScores } from './fixture-halftime.util';
 import {
   MAX_FIXTURES_TO_UPDATE_PER_RUN,
   RESULTS_FETCH_BATCH_SIZE,
@@ -131,6 +132,7 @@ export class FixtureUpdateService {
 
         const fix = fixtureData.fixture;
         const goals = fixtureData.goals;
+        const ht = extractHalftimeScores(fixtureData);
 
         const short = fix.status?.short ?? '';
         await this.fixtureRepo.update(
@@ -141,7 +143,10 @@ export class FixtureUpdateService {
             awayScore: goals?.away ?? null,
             statusElapsed: normalizeFixtureElapsed(short, fix.status?.elapsed),
             syncedAt: new Date(),
-          }
+            ...(ht.htHomeScore != null && ht.htAwayScore != null
+              ? { htHomeScore: ht.htHomeScore, htAwayScore: ht.htAwayScore }
+              : {}),
+          },
         );
         updated++;
       }
@@ -256,6 +261,7 @@ export class FixtureUpdateService {
         const fix = fixtureData.fixture;
         const goals = fixtureData.goals;
         const status = fix?.status?.short ?? '';
+        const ht = extractHalftimeScores(fixtureData);
 
         if (goals?.home !== null && goals?.away !== null) {
           await this.fixtureRepo.update(
@@ -266,6 +272,9 @@ export class FixtureUpdateService {
               awayScore: goals.away,
               statusElapsed: normalizeFixtureElapsed(status, fix?.status?.elapsed),
               syncedAt: new Date(),
+              ...(ht.htHomeScore != null && ht.htAwayScore != null
+                ? { htHomeScore: ht.htHomeScore, htAwayScore: ht.htAwayScore }
+                : {}),
             },
           );
           updated++;

@@ -14,7 +14,18 @@ interface DbFixture {
   leagueName: string | null;
   matchDate: string;
   status: string;
+  homeScore?: number | null;
+  awayScore?: number | null;
+  htHomeScore?: number | null;
+  htAwayScore?: number | null;
   odds?: { marketName: string; marketValue: string; odds: number }[];
+}
+
+function scoreLine(h: number | null | undefined, a: number | null | undefined): string {
+  if (h != null && a != null && Number.isFinite(Number(h)) && Number.isFinite(Number(a))) {
+    return `${h}–${a}`;
+  }
+  return '—';
 }
 
 interface FilterOptions {
@@ -873,7 +884,7 @@ export default function AdminFixturesPage() {
             <button type="button"
               onClick={() => syncOdds(true)}
               disabled={syncing || fetchingResults || settling || reconciling}
-              title="Re-fetch odds for all upcoming fixtures (BTTS, Correct Score, etc.)"
+              title="Re-fetch odds for all upcoming fixtures (which markets are stored depends on DB market_config: BTTS, DNB, first-half, handicaps, etc.)"
               className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-emerald-600 to-emerald-700 text-white hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 transition-all shadow-md"
             >
               Force Refresh Odds
@@ -1063,6 +1074,8 @@ export default function AdminFixturesPage() {
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">League</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Date</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">FT</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">HT</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -1079,6 +1092,12 @@ export default function AdminFixturesPage() {
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                           {f.status}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm tabular-nums text-gray-700 dark:text-gray-300">
+                        {scoreLine(f.homeScore, f.awayScore)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm tabular-nums text-gray-600 dark:text-gray-400">
+                        {scoreLine(f.htHomeScore, f.htAwayScore)}
                       </td>
                     </tr>
                   ))}

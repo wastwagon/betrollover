@@ -2,41 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MarketConfig } from './entities/market-config.entity';
-
-/**
- * API-Football returns market names that vary by bookmaker.
- * Map API names to our config names so BTTS, Correct Score, etc. are recognized.
- */
-const API_MARKET_ALIASES: Record<string, string> = {
-  // Both Teams To Score (BTTS / GG)
-  'Both Teams To Score': 'Both Teams To Score',
-  'Goals - Both Teams Score': 'Both Teams To Score',
-  'Both Teams Score': 'Both Teams To Score',
-  'BTTS': 'Both Teams To Score',
-  'GG': 'Both Teams To Score',
-  'Both Teams To Score - Yes/No': 'Both Teams To Score',
-  // Correct Score
-  'Correct Score': 'Correct Score',
-  'Exact Score': 'Correct Score',
-  'Score': 'Correct Score',
-  // Half-Time/Full-Time (HT/FT)
-  'Half-Time/Full-Time': 'Half-Time/Full-Time',
-  'HT/FT': 'Half-Time/Full-Time',
-  'Half Time/Full Time': 'Half-Time/Full-Time',
-  'Half Time - Full Time': 'Half-Time/Full-Time',
-  'Double Result': 'Half-Time/Full-Time',
-  'Result at Half-Time/Full-Time': 'Half-Time/Full-Time',
-  // Match Winner (1X2)
-  'Match Winner': 'Match Winner',
-  'Home/Away': 'Match Winner',
-  '1X2': 'Match Winner',
-  // Goals Over/Under
-  'Goals Over/Under': 'Goals Over/Under',
-  'Over/Under': 'Goals Over/Under',
-  'Total Goals': 'Goals Over/Under',
-  // Double Chance
-  'Double Chance': 'Double Chance',
-};
+import { normalizeApiMarketName } from './api-market-aliases';
 
 /** Common Correct Score options only (excludes rare scores like 10:0, 9:9, etc.) */
 const CORRECT_SCORE_ALLOWED = new Set([
@@ -68,17 +34,11 @@ export class MarketFilterService {
     }
   }
 
-  /** Normalize API market name to our config name (handles bookmaker variations) */
-  private normalizeMarketName(apiName: string): string {
-    const trimmed = (apiName || '').trim();
-    return API_MARKET_ALIASES[trimmed] ?? trimmed;
-  }
-
   /**
    * Check if a market is allowed
    */
   isMarketAllowed(marketName: string): boolean {
-    const normalized = this.normalizeMarketName(marketName);
+    const normalized = normalizeApiMarketName(marketName);
     const config = this.marketConfigCache.get(normalized);
     return config?.isEnabled === true;
   }
@@ -87,7 +47,7 @@ export class MarketFilterService {
    * Filter market values (e.g., Over/Under lines, Correct Score)
    */
   isMarketValueAllowed(marketName: string, marketValue: string): boolean {
-    const normalized = this.normalizeMarketName(marketName);
+    const normalized = normalizeApiMarketName(marketName);
     const config = this.marketConfigCache.get(normalized);
     if (!config || !config.isEnabled) return false;
 
@@ -103,7 +63,7 @@ export class MarketFilterService {
     }
 
     // For Over/Under markets, check if value contains allowed lines
-    if (normalized === 'Goals Over/Under') {
+    if (normalized === 'Goals Over/Under' || normalized === 'Goals Over/Under First Half') {
       return config.allowedValues.some(line => marketValue.includes(line));
     }
 
@@ -133,7 +93,7 @@ export class MarketFilterService {
     for (const bookmaker of bookmakers) {
       for (const bet of bookmaker.bets || []) {
         const apiMarketName = bet.name;
-        const marketName = this.normalizeMarketName(apiMarketName);
+        const marketName = normalizeApiMarketName(apiMarketName);
 
         if (!this.isMarketAllowed(apiMarketName)) continue;
 

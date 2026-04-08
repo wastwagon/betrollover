@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
+import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
 import { useRouter } from 'next/navigation';
 
 export interface PredictionFixture {
@@ -70,18 +71,6 @@ interface PredictionCardProps {
   onCopyBet?: () => void;
   className?: string;
   linkToDetail?: boolean;
-}
-
-function formatOutcome(outcome: string): string {
-  const o = (outcome || '').toLowerCase();
-  if (o === 'home') return 'Home Win';
-  if (o === 'away') return 'Away Win';
-  if (o === 'draw') return 'Draw';
-  if (o === 'btts') return 'BTTS Yes';
-  if (o === 'over25') return 'Over 2.5';
-  if (o === 'under25') return 'Under 2.5';
-  if (o === 'home_away') return 'Home or Away (12)';
-  return outcome || '—';
 }
 
 export function PredictionCard({ prediction, onCopyBet, className = '', linkToDetail = true }: PredictionCardProps) {
@@ -168,7 +157,7 @@ export function PredictionCard({ prediction, onCopyBet, className = '', linkToDe
               </span>
               <div className="flex items-center justify-between gap-2 text-xs min-w-0">
                 <span className="text-[var(--primary)] font-semibold min-w-0 truncate">
-                  {formatOutcome(fixture.selected_outcome)}
+                  {formatFootballOutcomeLabel(fixture.selected_outcome)}
                 </span>
                 <span className="text-[var(--text-muted)] shrink-0 tabular-nums">@{Number(fixture.selection_odds).toFixed(2)}</span>
               </div>

@@ -7,14 +7,14 @@ import { Repository } from 'typeorm';
 
 import { getSportApiBaseUrl } from '../../config/sports.config';
 import { PREDICTION_API_DELAY_MS } from '../../config/api-limits.config';
-const PREDICTIONS_CACHE_TTL = 24 * 60 * 60; // 24 hours
+import {
+  parseApiFootballPredictionsOutcomes,
+  type ApiPredictionOutcome,
+} from './api-football-predictions.parser';
 
-/** API-Football prediction for a single outcome (e.g. home win, over 2.5) */
-export interface ApiPredictionOutcome {
-  outcome: string; // 'home' | 'draw' | 'away' | 'over25' | 'under25' | 'btts'
-  probability: number; // 0-1
-  rawPercent?: number; // API may return 0-100
-}
+export type { ApiPredictionOutcome };
+
+const PREDICTIONS_CACHE_TTL = 24 * 60 * 60; // 24 hours
 
 /** Parsed API-Football predictions for a fixture */
 export interface ApiFixturePredictions {
@@ -77,7 +77,7 @@ export class ApiPredictionsService {
         return null;
       }
 
-      const outcomes = this.parsePredictionsResponse(response.predictions);
+      const outcomes = parseApiFootballPredictionsOutcomes(response.predictions as Record<string, unknown>);
       if (outcomes.length === 0) return null;
 
       return {
@@ -89,72 +89,6 @@ export class ApiPredictionsService {
       this.logger.warn(`Failed to fetch predictions for fixture ${apiFixtureId}: ${err?.message}`);
       return null;
     }
-  }
-
-  /**
-   * Parse API-Football predictions response.
-   * Handles: predictions.winner, predictions.percent, predictions.goals, predictions.btts
-   * API docs: https://www.api-football.com/documentation-v3
-   */
-  private parsePredictionsResponse(predictions: Record<string, unknown>): ApiPredictionOutcome[] {
-    const outcomes: ApiPredictionOutcome[] = [];
-
-    // Match winner: try winner.{home,draw,away} or percent.{home,draw,away}
-    const winner = predictions?.winner as Record<string, string> | undefined;
-    const percent = predictions?.percent as Record<string, string> | undefined;
-    const homePct = winner?.home ?? percent?.home;
-    const drawPct = winner?.draw ?? percent?.draw;
-    const awayPct = winner?.away ?? percent?.away;
-    if (homePct) {
-      outcomes.push({ outcome: 'home', probability: this.parsePercent(homePct), rawPercent: this.parsePercent(homePct) * 100 });
-    }
-    if (drawPct) {
-      outcomes.push({ outcome: 'draw', probability: this.parsePercent(drawPct), rawPercent: this.parsePercent(drawPct) * 100 });
-    }
-    if (awayPct) {
-      outcomes.push({ outcome: 'away', probability: this.parsePercent(awayPct), rawPercent: this.parsePercent(awayPct) * 100 });
-    }
-
-    // Goals / over-under: { "over": "75%", "under": "25%" } or "over 2.5"/"under 2.5"
-    const goals = predictions?.goals as Record<string, unknown> | undefined;
-    if (goals) {
-      const over = (goals.over as string) || (goals['over 2.5'] as string);
-      const under = (goals.under as string) || (goals['under 2.5'] as string);
-      if (over) {
-        outcomes.push({
-          outcome: 'over25',
-          probability: this.parsePercent(over),
-          rawPercent: this.parsePercent(over) * 100,
-        });
-      }
-      if (under) {
-        outcomes.push({
-          outcome: 'under25',
-          probability: this.parsePercent(under),
-          rawPercent: this.parsePercent(under) * 100,
-        });
-      }
-    }
-
-    // BTTS: sometimes in predictions.btts or similar
-    const btts = predictions?.btts as Record<string, string> | undefined;
-    if (btts?.yes) {
-      outcomes.push({
-        outcome: 'btts',
-        probability: this.parsePercent(btts.yes),
-        rawPercent: this.parsePercent(btts.yes) * 100,
-      });
-    }
-
-    return outcomes;
-  }
-
-  private parsePercent(val: string | number): number {
-    if (typeof val === 'number') return Math.min(1, Math.max(0, val));
-    const s = String(val || '').replace(/[^\d.]/g, '');
-    const n = parseFloat(s);
-    if (isNaN(n)) return 0;
-    return Math.min(1, Math.max(0, n > 1 ? n / 100 : n));
   }
 
   /**

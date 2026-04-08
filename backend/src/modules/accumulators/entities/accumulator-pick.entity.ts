@@ -28,6 +28,10 @@ export class AccumulatorPick {
   @Column({ length: 100 })
   prediction: string;
 
+  /** Canonical outcome for football grading (matches prediction_fixtures.selectedOutcome). When set, settlement prefers this over `prediction`. */
+  @Column({ type: 'varchar', length: 40, nullable: true, name: 'outcome_key' })
+  outcomeKey: string | null = null;
+
   @Column('decimal', { precision: 10, scale: 3 })
   odds: number;
 

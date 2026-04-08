@@ -22,7 +22,7 @@ So “effective and well-performing” here means: **same product (2-pick acca),
 2. **League focus** – Tipsters with specific leagues (e.g. Serie A, Championship) only see those leagues. If the 7-day set has few such fixtures, or league names don’t match exactly, they get 0–1 legs.
 3. **Weekend / midweek only** – Some only see Sat/Sun or Tue–Thu. Need at least 2 qualifying fixtures in those days; often there aren’t.
 4. **Strict thresholds** – Higher min_win_probability, min_expected_value, min_api_confidence than The Gambler. Fewer fixtures pass, so fewer tipsters get ≥2 legs.
-5. **team_filter** – TopSixSniper has `team_filter: ['top_6']` in config but it’s not implemented; he’s just Premier League + conservative + strict. Not the main reason others don’t fire, but inconsistent.
+5. **team_filter** – **Implemented** (Big 6 matching + Premier League focus for TopSixSniper). Historical note only if this doc predates that change.
 
 ---
 
@@ -70,7 +70,7 @@ Focus on **three changes** that make more tipsters post **good** 2-pick accas wi
 
 ## Optional later (not part of core recommendation)
 
-- **team_filter:** Either implement Big 6 for TopSixSniper or remove `team_filter` from config so behaviour matches. Low priority compared to 1–3.
+- **team_filter:** Implemented for TopSixSniper (Big 6 + EPL `leagues_focus`).
 - **Debug / observability:** A dry-run or log that shows per tipster “how many fixtures passed filter” and “did we find a pair.” Helps tune 2 and 3 without guessing.
 
 ---

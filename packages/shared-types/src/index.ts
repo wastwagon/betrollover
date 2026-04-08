@@ -6,3 +6,4 @@
 export * from './auth';
 export * from './wallet';
 export * from './api';
+export * from './format-football-outcome';

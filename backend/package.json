@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "BetRollover API - NestJS Backend",
   "scripts": {
-    "build": "nest build",
+    "build": "npm run build --prefix ../packages/shared-types && nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
@@ -21,6 +21,7 @@
     "test-email": "NODE_PATH=./node_modules node ../scripts/test-sendgrid.js"
   },
   "dependencies": {
+    "@betrollover/shared-types": "file:../packages/shared-types",
     "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^10.3.0",
     "@nestjs/config": "^3.1.1",

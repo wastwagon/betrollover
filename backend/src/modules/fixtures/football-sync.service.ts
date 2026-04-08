@@ -10,6 +10,7 @@ import { OddsSyncService } from './odds-sync.service';
 
 import { getSportApiBaseUrl } from '../../config/sports.config';
 import { normalizeFixtureElapsed } from './fixture-status-elapsed.util';
+import { extractHalftimeScores } from './fixture-halftime.util';
 import {
   getSyncDates,
   MAX_LEAGUE_BACKFILL_PER_RUN,
@@ -266,6 +267,7 @@ export class FootballSyncService {
           const { home: homeName, away: awayName } = extractTeamNames(f);
           const { home: homeLogo, away: awayLogo } = extractTeamLogos(f);
           const { home: homeCc, away: awayCc } = extractCountryCodes(f);
+          const ht = extractHalftimeScores(f);
           await this.fixtureRepo.upsert(
             {
               apiId: fix.id,
@@ -283,6 +285,9 @@ export class FootballSyncService {
               awayScore: f.goals?.away ?? null,
               statusElapsed: normalizeFixtureElapsed(fix.status?.short, fix.status?.elapsed),
               syncedAt: new Date(),
+              ...(ht.htHomeScore != null && ht.htAwayScore != null
+                ? { htHomeScore: ht.htHomeScore, htAwayScore: ht.htAwayScore }
+                : {}),
             },
             ['apiId'],
           );

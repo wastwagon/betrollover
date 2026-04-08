@@ -109,7 +109,7 @@ export class FixturesController {
 
     /** Include matchDate so NS→live transitions and kickoff changes emit deltas. */
     const rowSig = (row: any) =>
-      `${row?.id}|${row?.status ?? ''}|${row?.statusElapsed ?? ''}|${row?.homeScore ?? ''}|${row?.awayScore ?? ''}|${row?.syncedAt ?? ''}|${row?.matchDate ?? ''}`;
+      `${row?.id}|${row?.status ?? ''}|${row?.statusElapsed ?? ''}|${row?.homeScore ?? ''}|${row?.awayScore ?? ''}|${row?.htHomeScore ?? ''}|${row?.htAwayScore ?? ''}|${row?.syncedAt ?? ''}|${row?.matchDate ?? ''}`;
 
     return defer(() => {
       this.liveStreamActiveConnections += 1;

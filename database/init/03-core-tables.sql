@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS accumulator_picks (
   away_team_type VARCHAR(20) DEFAULT 'club' CHECK (away_team_type IN ('club','national')),
   match_description VARCHAR(255) NOT NULL,
   prediction VARCHAR(100) NOT NULL,
+  outcome_key VARCHAR(40) NULL,
   odds DECIMAL(10,3) NOT NULL,
   result VARCHAR(20) DEFAULT 'pending' CHECK (result IN ('pending','won','lost','void')),
   match_date TIMESTAMP,

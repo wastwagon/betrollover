@@ -22,6 +22,7 @@ import * as path from 'path';
 config({ path: path.resolve(__dirname, '../../.env') });
 
 import { getSportApiBaseUrl } from '../src/config/sports.config';
+import { determinePickResult } from '../src/modules/accumulators/settlement-logic';
 
 const BASE = getSportApiBaseUrl('football');
 const API_KEY = process.env.API_SPORTS_KEY || '';
@@ -102,19 +103,23 @@ function checkOutcome(
   selectedOutcome: string,
   homeScore: number,
   awayScore: number,
+  homeTeam?: string,
+  awayTeam?: string,
+  htHome?: number | null,
+  htAway?: number | null,
 ): boolean {
   const outcome = (selectedOutcome || '').trim().toLowerCase();
-  const totalGoals = homeScore + awayScore;
-  const homeWon = homeScore > awayScore;
-  const draw = homeScore === awayScore;
-  const awayWon = awayScore > homeScore;
-  if (outcome === 'home') return homeWon;
-  if (outcome === 'draw') return draw;
-  if (outcome === 'away') return awayWon;
-  if (outcome === 'btts') return homeScore > 0 && awayScore > 0;
-  if (outcome === 'over25') return totalGoals > 2;
-  if (outcome === 'under25') return totalGoals < 2;
-  return false;
+  return (
+    determinePickResult(
+      outcome,
+      homeScore,
+      awayScore,
+      homeTeam,
+      awayTeam,
+      htHome ?? null,
+      htAway ?? null,
+    ) === 'won'
+  );
 }
 
 interface FinishedFx {
@@ -125,6 +130,8 @@ interface FinishedFx {
   away: string;
   homeScore: number;
   awayScore: number;
+  htHome: number | null;
+  htAway: number | null;
   status: string;
 }
 
@@ -137,6 +144,10 @@ function rowToFinished(row: any, dateStr: string): FinishedFx | null {
   const h = Number(goals.home);
   const a = Number(goals.away);
   if (Number.isNaN(h) || Number.isNaN(a)) return null;
+  const ht = row.score?.halftime;
+  const hasHt = ht && typeof ht.home === 'number' && typeof ht.away === 'number';
+  const htHome = hasHt ? Number(ht.home) : null;
+  const htAway = hasHt ? Number(ht.away) : null;
   return {
     apiId: fix.id,
     date: dateStr,
@@ -145,6 +156,8 @@ function rowToFinished(row: any, dateStr: string): FinishedFx | null {
     away: row.teams?.away?.name || 'Away',
     homeScore: h,
     awayScore: a,
+    htHome,
+    htAway,
     status,
   };
 }
@@ -295,7 +308,9 @@ async function main() {
     if (p.over25 != null && p.under25 != null) {
       const predSide = p.over25 >= p.under25 ? 'over25' : 'under25';
       ou.total++;
-      if (checkOutcome(predSide, fx.homeScore, fx.awayScore)) ou.correct++;
+      if (checkOutcome(predSide, fx.homeScore, fx.awayScore, fx.home, fx.away, fx.htHome, fx.htAway)) {
+        ou.correct++;
+      }
     }
 
     if (p.bttsYes != null) {

@@ -10,6 +10,7 @@ import { MarketFilterService } from './market-filter.service';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { getSportApiBaseUrl } from '../../config/sports.config';
 import { normalizeFixtureElapsed } from './fixture-status-elapsed.util';
+import { extractHalftimeScores } from './fixture-halftime.util';
 
 @Injectable()
 export class OddsSyncService {
@@ -205,6 +206,7 @@ export class OddsSyncService {
           const away = item.teams?.away?.name ?? item.teams?.away?.team?.name ?? '';
           const homeName = (typeof home === 'string' && home.trim()) ? home.trim() : 'Home';
           const awayName = (typeof away === 'string' && away.trim()) ? away.trim() : 'Away';
+          const ht = extractHalftimeScores(item);
 
           await this.fixtureRepo.upsert(
             {
@@ -219,6 +221,9 @@ export class OddsSyncService {
               awayScore: item.goals?.away ?? null,
               statusElapsed: normalizeFixtureElapsed(fix.status?.short, fix.status?.elapsed),
               syncedAt: new Date(),
+              ...(ht.htHomeScore != null && ht.htAwayScore != null
+                ? { htHomeScore: ht.htHomeScore, htAwayScore: ht.htAwayScore }
+                : {}),
             },
             ['apiId'],
           );

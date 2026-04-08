@@ -32,6 +32,15 @@ describe('settlement-logic', () => {
       expect(determinePickResult('12', 1, 1)).toBe('lost');
     });
 
+    it('AI double-chance keys home_draw / draw_away', () => {
+      expect(determinePickResult('home_draw', 2, 1)).toBe('won');
+      expect(determinePickResult('home_draw', 1, 1)).toBe('won');
+      expect(determinePickResult('home_draw', 1, 2)).toBe('lost');
+      expect(determinePickResult('draw_away', 1, 2)).toBe('won');
+      expect(determinePickResult('draw_away', 1, 1)).toBe('won');
+      expect(determinePickResult('draw_away', 2, 1)).toBe('lost');
+    });
+
     it('1X (home or draw)', () => {
       expect(determinePickResult('1x', 2, 1)).toBe('won');
       expect(determinePickResult('1x', 1, 1)).toBe('won');
@@ -81,6 +90,8 @@ describe('settlement-logic', () => {
       expect(determinePickResult('under 2.5', 2, 1)).toBe('lost');
       expect(determinePickResult('Over 1.5', 1, 1)).toBe('won');
       expect(determinePickResult('Under 3.5', 2, 1)).toBe('won');
+      expect(determinePickResult('goals over/under: under 2.5', 1, 1)).toBe('won');
+      expect(determinePickResult('goals over/under: over 2.5', 2, 1)).toBe('won');
     });
 
     it('basketball points', () => {
@@ -184,6 +195,85 @@ describe('settlement-logic', () => {
       expect(determinePickResult('even', 2, 2)).toBe('won');
       expect(determinePickResult('even total', 1, 1)).toBe('won');
       expect(determinePickResult('odd', 2, 2)).toBe('lost');
+    });
+
+    it('coupon-style Odd/Even: …', () => {
+      expect(determinePickResult('odd/even: odd', 2, 1)).toBe('won');
+      expect(determinePickResult('odd/even: even', 2, 2)).toBe('won');
+      expect(determinePickResult('goals odd/even: even', 1, 1)).toBe('won');
+    });
+  });
+
+  describe('Draw No Bet (full coupon label)', () => {
+    it('void on draw; home/away otherwise', () => {
+      expect(determinePickResult('draw no bet: home', 2, 1)).toBe('won');
+      expect(determinePickResult('draw no bet: home', 1, 1)).toBe('void');
+      expect(determinePickResult('draw no bet: away', 1, 2)).toBe('won');
+    });
+  });
+
+  describe('First half markets', () => {
+    it('winner uses HT scores', () => {
+      expect(determinePickResult('first half winner: home', 0, 2, undefined, undefined, 1, 0)).toBe('won');
+      expect(determinePickResult('first half winner: away', 0, 2, undefined, undefined, 1, 0)).toBe('lost');
+      expect(determinePickResult('first half winner: draw', 5, 0, undefined, undefined, 1, 1)).toBe('won');
+    });
+
+    it('stays pending without HT data', () => {
+      expect(determinePickResult('first half winner: home', 2, 1)).toBeNull();
+    });
+
+    it('first half goals O/U', () => {
+      expect(determinePickResult('goals over/under first half: over 1.5', 0, 0, undefined, undefined, 2, 0)).toBe('won');
+      expect(determinePickResult('goals over/under first half: under 2.5', 10, 10, undefined, undefined, 0, 1)).toBe('won');
+    });
+  });
+
+  describe('Asian Handicap (coupon label)', () => {
+    it('parses home line from text', () => {
+      expect(determinePickResult('asian handicap: home -1', 3, 1)).toBe('won');
+      expect(determinePickResult('asian handicap: home -1', 1, 1)).toBe('lost');
+    });
+  });
+
+  describe('European Handicap (coupon label)', () => {
+    it('uses same spread parsing as Asian', () => {
+      expect(determinePickResult('european handicap: home -1', 3, 1)).toBe('won');
+      expect(determinePickResult('european handicap: away +1', 1, 0)).toBe('lost');
+    });
+  });
+
+  describe('Canonical outcome_key (engine / marketplace)', () => {
+    it('ht_home / ht_draw use half-time goals only', () => {
+      expect(determinePickResult('ht_home', 0, 3, undefined, undefined, 1, 0)).toBe('won');
+      expect(determinePickResult('ht_home', 3, 0, undefined, undefined, 0, 1)).toBe('lost');
+      expect(determinePickResult('ht_draw', 5, 0, undefined, undefined, 1, 1)).toBe('won');
+      expect(determinePickResult('ht_home', 2, 1)).toBeNull();
+    });
+
+    it('dnb_home / dnb_away void on draw', () => {
+      expect(determinePickResult('dnb_home', 2, 1)).toBe('won');
+      expect(determinePickResult('dnb_home', 1, 1)).toBe('void');
+      expect(determinePickResult('dnb_away', 1, 2)).toBe('won');
+    });
+
+    it('FT total lines by slug', () => {
+      expect(determinePickResult('over15', 2, 0)).toBe('won');
+      expect(determinePickResult('under15', 1, 0)).toBe('won');
+      expect(determinePickResult('over35', 2, 2)).toBe('won');
+      expect(determinePickResult('under35', 2, 1)).toBe('won');
+    });
+
+    it('odd_goals / even_goals from full-time total', () => {
+      expect(determinePickResult('odd_goals', 2, 1)).toBe('won');
+      expect(determinePickResult('even_goals', 2, 1)).toBe('lost');
+      expect(determinePickResult('even_goals', 2, 2)).toBe('won');
+    });
+
+    it('first-half O/U slugs need HT total', () => {
+      expect(determinePickResult('fh_over05', 0, 0, undefined, undefined, 0, 1)).toBe('won');
+      expect(determinePickResult('fh_under15', 9, 9, undefined, undefined, 0, 1)).toBe('won');
+      expect(determinePickResult('fh_over25', 0, 0)).toBeNull();
     });
   });
 

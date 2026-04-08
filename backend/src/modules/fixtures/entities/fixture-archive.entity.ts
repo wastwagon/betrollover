@@ -39,6 +39,12 @@ export class FixtureArchive {
   @Column({ type: 'int', name: 'away_score', nullable: true })
   awayScore: number | null = null;
 
+  @Column({ type: 'int', name: 'ht_home_score', nullable: true })
+  htHomeScore: number | null = null;
+
+  @Column({ type: 'int', name: 'ht_away_score', nullable: true })
+  htAwayScore: number | null = null;
+
   @Column({ type: 'timestamp', name: 'synced_at', nullable: true })
   syncedAt: Date | null = null;
 

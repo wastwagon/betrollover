@@ -25,6 +25,9 @@ CREATE TABLE IF NOT EXISTS fixtures (
   synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS ht_home_score INT NULL;
+ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS ht_away_score INT NULL;
+
 CREATE INDEX idx_fixtures_date ON fixtures(match_date);
 CREATE INDEX idx_fixtures_status ON fixtures(status);
 CREATE INDEX idx_fixtures_league ON fixtures(league_id);

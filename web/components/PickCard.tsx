@@ -9,6 +9,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { useT } from '@/context/LanguageContext';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { tipsterRankBadgeClass, tipsterRankBadgeContent } from '@/lib/tipster-rank-ui';
+import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
 
 interface Pick {
   id?: number;
@@ -353,7 +354,7 @@ export function PickCard({
                           <span className="truncate">{p.matchDescription}</span>
                         </span>
                         <span className="text-[var(--text-muted)] flex-shrink-0 text-[9px]">
-                          {p.prediction} @ {Number(p.odds || 0).toFixed(2)}
+                          {formatFootballOutcomeLabel(p.prediction)} @ {Number(p.odds || 0).toFixed(2)}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5 flex-wrap">
@@ -540,7 +541,7 @@ export function PickCard({
                           )}
                         </div>
                         <div className="text-right flex-shrink-0 min-w-0">
-                          <span className="text-sm text-[var(--text-muted)] block truncate max-w-[8rem] sm:max-w-none">{p.prediction}</span>
+                          <span className="text-sm text-[var(--text-muted)] block truncate max-w-[8rem] sm:max-w-none">{formatFootballOutcomeLabel(p.prediction)}</span>
                           <span className="text-sm font-semibold text-[var(--primary)] tabular-nums">@{Number(p.odds || 0).toFixed(2)}</span>
                         </div>
                       </li>
@@ -690,7 +691,7 @@ export function PickCard({
                             )}
                           </div>
                           <div className="text-right flex-shrink-0 min-w-0">
-                            <span className="text-xs text-[var(--text-muted)] block truncate max-w-[7rem] sm:max-w-none">{p.prediction}</span>
+                            <span className="text-xs text-[var(--text-muted)] block truncate max-w-[7rem] sm:max-w-none">{formatFootballOutcomeLabel(p.prediction)}</span>
                             <span className="text-xs font-semibold text-[var(--primary)] tabular-nums">@{Number(p.odds || 0).toFixed(2)}</span>
                           </div>
                         </li>

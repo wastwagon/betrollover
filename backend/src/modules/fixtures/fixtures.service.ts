@@ -428,6 +428,8 @@ export class FixturesService {
       statusElapsed: f.statusElapsed ?? null,
       homeScore: f.homeScore,
       awayScore: f.awayScore,
+      htHomeScore: f.htHomeScore ?? null,
+      htAwayScore: f.htAwayScore ?? null,
       syncedAt: f.syncedAt?.toISOString?.() ?? f.syncedAt,
     });
 

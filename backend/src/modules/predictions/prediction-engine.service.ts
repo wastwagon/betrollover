@@ -9,33 +9,15 @@ import { PredictionFixture } from './entities/prediction-fixture.entity';
 import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
 import { AccumulatorPick } from '../accumulators/entities/accumulator-pick.entity';
 import { AI_TIPSTERS, AiTipsterConfig, AiTipsterPersonality } from '../../config/ai-tipsters.config';
+import {
+  fixtureInvolvesBigSix,
+  isLikelyEplBigSixTeam,
+} from '../../config/epl-big-six.config';
+import { leagueMatchesFocus } from '../../config/league-focus.util';
 import { ApiPredictionsService, ApiFixturePredictions } from '../fixtures/api-predictions.service';
 import { OddsSyncService } from '../fixtures/odds-sync.service';
 import { PredictionMarketplaceSyncService } from './prediction-marketplace-sync.service';
-
-/** Maps market value to outcome key for filtering. Draw is excluded per user preference. */
-function outcomeFromMarket(marketName: string, marketValue: string): string {
-  const v = (marketValue || '').trim().toLowerCase();
-  if (marketName === 'Match Winner') {
-    if (v.includes('home') || v === '1') return 'home';
-    if (v.includes('away') || v === '2') return 'away';
-    if (v.includes('draw') || v === 'x') return 'draw'; // kept for filtering out
-  }
-  if (marketName === 'Both Teams To Score') {
-    if (v.includes('yes')) return 'btts';
-  }
-  if (marketName === 'Goals Over/Under') {
-    if (v.includes('over') && v.includes('2.5')) return 'over25';
-    if (v.includes('under') && v.includes('2.5')) return 'under25';
-  }
-  if (marketName === 'Double Chance') {
-    if (v.includes('home') && v.includes('away') || v === '12') return 'home_away';
-    if (v.includes('home') && v.includes('draw') || v === '1x') return 'home_draw';
-    if (v.includes('draw') && v.includes('away') || v === 'x2') return 'draw_away';
-  }
-  if (marketName === 'Correct Score') return 'correct_score';
-  return v;
-}
+import { engineOutcomeKeyFromOddsLine } from '../fixtures/odds-outcome-keys';
 
 interface FixturePrediction {
   fixtureId: number;
@@ -53,7 +35,7 @@ interface FixturePrediction {
   fromApi?: boolean;
 }
 
-interface TipsterPredictionResult {
+export interface TipsterPredictionResult {
   tipsterUsername: string;
   tipsterDisplayName: string;
   tipsterId: number;
@@ -139,8 +121,8 @@ export class PredictionEngineService {
   }
 
   /**
-   * Main entry: generate predictions for all 25 AI tipsters (Hybrid: API-Football + value filter)
-   * Fixtures are drawn from the next 7 days (not limited to a single day). Value filters determine qualifying accas.
+   * Main entry: generate predictions for all 25 AI tipsters (Hybrid: API-Football + value filter).
+   * Fixtures are limited to the given calendar day (kickoff on that date in UTC window).
    * @param forDate Optional date (YYYY-MM-DD) for prediction_date; defaults to today
    */
   async generateDailyPredictionsForAllTipsters(forDate?: string, dryRun = false): Promise<TipsterPredictionResult[]> {
@@ -297,7 +279,7 @@ export class PredictionEngineService {
       const candidates: { outcome: string; odds: number; prob: number; ev: number; fromApi: boolean }[] = [];
 
       for (const o of odds) {
-        const outcome = outcomeFromMarket(o.marketName, o.marketValue);
+        const outcome = engineOutcomeKeyFromOddsLine(o.marketName, o.marketValue);
         if (!outcome || outcome === 'correct_score') continue;
 
         const oddsNum = Number(o.odds);
@@ -319,6 +301,22 @@ export class PredictionEngineService {
             const away = apiPred.outcomes.find((a) => a.outcome === 'away');
             if (home && away) {
               prob = home.probability + away.probability;
+              fromApi = true;
+            } else {
+              prob = this.impliedProbToOurProb(oddsNum);
+            }
+          } else if (
+            !apiOutcome &&
+            (outcomeNorm === 'dnb_home' || outcomeNorm === 'dnb_away')
+          ) {
+            const home = apiPred.outcomes.find((a) => a.outcome === 'home');
+            const away = apiPred.outcomes.find((a) => a.outcome === 'away');
+            const s = home && away ? home.probability + away.probability : 0;
+            if (home && away && s > 0) {
+              prob =
+                outcomeNorm === 'dnb_home'
+                  ? home.probability / s
+                  : away.probability / s;
               fromApi = true;
             } else {
               prob = this.impliedProbToOurProb(oddsNum);
@@ -345,54 +343,59 @@ export class PredictionEngineService {
 
       if (candidates.length === 0) continue;
 
-      // Exclude draw: only home, away, btts, over25, under25, home_away (Double Chance 12)
-      const NO_DRAW_OUTCOMES = ['home', 'away', 'btts', 'over25', 'under25', 'home_away'];
-      const nonDrawCandidates = candidates.filter((c) => NO_DRAW_OUTCOMES.includes(c.outcome));
-      const sorted = (nonDrawCandidates.length > 0 ? nonDrawCandidates : candidates)
-        .filter((c) => c.outcome !== 'draw')
-        .sort((a, b) => b.ev - a.ev);
-      const best = sorted[0];
-      if (!best) continue;
-      results.push({
-        fixtureId: fixture.id,
-        apiId: fixture.apiId,
-        matchDate: fixture.matchDate,
-        leagueName,
-        leagueId,
-        homeTeam: fixture.homeTeamName,
-        awayTeam: fixture.awayTeamName,
-        selectedOutcome: best.outcome,
-        odds: best.odds,
-        probability: best.prob,
-        ev: best.ev,
-        fromApi: best.fromApi,
-      });
+      /** One row per outcome type per fixture (best EV in that market) so specialists see their market. */
+      const EMIT_OUTCOMES = [
+        'home',
+        'away',
+        'draw',
+        'over15',
+        'under15',
+        'over25',
+        'under25',
+        'over35',
+        'under35',
+        'btts',
+        'home_away',
+        'home_draw',
+        'draw_away',
+        'dnb_home',
+        'dnb_away',
+        'ht_home',
+        'ht_away',
+        'ht_draw',
+        'fh_over05',
+        'fh_under05',
+        'fh_over15',
+        'fh_under15',
+        'fh_over25',
+        'fh_under25',
+        'odd_goals',
+        'even_goals',
+      ] as const;
+
+      for (const outcomeKey of EMIT_OUTCOMES) {
+        const group = candidates.filter((c) => c.outcome === outcomeKey);
+        if (group.length === 0) continue;
+        const best = [...group].sort((a, b) => b.ev - a.ev)[0];
+        if (!best) continue;
+        results.push({
+          fixtureId: fixture.id,
+          apiId: fixture.apiId,
+          matchDate: fixture.matchDate,
+          leagueName,
+          leagueId,
+          homeTeam: fixture.homeTeamName,
+          awayTeam: fixture.awayTeamName,
+          selectedOutcome: best.outcome,
+          odds: best.odds,
+          probability: best.prob,
+          ev: best.ev,
+          fromApi: best.fromApi,
+        });
+      }
     }
 
     return results;
-  }
-
-  /** Aliases for league matching: config key (lowercase) -> possible API/DB names (lowercase, no spaces for fuzzy match). */
-  private static readonly LEAGUE_ALIASES: Record<string, string[]> = {
-    'premier league': ['premier league', 'english premier league', 'epl'],
-    'la liga': ['la liga', 'laliga', 'spanish la liga', 'laliga santander'],
-    'serie a': ['serie a', 'italian serie a', 'serie a tim'],
-    'bundesliga': ['bundesliga', 'german bundesliga', 'bundesliga 1'],
-    'ligue 1': ['ligue 1', 'france ligue 1', 'ligue 1 ubereats'],
-    championship: ['championship', 'english championship', 'efl championship', 'championship league'],
-  };
-
-  /** League name matches config focus: includes, normalized (no spaces), or explicit aliases. */
-  private leagueMatchesFocus(fixtureLeagueName: string | null, configLeague: string): boolean {
-    if (!fixtureLeagueName) return false;
-    const f = fixtureLeagueName.toLowerCase().trim();
-    const c = configLeague.toLowerCase().trim();
-    if (f.includes(c)) return true;
-    const fNorm = f.replace(/\s+/g, '');
-    const cNorm = c.replace(/\s+/g, '');
-    if (fNorm.includes(cNorm) || cNorm.includes(fNorm)) return true;
-    const aliases = PredictionEngineService.LEAGUE_ALIASES[cNorm] ?? [cNorm];
-    return aliases.some((alias) => f.includes(alias) || fNorm.includes(alias.replace(/\s+/g, '')));
   }
 
   /** Weekend = Sat(6), Sun(0). Midweek = Tue(2), Wed(3), Thu(4). */
@@ -401,6 +404,28 @@ export class PredictionEngineService {
     const d = new Date(matchDate).getDay();
     if (fixtureDays === 'weekend') return d === 0 || d === 6;
     if (fixtureDays === 'midweek') return d >= 2 && d <= 4;
+    return true;
+  }
+
+  /**
+   * team_filter top_6: home specialist → home club must be Big 6; away → away club;
+   * otherwise either side Big 6.
+   */
+  private matchesTeamFilter(fp: FixturePrediction, personality: AiTipsterPersonality): boolean {
+    const filters = personality.team_filter;
+    if (!filters?.length) return true;
+    const spec = personality.outcome_specialization;
+    for (const f of filters) {
+      if (f.toLowerCase() !== 'top_6') continue;
+      if (spec === 'home') {
+        if (!isLikelyEplBigSixTeam(fp.homeTeam)) return false;
+      } else if (spec === 'away') {
+        if (!isLikelyEplBigSixTeam(fp.awayTeam)) return false;
+      } else if (!fixtureInvolvesBigSix(fp.homeTeam, fp.awayTeam)) {
+        return false;
+      }
+      return true;
+    }
     return true;
   }
 
@@ -420,9 +445,11 @@ export class PredictionEngineService {
 
       if (!hasAll && leagues.length > 0) {
         if (!fp.leagueName) return false;
-        const match = leagues.some((l) => this.leagueMatchesFocus(fp.leagueName, l));
+        const match = leagues.some((l) => leagueMatchesFocus(fp.leagueName, l));
         if (!match) return false;
       }
+
+      if (!this.matchesTeamFilter(fp, personality)) return false;
 
       if (fp.odds < personality.target_odds_min || fp.odds > personality.target_odds_max)
         return false;
@@ -440,19 +467,79 @@ export class PredictionEngineService {
       }
 
       const outcomeNorm = fp.selectedOutcome.toLowerCase();
+
+      if (personality.outcome_specialization) {
+        return outcomeNorm === personality.outcome_specialization;
+      }
+
       const betTypes = personality.bet_types || [];
       const allows1x2 = betTypes.some((b) => b.toLowerCase().includes('1x2'));
       const allowsBtts = betTypes.some((b) => b.toLowerCase().includes('btts'));
       const allowsOver25 = betTypes.some((b) => b.toLowerCase().includes('over'));
       const allowsUnder25 = betTypes.some((b) => b.toLowerCase().includes('under'));
       const allowsDoubleChance = betTypes.some((b) => b.toLowerCase().includes('double'));
+      const allowsDnb = betTypes.some((b) => {
+        const x = b.toLowerCase();
+        return x.includes('dnb') || x.includes('draw no bet');
+      });
+      const allowsFirstHalf = betTypes.some((b) => {
+        const x = b.toLowerCase();
+        return (
+          x.includes('first half') ||
+          x.includes('1st half') ||
+          x.includes('half time') ||
+          x === 'ht'
+        );
+      });
+      const normOu = (s: string) => s.toLowerCase().replace(/\s+/g, '');
+      const hasOverUnderCombo = betTypes.some((b) => normOu(b) === 'over/under');
+      const allowsOver15 =
+        allowsOver25 ||
+        hasOverUnderCombo ||
+        betTypes.some((b) => /over.*1\.5|1\.5.*over|o\s*1\.5/i.test(b));
+      const allowsOver35 =
+        allowsOver25 ||
+        hasOverUnderCombo ||
+        betTypes.some((b) => /over.*3\.5|3\.5.*over/i.test(b));
+      const allowsUnder15 =
+        betTypes.some((b) => /under.*1\.5|1\.5.*under|u\s*1\.5/i.test(b)) || hasOverUnderCombo;
+      const allowsUnder35 =
+        betTypes.some((b) => /under.*3\.5|3\.5.*under/i.test(b)) || hasOverUnderCombo;
+      const allowsOddEven = betTypes.some((b) => {
+        const x = b.toLowerCase();
+        return x.includes('odd/even') || x.includes('odd even') || (x.includes('odd') && x.includes('even'));
+      });
 
       if (['home', 'away'].includes(outcomeNorm) && !allows1x2) return false;
-      if (outcomeNorm === 'draw') return false;
+      if (outcomeNorm === 'draw' && !allows1x2) return false;
       if (outcomeNorm === 'btts' && !allowsBtts) return false;
+      if (outcomeNorm === 'over15' && !allowsOver15) return false;
       if (outcomeNorm === 'over25' && !allowsOver25) return false;
+      if (outcomeNorm === 'over35' && !allowsOver35) return false;
+      if (outcomeNorm === 'under15' && !allowsUnder15) return false;
       if (outcomeNorm === 'under25' && !allowsUnder25) return false;
-      if (outcomeNorm === 'home_away' && !allowsDoubleChance) return false;
+      if (outcomeNorm === 'under35' && !allowsUnder35) return false;
+      if (
+        ['home_away', 'home_draw', 'draw_away'].includes(outcomeNorm) &&
+        !allowsDoubleChance
+      )
+        return false;
+      if (['dnb_home', 'dnb_away'].includes(outcomeNorm) && !allowsDnb) return false;
+      if (['ht_home', 'ht_away', 'ht_draw'].includes(outcomeNorm) && !allowsFirstHalf)
+        return false;
+      if (
+        [
+          'fh_over05',
+          'fh_under05',
+          'fh_over15',
+          'fh_under15',
+          'fh_over25',
+          'fh_under25',
+        ].includes(outcomeNorm) &&
+        !allowsFirstHalf
+      )
+        return false;
+      if (['odd_goals', 'even_goals'].includes(outcomeNorm) && !allowsOddEven) return false;
 
       return true;
     });

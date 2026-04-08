@@ -9,6 +9,7 @@ import { TipsterPerformanceLog } from './entities/tipster-performance-log.entity
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { FixtureUpdateService } from '../fixtures/fixture-update.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { determinePickResult } from '../accumulators/settlement-logic';
 
 const TOP_RANK_THRESHOLD = 10;
 
@@ -71,20 +72,35 @@ export class ResultTrackerService {
       if (pf.fixtureId == null) continue; // Non-football predictions handled separately (Phase 1+)
       const fixture = await this.fixtureRepo.findOne({
         where: { id: pf.fixtureId },
-        select: ['id', 'status', 'homeScore', 'awayScore'],
+        select: [
+          'id',
+          'status',
+          'homeScore',
+          'awayScore',
+          'homeTeamName',
+          'awayTeamName',
+          'htHomeScore',
+          'htAwayScore',
+        ],
       });
 
       if (!fixture || fixture.status !== 'FT') continue;
       if (fixture.homeScore == null || fixture.awayScore == null) continue;
 
-      const isWon = this.checkIfWon(
+      const legResult = this.gradeFixtureLeg(
         pf.selectedOutcome || '',
         fixture.homeScore,
         fixture.awayScore,
+        fixture.homeTeamName,
+        fixture.awayTeamName,
+        fixture.htHomeScore,
+        fixture.htAwayScore,
       );
 
+      if (legResult == null) continue;
+
       await this.predictionFixtureRepo.update(pf.id, {
-        resultStatus: isWon ? 'won' : 'lost',
+        resultStatus: legResult,
         actualScore: `${fixture.homeScore}-${fixture.awayScore}`,
       });
       fixturesUpdated++;
@@ -110,33 +126,32 @@ export class ResultTrackerService {
   }
 
   /**
-   * Determine if prediction was correct based on selected outcome
+   * Grade one football leg: same rules as marketplace picks (`determinePickResult`).
+   * Returns null when the result cannot be computed yet (e.g. first-half market but HT score not stored).
    */
-  private checkIfWon(
+  private gradeFixtureLeg(
     selectedOutcome: string,
     homeScore: number,
     awayScore: number,
-  ): boolean {
+    homeTeam?: string | null,
+    awayTeam?: string | null,
+    htHome?: number | null,
+    htAway?: number | null,
+  ): 'won' | 'lost' | 'void' | null {
     const outcome = (selectedOutcome || '').trim().toLowerCase();
-    const totalGoals = homeScore + awayScore;
-    const homeWon = homeScore > awayScore;
-    const draw = homeScore === awayScore;
-    const awayWon = awayScore > homeScore;
-
-    if (outcome === 'home') return homeWon;
-    if (outcome === 'draw') return draw;
-    if (outcome === 'away') return awayWon;
-    if (outcome === 'home_away') return homeWon || awayWon;
-    if (outcome === 'btts') return homeScore > 0 && awayScore > 0;
-    if (outcome === 'over25') return totalGoals > 2;
-    if (outcome === 'under25') return totalGoals < 2;
-
-    // Correct score: normalize "2-1", "2:1" etc.
-    const expected = outcome.replace(/:/g, '-');
-    const actual = `${homeScore}-${awayScore}`;
-    if (expected === actual) return true;
-
-    return false;
+    const r = determinePickResult(
+      outcome,
+      homeScore,
+      awayScore,
+      homeTeam ?? undefined,
+      awayTeam ?? undefined,
+      htHome ?? null,
+      htAway ?? null,
+    );
+    if (r === 'won') return 'won';
+    if (r === 'void') return 'void';
+    if (r === 'lost') return 'lost';
+    return null;
   }
 
   /**
@@ -153,7 +168,8 @@ export class ResultTrackerService {
     );
     if (!allSettled) return false;
 
-    const accaWon = fixtures.every((f) => f.resultStatus === 'won');
+    const hasVoid = fixtures.some((f) => f.resultStatus === 'void');
+    const allWon = fixtures.every((f) => f.resultStatus === 'won');
     const prediction = await this.predictionRepo.findOne({
       where: { id: predictionId },
       select: ['id', 'tipsterId', 'combinedOdds', 'status'],
@@ -162,8 +178,18 @@ export class ResultTrackerService {
     if (!prediction || prediction.status !== 'pending') return false;
 
     const combinedOdds = Number(prediction.combinedOdds);
-    const actualResult = accaWon ? combinedOdds - 1 : -1;
-    const status = accaWon ? 'won' : 'lost';
+    let status: string;
+    let actualResult: number;
+    if (hasVoid) {
+      status = 'void';
+      actualResult = 0;
+    } else if (allWon) {
+      status = 'won';
+      actualResult = combinedOdds - 1;
+    } else {
+      status = 'lost';
+      actualResult = -1;
+    }
 
     await this.predictionRepo.update(predictionId, {
       status,

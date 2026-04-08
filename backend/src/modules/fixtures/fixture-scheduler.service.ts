@@ -439,6 +439,8 @@ export class FixtureSchedulerService implements OnModuleInit {
             status: f.status,
             homeScore: f.homeScore,
             awayScore: f.awayScore,
+            htHomeScore: f.htHomeScore,
+            htAwayScore: f.htAwayScore,
             syncedAt: f.syncedAt,
           }),
         );

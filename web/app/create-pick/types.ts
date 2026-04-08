@@ -19,6 +19,9 @@ export interface Fixture {
   leagueName: string | null;
   matchDate: string;
   status: string;
+  /** Half-time score when synced (first-half market settlement). */
+  htHomeScore?: number | null;
+  htAwayScore?: number | null;
   odds?: FixtureOdd[];
   oddsError?: string;
   league?: {

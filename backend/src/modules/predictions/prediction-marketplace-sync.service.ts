@@ -11,21 +11,7 @@ import { TipstersSetupService } from './tipsters-setup.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { TipsterService } from '../tipster/tipster.service';
-
-/** Format selectedOutcome for display (e.g. over25 -> Over 2.5) */
-function formatOutcome(outcome: string | null): string {
-  const o = (outcome || '').toLowerCase();
-  if (o === 'home') return 'Home Win';
-  if (o === 'away') return 'Away Win';
-  if (o === 'draw') return 'Draw';
-  if (o === 'btts') return 'BTTS Yes';
-  if (o === 'over25') return 'Over 2.5';
-  if (o === 'under25') return 'Under 2.5';
-  if (o === 'home_away') return 'Home or Away (12)';
-  if (o === 'home_draw') return 'Home or Draw (1X)';
-  if (o === 'draw_away') return 'Draw or Away (X2)';
-  return outcome || '—';
-}
+import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
 
 @Injectable()
 export class PredictionMarketplaceSyncService {
@@ -169,7 +155,8 @@ export class PredictionMarketplaceSyncService {
         accumulatorId: ticket.id,
         fixtureId: f.fixtureId,
         matchDescription: `${f.homeTeam} vs ${f.awayTeam}`,
-        prediction: formatOutcome(f.selectedOutcome),
+        prediction: formatFootballOutcomeLabel(f.selectedOutcome),
+        outcomeKey: f.selectedOutcome || null,
         odds: f.selectionOdds,
         matchDate: f.matchDate,
         result: 'pending',
@@ -207,7 +194,7 @@ export class PredictionMarketplaceSyncService {
                   isSubscription: false,
                   legs: fixtures.map((f) => ({
                     matchDescription: `${f.homeTeam} vs ${f.awayTeam}`,
-                    prediction: formatOutcome(f.selectedOutcome),
+                    prediction: formatFootballOutcomeLabel(f.selectedOutcome),
                     odds: Number(f.selectionOdds),
                     matchDate: f.matchDate ? new Date(f.matchDate).toISOString() : null,
                   })),
@@ -358,7 +345,7 @@ export class PredictionMarketplaceSyncService {
 
       const ourFormatted = fixtures
         .filter((f) => f.fixtureId != null)
-        .map((f) => `${f.fixtureId}:${formatOutcome(f.selectedOutcome)}:${Number(f.selectionOdds)}`)
+        .map((f) => `${f.fixtureId}:${formatFootballOutcomeLabel(f.selectedOutcome)}:${Number(f.selectionOdds)}`)
         .sort()
         .join('|');
 

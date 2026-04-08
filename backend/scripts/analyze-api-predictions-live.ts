@@ -14,6 +14,12 @@
  *
  * Disclaimer: API “percent” fields are not verified long-run calibration; treat as
  * exploratory signal only, not proof of edge.
+ *
+ * Markets with model probability: 1X2, O/U 1.5/2.5/3.5 (when API returns them), BTTS,
+ * double chance, DNB (derived from 1X2 by renormalizing out draw), first-half 1X2
+ * (when `predictions.half_time` exists), odd/even (when `predictions.odd_even` exists).
+ * Model probabilities: `parseApiFootballPredictionsOutcomes` in `api-football-predictions.parser.ts`
+ * (aligned with the prediction engine). Odds lines map via `outcomeKeyFromOddsLine`.
  */
 
 import { config } from 'dotenv';
@@ -22,6 +28,12 @@ import * as path from 'path';
 config({ path: path.resolve(__dirname, '../../.env') });
 
 import { getSportApiBaseUrl } from '../src/config/sports.config';
+import { normalizeApiMarketName } from '../src/modules/fixtures/api-market-aliases';
+import { outcomeKeyFromOddsLine } from '../src/modules/fixtures/odds-outcome-keys';
+import {
+  parseApiFootballPredictionsOutcomes,
+  type ApiPredictionOutcome,
+} from '../src/modules/fixtures/api-football-predictions.parser';
 
 const BASE = getSportApiBaseUrl('football');
 const API_KEY = process.env.API_SPORTS_KEY || '';
@@ -30,47 +42,17 @@ const DAYS = Math.min(7, Math.max(1, parseInt(process.env.DAYS || '2', 10) || 2)
 const MAX_FIXTURES = Math.min(200, Math.max(5, parseInt(process.env.MAX_FIXTURES || '50', 10) || 50));
 const DELAY_MS = Math.max(0, parseInt(process.env.DELAY_MS || '200', 10) || 200);
 
-/** Same mapping as prediction-engine (draw kept for pairing but summarized separately). */
-function outcomeFromMarket(marketName: string, marketValue: string): string | null {
-  const v = (marketValue || '').trim().toLowerCase();
-  if (marketName === 'Match Winner') {
-    if (v.includes('home') || v === '1') return 'home';
-    if (v.includes('away') || v === '2') return 'away';
-    if (v.includes('draw') || v === 'x') return 'draw';
-  }
-  if (marketName === 'Both Teams To Score') {
-    if (v.includes('yes')) return 'btts';
-  }
-  if (marketName === 'Goals Over/Under') {
-    if (v.includes('over') && v.includes('2.5')) return 'over25';
-    if (v.includes('under') && v.includes('2.5')) return 'under25';
-  }
-  if (marketName === 'Double Chance') {
-    if ((v.includes('home') && v.includes('away')) || v === '12') return 'home_away';
-  }
-  return null;
-}
-
-const API_MARKET_ALIASES: Record<string, string> = {
-  'Both Teams To Score': 'Both Teams To Score',
-  'Goals - Both Teams Score': 'Both Teams To Score',
-  'Both Teams Score': 'Both Teams To Score',
-  BTTS: 'Both Teams To Score',
-  GG: 'Both Teams To Score',
-  'Both Teams To Score - Yes/No': 'Both Teams To Score',
-  'Match Winner': 'Match Winner',
-  'Home/Away': 'Match Winner',
-  '1X2': 'Match Winner',
-  'Goals Over/Under': 'Goals Over/Under',
-  'Over/Under': 'Goals Over/Under',
-  'Total Goals': 'Goals Over/Under',
-  'Double Chance': 'Double Chance',
-};
-
-function normalizeMarketName(apiName: string): string {
-  const trimmed = (apiName || '').trim();
-  return API_MARKET_ALIASES[trimmed] ?? trimmed;
-}
+/** Normalized market names to pull from odds (must stay in sync with `outcomeKeyFromOddsLine`). */
+const ANALYSIS_MARKETS = new Set<string>([
+  'Match Winner',
+  'Goals Over/Under',
+  'Both Teams To Score',
+  'Double Chance',
+  'Draw No Bet',
+  'Odd/Even',
+  'First Half Winner',
+  'Goals Over/Under First Half',
+]);
 
 /** Best odds per (marketName, marketValue) across bookmakers — mirrors market-filter idea without DB. */
 function flattenOdds(oddsJson: any): Array<{ marketName: string; marketValue: string; odds: number }> {
@@ -78,20 +60,12 @@ function flattenOdds(oddsJson: any): Array<{ marketName: string; marketValue: st
   const bookmakers = oddsJson?.response?.[0]?.bookmakers || [];
   for (const bm of bookmakers) {
     for (const bet of bm.bets || []) {
-      const marketName = normalizeMarketName(bet.name || '');
-      if (
-        marketName !== 'Match Winner' &&
-        marketName !== 'Goals Over/Under' &&
-        marketName !== 'Both Teams To Score' &&
-        marketName !== 'Double Chance'
-      ) {
-        continue;
-      }
+      const marketName = normalizeApiMarketName(bet.name || '');
+      if (!ANALYSIS_MARKETS.has(marketName)) continue;
       for (const value of bet.values || []) {
         const marketValue = String(value.value ?? '');
         const odd = parseFloat(String(value.odd));
         if (!marketValue || Number.isNaN(odd) || odd < 1.01) continue;
-        const key = `${marketName}\0${marketValue}`;
         const existing = out.find((o) => o.marketName === marketName && o.marketValue === marketValue);
         if (!existing) {
           out.push({ marketName, marketValue, odds: odd });
@@ -104,51 +78,33 @@ function flattenOdds(oddsJson: any): Array<{ marketName: string; marketValue: st
   return out;
 }
 
-function parsePercent(val: string | number): number {
-  if (typeof val === 'number') return Math.min(1, Math.max(0, val));
-  const s = String(val || '').replace(/[^\d.]/g, '');
-  const n = parseFloat(s);
-  if (Number.isNaN(n)) return 0;
-  return Math.min(1, Math.max(0, n > 1 ? n / 100 : n));
-}
-
-interface ApiOutcome {
-  outcome: string;
-  probability: number;
-}
-
-function parsePredictions(predictions: Record<string, unknown>): ApiOutcome[] {
-  const outcomes: ApiOutcome[] = [];
-  const winner = predictions?.winner as Record<string, string> | undefined;
-  const percent = predictions?.percent as Record<string, string> | undefined;
-  const homePct = winner?.home ?? percent?.home;
-  const drawPct = winner?.draw ?? percent?.draw;
-  const awayPct = winner?.away ?? percent?.away;
-  if (homePct) outcomes.push({ outcome: 'home', probability: parsePercent(homePct) });
-  if (drawPct) outcomes.push({ outcome: 'draw', probability: parsePercent(drawPct) });
-  if (awayPct) outcomes.push({ outcome: 'away', probability: parsePercent(awayPct) });
-
-  const goals = predictions?.goals as Record<string, unknown> | undefined;
-  if (goals) {
-    const over = (goals.over as string) || (goals['over 2.5'] as string);
-    const under = (goals.under as string) || (goals['under 2.5'] as string);
-    if (over) outcomes.push({ outcome: 'over25', probability: parsePercent(over) });
-    if (under) outcomes.push({ outcome: 'under25', probability: parsePercent(under) });
-  }
-
-  const btts = predictions?.btts as Record<string, string> | undefined;
-  if (btts?.yes) outcomes.push({ outcome: 'btts', probability: parsePercent(btts.yes) });
-
-  return outcomes;
-}
-
-function probForOutcome(apiOutcomes: ApiOutcome[], outcome: string): number | null {
+function probForOutcome(apiOutcomes: ApiPredictionOutcome[], outcome: string): number | null {
   const o = outcome.toLowerCase();
   if (o === 'home_away') {
     const home = apiOutcomes.find((a) => a.outcome === 'home');
     const away = apiOutcomes.find((a) => a.outcome === 'away');
     if (home && away) return home.probability + away.probability;
     return null;
+  }
+  if (o === 'home_draw') {
+    const home = apiOutcomes.find((a) => a.outcome === 'home');
+    const draw = apiOutcomes.find((a) => a.outcome === 'draw');
+    if (home && draw) return home.probability + draw.probability;
+    return null;
+  }
+  if (o === 'draw_away') {
+    const draw = apiOutcomes.find((a) => a.outcome === 'draw');
+    const away = apiOutcomes.find((a) => a.outcome === 'away');
+    if (draw && away) return draw.probability + away.probability;
+    return null;
+  }
+  if (o === 'dnb_home' || o === 'dnb_away') {
+    const home = apiOutcomes.find((a) => a.outcome === 'home');
+    const away = apiOutcomes.find((a) => a.outcome === 'away');
+    if (!home || !away) return null;
+    const s = home.probability + away.probability;
+    if (s <= 0) return null;
+    return o === 'dnb_home' ? home.probability / s : away.probability / s;
   }
   const found = apiOutcomes.find((a) => a.outcome === o);
   return found ? found.probability : null;
@@ -239,7 +195,9 @@ async function main() {
     const predData = await predRes.json();
     const oddsData = await oddsRes.json();
     const resp = predData?.response?.[0];
-    const apiOutcomes = resp?.predictions ? parsePredictions(resp.predictions as Record<string, unknown>) : [];
+    const apiOutcomes = resp?.predictions
+      ? parseApiFootballPredictionsOutcomes(resp.predictions as Record<string, unknown>)
+      : [];
     if (apiOutcomes.length === 0) {
       noPred++;
       if (DELAY_MS) await new Promise((r) => setTimeout(r, DELAY_MS));
@@ -254,8 +212,10 @@ async function main() {
     }
 
     for (const line of flat) {
-      const outcome = outcomeFromMarket(line.marketName, line.marketValue);
-      if (!outcome || outcome === 'draw') continue;
+      const outcome = outcomeKeyFromOddsLine(line.marketName, line.marketValue);
+      if (!outcome) continue;
+      // Skip full-time draw only (keep ht_draw when API supplies half-time probs).
+      if (outcome === 'draw') continue;
 
       const prob = probForOutcome(apiOutcomes, outcome);
       if (prob == null || prob <= 0) continue;

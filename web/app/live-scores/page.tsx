@@ -23,6 +23,8 @@ interface Row {
   statusElapsed?: number | null;
   homeScore: number | null;
   awayScore: number | null;
+  htHomeScore?: number | null;
+  htAwayScore?: number | null;
   syncedAt?: string | null;
 }
 
@@ -70,6 +72,10 @@ function matchesCountry(row: Row, selectedCountry: string): boolean {
     return !c || c.toLowerCase() === 'world';
   }
   return c.toLowerCase() === sel;
+}
+
+function hasHalfTimeScores(row: Row): row is Row & { htHomeScore: number; htAwayScore: number } {
+  return row.htHomeScore != null && row.htAwayScore != null;
 }
 
 function matchesSearch(row: Row, term: string): boolean {
@@ -527,9 +533,16 @@ export default function LiveScoresPage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-lg font-bold tabular-nums text-[var(--text)]">
-                          {row.homeScore ?? '—'} : {row.awayScore ?? '—'}
-                        </span>
+                        <div className="flex flex-col items-end gap-0.5">
+                          <span className="text-lg font-bold tabular-nums text-[var(--text)]">
+                            {row.homeScore ?? '—'} : {row.awayScore ?? '—'}
+                          </span>
+                          {hasHalfTimeScores(row) && (
+                            <span className="text-[10px] leading-tight text-[var(--text-muted)] tabular-nums">
+                              HT {row.htHomeScore}–{row.htAwayScore}
+                            </span>
+                          )}
+                        </div>
                         <span className="text-xs font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-200 tabular-nums">
                           {formatLiveFixturePeriod(row.status, row.statusElapsed)}
                         </span>
@@ -601,9 +614,16 @@ export default function LiveScoresPage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-lg font-bold tabular-nums text-[var(--text)]">
-                          {row.homeScore ?? '—'} : {row.awayScore ?? '—'}
-                        </span>
+                        <div className="flex flex-col items-end gap-0.5">
+                          <span className="text-lg font-bold tabular-nums text-[var(--text)]">
+                            {row.homeScore ?? '—'} : {row.awayScore ?? '—'}
+                          </span>
+                          {hasHalfTimeScores(row) && (
+                            <span className="text-[10px] leading-tight text-[var(--text-muted)] tabular-nums">
+                              HT {row.htHomeScore}–{row.htAwayScore}
+                            </span>
+                          )}
+                        </div>
                         <span className="text-xs font-bold uppercase px-2 py-1 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                           FT
                         </span>

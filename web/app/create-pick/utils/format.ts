@@ -14,6 +14,18 @@ export function formatMarketValue(marketName: string, value: string): string {
       .replace(/\bDraw\b/g, 'X')
       .replace(/\bAway\b/g, '2');
   }
+  if (marketName === 'Draw No Bet') {
+    if (value === 'Home') return 'DNB — Home (1)';
+    if (value === 'Away') return 'DNB — Away (2)';
+  }
+  if (marketName === 'First Half Winner') {
+    if (value === 'Home') return '1 (HT)';
+    if (value === 'Draw') return 'X (HT)';
+    if (value === 'Away') return '2 (HT)';
+  }
+  if (marketName === 'Odd/Even') {
+    return value === 'Odd' ? 'Total goals odd' : value === 'Even' ? 'Total goals even' : value;
+  }
   return value;
 }
 

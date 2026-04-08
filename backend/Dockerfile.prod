@@ -1,38 +1,44 @@
 # BetRollover API - Production Dockerfile
 # Build context: project root (.)
+# package.json uses file:../packages/shared-types → /packages/shared-types (sibling of /app).
 FROM node:20-alpine AS builder
 
-WORKDIR /app
 RUN apk add --no-cache python3 make g++
 
-COPY backend/package*.json ./
-RUN npm ci
+COPY packages/shared-types/package.json packages/shared-types/package-lock.json packages/shared-types/tsconfig.json /packages/shared-types/
+COPY packages/shared-types/src /packages/shared-types/src
+RUN cd /packages/shared-types && npm ci && npm run build
 
+WORKDIR /app
+COPY backend/package.json backend/package-lock.json ./
+RUN npm ci
 COPY backend/ ./
 RUN npm run build
 
 # Production stage
 FROM node:20-alpine
 
-WORKDIR /app
 RUN apk add --no-cache dumb-init curl postgresql-client
 
-COPY --from=builder /app/package*.json ./
+COPY packages/shared-types/package.json packages/shared-types/package-lock.json packages/shared-types/tsconfig.json /packages/shared-types/
+COPY packages/shared-types/src /packages/shared-types/src
+RUN cd /packages/shared-types && npm ci && npm run build
+
+WORKDIR /app
+COPY backend/package.json backend/package-lock.json ./
+RUN npm ci --omit=dev
+
 COPY --from=builder /app/dist ./dist
 COPY database/ ./database/
 COPY scripts/coolify-full-db-setup.sh /app/scripts/
 COPY scripts/coolify-diagnose-fixtures.sh /app/scripts/
 COPY backend/scripts/docker-entrypoint.sh /app/scripts/
 
-# Ensure node user can read migrations and scripts
 RUN chown -R node:node /app/database /app/scripts && chmod +x /app/scripts/docker-entrypoint.sh /app/scripts/coolify-diagnose-fixtures.sh
-
-RUN npm ci --omit=dev
 
 ENV NODE_ENV=production
 EXPOSE 3001
 
 USER node
-# Run migrations via psql before API (handles DO $$ blocks correctly)
 ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
 CMD ["dumb-init", "--", "node", "dist/main.js"]

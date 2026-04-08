@@ -27,6 +27,7 @@ import { useSlipCart } from '@/context/SlipCartContext';
 import type { Fixture, FixtureOdd, SportEventItem, CreatePickSport, FilterOptions } from './types';
 import { SportLoadingSpinner } from './components/SportLoadingSpinner';
 import { SportEmptyState } from './components/SportEmptyState';
+import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
 import { FootballFixtureCard } from './components/FootballFixtureCard';
 import { SportEventCard } from './components/SportEventCard';
 
@@ -1295,7 +1296,7 @@ export default function CreatePickPage() {
                                   </p>
                                 </div>
                                 <p className="text-xs text-[var(--text-muted)] mt-1 break-words">
-                                  {s.prediction}
+                                  {formatFootballOutcomeLabel(s.prediction)}
                                 </p>
                                 <p className="text-sm font-bold text-[var(--primary)] mt-1 tabular-nums">
                                   @ {s.odds.toFixed(2)}
@@ -1565,7 +1566,9 @@ export default function CreatePickPage() {
                             <span className="text-sm shrink-0">{sheetSportIcon}</span>
                             <p className="text-sm font-semibold text-[var(--text)] truncate min-w-0">{s.matchDescription}</p>
                           </div>
-                          <p className="text-xs text-[var(--text-muted)] mt-1 break-words">{s.prediction}</p>
+                          <p className="text-xs text-[var(--text-muted)] mt-1 break-words">
+                            {formatFootballOutcomeLabel(s.prediction)}
+                          </p>
                           <p className="text-base font-bold text-[var(--primary)] mt-2 tabular-nums">@ {s.odds.toFixed(2)}</p>
                         </div>
                         <button

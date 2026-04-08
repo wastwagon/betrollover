@@ -20,8 +20,10 @@ export const SETTLEMENT_SUPPORTED_MARKETS = [
   'Double Chance: 1X, X2, 12 (slash or text format)',
   'Both Teams To Score: Yes, No',
   'Over/Under: Over/Under 1.5, 2.5, 3.5 (goals, points, etc.)',
-  'Handicap/Spread: Home -3.5, Away +2.5, Team Name ±N',
-  'Odd/Even: Total goals/points odd or even',
+  'Canonical outcome_key slugs: ht_home/ht_draw/ht_away, dnb_home/dnb_away, over15/under15/over35/under35, fh_over05…fh_under25, odd_goals/even_goals (when stored on pick)',
+  'First Half Winner; First Half Over/Under 0.5, 1.5, 2.5 (needs HT score on fixture)',
+  'Handicap/Spread: Home -3.5, Away +2.5, Team Name ±N (incl. Asian / European Handicap labels)',
+  'Odd/Even: Total goals/points odd or even (incl. Odd/Even: Odd/Even)',
   'Draw No Bet: Match winner, draw = void',
   'Set Betting (tennis): 2-0, 2-1 (order-agnostic)',
   'Correct Score: 2-1, 1:1 (dash or colon)',
@@ -51,6 +53,12 @@ export class SettlementService {
     @Inject(forwardRef(() => TipstersApiService))
     private readonly tipstersApiService: TipstersApiService,
   ) { }
+
+  /** Argument to `determinePickResult`: canonical `outcomeKey` when set (AI marketplace sync), else `prediction` text. */
+  private pickGradingInput(pick: AccumulatorPick): string {
+    const key = pick.outcomeKey?.trim();
+    return key || (pick.prediction || '').trim();
+  }
 
   /** Persist ROI, win rate, avg odds, streaks from accumulator_tickets (single source of truth). */
   private async persistTipsterStatsForUserIds(userIds: Iterable<number>): Promise<void> {
@@ -86,11 +94,11 @@ export class SettlementService {
     const [ftFixtures, scoredPastFixtures] = await Promise.all([
       this.fixtureRepo.find({
         where: { status: 'FT' },
-        select: ['id', 'homeScore', 'awayScore', 'homeTeamName', 'awayTeamName'],
+        select: ['id', 'homeScore', 'awayScore', 'homeTeamName', 'awayTeamName', 'htHomeScore', 'htAwayScore'],
       }),
       this.fixtureRepo
         .createQueryBuilder('f')
-        .select(['f.id', 'f.homeScore', 'f.awayScore', 'f.homeTeamName', 'f.awayTeamName'])
+        .select(['f.id', 'f.homeScore', 'f.awayScore', 'f.homeTeamName', 'f.awayTeamName', 'f.htHomeScore', 'f.htAwayScore'])
         .where("f.status != 'FT'")
         .andWhere('f.matchDate < :cutoff', { cutoff: twoHoursAgo })
         .andWhere('f.homeScore IS NOT NULL')
@@ -163,11 +171,13 @@ export class SettlementService {
         const fix = fixtureMap.get(pick.fixtureId!);
         if (!fix || fix.homeScore == null || fix.awayScore == null) continue;
         const computed = determinePickResult(
-          pick.prediction,
+          this.pickGradingInput(pick),
           fix.homeScore,
           fix.awayScore,
           fix.homeTeamName,
           fix.awayTeamName,
+          fix.htHomeScore,
+          fix.htAwayScore,
         );
         if (!computed || computed === pick.result) continue;
         deltas.push({ pickId: pick.id, accumulatorId: pick.accumulatorId, computed });
@@ -182,7 +192,7 @@ export class SettlementService {
         const evt = eventMap.get(pick.eventId!);
         if (!evt || evt.homeScore == null || evt.awayScore == null) continue;
         const computed = determinePickResult(
-          pick.prediction,
+          this.pickGradingInput(pick),
           evt.homeScore,
           evt.awayScore,
           evt.homeTeam,
@@ -392,7 +402,7 @@ export class SettlementService {
    * 4. For tickets where all picks are settled, set ticket result (won/lost/void) and status
    * 5. If marketplace coupon with price > 0: settle escrow (payout tipster or refund buyer)
    *
-   * Supported markets: Match Winner, Double Chance, BTTS, Over/Under 1.5/2.5/3.5, Correct Score.
+   * Supported markets: Match Winner, Double Chance, BTTS, O/U (full + first half), DNB, Odd/Even, Asian Handicap, Correct Score, etc.
    * Unmatched predictions log a warning so new market types can be added.
    */
   async runSettlement(): Promise<{
@@ -447,13 +457,23 @@ export class SettlementService {
       const fix = fixtureMap.get(pick.fixtureId!);
       if (!fix || fix.homeScore == null || fix.awayScore == null) continue;
 
-      const result = determinePickResult(pick.prediction, fix.homeScore, fix.awayScore, fix.homeTeamName, fix.awayTeamName);
+      const result = determinePickResult(
+        this.pickGradingInput(pick),
+        fix.homeScore,
+        fix.awayScore,
+        fix.homeTeamName,
+        fix.awayTeamName,
+        fix.htHomeScore,
+        fix.htAwayScore,
+      );
       if (result) {
         pick.result = result;
         await this.pickRepo.save(pick);
         picksUpdated++;
-      } else if (pick.prediction) {
-        this.logger.warn(`Unmatched prediction: "${pick.prediction}". Supported: ${SETTLEMENT_SUPPORTED_MARKETS.join('; ')}`);
+      } else if (this.pickGradingInput(pick)) {
+        this.logger.warn(
+          `Unmatched prediction: "${pick.prediction}" (key=${pick.outcomeKey ?? '—'}). Supported: ${SETTLEMENT_SUPPORTED_MARKETS.join('; ')}`,
+        );
       }
     }
 
@@ -461,13 +481,21 @@ export class SettlementService {
       const evt = eventMap.get(pick.eventId!);
       if (!evt || evt.homeScore == null || evt.awayScore == null) continue;
 
-      const result = determinePickResult(pick.prediction, evt.homeScore, evt.awayScore, evt.homeTeam, evt.awayTeam);
+      const result = determinePickResult(
+        this.pickGradingInput(pick),
+        evt.homeScore,
+        evt.awayScore,
+        evt.homeTeam,
+        evt.awayTeam,
+      );
       if (result) {
         pick.result = result;
         await this.pickRepo.save(pick);
         picksUpdated++;
-      } else if (pick.prediction) {
-        this.logger.warn(`Unmatched prediction: "${pick.prediction}". Supported: ${SETTLEMENT_SUPPORTED_MARKETS.join('; ')}`);
+      } else if (this.pickGradingInput(pick)) {
+        this.logger.warn(
+          `Unmatched prediction: "${pick.prediction}" (key=${pick.outcomeKey ?? '—'}). Supported: ${SETTLEMENT_SUPPORTED_MARKETS.join('; ')}`,
+        );
       }
     }
 

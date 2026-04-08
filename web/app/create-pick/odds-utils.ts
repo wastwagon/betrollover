@@ -18,6 +18,12 @@ export const MARKET_ORDER = [
   'Goals Over/Under',
   'Both Teams To Score',
   'Double Chance',
+  'Draw No Bet',
+  'Asian Handicap',
+  'European Handicap',
+  'Odd/Even',
+  'First Half Winner',
+  'Goals Over/Under First Half',
   'Half-Time/Full-Time',
   'Correct Score',
 ];

@@ -1,5 +1,7 @@
 # AI Tipsters: Limits and Single Coupons
 
+> **Note:** Numeric odds, probabilities, and per-tipster specialisations change in code. Treat the table below as **illustrative**; authoritative values are in [`backend/src/config/ai-tipsters.config.ts`](../backend/src/config/ai-tipsters.config.ts).
+
 ## What “limits” mean for single coupons
 
 With **single-fixture coupons**, each AI tipster only needs **one** fixture that passes their filters to create a coupon (no need for a second leg or combined odds 2.0–4.0). So **more** tipsters can post than when we required 2-pick accas.
@@ -46,7 +48,7 @@ If **no** fixture passes for a tipster on a given run, that tipster creates **no
 | **UnderdogKing** | 1.41–2.0 | 0.57 / 0.52 | PL, Championship, La Liga | 1X2 **+ away ≥2.5** | — | 2 |
 | **HighRollerHQ** | 1.41–2.0 | 0.55 / 0.52 | Top 5 leagues | 1X2, BTTS, Over/Under | — | 2 |
 | **TheGambler** | 1.41–2.0 | 0.52 / 0.5 | All | 1X2, BTTS, Under 2.5 | — | 2 |
-| **TopSixSniper** | 1.41–2.0 | **0.63** / 0.57 | **PL only** | 1X2 | — (team_filter in config but not enforced in engine) | 1 |
+| **TopSixSniper** | See config (e.g. 2.0–5.0) | See config | **Premier League** (`leagues_focus`) | 1X2, **home** only | **Big 6 home** (`team_filter` + `outcome_specialization`) | 3 |
 
 *PL = Premier League, DC = Double Chance, O/U = Over/Under.*
 

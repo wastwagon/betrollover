@@ -55,6 +55,13 @@ export class Fixture {
   @Column({ type: 'int', nullable: true })
   awayScore: number | null = null;
 
+  /** Half-time goals (API-Football score.halftime); used to settle first-half markets. */
+  @Column({ type: 'int', nullable: true, name: 'ht_home_score' })
+  htHomeScore: number | null = null;
+
+  @Column({ type: 'int', nullable: true, name: 'ht_away_score' })
+  htAwayScore: number | null = null;
+
   @Column({ type: 'timestamp', nullable: true })
   syncedAt: Date | null = null;
 

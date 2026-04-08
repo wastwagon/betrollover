@@ -1,6 +1,7 @@
 /**
  * Fetch directly from API-Football (no DB): fixtures + predictions + odds,
  * then simulate which AI tipsters would get coupons. Uses same filters as engine.
+ * Fixtures: next 7 days; first FIXTURES_LIMIT fixtures get full predictions+odds fetch.
  *
  * Usage (from backend directory):
  *   API_SPORTS_KEY=your_key npx ts-node -r tsconfig-paths/register scripts/test-ai-tipsters-from-api.ts
@@ -19,6 +20,9 @@ const DELAY_MS = 350;
 
 // Load AI tipsters config (same as engine)
 import { AI_TIPSTERS, AiTipsterPersonality } from '../src/config/ai-tipsters.config';
+import { fixtureInvolvesBigSix, isLikelyEplBigSixTeam } from '../src/config/epl-big-six.config';
+import { leagueMatchesFocus } from '../src/config/league-focus.util';
+import { parseApiFootballPredictionsOutcomes } from '../src/modules/fixtures/api-football-predictions.parser';
 
 interface FixturePrediction {
   fixtureId: number;
@@ -33,13 +37,6 @@ interface FixturePrediction {
   awayTeam: string;
 }
 
-function parsePercent(val: string | number): number {
-  if (typeof val === 'number') return Math.min(1, Math.max(0, val));
-  const s = String(val || '').replace(/[^\d.]/g, '');
-  const n = parseFloat(s);
-  return isNaN(n) ? 0 : Math.min(1, Math.max(0, n > 1 ? n / 100 : n));
-}
-
 function impliedProb(odds: number, edge = 0.02): number {
   return Math.min(0.95, 1 / odds + edge);
 }
@@ -48,25 +45,33 @@ function ev(prob: number, odds: number): number {
   return prob * odds - 1;
 }
 
-const LEAGUE_ALIASES: Record<string, string[]> = {
-  'premier league': ['premier league', 'english premier league', 'epl'],
-  'la liga': ['la liga', 'laliga', 'spanish la liga'],
-  'serie a': ['serie a', 'italian serie a'],
-  bundesliga: ['bundesliga', 'german bundesliga'],
-  'ligue 1': ['ligue 1', 'france ligue 1'],
-  championship: ['championship', 'english championship', 'efl championship'],
-};
+function matchesFixtureDays(matchDate: Date, fixtureDays?: 'weekend' | 'midweek'): boolean {
+  if (!fixtureDays) return true;
+  const d = new Date(matchDate).getDay();
+  if (fixtureDays === 'weekend') return d === 0 || d === 6;
+  if (fixtureDays === 'midweek') return d >= 2 && d <= 4;
+  return true;
+}
 
-function leagueMatchesFocus(fixtureLeague: string | null, configLeague: string): boolean {
-  if (!fixtureLeague) return false;
-  const f = fixtureLeague.toLowerCase().trim();
-  const c = configLeague.toLowerCase().trim();
-  if (f.includes(c)) return true;
-  const fNorm = f.replace(/\s+/g, '');
-  const cNorm = c.replace(/\s+/g, '');
-  if (fNorm.includes(cNorm) || cNorm.includes(fNorm)) return true;
-  const aliases = LEAGUE_ALIASES[cNorm] ?? [cNorm];
-  return aliases.some((a) => f.includes(a) || fNorm.includes(a.replace(/\s+/g, '')));
+function matchesTeamFilter(
+  fp: FixturePrediction,
+  personality: AiTipsterPersonality,
+): boolean {
+  const filters = personality.team_filter;
+  if (!filters?.length) return true;
+  const spec = personality.outcome_specialization;
+  for (const f of filters) {
+    if (f.toLowerCase() !== 'top_6') continue;
+    if (spec === 'home') {
+      if (!isLikelyEplBigSixTeam(fp.homeTeam)) return false;
+    } else if (spec === 'away') {
+      if (!isLikelyEplBigSixTeam(fp.awayTeam)) return false;
+    } else if (!fixtureInvolvesBigSix(fp.homeTeam, fp.awayTeam)) {
+      return false;
+    }
+    return true;
+  }
+  return true;
 }
 
 function filterByPersonality(
@@ -76,16 +81,18 @@ function filterByPersonality(
 ): FixturePrediction[] {
   const leagues = personality.leagues_focus || [];
   const hasAll = leagues.some((l) => l.toLowerCase() === 'all');
-  const minConf = personality.min_api_confidence ?? 0.52;
+  const minConf = personality.min_api_confidence ?? Math.min(0.52, personality.min_win_probability);
   const minProb = personality.min_win_probability;
   const evMin = Math.max(0, (personality.min_expected_value ?? 0.04) - 0.08);
 
   return list.filter((fp) => {
     if (excludeFixtureIds.has(fp.fixtureId)) return false;
+    if (!matchesFixtureDays(fp.matchDate, personality.fixture_days)) return false;
     if (!hasAll && leagues.length > 0) {
       if (!fp.leagueName) return false;
       if (!leagues.some((l) => leagueMatchesFocus(fp.leagueName, l))) return false;
     }
+    if (!matchesTeamFilter(fp, personality)) return false;
     if (fp.odds < personality.target_odds_min || fp.odds > personality.target_odds_max) return false;
     if (fp.fromApi) {
       if (fp.probability < minConf) return false;
@@ -99,19 +106,69 @@ function filterByPersonality(
     }
 
     const outcomeNorm = fp.selectedOutcome.toLowerCase();
+
+    if (personality.outcome_specialization) {
+      return outcomeNorm === personality.outcome_specialization;
+    }
+
     const betTypes = personality.bet_types || [];
     const allows1x2 = betTypes.some((b) => b.toLowerCase().includes('1x2'));
     const allowsBtts = betTypes.some((b) => b.toLowerCase().includes('btts'));
     const allowsOver25 = betTypes.some((b) => b.toLowerCase().includes('over'));
     const allowsUnder25 = betTypes.some((b) => b.toLowerCase().includes('under'));
     const allowsDoubleChance = betTypes.some((b) => b.toLowerCase().includes('double'));
+    const allowsDnb = betTypes.some((b) => {
+      const x = b.toLowerCase();
+      return x.includes('dnb') || x.includes('draw no bet');
+    });
+    const allowsFirstHalf = betTypes.some((b) => {
+      const x = b.toLowerCase();
+      return x.includes('first half') || x.includes('1st half') || x.includes('half time') || x === 'ht';
+    });
+    const normOu = (s: string) => s.toLowerCase().replace(/\s+/g, '');
+    const hasOverUnderCombo = betTypes.some((b) => normOu(b) === 'over/under');
+    const allowsOver15 =
+      allowsOver25 ||
+      hasOverUnderCombo ||
+      betTypes.some((b) => /over.*1\.5|1\.5.*over|o\s*1\.5/i.test(b));
+    const allowsOver35 =
+      allowsOver25 ||
+      hasOverUnderCombo ||
+      betTypes.some((b) => /over.*3\.5|3\.5.*over/i.test(b));
+    const allowsUnder15 =
+      betTypes.some((b) => /under.*1\.5|1\.5.*under|u\s*1\.5/i.test(b)) || hasOverUnderCombo;
+    const allowsUnder35 =
+      betTypes.some((b) => /under.*3\.5|3\.5.*under/i.test(b)) || hasOverUnderCombo;
+    const allowsOddEven = betTypes.some((b) => {
+      const x = b.toLowerCase();
+      return x.includes('odd/even') || x.includes('odd even') || (x.includes('odd') && x.includes('even'));
+    });
 
     if (['home', 'away'].includes(outcomeNorm) && !allows1x2) return false;
-    if (outcomeNorm === 'draw') return false;
+    if (outcomeNorm === 'draw' && !allows1x2) return false;
     if (outcomeNorm === 'btts' && !allowsBtts) return false;
+    if (outcomeNorm === 'over15' && !allowsOver15) return false;
     if (outcomeNorm === 'over25' && !allowsOver25) return false;
+    if (outcomeNorm === 'over35' && !allowsOver35) return false;
+    if (outcomeNorm === 'under15' && !allowsUnder15) return false;
     if (outcomeNorm === 'under25' && !allowsUnder25) return false;
-    if (outcomeNorm === 'home_away' && !allowsDoubleChance) return false;
+    if (outcomeNorm === 'under35' && !allowsUnder35) return false;
+    if (['home_away', 'home_draw', 'draw_away'].includes(outcomeNorm) && !allowsDoubleChance) return false;
+    if (['dnb_home', 'dnb_away'].includes(outcomeNorm) && !allowsDnb) return false;
+    if (['ht_home', 'ht_away', 'ht_draw'].includes(outcomeNorm) && !allowsFirstHalf) return false;
+    if (
+      [
+        'fh_over05',
+        'fh_under05',
+        'fh_over15',
+        'fh_under15',
+        'fh_over25',
+        'fh_under25',
+      ].includes(outcomeNorm) &&
+      !allowsFirstHalf
+    )
+      return false;
+    if (['odd_goals', 'even_goals'].includes(outcomeNorm) && !allowsOddEven) return false;
     return true;
   });
 }
@@ -127,9 +184,9 @@ async function main() {
 
   const headers = { 'x-apisports-key': API_KEY };
 
-  // 1. Fixtures next 3 days
+  // 1. Fixtures next 7 days
   const allFixtures: { apiId: number; date: string; home: string; away: string; league: string }[] = [];
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 7; i++) {
     const d = new Date();
     d.setDate(d.getDate() + i);
     const dateStr = d.toISOString().slice(0, 10);
@@ -150,7 +207,7 @@ async function main() {
   }
 
   const toFetch = allFixtures.slice(0, FIXTURES_LIMIT);
-  console.log(`Fixtures (next 3 days): ${allFixtures.length}, fetching predictions+odds for first ${toFetch.length}\n`);
+  console.log(`Fixtures (next 7 days): ${allFixtures.length}, fetching predictions+odds for first ${toFetch.length}\n`);
 
   // 2. Predictions + odds per fixture → one best outcome per fixture
   const fixturePredictions: FixturePrediction[] = [];
@@ -164,23 +221,12 @@ async function main() {
     const oddsData = await oddsRes.json();
     const resp = predData?.response?.[0];
     const predictions = resp?.predictions || {};
-    const winner = predictions.winner || {};
-    const percent = predictions.percent || {};
-    const goals = predictions.goals || {};
-    const btts = predictions.btts || {};
-
-    const outcomes: { outcome: string; prob: number; fromApi: boolean }[] = [];
-    const homePct = winner.home ?? percent.home;
-    const awayPct = winner.away ?? percent.away;
-    const drawPct = winner.draw ?? percent.draw;
-    if (homePct) outcomes.push({ outcome: 'home', prob: parsePercent(homePct), fromApi: true });
-    if (awayPct) outcomes.push({ outcome: 'away', prob: parsePercent(awayPct), fromApi: true });
-    if (drawPct) outcomes.push({ outcome: 'draw', prob: parsePercent(drawPct), fromApi: true });
-    const over25 = goals.over ?? goals['over 2.5'];
-    const under25 = goals.under ?? goals['under 2.5'];
-    if (over25) outcomes.push({ outcome: 'over25', prob: parsePercent(over25), fromApi: true });
-    if (under25) outcomes.push({ outcome: 'under25', prob: parsePercent(under25), fromApi: true });
-    if (btts.yes) outcomes.push({ outcome: 'btts', prob: parsePercent(btts.yes), fromApi: true });
+    const parsed = parseApiFootballPredictionsOutcomes(predictions as Record<string, unknown>);
+    const outcomes: { outcome: string; prob: number; fromApi: boolean }[] = parsed.map((o) => ({
+      outcome: o.outcome,
+      prob: o.probability,
+      fromApi: true,
+    }));
 
     const bookmakers = oddsData?.response?.[0]?.bookmakers || [];
     const oddsByOutcome: Record<string, number> = {};
@@ -215,7 +261,7 @@ async function main() {
       const prob = o.fromApi ? o.prob : impliedProb(odds);
       candidates.push({ outcome: o.outcome, odds, prob, ev: ev(prob, odds), fromApi: o.fromApi });
     }
-    for (const out of ['home', 'away', 'over25', 'under25', 'btts']) {
+    for (const out of ['home', 'away', 'draw', 'over25', 'under25', 'btts']) {
       if (seen.has(out)) continue;
       const odds = oddsByOutcome[out];
       if (odds == null) continue;
@@ -228,10 +274,40 @@ async function main() {
       });
     }
 
-    const noDraw = candidates.filter((c) => c.outcome !== 'draw');
-    const sorted = (noDraw.length ? noDraw : candidates).sort((a, b) => b.ev - a.ev);
-    const best = sorted[0];
-    if (best && best.odds >= 1.2 && best.odds <= 3.5) {
+    const EMIT_OUTCOMES = [
+      'home',
+      'away',
+      'draw',
+      'over15',
+      'under15',
+      'over25',
+      'under25',
+      'over35',
+      'under35',
+      'btts',
+      'home_away',
+      'home_draw',
+      'draw_away',
+      'dnb_home',
+      'dnb_away',
+      'ht_home',
+      'ht_away',
+      'ht_draw',
+      'fh_over05',
+      'fh_under05',
+      'fh_over15',
+      'fh_under15',
+      'fh_over25',
+      'fh_under25',
+      'odd_goals',
+      'even_goals',
+    ] as const;
+
+    for (const outcomeKey of EMIT_OUTCOMES) {
+      const group = candidates.filter((c) => c.outcome === outcomeKey);
+      if (group.length === 0) continue;
+      const best = [...group].sort((a, b) => b.ev - a.ev)[0];
+      if (!best || best.odds < 1.2 || best.odds > 5.5) continue;
       fixturePredictions.push({
         fixtureId: f.apiId,
         matchDate: new Date(f.date + 'T12:00:00Z'),
@@ -249,10 +325,12 @@ async function main() {
     await new Promise((r) => setTimeout(r, DELAY_MS));
   }
 
-  console.log(`Fixture predictions (best outcome per fixture): ${fixturePredictions.length}`);
+  console.log(`Fixture prediction rows (best EV per outcome per fixture): ${fixturePredictions.length}`);
 
-  const inRange = fixturePredictions.filter((fp) => fp.odds >= 1.41 && fp.odds <= 2.0);
-  console.log(`  In odds range 1.41–2.0 (engine band): ${inRange.length}`);
+  const gamblerBand = fixturePredictions.filter((fp) => fp.odds >= 1.41 && fp.odds <= 2.2);
+  const twoPlusBand = fixturePredictions.filter((fp) => fp.odds >= 2.0 && fp.odds <= 5.0);
+  console.log(`  In odds range 1.41–2.2 (The Gambler band): ${gamblerBand.length}`);
+  console.log(`  In odds range 2.0–5.0 (other AI tipsters band): ${twoPlusBand.length}`);
   if (fixturePredictions.length > 0) {
     console.log('  Sample (real API data):');
     fixturePredictions.slice(0, 8).forEach((fp) => {
@@ -308,6 +386,9 @@ async function main() {
   console.log(`  Tipsters with ≥1 coupon: ${withPicks.length}/${AI_TIPSTERS.length}`);
   console.log(`  Tipsters with 0 coupons: ${withZero.length}`);
   console.log(`  Total picks (simulated): ${totalPicks}`);
+  console.log(
+    '  Note: tipsters are processed in AI_TIPSTERS order; each pick reserves a fixture globally, so names at the top of the list consume the pool first.',
+  );
   console.log('  (No DB – fetched directly from API-Football)\n');
 }
 

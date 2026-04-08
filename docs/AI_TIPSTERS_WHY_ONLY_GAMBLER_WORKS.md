@@ -1,8 +1,10 @@
 # Why Only "The Gambler" AI Tipster Produces Predictions
 
-## Summary
+> **Historical note (2026):** The product now uses **single-fixture** coupons, a **multi-outcome candidate pool** per match, **`outcome_specialization`**, enforced **`team_filter` (Big 6)**, and **Premier League** focus for TopSixSniper. The analysis below describes an **older 2-leg acca** design; keep it only for background.
 
-All 25 AI tipsters use the **same pipeline**: API-Football predictions → fixture-level value (EV) → personality filter → best 2-fixture acca. Only **The Gambler** has personality settings loose enough that he almost always has ≥2 qualifying fixtures and a valid 2-leg pair. The others are filtered out by one or more of: **league focus**, **day-of-week**, **conservative same-day rule**, **strict probability/EV thresholds**, and (for one tipster) **unimplemented team_filter**.
+## Summary (legacy acca-era)
+
+All 25 AI tipsters used the **same pipeline**: API-Football predictions → fixture-level value (EV) → personality filter → best 2-fixture acca. Only **The Gambler** had personality settings loose enough that he almost always had ≥2 qualifying fixtures and a valid 2-leg pair. The others were filtered out by one or more of: **league focus**, **day-of-week**, **conservative same-day rule**, **strict probability/EV thresholds**, and (at the time) **unimplemented team_filter**.
 
 ---
 
@@ -85,9 +87,9 @@ Higher **min_win_probability** (0.61–0.72), **min_expected_value** (0.06–0.0
 - **preference: 'underdogs'** → away win and odds ≥ 2.5; very selective.
 - **bet_types** without Over/Under → no over25/under25 legs; fewer options.
 
-### 6. team_filter not implemented
+### 6. team_filter (resolved in current code)
 
-TopSixSniper has **team_filter: ['top_6']** in config, but `filterByPersonality` does **not** use `team_filter`. So he’s not actually restricted to Big 6; he’s just Premier League + conservative + strict (0.66, 0.07, 0.6), and the conservative same-day rule hurts him.
+Previously, **team_filter** was config-only. It is now enforced (`epl-big-six.config.ts` + `prediction-engine.service.ts`), and TopSixSniper also uses **Premier League** `leagues_focus`.
 
 ---
 
@@ -117,10 +119,9 @@ TopSixSniper has **team_filter: ['top_6']** in config, but `filterByPersonality`
 - **Effect:** More pairs pass the 2.0–4.0 check.
 - **Risk:** Slightly higher variance; keep within your product bounds.
 
-### E. Implement or drop team_filter
+### E. team_filter (done)
 
-- **Option 1:** Implement `team_filter: ['top_6']` (e.g. allow only fixtures where home or away is in a configured Big 6 list). Then TopSixSniper is truly Big 6 only.
-- **Option 2:** Remove `team_filter` from TopSixSniper so he behaves as “Premier League + conservative + strict” without team filter. Easiest if we don’t have a Big 6 list.
+`team_filter: ['top_6']` is implemented; TopSixSniper uses **Big 6 home** + **Premier League** `leagues_focus`.
 
 ### F. Optional debug endpoint
 
@@ -134,7 +135,7 @@ TopSixSniper has **team_filter: ['top_6']** in config, but `filterByPersonality`
 1. **A (conservative same-day)** – single code change, big impact for 6 tipsters.  
 2. **B (relax thresholds slightly)** – config-only, tune so more tipsters fire without making The Gambler redundant.  
 3. **C (league aliases)** – small code change, helps league specialists.  
-4. **E (team_filter)** – either implement or remove so config matches behavior.  
+4. ~~**E (team_filter)**~~ – implemented.  
 5. **F (debug)** – helps validate and tune A–E.
 
 If you tell me which of A–F you want to adopt first (and any constraints, e.g. “conservative must stay different-day”), I can outline exact code/config changes next.

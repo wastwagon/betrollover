@@ -59,7 +59,13 @@ INSERT INTO market_config (market_name, tier, is_enabled, allowed_values, displa
 -- Tier 2 Markets
 ('Double Chance', 2, true, NULL, 4),
 ('Correct Score', 2, true, NULL, 5),
-('Half-Time/Full-Time', 2, true, NULL, 6)
+('Half-Time/Full-Time', 2, true, NULL, 6),
+('Draw No Bet', 2, true, NULL, 7),
+('Odd/Even', 2, true, NULL, 8),
+('First Half Winner', 2, true, NULL, 9),
+('Goals Over/Under First Half', 2, true, '["0.5", "1.5", "2.5"]', 10),
+('Asian Handicap', 2, true, NULL, 11),
+('European Handicap', 2, true, NULL, 12)
 ON CONFLICT (market_name) DO NOTHING;
 
 -- Create trigger for updated_at
