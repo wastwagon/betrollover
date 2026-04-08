@@ -73,6 +73,14 @@ const TIPSTER_PERFORMANCE_LABELS: Record<TipsterPerformancePeriod, string> = {
   d90: 'tipster.performance_90d',
 };
 
+function tipsterProfileQuery(period: TipsterPerformancePeriod, postedRange: { from: string; to: string } | null): string {
+  if (postedRange?.from && postedRange?.to) {
+    return `?from=${encodeURIComponent(postedRange.from)}&to=${encodeURIComponent(postedRange.to)}`;
+  }
+  if (period === 'all') return '';
+  return `?performance=${encodeURIComponent(period)}`;
+}
+
 interface TipsterProfile {
   tipster: {
     id: number;
@@ -98,7 +106,8 @@ interface TipsterProfile {
   /** Total settled count (won/lost/void) for Archive tab label. Backend may cap list at 50. */
   archived_settled_count?: number;
   is_following: boolean;
-  performance_period?: TipsterPerformancePeriod;
+  performance_period?: TipsterPerformancePeriod | null;
+  posted_date_range?: { from: string; to: string } | null;
 }
 
 export default function TipsterProfilePage() {
@@ -122,6 +131,10 @@ export default function TipsterProfilePage() {
   const [isAuthed, setIsAuthed] = useState(false);
   const [reviewSummary, setReviewSummary] = useState<{ avg: number; total: number } | null>(null);
   const [performancePeriod, setPerformancePeriod] = useState<TipsterPerformancePeriod>('all');
+  /** Applied calendar range (coupon posted date); takes precedence over preset `performance` in the API. */
+  const [postedRange, setPostedRange] = useState<{ from: string; to: string } | null>(null);
+  const [dateFromDraft, setDateFromDraft] = useState('');
+  const [dateToDraft, setDateToDraft] = useState('');
   /** Snapshot of tipster row from last all-time fetch — keeps JSON-LD stable when viewing shorter periods. */
   const allTimeTipsterForLdRef = useRef<TipsterProfile['tipster'] | null>(null);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
@@ -130,14 +143,14 @@ export default function TipsterProfilePage() {
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const q = performancePeriod === 'all' ? '' : `?performance=${encodeURIComponent(performancePeriod)}`;
+    const q = tipsterProfileQuery(performancePeriod, postedRange);
     fetch(`${getApiUrl()}/tipsters/${encodeURIComponent(username)}${q}`, { headers })
       .then((r) => (r.ok ? r.json() : null))
       .then((p) => {
         if (p) setProfile(p);
       })
       .catch(() => {});
-  }, [username, performancePeriod]);
+  }, [username, performancePeriod, postedRange]);
 
   useEffect(() => {
     let cancelled = false;
@@ -145,14 +158,14 @@ export default function TipsterProfilePage() {
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const q = performancePeriod === 'all' ? '' : `?performance=${encodeURIComponent(performancePeriod)}`;
+    const q = tipsterProfileQuery(performancePeriod, postedRange);
 
     fetch(`${getApiUrl()}/tipsters/${encodeURIComponent(username)}${q}`, { headers })
       .then((r) => (r.ok ? r.json() : null))
       .then((p) => {
         if (cancelled) return;
         setProfile(p);
-        if (p?.tipster && performancePeriod === 'all') {
+        if (p?.tipster && !postedRange && performancePeriod === 'all') {
           allTimeTipsterForLdRef.current = p.tipster;
         }
         if (p?.tipster?.id) {
@@ -176,7 +189,7 @@ export default function TipsterProfilePage() {
     return () => {
       cancelled = true;
     };
-  }, [username, performancePeriod]);
+  }, [username, performancePeriod, postedRange]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -509,9 +522,12 @@ export default function TipsterProfilePage() {
                     <button
                       key={key}
                       type="button"
-                      onClick={() => setPerformancePeriod(key)}
+                      onClick={() => {
+                        setPostedRange(null);
+                        setPerformancePeriod(key);
+                      }}
                       className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-                        performancePeriod === key
+                        !postedRange && performancePeriod === key
                           ? 'bg-[var(--primary)] text-white shadow-sm'
                           : 'text-[var(--text-muted)] hover:text-[var(--text)]'
                       }`}
@@ -520,9 +536,74 @@ export default function TipsterProfilePage() {
                     </button>
                   ))}
                 </div>
-                {performancePeriod !== 'all' && (
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mt-4 mb-2">
+                  {t('tipster.posted_date_filter_label')}
+                </p>
+                <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 p-3 rounded-xl bg-white/60 dark:bg-gray-800/60 border border-emerald-100/80 dark:border-emerald-800/50">
+                  <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)] shrink-0">
+                    <span>{t('tipster.date_from')}</span>
+                    <input
+                      type="date"
+                      value={dateFromDraft}
+                      onChange={(e) => setDateFromDraft(e.target.value)}
+                      className="rounded-lg border border-emerald-200/80 dark:border-emerald-700/50 bg-white dark:bg-gray-900 px-2 py-1.5 text-sm text-[var(--text)]"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)] shrink-0">
+                    <span>{t('tipster.date_to')}</span>
+                    <input
+                      type="date"
+                      value={dateToDraft}
+                      onChange={(e) => setDateToDraft(e.target.value)}
+                      className="rounded-lg border border-emerald-200/80 dark:border-emerald-700/50 bg-white dark:bg-gray-900 px-2 py-1.5 text-sm text-[var(--text)]"
+                    />
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!dateFromDraft || !dateToDraft) {
+                          showError(new Error(t('tipster.posted_date_both_required')));
+                          return;
+                        }
+                        if (dateFromDraft > dateToDraft) {
+                          showError(new Error(t('tipster.posted_date_invalid_order')));
+                          return;
+                        }
+                        const a = new Date(`${dateFromDraft}T12:00:00Z`);
+                        const b = new Date(`${dateToDraft}T12:00:00Z`);
+                        const span = Math.floor((b.getTime() - a.getTime()) / 86400000) + 1;
+                        if (span > 366) {
+                          showError(new Error(t('tipster.posted_date_max_span')));
+                          return;
+                        }
+                        setPostedRange({ from: dateFromDraft, to: dateToDraft });
+                      }}
+                      className="px-4 py-2 rounded-lg text-sm font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
+                    >
+                      {t('tipster.posted_date_apply')}
+                    </button>
+                    {postedRange ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPostedRange(null);
+                          setPerformancePeriod('all');
+                        }}
+                        className="px-4 py-2 rounded-lg text-sm font-medium border border-emerald-200 dark:border-emerald-700 text-[var(--text)] hover:bg-white/80 dark:hover:bg-gray-700/50"
+                      >
+                        {t('tipster.posted_date_clear')}
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+                {postedRange ? (
+                  <p className="text-[10px] text-[var(--text-muted)] mt-2 opacity-90">
+                    {t('tipster.performance_posted_hint', { from: postedRange.from, to: postedRange.to })}
+                  </p>
+                ) : performancePeriod !== 'all' ? (
                   <p className="text-[10px] text-[var(--text-muted)] mt-2 opacity-90">{t('tipster.performance_settled_hint')}</p>
-                )}
+                ) : null}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 mb-4 min-w-0">
                 <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">

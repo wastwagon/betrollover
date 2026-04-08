@@ -19,7 +19,7 @@ const SORT_COLUMNS: Record<string, string> = {
   total_predictions: 'totalPredictions',
 };
 
-/** Tipster profile stats + archive filter (marketplace coupons, by settlement time `updated_at`). */
+/** Tipster profile: settlement presets filter by `updated_at`; optional `from`/`to` filters by coupon post time `created_at`. */
 export type TipsterProfilePerformancePeriod = 'all' | 'week' | 'month' | 'd60' | 'd90';
 
 export function parseTipsterProfilePerformancePeriod(raw: string | undefined): TipsterProfilePerformancePeriod {
@@ -29,6 +29,61 @@ export function parseTipsterProfilePerformancePeriod(raw: string | undefined): T
   if (v === '60d' || v === 'd60') return 'd60';
   if (v === '90d' || v === 'd90') return 'd90';
   return 'all';
+}
+
+/** Profile stats + archive: settlement time (`updated_at`). Active coupons list is not narrowed by this. */
+export type TipsterProfileSettlementWindow = { kind: 'settlement_period'; period: TipsterProfilePerformancePeriod };
+
+/** Custom calendar on tipster page: coupons **posted** in range (`created_at`); stats from those coupons only. */
+export type TipsterProfilePostedWindow = {
+  kind: 'posted_between';
+  from: string;
+  to: string;
+  startUtc: Date;
+  endExclusiveUtc: Date;
+};
+
+export type TipsterProfilePerformanceWindow = TipsterProfileSettlementWindow | TipsterProfilePostedWindow;
+
+const TIPSTER_POSTED_RANGE_MAX_DAYS = 366;
+
+function parseYmdUtcStrict(ymd: string): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd.trim());
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]) - 1;
+  const d = Number(m[3]);
+  const dt = new Date(Date.UTC(y, mo, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo || dt.getUTCDate() !== d) return null;
+  return dt;
+}
+
+/**
+ * When both `from` and `to` are valid `YYYY-MM-DD` (UTC calendar days), `from <= to`, span <= 366 days.
+ * Takes precedence over `performance` on GET /tipsters/:username.
+ */
+export function parseTipsterProfilePostedBetween(fromRaw?: string, toRaw?: string): TipsterProfilePostedWindow | null {
+  if (fromRaw == null || toRaw == null) return null;
+  const from = fromRaw.trim();
+  const to = toRaw.trim();
+  if (!from || !to) return null;
+  const startUtc = parseYmdUtcStrict(from);
+  const toDayUtc = parseYmdUtcStrict(to);
+  if (!startUtc || !toDayUtc || startUtc > toDayUtc) return null;
+  const spanDays = (toDayUtc.getTime() - startUtc.getTime()) / 86400000 + 1;
+  if (spanDays > TIPSTER_POSTED_RANGE_MAX_DAYS) return null;
+  const endExclusiveUtc = new Date(toDayUtc.getTime() + 86400000);
+  return { kind: 'posted_between', from, to, startUtc, endExclusiveUtc };
+}
+
+export function buildTipsterProfilePerformanceWindow(
+  performanceRaw: string | undefined,
+  fromRaw?: string,
+  toRaw?: string,
+): TipsterProfilePerformanceWindow {
+  const posted = parseTipsterProfilePostedBetween(fromRaw, toRaw);
+  if (posted) return posted;
+  return { kind: 'settlement_period', period: parseTipsterProfilePerformancePeriod(performanceRaw) };
 }
 
 /** Browse / leaderboard ordering: measurable performance first; never rank empty profiles above tipsters with settled picks. */
@@ -435,13 +490,27 @@ export class TipstersApiService {
     }
   }
 
+  /** Stats + archive: settlement presets use `updated_at`; custom range uses coupon post time `created_at`. */
+  private applyTipsterProfileWindowOnTicket(
+    qb: SelectQueryBuilder<AccumulatorTicket>,
+    window: TipsterProfilePerformanceWindow,
+  ): void {
+    if (window.kind === 'posted_between') {
+      qb.andWhere('t.createdAt >= :__tw0', { __tw0: window.startUtc });
+      qb.andWhere('t.createdAt < :__tw1', { __tw1: window.endExclusiveUtc });
+      return;
+    }
+    this.applyTipsterProfilePeriodFilter(qb, window.period);
+  }
+
   /**
-   * Marketplace settled coupons only; window by settlement time (`updated_at`).
+   * Marketplace settled coupons only.
+   * Settlement presets: window by `updated_at`. Custom posted range: window by `createdAt`.
    * `total` = won + lost + void; ROI / win rate use won+lost only (same as public profile formulas).
    */
   private async computeMarketplaceProfileStats(
     userId: number,
-    period: TipsterProfilePerformancePeriod,
+    window: TipsterProfilePerformanceWindow,
   ): Promise<{
     total: number;
     won: number;
@@ -466,7 +535,7 @@ export class TipstersApiService {
       .setParameter('lost', 'lost')
       .setParameter('won2', 'won');
 
-    this.applyTipsterProfilePeriodFilter(qb, period);
+    this.applyTipsterProfileWindowOnTicket(qb, window);
 
     const row = await qb.getRawOne<{
       total: string;
@@ -491,7 +560,7 @@ export class TipstersApiService {
       .where('t.userId = :uid', { uid: userId })
       .andWhere('t.isMarketplace = :im', { im: true })
       .andWhere('t.result IN (:...wl)', { wl: ['won', 'lost'] });
-    this.applyTipsterProfilePeriodFilter(streakQb, period);
+    this.applyTipsterProfileWindowOnTicket(streakQb, window);
     const streakRows = await streakQb.orderBy('t.updatedAt', 'DESC').take(500).getMany();
     const { currentStreak, bestStreak } = this.computeStreakFromOrderedResults(streakRows);
 
@@ -651,13 +720,13 @@ export class TipstersApiService {
     }));
   }
 
-  async getTipsterProfile(username: string, performancePeriod: TipsterProfilePerformancePeriod = 'all') {
+  async getTipsterProfile(username: string, window: TipsterProfilePerformanceWindow) {
     const tipster = await this.tipsterRepo.findOne({
       where: { username },
     });
     if (!tipster) return null;
 
-    const marketplaceCoupons = await this.getMarketplaceCouponsForTipster(username, performancePeriod);
+    const marketplaceCoupons = await this.getMarketplaceCouponsForTipster(username, window);
 
     let totalPredictions = tipster.totalPredictions;
     let totalWins = tipster.totalWins;
@@ -669,7 +738,7 @@ export class TipstersApiService {
     let avgOddsLive = Number(tipster.avgOdds);
 
     if (tipster.userId != null) {
-      const mp = await this.computeMarketplaceProfileStats(tipster.userId, performancePeriod);
+      const mp = await this.computeMarketplaceProfileStats(tipster.userId, window);
       totalPredictions = mp.total;
       totalWins = mp.won;
       totalLosses = mp.lost;
@@ -691,7 +760,8 @@ export class TipstersApiService {
     const followerCount = await this.followRepo.count({ where: { tipsterId: tipster.id } });
     const allTimeRankMap = await this.getAllTimeLeaderboardRankMap();
     const liveLeaderboardRank = allTimeRankMap.get(tipster.id) ?? null;
-    const leaderboardRankForResponse = performancePeriod === 'all' ? liveLeaderboardRank : null;
+    const leaderboardRankForResponse =
+      window.kind === 'settlement_period' && window.period === 'all' ? liveLeaderboardRank : null;
 
     return {
       tipster: {
@@ -720,18 +790,16 @@ export class TipstersApiService {
         is_active: tipster.isActive,
       },
       marketplace_coupons: marketplaceCoupons,
-      archived_coupons: await this.getArchivedCouponsForTipster(username, performancePeriod),
-      archived_settled_count: await this.getArchivedSettledCount(username, performancePeriod),
+      archived_coupons: await this.getArchivedCouponsForTipster(username, window),
+      archived_settled_count: await this.getArchivedSettledCount(username, window),
       performance_history: performance,
-      performance_period: performancePeriod,
+      performance_period: window.kind === 'settlement_period' ? window.period : null,
+      posted_date_range: window.kind === 'posted_between' ? { from: window.from, to: window.to } : null,
     };
   }
 
-  /** Total count of settled marketplace coupons in the optional performance window (by settlement time). */
-  async getArchivedSettledCount(
-    username: string,
-    performancePeriod: TipsterProfilePerformancePeriod = 'all',
-  ): Promise<number> {
+  /** Total count of settled marketplace coupons in the selected window. */
+  async getArchivedSettledCount(username: string, window: TipsterProfilePerformanceWindow): Promise<number> {
     const tipster = await this.tipsterRepo.findOne({ where: { username }, select: ['userId'] });
     if (!tipster?.userId) return 0;
     const qb = this.ticketRepo
@@ -739,19 +807,16 @@ export class TipstersApiService {
       .where('t.userId = :uid', { uid: tipster.userId })
       .andWhere('t.isMarketplace = :im', { im: true })
       .andWhere('t.result IN (:...r)', { r: ['won', 'lost', 'void'] });
-    this.applyTipsterProfilePeriodFilter(qb, performancePeriod);
+    this.applyTipsterProfileWindowOnTicket(qb, window);
     return qb.getCount();
   }
 
   /** Settled marketplace coupons for archive; limited to 50 most recent in the selected window. */
-  async getArchivedCouponsForTipster(
-    username: string,
-    performancePeriod: TipsterProfilePerformancePeriod = 'all',
-  ) {
+  async getArchivedCouponsForTipster(username: string, window: TipsterProfilePerformanceWindow) {
     const tipster = await this.tipsterRepo.findOne({ where: { username } });
     if (!tipster?.userId) return [];
 
-    const mp = await this.computeMarketplaceProfileStats(tipster.userId, performancePeriod);
+    const mp = await this.computeMarketplaceProfileStats(tipster.userId, window);
     const winRate = mp.winRate;
     const totalPredictions = mp.total;
     const totalWins = mp.won;
@@ -763,7 +828,7 @@ export class TipstersApiService {
       .where('t.userId = :uid', { uid: tipster.userId })
       .andWhere('t.isMarketplace = :im', { im: true })
       .andWhere('t.result IN (:...r)', { r: ['won', 'lost', 'void'] });
-    this.applyTipsterProfilePeriodFilter(qb, performancePeriod);
+    this.applyTipsterProfileWindowOnTicket(qb, window);
     const tickets = await qb.orderBy('t.updatedAt', 'DESC').take(50).getMany();
 
     const validTickets = tickets.filter((t) => t.picks?.length);
@@ -772,7 +837,8 @@ export class TipstersApiService {
       select: ['id', 'displayName', 'username', 'avatar'],
     });
     const allTimeRankMap = await this.getAllTimeLeaderboardRankMap();
-    const liveRank = performancePeriod === 'all' ? allTimeRankMap.get(tipster.id) ?? null : null;
+    const liveRank =
+      window.kind === 'settlement_period' && window.period === 'all' ? allTimeRankMap.get(tipster.id) ?? null : null;
 
     // Enrich picks with fixture scores (FT scoreline) for settled coupons
     const fixtureIds = [...new Set(validTickets.flatMap((t) => (t.picks || []).map((p) => p.fixtureId).filter(Boolean) as number[]))];
@@ -812,14 +878,11 @@ export class TipstersApiService {
   }
 
   /** Marketplace coupons for this tipster only. Deduplicated, same format as marketplace. */
-  async getMarketplaceCouponsForTipster(
-    username: string,
-    performancePeriod: TipsterProfilePerformancePeriod = 'all',
-  ) {
+  async getMarketplaceCouponsForTipster(username: string, window: TipsterProfilePerformanceWindow) {
     const tipster = await this.tipsterRepo.findOne({ where: { username } });
     if (!tipster?.userId) return [];
 
-    const mp = await this.computeMarketplaceProfileStats(tipster.userId, performancePeriod);
+    const mp = await this.computeMarketplaceProfileStats(tipster.userId, window);
     const winRate = mp.winRate;
     const totalPredictions = mp.total;
     const totalWins = mp.won;
@@ -833,16 +896,18 @@ export class TipstersApiService {
     if (accIds.length === 0) return [];
 
     // Only show tickets that are still unsettled (result = pending). Settled tickets appear in Archive.
-    const tickets = await this.ticketRepo.find({
-      where: {
-        id: In(accIds),
-        userId: tipster.userId,
-        result: 'pending',
-        isMarketplace: true,
-      },
-      relations: ['picks'],
-      order: { createdAt: 'DESC' },
-    });
+    const tqb = this.ticketRepo
+      .createQueryBuilder('t')
+      .leftJoinAndSelect('t.picks', 'p')
+      .where('t.id IN (:...ids)', { ids: accIds })
+      .andWhere('t.userId = :uid', { uid: tipster.userId })
+      .andWhere('t.result = :pend', { pend: 'pending' })
+      .andWhere('t.isMarketplace = :im', { im: true });
+    if (window.kind === 'posted_between') {
+      tqb.andWhere('t.createdAt >= :__pa0', { __pa0: window.startUtc });
+      tqb.andWhere('t.createdAt < :__pa1', { __pa1: window.endExclusiveUtc });
+    }
+    const tickets = await tqb.orderBy('t.createdAt', 'DESC').getMany();
 
     // Include all marketplace coupons (upcoming + started/settled) so picks show on profile
     const validTickets = tickets.filter((t) => t.picks?.length);
@@ -863,7 +928,8 @@ export class TipstersApiService {
     const priceMap = new Map(rows.map((r) => [r.accumulatorId, Number(r.price)]));
     const purchaseCountMap = new Map(rows.map((r) => [r.accumulatorId, r.purchaseCount || 0]));
     const allTimeRankMap = await this.getAllTimeLeaderboardRankMap();
-    const liveRank = performancePeriod === 'all' ? allTimeRankMap.get(tipster.id) ?? null : null;
+    const liveRank =
+      window.kind === 'settlement_period' && window.period === 'all' ? allTimeRankMap.get(tipster.id) ?? null : null;
 
     return deduped.map((ticket) => ({
       ...ticket,
