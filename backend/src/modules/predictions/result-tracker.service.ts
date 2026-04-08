@@ -53,8 +53,8 @@ export class ResultTrackerService {
     predictionsSettled: number;
     tipstersUpdated: number;
   }> {
-    // 1. Refresh finished fixtures from API (ensure we have latest scores)
-    await this.fixtureUpdateService.updateFinishedFixtures();
+    // Finished fixture polling is owned by FixtureSchedulerService.
+    // Here we only consume currently stored FT results to avoid duplicate API polling.
 
     const now = new Date();
     const pending = await this.predictionFixtureRepo.find({

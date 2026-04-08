@@ -360,7 +360,7 @@ export class FixturesController {
     @Query('limit') _limitParam?: string,
   ) {
     await this.syncStatusRepo.upsert(
-      { syncType: 'odds', status: 'running' },
+      { syncType: 'odds', status: 'running', lastSyncDueMissing: null, lastSyncDueStale: null },
       ['syncType'],
     );
 
@@ -368,8 +368,11 @@ export class FixturesController {
       const now = new Date();
       const lookaheadEnd = new Date(now.getTime() + SYNC_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
       const forceRefresh = force === 'true' || force === '1';
+      const refreshBefore = new Date(now.getTime() - 6 * 60 * 60 * 1000);
 
       let fixtureIds: number[];
+      let dueMissing = 0;
+      let dueStale = 0;
 
       if (forceRefresh) {
         const allFixtures = await this.fixturesService.fixtureRepo
@@ -380,25 +383,24 @@ export class FixturesController {
           .orderBy('f.match_date', 'ASC')
           .getMany();
         fixtureIds = allFixtures.map(f => f.id);
+        dueStale = fixtureIds.length;
       } else {
-        const fixturesWithOdds = await this.fixturesService.fixtureRepo
+        const due = await this.fixturesService.fixtureRepo
           .createQueryBuilder('f')
-          .innerJoin('f.odds', 'o')
+          .leftJoin('f.odds', 'o')
           .where("f.status IN ('NS', 'TBD')")
           .andWhere('f.match_date >= :now', { now })
           .andWhere('f.match_date <= :lookaheadEnd', { lookaheadEnd })
-          .select('f.id')
-          .getMany();
-        const fixturesWithOddsIds = fixturesWithOdds.map(f => f.id);
-        const allFixtures = await this.fixturesService.fixtureRepo
-          .createQueryBuilder('f')
-          .where("f.status IN ('NS', 'TBD')")
-          .andWhere('f.match_date >= :now', { now })
-          .andWhere('f.match_date <= :lookaheadEnd', { lookaheadEnd })
-          .getMany();
-        fixtureIds = allFixtures
-          .filter(f => !fixturesWithOddsIds.includes(f.id))
-          .map(f => f.id);
+          .select('f.id', 'id')
+          .addSelect('MAX(o.synced_at)', 'lastSyncedAt')
+          .groupBy('f.id')
+          .addGroupBy('f.match_date')
+          .having('COUNT(o.id) = 0 OR MAX(o.synced_at) < :refreshBefore', { refreshBefore })
+          .orderBy('f.match_date', 'ASC')
+          .getRawMany<{ id: string; lastSyncedAt: string | null }>();
+        fixtureIds = due.map((r) => Number(r.id)).filter((id) => Number.isFinite(id));
+        dueMissing = due.filter((r) => !r.lastSyncedAt).length;
+        dueStale = due.length - dueMissing;
       }
       
       if (fixtureIds.length === 0) {
@@ -409,6 +411,8 @@ export class FixturesController {
             status: 'success',
             lastSyncAt: new Date(),
             lastSyncCount: 0,
+            lastSyncDueMissing: dueMissing,
+            lastSyncDueStale: dueStale,
             lastError: null,
           },
           ['syncType'],
@@ -429,6 +433,8 @@ export class FixturesController {
           status: 'success',
           lastSyncAt: new Date(),
           lastSyncCount: result.synced,
+          lastSyncDueMissing: dueMissing,
+          lastSyncDueStale: dueStale,
           lastError: null,
         },
         ['syncType'],
@@ -440,6 +446,8 @@ export class FixturesController {
         {
           syncType: 'odds',
           status: 'error',
+          lastSyncDueMissing: null,
+          lastSyncDueStale: null,
           lastError: error.message,
         },
         ['syncType'],

@@ -59,6 +59,16 @@ interface EnableLeaguesResult {
   leagues: { apiId: number; name: string; country: string }[];
 }
 
+interface SyncStatusRow {
+  syncType: string;
+  status: string;
+  lastSyncAt?: string | null;
+  lastSyncCount?: number | null;
+  lastSyncLeagues?: number | null;
+  lastSyncDueMissing?: number | null;
+  lastSyncDueStale?: number | null;
+}
+
 interface LiveStreamMetrics {
   activeConnections: number;
   totalConnections: number;
@@ -111,7 +121,19 @@ export default function AdminFixturesPage() {
     escrowTicketsAdjusted: number;
     errors: string[];
   } | null>(null);
-  const [syncResult, setSyncResult] = useState<{ fixtures: number; leagues: number } | null>(null);
+  const [syncResult, setSyncResult] = useState<{
+    fixtures: number;
+    leagues: number;
+    oddsDueMissing?: number;
+    oddsDueStale?: number;
+  } | null>(null);
+  const [oddsHealth, setOddsHealth] = useState<{
+    status: string;
+    lastSyncAt: string | null;
+    lastSyncCount: number;
+    dueMissing: number;
+    dueStale: number;
+  } | null>(null);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({ countries: [], tournaments: [], leagues: [] });
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedCompetition, setSelectedCompetition] = useState('');
@@ -251,22 +273,45 @@ export default function AdminFixturesPage() {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
+  const loadSyncStatus = useCallback(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
     fetch(`${getApiUrl()}/fixtures/sync/status`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : []))
       .then((statuses) => {
-        const fixturesStatus = Array.isArray(statuses) ? statuses.find((s: { syncType: string }) => s.syncType === 'fixtures') : null;
+        const rows: SyncStatusRow[] = Array.isArray(statuses) ? statuses : [];
+        const fixturesStatus = rows.find((s) => s.syncType === 'fixtures') ?? null;
+        const oddsStatus = rows.find((s) => s.syncType === 'odds') ?? null;
         if (fixturesStatus?.lastSyncCount != null && fixturesStatus?.lastSyncAt) {
           setSyncResult({
             fixtures: fixturesStatus.lastSyncCount,
             leagues: fixturesStatus.lastSyncLeagues ?? 0,
+            oddsDueMissing:
+              typeof oddsStatus?.lastSyncDueMissing === 'number'
+                ? oddsStatus.lastSyncDueMissing
+                : undefined,
+            oddsDueStale:
+              typeof oddsStatus?.lastSyncDueStale === 'number'
+                ? oddsStatus.lastSyncDueStale
+                : undefined,
+          });
+        }
+        if (oddsStatus) {
+          setOddsHealth({
+            status: oddsStatus.status || 'idle',
+            lastSyncAt: oddsStatus.lastSyncAt ?? null,
+            lastSyncCount: Number(oddsStatus.lastSyncCount ?? 0),
+            dueMissing: Number(oddsStatus.lastSyncDueMissing ?? 0),
+            dueStale: Number(oddsStatus.lastSyncDueStale ?? 0),
           });
         }
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    loadSyncStatus();
+  }, [loadSyncStatus]);
 
   // Reset country/competition if no longer in filtered list (e.g. no fixtures in next 72 hours)
   useEffect(() => {
@@ -529,6 +574,7 @@ export default function AdminFixturesPage() {
           setError(null);
         }
         load();
+        loadSyncStatus();
       } else {
         setError(getApiErrorMessage(data, 'Sync failed. Add API_SPORTS_KEY in Admin → Settings or backend .env'));
       }
@@ -557,6 +603,7 @@ export default function AdminFixturesPage() {
       if (res.ok) {
         load();
         loadDiagnostic();
+        loadSyncStatus();
         setError(null);
       } else {
         setError(getApiErrorMessage(data, 'Odds sync failed. Check API key and API-Football status.'));
@@ -581,13 +628,48 @@ export default function AdminFixturesPage() {
             Showing page <strong className="text-gray-900 dark:text-white">{page}</strong> of <strong className="text-gray-900 dark:text-white">{totalPages}</strong> · <strong className="text-gray-900 dark:text-white">{allFixtures.length}</strong> fixture{allFixtures.length !== 1 ? 's' : ''} total for next {LOOKAHEAD_HOURS} hours
             {syncResult && syncResult.fixtures > 0 && (
               <span className="ml-2 text-emerald-600 dark:text-emerald-400">
-                (Last sync: {syncResult.fixtures} fixtures{syncResult.leagues > 0 ? `, ${syncResult.leagues} leagues` : ''})
+                (Last sync: {syncResult.fixtures} fixtures{syncResult.leagues > 0 ? `, ${syncResult.leagues} leagues` : ''}
+                {syncResult.oddsDueMissing != null || syncResult.oddsDueStale != null
+                  ? `; odds due missing=${syncResult.oddsDueMissing ?? 0}, stale=${syncResult.oddsDueStale ?? 0}`
+                  : ''})
               </span>
             )}
             {enabledLeaguesCount != null && (
               <span className="ml-2 text-gray-500 dark:text-gray-400">· {enabledLeaguesCount} leagues enabled</span>
             )}
           </p>
+
+          <div className="mt-4 p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Odds Sync Health</h2>
+            {!oddsHealth ? (
+              <p className="text-xs text-gray-500 dark:text-gray-400">No odds sync status yet.</p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Status</p>
+                  <p className="font-semibold text-gray-900 dark:text-white uppercase">{oddsHealth.status}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Last synced fixtures</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">{oddsHealth.lastSyncCount}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Due missing</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">{oddsHealth.dueMissing}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Due stale</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">{oddsHealth.dueStale}</p>
+                </div>
+                <div className="col-span-2 md:col-span-1">
+                  <p className="text-gray-500 dark:text-gray-400">Last run</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">
+                    {oddsHealth.lastSyncAt ? new Date(oddsHealth.lastSyncAt).toLocaleString() : '—'}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Leagues & coverage — ensure enough leagues so you get all fixtures */}
           <div className="mt-6 p-5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">

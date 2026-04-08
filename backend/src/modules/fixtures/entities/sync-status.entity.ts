@@ -23,6 +23,12 @@ export class SyncStatus {
   @Column({ type: 'int', nullable: true, name: 'last_sync_leagues' })
   lastSyncLeagues: number | null = null;
 
+  @Column({ type: 'int', nullable: true, name: 'last_sync_due_missing' })
+  lastSyncDueMissing: number | null = null;
+
+  @Column({ type: 'int', nullable: true, name: 'last_sync_due_stale' })
+  lastSyncDueStale: number | null = null;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -83,6 +83,7 @@ export class FixtureSchedulerService implements OnModuleInit {
     count: number = 0,
     error: string | null = null,
     leagues?: number,
+    due?: { missing: number; stale: number },
   ) {
     const payload: Record<string, unknown> = {
       syncType,
@@ -93,6 +94,11 @@ export class FixtureSchedulerService implements OnModuleInit {
     };
     if (syncType === 'fixtures' && leagues != null) {
       payload.lastSyncLeagues = leagues;
+    }
+    // Only set when this run computed due breakdown; omit otherwise so upsert does not wipe prior values.
+    if (syncType === 'odds' && due !== undefined) {
+      payload.lastSyncDueMissing = due.missing;
+      payload.lastSyncDueStale = due.stale;
     }
     await this.syncStatusRepo.upsert(payload as any, ['syncType']);
   }
@@ -241,7 +247,7 @@ export class FixtureSchedulerService implements OnModuleInit {
 
   /**
    * Sync odds for upcoming fixtures (runs every 2 hours)
-   * Pre-loads odds for fixtures up to 7 days ahead that don't have odds yet.
+   * Pre-loads odds for fixtures up to lookahead window that are missing odds OR stale.
    * Prioritizes soonest matches. Uses Tier 1/2 market filter (BTTS, Correct Score, HT/FT).
    */
   @Cron('0 */2 * * *') // Every 2 hours
@@ -255,39 +261,44 @@ export class FixtureSchedulerService implements OnModuleInit {
     try {
       const now = new Date();
       const lookaheadEnd = new Date(now.getTime() + SYNC_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
+      const refreshBefore = new Date(now.getTime() - 6 * 60 * 60 * 1000);
 
-      const fixturesWithOdds = await this.fixtureRepo
+      // Refresh fixtures with no odds rows OR stale odds snapshot.
+      const due = await this.fixtureRepo
         .createQueryBuilder('f')
-        .innerJoin('f.odds', 'o')
+        .leftJoin('f.odds', 'o')
         .where("f.status IN ('NS', 'TBD')")
         .andWhere('f.match_date >= :now', { now })
         .andWhere('f.match_date <= :lookaheadEnd', { lookaheadEnd })
-        .select('f.id')
-        .getMany();
-
-      const fixturesWithOddsIds = fixturesWithOdds.map(f => f.id);
-
-      // Prioritize fixtures by match_date (soonest first) - today's matches get odds first
-      const allFixtures = await this.fixtureRepo
-        .createQueryBuilder('f')
-        .where("f.status IN ('NS', 'TBD')")
-        .andWhere('f.match_date >= :now', { now })
-        .andWhere('f.match_date <= :lookaheadEnd', { lookaheadEnd })
+        .select('f.id', 'id')
+        .addSelect('MAX(o.synced_at)', 'lastSyncedAt')
+        .groupBy('f.id')
+        .addGroupBy('f.match_date')
+        .having('COUNT(o.id) = 0 OR MAX(o.synced_at) < :refreshBefore', { refreshBefore })
         .orderBy('f.match_date', 'ASC')
-        .getMany();
+        .getRawMany<{ id: string; lastSyncedAt: string | null }>();
 
-      const fixtures = allFixtures
-        .filter(f => !fixturesWithOddsIds.includes(f.id));
+      const dueMissing = due.filter((r) => !r.lastSyncedAt).length;
+      const dueStale = due.length - dueMissing;
+      this.logger.debug(
+        `Odds sync due fixtures: total=${due.length}, missing=${dueMissing}, stale=${dueStale}`,
+      );
 
-      if (fixtures.length > 0) {
-        const fixtureIds = fixtures.map(f => f.id);
+      if (due.length > 0) {
+        const fixtureIds = due.map((r) => Number(r.id)).filter((id) => Number.isFinite(id));
         const result = await this.oddsSyncService.syncOddsForFixtures(fixtureIds);
         this.logger.log(
-          `Odds sync completed: ${result.synced} fixtures synced, ${result.errors} errors`
+          `Odds sync completed: ${result.synced} fixtures synced (${fixtureIds.length} due; missing=${dueMissing}, stale=${dueStale}), ${result.errors} errors`
         );
-        await this.updateSyncStatus('odds', 'success', result.synced);
+        await this.updateSyncStatus('odds', 'success', result.synced, null, undefined, {
+          missing: dueMissing,
+          stale: dueStale,
+        });
       } else {
-        await this.updateSyncStatus('odds', 'success', 0);
+        await this.updateSyncStatus('odds', 'success', 0, null, undefined, {
+          missing: dueMissing,
+          stale: dueStale,
+        });
       }
       const removed = await this.footballSyncService.deleteUpcomingFixturesWithoutOdds();
       if (removed > 0) this.logger.log(`Cleaned up ${removed} upcoming fixture(s) without odds`);

@@ -100,17 +100,18 @@ export class OddsSyncService {
         // Delete existing odds for this fixture
         await this.oddsRepo.delete({ fixtureId: fixture.id });
 
-        // Save filtered odds (no bookmaker stored, just market + value + odds)
-        for (const odd of filteredOdds) {
-          await this.oddsRepo.save({
+        // Save filtered odds in one batch (no bookmaker stored, just market + value + odds)
+        const syncedAt = new Date();
+        await this.oddsRepo.insert(
+          filteredOdds.map((odd) => ({
             fixtureId: fixture.id,
             marketName: odd.marketName,
             marketValue: odd.marketValue,
             odds: odd.odds,
-            bookmaker: null, // Don't store bookmaker
-            syncedAt: new Date(),
-          });
-        }
+            bookmaker: null,
+            syncedAt,
+          })),
+        );
 
         synced++;
         this.logger.log(`Synced ${filteredOdds.length} odds for fixture ${fixture.apiId} (${filteredOdds.map(o => o.marketName).filter((v, i, a) => a.indexOf(v) === i).join(', ')})`);
@@ -233,17 +234,17 @@ export class OddsSyncService {
           if (!fixtureDbId) continue;
 
           await this.oddsRepo.delete({ fixtureId: fixtureDbId });
-          for (const odd of filteredOdds) {
-            await this.oddsRepo.save({
-              fixtureId: fixtureDbId,
-              marketName: odd.marketName,
-              marketValue: odd.marketValue,
-              odds: odd.odds,
-              bookmaker: null,
-              syncedAt: new Date(),
-            });
-            oddsStored++;
-          }
+          const syncedAt = new Date();
+          const rows = filteredOdds.map((odd) => ({
+            fixtureId: fixtureDbId,
+            marketName: odd.marketName,
+            marketValue: odd.marketValue,
+            odds: odd.odds,
+            bookmaker: null,
+            syncedAt,
+          }));
+          await this.oddsRepo.insert(rows);
+          oddsStored += rows.length;
           fixturesStored++;
         }
       } catch (err: any) {
