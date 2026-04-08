@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, SelectQueryBuilder } from 'typeorm';
 import { Tipster } from './entities/tipster.entity';
 import { Prediction } from './entities/prediction.entity';
 import { PredictionFixture } from './entities/prediction-fixture.entity';
@@ -18,6 +18,18 @@ const SORT_COLUMNS: Record<string, string> = {
   total_profit: 'totalProfit',
   total_predictions: 'totalPredictions',
 };
+
+/** Tipster profile stats + archive filter (marketplace coupons, by settlement time `updated_at`). */
+export type TipsterProfilePerformancePeriod = 'all' | 'week' | 'month' | 'd60' | 'd90';
+
+export function parseTipsterProfilePerformancePeriod(raw: string | undefined): TipsterProfilePerformancePeriod {
+  const v = (raw ?? 'all').toLowerCase().trim();
+  if (v === 'week' || v === 'weekly') return 'week';
+  if (v === 'month' || v === 'monthly') return 'month';
+  if (v === '60d' || v === 'd60') return 'd60';
+  if (v === '90d' || v === 'd90') return 'd90';
+  return 'all';
+}
 
 /** Browse / leaderboard ordering: measurable performance first; never rank empty profiles above tipsters with settled picks. */
 function tipsterListingActivityTier(row: { total_wins?: number; total_losses?: number; total_predictions?: number }): number {
@@ -383,6 +395,109 @@ export class TipstersApiService {
     return { currentStreak, bestStreak };
   }
 
+  /** Streak from rows already ordered newest settlement first (W/L only). */
+  private computeStreakFromOrderedResults(rows: { result: string }[]): { currentStreak: number; bestStreak: number } {
+    let currentStreak = 0;
+    let bestStreak = 0;
+    let run = 0;
+    for (let i = 0; i < rows.length; i++) {
+      const t = rows[i];
+      const sign = t.result === 'won' ? 1 : -1;
+      if (run === 0 || (run > 0 && sign === 1) || (run < 0 && sign === -1)) {
+        run += sign;
+      } else {
+        run = sign;
+      }
+      if (run > 0) bestStreak = Math.max(bestStreak, run);
+      if (i === 0) currentStreak = run;
+    }
+    return { currentStreak, bestStreak };
+  }
+
+  private applyTipsterProfilePeriodFilter(
+    qb: SelectQueryBuilder<AccumulatorTicket>,
+    period: TipsterProfilePerformancePeriod,
+  ): void {
+    if (period === 'all') return;
+    switch (period) {
+      case 'week':
+        qb.andWhere("t.updated_at >= DATE_TRUNC('week', CURRENT_TIMESTAMP)");
+        break;
+      case 'month':
+        qb.andWhere("t.updated_at >= DATE_TRUNC('month', CURRENT_TIMESTAMP)");
+        break;
+      case 'd60':
+        qb.andWhere("t.updated_at >= NOW() - INTERVAL '60 days'");
+        break;
+      case 'd90':
+        qb.andWhere("t.updated_at >= NOW() - INTERVAL '90 days'");
+        break;
+    }
+  }
+
+  /**
+   * Marketplace settled coupons only; window by settlement time (`updated_at`).
+   * `total` = won + lost + void; ROI / win rate use won+lost only (same as public profile formulas).
+   */
+  private async computeMarketplaceProfileStats(
+    userId: number,
+    period: TipsterProfilePerformancePeriod,
+  ): Promise<{
+    total: number;
+    won: number;
+    lost: number;
+    winRate: number;
+    roi: number;
+    currentStreak: number;
+    bestStreak: number;
+    avgOdds: number;
+  }> {
+    const qb = this.ticketRepo
+      .createQueryBuilder('t')
+      .select('COUNT(t.id)', 'total')
+      .addSelect(`SUM(CASE WHEN t.result = :won THEN 1 ELSE 0 END)`, 'won')
+      .addSelect(`SUM(CASE WHEN t.result = :lost THEN 1 ELSE 0 END)`, 'lost')
+      .addSelect(`COALESCE(SUM(CASE WHEN t.result = :won2 THEN t.totalOdds ELSE 0 END), 0)`, 'totalOddsWon')
+      .addSelect('COALESCE(AVG(t.totalOdds), 0)', 'avgOdds')
+      .where('t.userId = :uid', { uid: userId })
+      .andWhere('t.isMarketplace = :im', { im: true })
+      .andWhere('t.result IN (:...fin)', { fin: ['won', 'lost', 'void'] })
+      .setParameter('won', 'won')
+      .setParameter('lost', 'lost')
+      .setParameter('won2', 'won');
+
+    this.applyTipsterProfilePeriodFilter(qb, period);
+
+    const row = await qb.getRawOne<{
+      total: string;
+      won: string;
+      lost: string;
+      totalOddsWon: string;
+      avgOdds: string;
+    }>();
+
+    const total = Number(row?.total ?? 0) || 0;
+    const won = Number(row?.won ?? 0) || 0;
+    const lost = Number(row?.lost ?? 0) || 0;
+    const settledWL = won + lost;
+    const winRate = settledWL > 0 ? (won / settledWL) * 100 : 0;
+    const totalOddsWon = Number(row?.totalOddsWon ?? 0) || 0;
+    const roi = settledWL > 0 ? ((totalOddsWon - settledWL) / settledWL) * 100 : 0;
+    const avgOdds = Math.round(Number(row?.avgOdds ?? 0) * 100) / 100;
+
+    const streakQb = this.ticketRepo
+      .createQueryBuilder('t')
+      .select(['t.id', 't.result'])
+      .where('t.userId = :uid', { uid: userId })
+      .andWhere('t.isMarketplace = :im', { im: true })
+      .andWhere('t.result IN (:...wl)', { wl: ['won', 'lost'] });
+    this.applyTipsterProfilePeriodFilter(streakQb, period);
+    const streakRows = await streakQb.orderBy('t.updatedAt', 'DESC').take(500).getMany();
+    const { currentStreak, bestStreak } = this.computeStreakFromOrderedResults(streakRows);
+
+    return { total, won, lost, winRate, roi, currentStreak, bestStreak, avgOdds };
+  }
+
   async getTipsters(options: {
     limit: number;
     sortBy: string;
@@ -536,23 +651,34 @@ export class TipstersApiService {
     }));
   }
 
-  async getTipsterProfile(username: string) {
+  async getTipsterProfile(username: string, performancePeriod: TipsterProfilePerformancePeriod = 'all') {
     const tipster = await this.tipsterRepo.findOne({
       where: { username },
     });
     if (!tipster) return null;
 
-    const marketplaceCoupons = await this.getMarketplaceCouponsForTipster(username);
+    const marketplaceCoupons = await this.getMarketplaceCouponsForTipster(username, performancePeriod);
 
-    const ticketStats =
-      tipster.userId != null ? (await this.computeStatsFromTickets([tipster.userId])).get(tipster.userId) : null;
-    const totalPredictions = ticketStats ? ticketStats.total : tipster.totalPredictions;
-    const totalWins = ticketStats ? ticketStats.won : tipster.totalWins;
-    const totalLosses = ticketStats ? ticketStats.lost : tipster.totalLosses;
-    const winRate = ticketStats ? ticketStats.winRate : Number(tipster.winRate);
-    const roi = ticketStats ? ticketStats.roi : Number(tipster.roi);
-    const currentStreak = ticketStats ? ticketStats.currentStreak : (tipster.currentStreak ?? 0);
-    const bestStreak = ticketStats ? ticketStats.bestStreak : (tipster.bestStreak ?? 0);
+    let totalPredictions = tipster.totalPredictions;
+    let totalWins = tipster.totalWins;
+    let totalLosses = tipster.totalLosses;
+    let winRate = Number(tipster.winRate);
+    let roi = Number(tipster.roi);
+    let currentStreak = tipster.currentStreak ?? 0;
+    let bestStreak = tipster.bestStreak ?? 0;
+    let avgOddsLive = Number(tipster.avgOdds);
+
+    if (tipster.userId != null) {
+      const mp = await this.computeMarketplaceProfileStats(tipster.userId, performancePeriod);
+      totalPredictions = mp.total;
+      totalWins = mp.won;
+      totalLosses = mp.lost;
+      winRate = mp.winRate;
+      roi = mp.roi;
+      currentStreak = mp.currentStreak;
+      bestStreak = mp.bestStreak;
+      avgOddsLive = mp.avgOdds;
+    }
 
     const performance = await this.tipsterRepo.query(
       `SELECT * FROM tipster_performance_log
@@ -565,11 +691,7 @@ export class TipstersApiService {
     const followerCount = await this.followRepo.count({ where: { tipsterId: tipster.id } });
     const allTimeRankMap = await this.getAllTimeLeaderboardRankMap();
     const liveLeaderboardRank = allTimeRankMap.get(tipster.id) ?? null;
-
-    const avgOddsLive =
-      tipster.userId != null
-        ? await this.getAvgOddsFromSettledTickets(tipster.userId)
-        : Number(tipster.avgOdds);
+    const leaderboardRankForResponse = performancePeriod === 'all' ? liveLeaderboardRank : null;
 
     return {
       tipster: {
@@ -591,53 +713,58 @@ export class TipstersApiService {
         best_streak: bestStreak,
         total_profit: Number(tipster.totalProfit),
         avg_odds: avgOddsLive,
-        leaderboard_rank: liveLeaderboardRank,
+        leaderboard_rank: leaderboardRankForResponse,
         follower_count: followerCount,
         last_prediction_date: tipster.lastPredictionDate,
         join_date: tipster.joinDate,
         is_active: tipster.isActive,
       },
       marketplace_coupons: marketplaceCoupons,
-      archived_coupons: await this.getArchivedCouponsForTipster(username),
-      archived_settled_count: await this.getArchivedSettledCount(username),
+      archived_coupons: await this.getArchivedCouponsForTipster(username, performancePeriod),
+      archived_settled_count: await this.getArchivedSettledCount(username, performancePeriod),
       performance_history: performance,
+      performance_period: performancePeriod,
     };
   }
 
-  /** Total count of settled (won/lost/void) marketplace coupons for this tipster. Used for Archive tab label. */
-  async getArchivedSettledCount(username: string): Promise<number> {
+  /** Total count of settled marketplace coupons in the optional performance window (by settlement time). */
+  async getArchivedSettledCount(
+    username: string,
+    performancePeriod: TipsterProfilePerformancePeriod = 'all',
+  ): Promise<number> {
     const tipster = await this.tipsterRepo.findOne({ where: { username }, select: ['userId'] });
     if (!tipster?.userId) return 0;
-    return this.ticketRepo.count({
-      where: {
-        userId: tipster.userId,
-        result: In(['won', 'lost', 'void']),
-        isMarketplace: true,
-      },
-    });
+    const qb = this.ticketRepo
+      .createQueryBuilder('t')
+      .where('t.userId = :uid', { uid: tipster.userId })
+      .andWhere('t.isMarketplace = :im', { im: true })
+      .andWhere('t.result IN (:...r)', { r: ['won', 'lost', 'void'] });
+    this.applyTipsterProfilePeriodFilter(qb, performancePeriod);
+    return qb.getCount();
   }
 
-  /** Settled (won/lost/void) coupons for this tipster. For archive display. Limited to 50 most recent. */
-  async getArchivedCouponsForTipster(username: string) {
+  /** Settled marketplace coupons for archive; limited to 50 most recent in the selected window. */
+  async getArchivedCouponsForTipster(
+    username: string,
+    performancePeriod: TipsterProfilePerformancePeriod = 'all',
+  ) {
     const tipster = await this.tipsterRepo.findOne({ where: { username } });
     if (!tipster?.userId) return [];
 
-    const ticketStats = (await this.computeStatsFromTickets([tipster.userId])).get(tipster.userId);
-    const winRate = ticketStats ? ticketStats.winRate : Number(tipster.winRate);
-    const totalPredictions = ticketStats ? ticketStats.total : tipster.totalPredictions;
-    const totalWins = ticketStats ? ticketStats.won : tipster.totalWins;
-    const totalLosses = ticketStats ? ticketStats.lost : tipster.totalLosses;
+    const mp = await this.computeMarketplaceProfileStats(tipster.userId, performancePeriod);
+    const winRate = mp.winRate;
+    const totalPredictions = mp.total;
+    const totalWins = mp.won;
+    const totalLosses = mp.lost;
 
-    const tickets = await this.ticketRepo.find({
-      where: {
-        userId: tipster.userId,
-        result: In(['won', 'lost', 'void']),
-        isMarketplace: true,
-      },
-      relations: ['picks'],
-      order: { createdAt: 'DESC' },
-      take: 50,
-    });
+    const qb = this.ticketRepo
+      .createQueryBuilder('t')
+      .leftJoinAndSelect('t.picks', 'p')
+      .where('t.userId = :uid', { uid: tipster.userId })
+      .andWhere('t.isMarketplace = :im', { im: true })
+      .andWhere('t.result IN (:...r)', { r: ['won', 'lost', 'void'] });
+    this.applyTipsterProfilePeriodFilter(qb, performancePeriod);
+    const tickets = await qb.orderBy('t.updatedAt', 'DESC').take(50).getMany();
 
     const validTickets = tickets.filter((t) => t.picks?.length);
     const user = await this.usersRepo.findOne({
@@ -645,7 +772,7 @@ export class TipstersApiService {
       select: ['id', 'displayName', 'username', 'avatar'],
     });
     const allTimeRankMap = await this.getAllTimeLeaderboardRankMap();
-    const liveRank = allTimeRankMap.get(tipster.id) ?? null;
+    const liveRank = performancePeriod === 'all' ? allTimeRankMap.get(tipster.id) ?? null : null;
 
     // Enrich picks with fixture scores (FT scoreline) for settled coupons
     const fixtureIds = [...new Set(validTickets.flatMap((t) => (t.picks || []).map((p) => p.fixtureId).filter(Boolean) as number[]))];
@@ -684,16 +811,19 @@ export class TipstersApiService {
     }));
   }
 
-  /** Marketplace coupons for this tipster only. Deduplicated, same format as marketplace. Uses computed stats from accumulator_tickets. */
-  async getMarketplaceCouponsForTipster(username: string) {
+  /** Marketplace coupons for this tipster only. Deduplicated, same format as marketplace. */
+  async getMarketplaceCouponsForTipster(
+    username: string,
+    performancePeriod: TipsterProfilePerformancePeriod = 'all',
+  ) {
     const tipster = await this.tipsterRepo.findOne({ where: { username } });
     if (!tipster?.userId) return [];
 
-    const ticketStats = (await this.computeStatsFromTickets([tipster.userId])).get(tipster.userId);
-    const winRate = ticketStats ? ticketStats.winRate : Number(tipster.winRate);
-    const totalPredictions = ticketStats ? ticketStats.total : tipster.totalPredictions;
-    const totalWins = ticketStats ? ticketStats.won : tipster.totalWins;
-    const totalLosses = ticketStats ? ticketStats.lost : tipster.totalLosses;
+    const mp = await this.computeMarketplaceProfileStats(tipster.userId, performancePeriod);
+    const winRate = mp.winRate;
+    const totalPredictions = mp.total;
+    const totalWins = mp.won;
+    const totalLosses = mp.lost;
 
     const rows = await this.marketplaceRepo.find({
       where: { status: 'active' },
@@ -733,7 +863,7 @@ export class TipstersApiService {
     const priceMap = new Map(rows.map((r) => [r.accumulatorId, Number(r.price)]));
     const purchaseCountMap = new Map(rows.map((r) => [r.accumulatorId, r.purchaseCount || 0]));
     const allTimeRankMap = await this.getAllTimeLeaderboardRankMap();
-    const liveRank = allTimeRankMap.get(tipster.id) ?? null;
+    const liveRank = performancePeriod === 'all' ? allTimeRankMap.get(tipster.id) ?? null : null;
 
     return deduped.map((ticket) => ({
       ...ticket,

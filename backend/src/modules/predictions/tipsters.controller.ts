@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Delete, Param, Query, NotFoundException, UseGuards } from '@nestjs/common';
-import { TipstersApiService } from './tipsters-api.service';
+import { TipstersApiService, parseTipsterProfilePerformancePeriod } from './tipsters-api.service';
 import { TipsterFollowService } from './tipster-follow.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtGuard } from '../auth/guards/optional-jwt.guard';
@@ -81,9 +81,11 @@ export class TipstersController {
   @UseGuards(OptionalJwtGuard)
   async getTipsterProfile(
     @Param('username') username: string,
+    @Query('performance') performance: string | undefined,
     @CurrentUser() user: User | null,
   ) {
-    const profile = await this.tipstersApi.getTipsterProfile(username);
+    const period = parseTipsterProfilePerformancePeriod(performance);
+    const profile = await this.tipstersApi.getTipsterProfile(username, period);
     if (!profile) {
       throw new NotFoundException('Tipster not found');
     }

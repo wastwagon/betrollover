@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -61,6 +61,18 @@ interface SubscriptionPackage {
   roiGuaranteeEnabled: boolean;
 }
 
+type TipsterPerformancePeriod = 'all' | 'week' | 'month' | 'd60' | 'd90';
+
+const TIPSTER_PERFORMANCE_OPTIONS: TipsterPerformancePeriod[] = ['all', 'week', 'month', 'd60', 'd90'];
+
+const TIPSTER_PERFORMANCE_LABELS: Record<TipsterPerformancePeriod, string> = {
+  all: 'tipster.period_alltime',
+  week: 'tipster.period_weekly',
+  month: 'tipster.period_monthly',
+  d60: 'tipster.performance_60d',
+  d90: 'tipster.performance_90d',
+};
+
 interface TipsterProfile {
   tipster: {
     id: number;
@@ -86,6 +98,7 @@ interface TipsterProfile {
   /** Total settled count (won/lost/void) for Archive tab label. Backend may cap list at 50. */
   archived_settled_count?: number;
   is_following: boolean;
+  performance_period?: TipsterPerformancePeriod;
 }
 
 export default function TipsterProfilePage() {
@@ -108,39 +121,62 @@ export default function TipsterProfilePage() {
   const [subscribedPackageIds, setSubscribedPackageIds] = useState<Set<number>>(new Set());
   const [isAuthed, setIsAuthed] = useState(false);
   const [reviewSummary, setReviewSummary] = useState<{ avg: number; total: number } | null>(null);
+  const [performancePeriod, setPerformancePeriod] = useState<TipsterPerformancePeriod>('all');
+  /** Snapshot of tipster row from last all-time fetch — keeps JSON-LD stable when viewing shorter periods. */
+  const allTimeTipsterForLdRef = useRef<TipsterProfile['tipster'] | null>(null);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
 
-  const refetchProfile = () => {
+  const refetchProfile = useCallback(() => {
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    fetch(`${getApiUrl()}/tipsters/${encodeURIComponent(username)}`, { headers })
+    const q = performancePeriod === 'all' ? '' : `?performance=${encodeURIComponent(performancePeriod)}`;
+    fetch(`${getApiUrl()}/tipsters/${encodeURIComponent(username)}${q}`, { headers })
       .then((r) => (r.ok ? r.json() : null))
       .then((p) => {
         if (p) setProfile(p);
       })
       .catch(() => {});
-  };
+  }, [username, performancePeriod]);
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
+    const q = performancePeriod === 'all' ? '' : `?performance=${encodeURIComponent(performancePeriod)}`;
 
-    fetch(`${getApiUrl()}/tipsters/${encodeURIComponent(username)}`, { headers })
+    fetch(`${getApiUrl()}/tipsters/${encodeURIComponent(username)}${q}`, { headers })
       .then((r) => (r.ok ? r.json() : null))
       .then((p) => {
+        if (cancelled) return;
         setProfile(p);
+        if (p?.tipster && performancePeriod === 'all') {
+          allTimeTipsterForLdRef.current = p.tipster;
+        }
         if (p?.tipster?.id) {
           fetch(`${getApiUrl()}/reviews/tipster/${p.tipster.id}?limit=5`)
-            .then((r) => r.ok ? r.json() : null)
-            .then((d) => d && setReviewSummary({ avg: d.avg, total: d.total }))
+            .then((r) => (r.ok ? r.json() : null))
+            .then((d) => {
+              if (!cancelled && d) setReviewSummary({ avg: d.avg, total: d.total });
+            })
             .catch(() => {});
+        } else {
+          setReviewSummary(null);
         }
       })
-      .catch(() => setProfile(null))
-      .finally(() => setLoading(false));
-  }, [username]);
+      .catch(() => {
+        if (!cancelled) setProfile(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [username, performancePeriod]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -380,8 +416,8 @@ export default function TipsterProfilePage() {
         displayName={tipster.display_name}
         avatarUrl={tipster.avatar_url}
         bio={tipster.bio}
-        winRate={tipster.win_rate}
-        totalPredictions={tipster.total_predictions}
+        winRate={(allTimeTipsterForLdRef.current ?? tipster).win_rate}
+        totalPredictions={(allTimeTipsterForLdRef.current ?? tipster).total_predictions}
       />
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
@@ -464,6 +500,30 @@ export default function TipsterProfilePage() {
                 </div>
               )}
               {tipster.bio && <p className="text-[var(--text-muted)] mb-4">{tipster.bio}</p>}
+              <div className="mb-4 min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">
+                  {t('tipster.performance_period_label')}
+                </p>
+                <div className="flex flex-wrap gap-1.5 p-1 rounded-xl bg-white/60 dark:bg-gray-800/60 border border-emerald-100/80 dark:border-emerald-800/50">
+                  {TIPSTER_PERFORMANCE_OPTIONS.map((key) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setPerformancePeriod(key)}
+                      className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                        performancePeriod === key
+                          ? 'bg-[var(--primary)] text-white shadow-sm'
+                          : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+                      }`}
+                    >
+                      {t(TIPSTER_PERFORMANCE_LABELS[key])}
+                    </button>
+                  ))}
+                </div>
+                {performancePeriod !== 'all' && (
+                  <p className="text-[10px] text-[var(--text-muted)] mt-2 opacity-90">{t('tipster.performance_settled_hint')}</p>
+                )}
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 mb-4 min-w-0">
                 <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-lg p-3 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
                   <span className="text-xs uppercase text-[var(--text-muted)]">{t('tipster.roi')}</span>
