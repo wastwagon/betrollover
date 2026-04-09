@@ -232,6 +232,7 @@ async function bootstrap() {
     await migrationRunner.ensureDateOfBirthColumn();
     await migrationRunner.ensureTeamLogoAndCountryColumns();
     await migrationRunner.ensureSubscriptionEscrowAuditColumns();
+    await migrationRunner.ensureAiMaxCouponsPerDayColumn();
   } catch (err: any) {
     logger.error(`Migration bootstrap failed: ${err?.message || err}`);
     if (isProduction) {
@@ -243,6 +244,7 @@ async function bootstrap() {
       await migrationRunner.ensureDateOfBirthColumn();
       await migrationRunner.ensureTeamLogoAndCountryColumns();
       await migrationRunner.ensureSubscriptionEscrowAuditColumns();
+      await migrationRunner.ensureAiMaxCouponsPerDayColumn();
     } catch {
       // best-effort schema fix
     }

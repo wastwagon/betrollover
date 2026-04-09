@@ -19,6 +19,8 @@ interface Settings {
   /** GHS price for AI coupons when ROI + win rate meet minimums; 0 = AI always free */
   aiMarketplaceCouponPrice?: number;
   maxCouponsPerDay?: number;
+  /** Per AI tipster, UTC day; engine uses min(this, each tipster max in code config). */
+  aiMaxCouponsPerDay?: number;
   platformCommissionRate?: number;
   streamAlertThresholds?: {
     warnActiveConnections: number;
@@ -73,6 +75,8 @@ export default function AdminSettingsPage() {
   const [savingAiCouponPrice, setSavingAiCouponPrice] = useState(false);
   const [maxCouponsPerDay, setMaxCouponsPerDay] = useState<number>(0);
   const [savingCouponLimit, setSavingCouponLimit] = useState(false);
+  const [aiMaxCouponsPerDay, setAiMaxCouponsPerDay] = useState<number>(2);
+  const [savingAiMaxCoupons, setSavingAiMaxCoupons] = useState(false);
   const [commissionRate, setCommissionRate] = useState<number>(30.0);
   const [savingCommission, setSavingCommission] = useState(false);
   const [migrationStatus, setMigrationStatus] = useState<{ applied: { filename: string; appliedAt: string }[]; pending: string[] } | null>(null);
@@ -118,6 +122,7 @@ export default function AdminSettingsPage() {
         if (data?.minimumWinRate !== undefined) setMinimumWinRate(data.minimumWinRate);
         if (data?.aiMarketplaceCouponPrice !== undefined) setAiMarketplaceCouponPrice(data.aiMarketplaceCouponPrice);
         if (data?.maxCouponsPerDay !== undefined) setMaxCouponsPerDay(data.maxCouponsPerDay);
+        if (data?.aiMaxCouponsPerDay !== undefined) setAiMaxCouponsPerDay(data.aiMaxCouponsPerDay);
         if (data?.platformCommissionRate !== undefined) setCommissionRate(data.platformCommissionRate);
         return data;
       })
@@ -1406,15 +1411,91 @@ export default function AdminSettingsPage() {
                   </button>
                 </div>
 
+                {/* AI tipsters: daily coupon cap */}
+                <div className="bg-gradient-to-br from-cyan-50 to-teal-100 dark:from-cyan-900/20 dark:to-teal-800/20 rounded-2xl shadow-lg border-2 border-cyan-200 dark:border-cyan-800 p-4 sm:p-6 hover:shadow-xl transition-all">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">AI tipsters — coupons per day</h3>
+                    <span className="text-2xl">🤖</span>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                    Maximum <strong>marketplace coupons each AI tipster</strong> can publish per <strong>UTC calendar day</strong>{' '}
+                    (scheduled run around midnight). The engine uses the <strong>lower</strong> of this value and each
+                    tipster&apos;s own cap in server config (<code className="text-xs bg-white/60 dark:bg-gray-800 px-1 rounded">ai-tipsters.config.ts</code>
+                    , <code className="text-xs bg-white/60 dark:bg-gray-800 px-1 rounded">max_daily_predictions</code>).
+                    Default <strong>2</strong> keeps volume controlled.
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mb-4 leading-relaxed">
+                    How picks are built: same-day fixtures with odds from your DB; API-Football <strong>predictions</strong> endpoint
+                    supplies probabilities per outcome when available; otherwise implied probability from decimal odds. Each AI profile
+                    filters by <strong>min win probability</strong>, <strong>min expected value (EV)</strong>, optional{' '}
+                    <strong>min API confidence</strong>, odds band, leagues, and bet types (see config). Does not change human tipster limits.
+                  </p>
+                  <div className="flex items-center gap-3 mb-4">
+                    <input
+                      type="number"
+                      min={1}
+                      max={50}
+                      step={1}
+                      value={aiMaxCouponsPerDay}
+                      onChange={(e) =>
+                        setAiMaxCouponsPerDay(Math.min(50, Math.max(1, parseInt(e.target.value, 10) || 1)))
+                      }
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    />
+                    <span className="text-gray-600 dark:text-gray-400 font-medium whitespace-nowrap">/ tipster / day</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const token = localStorage.getItem('token');
+                      if (!token) return;
+                      setSavingAiMaxCoupons(true);
+                      try {
+                        const res = await fetch(`${getApiUrl()}/admin/settings/ai-max-coupons-per-day`, {
+                          method: 'PATCH',
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({ aiMaxCouponsPerDay }),
+                        });
+                        if (res.ok) {
+                          alert('AI daily coupon limit updated');
+                          const settingsRes = await fetch(`${getApiUrl()}/admin/settings`, {
+                            headers: { Authorization: `Bearer ${token}` },
+                            cache: 'no-store',
+                          });
+                          if (settingsRes.ok) {
+                            const data = await settingsRes.json();
+                            setSettings(data);
+                            if (data.aiMaxCouponsPerDay !== undefined) setAiMaxCouponsPerDay(data.aiMaxCouponsPerDay);
+                          }
+                        } else {
+                          const error = await res.json().catch(() => ({}));
+                          alert(getApiErrorMessage(error, 'Failed to update AI limit'));
+                        }
+                      } catch (e: unknown) {
+                        alert(e instanceof Error ? e.message : 'Failed to update AI limit');
+                      } finally {
+                        setSavingAiMaxCoupons(false);
+                      }
+                    }}
+                    disabled={savingAiMaxCoupons}
+                    className="w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
+                  >
+                    {savingAiMaxCoupons ? 'Saving...' : 'Save AI daily limit'}
+                  </button>
+                </div>
+
                 {/* Max coupons per UTC day (anti-spam) */}
                 <div className="bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-900/20 dark:to-violet-800/20 rounded-2xl shadow-lg border-2 border-violet-200 dark:border-violet-800 p-4 sm:p-6 hover:shadow-xl transition-all">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Coupons per day</h3>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Human tipsters — coupons per day</h3>
                     <span className="text-2xl">📅</span>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Maximum coupons a tipster can create per UTC day. Use <strong>0</strong> for unlimited. AI tipsters are
-                    exempt so automated predictions are not blocked.
+                    Maximum coupons a <strong>human</strong> tipster can create per UTC day. Use <strong>0</strong> for unlimited.
+                    AI tipsters use the separate <strong>AI tipsters — coupons per day</strong> setting above.
                   </p>
                   <div className="flex items-center gap-3 mb-4">
                     <input

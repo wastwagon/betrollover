@@ -1,6 +1,7 @@
 /**
  * AI Tipsters Configuration
- * 25 tipsters. Single-fixture coupons only. Max 3 coupons per tipster per day.
+ * 25 tipsters. Single-fixture coupons only. Each tipster sets max_daily_predictions (up to 3 here);
+ * the live cap is min(that value, api_settings.ai_max_coupons_per_day, default 2 — editable in Admin → Settings).
  * Fixtures limited to target day only (no advance/future coupons).
  * All leagues; global usedFixtureIds ensures no two AI tipsters pick the same fixture.
  *

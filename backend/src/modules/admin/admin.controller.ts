@@ -630,6 +630,21 @@ export class AdminController {
     return this.adminService.updateMaxCouponsPerDay(body.maxCouponsPerDay);
   }
 
+  @Patch('settings/ai-max-coupons-per-day')
+  async updateAiMaxCouponsPerDay(
+    @Body() body: { aiMaxCouponsPerDay: number },
+  ) {
+    if (
+      body?.aiMaxCouponsPerDay === undefined ||
+      body?.aiMaxCouponsPerDay === null ||
+      typeof body.aiMaxCouponsPerDay !== 'number' ||
+      Number.isNaN(body.aiMaxCouponsPerDay)
+    ) {
+      throw new BadRequestException('aiMaxCouponsPerDay (number 1–50) is required');
+    }
+    return this.adminService.updateAiMaxCouponsPerDay(body.aiMaxCouponsPerDay);
+  }
+
   @Patch('settings/ai-marketplace-coupon-price')
   async updateAiMarketplaceCouponPrice(
     @CurrentUser() user: User,

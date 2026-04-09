@@ -40,6 +40,13 @@ export class ApiSettings {
   @Column({ type: 'int', name: 'max_coupons_per_day', default: 0 })
   maxCouponsPerDay: number = 0;
 
+  /**
+   * Max coupons each AI tipster may generate per UTC day.
+   * Engine uses min(this, each tipster's max_daily_predictions in ai-tipsters.config.ts).
+   */
+  @Column({ type: 'int', name: 'ai_max_coupons_per_day', default: 2 })
+  aiMaxCouponsPerDay: number = 2;
+
   /** Platform commission % deducted from tipster payout on winning coupons (0–50). Default 30% per Terms. */
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 30.0 })
   platformCommissionRate: number = 30.0;

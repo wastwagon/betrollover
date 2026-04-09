@@ -226,9 +226,11 @@ export class NotificationsService {
         try {
           const user = await this.userRepo.findOne({
             where: { id: followerId },
-            select: ['email', 'emailNotifications'],
+            select: ['email'],
           });
-          if (user?.email && user.emailNotifications) {
+          // Follower new-pick alerts: send rich coupon email whenever the user has an address.
+          // (Paid picks use the teaser path above with alwaysSendEmail; free picks only had email when emailNotifications was on.)
+          if (user?.email) {
             await this.emailService.sendCouponCardEmail(user.email, {
               tipsterName,
               accumulatorId: params.accumulatorId,

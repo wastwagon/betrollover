@@ -129,6 +129,17 @@ export class MigrationRunnerService {
     }
   }
 
+  /** Ensure ai_max_coupons_per_day on api_settings (089). */
+  async ensureAiMaxCouponsPerDayColumn(): Promise<void> {
+    try {
+      await this.dataSource.query(
+        `ALTER TABLE api_settings ADD COLUMN IF NOT EXISTS ai_max_coupons_per_day INTEGER NOT NULL DEFAULT 2`,
+      );
+    } catch (err: any) {
+      this.logger.warn(`ensureAiMaxCouponsPerDayColumn failed (non-fatal): ${err?.message || err}`);
+    }
+  }
+
   /**
    * Ensure subscription_escrow audit columns (082). Fixes admin escrow / projections if migration was skipped.
    * Backfills commission_rate_percent_at_purchase for held rows from api_settings.

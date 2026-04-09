@@ -506,6 +506,10 @@ export class AdminService {
       minimumROI: Number(apiSettings?.minimumROI ?? 20.0),
       minimumWinRate: Number(apiSettings?.minimumWinRate ?? 45.0),
       maxCouponsPerDay: Math.max(0, Math.floor(Number(apiSettings?.maxCouponsPerDay ?? 0))),
+      aiMaxCouponsPerDay: Math.min(
+        50,
+        Math.max(1, Math.floor(Number(apiSettings?.aiMaxCouponsPerDay ?? 2))),
+      ),
       aiMarketplaceCouponPrice: Math.round(Number(apiSettings?.aiMarketplaceCouponPrice ?? 5.0) * 100) / 100,
       platformCommissionRate: clampPlatformCommissionPercent(apiSettings?.platformCommissionRate),
       streamAlertThresholds: this.mapStreamAlertThresholds(apiSettings),
@@ -629,6 +633,19 @@ export class AdminService {
       apiSettings = this.apiSettingsRepo.create({ id: 1 });
     }
     apiSettings.maxCouponsPerDay = n;
+    return this.apiSettingsRepo.save(apiSettings);
+  }
+
+  async updateAiMaxCouponsPerDay(aiMaxCouponsPerDay: number): Promise<ApiSettings> {
+    const n = Math.floor(Number(aiMaxCouponsPerDay));
+    if (!Number.isFinite(n) || n < 1 || n > 50) {
+      throw new BadRequestException('AI max coupons per day must be between 1 and 50');
+    }
+    let apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
+    if (!apiSettings) {
+      apiSettings = this.apiSettingsRepo.create({ id: 1 });
+    }
+    apiSettings.aiMaxCouponsPerDay = n;
     return this.apiSettingsRepo.save(apiSettings);
   }
 

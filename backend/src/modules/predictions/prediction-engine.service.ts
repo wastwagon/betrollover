@@ -19,6 +19,7 @@ import { ApiPredictionsService, ApiFixturePredictions } from '../fixtures/api-pr
 import { OddsSyncService } from '../fixtures/odds-sync.service';
 import { PredictionMarketplaceSyncService } from './prediction-marketplace-sync.service';
 import { engineOutcomeKeyFromOddsLine } from '../fixtures/odds-outcome-keys';
+import { ApiSettings } from '../admin/entities/api-settings.entity';
 
 interface FixturePrediction {
   fixtureId: number;
@@ -73,6 +74,8 @@ export class PredictionEngineService {
     private oddsSyncService: OddsSyncService,
     private dataSource: DataSource,
     private marketplaceSync: PredictionMarketplaceSyncService,
+    @InjectRepository(ApiSettings)
+    private apiSettingsRepo: Repository<ApiSettings>,
   ) { }
 
   /**
@@ -204,13 +207,27 @@ export class PredictionEngineService {
       this.logger.log(`Seeded usedFixtureIds with ${usedFixtureIds.size} fixture(s) already on marketplace for ${dateStr}`);
     }
 
+    let adminAiMaxPerDay = 2;
+    try {
+      const settingsRow = await this.apiSettingsRepo.findOne({
+        where: { id: 1 },
+        select: ['aiMaxCouponsPerDay'],
+      });
+      const raw = Math.floor(Number(settingsRow?.aiMaxCouponsPerDay ?? 2));
+      adminAiMaxPerDay = Number.isFinite(raw) && raw >= 1 ? Math.min(50, raw) : 2;
+    } catch {
+      adminAiMaxPerDay = 2;
+    }
+    this.logger.log(`AI daily coupon cap (admin): ${adminAiMaxPerDay} per tipster (UTC day)`);
+
     for (const tipsterConfig of AI_TIPSTERS) {
       if (!this.shouldTipsterPostToday(tipsterConfig)) continue;
 
       const tipster = tipsterByUsername.get(tipsterConfig.username);
       if (!tipster) continue;
 
-      const maxForTipster = tipsterConfig.personality.max_daily_predictions ?? 3;
+      const configMax = tipsterConfig.personality.max_daily_predictions ?? 3;
+      const maxForTipster = Math.min(configMax, adminAiMaxPerDay);
       let pred = this.createTipsterPrediction(tipsterConfig, tipster.id, fixturePredictions, usedFixtureIds);
       let count = 0;
       while (pred && count < maxForTipster) {
