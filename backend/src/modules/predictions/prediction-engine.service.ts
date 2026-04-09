@@ -19,7 +19,6 @@ import { ApiPredictionsService, ApiFixturePredictions } from '../fixtures/api-pr
 import { OddsSyncService } from '../fixtures/odds-sync.service';
 import { PredictionMarketplaceSyncService } from './prediction-marketplace-sync.service';
 import { engineOutcomeKeyFromOddsLine } from '../fixtures/odds-outcome-keys';
-import { ApiSettings } from '../admin/entities/api-settings.entity';
 
 interface FixturePrediction {
   fixtureId: number;
@@ -74,8 +73,6 @@ export class PredictionEngineService {
     private oddsSyncService: OddsSyncService,
     private dataSource: DataSource,
     private marketplaceSync: PredictionMarketplaceSyncService,
-    @InjectRepository(ApiSettings)
-    private apiSettingsRepo: Repository<ApiSettings>,
   ) { }
 
   /**
@@ -209,13 +206,14 @@ export class PredictionEngineService {
 
     let adminAiMaxPerDay = 2;
     try {
-      const settingsRow = await this.apiSettingsRepo.findOne({
-        where: { id: 1 },
-        select: ['aiMaxCouponsPerDay'],
-      });
-      const raw = Math.floor(Number(settingsRow?.aiMaxCouponsPerDay ?? 2));
+      // Raw SQL: avoids TypeORM find({ select }) without primary key (can throw) and missing-column errors pre-migration.
+      const rows = (await this.dataSource.query(
+        `SELECT ai_max_coupons_per_day AS v FROM api_settings WHERE id = 1 LIMIT 1`,
+      )) as Array<{ v: number | string | null }>;
+      const raw = rows?.[0]?.v != null ? Math.floor(Number(rows[0].v)) : 2;
       adminAiMaxPerDay = Number.isFinite(raw) && raw >= 1 ? Math.min(50, raw) : 2;
-    } catch {
+    } catch (e) {
+      this.logger.warn(`ai_max_coupons_per_day unreadable (${(e as Error)?.message}); using default 2`);
       adminAiMaxPerDay = 2;
     }
     this.logger.log(`AI daily coupon cap (admin): ${adminAiMaxPerDay} per tipster (UTC day)`);
