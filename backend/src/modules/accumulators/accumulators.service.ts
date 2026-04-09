@@ -690,6 +690,7 @@ export class AccumulatorsService {
       showPending?: boolean;
       showNotStated?: boolean;
       showSettled?: boolean;
+      priceFilter?: 'all' | 'free' | 'paid' | 'sold';
     },
   ) {
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
@@ -715,6 +716,10 @@ export class AccumulatorsService {
           )`,
           { now },
         );
+
+      if (options?.priceFilter === 'free') qb.andWhere('pm.price = 0');
+      if (options?.priceFilter === 'paid') qb.andWhere('pm.price > 0');
+      if (options?.priceFilter === 'sold') qb.andWhere('pm.purchase_count > 0');
 
       if (options?.tipsterUsername) {
         const tipsterUser = await this.usersRepo.findOne({
@@ -798,7 +803,13 @@ export class AccumulatorsService {
       where: marketplaceWhere,
       select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
     });
-    const accIds = rows.map((r) => r.accumulatorId);
+    const rowsFiltered = rows.filter((r) => {
+      if (options?.priceFilter === 'free') return Number(r.price) === 0;
+      if (options?.priceFilter === 'paid') return Number(r.price) > 0;
+      if (options?.priceFilter === 'sold') return Number(r.purchaseCount ?? 0) > 0;
+      return true;
+    });
+    const accIds = rowsFiltered.map((r) => r.accumulatorId);
     if (accIds.length === 0) {
       this.logger.debug(`getMarketplace: no active pick_marketplace rows`);
       return { items: [], total: 0, hasMore: false };
@@ -876,7 +887,7 @@ export class AccumulatorsService {
       this.logger.debug(`getMarketplace: ${enrichedTickets.length} coupons filtered out`);
     }
     const paginated = validTickets.slice(offset, offset + limit);
-    const rowByAccId = new Map(rows.map((r) => [r.accumulatorId, r]));
+    const rowByAccId = new Map(rowsFiltered.map((r) => [r.accumulatorId, r]));
     const rowsForPaginated = paginated
       .map((t) => rowByAccId.get(t.id))
       .filter((r): r is PickMarketplace => !!r);
@@ -903,6 +914,7 @@ export class AccumulatorsService {
     offset?: number;
     sport?: string;
     freeOnly?: boolean;
+    priceFilter?: 'free' | 'paid' | 'sold';
     tipsterSearch?: string;
   }) {
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
@@ -925,8 +937,14 @@ export class AccumulatorsService {
         { now },
       );
 
-    if (options?.freeOnly) {
+    if (options?.priceFilter === 'free' || options?.freeOnly) {
       qb.andWhere('pm.price = 0');
+    }
+    if (options?.priceFilter === 'paid') {
+      qb.andWhere('pm.price > 0');
+    }
+    if (options?.priceFilter === 'sold') {
+      qb.andWhere('pm.purchase_count > 0');
     }
     if (options?.sport) {
       const SPORT_DISPLAY_MAP: Record<string, string> = {

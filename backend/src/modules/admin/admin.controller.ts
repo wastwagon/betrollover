@@ -72,9 +72,14 @@ export class AdminController {
   }
 
   @Get('marketplace')
-  async getMarketplace(@CurrentUser() user: User) {
+  async getMarketplace(
+    @CurrentUser() user: User,
+    @Query('priceFilter') priceFilter?: string,
+  ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
-    return this.adminService.getMarketplace();
+    const priceFilterVal =
+      priceFilter === 'free' || priceFilter === 'paid' || priceFilter === 'sold' ? priceFilter : undefined;
+    return this.adminService.getMarketplace({ priceFilter: priceFilterVal });
   }
 
   @Get('marketplace/diagnostic')

@@ -24,7 +24,7 @@ const VALID_SPORT_KEYS = new Set([
   'football', 'basketball', 'rugby', 'mma', 'volleyball', 'hockey', 'american_football', 'tennis', 'multi',
 ]);
 
-type PriceFilter = 'all' | 'free' | 'paid';
+type PriceFilter = 'all' | 'free' | 'paid' | 'sold';
 type SortBy = 'newest' | 'price-low' | 'price-high' | 'tipster-rank' | 'following-only';
 
 interface Pick {
@@ -174,8 +174,6 @@ export default function MarketplacePage() {
 
   const filteredAndSortedPicks = useMemo(() => {
     let list = [...picks]; // API already filters by sport when sportFilter is set
-    if (priceFilter === 'free') list = list.filter((p) => p.price === 0);
-    if (priceFilter === 'paid') list = list.filter((p) => p.price > 0);
     if (sortBy === 'following-only' && followedTipsterUsernames.size > 0) {
       list = list.filter((p) => p.tipster?.username && followedTipsterUsernames.has(p.tipster.username));
     }
@@ -189,11 +187,15 @@ export default function MarketplacePage() {
       list.sort((a, b) => (a.tipster?.rank ?? 999) - (b.tipster?.rank ?? 999));
     }
     return list;
-  }, [picks, priceFilter, sortBy, followedTipsterUsernames]);
+  }, [picks, sortBy, followedTipsterUsernames]);
 
   const tipsterParam = useMemo(
     () => (debouncedTipster ? `&tipsterSearch=${encodeURIComponent(debouncedTipster)}` : ''),
     [debouncedTipster],
+  );
+  const priceParam = useMemo(
+    () => (priceFilter === 'all' ? '' : `&priceFilter=${encodeURIComponent(priceFilter)}`),
+    [priceFilter],
   );
 
   const hasPendingMarketplace = useMemo(
@@ -207,7 +209,7 @@ export default function MarketplacePage() {
 
     if (!token) {
       // Guest: use public marketplace (free + paid listings; login required to purchase/claim)
-      fetch(`${API_URL}/accumulators/marketplace/public?limit=24${sportParam}${tipsterParam}`)
+      fetch(`${API_URL}/accumulators/marketplace/public?limit=24${sportParam}${tipsterParam}${priceParam}`)
         .then((r) => (r.ok ? r.json() : { items: [], total: 0, hasMore: false }))
         .then((data) => {
           const items = data?.items ?? [];
@@ -227,7 +229,7 @@ export default function MarketplacePage() {
 
     // Logged in: fetch marketplace, wallet, purchased, user, following
     Promise.all([
-      fetch(`${API_URL}/accumulators/marketplace?limit=24${sportParam}${tipsterParam}`, {
+      fetch(`${API_URL}/accumulators/marketplace?limit=24${sportParam}${tipsterParam}${priceParam}`, {
         headers: { Authorization: `Bearer ${token}` },
       }).then((r) => (r.ok ? r.json() : { items: [], total: 0, hasMore: false })),
       fetch(`${API_URL}/wallet/balance`, {
@@ -267,7 +269,7 @@ export default function MarketplacePage() {
         showError(err);
       })
       .finally(() => setLoading(false));
-  }, [router, sportFilter, tipsterParam, showError]);
+  }, [router, sportFilter, tipsterParam, priceParam, showError]);
 
   /** Refresh coupon cards while any listing is still pending (visibility-aware, 45s). */
   useEffect(() => {
@@ -277,8 +279,8 @@ export default function MarketplacePage() {
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
       const token = localStorage.getItem('token');
       const url = token
-        ? `${API_URL}/accumulators/marketplace?limit=24${sportParam}${tipsterParam}`
-        : `${API_URL}/accumulators/marketplace/public?limit=24${sportParam}${tipsterParam}`;
+        ? `${API_URL}/accumulators/marketplace?limit=24${sportParam}${tipsterParam}${priceParam}`
+        : `${API_URL}/accumulators/marketplace/public?limit=24${sportParam}${tipsterParam}${priceParam}`;
       fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
         .then((r) => (r.ok ? r.json() : { items: [], total: 0, hasMore: false }))
         .then((data) => {
@@ -300,7 +302,7 @@ export default function MarketplacePage() {
       clearInterval(id);
       document.removeEventListener('visibilitychange', onVis);
     };
-  }, [hasPendingMarketplace, sportFilter, tipsterParam]);
+  }, [hasPendingMarketplace, sportFilter, tipsterParam, priceParam]);
 
   const recordView = (id: number) => {
     fetch(`${API_URL}/accumulators/${id}/view`, { method: 'POST' }).catch(() => {});
@@ -311,8 +313,8 @@ export default function MarketplacePage() {
     const token = localStorage.getItem('token');
     const sportParam = sportFilter ? `&sport=${encodeURIComponent(sportFilter)}` : '';
     const url = token
-      ? `${API_URL}/accumulators/marketplace?limit=24&offset=${picks.length}${sportParam}${tipsterParam}`
-      : `${API_URL}/accumulators/marketplace/public?limit=24&offset=${picks.length}${sportParam}${tipsterParam}`;
+      ? `${API_URL}/accumulators/marketplace?limit=24&offset=${picks.length}${sportParam}${tipsterParam}${priceParam}`
+      : `${API_URL}/accumulators/marketplace/public?limit=24&offset=${picks.length}${sportParam}${tipsterParam}${priceParam}`;
     setLoadingMore(true);
     try {
       const res = await fetch(url, {
@@ -511,6 +513,7 @@ export default function MarketplacePage() {
                   <option value="all">All</option>
                   <option value="free">Free only</option>
                   <option value="paid">Paid only</option>
+                  <option value="sold">Sold only</option>
                 </select>
               </div>
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 w-full sm:w-auto min-w-0">

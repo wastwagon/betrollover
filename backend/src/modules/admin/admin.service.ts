@@ -803,10 +803,16 @@ export class AdminService {
     };
   }
 
-  async getMarketplace() {
-    const listings = await this.marketplaceRepo.find({
+  async getMarketplace(options?: { priceFilter?: 'free' | 'paid' | 'sold' }) {
+    const listingsRaw = await this.marketplaceRepo.find({
       where: { status: 'active' },
       order: { createdAt: 'DESC' },
+    });
+    const listings = listingsRaw.filter((l) => {
+      if (options?.priceFilter === 'free') return Number(l.price) === 0;
+      if (options?.priceFilter === 'paid') return Number(l.price) > 0;
+      if (options?.priceFilter === 'sold') return Number(l.purchaseCount ?? 0) > 0;
+      return true;
     });
     const accIds = listings.map((l) => l.accumulatorId);
     if (accIds.length === 0) return [];

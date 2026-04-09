@@ -65,16 +65,24 @@ export class AccumulatorsController {
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
     @Query('freeOnly') freeOnly?: string,
+    @Query('priceFilter') priceFilter?: string,
     @Query('tipsterSearch') tipsterSearch?: string,
   ) {
     const limitVal = limit != null ? Math.min(Math.max(parseInt(limit, 10) || 24, 1), 100) : undefined;
     const offsetVal = offset != null ? Math.max(parseInt(offset, 10) || 0, 0) : undefined;
     const tipQ = tipsterSearch?.trim();
+    const priceFilterVal =
+      priceFilter === 'free' || priceFilter === 'paid' || priceFilter === 'sold'
+        ? priceFilter
+        : freeOnly === 'true'
+          ? 'free'
+          : undefined;
     const data = await this.accumulatorsService.getMarketplacePublicList({
       limit: limitVal,
       offset: offsetVal,
       sport: sport || undefined,
       freeOnly: freeOnly === 'true',
+      priceFilter: priceFilterVal,
       tipsterSearch: tipQ || undefined,
     });
     return this.withPageAliases(data);
@@ -91,6 +99,7 @@ export class AccumulatorsController {
     @Query('sport') sport?: string,
     @Query('tipsterUsername') tipsterUsername?: string,
     @Query('tipsterSearch') tipsterSearch?: string,
+    @Query('priceFilter') priceFilter?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
@@ -99,12 +108,17 @@ export class AccumulatorsController {
     const limitVal = limit != null ? Math.min(Math.max(parseInt(limit, 10) || 24, 1), 100) : undefined;
     const offsetVal = offset != null ? Math.max(parseInt(offset, 10) || 0, 0) : undefined;
     const tipQ = tipsterSearch?.trim();
+    const priceFilterVal =
+      priceFilter === 'free' || priceFilter === 'paid' || priceFilter === 'sold' || priceFilter === 'all'
+        ? priceFilter
+        : undefined;
     const opts: Parameters<typeof this.accumulatorsService.getMarketplace>[2] = {
       limit: limitVal,
       offset: offsetVal,
       sport: sport || undefined,
       tipsterUsername: isAdmin ? tipsterUsername || undefined : undefined,
       tipsterSearch: tipQ || undefined,
+      priceFilter: priceFilterVal,
     };
     if (isAdmin) {
       opts.showPending = showPending === undefined ? true : showPending !== 'false';

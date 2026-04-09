@@ -45,6 +45,8 @@ interface MarketplaceTipster {
   displayName: string;
 }
 
+type PriceFilter = 'all' | 'free' | 'paid' | 'sold';
+
 export default function AdminMarketplacePage() {
   const router = useRouter();
   const [picks, setPicks] = useState<Accumulator[]>([]);
@@ -52,6 +54,7 @@ export default function AdminMarketplacePage() {
   const [showPending, setShowPending] = useState(true);
   const [showNotStated, setShowNotStated] = useState(true);
   const [showSettled, setShowSettled] = useState(false);
+  const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
   const [tipsterUsername, setTipsterUsername] = useState<string>('');
   const [tipsters, setTipsters] = useState<MarketplaceTipster[]>([]);
   const [fixing, setFixing] = useState(false);
@@ -75,6 +78,7 @@ export default function AdminMarketplacePage() {
     params.set('showPending', String(showPending));
     params.set('showNotStated', String(showNotStated));
     params.set('showSettled', String(showSettled));
+    if (priceFilter !== 'all') params.set('priceFilter', priceFilter);
     if (tipsterUsername) params.set('tipsterUsername', tipsterUsername);
     const url = `${getApiUrl()}/accumulators/marketplace?${params.toString()}`;
     fetch(url, { headers: { Authorization: `Bearer ${token}` } })
@@ -85,7 +89,7 @@ export default function AdminMarketplacePage() {
       })
       .catch(() => setPicks([]))
       .finally(() => setLoading(false));
-  }, [router, showPending, showNotStated, showSettled, tipsterUsername]);
+  }, [router, showPending, showNotStated, showSettled, priceFilter, tipsterUsername]);
 
   const loadTipsters = useCallback(() => {
     const token = localStorage.getItem('token');
@@ -207,6 +211,17 @@ export default function AdminMarketplacePage() {
             </span>
           </div>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 shrink-0">Price/Sales:</label>
+            <select
+              value={priceFilter}
+              onChange={(e) => setPriceFilter(e.target.value as PriceFilter)}
+              className="w-full sm:w-auto sm:min-w-[180px] rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="all">All listings</option>
+              <option value="free">Free only</option>
+              <option value="paid">Paid only</option>
+              <option value="sold">Sold only (purchase count &gt; 0)</option>
+            </select>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 shrink-0">Filter by tipster:</label>
             <select
               value={tipsterUsername}
@@ -220,10 +235,13 @@ export default function AdminMarketplacePage() {
                 </option>
               ))}
             </select>
-            {tipsterUsername && (
+            {(tipsterUsername || priceFilter !== 'all') && (
               <button
                 type="button"
-                onClick={() => setTipsterUsername('')}
+                onClick={() => {
+                  setTipsterUsername('');
+                  setPriceFilter('all');
+                }}
                 className="text-sm text-gray-600 dark:text-gray-400 hover:underline"
               >
                 Clear filter
