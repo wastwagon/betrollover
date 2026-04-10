@@ -152,6 +152,13 @@ export class NotificationsService {
               ...(data.alwaysSendEmail ? { followerAlert: '1' } : {}),
             },
           })
+          .then((r) => {
+            if (r && 'sent' in r && !r.sent) {
+              this.logger.warn(
+                `Notification email not sent for user ${data.userId} (${data.type}): ${(r as { error?: string }).error || 'unknown'}`,
+              );
+            }
+          })
           .catch((err) => this.logger.warn(`Notification email failed for user ${data.userId}: ${err}`));
       }
     }
@@ -180,11 +187,17 @@ export class NotificationsService {
       isSubscription?: boolean;
     };
   }): Promise<void> {
-    const follows = await this.tipsterFollowRepo.find({
-      where: { tipsterId: params.tipsterId },
-      select: ['userId'],
-    });
-    const followerIds = follows.map((f: TipsterFollow) => f.userId).filter((id: number) => id !== params.tipsterUserId);
+    // Resolve followers by tipster profile owner (user id). Matches how follows are stored (tipster_id → tipsters.id)
+    // and avoids silent misses if tipsterId ever diverged from the creator's profile row.
+    const followRows = await this.tipsterFollowRepo
+      .createQueryBuilder('f')
+      .innerJoin('f.tipster', 't')
+      .where('t.userId = :uid', { uid: params.tipsterUserId })
+      .select('f.userId', 'userId')
+      .getRawMany<{ userId: number }>();
+    const followerIds = followRows
+      .map((r) => Number(r.userId))
+      .filter((id) => Number.isFinite(id) && id !== params.tipsterUserId);
     if (followerIds.length === 0) return;
 
     const tipsterName = params.tipsterDisplayName || 'A tipster';
@@ -192,6 +205,24 @@ export class NotificationsService {
     const price = Number(params.price) || 0;
     const link = `/coupons/${params.accumulatorId}`;
     const message = `${tipsterName} posted a new pick${price > 0 ? ` at GHS ${price.toFixed(2)}` : ' (free)'}.`;
+
+    const baseMetadata = {
+      tipsterName,
+      pickId: String(params.accumulatorId),
+      pickTitle: params.couponTitle || '',
+      ...(tipsterForm
+        ? {
+            tipsterForm: tipsterForm.label,
+            tipsterWinRate: tipsterForm.winRate,
+            tipsterRoi: tipsterForm.roi,
+            tipsterStreak: tipsterForm.streak,
+            tipsterTotalPicks: tipsterForm.totalPicks,
+            tipsterFormAsOf: tipsterForm.asOf,
+          }
+        : {}),
+      audience: 'followers',
+      deliveryMode: params.couponCard ? 'detailed_card' : 'teaser',
+    } as Record<string, string>;
 
     for (const followerId of followerIds) {
       await this.create({
@@ -203,49 +234,43 @@ export class NotificationsService {
         icon: 'bell',
         sendEmail: !params.couponCard,
         alwaysSendEmail: !params.couponCard,
-        metadata: {
-          tipsterName,
-          pickId: String(params.accumulatorId),
-          pickTitle: params.couponTitle || '',
-          ...(tipsterForm
-            ? {
-                tipsterForm: tipsterForm.label,
-                tipsterWinRate: tipsterForm.winRate,
-                tipsterRoi: tipsterForm.roi,
-                tipsterStreak: tipsterForm.streak,
-                tipsterTotalPicks: tipsterForm.totalPicks,
-                tipsterFormAsOf: tipsterForm.asOf,
-              }
-            : {}),
-          audience: 'followers',
-          deliveryMode: params.couponCard ? 'detailed_card' : 'teaser',
-        },
+        metadata: baseMetadata,
       }).catch((err) => this.logger.warn(`notifyFollowersOfNewCoupon: user ${followerId} ${err}`));
 
       if (params.couponCard) {
+        const user = await this.userRepo.findOne({
+          where: { id: followerId },
+          select: ['email'],
+        });
+        if (!user?.email) continue;
         try {
-          const user = await this.userRepo.findOne({
-            where: { id: followerId },
-            select: ['email'],
+          await this.emailService.sendCouponCardEmail(user.email, {
+            tipsterName,
+            accumulatorId: params.accumulatorId,
+            couponTitle: params.couponTitle,
+            tipsterForm: tipsterForm?.label,
+            tipsterFormAsOf: tipsterForm?.asOf,
+            totalOdds: params.couponCard.totalOdds,
+            price,
+            link,
+            legs: params.couponCard.legs,
+            isSubscription: params.couponCard.isSubscription ?? false,
           });
-          // Follower new-pick alerts: send rich coupon email whenever the user has an address.
-          // (Paid picks use the teaser path above with alwaysSendEmail; free picks only had email when emailNotifications was on.)
-          if (user?.email) {
-            await this.emailService.sendCouponCardEmail(user.email, {
-              tipsterName,
-              accumulatorId: params.accumulatorId,
-              couponTitle: params.couponTitle,
-              tipsterForm: tipsterForm?.label,
-              tipsterFormAsOf: tipsterForm?.asOf,
-              totalOdds: params.couponCard.totalOdds,
-              price,
-              link,
-              legs: params.couponCard.legs,
-              isSubscription: params.couponCard.isSubscription ?? false,
-            });
-          }
         } catch (err) {
-          this.logger.warn(`notifyFollowersOfNewCoupon email card failed for user ${followerId}: ${err}`);
+          this.logger.warn(
+            `notifyFollowersOfNewCoupon rich email failed for user ${followerId}, sending teaser fallback: ${err}`,
+          );
+          try {
+            await this.emailService.sendNotificationEmail(user.email, {
+              type: 'new_pick_from_followed',
+              title: 'New Pick from Tipster You Follow',
+              message,
+              link,
+              metadata: { ...baseMetadata, followerAlert: '1' },
+            });
+          } catch (fallbackErr) {
+            this.logger.warn(`notifyFollowersOfNewCoupon teaser fallback failed for user ${followerId}: ${fallbackErr}`);
+          }
         }
       }
     }

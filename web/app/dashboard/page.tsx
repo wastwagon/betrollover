@@ -216,7 +216,7 @@ function DashboardContent() {
           setMinimumROI(thresholds.minimumROI);
           setMinimumWinRate(thresholds.minimumWinRate);
           const purchasesList = Array.isArray(purchasedData) ? purchasedData : [];
-          setPurchases(purchasesList.slice(0, 5));
+          setPurchases(purchasesList);
           /** Money that stayed with the marketplace: winning coupons only (lost/void are refunded to wallet). */
           const totalSpent = purchasesList.reduce(
             (sum: number, p: Purchase) =>
@@ -1164,7 +1164,7 @@ function DashboardContent() {
               <div className="p-4 sm:p-6">
                 {purchases.length > 0 ? (
                   <div className="space-y-2 sm:space-y-3">
-                    {purchases.map((purchase) => {
+                    {purchases.slice(0, 5).map((purchase) => {
                       if (!purchase.pick) return null;
                       const totalOdds = Number(purchase.pick.totalOdds || 0);
                       const isActive = purchase.pick.status === 'active' && purchase.pick.result === 'pending';

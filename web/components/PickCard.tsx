@@ -96,6 +96,8 @@ interface PickCardProps {
   /** Buyer review summary for this coupon */
   avgRating?: number | null;
   reviewCount?: number | null;
+  /** From API: legs visible (buyer, seller, free/settled, or admin). Does not imply purchase — purchase CTA unchanged. */
+  picksRevealed?: boolean;
 }
 
 export function PickCard({
@@ -131,6 +133,7 @@ export function PickCard({
   followLoading = false,
   avgRating,
   reviewCount,
+  picksRevealed = false,
 }: PickCardProps) {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showUnveilModal, setShowUnveilModal] = useState(false);
@@ -149,7 +152,7 @@ export function PickCard({
   }, [showUnveil]);
 
   const isFree = price === 0;
-  const showFullDetails = isFree || isPurchased || viewOnly;
+  const showFullDetails = isFree || isPurchased || viewOnly || picksRevealed;
 
   const purchaseActivityLabel =
     purchaseCount !== undefined && purchaseCount > 0

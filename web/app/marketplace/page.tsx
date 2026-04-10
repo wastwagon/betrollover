@@ -69,6 +69,7 @@ interface Accumulator {
   result?: string;
   avgRating?: number | null;
   reviewCount?: number | null;
+  picksRevealed?: boolean;
   /** Set after POST /accumulators/:id/purchase for debugging/analytics; unveil modal uses merged `picks`. */
   purchasedTicket?: unknown;
 }
@@ -609,6 +610,7 @@ export default function MarketplacePage() {
                     result={a.result}
                     picks={a.picks || []}
                     tipster={a.tipster}
+                    picksRevealed={a.picksRevealed === true}
                     isPurchased={isPurchased}
                     canPurchase={canPurchase}
                     walletBalance={walletBalance}

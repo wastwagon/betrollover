@@ -571,12 +571,17 @@ export class EmailService {
       ? `${data.tipsterName} posted: ${subTitle}`
       : `${data.tipsterName} posted a new coupon`;
 
-    return this.send({
+    const result = await this.send({
       to,
       subject,
       text,
       html,
     });
+    if (!result.sent) {
+      this.logger.warn(`sendCouponCardEmail: send failed for ${to}: ${result.error || 'unknown'}`);
+      throw new Error(result.error || 'Coupon card email was not sent');
+    }
+    return result;
   }
 
   /**

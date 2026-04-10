@@ -129,6 +129,7 @@ export default function TipsterProfilePage() {
   const [subscribeLoading, setSubscribeLoading] = useState<number | null>(null);
   const [subscribedPackageIds, setSubscribedPackageIds] = useState<Set<number>>(new Set());
   const [isAuthed, setIsAuthed] = useState(false);
+  const [viewerIsAdmin, setViewerIsAdmin] = useState(false);
   const [reviewSummary, setReviewSummary] = useState<{ avg: number; total: number } | null>(null);
   const [performancePeriod, setPerformancePeriod] = useState<TipsterPerformancePeriod>('all');
   /** Applied calendar range (coupon posted date); takes precedence over preset `performance` in the API. */
@@ -202,11 +203,15 @@ export default function TipsterProfilePage() {
       fetch(`${getApiUrl()}/accumulators/purchased`, { headers: { Authorization: `Bearer ${token}` } }).then((r) =>
         r.ok ? r.json() : [],
       ),
-    ]).then(([walletData, purchasedData]) => {
+      fetch(`${getApiUrl()}/users/me`, { headers: { Authorization: `Bearer ${token}` } }).then((r) =>
+        r.ok ? r.json() : null,
+      ),
+    ]).then(([walletData, purchasedData, me]) => {
       if (walletData) setWalletBalance(Number(walletData.balance));
       if (Array.isArray(purchasedData)) {
         setPurchasedIds(new Set(purchasedData.map((p: any) => p.accumulatorId || p.pick?.id)));
       }
+      setViewerIsAdmin(me?.role === 'admin');
     });
   }, [profile?.marketplace_coupons?.length]);
 
@@ -825,6 +830,7 @@ export default function TipsterProfilePage() {
                         purchaseCount={a.purchaseCount}
                         picks={a.picks || []}
                         tipster={a.tipster}
+                        picksRevealed={viewerIsAdmin}
                         isPurchased={isPurchased}
                         canPurchase={canPurchase}
                         walletBalance={walletBalance}

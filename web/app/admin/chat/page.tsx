@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { AdminSidebar } from '@/components/AdminSidebar';
+import { getApiUrl } from '@/lib/site-config';
 
-const API = process.env.NEXT_PUBLIC_API_URL || '/api/backend';
+function api(path: string) {
+  return `${getApiUrl()}/chat${path.startsWith('/') ? path : `/${path}`}`;
+}
 
 function getToken() {
   if (typeof window === 'undefined') return null;
@@ -80,36 +83,44 @@ export default function AdminChatPage() {
   const loadFlagged = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/v1/chat/admin/flagged`, { headers: authHeaders() });
-      const data = await res.json();
-      setFlagged(data.data || []);
-    } catch {}
+      const res = await fetch(api('/admin/flagged'), { headers: authHeaders() });
+      const data = res.ok ? await res.json() : null;
+      const rows = data?.data;
+      setFlagged(Array.isArray(rows) ? rows : []);
+    } catch {
+      setFlagged([]);
+    }
     setLoading(false);
   };
 
   const loadBans = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/v1/chat/admin/bans`, { headers: authHeaders() });
-      const data = await res.json();
-      setBans(data.data || []);
-    } catch {}
+      const res = await fetch(api('/admin/bans'), { headers: authHeaders() });
+      const data = res.ok ? await res.json() : null;
+      const rows = data?.data;
+      setBans(Array.isArray(rows) ? rows : []);
+    } catch {
+      setBans([]);
+    }
     setLoading(false);
   };
 
   const loadRooms = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/v1/chat/rooms`, { headers: authHeaders() });
-      const data = await res.json();
-      setRooms(data || []);
-    } catch {}
+      const res = await fetch(api('/rooms'), { headers: authHeaders() });
+      const data = res.ok ? await res.json() : null;
+      setRooms(Array.isArray(data) ? data : []);
+    } catch {
+      setRooms([]);
+    }
     setLoading(false);
   };
 
   const deleteMessage = async (id: number) => {
     if (!confirm('Delete this message?')) return;
-    await fetch(`${API}/v1/chat/admin/messages/${id}`, {
+    await fetch(api(`/admin/messages/${id}`), {
       method: 'DELETE',
       headers: authHeaders(),
       body: JSON.stringify({ reason: 'Admin moderation' }),
@@ -127,7 +138,7 @@ export default function AdminChatPage() {
 
   const submitBan = async () => {
     if (!banModal) return;
-    await fetch(`${API}/v1/chat/admin/users/${banModal.userId}/ban`, {
+    await fetch(api(`/admin/users/${banModal.userId}/ban`), {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify({
@@ -144,7 +155,7 @@ export default function AdminChatPage() {
 
   const liftBan = async (userId: number, username: string) => {
     if (!confirm(`Lift ban for ${username}?`)) return;
-    await fetch(`${API}/v1/chat/admin/users/${userId}/ban`, {
+    await fetch(api(`/admin/users/${userId}/ban`), {
       method: 'DELETE',
       headers: authHeaders(),
     });
@@ -154,7 +165,7 @@ export default function AdminChatPage() {
 
   const saveRoom = async () => {
     if (!editRoom) return;
-    await fetch(`${API}/v1/chat/admin/rooms/${editRoom.id}`, {
+    await fetch(api(`/admin/rooms/${editRoom.id}`), {
       method: 'PATCH',
       headers: authHeaders(),
       body: JSON.stringify({

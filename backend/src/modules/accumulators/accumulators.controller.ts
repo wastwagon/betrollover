@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Query, UseGuards, ParseIntPipe, Not
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AccumulatorsService, CreateAccumulatorDto } from './accumulators.service';
-import { User } from '../users/entities/user.entity';
+import { User, UserRole } from '../users/entities/user.entity';
 
 @Controller('accumulators')
 export class AccumulatorsController {
@@ -119,6 +119,7 @@ export class AccumulatorsController {
       tipsterUsername: isAdmin ? tipsterUsername || undefined : undefined,
       tipsterSearch: tipQ || undefined,
       priceFilter: priceFilterVal,
+      viewerIsAdmin: isAdmin,
     };
     if (isAdmin) {
       opts.showPending = showPending === undefined ? true : showPending !== 'false';
@@ -170,7 +171,9 @@ export class AccumulatorsController {
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   getById(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
-    return this.accumulatorsService.getById(id, user.id);
+    return this.accumulatorsService.getById(id, user.id, {
+      viewerIsAdmin: user.role === UserRole.ADMIN,
+    });
   }
 
   @Post(':id/purchase')

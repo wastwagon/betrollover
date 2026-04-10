@@ -63,6 +63,10 @@ interface Purchase {
     sport?: string;
     picks: PickItem[];
     tipster?: Tipster | null;
+    purchaseCount?: number;
+    avgRating?: number | null;
+    reviewCount?: number | null;
+    createdAt?: string;
   };
 }
 
@@ -364,7 +368,7 @@ export default function MyPurchasesPage() {
           )}
 
           {!loading && filtered.length > 0 && (
-            <div className="space-y-3 pb-6 min-w-0 max-w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-6 min-w-0 max-w-full">
               {filtered.map((p) =>
                 p.pick ? (
                   <PickCard
@@ -379,9 +383,21 @@ export default function MyPurchasesPage() {
                     sport={p.pick.sport}
                     picks={p.pick.picks || []}
                     tipster={p.pick.tipster ?? null}
+                    purchaseCount={p.pick.purchaseCount}
+                    avgRating={p.pick.avgRating ?? null}
+                    reviewCount={p.pick.reviewCount ?? null}
+                    createdAt={p.pick.createdAt}
                     isPurchased
                     detailsHref={`/coupons/${p.pick.id}`}
                     onPurchase={() => {}}
+                    onView={() => {
+                      const tok = localStorage.getItem('token');
+                      if (!tok) return;
+                      fetch(`${getApiUrl()}/accumulators/${p.pick!.id}/view`, {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${tok}` },
+                      }).catch(() => {});
+                    }}
                     purchasing={false}
                   />
                 ) : null,

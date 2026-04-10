@@ -112,9 +112,7 @@ export default function AdminSettingsPage() {
           console.error('Settings API error:', r.status, await r.text());
           return null;
         }
-        const data = await r.json();
-        console.log('Settings loaded:', data);
-        return data;
+        return r.json();
       })
       .then((data) => {
         setSettings(data);

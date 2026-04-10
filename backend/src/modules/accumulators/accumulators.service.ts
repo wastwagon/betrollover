@@ -447,9 +447,9 @@ export class AccumulatorsService {
     ticket: AccumulatorTicket,
     listingRow: PickMarketplace | null,
     viewerUserId?: number | null,
-    opts?: { forceFullPicks?: boolean },
+    opts?: { forceFullPicks?: boolean; viewerIsAdmin?: boolean },
   ): Promise<Record<string, unknown>> {
-    if (opts?.forceFullPicks) {
+    if (opts?.forceFullPicks || opts?.viewerIsAdmin) {
       return { ...payload, picksRevealed: true };
     }
     const effectivePrice =
@@ -556,7 +556,7 @@ export class AccumulatorsService {
   async getById(
     id: number,
     viewerUserId?: number | null,
-    opts?: { forceFullPicks?: boolean },
+    opts?: { forceFullPicks?: boolean; viewerIsAdmin?: boolean },
   ) {
     const ticket = await this.ticketRepo.findOne({
       where: { id },
@@ -573,6 +573,30 @@ export class AccumulatorsService {
     const [withTipster] = await this.enrichWithTipsterMetadata([enriched], row ? [row] : []);
     const base = (withTipster ?? enriched) as Record<string, unknown>;
     return this.applyCouponPickVisibility(base, ticket, row, viewerUserId ?? undefined, opts);
+  }
+
+  async getPurchased(userId: number) {
+    const purchased = await this.purchasedRepo.find({
+      where: { userId },
+      order: { purchasedAt: 'DESC' },
+    });
+    const accIds = purchased.map((p) => p.accumulatorId);
+    if (accIds.length === 0) return [];
+    const tickets = await this.ticketRepo.find({
+      where: { id: In(accIds) },
+      relations: ['picks'],
+    });
+    const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
+    const rows = await this.marketplaceRepo.find({
+      where: { accumulatorId: In(accIds) },
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
+    });
+    const withTipster = await this.enrichWithTipsterMetadata(enrichedTickets, rows, userId);
+    const ticketMap = new Map(withTipster.map((t) => [t.id, t]));
+    return purchased.map((p) => ({
+      ...p,
+      pick: ticketMap.get(p.accumulatorId),
+    }));
   }
 
   async getMyAccumulators(userId: number, sport?: string) {
@@ -599,25 +623,6 @@ export class AccumulatorsService {
       order: { createdAt: 'DESC' },
     });
     return this.enrichPicksWithFixtureScores(tickets);
-  }
-
-  async getPurchased(userId: number) {
-    const purchased = await this.purchasedRepo.find({
-      where: { userId },
-      order: { purchasedAt: 'DESC' },
-    });
-    const accIds = purchased.map((p) => p.accumulatorId);
-    if (accIds.length === 0) return [];
-    const tickets = await this.ticketRepo.find({
-      where: { id: In(accIds) },
-      relations: ['picks'],
-    });
-    const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
-    const ticketMap = new Map(enrichedTickets.map((t) => [t.id, t]));
-    return purchased.map((p) => ({
-      ...p,
-      pick: ticketMap.get(p.accumulatorId),
-    }));
   }
 
   /** Subscription feed: coupons from tipsters the user is subscribed to */
@@ -691,11 +696,14 @@ export class AccumulatorsService {
       showNotStated?: boolean;
       showSettled?: boolean;
       priceFilter?: 'all' | 'free' | 'paid' | 'sold';
+      /** Admins see all pick legs on marketplace cards without purchasing. */
+      viewerIsAdmin?: boolean;
     },
   ) {
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
     const offset = Math.max(options?.offset ?? 0, 0);
     const adminFilterMode = options?.showPending !== undefined || options?.showNotStated !== undefined || options?.showSettled !== undefined;
+    const pickVisOpts = { viewerIsAdmin: options?.viewerIsAdmin === true };
     const now = new Date();
 
     // Optimized path for normal user marketplace view (pending + not started only).
@@ -791,6 +799,7 @@ export class AccumulatorsService {
             ticketById.get((item as { id: number }).id)!,
             rowByAccId.get((item as { id: number }).id) ?? null,
             userId,
+            pickVisOpts,
           ),
         ),
       );
@@ -900,6 +909,7 @@ export class AccumulatorsService {
           ticketById.get((item as { id: number }).id)!,
           rowByAccId.get((item as { id: number }).id) ?? null,
           userId,
+          pickVisOpts,
         ),
       ),
     );
