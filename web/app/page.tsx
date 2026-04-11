@@ -17,7 +17,7 @@ import { HomeJoinCtaCard } from '@/components/HomeJoinCtaCard';
 import { HomePopularTipsters } from '@/components/HomePopularTipsters';
 import { HomePopularEvents } from '@/components/HomePopularEvents';
 import { HomeFreeTipOfTheDay } from '@/components/HomeFreeTipOfTheDay';
-import { HomePublicChatRooms } from '@/components/HomePublicChatRooms';
+import { HomeQuickMarketplaceSections } from '@/components/HomeQuickMarketplaceSections';
 import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, getAlternates } from '@/lib/site-config';
 import { fetchSellingThresholds } from '@/lib/selling-thresholds';
@@ -171,59 +171,7 @@ export default async function HomePage() {
         <div className="section-ux-rail-4xl w-full min-w-0">
           <AdSlot zoneSlug="between-sections" fullWidth className="w-full" />
         </div>
-        <HomePublicChatRooms />
-
-        {/* Sports We Cover */}
-        <section className="py-14 md:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 to-emerald-50/30 dark:from-slate-900/60 dark:to-slate-800/40 border-t border-[var(--border)] w-full min-w-0 max-w-full overflow-x-hidden">
-          <div className="section-ux-cap-5xl w-full min-w-0">
-            <div className="text-center mb-10">
-              <span className="inline-block px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold uppercase tracking-wide mb-3">{t('nav.sports')}</span>
-              <h2 className="text-base font-semibold text-[var(--text)] mb-3 sm:text-lg md:text-xl">{t('home.sports_title')}</h2>
-              <p className="text-[var(--text-muted)] text-base max-w-xl mx-auto">{t('home.sports_sub')}</p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 section-ux-cap-4xl w-full min-w-0">
-              {(
-                [
-                  { id: 'football' as const, navKey: 'nav.football' as const, icon: '⚽', accent: 'border-emerald-400/60' },
-                  { id: 'basketball', navKey: 'nav.basketball', icon: '🏀', accent: 'border-orange-400/60' },
-                  { id: 'tennis', navKey: 'nav.tennis', icon: '🎾', accent: 'border-yellow-400/60' },
-                  { id: 'rugby', navKey: 'nav.rugby', icon: '🏉', accent: 'border-amber-400/60' },
-                  { id: 'mma', navKey: 'nav.mma', icon: '🥊', accent: 'border-red-400/55' },
-                  { id: 'volleyball', navKey: 'nav.volleyball', icon: '🏐', accent: 'border-blue-400/60' },
-                  { id: 'hockey', navKey: 'nav.hockey', icon: '🏒', accent: 'border-cyan-400/60' },
-                  { id: 'american_football', navKey: 'nav.american_football', icon: '🏈', accent: 'border-violet-400/60' },
-                  { id: 'multi', navKey: null, icon: '🌍', accent: 'border-teal-400/60' },
-                ] as const
-              ).map((sport) => {
-                const title =
-                  sport.navKey != null ? t(sport.navKey) : t('home.sport.multi_title');
-                const desc = t(`home.sport.${sport.id}.desc`);
-                const markets = t(`home.sport.${sport.id}.markets`).split('|');
-                return (
-                  <div
-                    key={sport.id}
-                    className={`p-5 rounded-2xl bg-[var(--card)] border-2 ${sport.accent} shadow-sm hover:shadow-md transition-all duration-200 min-w-0`}
-                  >
-                    <span className="text-3xl mb-3 block">{sport.icon}</span>
-                    <h3 className="text-base font-semibold text-[var(--text)] mb-1.5">{title}</h3>
-                    <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-3">{desc}</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {markets.map((m) => (
-                        <span
-                          key={m}
-                          className="px-2 py-0.5 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-xs font-medium"
-                        >
-                          {m.trim()}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
+        <HomeQuickMarketplaceSections />
 
         {/* Platform Features — Bento Grid */}
         <section className="py-14 md:py-20 border-t border-[var(--border)] w-full min-w-0 max-w-full overflow-x-hidden">

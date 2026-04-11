@@ -77,6 +77,12 @@ export class TipstersController {
     return { total: tipsters.length, total_count: tipsters.length, tipsters };
   }
 
+  /** Public: all active tipster usernames for XML sitemap (must stay above `:username`). */
+  @Get('sitemap/usernames')
+  async getSitemapUsernames() {
+    return this.tipstersApi.listActiveTipsterUsernames();
+  }
+
   @Get(':username')
   @UseGuards(OptionalJwtGuard)
   async getTipsterProfile(

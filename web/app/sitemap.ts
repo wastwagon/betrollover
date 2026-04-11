@@ -1,5 +1,10 @@
 import { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/site-config';
+import {
+  fetchAllNewsArticlesForSitemap,
+  fetchAllResourceItemsForSitemap,
+  fetchTipsterUsernamesForSitemap,
+} from '@/lib/seo/public-content';
 
 /**
  * Core pages that exist in both English (canonical) and French (/fr/...) versions.
@@ -43,8 +48,92 @@ const EN_ONLY_PAGES: Array<{
   { path: '/tools/converter',   changeFrequency: 'weekly',  priority: 0.5 },
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const base = SITE_URL;
+/** News + tipster profile URLs (requires API at build/runtime; fails soft if unreachable). */
+async function dynamicSitemapEntries(origin: string): Promise<MetadataRoute.Sitemap> {
+  const out: MetadataRoute.Sitemap = [];
+  try {
+    const [enNews, frNews, enResources, frResources, usernames] = await Promise.all([
+      fetchAllNewsArticlesForSitemap('en'),
+      fetchAllNewsArticlesForSitemap('fr'),
+      fetchAllResourceItemsForSitemap('en'),
+      fetchAllResourceItemsForSitemap('fr'),
+      fetchTipsterUsernamesForSitemap(),
+    ]);
+
+    const seenEn = new Set<string>();
+    for (const a of enNews) {
+      if (!a.slug || seenEn.has(a.slug)) continue;
+      seenEn.add(a.slug);
+      out.push({
+        url: `${origin}/news/${encodeURIComponent(a.slug)}`,
+        lastModified: a.publishedAt ? new Date(a.publishedAt) : new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.65,
+      });
+    }
+
+    const seenFr = new Set<string>();
+    for (const a of frNews) {
+      if (!a.slug || seenFr.has(a.slug)) continue;
+      seenFr.add(a.slug);
+      out.push({
+        url: `${origin}/fr/news/${encodeURIComponent(a.slug)}`,
+        lastModified: a.publishedAt ? new Date(a.publishedAt) : new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.6,
+      });
+    }
+
+    const seenResEn = new Set<string>();
+    for (const r of enResources) {
+      const key = `${r.categorySlug}/${r.itemSlug}`;
+      if (seenResEn.has(key)) continue;
+      seenResEn.add(key);
+      out.push({
+        url: `${origin}/resources/${encodeURIComponent(r.categorySlug)}/${encodeURIComponent(r.itemSlug)}`,
+        lastModified: r.publishedAt ? new Date(r.publishedAt) : new Date(),
+        changeFrequency: 'monthly',
+        priority: 0.55,
+      });
+    }
+
+    const seenResFr = new Set<string>();
+    for (const r of frResources) {
+      const key = `${r.categorySlug}/${r.itemSlug}`;
+      if (seenResFr.has(key)) continue;
+      seenResFr.add(key);
+      out.push({
+        url: `${origin}/fr/resources/${encodeURIComponent(r.categorySlug)}/${encodeURIComponent(r.itemSlug)}`,
+        lastModified: r.publishedAt ? new Date(r.publishedAt) : new Date(),
+        changeFrequency: 'monthly',
+        priority: 0.5,
+      });
+    }
+
+    for (const u of usernames) {
+      if (!u) continue;
+      const seg = encodeURIComponent(u);
+      out.push({
+        url: `${origin}/tipsters/${seg}`,
+        lastModified: new Date(),
+        changeFrequency: 'daily',
+        priority: 0.75,
+      });
+      out.push({
+        url: `${origin}/fr/tipsters/${seg}`,
+        lastModified: new Date(),
+        changeFrequency: 'daily',
+        priority: 0.7,
+      });
+    }
+  } catch {
+    /* backend unavailable during build — static hub URLs still valid */
+  }
+  return out;
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const base = SITE_URL.replace(/\/$/, '');
   const now = new Date();
 
   const localised: MetadataRoute.Sitemap = LOCALISED_PAGES.flatMap(({ path, changeFrequency, priority }) => {
@@ -64,5 +153,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority,
   }));
 
-  return [...localised, ...enOnly];
+  const dynamic = await dynamicSitemapEntries(base);
+
+  return [...localised, ...enOnly, ...dynamic];
 }

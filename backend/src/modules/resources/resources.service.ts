@@ -80,7 +80,13 @@ export class ResourcesService {
     return item;
   }
 
-  async listPublishedItems(params?: { categorySlug?: string; type?: ResourceType; limit?: number; language?: string }) {
+  async listPublishedItems(params?: {
+    categorySlug?: string;
+    type?: ResourceType;
+    limit?: number;
+    offset?: number;
+    language?: string;
+  }) {
     const lang = (params?.language || 'en').toLowerCase().slice(0, 5);
     const qb = this.itemRepo
       .createQueryBuilder('i')
@@ -96,8 +102,8 @@ export class ResourcesService {
     if (params?.type) {
       qb.andWhere('i.type = :type', { type: params.type });
     }
-    if (params?.limit) {
-      qb.take(params.limit);
+    if (params?.limit != null) {
+      qb.take(params.limit).skip(Math.max(0, params.offset ?? 0));
     }
 
     return qb.getMany();

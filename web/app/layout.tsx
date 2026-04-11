@@ -36,6 +36,8 @@ const dmSans = DM_Sans({
 // Ensure we only pass a string to className (avoids "Objects are not valid as React child" during hydration)
 const fontClassName = typeof dmSans?.variable === 'string' ? dmSans.variable : '';
 
+const googleSiteVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim();
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -86,6 +88,7 @@ export const metadata: Metadata = {
     },
   },
   category: 'sports',
+  ...(googleSiteVerification ? { verification: { google: googleSiteVerification } } : {}),
 };
 
 export const viewport: Viewport = {

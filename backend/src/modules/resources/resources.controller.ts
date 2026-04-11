@@ -16,12 +16,14 @@ export class ResourcesController {
     @Query('category') categorySlug?: string,
     @Query('type') type?: ResourceType,
     @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
     @Query('language') language?: string,
   ) {
     return this.resourcesService.listPublishedItems({
       categorySlug,
       type,
       limit: limit ? parseInt(limit, 10) : undefined,
+      offset: offset ? parseInt(offset, 10) : undefined,
       language: language || 'en',
     });
   }

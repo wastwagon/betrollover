@@ -748,6 +748,18 @@ export class TipstersApiService {
     }));
   }
 
+  /** Public: active tipster usernames for sitemap generation (no stats payload). */
+  async listActiveTipsterUsernames(): Promise<{ usernames: string[] }> {
+    const rows = await this.tipsterRepo
+      .createQueryBuilder('t')
+      .select('t.username', 'username')
+      .where('t.isActive = :active', { active: true })
+      .andWhere('(t.isAi = true OR t.userId IS NOT NULL)')
+      .orderBy('t.username', 'ASC')
+      .getRawMany<{ username: string }>();
+    return { usernames: rows.map((r) => r.username) };
+  }
+
   async getTipsterProfile(username: string, window: TipsterProfilePerformanceWindow) {
     const tipster = await this.tipsterRepo.findOne({
       where: { username },

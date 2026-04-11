@@ -115,6 +115,9 @@ export default function MarketplacePage() {
     const tip = searchParams.get('tipster') || '';
     setTipsterSearch(tip);
     setDebouncedTipster(tip);
+    const pf = searchParams.get('priceFilter');
+    if (pf === 'free' || pf === 'paid' || pf === 'sold') setPriceFilter(pf);
+    else if (pf === 'all') setPriceFilter('all');
   }, [searchParams]);
 
   // Keep URL in sync with filters (debounced tipster avoids history spam while typing)
@@ -123,11 +126,12 @@ export default function MarketplacePage() {
     const p = new URLSearchParams();
     if (sportFilter) p.set('sport', sportFilter);
     if (debouncedTipster) p.set('tipster', debouncedTipster);
+    if (priceFilter !== 'all') p.set('priceFilter', priceFilter);
     const qs = p.toString();
     const next = qs ? `/marketplace?${qs}` : '/marketplace';
     const cur = `${window.location.pathname}${window.location.search}`;
     if (cur !== next) router.replace(next, { scroll: false });
-  }, [sportFilter, debouncedTipster, router]);
+  }, [sportFilter, debouncedTipster, priceFilter, router]);
 
   const handleFollow = async (username: string) => {
     const token = localStorage.getItem('token');
