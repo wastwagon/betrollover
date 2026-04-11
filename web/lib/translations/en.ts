@@ -1034,6 +1034,10 @@ const en = {
   'leaderboard.empty_logged_sub':
     'No tipsters match this filter right now. Try another period or sport, or browse all profiles.',
   'leaderboard.empty_logged_cta': 'Browse all tipsters',
+  'leaderboard.rank_notice_all_time':
+    'All-time order matches the homepage “Leading ROI” figure: tipsters with at least {n} settled picks (wins + losses on published coupons) are ranked by ROI, highest first (then profit, then win rate). Tipsters with fewer than {n} settled picks appear below in ROI order so one-off hot streaks do not rank above longer track records.',
+  'leaderboard.rank_notice_period':
+    'This view ranks tipsters by ROI from coupons that settled in the selected window; only tipsters with at least one settled pick in that period appear.',
   'seo.discover_title': 'Discover Sports News & Tipster Guides',
   'seo.discover_desc': 'Transfer news, injury reports, and expert tipster strategy guides across all major global sports — football, basketball, tennis, MMA and more.',
   'seo.news_title': 'Sports News | Transfers, Injuries & Match Previews',

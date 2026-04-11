@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { useCurrency } from '@/context/CurrencyContext';
+import { LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
 
 interface PublicStats {
   verifiedTipsters: number;
@@ -33,9 +34,6 @@ function formatNumber(n: number): string {
   if (n <= 0) return '0';
   return n.toLocaleString();
 }
-
-/** Min settled picks (wins + losses) before we show someone as "leading" — avoids 100% from 1 pick */
-const MIN_SETTLED_FOR_LEADING = 10;
 
 /** Current leading tipster from leaderboard (win rate & ROI) — varies as leader changes */
 interface LeadingTipsterStats {
@@ -131,7 +129,9 @@ export function HomeHero() {
         total_losses?: number;
       }[];
       const settled = (e: (typeof entries)[0]) => (e.total_wins ?? 0) + (e.total_losses ?? 0);
-      const topWithEnoughSettled = entries.find((e) => settled(e) >= MIN_SETTLED_FOR_LEADING);
+      const topWithEnoughSettled = entries.find(
+        (e) => settled(e) >= LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING,
+      );
       if (topWithEnoughSettled) {
         setLeadingTipster({
           winRate: typeof topWithEnoughSettled.win_rate === 'number' ? topWithEnoughSettled.win_rate : null,

@@ -1031,6 +1031,10 @@ const fr: Record<string, string> = {
   'leaderboard.empty_logged_sub':
     'Aucun tipster ne correspond à ce filtre pour le moment. Essayez une autre période ou un autre sport, ou parcourez tous les profils.',
   'leaderboard.empty_logged_cta': 'Voir tous les tipsters',
+  'leaderboard.rank_notice_all_time':
+    'Le classement all-time suit la même règle que le ROI en tête sur l’accueil : les tipsters avec au moins {n} coupons arbitrés (gagnés + perdus) sont classés par ROI décroissant (puis profit, puis taux de réussite). Ceux avec moins de {n} coupons arbitrés viennent ensuite, toujours par ROI — les séries courtes ne passent pas devant des historiques plus solides.',
+  'leaderboard.rank_notice_period':
+    'Cette vue classe par ROI sur les coupons arbitrés dans la période choisie ; seuls les tipsters avec au moins un coupon arbitré sur la période apparaissent.',
   'seo.discover_title': "Découvrir les Actualités Sportives & Guides Tipsters",
   'seo.discover_desc': "Restez informé avec les actualités des transferts, rapports de blessures et guides stratégiques pour tipsters experts en football, basketball, tennis, MMA et plus.",
   'seo.news_title': "Actualités Sportives | Transferts, Blessures & Aperçus",
