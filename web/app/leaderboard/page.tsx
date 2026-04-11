@@ -13,7 +13,10 @@ import { useT } from '@/context/LanguageContext';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 import { tipsterRankMedal } from '@/lib/tipster-rank-ui';
-import { LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
+import {
+  LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING,
+  LEADERBOARD_MIN_SETTLED_WEEKLY,
+} from '@betrollover/shared-types';
 
 type Period = 'all_time' | 'monthly' | 'weekly';
 type SportFilter = 'all' | 'football' | 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football';
@@ -200,11 +203,18 @@ export default function LeaderboardPage() {
           className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--card)]/80 px-3 py-3 sm:px-4 sm:py-3.5 text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed max-w-4xl"
           role="note"
         >
-          {period === 'all_time'
-            ? t('leaderboard.rank_notice_all_time', {
-                n: String(LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING),
-              })
-            : t('leaderboard.rank_notice_period')}
+          <p className="font-semibold text-[var(--text)] mb-1.5">{t('leaderboard.important_note_title')}</p>
+          <p className="m-0">
+            {period === 'all_time'
+              ? t('leaderboard.rank_notice_all_time', {
+                  n: String(LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING),
+                })
+              : period === 'weekly'
+                ? t('leaderboard.rank_notice_weekly', { n: String(LEADERBOARD_MIN_SETTLED_WEEKLY) })
+                : t('leaderboard.rank_notice_monthly', {
+                    n: String(LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING),
+                  })}
+          </p>
         </div>
 
         {/* Table */}

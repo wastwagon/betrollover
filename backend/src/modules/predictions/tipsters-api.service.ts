@@ -11,7 +11,10 @@ import { PickMarketplace } from '../accumulators/entities/pick-marketplace.entit
 import { User } from '../users/entities/user.entity';
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { TipsterSubscriptionPackage } from '../subscriptions/entities/tipster-subscription-package.entity';
-import { LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
+import {
+  LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING,
+  LEADERBOARD_MIN_SETTLED_WEEKLY,
+} from '@betrollover/shared-types';
 
 const SORT_COLUMNS: Record<string, string> = {
   roi: 'roi',
@@ -91,14 +94,18 @@ function settledPickCount(row: { total_wins?: number; total_losses?: number }): 
   return (row.total_wins ?? 0) + (row.total_losses ?? 0);
 }
 
-/** All-time leaderboard row ordering (ROI tie-breakers) — matches homepage Leading ROI eligibility. */
+function leaderboardRowProfit(row: { total_profit?: number; profit?: number }): number {
+  return Number(row.total_profit ?? row.profit ?? 0);
+}
+
+/** Leaderboard row ordering (ROI, then profit, then win rate). Works for all-time and period rows (`profit` or `total_profit`). */
 function compareLeaderboardRows(
-  a: { roi: number; total_profit: number; win_rate: number },
-  b: { roi: number; total_profit: number; win_rate: number },
+  a: { roi: number; total_profit?: number; profit?: number; win_rate: number },
+  b: { roi: number; total_profit?: number; profit?: number; win_rate: number },
 ): number {
   const roi = (b.roi ?? 0) - (a.roi ?? 0);
   if (roi !== 0) return roi;
-  const profit = (b.total_profit ?? 0) - (a.total_profit ?? 0);
+  const profit = leaderboardRowProfit(b) - leaderboardRowProfit(a);
   if (profit !== 0) return profit;
   return (b.win_rate ?? 0) - (a.win_rate ?? 0);
 }
@@ -1120,10 +1127,14 @@ export class TipstersApiService {
       };
     });
 
-    const withSettled = enriched.filter((r) => (r.total_wins ?? 0) + (r.total_losses ?? 0) > 0);
-    const sorted = withSettled
-      .sort((a, b) => (b.roi ?? 0) - (a.roi ?? 0) || b.profit - a.profit || (b.win_rate ?? 0) - (a.win_rate ?? 0))
-      .slice(0, options.limit);
+    const withSettled = enriched.filter((r) => settledPickCount(r) > 0);
+    const minPrimary =
+      options.period === 'weekly'
+        ? LEADERBOARD_MIN_SETTLED_WEEKLY
+        : LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING;
+    const primary = withSettled.filter((r) => settledPickCount(r) >= minPrimary).sort(compareLeaderboardRows);
+    const secondary = withSettled.filter((r) => settledPickCount(r) < minPrimary).sort(compareLeaderboardRows);
+    const sorted = [...primary, ...secondary].slice(0, options.limit);
 
     const periodVipUids = [
       ...new Set(sorted.map((r) => idToUserId.get(r.id)).filter((id): id is number => id != null)),

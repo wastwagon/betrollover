@@ -1031,10 +1031,13 @@ const fr: Record<string, string> = {
   'leaderboard.empty_logged_sub':
     'Aucun tipster ne correspond à ce filtre pour le moment. Essayez une autre période ou un autre sport, ou parcourez tous les profils.',
   'leaderboard.empty_logged_cta': 'Voir tous les tipsters',
+  'leaderboard.important_note_title': 'Note importante',
   'leaderboard.rank_notice_all_time':
-    'Le classement all-time suit la même règle que le ROI en tête sur l’accueil : les tipsters avec au moins {n} coupons arbitrés (gagnés + perdus) sont classés par ROI décroissant (puis profit, puis taux de réussite). Ceux avec moins de {n} coupons arbitrés viennent ensuite, toujours par ROI — les séries courtes ne passent pas devant des historiques plus solides.',
-  'leaderboard.rank_notice_period':
-    'Cette vue classe par ROI sur les coupons arbitrés dans la période choisie ; seuls les tipsters avec au moins un coupon arbitré sur la période apparaissent.',
+    'Classement all-time : les tipsters avec au moins {n} coupons arbitrés (gagnés ou perdus) sont classés en premier par ROI, puis profit, puis taux de réussite. Les autres figurent en dessous, par ROI, jusqu’à atteindre {n} coupons arbitrés.',
+  'leaderboard.rank_notice_monthly':
+    'Ce mois-ci : seuls les tipsters avec au moins un coupon arbitré sur le mois apparaissent. Ceux avec au moins {n} coupons arbitrés sur le mois sont classés en premier par ROI, puis profit, puis taux de réussite ; les autres sur le mois suivent en dessous, par ROI.',
+  'leaderboard.rank_notice_weekly':
+    'Cette semaine : seuls les tipsters avec au moins un coupon arbitré sur la semaine apparaissent. Ceux avec au moins {n} coupons arbitrés sur la semaine sont classés en premier par ROI, puis profit, puis taux de réussite ; les autres sur la semaine suivent en dessous, par ROI.',
   'seo.discover_title': "Découvrir les Actualités Sportives & Guides Tipsters",
   'seo.discover_desc': "Restez informé avec les actualités des transferts, rapports de blessures et guides stratégiques pour tipsters experts en football, basketball, tennis, MMA et plus.",
   'seo.news_title': "Actualités Sportives | Transferts, Blessures & Aperçus",
