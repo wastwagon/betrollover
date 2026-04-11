@@ -1038,9 +1038,9 @@ const en = {
   'leaderboard.rank_notice_all_time':
     'All-time list: tipsters with at least {n} settled coupons (won or lost) are ranked first by ROI, then profit, then win rate. Everyone else appears below, by ROI, until they reach {n} settled coupons.',
   'leaderboard.rank_notice_monthly':
-    'This month: only tipsters with at least one settled coupon in the month are listed. Those with at least {n} settled picks in that month are ranked first by ROI, then profit, then win rate; everyone else in the month follows below, by ROI.',
+    'This month: only tipsters with at least one settled coupon posted in the current calendar month are listed. Those with at least {n} settled picks posted that month are ranked first by ROI, then profit, then win rate; everyone else in the month follows below, by ROI.',
   'leaderboard.rank_notice_weekly':
-    'This week: only tipsters with at least one settled coupon in the week are listed. Those with at least {n} settled picks in that week are ranked first by ROI, then profit, then win rate; everyone else in the week follows below, by ROI.',
+    'This week: only tipsters with at least one settled coupon posted in the current calendar week are listed. Those with at least {n} settled picks posted that week are ranked first by ROI, then profit, then win rate; everyone else in the week follows below, by ROI.',
   'seo.discover_title': 'Discover Sports News & Tipster Guides',
   'seo.discover_desc': 'Transfer news, injury reports, and expert tipster strategy guides across all major global sports — football, basketball, tennis, MMA and more.',
   'seo.news_title': 'Sports News | Transfers, Injuries & Match Previews',

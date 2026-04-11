@@ -1035,9 +1035,9 @@ const fr: Record<string, string> = {
   'leaderboard.rank_notice_all_time':
     'Classement all-time : les tipsters avec au moins {n} coupons arbitrés (gagnés ou perdus) sont classés en premier par ROI, puis profit, puis taux de réussite. Les autres figurent en dessous, par ROI, jusqu’à atteindre {n} coupons arbitrés.',
   'leaderboard.rank_notice_monthly':
-    'Ce mois-ci : seuls les tipsters avec au moins un coupon arbitré sur le mois apparaissent. Ceux avec au moins {n} coupons arbitrés sur le mois sont classés en premier par ROI, puis profit, puis taux de réussite ; les autres sur le mois suivent en dessous, par ROI.',
+    'Ce mois-ci : seuls les tipsters avec au moins un coupon arbitré publié dans le mois civil en cours apparaissent. Ceux avec au moins {n} coupons arbitrés publiés ce mois-là sont classés en premier par ROI, puis profit, puis taux de réussite ; les autres sur le mois suivent en dessous, par ROI.',
   'leaderboard.rank_notice_weekly':
-    'Cette semaine : seuls les tipsters avec au moins un coupon arbitré sur la semaine apparaissent. Ceux avec au moins {n} coupons arbitrés sur la semaine sont classés en premier par ROI, puis profit, puis taux de réussite ; les autres sur la semaine suivent en dessous, par ROI.',
+    'Cette semaine : seuls les tipsters avec au moins un coupon arbitré publié dans la semaine civile en cours apparaissent. Ceux avec au moins {n} coupons arbitrés publiés cette semaine-là sont classés en premier par ROI, puis profit, puis taux de réussite ; les autres sur la semaine suivent en dessous, par ROI.',
   'seo.discover_title': "Découvrir les Actualités Sportives & Guides Tipsters",
   'seo.discover_desc': "Restez informé avec les actualités des transferts, rapports de blessures et guides stratégiques pour tipsters experts en football, basketball, tennis, MMA et plus.",
   'seo.news_title': "Actualités Sportives | Transferts, Blessures & Aperçus",

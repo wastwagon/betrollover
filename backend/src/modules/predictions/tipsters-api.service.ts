@@ -335,7 +335,7 @@ export class TipstersApiService {
     return this.computeStatsFromTickets(userIds);
   }
 
-  /** Settled marketplace coupons in the current calendar week/month (same ROI basis as computeStatsFromTickets). */
+  /** Settled marketplace coupons posted in the current calendar week/month (same ROI basis as computeStatsFromTickets). */
   private async computeStatsFromTicketsInPeriod(
     userIds: number[],
     period: 'monthly' | 'weekly',
@@ -355,9 +355,11 @@ export class TipstersApiService {
       .setParameter('lost', 'lost');
 
     if (period === 'monthly') {
-      qb.andWhere("t.updated_at >= DATE_TRUNC('month', CURRENT_TIMESTAMP)");
+      qb.andWhere("t.created_at >= DATE_TRUNC('month', CURRENT_TIMESTAMP)")
+        .andWhere("t.created_at < DATE_TRUNC('month', CURRENT_TIMESTAMP) + INTERVAL '1 month'");
     } else {
-      qb.andWhere("t.updated_at >= DATE_TRUNC('week', CURRENT_TIMESTAMP)");
+      qb.andWhere("t.created_at >= DATE_TRUNC('week', CURRENT_TIMESTAMP)")
+        .andWhere("t.created_at < DATE_TRUNC('week', CURRENT_TIMESTAMP) + INTERVAL '1 week'");
     }
 
     if (sport) {
@@ -1014,16 +1016,18 @@ export class TipstersApiService {
       return withVip;
     }
 
+    // Human: coupon **posted** in the calendar window (created_at), not last touch (updated_at).
+    // Half-open [start, end) so "this week/month" does not include future or spill past the period.
     const dateFilter =
       options.period === 'monthly'
-        ? "at.updated_at >= DATE_TRUNC('month', CURRENT_DATE)"
-        : "at.updated_at >= DATE_TRUNC('week', CURRENT_DATE)";
+        ? "at.created_at >= DATE_TRUNC('month', CURRENT_DATE) AND at.created_at < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'"
+        : "at.created_at >= DATE_TRUNC('week', CURRENT_DATE) AND at.created_at < DATE_TRUNC('week', CURRENT_DATE) + INTERVAL '1 week'";
 
     // AI tipsters: from predictions. Human tipsters: from accumulator_tickets.
     const predDateFilter =
       options.period === 'monthly'
-        ? "p.prediction_date >= DATE_TRUNC('month', CURRENT_DATE)"
-        : "p.prediction_date >= DATE_TRUNC('week', CURRENT_DATE)";
+        ? "p.prediction_date >= DATE_TRUNC('month', CURRENT_DATE) AND p.prediction_date < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'"
+        : "p.prediction_date >= DATE_TRUNC('week', CURRENT_DATE) AND p.prediction_date < DATE_TRUNC('week', CURRENT_DATE) + INTERVAL '1 week'";
 
     const sportDisplayFilter = options.sport
       ? `AND LOWER(at.sport) = LOWER('${options.sport.charAt(0).toUpperCase() + options.sport.slice(1).replace('_', ' ')}')`
