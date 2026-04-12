@@ -2,8 +2,8 @@ import { redirect } from 'next/navigation';
 
 /**
  * /coupons is consolidated into /marketplace.
- * All coupon browsing, filtering, and purchasing now lives at /marketplace.
- * Individual coupon detail: /coupons/[id]
+ * All pick browsing, filtering, and purchasing now lives at /marketplace.
+ * Individual pick detail: /coupons/[id]
  * Settled history: /coupons/archive
  */
 export default async function CouponsRedirectPage({

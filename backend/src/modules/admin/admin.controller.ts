@@ -662,7 +662,7 @@ export class AdminController {
       typeof body.aiMarketplaceCouponPrice !== 'number' ||
       Number.isNaN(body.aiMarketplaceCouponPrice)
     ) {
-      throw new BadRequestException('aiMarketplaceCouponPrice (number 0–10000 GHS, 0 = AI coupons always free) is required');
+      throw new BadRequestException('aiMarketplaceCouponPrice (number 0–10000 GHS, 0 = AI picks always free) is required');
     }
     return this.adminService.updateAiMarketplaceCouponPrice(body.aiMarketplaceCouponPrice);
   }

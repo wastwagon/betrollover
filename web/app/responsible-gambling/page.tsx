@@ -21,15 +21,15 @@ export default async function ResponsibleGamblingPage() {
 
   const tips = locale === 'fr'
     ? [
-        'Fixez un budget personnel avant d\'acheter un coupon',
-        'Ne tentez jamais de récupérer des pertes en achetant plus de coupons',
+        'Fixez un budget personnel avant d\'acheter un pronostic',
+        'Ne tentez jamais de récupérer des pertes en achetant plus de pronostics',
         'Les pronostics des tipsters sont informatifs — ils ne garantissent aucun résultat',
         "Ne prenez pas de décisions financières sous stress émotionnel ou influence",
         "La prédiction sportive doit être traitée comme un divertissement, pas une source de revenus",
       ]
     : [
-        'Set a personal budget before purchasing any coupon',
-        'Never attempt to recover losses by purchasing more coupons',
+        'Set a personal budget before purchasing any tipster pick',
+        'Never attempt to recover losses by purchasing more picks',
         'Tipster picks are informational — they do not guarantee any outcome',
         'Do not make financial decisions while under emotional stress or influence',
         'Sports prediction should be treated as entertainment, not a source of income',

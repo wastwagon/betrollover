@@ -88,7 +88,7 @@ export class SubscriptionsService {
     for (const pkgId of packageIds) {
       const pkg = await this.getPackage(pkgId);
       if (pkg.tipsterUserId !== tipsterUserId) {
-        throw new ForbiddenException('You can only link coupons to your own subscription packages');
+        throw new ForbiddenException('You can only link picks to your own subscription packages');
       }
       if (pkg.status !== 'active') {
         throw new BadRequestException(`Subscription package "${pkg.name}" is not active`);
@@ -96,7 +96,7 @@ export class SubscriptionsService {
       const n = await this.countSubscriptionCouponsInWindow(pkgId, pkg.durationDays);
       if (n >= MAX_SUBSCRIPTION_COUPONS_PER_WINDOW) {
         throw new BadRequestException(
-          `You can add at most ${MAX_SUBSCRIPTION_COUPONS_PER_WINDOW} subscription coupons per ${pkg.durationDays}-day period for "${pkg.name}". Try again when older coupons fall outside the window.`,
+          `You can add at most ${MAX_SUBSCRIPTION_COUPONS_PER_WINDOW} subscription picks per ${pkg.durationDays}-day period for "${pkg.name}". Try again when older picks fall outside the window.`,
         );
       }
     }

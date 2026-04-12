@@ -11,14 +11,14 @@ import { TeamBadge } from '@/components/TeamBadge';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
-import { useT } from '@/context/LanguageContext';
+import { useLanguage, useT, type SupportedLanguage } from '@/context/LanguageContext';
 import { formatTipsterRankHash } from '@/lib/tipster-rank-ui';
 import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Pick {
   id?: number;
-  /** API sets true when paid coupon legs are hidden (teaser only). */
+  /** API sets true when paid pick legs are hidden (teaser only). */
   redacted?: boolean;
   sport?: string;
   matchDescription?: string;
@@ -73,17 +73,29 @@ interface Coupon {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const SPORT_META: Record<string, { icon: string; label: string; color: string }> = {
-  Football:          { icon: '⚽', label: 'Football',          color: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
-  Basketball:        { icon: '🏀', label: 'Basketball',        color: 'bg-orange-100 text-orange-800 border-orange-200' },
-  Rugby:             { icon: '🏉', label: 'Rugby',             color: 'bg-amber-100 text-amber-800 border-amber-200' },
-  MMA:               { icon: '🥊', label: 'MMA',               color: 'bg-red-100 text-red-800 border-red-200' },
-  Volleyball:        { icon: '🏐', label: 'Volleyball',        color: 'bg-blue-100 text-blue-800 border-blue-200' },
-  Hockey:            { icon: '🏒', label: 'Hockey',            color: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
-  'American Football': { icon: '🏈', label: 'American Football', color: 'bg-purple-100 text-purple-800 border-purple-200' },
-  Tennis:            { icon: '🎾', label: 'Tennis',            color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  'Multi-Sport':     { icon: '🌍', label: 'Multi-Sport',       color: 'bg-teal-100 text-teal-800 border-teal-200' },
+const SPORT_META: Record<string, { icon: string; labelKey: string; color: string }> = {
+  Football: { icon: '⚽', labelKey: 'nav.football', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
+  Basketball: { icon: '🏀', labelKey: 'nav.basketball', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+  Rugby: { icon: '🏉', labelKey: 'nav.rugby', color: 'bg-amber-100 text-amber-800 border-amber-200' },
+  MMA: { icon: '🥊', labelKey: 'nav.mma', color: 'bg-red-100 text-red-800 border-red-200' },
+  Volleyball: { icon: '🏐', labelKey: 'nav.volleyball', color: 'bg-blue-100 text-blue-800 border-blue-200' },
+  Hockey: { icon: '🏒', labelKey: 'nav.hockey', color: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
+  'American Football': { icon: '🏈', labelKey: 'nav.american_football', color: 'bg-purple-100 text-purple-800 border-purple-200' },
+  Tennis: { icon: '🎾', labelKey: 'nav.tennis', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  'Multi-Sport': { icon: '🌍', labelKey: 'pick_detail.sport_multi', color: 'bg-teal-100 text-teal-800 border-teal-200' },
 };
+
+function legResultLabel(
+  result: string,
+  t: (key: string, vars?: Record<string, string>) => string,
+): string {
+  const r = (result || 'pending').toLowerCase();
+  if (r === 'won') return t('pick_detail.leg_status_won');
+  if (r === 'lost') return t('pick_detail.leg_status_lost');
+  if (r === 'void') return t('pick_detail.leg_status_void');
+  if (r === 'pending') return t('pick_detail.leg_status_pending');
+  return result;
+}
 
 const RESULT_STYLE: Record<string, string> = {
   won:     'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -103,14 +115,16 @@ const COUPON_STATUS_STYLE: Record<string, string> = {
   pending: 'bg-amber-50 text-amber-800 border-amber-300',
 };
 
-function formatDate(s?: string | null) {
+const DATE_LOCALE: Record<SupportedLanguage, string> = { en: 'en-GB', fr: 'fr-FR' };
+
+function formatDate(s: string | null | undefined, lang: SupportedLanguage) {
   if (!s) return '';
-  return new Date(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Date(s).toLocaleDateString(DATE_LOCALE[lang], { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function formatDateTime(s?: string | null) {
+function formatDateTime(s: string | null | undefined, lang: SupportedLanguage) {
   if (!s) return '';
-  return new Date(s).toLocaleString('en-GB', {
+  return new Date(s).toLocaleString(DATE_LOCALE[lang], {
     day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
   });
 }
@@ -163,6 +177,8 @@ function StarRow({ rating, interactive = false, onChange }: { rating: number; in
 }
 
 function ReviewsSection({ couponId, isPurchased, isSettled }: { couponId: number; isPurchased: boolean; isSettled: boolean }) {
+  const t = useT();
+  const { lang } = useLanguage();
   const [data, setData] = useState<ReviewsData | null>(null);
   const [myReview, setMyReview] = useState<{ reviewed: boolean; review: Review | null } | null>(null);
   const [rating, setRating] = useState(5);
@@ -198,7 +214,7 @@ function ReviewsSection({ couponId, isPurchased, isSettled }: { couponId: number
     if (r.ok) { await loadReviews(); await loadMyReview(); setComment(''); }
     else {
         const d = await r.json().catch(() => ({}));
-        setErr(getApiErrorMessage(d, 'Could not submit review'));
+        setErr(getApiErrorMessage(d, t('pick_detail.review_submit_error')));
       }
     setSubmitting(false);
   };
@@ -206,7 +222,7 @@ function ReviewsSection({ couponId, isPurchased, isSettled }: { couponId: number
   return (
     <section className="section-ux-gutter-4xl pb-10 mt-8 min-w-0 max-w-full">
       <div className="flex flex-wrap items-center gap-3 mb-4 min-w-0">
-        <h2 className="text-base font-semibold text-[var(--text)]">Buyer Reviews</h2>
+        <h2 className="text-base font-semibold text-[var(--text)]">{t('pick_detail.buyer_reviews_title')}</h2>
         {data && data.total > 0 && (
           <span className="flex items-center gap-1.5 text-sm text-[var(--text-muted)]">
             <StarRow rating={Math.round(data.avg)} />
@@ -219,28 +235,31 @@ function ReviewsSection({ couponId, isPurchased, isSettled }: { couponId: number
       {/* Write review form — only if purchased + settled + not already reviewed */}
       {isPurchased && isSettled && myReview && !myReview.reviewed && (
         <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 mb-5 shadow-sm">
-          <p className="text-sm font-semibold text-[var(--text)] mb-3">Leave a Review</p>
+          <p className="text-sm font-semibold text-[var(--text)] mb-3">{t('pick_detail.leave_review_title')}</p>
           <StarRow rating={rating} interactive onChange={setRating} />
           <textarea rows={3} value={comment} onChange={(e) => setComment(e.target.value)}
-            placeholder="Share your experience with this pick…"
+            placeholder={t('pick_detail.review_placeholder')}
             className="mt-3 w-full min-w-0 px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-sm text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] resize-none"
           />
           {err && <p className="text-red-500 text-xs mt-1">{err}</p>}
           <button type="button" onClick={submit} disabled={submitting}
             className="mt-3 px-5 py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] disabled:opacity-50 transition-colors">
-            {submitting ? 'Submitting…' : 'Submit Review'}
+            {submitting ? t('pick_detail.submitting_review') : t('pick_detail.submit_review')}
           </button>
         </div>
       )}
 
       {myReview?.reviewed && (
         <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800 px-4 py-3 mb-4 text-sm text-emerald-700 dark:text-emerald-400">
-          ✅ You reviewed this coupon — thank you!
+          ✅ {t('pick_detail.review_thank_you')}
         </div>
       )}
 
       {!data || data.total === 0 ? (
-        <p className="text-[var(--text-muted)] text-sm">No reviews yet{isSettled ? '.' : ' — reviews unlock after the coupon settles.'}</p>
+        <p className="text-[var(--text-muted)] text-sm">
+          {t('pick_detail.reviews_empty')}
+          {!isSettled ? t('pick_detail.reviews_empty_pending_suffix') : ''}
+        </p>
       ) : (
         <div className="space-y-3">
           {data.items.map((rev) => (
@@ -248,9 +267,9 @@ function ReviewsSection({ couponId, isPurchased, isSettled }: { couponId: number
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3 mb-1 min-w-0">
                 <div className="flex items-center gap-2 min-w-0">
                   <StarRow rating={rev.rating} />
-                  <span className="text-xs font-semibold text-[var(--text)] truncate">{rev.reviewer?.displayName ?? 'Buyer'}</span>
+                  <span className="text-xs font-semibold text-[var(--text)] truncate">{rev.reviewer?.displayName ?? t('pick_detail.reviewer_fallback')}</span>
                 </div>
-                <span className="text-xs text-[var(--text-muted)] shrink-0">{new Date(rev.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'2-digit' })}</span>
+                <span className="text-xs text-[var(--text-muted)] shrink-0">{formatDate(rev.createdAt, lang)}</span>
               </div>
               {rev.comment && <p className="text-sm text-[var(--text-muted)] mt-1">{rev.comment}</p>}
             </div>
@@ -266,6 +285,7 @@ export default function CouponDetailPage() {
   const params = useParams();
   const router = useRouter();
   const t = useT();
+  const { lang } = useLanguage();
   const id = Number(params?.id);
 
   const [coupon, setCoupon] = useState<Coupon | null>(null);
@@ -377,10 +397,10 @@ export default function CouponDetailPage() {
         if (w.ok) { const d = await w.json(); setWalletBalance(Number(d.balance)); }
       } else {
         const err = await res.json().catch(() => ({}));
-        setPurchaseError(getApiErrorMessage(err, 'Purchase failed. Please try again.'));
+        setPurchaseError(getApiErrorMessage(err, t('pick_detail.purchase_failed_generic')));
       }
     } catch {
-      setPurchaseError('Network error. Please try again.');
+      setPurchaseError(t('pick_detail.purchase_network_error'));
     } finally {
       setPurchasing(false);
     }
@@ -402,10 +422,10 @@ export default function CouponDetailPage() {
         <UnifiedHeader />
         <main className="section-ux-empty w-full min-w-0 max-w-full">
           <p className="text-5xl mb-4">🎫</p>
-          <h1 className="text-lg font-semibold text-[var(--text)] mb-3">Coupon not found</h1>
-          <p className="text-[var(--text-muted)] mb-6">This coupon may have been removed or the link is invalid.</p>
-          <Link href="/coupons" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] transition-colors">
-            ← Browse Coupons
+          <h1 className="text-lg font-semibold text-[var(--text)] mb-3">{t('pick_detail.not_found_title')}</h1>
+          <p className="text-[var(--text-muted)] mb-6">{t('pick_detail.not_found_desc')}</p>
+          <Link href="/marketplace" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] transition-colors">
+            {t('pick_detail.browse_picks_cta')}
           </Link>
         </main>
         <AppFooter />
@@ -447,7 +467,7 @@ export default function CouponDetailPage() {
             className="inline-flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors font-medium"
           >
             <span className="text-base opacity-70" aria-hidden>🎫</span>
-            Marketplace
+            {t('nav.marketplace')}
           </Link>
           <span className="text-[var(--text-muted)]" aria-hidden>
             /
@@ -468,30 +488,39 @@ export default function CouponDetailPage() {
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 {sportMeta && (
                   <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${sportMeta.color}`}>
-                    {sportMeta.icon} {sportMeta.label}
+                    {sportMeta.icon} {t(sportMeta.labelKey)}
                   </span>
                 )}
                 <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${resultStyle}`}>
-                  {coupon.result === 'pending' ? '⏳ Pending' : coupon.result === 'won' ? '✓ Won' : coupon.result === 'lost' ? '✗ Lost' : coupon.result}
+                  {coupon.result === 'pending'
+                    ? t('pick_detail.result_pending')
+                    : coupon.result === 'won'
+                      ? t('pick_detail.result_won')
+                      : coupon.result === 'lost'
+                        ? t('pick_detail.result_lost')
+                        : coupon.result}
                 </span>
                 {coupon.createdAt && (
-                  <span className="text-sm text-[var(--text-muted)]">{formatDate(coupon.createdAt)}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{formatDate(coupon.createdAt, lang)}</span>
                 )}
               </div>
 
               {/* Stats row */}
               <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--text-muted)]">
                 <span className="flex items-center gap-1">
-                  <span className="font-semibold text-[var(--text)]">{pickCount}</span> picks
+                  {t('pick_card.picks_count', { n: String(pickCount) })}
                 </span>
                 <span className="flex items-center gap-1">
-                  Total odds: <span className="font-semibold text-[var(--text)] ml-1">{Number(coupon.totalOdds).toFixed(2)}</span>
+                  {t('pick_detail.total_odds_prefix')}{' '}
+                  <span className="font-semibold text-[var(--text)] ml-1">{Number(coupon.totalOdds).toFixed(2)}</span>
                 </span>
                 {settledPicks > 0 && (
                   <span className="flex items-center gap-1">
                     <span className="text-emerald-600 font-semibold">{wonPicks}W</span>
                     <span className="text-red-500 font-semibold">{lostPicks}L</span>
-                    <span className="text-[var(--text-muted)]">/ {pickCount} picks</span>
+                    <span className="text-[var(--text-muted)]">
+                      / {pickCount} {t('pick_card.picks')}
+                    </span>
                   </span>
                 )}
                 {coupon.purchaseCount != null && coupon.purchaseCount > 0 && (
@@ -527,10 +556,9 @@ export default function CouponDetailPage() {
               <div className="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700/40 flex items-start gap-3">
                 <span className="text-2xl">🎉</span>
                 <div>
-                  <p className="font-semibold text-emerald-800 dark:text-emerald-300">Coupon purchased!</p>
+                  <p className="font-semibold text-emerald-800 dark:text-emerald-300">{t('pick_detail.purchase_success_title')}</p>
                   <p className="text-sm text-emerald-700 dark:text-emerald-400 mt-0.5">
-                    All picks are now revealed. They will settle automatically when matches finish.
-                    Your purchase is protected by escrow — if this coupon loses, you get a refund.
+                    {t('pick_detail.purchase_success_sub')}
                   </p>
                 </div>
               </div>
@@ -561,10 +589,10 @@ export default function CouponDetailPage() {
                     }`}
                   >
                     {coupon.result === 'won'
-                      ? 'Coupon Won!'
+                      ? t('pick_detail.settlement_won_title')
                       : coupon.result === 'void'
-                        ? 'Coupon voided'
-                        : 'Coupon Lost — Refund Processed'}
+                        ? t('pick_detail.settlement_void_title')
+                        : t('pick_detail.settlement_lost_title')}
                   </p>
                   <p
                     className={`text-sm mt-0.5 ${
@@ -576,10 +604,10 @@ export default function CouponDetailPage() {
                     }`}
                   >
                     {coupon.result === 'won'
-                      ? 'All picks in this coupon landed. This tipster delivered.'
+                      ? t('pick_detail.settlement_won_sub')
                       : coupon.result === 'void'
-                        ? 'One or more matches were voided or cancelled. Check your wallet for any refunds.'
-                        : 'This coupon has been settled. Escrow has automatically refunded all purchasers.'}
+                        ? t('pick_detail.settlement_void_sub')
+                        : t('pick_detail.settlement_lost_sub')}
                   </p>
                 </div>
               </div>
@@ -587,7 +615,7 @@ export default function CouponDetailPage() {
 
             {/* ── Picks ── */}
             <h2 className="text-sm font-semibold text-[var(--text)] mb-3">
-              Picks ({pickCount})
+              {t('pick_detail.picks_section_title', { n: String(pickCount) })}
             </h2>
 
             {picksHidden ? (
@@ -599,7 +627,7 @@ export default function CouponDetailPage() {
                   <div className="min-w-0">
                     <p className="font-semibold text-[var(--text)]">Selections are locked</p>
                     <p className="text-sm text-[var(--text-muted)] mt-0.5 leading-relaxed">
-                      Purchase this coupon to see matches, markets, and odds for each leg. Combined total odds are shown
+                      Purchase this pick to see matches, markets, and odds for each leg. Combined total odds are shown
                       above for reference — same as on the marketplace card.
                     </p>
                   </div>
@@ -623,12 +651,12 @@ export default function CouponDetailPage() {
                   ))}
                 </div>
                 <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 mb-6">
-                  <h3 className="text-sm font-semibold text-[var(--text)] mb-2">Odds breakdown</h3>
+                  <h3 className="text-sm font-semibold text-[var(--text)] mb-2">{t('pick_detail.odds_breakdown_title')}</h3>
                   <p className="text-sm text-[var(--text-muted)] mb-3">
-                    Per-leg odds unlock after you purchase.
+                    {t('pick_detail.per_leg_unlock_note')}
                   </p>
                   <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between gap-2 min-w-0">
-                    <span className="text-sm font-semibold text-[var(--text)] shrink-0">Total odds</span>
+                    <span className="text-sm font-semibold text-[var(--text)] shrink-0">{t('pick_detail.total_odds_balance')}</span>
                     <span className="text-base font-semibold text-[var(--primary)] tabular-nums shrink-0">
                       {Number(coupon.totalOdds).toFixed(2)}
                     </span>
@@ -693,7 +721,7 @@ export default function CouponDetailPage() {
                             <p className="text-xs text-[var(--text-muted)] mb-1">{formatFootballOutcomeLabel(pick.prediction)}</p>
 
                             <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-muted)]">
-                              {pick.matchDate && <span>{formatDateTime(pick.matchDate)}</span>}
+                              {pick.matchDate && <span>{formatDateTime(pick.matchDate, lang)}</span>}
                               {isLive && (
                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 font-bold text-[10px] tabular-nums">
                                   🔴 {formatLiveFixturePeriod(pick.fixtureStatus, pick.fixtureStatusElapsed)}
@@ -703,7 +731,7 @@ export default function CouponDetailPage() {
                                 <span
                                   className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold border ${pickSport.color}`}
                                 >
-                                  {pickSport.icon} {pickSport.label}
+                                  {pickSport.icon} {t(pickSport.labelKey)}
                                 </span>
                               )}
                             </div>
@@ -723,7 +751,7 @@ export default function CouponDetailPage() {
                             <span
                               className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${pickStyle}`}
                             >
-                              {RESULT_ICON[pickResult]} {pickResult}
+                              {RESULT_ICON[pickResult]} {legResultLabel(pickResult, t)}
                             </span>
                           </div>
                         </div>
@@ -733,13 +761,13 @@ export default function CouponDetailPage() {
                 </div>
 
                 <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 mb-6">
-                  <h3 className="text-sm font-semibold text-[var(--text)] mb-3">Odds Breakdown</h3>
+                  <h3 className="text-sm font-semibold text-[var(--text)] mb-3">{t('pick_detail.odds_breakdown_title')}</h3>
                   <div className="space-y-2">
                     {coupon.picks.map((p, idx) => (
                       <div key={idx} className="flex items-center justify-between gap-2 text-sm min-w-0">
                         <span className="text-[var(--text-muted)] min-w-0 flex-1 truncate">
                           {p.homeTeamName && p.awayTeamName
-                            ? `${p.homeTeamName} vs ${p.awayTeamName}`
+                            ? t('pick_detail.match_vs', { home: p.homeTeamName, away: p.awayTeamName })
                             : p.matchDescription}
                         </span>
                         <span className="font-semibold text-[var(--text)] tabular-nums shrink-0">
@@ -748,7 +776,7 @@ export default function CouponDetailPage() {
                       </div>
                     ))}
                     <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between gap-2 min-w-0">
-                      <span className="text-sm font-semibold text-[var(--text)] shrink-0">Total Odds</span>
+                      <span className="text-sm font-semibold text-[var(--text)] shrink-0">{t('pick_detail.total_odds_balance')}</span>
                       <span className="text-base font-semibold text-[var(--primary)] tabular-nums shrink-0">
                         {Number(coupon.totalOdds).toFixed(2)}
                       </span>
@@ -764,16 +792,16 @@ export default function CouponDetailPage() {
             <div className="sticky top-24 space-y-4">
               <AdSlot zoneSlug="coupon-detail-sidebar" />
 
-              {/* Purchase / receipt card — guests on settled coupons see sign-up CTA instead */}
+              {/* Purchase / receipt card — guests on settled picks see sign-up CTA instead */}
               <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-hidden shadow-sm">
                 <div className="p-5">
                   <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3 mb-4 min-w-0">
                     <span className="text-lg font-semibold text-[var(--primary)] tabular-nums shrink-0">
-                      {coupon.price === 0 ? 'Free' : `GHS ${Number(coupon.price).toFixed(2)}`}
+                      {coupon.price === 0 ? t('common.free') : `GHS ${Number(coupon.price).toFixed(2)}`}
                     </span>
                     {coupon.price > 0 && walletBalance !== null && (
                       <span className="text-xs text-[var(--text-muted)] tabular-nums min-w-0 sm:text-right">
-                        Balance: GHS {walletBalance.toFixed(2)}
+                        {t('pick_detail.wallet_balance', { amount: walletBalance.toFixed(2) })}
                       </span>
                     )}
                   </div>
@@ -781,26 +809,25 @@ export default function CouponDetailPage() {
                   {!isAuthed && isSettled ? (
                     <div className="space-y-3">
                       <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                        This coupon is settled — full results are visible above. Create a free account to follow tipsters,
-                        buy live picks, and use your wallet with escrow protection.
+                        {t('pick_detail.settled_guest_intro')}
                       </p>
                       <Link
                         href={`/register?redirect=/marketplace`}
                         className="block w-full py-3 rounded-xl bg-[var(--primary)] text-white font-bold text-sm text-center hover:bg-[var(--primary-hover)] transition-colors"
                       >
-                        Create account
+                        {t('pick_detail.create_account')}
                       </Link>
                       <Link
                         href="/marketplace"
                         className="block w-full py-2.5 rounded-xl border border-[var(--border)] text-[var(--text)] font-semibold text-sm text-center hover:bg-[var(--bg)] transition-colors"
                       >
-                        Browse marketplace →
+                        {t('pick_detail.browse_marketplace')}
                       </Link>
                       <Link
                         href={`/login?redirect=/coupons/${id}`}
                         className="block text-center text-sm text-[var(--primary)] hover:underline"
                       >
-                        Already have an account? Log in
+                        {t('pick_detail.already_have_account_login')}
                       </Link>
                     </div>
                   ) : isPurchased ? (
@@ -808,8 +835,8 @@ export default function CouponDetailPage() {
                       <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700/40">
                         <span className="text-emerald-600 text-lg">✓</span>
                         <div>
-                          <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">Purchased</p>
-                          <p className="text-xs text-emerald-700 dark:text-emerald-400">All picks are revealed above</p>
+                          <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">{t('pick_detail.purchased_label')}</p>
+                          <p className="text-xs text-emerald-700 dark:text-emerald-400">{t('pick_detail.purchased_revealed_note')}</p>
                         </div>
                       </div>
                       <Link
@@ -825,12 +852,12 @@ export default function CouponDetailPage() {
                         <span className="text-blue-600 text-lg">✓</span>
                         <div>
                           <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">
-                            {coupon.accessViaSubscription ? 'Access via subscription' : 'Access granted'}
+                            {coupon.accessViaSubscription ? t('pick_detail.access_via_subscription') : t('pick_detail.access_granted')}
                           </p>
                           <p className="text-xs text-blue-700 dark:text-blue-400">
                             {coupon.accessViaSubscription
-                              ? 'Your active subscription unlocks this paid coupon.'
-                              : 'You can view this paid coupon without buying it.'}
+                              ? t('pick_detail.access_subscription_note')
+                              : t('pick_detail.access_granted_note')}
                           </p>
                         </div>
                       </div>
@@ -852,14 +879,18 @@ export default function CouponDetailPage() {
                         disabled={!canPurchase || purchasing}
                         className="w-full py-3 rounded-xl bg-[var(--primary)] text-white font-bold text-sm hover:bg-[var(--primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
-                        {purchasing ? 'Processing…' : coupon.price === 0 ? 'Get Free Coupon' : `Purchase for GHS ${Number(coupon.price).toFixed(2)}`}
+                        {purchasing
+                          ? t('pick_card.processing')
+                          : coupon.price === 0
+                            ? t('pick_detail.get_free_pick')
+                            : t('marketplace.purchase_btn', { price: `GHS ${Number(coupon.price).toFixed(2)}` })}
                       </button>
                       {!canPurchase && !isPurchased && coupon.price > 0 && walletBalance !== null && walletBalance < coupon.price && (
                         <Link
                           href="/wallet"
                           className="block text-center text-xs text-amber-600 hover:underline"
                         >
-                          ⚠ Insufficient balance — Top up wallet →
+                          {t('pick_detail.insufficient_balance_link')}
                         </Link>
                       )}
                     </div>
@@ -871,11 +902,9 @@ export default function CouponDetailPage() {
                   <div className="flex items-start gap-2">
                     <span className="text-lg">🛡</span>
                     <div>
-                      <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300">Escrow Protected</p>
+                      <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300">{t('pick_detail.escrow_badge_title')}</p>
                       <p className="text-xs text-emerald-700 dark:text-emerald-400 leading-relaxed mt-0.5">
-                        {coupon.price === 0
-                          ? 'Free coupons are shared for information only — there is no purchase to refund.'
-                          : 'If this coupon loses, your purchase price is automatically refunded. No claims needed.'}
+                        {coupon.price === 0 ? t('pick_detail.escrow_free_note') : t('pick_detail.escrow_paid_note')}
                       </p>
                     </div>
                   </div>
@@ -913,24 +942,24 @@ export default function CouponDetailPage() {
                       <p className="text-sm font-semibold text-[var(--text)]">
                         {coupon.tipster.winRate != null ? `${Number(coupon.tipster.winRate).toFixed(0)}%` : '—'}
                       </p>
-                      <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Win Rate</p>
+                      <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">{t('pick_detail.tipster_grid_win_rate')}</p>
                     </div>
                     <div className="text-center">
                       <p className="text-sm font-semibold text-[var(--text)]">{coupon.tipster.totalPicks}</p>
-                      <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Total</p>
+                      <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">{t('pick_detail.tipster_grid_total')}</p>
                     </div>
                     <div className="text-center">
                       <p className="text-sm font-semibold text-[var(--text)]">
                         {formatTipsterRankHash(coupon.tipster.rank)}
                       </p>
-                      <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Rank</p>
+                      <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">{t('pick_detail.tipster_grid_rank')}</p>
                     </div>
                   </div>
                   <Link
                     href={`/tipsters/${coupon.tipster.username}`}
                     className="block text-center text-xs font-semibold text-[var(--primary)] hover:underline"
                   >
-                    View Tipster Profile →
+                    {t('pick_detail.view_tipster_profile')}
                   </Link>
                 </div>
               )}
@@ -941,13 +970,13 @@ export default function CouponDetailPage() {
                 onClick={handleShare}
                 className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-semibold text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
               >
-                {copied ? '✓ Link Copied!' : '🔗 Share Coupon'}
+                {copied ? t('pick_detail.link_copied') : t('pick_detail.share_pick')}
               </button>
 
               {/* Disclaimer */}
               <div className="rounded-xl bg-[var(--card)] border border-[var(--border)] p-3">
                 <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
-                  Picks are for informational purposes only. BetRollover and its tipsters accept no liability for losses incurred from acting on these picks. Refunds cover coupon purchase price only.
+                  {t('pick_detail.sidebar_disclaimer')}
                 </p>
               </div>
 
@@ -957,7 +986,7 @@ export default function CouponDetailPage() {
                   href={`/support?couponId=${coupon.id}&open=1`}
                   className="block text-center text-xs text-[var(--text-muted)] hover:text-red-500 transition-colors"
                 >
-                  🎫 Raise a dispute or support ticket
+                  {t('pick_detail.raise_dispute')}
                 </a>
               )}
             </div>

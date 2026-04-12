@@ -77,26 +77,23 @@ const SPORT_META: Record<string, { icon: string; label: string; comingSoon?: boo
   tennis:            { icon: '🎾', label: 'Tennis',         comingSoon: true },
 };
 
-const SKILL_OVERVIEW = [
-  {
-    level: 'beginner',
-    icon: '🌱',
-    title: 'Beginner',
-    desc: "Odds explained, how to read a tipster's picks, and what to look for before you buy a coupon.",
-  },
-  {
-    level: 'intermediate',
-    icon: '📈',
-    title: 'Intermediate',
-    desc: 'Bankroll management, value picks, and using ROI & win rate to compare tipsters objectively.',
-  },
-  {
-    level: 'advanced',
-    icon: '🧠',
-    title: 'Advanced',
-    desc: 'Multi-leg accumulator strategy, expected value, and portfolio-style multi-sport tipster selection.',
-  },
+const SKILL_OVERVIEW_LEVELS = ['beginner', 'intermediate', 'advanced'] as const;
+
+const SKILL_OVERVIEW: {
+  level: (typeof SKILL_OVERVIEW_LEVELS)[number];
+  icon: string;
+  title: string;
+}[] = [
+  { level: 'beginner', icon: '🌱', title: 'Beginner' },
+  { level: 'intermediate', icon: '📈', title: 'Intermediate' },
+  { level: 'advanced', icon: '🧠', title: 'Advanced' },
 ];
+
+const SKILL_OVERVIEW_DESC_KEYS: Record<(typeof SKILL_OVERVIEW_LEVELS)[number], string> = {
+  beginner: 'resources.skill_overview_beginner_desc',
+  intermediate: 'resources.skill_overview_intermediate_desc',
+  advanced: 'resources.skill_overview_advanced_desc',
+};
 
 export default function ResourcesPage() {
   const t = useT();
@@ -122,7 +119,7 @@ export default function ResourcesPage() {
         <PageHeader
           label={t('nav.guides')}
           title={t('resources.page_title')}
-          tagline="From reading odds and evaluating tipsters to advanced multi-sport accumulator strategies — make sharper, more informed decisions."
+          tagline={t('resources.page_tagline')}
         />
 
         <p className="mb-6 text-sm text-[var(--text-muted)]">
@@ -145,14 +142,16 @@ export default function ResourcesPage() {
                 {LEVEL_LABELS[card.level]}
               </span>
               <h3 className="font-semibold text-[var(--text)] mb-1">{card.title}</h3>
-              <p className="text-sm text-[var(--text-muted)]">{card.desc}</p>
+              <p className="text-sm text-[var(--text-muted)]">{t(SKILL_OVERVIEW_DESC_KEYS[card.level])}</p>
             </div>
           ))}
         </div>
 
         {/* Sport filter row */}
         <div className="mb-8 w-full min-w-0 overflow-hidden">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">Filter by Sport</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">
+            {t('resources.filter_by_sport')}
+          </p>
           <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
             {SPORT_FILTERS.map(sf => (
               <button
@@ -181,15 +180,17 @@ export default function ResourcesPage() {
                 <div className="flex flex-col sm:flex-row sm:items-start gap-4">
                   <span className="text-4xl shrink-0">{sportMeta.icon}</span>
                   <div>
-                    <h3 className="font-bold text-[var(--text)] mb-1">{sportMeta.label} Guides — Coming Soon</h3>
+                    <h3 className="font-bold text-[var(--text)] mb-1">
+                      {t('resources.sport_guides_coming_title', { sport: sportMeta.label })}
+                    </h3>
                     <p className="text-sm text-[var(--text-muted)] mb-3">
-                      Sport-specific {sportMeta.label.toLowerCase()} strategy guides are in development. The universal guides below apply across all sports and are a great starting point.
+                      {t('resources.sport_guides_coming_desc', { sportLower: sportMeta.label.toLowerCase() })}
                     </p>
                     <Link
                       href={`/marketplace?sport=${activeSport}`}
                       className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--primary)] hover:underline"
                     >
-                      Browse {sportMeta.label} tipster picks →
+                      {t('resources.browse_sport_tipster_picks', { sport: sportMeta.label })}
                     </Link>
                   </div>
                 </div>
@@ -203,17 +204,16 @@ export default function ResourcesPage() {
             ) : categories.length === 0 ? (
               <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-12 text-center">
                 <p className="text-4xl mb-3">📚</p>
-                <p className="font-semibold text-[var(--text)] mb-1">Guides coming soon</p>
+                <p className="font-semibold text-[var(--text)] mb-1">{t('resources.empty_guides_title')}</p>
                 <p className="text-[var(--text-muted)] text-sm max-w-md mx-auto mb-5">
-                  We&apos;re building in-depth tipster guides covering odds, bankroll management, and multi-sport accumulator strategies.
-                  In the meantime, browse verified tipster picks in the marketplace.
+                  {t('resources.empty_guides_body')}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Link href="/marketplace" className="px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors">
-                    Browse Marketplace →
+                    {t('resources.cta_browse_marketplace')}
                   </Link>
                   <Link href="/news" className="px-5 py-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:border-[var(--primary)] transition-colors">
-                    Read Latest News
+                    {t('resources.cta_read_news')}
                   </Link>
                 </div>
               </div>
@@ -232,7 +232,7 @@ export default function ResourcesPage() {
                     )}
                     <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {(cat.items ?? []).length === 0 ? (
-                        <p className="text-sm text-[var(--text-muted)] sm:col-span-2">No items yet — check back soon.</p>
+                        <p className="text-sm text-[var(--text-muted)] sm:col-span-2">{t('resources.category_no_items')}</p>
                       ) : (
                         (cat.items ?? []).map(item => (
                           <Link

@@ -1005,7 +1005,7 @@ export default function AdminFixturesPage() {
             <button type="button"
               onClick={fetchResultsAndSettle}
               disabled={syncing || fetchingResults || settling || reconciling}
-              title="Fetch results from API-Sports, then immediately settle pending coupons. Use when matches have finished but coupons are still pending."
+              title="Fetch results from API-Sports, then immediately settle pending picks. Use when matches have finished but picks are still pending."
               className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-violet-600 to-violet-700 text-white hover:from-violet-700 hover:to-violet-800 disabled:opacity-50 transition-all shadow-md"
             >
               {fetchingResults || settling ? (
@@ -1014,15 +1014,15 @@ export default function AdminFixturesPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M 4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  {settling ? 'Settling coupons…' : 'Fetching results…'}
+                  {settling ? 'Settling picks…' : 'Fetching results…'}
                 </span>
-              ) : '⚡ Fetch Results & Settle Coupons'}
+              ) : '⚡ Fetch Results & Settle Picks'}
             </button>
             <button
               type="button"
               onClick={reconcileSettledCoupons}
               disabled={syncing || fetchingResults || settling || reconciling}
-              title="After scores are corrected in the DB, re-grade settled picks and fix escrow if the coupon should have won instead of lost (or vice versa). Does not fetch from the API."
+              title="After scores are corrected in the DB, re-grade settled picks and fix escrow if the pick should have won instead of lost (or vice versa). Does not fetch from the API."
               className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-rose-600 to-rose-700 text-white hover:from-rose-700 hover:to-rose-800 disabled:opacity-50 transition-all shadow-md"
             >
               {reconciling ? (
@@ -1034,13 +1034,13 @@ export default function AdminFixturesPage() {
                   Reconciling…
                 </span>
               ) : (
-                '↩ Reconcile settled coupons'
+                '↩ Reconcile settled picks'
               )}
             </button>
             <p className="w-full text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Use when matches have finished but coupons are still &quot;pending&quot;. Scheduled sync runs about every minute — this forces it immediately.
+              Use when matches have finished but picks are still &quot;pending&quot;. Scheduled sync runs about every minute — this forces it immediately.
               {' '}
-              <strong className="text-gray-600 dark:text-gray-300">Reconcile</strong> is for when scores were wrong at settlement (e.g. API quota): fetch correct scores first, then run it — it updates already-settled coupons and wallets if the outcome flips.
+              <strong className="text-gray-600 dark:text-gray-300">Reconcile</strong> is for when scores were wrong at settlement (e.g. API quota): fetch correct scores first, then run it — it updates already-settled picks and wallets if the outcome flips.
             </p>
           </div>
         </div>
@@ -1050,7 +1050,7 @@ export default function AdminFixturesPage() {
             <div className="font-medium space-y-1">
               <p>
                 Reconcile: <strong>{reconcileMsg.picksRegraded}</strong> pick{reconcileMsg.picksRegraded !== 1 ? 's' : ''} regraded,{' '}
-                <strong>{reconcileMsg.ticketsOutcomeChanged}</strong> coupon{reconcileMsg.ticketsOutcomeChanged !== 1 ? 's' : ''} outcome updated,{' '}
+                <strong>{reconcileMsg.ticketsOutcomeChanged}</strong> pick{reconcileMsg.ticketsOutcomeChanged !== 1 ? 's' : ''} outcome updated,{' '}
                 <strong>{reconcileMsg.escrowTicketsAdjusted}</strong> escrow adjustment{reconcileMsg.escrowTicketsAdjusted !== 1 ? 's' : ''}.
               </p>
               {reconcileMsg.errors.length > 0 && (
@@ -1072,7 +1072,7 @@ export default function AdminFixturesPage() {
               <span className="font-medium">
                 {resultMsg.updated} fixture{resultMsg.updated !== 1 ? 's' : ''} updated with results.
                 {resultMsg.settled !== undefined && (
-                  <> {resultMsg.settled} coupon{resultMsg.settled !== 1 ? 's' : ''} settled.</>
+                  <> {resultMsg.settled} pick{resultMsg.settled !== 1 ? 's' : ''} settled.</>
                 )}
                 {resultMsg.updated === 0 && (
                   <> No unfinished past fixtures found — all may already be up to date, or no matches ended recently.</>

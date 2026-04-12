@@ -524,9 +524,9 @@ export class EmailService {
       .join('');
 
     const inner = `${this.brandHeader(
-      'New coupon alert',
+      'New pick alert',
       couponHeadline,
-      `${tipsterName} just published a new coupon.${tipsterFormLine ? ' ' : ''}`,
+      `${tipsterName} just published a new pick.${tipsterFormLine ? ' ' : ''}`,
     )}
 <tr>
   <td style="padding:8px 36px 26px;">
@@ -545,7 +545,7 @@ export class EmailService {
       ${legsHtml || `<tr><td style="padding:14px 16px;border-top:1px solid ${BR.line};font-size:13px;color:${BR.muted};">No leg details available.</td></tr>`}
     </table>
     <div style="text-align:center;margin-top:24px;">
-      <a href="${this.escapeHtmlAttr(ctaUrl)}" style="display:inline-block;background:linear-gradient(180deg,#d4af37,#b8941f);color:#0c1224;padding:14px 30px;text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(201,162,39,0.35);">Open Coupon</a>
+      <a href="${this.escapeHtmlAttr(ctaUrl)}" style="display:inline-block;background:linear-gradient(180deg,#d4af37,#b8941f);color:#0c1224;padding:14px 30px;text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(201,162,39,0.35);">Open pick</a>
     </div>
   </td>
 </tr>`;
@@ -560,16 +560,16 @@ export class EmailService {
           }`,
       )
       .join('\n');
-    const text = `New coupon from ${data.tipsterName}\n${
+    const text = `New pick from ${data.tipsterName}\n${
       data.tipsterForm
-        ? `\n${data.tipsterForm}${asOfLabel ? `\nAs of: ${asOfLabel}` : ''}\nStats source: settled coupon results on BetRollover.\nPerformance can change as new picks settle.\n`
+        ? `\n${data.tipsterForm}${asOfLabel ? `\nAs of: ${asOfLabel}` : ''}\nStats source: settled pick results on BetRollover.\nPerformance can change as new picks settle.\n`
         : '\n'
     }\n${couponUserFacingRef(data.accumulatorId, data.couponTitle)}\nAccess: ${accessLabel}\nPrice: ${priceLabel}\nTotal Odds: ${totalOddsLabel}\n\n${textLegs}\n\nOpen: ${ctaUrl}\n\n— BetRollover`;
 
     const subTitle = truncateCouponTitleForSubject(data.couponTitle || '', 45);
     const subject = subTitle
       ? `${data.tipsterName} posted: ${subTitle}`
-      : `${data.tipsterName} posted a new coupon`;
+      : `${data.tipsterName} posted a new pick`;
 
     const result = await this.send({
       to,
@@ -579,7 +579,7 @@ export class EmailService {
     });
     if (!result.sent) {
       this.logger.warn(`sendCouponCardEmail: send failed for ${to}: ${result.error || 'unknown'}`);
-      throw new Error(result.error || 'Coupon card email was not sent');
+      throw new Error(result.error || 'Pick alert email was not sent');
     }
     return result;
   }

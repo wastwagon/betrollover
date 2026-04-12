@@ -254,7 +254,7 @@ export default function LeaderboardPage() {
 
             {entries.map((entry, idx) => {
               // Use API win_rate (settled-only won/(won+lost)). Do not use total_wins/total_predictions:
-              // total_predictions includes pending coupons, which wrongly dilutes win rate vs profile/leaderboard API.
+              // total_predictions includes pending picks, which wrongly dilutes win rate vs profile/leaderboard API.
               const winRate = Number(entry.win_rate) || 0;
               const rank = entry.rank ?? entry.leaderboard_rank ?? idx + 1;
               const roi = entry.roi ?? 0;

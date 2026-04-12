@@ -42,6 +42,35 @@ const SPORT_MARKET_ORDERS: Record<Exclude<CreatePickSport, 'football'>, string[]
   tennis: ['Match Winner', 'Over/Under', 'Set Betting', 'Games Over/Under'],
 };
 
+type CountKind = 'fixtures' | 'games' | 'matches' | 'fights';
+
+function availableCountLabel(
+  n: number,
+  kind: CountKind,
+  t: (key: string, vars?: Record<string, string>) => string,
+): string {
+  const keys: Record<CountKind, [string, string]> = {
+    fixtures: ['create_pick.available_fixtures_one', 'create_pick.available_fixtures_other'],
+    games: ['create_pick.available_games_one', 'create_pick.available_games_other'],
+    matches: ['create_pick.available_matches_one', 'create_pick.available_matches_other'],
+    fights: ['create_pick.available_fights_one', 'create_pick.available_fights_other'],
+  };
+  const [oneKey, otherKey] = keys[kind];
+  return n === 1 ? t(oneKey) : t(otherKey, { n: String(n) });
+}
+
+/** Bold the leading integer (e.g. count summaries: "12 fixtures…"). */
+function BoldLeadingCount({ text }: { text: string }) {
+  const m = text.match(/^(\d+)/);
+  if (!m) return <>{text}</>;
+  return (
+    <>
+      <strong>{m[1]}</strong>
+      {text.slice(m[0].length)}
+    </>
+  );
+}
+
 export default function CreatePickPage() {
   const router = useRouter();
   const t = useT();
@@ -446,10 +475,10 @@ export default function CreatePickPage() {
 
         const fixRes = await fetch(`${getApiUrl()}/fixtures?${params.toString()}`, { headers });
         if (!fixRes.ok) {
-          const errorText = await fixRes.text().catch(() => '');
-          const errorMessage = formatError(new Error(`Failed to load fixtures: ${fixRes.status}`));
-          setFixtureError(errorMessage);
-          showError(new Error(`Failed to load fixtures: ${fixRes.status}`));
+          await fixRes.text().catch(() => '');
+          const msg = t('create_pick.fixtures_load_http_error', { status: String(fixRes.status) });
+          setFixtureError(formatError(new Error(msg)));
+          showError(new Error(msg));
           setFixtures([]);
           return;
         }
@@ -469,7 +498,7 @@ export default function CreatePickPage() {
         setLoading(false);
       }
     })();
-  }, [router, selectedCountry, selectedLeague, debouncedTeamSearch, sport, showError]);
+  }, [router, selectedCountry, selectedLeague, debouncedTeamSearch, sport, showError, t]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -580,7 +609,7 @@ export default function CreatePickPage() {
                 setFixtures((prev) =>
                   prev.map((fix) => 
                     fix.id === f.id 
-                      ? { ...fix, oddsError: 'Odds not available from bookmakers yet. Please try again later or select another fixture.' }
+                      ? { ...fix, oddsError: t('create_pick.odds_not_available_yet') }
                       : fix
                   )
                 );
@@ -594,7 +623,7 @@ export default function CreatePickPage() {
           setFixtures((prev) =>
             prev.map((fix) => 
               fix.id === f.id 
-                ? { ...fix, oddsError: 'Unable to fetch odds. The match may be too far in the future or odds are not yet available from bookmakers.' }
+                ? { ...fix, oddsError: t('create_pick.odds_fetch_failed') }
                 : fix
             )
           );
@@ -631,7 +660,7 @@ export default function CreatePickPage() {
       matchDate: f.matchDate,
     });
     if (!added) {
-      showError(new Error('You already have a selection for this match. Remove it to pick a different outcome.'));
+      showError(new Error(t('create_pick.error_duplicate_same_match')));
     }
   };
 
@@ -647,7 +676,7 @@ export default function CreatePickPage() {
       matchDate: e.eventDate,
     });
     if (!added) {
-      showError(new Error('You already have a selection for this match. Remove it to pick a different outcome.'));
+      showError(new Error(t('create_pick.error_duplicate_same_match')));
     }
   };
 
@@ -660,23 +689,26 @@ export default function CreatePickPage() {
 
   const submit = async () => {
     if (selections.length === 0) {
-      setFormError('Add at least one selection');
+      setFormError(t('create_pick.error_no_selections'));
       return;
     }
     if (!title.trim()) {
-      setFormError('Enter a title');
+      setFormError(t('create_pick.error_no_title'));
       return;
     }
     if (placement === 'subscription' && subscriptionPackageIds.length === 0) {
-      setFormError('Select your VIP package or create one in Subscription packages.');
+      setFormError(t('create_pick.error_vip_packages_required'));
       return;
     }
     const priceNum = Number(price) || 0;
     if (priceNum > 0 && !paidSaleAllowed) {
       setFormError(
         sellTh && myTipStats
-          ? `Paid coupons require minimum ROI ${sellTh.minimumROI}% and win rate ${sellTh.minimumWinRate}%. Set price to 0 (free) or improve your settled stats.`
-          : 'Loading your stats — wait a moment, or set price to 0 (free) to publish.',
+          ? t('create_pick.error_paid_requires_stats', {
+              minRoi: String(sellTh.minimumROI),
+              minWr: String(sellTh.minimumWinRate),
+            })
+          : t('create_pick.error_stats_loading_for_paid'),
       );
       return;
     }
@@ -718,7 +750,7 @@ export default function CreatePickPage() {
       const msg =
         getApiErrorMessage(err, '') ||
         (typeof err?.error === 'string' ? err.error : '') ||
-        'Failed to create pick';
+        t('create_pick.submit_failed_default');
       const errorMessage = res.status >= 500 ? formatError(new Error(msg)) : (msg || formatError(new Error(msg)));
       setFormError(errorMessage);
       // Avoid duplicate toast for expected 4xx validation; toast only for server errors.
@@ -727,7 +759,7 @@ export default function CreatePickPage() {
       }
       return;
     }
-    showSuccess('Pick created successfully!');
+    showSuccess(t('create_pick.toast_success_created'));
     clearCart();
     router.push('/my-picks');
   };
@@ -859,7 +891,7 @@ export default function CreatePickPage() {
                     type="button"
                     onClick={() => setTeamSearch('')}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
-                    title="Clear search"
+                    title={t('create_pick.clear_search_title')}
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -878,28 +910,28 @@ export default function CreatePickPage() {
                 </p>
                 <p className="text-[var(--text)] text-sm font-medium">
                   {sport === 'football' && (
-                    <><strong>{availableFixtures.length}</strong> available fixture{availableFixtures.length !== 1 ? 's' : ''}</>
+                    <BoldLeadingCount text={availableCountLabel(availableFixtures.length, 'fixtures', t)} />
                   )}
                   {sport === 'basketball' && (
-                    <><strong>{availableBasketballEvents.length}</strong> available game{availableBasketballEvents.length !== 1 ? 's' : ''}</>
+                    <BoldLeadingCount text={availableCountLabel(availableBasketballEvents.length, 'games', t)} />
                   )}
                   {sport === 'rugby' && (
-                    <><strong>{availableRugbyEvents.length}</strong> available match{availableRugbyEvents.length !== 1 ? 'es' : ''}</>
+                    <BoldLeadingCount text={availableCountLabel(availableRugbyEvents.length, 'matches', t)} />
                   )}
                   {sport === 'mma' && (
-                    <><strong>{availableMmaEvents.length}</strong> available fight{availableMmaEvents.length !== 1 ? 's' : ''}</>
+                    <BoldLeadingCount text={availableCountLabel(availableMmaEvents.length, 'fights', t)} />
                   )}
                   {sport === 'volleyball' && (
-                    <><strong>{availableVolleyballEvents.length}</strong> available match{availableVolleyballEvents.length !== 1 ? 'es' : ''}</>
+                    <BoldLeadingCount text={availableCountLabel(availableVolleyballEvents.length, 'matches', t)} />
                   )}
                   {sport === 'hockey' && (
-                    <><strong>{availableHockeyEvents.length}</strong> available game{availableHockeyEvents.length !== 1 ? 's' : ''}</>
+                    <BoldLeadingCount text={availableCountLabel(availableHockeyEvents.length, 'games', t)} />
                   )}
                   {sport === 'american_football' && (
-                    <><strong>{availableAmericanFootballEvents.length}</strong> available game{availableAmericanFootballEvents.length !== 1 ? 's' : ''}</>
+                    <BoldLeadingCount text={availableCountLabel(availableAmericanFootballEvents.length, 'games', t)} />
                   )}
                   {sport === 'tennis' && (
-                    <><strong>{availableTennisEvents.length}</strong> available match{availableTennisEvents.length !== 1 ? 'es' : ''}</>
+                    <BoldLeadingCount text={availableCountLabel(availableTennisEvents.length, 'matches', t)} />
                   )}
                 </p>
               </div>
@@ -920,21 +952,21 @@ export default function CreatePickPage() {
                         <option value="">{t('create_pick.all_countries')}</option>
                         {filterOptions.countries.map((country) => (
                           <option key={country} value={country}>
-                            {country === 'World' ? 'World (international)' : country}
+                            {country === 'World' ? t('live_scores.world_international') : country}
                           </option>
                         ))}
                       </select>
                     </div>
                     {filterOptions.leagues.length > 0 && (
                       <div className="flex min-w-0 max-w-full flex-1 basis-full items-center gap-2 sm:basis-auto sm:flex-initial">
-                        <label className="shrink-0 text-sm font-medium text-[var(--text)] whitespace-nowrap">Competition</label>
+                        <label className="shrink-0 text-sm font-medium text-[var(--text)] whitespace-nowrap">{t('create_pick.competition')}</label>
                         <select
                           value={competitionOptions.some((l) => String(l.id) === selectedLeague) ? selectedLeague : ''}
                           onChange={(e) => setSelectedLeague(e.target.value)}
                           className="min-w-0 flex-1 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all sm:min-w-[200px] sm:flex-initial"
                           title={selectedCountry ? (selectedCountry === 'World' ? t('create_pick.international_only') : t('create_pick.leagues_in', { country: selectedCountry })) : t('create_pick.filter_by_league')}
                         >
-                          <option value="">All competitions</option>
+                          <option value="">{t('create_pick.all_competitions')}</option>
                           {competitionOptions.map((l) => (
                             <option key={l.id} value={String(l.id)}>
                               {l.country ? `${l.name} (${l.country})` : l.name}
@@ -947,7 +979,7 @@ export default function CreatePickPage() {
                       <button
                         type="button"
                         onClick={() => { setSelectedCountry(''); setSelectedLeague(''); setTeamSearch(''); }}
-                        title="Clear all filters"
+                        title={t('create_pick.clear_all_filters_title')}
                         className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                       >
                         {t('create_pick.clear_filters')}
@@ -959,13 +991,13 @@ export default function CreatePickPage() {
                 {/* Non-football: Competition/League filter (client-side from loaded events) */}
                 {sport !== 'football' && uniqueSportLeagues.length > 0 && (
                   <div className="flex min-w-0 max-w-full flex-1 basis-full items-center gap-2 sm:basis-auto sm:flex-initial">
-                    <label className="shrink-0 text-sm font-medium text-[var(--text)] whitespace-nowrap">Competition</label>
+                    <label className="shrink-0 text-sm font-medium text-[var(--text)] whitespace-nowrap">{t('create_pick.competition')}</label>
                     <select
                       value={sportLeague}
                       onChange={(e) => setSportLeague(e.target.value)}
                       className="min-w-0 flex-1 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all sm:min-w-[200px] sm:flex-initial"
                     >
-                      <option value="">All competitions</option>
+                      <option value="">{t('create_pick.all_competitions')}</option>
                       {uniqueSportLeagues.map((league) => (
                         <option key={league} value={league}>{league}</option>
                       ))}
@@ -976,10 +1008,10 @@ export default function CreatePickPage() {
                   <button
                     type="button"
                     onClick={() => { setSportLeague(''); setTeamSearch(''); }}
-                    title="Clear all filters"
+                    title={t('create_pick.clear_all_filters_title')}
                     className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                   >
-                    Clear Filters
+                    {t('create_pick.clear_filters')}
                   </button>
                 )}
               </div>
@@ -987,59 +1019,59 @@ export default function CreatePickPage() {
             {loading && sport === 'football' && <LoadingSkeleton count={4} />}
 
             {/* Basketball */}
-            {sport === 'basketball' && loadingBasketball && <SportLoadingSpinner label="Loading basketball games…" />}
+            {sport === 'basketball' && loadingBasketball && <SportLoadingSpinner label={t('create_pick.loading_basketball_games')} />}
             {sport === 'basketball' && !loadingBasketball && availableBasketballEvents.length === 0 && (
               basketballEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState emoji="🏀" label="No upcoming basketball games with odds" hint="Basketball data syncs daily. Odds become available shortly after events are synced." />
-                : <SportEmptyState emoji="🏀" label="No games match your filters" hint="Try clearing the Competition filter or changing your search." />
+                ? <SportEmptyState emoji="🏀" label={t('create_pick.empty_basketball_no_odds_title')} hint={t('create_pick.empty_basketball_no_odds_hint')} />
+                : <SportEmptyState emoji="🏀" label={t('create_pick.empty_filtered_games')} hint={t('create_pick.empty_filtered_hint')} />
             )}
 
             {/* Rugby */}
-            {sport === 'rugby' && loadingRugby && <SportLoadingSpinner label="Loading rugby matches…" />}
+            {sport === 'rugby' && loadingRugby && <SportLoadingSpinner label={t('create_pick.loading_rugby_matches')} />}
             {sport === 'rugby' && !loadingRugby && availableRugbyEvents.length === 0 && (
               rugbyEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState emoji="🏉" label="No upcoming rugby matches with odds" hint="Rugby data syncs daily. Odds become available shortly after events are synced." />
-                : <SportEmptyState emoji="🏉" label="No matches match your filters" hint="Try clearing the Competition filter or changing your search." />
+                ? <SportEmptyState emoji="🏉" label={t('create_pick.empty_rugby_no_odds_title')} hint={t('create_pick.empty_rugby_no_odds_hint')} />
+                : <SportEmptyState emoji="🏉" label={t('create_pick.empty_filtered_matches')} hint={t('create_pick.empty_filtered_hint')} />
             )}
 
             {/* MMA */}
-            {sport === 'mma' && loadingMma && <SportLoadingSpinner label="Loading MMA fights…" />}
+            {sport === 'mma' && loadingMma && <SportLoadingSpinner label={t('create_pick.loading_mma_fights')} />}
             {sport === 'mma' && !loadingMma && availableMmaEvents.length === 0 && (
               mmaEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState emoji="🥊" label="No upcoming MMA fights with odds" hint="MMA data syncs daily. Odds are typically available for major promotions like UFC." />
-                : <SportEmptyState emoji="🥊" label="No fights match your filters" hint="Try clearing the Competition filter or changing your search." />
+                ? <SportEmptyState emoji="🥊" label={t('create_pick.empty_mma_no_odds_title')} hint={t('create_pick.empty_mma_no_odds_hint')} />
+                : <SportEmptyState emoji="🥊" label={t('create_pick.empty_filtered_fights')} hint={t('create_pick.empty_filtered_hint')} />
             )}
 
             {/* Volleyball */}
-            {sport === 'volleyball' && loadingVolleyball && <SportLoadingSpinner label="Loading volleyball matches…" />}
+            {sport === 'volleyball' && loadingVolleyball && <SportLoadingSpinner label={t('create_pick.loading_volleyball_matches')} />}
             {sport === 'volleyball' && !loadingVolleyball && availableVolleyballEvents.length === 0 && (
               volleyballEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState emoji="🏐" label="No upcoming volleyball matches with odds" hint="Volleyball data syncs daily at 07:00. Odds may not be available for all leagues." />
-                : <SportEmptyState emoji="🏐" label="No matches match your filters" hint="Try clearing the Competition filter or changing your search." />
+                ? <SportEmptyState emoji="🏐" label={t('create_pick.empty_volleyball_no_odds_title')} hint={t('create_pick.empty_volleyball_no_odds_hint')} />
+                : <SportEmptyState emoji="🏐" label={t('create_pick.empty_filtered_matches')} hint={t('create_pick.empty_filtered_hint')} />
             )}
 
             {/* Hockey */}
-            {sport === 'hockey' && loadingHockey && <SportLoadingSpinner label="Loading hockey games…" />}
+            {sport === 'hockey' && loadingHockey && <SportLoadingSpinner label={t('create_pick.loading_hockey_games')} />}
             {sport === 'hockey' && !loadingHockey && availableHockeyEvents.length === 0 && (
               hockeyEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState emoji="🏒" label="No upcoming hockey games with odds" hint="Hockey data syncs daily. Odds are available for NHL and major European leagues." />
-                : <SportEmptyState emoji="🏒" label="No games match your filters" hint="Try clearing the Competition filter or changing your search." />
+                ? <SportEmptyState emoji="🏒" label={t('create_pick.empty_hockey_no_odds_title')} hint={t('create_pick.empty_hockey_no_odds_hint')} />
+                : <SportEmptyState emoji="🏒" label={t('create_pick.empty_filtered_games')} hint={t('create_pick.empty_filtered_hint')} />
             )}
 
             {/* American Football */}
-            {sport === 'american_football' && loadingAmericanFootball && <SportLoadingSpinner label="Loading American Football games…" />}
+            {sport === 'american_football' && loadingAmericanFootball && <SportLoadingSpinner label={t('create_pick.loading_american_football_games')} />}
             {sport === 'american_football' && !loadingAmericanFootball && availableAmericanFootballEvents.length === 0 && (
               americanFootballEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState emoji="🏈" label="No upcoming NFL/NCAAF games with odds" hint="NFL is off-season. NCAAF games will appear when the season starts. Data syncs daily." />
-                : <SportEmptyState emoji="🏈" label="No games match your filters" hint="Try clearing the Competition filter or changing your search." />
+                ? <SportEmptyState emoji="🏈" label={t('create_pick.empty_american_football_no_odds_title')} hint={t('create_pick.empty_american_football_no_odds_hint')} />
+                : <SportEmptyState emoji="🏈" label={t('create_pick.empty_filtered_games')} hint={t('create_pick.empty_filtered_hint')} />
             )}
 
             {/* Tennis */}
-            {sport === 'tennis' && loadingTennis && <SportLoadingSpinner label="Loading tennis matches…" />}
+            {sport === 'tennis' && loadingTennis && <SportLoadingSpinner label={t('create_pick.loading_tennis_matches')} />}
             {sport === 'tennis' && !loadingTennis && availableTennisEvents.length === 0 && (
               tennisEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState emoji="🎾" label="No upcoming tennis matches with odds" hint="Tennis data syncs daily at 08:30. Odds are available for ATP/WTA tour events." />
-                : <SportEmptyState emoji="🎾" label="No matches match your filters" hint="Try clearing the Competition filter or changing your search." />
+                ? <SportEmptyState emoji="🎾" label={t('create_pick.empty_tennis_no_odds_title')} hint={t('create_pick.empty_tennis_no_odds_hint')} />
+                : <SportEmptyState emoji="🎾" label={t('create_pick.empty_filtered_matches')} hint={t('create_pick.empty_filtered_hint')} />
             )}
             {fixtureError && (
               <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
@@ -1079,7 +1111,7 @@ export default function CreatePickPage() {
                       }}
                       className="mt-2 text-sm font-medium text-red-700 dark:text-red-300 hover:text-red-900 dark:hover:text-red-100 underline"
                     >
-                      Try again
+                      {t('error.try_again')}
                     </button>
                   </div>
                 </div>

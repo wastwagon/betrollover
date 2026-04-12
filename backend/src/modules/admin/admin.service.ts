@@ -1560,7 +1560,7 @@ export class AdminService {
   }
 
   /**
-   * Admin-only: Complete coupon deletion with escrow refund, AI prediction cleanup,
+   * Admin-only: Complete pick deletion with escrow refund, AI prediction cleanup,
    * and tipster stats recalculation. Safe for live system.
    */
   async deletePick(id: number): Promise<{ ok: boolean; refundedCount?: number; tipsterStatsRecalculated?: boolean }> {
@@ -1568,7 +1568,7 @@ export class AdminService {
       where: { id },
       select: ['id', 'userId', 'title', 'result'],
     });
-    if (!ticket) throw new NotFoundException('Coupon not found');
+    if (!ticket) throw new NotFoundException('Pick not found');
 
     const accumulatorId = id;
     const sellerId = ticket.userId;

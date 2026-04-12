@@ -16,7 +16,7 @@ interface Settings {
   isActive?: boolean;
   minimumROI?: number;
   minimumWinRate?: number;
-  /** GHS price for AI coupons when ROI + win rate meet minimums; 0 = AI always free */
+  /** GHS price for AI marketplace picks when ROI + win rate meet minimums; 0 = AI always free */
   aiMarketplaceCouponPrice?: number;
   maxCouponsPerDay?: number;
   /** Per AI tipster, UTC day; engine uses min(this, each tipster max in code config). */
@@ -1215,8 +1215,8 @@ export default function AdminSettingsPage() {
                     <span className="text-2xl">📊</span>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Human tipsters need this ROI% to list paid coupons. AI tipsters use the same bar for automatic paid
-                    listings when <strong>AI coupon price</strong> is greater than zero.
+                    Human tipsters need this ROI% to list paid picks. AI tipsters use the same bar for automatic paid
+                    listings when <strong>AI pick price</strong> is greater than zero.
                   </p>
                   <div className="flex items-center gap-3 mb-4">
                     <input
@@ -1281,8 +1281,8 @@ export default function AdminSettingsPage() {
                     <span className="text-2xl">🎯</span>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Human tipsters need this settled win rate for paid marketplace coupons. AI tipsters use the same
-                    thresholds for auto-priced coupons. If either metric is below the minimum, only free listings apply
+                    Human tipsters need this settled win rate for paid marketplace picks. AI tipsters use the same
+                    thresholds for auto-priced picks. If either metric is below the minimum, only free listings apply
                     until both recover.
                   </p>
                   <div className="flex items-center gap-3 mb-4">
@@ -1339,17 +1339,17 @@ export default function AdminSettingsPage() {
                   </button>
                 </div>
 
-                {/* AI marketplace coupon price */}
+                {/* AI marketplace pick price */}
                 <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 rounded-2xl shadow-lg border-2 border-indigo-200 dark:border-indigo-800 p-4 sm:p-6 hover:shadow-xl transition-all">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">AI coupon price</h3>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">AI pick price</h3>
                     <span className="text-2xl">🤖</span>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                     When an AI tipster’s <strong>ROI</strong> and <strong>win rate</strong> (on their profile / leaderboard)
                     meet the minimum ROI and minimum win rate above, new prediction syncs list at this price on the
-                    marketplace with the same escrow rules as human paid coupons. Set to <strong>0</strong> to keep all AI
-                    coupons free.
+                    marketplace with the same escrow rules as human paid picks. Set to <strong>0</strong> to keep all AI
+                    picks free.
                   </p>
                   <div className="flex items-center gap-3 mb-4">
                     <span className="text-gray-600 dark:text-gray-400 font-medium shrink-0">GHS</span>
@@ -1380,7 +1380,7 @@ export default function AdminSettingsPage() {
                           body: JSON.stringify({ aiMarketplaceCouponPrice }),
                         });
                         if (res.ok) {
-                          alert('AI coupon price updated successfully');
+                          alert('AI pick price updated successfully');
                           const settingsRes = await fetch(`${getApiUrl()}/admin/settings`, {
                             headers: { Authorization: `Bearer ${token}` },
                             cache: 'no-store',
@@ -1394,10 +1394,10 @@ export default function AdminSettingsPage() {
                           }
                         } else {
                           const error = await res.json().catch(() => ({}));
-                          alert(getApiErrorMessage(error, 'Failed to update AI coupon price'));
+                          alert(getApiErrorMessage(error, 'Failed to update AI pick price'));
                         }
                       } catch (e: unknown) {
-                        alert(e instanceof Error ? e.message : 'Failed to update AI coupon price');
+                        alert(e instanceof Error ? e.message : 'Failed to update AI pick price');
                       } finally {
                         setSavingAiCouponPrice(false);
                       }
@@ -1405,18 +1405,18 @@ export default function AdminSettingsPage() {
                     disabled={savingAiCouponPrice}
                     className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
                   >
-                    {savingAiCouponPrice ? 'Saving...' : 'Save AI coupon price'}
+                    {savingAiCouponPrice ? 'Saving...' : 'Save AI pick price'}
                   </button>
                 </div>
 
-                {/* AI tipsters: daily coupon cap */}
+                {/* AI tipsters: daily pick cap */}
                 <div className="bg-gradient-to-br from-cyan-50 to-teal-100 dark:from-cyan-900/20 dark:to-teal-800/20 rounded-2xl shadow-lg border-2 border-cyan-200 dark:border-cyan-800 p-4 sm:p-6 hover:shadow-xl transition-all">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">AI tipsters — coupons per day</h3>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">AI tipsters — picks per day</h3>
                     <span className="text-2xl">🤖</span>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                    Maximum <strong>marketplace coupons each AI tipster</strong> can publish per <strong>UTC calendar day</strong>{' '}
+                    Maximum <strong>marketplace picks each AI tipster</strong> can publish per <strong>UTC calendar day</strong>{' '}
                     (scheduled run around midnight). The engine uses the <strong>lower</strong> of this value and each
                     tipster&apos;s own cap in server config (<code className="text-xs bg-white/60 dark:bg-gray-800 px-1 rounded">ai-tipsters.config.ts</code>
                     , <code className="text-xs bg-white/60 dark:bg-gray-800 px-1 rounded">max_daily_predictions</code>).
@@ -1458,7 +1458,7 @@ export default function AdminSettingsPage() {
                           body: JSON.stringify({ aiMaxCouponsPerDay }),
                         });
                         if (res.ok) {
-                          alert('AI daily coupon limit updated');
+                          alert('AI daily pick limit updated');
                           const settingsRes = await fetch(`${getApiUrl()}/admin/settings`, {
                             headers: { Authorization: `Bearer ${token}` },
                             cache: 'no-store',
@@ -1485,15 +1485,15 @@ export default function AdminSettingsPage() {
                   </button>
                 </div>
 
-                {/* Max coupons per UTC day (anti-spam) */}
+                {/* Max picks per UTC day (anti-spam) */}
                 <div className="bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-900/20 dark:to-violet-800/20 rounded-2xl shadow-lg border-2 border-violet-200 dark:border-violet-800 p-4 sm:p-6 hover:shadow-xl transition-all">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Human tipsters — coupons per day</h3>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Human tipsters — picks per day</h3>
                     <span className="text-2xl">📅</span>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Maximum coupons a <strong>human</strong> tipster can create per UTC day. Use <strong>0</strong> for unlimited.
-                    AI tipsters use the separate <strong>AI tipsters — coupons per day</strong> setting above.
+                    Maximum picks a <strong>human</strong> tipster can create per UTC day. Use <strong>0</strong> for unlimited.
+                    AI tipsters use the separate <strong>AI tipsters — picks per day</strong> setting above.
                   </p>
                   <div className="flex items-center gap-3 mb-4">
                     <input
@@ -1522,7 +1522,7 @@ export default function AdminSettingsPage() {
                           body: JSON.stringify({ maxCouponsPerDay }),
                         });
                         if (res.ok) {
-                          alert('Daily coupon limit updated successfully');
+                          alert('Daily pick limit updated successfully');
                           const settingsRes = await fetch(`${getApiUrl()}/admin/settings`, {
                             headers: { Authorization: `Bearer ${token}` },
                             cache: 'no-store',
@@ -1556,7 +1556,7 @@ export default function AdminSettingsPage() {
                     <span className="text-2xl">💰</span>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                    % deducted from tipster payouts when a winning coupon is settled via escrow.
+                    % deducted from tipster payouts when a winning pick is settled via escrow.
                   </p>
                   {/* Live preview */}
                   <div className="bg-amber-100/60 dark:bg-amber-900/30 rounded-xl p-3 mb-4 text-xs space-y-1">

@@ -20,20 +20,20 @@ export class ReviewsService {
   async submitReview(userId: number, data: { couponId: number; rating: number; comment?: string }) {
     if (data.rating < 1 || data.rating > 5) throw new BadRequestException('Rating must be 1–5');
 
-    // Verify buyer purchased this coupon
+    // Verify buyer purchased this pick
     const purchase = await this.purchasedRepo.findOne({
       where: { userId, accumulatorId: data.couponId },
     });
-    if (!purchase) throw new ForbiddenException('You can only review coupons you have purchased');
+    if (!purchase) throw new ForbiddenException('You can only review picks you have purchased');
 
-    // Verify coupon is settled (won or lost)
+    // Verify pick is settled (won or lost)
     const ticket = await this.ticketRepo.findOne({ where: { id: data.couponId } });
-    if (!ticket) throw new BadRequestException('Coupon not found');
+    if (!ticket) throw new BadRequestException('Pick not found');
     if (ticket.result === 'pending' || !ticket.result) {
-      throw new BadRequestException('You can only review settled coupons');
+      throw new BadRequestException('You can only review settled picks');
     }
 
-    // Upsert review (one per buyer per coupon)
+    // Upsert review (one per buyer per pick)
     const existing = await this.reviewRepo.findOne({
       where: { couponId: data.couponId, reviewerId: userId },
     });

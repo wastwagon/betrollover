@@ -190,7 +190,7 @@ export default function EarningsPage() {
       .map(([month, earned]) => ({ month, earned: Number(earned.toFixed(2)) }));
   }, [transactions]);
 
-  // Coupon revenue breakdown
+  // Pick revenue breakdown
   const couponRevenue = useMemo(() =>
     coupons
       .filter(c => Number(c.price) > 0 && (c.purchaseCount ?? 0) > 0)
@@ -328,7 +328,7 @@ export default function EarningsPage() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 min-w-0">
-          {/* ── Coupon performance ── */}
+          {/* ── Pick performance ── */}
           <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-hidden shadow-sm min-w-0">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-5 py-4 border-b border-[var(--border)] min-w-0">
               <h2 className="text-sm font-semibold text-[var(--text)] min-w-0">{t('earnings.top_revenue')}</h2>
@@ -369,7 +369,7 @@ export default function EarningsPage() {
             )}
           </div>
 
-          {/* ── Coupon stats summary ── */}
+          {/* ── Pick stats summary ── */}
           <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm min-w-0">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 min-w-0">
               <h2 className="text-sm font-semibold text-[var(--text)] min-w-0">{t('earnings.coupon_stats')}</h2>

@@ -412,7 +412,7 @@ export default function MyPurchasesPage() {
                 href="/coupons/archive"
                 className="text-sm text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors"
               >
-                📦 View settled coupon archive →
+                {t('my_purchases.settled_archive_link')}
               </Link>
             </div>
           )}

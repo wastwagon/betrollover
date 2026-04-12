@@ -154,7 +154,7 @@ export default function AdminSupportPage() {
               <div>
                 <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Subject</p>
                 <p className="font-medium text-gray-900 dark:text-white">{selected.subject}</p>
-                {selected.relatedCouponId && <p className="text-xs text-blue-500 mt-0.5">Coupon #{selected.relatedCouponId}</p>}
+                {selected.relatedCouponId && <p className="text-xs text-blue-500 mt-0.5">Pick #{selected.relatedCouponId}</p>}
               </div>
               <div>
                 <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Message</p>

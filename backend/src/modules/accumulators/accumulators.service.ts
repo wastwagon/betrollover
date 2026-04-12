@@ -117,7 +117,7 @@ export class AccumulatorsService {
       where: { userId, title: dto.title.trim() }
     });
     if (existingTitle) {
-      throw new BadRequestException(`You already have a coupon with the title "${dto.title}". Please use a different title.`);
+      throw new BadRequestException(`You already have a pick with the title "${dto.title}". Please use a different title.`);
     }
 
     const policy = await this.loadSellingPolicy();
@@ -125,7 +125,7 @@ export class AccumulatorsService {
       const todayCount = await this.countCouponsCreatedUtcToday(userId);
       if (todayCount >= policy.maxCouponsPerDay) {
         throw new BadRequestException(
-          `Daily coupon limit reached (${policy.maxCouponsPerDay} per UTC day). You can create more after midnight UTC.`,
+          `Daily pick limit reached (${policy.maxCouponsPerDay} per UTC day). You can create more after midnight UTC.`,
         );
       }
     }
@@ -137,7 +137,7 @@ export class AccumulatorsService {
       throw new BadRequestException('At least one selection is required');
     }
     if (dto.selections.length > 20) {
-      throw new BadRequestException('Maximum 20 selections allowed per coupon');
+      throw new BadRequestException('Maximum 20 selections allowed per pick');
     }
 
     // Validate price
@@ -162,7 +162,7 @@ export class AccumulatorsService {
       if (selection.odds > 1000) {
         throw new BadRequestException('Odds cannot exceed 1000');
       }
-      // Use per-selection sport for routing validation, fall back to coupon sport
+      // Use per-selection sport for routing validation, fall back to pick sport
       const selSport = (selection.sport || dto.sport || 'football').toLowerCase();
       if (dto.isMarketplace) {
         if (SPORT_EVENT_SPORTS.has(selSport)) {
@@ -186,21 +186,21 @@ export class AccumulatorsService {
 
     if (placementNorm === 'subscription') {
       if (dto.isMarketplace) {
-        throw new BadRequestException('Subscription-only coupons cannot be listed on the marketplace.');
+        throw new BadRequestException('Subscription-only picks cannot be listed on the marketplace.');
       }
       if (!(dto.subscriptionPackageIds?.length)) {
-        throw new BadRequestException('Select your VIP package for subscription-only coupons.');
+        throw new BadRequestException('Select your VIP package for subscription-only picks.');
       }
     } else {
       if (!dto.isMarketplace) {
         throw new BadRequestException('Marketplace placement requires listing on the marketplace.');
       }
       if ((dto.subscriptionPackageIds?.length ?? 0) > 0) {
-        throw new BadRequestException('Marketplace coupons cannot be linked to a subscription package.');
+        throw new BadRequestException('Marketplace picks cannot be linked to a subscription package.');
       }
     }
 
-    // ROI + win rate: any paid coupon (marketplace or subscription-only). Aligns with VIP package rules.
+    // ROI + win rate: any paid pick (marketplace or subscription-only). Aligns with VIP package rules.
     if (price > 0) {
       const user = await this.usersRepo.findOne({ where: { id: userId } });
       if (!user) throw new NotFoundException('User not found');
@@ -217,7 +217,7 @@ export class AccumulatorsService {
           parts.push(`win rate ${stats.winRate}% (minimum ${policy.minimumWinRate}%)`);
         }
         throw new BadRequestException(
-          `Paid coupons require both minimum ROI and win rate (marketplace or VIP subscribers). Current: ${parts.join('; ')}. Use price 0 (free) until your settled results meet every requirement.`,
+          `Paid picks require both minimum ROI and win rate (marketplace or VIP subscribers). Current: ${parts.join('; ')}. Use price 0 (free) until your settled results meet every requirement.`,
         );
       }
     }
@@ -235,7 +235,7 @@ export class AccumulatorsService {
       : (SPORT_DISPLAY_NAMES[couponSport] ?? 'Football');
 
     const totalOdds = dto.selections.reduce((a, s) => a * s.odds, 1);
-    // Auto-approve ALL coupons (both free and paid) - they become immediately available on marketplace
+    // Auto-approve ALL picks (both free and paid) — they become immediately available on marketplace
     const ticket = this.ticketRepo.create({
       userId,
       title: dto.title,
@@ -1094,9 +1094,9 @@ export class AccumulatorsService {
       return !started;
     });
     let reason = 'ok';
-    if (byResult.won + byResult.lost === tickets.length) reason = 'All coupons settled (matches finished)';
-    else if (afterMatchFilter.length === 0 && pending.length > 0) reason = 'All pending coupons have fixtures that already started';
-    else if (pending.length === 0) reason = 'All coupons settled or cancelled';
+    if (byResult.won + byResult.lost === tickets.length) reason = 'All picks settled (matches finished)';
+    else if (afterMatchFilter.length === 0 && pending.length > 0) reason = 'All pending picks have fixtures that already started';
+    else if (pending.length === 0) reason = 'All picks settled or cancelled';
     return {
       activeListings: rows.length,
       ticketsTotal: tickets.length,
@@ -1466,10 +1466,10 @@ export class AccumulatorsService {
       platformCommissionPercent,
       metricNotes: {
         verifiedTipsters: 'tipsters.is_active = true (includes listed AI tipsters)',
-        totalPicks: 'Marketplace coupons settled won+lost (matches /accumulators/archive total)',
-        activePicks: 'Live buyable listings (active + pending coupon + no started fixture)',
+        totalPicks: 'Marketplace picks settled won+lost (matches /accumulators/archive total)',
+        activePicks: 'Live buyable listings (active + pending result + no started fixture)',
         successfulPurchases: 'user_purchased_picks joined to pick_marketplace',
-        winRate: 'Marketplace-listed coupons: won / (won + lost)',
+        winRate: 'Marketplace-listed picks: won / (won + lost)',
         totalPaidOut: 'SUM(wallet_transactions.amount) type=payout, status=completed, amount>0',
         grossWinningStakesGhs: 'SUM(escrow_funds.amount) where status=released',
       },

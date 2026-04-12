@@ -329,7 +329,7 @@ export class UsersService {
     } else {
       await this.tipsterRequestRepo.save({ userId, status: 'approved', reviewedAt: new Date() });
     }
-    return { status: 'approved', message: 'You are now a tipster. Post free picks to build your ROI before selling paid coupons.' };
+    return { status: 'approved', message: 'You are now a tipster. Post free picks to build your ROI before selling paid picks.' };
   }
 
   private async ensureTipsterForUser(user: User): Promise<void> {

@@ -81,7 +81,7 @@ export default function AdminPurchasesPage() {
           <p className="text-3xl font-bold">GHS {pageSubtotalGross.toFixed(2)}</p>
           <p className="text-xs opacity-85 mt-2 leading-snug max-w-xl">
             Sum of listed purchase prices only. Platform-wide gross is under Admin → Analytics. Buyer “Total spent” on the user
-            dashboard counts winning coupons only (lost/void are refunded).
+            dashboard counts winning picks only (lost/void are refunded).
           </p>
         </div>
 
@@ -130,7 +130,7 @@ export default function AdminPurchasesPage() {
                         <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">ID</th>
                         <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider min-w-[10rem]">Buyer</th>
                         <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider min-w-[10rem]">Tipster</th>
-                        <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Coupon</th>
+                        <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Pick</th>
                         <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Price</th>
                         <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Date</th>
                       </tr>
@@ -141,7 +141,7 @@ export default function AdminPurchasesPage() {
                         const tipsterId = p.tipsterUserId ?? 0;
                         const tipster = tipsterId
                           ? formatPerson(p.tipsterDisplayName, p.tipsterUsername, tipsterId)
-                          : { name: '—', sub: 'No coupon link' };
+                          : { name: '—', sub: 'No pick link' };
                         return (
                         <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                           <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{p.id}</td>

@@ -171,7 +171,7 @@ export class AccumulatorsController {
   @Get(':id/public')
   async getByIdPublic(@Param('id', ParseIntPipe) id: number) {
     const coupon = await this.accumulatorsService.getByIdPublic(id);
-    if (!coupon) throw new NotFoundException('Coupon not found or not available without login');
+    if (!coupon) throw new NotFoundException('Pick not found or not available without login');
     return coupon;
   }
 

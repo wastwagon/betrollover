@@ -301,16 +301,16 @@ export default function CouponsArchivePage() {
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6 min-w-0">
           <div className="min-w-0 flex-1 max-w-full">
             <PageHeader
-              label="Archive"
-              title="Coupons Archive"
-              tagline="Historical coupons — settled results with full performance record."
+              label={t('coupons.archive.page_label')}
+              title={t('coupons.archive.page_title')}
+              tagline={t('coupons.archive.page_tagline')}
             />
           </div>
           <Link
             href="/coupons"
             className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto self-stretch sm:self-auto shrink-0"
           >
-            ← Active Coupons
+            {t('coupons.archive.back_marketplace')}
           </Link>
         </div>
 
@@ -446,7 +446,11 @@ export default function CouponsArchivePage() {
                     : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text)]'
                 }`}
               >
-                {f === 'all' ? 'All Results' : f === 'won' ? '✅ Won' : '❌ Lost'}
+                {f === 'all'
+                  ? t('coupons.archive.filter_all')
+                  : f === 'won'
+                    ? t('coupons.archive.filter_won')
+                    : t('coupons.archive.filter_lost')}
               </button>
             ))}
           </div>
@@ -460,13 +464,17 @@ export default function CouponsArchivePage() {
           </div>
         ) : filtered.length === 0 ? (
           <EmptyState
-            title={hasPeriodFilter && totalSettled === 0 ? t('coupons.archive.empty_period') : 'No archived coupons'}
+            title={
+              hasPeriodFilter && totalSettled === 0
+                ? t('coupons.archive.empty_period')
+                : t('coupons.archive.empty_default_title')
+            }
             description={
               hasPeriodFilter && totalSettled === 0
                 ? t('coupons.archive.empty_period_sub')
-                : 'Settled coupons will appear here after their matches conclude.'
+                : t('coupons.archive.empty_default_desc')
             }
-            actionLabel="Browse Active Coupons"
+            actionLabel={t('coupons.archive.browse_active_cta')}
             actionHref="/coupons"
           />
         ) : (

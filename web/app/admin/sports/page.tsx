@@ -373,7 +373,7 @@ export default function AdminSportsPage() {
             <button type="button"
               onClick={() => triggerSync('results')}
               disabled={syncing === 'results' || syncingAll}
-              title="Fetch completed scores from The Odds API and settle pending coupons"
+              title="Fetch completed scores from The Odds API and settle pending picks"
               className="px-4 py-1.5 rounded-lg bg-slate-700 text-white text-sm font-semibold hover:bg-slate-800 disabled:opacity-50 transition-colors"
             >
               {syncing === 'results' ? 'Fetching…' : '✓ Sync Results & Settle'}

@@ -118,7 +118,7 @@ export default function AdminMarketplacePage() {
   };
 
   const handleDeleteCoupon = async (id: number, title: string) => {
-    if (!confirm(`Permanently delete coupon "${title}"?\n\nThis will:\n• Refund any pending purchases\n• Remove from tipster stats (ROI, win rate, streak)\n• Cannot be undone`)) return;
+    if (!confirm(`Permanently delete pick "${title}"?\n\nThis will:\n• Refund any pending purchases\n• Remove from tipster stats (ROI, win rate, streak)\n• Cannot be undone`)) return;
     const token = localStorage.getItem('token');
     if (!token) return;
     setDeletingId(id);
@@ -130,8 +130,8 @@ export default function AdminMarketplacePage() {
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         const msg = data.refundedCount
-          ? `Coupon deleted. ${data.refundedCount} purchase(s) refunded. Tipster stats recalculated.`
-          : 'Coupon deleted. Tipster stats recalculated.';
+          ? `Pick deleted. ${data.refundedCount} purchase(s) refunded. Tipster stats recalculated.`
+          : 'Pick deleted. Tipster stats recalculated.';
         alert(msg);
         loadMarketplace();
       } else {
@@ -178,7 +178,7 @@ export default function AdminMarketplacePage() {
             <Link href="/marketplace" className="text-[var(--primary)] hover:underline">View as customer →</Link>
           </p>
           <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-            <span className="text-sm font-medium text-amber-900 dark:text-amber-100">Show coupons:</span>
+            <span className="text-sm font-medium text-amber-900 dark:text-amber-100">Show picks:</span>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -207,7 +207,7 @@ export default function AdminMarketplacePage() {
               <span className="text-sm font-medium text-amber-900 dark:text-amber-100">Settled</span>
             </label>
             <span className="text-xs text-amber-800 dark:text-amber-200">
-              Removed/deleted coupons never shown. Settled hidden by default.
+              Removed/deleted picks never shown. Settled hidden by default.
             </span>
           </div>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
@@ -272,10 +272,10 @@ export default function AdminMarketplacePage() {
               {JSON.stringify(diagnostic, null, 2)}
             </pre>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              {diagnostic.reason === 'All coupons settled (matches finished)'
+              {diagnostic.reason === 'All picks settled (matches finished)'
                 ? 'Matches have finished. Generate new predictions for upcoming fixtures.'
-                : diagnostic.reason === 'All pending coupons have fixtures that already started'
-                  ? 'All pending coupons contain matches that have already kicked off.'
+                : diagnostic.reason === 'All pending picks have fixtures that already started'
+                  ? 'All pending picks contain matches that have already kicked off.'
                   : diagnostic.reason}
             </p>
           </div>
@@ -299,8 +299,8 @@ export default function AdminMarketplacePage() {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No picks on marketplace</h3>
             <p className="text-gray-600 dark:text-gray-400">
               {tipsterUsername
-                ? 'No coupons for this tipster with the selected filters.'
-                : 'No coupons match the selected filters (Pending / Not stated / Settled).'}
+                ? 'No picks for this tipster with the selected filters.'
+                : 'No picks match the selected filters (Pending / Not stated / Settled).'}
             </p>
           </div>
         )}
@@ -331,7 +331,7 @@ export default function AdminMarketplacePage() {
                   onClick={() => handleDeleteCoupon(a.id, a.title)}
                   disabled={deletingId === a.id}
                   className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium disabled:opacity-50 z-10 shadow"
-                  title="Delete coupon (refunds pending purchases, recalculates tipster stats)"
+                  title="Delete pick (refunds pending purchases, recalculates tipster stats)"
                 >
                   {deletingId === a.id ? 'Deleting…' : 'Delete'}
                 </button>

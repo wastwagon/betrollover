@@ -134,7 +134,7 @@ export default function AdminEscrowPage() {
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Escrow Funds</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            <strong>Marketplace picks:</strong> funds held until coupons settle — released to the tipster on a win, refunded
+            <strong>Marketplace picks:</strong> funds held until picks settle — released to the tipster on a win, refunded
             to buyers on loss/void. <strong>VIP subscriptions:</strong> funds held until the subscription period ends — then
             released to the tipster (minus platform fee) or refunded under the ROI guarantee. Both use the platform rate
             below for tipster net vs platform fee on release.

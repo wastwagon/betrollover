@@ -47,7 +47,7 @@ interface UserBehavior {
     purchaseCount: number;
     /** Sum of all purchase rows (same as historical “gross”). */
     grossPurchaseTotal: number;
-    /** Matches user dashboard “Total spent” — winning coupons only. */
+    /** Matches user dashboard “Total spent” — winning picks only. */
     spentOnWinningCoupons: number;
     /** Legacy alias of spentOnWinningCoupons from API. */
     totalSpent?: number;
@@ -496,7 +496,7 @@ export default function AdminAnalyticsPage() {
                   ? `GHS ${realTime.marketplace.revenue.last7d.toFixed(2)} this week`
                   : '—'}
               </p>
-              <p className="text-[10px] opacity-70 mt-2 leading-snug">Gross spend on marketplace-listed coupons only.</p>
+              <p className="text-[10px] opacity-70 mt-2 leading-snug">Gross spend on marketplace-listed picks only.</p>
             </div>
           </div>
         )}
@@ -828,7 +828,7 @@ export default function AdminAnalyticsPage() {
                       🏛 Platform Commission Revenue
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
-                      Automatically deducted from tipster payouts on winning coupon settlements.
+                      Automatically deducted from tipster payouts on winning pick settlements.
                     </p>
                   </div>
                   <div className="text-left sm:text-right shrink-0">
@@ -892,7 +892,7 @@ export default function AdminAnalyticsPage() {
 
             {revenue && <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-xl p-6 text-white">
-                <p className="text-sm opacity-90 mb-1">Coupon Sales Revenue</p>
+                <p className="text-sm opacity-90 mb-1">Pick sales revenue</p>
                 <p className="text-3xl font-bold">GHS {(revenue.totalRevenue ?? 0).toFixed(2)}</p>
               </div>
               <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white">
@@ -908,7 +908,7 @@ export default function AdminAnalyticsPage() {
             {revenue && (
               <>
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Coupon Sales Revenue Trend</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Pick sales revenue trend</h3>
                   <SimpleChart data={revenue.revenueTrend.map((r) => ({ date: r.date, value: r.revenue }))} color="green" />
                 </div>
 
@@ -1375,7 +1375,7 @@ export default function AdminAnalyticsPage() {
                 {/* Picks by sport — horizontal bar chart */}
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Picks by Sport</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Total, won, and lost coupons per sport</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Total, won, and lost picks per sport</p>
                   <ResponsiveContainer width="100%" height={280}>
                     <BarChart data={sportBreakdown} layout="vertical" margin={{ left: 20, right: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" horizontal={false} />
@@ -1398,7 +1398,7 @@ export default function AdminAnalyticsPage() {
                   {/* Win rate by sport */}
                   <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Win Rate by Sport</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">% of settled coupons that won</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">% of settled picks that won</p>
                     <ResponsiveContainer width="100%" height={220}>
                       <BarChart data={sportBreakdown.filter((s) => s.totalPicks - s.pendingPicks > 0)}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -1417,7 +1417,7 @@ export default function AdminAnalyticsPage() {
                   {/* Revenue by sport — pie */}
                   <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Revenue by Sport</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">From paid coupon purchases</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">From paid pick purchases</p>
                     {sportBreakdown.every((s) => s.revenue === 0) ? (
                       <div className="py-10 text-center text-gray-400 text-sm">No paid pick revenue yet</div>
                     ) : (

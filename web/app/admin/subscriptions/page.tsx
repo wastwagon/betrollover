@@ -849,7 +849,7 @@ export default function AdminSubscriptionsPage() {
             (human + AI tipsters). Use <strong className="text-gray-800 dark:text-gray-200">Delete</strong> on a card to
             unpublish that package from the shop (existing subscribers keep access until their period ends).{' '}
             <strong className="text-gray-800 dark:text-gray-200">VIP subscribers</strong> lists real checkouts — remove a
-            row to revoke access (refunds held escrow like coupons).
+            row to revoke access (refunds held escrow like picks).
           </p>
           <div className="flex flex-wrap gap-2 mb-4">
             <Link

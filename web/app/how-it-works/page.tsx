@@ -9,10 +9,12 @@ import { fetchSellingThresholds } from '@/lib/selling-thresholds';
 import type { Metadata } from 'next';
 
 export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  const t = buildT(locale);
   const th = await fetchSellingThresholds({ revalidate: 300 });
   const minRoi = String(th.minimumROI);
   const minWr = String(th.minimumWinRate);
-  const description = `How BetRollover works: escrow-protected picks, transparent settlement. Same account to buy or sell — ${minRoi}% ROI and ${minWr}% win rate unlock paid marketplace coupons (admin-set). Refunded if picks lose.`;
+  const description = t('how_it_works.meta_description', { minRoi, minWr });
   return {
     title: `How It Works | ${SITE_NAME}`,
     description,

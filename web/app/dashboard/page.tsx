@@ -103,7 +103,7 @@ function DashboardContent() {
     total: number;
     totalSpent: number;
     active: number;
-    /** Purchase prices for coupons still pending (escrow held). */
+    /** Purchase prices for picks still pending (escrow held). */
     pendingEscrowAmount: number;
   } | null>(null);
   const [feedPicks, setFeedPicks] = useState<FeedPick[]>([]);
@@ -217,7 +217,7 @@ function DashboardContent() {
           setMinimumWinRate(thresholds.minimumWinRate);
           const purchasesList = Array.isArray(purchasedData) ? purchasedData : [];
           setPurchases(purchasesList);
-          /** Money that stayed with the marketplace: winning coupons only (lost/void are refunded to wallet). */
+          /** Money that stayed with the marketplace: winning picks only (lost/void are refunded to wallet). */
           const totalSpent = purchasesList.reduce(
             (sum: number, p: Purchase) =>
               sum + (p.pick?.result === 'won' ? Number(p.purchasePrice || 0) : 0),
@@ -335,7 +335,7 @@ function DashboardContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
               <StatCard
                 title="Total purchases"
-                hint="All coupon checkouts (includes non-marketplace paths)."
+                hint="All pick checkouts (includes non-marketplace paths)."
                 value={stats?.purchases?.total ?? 0}
                 icon="🛍️"
               />
@@ -354,7 +354,7 @@ function DashboardContent() {
               />
               <StatCard
                 title="Marketplace revenue (GHS)"
-                hint="Gross spend on marketplace-listed coupons only."
+                hint="Gross spend on marketplace-listed picks only."
                 value={stats?.purchases?.marketplaceRevenue ?? 0}
                 icon="📊"
                 format="currency"
