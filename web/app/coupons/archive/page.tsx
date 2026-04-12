@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
@@ -50,38 +50,103 @@ interface Coupon {
   result?: string;
 }
 
+type ArchiveSummary = { total: number; wonTotal: number; lostTotal: number };
+
+function parseArchiveResponse(data: unknown): { items: Coupon[]; summary: ArchiveSummary | null } {
+  if (data == null || typeof data !== 'object') {
+    return { items: [], summary: null };
+  }
+  if (Array.isArray(data)) {
+    const items = data as Coupon[];
+    const wonTotal = items.filter((c) => c.result === 'won').length;
+    const lostTotal = items.filter((c) => c.result === 'lost').length;
+    return { items, summary: { total: items.length, wonTotal, lostTotal } };
+  }
+  const obj = data as Record<string, unknown>;
+  const items = Array.isArray(obj.items) ? (obj.items as Coupon[]) : [];
+  if (typeof obj.total === 'number' || typeof obj.total === 'string') {
+    const total = Number(obj.total);
+    const wonTotal = Number(obj.wonTotal ?? obj.won_total ?? 0);
+    const lostTotal = Number(obj.lostTotal ?? obj.lost_total ?? 0);
+    return { items, summary: { total, wonTotal, lostTotal } };
+  }
+  const wonTotal = items.filter((c) => c.result === 'won').length;
+  const lostTotal = items.filter((c) => c.result === 'lost').length;
+  return { items, summary: { total: items.length, wonTotal, lostTotal } };
+}
+
+const ARCHIVE_POLL_MS = 45_000;
+
 export default function CouponsArchivePage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [summary, setSummary] = useState<ArchiveSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [resultFilter, setResultFilter] = useState<'all' | 'won' | 'lost'>('all');
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [purchasedIds, setPurchasedIds] = useState<Set<number>>(new Set());
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
+  const loadArchive = useCallback(async (opts?: { withWallet?: boolean }) => {
+    const withWallet = opts?.withWallet !== false;
+    const token = withWallet ? localStorage.getItem('token') : null;
     const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-    Promise.all([
-      // Archive is public — no auth required
-      fetch(`${getApiUrl()}/accumulators/archive?limit=100`)
-        .then((r) => r.ok ? r.json() : []),
-      token ? fetch(`${getApiUrl()}/wallet/balance`, { headers: authHeaders }).then((r) => r.ok ? r.json() : null) : Promise.resolve(null),
-      token ? fetch(`${getApiUrl()}/accumulators/purchased`, { headers: authHeaders }).then((r) => r.ok ? r.json() : []) : Promise.resolve([]),
-    ]).then(([data, wallet, purchased]) => {
-      setCoupons(Array.isArray(data) ? data : (data?.items ?? []));
-      if (wallet) setWalletBalance(Number(wallet.balance));
-      const ids = new Set<number>((purchased || []).map((p: { accumulatorId?: number }) => p.accumulatorId).filter(Boolean));
-      setPurchasedIds(ids);
-    }).catch(() => setCoupons([])).finally(() => setLoading(false));
+    try {
+      const archiveRes = await fetch(`${getApiUrl()}/accumulators/archive?limit=100`, { cache: 'no-store' });
+      const raw = archiveRes.ok ? await archiveRes.json() : [];
+      const { items, summary: nextSummary } = parseArchiveResponse(raw);
+      setCoupons(items);
+      setSummary(nextSummary);
+
+      if (withWallet && token) {
+        const [wallet, purchased] = await Promise.all([
+          fetch(`${getApiUrl()}/wallet/balance`, { headers: authHeaders }).then((r) => (r.ok ? r.json() : null)),
+          fetch(`${getApiUrl()}/accumulators/purchased`, { headers: authHeaders }).then((r) => (r.ok ? r.json() : [])),
+        ]);
+        if (wallet) setWalletBalance(Number(wallet.balance));
+        const ids = new Set<number>((purchased || []).map((p: { accumulatorId?: number }) => p.accumulatorId).filter(Boolean));
+        setPurchasedIds(ids);
+      }
+    } catch {
+      setCoupons([]);
+      setSummary(null);
+    }
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      await loadArchive({ withWallet: true });
+      if (!cancelled) setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loadArchive]);
+
+  useEffect(() => {
+    const tick = () => {
+      void loadArchive({ withWallet: false });
+    };
+    const id = window.setInterval(tick, ARCHIVE_POLL_MS);
+    const onVis = () => {
+      if (document.visibilityState === 'visible') tick();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, [loadArchive]);
 
   const filtered = coupons.filter((c) => {
     if (resultFilter === 'all') return true;
     return c.result === resultFilter;
   });
 
-  const wonCount = coupons.filter((c) => c.result === 'won').length;
-  const lostCount = coupons.filter((c) => c.result === 'lost').length;
-  const winRate = coupons.length > 0 ? Math.round((wonCount / coupons.length) * 100) : 0;
+  const wonCount = summary?.wonTotal ?? coupons.filter((c) => c.result === 'won').length;
+  const lostCount = summary?.lostTotal ?? coupons.filter((c) => c.result === 'lost').length;
+  const totalSettled = summary?.total ?? coupons.length;
+  const winRate = totalSettled > 0 ? Math.round((wonCount / totalSettled) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
@@ -107,11 +172,11 @@ export default function CouponsArchivePage() {
           <AdSlot zoneSlug="coupons-archive-full" fullWidth className="w-full max-w-3xl" />
         </div>
 
-        {/* Summary stats */}
-        {!loading && coupons.length > 0 && (
+        {/* Summary stats — API totals (full archive), not limited to this page of cards */}
+        {!loading && totalSettled > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 min-w-0">
             <div className="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center min-w-0">
-              <p className="text-lg font-semibold text-[var(--text)]">{coupons.length}</p>
+              <p className="text-lg font-semibold text-[var(--text)]">{totalSettled}</p>
               <p className="text-xs text-[var(--text-muted)] mt-1">Total Settled</p>
             </div>
             <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center min-w-0">

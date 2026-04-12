@@ -1522,30 +1522,56 @@ export class AccumulatorsService {
     return this.enrichWithTipsterMetadata(validTickets, rows);
   }
 
-  /** Public archive: settled (won/lost) marketplace coupons, most recent first */
+  /** Public archive: settled (won/lost) marketplace coupons, most recent first. Includes global counts (not page-limited). */
   async getMarketplaceArchive(options?: { limit?: number; offset?: number }) {
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 200);
     const offset = Math.max(options?.offset ?? 0, 0);
 
-    const rows = await this.marketplaceRepo.find({
-      select: ['accumulatorId', 'price', 'purchaseCount'],
-    });
-    const accIds = rows.map((r) => r.accumulatorId);
-    if (accIds.length === 0) return [];
+    const countRow = await this.ticketRepo
+      .createQueryBuilder('t')
+      .select('COUNT(t.id)', 'cnt')
+      .addSelect(`COALESCE(SUM(CASE WHEN t.result = 'won' THEN 1 ELSE 0 END), 0)`, 'won')
+      .addSelect(`COALESCE(SUM(CASE WHEN t.result = 'lost' THEN 1 ELSE 0 END), 0)`, 'lost')
+      .where('t.result IN (:...r)', { r: ['won', 'lost'] })
+      .andWhere('EXISTS (SELECT 1 FROM pick_marketplace pm WHERE pm.accumulator_id = t.id)')
+      .getRawOne<Record<string, string | number | null | undefined>>();
 
-    const tickets = await this.ticketRepo.find({
-      where: [
-        { id: In(accIds), result: 'won' },
-        { id: In(accIds), result: 'lost' },
-      ],
-      relations: ['picks'],
-      order: { updatedAt: 'DESC' },
-      take: limit,
-      skip: offset,
-    });
+    const num = (v: unknown) => Number(v ?? 0);
+    const total = num(countRow?.cnt);
+    const wonTotal = num(countRow?.won);
+    const lostTotal = num(countRow?.lost);
+
+    if (total === 0) {
+      return { items: [], total: 0, wonTotal: 0, lostTotal: 0, hasMore: false };
+    }
+
+    const tickets = await this.ticketRepo
+      .createQueryBuilder('t')
+      .leftJoinAndSelect('t.picks', 'picks')
+      .where('t.result IN (:...r)', { r: ['won', 'lost'] })
+      .andWhere('EXISTS (SELECT 1 FROM pick_marketplace pm WHERE pm.accumulator_id = t.id)')
+      .orderBy('t.updatedAt', 'DESC')
+      .skip(offset)
+      .take(limit)
+      .getMany();
+
+    const pageIds = tickets.map((t) => t.id);
+    const rows = pageIds.length
+      ? await this.marketplaceRepo.find({
+          where: { accumulatorId: In(pageIds) },
+          select: ['accumulatorId', 'price', 'purchaseCount'],
+        })
+      : [];
 
     const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
-    return this.enrichWithTipsterMetadata(enrichedTickets, rows);
+    const items = await this.enrichWithTipsterMetadata(enrichedTickets, rows);
+    return {
+      items,
+      total,
+      wonTotal,
+      lostTotal,
+      hasMore: offset + items.length < total,
+    };
   }
 
   async purchase(buyerId: number, accumulatorId: number) {
