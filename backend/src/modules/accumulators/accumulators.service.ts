@@ -1354,18 +1354,6 @@ export class AccumulatorsService {
   }
 
   /**
-   * Count distinct coupons that have been published to the marketplace (ever listed).
-   * Used for "Coupons Published" homepage stat so it matches marketplace reality.
-   */
-  async getPublishedCouponsCount(): Promise<number> {
-    const result = await this.marketplaceRepo
-      .createQueryBuilder('pm')
-      .select('COUNT(DISTINCT pm.accumulator_id)', 'cnt')
-      .getRawOne<{ cnt: string }>();
-    return parseInt(result?.cnt ?? '0', 10);
-  }
-
-  /**
    * Count marketplace listings that are actually "live" (available to buy):
    * active listing + coupon active/pending + no fixture started. Matches getMarketplace filter.
    */
@@ -1445,7 +1433,6 @@ export class AccumulatorsService {
     const [
       apiSettingsRow,
       activeTipstersCount,
-      publishedCouponsCount,
       liveMarketplaceCount,
       marketplacePurchaseCount,
       netTipsterPayouts,
@@ -1454,7 +1441,6 @@ export class AccumulatorsService {
     ] = await Promise.all([
       this.apiSettingsRepo.findOne({ where: { id: 1 } }),
       this.tipsterRepo.count({ where: { isActive: true } }),
-      this.getPublishedCouponsCount(),
       this.getLiveMarketplaceCount(),
       this.getMarketplacePurchaseCount(),
       this.getTotalNetTipsterPayouts(),
@@ -1466,7 +1452,8 @@ export class AccumulatorsService {
     const platformCommissionPercent = clampPlatformCommissionPercent(apiSettingsRow?.platformCommissionRate);
     return {
       verifiedTipsters: activeTipstersCount,
-      totalPicks: publishedCouponsCount,
+      /** Same scope as coupons archive “Total settled” (all-time): marketplace-listed, won + lost. */
+      totalPicks: settled,
       activePicks: liveMarketplaceCount,
       successfulPurchases: marketplacePurchaseCount,
       winRate,
@@ -1479,7 +1466,7 @@ export class AccumulatorsService {
       platformCommissionPercent,
       metricNotes: {
         verifiedTipsters: 'tipsters.is_active = true (includes listed AI tipsters)',
-        totalPicks: 'DISTINCT coupons ever on pick_marketplace',
+        totalPicks: 'Marketplace coupons settled won+lost (matches /accumulators/archive total)',
         activePicks: 'Live buyable listings (active + pending coupon + no started fixture)',
         successfulPurchases: 'user_purchased_picks joined to pick_marketplace',
         winRate: 'Marketplace-listed coupons: won / (won + lost)',
