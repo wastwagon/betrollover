@@ -155,10 +155,17 @@ export class AccumulatorsController {
   getArchive(
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
   ) {
     const limitVal = limit != null ? Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200) : undefined;
     const offsetVal = offset != null ? Math.max(parseInt(offset, 10) || 0, 0) : undefined;
-    return this.accumulatorsService.getMarketplaceArchive({ limit: limitVal, offset: offsetVal });
+    return this.accumulatorsService.getMarketplaceArchive({
+      limit: limitVal,
+      offset: offsetVal,
+      from: from?.trim(),
+      to: to?.trim(),
+    });
   }
 
   @Get(':id/public')

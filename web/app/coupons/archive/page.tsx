@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
@@ -10,6 +10,7 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { PageHeader } from '@/components/PageHeader';
 import { getApiUrl } from '@/lib/site-config';
+import { useT } from '@/context/LanguageContext';
 
 interface Pick {
   id?: number;
@@ -50,7 +51,58 @@ interface Coupon {
   result?: string;
 }
 
-type ArchiveSummary = { total: number; wonTotal: number; lostTotal: number };
+type PeriodPreset = 'all' | '7d' | '30d' | '90d' | 'month' | 'custom';
+
+type ArchiveSummary = {
+  total: number;
+  wonTotal: number;
+  lostTotal: number;
+  combinedRoi: number;
+  netProfitUnits: number;
+  avgCouponOdds: number;
+  from: string | null;
+  to: string | null;
+};
+
+function utcYmd(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+function getTodayUtc(): string {
+  return utcYmd(new Date());
+}
+
+function addUtcDaysFromYmd(ymd: string, deltaDays: number): string {
+  const [y, m, d] = ymd.split('-').map((x) => parseInt(x, 10));
+  const dt = new Date(Date.UTC(y, m - 1, d + deltaDays));
+  return utcYmd(dt);
+}
+
+function defaultLast30Range(): { from: string; to: string } {
+  const to = getTodayUtc();
+  return { from: addUtcDaysFromYmd(to, -29), to };
+}
+
+function rangeForPreset(preset: PeriodPreset, custom: { from: string; to: string }): { from?: string; to?: string } {
+  const today = getTodayUtc();
+  if (preset === 'all') return {};
+  if (preset === '7d') return { from: addUtcDaysFromYmd(today, -6), to: today };
+  if (preset === '30d') return { from: addUtcDaysFromYmd(today, -29), to: today };
+  if (preset === '90d') return { from: addUtcDaysFromYmd(today, -89), to: today };
+  if (preset === 'month') {
+    const now = new Date();
+    const first = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    return { from: utcYmd(first), to: today };
+  }
+  if (preset === 'custom') {
+    const ymd = /^\d{4}-\d{2}-\d{2}$/;
+    if (ymd.test(custom.from) && ymd.test(custom.to) && custom.from <= custom.to) {
+      return { from: custom.from, to: custom.to };
+    }
+    return {};
+  }
+  return {};
+}
 
 function parseArchiveResponse(data: unknown): { items: Coupon[]; summary: ArchiveSummary | null } {
   if (data == null || typeof data !== 'object') {
@@ -60,7 +112,19 @@ function parseArchiveResponse(data: unknown): { items: Coupon[]; summary: Archiv
     const items = data as Coupon[];
     const wonTotal = items.filter((c) => c.result === 'won').length;
     const lostTotal = items.filter((c) => c.result === 'lost').length;
-    return { items, summary: { total: items.length, wonTotal, lostTotal } };
+    return {
+      items,
+      summary: {
+        total: items.length,
+        wonTotal,
+        lostTotal,
+        combinedRoi: 0,
+        netProfitUnits: 0,
+        avgCouponOdds: 0,
+        from: null,
+        to: null,
+      },
+    };
   }
   const obj = data as Record<string, unknown>;
   const items = Array.isArray(obj.items) ? (obj.items as Coupon[]) : [];
@@ -68,16 +132,46 @@ function parseArchiveResponse(data: unknown): { items: Coupon[]; summary: Archiv
     const total = Number(obj.total);
     const wonTotal = Number(obj.wonTotal ?? obj.won_total ?? 0);
     const lostTotal = Number(obj.lostTotal ?? obj.lost_total ?? 0);
-    return { items, summary: { total, wonTotal, lostTotal } };
+    const combinedRoi = Number(obj.combinedRoi ?? obj.combined_roi ?? 0);
+    const netProfitUnits = Number(obj.netProfitUnits ?? obj.net_profit_units ?? 0);
+    const avgCouponOdds = Number(obj.avgCouponOdds ?? obj.avg_coupon_odds ?? 0);
+    const from = (obj.from != null ? String(obj.from) : null) || null;
+    const to = (obj.to != null ? String(obj.to) : null) || null;
+    return {
+      items,
+      summary: {
+        total,
+        wonTotal,
+        lostTotal,
+        combinedRoi,
+        netProfitUnits,
+        avgCouponOdds,
+        from,
+        to,
+      },
+    };
   }
   const wonTotal = items.filter((c) => c.result === 'won').length;
   const lostTotal = items.filter((c) => c.result === 'lost').length;
-  return { items, summary: { total: items.length, wonTotal, lostTotal } };
+  return {
+    items,
+    summary: {
+      total: items.length,
+      wonTotal,
+      lostTotal,
+      combinedRoi: 0,
+      netProfitUnits: 0,
+      avgCouponOdds: 0,
+      from: null,
+      to: null,
+    },
+  };
 }
 
 const ARCHIVE_POLL_MS = 45_000;
 
 export default function CouponsArchivePage() {
+  const t = useT();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [summary, setSummary] = useState<ArchiveSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -85,31 +179,54 @@ export default function CouponsArchivePage() {
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [purchasedIds, setPurchasedIds] = useState<Set<number>>(new Set());
 
-  const loadArchive = useCallback(async (opts?: { withWallet?: boolean }) => {
-    const withWallet = opts?.withWallet !== false;
-    const token = withWallet ? localStorage.getItem('token') : null;
-    const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-    try {
-      const archiveRes = await fetch(`${getApiUrl()}/accumulators/archive?limit=100`, { cache: 'no-store' });
-      const raw = archiveRes.ok ? await archiveRes.json() : [];
-      const { items, summary: nextSummary } = parseArchiveResponse(raw);
-      setCoupons(items);
-      setSummary(nextSummary);
+  const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('all');
+  const [customApplied, setCustomApplied] = useState(defaultLast30Range);
+  const [draftFrom, setDraftFrom] = useState(() => defaultLast30Range().from);
+  const [draftTo, setDraftTo] = useState(() => defaultLast30Range().to);
 
-      if (withWallet && token) {
-        const [wallet, purchased] = await Promise.all([
-          fetch(`${getApiUrl()}/wallet/balance`, { headers: authHeaders }).then((r) => (r.ok ? r.json() : null)),
-          fetch(`${getApiUrl()}/accumulators/purchased`, { headers: authHeaders }).then((r) => (r.ok ? r.json() : [])),
-        ]);
-        if (wallet) setWalletBalance(Number(wallet.balance));
-        const ids = new Set<number>((purchased || []).map((p: { accumulatorId?: number }) => p.accumulatorId).filter(Boolean));
-        setPurchasedIds(ids);
+  const activeRange = useMemo(
+    () => rangeForPreset(periodPreset, customApplied),
+    [periodPreset, customApplied],
+  );
+
+  const archiveQuerySuffix = useMemo(() => {
+    if (!activeRange.from || !activeRange.to) return '';
+    return `&from=${encodeURIComponent(activeRange.from)}&to=${encodeURIComponent(activeRange.to)}`;
+  }, [activeRange.from, activeRange.to]);
+
+  const hasPeriodFilter = periodPreset !== 'all';
+
+  const loadArchive = useCallback(
+    async (opts?: { withWallet?: boolean }) => {
+      const withWallet = opts?.withWallet !== false;
+      const token = withWallet ? localStorage.getItem('token') : null;
+      const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      try {
+        const archiveRes = await fetch(
+          `${getApiUrl()}/accumulators/archive?limit=100${archiveQuerySuffix}`,
+          { cache: 'no-store' },
+        );
+        const raw = archiveRes.ok ? await archiveRes.json() : [];
+        const { items, summary: nextSummary } = parseArchiveResponse(raw);
+        setCoupons(items);
+        setSummary(nextSummary);
+
+        if (withWallet && token) {
+          const [wallet, purchased] = await Promise.all([
+            fetch(`${getApiUrl()}/wallet/balance`, { headers: authHeaders }).then((r) => (r.ok ? r.json() : null)),
+            fetch(`${getApiUrl()}/accumulators/purchased`, { headers: authHeaders }).then((r) => (r.ok ? r.json() : [])),
+          ]);
+          if (wallet) setWalletBalance(Number(wallet.balance));
+          const ids = new Set<number>((purchased || []).map((p: { accumulatorId?: number }) => p.accumulatorId).filter(Boolean));
+          setPurchasedIds(ids);
+        }
+      } catch {
+        setCoupons([]);
+        setSummary(null);
       }
-    } catch {
-      setCoupons([]);
-      setSummary(null);
-    }
-  }, []);
+    },
+    [archiveQuerySuffix],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -138,6 +255,21 @@ export default function CouponsArchivePage() {
     };
   }, [loadArchive]);
 
+  const selectPreset = (p: PeriodPreset) => {
+    setPeriodPreset(p);
+    if (p === 'custom') {
+      setDraftFrom(customApplied.from);
+      setDraftTo(customApplied.to);
+    }
+  };
+
+  const applyCustomRange = () => {
+    if (draftFrom <= draftTo) {
+      setCustomApplied({ from: draftFrom, to: draftTo });
+      setPeriodPreset('custom');
+    }
+  };
+
   const filtered = coupons.filter((c) => {
     if (resultFilter === 'all') return true;
     return c.result === resultFilter;
@@ -147,6 +279,20 @@ export default function CouponsArchivePage() {
   const lostCount = summary?.lostTotal ?? coupons.filter((c) => c.result === 'lost').length;
   const totalSettled = summary?.total ?? coupons.length;
   const winRate = totalSettled > 0 ? Math.round((wonCount / totalSettled) * 100) : 0;
+  const combinedRoi = summary?.combinedRoi ?? 0;
+  const netUnits = summary?.netProfitUnits ?? 0;
+  const avgOdds = summary?.avgCouponOdds ?? 0;
+  const roiPositive = combinedRoi > 0;
+  const unitsPositive = netUnits > 0;
+
+  const periodChips: { id: PeriodPreset; labelKey: string }[] = [
+    { id: 'all', labelKey: 'coupons.archive.period_all' },
+    { id: '7d', labelKey: 'coupons.archive.period_7d' },
+    { id: '30d', labelKey: 'coupons.archive.period_30d' },
+    { id: '90d', labelKey: 'coupons.archive.period_90d' },
+    { id: 'month', labelKey: 'coupons.archive.period_month' },
+    { id: 'custom', labelKey: 'coupons.archive.period_custom' },
+  ];
 
   return (
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
@@ -172,52 +318,154 @@ export default function CouponsArchivePage() {
           <AdSlot zoneSlug="coupons-archive-full" fullWidth className="w-full max-w-3xl" />
         </div>
 
-        {/* Summary stats — API totals (full archive), not limited to this page of cards */}
+        {/* Period filter */}
+        <div className="mb-4 space-y-3 min-w-0">
+          <p className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">{t('coupons.archive.period_label')}</p>
+          <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
+            {periodChips.map((chip) => (
+              <button
+                key={chip.id}
+                type="button"
+                onClick={() => selectPreset(chip.id)}
+                className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                  periodPreset === chip.id
+                    ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
+                    : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text)]'
+                }`}
+              >
+                {t(chip.labelKey)}
+              </button>
+            ))}
+          </div>
+          {periodPreset === 'custom' && (
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-end gap-3 pt-1">
+              <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)] min-w-0">
+                <span>{t('coupons.archive.custom_from')}</span>
+                <input
+                  type="date"
+                  value={draftFrom}
+                  onChange={(e) => setDraftFrom(e.target.value)}
+                  className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--text)]"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)] min-w-0">
+                <span>{t('coupons.archive.custom_to')}</span>
+                <input
+                  type="date"
+                  value={draftTo}
+                  onChange={(e) => setDraftTo(e.target.value)}
+                  className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--text)]"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={applyCustomRange}
+                disabled={!draftFrom || !draftTo || draftFrom > draftTo}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-[var(--primary)] text-white disabled:opacity-50 disabled:cursor-not-allowed sm:mb-0"
+              >
+                {t('coupons.archive.apply_range')}
+              </button>
+            </div>
+          )}
+          <p className="text-xs text-[var(--text-muted)] leading-relaxed max-w-3xl">{t('coupons.archive.range_hint')}</p>
+        </div>
+
+        {/* Summary stats — API totals for selected period */}
         {!loading && totalSettled > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 min-w-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 min-w-0">
             <div className="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center min-w-0">
               <p className="text-lg font-semibold text-[var(--text)]">{totalSettled}</p>
-              <p className="text-xs text-[var(--text-muted)] mt-1">Total Settled</p>
+              <p className="text-xs text-[var(--text-muted)] mt-1">{t('coupons.archive.total_settled')}</p>
             </div>
             <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center min-w-0">
               <p className="text-lg font-semibold text-emerald-700">{wonCount}</p>
-              <p className="text-xs text-emerald-600 mt-1">Won</p>
+              <p className="text-xs text-emerald-600 mt-1">{t('coupons.archive.won')}</p>
             </div>
             <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-center min-w-0">
               <p className="text-lg font-semibold text-red-700">{lostCount}</p>
-              <p className="text-xs text-red-600 mt-1">Lost ({winRate}% win rate)</p>
+              <p className="text-xs text-red-600 mt-1">{t('coupons.archive.lost')}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center min-w-0">
+              <p className="text-lg font-semibold text-[var(--text)]">{winRate}%</p>
+              <p className="text-xs text-[var(--text-muted)] mt-1">{t('coupons.archive.win_rate_card')}</p>
+            </div>
+            <div
+              className={`p-4 rounded-xl border text-center min-w-0 ${
+                roiPositive ? 'bg-emerald-50 border-emerald-200' : combinedRoi < 0 ? 'bg-red-50 border-red-200' : 'bg-[var(--card)] border-[var(--border)]'
+              }`}
+              title={t('coupons.archive.combined_roi_hint')}
+            >
+              <p
+                className={`text-lg font-semibold ${
+                  roiPositive ? 'text-emerald-700' : combinedRoi < 0 ? 'text-red-700' : 'text-[var(--text)]'
+                }`}
+              >
+                {combinedRoi > 0 ? '+' : ''}
+                {combinedRoi}%
+              </p>
+              <p className={`text-xs mt-1 ${roiPositive ? 'text-emerald-600' : combinedRoi < 0 ? 'text-red-600' : 'text-[var(--text-muted)]'}`}>
+                {t('coupons.archive.combined_roi')}
+              </p>
+            </div>
+            <div
+              className={`p-4 rounded-xl border text-center min-w-0 ${
+                unitsPositive ? 'bg-emerald-50 border-emerald-200' : netUnits < 0 ? 'bg-red-50 border-red-200' : 'bg-[var(--card)] border-[var(--border)]'
+              }`}
+              title={t('coupons.archive.net_units_hint')}
+            >
+              <p
+                className={`text-lg font-semibold ${
+                  unitsPositive ? 'text-emerald-700' : netUnits < 0 ? 'text-red-700' : 'text-[var(--text)]'
+                }`}
+              >
+                {netUnits > 0 ? '+' : ''}
+                {netUnits}
+              </p>
+              <p className={`text-xs mt-1 ${unitsPositive ? 'text-emerald-600' : netUnits < 0 ? 'text-red-600' : 'text-[var(--text-muted)]'}`}>
+                {t('coupons.archive.net_units')}
+              </p>
+            </div>
+            <div className="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center min-w-0" title={t('coupons.archive.avg_odds_hint')}>
+              <p className="text-lg font-semibold text-[var(--text)]">{avgOdds}</p>
+              <p className="text-xs text-[var(--text-muted)] mt-1">{t('coupons.archive.avg_odds')}</p>
             </div>
           </div>
         )}
 
         {/* Result filter */}
         <div className="mb-6 w-full min-w-0 overflow-hidden">
-        <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
-          {(['all', 'won', 'lost'] as const).map((f) => (
-            <button
-              key={f}
-              type="button"
-              onClick={() => setResultFilter(f)}
-              className={`shrink-0 px-4 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
-                resultFilter === f
-                  ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                  : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text)]'
-              }`}
-            >
-              {f === 'all' ? 'All Results' : f === 'won' ? '✅ Won' : '❌ Lost'}
-            </button>
-          ))}
-        </div>
+          <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
+            {(['all', 'won', 'lost'] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setResultFilter(f)}
+                className={`shrink-0 px-4 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                  resultFilter === f
+                    ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
+                    : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text)]'
+                }`}
+              >
+                {f === 'all' ? 'All Results' : f === 'won' ? '✅ Won' : '❌ Lost'}
+              </button>
+            ))}
+          </div>
         </div>
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-w-0">
-            {[1, 2, 3, 4].map((i) => <LoadingSkeleton key={i} count={1} className="h-64 rounded-2xl" />)}
+            {[1, 2, 3, 4].map((i) => (
+              <LoadingSkeleton key={i} count={1} className="h-64 rounded-2xl" />
+            ))}
           </div>
         ) : filtered.length === 0 ? (
           <EmptyState
-            title="No archived coupons"
-            description="Settled coupons will appear here after their matches conclude."
+            title={hasPeriodFilter && totalSettled === 0 ? t('coupons.archive.empty_period') : 'No archived coupons'}
+            description={
+              hasPeriodFilter && totalSettled === 0
+                ? t('coupons.archive.empty_period_sub')
+                : 'Settled coupons will appear here after their matches conclude.'
+            }
             actionLabel="Browse Active Coupons"
             actionHref="/coupons"
           />

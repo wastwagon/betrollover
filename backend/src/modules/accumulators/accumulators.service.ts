@@ -1522,38 +1522,92 @@ export class AccumulatorsService {
     return this.enrichWithTipsterMetadata(validTickets, rows);
   }
 
+  /**
+   * Optional archive date window (UTC calendar days, YYYY-MM-DD).
+   * Filters by `updated_at` (typically settlement / last touch) on settled coupons.
+   */
+  private resolveArchiveDateRange(from?: string, to?: string): { fromUtc?: Date; toExclusiveUtc?: Date } {
+    const f = from?.trim();
+    const t = to?.trim();
+    if (!f && !t) return {};
+    const ymd = /^\d{4}-\d{2}-\d{2}$/;
+    if (!f || !t || !ymd.test(f) || !ymd.test(t)) {
+      throw new BadRequestException('Invalid from/to: use YYYY-MM-DD together, or omit both for all time.');
+    }
+    const [fy, fm, fd] = f.split('-').map((x) => parseInt(x, 10));
+    const [ty, tm, td] = t.split('-').map((x) => parseInt(x, 10));
+    const fromUtc = new Date(Date.UTC(fy, fm - 1, fd, 0, 0, 0, 0));
+    const toExclusiveUtc = new Date(Date.UTC(ty, tm - 1, td + 1, 0, 0, 0, 0));
+    if (toExclusiveUtc.getTime() < fromUtc.getTime()) {
+      throw new BadRequestException('from must be on or before to.');
+    }
+    return { fromUtc, toExclusiveUtc };
+  }
+
   /** Public archive: settled (won/lost) marketplace coupons, most recent first. Includes global counts (not page-limited). */
-  async getMarketplaceArchive(options?: { limit?: number; offset?: number }) {
+  async getMarketplaceArchive(options?: { limit?: number; offset?: number; from?: string; to?: string }) {
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 200);
     const offset = Math.max(options?.offset ?? 0, 0);
+    const { fromUtc, toExclusiveUtc } = this.resolveArchiveDateRange(options?.from, options?.to);
 
-    const countRow = await this.ticketRepo
+    const statsQb = this.ticketRepo
       .createQueryBuilder('t')
       .select('COUNT(t.id)', 'cnt')
       .addSelect(`COALESCE(SUM(CASE WHEN t.result = 'won' THEN 1 ELSE 0 END), 0)`, 'won')
       .addSelect(`COALESCE(SUM(CASE WHEN t.result = 'lost' THEN 1 ELSE 0 END), 0)`, 'lost')
+      .addSelect(
+        `COALESCE(SUM(CASE WHEN t.result = 'won' THEN (t.totalOdds - 1) ELSE -1 END), 0)`,
+        'profitUnits',
+      )
+      .addSelect('COALESCE(AVG(t.totalOdds), 0)', 'avgOdds')
       .where('t.result IN (:...r)', { r: ['won', 'lost'] })
-      .andWhere('EXISTS (SELECT 1 FROM pick_marketplace pm WHERE pm.accumulator_id = t.id)')
-      .getRawOne<Record<string, string | number | null | undefined>>();
+      .andWhere('EXISTS (SELECT 1 FROM pick_marketplace pm WHERE pm.accumulator_id = t.id)');
+    if (fromUtc) {
+      statsQb.andWhere('t.updatedAt >= :fromUtc', { fromUtc });
+    }
+    if (toExclusiveUtc) {
+      statsQb.andWhere('t.updatedAt < :toExclusiveUtc', { toExclusiveUtc });
+    }
+
+    const countRow = await statsQb.getRawOne<Record<string, string | number | null | undefined>>();
 
     const num = (v: unknown) => Number(v ?? 0);
     const total = num(countRow?.cnt);
     const wonTotal = num(countRow?.won);
     const lostTotal = num(countRow?.lost);
+    const profitUnits = num(countRow?.profitunits ?? countRow?.profitUnits);
+    const avgOddsRaw = num(countRow?.avgodds ?? countRow?.avgOdds);
+    const settledForRoi = wonTotal + lostTotal;
+    const combinedRoi = settledForRoi > 0 ? Math.round((profitUnits / settledForRoi) * 1000) / 10 : 0;
+    const avgCouponOdds = Math.round(avgOddsRaw * 100) / 100;
 
     if (total === 0) {
-      return { items: [], total: 0, wonTotal: 0, lostTotal: 0, hasMore: false };
+      return {
+        items: [],
+        total: 0,
+        wonTotal: 0,
+        lostTotal: 0,
+        combinedRoi: 0,
+        netProfitUnits: 0,
+        avgCouponOdds: 0,
+        hasMore: false,
+        from: options?.from?.trim() || null,
+        to: options?.to?.trim() || null,
+      };
     }
 
-    const tickets = await this.ticketRepo
+    const listQb = this.ticketRepo
       .createQueryBuilder('t')
       .leftJoinAndSelect('t.picks', 'picks')
       .where('t.result IN (:...r)', { r: ['won', 'lost'] })
-      .andWhere('EXISTS (SELECT 1 FROM pick_marketplace pm WHERE pm.accumulator_id = t.id)')
-      .orderBy('t.updatedAt', 'DESC')
-      .skip(offset)
-      .take(limit)
-      .getMany();
+      .andWhere('EXISTS (SELECT 1 FROM pick_marketplace pm WHERE pm.accumulator_id = t.id)');
+    if (fromUtc) {
+      listQb.andWhere('t.updatedAt >= :fromUtc', { fromUtc });
+    }
+    if (toExclusiveUtc) {
+      listQb.andWhere('t.updatedAt < :toExclusiveUtc', { toExclusiveUtc });
+    }
+    const tickets = await listQb.orderBy('t.updatedAt', 'DESC').skip(offset).take(limit).getMany();
 
     const pageIds = tickets.map((t) => t.id);
     const rows = pageIds.length
@@ -1570,7 +1624,12 @@ export class AccumulatorsService {
       total,
       wonTotal,
       lostTotal,
+      combinedRoi,
+      netProfitUnits: Math.round(profitUnits * 100) / 100,
+      avgCouponOdds,
       hasMore: offset + items.length < total,
+      from: options?.from?.trim() || null,
+      to: options?.to?.trim() || null,
     };
   }
 
