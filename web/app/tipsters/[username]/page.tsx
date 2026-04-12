@@ -769,7 +769,7 @@ export default function TipsterProfilePage() {
             </span>
           </div>
 
-          {/* Sport filter pills — only shown when tipster has multi-sport coupons */}
+          {/* Sport filter pills — only shown when tipster has multi-sport picks */}
           {availableSports.length > 1 && (
             <div className="flex flex-wrap gap-2 mb-5">
               <button

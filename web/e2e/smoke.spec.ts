@@ -40,7 +40,7 @@ test.describe('Smoke tests', () => {
   test('marketplace loads for guests (public list)', async ({ page }) => {
     await page.goto('/marketplace');
     await expect(page).toHaveURL(/\/marketplace/);
-    await expect(page.locator('h1')).toContainText(/Marketplace|Coupons|Picks/i);
+    await expect(page.locator('h1')).toContainText(/Marketplace|Picks|Pronostics/i);
   });
 
   test('create-pick redirects to login when unauthenticated', async ({ page }) => {

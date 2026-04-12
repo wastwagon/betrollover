@@ -1,31 +1,47 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ComponentType } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { usePendingWithdrawalCount } from '@/hooks/usePendingWithdrawalCount';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
+import { useT } from '@/context/LanguageContext';
 
 type FoldId = 'picks' | 'account' | null;
 
-const navItems = [
-  { id: 'dashboard', href: '/dashboard', label: 'Dashboard', icon: HomeIcon },
-  { id: 'picks', href: null, label: 'Picks', icon: PicksIcon, fold: true },
-  { id: 'marketplace', href: '/marketplace', label: 'Marketplace', icon: MarketplaceIcon },
-  { id: 'purchases', href: '/my-purchases', label: 'Purchases', icon: PurchasesIcon },
-  { id: 'account', href: null, label: 'Account', icon: AccountIcon, fold: true },
-] as const;
+type NavIcon = ComponentType<{ active?: boolean }>;
 
-const picksFoldItems = [
-  { href: '/create-pick', label: 'Create Pick', icon: '✨', desc: 'Share your tips' },
-  { href: '/my-picks', label: 'My Picks', icon: '📋', desc: 'Manage your tips' },
+type MainNavItem =
+  | { id: string; href: string; labelKey: string; icon: NavIcon }
+  | { id: string; href: null; labelKey: string; icon: NavIcon; fold: true };
+
+const mainNavItems: MainNavItem[] = [
+  { id: 'dashboard', href: '/dashboard', labelKey: 'nav.dashboard', icon: HomeIcon },
+  { id: 'picks', href: null, labelKey: 'nav.bottom_picks', icon: PicksIcon, fold: true },
+  { id: 'marketplace', href: '/marketplace', labelKey: 'nav.marketplace', icon: MarketplaceIcon },
+  { id: 'purchases', href: '/my-purchases', labelKey: 'nav.bottom_purchases', icon: PurchasesIcon },
+  { id: 'account', href: null, labelKey: 'nav.bottom_account', icon: AccountIcon, fold: true },
 ];
 
-const accountFoldItems = [
-  { href: '/profile', label: 'Profile', icon: '👤', desc: 'Your profile' },
-  { href: '/wallet', label: 'Wallet', icon: '💰', desc: 'Balance & transactions' },
-  { href: '/subscriptions', label: 'Subscriptions', icon: '⭐', desc: 'Tipster subscription coupons' },
-  { href: null, label: 'Sign out', icon: '🚪', desc: 'Log out', isAction: true },
+type FoldSheetItem = {
+  id: string;
+  href: string | null;
+  icon: string;
+  labelKey: string;
+  descKey: string;
+  isAction?: boolean;
+};
+
+const picksFoldItems: FoldSheetItem[] = [
+  { id: 'create', href: '/create-pick', icon: '✨', labelKey: 'nav.create_coupon', descKey: 'dashboard.create_coupon_desc' },
+  { id: 'my-picks', href: '/my-picks', icon: '📋', labelKey: 'nav.my_picks', descKey: 'dashboard.my_picks_desc' },
+];
+
+const accountFoldItems: FoldSheetItem[] = [
+  { id: 'profile', href: '/profile', icon: '👤', labelKey: 'dashboard.card_profile', descKey: 'dashboard.card_profile_desc' },
+  { id: 'wallet', href: '/wallet', icon: '💰', labelKey: 'nav.wallet', descKey: 'dashboard.card_wallet_desc' },
+  { id: 'subscriptions', href: '/subscriptions', icon: '⭐', labelKey: 'nav.subscriptions', descKey: 'dashboard.card_subscriptions_desc' },
+  { id: 'sign-out', href: null, icon: '🚪', labelKey: 'nav.logout', descKey: 'dashboard.bottom_nav.sign_out_help', isAction: true },
 ];
 
 function HomeIcon({ active }: { active?: boolean }) {
@@ -77,12 +93,13 @@ function isAccountActive(path: string) {
 }
 
 export function DashboardBottomNav() {
+  const t = useT();
   const pathname = usePathname();
   const router = useRouter();
   const [openFold, setOpenFold] = useState<FoldId>(null);
   const pendingWithdrawalCount = usePendingWithdrawalCount();
 
-  const handleFoldAction = (item: { href: string | null; isAction?: boolean }) => {
+  const handleFoldAction = (item: FoldSheetItem) => {
     if (item.isAction) {
       setOpenFold(null);
       localStorage.removeItem('token');
@@ -102,13 +119,16 @@ export function DashboardBottomNav() {
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0px)' }}
       >
         <div className="section-ux-gutter-wide flex items-center justify-around md:justify-center md:gap-2 h-16 md:h-12">
-          {navItems.map((item) => {
+          {mainNavItems.map((item) => {
             const isActive =
-              item.href === pathname ||
+              ('href' in item && item.href === pathname) ||
               (item.id === 'picks' && isPicksActive(pathname)) ||
               (item.id === 'account' && isAccountActive(pathname));
 
             if ('fold' in item && item.fold) {
+              const foldLabel = t(item.labelKey);
+              const ariaOpen = t('dashboard.bottom_nav.open_fold_aria', { label: foldLabel });
+              const ariaClose = t('dashboard.bottom_nav.close_fold_aria', { label: foldLabel });
               return (
                 <button
                   key={item.id}
@@ -116,13 +136,13 @@ export function DashboardBottomNav() {
                   onClick={() => setOpenFold(openFold === item.id ? null : (item.id as FoldId))}
                   aria-expanded={openFold === item.id}
                   aria-haspopup="true"
-                  aria-label={openFold === item.id ? `Close ${item.label} menu` : `Open ${item.label} menu`}
+                  aria-label={openFold === item.id ? ariaClose : ariaOpen}
                   className={`flex flex-col items-center justify-center flex-1 md:flex-initial md:px-6 py-3 gap-1 min-w-0 transition-colors ${
                     isActive ? 'text-[var(--primary)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'
                   }`}
                 >
                   <item.icon active={isActive} />
-                  <span className="text-[10px] md:text-xs font-medium truncate w-full text-center">{item.label}</span>
+                  <span className="text-[10px] md:text-xs font-medium truncate w-full text-center">{foldLabel}</span>
                 </button>
               );
             }
@@ -136,7 +156,7 @@ export function DashboardBottomNav() {
                 }`}
               >
                 <item.icon active={isActive} />
-                <span className="text-[10px] md:text-xs font-medium truncate w-full text-center">{item.label}</span>
+                <span className="text-[10px] md:text-xs font-medium truncate w-full text-center">{t(item.labelKey)}</span>
               </Link>
             );
           })}
@@ -151,19 +171,19 @@ export function DashboardBottomNav() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-12 h-1 rounded-full bg-[var(--border)] mx-auto mb-6" />
-            <h3 className="text-lg font-semibold text-[var(--text)] mb-4">Picks</h3>
+            <h3 className="text-lg font-semibold text-[var(--text)] mb-4">{t('nav.bottom_picks')}</h3>
             <div className="grid grid-cols-2 gap-3">
               {picksFoldItems.map((child) => (
                 <Link
-                  key={child.href}
-                  href={child.href}
+                  key={child.id}
+                  href={child.href!}
                   onClick={() => setOpenFold(null)}
                   className="flex items-center gap-4 p-4 rounded-2xl bg-[var(--bg-warm)] hover:bg-[var(--primary-light)] border border-[var(--border)] hover:border-[var(--primary)]/30 transition-all group"
                 >
                   <span className="text-2xl group-hover:scale-110 transition-transform">{child.icon}</span>
                   <div className="min-w-0">
-                    <span className="font-semibold text-[var(--text)] block">{child.label}</span>
-                    <span className="text-xs text-[var(--text-muted)]">{child.desc}</span>
+                    <span className="font-semibold text-[var(--text)] block">{t(child.labelKey)}</span>
+                    <span className="text-xs text-[var(--text-muted)]">{t(child.descKey)}</span>
                   </div>
                 </Link>
               ))}
@@ -180,25 +200,25 @@ export function DashboardBottomNav() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-12 h-1 rounded-full bg-[var(--border)] mx-auto mb-6" />
-            <h3 className="text-lg font-semibold text-[var(--text)] mb-4">Account</h3>
+            <h3 className="text-lg font-semibold text-[var(--text)] mb-4">{t('profile.account')}</h3>
             <div className="space-y-2">
               {accountFoldItems.map((child) =>
                 child.isAction ? (
                   <button
-                    key={child.label}
+                    key={child.id}
                     type="button"
                     onClick={() => handleFoldAction(child)}
                     className="w-full flex items-center gap-4 p-4 rounded-2xl bg-[var(--bg-warm)] hover:bg-red-50 border border-[var(--border)] hover:border-red-200 text-left transition-all group"
                   >
                     <span className="text-2xl">{child.icon}</span>
                     <div>
-                      <span className="font-semibold text-[var(--text)] group-hover:text-red-600">{child.label}</span>
-                      <span className="block text-xs text-[var(--text-muted)]">{child.desc}</span>
+                      <span className="font-semibold text-[var(--text)] group-hover:text-red-600">{t(child.labelKey)}</span>
+                      <span className="block text-xs text-[var(--text-muted)]">{t(child.descKey)}</span>
                     </div>
                   </button>
                 ) : (
                   <Link
-                    key={child.href}
+                    key={child.id}
                     href={child.href!}
                     onClick={() => setOpenFold(null)}
                     className="flex items-center gap-4 p-4 rounded-2xl bg-[var(--bg-warm)] hover:bg-[var(--primary-light)] border border-[var(--border)] hover:border-[var(--primary)]/30 transition-all group"
@@ -212,8 +232,8 @@ export function DashboardBottomNav() {
                       )}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <span className="font-semibold text-[var(--text)] block">{child.label}</span>
-                      <span className="text-xs text-[var(--text-muted)]">{child.desc}</span>
+                      <span className="font-semibold text-[var(--text)] block">{t(child.labelKey)}</span>
+                      <span className="text-xs text-[var(--text-muted)]">{t(child.descKey)}</span>
                     </div>
                   </Link>
                 )

@@ -3,7 +3,7 @@
 interface LoadingSkeletonProps {
   count?: number;
   className?: string;
-  /** Card grid layout (e.g. marketplace, tipster coupons) */
+  /** Card grid layout (e.g. marketplace, tipster picks) */
   variant?: 'list' | 'cards';
 }
 

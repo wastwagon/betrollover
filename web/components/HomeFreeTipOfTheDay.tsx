@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PickCard } from '@/components/PickCard';
 import { getApiUrl } from '@/lib/site-config';
+import { useT } from '@/context/LanguageContext';
 
 const SPORT_META: Record<string, { label: string; emoji: string }> = {
   football:          { label: 'Football',          emoji: '⚽' },
@@ -49,6 +50,7 @@ interface FreeTip {
 }
 
 export function HomeFreeTipOfTheDay() {
+  const t = useT();
   const router = useRouter();
   const [tip, setTip] = useState<FreeTip | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,7 +94,7 @@ export function HomeFreeTipOfTheDay() {
     return (
       <section className="py-12 md:py-16 border-t border-[var(--border)] bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <div className="section-ux-gutter-wide w-full min-w-0">
-          <h2 className="text-base font-semibold text-[var(--text)] mb-4 sm:mb-6 sm:text-lg md:text-xl">Free Tip of the Day</h2>
+          <h2 className="text-base font-semibold text-[var(--text)] mb-4 sm:mb-6 sm:text-lg md:text-xl">{t('home.free_tip')}</h2>
           <div className="max-w-md h-64 rounded-2xl bg-[var(--card)] animate-pulse" />
         </div>
       </section>
@@ -113,22 +115,24 @@ export function HomeFreeTipOfTheDay() {
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-2">
               <span className="inline-block px-3 py-1 rounded-full bg-amber-200 dark:bg-amber-800/50 text-amber-900 dark:text-amber-100 text-xs font-semibold">
-                Free
+                {t('home.free_tip_badge_free')}
               </span>
               <span className="inline-block px-3 py-1 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-xs font-semibold">
                 {sportMeta.emoji} {sportMeta.label}
               </span>
             </div>
-            <h2 className="text-base font-semibold text-[var(--text)] sm:text-lg md:text-xl">Free Tip of the Day</h2>
+            <h2 className="text-base font-semibold text-[var(--text)] sm:text-lg md:text-xl">{t('home.free_tip')}</h2>
             <p className="text-sm text-[var(--text-muted)] mt-0.5">
-              From {tip.tipster?.displayName ?? 'Expert Tipster'} — no purchase required
+              {t('home.free_tip_attribution', {
+                name: tip.tipster?.displayName ?? t('home.free_tip_expert_fallback'),
+              })}
             </p>
           </div>
           <Link
             href="/marketplace"
             className="text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline shrink-0 w-fit"
           >
-            All coupons →
+            {t('home.free_tip_browse_all')}
           </Link>
         </div>
         <div className="max-w-lg w-full min-w-0">

@@ -42,7 +42,7 @@ export default function TipsterProfileLoading() {
           ))}
         </div>
 
-        {/* Coupon cards */}
+        {/* Pick cards */}
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <div

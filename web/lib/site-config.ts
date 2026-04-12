@@ -66,7 +66,7 @@ export const SITE_KEYWORDS = [
   'escrow-protected picks',
   'risk-free sports tips',
   'free sports tips',
-  'multi-sport coupons',
+  'multi-sport picks',
   'tipster rank',
   'tipster ROI',
   'tipster streak',

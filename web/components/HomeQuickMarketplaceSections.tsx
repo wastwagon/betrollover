@@ -26,7 +26,7 @@ interface Tipster {
   avatarUrl?: string | null;
 }
 
-interface MarketplaceCoupon {
+interface MarketplaceCardItem {
   id: number;
   title: string;
   totalOdds: number;
@@ -40,9 +40,9 @@ interface MarketplaceCoupon {
   createdAt?: string;
 }
 
-function parseMarketplacePayload(data: unknown): MarketplaceCoupon[] {
+function parseMarketplacePayload(data: unknown): MarketplaceCardItem[] {
   const items = (data as { items?: unknown })?.items;
-  return Array.isArray(items) ? (items as MarketplaceCoupon[]) : [];
+  return Array.isArray(items) ? (items as MarketplaceCardItem[]) : [];
 }
 
 function leaderboardUsernameSet(data: unknown): Set<string> {
@@ -56,10 +56,10 @@ function leaderboardUsernameSet(data: unknown): Set<string> {
   return names;
 }
 
-/** Prefer coupons from all-time leaderboard tipsters; fill with newest listings if needed. */
-function pickEliteShowcase(all: MarketplaceCoupon[], eliteNames: Set<string>, max = 6): MarketplaceCoupon[] {
+/** Prefer picks from all-time leaderboard tipsters; fill with newest listings if needed. */
+function pickEliteShowcase(all: MarketplaceCardItem[], eliteNames: Set<string>, max = 6): MarketplaceCardItem[] {
   const seen = new Set<number>();
-  const out: MarketplaceCoupon[] = [];
+  const out: MarketplaceCardItem[] = [];
   for (const a of all) {
     const u = a.tipster?.username?.trim().toLowerCase();
     if (u && eliteNames.has(u) && !seen.has(a.id)) {
@@ -80,8 +80,8 @@ function pickEliteShowcase(all: MarketplaceCoupon[], eliteNames: Set<string>, ma
 
 export function HomeQuickMarketplaceSections() {
   const t = useT();
-  const [elite, setElite] = useState<MarketplaceCoupon[]>([]);
-  const [paid, setPaid] = useState<MarketplaceCoupon[]>([]);
+  const [elite, setElite] = useState<MarketplaceCardItem[]>([]);
+  const [paid, setPaid] = useState<MarketplaceCardItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -125,7 +125,7 @@ export function HomeQuickMarketplaceSections() {
     </div>
   );
 
-  const renderCards = (items: MarketplaceCoupon[]) =>
+  const renderCards = (items: MarketplaceCardItem[]) =>
     items.map((a) => (
       <PickCard
         key={a.id}

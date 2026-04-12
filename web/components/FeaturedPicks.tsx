@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PickCard } from '@/components/PickCard';
 import { getApiUrl } from '@/lib/site-config';
+import { useT } from '@/context/LanguageContext';
 
 interface Pick {
   id?: number;
@@ -38,6 +39,7 @@ interface Accumulator {
 }
 
 export function FeaturedPicks() {
+  const t = useT();
   const [picks, setPicks] = useState<Accumulator[]>([]);
 
   useEffect(() => {
@@ -54,8 +56,8 @@ export function FeaturedPicks() {
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--accent)]/5 to-transparent pointer-events-none" />
       <div className="relative section-ux-gutter">
         <div className="text-center mb-8">
-          <h2 className="text-base md:text-lg font-semibold text-[var(--text)]">Marketplace Coupons</h2>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">Browse and purchase from verified tipsters</p>
+          <h2 className="text-base md:text-lg font-semibold text-[var(--text)]">{t('marketplace.featured_section_title')}</h2>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">{t('marketplace.featured_section_subtitle')}</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {picks.map((a) => (

@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { PickCard } from '@/components/PickCard';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getApiUrl } from '@/lib/site-config';
-import { useT } from '@/context/LanguageContext';
+import { useLanguage, useT } from '@/context/LanguageContext';
 
 interface Subscription {
   id: number;
@@ -34,6 +34,7 @@ interface FeedPick {
 
 function SubscriptionsContent() {
   const t = useT();
+  const { lang } = useLanguage();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -93,13 +94,13 @@ function SubscriptionsContent() {
     <DashboardShell>
       <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full overflow-x-hidden">
         <PageHeader
-          label="Subscriptions"
-          title="My Subscriptions"
-          tagline="View coupons from tipsters you subscribe to."
+          label={t('subscriptions.page_label')}
+          title={t('subscriptions.page_title')}
+          tagline={t('subscriptions.page_tagline')}
         />
         {justSubscribed && (
           <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-700/60 dark:bg-emerald-900/20 dark:text-emerald-200 p-3 text-sm">
-            Subscription activated successfully. Your VIP access is now live.
+            {t('subscriptions.activated_banner')}
           </div>
         )}
 
@@ -129,7 +130,9 @@ function SubscriptionsContent() {
           <>
             <section className="mb-8 min-w-0 max-w-full">
               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between mb-3 min-w-0">
-                <h2 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider min-w-0">Active subscriptions</h2>
+                <h2 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider min-w-0">
+                  {t('subscriptions.active_section_title')}
+                </h2>
                 <Link
                   href="/subscriptions/marketplace"
                   className="text-xs font-medium text-[var(--primary)] hover:underline w-fit shrink-0"
@@ -143,9 +146,13 @@ function SubscriptionsContent() {
                     key={s.id}
                     className="rounded-xl p-4 border border-[var(--border)] bg-[var(--card)] min-w-0"
                   >
-                    <h3 className="font-semibold text-[var(--text)] break-words">{s.package?.name ?? 'Package'}</h3>
+                    <h3 className="font-semibold text-[var(--text)] break-words">
+                      {s.package?.name ?? t('subscriptions.package_fallback')}
+                    </h3>
                     <p className="text-sm text-[var(--text-muted)] mt-1">
-                      Ends {new Date(s.endsAt).toLocaleDateString()}
+                      {t('subscriptions.ends_on', {
+                        date: new Date(s.endsAt).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-GB'),
+                      })}
                     </p>
                     <p className="text-sm font-medium text-[var(--primary)] mt-2">
                       GHS {Number(s.amountPaid).toFixed(2)}/{s.package?.durationDays ?? 30}d
@@ -156,11 +163,13 @@ function SubscriptionsContent() {
             </section>
 
             <section className="min-w-0 max-w-full">
-              <h2 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">Subscription coupons</h2>
+              <h2 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">
+                {t('subscriptions.feed_section_title')}
+              </h2>
               {feedLoading ? (
                 <LoadingSkeleton count={2} variant="cards" />
               ) : feedPicks.length === 0 ? (
-                <p className="text-[var(--text-muted)]">No coupons from subscribed tipsters yet.</p>
+                <p className="text-[var(--text-muted)]">{t('subscriptions.feed_empty')}</p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-w-0">
                   {feedPicks.map((pick) => {
