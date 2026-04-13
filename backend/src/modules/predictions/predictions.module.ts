@@ -1,4 +1,5 @@
 import { Module, forwardRef } from '@nestjs/common';
+import { AccumulatorsModule } from '../accumulators/accumulators.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { Tipster } from './entities/tipster.entity';
@@ -49,6 +50,7 @@ import { TipsterModule } from '../tipster/tipster.module';
       ApiSettings,
     ]),
     forwardRef(() => FixturesModule),
+    forwardRef(() => AccumulatorsModule),
   ],
   controllers: [TipstersController, PredictionsController, LeaderboardController],
   providers: [

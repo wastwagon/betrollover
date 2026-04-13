@@ -37,6 +37,8 @@ interface FeedPick {
   picks: Array<{ matchDescription?: string; prediction?: string; odds?: number; matchDate?: string }>;
   tipster?: { id: number; displayName: string; username: string; avatarUrl: string | null; winRate: number; totalPicks: number; wonPicks: number; lostPicks: number; rank: number | null } | null;
   createdAt: string;
+  /** From API when viewer may see legs (purchase, subscription, free, settled, etc.). */
+  picksRevealed?: boolean;
 }
 
 interface User {
@@ -974,6 +976,7 @@ function DashboardContent() {
                               purchaseCount={pick.purchaseCount}
                               picks={pick.picks || []}
                               tipster={pick.tipster}
+                              picksRevealed={pick.picksRevealed === true}
                               isPurchased={isPurchased}
                               canPurchase={canPurchase}
                               walletBalance={walletBalance}

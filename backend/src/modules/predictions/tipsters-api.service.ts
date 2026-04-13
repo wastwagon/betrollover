@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, SelectQueryBuilder } from 'typeorm';
 import { Tipster } from './entities/tipster.entity';
@@ -15,6 +15,7 @@ import {
   LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING,
   LEADERBOARD_MIN_SETTLED_WEEKLY,
 } from '@betrollover/shared-types';
+import { AccumulatorsService } from '../accumulators/accumulators.service';
 
 const SORT_COLUMNS: Record<string, string> = {
   roi: 'roi',
@@ -141,6 +142,8 @@ export class TipstersApiService {
     private fixtureRepo: Repository<Fixture>,
     @InjectRepository(TipsterSubscriptionPackage)
     private subscriptionPackageRepo: Repository<TipsterSubscriptionPackage>,
+    @Inject(forwardRef(() => AccumulatorsService))
+    private readonly accumulatorsService: AccumulatorsService,
   ) {}
 
   /** At most one active package per tipster (DB-enforced); map user id → package id. */
@@ -1218,10 +1221,11 @@ export class TipstersApiService {
 
     const listingRows = await this.marketplaceRepo.find({
       where: { accumulatorId: In(tickets.map((t) => t.id)), status: 'active' },
-      select: ['accumulatorId', 'price', 'purchaseCount'],
+      select: ['accumulatorId', 'price', 'purchaseCount', 'status'],
     });
     const priceMap = new Map(listingRows.map((r) => [r.accumulatorId, Number(r.price)]));
     const purchaseMap = new Map(listingRows.map((r) => [r.accumulatorId, r.purchaseCount || 0]));
+    const rowByAccId = new Map(listingRows.map((r) => [r.accumulatorId, r]));
 
     const userMap = new Map<
       number,
@@ -1241,9 +1245,20 @@ export class TipstersApiService {
 
     const ticketStatsMap = await this.computeStatsFromTickets(followedUserIds);
 
-    return tickets
-      .filter((t) => t.picks?.length)
-      .map((ticket) => {
+    const enrichedTickets = await this.accumulatorsService.enrichPicksWithFixtureScores(tickets);
+    const filtered = enrichedTickets.filter((t) => t.picks?.length);
+
+    return Promise.all(
+      filtered.map(async (ticket) => {
+        const row = rowByAccId.get(ticket.id) ?? null;
+        const { picks, picksRevealed, accessViaSubscription } =
+          await this.accumulatorsService.applyViewerPickVisibilityForTicket(
+            ticket,
+            row,
+            userId,
+            (ticket.picks ?? []) as unknown[],
+          );
+
         const tipsterUser = userMap.get(ticket.userId!);
         const stats = ticketStatsMap.get(ticket.userId!);
         const totalPicks = stats?.total ?? 0;
@@ -1259,7 +1274,9 @@ export class TipstersApiService {
           purchaseCount: purchaseMap.get(ticket.id) ?? 0,
           status: ticket.status,
           result: ticket.result,
-          picks: ticket.picks ?? [],
+          picks,
+          picksRevealed,
+          ...(accessViaSubscription ? { accessViaSubscription: true } : {}),
           tipster: tipsterUser
             ? {
                 id: 0,
@@ -1275,6 +1292,7 @@ export class TipstersApiService {
             : null,
           createdAt: ticket.createdAt,
         };
-      });
+      }),
+    );
   }
 }

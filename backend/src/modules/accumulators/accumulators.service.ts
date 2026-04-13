@@ -1,4 +1,12 @@
-import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
+  Logger,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, DataSource, EntityManager } from 'typeorm';
 import { AccumulatorTicket } from './entities/accumulator-ticket.entity';
@@ -103,6 +111,7 @@ export class AccumulatorsService {
     private subscriptionsService: SubscriptionsService,
     private referralsService: ReferralsService,
     private dataSource: DataSource,
+    @Inject(forwardRef(() => TipstersApiService))
     private tipstersApiService: TipstersApiService,
   ) { }
 
@@ -493,7 +502,30 @@ export class AccumulatorsService {
     };
   }
 
-  private async enrichPicksWithFixtureScores<T extends { picks?: Array<{ fixtureId?: number | null; eventId?: number | null }> }>(tickets: T[]): Promise<T[]> {
+  /**
+   * Same per-viewer rules as marketplace (free / settled / owner / active subscription / purchase / redacted).
+   * Used by the followed-tipster dashboard feed so VIP subscribers are not shown locked cards.
+   */
+  async applyViewerPickVisibilityForTicket(
+    ticket: AccumulatorTicket,
+    listingRow: PickMarketplace | null,
+    viewerUserId: number,
+    picksPayload: unknown[],
+  ): Promise<{ picks: unknown[]; picksRevealed: boolean; accessViaSubscription?: boolean }> {
+    const applied = await this.applyCouponPickVisibility(
+      { picks: picksPayload } as Record<string, unknown>,
+      ticket,
+      listingRow,
+      viewerUserId,
+    );
+    return {
+      picks: (applied.picks as unknown[]) ?? picksPayload,
+      picksRevealed: applied.picksRevealed === true,
+      ...(applied.accessViaSubscription === true ? { accessViaSubscription: true as const } : {}),
+    };
+  }
+
+  async enrichPicksWithFixtureScores<T extends { picks?: Array<{ fixtureId?: number | null; eventId?: number | null }> }>(tickets: T[]): Promise<T[]> {
     const fixtureIds = [...new Set(tickets.flatMap((t) => (t.picks || []).map((p) => p.fixtureId).filter(Boolean) as number[]))];
     const eventIds = [...new Set(tickets.flatMap((t) => (t.picks || []).map((p) => p.eventId).filter(Boolean) as number[]))];
     const fixtures = fixtureIds.length > 0

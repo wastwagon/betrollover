@@ -99,7 +99,7 @@ interface PickCardProps {
   /** Buyer review summary for this coupon */
   avgRating?: number | null;
   reviewCount?: number | null;
-  /** From API: legs visible (buyer, seller, free/settled, or admin). Does not imply purchase — purchase CTA unchanged. */
+  /** From API: viewer may see full legs (purchase, subscription, free/settled, seller, admin). Drives View vs Purchase CTA when true. */
   picksRevealed?: boolean;
 }
 
@@ -156,6 +156,8 @@ export function PickCard({
 
   const isFree = price === 0;
   const showFullDetails = isFree || isPurchased || viewOnly || picksRevealed;
+  /** Match primary CTA to server-granted leg visibility (subscription, settled, etc.). */
+  const showAccessCTA = isPurchased || viewOnly || isFree || picksRevealed;
 
   const purchaseActivityLabel =
     purchaseCount !== undefined && purchaseCount > 0
@@ -421,7 +423,7 @@ export function PickCard({
 
           {/* Action Button - purchased, viewOnly, or free: View; else purchase */}
           <div className="mt-auto pt-2 border-t border-[var(--border)]/80">
-            {isPurchased || viewOnly || isFree ? (
+            {showAccessCTA ? (
               <Link
                 href={detailsHref ?? `/coupons/${id}`}
                 className="block w-full px-3 py-2 rounded-lg font-semibold bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-xs text-center transition-all duration-200"
@@ -562,8 +564,8 @@ export function PickCard({
                 </ul>
               </div>
 
-              {/* Purchase Button in Modal - only for paid picks */}
-              {!isPurchased && !isFree && (
+              {/* Purchase Button in Modal - only when legs are not already visible to this viewer */}
+              {!isPurchased && !isFree && !picksRevealed && (
                 <div className="mt-6 pt-6 border-t border-[var(--border)]">
                   {canPurchase ? (
                     <button
