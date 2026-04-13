@@ -3,6 +3,8 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
@@ -63,6 +65,7 @@ export class SubscriptionsService {
     @InjectRepository(User)
     private readonly usersRepo: Repository<User>,
     private readonly tipsterService: TipsterService,
+    @Inject(forwardRef(() => TipstersApiService))
     private readonly tipstersApi: TipstersApiService,
     private readonly walletService: WalletService,
     private readonly notificationsService: NotificationsService,
