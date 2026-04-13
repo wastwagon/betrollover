@@ -39,14 +39,20 @@ interface Tipster {
   displayName: string;
   username: string;
   avatarUrl?: string | null;
-  /** Platform AI tipster (from API `isAi`). */
+  /** Platform AI tipster (from API `isAi`; some payloads use `is_ai`). */
   isAi?: boolean;
+  is_ai?: boolean;
   winRate: number;
   totalPicks: number;
   wonPicks: number;
   lostPicks: number;
   /** Global all-time leaderboard rank; null if not on leaderboard (e.g. no settled picks). */
   rank: number | null;
+}
+
+function tipsterShowsAiBadge(t: Tipster | null | undefined): boolean {
+  if (!t) return false;
+  return t.isAi === true || t.is_ai === true;
 }
 
 const SPORT_META: Record<string, { icon: string; label: string; color: string }> = {
@@ -243,7 +249,7 @@ export function PickCard({
                     <p className="font-medium text-xs text-[var(--text)] truncate min-w-0" title={tipster ? `${t('pick_card.tipster')}: ${tipster.displayName}` : t('pick_card.tipster')}>
                       {tipster?.displayName || t('pick_card.tipster')}
                     </p>
-                    {tipster?.isAi ? <AiTipsterBadge className="!text-[9px] !px-1.5 !py-px" /> : null}
+                    {tipsterShowsAiBadge(tipster) ? <AiTipsterBadge className="!text-[9px] !px-1.5 !py-px" /> : null}
                   </div>
                   <div className="flex items-center gap-1.5 mt-0">
                     <span className="text-[9px] text-[var(--text-muted)]">
@@ -482,7 +488,7 @@ export function PickCard({
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-medium text-base text-[var(--text)]">{tipster.displayName}</p>
-                        {tipster.isAi ? <AiTipsterBadge /> : null}
+                        {tipsterShowsAiBadge(tipster) ? <AiTipsterBadge /> : null}
                       </div>
                       <div className="flex items-center gap-4 mt-1">
                         <span className="text-sm text-[var(--text-muted)]">
@@ -647,7 +653,7 @@ export function PickCard({
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold text-[var(--text)]">{tipster.displayName}</p>
-                          {tipster.isAi ? <AiTipsterBadge /> : null}
+                          {tipsterShowsAiBadge(tipster) ? <AiTipsterBadge /> : null}
                         </div>
                         <p className="text-xs text-[var(--text-muted)]">
                           {t('pick_card.win_rate', { rate: (tipster?.winRate != null ? Number(tipster.winRate).toFixed(1) : '—') })} • {t('pick_card.picks_count', { n: String(tipster.totalPicks) })}

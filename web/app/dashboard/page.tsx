@@ -35,7 +35,18 @@ interface FeedPick {
   status: string;
   result: string;
   picks: Array<{ matchDescription?: string; prediction?: string; odds?: number; matchDate?: string }>;
-  tipster?: { id: number; displayName: string; username: string; avatarUrl: string | null; winRate: number; totalPicks: number; wonPicks: number; lostPicks: number; rank: number | null } | null;
+  tipster?: {
+    id: number;
+    displayName: string;
+    username: string;
+    avatarUrl: string | null;
+    winRate: number;
+    totalPicks: number;
+    wonPicks: number;
+    lostPicks: number;
+    rank: number | null;
+    isAi?: boolean;
+  } | null;
   createdAt: string;
   /** From API when viewer may see legs (purchase, subscription, free, settled, etc.). */
   picksRevealed?: boolean;
@@ -895,11 +906,12 @@ function DashboardContent() {
                         displayName: tip.displayName,
                         username: tip.username,
                         avatarUrl: tip.avatarUrl ?? null,
+                        isAi: tip.isAi === true,
                         winRate: tip.winRate,
                         totalPicks: tip.totalPicks ?? 0,
                         wonPicks: tip.wonPicks ?? 0,
                         lostPicks: tip.lostPicks ?? 0,
-                        rank: tip.rank ?? 0,
+                        rank: tip.rank ?? null,
                       }
                     : null;
                   return (

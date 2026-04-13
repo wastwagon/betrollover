@@ -29,7 +29,17 @@ interface FeedPick {
   price: number;
   purchaseCount: number;
   picks: Array<{ matchDescription?: string; prediction?: string; odds?: number }>;
-  tipster?: { displayName: string; username: string; avatarUrl: string | null; winRate: number } | null;
+  tipster?: {
+    displayName: string;
+    username: string;
+    avatarUrl: string | null;
+    winRate: number;
+    isAi?: boolean;
+    totalPicks?: number;
+    wonPicks?: number;
+    lostPicks?: number;
+    rank?: number | null;
+  } | null;
 }
 
 function SubscriptionsContent() {
@@ -180,11 +190,12 @@ function SubscriptionsContent() {
                           displayName: tipMeta.displayName,
                           username: tipMeta.username,
                           avatarUrl: tipMeta.avatarUrl ?? null,
+                          isAi: tipMeta.isAi === true,
                           winRate: tipMeta.winRate,
-                          totalPicks: 0,
-                          wonPicks: 0,
-                          lostPicks: 0,
-                          rank: 0,
+                          totalPicks: tipMeta.totalPicks ?? 0,
+                          wonPicks: tipMeta.wonPicks ?? 0,
+                          lostPicks: tipMeta.lostPicks ?? 0,
+                          rank: tipMeta.rank ?? null,
                         }
                       : null;
                     return (

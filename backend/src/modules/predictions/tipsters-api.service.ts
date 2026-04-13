@@ -1200,7 +1200,7 @@ export class TipstersApiService {
 
     const tipsters = await this.tipsterRepo.find({
       where: { id: In(tipsterIds) },
-      select: ['id', 'userId', 'username', 'displayName', 'avatarUrl', 'winRate'],
+      select: ['id', 'userId', 'username', 'displayName', 'avatarUrl', 'winRate', 'isAi'],
     });
     const followedUserIds = tipsters.filter((t) => t.userId != null).map((t) => t.userId!);
     if (followedUserIds.length === 0) return [];
@@ -1229,7 +1229,14 @@ export class TipstersApiService {
 
     const userMap = new Map<
       number,
-      { displayName: string; username: string; avatarUrl: string | null; winRate: number; rank: number | null }
+      {
+        displayName: string;
+        username: string;
+        avatarUrl: string | null;
+        winRate: number;
+        rank: number | null;
+        isAi: boolean;
+      }
     >();
     for (const t of tipsters) {
       if (t.userId) {
@@ -1239,6 +1246,7 @@ export class TipstersApiService {
           avatarUrl: t.avatarUrl,
           winRate: Number(t.winRate),
           rank: allTimeRankMap.get(t.id) ?? null,
+          isAi: !!t.isAi,
         });
       }
     }
@@ -1283,6 +1291,7 @@ export class TipstersApiService {
                 displayName: tipsterUser.displayName,
                 username: tipsterUser.username,
                 avatarUrl: tipsterUser.avatarUrl,
+                isAi: tipsterUser.isAi,
                 winRate,
                 totalPicks,
                 wonPicks,
