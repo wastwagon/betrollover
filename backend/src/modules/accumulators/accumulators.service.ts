@@ -1156,6 +1156,17 @@ export class AccumulatorsService {
     });
     const tipsterMap = new Map(tipsters.map(t => [t.id, t]));
 
+    const tipsterRowsForAi =
+      tipsterIds.length > 0
+        ? await this.tipsterRepo.find({
+            where: { userId: In(tipsterIds) },
+            select: ['userId', 'isAi'],
+          })
+        : [];
+    const isAiByUserId = new Map<number, boolean>(
+      tipsterRowsForAi.filter((row) => row.userId != null).map((row) => [row.userId!, !!row.isAi]),
+    );
+
     // Create price & purchase count maps
     const priceMap = new Map(marketplaceRows.map(r => [r.accumulatorId, Number(r.price)]));
     const purchaseCountMap = new Map(marketplaceRows.map(r => [r.accumulatorId, r.purchaseCount || 0]));
@@ -1213,6 +1224,7 @@ export class AccumulatorsService {
           displayName: tipster.displayName,
           username: tipster.username,
           avatarUrl: tipster.avatar,
+          isAi: isAiByUserId.get(ticket.userId) ?? false,
           winRate: Math.round(stats.winRate * 10) / 10,
           totalPicks: stats.totalPicks,
           wonPicks: stats.wonPicks,

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { FollowersCountButton } from '@/components/TipsterFollowersModal';
+import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 
 export interface TipsterCardData {
   id: number;
@@ -24,6 +25,8 @@ export interface TipsterCardData {
   is_following?: boolean;
   /** Active VIP subscription package id from API; omit or null if none. */
   vip_package_id?: number | null;
+  /** Platform-operated AI tipster (from API `is_ai`). */
+  is_ai?: boolean;
 }
 
 interface TipsterCardProps {
@@ -69,8 +72,11 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
             </div>
           </Link>
           <div className="min-w-0 flex-1">
-            <Link href={`/tipsters/${tipster.username}`} className="block group">
-              <h3 className="font-semibold text-sm sm:text-base text-[var(--text)] truncate">{tipster.display_name}</h3>
+            <Link href={`/tipsters/${tipster.username}`} className="block group min-w-0">
+              <span className="flex items-center gap-2 min-w-0">
+                <h3 className="font-semibold text-sm sm:text-base text-[var(--text)] truncate min-w-0">{tipster.display_name}</h3>
+                {tipster.is_ai ? <AiTipsterBadge /> : null}
+              </span>
             </Link>
             <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1 mt-0.5 text-[10px] sm:text-xs text-[var(--text-muted)]">
               {tipster.leaderboard_rank != null && (

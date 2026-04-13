@@ -178,6 +178,7 @@ export class TipstersApiService {
         | 'roi'
         | 'totalProfit'
         | 'leaderboardRank'
+        | 'isAi'
       >
     >;
     sorted: Array<{
@@ -185,6 +186,7 @@ export class TipstersApiService {
       username: string;
       display_name: string;
       avatar_url: string | null;
+      is_ai: boolean;
       roi: number;
       win_rate: number;
       total_predictions: number;
@@ -209,6 +211,7 @@ export class TipstersApiService {
         'roi',
         'totalProfit',
         'leaderboardRank',
+        'isAi',
       ],
     });
     const humanUserIds = tipsters.filter((t) => t.userId != null).map((t) => t.userId!);
@@ -226,6 +229,7 @@ export class TipstersApiService {
         username: t.username,
         display_name: t.displayName,
         avatar_url: t.avatarUrl,
+        is_ai: !!t.isAi,
         roi,
         win_rate: winRate,
         total_predictions: totalPredictions,
@@ -907,6 +911,7 @@ export class TipstersApiService {
             displayName: user.displayName,
             username: user.username,
             avatarUrl: user.avatar ?? tipster.avatarUrl,
+            isAi: !!tipster.isAi,
             winRate,
             totalPicks: totalPredictions,
             wonPicks: totalWins,
@@ -981,6 +986,7 @@ export class TipstersApiService {
             displayName: user.displayName,
             username: user.username,
             avatarUrl: user.avatar ?? tipster.avatarUrl,
+            isAi: !!tipster.isAi,
             winRate,
             totalPicks: totalPredictions,
             wonPicks: totalWins,
@@ -1108,10 +1114,11 @@ export class TipstersApiService {
       tipsterIds.length > 0
         ? await this.tipsterRepo.find({
             where: { id: In(tipsterIds) },
-            select: ['id', 'userId'],
+            select: ['id', 'userId', 'isAi'],
           })
         : [];
     const idToUserId = new Map(tipsterRows.map((t) => [t.id, t.userId]));
+    const idToIsAi = new Map(tipsterRows.map((t) => [t.id, !!t.isAi]));
     const humanUserIds = [...new Set(tipsterRows.map((t) => t.userId).filter((id): id is number => id != null))];
     const periodTicketStats = await this.computeStatsFromTicketsInPeriod(humanUserIds, options.period, options.sport);
 
@@ -1164,6 +1171,7 @@ export class TipstersApiService {
         username: r.username,
         display_name: r.display_name,
         avatar_url: r.avatar_url,
+        is_ai: idToIsAi.get(r.id) ?? false,
         roi: r.roi,
         win_rate: r.win_rate,
         total_predictions: r.total_predictions,

@@ -17,6 +17,7 @@ interface Tipster {
   id: number;
   displayName: string;
   username: string;
+  isAi?: boolean;
   winRate: number;
   totalPicks: number;
   wonPicks: number;

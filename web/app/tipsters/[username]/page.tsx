@@ -17,6 +17,7 @@ import { getApiErrorMessage } from '@/lib/api-error-message';
 import { PersonJsonLd } from '@/components/PersonJsonLd';
 import { useT } from '@/context/LanguageContext';
 import { FollowersCountButton } from '@/components/TipsterFollowersModal';
+import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 
 interface Pick {
   id?: number;
@@ -89,6 +90,8 @@ interface TipsterProfile {
     display_name: string;
     avatar_url: string | null;
     bio: string | null;
+    /** Platform AI tipster */
+    is_ai?: boolean;
     total_predictions: number;
     total_wins: number;
     total_losses: number;
@@ -484,8 +487,9 @@ export default function TipsterProfilePage() {
               </button>
             </div>
               <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-2 min-w-0">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 min-w-0">
                 <h1 className="text-lg sm:text-xl font-semibold text-[var(--text)] min-w-0 break-words">{tipster.display_name}</h1>
+                {tipster.is_ai ? <AiTipsterBadge /> : null}
                 <span className="text-sm font-medium text-[var(--text-muted)] shrink-0">@{tipster.username}</span>
                 {tipster.leaderboard_rank != null && (
                   <span

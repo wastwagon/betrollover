@@ -723,6 +723,8 @@ const fr: Record<string, string> = {
   'tipster.browse_tipsters': 'Voir les Tipsters',
   'tipster.back_to_tipsters': '← Retour aux Tipsters',
   'tipster.ai_tipster': 'Tipster IA',
+  'tipster.ai_badge_title': 'Tipster IA — géré par la plateforme',
+  'tipster.ai_badge_aria': 'Tipster IA géré par la plateforme',
   'tipster.won_lost': 'Gagnés / Perdus',
   'tipster.best_streak': 'Meilleure Série',
   'tipster.predictions': 'Pronostics',

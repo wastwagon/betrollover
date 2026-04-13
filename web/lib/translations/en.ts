@@ -725,6 +725,8 @@ const en = {
   'tipster.browse_tipsters': 'Browse Tipsters',
   'tipster.back_to_tipsters': '← Back to Tipsters',
   'tipster.ai_tipster': 'AI Tipster',
+  'tipster.ai_badge_title': 'AI tipster — operated by the platform',
+  'tipster.ai_badge_aria': 'AI tipster operated by the platform',
   'tipster.won_lost': 'Won / Lost',
   'tipster.best_streak': 'Best Streak',
   'tipster.predictions': 'Predictions',

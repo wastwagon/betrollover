@@ -10,6 +10,7 @@ import { useT } from '@/context/LanguageContext';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { tipsterRankBadgeClass, tipsterRankBadgeContent } from '@/lib/tipster-rank-ui';
 import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
+import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 
 interface Pick {
   id?: number;
@@ -38,6 +39,8 @@ interface Tipster {
   displayName: string;
   username: string;
   avatarUrl?: string | null;
+  /** Platform AI tipster (from API `isAi`). */
+  isAi?: boolean;
   winRate: number;
   totalPicks: number;
   wonPicks: number;
@@ -234,9 +237,12 @@ export function PickCard({
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-xs text-[var(--text)] truncate" title={tipster ? `${t('pick_card.tipster')}: ${tipster.displayName}` : t('pick_card.tipster')}>
-                    {tipster?.displayName || t('pick_card.tipster')}
-                  </p>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <p className="font-medium text-xs text-[var(--text)] truncate min-w-0" title={tipster ? `${t('pick_card.tipster')}: ${tipster.displayName}` : t('pick_card.tipster')}>
+                      {tipster?.displayName || t('pick_card.tipster')}
+                    </p>
+                    {tipster?.isAi ? <AiTipsterBadge className="!text-[9px] !px-1.5 !py-px" /> : null}
+                  </div>
                   <div className="flex items-center gap-1.5 mt-0">
                     <span className="text-[9px] text-[var(--text-muted)]">
                       {tipster ? `${tipster.totalPicks}p` : `${totalPicks}p`}
@@ -471,8 +477,11 @@ export function PickCard({
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold ${tipsterRankBadgeClass(tipster.rank)}`}>
                       {tipsterRankBadgeContent(tipster.rank)}
                     </div>
-                    <div>
-                      <p className="font-medium text-base text-[var(--text)]">{tipster.displayName}</p>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium text-base text-[var(--text)]">{tipster.displayName}</p>
+                        {tipster.isAi ? <AiTipsterBadge /> : null}
+                      </div>
                       <div className="flex items-center gap-4 mt-1">
                         <span className="text-sm text-[var(--text-muted)]">
                           {t('pick_card.picks_count', { n: String(tipster.totalPicks) })}
@@ -633,8 +642,11 @@ export function PickCard({
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold ${tipsterRankBadgeClass(tipster.rank)}`}>
                         {tipsterRankBadgeContent(tipster.rank)}
                       </div>
-                      <div>
-                        <p className="font-semibold text-[var(--text)]">{tipster.displayName}</p>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-semibold text-[var(--text)]">{tipster.displayName}</p>
+                          {tipster.isAi ? <AiTipsterBadge /> : null}
+                        </div>
                         <p className="text-xs text-[var(--text-muted)]">
                           {t('pick_card.win_rate', { rate: (tipster?.winRate != null ? Number(tipster.winRate).toFixed(1) : '—') })} • {t('pick_card.picks_count', { n: String(tipster.totalPicks) })}
                         </p>

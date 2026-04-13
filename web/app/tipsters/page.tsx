@@ -44,6 +44,7 @@ function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: numb
     follower_count: 0,
     is_following: false,
     vip_package_id: (entry.vip_package_id as number | null | undefined) ?? null,
+    is_ai: !!(entry.is_ai as boolean | undefined),
   };
 }
 

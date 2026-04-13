@@ -10,6 +10,8 @@ function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: numb
   const rank = (entry.rank ?? entry.leaderboard_rank ?? index + 1) as number;
   const totalPredictions = (entry.total_predictions ?? entry.monthly_predictions ?? 0) as number;
   const totalWins = (entry.total_wins ?? entry.monthly_wins ?? 0) as number;
+  const totalLosses =
+    entry.total_losses != null ? (entry.total_losses as number) : Math.max(0, totalPredictions - totalWins);
   const roi = (entry.roi ?? 0) as number;
   const winRate = totalPredictions > 0 ? (totalWins / totalPredictions) * 100 : 0;
   return {
@@ -23,10 +25,11 @@ function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: numb
     current_streak: 0,
     total_predictions: totalPredictions,
     total_wins: totalWins,
-    total_losses: totalPredictions - totalWins,
+    total_losses: totalLosses,
     leaderboard_rank: rank,
     follower_count: 0,
     is_following: false,
+    is_ai: !!(entry.is_ai as boolean | undefined),
   };
 }
 

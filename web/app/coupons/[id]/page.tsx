@@ -13,6 +13,7 @@ import { getApiErrorMessage } from '@/lib/api-error-message';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { useLanguage, useT, type SupportedLanguage } from '@/context/LanguageContext';
 import { formatTipsterRankHash } from '@/lib/tipster-rank-ui';
+import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -46,6 +47,7 @@ interface Tipster {
   displayName: string;
   username: string;
   avatarUrl?: string | null;
+  isAi?: boolean;
   winRate: number;
   totalPicks: number;
   wonPicks: number;
@@ -933,7 +935,10 @@ export default function CouponDetailPage() {
                       )}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-[var(--text)] truncate">{coupon.tipster.displayName}</p>
+                      <p className="text-sm font-semibold text-[var(--text)] flex flex-wrap items-center gap-2 min-w-0">
+                        <span className="truncate min-w-0">{coupon.tipster.displayName}</span>
+                        {coupon.tipster.isAi ? <AiTipsterBadge /> : null}
+                      </p>
                       <p className="text-xs text-[var(--text-muted)]">@{coupon.tipster.username}</p>
                     </div>
                   </div>

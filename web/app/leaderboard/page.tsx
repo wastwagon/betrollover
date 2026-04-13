@@ -13,6 +13,7 @@ import { useT } from '@/context/LanguageContext';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 import { tipsterRankMedal } from '@/lib/tipster-rank-ui';
+import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import {
   LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING,
   LEADERBOARD_MIN_SETTLED_WEEKLY,
@@ -37,6 +38,7 @@ interface LeaderboardEntry {
   monthly_roi?: number;
   avg_rating?: number | null;
   review_count?: number | null;
+  is_ai?: boolean;
 }
 
 function RankBadge({ rank }: { rank: number }) {
@@ -100,6 +102,9 @@ export default function LeaderboardPage() {
           roi: (e.roi as number) ?? 0,
           total_predictions: (e.total_predictions ?? e.monthly_predictions ?? 0) as number,
           total_wins: (e.total_wins ?? e.monthly_wins ?? 0) as number,
+          is_ai: !!(e.is_ai as boolean | undefined),
+          avg_rating: (e.avg_rating as number | null | undefined) ?? null,
+          review_count: (e.review_count as number | null | undefined) ?? null,
         })));
       })
       .catch(() => setEntries([]))
@@ -289,8 +294,9 @@ export default function LeaderboardPage() {
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-[var(--text)] truncate group-hover:text-[var(--primary)] transition-colors">
-                        {entry.display_name}
+                      <p className="font-semibold text-[var(--text)] group-hover:text-[var(--primary)] transition-colors flex flex-wrap items-center gap-2 min-w-0">
+                        <span className="truncate min-w-0 max-w-full">{entry.display_name}</span>
+                        {entry.is_ai ? <AiTipsterBadge /> : null}
                       </p>
                       <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                         <p className="text-xs text-[var(--text-muted)] truncate min-w-0">@{entry.username}</p>
