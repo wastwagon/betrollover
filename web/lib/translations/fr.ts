@@ -759,6 +759,7 @@ const fr: Record<string, string> = {
   'tipster.desc_roi': 'Meilleur retour sur investissement',
   'tipster.roi_guarantee': 'Garantie ROI : remboursement si inférieur à {n}%',
   'tipster.subscribed': 'Abonné',
+  'tipster.join_vip': 'Rejoindre VIP',
   'tipster.subscribe': 'S\'abonner',
   'tipster.active': 'Actifs',
   'tipster.archive': 'Archives',
@@ -1161,6 +1162,7 @@ const fr: Record<string, string> = {
   'leaderboard.empty_logged_sub':
     'Aucun tipster ne correspond à ce filtre pour le moment. Essayez une autre période ou un autre sport, ou parcourez tous les profils.',
   'leaderboard.empty_logged_cta': 'Voir tous les tipsters',
+  'leaderboard.actions_col': 'Actions',
   'leaderboard.important_note_title': 'Note importante',
   'leaderboard.rank_notice_all_time':
     'Classement all-time : les tipsters avec au moins {n} pronostics arbitrés (gagnés ou perdus) sont classés en premier par ROI, puis profit, puis taux de réussite. Les autres figurent en dessous, par ROI, jusqu’à atteindre {n} pronostics arbitrés.',

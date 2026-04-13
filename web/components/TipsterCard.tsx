@@ -115,7 +115,7 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
               href={`/subscriptions/checkout?packageId=${tipster.vip_package_id}`}
               className="w-full text-center px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-semibold text-xs sm:text-sm bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-400/40 hover:bg-amber-500/25 transition-colors"
             >
-              Join VIP
+              {t('tipster.join_vip')}
             </Link>
           )}
           {onFollow && (

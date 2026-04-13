@@ -760,6 +760,7 @@ const en = {
   'tipster.desc_roi': 'Best return on investment',
   'tipster.roi_guarantee': 'ROI guarantee: refund if below {n}%',
   'tipster.subscribed': 'Subscribed',
+  'tipster.join_vip': 'Join VIP',
   'tipster.subscribe': 'Subscribe',
   'tipster.active': 'Active',
   'tipster.archive': 'Archive',
@@ -1163,6 +1164,7 @@ const en = {
   'leaderboard.empty_logged_sub':
     'No tipsters match this filter right now. Try another period or sport, or browse all profiles.',
   'leaderboard.empty_logged_cta': 'Browse all tipsters',
+  'leaderboard.actions_col': 'Actions',
   'leaderboard.important_note_title': 'Important note',
   'leaderboard.rank_notice_all_time':
     'All-time list: tipsters with at least {n} settled picks (won or lost) are ranked first by ROI, then profit, then win rate. Everyone else appears below, by ROI, until they reach {n} settled picks.',

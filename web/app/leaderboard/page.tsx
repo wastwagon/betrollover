@@ -39,6 +39,26 @@ interface LeaderboardEntry {
   avg_rating?: number | null;
   review_count?: number | null;
   is_ai?: boolean;
+  /** Active VIP package id from API when tipster sells a subscription plan. */
+  vip_package_id?: number | null;
+}
+
+interface MySubscriptionRow {
+  packageId: number;
+  status: string;
+  endsAt: string;
+}
+
+function activeSubscriptionPackageIds(subs: MySubscriptionRow[]): Set<number> {
+  const now = Date.now();
+  const ids = new Set<number>();
+  for (const s of subs) {
+    if (s.status !== 'active') continue;
+    const end = s.endsAt ? new Date(s.endsAt).getTime() : 0;
+    if (end <= now) continue;
+    if (typeof s.packageId === 'number' && Number.isFinite(s.packageId)) ids.add(s.packageId);
+  }
+  return ids;
 }
 
 function RankBadge({ rank }: { rank: number }) {
@@ -60,6 +80,8 @@ export default function LeaderboardPage() {
   const [period, setPeriod] = useState<Period>('all_time');
   const [sport, setSport] = useState<SportFilter>('all');
   const [loggedIn, setLoggedIn] = useState(false);
+  const [meResolved, setMeResolved] = useState(false);
+  const [subscribedPackageIds, setSubscribedPackageIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const sync = () => setLoggedIn(!!(typeof window !== 'undefined' && localStorage.getItem('token')));
@@ -74,6 +96,23 @@ export default function LeaderboardPage() {
       window.removeEventListener(AUTH_STORAGE_SYNC, sync);
     };
   }, [pathname]);
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      setMeResolved(true);
+      return;
+    }
+    const apiUrl = getApiUrl();
+    fetch(`${apiUrl}/subscriptions/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((raw: unknown) => {
+        const subs = Array.isArray(raw) ? (raw as MySubscriptionRow[]) : [];
+        setSubscribedPackageIds(activeSubscriptionPackageIds(subs));
+      })
+      .catch(() => setSubscribedPackageIds(new Set()))
+      .finally(() => setMeResolved(true));
+  }, []);
 
   const fetchLeaderboard = useCallback((p: Period, s: SportFilter) => {
     setLoading(true);
@@ -105,6 +144,7 @@ export default function LeaderboardPage() {
           is_ai: !!(e.is_ai as boolean | undefined),
           avg_rating: (e.avg_rating as number | null | undefined) ?? null,
           review_count: (e.review_count as number | null | undefined) ?? null,
+          vip_package_id: (e.vip_package_id as number | null | undefined) ?? null,
         })));
       })
       .catch(() => setEntries([]))
@@ -248,13 +288,13 @@ export default function LeaderboardPage() {
         ) : (
           <div className="space-y-2 min-w-0">
             {/* Desktop table header */}
-            <div className="hidden md:grid grid-cols-[3rem_1fr_8rem_8rem_8rem_8rem] gap-4 px-4 py-2 text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] min-w-0">
+            <div className="hidden md:grid grid-cols-[3rem_1fr_8rem_8rem_8rem_10rem] gap-4 px-4 py-2 text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] min-w-0">
               <span>#</span>
               <span>{t('nav.tipsters')}</span>
               <span className="text-center">{t('tipster.win_rate')}</span>
               <span className="text-center">{t('tipster.roi')}</span>
               <span className="text-center">{t('tipster.total_picks')}</span>
-              <span className="text-center">{t('common.view')}</span>
+              <span className="text-center">{t('leaderboard.actions_col')}</span>
             </div>
 
             {entries.map((entry, idx) => {
@@ -264,15 +304,28 @@ export default function LeaderboardPage() {
               const rank = entry.rank ?? entry.leaderboard_rank ?? idx + 1;
               const roi = entry.roi ?? 0;
               const avatarSrc = getAvatarUrl(entry.avatar_url, 48);
+              const hasVipPackage = entry.vip_package_id != null && entry.vip_package_id > 0;
+              const subbedToThisVip =
+                hasVipPackage &&
+                meResolved &&
+                subscribedPackageIds.has(entry.vip_package_id as number);
+
+              const joinVipClasses =
+                'inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-400/40 hover:bg-amber-500/25 transition-colors w-full md:w-auto md:min-w-[7.5rem]';
+              const subscribedVipClasses =
+                'inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--text-muted)]/15 text-[var(--text-muted)] border border-[var(--border)] cursor-default w-full md:w-auto md:min-w-[7.5rem]';
 
               return (
                 <div
                   key={entry.id}
-                  className={`flex md:grid md:grid-cols-[3rem_1fr_8rem_8rem_8rem_8rem] items-center gap-3 md:gap-4 px-4 py-3.5 rounded-2xl border transition-all hover:border-[var(--primary)]/30 hover:shadow-sm min-w-0 w-full max-w-full overflow-x-hidden ${
+                  className={`flex flex-col rounded-2xl border transition-all hover:border-[var(--primary)]/30 hover:shadow-sm min-w-0 w-full max-w-full overflow-x-hidden ${
                     rank <= 3
                       ? 'bg-gradient-to-r from-amber-50/60 to-white border-amber-200/60'
                       : 'bg-[var(--card)] border-[var(--border)]'
                   }`}
+                >
+                <div
+                  className={`flex md:grid md:grid-cols-[3rem_1fr_8rem_8rem_8rem_10rem] items-center gap-3 md:gap-4 px-4 py-3.5 min-w-0 w-full max-w-full overflow-x-hidden`}
                 >
                   <div className="shrink-0"><RankBadge rank={rank} /></div>
 
@@ -341,20 +394,81 @@ export default function LeaderboardPage() {
                     </span>
                   </div>
 
-                  <div className="hidden md:flex items-center justify-center gap-2">
-                    <Link
-                      href={`/tipsters/${entry.username}`}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary-light)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white transition-colors"
-                    >
-                      View
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => handleFollow(entry.username)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
-                    >
-                      Follow
-                    </button>
+                  <div className="hidden md:flex flex-col items-stretch justify-center gap-1.5">
+                    {hasVipPackage ? (
+                      !meResolved ? (
+                        <div
+                          className="h-8 w-full rounded-lg bg-[var(--bg)] border border-[var(--border)] animate-pulse"
+                          aria-hidden
+                        />
+                      ) : subbedToThisVip ? (
+                        <div
+                          className={subscribedVipClasses}
+                          role="status"
+                          title={t('subscriptions.vip_already_subscribed_hint')}
+                        >
+                          {t('tipster.subscribed')}
+                        </div>
+                      ) : (
+                        <Link
+                          href={`/subscriptions/checkout?packageId=${entry.vip_package_id}`}
+                          className={joinVipClasses}
+                        >
+                          {t('tipster.join_vip')}
+                        </Link>
+                      )
+                    ) : null}
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      <Link
+                        href={`/tipsters/${entry.username}`}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary-light)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white transition-colors"
+                      >
+                        {t('common.view')}
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => handleFollow(entry.username)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                      >
+                        {t('tipster.follow')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                  <div className="md:hidden flex flex-col gap-2 px-4 pb-3.5 pt-2 border-t border-[var(--border)]/50">
+                    {hasVipPackage ? (
+                      !meResolved ? (
+                        <div className="h-8 w-full rounded-lg bg-[var(--bg)] border border-[var(--border)] animate-pulse" aria-hidden />
+                      ) : subbedToThisVip ? (
+                        <div
+                          className={subscribedVipClasses}
+                          role="status"
+                          title={t('subscriptions.vip_already_subscribed_hint')}
+                        >
+                          {t('tipster.subscribed')}
+                        </div>
+                      ) : (
+                        <Link href={`/subscriptions/checkout?packageId=${entry.vip_package_id}`} className={joinVipClasses}>
+                          {t('tipster.join_vip')}
+                        </Link>
+                      )
+                    ) : null}
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      <Link
+                        href={`/tipsters/${entry.username}`}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary-light)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white transition-colors"
+                      >
+                        {t('common.view')}
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => handleFollow(entry.username)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                      >
+                        {t('tipster.follow')}
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
