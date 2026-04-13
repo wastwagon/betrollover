@@ -747,6 +747,8 @@ const fr: Record<string, string> = {
   'subscriptions.roi_target_delivery': 'Objectif de ROI livré : {n}',
   'subscriptions.roi_target_unpublished': 'Aucun engagement de ROI n\'a encore été publié pour ce forfait.',
   'subscriptions.subscribe_cta': 'S’abonner',
+  'subscriptions.vip_already_subscribed_hint':
+    'Vous avez déjà un forfait VIP actif avec ce tipster. Gérez-le depuis la page Mes abonnements.',
   'subscriptions.marketplace_footnote':
     'Les tipsters ont besoin d\'au moins {minRoi} % de ROI réglé et {minWr} % de taux de victoire réglé (seuils admin en direct) pour proposer un forfait VIP — même barème que les pronostics payants sur le marché. Les stats reflètent les pronostics réglés.',
   'subscriptions.vip_create_eligibility':

@@ -19,6 +19,8 @@ interface MarketplaceItem {
     name: string;
     price: number;
     durationDays: number;
+    /** Tipster’s platform user id — used to detect an existing active subscription. */
+    tipsterUserId?: number;
     roiGuaranteeMin: number | null;
     roiGuaranteeEnabled: boolean;
   };
@@ -46,10 +48,31 @@ interface MarketplaceItem {
   } | null;
 }
 
+interface MySubscriptionRow {
+  status: string;
+  endsAt: string;
+  package?: { tipsterUserId?: number };
+}
+
+function activeTipsterUserIdsFromSubscriptions(subs: MySubscriptionRow[]): Set<number> {
+  const now = Date.now();
+  const ids = new Set<number>();
+  for (const s of subs) {
+    if (s.status !== 'active') continue;
+    const end = s.endsAt ? new Date(s.endsAt).getTime() : 0;
+    if (end <= now) continue;
+    const uid = s.package?.tipsterUserId;
+    if (typeof uid === 'number' && Number.isFinite(uid)) ids.add(uid);
+  }
+  return ids;
+}
+
 export default function SubscriptionMarketplacePage() {
   const t = useT();
   const [items, setItems] = useState<MarketplaceItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [meResolved, setMeResolved] = useState(false);
+  const [subscribedTipsterUserIds, setSubscribedTipsterUserIds] = useState<Set<number>>(new Set());
   const [thresholds, setThresholds] = useState<SellingThresholds>(SELLING_THRESHOLDS_FALLBACK);
 
   useEffect(() => {
@@ -63,6 +86,23 @@ export default function SubscriptionMarketplacePage() {
       .then((d) => setItems(Array.isArray(d?.items) ? d.items : []))
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      setMeResolved(true);
+      return;
+    }
+    const apiUrl = getApiUrl();
+    fetch(`${apiUrl}/subscriptions/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((raw: unknown) => {
+        const subs = Array.isArray(raw) ? (raw as MySubscriptionRow[]) : [];
+        setSubscribedTipsterUserIds(activeTipsterUserIdsFromSubscriptions(subs));
+      })
+      .catch(() => setSubscribedTipsterUserIds(new Set()))
+      .finally(() => setMeResolved(true));
   }, []);
 
   return (
@@ -102,6 +142,11 @@ export default function SubscriptionMarketplacePage() {
               const hasCommittedRoi = pkg.roiGuaranteeEnabled && pkg.roiGuaranteeMin != null;
               const committedRoiValue =
                 pkg.roiGuaranteeMin != null ? `${Number(pkg.roiGuaranteeMin).toFixed(1)}%` : '—';
+              const tipsterUid = pkg.tipsterUserId;
+              const alreadySubscribed =
+                typeof tipsterUid === 'number' &&
+                Number.isFinite(tipsterUid) &&
+                subscribedTipsterUserIds.has(tipsterUid);
 
               return (
       <article
@@ -203,12 +248,38 @@ export default function SubscriptionMarketplacePage() {
                             : t('subscriptions.roi_target_unpublished')}
                         </p>
                       </div>
-                      <Link
-                        href={`/subscriptions/checkout?packageId=${pkg.id}`}
-                        className="mt-3 w-full inline-flex items-center justify-center py-2.5 rounded-xl font-semibold text-sm bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors"
-                      >
-                        {t('subscriptions.subscribe_cta')}
-                      </Link>
+                      {!meResolved ? (
+                        <div
+                          className="mt-3 w-full h-10 rounded-xl bg-[var(--card)] border border-[var(--border)] animate-pulse"
+                          aria-hidden
+                        />
+                      ) : alreadySubscribed ? (
+                        <div className="mt-3 space-y-2">
+                          <div
+                            className="w-full inline-flex items-center justify-center py-2.5 rounded-xl font-semibold text-sm bg-[var(--text-muted)]/15 text-[var(--text-muted)] border border-[var(--border)] cursor-default select-none"
+                            role="status"
+                            aria-label={t('tipster.subscribed')}
+                          >
+                            {t('tipster.subscribed')}
+                          </div>
+                          <p className="text-xs text-[var(--text-muted)] leading-snug">
+                            {t('subscriptions.vip_already_subscribed_hint')}
+                          </p>
+                          <Link
+                            href="/subscriptions"
+                            className="block text-center text-sm font-medium text-[var(--primary)] hover:underline"
+                          >
+                            {t('subscriptions.page_title')} →
+                          </Link>
+                        </div>
+                      ) : (
+                        <Link
+                          href={`/subscriptions/checkout?packageId=${pkg.id}`}
+                          className="mt-3 w-full inline-flex items-center justify-center py-2.5 rounded-xl font-semibold text-sm bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors"
+                        >
+                          {t('subscriptions.subscribe_cta')}
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </article>

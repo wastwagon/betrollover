@@ -748,6 +748,8 @@ const en = {
   'subscriptions.roi_target_delivery': 'Target ROI delivery: {n}',
   'subscriptions.roi_target_unpublished': 'No target ROI commitment published for this package yet.',
   'subscriptions.subscribe_cta': 'Subscribe',
+  'subscriptions.vip_already_subscribed_hint':
+    'You already have an active VIP plan with this tipster. Manage it from your subscriptions page.',
   'subscriptions.marketplace_footnote':
     'Tipsters need at least {minRoi}% settled ROI and {minWr}% settled win rate (live admin thresholds) to offer VIP packages — same bar as paid marketplace picks. Stats shown reflect settled pick performance.',
   'subscriptions.vip_create_eligibility':

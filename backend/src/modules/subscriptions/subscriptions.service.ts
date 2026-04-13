@@ -227,6 +227,7 @@ export class SubscriptionsService {
           name: pkg.name,
           price: Number(pkg.price),
           durationDays: pkg.durationDays,
+          tipsterUserId: pkg.tipsterUserId,
           roiGuaranteeMin: pkg.roiGuaranteeMin != null ? Number(pkg.roiGuaranteeMin) : null,
           roiGuaranteeEnabled: pkg.roiGuaranteeEnabled,
         },
@@ -349,6 +350,10 @@ export class SubscriptionsService {
     }
     if (pkg.tipsterUserId === userId) {
       throw new BadRequestException('You cannot subscribe to your own package');
+    }
+
+    if (await this.hasActiveSubscriptionToTipster(userId, pkg.tipsterUserId)) {
+      throw new BadRequestException('You already have an active subscription to this tipster.');
     }
 
     const amount = Number(pkg.price);
