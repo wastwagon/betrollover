@@ -265,6 +265,15 @@ export class TipstersApiService {
   }
 
   /**
+   * All-time leaderboard tipster ids in the same order as GET /leaderboard?period=all_time (no limit).
+   * Ticket-backed stats for humans, primary/secondary settled thresholds, excludes suspended accounts.
+   */
+  async getAllTimeLeaderboardOrderedTipsterIds(sport?: string): Promise<number[]> {
+    const { sorted } = await this.computeAllTimeLeaderboardSortedEntries(sport);
+    return sorted.map((e) => e.id);
+  }
+
+  /**
    * Single pass over all-time sorted leaderboard: tipster entity id and user id → rank (1-based).
    * Same ordering as GET /leaderboard?period=all_time (ROI). Unlisted tipsters are omitted from both maps.
    */
