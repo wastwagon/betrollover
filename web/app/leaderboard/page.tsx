@@ -394,11 +394,11 @@ export default function LeaderboardPage() {
                     </span>
                   </div>
 
-                  <div className="hidden md:flex flex-col items-stretch justify-center gap-1.5">
+                  <div className="hidden md:flex items-center justify-center gap-2 flex-wrap">
                     {hasVipPackage ? (
                       !meResolved ? (
                         <div
-                          className="h-8 w-full rounded-lg bg-[var(--bg)] border border-[var(--border)] animate-pulse"
+                          className="h-8 min-w-[7.5rem] rounded-lg bg-[var(--bg)] border border-[var(--border)] animate-pulse"
                           aria-hidden
                         />
                       ) : subbedToThisVip ? (
@@ -418,7 +418,7 @@ export default function LeaderboardPage() {
                         </Link>
                       )
                     ) : null}
-                    <div className="flex flex-wrap gap-2 justify-center">
+                    <div className="flex items-center gap-2">
                       <Link
                         href={`/tipsters/${entry.username}`}
                         className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary-light)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white transition-colors"
@@ -436,10 +436,10 @@ export default function LeaderboardPage() {
                   </div>
                 </div>
 
-                  <div className="md:hidden flex flex-col gap-2 px-4 pb-3.5 pt-2 border-t border-[var(--border)]/50">
+                  <div className="md:hidden flex items-center gap-2 flex-wrap justify-end px-4 pb-3.5 pt-2 border-t border-[var(--border)]/50">
                     {hasVipPackage ? (
                       !meResolved ? (
-                        <div className="h-8 w-full rounded-lg bg-[var(--bg)] border border-[var(--border)] animate-pulse" aria-hidden />
+                        <div className="h-8 min-w-[7.5rem] rounded-lg bg-[var(--bg)] border border-[var(--border)] animate-pulse" aria-hidden />
                       ) : subbedToThisVip ? (
                         <div
                           className={subscribedVipClasses}
@@ -454,7 +454,7 @@ export default function LeaderboardPage() {
                         </Link>
                       )
                     ) : null}
-                    <div className="flex flex-wrap gap-2 justify-end">
+                    <div className="flex items-center gap-2">
                       <Link
                         href={`/tipsters/${entry.username}`}
                         className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary-light)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white transition-colors"
