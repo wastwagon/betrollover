@@ -275,18 +275,24 @@ export class AdminService {
     await this.authService.logoutAllForUser(userId);
     // Remove tipster row so deleted user no longer appears in tipsters list (tipsters.user_id is ON DELETE SET NULL, so we must delete the tipster explicitly)
     const tipsterRepo = this.dataSource.getRepository(Tipster);
-    await tipsterRepo.delete({ userId });
+    const tipsterDelete = await tipsterRepo.delete({ userId });
     await this.usersRepo.delete(userId);
     await this.auditService.log(adminId, 'user_deleted', 'user', userId, {
       email: user.email,
       username: user.username,
     });
+    if ((tipsterDelete.affected ?? 0) > 0) {
+      await this.resultTrackerService.updateLeaderboardNow().catch((err) => {
+        this.logger.warn(`Leaderboard refresh after user delete: ${err?.message}`);
+      });
+    }
     return { deleted: true };
   }
 
   async updateUser(adminId: number, id: number, data: { role?: string; status?: string; avatar?: string | null }) {
     const user = await this.usersRepo.findOne({ where: { id } });
     if (!user) return null;
+    const prevStatus = user.status;
     if (data.role) user.role = data.role as UserRole;
     if (data.status) user.status = data.status as UserStatus;
     if (data.avatar !== undefined) {
@@ -294,6 +300,15 @@ export class AdminService {
       await this.syncAvatarToTipster(id, user.avatar);
     }
     await this.usersRepo.save(user);
+    if (data.status !== undefined && user.status !== prevStatus) {
+      const tipsterRepo = this.dataSource.getRepository(Tipster);
+      const linkedTipster = await tipsterRepo.findOne({ where: { userId: id }, select: ['id'] });
+      if (linkedTipster) {
+        await this.resultTrackerService.updateLeaderboardNow().catch((err) => {
+          this.logger.warn(`Leaderboard refresh after user ${id} status change: ${err?.message}`);
+        });
+      }
+    }
     if (data.role || data.status) {
       await this.auditService.log(adminId, data.role ? 'user_role_change' : 'user_status_change', 'user', id, {
         role: data.role ?? user.role,
