@@ -18,7 +18,7 @@ import { PickMarketplace } from '../accumulators/entities/pick-marketplace.entit
 import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { Tipster } from '../predictions/entities/tipster.entity';
-import { User } from '../users/entities/user.entity';
+import { User, UserStatus } from '../users/entities/user.entity';
 import { TipsterService } from '../tipster/tipster.service';
 import { TipstersApiService } from '../predictions/tipsters-api.service';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
@@ -174,18 +174,25 @@ export class SubscriptionsService {
   }
 
   /**
-   * Public list: all active VIP packages with tipster profile + live ticket performance (for marketplace UI).
+   * Public list: active VIP packages whose tipster user account is active (same rule as /tipsters).
+   * Suspended or inactive users are excluded so packages do not appear on the subscription marketplace.
    */
   async getMarketplacePackages(options?: { limit?: number; offset?: number }) {
     const limit = Math.min(Math.max(options?.limit ?? 24, 1), 100);
     const offset = Math.max(options?.offset ?? 0, 0);
-    const total = await this.packageRepo.count({ where: { status: 'active' } });
-    const pkgs = await this.packageRepo.find({
-      where: { status: 'active' },
-      order: { createdAt: 'DESC' },
-      take: limit,
-      skip: offset,
-    });
+    const baseQb = this.packageRepo
+      .createQueryBuilder('p')
+      .innerJoin(User, 'u', 'u.id = p.tipsterUserId')
+      .where('p.status = :pkgStatus', { pkgStatus: 'active' })
+      .andWhere('u.status = :userStatus', { userStatus: UserStatus.ACTIVE });
+
+    const total = await baseQb.clone().getCount();
+    const pkgs = await baseQb
+      .clone()
+      .orderBy('p.createdAt', 'DESC')
+      .skip(offset)
+      .take(limit)
+      .getMany();
     if (pkgs.length === 0) {
       return { items: [], total: 0, hasMore: false };
     }
