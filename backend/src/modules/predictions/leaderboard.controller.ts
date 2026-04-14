@@ -3,6 +3,10 @@ import { Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { TipstersApiService } from './tipsters-api.service';
+import {
+  LEADERBOARD_CACHE_GEN_KEY,
+  leaderboardHttpCacheKey,
+} from './leaderboard-cache.util';
 
 const LEADERBOARD_CACHE_TTL = 300; // 5 minutes
 
@@ -27,7 +31,9 @@ export class LeaderboardController {
       100,
     );
     const sportVal = sport && sport !== 'all' ? sport.toLowerCase() : undefined;
-    const cacheKey = `leaderboard:${periodVal}:${limitVal}:${sportVal ?? 'all'}`;
+    const genRaw = await this.cacheManager.get<number>(LEADERBOARD_CACHE_GEN_KEY);
+    const gen = typeof genRaw === 'number' && !Number.isNaN(genRaw) ? genRaw : 0;
+    const cacheKey = leaderboardHttpCacheKey(gen, periodVal, limitVal, sportVal ?? 'all');
     const cached = await this.cacheManager.get<{ period: string; leaderboard: unknown[] }>(cacheKey);
     if (cached) return cached;
     const leaderboard = await this.tipstersApi.getLeaderboard({

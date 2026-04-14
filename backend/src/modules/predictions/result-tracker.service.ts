@@ -1,5 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { Repository, LessThan, In } from 'typeorm';
 import { Cron } from '@nestjs/schedule';
 import { PredictionFixture } from './entities/prediction-fixture.entity';
@@ -11,6 +13,10 @@ import { FixtureUpdateService } from '../fixtures/fixture-update.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { determinePickResult } from '../accumulators/settlement-logic';
 import { TipstersApiService } from './tipsters-api.service';
+import {
+  LEADERBOARD_CACHE_GEN_KEY,
+  LEADERBOARD_CACHE_GEN_TTL_MS,
+} from './leaderboard-cache.util';
 
 const TOP_RANK_THRESHOLD = 10;
 
@@ -32,6 +38,7 @@ export class ResultTrackerService {
     private fixtureUpdateService: FixtureUpdateService,
     private notificationsService: NotificationsService,
     private tipstersApi: TipstersApiService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
   /**
@@ -290,6 +297,15 @@ export class ResultTrackerService {
         }).catch(() => {});
       }
     }
+
+    await this.bumpLeaderboardHttpCacheGeneration();
+  }
+
+  /** Invalidate GET /leaderboard HTTP cache entries (new generation prefix). */
+  private async bumpLeaderboardHttpCacheGeneration(): Promise<void> {
+    const raw = await this.cacheManager.get<number>(LEADERBOARD_CACHE_GEN_KEY);
+    const next = (typeof raw === 'number' && !Number.isNaN(raw) ? raw : 0) + 1;
+    await this.cacheManager.set(LEADERBOARD_CACHE_GEN_KEY, next, LEADERBOARD_CACHE_GEN_TTL_MS);
   }
 
   /**
