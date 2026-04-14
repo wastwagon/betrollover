@@ -8,7 +8,7 @@ import { TipsterFollow } from './entities/tipster-follow.entity';
 import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
 import { AccumulatorPick } from '../accumulators/entities/accumulator-pick.entity';
 import { PickMarketplace } from '../accumulators/entities/pick-marketplace.entity';
-import { User } from '../users/entities/user.entity';
+import { User, UserStatus } from '../users/entities/user.entity';
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { TipsterSubscriptionPackage } from '../subscriptions/entities/tipster-subscription-package.entity';
 import {
@@ -199,7 +199,7 @@ export class TipstersApiService {
       leaderboard_rank: number | null;
     }>;
   }> {
-    const tipsters = await this.tipsterRepo.find({
+    const tipstersRaw = await this.tipsterRepo.find({
       where: { isActive: true },
       select: [
         'id',
@@ -217,6 +217,18 @@ export class TipstersApiService {
         'isAi',
       ],
     });
+    const humanIdsForStatus = [...new Set(tipstersRaw.map((t) => t.userId).filter((id): id is number => id != null))];
+    let activeHumanIds = new Set<number>();
+    if (humanIdsForStatus.length > 0) {
+      const activeRows = await this.usersRepo.find({
+        where: { id: In(humanIdsForStatus), status: UserStatus.ACTIVE },
+        select: ['id'],
+      });
+      activeHumanIds = new Set(activeRows.map((r) => r.id));
+    }
+    const tipsters = tipstersRaw.filter(
+      (t) => t.isAi || (t.userId != null && activeHumanIds.has(t.userId)),
+    );
     const humanUserIds = tipsters.filter((t) => t.userId != null).map((t) => t.userId!);
     const ticketStatsMap = await this.computeStatsFromTickets(humanUserIds, sport);
 
@@ -613,9 +625,14 @@ export class TipstersApiService {
   }) {
     const qb = this.tipsterRepo
       .createQueryBuilder('t')
+      .leftJoin(User, 'u', 'u.id = t.userId')
       .where('t.isActive = :active', { active: true })
       // Exclude orphaned human tipsters (user deleted; user_id set to null by ON DELETE SET NULL)
       .andWhere('(t.isAi = true OR t.userId IS NOT NULL)')
+      // Human tipsters only if linked user account is active (suspended / inactive hidden from public)
+      .andWhere('(t.isAi = true OR (t.userId IS NOT NULL AND u.status = :userActive))', {
+        userActive: UserStatus.ACTIVE,
+      })
       .select([
         't.id',
         't.username',
@@ -759,9 +776,13 @@ export class TipstersApiService {
   async listActiveTipsterUsernames(): Promise<{ usernames: string[] }> {
     const rows = await this.tipsterRepo
       .createQueryBuilder('t')
+      .leftJoin(User, 'u', 'u.id = t.userId')
       .select('t.username', 'username')
       .where('t.isActive = :active', { active: true })
       .andWhere('(t.isAi = true OR t.userId IS NOT NULL)')
+      .andWhere('(t.isAi = true OR (t.userId IS NOT NULL AND u.status = :userActive))', {
+        userActive: UserStatus.ACTIVE,
+      })
       .orderBy('t.username', 'ASC')
       .getRawMany<{ username: string }>();
     return { usernames: rows.map((r) => r.username) };
@@ -772,6 +793,16 @@ export class TipstersApiService {
       where: { username },
     });
     if (!tipster) return null;
+
+    if (tipster.userId != null) {
+      const owner = await this.usersRepo.findOne({
+        where: { id: tipster.userId },
+        select: ['id', 'status'],
+      });
+      if (!owner || owner.status !== UserStatus.ACTIVE) {
+        return null;
+      }
+    }
 
     const marketplaceCoupons = await this.getMarketplaceCouponsForTipster(username, window);
 
@@ -1063,6 +1094,10 @@ export class TipstersApiService {
          FROM tipsters t
          LEFT JOIN predictions p ON t.id = p.tipster_id AND ${predDateFilter}
          WHERE t.is_active = true
+         AND (
+           t.is_ai = true
+           OR EXISTS (SELECT 1 FROM users u WHERE u.id = t.user_id AND u.status = 'active')
+         )
          GROUP BY t.id, t.username, t.display_name, t.avatar_url`,
         [],
       ),
@@ -1072,6 +1107,7 @@ export class TipstersApiService {
           SUM(CASE WHEN at.result = 'won' THEN 1 ELSE 0 END)::int as wins,
           COALESCE(SUM(CASE WHEN at.result = 'won' THEN at.total_odds - 1 ELSE -1 END), 0)::float as profit
          FROM tipsters t
+         INNER JOIN users u ON u.id = t.user_id AND u.status = 'active'
          INNER JOIN accumulator_tickets at ON at.user_id = t.user_id
            AND at.result IN ('won', 'lost') AND ${dateFilter} ${sportDisplayFilter}
          WHERE t.is_active = true AND t.user_id IS NOT NULL

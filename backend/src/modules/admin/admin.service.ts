@@ -205,7 +205,8 @@ export class AdminService {
                    COUNT(*) FILTER (WHERE result IN ('won','lost')) AS settled,
                    COALESCE(SUM(CASE WHEN result='won' THEN total_odds ELSE 0 END),0) AS sum_odds_won,
                    COUNT(*) AS total_picks
-                 FROM accumulator_tickets WHERE user_id=$1 AND status='active'`,
+                 FROM accumulator_tickets
+                 WHERE user_id=$1 AND result IN ('won','lost','void')`,
                 [u.id],
               ),
               this.dataSource.query(
