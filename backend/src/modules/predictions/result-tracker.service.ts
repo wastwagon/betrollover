@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan, In } from 'typeorm';
+import { User, UserStatus } from '../users/entities/user.entity';
 import { Cron } from '@nestjs/schedule';
 import { PredictionFixture } from './entities/prediction-fixture.entity';
 import { Prediction } from './entities/prediction.entity';
@@ -24,6 +25,8 @@ export class ResultTrackerService {
     private predictionRepo: Repository<Prediction>,
     @InjectRepository(Tipster)
     private tipsterRepo: Repository<Tipster>,
+    @InjectRepository(User)
+    private userRepo: Repository<User>,
     @InjectRepository(TipsterPerformanceLog)
     private performanceLogRepo: Repository<TipsterPerformanceLog>,
     @InjectRepository(Fixture)
@@ -240,24 +243,59 @@ export class ResultTrackerService {
   }
 
   /**
-   * Update leaderboard rankings by ROI
+   * User ids of human tipster accounts that may appear on the public leaderboard (same rule as TipstersApiService).
+   */
+  private async getActiveHumanUserIdsForTipsters(
+    tipsters: Array<{ userId: number | null }>,
+  ): Promise<Set<number>> {
+    const humanIds = [...new Set(tipsters.map((t) => t.userId).filter((id): id is number => id != null))];
+    if (humanIds.length === 0) return new Set();
+    const activeRows = await this.userRepo.find({
+      where: { id: In(humanIds), status: UserStatus.ACTIVE },
+      select: ['id'],
+    });
+    return new Set(activeRows.map((r) => r.id));
+  }
+
+  private tipsterEligibleForPersistedLeaderboard(
+    t: { isAi?: boolean; userId: number | null | undefined },
+    activeHumanIds: Set<number>,
+  ): boolean {
+    return !!t.isAi || (t.userId != null && activeHumanIds.has(t.userId));
+  }
+
+  /**
+   * Update persisted leaderboard ranks by tipsters.roi (desc).
+   * Humans linked to a non-active user are excluded and their rank cleared — same availability as public browse/leaderboard.
    */
   private async updateLeaderboardRankings(): Promise<void> {
-    const tipsters = await this.tipsterRepo.find({
+    const allActive = await this.tipsterRepo.find({
       where: { isActive: true },
-      order: { roi: 'DESC' },
-      select: ['id', 'userId', 'leaderboardRank'],
+      select: ['id', 'userId', 'leaderboardRank', 'isAi', 'roi'],
     });
 
-    const oldRankMap = new Map(tipsters.map((t) => [t.id, t.leaderboardRank]));
+    const activeHumanIds = await this.getActiveHumanUserIdsForTipsters(allActive);
 
-    for (let i = 0; i < tipsters.length; i++) {
+    const eligible = allActive
+      .filter((t) => this.tipsterEligibleForPersistedLeaderboard(t, activeHumanIds))
+      .sort((a, b) => Number(b.roi ?? 0) - Number(a.roi ?? 0));
+
+    for (const t of allActive) {
+      if (this.tipsterEligibleForPersistedLeaderboard(t, activeHumanIds)) continue;
+      if (t.leaderboardRank != null) {
+        await this.tipsterRepo.update(t.id, { leaderboardRank: null });
+      }
+    }
+
+    const oldRankMap = new Map(eligible.map((e) => [e.id, e.leaderboardRank]));
+
+    for (let i = 0; i < eligible.length; i++) {
       const newRank = i + 1;
-      await this.tipsterRepo.update(tipsters[i].id, {
+      await this.tipsterRepo.update(eligible[i].id, {
         leaderboardRank: newRank,
       });
 
-      const tipster = tipsters[i];
+      const tipster = eligible[i];
       if (!tipster.userId) continue;
 
       const oldRank = oldRankMap.get(tipster.id) ?? null;
@@ -287,17 +325,18 @@ export class ResultTrackerService {
     const today = new Date().toISOString().slice(0, 10);
     const tipsters = await this.tipsterRepo.find({
       where: { isActive: true },
-      select: ['id', 'totalPredictions', 'winRate', 'roi', 'currentStreak', 'totalProfit'],
+      select: ['id', 'userId', 'isAi', 'totalPredictions', 'winRate', 'roi', 'currentStreak', 'totalProfit'],
     });
 
-    const byRoi = [...tipsters].sort(
-      (a, b) => Number(b.roi || 0) - Number(a.roi || 0),
-    );
+    const activeHumanIds = await this.getActiveHumanUserIdsForTipsters(tipsters);
+    const eligible = tipsters.filter((t) => this.tipsterEligibleForPersistedLeaderboard(t, activeHumanIds));
+    const byRoi = [...eligible].sort((a, b) => Number(b.roi || 0) - Number(a.roi || 0));
 
     let snapshots = 0;
     for (let i = 0; i < tipsters.length; i++) {
       const t = tipsters[i];
-      const rank = byRoi.findIndex((r) => r.id === t.id) + 1;
+      const onLeaderboard = this.tipsterEligibleForPersistedLeaderboard(t, activeHumanIds);
+      const rank = onLeaderboard ? byRoi.findIndex((r) => r.id === t.id) + 1 : null;
 
       await this.performanceLogRepo.upsert(
         {
