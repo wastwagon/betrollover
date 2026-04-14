@@ -33,6 +33,17 @@ function validateConfig(logger: Logger): void {
 }
 
 async function bootstrap() {
+  // Nest uses ANSI (e.g. \x1B[38;5;3m). Log shippers / Docker often strip ESC, leaving garbage like ";5;3m".
+  // NO_COLOR is honored at log time by @nestjs/common (cli-colors.util). FORCE_COLOR=1 opts back into color.
+  const wantColor =
+    process.stdout.isTTY &&
+    process.env.NO_COLOR == null &&
+    process.env.FORCE_COLOR !== '0' &&
+    (process.env.NODE_ENV !== 'production' || process.env.FORCE_COLOR === '1');
+  if (!wantColor) {
+    process.env.NO_COLOR = '1';
+  }
+
   const logger = new Logger('Bootstrap');
 
   // Validate critical environment variables (production: fail fast with clear message)
