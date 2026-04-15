@@ -32,6 +32,7 @@ interface MarketplaceCardItem {
   totalOdds: number;
   totalPicks: number;
   price: number;
+  purchaseCount?: number;
   sport?: string;
   status?: string;
   result?: string;
@@ -134,6 +135,7 @@ export function HomeQuickMarketplaceSections() {
         totalPicks={a.totalPicks}
         totalOdds={a.totalOdds}
         price={a.price}
+        purchaseCount={a.purchaseCount}
         sport={a.sport}
         status={a.status}
         result={a.result}
