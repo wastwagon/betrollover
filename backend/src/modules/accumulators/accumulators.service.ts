@@ -723,7 +723,7 @@ export class AccumulatorsService {
   /** User IDs for AI tipsters currently hidden from user-facing surfaces (negative ROI). */
   private async getHiddenAiUserIds(): Promise<number[]> {
     const rows = await this.tipsterRepo.find({
-      where: { isAi: true, isActive: true },
+      where: { isAi: true },
       select: ['userId', 'roi'],
     });
     return rows
@@ -1460,6 +1460,13 @@ export class AccumulatorsService {
       INNER JOIN accumulator_tickets t ON t.id = pm.accumulator_id AND t.status = 'active' AND t.result = 'pending'
       WHERE pm.status = 'active'
       AND NOT EXISTS (
+        SELECT 1
+        FROM tipsters ts
+        WHERE ts.user_id = t.user_id
+          AND ts.is_ai = true
+          AND COALESCE(ts.roi, 0) < 0
+      )
+      AND NOT EXISTS (
         SELECT 1 FROM accumulator_picks ap
         JOIN fixtures f ON f.id = ap.fixture_id
         WHERE ap.accumulator_id = pm.accumulator_id AND f.match_date <= NOW()
@@ -1564,7 +1571,7 @@ export class AccumulatorsService {
       metricNotes: {
         verifiedTipsters: 'tipsters.is_active = true (includes listed AI tipsters)',
         totalPicks: 'Marketplace picks settled won+lost (matches /accumulators/archive total)',
-        activePicks: 'Live buyable listings (active + pending result + no started fixture)',
+        activePicks: 'Live buyable listings (active + pending result + no started fixture, excluding hidden negative-ROI AI tipsters)',
         successfulPurchases: 'user_purchased_picks joined to pick_marketplace',
         winRate: 'Marketplace-listed picks: won / (won + lost)',
         totalPaidOut: 'SUM(wallet_transactions.amount) type=payout, status=completed, amount>0',
@@ -1642,6 +1649,7 @@ export class AccumulatorsService {
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 200);
     const offset = Math.max(options?.offset ?? 0, 0);
     const { fromUtc, toExclusiveUtc } = this.resolveArchiveDateRange(options?.from, options?.to);
+    const hiddenAiUserIds = await this.getHiddenAiUserIds();
 
     const statsQb = this.ticketRepo
       .createQueryBuilder('t')
@@ -1664,6 +1672,9 @@ export class AccumulatorsService {
             AND COALESCE(ts.roi, 0) < 0
         )`,
       );
+    if (hiddenAiUserIds.length > 0) {
+      statsQb.andWhere('t.userId NOT IN (:...hiddenAiUserIds)', { hiddenAiUserIds });
+    }
     if (fromUtc) {
       statsQb.andWhere('t.updatedAt >= :fromUtc', { fromUtc });
     }
@@ -1712,6 +1723,9 @@ export class AccumulatorsService {
             AND COALESCE(ts.roi, 0) < 0
         )`,
       );
+    if (hiddenAiUserIds.length > 0) {
+      listQb.andWhere('t.userId NOT IN (:...hiddenAiUserIds)', { hiddenAiUserIds });
+    }
     if (fromUtc) {
       listQb.andWhere('t.updatedAt >= :fromUtc', { fromUtc });
     }
