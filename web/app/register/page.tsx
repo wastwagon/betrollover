@@ -37,6 +37,30 @@ function RegisterForm() {
   useEffect(() => {
     trackRegistrationStartedOnce();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    // Consume and clear short-lived oauth cookie if present to avoid stale cookie loops.
+    const consumeSessionCookie = async () => {
+      try {
+        const res = await fetch('/api/auth/session-token', { method: 'GET' });
+        if (!res.ok) return;
+        const data = await res.json().catch(() => ({ token: null }));
+        const token = typeof data?.token === 'string' ? data.token.trim() : '';
+        if (!token || cancelled) return;
+        localStorage.setItem('token', token);
+        emitAuthStorageSync();
+        router.push('/dashboard');
+        router.refresh();
+      } catch {
+        // Best-effort only.
+      }
+    };
+    void consumeSessionCookie();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');

@@ -9,6 +9,8 @@ import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { AppleSignInButton } from '@/components/AppleSignInButton';
 import { ApiErrorBanner } from '@/components/ApiErrorBanner';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { getApiUrl } from '@/lib/site-config';
+import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 
 function LoginForm() {
   const t = useT();
@@ -27,49 +29,58 @@ function LoginForm() {
     if (urlError) setError(decodeURIComponent(urlError));
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    // Consume and clear short-lived oauth cookie if present.
+    // This prevents stale cookie state from blocking future login attempts.
+    const consumeSessionCookie = async () => {
+      try {
+        const res = await fetch('/api/auth/session-token', { method: 'GET' });
+        if (!res.ok) return;
+        const data = await res.json().catch(() => ({ token: null }));
+        const token = typeof data?.token === 'string' ? data.token.trim() : '';
+        if (!token || cancelled) return;
+        localStorage.setItem('token', token);
+        emitAuthStorageSync();
+        router.push('/dashboard');
+        router.refresh();
+      } catch {
+        // Best-effort only; normal login still works without this.
+      }
+    };
+    void consumeSessionCookie();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/login', {
+      // Direct login flow (same as registration): store access token in localStorage.
+      // Avoids reliance on short-lived auth cookies that can get stale across browsers/devices.
+      const res = await fetch(`${getApiUrl()}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
-        redirect: 'follow', // Follow redirects automatically
       });
-
-      // After redirect, check the final URL for error parameter
-      const finalUrl = new URL(res.url);
-      const errorParam = finalUrl.searchParams.get('error');
-
-      if (errorParam) {
-        setError(decodeURIComponent(errorParam));
-        setLoading(false);
-        return;
-      }
-
-      // Check if we're on the dashboard (success)
-      if (finalUrl.pathname.includes('/dashboard')) {
-        // Success - the API route handled the redirect
-        window.location.href = res.url;
-        return;
-      }
-
-      // Fallback: check response status
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({ message: 'Login failed' }));
+      const data = await res.json().catch(() => ({ message: 'Login failed' }));
+      if (!res.ok || typeof data?.access_token !== 'string' || !data.access_token.trim()) {
         setError(getApiErrorMessage(data, t('auth.invalid_credentials')));
-        setLoading(false);
         return;
       }
 
-      // Default success case
+      localStorage.setItem('token', data.access_token.trim());
+      emitAuthStorageSync();
       router.push('/dashboard');
+      router.refresh();
     } catch (err) {
       console.error('Login error:', err);
       setError(t('auth.server_error'));
+    } finally {
       setLoading(false);
     }
   };
