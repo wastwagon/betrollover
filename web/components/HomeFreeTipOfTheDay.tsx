@@ -151,7 +151,7 @@ export function HomeFreeTipOfTheDay() {
             <h2 className="text-base font-semibold text-[var(--text)] sm:text-lg md:text-xl">{t('home.free_tip')}</h2>
             <p className="text-sm text-[var(--text-muted)] mt-0.5">
               {t('home.free_tip_attribution', {
-                name: tip.tipster?.displayName ?? t('home.free_tip_expert_fallback'),
+                name: primary?.tipster?.displayName ?? t('home.free_tip_expert_fallback'),
               })}
             </p>
           </div>
