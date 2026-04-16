@@ -715,6 +715,17 @@ export class AccumulatorsService {
     }
   }
 
+  /** User IDs for AI tipsters currently hidden from user-facing surfaces (negative ROI). */
+  private async getHiddenAiUserIds(): Promise<number[]> {
+    const rows = await this.tipsterRepo.find({
+      where: { isAi: true, isActive: true },
+      select: ['userId', 'roi'],
+    });
+    return rows
+      .filter((r) => r.userId != null && Number(r.roi ?? 0) < 0)
+      .map((r) => r.userId!) as number[];
+  }
+
   async getMarketplace(
     userId: number,
     includeAllListings = false,
@@ -746,6 +757,15 @@ export class AccumulatorsService {
         .innerJoin(PickMarketplace, 'pm', "pm.accumulator_id = t.id AND pm.status = 'active'")
         .where("t.status = 'active'")
         .andWhere("t.result = 'pending'")
+        .andWhere(
+          `NOT EXISTS (
+            SELECT 1
+            FROM tipsters ts
+            WHERE ts.user_id = t.user_id
+              AND ts.is_ai = true
+              AND COALESCE(ts.roi, 0) < 0
+          )`,
+        )
         .andWhere(
           `NOT EXISTS (
             SELECT 1
@@ -968,6 +988,15 @@ export class AccumulatorsService {
       .innerJoin(PickMarketplace, 'pm', "pm.accumulator_id = t.id AND pm.status = 'active'")
       .where("t.status = 'active'")
       .andWhere("t.result = 'pending'")
+      .andWhere(
+        `NOT EXISTS (
+          SELECT 1
+          FROM tipsters ts
+          WHERE ts.user_id = t.user_id
+            AND ts.is_ai = true
+            AND COALESCE(ts.roi, 0) < 0
+        )`,
+      )
       .andWhere(
         `NOT EXISTS (
           SELECT 1
@@ -1274,14 +1303,17 @@ export class AccumulatorsService {
    */
   async getFreeTipOfTheDay() {
     const now = new Date();
+    const hiddenAiUserIds = await this.getHiddenAiUserIds();
+    const hiddenAiSet = new Set(hiddenAiUserIds);
 
     // Helper: find the best free active pending tip for a given set of user IDs
     const findBestFreeTip = async (userIds: number[]) => {
-      if (!userIds.length) return null;
+      const visibleUserIds = userIds.filter((id) => !hiddenAiSet.has(id));
+      if (!visibleUserIds.length) return null;
 
       const tickets = await this.ticketRepo.find({
         where: {
-          userId: In(userIds),
+          userId: In(visibleUserIds),
           status: 'active',
           result: 'pending',
           isMarketplace: true,
@@ -1529,14 +1561,22 @@ export class AccumulatorsService {
     });
     const accIds = rows.map((r) => r.accumulatorId);
     if (accIds.length === 0) return [];
-    const tickets = await this.ticketRepo.find({
-      where: {
-        id: In(accIds),
-        status: 'active',
-        result: 'pending',
-      },
-      relations: ['picks'],
-    });
+    const tickets = await this.ticketRepo
+      .createQueryBuilder('t')
+      .leftJoinAndSelect('t.picks', 'picks')
+      .where('t.id IN (:...accIds)', { accIds })
+      .andWhere("t.status = 'active'")
+      .andWhere("t.result = 'pending'")
+      .andWhere(
+        `NOT EXISTS (
+          SELECT 1
+          FROM tipsters ts
+          WHERE ts.user_id = t.user_id
+            AND ts.is_ai = true
+            AND COALESCE(ts.roi, 0) < 0
+        )`,
+      )
+      .getMany();
 
     const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
 
