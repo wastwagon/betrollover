@@ -193,7 +193,8 @@ export function HomeHero() {
       <div className="relative max-w-7xl mx-auto section-ux-hero w-full min-w-0">
         <h1 className="sr-only">{t('home.hero_title')}</h1>
         {/* Compact KPI Dashboard - 6 cards: platform + leading ROI + paid out */}
-        <div className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3 min-w-0">
+        {/* sm=640px: avoid 2-up stats on typical phone widths (390–430), which looked like a shrunk desktop layout in store shots */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3 min-w-0">
           {statItems.map((item, idx) => {
             const cfg = statConfigBase[item.key];
             return (

@@ -411,14 +411,14 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
         className="sticky top-0 z-50 w-full min-w-0 max-w-full bg-white/95 backdrop-blur-xl border-b border-slate-200/70 shadow-sm"
       >
         <div className="section-ux-gutter-wide min-w-0 max-w-full">
-          <div className="flex items-center justify-between h-[4.5rem] min-w-0 gap-2">
+          <div className="flex items-center justify-between h-[4.5rem] min-w-0 gap-1.5 sm:gap-2">
 
             {/* ── Logo ── */}
-            <Link href="/" className="flex items-center gap-2.5 shrink-0 group" aria-label="BetRollover home">
+            <Link href="/" className="flex items-center gap-2 sm:gap-2.5 min-w-0 shrink-0 group" aria-label="BetRollover home">
               <Image
                 src="/BetRollover-logo.png" alt="BetRollover"
                 width={52} height={52}
-                className="w-11 h-11 rounded-xl shadow-md group-hover:shadow-lg transition-shadow object-contain"
+                className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl shadow-md group-hover:shadow-lg transition-shadow object-contain shrink-0"
                 priority
               />
               <span className="hidden sm:block font-bold text-base text-slate-800 group-hover:text-emerald-700 transition-colors">
@@ -731,7 +731,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
             )}
 
             {/* Mobile: Account only (no hamburger) — primary nav is bottom bar + in-page smart buttons */}
-            <div className="lg:hidden flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div className="lg:hidden flex items-center justify-end gap-1 sm:gap-2 min-w-0 shrink ml-1">
               {isSignedIn ? (
                 <>
                   <button
@@ -858,10 +858,16 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                 </>
               ) : (
                 <>
-                  <Link href="/login" className="px-3 py-2 rounded-xl text-sm font-semibold text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors">
+                  <Link
+                    href="/login"
+                    className="shrink-0 whitespace-nowrap px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                  >
                     {t('nav.login')}
                   </Link>
-                  <Link href="/register" className="px-3 py-2 rounded-xl text-sm font-bold bg-[var(--primary)] text-white hover:opacity-90 transition-opacity">
+                  <Link
+                    href="/register"
+                    className="shrink-0 whitespace-nowrap px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold bg-[var(--primary)] text-white hover:opacity-90 transition-opacity"
+                  >
                     {t('nav.register')}
                   </Link>
                 </>
@@ -871,7 +877,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
           {/* Mobile / tablet: discoverability without mega menus */}
           <nav
-            className="lg:hidden border-t border-slate-100/90 flex gap-2 overflow-x-auto overscroll-x-contain scrollbar-hide py-2.5 -mx-4 px-3 sm:-mx-6 sm:px-4 snap-x snap-mandatory"
+            className="lg:hidden border-t border-slate-100/90 flex flex-wrap justify-center sm:flex-nowrap sm:justify-start gap-2 overflow-x-auto overscroll-x-contain scrollbar-hide py-2.5 -mx-4 px-3 sm:-mx-6 sm:px-4 sm:snap-x sm:snap-mandatory"
             aria-label={t('nav.browse')}
           >
             {[
@@ -884,7 +890,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               <Link
                 key={q.href}
                 href={q.href}
-                className={`shrink-0 snap-start inline-flex items-center min-h-[44px] px-3.5 rounded-full text-xs font-bold border transition-colors touch-manipulation ${
+                className={`shrink-0 sm:snap-start inline-flex items-center min-h-[40px] sm:min-h-[44px] px-3 sm:px-3.5 rounded-full text-[11px] sm:text-xs font-bold border transition-colors touch-manipulation ${
                   isActive(pathname, q.href)
                     ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
                     : 'bg-slate-50 text-slate-700 border-slate-200/80 hover:border-emerald-300 hover:text-emerald-800'

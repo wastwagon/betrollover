@@ -115,7 +115,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} className={fontClassName}>
-      <body className="min-h-screen bg-[var(--bg)] font-sans antialiased">
+      <body className="min-h-[100dvh] min-h-screen bg-[var(--bg)] font-sans antialiased">
         {!offThirdParty && <GoogleTagManagerNoScript />}
         <JsonLdScript />
         <ThirdPartyTags disabled={offThirdParty} />
@@ -130,7 +130,7 @@ export default async function RootLayout({
                   id="main-content"
                   role="main"
                   tabIndex={-1}
-                  className="min-h-screen min-w-0 max-w-full overflow-x-hidden pb-[calc(6rem+env(safe-area-inset-bottom,0px))] xl:pb-0"
+                  className="min-h-[100dvh] min-h-screen min-w-0 max-w-full overflow-x-hidden pb-[calc(6rem+env(safe-area-inset-bottom,0px))] xl:pb-0"
                 >
                   {children}
                 </div>

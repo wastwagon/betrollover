@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -87,7 +87,9 @@ export function MobileBottomNav() {
   const { t } = useLanguage();
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
+  // useLayoutEffect: paint bottom nav on the first client frame (before paint).
+  // Headless/Play Store captures used to fire while `mounted` was still false, leaving a blank band above the real bottom inset.
+  useLayoutEffect(() => {
     setMounted(true);
   }, []);
 
@@ -100,8 +102,8 @@ export function MobileBottomNav() {
       className="fixed inset-x-0 bottom-0 z-50 xl:hidden px-2 sm:px-4 pt-2"
       style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
     >
-      {/* Narrow max-width + centered only on small phones; sm+ (large phones, iPad) uses full width so the bar is not a short pill in the middle. */}
-      <div className="w-full max-w-lg mx-auto sm:max-w-none sm:mx-0 rounded-2xl sm:rounded-t-2xl sm:rounded-b-none bg-[var(--card)] border border-[var(--border)] shadow-[0_-2px_20px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.2)]">
+      {/* Full-width bar on all breakpoints so mobile layouts (and store screenshots) align edge-to-edge with the viewport */}
+      <div className="w-full rounded-2xl sm:rounded-t-2xl sm:rounded-b-none bg-[var(--card)] border border-[var(--border)] shadow-[0_-2px_20px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.2)]">
         <div className="flex w-full flex-nowrap items-stretch gap-0.5 px-1 min-h-[56px] py-0.5 max-sm:overflow-x-auto max-sm:overscroll-x-contain scrollbar-hide max-sm:snap-x max-sm:snap-mandatory sm:gap-1 sm:px-3">
           {NAV_ITEMS.map((item) => {
             const active = isActive(pathname, item.href);

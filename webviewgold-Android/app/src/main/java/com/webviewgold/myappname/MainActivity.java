@@ -5,7 +5,6 @@ import static android.content.Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NO_HISTORY;
 import static android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS;
-import static com.betrollover.app.BuildConfig.ONESIGNAL_APP_ID;
 import static com.betrollover.app.Config.ACTIVATE_PROGRESS_BAR;
 import static com.betrollover.app.Config.ASK_FOR_AD_CONSENT;
 import static com.betrollover.app.Config.AUTO_DOWNLOAD_FILES;
@@ -194,7 +193,6 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanner;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 import com.onesignal.OneSignal;
-import com.onesignal.debug.LogLevel;
 import com.onesignal.inAppMessages.IInAppMessageClickEvent;
 import com.onesignal.inAppMessages.IInAppMessageClickListener;
 import com.onesignal.notifications.INotificationClickEvent;
@@ -456,7 +454,8 @@ public class MainActivity extends AppCompatActivity
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+                final int topPadding = Config.TRANSPARENT_STATUS_BAR ? 0 : systemBars.top;
+                v.setPadding(systemBars.left, topPadding, systemBars.right, systemBars.bottom);
             }
             return insets;
         });
@@ -2505,10 +2504,7 @@ public class MainActivity extends AppCompatActivity
         TimeStamp = Calendar.getInstance().getTimeInMillis();
 
 
-        if (Config.PUSH_ENABLED) {
-            OneSignal.getDebug().setLogLevel(LogLevel.VERBOSE);
-            OneSignal.initWithContext(this, ONESIGNAL_APP_ID);
-        }
+        // OneSignal is initialized once at app startup in WebViewApp (Application class).
 
         if (mAdView != null) {
             if (!HIDE_ADS_FOR_PURCHASE) {
