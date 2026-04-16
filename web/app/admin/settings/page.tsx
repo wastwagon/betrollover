@@ -1165,7 +1165,7 @@ export default function AdminSettingsPage() {
                     <p className="text-xs text-blue-800 dark:text-blue-200">
                       <strong>Automatic Sync Schedule:</strong> Full fixture import (same as &quot;Sync Fixtures&quot;) runs{' '}
                       <strong>every 6 hours</strong> at 00:00, 06:00, 12:00, and 18:00 <strong>server local time</strong>.{' '}
-                      <strong>AI predictions</strong> generate daily at <strong>00:05</strong> (server local time).{' '}
+                      <strong>AI predictions</strong> generate daily at <strong>8:00 PM</strong> (Africa/Accra by default).{' '}
                       <strong>Odds force refresh</strong> runs at <strong>23:45</strong> so markets are primed before that run. Set{' '}
                       <code className="text-xs">TZ</code> on the API host (e.g. <code className="text-xs">Africa/Accra</code>) if
                       those ticks should follow your region. Requires <code className="text-xs">ENABLE_SCHEDULING=true</code>.

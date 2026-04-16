@@ -152,7 +152,9 @@ export default function AdminAiPredictionsPage() {
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">AI Predictions</h1>
-          <p className="text-gray-600 dark:text-gray-400">Generate and manage AI tipster predictions from fixtures in the next 7 days.</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            Generate and manage AI tipster predictions. Automatic run is 8:00 PM (Africa/Accra) with a 2:00 AM catch-up.
+          </p>
         </div>
 
         {message && (
@@ -188,7 +190,8 @@ export default function AdminAiPredictionsPage() {
             )}
           </button>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Runs automatically at 9 AM and 11 AM (catch-up). Check sync status in Settings.
+            Runs automatically at 8:00 PM (Africa/Accra) with a 2:00 AM catch-up. You can also run it manually here.
+            Check sync status in Settings.
           </p>
         </div>
 
@@ -229,7 +232,9 @@ export default function AdminAiPredictionsPage() {
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Latest Predictions</h2>
               {todayPredictions.length === 0 ? (
-                <p className="text-gray-500 dark:text-gray-400 py-4">No predictions yet. Fixtures are drawn from the next 7 days.</p>
+                <p className="text-gray-500 dark:text-gray-400 py-4">
+                  No predictions yet. Scheduled generation targets same-day fixtures for the current UTC calendar day.
+                </p>
               ) : (
                 <div className="space-y-3">
                   {todayPredictions.slice(0, 10).map((p) => (
