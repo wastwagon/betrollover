@@ -43,6 +43,7 @@ interface Tipster {
   isAi?: boolean;
   is_ai?: boolean;
   winRate: number;
+  roi?: number;
   totalPicks: number;
   wonPicks: number;
   lostPicks: number;
@@ -258,6 +259,19 @@ export function PickCard({
                     <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
                       {tipster?.winRate != null ? `${Number(tipster.winRate).toFixed(1)}%` : '—'}
                     </span>
+                    {tipster?.roi != null && (
+                      <span
+                        className={`text-[9px] font-bold ${
+                          Number(tipster.roi) > 0
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : Number(tipster.roi) < 0
+                              ? 'text-rose-600 dark:text-rose-400'
+                              : 'text-[var(--text-muted)]'
+                        }`}
+                      >
+                        {`${Number(tipster.roi).toFixed(1)}% ROI`}
+                      </span>
+                    )}
                     {tipster && (tipster.wonPicks > 0 || tipster.lostPicks > 0) && (
                       <span className="text-[9px] text-[var(--text-muted)]">
                         {tipster.wonPicks}W / {tipster.lostPicks}L

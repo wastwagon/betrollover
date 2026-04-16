@@ -595,6 +595,10 @@ export class AccumulatorsService {
       relations: ['picks'],
     });
     if (!ticket) return null;
+    if (!opts?.viewerIsAdmin) {
+      const visibleTickets = await this.filterTicketsByAiRoiVisibility([ticket]);
+      if (visibleTickets.length === 0) return null;
+    }
     const [enriched] = await this.enrichPicksWithFixtureScores([ticket]);
 
     // Include tipster metadata and marketplace row so the detail page has full context
@@ -618,7 +622,8 @@ export class AccumulatorsService {
       where: { id: In(accIds) },
       relations: ['picks'],
     });
-    const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
+    const visibleTickets = await this.filterTicketsByAiRoiVisibility(tickets);
+    const enrichedTickets = await this.enrichPicksWithFixtureScores(visibleTickets);
     const rows = await this.marketplaceRepo.find({
       where: { accumulatorId: In(accIds) },
       select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
@@ -724,6 +729,13 @@ export class AccumulatorsService {
     return rows
       .filter((r) => r.userId != null && Number(r.roi ?? 0) < 0)
       .map((r) => r.userId!) as number[];
+  }
+
+  private async filterTicketsByAiRoiVisibility(tickets: AccumulatorTicket[]): Promise<AccumulatorTicket[]> {
+    if (tickets.length === 0) return tickets;
+    const hiddenAiUserIds = new Set(await this.getHiddenAiUserIds());
+    if (hiddenAiUserIds.size === 0) return tickets;
+    return tickets.filter((t) => !hiddenAiUserIds.has(t.userId));
   }
 
   async getMarketplace(
@@ -832,15 +844,16 @@ export class AccumulatorsService {
         where: { id: In(pageIds) },
         relations: ['picks'],
       });
+      const visibleTickets = await this.filterTicketsByAiRoiVisibility(tickets);
       const order = new Map(pageIds.map((id, i) => [id, i]));
-      tickets.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+      visibleTickets.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
 
       const rows = await this.marketplaceRepo.find({
         where: { accumulatorId: In(pageIds), status: 'active' },
         select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
       });
 
-      const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
+      const enrichedTickets = await this.enrichPicksWithFixtureScores(visibleTickets);
       const itemsWithMeta = await this.enrichWithTipsterMetadata(enrichedTickets, rows, userId);
       const rowByAccId = new Map(rows.map((r) => [r.accumulatorId, r]));
       const ticketById = new Map(enrichedTickets.map((t) => [t.id, t]));
@@ -912,8 +925,9 @@ export class AccumulatorsService {
       relations: ['picks'],
       order: { createdAt: 'DESC' },
     });
+    const visibleTickets = await this.filterTicketsByAiRoiVisibility(tickets);
 
-    const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
+    const enrichedTickets = await this.enrichPicksWithFixtureScores(visibleTickets);
     let validTickets: typeof enrichedTickets;
     if (adminFilterMode) {
       const showPending = options!.showPending !== false;
@@ -1059,9 +1073,10 @@ export class AccumulatorsService {
       where: { id: In(pageIds) },
       relations: ['picks'],
     });
+    const visibleTickets = await this.filterTicketsByAiRoiVisibility(tickets);
     const order = new Map(pageIds.map((id, i) => [id, i]));
-    tickets.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
-    const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
+    visibleTickets.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+    const enrichedTickets = await this.enrichPicksWithFixtureScores(visibleTickets);
 
     const rowsForPaginated = await this.marketplaceRepo.find({
       where: { accumulatorId: In(pageIds), status: 'active' },
@@ -1175,7 +1190,7 @@ export class AccumulatorsService {
     // Calculate tipster stats using SQL aggregation (fixes N+1 query)
     const tipsterStatsMap = new Map<
       number,
-      { winRate: number; totalPicks: number; wonPicks: number; lostPicks: number }
+      { winRate: number; roi: number; totalPicks: number; wonPicks: number; lostPicks: number }
     >();
 
     const rankByUserId =
@@ -1188,9 +1203,11 @@ export class AccumulatorsService {
         .addSelect('COUNT(*)', 'total')
         .addSelect('SUM(CASE WHEN ticket.result = :won THEN 1 ELSE 0 END)', 'won')
         .addSelect('SUM(CASE WHEN ticket.result = :lost THEN 1 ELSE 0 END)', 'lost')
+        .addSelect('COALESCE(SUM(CASE WHEN ticket.result = :won2 THEN ticket.total_odds ELSE 0 END), 0)', 'totalOddsWon')
         .where('ticket.user_id IN (:...tipsterIds)', { tipsterIds })
         .setParameter('won', 'won')
         .setParameter('lost', 'lost')
+        .setParameter('won2', 'won')
         .groupBy('ticket.user_id')
         .getRawMany();
 
@@ -1201,8 +1218,11 @@ export class AccumulatorsService {
         const lost = Number(row.lost) || 0;
         const settled = won + lost;
         const winRate = settled > 0 ? (won / settled) * 100 : 0;
+        const totalOddsWon = Number(row.totalOddsWon) || 0;
+        const roi = settled > 0 ? ((totalOddsWon - settled) / settled) * 100 : 0;
         tipsterStatsMap.set(userId, {
           winRate,
+          roi,
           totalPicks: total,
           wonPicks: won,
           lostPicks: lost,
@@ -1268,7 +1288,7 @@ export class AccumulatorsService {
     // Enrich tickets with tipster data
     return validTickets.map(ticket => {
       const tipster = tipsterMap.get(ticket.userId);
-      const stats = tipsterStatsMap.get(ticket.userId) || { winRate: 0, totalPicks: 0, wonPicks: 0, lostPicks: 0 };
+      const stats = tipsterStatsMap.get(ticket.userId) || { winRate: 0, roi: 0, totalPicks: 0, wonPicks: 0, lostPicks: 0 };
       const globalRank = rankByUserId.get(ticket.userId) ?? null;
 
       return {
@@ -1287,6 +1307,7 @@ export class AccumulatorsService {
           avatarUrl: tipster.avatar,
           isAi: isAiByUserId.get(ticket.userId) ?? false,
           winRate: Math.round(stats.winRate * 10) / 10,
+          roi: Math.round(stats.roi * 10) / 10,
           totalPicks: stats.totalPicks,
           wonPicks: stats.wonPicks,
           lostPicks: stats.lostPicks,
@@ -1578,7 +1599,8 @@ export class AccumulatorsService {
       )
       .getMany();
 
-    const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
+    const visibleTickets = await this.filterTicketsByAiRoiVisibility(tickets);
+    const enrichedTickets = await this.enrichPicksWithFixtureScores(visibleTickets);
 
     const now = new Date();
     const validTickets = enrichedTickets.filter((ticket: any) => {
@@ -1632,7 +1654,16 @@ export class AccumulatorsService {
       )
       .addSelect('COALESCE(AVG(t.totalOdds), 0)', 'avgOdds')
       .where('t.result IN (:...r)', { r: ['won', 'lost'] })
-      .andWhere('EXISTS (SELECT 1 FROM pick_marketplace pm WHERE pm.accumulator_id = t.id)');
+      .andWhere('EXISTS (SELECT 1 FROM pick_marketplace pm WHERE pm.accumulator_id = t.id)')
+      .andWhere(
+        `NOT EXISTS (
+          SELECT 1
+          FROM tipsters ts
+          WHERE ts.user_id = t.user_id
+            AND ts.is_ai = true
+            AND COALESCE(ts.roi, 0) < 0
+        )`,
+      );
     if (fromUtc) {
       statsQb.andWhere('t.updatedAt >= :fromUtc', { fromUtc });
     }
@@ -1671,7 +1702,16 @@ export class AccumulatorsService {
       .createQueryBuilder('t')
       .leftJoinAndSelect('t.picks', 'picks')
       .where('t.result IN (:...r)', { r: ['won', 'lost'] })
-      .andWhere('EXISTS (SELECT 1 FROM pick_marketplace pm WHERE pm.accumulator_id = t.id)');
+      .andWhere('EXISTS (SELECT 1 FROM pick_marketplace pm WHERE pm.accumulator_id = t.id)')
+      .andWhere(
+        `NOT EXISTS (
+          SELECT 1
+          FROM tipsters ts
+          WHERE ts.user_id = t.user_id
+            AND ts.is_ai = true
+            AND COALESCE(ts.roi, 0) < 0
+        )`,
+      );
     if (fromUtc) {
       listQb.andWhere('t.updatedAt >= :fromUtc', { fromUtc });
     }

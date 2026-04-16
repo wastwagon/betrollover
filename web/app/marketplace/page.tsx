@@ -44,6 +44,7 @@ interface Tipster {
   displayName: string;
   username: string;
   winRate: number;
+  roi?: number;
   totalPicks: number;
   wonPicks: number;
   lostPicks: number;
