@@ -102,8 +102,8 @@ export function HomeQuickMarketplaceSections() {
         const eliteNames = leaderboardUsernameSet(lbJson);
         const allItems = parseMarketplacePayload(allJson);
         const paidItems = parseMarketplacePayload(paidJson);
-        setElite(pickEliteShowcase(allItems, eliteNames, 6));
-        setPaid(paidItems.slice(0, 6));
+        setElite(pickEliteShowcase(allItems, eliteNames, 8));
+        setPaid(paidItems.slice(0, 8));
       } catch {
         if (!cancelled) {
           setElite([]);
@@ -119,8 +119,8 @@ export function HomeQuickMarketplaceSections() {
   }, []);
 
   const skeleton = (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 min-w-0">
-      {[1, 2, 3].map((i) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">
+      {[1, 2, 3, 4].map((i) => (
         <div key={i} className="h-40 sm:h-44 rounded-2xl bg-[var(--card)] animate-pulse border border-[var(--border)]" />
       ))}
     </div>
@@ -163,7 +163,7 @@ export function HomeQuickMarketplaceSections() {
           {loading ? (
             skeleton
           ) : elite.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 min-w-0">{renderCards(elite)}</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">{renderCards(elite)}</div>
           ) : (
             <p className="text-center text-[var(--text-muted)] py-8 text-sm">{t('common.no_results')}</p>
           )}
@@ -198,7 +198,7 @@ export function HomeQuickMarketplaceSections() {
           {loading ? (
             skeleton
           ) : paid.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 min-w-0">{renderCards(paid)}</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">{renderCards(paid)}</div>
           ) : (
             <p className="text-center text-[var(--text-muted)] py-8 text-sm">{t('common.no_results')}</p>
           )}

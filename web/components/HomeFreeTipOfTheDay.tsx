@@ -33,6 +33,7 @@ interface Tipster {
   avatarUrl?: string | null;
   isAi?: boolean;
   winRate: number;
+  roi?: number;
   totalPicks?: number;
   wonPicks?: number;
   lostPicks?: number;
@@ -54,15 +55,39 @@ export function HomeFreeTipOfTheDay() {
   const t = useT();
   const router = useRouter();
   const [tip, setTip] = useState<FreeTip | null>(null);
+  const [tips, setTips] = useState<FreeTip[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
   const [isPurchased, setIsPurchased] = useState(false);
 
   useEffect(() => {
-    fetch(`${getApiUrl()}/accumulators/free-tip-of-the-day`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => setTip(data))
-      .catch(() => setTip(null))
+    Promise.all([
+      fetch(`${getApiUrl()}/accumulators/free-tip-of-the-day`).then((r) => (r.ok ? r.json() : null)),
+      fetch(`${getApiUrl()}/accumulators/marketplace/public?limit=12&priceFilter=free`).then((r) => (r.ok ? r.json() : { items: [] })),
+      fetch(`${getApiUrl()}/accumulators/marketplace/public?limit=12`).then((r) => (r.ok ? r.json() : { items: [] })),
+    ])
+      .then(([featured, market, anyMarket]) => {
+        const marketItems = Array.isArray((market as { items?: unknown[] })?.items)
+          ? ((market as { items?: FreeTip[] }).items ?? [])
+          : [];
+        const anyItems = Array.isArray((anyMarket as { items?: unknown[] })?.items)
+          ? ((anyMarket as { items?: FreeTip[] }).items ?? [])
+          : [];
+        const combined = [featured, ...marketItems, ...anyItems].filter(Boolean) as FreeTip[];
+        const seen = new Set<number>();
+        const uniqueVisible = combined.filter((item) => {
+          if (!item?.id || seen.has(item.id)) return false;
+          seen.add(item.id);
+          // Safety net: negative-ROI AI must never show in this homepage section.
+          return !(item.tipster?.isAi && Number(item.tipster.roi ?? 0) < 0);
+        });
+        setTip(featured as FreeTip | null);
+        setTips(uniqueVisible.slice(0, 4));
+      })
+      .catch(() => {
+        setTip(null);
+        setTips([]);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -102,11 +127,12 @@ export function HomeFreeTipOfTheDay() {
     );
   }
 
-  if (!tip) {
+  if (!tip && tips.length === 0) {
     return null;
   }
 
-  const sportKey = tip.sport?.toLowerCase() ?? 'football';
+  const primary = tip ?? tips[0];
+  const sportKey = primary?.sport?.toLowerCase() ?? 'football';
   const sportMeta = SPORT_META[sportKey] ?? SPORT_META['football'];
 
   return (
@@ -136,21 +162,26 @@ export function HomeFreeTipOfTheDay() {
             {t('home.free_tip_browse_all')}
           </Link>
         </div>
-        <div className="max-w-lg w-full min-w-0">
-          <PickCard
-            id={tip.id}
-            title={tip.title}
-            sport={tip.sport}
-            totalPicks={tip.totalPicks}
-            totalOdds={tip.totalOdds}
-            price={0}
-            picks={tip.picks}
-            tipster={tip.tipster ? { ...tip.tipster, totalPicks: tip.tipster.totalPicks ?? 0, wonPicks: tip.tipster.wonPicks ?? 0, lostPicks: tip.tipster.lostPicks ?? 0 } : null}
-            isPurchased={isPurchased}
-            canPurchase={!isPurchased}
-            onPurchase={handlePurchase}
-            purchasing={purchasing}
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">
+          {(tips.length > 0 ? tips : (primary ? [primary] : [])).map((item) => (
+            <PickCard
+              key={item.id}
+              id={item.id}
+              title={item.title}
+              sport={item.sport}
+              totalPicks={item.totalPicks}
+              totalOdds={item.totalOdds}
+              price={0}
+              picks={item.picks}
+              tipster={item.tipster ? { ...item.tipster, totalPicks: item.tipster.totalPicks ?? 0, wonPicks: item.tipster.wonPicks ?? 0, lostPicks: item.tipster.lostPicks ?? 0 } : null}
+              isPurchased={isPurchased && item.id === tip?.id}
+              canPurchase={!(isPurchased && item.id === tip?.id)}
+              onPurchase={item.id === tip?.id ? handlePurchase : () => router.push(`/coupons/${item.id}`)}
+              purchasing={purchasing && item.id === tip?.id}
+              viewOnly={item.id !== tip?.id}
+              detailsHref={item.id !== tip?.id ? `/coupons/${item.id}` : undefined}
+            />
+          ))}
         </div>
       </div>
     </section>

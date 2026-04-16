@@ -1364,7 +1364,11 @@ export class AccumulatorsService {
       const ticket = validWithListing[0];
       const row = rows.find((r) => r.accumulatorId === ticket.id);
       const items = await this.enrichWithTipsterMetadata([ticket], row ? [row] : []);
-      return items[0] ?? null;
+      const first = items[0] as { tipster?: { isAi?: boolean; roi?: number } } | undefined;
+      if (!first) return null;
+      // Safety net: do not return hidden AI tipsters even if upstream lookup misses one.
+      if (first.tipster?.isAi && Number(first.tipster.roi ?? 0) < 0) return null;
+      return first;
     };
 
     // 1. Try TheGambler first (curated daily tip)
