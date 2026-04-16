@@ -15,12 +15,18 @@ import { SyncStatus } from './entities/sync-status.entity';
 import { SYNC_LOOKAHEAD_DAYS } from '../../config/api-limits.config';
 import { SyncLockService } from './sync-lock.service';
 
+const PREDICTION_TIME_ZONE =
+  process.env.PREDICTION_TIMEZONE || process.env.TIMEZONE || 'Africa/Accra';
+const ODDS_FORCE_REFRESH_CRON = process.env.ODDS_FORCE_REFRESH_CRON || '45 19 * * *';
+const PREDICTION_DAILY_CRON = process.env.PREDICTION_DAILY_CRON || '0 20 * * *';
+const PREDICTION_CATCHUP_CRON = process.env.PREDICTION_CATCHUP_CRON || '0 2 * * *';
+
 /**
  * Scheduled Jobs for Fixture Updates & Syncing
  *
  * Full fixture import (enabled leagues, lookahead window) runs every 6 hours (00:00, 06:00, 12:00, 18:00 server local time)
  * so newly published fixtures appear without waiting for a single daily run. ~28 API calls/day for dates — fine on Pro/Ultra.
- * Live + finished fixture sync about every minute (Ultra); periodic settlement every minute. Also: 23:45 odds force, 00:05 AI predictions, 2:00 AM archive + prediction catch-up.
+ * Live + finished fixture sync about every minute (Ultra); periodic settlement every minute. Also: 19:45 odds force, 20:00 AI predictions, 2:00 AM catch-up + archive.
  *
  * Set ENABLE_FOOTBALL_SYNC=false to skip football API (e.g. when using prod server).
  */
@@ -288,10 +294,10 @@ export class FixtureSchedulerService implements OnModuleInit {
   }
 
   /**
-   * Daily force refresh of odds (23:45 — before midnight prediction run)
+   * Daily force refresh of odds (default 19:45 in PREDICTION_TIME_ZONE; before prediction run)
    * Re-syncs upcoming fixtures to apply latest Tier 1/2 market filter.
    */
-  @Cron('45 23 * * *')
+  @Cron(ODDS_FORCE_REFRESH_CRON, { timeZone: PREDICTION_TIME_ZONE })
   async handleOddsForceRefresh() {
     if (!this.isSchedulingEnabled()) return;
     // Same lock as scheduled/manual odds sync — avoids parallel API + DB load.
@@ -349,10 +355,10 @@ export class FixtureSchedulerService implements OnModuleInit {
   }
 
   /**
-   * Daily prediction generation (00:05 server local time — just after midnight / 00:00 fixture tick)
-   * Generates AI tipster predictions for today. Odds force runs 23:45 prior calendar evening.
+   * Daily prediction generation (default 20:00 in PREDICTION_TIME_ZONE).
+   * Generates AI tipster predictions for the current UTC calendar day.
    */
-  @Cron('5 0 * * *')
+  @Cron(PREDICTION_DAILY_CRON, { timeZone: PREDICTION_TIME_ZONE })
   async handleDailyPredictionGeneration() {
     if (!this.isSchedulingEnabled()) return;
     if (!(await this.syncLockService.tryStartSync('predictions'))) {
@@ -371,10 +377,10 @@ export class FixtureSchedulerService implements OnModuleInit {
   }
 
   /**
-   * Catch-up: if no predictions for today by 2 AM, run generation again.
-   * Handles cases where midnight run failed or fixtures/odds weren't ready.
+   * Catch-up: if no predictions exist by the catch-up cron (default 2 AM), run generation again.
+   * Handles cases where the evening run failed or fixtures/odds were not ready.
    */
-  @Cron('0 2 * * *')
+  @Cron(PREDICTION_CATCHUP_CRON, { timeZone: PREDICTION_TIME_ZONE })
   async handlePredictionCatchUp() {
     if (!this.isSchedulingEnabled()) return;
     const count = await this.predictionEngine.getTodaysPredictionCount();

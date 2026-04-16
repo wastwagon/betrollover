@@ -1417,7 +1417,8 @@ export default function AdminSettingsPage() {
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                     Maximum <strong>marketplace picks each AI tipster</strong> can publish per <strong>UTC calendar day</strong>{' '}
-                    (scheduled run around midnight). The engine uses the <strong>lower</strong> of this value and each
+                    (scheduled run defaults to <strong>8:00 PM Africa/Accra</strong>; admins can also run manual generation in{' '}
+                    <strong>Admin → AI predictions</strong>). The engine uses the <strong>lower</strong> of this value and each
                     tipster&apos;s own cap in server config (<code className="text-xs bg-white/60 dark:bg-gray-800 px-1 rounded">ai-tipsters.config.ts</code>
                     , <code className="text-xs bg-white/60 dark:bg-gray-800 px-1 rounded">max_daily_predictions</code>).
                     Default <strong>2</strong> keeps volume controlled.
