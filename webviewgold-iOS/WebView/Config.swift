@@ -33,7 +33,8 @@ var uselocalhtmlfolder = false //Set to "true" to use local "local-www/index.htm
 
 var openallexternalurlsinsafaribydefault = false //Set to "true" to open all external hosts in Safari by default
 
-var safariwhitelist:[String] = [] //Add domains here that should ALWAYS be opened in Safari, regardless of what the openallexternalurlsinsafaribydefault option is set to; to add another domain, insert another host like so: ["alwaysopeninsafari.com", "google.com", "m.facebook.com"] please enter the host exactly how you link to it (with or without www, but always without http/https)
+// Google OAuth must not load in WKWebView (403 disallowed_useragent). Exact host match in WebViewController.
+var safariwhitelist:[String] = ["accounts.google.com"] //Add domains here that should ALWAYS be opened in Safari, regardless of what the openallexternalurlsinsafaribydefault option is set to; to add another domain, insert another host like so: ["alwaysopeninsafari.com", "google.com", "m.facebook.com"] please enter the host exactly how you link to it (with or without www, but always without http/https)
 
 var safariblacklist = [host] //Add domains here that should NEVER be opened in Safari, regardless of what the openallexternalurlsinsafaribydefault option is set to; to add another domain, insert another host like so: ["alwaysopeninsafari.com", "google.com", "m.facebook.com"] please enter the host exactly how you link to it (with or without www, but always without http/https)
 

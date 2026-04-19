@@ -69,7 +69,8 @@ public class Config {
 
 
     // Acts regardless of what the EXTERNAL_LINK_HANDLING_OPTIONS option is set to
-    public static String[] ALWAYS_OPEN_IN_INAPP_TAB = new String[]{};
+    // Google OAuth in the main WebView hits 403 disallowed_useragent; Custom Tabs is an allowed context (see MainActivity.openInInappTab).
+    public static String[] ALWAYS_OPEN_IN_INAPP_TAB = new String[]{"https://accounts.google.com"};
 
     // Add URL prefixes that you NEVER want to open in an in-app tab (e.g., {"https://www.google.com", "https://www.example.com/page"})
     // Acts regardless of what the EXTERNAL_LINK_HANDLING_OPTIONS option is set to
