@@ -1478,7 +1478,7 @@ const en = {
   'auth.sign_in_with_google': 'Sign in with Google',
   'auth.sign_up_with_google': 'Sign up with Google',
   'auth.google_webview_hint':
-    'Google sign-in opens on a secure page, then brings you back here.',
+    'Google sign-in opens on Google\'s secure page, then returns you here. If you see Access blocked (403), WebViewGold must open accounts.google.com in the system browser or in-app Safari/Chrome view—see WebViewGold → External links.',
   'auth.sign_in_with_apple': 'Sign in with Apple',
   'auth.sign_up_with_apple': 'Sign up with Apple',
   'auth.or_continue_with': 'or continue with',

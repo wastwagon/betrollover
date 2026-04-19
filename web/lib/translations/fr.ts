@@ -1484,7 +1484,7 @@ const fr: Record<string, string> = {
   'auth.sign_in_with_google': 'Se connecter avec Google',
   'auth.sign_up_with_google': 'S\'inscrire avec Google',
   'auth.google_webview_hint':
-    "La connexion Google s'ouvre sur une page sécurisée, puis vous ramène ici.",
+    "La connexion Google s'ouvre sur la page sécurisée de Google, puis vous ramène ici. Si vous voyez Accès refusé (403), WebViewGold doit ouvrir accounts.google.com dans le navigateur système ou la vue Safari/Chrome intégrée — voir WebViewGold → Liens externes.",
   'auth.sign_in_with_apple': 'Se connecter avec Apple',
   'auth.sign_up_with_apple': 'S\'inscrire avec Apple',
   'auth.or_continue_with': 'ou continuer avec',
