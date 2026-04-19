@@ -1,9 +1,56 @@
+import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:6001';
 export const GOOGLE_OAUTH_STATE_COOKIE = 'google_oauth_state';
 export const OAUTH_TOKEN_COOKIE = 'br_oauth_token';
+
+type GoogleOAuthStatePayload = { v: 1; exp: number; n: string; next: string | null };
+
+/**
+ * HMAC-signed OAuth `state` so `/callback` can verify CSRF without relying on the
+ * state cookie (WKWebView vs Safari / Custom Tabs use different cookie jars).
+ */
+export function buildGoogleOAuthState(secret: string, next: string | null): string {
+  const n = crypto.randomBytes(16).toString('hex');
+  const payload: GoogleOAuthStatePayload = {
+    v: 1,
+    exp: Date.now() + 15 * 60 * 1000,
+    n,
+    next: next && next.startsWith('/') && !next.startsWith('//') ? next.slice(0, 512) : null,
+  };
+  const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const sig = crypto.createHmac('sha256', secret).update(payloadB64).digest('base64url');
+  return `${payloadB64}.${sig}`;
+}
+
+export function verifyGoogleOAuthState(
+  state: string | null,
+  secret: string,
+): { ok: true; next: string | null } | { ok: false } {
+  if (!state || !secret) return { ok: false };
+  const dot = state.lastIndexOf('.');
+  if (dot <= 0) return { ok: false };
+  const payloadB64 = state.slice(0, dot);
+  const sig = state.slice(dot + 1);
+  const expectedSig = crypto.createHmac('sha256', secret).update(payloadB64).digest('base64url');
+  const a = Buffer.from(sig, 'utf8');
+  const b = Buffer.from(expectedSig, 'utf8');
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return { ok: false };
+  try {
+    const parsed = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8')) as GoogleOAuthStatePayload;
+    if (parsed.v !== 1 || typeof parsed.exp !== 'number' || Date.now() > parsed.exp) return { ok: false };
+    if (typeof parsed.n !== 'string' || !parsed.n) return { ok: false };
+    const next =
+      typeof parsed.next === 'string' && parsed.next.startsWith('/') && !parsed.next.startsWith('//')
+        ? parsed.next
+        : null;
+    return { ok: true, next };
+  } catch {
+    return { ok: false };
+  }
+}
 
 export function getRedirectBase(request: NextRequest): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;

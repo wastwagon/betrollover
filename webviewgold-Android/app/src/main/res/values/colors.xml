@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#4FaFFf</color>
-    <color name="colorPrimaryDark">#0F7FFC</color> <!-- Used for Color of the Status Bar-->
+    <!-- BetRollover brand (matches web themeColor #10b981) -->
+    <color name="colorPrimary">#10b981</color>
+    <color name="colorPrimaryDark">#047857</color> <!-- Darker emerald: status bar, cutout scrim, Custom Tabs toolbar -->
     <color name="colorAccent">#6A6A6A</color> <!-- Used for Color of the Loading Sign and Dialogue Buttons -->
     <color name="launchLoadingSignBackground">#FFFFFF</color> <!-- Background Color for Loading Sign Screen on launch -->
     <color name="colorWhite">#FFFFFF</color>

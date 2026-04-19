@@ -94,9 +94,7 @@ public class SplashScreenActivity extends BaseActivity {
             splashImage.setLayoutParams(params);
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (Config.blackStatusBarText) {
-                getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-            }
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         }
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
             if (BuildConfig.IS_DEBUG_MODE) Log.d("TAG", "onCreate: RUN");

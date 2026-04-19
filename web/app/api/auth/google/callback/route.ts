@@ -3,6 +3,7 @@ import {
   completeGoogleSignInFromIdToken,
   getRedirectBase,
   GOOGLE_OAUTH_STATE_COOKIE,
+  verifyGoogleOAuthState,
 } from '@/lib/google-auth-exchange';
 
 const GOOGLE_OAUTH_NEXT_COOKIE = 'google_oauth_next';
@@ -34,9 +35,15 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code');
   const state = searchParams.get('state');
   const cookieState = request.cookies.get(GOOGLE_OAUTH_STATE_COOKIE)?.value;
-  const nextPath = request.cookies.get(GOOGLE_OAUTH_NEXT_COOKIE)?.value;
+  const nextFromCookie = request.cookies.get(GOOGLE_OAUTH_NEXT_COOKIE)?.value;
 
-  if (!code || !state || !cookieState || state !== cookieState) {
+  const signed = verifyGoogleOAuthState(state, clientSecret);
+  const legacyCookieOk =
+    Boolean(code && state && cookieState && state === cookieState);
+  const stateOk = signed.ok || legacyCookieOk;
+  const nextPath = signed.ok ? signed.next : legacyCookieOk ? nextFromCookie : null;
+
+  if (!code || !state || !stateOk) {
     loginUrl.searchParams.set('error', 'Google sign-in was cancelled or the session expired. Please try again.');
     const r = NextResponse.redirect(loginUrl, 302);
     r.cookies.delete(GOOGLE_OAUTH_STATE_COOKIE);

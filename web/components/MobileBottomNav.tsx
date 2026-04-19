@@ -99,13 +99,12 @@ export function MobileBottomNav() {
     <nav
       role="navigation"
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-50 xl:hidden px-2 sm:px-4 pt-2"
-      style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+      className="fixed inset-x-0 bottom-0 z-50 xl:hidden bg-[var(--card)] border-t border-[var(--border)] shadow-[0_-4px_20px_rgba(0,0,0,0.07)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.35)]"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      {/* Full-width bar on all breakpoints so mobile layouts (and store screenshots) align edge-to-edge with the viewport */}
-      <div className="w-full rounded-2xl sm:rounded-t-2xl sm:rounded-b-none bg-[var(--card)] border border-[var(--border)] shadow-[0_-2px_20px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.2)]">
-        <div className="flex w-full flex-nowrap items-stretch gap-0.5 px-1 min-h-[56px] py-0.5 max-sm:overflow-x-auto max-sm:overscroll-x-contain scrollbar-hide max-sm:snap-x max-sm:snap-mandatory sm:gap-1 sm:px-3">
-          {NAV_ITEMS.map((item) => {
+      {/* Edge-to-edge docked tab bar (same bg + safe-area padding avoids a “floating” gap above the home indicator). */}
+      <div className="flex w-full flex-nowrap items-stretch gap-0.5 px-0.5 min-h-[56px] py-1 max-sm:overflow-x-auto max-sm:overscroll-x-contain scrollbar-hide max-sm:snap-x max-sm:snap-mandatory sm:gap-1 sm:px-3">
+        {NAV_ITEMS.map((item) => {
             const active = isActive(pathname, item.href);
             const Icon = ICONS[item.id];
             /** Fixed slots on narrow phones (scroll if needed); equal flex columns on sm+ so items span the full bar. */
@@ -146,8 +145,7 @@ export function MobileBottomNav() {
                 </span>
               </Link>
             );
-          })}
-        </div>
+        })}
       </div>
     </nav>
   );

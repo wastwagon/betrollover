@@ -1,22 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
 import {
+  buildGoogleOAuthState,
   getRedirectBase,
   GOOGLE_OAUTH_STATE_COOKIE,
 } from '@/lib/google-auth-exchange';
 
 const GOOGLE_OAUTH_NEXT_COOKIE = 'google_oauth_next';
-
-function cookieOpts(request: NextRequest) {
-  const secure = request.nextUrl.protocol === 'https:' || process.env.NODE_ENV === 'production';
-  return {
-    httpOnly: true as const,
-    secure,
-    sameSite: 'lax' as const,
-    maxAge: 600,
-    path: '/',
-  };
-}
 
 /**
  * Starts Google OAuth (authorization code) for environments where GIS `renderButton`
@@ -38,12 +27,14 @@ export async function GET(request: NextRequest) {
   }
 
   const redirectUri = `${base}/api/auth/google/callback`;
-  const state = crypto.randomBytes(24).toString('hex');
   const nextRaw = new URL(request.url).searchParams.get('next');
   const next =
     typeof nextRaw === 'string' && nextRaw.startsWith('/') && !nextRaw.startsWith('//')
       ? nextRaw.slice(0, 512)
       : null;
+
+  // Signed state (no cookie required) so OAuth works when Google opens in Safari / Custom Tabs.
+  const state = buildGoogleOAuthState(clientSecret, next);
 
   const authParams = new URLSearchParams({
     client_id: clientId,
@@ -57,9 +48,7 @@ export async function GET(request: NextRequest) {
   const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${authParams.toString()}`;
 
   const response = NextResponse.redirect(googleAuthUrl, 302);
-  response.cookies.set(GOOGLE_OAUTH_STATE_COOKIE, state, cookieOpts(request));
-  if (next) {
-    response.cookies.set(GOOGLE_OAUTH_NEXT_COOKIE, next, cookieOpts(request));
-  }
+  response.cookies.delete(GOOGLE_OAUTH_STATE_COOKIE);
+  response.cookies.delete(GOOGLE_OAUTH_NEXT_COOKIE);
   return response;
 }

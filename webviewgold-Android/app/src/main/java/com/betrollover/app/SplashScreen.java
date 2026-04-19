@@ -82,9 +82,8 @@ public class SplashScreen extends AppCompatActivity {
         setContentView(R.layout.splash_screen);
         instance = this;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (Config.blackStatusBarText) {
-                getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-            }
+            // White status bar below — always use dark status-bar icons on splash.
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         }
         if (Config.PREVENT_SLEEP) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);

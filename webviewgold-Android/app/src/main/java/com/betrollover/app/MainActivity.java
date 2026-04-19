@@ -3027,6 +3027,14 @@ public class MainActivity extends AppCompatActivity
             isErrorPageLoaded = false;
             WebSettings webSettings = view.getSettings();
 
+            // Custom-tab hosts (e.g. Google OAuth) must be handled even while isRedirected is true —
+            // onProgressChanged sets isRedirected for progress 1–99, and the later block only ran when !isRedirected,
+            // so OAuth redirects stayed in the WebView and triggered Google's block.
+            if (url != null && shouldAlwaysOpenInInappTab(url)) {
+                openInInappTab(url);
+                return true;
+            }
+
             // Google login helper tool
             if (Config.GOOGLE_LOGIN_HELPER_TRIGGERS.length != 0) {
                 for (int i = 0; i < Config.GOOGLE_LOGIN_HELPER_TRIGGERS.length; i++) {
@@ -3492,12 +3500,6 @@ public class MainActivity extends AppCompatActivity
 
                         return true;
                     }
-                }
-
-                // Check if the URL should always open in an in-app tab
-                if ((url != null) && shouldAlwaysOpenInInappTab(url)) {
-                    openInInappTab(url);
-                    return true;
                 }
 
                 if (SPECIAL_LINK_HANDLING_OPTIONS != 0) {

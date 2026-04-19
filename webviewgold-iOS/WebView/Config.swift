@@ -154,13 +154,14 @@ var imagenotfound = "Image not found." //Set the title label of the "Image not f
 
 //Custom Status Bar Design
 
-var statusBarBackgroundColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1) //Define a custom status bar background color
+// BetRollover brand (matches web themeColor #10b981 / Android colorPrimary)
+var statusBarBackgroundColor = #colorLiteral(red: 0.06274509803921569, green: 0.7254901960784313, blue: 0.5058823529411764, alpha: 1)
 
-var darkModeStatusBarBackgroundColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1) //Define a custom status bar background color while user is using iOS Dark Mode
+var darkModeStatusBarBackgroundColor = #colorLiteral(red: 0.06274509803921569, green: 0.7254901960784313, blue: 0.5058823529411764, alpha: 1)
 
-var statusBarTextColor = "black" //Define the text color of the status bar ("white" or "black"); requires iOS 13 or higher
+var statusBarTextColor = "white" //Light icons on emerald bar; requires iOS 13 or higher
 
-var darkModeStatusBarTextColor = "black" //Define the text color of the status bar ("white" or "black")  while user is using iOS Dark Mode; requires iOS 13 or higher; NOTE: choosing "black" deactivates dark mode in the app to prevent an illegible status bar
+var darkModeStatusBarTextColor = "white" //Match light mode on emerald bar
 
 //Custom Bottom Bar Design
 

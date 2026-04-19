@@ -1068,7 +1068,8 @@ class WebViewController: UIViewController, OSSubscriptionObserver, GADBannerView
     
     func setupContainerView() {
         containerView = UIView(frame: CGRect(x: 0, y: 0, width: view.frame.width, height: view.frame.height))
-        containerView.backgroundColor = UIColor(red: 16/255.0, green: 119/255.0, blue: 224/255.0, alpha: 1.0)
+        // BetRollover emerald (#10b981) — was template blue
+        containerView.backgroundColor = UIColor(red: 16 / 255.0, green: 185 / 255.0, blue: 129 / 255.0, alpha: 1.0)
         containerView.layer.cornerRadius = 10
         containerView.clipsToBounds = true
         containerView.isHidden = true // Initially hidden
@@ -1084,7 +1085,7 @@ class WebViewController: UIViewController, OSSubscriptionObserver, GADBannerView
         // Create top navigation bar view
         let navBar = UIView()
         navBar.translatesAutoresizingMaskIntoConstraints = false
-        navBar.backgroundColor = UIColor.systemBlue
+        navBar.backgroundColor = UIColor(red: 4 / 255.0, green: 120 / 255.0, blue: 87 / 255.0, alpha: 1.0) // #047857
         containerView.addSubview(navBar)
         
         // Title Label

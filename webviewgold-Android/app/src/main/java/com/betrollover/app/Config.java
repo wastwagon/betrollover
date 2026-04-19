@@ -129,8 +129,8 @@ public class Config {
     /** Logo size vs smallest screen dimension (32 = small; 60 = prominent app logo). */
     public static final double SCALE_SPLASH_IMAGE = 60;
 
-    //Set to "true" for black status bar text; Set to "false" for white status bar text. Use true with white splash (splash_screen_background).
-    static boolean blackStatusBarText = true;
+    //Set to "true" for dark status-bar icons (use with light status bar / white splash). "false" = light icons on dark bar (matches emerald colorPrimaryDark).
+    static boolean blackStatusBarText = false;
 
     //Set to "true" for transparent status bar; Set to "false" for opaque status bar; Use 'colorPrimaryDark' in style.xml to choose the status bar background color
     static boolean TRANSPARENT_STATUS_BAR = true;
