@@ -2,14 +2,10 @@
 
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useSlipCount } from '@/context/SlipCartContext';
 import { useLanguage, useT } from '@/context/LanguageContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { trackEvent } from '@/lib/analytics';
-import { TELEGRAM_ADS_HANDLE, TELEGRAM_ADS_URL } from '@/lib/site-config';
-
 function Dropdown({ open, onClose, triggerRef, children }: {
   open: boolean;
   onClose: () => void;
@@ -178,7 +174,6 @@ function isAdminRoute(pathname: string | null) {
 
 export function TopBar() {
   const pathname = usePathname();
-  const slipCount = useSlipCount();
   const t = useT();
   const [reduceMotion, setReduceMotion] = useState(false);
 
@@ -203,71 +198,40 @@ export function TopBar() {
     t('topbar.disclaimer_5'),
   ].join(' • ');
 
+  /** Matches bar height: safe-area + min row (min-h-9 + py-1). Keeps layout when bar is fixed on mobile. */
+  const mobileSpacerStyle = { height: 'calc(env(safe-area-inset-top, 0px) + 2.75rem)' } as const;
+
   return (
-    <div className="relative z-[60] w-full min-w-0 max-w-full bg-emerald-700 text-white/95 text-xs sm:text-sm border-b border-emerald-800/70 overflow-x-hidden safe-area-inset-top">
-      <div className="flex items-center justify-between min-h-9 h-auto sm:h-9 py-1 sm:py-0 px-3 sm:px-4 gap-2 min-w-0 max-w-full">
-        {/* Scrolling disclaimer — seamless loop; static scroll when prefers-reduced-motion */}
-        <div className="flex-1 min-w-0 overflow-hidden">
-          {reduceMotion ? (
-            <div className="overflow-x-auto overflow-y-hidden [-webkit-overflow-scrolling:touch] pb-0.5">
-              <p className="whitespace-nowrap pr-4 text-emerald-50/95 leading-snug">{disclaimerText}</p>
-            </div>
-          ) : (
-            <>
-              <p className="sr-only">{disclaimerText}</p>
-              <div className="overflow-hidden" aria-hidden="true">
-                <div className="animate-marquee whitespace-nowrap inline-flex will-change-transform text-emerald-50/95">
-                  <span className="inline-block shrink-0 px-6">{disclaimerText}</span>
-                  <span className="inline-block shrink-0 px-6">{disclaimerText}</span>
-                </div>
+    <>
+      <div className="z-[60] w-full min-w-0 max-w-full bg-[#047857] text-white/95 text-xs sm:text-sm border-b border-emerald-900/40 overflow-x-hidden safe-area-inset-top max-md:fixed max-md:top-0 max-md:left-0 max-md:right-0 md:relative">
+        <div className="flex items-center justify-between min-h-9 h-auto sm:h-9 py-1 sm:py-0 px-3 sm:px-4 gap-2 min-w-0 max-w-full">
+          {/* Scrolling disclaimer — seamless loop; static scroll when prefers-reduced-motion */}
+          <div className="flex-1 min-w-0 overflow-hidden">
+            {reduceMotion ? (
+              <div className="overflow-x-auto overflow-y-hidden [-webkit-overflow-scrolling:touch] pb-0.5">
+                <p className="whitespace-nowrap pr-4 text-emerald-50/95 leading-snug">{disclaimerText}</p>
               </div>
-            </>
-          )}
-        </div>
-
-        {/* Right: Telegram | cart | currency | language */}
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-          <a
-            href={TELEGRAM_ADS_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/90 hover:bg-emerald-500 text-white font-medium shadow-sm shadow-emerald-950/20 transition-colors shrink-0"
-            aria-label={`Live support on Telegram: @${TELEGRAM_ADS_HANDLE}`}
-          >
-            <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-              <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
-            </svg>
-            <span className="hidden sm:inline">Live support</span>
-          </a>
-
-          {/* Cart icon — draft pick (create flow) */}
-          <Link
-            href="/create-pick"
-            className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors shrink-0 ${
-              slipCount > 0
-                ? 'bg-emerald-600/80 hover:bg-emerald-600 text-white'
-                : 'text-emerald-100/75 hover:text-white hover:bg-emerald-800/55'
-            }`}
-            aria-label={
-              slipCount > 0
-                ? `Unfinished pick: ${slipCount} selection${slipCount !== 1 ? 's' : ''}`
-                : 'Create pick'
-            }
-          >
-            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-            </svg>
-            {slipCount > 0 && (
-              <span className="min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold bg-white/25 rounded-full">
-                {slipCount > 9 ? '9+' : slipCount}
-              </span>
+            ) : (
+              <>
+                <p className="sr-only">{disclaimerText}</p>
+                <div className="overflow-hidden" aria-hidden="true">
+                  <div className="animate-marquee whitespace-nowrap inline-flex will-change-transform text-emerald-50/95">
+                    <span className="inline-block shrink-0 px-6">{disclaimerText}</span>
+                    <span className="inline-block shrink-0 px-6">{disclaimerText}</span>
+                  </div>
+                </div>
+              </>
             )}
-          </Link>
+          </div>
 
-          {/* Currency & Language */}
-          <TopBarSwitchers />
+          {/* Currency & language only (live support + draft pick removed from top bar) */}
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            <TopBarSwitchers />
+          </div>
         </div>
       </div>
-    </div>
+      {/* Reserve space when the bar is fixed so main content is not hidden underneath */}
+      <div className="md:hidden w-full shrink-0 pointer-events-none" style={mobileSpacerStyle} aria-hidden />
+    </>
   );
 }

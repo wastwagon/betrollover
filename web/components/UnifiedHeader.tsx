@@ -182,6 +182,8 @@ function DesktopMenuPortal({
 /* ─── Main component ─────────────────────────────────────── */
 export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
   const pathname = usePathname();
+  /** TopBar is not rendered on admin routes — sticky offset must stay `top-0`. */
+  const hideTopBar = pathname.startsWith('/admin') || pathname.startsWith('/fr/admin');
   const router   = useRouter();
   const { t } = useLanguage();
   const { format, currency } = useCurrency();
@@ -408,7 +410,9 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
       <header
         ref={headerRef}
-        className="sticky top-0 z-50 w-full min-w-0 max-w-full bg-white/95 backdrop-blur-xl border-b border-slate-200/70 shadow-sm"
+        className={`sticky z-50 w-full min-w-0 max-w-full bg-white/95 backdrop-blur-xl border-b border-slate-200/70 shadow-sm ${
+          hideTopBar ? 'top-0' : 'max-md:top-[calc(env(safe-area-inset-top,0px)+2.75rem)] md:top-0'
+        }`}
       >
         <div className="section-ux-gutter-wide min-w-0 max-w-full">
           <div className="flex items-center justify-between h-[4.5rem] min-w-0 gap-1.5 sm:gap-2">

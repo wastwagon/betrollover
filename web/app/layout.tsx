@@ -96,7 +96,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: '#10b981',
+  /** Matches TopBar `bg-emerald-700` (#047857) so the mobile status / theme strip blends with the disclaimer bar. */
+  themeColor: '#047857',
   viewportFit: 'cover',
 };
 
