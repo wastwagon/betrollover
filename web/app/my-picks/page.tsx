@@ -194,7 +194,7 @@ export default function MyPicksPage() {
           {!loading && filtered.length > 0 && (
             <div className="space-y-3 pb-6 min-w-0 max-w-full">
               <p className="text-sm text-[var(--text-muted)] mb-2 min-w-0 break-words">
-                {filtered.length === 1 ? t('my_picks.coupons_count', { n: '1' }) : t('my_picks.coupons_count_plural', { n: String(filtered.length) })}
+                {filtered.length === 1 ? t('my_picks.pick_count', { n: '1' }) : t('my_picks.pick_count_plural', { n: String(filtered.length) })}
                 {sportFilter ? ` · ${SPORT_DISPLAY_MAP[sportFilter] ?? sportFilter}` : ''}
               </p>
               {filtered.map((a) => (

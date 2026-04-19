@@ -363,7 +363,7 @@ export default function MarketplacePage() {
       if (res.ok) {
         const purchasedTicket = await res.json();
         try { (await import('@/lib/analytics')).trackEvent('coupon_purchased', { couponId: id }, token); } catch { /* noop */ }
-        showSuccess(t('tipster.toast_coupon_purchased'));
+        showSuccess(t('tipster.toast_pick_purchased'));
         // Mark as purchased
         setPurchasedIds(prev => new Set([...Array.from(prev), id]));
         // Refresh wallet balance
@@ -564,7 +564,7 @@ export default function MarketplacePage() {
                 description={
                   debouncedTipster ? t('marketplace.tipster_search_empty_hint') : t('marketplace.no_picks_sub')
                 }
-                actionLabel={debouncedTipster ? t('common.clear') : t('nav.create_coupon')}
+                actionLabel={debouncedTipster ? t('common.clear') : t('nav.create_pick')}
                 actionHref={debouncedTipster ? undefined : '/create-pick'}
                 onActionClick={
                   debouncedTipster

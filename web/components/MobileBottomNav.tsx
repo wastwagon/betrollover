@@ -58,7 +58,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'home', href: '/', labelKey: 'header.home', primary: false },
   { id: 'marketplace', href: '/marketplace', labelKey: 'nav.bottom_picks', primary: false },
   { id: 'tipsters', href: '/tipsters', labelKey: 'nav.tipsters', primary: false },
-  { id: 'create', href: '/create-pick', labelKey: 'nav.coupon', primary: true },
+  { id: 'create', href: '/create-pick', labelKey: 'nav.pick_tab', primary: true },
   { id: 'subscribe', href: '/subscriptions/marketplace', labelKey: 'nav.bottom_subscribe', primary: false },
 ];
 

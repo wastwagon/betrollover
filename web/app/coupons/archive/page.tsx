@@ -286,12 +286,12 @@ export default function CouponsArchivePage() {
   const unitsPositive = netUnits > 0;
 
   const periodChips: { id: PeriodPreset; labelKey: string }[] = [
-    { id: 'all', labelKey: 'coupons.archive.period_all' },
-    { id: '7d', labelKey: 'coupons.archive.period_7d' },
-    { id: '30d', labelKey: 'coupons.archive.period_30d' },
-    { id: '90d', labelKey: 'coupons.archive.period_90d' },
-    { id: 'month', labelKey: 'coupons.archive.period_month' },
-    { id: 'custom', labelKey: 'coupons.archive.period_custom' },
+    { id: 'all', labelKey: 'picks.archive.period_all' },
+    { id: '7d', labelKey: 'picks.archive.period_7d' },
+    { id: '30d', labelKey: 'picks.archive.period_30d' },
+    { id: '90d', labelKey: 'picks.archive.period_90d' },
+    { id: 'month', labelKey: 'picks.archive.period_month' },
+    { id: 'custom', labelKey: 'picks.archive.period_custom' },
   ];
 
   return (
@@ -301,16 +301,16 @@ export default function CouponsArchivePage() {
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6 min-w-0">
           <div className="min-w-0 flex-1 max-w-full">
             <PageHeader
-              label={t('coupons.archive.page_label')}
-              title={t('coupons.archive.page_title')}
-              tagline={t('coupons.archive.page_tagline')}
+              label={t('picks.archive.page_label')}
+              title={t('picks.archive.page_title')}
+              tagline={t('picks.archive.page_tagline')}
             />
           </div>
           <Link
             href="/coupons"
             className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto self-stretch sm:self-auto shrink-0"
           >
-            {t('coupons.archive.back_marketplace')}
+            {t('picks.archive.back_marketplace')}
           </Link>
         </div>
 
@@ -320,7 +320,7 @@ export default function CouponsArchivePage() {
 
         {/* Period filter */}
         <div className="mb-4 space-y-3 min-w-0">
-          <p className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">{t('coupons.archive.period_label')}</p>
+          <p className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">{t('picks.archive.period_label')}</p>
           <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
             {periodChips.map((chip) => (
               <button
@@ -340,7 +340,7 @@ export default function CouponsArchivePage() {
           {periodPreset === 'custom' && (
             <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-end gap-3 pt-1">
               <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)] min-w-0">
-                <span>{t('coupons.archive.custom_from')}</span>
+                <span>{t('picks.archive.custom_from')}</span>
                 <input
                   type="date"
                   value={draftFrom}
@@ -349,7 +349,7 @@ export default function CouponsArchivePage() {
                 />
               </label>
               <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)] min-w-0">
-                <span>{t('coupons.archive.custom_to')}</span>
+                <span>{t('picks.archive.custom_to')}</span>
                 <input
                   type="date"
                   value={draftTo}
@@ -363,11 +363,11 @@ export default function CouponsArchivePage() {
                 disabled={!draftFrom || !draftTo || draftFrom > draftTo}
                 className="px-4 py-2 rounded-lg text-sm font-medium bg-[var(--primary)] text-white disabled:opacity-50 disabled:cursor-not-allowed sm:mb-0"
               >
-                {t('coupons.archive.apply_range')}
+                {t('picks.archive.apply_range')}
               </button>
             </div>
           )}
-          <p className="text-xs text-[var(--text-muted)] leading-relaxed max-w-3xl">{t('coupons.archive.range_hint')}</p>
+          <p className="text-xs text-[var(--text-muted)] leading-relaxed max-w-3xl">{t('picks.archive.range_hint')}</p>
         </div>
 
         {/* Summary stats — API totals for selected period */}
@@ -375,25 +375,25 @@ export default function CouponsArchivePage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 min-w-0">
             <div className="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center min-w-0">
               <p className="text-lg font-semibold text-[var(--text)]">{totalSettled}</p>
-              <p className="text-xs text-[var(--text-muted)] mt-1">{t('coupons.archive.total_settled')}</p>
+              <p className="text-xs text-[var(--text-muted)] mt-1">{t('picks.archive.total_settled')}</p>
             </div>
             <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center min-w-0">
               <p className="text-lg font-semibold text-emerald-700">{wonCount}</p>
-              <p className="text-xs text-emerald-600 mt-1">{t('coupons.archive.won')}</p>
+              <p className="text-xs text-emerald-600 mt-1">{t('picks.archive.won')}</p>
             </div>
             <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-center min-w-0">
               <p className="text-lg font-semibold text-red-700">{lostCount}</p>
-              <p className="text-xs text-red-600 mt-1">{t('coupons.archive.lost')}</p>
+              <p className="text-xs text-red-600 mt-1">{t('picks.archive.lost')}</p>
             </div>
             <div className="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center min-w-0">
               <p className="text-lg font-semibold text-[var(--text)]">{winRate}%</p>
-              <p className="text-xs text-[var(--text-muted)] mt-1">{t('coupons.archive.win_rate_card')}</p>
+              <p className="text-xs text-[var(--text-muted)] mt-1">{t('picks.archive.win_rate_card')}</p>
             </div>
             <div
               className={`p-4 rounded-xl border text-center min-w-0 ${
                 roiPositive ? 'bg-emerald-50 border-emerald-200' : combinedRoi < 0 ? 'bg-red-50 border-red-200' : 'bg-[var(--card)] border-[var(--border)]'
               }`}
-              title={t('coupons.archive.combined_roi_hint')}
+              title={t('picks.archive.combined_roi_hint')}
             >
               <p
                 className={`text-lg font-semibold ${
@@ -404,14 +404,14 @@ export default function CouponsArchivePage() {
                 {combinedRoi}%
               </p>
               <p className={`text-xs mt-1 ${roiPositive ? 'text-emerald-600' : combinedRoi < 0 ? 'text-red-600' : 'text-[var(--text-muted)]'}`}>
-                {t('coupons.archive.combined_roi')}
+                {t('picks.archive.combined_roi')}
               </p>
             </div>
             <div
               className={`p-4 rounded-xl border text-center min-w-0 ${
                 unitsPositive ? 'bg-emerald-50 border-emerald-200' : netUnits < 0 ? 'bg-red-50 border-red-200' : 'bg-[var(--card)] border-[var(--border)]'
               }`}
-              title={t('coupons.archive.net_units_hint')}
+              title={t('picks.archive.net_units_hint')}
             >
               <p
                 className={`text-lg font-semibold ${
@@ -422,12 +422,12 @@ export default function CouponsArchivePage() {
                 {netUnits}
               </p>
               <p className={`text-xs mt-1 ${unitsPositive ? 'text-emerald-600' : netUnits < 0 ? 'text-red-600' : 'text-[var(--text-muted)]'}`}>
-                {t('coupons.archive.net_units')}
+                {t('picks.archive.net_units')}
               </p>
             </div>
-            <div className="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center min-w-0" title={t('coupons.archive.avg_odds_hint')}>
+            <div className="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center min-w-0" title={t('picks.archive.avg_odds_hint')}>
               <p className="text-lg font-semibold text-[var(--text)]">{avgOdds}</p>
-              <p className="text-xs text-[var(--text-muted)] mt-1">{t('coupons.archive.avg_odds')}</p>
+              <p className="text-xs text-[var(--text-muted)] mt-1">{t('picks.archive.avg_odds')}</p>
             </div>
           </div>
         )}
@@ -447,10 +447,10 @@ export default function CouponsArchivePage() {
                 }`}
               >
                 {f === 'all'
-                  ? t('coupons.archive.filter_all')
+                  ? t('picks.archive.filter_all')
                   : f === 'won'
-                    ? t('coupons.archive.filter_won')
-                    : t('coupons.archive.filter_lost')}
+                    ? t('picks.archive.filter_won')
+                    : t('picks.archive.filter_lost')}
               </button>
             ))}
           </div>
@@ -466,15 +466,15 @@ export default function CouponsArchivePage() {
           <EmptyState
             title={
               hasPeriodFilter && totalSettled === 0
-                ? t('coupons.archive.empty_period')
-                : t('coupons.archive.empty_default_title')
+                ? t('picks.archive.empty_period')
+                : t('picks.archive.empty_default_title')
             }
             description={
               hasPeriodFilter && totalSettled === 0
-                ? t('coupons.archive.empty_period_sub')
-                : t('coupons.archive.empty_default_desc')
+                ? t('picks.archive.empty_period_sub')
+                : t('picks.archive.empty_default_desc')
             }
-            actionLabel={t('coupons.archive.browse_active_cta')}
+            actionLabel={t('picks.archive.browse_active_cta')}
             actionHref="/coupons"
           />
         ) : (

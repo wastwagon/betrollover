@@ -156,6 +156,7 @@ export default function AdminSubscriptionsPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [tipsterUserId, setTipsterUserId] = useState<string>('');
+  const [subscriberUserIdFilter, setSubscriberUserIdFilter] = useState<string>('');
   const [tipsterKind, setTipsterKind] = useState<string>('all');
   const [createdFrom, setCreatedFrom] = useState<string>('');
   const [createdTo, setCreatedTo] = useState<string>('');
@@ -166,6 +167,7 @@ export default function AdminSubscriptionsPage() {
   const [hideReviewed, setHideReviewed] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deletingPackageId, setDeletingPackageId] = useState<number | null>(null);
+  const [revokingAllForSubscriber, setRevokingAllForSubscriber] = useState(false);
 
   const loadCatalog = useCallback(() => {
     const apiUrl = getApiUrl();
@@ -200,6 +202,11 @@ export default function AdminSubscriptionsPage() {
     const params = new URLSearchParams();
     if (statusFilter && statusFilter !== 'all') params.set('status', statusFilter);
     if (tipsterUserId) params.set('tipsterUserId', tipsterUserId);
+    const subUid = subscriberUserIdFilter.trim();
+    if (subUid) {
+      const n = parseInt(subUid, 10);
+      if (Number.isFinite(n) && n > 0) params.set('subscriberUserId', String(n));
+    }
     if (tipsterKind && tipsterKind !== 'all') params.set('tipsterKind', tipsterKind);
     if (createdFrom) params.set('createdFrom', createdFrom);
     if (createdTo) params.set('createdTo', createdTo);
@@ -210,7 +217,7 @@ export default function AdminSubscriptionsPage() {
       .then((data) => setRows(Array.isArray(data) ? data : []))
       .catch(() => setRows([]))
       .finally(() => setLoading(false));
-  }, [router, statusFilter, tipsterUserId, tipsterKind, createdFrom, createdTo]);
+  }, [router, statusFilter, tipsterUserId, subscriberUserIdFilter, tipsterKind, createdFrom, createdTo]);
 
   useEffect(() => {
     loadTipsters();
@@ -462,6 +469,45 @@ export default function AdminSubscriptionsPage() {
       alert('Delete failed');
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleRevokeAllForSubscriber = async () => {
+    const uid = parseInt(subscriberUserIdFilter.trim(), 10);
+    if (!Number.isFinite(uid) || uid <= 0) return;
+    if (
+      !confirm(
+        `Remove every VIP subscription for user #${uid}?\n\nHeld escrow is refunded per subscription. If escrow was already released to tipsters, no extra refund is issued. This cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setRevokingAllForSubscriber(true);
+    try {
+      const res = await fetch(`${getApiUrl()}/admin/subscriptions/revoke-all-for-subscriber`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscriberUserId: uid }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        const removed = typeof data.removed === 'number' ? data.removed : 0;
+        const total = typeof data.totalRefunded === 'number' ? data.totalRefunded : 0;
+        alert(
+          removed === 0
+            ? 'No subscription rows found for this user.'
+            : `Removed ${removed} subscription(s). Total refunded from held escrow: GHS ${total.toFixed(2)}`,
+        );
+        loadRows();
+      } else {
+        alert(getApiErrorMessage(data, 'Revoke all failed'));
+      }
+    } catch {
+      alert('Revoke all failed');
+    } finally {
+      setRevokingAllForSubscriber(false);
     }
   };
 
@@ -955,6 +1001,35 @@ export default function AdminSubscriptionsPage() {
                   Clear
                 </button>
               )}
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-2">Subscriber user ID:</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                placeholder="e.g. 42"
+                value={subscriberUserIdFilter}
+                onChange={(e) => setSubscriberUserIdFilter(e.target.value.replace(/\D/g, ''))}
+                className="w-[120px] rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+              />
+              {subscriberUserIdFilter && (
+                <button
+                  type="button"
+                  onClick={() => setSubscriberUserIdFilter('')}
+                  className="text-sm text-gray-600 dark:text-gray-400 hover:underline"
+                >
+                  Clear
+                </button>
+              )}
+              {subscriberUserIdFilter.trim() && Number.parseInt(subscriberUserIdFilter.trim(), 10) > 0 && (
+                <button
+                  type="button"
+                  onClick={() => void handleRevokeAllForSubscriber()}
+                  disabled={revokingAllForSubscriber}
+                  className="inline-flex items-center rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed text-white text-sm font-semibold px-3 py-2"
+                >
+                  {revokingAllForSubscriber ? 'Revoking…' : 'Revoke all for this user'}
+                </button>
+              )}
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-2">Created from:</label>
               <input
                 type="date"
@@ -1037,9 +1112,16 @@ export default function AdminSubscriptionsPage() {
               </button>
             </div>
             <p className="text-xs text-amber-900/90 dark:text-amber-200/90 mb-4">
-              Held escrow: subscriber is refunded when you delete. Released escrow: tipster was already paid; delete only removes the record.
+              Held escrow: subscriber is refunded when you delete. Released escrow: tipster was already paid; delete only removes the record. Use{' '}
+              <strong>Subscriber user ID</strong> to load every VIP purchase for that account (not limited to the newest 5,000 global rows).
             </p>
-            {(statusFilter !== 'all' || tipsterKind !== 'all' || tipsterUserId || createdFrom || createdTo || reconcileMode) && (
+            {(statusFilter !== 'all' ||
+              tipsterKind !== 'all' ||
+              tipsterUserId ||
+              subscriberUserIdFilter ||
+              createdFrom ||
+              createdTo ||
+              reconcileMode) && (
               <div className="mb-4 flex flex-wrap gap-2">
                 <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mr-1 self-center">
                   Active filters:
@@ -1062,6 +1144,11 @@ export default function AdminSubscriptionsPage() {
                 {tipsterUserId && (
                   <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200 text-xs font-medium">
                     Tipster: {tipsters.find((x) => String(x.tipsterUserId) === tipsterUserId)?.displayName ?? `#${tipsterUserId}`}
+                  </span>
+                )}
+                {subscriberUserIdFilter && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 text-xs font-medium">
+                    Subscriber user #{subscriberUserIdFilter}
                   </span>
                 )}
                 {(createdFrom || createdTo) && (
@@ -1184,12 +1271,26 @@ export default function AdminSubscriptionsPage() {
                   ⭐
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  {tipsterUserId || statusFilter !== 'all' || tipsterKind !== 'all' || createdFrom || createdTo || showOnlyEndedHeld || showOnlyMissingSnapshots
+                  {tipsterUserId ||
+                  subscriberUserIdFilter ||
+                  statusFilter !== 'all' ||
+                  tipsterKind !== 'all' ||
+                  createdFrom ||
+                  createdTo ||
+                  showOnlyEndedHeld ||
+                  showOnlyMissingSnapshots
                     ? 'No matching subscriptions'
                     : 'No subscriptions'}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto">
-                  {tipsterUserId || statusFilter !== 'all' || tipsterKind !== 'all' || createdFrom || createdTo || showOnlyEndedHeld || showOnlyMissingSnapshots
+                  {tipsterUserId ||
+                  subscriberUserIdFilter ||
+                  statusFilter !== 'all' ||
+                  tipsterKind !== 'all' ||
+                  createdFrom ||
+                  createdTo ||
+                  showOnlyEndedHeld ||
+                  showOnlyMissingSnapshots
                     ? 'Nothing matches the current filters.'
                     : 'No subscription rows in the database yet. The marketplace catalog still shows published packages for sale.'}
                 </p>

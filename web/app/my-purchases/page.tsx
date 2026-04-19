@@ -346,8 +346,8 @@ export default function MyPurchasesPage() {
           {!loading && purchases.length === 0 && vipSubscriptions.length > 0 && (
             <div className="card-gradient rounded-2xl mb-6">
               <EmptyState
-                title={t('my_purchases.no_coupon_purchases')}
-                description={t('my_purchases.no_coupon_purchases_desc')}
+                title={t('my_purchases.no_pick_purchases')}
+                description={t('my_purchases.no_pick_purchases_desc')}
                 actionLabel={t('my_purchases.browse_marketplace')}
                 actionHref="/marketplace"
                 icon="🛒"

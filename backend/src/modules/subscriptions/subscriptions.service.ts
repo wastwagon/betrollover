@@ -132,7 +132,7 @@ export class SubscriptionsService {
         parts.push(`win rate ${winRate.toFixed(1)}% (minimum ${minimumWinRate}%)`);
       }
       throw new BadRequestException(
-        `VIP packages require the same performance minimums as paid marketplace coupons. Current: ${parts.join('; ')}. Improve with free picks until both metrics qualify.`,
+        `VIP packages require the same performance minimums as paid marketplace picks. Current: ${parts.join('; ')}. Improve with free picks until both metrics qualify.`,
       );
     }
 
@@ -407,7 +407,7 @@ export class SubscriptionsService {
         userId,
         type: 'subscription',
         title: 'Subscription Active',
-        message: `You're now subscribed to ${pkg.name}. You can view the tipster's subscription coupons in your dashboard.`,
+        message: `You're now subscribed to ${pkg.name}. You can view the tipster's subscription picks in your dashboard.`,
         link: '/dashboard/subscriptions',
         icon: 'star',
         sendEmail: true,
@@ -554,6 +554,8 @@ export class SubscriptionsService {
   async listAdminSubscriptions(filters: {
     status?: string;
     tipsterUserId?: number;
+    /** When set, returns all matching rows for this subscriber (not subject to global cap). */
+    subscriberUserId?: number;
     tipsterKind?: 'human' | 'ai' | 'all';
     createdFrom?: string;
     createdTo?: string;
@@ -602,8 +604,12 @@ export class SubscriptionsService {
       .createQueryBuilder('s')
       .leftJoinAndSelect('s.user', 'subscriber')
       .leftJoinAndSelect('s.package', 'pkg')
-      .orderBy('s.createdAt', 'DESC')
-      .take(500);
+      .orderBy('s.createdAt', 'DESC');
+    if (filters.subscriberUserId != null && Number.isFinite(filters.subscriberUserId)) {
+      qb.andWhere('s.userId = :subUid', { subUid: filters.subscriberUserId });
+    } else {
+      qb.take(5000);
+    }
     if (filters.status && filters.status !== 'all') {
       qb.andWhere('s.status = :st', { st: filters.status });
     }
@@ -747,8 +753,11 @@ export class SubscriptionsService {
 
     await this.subscriptionRepo.manager.transaction(async (em) => {
       await em.delete(RoiGuaranteeRefund, { subscriptionId });
-      const row = await em.findOne(Subscription, { where: { id: subscriptionId } });
-      if (row) await em.remove(row);
+      await em.delete(SubscriptionEscrow, { subscriptionId });
+      const del = await em.delete(Subscription, { id: subscriptionId });
+      if (!del.affected) {
+        throw new NotFoundException('Subscription not found');
+      }
     });
 
     if (refundDue > 0) {
@@ -770,6 +779,42 @@ export class SubscriptionsService {
           : escrow?.status === 'released'
             ? 'Subscription removed. Escrow had already been released to the tipster; no refund issued.'
             : 'Subscription removed.',
+    };
+  }
+
+  /**
+   * Remove every subscription row for a user (same rules as adminDeleteSubscription per row).
+   * Use when revoking access without hunting rows hidden by global admin list limits.
+   */
+  async adminRevokeAllSubscriptionsForSubscriber(subscriberUserId: number): Promise<{
+    ok: boolean;
+    removed: number;
+    totalRefunded: number;
+    details: Array<{ subscriptionId: number; refundedAmount: number | null }>;
+  }> {
+    const exists = await this.usersRepo.findOne({ where: { id: subscriberUserId }, select: ['id'] });
+    if (!exists) throw new NotFoundException('User not found');
+
+    const rows = await this.subscriptionRepo.find({
+      where: { userId: subscriberUserId },
+      select: ['id'],
+      order: { id: 'ASC' },
+    });
+    const details: Array<{ subscriptionId: number; refundedAmount: number | null }> = [];
+    let totalRefunded = 0;
+    for (const r of rows) {
+      const res = await this.adminDeleteSubscription(r.id);
+      details.push({
+        subscriptionId: r.id,
+        refundedAmount: res.refundedAmount,
+      });
+      if (res.refundedAmount != null) totalRefunded += res.refundedAmount;
+    }
+    return {
+      ok: true,
+      removed: rows.length,
+      totalRefunded: Number(totalRefunded.toFixed(2)),
+      details,
     };
   }
 }

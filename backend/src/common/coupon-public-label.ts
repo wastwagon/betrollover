@@ -1,12 +1,13 @@
 /**
- * User-facing coupon labels: stable id reference and optional tipster-entered title.
+ * User-facing pick labels: stable id reference and optional tipster-entered title.
+ * (Module/filename kept for import stability.)
  */
 
 const SUBJECT_MAX = 50;
 const WALLET_MSG_MAX = 80;
 
 export function couponPublicRef(id: number): string {
-  return `Coupon #${id}`;
+  return `Pick #${id}`;
 }
 
 /** Truncate for email / push subject lines */

@@ -272,7 +272,7 @@ export class SettlementService {
 
     if (picksRegraded > 0) {
       this.logger.log(
-        `Reconcile: ${picksRegraded} pick(s) regraded, ${ticketsOutcomeChanged} coupon(s) outcome updated, ${escrowTicketsAdjusted} escrow adjustment(s)`,
+        `Reconcile: ${picksRegraded} pick(s) regraded, ${ticketsOutcomeChanged} pick(s) outcome updated, ${escrowTicketsAdjusted} escrow adjustment(s)`,
       );
     }
 
@@ -300,7 +300,7 @@ export class SettlementService {
     if (funds.length === 0) {
       const released = await eRepo.find({ where: { pickId: ticketId, status: 'released' } });
       if (released.length > 0) {
-        throw new Error('Escrow already released for this coupon; aborting win reconciliation');
+        throw new Error('Escrow already released for this pick; aborting win reconciliation');
       }
       return;
     }
@@ -351,7 +351,7 @@ export class SettlementService {
     if (funds.length === 0) {
       const refunded = await eRepo.find({ where: { pickId: ticketId, status: 'refunded' } });
       if (refunded.length > 0) {
-        throw new Error('Escrow already refunded for this coupon; aborting reversal');
+        throw new Error('Escrow already refunded for this pick; aborting reversal');
       }
       return;
     }

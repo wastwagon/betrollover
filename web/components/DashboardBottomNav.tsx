@@ -33,7 +33,7 @@ type FoldSheetItem = {
 };
 
 const picksFoldItems: FoldSheetItem[] = [
-  { id: 'create', href: '/create-pick', icon: '✨', labelKey: 'nav.create_coupon', descKey: 'dashboard.create_coupon_desc' },
+  { id: 'create', href: '/create-pick', icon: '✨', labelKey: 'nav.create_pick', descKey: 'dashboard.create_pick_desc' },
   { id: 'my-picks', href: '/my-picks', icon: '📋', labelKey: 'nav.my_picks', descKey: 'dashboard.my_picks_desc' },
 ];
 

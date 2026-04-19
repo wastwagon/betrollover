@@ -14,7 +14,7 @@ export class TipsterController {
     return this.tipsterService.getStats(user.id, user.role);
   }
 
-  /** Min ROI & win rate required to list paid coupons on the marketplace (from api_settings). */
+  /** Min ROI & win rate required to list paid picks on the marketplace (from api_settings). */
   @Get('selling-thresholds')
   async getSellingThresholds() {
     return this.tipsterService.getSellingThresholds();

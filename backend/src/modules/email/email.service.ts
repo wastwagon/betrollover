@@ -403,7 +403,7 @@ export class EmailService {
         )}</p>`
       : '';
     const tipsterFormTrustNote = data.metadata?.tipsterForm
-      ? `<p style="font-size:11px;color:${BR.muted};margin:0 0 14px;">Stats source: settled coupon results on BetRollover. Performance can change as new picks settle.</p>`
+      ? `<p style="font-size:11px;color:${BR.muted};margin:0 0 14px;">Stats source: settled pick results on BetRollover. Performance can change as new picks settle.</p>`
       : '';
     const ctaGradient =
       accentColor === '#10b981'
@@ -458,8 +458,8 @@ export class EmailService {
   }
 
   /**
-   * Rich coupon-card email used for new pick alerts.
-   * Includes full coupon details so users can read without opening the app.
+   * Rich pick-card email used for new pick alerts.
+   * Includes full leg details so users can read without opening the app.
    */
   async sendCouponCardEmail(
     to: string,
@@ -499,7 +499,7 @@ export class EmailService {
               ? `<p style="margin:6px 0 0;font-size:11px;color:${BR.muted};">As of: ${this.escapeEmailText(asOfLabel)}</p>`
               : ''
           }
-          <p style="margin:6px 0 0;font-size:11px;color:${BR.muted};">Stats source: settled coupon results on BetRollover.</p>
+          <p style="margin:6px 0 0;font-size:11px;color:${BR.muted};">Stats source: settled pick results on BetRollover.</p>
           <p style="margin:4px 0 0;font-size:11px;color:${BR.muted};">Performance can change as new picks settle.</p>
         </div>`
       : '';

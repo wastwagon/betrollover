@@ -326,7 +326,7 @@ export default function TipsterProfilePage() {
       if (res.ok) {
         const purchased = await res.json().catch(() => null);
         try { (await import('@/lib/analytics')).trackEvent('coupon_purchased', { couponId: id, tipsterUsername: username }, token); } catch { /* noop */ }
-        showSuccess(t('tipster.toast_coupon_purchased'));
+        showSuccess(t('tipster.toast_pick_purchased'));
         setPurchasedIds((prev) => new Set([...Array.from(prev), id]));
         const walletRes = await fetch(`${getApiUrl()}/wallet/balance`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -857,7 +857,7 @@ export default function TipsterProfilePage() {
                 <p className="text-[var(--text-muted)]">
                   {sportFilter !== 'all'
                     ? t('tipster.no_settled_picks_sport', { sport: SPORT_META[sportFilter]?.label ?? sportFilter })
-                    : t('tipster.no_settled_coupons')}
+                    : t('tipster.no_settled_picks')}
                 </p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">

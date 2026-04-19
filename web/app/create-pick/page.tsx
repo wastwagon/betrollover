@@ -785,19 +785,19 @@ export default function CreatePickPage() {
               role="status"
             >
               {dailyQuota.exempt ? (
-                <p className="font-medium">{t('coupon_quota.exempt')}</p>
+                <p className="font-medium">{t('pick_quota.exempt')}</p>
               ) : dailyQuota.maxPerDay <= 0 ? (
-                <p className="font-medium">{t('coupon_quota.unlimited_platform')}</p>
+                <p className="font-medium">{t('pick_quota.unlimited_platform')}</p>
               ) : atDailyLimit ? (
                 <p className="font-medium">
-                  {t('coupon_quota.at_limit', {
+                  {t('pick_quota.at_limit', {
                     max: String(dailyQuota.maxPerDay),
                     resetTime: formatQuotaResetUtc(dailyQuota.resetsAtUtc) || dailyQuota.resetsAtUtc,
                   })}
                 </p>
               ) : (
                 <p className="font-medium">
-                  {t('coupon_quota.remaining', {
+                  {t('pick_quota.remaining', {
                     remaining: String(dailyQuota.remaining ?? 0),
                     max: String(dailyQuota.maxPerDay),
                     used: String(dailyQuota.usedToday),

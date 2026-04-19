@@ -105,6 +105,7 @@ export class AdminController {
     @CurrentUser() user: User,
     @Query('status') status?: string,
     @Query('tipsterUserId') tipsterUserIdRaw?: string,
+    @Query('subscriberUserId') subscriberUserIdRaw?: string,
     @Query('tipsterKind') tipsterKind?: string,
     @Query('createdFrom') createdFrom?: string,
     @Query('createdTo') createdTo?: string,
@@ -114,11 +115,17 @@ export class AdminController {
       tipsterUserIdRaw != null && tipsterUserIdRaw !== ''
         ? parseInt(tipsterUserIdRaw, 10)
         : undefined;
+    const subscriberUserId =
+      subscriberUserIdRaw != null && subscriberUserIdRaw !== ''
+        ? parseInt(subscriberUserIdRaw, 10)
+        : undefined;
     const kind =
       tipsterKind === 'human' || tipsterKind === 'ai' ? (tipsterKind as 'human' | 'ai') : 'all';
     return this.subscriptionsService.listAdminSubscriptions({
       status: status || undefined,
       tipsterUserId: tipsterUserId != null && !Number.isNaN(tipsterUserId) ? tipsterUserId : undefined,
+      subscriberUserId:
+        subscriberUserId != null && !Number.isNaN(subscriberUserId) ? subscriberUserId : undefined,
       tipsterKind: kind,
       createdFrom: createdFrom || undefined,
       createdTo: createdTo || undefined,
@@ -133,6 +140,20 @@ export class AdminController {
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.subscriptionsService.adminDeactivateSubscriptionPackage(packageId);
+  }
+
+  /** Remove all VIP subscription rows for one user (refunds held escrow per row). */
+  @Post('subscriptions/revoke-all-for-subscriber')
+  async adminRevokeAllSubscriptionsForSubscriber(
+    @CurrentUser() user: User,
+    @Body() body: { subscriberUserId?: number },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const raw = body?.subscriberUserId;
+    if (raw == null || !Number.isFinite(Number(raw)) || Number(raw) <= 0) {
+      throw new BadRequestException('subscriberUserId must be a positive number');
+    }
+    return this.subscriptionsService.adminRevokeAllSubscriptionsForSubscriber(Number(raw));
   }
 
   @Delete('subscriptions/:id')

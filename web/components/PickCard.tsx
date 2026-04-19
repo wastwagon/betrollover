@@ -103,7 +103,7 @@ interface PickCardProps {
   isFollowing?: boolean;
   onFollow?: () => void;
   followLoading?: boolean;
-  /** Buyer review summary for this coupon */
+  /** Buyer review summary for this pick */
   avgRating?: number | null;
   reviewCount?: number | null;
   /** From API: viewer may see full legs (purchase, subscription, free/settled, seller, admin). Drives View vs Purchase CTA when true. */
@@ -359,7 +359,7 @@ export function PickCard({
             )}
           </div>
 
-          {/* Pick Details - Show for free or purchased coupons */}
+          {/* Pick Details - Show for free or purchased picks */}
           {showFullDetails && picks.length > 0 && (
             <div className="mb-2 flex-1">
               <ul className="space-y-1">
@@ -482,7 +482,7 @@ export function PickCard({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="sticky top-0 bg-[var(--card)] border-b border-[var(--border)] px-4 sm:px-6 py-4 flex items-center justify-between gap-3 z-10 min-w-0">
-              <h3 className="text-base font-semibold text-[var(--text)] min-w-0 flex-1 pr-2">{t('pick_card.coupon_details')}</h3>
+              <h3 className="text-base font-semibold text-[var(--text)] min-w-0 flex-1 pr-2">{t('pick_card.pick_details')}</h3>
               <button
                 type="button"
                 onClick={() => setShowDetailsModal(false)}
@@ -630,7 +630,7 @@ export function PickCard({
             <div className="sticky top-0 bg-gradient-to-r from-emerald-500 to-green-600 text-white px-4 sm:px-6 py-4 flex items-center justify-between gap-3 z-10 rounded-t-2xl min-w-0">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                 <span className="text-2xl sm:text-3xl shrink-0">🎉</span>
-                <h3 className="text-base font-semibold min-w-0">{t('pick_card.coupon_unlocked')}</h3>
+                <h3 className="text-base font-semibold min-w-0">{t('pick_card.pick_unlocked')}</h3>
               </div>
               <button
                 type="button"
@@ -647,7 +647,7 @@ export function PickCard({
               {/* Success Message */}
               <div className="text-center mb-6">
                 <p className="text-lg text-gray-700 dark:text-gray-300 mb-2">
-                  {t('pick_card.coupon_unlocked_msg')}
+                  {t('pick_card.pick_unlocked_msg')}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {price > 0 && (

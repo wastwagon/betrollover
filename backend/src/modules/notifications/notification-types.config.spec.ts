@@ -7,9 +7,9 @@ import {
 
 describe('notification-types.config', () => {
   describe('getEmailSubject', () => {
-    it('should return contextual subject for purchase with coupon id', () => {
+    it('should return contextual subject for purchase with pick id', () => {
       expect(getEmailSubject('purchase', 'Purchase Complete', { pickId: '42' }))
-        .toBe('Purchase confirmed · Coupon #42');
+        .toBe('Purchase confirmed · Pick #42');
     });
 
     it('should include pick title in subject when provided', () => {

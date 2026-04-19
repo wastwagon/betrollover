@@ -628,7 +628,7 @@ export class AdminService {
 
   async updateAiMarketplaceCouponPrice(aiMarketplaceCouponPrice: number): Promise<ApiSettings> {
     if (aiMarketplaceCouponPrice < 0 || aiMarketplaceCouponPrice > 10000) {
-      throw new BadRequestException('AI marketplace coupon price must be between 0 and 10000 GHS (0 = always free)');
+      throw new BadRequestException('AI marketplace pick price must be between 0 and 10000 GHS (0 = always free)');
     }
     const rounded = Math.round(Number(aiMarketplaceCouponPrice) * 100) / 100;
     let apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
@@ -642,7 +642,7 @@ export class AdminService {
   async updateMaxCouponsPerDay(maxCouponsPerDay: number): Promise<ApiSettings> {
     const n = Math.floor(Number(maxCouponsPerDay));
     if (!Number.isFinite(n) || n < 0 || n > 500) {
-      throw new BadRequestException('Max coupons per day must be between 0 and 500 (0 = unlimited)');
+      throw new BadRequestException('Max picks per day must be between 0 and 500 (0 = unlimited)');
     }
     let apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
     if (!apiSettings) {
@@ -655,7 +655,7 @@ export class AdminService {
   async updateAiMaxCouponsPerDay(aiMaxCouponsPerDay: number): Promise<ApiSettings> {
     const n = Math.floor(Number(aiMaxCouponsPerDay));
     if (!Number.isFinite(n) || n < 1 || n > 50) {
-      throw new BadRequestException('AI max coupons per day must be between 1 and 50');
+      throw new BadRequestException('AI max picks per day must be between 1 and 50');
     }
     let apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
     if (!apiSettings) {
@@ -1603,13 +1603,13 @@ export class AdminService {
           gross,
           'refund',
           `pick-${accumulatorId}-admin-delete`,
-          `Refund: coupon deleted by admin (Coupon #${accumulatorId})`,
+          `Refund: pick deleted by admin (Pick #${accumulatorId})`,
         );
         await this.notificationsService.create({
           userId: f.userId,
           type: 'settlement',
-          title: 'Coupon Refunded',
-          message: `A coupon you purchased was removed by admin. GHS ${gross.toFixed(2)} has been refunded to your wallet.`,
+          title: 'Pick Refunded',
+          message: `A pick you purchased was removed by admin. GHS ${gross.toFixed(2)} has been refunded to your wallet.`,
           link: '/my-purchases',
           icon: 'refund',
           sendEmail: true,
@@ -1629,7 +1629,7 @@ export class AdminService {
     if (listing?.predictionId) {
       await this.predictionFixtureRepo.delete({ predictionId: listing.predictionId });
       await this.predictionRepo.delete(listing.predictionId);
-      this.logger.log(`Deleted AI prediction ${listing.predictionId} for coupon ${accumulatorId}`);
+      this.logger.log(`Deleted AI prediction ${listing.predictionId} for pick ${accumulatorId}`);
     }
 
     // 3. Delete coupon (CASCADE removes picks, marketplace, purchases, escrow, reactions, etc.)
@@ -1640,10 +1640,10 @@ export class AdminService {
 
     // 5. Update leaderboard rankings
     await this.resultTrackerService.updateLeaderboardNow().catch((err) => {
-      this.logger.warn(`Leaderboard update after coupon delete failed: ${err?.message}`);
+      this.logger.warn(`Leaderboard update after pick delete failed: ${err?.message}`);
     });
 
-    this.logger.log(`Admin deleted coupon ${accumulatorId} (tipster ${sellerId}). Refunded: ${processedUsers.size}`);
+    this.logger.log(`Admin deleted pick ${accumulatorId} (tipster ${sellerId}). Refunded: ${processedUsers.size}`);
 
     return {
       ok: true,

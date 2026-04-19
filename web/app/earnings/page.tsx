@@ -31,7 +31,7 @@ interface WalletTransaction {
   createdAt: string;
 }
 
-interface MyCoupon {
+interface PublishedPick {
   id: number;
   title: string;
   sport?: string;
@@ -105,7 +105,7 @@ export default function EarningsPage() {
 
   const [balance, setBalance] = useState<number | null>(null);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
-  const [coupons, setCoupons] = useState<MyCoupon[]>([]);
+  const [publishedPicks, setPublishedPicks] = useState<PublishedPick[]>([]);
   const [loading, setLoading] = useState(true);
   const [txFilter, setTxFilter] = useState<'all' | 'payout' | 'commission' | 'withdrawal'>('all');
 
@@ -128,11 +128,11 @@ export default function EarningsPage() {
       fetch(`${getApiUrl()}/wallet/transactions?limit=100`, { headers: h }).then(r => r.ok ? r.json() : []),
       fetch(`${getApiUrl()}/accumulators/my`, { headers: h }).then(r => r.ok ? r.json() : []),
       userId ? fetch(`${getApiUrl()}/reviews/tipster/${userId}?limit=1`).then(r => r.ok ? r.json() : null) : Promise.resolve(null),
-    ]).then(([balData, txData, couponData, revData]) => {
+    ]).then(([balData, txData, picksPayload, revData]) => {
       if (balData) setBalance(Number(balData.balance));
       setTransactions(Array.isArray(txData) ? txData : []);
       setTransactions(Array.isArray(txData) ? txData : (txData?.items ?? []));
-      setCoupons(Array.isArray(couponData) ? couponData : (couponData?.items ?? []));
+      setPublishedPicks(Array.isArray(picksPayload) ? picksPayload : (picksPayload?.items ?? []));
       if (revData?.total > 0) setReviewSummary({ avg: revData.avg, total: revData.total });
     }).catch(() => {}).finally(() => setLoading(false));
   }, [router]);
@@ -171,11 +171,6 @@ export default function EarningsPage() {
     [transactions]
   );
 
-  const totalCouponRevenue = useMemo(() =>
-    coupons.reduce((s, c) => s + ((c.purchaseCount ?? 0) * Number(c.price)), 0),
-    [coupons]
-  );
-
   // Monthly earnings chart data (last 6 months from payout txns)
   const chartData = useMemo(() => {
     const monthMap = new Map<string, number>();
@@ -191,12 +186,12 @@ export default function EarningsPage() {
   }, [transactions]);
 
   // Pick revenue breakdown
-  const couponRevenue = useMemo(() =>
-    coupons
+  const topRevenuePicks = useMemo(() =>
+    publishedPicks
       .filter(c => Number(c.price) > 0 && (c.purchaseCount ?? 0) > 0)
       .sort((a, b) => (b.purchaseCount ?? 0) * Number(b.price) - (a.purchaseCount ?? 0) * Number(a.price))
       .slice(0, 10),
-    [coupons]
+    [publishedPicks]
   );
 
   const filteredTx = useMemo(() => {
@@ -335,15 +330,15 @@ export default function EarningsPage() {
               <Link href="/my-picks" className="text-xs text-[var(--primary)] hover:underline w-fit shrink-0">{t('earnings.view_all_picks')}</Link>
             </div>
 
-            {couponRevenue.length === 0 ? (
+            {topRevenuePicks.length === 0 ? (
               <div className="p-8 text-center">
                 <p className="text-3xl mb-2">🎫</p>
                 <p className="text-sm text-[var(--text-muted)]">{t('earnings.no_paid_sold')}</p>
-                <Link href="/create-pick" className="text-xs text-[var(--primary)] hover:underline mt-1 inline-block">{t('earnings.create_coupon_link')}</Link>
+                <Link href="/create-pick" className="text-xs text-[var(--primary)] hover:underline mt-1 inline-block">{t('earnings.create_pick_link')}</Link>
               </div>
             ) : (
               <ul className="divide-y divide-[var(--border)]">
-                {couponRevenue.map((c) => {
+                {topRevenuePicks.map((c) => {
                   const revenue = (c.purchaseCount ?? 0) * Number(c.price);
                   const sportIcon = c.sport ? (SPORT_META[c.sport]?.icon ?? '🌍') : '🌍';
                   return (
@@ -372,7 +367,7 @@ export default function EarningsPage() {
           {/* ── Pick stats summary ── */}
           <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm min-w-0">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 min-w-0">
-              <h2 className="text-sm font-semibold text-[var(--text)] min-w-0">{t('earnings.coupon_stats')}</h2>
+              <h2 className="text-sm font-semibold text-[var(--text)] min-w-0">{t('earnings.pick_stats')}</h2>
               {reviewSummary && (
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="flex">
@@ -388,12 +383,12 @@ export default function EarningsPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5 min-w-0">
               {[
-                { label: t('earnings.total_coupons'), value: coupons.length },
-                { label: t('earnings.active'), value: coupons.filter(c => c.status === 'active' && c.result === 'pending').length },
-                { label: t('earnings.won'), value: coupons.filter(c => c.result === 'won').length, color: 'text-emerald-600' },
-                { label: t('earnings.lost'), value: coupons.filter(c => c.result === 'lost').length, color: 'text-red-500' },
-                { label: t('earnings.free'), value: coupons.filter(c => Number(c.price) === 0).length },
-                { label: t('earnings.paid'), value: coupons.filter(c => Number(c.price) > 0).length, color: 'text-amber-600' },
+                { label: t('earnings.total_picks'), value: publishedPicks.length },
+                { label: t('earnings.active'), value: publishedPicks.filter(c => c.status === 'active' && c.result === 'pending').length },
+                { label: t('earnings.won'), value: publishedPicks.filter(c => c.result === 'won').length, color: 'text-emerald-600' },
+                { label: t('earnings.lost'), value: publishedPicks.filter(c => c.result === 'lost').length, color: 'text-red-500' },
+                { label: t('earnings.free'), value: publishedPicks.filter(c => Number(c.price) === 0).length },
+                { label: t('earnings.paid'), value: publishedPicks.filter(c => Number(c.price) > 0).length, color: 'text-amber-600' },
               ].map(({ label, value, color }) => (
                 <div key={label} className="rounded-xl bg-[var(--bg)] border border-[var(--border)] p-3 text-center">
                   <p className={`text-xl font-bold ${color ?? 'text-[var(--text)]'}`}>{value}</p>
@@ -402,12 +397,12 @@ export default function EarningsPage() {
               ))}
             </div>
 
-            {coupons.length > 0 && (
+            {publishedPicks.length > 0 && (
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">{t('earnings.win_rate')}</p>
                 {(() => {
-                  const settled = coupons.filter(c => c.result === 'won' || c.result === 'lost');
-                  const won = coupons.filter(c => c.result === 'won').length;
+                  const settled = publishedPicks.filter(c => c.result === 'won' || c.result === 'lost');
+                  const won = publishedPicks.filter(c => c.result === 'won').length;
                   const rate = settled.length > 0 ? (won / settled.length) * 100 : 0;
                   return (
                     <div>
@@ -434,7 +429,7 @@ export default function EarningsPage() {
                 href="/create-pick"
                 className="w-full sm:flex-1 text-center py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors"
               >
-                {t('earnings.new_coupon')}
+                {t('earnings.new_pick')}
               </Link>
               <Link
                 href="/wallet"

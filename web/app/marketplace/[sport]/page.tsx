@@ -14,7 +14,7 @@ const VALID_SPORTS = [
 
 /**
  * Friendly URL: /marketplace/rugby → redirects to /marketplace?sport=rugby
- * so the main marketplace page can read the filter and show that sport's coupons.
+ * so the main marketplace page can read the filter and show that sport's picks.
  */
 export default async function MarketplaceSportPage({
   params,

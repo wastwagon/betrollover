@@ -37,7 +37,7 @@ export class PredictionMarketplaceSyncService {
     private tipsterService: TipsterService,
   ) {}
 
-  /** Same minimum ROI / win rate as human paid coupons; optional GHS price for qualifying AI tipsters. */
+  /** Same minimum ROI / win rate as human paid picks; optional GHS price for qualifying AI tipsters. */
   private async loadAiMarketplacePricing(): Promise<{
     minimumROI: number;
     minimumWinRate: number;
@@ -114,7 +114,7 @@ export class PredictionMarketplaceSyncService {
     // Check for duplicate: same tipster, same fixtures, same markets/odds
     const duplicate = await this.findDuplicateCoupon(tipster.userId, fixtures);
     if (duplicate) {
-      this.logger.debug(`Duplicate coupon for tipster ${tipster.username}, skipping prediction ${prediction.id}`);
+      this.logger.debug(`Duplicate pick for tipster ${tipster.username}, skipping prediction ${prediction.id}`);
       return { accumulatorId: duplicate };
     }
 
@@ -181,7 +181,7 @@ export class PredictionMarketplaceSyncService {
           couponTitle: title,
           price: listPrice,
           accumulatorId: ticket.id,
-          // Match human marketplace: detailed leg email only for free coupons; paid = teaser only (no picks in email).
+          // Match human marketplace: detailed leg email only for free picks; paid = teaser only (no leg details in email).
           couponCard:
             listPrice === 0
               ? {

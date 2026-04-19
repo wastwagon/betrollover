@@ -325,8 +325,8 @@ function DashboardContent() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
               <StatCard
-                title={t('admin.stats_all_coupons_title')}
-                hint={t('admin.stats_all_coupons_hint')}
+                title={t('admin.stats_all_picks_title')}
+                hint={t('admin.stats_all_picks_hint')}
                 value={stats?.picks?.total ?? 0}
                 icon="📋"
               />
@@ -554,19 +554,19 @@ function DashboardContent() {
               role="status"
             >
               {dailyQuota.exempt ? (
-                <p className="font-medium">{t('coupon_quota.exempt')}</p>
+                <p className="font-medium">{t('pick_quota.exempt')}</p>
               ) : dailyQuota.maxPerDay <= 0 ? (
-                <p className="font-medium">{t('coupon_quota.unlimited_platform')}</p>
+                <p className="font-medium">{t('pick_quota.unlimited_platform')}</p>
               ) : dailyQuota.remaining === 0 ? (
                 <p className="font-medium">
-                  {t('coupon_quota.at_limit', {
+                  {t('pick_quota.at_limit', {
                     max: String(dailyQuota.maxPerDay),
                     resetTime: formatQuotaResetUtc(dailyQuota.resetsAtUtc) || dailyQuota.resetsAtUtc,
                   })}
                 </p>
               ) : (
                 <p className="font-medium">
-                  {t('coupon_quota.remaining', {
+                  {t('pick_quota.remaining', {
                     remaining: String(dailyQuota.remaining ?? 0),
                     max: String(dailyQuota.maxPerDay),
                     used: String(dailyQuota.usedToday),
@@ -601,7 +601,7 @@ function DashboardContent() {
                   ➕
                 </span>
                 <div className="min-w-0">
-                  <span className="font-semibold block text-white">{t('dashboard.create_coupon')}</span>
+                  <span className="font-semibold block text-white">{t('dashboard.create_pick')}</span>
                   <span className="text-sm text-white/85">{t('dashboard.card_create_desc')}</span>
                 </div>
               </Link>

@@ -50,8 +50,8 @@ export function HomeStats() {
 
   const items: { value: string; label: string; hint: string }[] = [
     { value: formatNumber(s.verifiedTipsters), label: t('home.stats_tipsters'), hint: t('home.stats_hint_tipsters') },
-    { value: formatNumber(s.totalPicks), label: t('home.stats_picks'), hint: t('home.stats_hint_coupons') },
-    { value: formatNumber(s.successfulPurchases), label: t('home.stats_coupons_bought'), hint: t('home.stats_hint_coupons_bought') },
+    { value: formatNumber(s.totalPicks), label: t('home.stats_picks'), hint: t('home.stats_hint_settled_picks') },
+    { value: formatNumber(s.successfulPurchases), label: t('home.stats_marketplace_purchases'), hint: t('home.stats_hint_marketplace_purchases') },
     { value: `${s.winRate}%`, label: t('home.stats_marketplace_win_rate'), hint: t('home.stats_hint_win_rate') },
     { value: format(s.totalPaidOut).primary, label: t('home.stats_paid_out'), hint: t('home.stats_hint_paid_out') },
   ];

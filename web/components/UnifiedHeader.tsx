@@ -432,7 +432,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               {/* Home */}
               <NavBtn href="/" label={t('header.home')} />
 
-              <NavBtn href="/marketplace" label={t('nav.coupons_and_picks')} />
+              <NavBtn href="/marketplace" label={t('nav.picks')} />
 
               {/* Tipsters ▾ */}
               <div className="relative">
@@ -469,7 +469,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       {!isSignedIn && (
                         <CompactNavLink href="/register" icon="🚀" label={t('nav.register')} onClick={closeAll} />
                       )}
-                      <CompactNavLink href="/create-pick" icon="🎯" label={t('nav.create_coupon')} onClick={closeAll} />
+                      <CompactNavLink href="/create-pick" icon="🎯" label={t('nav.create_pick')} onClick={closeAll} />
                       <CompactNavLink
                         href="/dashboard/subscription-packages"
                         icon="📦"
@@ -506,7 +506,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                   maxHeightClass="max-h-[min(80vh,36rem)]"
                 >
                     <div className="py-1 px-1">
-                      <SectionLabel>{t('header.section_coupons_picks')}</SectionLabel>
+                      <SectionLabel>{t('header.section_picks')}</SectionLabel>
                       <CompactNavLink
                         href="/marketplace"
                         icon="🛒"
@@ -558,7 +558,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
                   </svg>
-                  {t('nav.create_coupon')}
+                  {t('nav.create_pick')}
                   {slipCount !== undefined && slipCount > 0 && (
                     <span className="min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold bg-white/25 text-white rounded-full">
                       {slipCount > 9 ? '9+' : slipCount}
@@ -881,7 +881,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
             aria-label={t('nav.browse')}
           >
             {[
-              { href: '/marketplace', label: t('nav.coupons_and_picks') },
+              { href: '/marketplace', label: t('nav.picks') },
               { href: '/live-scores', label: t('nav.live_scores_short') },
               { href: '/league-tables', label: t('nav.league_tables_short') },
               { href: '/tipsters', label: t('nav.tipsters') },

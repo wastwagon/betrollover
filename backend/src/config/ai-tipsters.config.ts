@@ -159,7 +159,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'PremierLeaguePro',
     display_name: 'Weekend Multi-Market',
-    bio: 'Weekend only. Picks the strongest edge across 1X2 (incl. draw), goals, BTTS or double chance per coupon. All leagues.',
+    bio: 'Weekend only. Picks the strongest edge across 1X2 (incl. draw), goals, BTTS or double chance per pick. All leagues.',
     avatar_url: '/avatars/epl_pro.png',
     personality: {
       risk_level: 'balanced',

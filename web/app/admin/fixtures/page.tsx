@@ -517,7 +517,7 @@ export default function AdminFixturesPage() {
     }
   };
 
-  const reconcileSettledCoupons = async () => {
+  const reconcileSettledPicks = async () => {
     const token = localStorage.getItem('token');
     if (!token) return;
     setReconciling(true);
@@ -1020,7 +1020,7 @@ export default function AdminFixturesPage() {
             </button>
             <button
               type="button"
-              onClick={reconcileSettledCoupons}
+              onClick={reconcileSettledPicks}
               disabled={syncing || fetchingResults || settling || reconciling}
               title="After scores are corrected in the DB, re-grade settled picks and fix escrow if the pick should have won instead of lost (or vice versa). Does not fetch from the API."
               className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-rose-600 to-rose-700 text-white hover:from-rose-700 hover:to-rose-800 disabled:opacity-50 transition-all shadow-md"

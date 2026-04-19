@@ -34,11 +34,11 @@ export const ADMIN_NOTIFICATION_TEMPLATES = {
   },
   new_coupon_posted: {
     subject: (ctx: { couponId: number; creatorName: string }) =>
-      `New coupon #${ctx.couponId} by ${ctx.creatorName}`,
+      `New pick #${ctx.couponId} by ${ctx.creatorName}`,
     message: (ctx: { creatorName: string; couponId: number; price?: number; isFree?: boolean }) =>
       ctx.isFree
-        ? `${ctx.creatorName} has posted a free pick to the marketplace (coupon #${ctx.couponId}).`
-        : `${ctx.creatorName} has posted a marketplace pick at GHS ${Number(ctx.price || 0).toFixed(2)} (coupon #${ctx.couponId}).`,
+        ? `${ctx.creatorName} has posted a free pick to the marketplace (pick #${ctx.couponId}).`
+        : `${ctx.creatorName} has posted a marketplace pick at GHS ${Number(ctx.price || 0).toFixed(2)} (pick #${ctx.couponId}).`,
     ctaText: 'View Marketplace',
     link: '/admin/marketplace',
     accentColor: '#10b981',

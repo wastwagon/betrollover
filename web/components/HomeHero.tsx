@@ -44,8 +44,8 @@ interface LeadingTipsterStats {
 /** Six stats: platform counts + leading ROI + net paid to tipsters (wallet payouts) */
 type StatKey =
   | 'verified'
-  | 'coupons'
-  | 'couponsBought'
+  | 'settledPicks'
+  | 'marketplacePurchases'
   | 'leadingRoi'
   | 'marketplace'
   | 'paidOut';
@@ -61,15 +61,15 @@ const statConfigBase: Record<
     border: 'border-emerald-500/40',
     iconBg: 'bg-emerald-500/25 text-emerald-300',
   },
-  coupons: {
+  settledPicks: {
     labelKey: 'home.stats_picks',
     icon: '📊',
     bg: 'bg-blue-500/15',
     border: 'border-blue-500/40',
     iconBg: 'bg-blue-500/25 text-blue-300',
   },
-  couponsBought: {
-    labelKey: 'home.stats_coupons_bought',
+  marketplacePurchases: {
+    labelKey: 'home.stats_marketplace_purchases',
     icon: '🛍️',
     bg: 'bg-sky-500/15',
     border: 'border-sky-500/40',
@@ -101,8 +101,8 @@ const statConfigBase: Record<
 /** Native tooltips: how each KPI is computed (hover). */
 const STAT_HINT_KEYS: Record<StatKey, string> = {
   verified: 'home.stats_hint_tipsters',
-  coupons: 'home.stats_hint_coupons',
-  couponsBought: 'home.stats_hint_coupons_bought',
+  settledPicks: 'home.stats_hint_settled_picks',
+  marketplacePurchases: 'home.stats_hint_marketplace_purchases',
   leadingRoi: 'home.stats_hint_leading_roi',
   marketplace: 'home.stats_hint_marketplace',
   paidOut: 'home.stats_hint_paid_out',
@@ -160,8 +160,8 @@ export function HomeHero() {
 
   const statItems: { key: StatKey; value: string }[] = [
     { key: 'verified', value: formatNumber(s.verifiedTipsters) },
-    { key: 'coupons', value: formatNumber(s.totalPicks) },
-    { key: 'couponsBought', value: formatNumber(s.successfulPurchases) },
+    { key: 'settledPicks', value: formatNumber(s.totalPicks) },
+    { key: 'marketplacePurchases', value: formatNumber(s.successfulPurchases) },
     { key: 'leadingRoi', value: leadingRoiStr },
     { key: 'marketplace', value: formatNumber(s.activePicks) },
     { key: 'paidOut', value: paidOutFormatted },

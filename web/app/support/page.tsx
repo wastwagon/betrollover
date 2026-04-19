@@ -168,7 +168,7 @@ function SupportContent() {
               </div>
               {form.category === 'dispute' || form.category === 'settlement' ? (
                 <div>
-                  <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{t('support.related_coupon')}</label>
+                  <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{t('support.related_pick_id')}</label>
                   <input
                     type="number"
                     placeholder={t('support.related_placeholder')}
@@ -213,7 +213,7 @@ function SupportContent() {
                     <p className="text-xs text-[var(--text-muted)] mt-0.5">
                       {t(`support.cat_${ticket.category}` as 'support.cat_general')}
                       {ticket.relatedCouponId && (
-                        <> · <Link href={`/coupons/${ticket.relatedCouponId}`} className="text-[var(--primary)] hover:underline">{t('support.coupon_id', { id: String(ticket.relatedCouponId) })}</Link></>
+                        <> · <Link href={`/coupons/${ticket.relatedCouponId}`} className="text-[var(--primary)] hover:underline">{t('support.pick_id', { id: String(ticket.relatedCouponId) })}</Link></>
                       )}
                       · {new Date(ticket.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
                     </p>

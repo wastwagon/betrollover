@@ -63,7 +63,7 @@ function SubscriptionsContent() {
     const headers = { Authorization: `Bearer ${token}` };
     const apiUrl = getApiUrl();
     // Keep above-the-fold content responsive by not blocking subscription render on feed fetch.
-    fetch(`${apiUrl}/subscriptions/me`, { headers })
+    fetch(`${apiUrl}/subscriptions/me`, { headers, cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : []))
       .then((subs) => {
         setSubscriptions(Array.isArray(subs) ? subs : []);
@@ -71,7 +71,7 @@ function SubscriptionsContent() {
       .catch(() => {})
       .finally(() => setSubsLoading(false));
 
-    fetch(`${apiUrl}/accumulators/subscription-feed?limit=20`, { headers })
+    fetch(`${apiUrl}/accumulators/subscription-feed?limit=20`, { headers, cache: 'no-store' })
       .then((r) => (r.ok ? r.json().then((d: { items?: FeedPick[] }) => d?.items ?? []) : []))
       .then((feed) => {
         setFeedPicks(Array.isArray(feed) ? feed : []);

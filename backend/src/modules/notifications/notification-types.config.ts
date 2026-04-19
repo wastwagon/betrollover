@@ -5,7 +5,7 @@
  */
 import { couponPublicRef, truncateCouponTitleForSubject } from '../../common/coupon-public-label';
 
-function emailSubjectWithCouponRef(base: string, ctx: Record<string, string>): string {
+function emailSubjectWithPickRef(base: string, ctx: Record<string, string>): string {
   const idRaw = ctx.pickId?.trim();
   if (!idRaw) return base;
   const idNum = Number(idRaw);
@@ -22,14 +22,14 @@ export const NOTIFICATION_TYPES = {
     icon: 'check',
     defaultSubject: 'Pick Published',
     emailSubject: (ctx: Record<string, string>) =>
-      emailSubjectWithCouponRef('Your pick is now live on the marketplace', ctx),
+      emailSubjectWithPickRef('Your pick is now live on the marketplace', ctx),
     ctaText: 'View Marketplace',
     category: 'marketplace',
   },
   purchase: {
     icon: 'cart',
     defaultSubject: 'Purchase Complete',
-    emailSubject: (ctx: Record<string, string>) => emailSubjectWithCouponRef('Purchase confirmed', ctx),
+    emailSubject: (ctx: Record<string, string>) => emailSubjectWithPickRef('Purchase confirmed', ctx),
     ctaText: 'View My Purchases',
     category: 'marketplace',
   },
@@ -38,8 +38,8 @@ export const NOTIFICATION_TYPES = {
     defaultSubject: 'Pick Settled',
     emailSubject: (ctx: Record<string, string>) =>
       ctx.variant === 'won'
-        ? emailSubjectWithCouponRef('Pick won', ctx)
-        : emailSubjectWithCouponRef('Pick settled', ctx),
+        ? emailSubjectWithPickRef('Pick won', ctx)
+        : emailSubjectWithPickRef('Pick settled', ctx),
     ctaText: 'View My Purchases',
     category: 'marketplace',
   },
@@ -83,8 +83,8 @@ export const NOTIFICATION_TYPES = {
   },
   coupon_sold: {
     icon: 'cart',
-    defaultSubject: 'Coupon Sold',
-    emailSubject: (ctx: Record<string, string>) => emailSubjectWithCouponRef('Someone purchased your coupon', ctx),
+    defaultSubject: 'Pick Sold',
+    emailSubject: (ctx: Record<string, string>) => emailSubjectWithPickRef('Someone purchased your pick', ctx),
     ctaText: 'View Marketplace',
     category: 'marketplace',
   },

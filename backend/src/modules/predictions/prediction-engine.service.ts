@@ -216,7 +216,7 @@ export class PredictionEngineService {
       this.logger.warn(`ai_max_coupons_per_day unreadable (${(e as Error)?.message}); using default 2`);
       adminAiMaxPerDay = 2;
     }
-    this.logger.log(`AI daily coupon cap (admin): ${adminAiMaxPerDay} per tipster (UTC day)`);
+    this.logger.log(`AI daily pick cap (admin): ${adminAiMaxPerDay} per tipster (UTC day)`);
 
     for (const tipsterConfig of AI_TIPSTERS) {
       if (!this.shouldTipsterPostToday(tipsterConfig)) continue;

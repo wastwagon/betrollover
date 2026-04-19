@@ -61,13 +61,13 @@ const errorMappings: ErrorMapping[] = [
     action: 'Make sure all required fields are filled correctly',
   },
   {
-    pattern: /Daily coupon limit reached/i,
-    message: 'Daily coupon limit reached',
-    action: 'You can create more coupons after midnight UTC, or contact support if you need a higher limit',
+    pattern: /Daily pick limit reached|Daily coupon limit reached/i,
+    message: 'Daily pick limit reached',
+    action: 'You can create more picks after midnight UTC, or contact support if you need a higher limit',
   },
   {
     pattern: /cannot purchase your own|own pick|own coupon|own slip/i,
-    message: 'You cannot purchase your own coupon or slip',
+    message: 'You cannot purchase your own pick',
     action: 'This is your own pick. You can view it in "My Picks" instead.',
   },
 ];

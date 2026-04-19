@@ -959,7 +959,7 @@ export class AccumulatorsService {
 
     const total = validTickets.length;
     if (enrichedTickets.length > 0 && validTickets.length === 0) {
-      this.logger.debug(`getMarketplace: ${enrichedTickets.length} coupons filtered out`);
+      this.logger.debug(`getMarketplace: ${enrichedTickets.length} listings filtered out`);
     }
     const paginated = validTickets.slice(offset, offset + limit);
     const rowByAccId = new Map(rowsFiltered.map((r) => [r.accumulatorId, r]));
@@ -1875,11 +1875,11 @@ export class AccumulatorsService {
         this.notificationsService.create({
           userId: sellerId,
           type: 'coupon_sold',
-          title: 'Coupon Sold',
+          title: 'Pick Sold',
           message:
             price > 0
-              ? `Someone purchased your coupon for GHS ${price.toFixed(2)}. Funds will be released to your wallet when the pick settles.`
-              : `Someone unlocked your free coupon.`,
+              ? `Someone purchased your pick for GHS ${price.toFixed(2)}. Funds will be released to your wallet when the pick settles.`
+              : `Someone unlocked your free pick.`,
           link: '/my-picks',
           icon: 'cart',
           sendEmail: true,

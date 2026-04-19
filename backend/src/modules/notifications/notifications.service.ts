@@ -167,7 +167,7 @@ export class NotificationsService {
 
   /**
    * In-app + email + push for every user following this tipster (except the creator).
-   * Used for human marketplace coupons and AI prediction → marketplace sync.
+   * Used for human marketplace picks and AI prediction → marketplace sync.
    */
   async notifyFollowersOfNewCoupon(params: {
     tipsterId: number;
@@ -277,7 +277,7 @@ export class NotificationsService {
   }
 
   /**
-   * Notify explicit users (e.g., paid subscribers) about a subscription-only coupon.
+   * Notify explicit users (e.g., paid subscribers) about a subscribers-only pick.
    * Does not use follower graph.
    */
   async notifyUsersOfSubscriptionCoupon(params: {
@@ -301,13 +301,13 @@ export class NotificationsService {
     const tipsterName = params.tipsterDisplayName || 'A tipster';
     const tipsterForm = await this.getTipsterFormSnapshot(params.tipsterUserId);
     const link = `/coupons/${params.accumulatorId}`;
-    const message = `${tipsterName} posted a new subscribers-only coupon.`;
+    const message = `${tipsterName} posted a new subscribers-only pick.`;
 
     for (const userId of recipients) {
       await this.create({
         userId,
         type: 'subscription',
-        title: 'New Subscribers-Only Coupon',
+        title: 'New Subscribers-Only Pick',
         message,
         link,
         icon: 'star',
