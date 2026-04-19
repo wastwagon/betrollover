@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useT } from '@/context/LanguageContext';
 import { trackRegistrationStartedOnce } from '@/lib/analytics';
-import { isLikelyEmbeddedWebView } from '@/lib/webview-context';
+import { shouldPreferGoogleOAuthRedirect } from '@/lib/webview-context';
 
 declare global {
   interface Window {
@@ -79,29 +79,28 @@ export function GoogleSignInButton({
   const [preferRedirect, setPreferRedirect] = useState(false);
   const t = useT();
 
-  const forceRedirect =
-    typeof process !== 'undefined' && process.env.NEXT_PUBLIC_GOOGLE_WEBVIEW_USE_REDIRECT === '1';
-
   useEffect(() => {
     setClientId(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '');
   }, []);
 
   useEffect(() => {
     if (!clientId?.trim()) return;
-    if (forceRedirect) {
-      setPreferRedirect(true);
-      return;
-    }
-    if (isLikelyEmbeddedWebView()) setPreferRedirect(true);
-  }, [clientId, forceRedirect]);
+    if (shouldPreferGoogleOAuthRedirect()) setPreferRedirect(true);
+  }, [clientId]);
 
   useEffect(() => {
     if (preferRedirect || !clientId?.trim()) return;
     const id = window.setTimeout(() => {
       const el = containerRef.current;
-      if (!el || el.children.length > 0) return;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const iframe = el.querySelector('iframe');
+      const iframeH = iframe ? (iframe as HTMLIFrameElement).offsetHeight : 0;
+      // GIS sometimes leaves an empty shell (no usable iframe / height).
+      const looksEmpty = rect.height < 12 && iframeH < 12;
+      if (!looksEmpty) return;
       setPreferRedirect(true);
-    }, 3500);
+    }, 1200);
     return () => window.clearTimeout(id);
   }, [preferRedirect, clientId]);
 
