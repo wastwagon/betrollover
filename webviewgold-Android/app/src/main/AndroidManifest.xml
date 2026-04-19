@@ -110,17 +110,21 @@
 
         <activity
             android:name=".SplashScreen"
+            android:exported="false"
+            android:resizeableActivity="true"
             android:screenOrientation="behind"
             android:theme="@style/SplashTheme" />
         <activity
             android:name=".SplashScreenActivity"
             android:exported="true"
+            android:resizeableActivity="true"
             android:theme="@style/Theme.App.Starting"/>
         <activity
             android:name=".MainActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
             android:exported="true"
             android:launchMode="singleTask"
+            android:resizeableActivity="true"
             android:screenOrientation="behind"
             android:theme="@style/AppTheme">
 

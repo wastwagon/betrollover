@@ -44,18 +44,18 @@ public class SplashScreenActivity extends BaseActivity {
             if (Config.PHONE_ORIENTATION == "auto") {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
             } else if (Config.PHONE_ORIENTATION == "portrait") {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
             } else if (Config.PHONE_ORIENTATION == "landscape") {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
             }
             // Tablet/Other orientation setting
         } else {
             if (Config.TABLET_ORIENTATION == "auto") {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
             } else if (Config.TABLET_ORIENTATION == "portrait") {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
             } else if (Config.TABLET_ORIENTATION == "landscape") {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
             }
         }
         setContentView(R.layout.splash_screen);

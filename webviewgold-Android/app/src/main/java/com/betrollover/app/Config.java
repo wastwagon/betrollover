@@ -33,7 +33,8 @@ public class Config {
     public static final String PHONE_ORIENTATION = "portrait";
 
     // Set the tablet orientation to either "portrait", "landscape", or "auto"
-    public static final String TABLET_ORIENTATION = "portrait";
+    // "auto" satisfies Play large-screen / resizable guidance (foldables, tablets, freeform).
+    public static final String TABLET_ORIENTATION = "auto";
 
     // Set a customized UserAgent for WebView URL requests (or leave it empty to use the default Android UserAgent)
     public static final String USER_AGENT = "";

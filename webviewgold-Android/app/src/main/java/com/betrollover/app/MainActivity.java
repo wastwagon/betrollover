@@ -129,6 +129,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -366,6 +367,8 @@ public class MainActivity extends AppCompatActivity
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        // Android 15+ / Play edge-to-edge guidance (replaces ad-hoc deprecated bar APIs where possible).
+        EdgeToEdge.enable(this);
 
         mContext = this;
 
@@ -1008,18 +1011,18 @@ public class MainActivity extends AppCompatActivity
             if (Config.PHONE_ORIENTATION == "auto") {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
             } else if (Config.PHONE_ORIENTATION == "portrait") {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
             } else if (Config.PHONE_ORIENTATION == "landscape") {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
             }
             // Tablet/Other orientation setting
         } else {
             if (Config.TABLET_ORIENTATION == "auto") {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
             } else if (Config.TABLET_ORIENTATION == "portrait") {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
             } else if (Config.TABLET_ORIENTATION == "landscape") {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
             }
         }
 
