@@ -1477,6 +1477,8 @@ const en = {
   'auth.signing_in': 'Signing in...',
   'auth.sign_in_with_google': 'Sign in with Google',
   'auth.sign_up_with_google': 'Sign up with Google',
+  'auth.google_webview_hint':
+    'In some in-app browsers (e.g. WebViewGold), Google’s sign-in button may not appear. Use the button below to continue with Google in the same flow.',
   'auth.sign_in_with_apple': 'Sign in with Apple',
   'auth.sign_up_with_apple': 'Sign up with Apple',
   'auth.or_continue_with': 'or continue with',
