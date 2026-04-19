@@ -1484,7 +1484,7 @@ const fr: Record<string, string> = {
   'auth.sign_in_with_google': 'Se connecter avec Google',
   'auth.sign_up_with_google': 'S\'inscrire avec Google',
   'auth.google_webview_hint':
-    "Sur mobile et dans les navigateurs intégrés (dont WebViewGold), le widget Google est peu fiable — nous utilisons une connexion Google pleine page. Touchez ci-dessous pour continuer.",
+    "La connexion Google s'ouvre sur une page sécurisée, puis vous ramène ici.",
   'auth.sign_in_with_apple': 'Se connecter avec Apple',
   'auth.sign_up_with_apple': 'S\'inscrire avec Apple',
   'auth.or_continue_with': 'ou continuer avec',

@@ -93,8 +93,8 @@ function LoginForm() {
         <div className="w-full max-w-md min-w-0 mx-auto px-4 sm:px-0">
           <div className="bg-white rounded-2xl shadow-xl border border-[var(--border)] p-6 sm:p-8 md:p-10 min-w-0 max-w-full">
             <div className="text-center mb-8">
-              <h1 className="text-xl font-semibold text-[var(--text)]">{t('auth.welcome_back')}</h1>
-              <p className="mt-2 text-[var(--text-muted)]">{t('auth.sign_in_desc')}</p>
+              <h1 className="sr-only">{t('auth.login')}</h1>
+              <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('auth.sign_in_desc')}</p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-5 min-w-0">
               <div className="min-w-0">

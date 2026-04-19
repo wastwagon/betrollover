@@ -1478,7 +1478,7 @@ const en = {
   'auth.sign_in_with_google': 'Sign in with Google',
   'auth.sign_up_with_google': 'Sign up with Google',
   'auth.google_webview_hint':
-    'On phones and in-app browsers (including WebViewGold), Google’s widget is unreliable — we use a full-page Google sign-in instead. Tap below to continue.',
+    'Google sign-in opens on a secure page, then brings you back here.',
   'auth.sign_in_with_apple': 'Sign in with Apple',
   'auth.sign_up_with_apple': 'Sign up with Apple',
   'auth.or_continue_with': 'or continue with',
