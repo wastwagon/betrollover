@@ -80,7 +80,8 @@ function TopBarSwitchers() {
     else if (code === 'en' && isFrPath) router.push(pathname.slice(3) || '/');
   };
 
-  const btnCls = 'flex items-center gap-1 px-2 py-1 rounded-md text-slate-200 hover:bg-slate-700/60 transition-colors text-xs font-medium';
+  const btnCls =
+    'flex items-center gap-1 px-2 py-1 rounded-md text-white/90 hover:bg-emerald-800/55 transition-colors text-xs font-medium';
 
   return (
     <>
@@ -203,19 +204,19 @@ export function TopBar() {
   ].join(' • ');
 
   return (
-    <div className="relative z-[60] w-full min-w-0 max-w-full bg-slate-800 text-slate-200 text-xs sm:text-sm border-b border-slate-700/60 overflow-x-hidden safe-area-inset-top">
+    <div className="relative z-[60] w-full min-w-0 max-w-full bg-emerald-700 text-white/95 text-xs sm:text-sm border-b border-emerald-800/70 overflow-x-hidden safe-area-inset-top">
       <div className="flex items-center justify-between min-h-9 h-auto sm:h-9 py-1 sm:py-0 px-3 sm:px-4 gap-2 min-w-0 max-w-full">
         {/* Scrolling disclaimer — seamless loop; static scroll when prefers-reduced-motion */}
         <div className="flex-1 min-w-0 overflow-hidden">
           {reduceMotion ? (
             <div className="overflow-x-auto overflow-y-hidden [-webkit-overflow-scrolling:touch] pb-0.5">
-              <p className="whitespace-nowrap pr-4 text-slate-300 leading-snug">{disclaimerText}</p>
+              <p className="whitespace-nowrap pr-4 text-emerald-50/95 leading-snug">{disclaimerText}</p>
             </div>
           ) : (
             <>
               <p className="sr-only">{disclaimerText}</p>
               <div className="overflow-hidden" aria-hidden="true">
-                <div className="animate-marquee whitespace-nowrap inline-flex will-change-transform">
+                <div className="animate-marquee whitespace-nowrap inline-flex will-change-transform text-emerald-50/95">
                   <span className="inline-block shrink-0 px-6">{disclaimerText}</span>
                   <span className="inline-block shrink-0 px-6">{disclaimerText}</span>
                 </div>
@@ -230,7 +231,7 @@ export function TopBar() {
             href={TELEGRAM_ADS_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-600/80 hover:bg-sky-600 text-white font-medium transition-colors shrink-0"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/90 hover:bg-emerald-500 text-white font-medium shadow-sm shadow-emerald-950/20 transition-colors shrink-0"
             aria-label={`Live support on Telegram: @${TELEGRAM_ADS_HANDLE}`}
           >
             <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -243,7 +244,9 @@ export function TopBar() {
           <Link
             href="/create-pick"
             className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors shrink-0 ${
-              slipCount > 0 ? 'bg-emerald-600/80 hover:bg-emerald-600 text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/60'
+              slipCount > 0
+                ? 'bg-emerald-600/80 hover:bg-emerald-600 text-white'
+                : 'text-emerald-100/75 hover:text-white hover:bg-emerald-800/55'
             }`}
             aria-label={
               slipCount > 0
