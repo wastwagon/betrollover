@@ -14,6 +14,7 @@
  *   API_MAX_FOOTBALL_ODDS_FIXTURES=0 Max football fixtures per per-fixture /odds?fixture= sync batch (0 = uncapped)
  *   API_MAX_LEAGUE_BACKFILL_PER_RUN=50
  *   API_CALL_DELAY_MS=100            Delay between API calls (transfers, injuries)
+ *   API_ODDS_CALL_DELAY_MS=250       Delay between /odds per-fixture calls (lower = faster but more 429s)
  *   API_PREDICTION_DELAY_MS=100      Delay between prediction API calls
  *   API_FIXTURE_UPDATE_BATCH_SIZE=20 API batch size for fixture results
  *   API_MAX_FIXTURES_UPDATE_PER_RUN=100
@@ -56,6 +57,15 @@ export const MAX_LEAGUE_BACKFILL_PER_RUN = Math.min(
 /** Delay (ms) between API calls to avoid rate limits. Free: 350; Pro: 100; Ultra: 50 */
 export const API_CALL_DELAY_MS = Math.max(
   parseInt(process.env.API_CALL_DELAY_MS || '', 10) || (isUltra ? 50 : isProLike ? 100 : 350),
+  50
+);
+
+/**
+ * Delay between GET /odds?fixture= calls. Kept separate from API_CALL_DELAY_MS because per-fixture
+ * odds sync issues many requests in one run; Ultra's 50ms general delay is too aggressive here.
+ */
+export const API_ODDS_CALL_DELAY_MS = Math.max(
+  parseInt(process.env.API_ODDS_CALL_DELAY_MS || '', 10) || (isUltra ? 200 : isProLike ? 250 : 400),
   50
 );
 

@@ -11,10 +11,25 @@ import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { getSportApiBaseUrl } from '../../config/sports.config';
 import { normalizeFixtureElapsed } from './fixture-status-elapsed.util';
 import { extractHalftimeScores } from './fixture-halftime.util';
-import { API_CALL_DELAY_MS, MAX_FOOTBALL_ODDS_FIXTURES } from '../../config/api-limits.config';
+import {
+  API_CALL_DELAY_MS,
+  API_ODDS_CALL_DELAY_MS,
+  MAX_FOOTBALL_ODDS_FIXTURES,
+} from '../../config/api-limits.config';
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const ODDS_FETCH_MAX_ATTEMPTS = 6;
+
+/** Parse Retry-After as seconds; returns ms or null if unusable */
+function retryAfterMs(headers: Headers): number | null {
+  const raw = headers.get('retry-after');
+  if (!raw) return null;
+  const sec = parseInt(raw, 10);
+  if (!Number.isFinite(sec) || sec < 0) return null;
+  return sec * 1000;
 }
 
 @Injectable()
@@ -34,6 +49,33 @@ export class OddsSyncService {
     private apiSettingsRepo: Repository<ApiSettings>,
     private marketFilterService: MarketFilterService,
   ) {}
+
+  /**
+   * Retry on 429 with Retry-After or exponential backoff so transient limits don't skip fixtures.
+   */
+  private async fetchOddsResponse(
+    url: string,
+    headers: Record<string, string>,
+    logContext: string,
+  ): Promise<Response> {
+    let last: Response | null = null;
+    for (let attempt = 1; attempt <= ODDS_FETCH_MAX_ATTEMPTS; attempt++) {
+      const res = await fetch(url, { headers });
+      last = res;
+      if (res.status !== 429) {
+        return res;
+      }
+      if (attempt >= ODDS_FETCH_MAX_ATTEMPTS) {
+        break;
+      }
+      const fromHeader = retryAfterMs(res.headers);
+      const exponential = Math.min(2000 * Math.pow(2, attempt - 1), 120_000);
+      const waitMs = Math.max(fromHeader ?? 0, exponential);
+      this.logger.debug(`${logContext}: HTTP 429, waiting ${waitMs}ms before retry ${attempt + 1}/${ODDS_FETCH_MAX_ATTEMPTS}`);
+      await sleep(waitMs);
+    }
+    return last!;
+  }
 
   private async getApiKey(): Promise<string> {
     try {
@@ -87,13 +129,19 @@ export class OddsSyncService {
     for (const fixture of fixtures) {
       try {
         if (idx++ > 0) {
-          await sleep(API_CALL_DELAY_MS);
+          await sleep(API_ODDS_CALL_DELAY_MS);
         }
-        // Fetch odds from API
-        const res = await fetch(`${getSportApiBaseUrl('football')}/odds?fixture=${fixture.apiId}`, { headers });
-        
+        const res = await this.fetchOddsResponse(
+          `${getSportApiBaseUrl('football')}/odds?fixture=${fixture.apiId}`,
+          headers,
+          `odds fixture=${fixture.apiId}`,
+        );
+
         if (!res.ok) {
-          this.logger.warn(`Failed to fetch odds for fixture ${fixture.apiId}: ${res.status}`);
+          this.logger.warn(
+            `Failed to fetch odds for fixture ${fixture.apiId}: ${res.status}` +
+              (res.status === 429 ? ` after ${ODDS_FETCH_MAX_ATTEMPTS} attempts` : ''),
+          );
           errors++;
           continue;
         }
@@ -187,11 +235,17 @@ export class OddsSyncService {
       const date = dates[d];
       try {
         if (d > 0) {
-          await sleep(API_CALL_DELAY_MS);
+          await sleep(API_ODDS_CALL_DELAY_MS);
         }
-        const res = await fetch(`${getSportApiBaseUrl('football')}/odds?date=${date}`, { headers });
+        const res = await this.fetchOddsResponse(
+          `${getSportApiBaseUrl('football')}/odds?date=${date}`,
+          headers,
+          `odds date=${date}`,
+        );
         if (!res.ok) {
-          this.logger.warn(`Odds by date ${date}: ${res.status}`);
+          this.logger.warn(
+            `Odds by date ${date}: ${res.status}` + (res.status === 429 ? ` after ${ODDS_FETCH_MAX_ATTEMPTS} attempts` : ''),
+          );
           continue;
         }
         const data = await safeJson<any>(res);
