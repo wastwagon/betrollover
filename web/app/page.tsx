@@ -15,7 +15,6 @@ import { AdSlot } from '@/components/AdSlot';
 import { HomeHero } from '@/components/HomeHero';
 import { HomeJoinCtaCard } from '@/components/HomeJoinCtaCard';
 import { HomePopularTipsters } from '@/components/HomePopularTipsters';
-import { HomePopularEvents } from '@/components/HomePopularEvents';
 import { HomeFreeTipOfTheDay } from '@/components/HomeFreeTipOfTheDay';
 import { HomeQuickMarketplaceSections } from '@/components/HomeQuickMarketplaceSections';
 import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
@@ -167,7 +166,6 @@ export default async function HomePage() {
         <section id="free-tip-of-the-day" className="w-full min-w-0">
           <HomeFreeTipOfTheDay />
         </section>
-        <HomePopularEvents />
         <div className="section-ux-rail-4xl w-full min-w-0">
           <AdSlot zoneSlug="between-sections" fullWidth className="w-full" />
         </div>

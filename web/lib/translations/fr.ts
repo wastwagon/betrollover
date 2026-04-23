@@ -145,8 +145,6 @@ const fr: Record<string, string> = {
   'home.hero_badge': 'Approuvé par les passionnés de sport',
   'home.featured_tipsters': 'Meilleurs Tipsters',
   'home.featured_tipsters_sub': 'Tipsters vérifiés classés par taux de victoire et ROI',
-  'home.popular_events': 'Événements Populaires',
-  'home.popular_events_sub': 'Les pronostics les plus suivis cette semaine',
   'home.free_tip': 'Pronostic Gratuit du Jour',
   'home.free_tip_sub': 'Le pronostic gratuit d\'aujourd\'hui de notre meilleur tipster',
   'home.free_tip_browse_all': 'Tous les pronostics →',
@@ -158,12 +156,6 @@ const fr: Record<string, string> = {
   'home.marketplace_active_sub':
     'Nouveaux pronostics des tipsters du classement général — et d’autres annonces récentes pour toujours voir du live.',
   'home.marketplace_active_cta': 'Voir tous les tipsters',
-  'home.marketplace_sale_badge': 'À vendre',
-  'home.marketplace_sale_title': 'Pronostics payants en vente',
-  'home.marketplace_sale_sub':
-    'Pronostics payants protégés par escrow, publiés par des vendeurs vérifiés. Touchez une carte pour les détails ou achetez après connexion.',
-  'home.marketplace_sale_link': 'Voir uniquement payants',
-  'home.marketplace_browse': 'Ouvrir le marché',
   'home.how_it_works': 'Comment Ça Marche',
   'home.for_buyers': 'Pour les acheteurs',
   'home.for_sellers': 'Pour les vendeurs',

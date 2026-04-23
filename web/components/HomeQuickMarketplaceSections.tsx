@@ -82,7 +82,6 @@ function pickEliteShowcase(all: MarketplaceCardItem[], eliteNames: Set<string>, 
 export function HomeQuickMarketplaceSections() {
   const t = useT();
   const [elite, setElite] = useState<MarketplaceCardItem[]>([]);
-  const [paid, setPaid] = useState<MarketplaceCardItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -90,24 +89,19 @@ export function HomeQuickMarketplaceSections() {
     const api = getApiUrl();
     (async () => {
       try {
-        const [lbRes, allRes, paidRes] = await Promise.all([
+        const [lbRes, allRes] = await Promise.all([
           fetch(`${api}/leaderboard?period=all_time&limit=24`),
           fetch(`${api}/accumulators/marketplace/public?limit=48`),
-          fetch(`${api}/accumulators/marketplace/public?limit=12&priceFilter=paid`),
         ]);
         const lbJson = lbRes.ok ? await lbRes.json() : {};
         const allJson = allRes.ok ? await allRes.json() : {};
-        const paidJson = paidRes.ok ? await paidRes.json() : {};
         if (cancelled) return;
         const eliteNames = leaderboardUsernameSet(lbJson);
         const allItems = parseMarketplacePayload(allJson);
-        const paidItems = parseMarketplacePayload(paidJson);
         setElite(pickEliteShowcase(allItems, eliteNames, 8));
-        setPaid(paidItems.slice(0, 8));
       } catch {
         if (!cancelled) {
           setElite([]);
-          setPaid([]);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -173,41 +167,6 @@ export function HomeQuickMarketplaceSections() {
               className="inline-flex items-center justify-center text-sm font-semibold text-[var(--primary)] hover:underline min-h-[44px] sm:min-h-0"
             >
               {t('home.marketplace_active_cta')} →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-12 md:py-16 border-t border-[var(--border)] bg-gradient-to-b from-[var(--card)]/40 to-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
-        <div className="section-ux-gutter-wide w-full min-w-0">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between mb-6 sm:mb-8">
-            <div className="text-center sm:text-left max-w-2xl sm:max-w-none mx-auto sm:mx-0 px-1 sm:px-0">
-              <span className="inline-block px-3 py-1 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-2">
-                {t('home.marketplace_sale_badge')}
-              </span>
-              <h2 className="text-lg font-bold text-[var(--text)] sm:text-xl md:text-2xl">{t('home.marketplace_sale_title')}</h2>
-              <p className="text-sm text-[var(--text-muted)] mt-2 leading-relaxed">{t('home.marketplace_sale_sub')}</p>
-            </div>
-            <Link
-              href="/marketplace?priceFilter=paid"
-              className="text-sm font-semibold text-[var(--primary)] hover:underline shrink-0 text-center sm:text-right self-center sm:self-start"
-            >
-              {t('home.marketplace_sale_link')} →
-            </Link>
-          </div>
-          {loading ? (
-            skeleton
-          ) : paid.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">{renderCards(paid)}</div>
-          ) : (
-            <p className="text-center text-[var(--text-muted)] py-8 text-sm">{t('common.no_results')}</p>
-          )}
-          <div className="text-center mt-6">
-            <Link
-              href="/marketplace"
-              className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors"
-            >
-              {t('home.marketplace_browse')}
             </Link>
           </div>
         </div>
