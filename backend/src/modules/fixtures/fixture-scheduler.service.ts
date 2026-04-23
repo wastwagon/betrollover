@@ -28,6 +28,11 @@ const PREDICTION_CATCHUP_CRON = process.env.PREDICTION_CATCHUP_CRON || '0 2 * * 
  * so newly published fixtures appear without waiting for a single daily run. ~28 API calls/day for dates — fine on Pro/Ultra.
  * Live + finished fixture sync about every minute (Ultra); periodic settlement every minute. Also: 19:45 odds force, 20:00 AI predictions, 2:00 AM catch-up + archive.
  *
+ * Postgres / checkpoints: bursts of WAL and long `checkpoint complete` lines often align with this service — especially
+ * the 6-hour full sync (fixtures + odds + cleanup), the 2-hour odds pass, ODDS_FORCE_REFRESH_CRON, and PREDICTION_DAILY_CRON.
+ * Crons below without `{ timeZone }` use the process timezone (typically set TZ on the API container); prediction-related
+ * env crons use PREDICTION_TIMEZONE. Misaligned TZ makes UTC log correlation harder.
+ *
  * Set ENABLE_FOOTBALL_SYNC=false to skip football API (e.g. when using prod server).
  */
 @Injectable()

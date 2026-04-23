@@ -23,7 +23,9 @@ export async function GET(request: NextRequest) {
   params.set('language', locale);
 
   const url = `${BACKEND_URL}/api/v1/news${params.toString() ? `?${params}` : ''}`;
-  console.log(`[NewsProxy] Fetching: ${url}`); // Debug Log
+  if (process.env.NODE_ENV !== 'production' || process.env.DEBUG_NEWS_PROXY === '1') {
+    console.log(`[NewsProxy] Fetching: ${url}`);
+  }
 
   try {
     const res = await fetch(url, { next: { revalidate: 60 } });
