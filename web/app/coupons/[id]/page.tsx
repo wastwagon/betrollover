@@ -14,6 +14,7 @@ import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { useLanguage, useT, type SupportedLanguage } from '@/context/LanguageContext';
 import { formatTipsterRankHash } from '@/lib/tipster-rank-ui';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
+import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -480,6 +481,15 @@ export default function CouponDetailPage() {
         </nav>
         <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)] mb-6 tracking-tight min-w-0 break-words">{coupon.title}</h1>
 
+        {Number(coupon.price) > 0 ? (
+          <EscrowTrustCallout
+            className="mb-6 lg:hidden"
+            title={t('marketplace.trust_callout_title')}
+            body={t('marketplace.trust_callout_body')}
+            linkLabel={t('home.how_it_works')}
+          />
+        ) : null}
+
         <div className="flex flex-col lg:flex-row gap-8 min-w-0">
 
           {/* ── Main content ── */}
@@ -627,10 +637,9 @@ export default function CouponDetailPage() {
                     🔒
                   </span>
                   <div className="min-w-0">
-                    <p className="font-semibold text-[var(--text)]">Selections are locked</p>
+                    <p className="font-semibold text-[var(--text)]">{t('pick_detail.selections_locked_title')}</p>
                     <p className="text-sm text-[var(--text-muted)] mt-0.5 leading-relaxed">
-                      Purchase this pick to see matches, markets, and odds for each leg. Combined total odds are shown
-                      above for reference — same as on the marketplace card.
+                      {t('pick_detail.selections_locked_body')}
                     </p>
                   </div>
                 </div>

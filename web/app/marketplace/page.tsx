@@ -469,6 +469,7 @@ export default function MarketplacePage() {
               src="/images/marketing/marketplace-strip.png"
               alt=""
               fill
+              fetchPriority="low"
               className="object-cover object-center"
               sizes="(max-width: 1280px) 100vw, 1280px"
             />
