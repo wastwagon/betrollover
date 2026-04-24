@@ -65,10 +65,8 @@ function RegisterForm() {
         <div className="relative w-full max-w-[440px] min-w-0 mx-auto px-4 sm:px-0">
           <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white/90 dark:bg-slate-900/60 backdrop-blur-sm shadow-[0_1px_2px_rgb(0_0_0/0.04),0_24px_48px_-12px_rgb(0_0_0/0.08)] dark:shadow-[0_24px_48px_-12px_rgb(0_0_0/0.35)] px-5 py-8 sm:px-10 sm:py-11 min-w-0 max-w-full">
               <div className="text-center mb-9">
-                <h1 className="text-[1.65rem] sm:text-3xl font-semibold text-[var(--text)] tracking-[-0.02em] leading-tight">
-                  {t('auth.create_account')}
-                </h1>
-                <p className="mt-2.5 text-sm text-[var(--text-muted)] leading-relaxed">
+                <h1 className="sr-only">{t('auth.register_cta')}</h1>
+                <p className="text-base sm:text-lg font-medium text-[var(--text)] leading-relaxed">
                   {t('auth.register_subtitle')}
                 </p>
               </div>
