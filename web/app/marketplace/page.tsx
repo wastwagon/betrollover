@@ -534,32 +534,32 @@ export default function MarketplacePage() {
                 </div>
               </div>
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 w-full sm:w-auto min-w-0">
-                <label className="text-sm font-medium text-[var(--text)] shrink-0">Price</label>
+                <label className="text-sm font-medium text-[var(--text)] shrink-0">{t('marketplace.filter_price')}</label>
                 <select
                   value={priceFilter}
                   onChange={(e) => setPriceFilter(e.target.value as PriceFilter)}
                   className="w-full sm:w-auto sm:min-w-[120px] px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                 >
-                  <option value="all">All</option>
-                  <option value="free">Free only</option>
-                  <option value="paid">Paid only</option>
-                  <option value="sold">Sold only</option>
+                  <option value="all">{t('common.all')}</option>
+                  <option value="free">{t('marketplace.filter_free_only')}</option>
+                  <option value="paid">{t('marketplace.filter_paid_only')}</option>
+                  <option value="sold">{t('marketplace.filter_sold_only')}</option>
                 </select>
               </div>
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 w-full sm:w-auto min-w-0">
-                <label className="text-sm font-medium text-[var(--text)] shrink-0">Sort by</label>
+                <label className="text-sm font-medium text-[var(--text)] shrink-0">{t('marketplace.sort_by')}</label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortBy)}
                   className="w-full sm:w-auto sm:min-w-[140px] px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                 >
-                  <option value="newest">Newest first</option>
+                  <option value="newest">{t('marketplace.sort_newest_first')}</option>
                   {followedTipsterUsernames.size > 0 && (
-                    <option value="following-only">Following only</option>
+                    <option value="following-only">{t('marketplace.sort_following_only')}</option>
                   )}
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                  <option value="tipster-rank">Tipster rank</option>
+                  <option value="price-low">{t('marketplace.sort_price_asc')}</option>
+                  <option value="price-high">{t('marketplace.sort_price_desc')}</option>
+                  <option value="tipster-rank">{t('marketplace.sort_tipster_rank')}</option>
                 </select>
               </div>
               {(priceFilter !== 'all' || sortBy !== 'newest' || debouncedTipster) && (
@@ -572,7 +572,7 @@ export default function MarketplacePage() {
                   }}
                   className="w-full sm:w-auto px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                 >
-                  Clear filters
+                  {t('marketplace.clear_filters')}
                 </button>
               )}
             </div>
@@ -665,7 +665,7 @@ export default function MarketplacePage() {
                 disabled={loadingMore}
                 className="w-full max-w-md sm:w-auto px-6 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-70 transition-colors"
               >
-                {loadingMore ? 'Loading...' : `Load more (${picks.length} of ${total})`}
+                {loadingMore ? t('common.loading') : t('marketplace.load_more_count', { shown: String(picks.length), total: String(total) })}
               </button>
             </div>
           )}

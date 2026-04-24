@@ -200,6 +200,14 @@ export default function MyPurchasesPage() {
             <span aria-hidden>🛡</span>
             {t('my_purchases.escrow_refund_note')}
           </p>
+          {!loading && (resultFilter === 'lost' || resultFilter === 'void') && (
+            <p className="text-xs text-[var(--text-muted)] mb-4">
+              {t('my_purchases.refund_wallet_hint')}{' '}
+              <Link href="/wallet" className="text-[var(--primary)] hover:underline">
+                {t('wallet.title')}
+              </Link>
+            </p>
+          )}
 
           {!loading && vipSubscriptions.length > 0 && (
             <section
