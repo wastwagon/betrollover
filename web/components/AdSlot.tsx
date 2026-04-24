@@ -85,26 +85,33 @@ export function AdSlot({ zoneSlug, className = '', fullWidth = false }: AdSlotPr
 
   const imgW = ad.width && ad.width > 0 ? ad.width : 300;
   const imgH = ad.height && ad.height > 0 ? ad.height : 250;
+  const maxDisplayH = fullWidth ? 'min(120px, 40vw)' : 'min(400px, 70vh)';
 
   return (
-    <div className={shell}>
+    <div className={`${shell} ${placeholderMinH} flex flex-col justify-center`}>
       <Link
         href={ad.targetUrl}
         target="_blank"
         rel="noopener noreferrer sponsored"
         onClick={handleClick}
-        className="block w-full max-w-full rounded-xl overflow-hidden border border-[var(--border)] hover:border-[var(--primary)]/30 transition-colors"
+        className="block w-full max-w-full rounded-xl overflow-hidden border border-[var(--border)] hover:border-[var(--primary)]/30 transition-colors bg-[var(--card)]/40"
       >
-        <Image
-          src={getAdImageUrl(ad.imageUrl) || ad.imageUrl}
-          alt={`Ad: ${ad.advertiserName}`}
-          width={imgW}
-          height={imgH}
-          sizes="(max-width: 768px) 100vw, 728px"
-          className="w-full h-auto max-w-full object-contain"
-          style={{ maxHeight: fullWidth ? 'min(120px, 40vw)' : Math.min(imgH, 400) }}
-          unoptimized
-        />
+        <div
+          className="relative w-full mx-auto max-w-full"
+          style={{
+            aspectRatio: `${imgW} / ${imgH}`,
+            maxHeight: maxDisplayH,
+          }}
+        >
+          <Image
+            src={getAdImageUrl(ad.imageUrl) || ad.imageUrl}
+            alt={`Ad: ${ad.advertiserName}`}
+            fill
+            sizes="(max-width: 768px) 100vw, 728px"
+            className="object-contain object-center"
+            unoptimized
+          />
+        </div>
       </Link>
       <span className="block text-[10px] text-[var(--text-muted)] mt-1 text-center">Ad</span>
     </div>
