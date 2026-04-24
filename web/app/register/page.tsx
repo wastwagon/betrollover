@@ -383,7 +383,7 @@ function RegisterForm() {
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[var(--text)] transition-colors p-1 rounded-lg hover:bg-slate-100"
-                      tabIndex={-1}
+                      aria-pressed={showPassword}
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? (
@@ -421,7 +421,7 @@ function RegisterForm() {
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[var(--text)] transition-colors p-1 rounded-lg hover:bg-slate-100"
-                      tabIndex={-1}
+                      aria-pressed={showConfirmPassword}
                       aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
                     >
                       {showConfirmPassword ? (

@@ -87,6 +87,7 @@ const fr: Record<string, string> = {
   'common.search': 'Rechercher',
   'common.filter': 'Filtrer',
   'common.clear': 'Effacer',
+  'common.retry': 'Reessayer',
   'common.all': 'Tous',
   'common.free': 'Gratuit',
   'common.paid': 'Payant',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useT } from '@/context/LanguageContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -106,6 +106,7 @@ export default function MarketplacePage() {
   }, [tipsterSearch]);
   const [followedTipsterUsernames, setFollowedTipsterUsernames] = useState<Set<string>>(new Set());
   const [followLoading, setFollowLoading] = useState<string | null>(null);
+  const [autoPurchaseHandled, setAutoPurchaseHandled] = useState(false);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
 
   // Sync sport + tipster search from URL (shareable links, back/forward)
@@ -337,7 +338,7 @@ export default function MarketplacePage() {
     }
   };
 
-  const purchase = async (id: number) => {
+  const purchase = useCallback(async (id: number) => {
     const token = localStorage.getItem('token');
     if (!token) {
       router.push('/login?redirect=/marketplace');
@@ -349,7 +350,13 @@ export default function MarketplacePage() {
 
     // Check wallet balance for paid coupons
     if (coupon.price > 0 && (walletBalance === null || walletBalance < coupon.price)) {
-      showError(new Error(`Insufficient funds. You need GHS ${coupon.price.toFixed(2)} but only have GHS ${walletBalance?.toFixed(2) || '0.00'}.`));
+      const continuePath = `/marketplace?autoPurchase=${id}&autoAttemptId=${Date.now()}`;
+      showError(
+        new Error(
+          `${t('pick_card.top_up_wallet_to_purchase')}. ${t('wallet.balance')}: GHS ${walletBalance?.toFixed(2) || '0.00'}`,
+        ),
+      );
+      router.push(`/wallet?continue=${encodeURIComponent(continuePath)}`);
       return;
     }
 
@@ -403,7 +410,24 @@ export default function MarketplacePage() {
     } finally {
       setPurchasing(null);
     }
-  };
+  }, [picks, router, showError, showSuccess, t, walletBalance]);
+
+  useEffect(() => {
+    if (autoPurchaseHandled) return;
+    const autoPurchaseRaw = searchParams.get('autoPurchase');
+    if (!autoPurchaseRaw) return;
+    const id = Number(autoPurchaseRaw);
+    if (!Number.isFinite(id) || id <= 0) return;
+    if (loading) return;
+    if (purchasing !== null) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const coupon = picks.find((p) => p.id === id);
+    if (!coupon) return;
+    if (coupon.price > 0 && (walletBalance === null || walletBalance < coupon.price)) return;
+    setAutoPurchaseHandled(true);
+    void purchase(id);
+  }, [autoPurchaseHandled, searchParams, loading, purchasing, picks, walletBalance, purchase]);
 
   return (
     <DashboardShell>

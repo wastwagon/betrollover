@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { DashboardShell } from '@/components/DashboardShell';
@@ -65,6 +65,7 @@ function WalletContent() {
   const [payoutMethods, setPayoutMethods] = useState<PayoutMethod[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [depositAmount, setDepositAmount] = useState('');
   const [depositLoading, setDepositLoading] = useState(false);
   const [depositError, setDepositError] = useState<string | null>(null);
@@ -98,11 +99,12 @@ function WalletContent() {
     }
   };
 
-  const loadData = () => {
+  const loadData = useCallback(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
     const headers = { Authorization: `Bearer ${token}` };
     const apiUrl = getApiUrl();
+    setLoadError(null);
     Promise.all([
       fetch(`${apiUrl}/users/me`, { headers }).then((r) => (r.ok ? r.json() : null)),
       fetch(`${apiUrl}/wallet/balance`, { headers }).then((r) => r.ok ? r.json() : null),
@@ -118,11 +120,12 @@ function WalletContent() {
         setWithdrawals(Array.isArray(wdrs) ? wdrs : []);
       })
       .catch(() => {
+        setLoadError(t('common.error'));
         setBalance({ balance: 0, currency: 'GHS' });
         setTransactions([]);
       })
       .finally(() => setLoading(false));
-  };
+  }, [t]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -131,7 +134,7 @@ function WalletContent() {
       return;
     }
     loadData();
-  }, [router]);
+  }, [router, loadData]);
 
   // Persist a post-top-up return path for seamless checkout continuation.
   useEffect(() => {
@@ -143,8 +146,13 @@ function WalletContent() {
   // Handle callback from Paystack: verify deposit (credits if webhook hasn't fired) then refresh
   useEffect(() => {
     const deposit = searchParams.get('deposit');
+    const depositState = deposit?.toLowerCase();
+    if (depositState === 'cancelled' || depositState === 'failed') {
+      setDepositError(t('wallet.deposit_failed'));
+      return;
+    }
     const ref = searchParams.get('ref');
-    if (deposit === 'success' && ref) {
+    if (depositState === 'success' && ref) {
       const token = localStorage.getItem('token');
       if (token) {
         fetch(`${getApiUrl()}/wallet/deposit/verify?ref=${encodeURIComponent(ref)}`, {
@@ -156,15 +164,20 @@ function WalletContent() {
       const nextPath = normalizeInternalPath(sessionStorage.getItem('wallet.afterTopupContinue'));
       if (nextPath) {
         sessionStorage.removeItem('wallet.afterTopupContinue');
-        const withAutoSubscribe = nextPath.includes('?')
-          ? `${nextPath}&autoSubscribe=1&autoAttemptId=${Date.now()}`
-          : `${nextPath}?autoSubscribe=1&autoAttemptId=${Date.now()}`;
-        router.replace(withAutoSubscribe, { scroll: false });
+        const isSubscriptionsCheckout = nextPath.startsWith('/subscriptions/checkout');
+        const resumePath = isSubscriptionsCheckout
+          ? (nextPath.includes('?')
+            ? `${nextPath}&autoSubscribe=1&autoAttemptId=${Date.now()}`
+            : `${nextPath}?autoSubscribe=1&autoAttemptId=${Date.now()}`)
+          : (nextPath.includes('?')
+            ? `${nextPath}&autoAttemptId=${Date.now()}`
+            : `${nextPath}?autoAttemptId=${Date.now()}`);
+        router.replace(resumePath, { scroll: false });
       } else {
         router.replace('/wallet', { scroll: false });
       }
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, loadData, t]);
 
   const handleDeposit = async () => {
     const amount = parseFloat(depositAmount);
@@ -357,6 +370,19 @@ function WalletContent() {
               <Link href="/verify-email" className="mt-2 inline-block text-sm underline hover:no-underline">
                 {t('wallet.resend_verify')}
               </Link>
+            </div>
+          )}
+
+          {!loading && loadError && (
+            <div className="rounded-xl border border-red-300/60 bg-red-50 dark:bg-red-950/25 p-4 text-red-700 dark:text-red-300">
+              <p className="text-sm font-medium">{loadError}</p>
+              <button
+                type="button"
+                onClick={loadData}
+                className="mt-2 text-sm underline hover:no-underline"
+              >
+                {t('common.retry')}
+              </button>
             </div>
           )}
 
@@ -720,6 +746,7 @@ function WalletContent() {
                     const displayType = isMisclassifiedCredit ? 'credit' : tx.type;
                     const TX_ICON: Record<string, string> = { payout:'💰', commission:'🏛', refund:'↩', deposit:'⬆', withdrawal:'💸', purchase:'🛒', credit:'✨', adjustment:'⚙️' };
                     const TX_LABEL: Record<string, string> = { payout: t('wallet.net_payout'), commission: t('wallet.commission'), refund: t('wallet.refund'), deposit: t('wallet.deposit'), withdrawal: t('wallet.withdrawal'), purchase: t('wallet.purchase'), credit: t('wallet.credit'), adjustment: t('wallet.adjustment') };
+                    const refundFromPick = displayType === 'refund' && (tx.reference?.startsWith('pick-') ?? false);
                     return (
                       <li key={tx.id} className={`flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 py-3 sm:py-2 border-b border-[var(--border)] last:border-0 ${isCommission ? 'opacity-70' : ''}`}>
                         <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -727,6 +754,11 @@ function WalletContent() {
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-sm text-[var(--text)]">{TX_LABEL[displayType] ?? displayType}</p>
                             <p className="text-xs text-[var(--text-muted)] truncate">{tx.description || new Date(tx.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short' })}</p>
+                            {refundFromPick ? (
+                              <Link href="/my-purchases" className="text-[10px] text-[var(--primary)] hover:underline">
+                                {t('my_purchases.title')}
+                              </Link>
+                            ) : null}
                           </div>
                         </div>
                         <div className="text-right shrink-0 sm:ml-auto pl-9 sm:pl-0 tabular-nums">

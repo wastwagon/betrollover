@@ -88,6 +88,7 @@ const en = {
   'common.search': 'Search',
   'common.filter': 'Filter',
   'common.clear': 'Clear',
+  'common.retry': 'Retry',
   'common.all': 'All',
   'common.free': 'Free',
   'common.paid': 'Paid',
