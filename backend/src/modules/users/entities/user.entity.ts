@@ -87,6 +87,9 @@ export class User {
   @Column({ default: false })
   pushNotifications: boolean;
 
+  @Column({ default: false })
+  marketingConsent: boolean;
+
   @Column('text', { nullable: true })
   bio: string | null = null;
 

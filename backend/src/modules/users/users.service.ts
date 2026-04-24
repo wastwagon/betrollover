@@ -60,7 +60,7 @@ export class UsersService {
   async findById(id: number): Promise<User | null> {
     return this.usersRepository.findOne({
       where: { id },
-      select: ['id', 'email', 'contactEmail', 'username', 'displayName', 'avatar', 'phone', 'role', 'status', 'createdAt', 'emailVerifiedAt', 'ageVerifiedAt', 'bio'],
+      select: ['id', 'email', 'contactEmail', 'username', 'displayName', 'avatar', 'phone', 'role', 'status', 'createdAt', 'emailVerifiedAt', 'ageVerifiedAt', 'bio', 'marketingConsent'],
     });
   }
 
@@ -75,6 +75,7 @@ export class UsersService {
     country?: string;
     countryCode?: string;
     flagEmoji?: string;
+    marketingConsent?: boolean;
   }): Promise<User> {
     const hashedPassword = await bcrypt.hash(data.password, 12);
     const user = this.usersRepository.create({
@@ -89,6 +90,7 @@ export class UsersService {
       country: data.country ?? 'Ghana',
       countryCode: data.countryCode ?? 'GHA',
       flagEmoji: data.flagEmoji ?? '🇬🇭',
+      marketingConsent: data.marketingConsent === true,
     });
     return this.usersRepository.save(user);
   }
@@ -208,7 +210,7 @@ export class UsersService {
 
   async updateProfile(
     id: number,
-    data: { displayName?: string; phone?: string; avatar?: string | null; contactEmail?: string | null; bio?: string | null },
+    data: { displayName?: string; phone?: string; avatar?: string | null; contactEmail?: string | null; bio?: string | null; marketingConsent?: boolean },
   ): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) throw new BadRequestException('Account not found.');
@@ -226,6 +228,9 @@ export class UsersService {
     if (data.avatar !== undefined) {
       user.avatar = data.avatar || null;
       await this.syncAvatarToTipster(id, user.avatar);
+    }
+    if (data.marketingConsent !== undefined) {
+      user.marketingConsent = data.marketingConsent === true;
     }
     await this.usersRepository.save(user);
     return this.findById(id) as Promise<User>;

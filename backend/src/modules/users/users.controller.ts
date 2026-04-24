@@ -17,7 +17,7 @@ export class UsersController {
 
   @Patch('me')
   @UseGuards(JwtAuthGuard)
-  async updateProfile(@CurrentUser() user: User, @Body() body: { displayName?: string; phone?: string; avatar?: string | null; contactEmail?: string | null; bio?: string | null }) {
+  async updateProfile(@CurrentUser() user: User, @Body() body: { displayName?: string; phone?: string; avatar?: string | null; contactEmail?: string | null; bio?: string | null; marketingConsent?: boolean }) {
     return this.usersService.updateProfile(user.id, body);
   }
 

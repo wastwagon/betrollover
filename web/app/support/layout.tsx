@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: 'Get help, raise a dispute, or report an issue. Our support team reviews all tickets promptly.',
   openGraph: {
     title: `Support & Disputes | ${SITE_NAME}`,
-    description: 'Raise a support ticket or dispute. We respond within 24 hours.',
+    description: 'Raise a support ticket or dispute. Support replies are typically within 24 hours (Mon–Fri); wallet and payment disputes within 48 hours.',
   },
 };
 

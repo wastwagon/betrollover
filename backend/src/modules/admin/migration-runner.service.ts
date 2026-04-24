@@ -140,6 +140,17 @@ export class MigrationRunnerService {
     }
   }
 
+  /** Ensure optional marketing consent preference exists on users. */
+  async ensureMarketingConsentColumn(): Promise<void> {
+    try {
+      await this.dataSource.query(
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS marketing_consent BOOLEAN NOT NULL DEFAULT FALSE`,
+      );
+    } catch (err: any) {
+      this.logger.warn(`ensureMarketingConsentColumn failed (non-fatal): ${err?.message || err}`);
+    }
+  }
+
   /**
    * Ensure subscription_escrow audit columns (082). Fixes admin escrow / projections if migration was skipped.
    * Backfills commission_rate_percent_at_purchase for held rows from api_settings.

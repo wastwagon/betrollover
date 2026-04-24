@@ -1,5 +1,4 @@
-import { Injectable, Logger, UnauthorizedException, ConflictException, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { resolveIpToCountry, countryCodeToFlagEmoji } from '../../common/geo.util';
+import { Injectable, Logger, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { validatePasswordPolicy } from '../../common/password-policy.util';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -13,14 +12,11 @@ import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { UsersService } from '../users/users.service';
 import { WalletService } from '../wallet/wallet.service';
-import { EmailOtpService } from '../otp/email-otp.service';
 import { EmailService } from '../email/email.service';
 import { User } from '../users/entities/user.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { PasswordResetOtp } from '../otp/entities/password-reset-otp.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
-import { ReferralsService } from '../referrals/referrals.service';
-import { VisitorSession } from '../admin/entities/visitor-session.entity';
 
 const REFRESH_TOKEN_EXPIRY_DAYS = 30;
 const PASSWORD_RESET_COOLDOWN_MS = 60_000;
@@ -42,7 +38,6 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private walletService: WalletService,
-    private emailOtpService: EmailOtpService,
     private emailService: EmailService,
     private config: ConfigService,
     @InjectRepository(Tipster)
@@ -51,18 +46,7 @@ export class AuthService {
     private passwordResetOtpRepo: Repository<PasswordResetOtp>,
     @InjectRepository(RefreshToken)
     private refreshTokenRepo: Repository<RefreshToken>,
-    private referralsService: ReferralsService,
-    @InjectRepository(VisitorSession)
-    private visitorSessionRepo: Repository<VisitorSession>,
   ) { }
-
-  async sendRegistrationOtp(email: string) {
-    const existing = await this.usersService.findByEmail(email);
-    if (existing) {
-      throw new ConflictException('This email is already registered. Please sign in or use a different email.');
-    }
-    return this.emailOtpService.sendOtp(email.trim().toLowerCase());
-  }
 
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.usersService.findByEmail(email);
@@ -278,97 +262,6 @@ export class AuthService {
   async logoutAllForUser(userId: number): Promise<{ revoked: number }> {
     const result = await this.refreshTokenRepo.delete({ userId });
     return { revoked: result.affected ?? 0 };
-  }
-
-  async register(data: {
-    email: string;
-    username: string;
-    password: string;
-    displayName: string;
-    otpCode: string;
-    dateOfBirth: string;
-    referralCode?: string;
-    sessionId?: string;
-  }, clientIp?: string) {
-    const policy = validatePasswordPolicy(data.password);
-    if (!policy.valid) throw new BadRequestException(policy.message);
-    await this.emailOtpService.verifyOtp(data.email.trim().toLowerCase(), data.otpCode);
-    const existing = await this.usersService.findByEmail(data.email);
-    if (existing) {
-      throw new ConflictException('This email is already registered. Please sign in or use a different email.');
-    }
-
-    if (!this.usersService.isAtLeast18(data.dateOfBirth)) {
-      throw new ForbiddenException('You must be at least 18 years old to register.');
-    }
-
-    // Resolve country from IP (fire-and-forget friendly; fallback to defaults)
-    let country = 'Ghana';
-    let countryCode = 'GHA';
-    let flagEmoji = '🇬🇭';
-    if (clientIp) {
-      try {
-        const geo = await resolveIpToCountry(clientIp);
-        if (geo) {
-          country = geo.country;
-          countryCode = geo.countryCode;
-          flagEmoji = countryCodeToFlagEmoji(geo.countryCode) || flagEmoji;
-        }
-      } catch {
-        // Keep defaults on any error
-      }
-    }
-
-    let user: User;
-    try {
-      user = await this.usersService.create({
-        email: data.email,
-        username: data.username,
-        password: data.password,
-        displayName: data.displayName,
-        phone: undefined,
-        dateOfBirth: data.dateOfBirth,
-        country,
-        countryCode,
-        flagEmoji,
-      });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes('users_username_key') || (msg.includes('unique constraint') && msg.toLowerCase().includes('username'))) {
-        throw new ConflictException('This username is already taken. Please choose another.');
-      }
-      if (msg.includes('users_email_key') || (msg.includes('unique constraint') && msg.toLowerCase().includes('email'))) {
-        throw new ConflictException('This email is already registered. Please sign in or use a different email.');
-      }
-      throw err;
-    }
-    await this.usersService.setEmailVerified(user.id);
-    await this.walletService.getOrCreateWallet(user.id);
-    await this.ensureTipsterForUser(user);
-
-    // Register referral code if provided (fire-and-forget)
-    if (data.referralCode?.trim()) {
-      this.referralsService.registerSignup(user.id, data.referralCode.trim()).catch(() => {});
-    }
-
-    // Link analytics session to user for conversion attribution (fire-and-forget)
-    if (data.sessionId?.trim()) {
-      this.visitorSessionRepo.update(
-        { sessionId: data.sessionId.trim().slice(0, 64) },
-        { userId: user.id },
-      ).catch(() => {});
-    }
-
-    this.emailService.sendAdminNotification({
-      type: 'new_user_registered',
-      metadata: {
-        displayName: user.displayName,
-        email: user.email,
-        username: user.username,
-      },
-    }).catch(() => { });
-
-    return this.login(user);
   }
 
   async verifyEmail(token: string): Promise<{ verified: boolean; message: string }> {

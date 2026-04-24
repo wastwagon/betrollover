@@ -13,9 +13,9 @@
 - **Web:** Community page shows flag emoji beside username (with `title` tooltip for country code).
 - **Mobile:** Community tab shows flag beside username.
 
-### Phase 2: IP Geolocation at Registration (Done)
+### Phase 2: IP Geolocation at Account Creation (Done)
 
-- **Flow:** On `POST /auth/register`, client IP is extracted from `X-Forwarded-For`, `X-Real-IP`, or `req.ip`.
+- **Flow:** During account creation, client country data is resolved from IP.
 - **Service:** `resolveIpToCountry()` in `backend/src/common/geo.util.ts` calls ip-api.com (free, no key).
 - **Fallback:** Localhost and private IPs skip lookup; on failure or empty result, defaults to Ghana (GHA, 🇬🇭).
 - **Storage:** `UsersService.create()` accepts `country`, `countryCode`, `flagEmoji`; new users get geo-tagged.
@@ -23,7 +23,7 @@
 ### Data Flow
 
 ```
-Registration (with IP) → resolveIpToCountry(ip) → country, countryCode
+Account creation (with IP) → resolveIpToCountry(ip) → country, countryCode
                     → countryCodeToFlagEmoji(code) → flagEmoji
                     → UsersService.create({ country, countryCode, flagEmoji })
 Chat message → User has countryCode, flagEmoji → API returns them → UI displays flag

@@ -82,22 +82,12 @@ export default async function ContactPage() {
 
             <section>
               <h2 className="text-xl font-semibold mb-3">
-                {locale === 'fr' ? 'Délais de Réponse' : 'Response Times'}
+                {t('contact.response_times_title')}
               </h2>
               <ul className="list-disc pl-6 space-y-2 text-sm">
-                {locale === 'fr' ? (
-                  <>
-                    <li>Demandes de support — généralement sous 24 heures (Lun–Ven)</li>
-                    <li>Litiges de portefeuille et de paiement — sous 48 heures</li>
-                    <li>Demandes de partenariat — sous 3 à 5 jours ouvrables</li>
-                  </>
-                ) : (
-                  <>
-                    <li>Support requests — typically within 24 hours (Mon–Fri)</li>
-                    <li>Wallet &amp; payment disputes — within 48 hours</li>
-                    <li>Partnership inquiries — within 3–5 business days</li>
-                  </>
-                )}
+                <li>{t('contact.response_time_support')}</li>
+                <li>{t('contact.response_time_wallet')}</li>
+                <li>{t('contact.response_time_partnership')}</li>
               </ul>
             </section>
 

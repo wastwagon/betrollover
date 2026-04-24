@@ -1,19 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { WalletService } from '../wallet/wallet.service';
-import { EmailOtpService } from '../otp/email-otp.service';
 import { EmailService } from '../email/email.service';
-import { ReferralsService } from '../referrals/referrals.service';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { PasswordResetOtp } from '../otp/entities/password-reset-otp.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { User, UserRole } from '../users/entities/user.entity';
-import { VisitorSession } from '../admin/entities/visitor-session.entity';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -21,7 +18,6 @@ describe('AuthService', () => {
   let usersService: jest.Mocked<Partial<UsersService>>;
   let jwtService: jest.Mocked<Partial<JwtService>>;
   let walletService: jest.Mocked<Partial<WalletService>>;
-  let emailOtpService: jest.Mocked<Partial<EmailOtpService>>;
   let emailService: jest.Mocked<Partial<EmailService>>;
 
   const mockUser: Partial<User> = {
@@ -52,10 +48,6 @@ describe('AuthService', () => {
     walletService = {
       getOrCreateWallet: jest.fn().mockResolvedValue({}),
     };
-    emailOtpService = {
-      verifyOtp: jest.fn().mockResolvedValue(undefined),
-      sendOtp: jest.fn().mockResolvedValue({ sent: true }),
-    };
     emailService = {
       sendAdminNotification: jest.fn().mockResolvedValue(undefined),
       sendVerificationEmail: jest.fn().mockResolvedValue({ sent: true }),
@@ -67,14 +59,11 @@ describe('AuthService', () => {
         { provide: UsersService, useValue: usersService },
         { provide: JwtService, useValue: jwtService },
         { provide: WalletService, useValue: walletService },
-        { provide: EmailOtpService, useValue: emailOtpService },
         { provide: EmailService, useValue: emailService },
-        { provide: ReferralsService, useValue: { registerSignup: jest.fn().mockResolvedValue(undefined) } },
         { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue('http://localhost:6002') } },
         { provide: getRepositoryToken(Tipster), useValue: { findOne: jest.fn(), create: jest.fn(), save: jest.fn() } },
         { provide: getRepositoryToken(PasswordResetOtp), useValue: { findOne: jest.fn(), save: jest.fn(), delete: jest.fn() } },
         { provide: getRepositoryToken(RefreshToken), useValue: { findOne: jest.fn(), save: jest.fn(), delete: jest.fn(), create: jest.fn((o) => o) } },
-        { provide: getRepositoryToken(VisitorSession), useValue: { update: jest.fn().mockResolvedValue({ affected: 0 }) } },
       ],
     }).compile();
 
@@ -144,24 +133,6 @@ describe('AuthService', () => {
     });
   });
 
-  describe('sendRegistrationOtp', () => {
-    it('should throw ConflictException when email already registered', async () => {
-      (usersService.findByEmail as jest.Mock).mockResolvedValue(mockUser);
-
-      await expect(service.sendRegistrationOtp('test@example.com')).rejects.toThrow(ConflictException);
-      await expect(service.sendRegistrationOtp('test@example.com')).rejects.toThrow('already registered');
-      expect(emailOtpService.sendOtp).not.toHaveBeenCalled();
-    });
-
-    it('should send OTP when email is not registered', async () => {
-      (usersService.findByEmail as jest.Mock).mockResolvedValue(null);
-
-      await service.sendRegistrationOtp('new@example.com');
-
-      expect(emailOtpService.sendOtp).toHaveBeenCalledWith('new@example.com');
-    });
-  });
-
   describe('verifyEmail', () => {
     it('should return verified: false when token is empty', async () => {
       const result = await service.verifyEmail('');
@@ -209,39 +180,4 @@ describe('AuthService', () => {
     });
   });
 
-  describe('register', () => {
-    it('should throw ForbiddenException when user is under 18', async () => {
-      (usersService.isAtLeast18 as jest.Mock).mockReturnValue(false);
-
-      await expect(
-        service.register({
-          email: 'new@example.com',
-          username: 'newuser',
-          password: 'password123',
-          displayName: 'New User',
-          otpCode: '123456',
-          dateOfBirth: '2010-01-01',
-        }),
-      ).rejects.toThrow(ForbiddenException);
-      expect(usersService.create).not.toHaveBeenCalled();
-    });
-
-    it('should throw ConflictException when email already exists', async () => {
-      (usersService.isAtLeast18 as jest.Mock).mockReturnValue(true);
-      (emailOtpService.verifyOtp as jest.Mock).mockResolvedValue(undefined);
-      (usersService.findByEmail as jest.Mock).mockResolvedValue(mockUser);
-
-      await expect(
-        service.register({
-          email: 'test@example.com',
-          username: 'newuser',
-          password: 'password123',
-          displayName: 'New User',
-          otpCode: '123456',
-          dateOfBirth: '1990-01-01',
-        }),
-      ).rejects.toThrow(ConflictException);
-      expect(usersService.create).not.toHaveBeenCalled();
-    });
-  });
 });

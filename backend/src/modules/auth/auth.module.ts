@@ -9,7 +9,6 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { UsersModule } from '../users/users.module';
 import { WalletModule } from '../wallet/wallet.module';
-import { OtpModule } from '../otp/otp.module';
 import { EmailModule } from '../email/email.module';
 import { ReferralsModule } from '../referrals/referrals.module';
 import { Tipster } from '../predictions/entities/tipster.entity';
@@ -33,7 +32,6 @@ import { VisitorSession } from '../admin/entities/visitor-session.entity';
     }),
     TypeOrmModule.forFeature([Tipster, PasswordResetOtp, RefreshToken, VisitorSession]),
     WalletModule,
-    OtpModule,
     EmailModule,
     ReferralsModule,
   ],

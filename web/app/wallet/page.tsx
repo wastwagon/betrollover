@@ -53,6 +53,8 @@ interface Withdrawal {
   updatedAt?: string;
 }
 
+type DepositCallbackState = 'success' | 'failed' | 'cancelled' | 'incomplete';
+
 function WalletContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -89,7 +91,22 @@ function WalletContent() {
   });
   const [payoutLoading, setPayoutLoading] = useState(false);
   const [payoutError, setPayoutError] = useState<string | null>(null);
+  const [depositCallbackState, setDepositCallbackState] = useState<DepositCallbackState | null>(null);
+  const [depositContinuePath, setDepositContinuePath] = useState<string | null>(null);
+  const [handledDepositRef, setHandledDepositRef] = useState<string | null>(null);
   const continuePathFromQuery = searchParams.get('continue');
+  const buildResumePath = useCallback((nextPath: string): string => {
+    const isSubscriptionsCheckout = nextPath.startsWith('/subscriptions/checkout');
+    if (isSubscriptionsCheckout) {
+      return nextPath.includes('?')
+        ? `${nextPath}&autoSubscribe=1&autoAttemptId=${Date.now()}`
+        : `${nextPath}?autoSubscribe=1&autoAttemptId=${Date.now()}`;
+    }
+    return nextPath.includes('?')
+      ? `${nextPath}&autoAttemptId=${Date.now()}`
+      : `${nextPath}?autoAttemptId=${Date.now()}`;
+  }, []);
+
 
   const normalizeInternalPath = (value: string | null): string | null => {
     if (!value || !value.startsWith('/') || value.startsWith('//')) return null;
@@ -149,12 +166,22 @@ function WalletContent() {
   useEffect(() => {
     const deposit = searchParams.get('deposit');
     const depositState = deposit?.toLowerCase();
+    const storedContinuePath = normalizeInternalPath(sessionStorage.getItem('wallet.afterTopupContinue'));
+    if (storedContinuePath) {
+      setDepositContinuePath(storedContinuePath);
+    }
     if (depositState === 'cancelled' || depositState === 'failed') {
-      setDepositError(t('wallet.deposit_failed'));
+      setDepositCallbackState(depositState);
+      setDepositError(null);
       return;
     }
     const ref = searchParams.get('ref');
-    if (depositState === 'success' && ref) {
+    if (depositState === 'success' && !ref) {
+      setDepositCallbackState('incomplete');
+      return;
+    }
+    if (depositState === 'success' && ref && handledDepositRef !== ref) {
+      setHandledDepositRef(ref);
       const token = localStorage.getItem('token');
       if (token) {
         fetch(`${getApiUrl()}/wallet/deposit/verify?ref=${encodeURIComponent(ref)}`, {
@@ -163,23 +190,9 @@ function WalletContent() {
           .then((r) => r.json())
           .finally(() => loadData());
       }
-      const nextPath = normalizeInternalPath(sessionStorage.getItem('wallet.afterTopupContinue'));
-      if (nextPath) {
-        sessionStorage.removeItem('wallet.afterTopupContinue');
-        const isSubscriptionsCheckout = nextPath.startsWith('/subscriptions/checkout');
-        const resumePath = isSubscriptionsCheckout
-          ? (nextPath.includes('?')
-            ? `${nextPath}&autoSubscribe=1&autoAttemptId=${Date.now()}`
-            : `${nextPath}?autoSubscribe=1&autoAttemptId=${Date.now()}`)
-          : (nextPath.includes('?')
-            ? `${nextPath}&autoAttemptId=${Date.now()}`
-            : `${nextPath}?autoAttemptId=${Date.now()}`);
-        router.replace(resumePath, { scroll: false });
-      } else {
-        router.replace('/wallet', { scroll: false });
-      }
+      setDepositCallbackState('success');
     }
-  }, [searchParams, router, loadData, t]);
+  }, [searchParams, loadData, t, handledDepositRef]);
 
   const handleDeposit = async () => {
     const amount = parseFloat(depositAmount);
@@ -187,6 +200,7 @@ function WalletContent() {
       setDepositError(t('wallet.deposit_range'));
       return;
     }
+    setDepositCallbackState(null);
     setDepositError(null);
     setDepositLoading(true);
     const token = localStorage.getItem('token');
@@ -423,6 +437,57 @@ function WalletContent() {
                 </button>
               </div>
             </div>
+
+            {depositCallbackState && (
+              <div
+                className={`rounded-2xl border p-4 ${
+                  depositCallbackState === 'success'
+                    ? 'border-emerald-300/70 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300'
+                    : 'border-amber-300/70 bg-amber-50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200'
+                }`}
+              >
+                <p className="text-sm font-medium">
+                  {depositCallbackState === 'success'
+                    ? t('wallet.deposit_callback_success')
+                    : depositCallbackState === 'cancelled'
+                      ? t('wallet.deposit_callback_cancelled')
+                      : depositCallbackState === 'failed'
+                        ? t('wallet.deposit_callback_failed')
+                        : t('wallet.deposit_callback_incomplete')}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {(depositCallbackState === 'failed' || depositCallbackState === 'cancelled' || depositCallbackState === 'incomplete') && (
+                    <button
+                      type="button"
+                      onClick={() => setDepositCallbackState(null)}
+                      className="px-3 py-1.5 rounded-lg border border-current/30 text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                    >
+                      {t('wallet.deposit_retry')}
+                    </button>
+                  )}
+                  {depositContinuePath && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = buildResumePath(depositContinuePath);
+                        sessionStorage.removeItem('wallet.afterTopupContinue');
+                        setDepositCallbackState(null);
+                        router.push(next);
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-[var(--primary)] text-white text-xs font-semibold hover:bg-[var(--primary-hover)] transition-colors"
+                    >
+                      {t('wallet.deposit_return_to_checkout')}
+                    </button>
+                  )}
+                  <Link
+                    href="/support"
+                    className="px-3 py-1.5 rounded-lg border border-current/30 text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                  >
+                    {t('wallet.deposit_contact_support')}
+                  </Link>
+                </div>
+              </div>
+            )}
 
             {canWithdraw && (
               <div id="withdraw" className="card-gradient rounded-2xl p-5 shadow-lg scroll-mt-24 min-w-0">

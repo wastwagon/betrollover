@@ -78,7 +78,7 @@ PROJECT_SLUG/
 
 1. **Single API** — One NestJS backend serves the web app.
 2. **Single Database** — PostgreSQL is the source of truth.
-3. **Shared Auth** — JWT tokens. Web stores in `localStorage`. Same login/register endpoints.
+3. **Shared Auth** — JWT tokens. Web stores in `localStorage`. Prefer social-first auth (Google/Apple) with standard login endpoints as needed.
 4. **Shared Data Layer** — Use `@tanstack/react-query` on web for API state.
 5. **TypeScript Everywhere** — Backend and web use TypeScript.
 6. **Docker for Local Dev** — `docker compose up` starts Postgres, Redis, API, Web.
@@ -148,8 +148,9 @@ Avoid port 6000 (Chrome blocks it). Use 6xxx range for API/Web.
 
 ## 7. Auth Flow (Shared)
 
-- `POST /api/v1/auth/register` — body: `{ email, password, displayName? }`
-- `POST /api/v1/auth/login` — body: `{ email, password }` → returns `{ access_token }`
+- `POST /api/v1/auth/google` — body: `{ id_token }` → returns `{ access_token }`
+- `POST /api/v1/auth/apple` — body: `{ id_token, user?, nonce? }` → returns `{ access_token }`
+- `POST /api/v1/auth/login` — body: `{ email, password }` (optional legacy login path)
 - Protected routes: `Authorization: Bearer <token>`
 - Passport JWT strategy validates token; `@CurrentUser()` decorator injects user
 
@@ -308,7 +309,7 @@ BetRollover is **web-only** (mobile-first Next.js). No Expo or native app. For p
 ### Backend
 - [ ] Initialize NestJS in `backend/` with TypeORM, Passport JWT
 - [ ] API versioning: prefix routes with `/api/v1/`
-- [ ] Implement auth: register, login, JWT guard
+- [ ] Implement auth: social sign-in (Google/Apple), login, JWT guard
 - [ ] Health endpoint `GET /health`
 - [ ] Configure CORS for web origin
 - [ ] Rate limiting on auth endpoints
@@ -343,8 +344,8 @@ Create a new project named [PROJECT_NAME] using this stack:
 
 Implement:
 1. Shared types: packages/shared-types with DTOs and API contracts
-2. Backend: NestJS with auth (register, login) under /api/v1/, health check, TypeORM, rate limiting, Helmet
-3. Web: Next.js 14 App Router, Tailwind, metadata/sitemap/robots for SEO, login/register, dashboard shell
+2. Backend: NestJS with auth (google, apple, login) under /api/v1/, health check, TypeORM, rate limiting, Helmet
+3. Web: Next.js 14 App Router, Tailwind, metadata/sitemap/robots for SEO, login/social-signup, dashboard shell
 4. Mobile: N/A (BetRollover is web-only)
 5. Privacy policy page at /privacy, terms at /terms
 6. docker-compose.yml, .env.example, README

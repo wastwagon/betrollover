@@ -34,7 +34,7 @@
 | Gap | Impact | Recommendation |
 |-----|--------|----------------|
 | **Email verification** | Wallet, tipster request, payout methods, and withdrawals already **require** `emailVerifiedAt`. Ensure verification flow is robust (send email on register, link/OTP, block wallet until verified). | Confirm flow end-to-end; add fallback “resend verification” and clear UX when actions are blocked. |
-| **Fake / bot signups** | PRODUCT_REVIEW.md notes no CAPTCHA, no rate limiting on register. Risk of spam accounts and abuse. | Add reCAPTCHA v3 on register; rate limit `/auth/register` by IP (e.g. 5/hour). |
+| **Fake / bot signups** | PRODUCT_REVIEW.md notes no CAPTCHA on social onboarding. Risk of spam accounts and abuse. | Add reCAPTCHA v3 on social sign-in/signup entry points and apply IP throttling on `/auth/google` and `/auth/apple`. |
 | **Display name** | Optional; users can use fake names. Weakens trust on tipster profiles and in support. | Make full name required at registration with simple validation (e.g. 2+ words, letters/spaces). |
 | **Deposit callback** | If Paystack webhook is slow or fails, user returns with `?ref=xxx` but wallet might not be credited. | Add `GET /wallet/deposit/verify?ref=xxx` that verifies with Paystack and credits if not already done (idempotent). |
 

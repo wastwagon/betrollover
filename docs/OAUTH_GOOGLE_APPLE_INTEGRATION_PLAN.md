@@ -2,7 +2,7 @@
 
 ## Current auth (summary)
 
-- **Backend:** NestJS; JWT access tokens + refresh tokens; email/password via `LocalStrategy`; `POST /auth/login`, `POST /auth/register` (OTP + password).
+- **Backend:** NestJS; JWT access tokens + refresh tokens; social auth via `POST /auth/google` and `POST /auth/apple`, plus `POST /auth/login` for existing password accounts.
 - **User entity:** `username`, `email`, `password` (required), `displayName`, etc. No OAuth provider fields yet.
 - **Frontend:** Login/register forms; Next.js API route `/api/auth/login` proxies to backend and redirects with `token` in URL; client stores token (e.g. localStorage).
 
@@ -103,8 +103,7 @@ Recommendation: **ID token flow** (frontend gets id_token from Google button; ba
 
 ## When login is needed (unchanged)
 
-- Email/password login and register: unchanged.
-- After adding Google/Apple: **login is needed** for the same actions as today (purchase, follow, create picks, dashboard, wallet, etc.). The only change is **how** the user gets a session: email/password, Google, or (later) Apple.
+- After Google/Apple rollout: **login is needed** for the same actions as today (purchase, follow, create picks, dashboard, wallet, etc.). Session creation is social-first (Google/Apple), with email/password retained only for existing password users.
 
 ---
 
@@ -136,4 +135,4 @@ Recommendation: **ID token flow** (frontend gets id_token from Google button; ba
 - In “Account” or “Profile”: “Link Google” / “Link Apple” so an existing email user can add OAuth and then sign in with either. Backend: same Google/Apple endpoint; when user is found by email and already logged in (or you verify session), set `provider_google_id` / `provider_apple_id` instead of creating a new user.
 - “Unlink” later: set `provider_google_id` to null; require password to be set if they remove the only sign-in method.
 
-This plan keeps secrets on the server, uses standard verification of provider tokens, and fits your current JWT + refresh-token flow so that **when login is needed** stays the same; only the ways to obtain a session increase (email/password + Google, then Apple).
+This plan keeps secrets on the server, uses standard verification of provider tokens, and fits your current JWT + refresh-token flow so that **when login is needed** stays the same; social sign-in (Google/Apple) is the primary session path.

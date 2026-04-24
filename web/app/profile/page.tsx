@@ -23,6 +23,7 @@ interface Profile {
   phone: string | null;
   role: string;
   createdAt: string;
+  marketingConsent?: boolean;
 }
 
 export default function ProfilePage() {
@@ -37,6 +38,7 @@ export default function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
   const [msg, setMsg] = useState('');
 
   const [pwCurrent, setPwCurrent] = useState('');
@@ -65,6 +67,7 @@ export default function ProfilePage() {
         setPhone(data.phone || '');
         setContactEmail(data.contactEmail || '');
         setAvatarUrl(data.avatar || '');
+        setMarketingConsent(data.marketingConsent === true);
       })
       .catch(() => router.push('/login'))
       .finally(() => setLoading(false));
@@ -83,7 +86,12 @@ export default function ProfilePage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ displayName, phone: phone || null, contactEmail: contactEmail.trim() || null }),
+        body: JSON.stringify({
+          displayName,
+          phone: phone || null,
+          contactEmail: contactEmail.trim() || null,
+          marketingConsent,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
@@ -352,6 +360,15 @@ export default function ProfilePage() {
                 />
                 <p className="text-xs text-[var(--text-muted)] mt-1">{t('profile.contact_email_hint')}</p>
               </div>
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={marketingConsent}
+                  onChange={(e) => setMarketingConsent(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)]/30"
+                />
+                <span className="text-xs text-[var(--text-muted)]">{t('profile.marketing_consent')}</span>
+              </label>
               {msg && <p className="text-sm text-[var(--primary)]">{msg}</p>}
               <button
                 type="submit"

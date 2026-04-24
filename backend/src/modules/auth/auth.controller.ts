@@ -1,11 +1,9 @@
-import { Body, Controller, Get, Logger, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { Request } from 'express';
+import { Body, Controller, Get, Logger, Post, Query, UseGuards } from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
 import { AppleLoginDto } from './dto/apple-login.dto';
-import { RegisterDto } from './dto/register.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -40,22 +38,6 @@ export class AuthController {
       this.logger.error(`[Login] 500 for user ${user?.id ?? '?'}: ${err?.message ?? err}`, err?.stack);
       throw err;
     }
-  }
-
-  @Post('otp/send')
-  @Throttle({ default: { limit: 5, ttl: 90000 } }) // 5 OTP requests per 15 min per IP
-  async sendOtp(@Body() body: { email: string }) {
-    return this.authService.sendRegistrationOtp(body.email);
-  }
-
-  @Post('register')
-  @Throttle({ default: { limit: 5, ttl: 3600000 } }) // 5 registrations per hour per IP
-  async register(@Body() dto: RegisterDto, @Req() req: Request) {
-    const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim()
-      || req.headers['x-real-ip']
-      || req.socket?.remoteAddress
-      || req.ip;
-    return this.authService.register(dto, typeof ip === 'string' ? ip : undefined);
   }
 
   @Get('verify-email')

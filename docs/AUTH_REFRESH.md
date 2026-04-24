@@ -9,7 +9,8 @@
 | Endpoint | Description |
 |----------|-------------|
 | `POST /api/v1/auth/login` | Returns `access_token`, `refresh_token`, and `user`. |
-| `POST /api/v1/auth/register` | Same as login (returns both tokens). |
+| `POST /api/v1/auth/google` | Google sign-in/up; returns `access_token`, `refresh_token`, and `user`. |
+| `POST /api/v1/auth/apple` | Apple sign-in/up; returns `access_token`, `refresh_token`, and `user`. |
 | `POST /api/v1/auth/refresh` | Body: `{ "refresh_token": "..." }`. Returns new `access_token` and `refresh_token`. |
 | `POST /api/v1/auth/logout` | Body: `{ "refresh_token": "..." }`. Revokes the refresh token. |
 
@@ -17,7 +18,7 @@
 
 ## Client Usage
 
-1. **On login/register:** Store both `access_token` and `refresh_token` (e.g. `localStorage`).
+1. **On login/social sign-in:** Store both `access_token` and `refresh_token` (e.g. `localStorage`).
 2. **On API 401:** Call `POST /auth/refresh` with body `{ refresh_token: storedRefreshToken }`. If successful, use the new `access_token` and optionally `refresh_token` (rotation).
 3. **On logout:** Call `POST /auth/logout` with `refresh_token` to revoke it.
 

@@ -6,7 +6,6 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { AuthModule } from './modules/auth/auth.module';
-import { OtpModule } from './modules/otp/otp.module';
 import { UsersModule } from './modules/users/users.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { AdminModule } from './modules/admin/admin.module';
@@ -69,7 +68,6 @@ import { ChatModule } from './modules/chat/chat.module';
       },
     }),
     AuthModule,
-    OtpModule,
     UsersModule,
     WalletModule,
     AdminModule,

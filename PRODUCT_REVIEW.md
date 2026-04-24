@@ -12,7 +12,7 @@ Comprehensive review for building a world-class tipster platform.
 - **No email verification** – anyone can register with any email
 - **No phone required** – `phone` exists in schema but is optional at registration
 - **No CAPTCHA/reCAPTCHA** – vulnerable to bots
-- **No rate limiting** on `/auth/register` – allows mass signups
+- **No CAPTCHA/reCAPTCHA** on social onboarding – vulnerable to scripted sign-ins
 
 ### Recommended Improvements (Priority Order)
 

@@ -305,23 +305,6 @@ export class EmailService {
     });
   }
 
-  async sendRegistrationOtp(to: string, code: string) {
-    const expiryMinutes = 10;
-    const inner = `${this.brandHeader('Security', 'Verify it’s you', 'Enter the code below to finish signing up.')}
-<tr>
-  <td style="padding:8px 36px 32px;text-align:center;">
-    <p style="font-size:36px;font-weight:800;letter-spacing:0.35em;color:${BR.ink};margin:8px 0 20px;">${this.escapeEmailText(code)}</p>
-    <p style="font-size:13px;color:${BR.muted};margin:0;">Valid for ${expiryMinutes} minutes. Do not share this code.</p>
-  </td>
-</tr>`;
-    return this.send({
-      to,
-      subject: 'Your BetRollover verification code',
-      text: `Your verification code is: ${code}\n\nValid for ${expiryMinutes} minutes. Do not share this code.\n\n— BetRollover`,
-      html: this.premiumDocument(inner),
-    });
-  }
-
   async sendPasswordResetOtp(to: string, code: string) {
     const expiryMinutes = 10;
     const appUrl = process.env.APP_URL || 'http://localhost:6002';
