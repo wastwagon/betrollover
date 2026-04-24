@@ -391,7 +391,11 @@ export default function TipsterProfilePage() {
       <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <UnifiedHeader />
         <main className="section-ux-page w-full min-w-0">
-          <LoadingSkeleton count={3} className="space-y-6" />
+          <LoadingSkeleton
+            count={8}
+            variant="cards"
+            cardsGridClassName="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-8 min-w-0"
+          />
         </main>
       </div>
     );

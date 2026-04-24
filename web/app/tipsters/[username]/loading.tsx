@@ -1,3 +1,5 @@
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+
 export default function TipsterProfileLoading() {
   return (
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
@@ -42,23 +44,12 @@ export default function TipsterProfileLoading() {
           ))}
         </div>
 
-        {/* Pick cards */}
-        <div className="space-y-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-4 animate-pulse"
-              style={{ animationDelay: `${i * 60}ms` }}
-            >
-              <div className="flex justify-between mb-3">
-                <div className="h-4 w-32 rounded bg-[var(--border)]" />
-                <div className="h-6 w-16 rounded-full bg-[var(--border)]" />
-              </div>
-              <div className="h-10 w-full rounded-xl bg-[var(--border)] mb-2 opacity-60" />
-              <div className="h-10 w-full rounded-xl bg-[var(--border)] opacity-40" />
-            </div>
-          ))}
-        </div>
+        {/* Pick cards — grid matches /tipsters/[username] PickCard layout */}
+        <LoadingSkeleton
+          count={8}
+          variant="cards"
+          cardsGridClassName="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-8 min-w-0"
+        />
       </div>
     </div>
   );
