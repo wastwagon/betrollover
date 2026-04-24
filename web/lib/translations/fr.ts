@@ -70,6 +70,7 @@ const fr: Record<string, string> = {
   'auth.terms_agree': 'En vous inscrivant, vous acceptez nos',
   'auth.terms': 'Conditions d\'Utilisation',
   'auth.privacy': 'Politique de Confidentialité',
+  'auth.accept_terms_required': 'Veuillez accepter les Conditions d\'utilisation et la Politique de confidentialité pour continuer.',
 
   // ── Common UI ────────────────────────────────────────────────────────────
   'common.loading': 'Chargement...',

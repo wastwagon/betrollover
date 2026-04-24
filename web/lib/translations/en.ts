@@ -71,6 +71,7 @@ const en = {
   'auth.terms_agree': 'By registering you agree to our',
   'auth.terms': 'Terms of Service',
   'auth.privacy': 'Privacy Policy',
+  'auth.accept_terms_required': 'Please accept the Terms of Service and Privacy Policy to continue.',
 
   // ── Common UI ────────────────────────────────────────────────────────────
   'common.loading': 'Loading...',

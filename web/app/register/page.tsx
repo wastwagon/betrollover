@@ -28,6 +28,7 @@ function RegisterForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [referralCode, setReferralCode] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   useEffect(() => {
     const ref = searchParams.get('ref');
@@ -98,6 +99,10 @@ function RegisterForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    if (!acceptedTerms) {
+      setError(t('auth.accept_terms_required'));
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch(`${getApiUrl()}/auth/register`, {
@@ -441,9 +446,28 @@ function RegisterForm() {
                   )}
                 </div>
                 {error && <p className="text-sm text-red-500 font-medium" role="alert" aria-live="polite">{error}</p>}
+                <label htmlFor="termsConsent" className="flex items-start gap-2 text-xs text-[var(--text-muted)]">
+                  <input
+                    id="termsConsent"
+                    type="checkbox"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[var(--primary)] focus:ring-[var(--primary)]/30"
+                  />
+                  <span>
+                    {t('auth.terms_agree')}{' '}
+                    <Link href="/terms" className="text-[var(--primary)] hover:underline">
+                      {t('auth.terms')}
+                    </Link>{' '}
+                    {t('common.and')}{' '}
+                    <Link href="/privacy" className="text-[var(--primary)] hover:underline">
+                      {t('auth.privacy')}
+                    </Link>
+                  </span>
+                </label>
                 <button
                   type="submit"
-                  disabled={loading || !otpCode || !dateOfBirth || password !== confirmPassword}
+                  disabled={loading || !otpCode || !dateOfBirth || password !== confirmPassword || !acceptedTerms}
                   className="w-full py-3.5 rounded-lg text-[15px] font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-45 disabled:pointer-events-none transition-colors"
                 >
                   {loading ? t('auth.creating_account') : t('auth.register')}
