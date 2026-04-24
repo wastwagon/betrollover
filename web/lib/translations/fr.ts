@@ -1234,9 +1234,10 @@ const fr: Record<string, string> = {
   'marketplace.featured_section_title': 'Pronostics du marché',
   'marketplace.featured_section_subtitle': 'Parcourez les sélections de tipsters vérifiés',
 
-  'seo.register_title': 'Créer un compte | Rejoindre la marketplace',
+  'seo.register_title': 'Inscription | BetRollover — marketplace de tipsters',
   'seo.register_desc':
-    "Inscrivez-vous sur BetRollover — pronostics vérifiés, achats protégés par escrow et portefeuille multi-devises. Email, Google ou Apple.",
+    'Rejoignez BetRollover avec Google ou Apple — pronostics vérifiés, achats protégés par escrow et portefeuille multi-devises.',
+  'seo.register_og_alt': 'BetRollover — inscription avec Google ou Apple',
   'seo.login_title': 'Connexion | BetRollover',
   'seo.login_desc':
     'Connectez-vous à votre compte BetRollover pour parcourir la marketplace, gérer votre portefeuille et suivre les tipsters.',

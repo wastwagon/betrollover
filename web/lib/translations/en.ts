@@ -1237,9 +1237,10 @@ const en = {
   'marketplace.featured_section_title': 'Marketplace picks',
   'marketplace.featured_section_subtitle': 'Browse selections from verified tipsters',
 
-  'seo.register_title': 'Create Account | Join the Tipster Marketplace',
+  'seo.register_title': 'Sign up | BetRollover Tipster Marketplace',
   'seo.register_desc':
-    'Sign up for BetRollover — verified sports tips, escrow-protected picks, and multi-currency wallets. Email verification, Google, or Apple.',
+    'Join BetRollover with Google or Apple — verified sports tips, escrow-protected picks, and multi-currency wallets.',
+  'seo.register_og_alt': 'BetRollover — sign up with Google or Apple',
   'seo.login_title': 'Sign In | BetRollover',
   'seo.login_desc':
     'Log in to your BetRollover account to browse the marketplace, manage your wallet, and follow tipsters.',

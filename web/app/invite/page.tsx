@@ -62,7 +62,7 @@ export default function InvitePage() {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const shareUrl  = stats ? `${origin}/register?ref=${stats.code}` : '';
   const shareText = stats
-    ? `Join me on BetRollover — the AI-powered tipster marketplace! Use my referral code ${stats.code} when signing up. ${shareUrl}`
+    ? `Join me on BetRollover — the AI-powered tipster marketplace! Sign up with Google or Apple using this link (your referral is tracked automatically): ${shareUrl}`
     : '';
 
   return (
