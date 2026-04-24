@@ -5,19 +5,31 @@ interface LoadingSkeletonProps {
   className?: string;
   /** Card grid layout (e.g. marketplace, tipster picks) */
   variant?: 'list' | 'cards';
+  /** When `variant="cards"`, overrides the default grid classes (include `grid` and gap). */
+  cardsGridClassName?: string;
 }
 
-export function LoadingSkeleton({ count = 3, className = '', variant = 'list' }: LoadingSkeletonProps) {
+const DEFAULT_CARDS_GRID = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4';
+
+export function LoadingSkeleton({
+  count = 3,
+  className = '',
+  variant = 'list',
+  cardsGridClassName,
+}: LoadingSkeletonProps) {
   const isCards = variant === 'cards';
+  const cardsGrid = (cardsGridClassName?.trim() || DEFAULT_CARDS_GRID).trim();
 
   return (
     <div
-      className={`${isCards ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4' : 'space-y-4'} ${className}`.trim()}
+      className={`${isCards ? cardsGrid : 'space-y-4'} ${className}`.trim()}
     >
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="card-gradient rounded-2xl p-4 md:p-5"
+          className={
+            isCards ? 'card-gradient rounded-xl p-4 md:p-5' : 'card-gradient rounded-2xl p-4 md:p-5'
+          }
         >
           <div className="flex items-center gap-2 mb-3">
             <div className="skeleton h-8 w-8 rounded-full" />

@@ -588,7 +588,11 @@ export default function MarketplacePage() {
           )}
 
           {loading && (
-            <LoadingSkeleton count={8} variant="cards" />
+            <LoadingSkeleton
+              count={8}
+              variant="cards"
+              cardsGridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-8 min-w-0"
+            />
           )}
           {!loading && picks.length === 0 && (
             <div className="card-gradient rounded-2xl">

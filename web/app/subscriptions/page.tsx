@@ -92,7 +92,11 @@ function SubscriptionsContent() {
     return (
       <DashboardShell>
         <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full overflow-x-hidden">
-          <LoadingSkeleton count={4} variant="cards" />
+          <LoadingSkeleton
+            count={4}
+            variant="cards"
+            cardsGridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-w-0"
+          />
         </div>
       </DashboardShell>
     );
@@ -177,7 +181,11 @@ function SubscriptionsContent() {
                 {t('subscriptions.feed_section_title')}
               </h2>
               {feedLoading ? (
-                <LoadingSkeleton count={2} variant="cards" />
+                <LoadingSkeleton
+                  count={2}
+                  variant="cards"
+                  cardsGridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-w-0"
+                />
               ) : feedPicks.length === 0 ? (
                 <p className="text-[var(--text-muted)]">{t('subscriptions.feed_empty')}</p>
               ) : (
@@ -235,7 +243,11 @@ export default function SubscriptionsPage() {
       fallback={
         <DashboardShell>
           <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full overflow-x-hidden">
-            <LoadingSkeleton count={4} variant="cards" />
+            <LoadingSkeleton
+              count={4}
+              variant="cards"
+              cardsGridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-w-0"
+            />
           </div>
         </DashboardShell>
       }
