@@ -10,7 +10,7 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
-import { useT } from '@/context/LanguageContext';
+import { useLanguage, useT } from '@/context/LanguageContext';
 import {
   withdrawalStatusLabelKey,
   walletWithdrawalStatusBadgeClass,
@@ -57,6 +57,8 @@ function WalletContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useT();
+  const { lang } = useLanguage();
+  const locale = lang === 'fr' ? 'fr-FR' : 'en-GB';
   const { format, currency } = useCurrency();
   const { showSuccess, clearSuccess, success: toastSuccess } = useToast();
   const [user, setUser] = useState<{ role: string; emailVerifiedAt?: string | null } | null>(null);
@@ -337,11 +339,11 @@ function WalletContent() {
   const pendingWithdrawal = withdrawals.find((w) => w.status === 'pending' || w.status === 'processing');
 
   function formatDate(s: string) {
-    return new Date(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    return new Date(s).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
   function formatDateTime(s: string) {
-    return new Date(s).toLocaleDateString('en-GB', {
+    return new Date(s).toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -753,7 +755,7 @@ function WalletContent() {
                           <span className="text-base w-6 text-center shrink-0 pt-0.5">{TX_ICON[displayType] ?? '↔'}</span>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-sm text-[var(--text)]">{TX_LABEL[displayType] ?? displayType}</p>
-                            <p className="text-xs text-[var(--text-muted)] truncate">{tx.description || new Date(tx.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short' })}</p>
+                            <p className="text-xs text-[var(--text-muted)] truncate">{tx.description || new Date(tx.createdAt).toLocaleDateString(locale, { day:'numeric', month:'short' })}</p>
                             {refundFromPick ? (
                               <Link href="/my-purchases" className="text-[10px] text-[var(--primary)] hover:underline">
                                 {t('my_purchases.title')}

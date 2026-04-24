@@ -12,7 +12,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { useErrorToast } from '@/hooks/useErrorToast';
 import { ErrorToast } from '@/components/ErrorToast';
 import { getApiUrl } from '@/lib/site-config';
-import { useT } from '@/context/LanguageContext';
+import { useLanguage, useT } from '@/context/LanguageContext';
 
 /* ─── Types ─────────────────────────────────────────────────── */
 interface PickItem {
@@ -97,6 +97,8 @@ const SPORT_CHIPS = [
 export default function MyPurchasesPage() {
   const router = useRouter();
   const t = useT();
+  const { lang } = useLanguage();
+  const locale = lang === 'fr' ? 'fr-FR' : 'en-GB';
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [vipSubscriptions, setVipSubscriptions] = useState<VipSubscriptionRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -228,7 +230,7 @@ export default function MyPurchasesPage() {
                       {s.endsAt ? (
                         <>
                           {' '}
-                          · {t('my_purchases.vip_ends')} {new Date(s.endsAt).toLocaleDateString()}
+                          · {t('my_purchases.vip_ends')} {new Date(s.endsAt).toLocaleDateString(locale)}
                         </>
                       ) : null}
                       {s.amountPaid != null ? (

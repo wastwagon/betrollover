@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { formatError } from '@/utils/errorMessages';
+import { useT } from '@/context/LanguageContext';
 
 interface ErrorToastProps {
   error: unknown;
@@ -11,6 +12,7 @@ interface ErrorToastProps {
 
 export function ErrorToast({ error, onClose, duration = 5000 }: ErrorToastProps) {
   const [isVisible, setIsVisible] = useState(true);
+  const t = useT();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -36,7 +38,7 @@ export function ErrorToast({ error, onClose, duration = 5000 }: ErrorToastProps)
           <span className="text-2xl">⚠️</span>
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-red-900 dark:text-red-200 mb-1">Error</h4>
+          <h4 className="font-semibold text-red-900 dark:text-red-200 mb-1">{t('toast.error_title')}</h4>
           <p className="text-sm text-red-800 dark:text-red-300">{errorMessage}</p>
         </div>
         <button
@@ -46,7 +48,7 @@ export function ErrorToast({ error, onClose, duration = 5000 }: ErrorToastProps)
             setTimeout(onClose, 300);
           }}
           className="flex-shrink-0 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 transition-colors"
-          aria-label="Close error message"
+          aria-label={t('toast.close_error')}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

@@ -7,7 +7,7 @@ import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
-import { useT } from '@/context/LanguageContext';
+import { useLanguage, useT } from '@/context/LanguageContext';
 import { getApiUrl } from '@/lib/site-config';
 
 interface Notification {
@@ -49,6 +49,8 @@ function getTypeMeta(type: string) {
 export default function NotificationsPage() {
   const router = useRouter();
   const t = useT();
+  const { lang } = useLanguage();
+  const locale = lang === 'fr' ? 'fr-FR' : 'en-GB';
 
   function timeAgo(dateStr: string): string {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -59,7 +61,7 @@ export default function NotificationsPage() {
     if (h < 24) return t('notifications.hour_ago', { h: String(h) });
     const d = Math.floor(h / 24);
     if (d < 7)  return t('notifications.day_ago', { d: String(d) });
-    return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    return new Date(dateStr).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
   }
   const [items, setItems] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);

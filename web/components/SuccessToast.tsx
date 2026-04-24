@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useT } from '@/context/LanguageContext';
 
 interface SuccessToastProps {
   message: string;
@@ -10,6 +11,7 @@ interface SuccessToastProps {
 
 export function SuccessToast({ message, onClose, duration = 4000 }: SuccessToastProps) {
   const [isVisible, setIsVisible] = useState(true);
+  const t = useT();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -43,7 +45,7 @@ export function SuccessToast({ message, onClose, duration = 4000 }: SuccessToast
             setTimeout(onClose, 300);
           }}
           className="flex-shrink-0 text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 transition-colors rounded-lg p-1 hover:bg-emerald-100 dark:hover:bg-emerald-800/30"
-          aria-label="Dismiss"
+          aria-label={t('toast.dismiss')}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
