@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { PickCard } from '@/components/PickCard';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 
@@ -281,14 +282,7 @@ export default function AdminMarketplacePage() {
           </div>
         )}
 
-        {loading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-12 h-12 rounded-full border-4 border-red-200 border-t-red-600 animate-spin" />
-              <p className="text-gray-600 dark:text-gray-400 font-medium">Loading marketplace...</p>
-            </div>
-          </div>
-        )}
+        {loading && <LoadingSkeleton count={8} variant="cards" />}
         {!loading && picks.length === 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">

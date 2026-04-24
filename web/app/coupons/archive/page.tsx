@@ -457,11 +457,11 @@ export default function CouponsArchivePage() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-w-0">
-            {[1, 2, 3, 4].map((i) => (
-              <LoadingSkeleton key={i} count={1} className="h-64 rounded-2xl" />
-            ))}
-          </div>
+          <LoadingSkeleton
+            count={8}
+            variant="cards"
+            cardsGridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-w-0"
+          />
         ) : filtered.length === 0 ? (
           <EmptyState
             title={

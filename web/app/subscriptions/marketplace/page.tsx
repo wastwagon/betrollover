@@ -116,11 +116,12 @@ export default function SubscriptionMarketplacePage() {
         />
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <LoadingSkeleton key={i} count={1} className="h-80 rounded-2xl" />
-            ))}
-          </div>
+          <LoadingSkeleton
+            count={6}
+            variant="cards"
+            className="mt-8"
+            cardsGridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 min-w-0"
+          />
         ) : items.length === 0 ? (
           <div className="mt-8">
             <EmptyState
