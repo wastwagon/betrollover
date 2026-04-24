@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/useToast';
 import { formatError } from '@/utils/errorMessages';
 import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
+import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 
@@ -476,6 +477,13 @@ export default function MarketplacePage() {
               aria-hidden
             />
           </div>
+
+          <EscrowTrustCallout
+            className="mb-4"
+            title={t('marketplace.trust_callout_title')}
+            body={t('marketplace.trust_callout_body')}
+            linkLabel={t('home.how_it_works')}
+          />
 
           {/* Sport tabs — scrollable on mobile */}
           <div className="mb-4 w-full min-w-0 overflow-hidden">

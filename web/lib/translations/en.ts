@@ -351,6 +351,9 @@ const en = {
   'marketplace.view_details': 'View Details',
   'marketplace.free_badge': 'FREE',
   'marketplace.escrow_note': 'Escrow protected — refund if any pick loses',
+  'marketplace.trust_callout_title': 'Escrow-protected purchases',
+  'marketplace.trust_callout_body':
+    'When you buy a paid pick, funds stay in escrow until every selection settles. If the pick loses, the purchase amount is refunded to your wallet automatically.',
   'marketplace.login_to_buy': 'Sign in to purchase',
 
   // ── League tables & top scorers (dedicated page) ─────────────────────────
@@ -738,6 +741,9 @@ const en = {
   'tipster.avg_odds': 'Avg Odds',
   'tipster.commission_note_full': 'Per our Terms, 30% of each winning pick sale is retained by the Platform; 70% is credited to the tipster.',
   'tipster.learn_more': 'Learn more',
+  'tipster.trust_callout_title': 'Same buyer protection as the marketplace',
+  'tipster.trust_callout_body':
+    'Purchases here use the same escrow, settlement, and refund rules as everywhere else on BetRollover — your wallet is credited automatically when picks lose.',
   'tipster.subscription_packages': 'Subscription Packages',
   'tipster.subscription_packages_desc': 'Set recurring tip subscriptions',
   'subscriptions.marketplace_title': 'VIP subscriptions',
@@ -849,6 +855,9 @@ const en = {
   'wallet.amount': 'Amount',
   'wallet.currency_note': 'For reference only. All transactions are in GHS.',
   'wallet.tagline': 'Deposit, withdraw, and track transactions',
+  'wallet.trust_callout_title': 'Refunds, earnings & escrow',
+  'wallet.trust_callout_body':
+    'Pick purchase refunds and tipster earnings from settled picks show up here. Buyer funds for paid picks stay in escrow until the pick settles.',
   'wallet.verify_email': 'Verify your email to deposit, withdraw, or add payout methods.',
   'wallet.resend_verify': 'Resend verification email →',
   'wallet.amount_placeholder': 'Amount (GHS)',

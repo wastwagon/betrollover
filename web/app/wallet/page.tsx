@@ -20,6 +20,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { useToast } from '@/hooks/useToast';
 import { PENDING_WITHDRAWALS_INVALIDATE } from '@/hooks/usePendingWithdrawalCount';
 import { SuccessToast } from '@/components/SuccessToast';
+import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 
 interface Transaction {
   id: number;
@@ -374,6 +375,13 @@ function WalletContent() {
             label={t('wallet.title')}
             title={t('wallet.title')}
             tagline={t('wallet.tagline')}
+          />
+
+          <EscrowTrustCallout
+            className="mb-4"
+            title={t('wallet.trust_callout_title')}
+            body={t('wallet.trust_callout_body')}
+            linkLabel={t('home.how_it_works')}
           />
 
           <div className="mb-4">

@@ -18,6 +18,7 @@ import { PersonJsonLd } from '@/components/PersonJsonLd';
 import { useT } from '@/context/LanguageContext';
 import { FollowersCountButton } from '@/components/TipsterFollowersModal';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
+import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 
 interface Pick {
   id?: number;
@@ -667,6 +668,13 @@ export default function TipsterProfilePage() {
             </div>
           </div>
         </div>
+
+        <EscrowTrustCallout
+          className="section-ux-gutter mb-8"
+          title={t('tipster.trust_callout_title')}
+          body={t('tipster.trust_callout_body')}
+          linkLabel={t('home.how_it_works')}
+        />
 
         {subscriptionPackages.length > 0 && (
           <section className="section-ux-gutter mb-10">

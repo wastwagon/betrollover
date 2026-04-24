@@ -350,6 +350,9 @@ const fr: Record<string, string> = {
   'marketplace.view_details': 'Voir les Détails',
   'marketplace.free_badge': 'GRATUIT',
   'marketplace.escrow_note': 'Protection escrow — remboursement si un pronostic perd',
+  'marketplace.trust_callout_title': 'Achats protégés par escrow',
+  'marketplace.trust_callout_body':
+    'Lorsque vous achetez un pronostic payant, les fonds restent en escrow jusqu\'au règlement de toutes les sélections. Si le pronostic perd, le montant payé est remboursé automatiquement sur votre portefeuille.',
   'marketplace.login_to_buy': 'Connectez-vous pour acheter',
 
   // ── League tables & top scorers (dedicated page) ─────────────────────────
@@ -735,6 +738,9 @@ const fr: Record<string, string> = {
   'tipster.avg_odds': 'Cote Moy.',
   'tipster.commission_note_full': 'Selon nos Conditions, 30 % de chaque vente de pronostic gagnant est retenu par la Plateforme ; 70 % sont crédités au tipster.',
   'tipster.learn_more': 'En savoir plus',
+  'tipster.trust_callout_title': 'La même protection acheteur que sur la marketplace',
+  'tipster.trust_callout_body':
+    'Les achats ici utilisent les mêmes règles d\'escrow, de règlement et de remboursement que partout ailleurs sur BetRollover — votre portefeuille est crédité automatiquement lorsque les pronostics perdent.',
   'tipster.subscription_packages': 'Forfaits d\'Abonnement',
   'tipster.subscription_packages_desc': 'Gérer les abonnements récurrents aux pronostics',
   'subscriptions.marketplace_title': 'Abonnements VIP',
@@ -847,6 +853,9 @@ const fr: Record<string, string> = {
   'wallet.amount': 'Montant',
   'wallet.currency_note': 'À titre indicatif uniquement. Toutes les transactions sont en GHS.',
   'wallet.tagline': 'Déposer, retirer et suivre les transactions',
+  'wallet.trust_callout_title': 'Remboursements, gains et escrow',
+  'wallet.trust_callout_body':
+    'Les remboursements d\'achats de pronostics et les gains des tipsters après règlement apparaissent ici. Les fonds des acheteurs pour les pronostics payants restent en escrow jusqu\'au règlement du pronostic.',
   'wallet.verify_email': 'Vérifiez votre email pour déposer, retirer ou ajouter des moyens de paiement.',
   'wallet.resend_verify': 'Renvoyer l\'email de vérification →',
   'wallet.amount_placeholder': 'Montant (GHS)',
