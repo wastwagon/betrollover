@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
@@ -16,6 +17,7 @@ interface PaystackWebhookRequest {
 }
 
 @Controller('wallet')
+@Throttle({ default: { limit: 80, ttl: 60000 } })
 export class WalletController {
   constructor(
     private readonly walletService: WalletService,
@@ -43,6 +45,7 @@ export class WalletController {
 
   @Post('deposit/initialize')
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 8, ttl: 60000 } })
   async initializeDeposit(
     @CurrentUser() user: User,
     @Body() dto: InitializeDepositDto,
@@ -58,6 +61,7 @@ export class WalletController {
 
   @Post('payout-methods')
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   async addPayoutMethod(
     @CurrentUser() user: User,
     @Body() dto: AddPayoutMethodDto,
@@ -67,6 +71,7 @@ export class WalletController {
 
   @Post('withdraw')
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 6, ttl: 60000 } })
   async requestWithdrawal(
     @CurrentUser() user: User,
     @Body() dto: RequestWithdrawalDto,
@@ -81,6 +86,7 @@ export class WalletController {
   }
 
   @Post('paystack-webhook')
+  @Throttle({ default: { limit: 300, ttl: 60000 } })
   async paystackWebhook(@Req() req: PaystackWebhookRequest) {
     const rawBody = req.rawBody || JSON.stringify(req.body || '');
     const signature = (req.headers['x-paystack-signature'] as string) || '';

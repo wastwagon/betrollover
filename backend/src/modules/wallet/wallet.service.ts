@@ -34,6 +34,42 @@ export class WalletService {
     private readonly config: ConfigService,
   ) { }
 
+  private async getWalletForUpdate(userId: number, manager: EntityManager): Promise<UserWallet> {
+    let wallet = await manager
+      .getRepository(UserWallet)
+      .createQueryBuilder('wallet')
+      .setLock('pessimistic_write')
+      .where('wallet.userId = :userId', { userId })
+      .getOne();
+
+    if (!wallet) {
+      await manager.getRepository(UserWallet).save(
+        manager.getRepository(UserWallet).create({
+          userId,
+          balance: 0,
+          currency: 'GHS',
+          status: 'active',
+        }),
+      );
+      wallet = await manager
+        .getRepository(UserWallet)
+        .createQueryBuilder('wallet')
+        .setLock('pessimistic_write')
+        .where('wallet.userId = :userId', { userId })
+        .getOne();
+    }
+    if (!wallet) {
+      throw new BadRequestException('Wallet not found');
+    }
+    return wallet;
+  }
+
+  private ensureWalletActive(wallet: UserWallet, operation: string): void {
+    if (wallet.status === 'frozen') {
+      throw new ForbiddenException(`Wallet is frozen. ${operation} is temporarily unavailable.`);
+    }
+  }
+
   async getOrCreateWallet(userId: number, manager?: EntityManager): Promise<UserWallet> {
     const repo = manager ? manager.getRepository(UserWallet) : this.walletRepo;
     let wallet = await repo.findOne({ where: { userId } });
@@ -74,24 +110,30 @@ export class WalletService {
     description?: string,
     manager?: EntityManager,
   ): Promise<void> {
-    const wRepo = manager ? manager.getRepository(UserWallet) : this.walletRepo;
-    const tRepo = manager ? manager.getRepository(WalletTransaction) : this.txRepo;
-
-    const wallet = await this.getOrCreateWallet(userId, manager);
-    const bal = Number(wallet.balance);
-    if (bal < amount) {
-      throw new BadRequestException('Insufficient balance');
+    if (amount <= 0) throw new BadRequestException('Amount must be greater than zero');
+    if (manager) {
+      const wallet = await this.getWalletForUpdate(userId, manager);
+      this.ensureWalletActive(wallet, 'Debit');
+      const bal = Number(wallet.balance);
+      if (bal < amount) {
+        throw new BadRequestException('Insufficient balance');
+      }
+      wallet.balance = Number((bal - amount).toFixed(2));
+      await manager.getRepository(UserWallet).save(wallet);
+      await manager.getRepository(WalletTransaction).save({
+        userId,
+        type,
+        amount: -amount,
+        currency: 'GHS',
+        status: 'completed',
+        reference: reference ?? null,
+        description: description ?? null,
+      });
+      return;
     }
-    wallet.balance = Number((bal - amount).toFixed(2));
-    await wRepo.save(wallet);
-    await tRepo.save({
-      userId,
-      type,
-      amount: -amount,
-      currency: 'GHS',
-      status: 'completed',
-      reference: reference ?? null,
-      description: description ?? null,
+
+    await this.walletRepo.manager.transaction(async (txManager) => {
+      await this.debit(userId, amount, type, reference, description, txManager);
     });
   }
 
@@ -103,20 +145,25 @@ export class WalletService {
     description?: string,
     manager?: EntityManager,
   ): Promise<void> {
-    const wRepo = manager ? manager.getRepository(UserWallet) : this.walletRepo;
-    const tRepo = manager ? manager.getRepository(WalletTransaction) : this.txRepo;
+    if (amount <= 0) throw new BadRequestException('Amount must be greater than zero');
+    if (manager) {
+      const wallet = await this.getWalletForUpdate(userId, manager);
+      wallet.balance = Number((Number(wallet.balance) + amount).toFixed(2));
+      await manager.getRepository(UserWallet).save(wallet);
+      await manager.getRepository(WalletTransaction).save({
+        userId,
+        type,
+        amount,
+        currency: 'GHS',
+        status: 'completed',
+        reference: reference ?? null,
+        description: description ?? null,
+      });
+      return;
+    }
 
-    const wallet = await this.getOrCreateWallet(userId, manager);
-    wallet.balance = Number((Number(wallet.balance) + amount).toFixed(2));
-    await wRepo.save(wallet);
-    await tRepo.save({
-      userId,
-      type,
-      amount,
-      currency: 'GHS',
-      status: 'completed',
-      reference: reference ?? null,
-      description: description ?? null,
+    await this.walletRepo.manager.transaction(async (txManager) => {
+      await this.credit(userId, amount, type, reference, description, txManager);
     });
   }
 
@@ -154,6 +201,9 @@ export class WalletService {
     if (amount < 1 || amount > 10000) {
       throw new BadRequestException('Amount must be between GHS 1 and GHS 10,000');
     }
+    const wallet = await this.getOrCreateWallet(user.id);
+    this.ensureWalletActive(wallet, 'Deposits');
+
     const reference = this.paystackService.generateReference();
     const appUrl = this.config.get('APP_URL') || process.env.APP_URL || 'http://localhost:6002';
     const callbackUrl = `${appUrl}/wallet?deposit=success&ref=${reference}`;
@@ -216,6 +266,8 @@ export class WalletService {
     }
 
     const amount = Number(verify.amount) / 100; // pesewas to GHS
+    const wallet = await this.getOrCreateWallet(userId);
+    this.ensureWalletActive(wallet, 'Deposits');
     deposit.status = 'completed';
     deposit.paystackReference = verify.id || null;
     await this.depositRepo.save(deposit);
@@ -279,6 +331,8 @@ export class WalletService {
 
     const deposit = await this.depositRepo.findOne({ where: { reference } });
     if (!deposit) return { received: true };
+    const wallet = await this.getOrCreateWallet(deposit.userId);
+    this.ensureWalletActive(wallet, 'Deposits');
 
     // Idempotency: skip if we already credited this reference (e.g. verify callback ran first)
     const existingTx = await this.txRepo.findOne({
@@ -524,6 +578,9 @@ export class WalletService {
     if (amount < minAmount || amount > maxAmount) {
       throw new BadRequestException(`Amount must be between GHS ${minAmount} and GHS ${maxAmount}`);
     }
+
+    const wallet = await this.getOrCreateWallet(user.id);
+    this.ensureWalletActive(wallet, 'Withdrawals');
 
     const payout = await this.payoutRepo.findOne({ where: { userId: user.id } });
     if (!payout) {

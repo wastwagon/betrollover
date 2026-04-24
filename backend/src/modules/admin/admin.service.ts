@@ -1423,14 +1423,47 @@ export class AdminService {
   }
 
   async updateDepositStatus(id: number, status: string) {
-    const deposit = await this.depositRepo.findOne({ where: { id } });
-    if (!deposit) return null;
-    deposit.status = status;
-    await this.depositRepo.save(deposit);
-    if (status === 'completed') {
-      await this.walletService.credit(deposit.userId, Number(deposit.amount), 'deposit', deposit.reference, 'Deposit completed');
+    const allowed = new Set(['pending', 'completed', 'failed', 'cancelled']);
+    if (!allowed.has(status)) {
+      throw new BadRequestException('Invalid status. Use pending, completed, failed, or cancelled.');
     }
-    return deposit;
+
+    return this.dataSource.transaction(async (manager) => {
+      const depositRepo = manager.getRepository(DepositRequest);
+      const txRepo = manager.getRepository(WalletTransaction);
+      const deposit = await depositRepo
+        .createQueryBuilder('deposit')
+        .setLock('pessimistic_write')
+        .where('deposit.id = :id', { id })
+        .getOne();
+      if (!deposit) return null;
+
+      const previousStatus = deposit.status;
+      if (previousStatus === status) return deposit;
+      if (['completed', 'failed', 'cancelled'].includes(previousStatus)) {
+        throw new BadRequestException('This deposit is already finalized and cannot be changed.');
+      }
+
+      if (status === 'completed') {
+        const existingTx = await txRepo.findOne({
+          where: { userId: deposit.userId, type: 'deposit', reference: deposit.reference },
+          select: ['id'],
+        });
+        if (!existingTx) {
+          await this.walletService.credit(
+            deposit.userId,
+            Number(deposit.amount),
+            'deposit',
+            deposit.reference,
+            'Deposit completed',
+            manager,
+          );
+        }
+      }
+
+      deposit.status = status;
+      return depositRepo.save(deposit);
+    });
   }
 
   // Withdrawals Management
@@ -1493,22 +1526,52 @@ export class AdminService {
   }
 
   async updateWithdrawalStatus(adminId: number, id: number, status: string, failureReason?: string) {
-    const withdrawal = await this.withdrawalRepo.findOne({ where: { id } });
-    if (!withdrawal) throw new NotFoundException('Withdrawal not found');
-    const terminal = new Set(['completed', 'failed', 'cancelled', 'rejected']);
-    if (terminal.has(withdrawal.status)) {
-      throw new BadRequestException('This withdrawal is already finalized and cannot be changed.');
-    }
     const allowed = new Set(['completed', 'failed', 'cancelled', 'rejected']);
     if (!allowed.has(status)) {
       throw new BadRequestException('Invalid status. Use completed, failed, rejected, or cancelled.');
     }
-    const payout = await this.payoutMethodRepo.findOne({ where: { id: withdrawal.payoutMethodId } });
-    withdrawal.status = status;
-    if (failureReason) withdrawal.failureReason = failureReason;
-    await this.withdrawalRepo.save(withdrawal);
+
+    const { withdrawal, payout } = await this.dataSource.transaction(async (manager) => {
+      const withdrawalRepo = manager.getRepository(WithdrawalRequest);
+      const locked = await withdrawalRepo
+        .createQueryBuilder('withdrawal')
+        .setLock('pessimistic_write')
+        .where('withdrawal.id = :id', { id })
+        .getOne();
+      if (!locked) throw new NotFoundException('Withdrawal not found');
+      const terminal = new Set(['completed', 'failed', 'cancelled', 'rejected']);
+      if (terminal.has(locked.status)) {
+        throw new BadRequestException('This withdrawal is already finalized and cannot be changed.');
+      }
+
+      if (failureReason) locked.failureReason = failureReason;
+      locked.status = status;
+      const saved = await withdrawalRepo.save(locked);
+
+      if (status === 'failed' || status === 'rejected' || status === 'cancelled') {
+        const txRepo = manager.getRepository(WalletTransaction);
+        const refundReference = saved.reference || undefined;
+        const existingRefund = await txRepo.findOne({
+          where: { userId: saved.userId, type: 'refund', reference: refundReference },
+          select: ['id'],
+        });
+        if (!existingRefund) {
+          await this.walletService.credit(
+            saved.userId,
+            Number(saved.amount),
+            'refund',
+            saved.reference || undefined,
+            'Withdrawal refunded',
+            manager,
+          );
+        }
+      }
+
+      const payoutMethod = await manager.getRepository(PayoutMethod).findOne({ where: { id: saved.payoutMethodId } });
+      return { withdrawal: saved, payout: payoutMethod };
+    });
+
     if (status === 'failed' || status === 'rejected' || status === 'cancelled') {
-      await this.walletService.credit(withdrawal.userId, Number(withdrawal.amount), 'refund', withdrawal.reference || undefined, 'Withdrawal refunded');
       let title: string;
       let verb: string;
       let notifType: 'withdrawal_failed' | 'withdrawal_rejected';

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
+import { ForbiddenException } from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { PaystackService } from './paystack.service';
 import { UsersService } from '../users/users.service';
@@ -17,6 +18,7 @@ describe('WalletService', () => {
   let depositRepo: jest.Mocked<{ findOne: jest.Mock; update: jest.Mock }>;
   let paystackService: jest.Mocked<Partial<PaystackService>>;
   let creditSpy: jest.SpyInstance;
+  let walletRepo: jest.Mocked<{ findOne: jest.Mock; create: jest.Mock; save: jest.Mock; manager: { transaction: jest.Mock } }>;
 
   const mockDeposit = {
     id: 1,
@@ -29,6 +31,12 @@ describe('WalletService', () => {
   };
 
   beforeEach(async () => {
+    walletRepo = {
+      findOne: jest.fn().mockResolvedValue({ userId: 10, balance: 0, currency: 'GHS', status: 'active' }),
+      create: jest.fn((input) => input),
+      save: jest.fn(async (input) => input),
+      manager: { transaction: jest.fn() },
+    };
     depositRepo = {
       findOne: jest.fn(),
       update: jest.fn(),
@@ -41,8 +49,8 @@ describe('WalletService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WalletService,
-        { provide: getRepositoryToken(UserWallet), useValue: { findOne: jest.fn(), create: jest.fn(), save: jest.fn() } },
-        { provide: getRepositoryToken(WalletTransaction), useValue: { save: jest.fn() } },
+        { provide: getRepositoryToken(UserWallet), useValue: walletRepo },
+        { provide: getRepositoryToken(WalletTransaction), useValue: { save: jest.fn(), findOne: jest.fn().mockResolvedValue(null) } },
         { provide: getRepositoryToken(DepositRequest), useValue: depositRepo },
         { provide: getRepositoryToken(PayoutMethod), useValue: { find: jest.fn() } },
         { provide: getRepositoryToken(WithdrawalRequest), useValue: { find: jest.fn(), save: jest.fn() } },
@@ -129,6 +137,17 @@ describe('WalletService', () => {
         'dep_ref_123',
         'Wallet deposit via Paystack',
       );
+    });
+
+    it('should reject webhook credit when wallet is frozen', async () => {
+      walletRepo.findOne.mockResolvedValue({ userId: 10, balance: 0, currency: 'GHS', status: 'frozen' });
+      (paystackService.verifyWebhookSignature as jest.Mock).mockResolvedValue(true);
+      (paystackService.verifyTransaction as jest.Mock).mockResolvedValue({ status: 'success', amount: 5000 });
+      (depositRepo.update as jest.Mock).mockResolvedValue({ affected: 1 });
+      (depositRepo.findOne as jest.Mock).mockResolvedValue(mockDeposit);
+
+      await expect(service.handlePaystackWebhook(rawBody, 'valid-sig')).rejects.toThrow(ForbiddenException);
+      expect(creditSpy).not.toHaveBeenCalled();
     });
   });
 });

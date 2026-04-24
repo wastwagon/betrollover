@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards, ForbiddenException, NotFoundException, BadRequestException, ParseIntPipe, UsePipes, ValidationPipe, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DataSource } from 'typeorm';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -33,6 +34,7 @@ import { UpdateApiSportsKeyDto, TestApiSportsConnectionDto } from './dto/api-spo
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
+@Throttle({ default: { limit: 120, ttl: 60000 } })
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
@@ -1086,6 +1088,7 @@ export class AdminController {
   }
 
   @Patch('deposits/:id/status')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   async updateDepositStatus(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -1114,6 +1117,7 @@ export class AdminController {
   }
 
   @Patch('withdrawals/:id/status')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   async updateWithdrawalStatus(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -1187,6 +1191,7 @@ export class AdminController {
 
   // Wallet Management
   @Post('wallets/:userId/adjust')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   async adjustWalletBalance(
     @CurrentUser() user: User,
     @Param('userId', ParseIntPipe) userId: number,
@@ -1197,6 +1202,7 @@ export class AdminController {
   }
 
   @Patch('wallets/:userId/freeze')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   async freezeWallet(
     @CurrentUser() user: User,
     @Param('userId', ParseIntPipe) userId: number,

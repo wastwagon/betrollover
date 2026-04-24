@@ -23,6 +23,9 @@ import { ReferralsService } from '../referrals/referrals.service';
 import { VisitorSession } from '../admin/entities/visitor-session.entity';
 
 const REFRESH_TOKEN_EXPIRY_DAYS = 30;
+const PASSWORD_RESET_COOLDOWN_MS = 60_000;
+const PASSWORD_RESET_MAX_ATTEMPTS = 5;
+const PASSWORD_RESET_LOCKOUT_MS = 10 * 60_000;
 
 export interface JwtPayload {
   sub: number;
@@ -32,6 +35,8 @@ export interface JwtPayload {
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private readonly passwordResetIssueState = new Map<string, number>();
+  private readonly passwordResetVerifyState = new Map<string, { attempts: number; lockUntil: number }>();
 
   constructor(
     private usersService: UsersService,
@@ -438,17 +443,26 @@ export class AuthService {
 
   async forgotPassword(email: string) {
     const normalized = email.trim().toLowerCase();
+    const now = Date.now();
+    const lastIssued = this.passwordResetIssueState.get(normalized) ?? 0;
+    if (now - lastIssued < PASSWORD_RESET_COOLDOWN_MS) {
+      return { message: 'If an account exists with that email, a reset code has been sent.' };
+    }
+
     const user = await this.usersService.findByEmail(normalized);
     // Silent fail if user not found for security, but we can't send email
     if (!user) return { message: 'If an account exists with that email, a reset code has been sent.' };
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const codeHash = crypto.createHash('sha256').update(code).digest('hex');
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     await this.passwordResetOtpRepo.delete({ email: normalized });
     await this.passwordResetOtpRepo.save(
-      this.passwordResetOtpRepo.create({ email: normalized, code, expiresAt }),
+      this.passwordResetOtpRepo.create({ email: normalized, code: codeHash, expiresAt }),
     );
+    this.passwordResetIssueState.set(normalized, now);
+    this.passwordResetVerifyState.delete(normalized);
 
     await this.emailService.sendPasswordResetOtp(normalized, code);
     return { message: 'If an account exists with that email, a reset code has been sent.' };
@@ -456,11 +470,22 @@ export class AuthService {
 
   async resetPassword(data: { email: string; code: string; newPassword: string }) {
     const normalized = data.email.trim().toLowerCase();
+    const state = this.passwordResetVerifyState.get(normalized);
+    const now = Date.now();
+    if (state && state.lockUntil > now) {
+      throw new UnauthorizedException('Too many failed attempts. Please request a new password reset code.');
+    }
+
+    const submittedCode = String(data.code || '').trim();
+    const codeHash = crypto.createHash('sha256').update(submittedCode).digest('hex');
     const record = await this.passwordResetOtpRepo.findOne({
-      where: { email: normalized, code: data.code, isUsed: false },
+      where: { email: normalized, code: codeHash, isUsed: false },
     });
 
     if (!record) {
+      const attempts = (state?.attempts ?? 0) + 1;
+      const lockUntil = attempts >= PASSWORD_RESET_MAX_ATTEMPTS ? now + PASSWORD_RESET_LOCKOUT_MS : 0;
+      this.passwordResetVerifyState.set(normalized, { attempts, lockUntil });
       throw new UnauthorizedException('The reset code is invalid or has expired. Please request a new one.');
     }
 
@@ -480,6 +505,7 @@ export class AuthService {
 
     record.isUsed = true;
     await this.passwordResetOtpRepo.save(record);
+    this.passwordResetVerifyState.delete(normalized);
 
     return { message: 'Password reset successful' };
   }
