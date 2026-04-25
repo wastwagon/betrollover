@@ -6,8 +6,10 @@ import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { useT } from '@/context/LanguageContext';
 
 interface PackageInfo {
   id: number;
@@ -21,6 +23,7 @@ interface PackageInfo {
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useT();
   const rawId = searchParams.get('packageId');
   const packageId = rawId ? parseInt(rawId, 10) : NaN;
   const fromTipster = searchParams.get('fromTipster');
@@ -131,6 +134,12 @@ function CheckoutContent() {
           ← Tipsters
         </Link>
         <PageHeader label="VIP" title="Join VIP" tagline="Pay from your wallet to unlock this tipster’s subscription picks." />
+        <EscrowTrustCallout
+          className="mb-4"
+          title={t('marketplace.trust_callout_title')}
+          body={t('marketplace.trust_callout_body')}
+          linkLabel={t('home.how_it_works')}
+        />
 
         {error && (
           <div className="mb-4 p-4 rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-200 text-sm">

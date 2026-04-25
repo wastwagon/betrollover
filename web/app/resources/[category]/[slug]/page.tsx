@@ -57,7 +57,7 @@ export default function ResourceItemPage() {
         <UnifiedHeader />
         <main className="section-ux-page-narrow text-center w-full min-w-0 px-4 sm:px-0">
           <h1 className="text-lg font-semibold text-[var(--text)] mb-4">{t('discover.resource_not_found')}</h1>
-          <Link href="/discover?tab=guides" className="text-[var(--primary)] hover:underline">
+          <Link href="/resources" className="text-[var(--primary)] hover:underline">
             {t('discover.back_to_discover')}
           </Link>
         </main>
@@ -87,7 +87,7 @@ export default function ResourceItemPage() {
         />
         <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 mb-6">
           <Link
-            href="/discover?tab=guides"
+            href="/resources"
             className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
           >
             ← {t('discover.back_to_discover')}

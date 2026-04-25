@@ -133,6 +133,24 @@ export default function ResourcesPage() {
           </Link>
         </p>
 
+        <section className="mb-8 rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 p-4 sm:p-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">Popular Guides</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Link
+              href="/guides/escrow-refunds"
+              className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            >
+              How escrow refunds work →
+            </Link>
+            <Link
+              href="/guides/evaluate-tipsters"
+              className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            >
+              How to evaluate tipsters before buying →
+            </Link>
+          </div>
+        </section>
+
         {/* Skill level overview cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           {SKILL_OVERVIEW.map(card => (

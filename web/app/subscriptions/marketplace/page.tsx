@@ -7,6 +7,7 @@ import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { PageHeader } from '@/components/PageHeader';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { EmptyState } from '@/components/EmptyState';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
@@ -113,6 +114,12 @@ export default function SubscriptionMarketplacePage() {
           label={t('nav.subscription_marketplace')}
           title={t('subscriptions.marketplace_title')}
           tagline={t('subscriptions.marketplace_tagline')}
+        />
+        <EscrowTrustCallout
+          className="mb-6"
+          title={t('marketplace.trust_callout_title')}
+          body={t('marketplace.trust_callout_body')}
+          linkLabel={t('home.how_it_works')}
         />
 
         {loading ? (

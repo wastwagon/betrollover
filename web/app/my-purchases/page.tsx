@@ -9,6 +9,7 @@ import { AdSlot } from '@/components/AdSlot';
 import { PickCard } from '@/components/PickCard';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
+import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { useErrorToast } from '@/hooks/useErrorToast';
 import { ErrorToast } from '@/components/ErrorToast';
 import { getApiUrl } from '@/lib/site-config';
@@ -255,6 +256,13 @@ export default function MyPurchasesPage() {
           <div className="mb-4">
             <AdSlot zoneSlug="my-purchases-full" fullWidth className="w-full" />
           </div>
+
+          <EscrowTrustCallout
+            className="mb-6"
+            title={t('marketplace.trust_callout_title')}
+            body={t('marketplace.trust_callout_body')}
+            linkLabel={t('home.how_it_works')}
+          />
 
           {/* ─── Summary cards ─────────────────────────────────── */}
           {!loading && stats.total > 0 && (
