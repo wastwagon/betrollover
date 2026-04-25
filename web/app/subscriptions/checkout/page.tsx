@@ -42,7 +42,7 @@ function CheckoutContent() {
   useEffect(() => {
     if (!Number.isFinite(packageId) || packageId < 1) {
       setLoading(false);
-      setError('Invalid package.');
+      setError(t('subscriptions.checkout_error_invalid_package'));
       return;
     }
     const token = localStorage.getItem('token');
@@ -58,16 +58,16 @@ function CheckoutContent() {
     ])
       .then(([p, w]) => {
         if (!p || p.status !== 'active') {
-          setError('This VIP package is not available.');
+          setError(t('subscriptions.checkout_error_not_available'));
           setPkg(null);
           return;
         }
         setPkg(p);
         if (w?.balance != null) setBalance(Number(w.balance));
       })
-      .catch(() => setError('Could not load package.'))
+      .catch(() => setError(t('subscriptions.checkout_error_load_failed')))
       .finally(() => setLoading(false));
-  }, [packageId, router]);
+  }, [packageId, router, t]);
 
   const pay = useCallback(async (): Promise<boolean> => {
     const token = localStorage.getItem('token');
@@ -82,18 +82,18 @@ function CheckoutContent() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(getApiErrorMessage(data, 'Payment failed'));
+        setError(getApiErrorMessage(data, t('subscriptions.checkout_error_payment_failed')));
         return false;
       }
       router.push('/subscriptions?subscribed=1');
       return true;
     } catch {
-      setError('Could not complete subscription. Please try again.');
+      setError(t('subscriptions.checkout_error_complete_failed'));
       return false;
     } finally {
       setPaying(false);
     }
-  }, [pkg, router]);
+  }, [pkg, router, t]);
 
   const price = pkg ? Number(pkg.price) : 0;
   const canPay = pkg && balance !== null && balance >= price;
@@ -131,9 +131,13 @@ function CheckoutContent() {
     <DashboardShell>
       <div className="section-ux-dashboard-shell max-w-lg mx-auto w-full min-w-0 max-w-full px-1 sm:px-0">
         <Link href={backHref} className="text-sm text-[var(--primary)] hover:underline mb-4 inline-block">
-          ← Tipsters
+          ← {t('tipster.back_to_tipsters')}
         </Link>
-        <PageHeader label="VIP" title="Join VIP" tagline="Pay from your wallet to unlock this tipster’s subscription picks." />
+        <PageHeader
+          label={t('subscriptions.checkout_label')}
+          title={t('subscriptions.checkout_title')}
+          tagline={t('subscriptions.checkout_tagline')}
+        />
         <EscrowTrustCallout
           className="mb-4"
           title={t('marketplace.trust_callout_title')}
@@ -152,26 +156,26 @@ function CheckoutContent() {
             <div className="min-w-0">
               <h2 className="text-lg font-semibold text-[var(--text)] break-words">{pkg.name}</h2>
               <p className="text-2xl font-bold text-[var(--primary)] mt-2 tabular-nums">
-                GHS {price.toFixed(2)} / {pkg.durationDays} days
+                GHS {price.toFixed(2)} / {t('subscriptions.checkout_days', { n: String(pkg.durationDays) })}
               </p>
             </div>
             <div className="text-sm text-[var(--text-muted)]">
-              Wallet balance:{' '}
+              {t('subscriptions.checkout_wallet_balance')}{' '}
               <span className="font-medium text-[var(--text)] tabular-nums">
                 {balance !== null ? `GHS ${balance.toFixed(2)}` : '—'}
               </span>
             </div>
             {balance !== null && balance < price && price > 0 && (
               <p className="text-sm text-[var(--text-muted)]">
-                Top up your wallet to subscribe.{' '}
+                {t('subscriptions.checkout_topup_hint')}{' '}
                 <Link href={walletTopUpHref} className="text-[var(--primary)] font-medium hover:underline">
-                  Top up and continue
+                  {t('subscriptions.checkout_topup_cta')}
                 </Link>
               </p>
             )}
             {autoSubscribe && canPay && (
               <p className="text-xs text-emerald-700 dark:text-emerald-300">
-                Wallet topped up. Completing your subscription automatically...
+                {t('subscriptions.checkout_auto_processing')}
               </p>
             )}
             <button
@@ -180,7 +184,7 @@ function CheckoutContent() {
               disabled={paying || !canPay}
               className="w-full py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {paying ? 'Processing…' : 'Pay from wallet'}
+              {paying ? t('subscriptions.checkout_processing') : t('subscriptions.checkout_pay_cta')}
             </button>
           </div>
         )}
