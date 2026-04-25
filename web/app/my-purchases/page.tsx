@@ -385,7 +385,10 @@ export default function MyPurchasesPage() {
                 title={t('my_purchases.no_filter_match')}
                 description={t('my_purchases.no_filter_match_desc')}
                 actionLabel={t('common.view_all')}
-                actionHref="#"
+                onActionClick={() => {
+                  setResultFilter('all');
+                  setSportFilter('all');
+                }}
                 icon="🔍"
               />
             </div>

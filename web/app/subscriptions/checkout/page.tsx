@@ -67,7 +67,7 @@ function CheckoutContent() {
       })
       .catch(() => setError(t('subscriptions.checkout_error_load_failed')))
       .finally(() => setLoading(false));
-  }, [packageId, router, t]);
+  }, [continueUrl, packageId, router, t]);
 
   const pay = useCallback(async (): Promise<boolean> => {
     const token = localStorage.getItem('token');
