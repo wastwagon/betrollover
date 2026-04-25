@@ -999,6 +999,8 @@ const fr: Record<string, string> = {
   'invite.total_credited': 'Total crédité',
   'invite.your_referral_code': 'Votre code de parrainage',
   'invite.share_message': 'Message de partage',
+  'invite.share_whatsapp': 'Partager sur WhatsApp',
+  'invite.share_telegram': 'Partager sur Telegram',
   'invite.your_referrals': 'Vos parrainages',
   'invite.joined': 'Inscrit',
   'invite.purchased': 'Acheté',

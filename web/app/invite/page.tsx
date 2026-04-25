@@ -64,6 +64,8 @@ export default function InvitePage() {
   const shareText = stats
     ? `Join me on BetRollover — the AI-powered tipster marketplace! Sign up with Google or Apple using this link (your referral is tracked automatically): ${shareUrl}`
     : '';
+  const whatsappHref = shareText ? `https://wa.me/?text=${encodeURIComponent(shareText)}` : '';
+  const telegramHref = shareText ? `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}` : '';
 
   return (
     <DashboardShell>
@@ -133,6 +135,24 @@ export default function InvitePage() {
                 <CopyButton text={shareText} />
               </div>
               <p className="text-sm text-[var(--text-muted)] bg-[var(--bg)] rounded-xl p-3 border border-[var(--border)] whitespace-pre-wrap break-words min-w-0">{shareText}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <a
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-60"
+                >
+                  <span aria-hidden>🟢</span> {t('invite.share_whatsapp')}
+                </a>
+                <a
+                  href={telegramHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 text-white text-xs font-semibold hover:bg-sky-700 transition-colors disabled:opacity-60"
+                >
+                  <span aria-hidden>✈️</span> {t('invite.share_telegram')}
+                </a>
+              </div>
             </div>
 
             {/* How it works */}

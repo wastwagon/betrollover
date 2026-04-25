@@ -1001,6 +1001,8 @@ const en = {
   'invite.total_credited': 'Total Credited',
   'invite.your_referral_code': 'Your Referral Code',
   'invite.share_message': 'Share Message',
+  'invite.share_whatsapp': 'Share on WhatsApp',
+  'invite.share_telegram': 'Share on Telegram',
   'invite.your_referrals': 'Your Referrals',
   'invite.joined': 'Joined',
   'invite.purchased': 'Purchased',
