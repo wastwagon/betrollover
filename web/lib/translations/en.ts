@@ -554,6 +554,9 @@ const en = {
   'my_purchases.no_pick_purchases': 'No pick purchases yet',
   'my_purchases.no_pick_purchases_desc':
     'You have VIP subscriptions below. Buy individual picks anytime from the marketplace.',
+  'my_purchases.explore_vip_marketplace': 'Explore VIP marketplace',
+  'my_purchases.learn_before_buying': 'Learn how to evaluate tipsters',
+  'my_purchases.open_my_subscriptions': 'Open my subscriptions',
   'my_purchases.vip_heading': 'VIP subscriptions',
   'my_purchases.vip_note':
     'These are time-based packages (not single picks). Subscription access and bundled content live on the Subscriptions page.',

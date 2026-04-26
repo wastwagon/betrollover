@@ -552,6 +552,9 @@ const fr: Record<string, string> = {
   'my_purchases.no_pick_purchases': 'Aucun pronostic acheté pour le moment',
   'my_purchases.no_pick_purchases_desc':
     'Vous avez des abonnements VIP ci-dessous. Achetez des pronostics à l’unité sur le marché quand vous voulez.',
+  'my_purchases.explore_vip_marketplace': 'Explorer le marché VIP',
+  'my_purchases.learn_before_buying': 'Apprendre à évaluer les tipsters',
+  'my_purchases.open_my_subscriptions': 'Ouvrir mes abonnements',
   'my_purchases.vip_heading': 'Abonnements VIP',
   'my_purchases.vip_note':
     'Forfaits sur une durée (pas des pronostics unitaires). L’accès lié aux abonnements est sur la page Abonnements.',

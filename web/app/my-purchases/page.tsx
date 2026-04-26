@@ -364,6 +364,20 @@ export default function MyPurchasesPage() {
                 actionHref="/marketplace"
                 icon="🛒"
               />
+              <div className="pb-8 px-4 sm:px-8 -mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2">
+                <Link
+                  href="/subscriptions/marketplace"
+                  className="inline-flex justify-center items-center px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                >
+                  {t('my_purchases.explore_vip_marketplace')}
+                </Link>
+                <Link
+                  href="/guides/evaluate-tipsters"
+                  className="inline-flex justify-center items-center px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                >
+                  {t('my_purchases.learn_before_buying')}
+                </Link>
+              </div>
             </div>
           )}
 
@@ -376,6 +390,14 @@ export default function MyPurchasesPage() {
                 actionHref="/marketplace"
                 icon="🛒"
               />
+              <div className="pb-8 px-4 sm:px-8 -mt-6 flex justify-center">
+                <Link
+                  href="/subscriptions"
+                  className="inline-flex justify-center items-center px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                >
+                  {t('my_purchases.open_my_subscriptions')}
+                </Link>
+              </div>
             </div>
           )}
 
