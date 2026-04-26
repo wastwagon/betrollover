@@ -537,6 +537,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       <CompactNavLink href="/leaderboard" icon="🏆" label={t('nav.leaderboard')} onClick={closeAll} />
                       <CompactNavLink href="/league-tables" icon="📊" label={t('nav.league_tables')} onClick={closeAll} />
                       <CompactNavLink href="/tipsters" icon="👥" label={t('nav.top_tipsters')} onClick={closeAll} />
+                      <CompactNavLink href="/guides" icon="📘" label={t('nav.short_guides')} onClick={closeAll} />
                     </div>
                 </DesktopMenuPortal>
               </div>
@@ -890,6 +891,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               { href: '/league-tables', label: t('nav.league_tables_short') },
               { href: '/tipsters', label: t('nav.tipsters') },
               { href: '/learn', label: t('nav.learn') },
+              { href: '/guides', label: t('nav.short_guides') },
             ].map((q) => (
               <Link
                 key={q.href}

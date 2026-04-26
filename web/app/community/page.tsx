@@ -48,20 +48,36 @@ function getToken(): string | null {
   return localStorage.getItem('token');
 }
 
-function timeAgo(dateStr: string): string {
+function timeAgo(
+  dateStr: string,
+  t: (key: string, vars?: Record<string, string>) => string,
+): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const s = Math.floor(diff / 1000);
-  if (s < 60) return `${s}s`;
+  if (s < 60) return t('community.time_sec', { n: String(s) });
   const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m`;
+  if (m < 60) return t('community.time_min', { n: String(m) });
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  return `${Math.floor(h / 24)}d`;
+  if (h < 24) return t('community.time_hour', { n: String(h) });
+  return t('community.time_day', { n: String(Math.floor(h / 24)) });
 }
 
 function UserBadge({ role }: { role: string }) {
-  if (role === 'admin') return <span className="ml-1 px-1 py-0.5 text-[10px] bg-red-600 text-white rounded font-bold">ADMIN</span>;
-  if (role === 'tipster') return <span className="ml-1 px-1 py-0.5 text-[10px] bg-emerald-600 text-white rounded font-bold">✓ TIPSTER</span>;
+  const t = useT();
+  if (role === 'admin') {
+    return (
+      <span className="ml-1 px-1 py-0.5 text-[10px] bg-red-600 text-white rounded font-bold">
+        {t('community.badge_admin')}
+      </span>
+    );
+  }
+  if (role === 'tipster') {
+    return (
+      <span className="ml-1 px-1 py-0.5 text-[10px] bg-emerald-600 text-white rounded font-bold">
+        ✓ {t('community.badge_tipster')}
+      </span>
+    );
+  }
   return null;
 }
 
@@ -257,7 +273,7 @@ function CommunityPageInner() {
     <div className="min-h-screen flex flex-col bg-gray-950 text-white w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
 
-      <div className="section-ux-community-shell w-full min-w-0" style={{ height: 'calc(100vh - 140px)' }}>
+      <main className="section-ux-community-shell w-full min-w-0" style={{ height: 'calc(100vh - 140px)' }}>
         {/* Active users bar - top center */}
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 max-w-[calc(100vw-1rem)] flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-800/95 border border-gray-700 text-sm text-gray-300 shadow-lg">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" aria-hidden />
@@ -270,7 +286,7 @@ function CommunityPageInner() {
 
         {/* Room sidebar */}
         <aside className="w-64 shrink-0 hidden md:flex flex-col gap-1">
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-2">Rooms</h2>
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-2">{t('community.rooms_section')}</h2>
           {rooms.map((room) => (
             <button
               key={room.slug}
@@ -286,7 +302,9 @@ function CommunityPageInner() {
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-sm truncate">{room.name}</div>
                 <div className="flex items-center gap-2 text-xs text-gray-400">
-                  {room.todayMessages > 0 && <span>{room.todayMessages} today</span>}
+                  {room.todayMessages > 0 && (
+                    <span>{t('community.messages_today_badge', { count: String(room.todayMessages) })}</span>
+                  )}
                   {(room.activeInRoom ?? 0) > 0 && (
                     <span className="text-emerald-400">
                       {t('community.chatting', { count: String(room.activeInRoom) })}
@@ -301,10 +319,10 @@ function CommunityPageInner() {
           <div className="mt-4 p-3 bg-gray-900 rounded-lg text-xs text-gray-500 leading-relaxed">
             <p className="font-semibold text-gray-400 mb-1">{t('community.rules_title')}</p>
             <ul className="space-y-0.5 list-disc list-inside">
-              <li>No external links or contacts</li>
-              <li>No spam or repeated messages</li>
-              <li>Keep discussion sport-related</li>
-              <li>Respect all members</li>
+              <li>{t('community.rule1')}</li>
+              <li>{t('community.rule2')}</li>
+              <li>{t('community.rule3')}</li>
+              <li>{t('community.rule4')}</li>
             </ul>
           </div>
           {/* Ad slot - sidebar below rules */}
@@ -322,7 +340,7 @@ function CommunityPageInner() {
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <span className="text-2xl shrink-0">{activeRoom?.icon}</span>
               <div className="min-w-0">
-                <h1 className="font-bold text-white truncate">{activeRoom?.name || 'Loading...'}</h1>
+                <h1 className="font-bold text-white truncate">{activeRoom?.name || t('common.loading')}</h1>
                 {activeRoom?.description && (
                   <p className="text-xs text-gray-400">{activeRoom.description}</p>
                 )}
@@ -331,6 +349,7 @@ function CommunityPageInner() {
             {/* Mobile room selector */}
             <select
               className="md:hidden shrink-0 min-w-0 max-w-[45%] bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-2 py-1"
+              aria-label={t('community.choose_room')}
               value={activeSlug}
               onChange={(e) => router.push(`/community?room=${e.target.value}`)}
             >
@@ -355,14 +374,14 @@ function CommunityPageInner() {
               <div className="flex items-center justify-center h-full text-gray-500">
                 <div className="text-center">
                   <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                  <p className="text-sm">Loading messages...</p>
+                  <p className="text-sm">{t('community.loading_messages')}</p>
                 </div>
               </div>
             ) : messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-2">
                 <span className="text-5xl">{activeRoom?.icon || '💬'}</span>
-                <p className="font-medium">No messages yet</p>
-                <p className="text-sm">Be the first to say something!</p>
+                <p className="font-medium">{t('community.no_messages')}</p>
+                <p className="text-sm">{t('community.empty_invite')}</p>
               </div>
             ) : (
               messages.map((msg) => (
@@ -377,7 +396,7 @@ function CommunityPageInner() {
                         </span>
                       )}
                       <UserBadge role={msg.user.role} />
-                      <span className="text-xs text-gray-500 ml-1">{timeAgo(msg.createdAt)}</span>
+                      <span className="text-xs text-gray-500 ml-1">{timeAgo(msg.createdAt, t)}</span>
                     </div>
                     <p className="text-gray-200 text-sm leading-relaxed break-words">{msg.content}</p>
 
@@ -406,7 +425,7 @@ function CommunityPageInner() {
                           onClick={() => setReportingId(reportingId === msg.id ? null : msg.id)}
                           className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-xs text-gray-500 hover:text-red-400 transition-all ml-1"
                         >
-                          ⚑ Report
+                          ⚑ {t('community.report')}
                         </button>
                       )}
                     </div>
@@ -423,7 +442,7 @@ function CommunityPageInner() {
                           {t('community.report_yes')}
                         </button>
                         <button type="button" onClick={() => setReportingId(null)} className="text-gray-500">
-                          Cancel
+                          {t('common.cancel')}
                         </button>
                       </div>
                     )}
@@ -450,7 +469,7 @@ function CommunityPageInner() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                  placeholder={`Message ${activeRoom?.name || ''}...`}
+                  placeholder={t('community.send_placeholder', { room: activeRoom?.name || '' })}
                   maxLength={500}
                   className="flex-1 min-w-0 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
@@ -460,16 +479,20 @@ function CommunityPageInner() {
                   disabled={sending || !input.trim()}
                   className="w-full sm:w-auto shrink-0 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
-                  {sending ? '...' : 'Send'}
+                  {sending ? t('community.sending') : t('community.send')}
                 </button>
               </div>
             ) : (
               <div className="text-center py-2">
                 <span className="text-gray-400 text-sm">
-                  <Link href="/login" className="text-indigo-400 hover:underline font-medium">Log in</Link>
-                  {' '}or{' '}
-                  <Link href="/register" className="text-indigo-400 hover:underline font-medium">register</Link>
-                  {' '}to participate in the conversation
+                  <Link href="/login" className="text-indigo-400 hover:underline font-medium">
+                    {t('auth.login')}
+                  </Link>{' '}
+                  {t('common.or')}{' '}
+                  <Link href="/register" className="text-indigo-400 hover:underline font-medium">
+                    {t('auth.register')}
+                  </Link>{' '}
+                  {t('community.to_participate_suffix')}
                 </span>
               </div>
             )}
@@ -482,16 +505,25 @@ function CommunityPageInner() {
             </div>
           </aside>
         </div>
-      </div>
+      </main>
 
       <AppFooter />
     </div>
   );
 }
 
+function CommunityPageFallback() {
+  const t = useT();
+  return (
+    <div className="min-h-screen bg-gray-950 flex items-center justify-center text-white w-full min-w-0 max-w-full overflow-x-hidden px-4 text-center">
+      {t('community.loading_page')}
+    </div>
+  );
+}
+
 export default function CommunityPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-950 flex items-center justify-center text-white w-full min-w-0 max-w-full overflow-x-hidden px-4 text-center">Loading community...</div>}>
+    <Suspense fallback={<CommunityPageFallback />}>
       <CommunityPageInner />
     </Suspense>
   );

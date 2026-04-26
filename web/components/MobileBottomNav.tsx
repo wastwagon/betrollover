@@ -98,7 +98,7 @@ export function MobileBottomNav() {
   const nav = (
     <nav
       role="navigation"
-      aria-label="Main"
+      aria-label={t('a11y.bottom_tab_bar')}
       className="fixed inset-x-0 bottom-0 z-50 xl:hidden bg-[var(--card)] border-t border-[var(--border)] shadow-[0_-4px_20px_rgba(0,0,0,0.07)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.35)]"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >

@@ -3,6 +3,9 @@
  * For French-speaking users worldwide (global audience).
  */
 const fr: Record<string, string> = {
+  'a11y.skip_to_content': 'Aller au contenu principal',
+  'a11y.bottom_tab_bar': 'Onglets du bas',
+
   // ── Navigation ──────────────────────────────────────────────────────────
   'nav.home': 'Accueil',
   'nav.browse': 'Parcourir',
@@ -21,6 +24,7 @@ const fr: Record<string, string> = {
   'nav.discover': 'Découvrir',
   'nav.news': 'Actualités',
   'nav.guides': 'Guides Tipsters',
+  'nav.short_guides': 'Guides rapides',
   'nav.community': 'Chat Communauté',
   'nav.about': 'À Propos',
   'nav.contact': 'Contact',
@@ -978,6 +982,7 @@ const fr: Record<string, string> = {
 
   // ── Community ────────────────────────────────────────────────────────────
   'community.title': 'Chat Communauté',
+  'community.rooms_section': 'Salons',
   'community.subtitle': 'Rejoignez les salons de discussion sportive en direct',
   'community.choose_room': 'Choisissez un salon',
   'community.messages_today': 'messages aujourd\'hui',
@@ -994,6 +999,20 @@ const fr: Record<string, string> = {
   'community.report_confirm': 'Signaler ce message ?',
   'community.report_yes': 'Oui, signaler',
   'community.send': 'Envoyer',
+  'community.sending': 'Envoi…',
+  'community.report': 'Signaler',
+  'community.loading_page': 'Chargement de la communauté…',
+  'community.loading_messages': 'Chargement des messages…',
+  'community.no_messages': 'Aucun message pour l’instant',
+  'community.empty_invite': 'Soyez le premier à écrire !',
+  'community.messages_today_badge': '{count} aujourd’hui',
+  'community.to_participate_suffix': 'pour participer à la discussion',
+  'community.badge_admin': 'ADMIN',
+  'community.badge_tipster': 'TIPSTER',
+  'community.time_sec': '{n} s',
+  'community.time_min': '{n} min',
+  'community.time_hour': '{n} h',
+  'community.time_day': '{n} j',
 
   // ── Invite ───────────────────────────────────────────────────────────────
   'invite.title': 'Inviter & Gagner',

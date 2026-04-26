@@ -3,6 +3,10 @@
  * All other languages fall back to these values for missing keys.
  */
 const en = {
+  // ── Accessibility (landmarks, skip link, screen reader labels) ─────────
+  'a11y.skip_to_content': 'Skip to main content',
+  'a11y.bottom_tab_bar': 'Bottom tab bar',
+
   // ── Navigation ──────────────────────────────────────────────────────────
   'nav.home': 'Home',
   'nav.browse': 'Browse',
@@ -21,6 +25,8 @@ const en = {
   'nav.discover': 'Discover',
   'nav.news': 'News',
   'nav.guides': 'Tipster Guides',
+  /** /guides static buyer how-tos (distinct from /resources tipster library) */
+  'nav.short_guides': 'Quick guides',
   'nav.community': 'Community Chat',
   'nav.about': 'About Us',
   'nav.contact': 'Contact',
@@ -980,6 +986,7 @@ const en = {
 
   // ── Community ────────────────────────────────────────────────────────────
   'community.title': 'Community Chat',
+  'community.rooms_section': 'Rooms',
   'community.subtitle': 'Join live sport chat rooms',
   'community.choose_room': 'Choose a room to join',
   'community.messages_today': 'messages today',
@@ -996,6 +1003,20 @@ const en = {
   'community.report_confirm': 'Report this message?',
   'community.report_yes': 'Yes, report',
   'community.send': 'Send',
+  'community.sending': 'Sending…',
+  'community.report': 'Report',
+  'community.loading_page': 'Loading community…',
+  'community.loading_messages': 'Loading messages…',
+  'community.no_messages': 'No messages yet',
+  'community.empty_invite': 'Be the first to say something!',
+  'community.messages_today_badge': '{count} today',
+  'community.to_participate_suffix': 'to participate in the conversation',
+  'community.badge_admin': 'ADMIN',
+  'community.badge_tipster': 'TIPSTER',
+  'community.time_sec': '{n}s',
+  'community.time_min': '{n}m',
+  'community.time_hour': '{n}h',
+  'community.time_day': '{n}d',
 
   // ── Invite ───────────────────────────────────────────────────────────────
   'invite.title': 'Invite & Earn',

@@ -93,6 +93,11 @@ export function AppFooter() {
                 </Link>
               </li>
               <li>
+                <Link href="/guides" className={footerLinkClass}>
+                  {t('nav.short_guides')}
+                </Link>
+              </li>
+              <li>
                 <Link href="/community" className={footerLinkClass}>
                   {t('community.title')}
                 </Link>
