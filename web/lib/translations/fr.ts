@@ -764,6 +764,8 @@ const fr: Record<string, string> = {
     'Vous avez déjà un forfait VIP actif avec ce tipster. Gérez-le depuis la page Mes abonnements.',
   'subscriptions.marketplace_footnote':
     'Les tipsters ont besoin d\'au moins {minRoi} % de ROI réglé et {minWr} % de taux de victoire réglé (seuils admin en direct) pour proposer un forfait VIP — même barème que les pronostics payants sur le marché. Les stats reflètent les pronostics réglés.',
+  'subscriptions.marketplace_link_escrow': 'Escrow & remboursements',
+  'subscriptions.marketplace_link_eval': 'Évaluer les tipsters',
   'subscriptions.vip_create_eligibility':
     'Il faut au moins {minRoi} % de ROI réglé et {minWr} % de taux de victoire réglé (réglages plateforme actuels) pour créer un forfait VIP — mêmes exigences que les pronostics payants sur le marché. Si l\'une des métriques passe sous le minimum, publiez des pronostics gratuits jusqu\'à rétablissement.',
   'subscriptions.checkout_label': 'VIP',

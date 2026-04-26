@@ -302,6 +302,32 @@ export default function SubscriptionMarketplacePage() {
             minWr: String(thresholds.minimumWinRate),
           })}
         </p>
+        <div className="mt-4 flex flex-wrap justify-center gap-2 sm:gap-3 text-sm max-w-2xl mx-auto px-1">
+          <Link
+            href="/tipsters"
+            className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+          >
+            {t('nav.tipsters')}
+          </Link>
+          <Link
+            href="/how-it-works#faq"
+            className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+          >
+            {t('home.how_it_works')}
+          </Link>
+          <Link
+            href="/guides/escrow-refunds"
+            className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+          >
+            {t('subscriptions.marketplace_link_escrow')}
+          </Link>
+          <Link
+            href="/guides/evaluate-tipsters"
+            className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+          >
+            {t('subscriptions.marketplace_link_eval')}
+          </Link>
+        </div>
       </main>
       <AppFooter />
     </div>

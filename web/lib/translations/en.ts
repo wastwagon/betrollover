@@ -766,6 +766,8 @@ const en = {
     'You already have an active VIP plan with this tipster. Manage it from your subscriptions page.',
   'subscriptions.marketplace_footnote':
     'Tipsters need at least {minRoi}% settled ROI and {minWr}% settled win rate (live admin thresholds) to offer VIP packages — same bar as paid marketplace picks. Stats shown reflect settled pick performance.',
+  'subscriptions.marketplace_link_escrow': 'Escrow & refunds',
+  'subscriptions.marketplace_link_eval': 'Evaluating tipsters',
   'subscriptions.vip_create_eligibility':
     'You need at least {minRoi}% settled ROI and {minWr}% settled win rate (current platform settings) to create a VIP package — same requirements as selling paid picks on the marketplace. If either metric drops below the minimum, publish free picks until both recover.',
   'subscriptions.checkout_label': 'VIP',
