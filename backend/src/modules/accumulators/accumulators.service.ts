@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
   InternalServerErrorException,
   Logger,
   Inject,
@@ -10,6 +11,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, DataSource, EntityManager } from 'typeorm';
 import { AccumulatorTicket } from './entities/accumulator-ticket.entity';
+import { AccumulatorBookingCodeCopy } from './entities/accumulator-booking-code-copy.entity';
 import { AccumulatorPick } from './entities/accumulator-pick.entity';
 import { PickMarketplace } from './entities/pick-marketplace.entity';
 import { PickReaction } from './entities/pick-reaction.entity';
@@ -85,6 +87,8 @@ export class AccumulatorsService {
   constructor(
     @InjectRepository(AccumulatorTicket)
     private ticketRepo: Repository<AccumulatorTicket>,
+    @InjectRepository(AccumulatorBookingCodeCopy)
+    private bookingCodeCopyRepo: Repository<AccumulatorBookingCodeCopy>,
     @InjectRepository(AccumulatorPick)
     private pickRepo: Repository<AccumulatorPick>,
     @InjectRepository(PickMarketplace)
@@ -466,7 +470,177 @@ export class AccumulatorsService {
     const next = { ...payload };
     delete next.bookmakerKey;
     delete next.bookingCode;
+    delete next.bookingCodeCopyCount;
     return next;
+  }
+
+  /**
+   * Whether the viewer may see full pick legs and booking code (matches applyCouponPickVisibility rules).
+   */
+  private async couponPicksRevealState(
+    ticket: AccumulatorTicket,
+    listingRow: PickMarketplace | null,
+    viewerUserId: number | null | undefined,
+    opts?: { forceFullPicks?: boolean; viewerIsAdmin?: boolean },
+  ): Promise<{ revealed: boolean; accessViaSubscription?: boolean }> {
+    if (opts?.forceFullPicks || opts?.viewerIsAdmin) {
+      return { revealed: true };
+    }
+    const effectivePrice =
+      listingRow && listingRow.status === 'active'
+        ? Number(listingRow.price)
+        : Number(ticket.price ?? 0);
+    if (effectivePrice <= 0) {
+      return { revealed: true };
+    }
+    const settled = ['won', 'lost', 'void'].includes((ticket.result || 'pending').toLowerCase());
+    if (settled) {
+      return { revealed: true };
+    }
+    if (viewerUserId == null) {
+      return { revealed: false };
+    }
+    if (ticket.userId === viewerUserId) {
+      return { revealed: true };
+    }
+    const hasSubscriptionAccess = await this.subscriptionsService.hasActiveSubscriptionToTipster(
+      viewerUserId,
+      ticket.userId,
+    );
+    if (hasSubscriptionAccess) {
+      return { revealed: true, accessViaSubscription: true };
+    }
+    const purchased = await this.purchasedRepo.findOne({
+      where: { userId: viewerUserId, accumulatorId: ticket.id },
+    });
+    if (purchased) {
+      return { revealed: true };
+    }
+    return { revealed: false };
+  }
+
+  private async getBookingCodeCopyCountsByAccumulatorIds(ids: number[]): Promise<Map<number, number>> {
+    if (ids.length === 0) return new Map();
+    const rows = await this.bookingCodeCopyRepo
+      .createQueryBuilder('c')
+      .select('c.accumulatorId', 'aid')
+      .addSelect('COUNT(*)', 'cnt')
+      .where('c.accumulatorId IN (:...ids)', { ids })
+      .groupBy('c.accumulatorId')
+      .getRawMany<{ aid: number; cnt: string }>();
+    const m = new Map<number, number>();
+    for (const r of rows) {
+      m.set(Number(r.aid), Number(r.cnt));
+    }
+    return m;
+  }
+
+  /** Attach copy counts for payloads that expose a booking code (full visibility). */
+  private async mergeBookingCodeCopyCountsIntoPayloads(items: Record<string, unknown>[]): Promise<void> {
+    const ids = items
+      .filter((p) => {
+        if (!p.bookmakerKey || !p.bookingCode) return false;
+        if (p.picksRevealed === false) return false;
+        return true;
+      })
+      .map((p) => Number((p as { id: number }).id))
+      .filter((id) => id > 0);
+    if (ids.length === 0) return;
+    const counts = await this.getBookingCodeCopyCountsByAccumulatorIds(ids);
+    for (const p of items) {
+      if (p.bookmakerKey && p.bookingCode && p.picksRevealed !== false) {
+        const id = Number((p as { id: number }).id);
+        p.bookingCodeCopyCount = counts.get(id) ?? 0;
+      }
+    }
+  }
+
+  /** Owner / internal lists without picksRevealed: attach counts when a booking code exists. */
+  private async mergeBookingCodeCopyCountsForTicketsPlain(
+    items: Array<Record<string, unknown> & { id: number; bookmakerKey?: string | null; bookingCode?: string | null }>,
+  ): Promise<void> {
+    const ids = items
+      .filter((t) => t.bookmakerKey && t.bookingCode)
+      .map((t) => t.id)
+      .filter((id) => id > 0);
+    if (ids.length === 0) return;
+    const counts = await this.getBookingCodeCopyCountsByAccumulatorIds(ids);
+    for (const t of items) {
+      if (t.bookmakerKey && t.bookingCode) {
+        t.bookingCodeCopyCount = counts.get(t.id) ?? 0;
+      }
+    }
+  }
+
+  async recordBookingCodeCopy(userId: number, accumulatorId: number): Promise<{ recorded: boolean; count: number }> {
+    const ticket = await this.ticketRepo.findOne({ where: { id: accumulatorId } });
+    if (!ticket) throw new NotFoundException('Pick not found');
+    if (!ticket.bookmakerKey?.trim() || !ticket.bookingCode?.trim()) {
+      throw new BadRequestException('This pick has no booking code to copy.');
+    }
+    const row = await this.marketplaceRepo.findOne({
+      where: { accumulatorId },
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
+    });
+    const state = await this.couponPicksRevealState(ticket, row, userId, {});
+    if (!state.revealed) {
+      throw new ForbiddenException('You cannot record a copy for a pick you cannot view.');
+    }
+
+    let recorded = false;
+    try {
+      await this.bookingCodeCopyRepo.save(
+        this.bookingCodeCopyRepo.create({ accumulatorId, userId }),
+      );
+      recorded = true;
+    } catch (e: any) {
+      if (e?.code !== '23505') throw e;
+    }
+    const count = await this.bookingCodeCopyRepo.count({ where: { accumulatorId } });
+    return { recorded, count };
+  }
+
+  /**
+   * Total unique copiers + display names of copiers who have a tipster profile (for tooltip).
+   */
+  async getBookingCodeCopiers(
+    accumulatorId: number,
+    viewerUserId: number | null | undefined,
+    viewerIsAdmin?: boolean,
+  ): Promise<{ count: number; tipsterNames: string[] }> {
+    const ticket = await this.ticketRepo.findOne({ where: { id: accumulatorId } });
+    if (!ticket) throw new NotFoundException('Pick not found');
+    if (!ticket.bookmakerKey?.trim() || !ticket.bookingCode?.trim()) {
+      throw new NotFoundException('No booking code on this pick');
+    }
+    const row = await this.marketplaceRepo.findOne({
+      where: { accumulatorId },
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
+    });
+    const state = await this.couponPicksRevealState(ticket, row, viewerUserId ?? null, {
+      viewerIsAdmin: viewerIsAdmin === true,
+    });
+    if (!state.revealed) {
+      throw new ForbiddenException('Booking code is not visible for this pick.');
+    }
+
+    const count = await this.bookingCodeCopyRepo.count({ where: { accumulatorId } });
+
+    const nameRows = await this.bookingCodeCopyRepo
+      .createQueryBuilder('c')
+      .innerJoin(User, 'u', 'u.id = c.userId')
+      .innerJoin(Tipster, 'ts', 'ts.userId = u.id')
+      .where('c.accumulatorId = :aid', { aid: accumulatorId })
+      .select('COALESCE(u.displayName, u.username)', 'name')
+      .getRawMany<{ name: string }>();
+    const tipsterNames = [...new Set(nameRows.map((r) => r.name).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b),
+    );
+
+    return {
+      count,
+      tipsterNames,
+    };
   }
 
   private buildRedactedPicksForCoupon(picks: Array<{ id?: number }>): Array<Record<string, unknown>> {
@@ -497,47 +671,18 @@ export class AccumulatorsService {
     viewerUserId?: number | null,
     opts?: { forceFullPicks?: boolean; viewerIsAdmin?: boolean },
   ): Promise<Record<string, unknown>> {
-    if (opts?.forceFullPicks || opts?.viewerIsAdmin) {
-      return { ...payload, picksRevealed: true };
-    }
-    const effectivePrice =
-      listingRow && listingRow.status === 'active'
-        ? Number(listingRow.price)
-        : Number(ticket.price ?? 0);
-    if (effectivePrice <= 0) {
-      return { ...payload, picksRevealed: true };
-    }
-    const settled = ['won', 'lost', 'void'].includes((ticket.result || 'pending').toLowerCase());
-    if (settled) {
-      return { ...payload, picksRevealed: true };
-    }
-    if (viewerUserId == null) {
+    const state = await this.couponPicksRevealState(ticket, listingRow, viewerUserId, opts);
+    if (!state.revealed) {
       return {
         ...this.stripBookingCodeFromPayload(payload),
         picksRevealed: false,
         picks: this.buildRedactedPicksForCoupon((payload.picks as Array<{ id?: number }>) || []),
       };
     }
-    if (ticket.userId === viewerUserId) {
-      return { ...payload, picksRevealed: true };
-    }
-    const hasSubscriptionAccess = await this.subscriptionsService.hasActiveSubscriptionToTipster(
-      viewerUserId,
-      ticket.userId,
-    );
-    if (hasSubscriptionAccess) {
-      return { ...payload, picksRevealed: true, accessViaSubscription: true };
-    }
-    const purchased = await this.purchasedRepo.findOne({
-      where: { userId: viewerUserId, accumulatorId: ticket.id },
-    });
-    if (purchased) {
-      return { ...payload, picksRevealed: true };
-    }
     return {
-      ...this.stripBookingCodeFromPayload(payload),
-      picksRevealed: false,
-      picks: this.buildRedactedPicksForCoupon((payload.picks as Array<{ id?: number }>) || []),
+      ...payload,
+      picksRevealed: true,
+      ...(state.accessViaSubscription ? { accessViaSubscription: true as const } : {}),
     };
   }
 
@@ -647,7 +792,9 @@ export class AccumulatorsService {
     });
     const [withTipster] = await this.enrichWithTipsterMetadata([enriched], row ? [row] : []);
     const base = (withTipster ?? enriched) as Record<string, unknown>;
-    return this.applyCouponPickVisibility(base, ticket, row, viewerUserId ?? undefined, opts);
+    const out = await this.applyCouponPickVisibility(base, ticket, row, viewerUserId ?? undefined, opts);
+    await this.mergeBookingCodeCopyCountsIntoPayloads([out]);
+    return out;
   }
 
   async getPurchased(userId: number) {
@@ -669,10 +816,17 @@ export class AccumulatorsService {
     });
     const withTipster = await this.enrichWithTipsterMetadata(enrichedTickets, rows, userId);
     const ticketMap = new Map(withTipster.map((t) => [t.id, t]));
-    return purchased.map((p) => ({
+    const out = purchased.map((p) => ({
       ...p,
       pick: ticketMap.get(p.accumulatorId),
     }));
+    const pickPayloads = out
+      .map((o) => o.pick)
+      .filter((x): x is NonNullable<typeof x> => !!x) as Record<string, unknown>[];
+    await this.mergeBookingCodeCopyCountsForTicketsPlain(
+      pickPayloads as Array<Record<string, unknown> & { id: number; bookmakerKey?: string | null; bookingCode?: string | null }>,
+    );
+    return out;
   }
 
   async getMyAccumulators(userId: number, sport?: string) {
@@ -698,7 +852,11 @@ export class AccumulatorsService {
       relations: ['picks'],
       order: { createdAt: 'DESC' },
     });
-    return this.enrichPicksWithFixtureScores(tickets);
+    const enriched = await this.enrichPicksWithFixtureScores(tickets);
+    await this.mergeBookingCodeCopyCountsForTicketsPlain(
+      enriched as unknown as Array<Record<string, unknown> & { id: number; bookmakerKey?: string | null; bookingCode?: string | null }>,
+    );
+    return enriched;
   }
 
   /** Subscription feed: coupons from tipsters the user is subscribed to */
@@ -720,6 +878,9 @@ export class AccumulatorsService {
     const limit = Math.min(Math.max(options?.limit ?? 20, 1), 100);
     const offset = Math.max(options?.offset ?? 0, 0);
     const paginated = items.slice(offset, offset + limit);
+    await this.mergeBookingCodeCopyCountsForTicketsPlain(
+      paginated as Array<Record<string, unknown> & { id: number; bookmakerKey?: string | null; bookingCode?: string | null }>,
+    );
     return {
       items: paginated,
       total: items.length,
@@ -907,6 +1068,7 @@ export class AccumulatorsService {
           ),
         ),
       );
+      await this.mergeBookingCodeCopyCountsIntoPayloads(items as Record<string, unknown>[]);
       return { items, total, hasMore: offset + items.length < total };
     }
 
@@ -1018,6 +1180,7 @@ export class AccumulatorsService {
         ),
       ),
     );
+    await this.mergeBookingCodeCopyCountsIntoPayloads(items as Record<string, unknown>[]);
     return { items, total, hasMore: offset + items.length < total };
   }
 
@@ -1135,6 +1298,7 @@ export class AccumulatorsService {
         ),
       ),
     );
+    await this.mergeBookingCodeCopyCountsIntoPayloads(items as Record<string, unknown>[]);
     return { items, total, hasMore: offset + items.length < total };
   }
 
@@ -1417,7 +1581,10 @@ export class AccumulatorsService {
     });
     if (gambler) {
       const tip = await findBestFreeTip([gambler.id]);
-      if (tip) return tip;
+      if (tip) {
+        await this.mergeBookingCodeCopyCountsForTicketsPlain([tip as Record<string, unknown> & { id: number }]);
+        return tip;
+      }
     }
 
     // 2. Fall back to any tipster's free pick — pick highest purchase count for today (users and tipsters same privileges)
@@ -1429,6 +1596,9 @@ export class AccumulatorsService {
     if (!allTipsters.length) return null;
 
     const tip = await findBestFreeTip(allTipsters.map((u) => u.id));
+    if (tip) {
+      await this.mergeBookingCodeCopyCountsForTicketsPlain([tip as Record<string, unknown> & { id: number }]);
+    }
     return tip ?? null;
   }
 
@@ -1662,7 +1832,11 @@ export class AccumulatorsService {
       return !hasStartedFixture;
     });
 
-    return this.enrichWithTipsterMetadata(validTickets, rows);
+    const featured = await this.enrichWithTipsterMetadata(validTickets, rows);
+    await this.mergeBookingCodeCopyCountsForTicketsPlain(
+      featured as Array<Record<string, unknown> & { id: number; bookmakerKey?: string | null; bookingCode?: string | null }>,
+    );
+    return featured;
   }
 
   /**
@@ -1787,6 +1961,9 @@ export class AccumulatorsService {
 
     const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
     const items = await this.enrichWithTipsterMetadata(enrichedTickets, rows);
+    await this.mergeBookingCodeCopyCountsForTicketsPlain(
+      items as Array<Record<string, unknown> & { id: number; bookmakerKey?: string | null; bookingCode?: string | null }>,
+    );
     return {
       items,
       total,

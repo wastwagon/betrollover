@@ -51,6 +51,7 @@ interface FreeTip {
   tipster?: Tipster | null;
   bookmakerKey?: string | null;
   bookingCode?: string | null;
+  bookingCodeCopyCount?: number;
 }
 
 export function HomeFreeTipOfTheDay() {
@@ -184,6 +185,7 @@ export function HomeFreeTipOfTheDay() {
               detailsHref={item.id !== tip?.id ? `/coupons/${item.id}` : undefined}
               bookmakerKey={item.bookmakerKey}
               bookingCode={item.bookingCode}
+              bookingCodeCopyCount={item.bookingCodeCopyCount ?? 0}
             />
           ))}
         </div>

@@ -41,6 +41,7 @@ interface Accumulator {
   createdAt?: string;
   bookmakerKey?: string | null;
   bookingCode?: string | null;
+  bookingCodeCopyCount?: number;
 }
 
 interface MarketplaceTipster {
@@ -324,6 +325,7 @@ export default function AdminMarketplacePage() {
                   createdAt={a.createdAt}
                   bookmakerKey={a.bookmakerKey}
                   bookingCode={a.bookingCode}
+                  bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}
                 />
                 <button type="button"
                   onClick={() => handleDeleteCoupon(a.id, a.title)}

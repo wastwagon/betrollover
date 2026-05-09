@@ -74,6 +74,7 @@ interface Accumulator {
   picksRevealed?: boolean;
   bookmakerKey?: string | null;
   bookingCode?: string | null;
+  bookingCodeCopyCount?: number;
   /** Set after POST /accumulators/:id/purchase for debugging/analytics; unveil modal uses merged `picks`. */
   purchasedTicket?: unknown;
 }
@@ -689,6 +690,7 @@ export default function MarketplacePage() {
                     picksRevealed={a.picksRevealed === true}
                     bookmakerKey={a.bookmakerKey}
                     bookingCode={a.bookingCode}
+                    bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}
                     isPurchased={isPurchased}
                     canPurchase={canPurchase}
                     walletBalance={walletBalance}

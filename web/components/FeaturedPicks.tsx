@@ -39,6 +39,7 @@ interface Accumulator {
   createdAt?: string;
   bookmakerKey?: string | null;
   bookingCode?: string | null;
+  bookingCodeCopyCount?: number;
 }
 
 export function FeaturedPicks() {
@@ -78,6 +79,7 @@ export function FeaturedPicks() {
               createdAt={a.createdAt}
               bookmakerKey={a.bookmakerKey}
               bookingCode={a.bookingCode}
+              bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}
               viewOnly={true}
               detailsHref="/marketplace"
               onPurchase={() => { }}

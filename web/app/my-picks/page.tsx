@@ -55,6 +55,7 @@ interface Accumulator {
   updatedAt?: string;
   bookmakerKey?: string | null;
   bookingCode?: string | null;
+  bookingCodeCopyCount?: number;
 }
 
 const SPORT_DISPLAY_MAP: Record<string, string> = {
@@ -213,6 +214,7 @@ export default function MyPicksPage() {
                   picks={a.picks || []}
                   bookmakerKey={a.bookmakerKey}
                   bookingCode={a.bookingCode}
+                  bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}
                   isPurchased={true}
                   createdAt={a.createdAt}
                   onPurchase={() => {}}

@@ -51,6 +51,7 @@ interface Coupon {
   result?: string;
   bookmakerKey?: string | null;
   bookingCode?: string | null;
+  bookingCodeCopyCount?: number;
 }
 
 type PeriodPreset = 'all' | '7d' | '30d' | '90d' | 'month' | 'custom';
@@ -503,6 +504,7 @@ export default function CouponsArchivePage() {
                 createdAt={coupon.createdAt}
                 bookmakerKey={coupon.bookmakerKey}
                 bookingCode={coupon.bookingCode}
+                bookingCodeCopyCount={coupon.bookingCodeCopyCount ?? 0}
               />
             ))}
           </div>

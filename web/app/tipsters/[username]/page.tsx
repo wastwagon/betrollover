@@ -54,6 +54,7 @@ interface MarketplaceCoupon {
   result?: string;
   bookmakerKey?: string | null;
   bookingCode?: string | null;
+  bookingCodeCopyCount?: number;
 }
 
 interface SubscriptionPackage {
@@ -859,6 +860,7 @@ export default function TipsterProfilePage() {
                         createdAt={a.createdAt}
                         bookmakerKey={a.bookmakerKey}
                         bookingCode={a.bookingCode}
+                        bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}
                       />
                     );
                   })}
@@ -899,6 +901,7 @@ export default function TipsterProfilePage() {
                       createdAt={a.createdAt}
                       bookmakerKey={a.bookmakerKey}
                       bookingCode={a.bookingCode}
+                      bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}
                     />
                   ))}
                 </div>

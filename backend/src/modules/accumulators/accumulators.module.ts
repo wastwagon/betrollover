@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccumulatorTicket } from './entities/accumulator-ticket.entity';
+import { AccumulatorBookingCodeCopy } from './entities/accumulator-booking-code-copy.entity';
 import { AccumulatorPick } from './entities/accumulator-pick.entity';
 import { PickMarketplace } from './entities/pick-marketplace.entity';
 import { PickReaction } from './entities/pick-reaction.entity';
@@ -29,6 +30,7 @@ import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity'
     UsersModule,
     TypeOrmModule.forFeature([
       AccumulatorTicket,
+      AccumulatorBookingCodeCopy,
       AccumulatorPick,
       PickMarketplace,
       PickReaction,

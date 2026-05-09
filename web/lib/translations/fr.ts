@@ -590,6 +590,10 @@ const fr: Record<string, string> = {
   'pick_card.booking_code_copied': 'Copié !',
   'pick_card.booking_code_hint':
     'Collez ce code dans l’appli du bookmaker pour charger le pari. Fourni par le tipster ; les cotes peuvent différer.',
+  'pick_card.booking_copy_count': '{n} copie(s)',
+  'pick_card.booking_copy_tipsters_title': 'Tipsters ayant copié',
+  'pick_card.booking_copy_no_tipsters':
+    'Aucun profil tipster dans cette liste pour l’instant. Le total inclut tout utilisateur connecté ayant copié.',
   'pick_card.more_picks': '+{n} pronostics en plus',
   'pick_card.top_up_wallet': 'Recharger le portefeuille',
   'pick_card.top_up_wallet_to_purchase': 'Recharger le portefeuille pour acheter',

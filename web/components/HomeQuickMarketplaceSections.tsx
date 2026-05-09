@@ -41,6 +41,7 @@ interface MarketplaceCardItem {
   createdAt?: string;
   bookmakerKey?: string | null;
   bookingCode?: string | null;
+  bookingCodeCopyCount?: number;
 }
 
 function parseMarketplacePayload(data: unknown): MarketplaceCardItem[] {
@@ -140,6 +141,7 @@ export function HomeQuickMarketplaceSections() {
         createdAt={a.createdAt}
         bookmakerKey={a.bookmakerKey}
         bookingCode={a.bookingCode}
+        bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}
         viewOnly
         detailsHref={`/coupons/${a.id}`}
         onPurchase={() => {}}

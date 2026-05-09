@@ -52,6 +52,7 @@ interface FeedPick {
   picksRevealed?: boolean;
   bookmakerKey?: string | null;
   bookingCode?: string | null;
+  bookingCodeCopyCount?: number;
 }
 
 interface User {
@@ -929,6 +930,7 @@ function DashboardContent() {
                       tipster={tipster}
                       bookmakerKey={pick.bookmakerKey}
                       bookingCode={pick.bookingCode}
+                      bookingCodeCopyCount={pick.bookingCodeCopyCount ?? 0}
                       isPurchased
                       canPurchase={false}
                       walletBalance={null}
@@ -995,6 +997,7 @@ function DashboardContent() {
                               picksRevealed={pick.picksRevealed === true}
                               bookmakerKey={pick.bookmakerKey}
                               bookingCode={pick.bookingCode}
+                              bookingCodeCopyCount={pick.bookingCodeCopyCount ?? 0}
                               isPurchased={isPurchased}
                               canPurchase={canPurchase}
                               walletBalance={walletBalance}

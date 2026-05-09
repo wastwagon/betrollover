@@ -42,6 +42,7 @@ interface FeedPick {
   } | null;
   bookmakerKey?: string | null;
   bookingCode?: string | null;
+  bookingCodeCopyCount?: number;
 }
 
 function SubscriptionsContent() {
@@ -222,6 +223,7 @@ function SubscriptionsContent() {
                         tipster={tipster}
                         bookmakerKey={pick.bookmakerKey}
                         bookingCode={pick.bookingCode}
+                        bookingCodeCopyCount={pick.bookingCodeCopyCount ?? 0}
                         isPurchased={true}
                         canPurchase={false}
                         walletBalance={null}

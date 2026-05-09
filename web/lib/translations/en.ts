@@ -596,6 +596,10 @@ const en = {
   'pick_card.booking_code_copied': 'Copied!',
   'pick_card.booking_code_hint':
     'Paste this in the bookmaker app to load the bet. The tipster supplies the code; odds may differ slightly.',
+  'pick_card.booking_copy_count': '{n} copied',
+  'pick_card.booking_copy_tipsters_title': 'Tipsters who copied',
+  'pick_card.booking_copy_no_tipsters':
+    'No tipster profiles in this list yet. The total count still includes every signed-in user who copied.',
   'pick_card.more_picks': '+{n} more picks',
   'pick_card.top_up_wallet': 'Top Up Wallet',
   'pick_card.top_up_wallet_to_purchase': 'Top Up Wallet to Purchase',

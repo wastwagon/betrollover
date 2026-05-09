@@ -70,6 +70,7 @@ interface Purchase {
     createdAt?: string;
     bookmakerKey?: string | null;
     bookingCode?: string | null;
+    bookingCodeCopyCount?: number;
   };
 }
 
@@ -440,6 +441,7 @@ export default function MyPurchasesPage() {
                     createdAt={p.pick.createdAt}
                     bookmakerKey={p.pick.bookmakerKey}
                     bookingCode={p.pick.bookingCode}
+                    bookingCodeCopyCount={p.pick.bookingCodeCopyCount ?? 0}
                     isPurchased
                     detailsHref={`/coupons/${p.pick.id}`}
                     onPurchase={() => {}}

@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, Param, Query, UseGuards, ParseIntPipe, NotFoundException } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtGuard } from '../auth/guards/optional-jwt.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AccumulatorsService, CreateAccumulatorDto } from './accumulators.service';
 import { User, UserRole } from '../users/entities/user.entity';
@@ -173,6 +174,23 @@ export class AccumulatorsController {
     const coupon = await this.accumulatorsService.getByIdPublic(id);
     if (!coupon) throw new NotFoundException('Pick not found or not available without login');
     return coupon;
+  }
+
+  /** Tipsters who copied (for hover list); total count includes all logged-in copiers. */
+  @Get(':id/booking-code-copies')
+  @UseGuards(OptionalJwtGuard)
+  async getBookingCodeCopies(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User | null) {
+    return this.accumulatorsService.getBookingCodeCopiers(
+      id,
+      user?.id ?? null,
+      user?.role === UserRole.ADMIN,
+    );
+  }
+
+  @Post(':id/booking-code-copy')
+  @UseGuards(JwtAuthGuard)
+  recordBookingCodeCopy(@CurrentUser() user: User, @Param('id', ParseIntPipe) id: number) {
+    return this.accumulatorsService.recordBookingCodeCopy(user.id, id);
   }
 
   @Get(':id')
