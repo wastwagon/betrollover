@@ -219,22 +219,9 @@ export default function MarketplacePage() {
     const sportParam = sportFilter ? `&sport=${encodeURIComponent(sportFilter)}` : '';
 
     if (!token) {
-      // Guest: use public marketplace (free + paid listings; login required to purchase/claim)
-      fetch(`${API_URL}/accumulators/marketplace/public?limit=24${sportParam}${tipsterParam}${priceParam}`)
-        .then((r) => (r.ok ? r.json() : { items: [], total: 0, hasMore: false }))
-        .then((data) => {
-          const items = data?.items ?? [];
-          setPicks(items);
-          setTotal(data?.total ?? items.length);
-          setHasMore(data?.hasMore ?? false);
-        })
-        .catch((err) => {
-          setPicks([]);
-          setTotal(0);
-          setHasMore(false);
-          showError(err);
-        })
-        .finally(() => setLoading(false));
+      const path = `${window.location.pathname}${window.location.search}`;
+      router.replace(`/login?redirect=${encodeURIComponent(path)}`);
+      setLoading(false);
       return;
     }
 
@@ -289,10 +276,9 @@ export default function MarketplacePage() {
     const poll = () => {
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
       const token = localStorage.getItem('token');
-      const url = token
-        ? `${API_URL}/accumulators/marketplace?limit=24${sportParam}${tipsterParam}${priceParam}`
-        : `${API_URL}/accumulators/marketplace/public?limit=24${sportParam}${tipsterParam}${priceParam}`;
-      fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      if (!token) return;
+      const url = `${API_URL}/accumulators/marketplace?limit=24${sportParam}${tipsterParam}${priceParam}`;
+      fetch(url, { headers: { Authorization: `Bearer ${token}` } })
         .then((r) => (r.ok ? r.json() : { items: [], total: 0, hasMore: false }))
         .then((data) => {
           const items = data?.items ?? (Array.isArray(data) ? data : []);
@@ -322,14 +308,16 @@ export default function MarketplacePage() {
   const loadMore = async () => {
     if (loadingMore || !hasMore) return;
     const token = localStorage.getItem('token');
+    if (!token) {
+      router.push(`/login?redirect=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`);
+      return;
+    }
     const sportParam = sportFilter ? `&sport=${encodeURIComponent(sportFilter)}` : '';
-    const url = token
-      ? `${API_URL}/accumulators/marketplace?limit=24&offset=${picks.length}${sportParam}${tipsterParam}${priceParam}`
-      : `${API_URL}/accumulators/marketplace/public?limit=24&offset=${picks.length}${sportParam}${tipsterParam}${priceParam}`;
+    const url = `${API_URL}/accumulators/marketplace?limit=24&offset=${picks.length}${sportParam}${tipsterParam}${priceParam}`;
     setLoadingMore(true);
     try {
       const res = await fetch(url, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json().catch(() => ({}));
       const items = data?.items ?? [];

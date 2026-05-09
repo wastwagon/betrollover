@@ -64,10 +64,23 @@ export function HomeFreeTipOfTheDay() {
   const [isPurchased, setIsPurchased] = useState(false);
 
   useEffect(() => {
+    const api = getApiUrl();
+    const token = localStorage.getItem('token');
+    const auth = token ? { Authorization: `Bearer ${token}` } : undefined;
+    const marketFree = token
+      ? fetch(`${api}/accumulators/marketplace/public?limit=12&priceFilter=free`, { headers: auth }).then((r) =>
+          r.ok ? r.json() : { items: [] },
+        )
+      : Promise.resolve({ items: [] });
+    const marketAny = token
+      ? fetch(`${api}/accumulators/marketplace/public?limit=12`, { headers: auth }).then((r) =>
+          r.ok ? r.json() : { items: [] },
+        )
+      : Promise.resolve({ items: [] });
     Promise.all([
-      fetch(`${getApiUrl()}/accumulators/free-tip-of-the-day`).then((r) => (r.ok ? r.json() : null)),
-      fetch(`${getApiUrl()}/accumulators/marketplace/public?limit=12&priceFilter=free`).then((r) => (r.ok ? r.json() : { items: [] })),
-      fetch(`${getApiUrl()}/accumulators/marketplace/public?limit=12`).then((r) => (r.ok ? r.json() : { items: [] })),
+      fetch(`${api}/accumulators/free-tip-of-the-day`).then((r) => (r.ok ? r.json() : null)),
+      marketFree,
+      marketAny,
     ])
       .then(([featured, market, anyMarket]) => {
         const marketItems = Array.isArray((market as { items?: unknown[] })?.items)

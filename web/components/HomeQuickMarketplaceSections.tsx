@@ -86,15 +86,28 @@ export function HomeQuickMarketplaceSections() {
   const t = useT();
   const [elite, setElite] = useState<MarketplaceCardItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [needsAuth, setNeedsAuth] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     const api = getApiUrl();
     (async () => {
       try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          if (!cancelled) {
+            setNeedsAuth(true);
+            setElite([]);
+            setLoading(false);
+          }
+          return;
+        }
+        setNeedsAuth(false);
         const [lbRes, allRes] = await Promise.all([
           fetch(`${api}/leaderboard?period=all_time&limit=24`),
-          fetch(`${api}/accumulators/marketplace/public?limit=48`),
+          fetch(`${api}/accumulators/marketplace/public?limit=48`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
         ]);
         const lbJson = lbRes.ok ? await lbRes.json() : {};
         const allJson = allRes.ok ? await allRes.json() : {};
@@ -164,6 +177,16 @@ export function HomeQuickMarketplaceSections() {
             skeleton
           ) : elite.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">{renderCards(elite)}</div>
+          ) : needsAuth ? (
+            <p className="text-center text-[var(--text-muted)] py-8 text-sm">
+              {t('home.marketplace_login_to_browse')}{' '}
+              <Link
+                href="/login?redirect=/"
+                className="font-semibold text-[var(--primary)] hover:underline"
+              >
+                {t('nav.login')}
+              </Link>
+            </p>
           ) : (
             <p className="text-center text-[var(--text-muted)] py-8 text-sm">{t('common.no_results')}</p>
           )}

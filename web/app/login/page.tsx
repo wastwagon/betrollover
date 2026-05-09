@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useT } from '@/context/LanguageContext';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
@@ -12,9 +12,21 @@ import { getApiErrorMessage } from '@/lib/api-error-message';
 import { getApiUrl } from '@/lib/site-config';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 
+/** Relative in-app path only; blocks protocol-relative and off-site redirects. */
+function safePostLoginPath(redirectParam: string | null): string {
+  if (!redirectParam?.trim()) return '/dashboard';
+  const p = redirectParam.trim();
+  if (!p.startsWith('/') || p.startsWith('//')) return '/dashboard';
+  return p;
+}
+
 function LoginForm() {
   const t = useT();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get('redirect');
+  const nextPath = safePostLoginPath(redirectParam);
+  const oauthRedirect = nextPath !== '/dashboard' ? nextPath : undefined;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -42,7 +54,7 @@ function LoginForm() {
         if (!token || cancelled) return;
         localStorage.setItem('token', token);
         emitAuthStorageSync();
-        router.push('/dashboard');
+        router.push(nextPath);
         router.refresh();
       } catch {
         // Best-effort only; normal login still works without this.
@@ -52,7 +64,7 @@ function LoginForm() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [router, nextPath]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,7 +87,7 @@ function LoginForm() {
 
       localStorage.setItem('token', data.access_token.trim());
       emitAuthStorageSync();
-      router.push('/dashboard');
+      router.push(nextPath);
       router.refresh();
     } catch (err) {
       console.error('Login error:', err);
@@ -171,7 +183,7 @@ function LoginForm() {
                   <span className="px-3 bg-white text-[var(--text-muted)]">{t('auth.or_continue_with')}</span>
                 </div>
               </div>
-              <GoogleSignInButton variant="signin" className="mb-4" disabled={loading} />
+              <GoogleSignInButton variant="signin" redirect={oauthRedirect} className="mb-4" disabled={loading} />
               <AppleSignInButton variant="signin" className="mb-4" disabled={loading} />
               <button
                 type="submit"

@@ -167,6 +167,7 @@ const en = {
   'home.marketplace_active_sub':
     'New picks from tipsters on the all-time leaderboard — plus other fresh listings so you always see something live.',
   'home.marketplace_active_cta': 'Browse all tipsters',
+  'home.marketplace_login_to_browse': 'Log in to see live marketplace picks.',
   'home.how_it_works': 'How It Works',
   'home.for_buyers': 'For buyers',
   'home.for_sellers': 'For sellers',

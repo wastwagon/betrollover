@@ -21,10 +21,16 @@ describe('AccumulatorsController (critical paths)', () => {
     controller = module.get<AccumulatorsController>(AccumulatorsController);
   });
 
-  describe('GET marketplace/public (guest access)', () => {
+  describe('GET marketplace/public (authenticated)', () => {
     it('returns items, total, and hasMore', async () => {
       const result = await controller.getMarketplacePublic();
-      expect(result).toEqual({ items: [], total: 0, hasMore: false });
+      expect(result).toEqual({
+        items: [],
+        total: 0,
+        hasMore: false,
+        has_more: false,
+        total_count: 0,
+      });
       expect(getMarketplacePublicList).toHaveBeenCalled();
     });
 

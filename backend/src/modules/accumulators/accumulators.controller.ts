@@ -61,6 +61,7 @@ export class AccumulatorsController {
   }
 
   @Get('marketplace/public')
+  @UseGuards(JwtAuthGuard)
   async getMarketplacePublic(
     @Query('sport') sport?: string,
     @Query('limit') limit?: string,
@@ -132,6 +133,7 @@ export class AccumulatorsController {
   }
 
   @Get('featured')
+  @UseGuards(JwtAuthGuard)
   getFeatured() {
     return this.accumulatorsService.getMarketplacePublic(8);
   }

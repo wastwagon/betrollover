@@ -164,6 +164,7 @@ const fr: Record<string, string> = {
   'home.marketplace_active_sub':
     'Nouveaux pronostics des tipsters du classement général — et d’autres annonces récentes pour toujours voir du live.',
   'home.marketplace_active_cta': 'Voir tous les tipsters',
+  'home.marketplace_login_to_browse': 'Connectez-vous pour voir les pronostics du marché en direct.',
   'home.how_it_works': 'Comment Ça Marche',
   'home.for_buyers': 'Pour les acheteurs',
   'home.for_sellers': 'Pour les vendeurs',

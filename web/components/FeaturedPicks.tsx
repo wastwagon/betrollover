@@ -47,7 +47,14 @@ export function FeaturedPicks() {
   const [picks, setPicks] = useState<Accumulator[]>([]);
 
   useEffect(() => {
-    fetch(`${getApiUrl()}/accumulators/featured`)
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setPicks([]);
+      return;
+    }
+    fetch(`${getApiUrl()}/accumulators/featured`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setPicks(Array.isArray(data) ? data : []))
       .catch(() => setPicks([]));
