@@ -49,6 +49,8 @@ interface FreeTip {
   price: number;
   picks: Pick[];
   tipster?: Tipster | null;
+  bookmakerKey?: string | null;
+  bookingCode?: string | null;
 }
 
 export function HomeFreeTipOfTheDay() {
@@ -180,6 +182,8 @@ export function HomeFreeTipOfTheDay() {
               purchasing={purchasing && item.id === tip?.id}
               viewOnly={item.id !== tip?.id}
               detailsHref={item.id !== tip?.id ? `/coupons/${item.id}` : undefined}
+              bookmakerKey={item.bookmakerKey}
+              bookingCode={item.bookingCode}
             />
           ))}
         </div>

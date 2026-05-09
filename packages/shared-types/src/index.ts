@@ -8,3 +8,4 @@ export * from './wallet';
 export * from './api';
 export * from './format-football-outcome';
 export * from './leaderboard';
+export * from './bookmakers-africa';

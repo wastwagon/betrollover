@@ -50,6 +50,8 @@ interface FeedPick {
   createdAt: string;
   /** From API when viewer may see legs (purchase, subscription, free, settled, etc.). */
   picksRevealed?: boolean;
+  bookmakerKey?: string | null;
+  bookingCode?: string | null;
 }
 
 interface User {
@@ -925,6 +927,8 @@ function DashboardContent() {
                       purchaseCount={pick.purchaseCount}
                       picks={pick.picks || []}
                       tipster={tipster}
+                      bookmakerKey={pick.bookmakerKey}
+                      bookingCode={pick.bookingCode}
                       isPurchased
                       canPurchase={false}
                       walletBalance={null}
@@ -989,6 +993,8 @@ function DashboardContent() {
                               picks={pick.picks || []}
                               tipster={pick.tipster}
                               picksRevealed={pick.picksRevealed === true}
+                              bookmakerKey={pick.bookmakerKey}
+                              bookingCode={pick.bookingCode}
                               isPurchased={isPurchased}
                               canPurchase={canPurchase}
                               walletBalance={walletBalance}

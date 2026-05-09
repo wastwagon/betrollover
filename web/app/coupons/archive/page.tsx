@@ -49,6 +49,8 @@ interface Coupon {
   createdAt?: string;
   status?: string;
   result?: string;
+  bookmakerKey?: string | null;
+  bookingCode?: string | null;
 }
 
 type PeriodPreset = 'all' | '7d' | '30d' | '90d' | 'month' | 'custom';
@@ -499,6 +501,8 @@ export default function CouponsArchivePage() {
                 viewOnly
                 onPurchase={() => {}}
                 createdAt={coupon.createdAt}
+                bookmakerKey={coupon.bookmakerKey}
+                bookingCode={coupon.bookingCode}
               />
             ))}
           </div>

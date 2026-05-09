@@ -9,7 +9,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { useT } from '@/context/LanguageContext';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { tipsterRankBadgeClass, tipsterRankBadgeContent } from '@/lib/tipster-rank-ui';
-import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
+import { formatFootballOutcomeLabel, bookmakerLabelForKey } from '@betrollover/shared-types';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 
 interface Pick {
@@ -69,6 +69,67 @@ const SPORT_META: Record<string, { icon: string; label: string; color: string }>
   multi:             { icon: '🌍', label: 'Multi-Sport',       color: 'bg-teal-100 text-teal-800 border-teal-200' },
 };
 
+function BookingCodeBlock({
+  bookmakerKey,
+  bookingCode,
+  dense,
+}: {
+  bookmakerKey: string;
+  bookingCode: string;
+  dense?: boolean;
+}) {
+  const t = useT();
+  const [copied, setCopied] = useState(false);
+  const label = bookmakerLabelForKey(bookmakerKey) || bookmakerKey;
+
+  const handleCopy = () => {
+    void (async () => {
+      try {
+        await navigator.clipboard.writeText(bookingCode);
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 2000);
+      } catch {
+        /* clipboard unavailable */
+      }
+    })();
+  };
+
+  return (
+    <div
+      className={
+        dense
+          ? 'rounded-lg border border-[var(--border)] bg-[var(--bg)]/50 p-2.5 mb-2'
+          : 'rounded-xl border border-[var(--border)] bg-[var(--bg)]/50 p-3 mb-4'
+      }
+    >
+      <div className="flex items-start justify-between gap-2 min-w-0 mb-1.5">
+        <p className={`font-medium text-[var(--text)] min-w-0 ${dense ? 'text-[10px]' : 'text-xs'}`}>
+          {t('pick_card.booking_code_title', { bookie: label })}
+        </p>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className={`shrink-0 font-semibold rounded-md bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors ${
+            dense ? 'text-[10px] px-2 py-0.5' : 'text-xs px-2.5 py-1'
+          }`}
+        >
+          {copied ? t('pick_card.booking_code_copied') : t('pick_card.copy_booking_code')}
+        </button>
+      </div>
+      <p
+        className={`font-mono break-all text-[var(--text)] bg-[var(--card)] border border-[var(--border)] rounded-md px-2 py-1 ${
+          dense ? 'text-[10px]' : 'text-xs'
+        }`}
+      >
+        {bookingCode}
+      </p>
+      <p className={`text-[var(--text-muted)] mt-1.5 ${dense ? 'text-[9px]' : 'text-[10px]'}`}>
+        {t('pick_card.booking_code_hint')}
+      </p>
+    </div>
+  );
+}
+
 interface PickCardProps {
   id: number;
   title: string;
@@ -108,6 +169,9 @@ interface PickCardProps {
   reviewCount?: number | null;
   /** From API: viewer may see full legs (purchase, subscription, free/settled, seller, admin). Drives View vs Purchase CTA when true. */
   picksRevealed?: boolean;
+  /** When legs are visible, API may include bookmaker + code (withheld for locked paid picks). */
+  bookmakerKey?: string | null;
+  bookingCode?: string | null;
 }
 
 export function PickCard({
@@ -144,6 +208,8 @@ export function PickCard({
   avgRating,
   reviewCount,
   picksRevealed = false,
+  bookmakerKey,
+  bookingCode,
 }: PickCardProps) {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showUnveilModal, setShowUnveilModal] = useState(false);
@@ -359,6 +425,10 @@ export function PickCard({
             )}
           </div>
 
+          {showFullDetails && bookmakerKey && bookingCode ? (
+            <BookingCodeBlock bookmakerKey={bookmakerKey} bookingCode={bookingCode} dense />
+          ) : null}
+
           {/* Pick Details - Show for free or purchased picks */}
           {showFullDetails && picks.length > 0 && (
             <div className="mb-2 flex-1">
@@ -533,6 +603,9 @@ export function PickCard({
                     {price === 0 ? t('status.free') : (priceDisplay?.primary ?? `GHS ${Number(price).toFixed(2)}`)}
                   </span>
                 </div>
+                {bookmakerKey && bookingCode ? (
+                  <BookingCodeBlock bookmakerKey={bookmakerKey} bookingCode={bookingCode} />
+                ) : null}
               </div>
 
               {/* All Picks */}

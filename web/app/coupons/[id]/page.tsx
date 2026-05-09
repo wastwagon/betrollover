@@ -15,7 +15,7 @@ import { useLanguage, useT, type SupportedLanguage } from '@/context/LanguageCon
 import { formatTipsterRankHash } from '@/lib/tipster-rank-ui';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
-import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
+import { bookmakerLabelForKey, formatFootballOutcomeLabel } from '@betrollover/shared-types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Pick {
@@ -62,6 +62,8 @@ interface Coupon {
   sport?: string;
   totalOdds: number;
   totalPicks: number;
+  bookmakerKey?: string | null;
+  bookingCode?: string | null;
   /** false = API withheld leg details until purchase (paid marketplace). */
   picksRevealed?: boolean;
   /** true when access to paid picks is unlocked via an active subscription to this tipster. */
@@ -300,6 +302,7 @@ export default function CouponDetailPage() {
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [bookingCopied, setBookingCopied] = useState(false);
   /** false = browsing as guest (public coupon); true = logged in */
   const [isAuthed, setIsAuthed] = useState(false);
 
@@ -624,6 +627,41 @@ export default function CouponDetailPage() {
                 </div>
               </div>
             )}
+
+            {coupon.bookmakerKey && coupon.bookingCode ? (
+              <div className="mb-6 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 min-w-0">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-sm font-semibold text-[var(--text)] mb-1">
+                      {t('pick_detail.booking_code_block_title', {
+                        bookie: bookmakerLabelForKey(coupon.bookmakerKey) || coupon.bookmakerKey,
+                      })}
+                    </h2>
+                    <p className="text-xs font-mono break-all text-[var(--text)] bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2">
+                      {coupon.bookingCode}
+                    </p>
+                    <p className="text-xs text-[var(--text-muted)] mt-2 leading-relaxed">{t('pick_detail.booking_code_note')}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void (async () => {
+                        try {
+                          await navigator.clipboard.writeText(coupon.bookingCode!);
+                          setBookingCopied(true);
+                          window.setTimeout(() => setBookingCopied(false), 2000);
+                        } catch {
+                          /* noop */
+                        }
+                      })();
+                    }}
+                    className="shrink-0 px-4 py-2 rounded-xl font-semibold text-sm bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors"
+                  >
+                    {bookingCopied ? t('pick_card.booking_code_copied') : t('pick_card.copy_booking_code')}
+                  </button>
+                </div>
+              </div>
+            ) : null}
 
             {/* ── Picks ── */}
             <h2 className="text-sm font-semibold text-[var(--text)] mb-3">

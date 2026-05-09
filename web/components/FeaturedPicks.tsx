@@ -37,6 +37,8 @@ interface Accumulator {
   picks?: Pick[];
   tipster?: Tipster | null;
   createdAt?: string;
+  bookmakerKey?: string | null;
+  bookingCode?: string | null;
 }
 
 export function FeaturedPicks() {
@@ -74,6 +76,8 @@ export function FeaturedPicks() {
               picks={a.picks || []}
               tipster={a.tipster}
               createdAt={a.createdAt}
+              bookmakerKey={a.bookmakerKey}
+              bookingCode={a.bookingCode}
               viewOnly={true}
               detailsHref="/marketplace"
               onPurchase={() => { }}

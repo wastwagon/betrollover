@@ -40,6 +40,8 @@ interface FeedPick {
     lostPicks?: number;
     rank?: number | null;
   } | null;
+  bookmakerKey?: string | null;
+  bookingCode?: string | null;
 }
 
 function SubscriptionsContent() {
@@ -218,6 +220,8 @@ function SubscriptionsContent() {
                         purchaseCount={pick.purchaseCount}
                         picks={pick.picks || []}
                         tipster={tipster}
+                        bookmakerKey={pick.bookmakerKey}
+                        bookingCode={pick.bookingCode}
                         isPurchased={true}
                         canPurchase={false}
                         walletBalance={null}

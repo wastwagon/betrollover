@@ -68,6 +68,8 @@ interface Purchase {
     avgRating?: number | null;
     reviewCount?: number | null;
     createdAt?: string;
+    bookmakerKey?: string | null;
+    bookingCode?: string | null;
   };
 }
 
@@ -436,6 +438,8 @@ export default function MyPurchasesPage() {
                     avgRating={p.pick.avgRating ?? null}
                     reviewCount={p.pick.reviewCount ?? null}
                     createdAt={p.pick.createdAt}
+                    bookmakerKey={p.pick.bookmakerKey}
+                    bookingCode={p.pick.bookingCode}
                     isPurchased
                     detailsHref={`/coupons/${p.pick.id}`}
                     onPurchase={() => {}}

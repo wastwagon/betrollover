@@ -591,6 +591,11 @@ const en = {
   'pick_card.purchase': 'Purchase',
   'pick_card.processing': 'Processing...',
   'pick_card.purchase_to_view': 'Purchase to view details',
+  'pick_card.booking_code_title': 'Booking code ({bookie})',
+  'pick_card.copy_booking_code': 'Copy',
+  'pick_card.booking_code_copied': 'Copied!',
+  'pick_card.booking_code_hint':
+    'Paste this in the bookmaker app to load the bet. The tipster supplies the code; odds may differ slightly.',
   'pick_card.more_picks': '+{n} more picks',
   'pick_card.top_up_wallet': 'Top Up Wallet',
   'pick_card.top_up_wallet_to_purchase': 'Top Up Wallet to Purchase',
@@ -635,6 +640,9 @@ const en = {
   'pick_detail.settlement_lost_title': 'Pick lost — refund processed',
   'pick_detail.settlement_lost_sub': 'This pick has been settled. Escrow has automatically refunded all purchasers.',
   'pick_detail.picks_section_title': 'Picks ({n})',
+  'pick_detail.booking_code_block_title': 'Booking code ({bookie})',
+  'pick_detail.booking_code_note':
+    'Paste in your bookmaker app. Provided by the tipster; we do not verify that it still loads.',
   'pick_detail.selections_locked_title': 'Selections are locked',
   'pick_detail.selections_locked_body':
     'Purchase this pick to see matches, markets, and odds for each leg. Combined total odds are shown above for reference — same as on the marketplace card.',
@@ -1355,6 +1363,13 @@ const en = {
   'create_pick.selection': 'selection',
   'create_pick.selections': 'selections',
   'create_pick.title_label': 'Title',
+  'create_pick.bookie_label': 'Bookmaker (optional)',
+  'create_pick.bookie_none': '— None —',
+  'create_pick.booking_code_label': 'Booking code',
+  'create_pick.booking_code_placeholder': 'Paste the share / booking code',
+  'create_pick.booking_code_hint_short': 'Pick a bookmaker, then paste the code from that app so followers can copy it.',
+  'create_pick.error_bookie_code_pair':
+    'Choose a bookmaker and enter a booking code together, or leave both empty.',
   'create_pick.price_label': 'Price (GHS)',
   'create_pick.price_note': '— 0 = free',
   'create_pick.paid_marketplace_rules_title': 'Paid picks — platform minimums',

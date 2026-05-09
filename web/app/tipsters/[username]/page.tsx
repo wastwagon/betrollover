@@ -52,6 +52,8 @@ interface MarketplaceCoupon {
   createdAt?: string;
   status?: string;
   result?: string;
+  bookmakerKey?: string | null;
+  bookingCode?: string | null;
 }
 
 interface SubscriptionPackage {
@@ -855,6 +857,8 @@ export default function TipsterProfilePage() {
                         showUnveil={unveilCouponId === a.id}
                         onUnveilClose={() => setUnveilCouponId(null)}
                         createdAt={a.createdAt}
+                        bookmakerKey={a.bookmakerKey}
+                        bookingCode={a.bookingCode}
                       />
                     );
                   })}
@@ -893,6 +897,8 @@ export default function TipsterProfilePage() {
                       walletBalance={walletBalance}
                       onPurchase={() => {}}
                       createdAt={a.createdAt}
+                      bookmakerKey={a.bookmakerKey}
+                      bookingCode={a.bookingCode}
                     />
                   ))}
                 </div>

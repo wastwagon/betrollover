@@ -39,6 +39,8 @@ interface MarketplaceCardItem {
   picks?: Pick[];
   tipster?: Tipster | null;
   createdAt?: string;
+  bookmakerKey?: string | null;
+  bookingCode?: string | null;
 }
 
 function parseMarketplacePayload(data: unknown): MarketplaceCardItem[] {
@@ -136,6 +138,8 @@ export function HomeQuickMarketplaceSections() {
         picks={a.picks || []}
         tipster={a.tipster ?? null}
         createdAt={a.createdAt}
+        bookmakerKey={a.bookmakerKey}
+        bookingCode={a.bookingCode}
         viewOnly
         detailsHref={`/coupons/${a.id}`}
         onPurchase={() => {}}

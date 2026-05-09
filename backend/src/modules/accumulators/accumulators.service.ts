@@ -31,6 +31,7 @@ import { ReferralsService } from '../referrals/referrals.service';
 import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity';
 import { clampPlatformCommissionPercent } from '../../common/platform-commission';
 import { couponUserFacingRef } from '../../common/coupon-public-label';
+import { isAllowedAfricanBookmakerKey } from '@betrollover/shared-types';
 
 /** Sports that use sport_events table (eventId) rather than fixtures (fixtureId) */
 const SPORT_EVENT_SPORTS = new Set(['basketball', 'rugby', 'mma', 'volleyball', 'hockey', 'american_football', 'tennis']);
@@ -61,6 +62,9 @@ export interface CreateAccumulatorDto {
   placement?: string;
   /** If placement includes subscription: package IDs to add coupon to */
   subscriptionPackageIds?: number[];
+  /** Allowlisted bookmaker key; must be set together with bookingCode when either is provided */
+  bookmakerKey?: string;
+  bookingCode?: string;
   selections: {
     fixtureId?: number;
     /** For non-football sports: sport event ID from sport_events */
@@ -184,6 +188,31 @@ export class AccumulatorsService {
       }
     }
 
+    let bookmakerKey: string | null = null;
+    let bookingCode: string | null = null;
+    const dtoBookie = (dto.bookmakerKey || '').trim().toLowerCase();
+    const dtoCode = (dto.bookingCode || '').trim();
+    if (dtoBookie || dtoCode) {
+      if (!dtoBookie || !dtoCode) {
+        throw new BadRequestException(
+          'Bookmaker and booking code must both be filled in together, or leave both empty.',
+        );
+      }
+      if (!isAllowedAfricanBookmakerKey(dtoBookie)) {
+        throw new BadRequestException('Unsupported bookmaker.');
+      }
+      if (dtoCode.length > 128) {
+        throw new BadRequestException('Booking code must be 128 characters or less.');
+      }
+      if (!/^[\sA-Za-z0-9\-_]+$/.test(dtoCode)) {
+        throw new BadRequestException(
+          'Booking code may only contain letters, numbers, spaces, hyphens, and underscores.',
+        );
+      }
+      bookmakerKey = dtoBookie;
+      bookingCode = dtoCode;
+    }
+
     // Default price to 0 (free) if not provided or invalid
     const price = dto.price && dto.price > 0 ? dto.price : 0;
     const rawPlacement = (dto.placement || 'marketplace').toLowerCase().trim();
@@ -256,6 +285,8 @@ export class AccumulatorsService {
       status: 'active',
       result: 'pending',
       isMarketplace: dto.isMarketplace,
+      bookmakerKey,
+      bookingCode,
     });
     await this.ticketRepo.save(ticket);
 
@@ -430,6 +461,14 @@ export class AccumulatorsService {
    * Once settled (won/lost/void), full picks are public for transparency. Seller / purchasers always see full picks.
    * Internal callers use viewer undefined or forceFullPicks.
    */
+  /** Hide share codes for the same viewers who do not see paid legs (prevents free riding). */
+  private stripBookingCodeFromPayload(payload: Record<string, unknown>): Record<string, unknown> {
+    const next = { ...payload };
+    delete next.bookmakerKey;
+    delete next.bookingCode;
+    return next;
+  }
+
   private buildRedactedPicksForCoupon(picks: Array<{ id?: number }>): Array<Record<string, unknown>> {
     const list = picks || [];
     return list.map((p, i) => ({
@@ -474,7 +513,7 @@ export class AccumulatorsService {
     }
     if (viewerUserId == null) {
       return {
-        ...payload,
+        ...this.stripBookingCodeFromPayload(payload),
         picksRevealed: false,
         picks: this.buildRedactedPicksForCoupon((payload.picks as Array<{ id?: number }>) || []),
       };
@@ -496,7 +535,7 @@ export class AccumulatorsService {
       return { ...payload, picksRevealed: true };
     }
     return {
-      ...payload,
+      ...this.stripBookingCodeFromPayload(payload),
       picksRevealed: false,
       picks: this.buildRedactedPicksForCoupon((payload.picks as Array<{ id?: number }>) || []),
     };

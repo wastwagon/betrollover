@@ -37,6 +37,14 @@ export class AccumulatorTicket {
   @Column({ default: false })
   isMarketplace: boolean;
 
+  /** Allowlisted slug (e.g. sportybet) — see @betrollover/shared-types bookmakers-africa */
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  bookmakerKey: string | null = null;
+
+  /** Tipster-provided share / booking code for the selected bookmaker */
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  bookingCode: string | null = null;
+
   @CreateDateColumn()
   createdAt: Date;
 

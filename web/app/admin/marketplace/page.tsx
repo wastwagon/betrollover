@@ -39,6 +39,8 @@ interface Accumulator {
   picks: Pick[];
   tipster?: Tipster | null;
   createdAt?: string;
+  bookmakerKey?: string | null;
+  bookingCode?: string | null;
 }
 
 interface MarketplaceTipster {
@@ -320,6 +322,8 @@ export default function AdminMarketplacePage() {
                   purchasing={false}
                   className="opacity-95"
                   createdAt={a.createdAt}
+                  bookmakerKey={a.bookmakerKey}
+                  bookingCode={a.bookingCode}
                 />
                 <button type="button"
                   onClick={() => handleDeleteCoupon(a.id, a.title)}

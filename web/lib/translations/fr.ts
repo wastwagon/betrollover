@@ -585,6 +585,11 @@ const fr: Record<string, string> = {
   'pick_card.purchase': 'Acheter',
   'pick_card.processing': 'Traitement...',
   'pick_card.purchase_to_view': 'Achetez pour voir les détails',
+  'pick_card.booking_code_title': 'Code de prise ({bookie})',
+  'pick_card.copy_booking_code': 'Copier',
+  'pick_card.booking_code_copied': 'Copié !',
+  'pick_card.booking_code_hint':
+    'Collez ce code dans l’appli du bookmaker pour charger le pari. Fourni par le tipster ; les cotes peuvent différer.',
   'pick_card.more_picks': '+{n} pronostics en plus',
   'pick_card.top_up_wallet': 'Recharger le portefeuille',
   'pick_card.top_up_wallet_to_purchase': 'Recharger le portefeuille pour acheter',
@@ -630,6 +635,9 @@ const fr: Record<string, string> = {
   'pick_detail.settlement_lost_sub':
     'Ce pronostic est réglé. L’escrow a automatiquement remboursé les acheteurs.',
   'pick_detail.picks_section_title': 'Pronostics ({n})',
+  'pick_detail.booking_code_block_title': 'Code de prise ({bookie})',
+  'pick_detail.booking_code_note':
+    'Collez dans l’appli bookmaker. Fourni par le tipster ; nous ne vérifions pas qu’il charge encore.',
   'pick_detail.selections_locked_title': 'Sélections verrouillées',
   'pick_detail.selections_locked_body':
     'Achetez ce pronostic pour voir matchs, marchés et cotes de chaque sélection. La cote combinée affichée plus haut reste la même que sur la carte marché.',
@@ -1350,6 +1358,14 @@ const fr: Record<string, string> = {
   'create_pick.selection': 'sélection',
   'create_pick.selections': 'sélections',
   'create_pick.title_label': 'Titre',
+  'create_pick.bookie_label': 'Bookmaker (facultatif)',
+  'create_pick.bookie_none': '— Aucun —',
+  'create_pick.booking_code_label': 'Code de prise',
+  'create_pick.booking_code_placeholder': 'Collez le code de partage / réservation',
+  'create_pick.booking_code_hint_short':
+    'Choisissez un bookmaker, puis collez le code depuis son appli pour que les abonnés puissent le copier.',
+  'create_pick.error_bookie_code_pair':
+    'Renseignez le bookmaker et le code ensemble, ou laissez les deux vides.',
   'create_pick.price_label': 'Prix (GHS)',
   'create_pick.price_note': '— 0 = gratuit',
   'create_pick.paid_marketplace_rules_title': 'Pronostics payants — minimums plateforme',

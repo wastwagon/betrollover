@@ -27,7 +27,7 @@ import { useSlipCart } from '@/context/SlipCartContext';
 import type { Fixture, FixtureOdd, SportEventItem, CreatePickSport, FilterOptions } from './types';
 import { SportLoadingSpinner } from './components/SportLoadingSpinner';
 import { SportEmptyState } from './components/SportEmptyState';
-import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
+import { AFRICAN_BOOKMAKERS, formatFootballOutcomeLabel } from '@betrollover/shared-types';
 import { FootballFixtureCard } from './components/FootballFixtureCard';
 import { SportEventCard } from './components/SportEventCard';
 
@@ -92,7 +92,8 @@ export default function CreatePickPage() {
   const [loadingHockey, setLoadingHockey] = useState(false);
   const [loadingAmericanFootball, setLoadingAmericanFootball] = useState(false);
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [bookmakerKey, setBookmakerKey] = useState('');
+  const [bookingCode, setBookingCode] = useState('');
   const [price, setPrice] = useState(0);
   const [placement, setPlacement] = useState<'marketplace' | 'subscription'>('marketplace');
   const [subscriptionPackageIds, setSubscriptionPackageIds] = useState<number[]>([]);
@@ -700,6 +701,12 @@ export default function CreatePickPage() {
       setFormError(t('create_pick.error_vip_packages_required'));
       return;
     }
+    const keyTrim = bookmakerKey.trim().toLowerCase();
+    const codeTrim = bookingCode.trim();
+    if ((keyTrim && !codeTrim) || (!keyTrim && codeTrim)) {
+      setFormError(t('create_pick.error_bookie_code_pair'));
+      return;
+    }
     const priceNum = Number(price) || 0;
     if (priceNum > 0 && !paidSaleAllowed) {
       setFormError(
@@ -723,7 +730,7 @@ export default function CreatePickPage() {
       },
       body: JSON.stringify({
         title: title.trim(),
-        description: description.trim() || undefined,
+        ...(keyTrim && codeTrim ? { bookmakerKey: keyTrim, bookingCode: codeTrim } : {}),
         price: Number(price) || 0,
         isMarketplace: placement === 'marketplace',
         placement,
@@ -1381,16 +1388,37 @@ export default function CreatePickPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-[var(--text)] mb-1">
-                          Description (optional)
-                        </label>
-                        <textarea
-                          value={description}
-                          onChange={(e) => setDescription(e.target.value)}
-                          placeholder="Brief analysis..."
-                          className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-shadow resize-none"
-                          rows={2}
+                        <label className="block text-xs font-medium text-[var(--text)] mb-1">{t('create_pick.bookie_label')}</label>
+                        <select
+                          value={bookmakerKey}
+                          onChange={(e) => {
+                            setBookmakerKey(e.target.value);
+                            setFormError(null);
+                          }}
+                          className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border)] bg-[var(--card)]"
+                        >
+                          <option value="">{t('create_pick.bookie_none')}</option>
+                          {AFRICAN_BOOKMAKERS.map((b) => (
+                            <option key={b.key} value={b.key}>
+                              {b.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-[var(--text)] mb-1">{t('create_pick.booking_code_label')}</label>
+                        <input
+                          type="text"
+                          value={bookingCode}
+                          onChange={(e) => {
+                            setBookingCode(e.target.value);
+                            setFormError(null);
+                          }}
+                          placeholder={t('create_pick.booking_code_placeholder')}
+                          autoComplete="off"
+                          className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-shadow"
                         />
+                        <p className="text-[10px] text-[var(--text-muted)] mt-1 leading-snug">{t('create_pick.booking_code_hint_short')}</p>
                       </div>
                       {sellTh &&
                         (placement === 'marketplace' || (placement === 'subscription' && price > 0)) && (
@@ -1639,14 +1667,37 @@ export default function CreatePickPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text)] mb-1">Description (optional)</label>
-                  <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Brief analysis..."
-                    className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent resize-none"
-                    rows={2}
+                  <label className="block text-sm font-medium text-[var(--text)] mb-1">{t('create_pick.bookie_label')}</label>
+                  <select
+                    value={bookmakerKey}
+                    onChange={(e) => {
+                      setBookmakerKey(e.target.value);
+                      setFormError(null);
+                    }}
+                    className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)]"
+                  >
+                    <option value="">{t('create_pick.bookie_none')}</option>
+                    {AFRICAN_BOOKMAKERS.map((b) => (
+                      <option key={b.key} value={b.key}>
+                        {b.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text)] mb-1">{t('create_pick.booking_code_label')}</label>
+                  <input
+                    type="text"
+                    value={bookingCode}
+                    onChange={(e) => {
+                      setBookingCode(e.target.value);
+                      setFormError(null);
+                    }}
+                    placeholder={t('create_pick.booking_code_placeholder')}
+                    autoComplete="off"
+                    className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
                   />
+                  <p className="text-xs text-[var(--text-muted)] mt-1.5 leading-snug">{t('create_pick.booking_code_hint_short')}</p>
                 </div>
                 {sellTh &&
                   (placement === 'marketplace' || (placement === 'subscription' && price > 0)) && (
