@@ -20,6 +20,17 @@ import { OddsSyncService } from '../fixtures/odds-sync.service';
 import { PredictionMarketplaceSyncService } from './prediction-marketplace-sync.service';
 import { engineOutcomeKeyFromOddsLine } from '../fixtures/odds-outcome-keys';
 
+/** Settled AI coupons in this window drive sort order, cold-skip, and tepid tightening. */
+const AI_ROLLING_STATS_DAYS = 56;
+/** Prefer higher recent win rate for fixture allocation when sample is meaningful. */
+const AI_SORT_MIN_SAMPLE = 10;
+/** Skip posting when recent track record is clearly negative. */
+const AI_COLD_SKIP_MIN_SAMPLE = 15;
+const AI_COLD_SKIP_MAX_WIN_RATE = 0.4;
+/** Below this win rate (with min sample), require stricter probability bars. */
+const AI_TEPID_MAX_WIN_RATE = 0.46;
+const AI_TEPID_CONFIDENCE_BUMP = 0.03;
+
 interface FixturePrediction {
   fixtureId: number;
   apiId: number;
@@ -204,35 +215,44 @@ export class PredictionEngineService {
       this.logger.log(`Seeded usedFixtureIds with ${usedFixtureIds.size} fixture(s) already on marketplace for ${dateStr}`);
     }
 
-    let adminAiMaxPerDay = 2;
+    let adminAiMaxPerDay = 1;
     try {
       // Raw SQL: avoids TypeORM find({ select }) without primary key (can throw) and missing-column errors pre-migration.
       const rows = (await this.dataSource.query(
         `SELECT ai_max_coupons_per_day AS v FROM api_settings WHERE id = 1 LIMIT 1`,
       )) as Array<{ v: number | string | null }>;
-      const raw = rows?.[0]?.v != null ? Math.floor(Number(rows[0].v)) : 2;
-      adminAiMaxPerDay = Number.isFinite(raw) && raw >= 1 ? Math.min(50, raw) : 2;
+      const raw = rows?.[0]?.v != null ? Math.floor(Number(rows[0].v)) : 1;
+      adminAiMaxPerDay = Number.isFinite(raw) && raw >= 1 ? Math.min(50, raw) : 1;
     } catch (e) {
-      this.logger.warn(`ai_max_coupons_per_day unreadable (${(e as Error)?.message}); using default 2`);
-      adminAiMaxPerDay = 2;
+      this.logger.warn(`ai_max_coupons_per_day unreadable (${(e as Error)?.message}); using default 1`);
+      adminAiMaxPerDay = 1;
     }
     this.logger.log(`AI daily pick cap (admin): ${adminAiMaxPerDay} per tipster (UTC day)`);
 
-    for (const tipsterConfig of AI_TIPSTERS) {
+    const rollingStats = await this.fetchAiRollingCouponStats(AI_ROLLING_STATS_DAYS);
+    const orderedConfigs = this.sortTipstersByPerformance(AI_TIPSTERS, tipsterByUsername, rollingStats);
+    this.logger.debug(
+      `AI tipster processing order (performance-prioritized): ${orderedConfigs.map((c) => c.username).join(', ')}`,
+    );
+
+    for (const tipsterConfig of orderedConfigs) {
       if (!this.shouldTipsterPostToday(tipsterConfig)) continue;
 
       const tipster = tipsterByUsername.get(tipsterConfig.username);
       if (!tipster) continue;
 
-      const configMax = tipsterConfig.personality.max_daily_predictions ?? 3;
+      const gatedConfig = this.applyPerformancePolicy(tipsterConfig, tipster.id, rollingStats);
+      if (!gatedConfig) continue;
+
+      const configMax = gatedConfig.personality.max_daily_predictions ?? 3;
       const maxForTipster = Math.min(configMax, adminAiMaxPerDay);
-      let pred = this.createTipsterPrediction(tipsterConfig, tipster.id, fixturePredictions, usedFixtureIds);
+      let pred = this.createTipsterPrediction(gatedConfig, tipster.id, fixturePredictions, usedFixtureIds);
       let count = 0;
       while (pred && count < maxForTipster) {
         allPredictions.push(pred);
         count++;
         pred.fixtures.forEach((f) => usedFixtureIds.add(f.fixtureId));
-        pred = this.createTipsterPrediction(tipsterConfig, tipster.id, fixturePredictions, usedFixtureIds);
+        pred = this.createTipsterPrediction(gatedConfig, tipster.id, fixturePredictions, usedFixtureIds);
       }
     }
 
@@ -270,6 +290,98 @@ export class PredictionEngineService {
     } catch (e) {
       this.logger.warn('Failed to write generation_logs', e);
     }
+  }
+
+  /**
+   * Settled single-coupon predictions per AI tipster (won+lost only) for the last N UTC days.
+   */
+  private async fetchAiRollingCouponStats(
+    lookbackDays: number,
+  ): Promise<Map<number, { settled: number; wins: number }>> {
+    const since = new Date();
+    since.setUTCDate(since.getUTCDate() - lookbackDays);
+    const sinceStr = since.toISOString().slice(0, 10);
+    const rows = (await this.dataSource.query(
+      `SELECT p.tipster_id AS id,
+              COUNT(*)::int AS settled,
+              SUM(CASE WHEN p.status = 'won' THEN 1 ELSE 0 END)::int AS wins
+       FROM predictions p
+       INNER JOIN tipsters t ON t.id = p.tipster_id AND t.is_ai = true
+       WHERE p.status IN ('won', 'lost')
+         AND p.prediction_date >= $1::date`,
+      [sinceStr],
+    )) as Array<{ id: number; settled: string | number; wins: string | number | null }>;
+    const map = new Map<number, { settled: number; wins: number }>();
+    for (const r of rows) {
+      map.set(Number(r.id), {
+        settled: Number(r.settled),
+        wins: Number(r.wins ?? 0),
+      });
+    }
+    return map;
+  }
+
+  /**
+   * Tipsters with enough recent settled coupons are processed first (higher win rate → earlier),
+   * so they claim the best remaining EV legs under global usedFixtureIds deduping.
+   */
+  private sortTipstersByPerformance(
+    configs: AiTipsterConfig[],
+    tipsterByUsername: Map<string, Tipster>,
+    stats: Map<number, { settled: number; wins: number }>,
+  ): AiTipsterConfig[] {
+    const withMeta = configs.map((c, idx) => {
+      const t = tipsterByUsername.get(c.username);
+      const s = t ? stats.get(t.id) : undefined;
+      const n = s?.settled ?? 0;
+      const wr = n > 0 ? s!.wins / n : 0;
+      return { c, idx, n, wr };
+    });
+    withMeta.sort((a, b) => {
+      const aHas = a.n >= AI_SORT_MIN_SAMPLE;
+      const bHas = b.n >= AI_SORT_MIN_SAMPLE;
+      if (aHas && bHas) {
+        if (b.wr !== a.wr) return b.wr - a.wr;
+        return a.idx - b.idx;
+      }
+      if (aHas && !bHas) return -1;
+      if (!aHas && bHas) return 1;
+      return a.idx - b.idx;
+    });
+    return withMeta.map((x) => x.c);
+  }
+
+  /**
+   * Cold tipsters (very poor recent coupon win rate with enough sample) skip a run.
+   * Tepid tipsters get slightly stricter probability thresholds for this run only.
+   */
+  private applyPerformancePolicy(
+    config: AiTipsterConfig,
+    tipsterId: number,
+    stats: Map<number, { settled: number; wins: number }>,
+  ): AiTipsterConfig | null {
+    const s = stats.get(tipsterId);
+    if (!s || s.settled < AI_SORT_MIN_SAMPLE) return config;
+    const wr = s.wins / s.settled;
+    if (s.settled >= AI_COLD_SKIP_MIN_SAMPLE && wr < AI_COLD_SKIP_MAX_WIN_RATE) {
+      this.logger.log(
+        `AI performance gate: skip ${config.username} (${s.settled} coupons in ${AI_ROLLING_STATS_DAYS}d, WR ${(wr * 100).toFixed(1)}%)`,
+      );
+      return null;
+    }
+    if (wr < AI_TEPID_MAX_WIN_RATE) {
+      const p = config.personality;
+      const apiBase = p.min_api_confidence ?? Math.min(0.52, p.min_win_probability);
+      return {
+        ...config,
+        personality: {
+          ...p,
+          min_win_probability: Math.min(0.92, p.min_win_probability + AI_TEPID_CONFIDENCE_BUMP),
+          min_api_confidence: Math.min(0.92, apiBase + AI_TEPID_CONFIDENCE_BUMP),
+        },
+      };
+    }
+    return config;
   }
 
   /**
@@ -464,7 +576,8 @@ export class PredictionEngineService {
     // When API data available, use min_api_confidence (or 0.52 fallback); else min_win_probability
     const minConf = personality.min_api_confidence ?? Math.min(0.52, personality.min_win_probability);
     const minProb = personality.min_win_probability;
-    const evMin = Math.max(0, personality.min_expected_value - 0.08); // Relax so more tipsters see same value pool as Gambler
+    const evRelax = personality.ev_min_relaxation ?? 0;
+    const evMin = Math.max(0, personality.min_expected_value - evRelax);
 
     return fixturePredictions.filter((fp) => {
       if (!this.matchesFixtureDays(fp.matchDate, personality.fixture_days)) return false;

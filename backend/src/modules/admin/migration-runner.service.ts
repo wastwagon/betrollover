@@ -133,7 +133,7 @@ export class MigrationRunnerService {
   async ensureAiMaxCouponsPerDayColumn(): Promise<void> {
     try {
       await this.dataSource.query(
-        `ALTER TABLE api_settings ADD COLUMN IF NOT EXISTS ai_max_coupons_per_day INTEGER NOT NULL DEFAULT 2`,
+        `ALTER TABLE api_settings ADD COLUMN IF NOT EXISTS ai_max_coupons_per_day INTEGER NOT NULL DEFAULT 1`,
       );
     } catch (err: any) {
       this.logger.warn(`ensureAiMaxCouponsPerDayColumn failed (non-fatal): ${err?.message || err}`);
