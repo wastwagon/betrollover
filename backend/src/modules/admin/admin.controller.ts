@@ -1152,6 +1152,13 @@ export class AdminController {
     return this.adminService.updatePickStatus(id, body.status);
   }
 
+  @Post('picks/bulk-delete')
+  async bulkDeletePicks(@CurrentUser() user: User, @Body() body: { ids?: number[] }) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const ids = Array.isArray(body?.ids) ? body.ids : [];
+    return this.adminService.bulkDeletePicks(ids);
+  }
+
   @Delete('picks/:id')
   async deletePick(@CurrentUser() user: User, @Param('id', ParseIntPipe) id: number) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');

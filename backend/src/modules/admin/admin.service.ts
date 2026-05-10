@@ -1639,10 +1639,10 @@ export class AdminService {
   }
 
   /**
-   * Admin-only: Complete pick deletion with escrow refund, AI prediction cleanup,
-   * and tipster stats recalculation. Safe for live system.
+   * Refunds escrow, removes linked AI prediction rows, deletes accumulator (CASCADE).
+   * Does not recalc tipster stats or leaderboard — use for batch deletes.
    */
-  async deletePick(id: number): Promise<{ ok: boolean; refundedCount?: number; tipsterStatsRecalculated?: boolean }> {
+  private async deletePickDataOnly(id: number): Promise<{ sellerId: number; refundedCount: number }> {
     const ticket = await this.ticketRepo.findOne({
       where: { id },
       select: ['id', 'userId', 'title', 'result'],
@@ -1652,7 +1652,6 @@ export class AdminService {
     const accumulatorId = id;
     const sellerId = ticket.userId;
 
-    // 1. Refund any held escrow (buyers who purchased before settlement)
     const heldFunds = await this.escrowRepo.find({
       where: { pickId: accumulatorId, status: 'held' },
     });
@@ -1684,7 +1683,6 @@ export class AdminService {
       await this.escrowRepo.save(f);
     }
 
-    // 2. Delete AI prediction + fixtures (if linked)
     const listing = await this.marketplaceRepo.findOne({
       where: { accumulatorId },
       select: ['predictionId'],
@@ -1695,23 +1693,82 @@ export class AdminService {
       this.logger.log(`Deleted AI prediction ${listing.predictionId} for pick ${accumulatorId}`);
     }
 
-    // 3. Delete coupon (CASCADE removes picks, marketplace, purchases, escrow, reactions, etc.)
     await this.ticketRepo.delete(accumulatorId);
 
-    // 4. Recalculate tipster stats from remaining tickets
+    this.logger.log(`Admin deleted pick ${accumulatorId} (tipster ${sellerId}). Refunded buyers: ${processedUsers.size}`);
+
+    return { sellerId, refundedCount: processedUsers.size };
+  }
+
+  /**
+   * Admin-only: Complete pick deletion with escrow refund, AI prediction cleanup,
+   * and tipster stats recalculation. Safe for live system.
+   */
+  async deletePick(id: number): Promise<{ ok: boolean; refundedCount?: number; tipsterStatsRecalculated?: boolean }> {
+    const { sellerId, refundedCount } = await this.deletePickDataOnly(id);
+
     const tipsterStatsRecalculated = await this.tipstersApiService.recalculateAndPersistTipsterStats(sellerId);
 
-    // 5. Update leaderboard rankings
     await this.resultTrackerService.updateLeaderboardNow().catch((err) => {
       this.logger.warn(`Leaderboard update after pick delete failed: ${err?.message}`);
     });
 
-    this.logger.log(`Admin deleted pick ${accumulatorId} (tipster ${sellerId}). Refunded: ${processedUsers.size}`);
-
     return {
       ok: true,
-      refundedCount: processedUsers.size,
+      refundedCount,
       tipsterStatsRecalculated,
+    };
+  }
+
+  /** Admin: delete up to 50 picks in one request; one stats recalc per affected seller, one leaderboard update. */
+  async bulkDeletePicks(ids: number[]): Promise<{
+    ok: boolean;
+    deleted: number;
+    refundedBuyersTotal: number;
+    failed: { id: number; error: string }[];
+    tipsterIdsRecalculated: number[];
+  }> {
+    const unique = [...new Set(ids.map((n) => Math.floor(Number(n))))].filter((n) => Number.isFinite(n) && n > 0);
+    const capped = unique.slice(0, 50);
+    if (capped.length === 0) {
+      return { ok: true, deleted: 0, refundedBuyersTotal: 0, failed: [], tipsterIdsRecalculated: [] };
+    }
+
+    const sellers = new Set<number>();
+    let refundedBuyersTotal = 0;
+    const failed: { id: number; error: string }[] = [];
+    let deleted = 0;
+
+    for (const id of capped) {
+      try {
+        const r = await this.deletePickDataOnly(id);
+        sellers.add(r.sellerId);
+        refundedBuyersTotal += r.refundedCount;
+        deleted++;
+      } catch (e: unknown) {
+        const msg =
+          e instanceof NotFoundException
+            ? 'Pick not found'
+            : e instanceof Error
+              ? e.message
+              : 'Delete failed';
+        failed.push({ id, error: msg });
+      }
+    }
+
+    for (const sellerId of sellers) {
+      await this.tipstersApiService.recalculateAndPersistTipsterStats(sellerId);
+    }
+    await this.resultTrackerService.updateLeaderboardNow().catch((err) => {
+      this.logger.warn(`Leaderboard update after bulk pick delete failed: ${err?.message}`);
+    });
+
+    return {
+      ok: failed.length === 0,
+      deleted,
+      refundedBuyersTotal,
+      failed,
+      tipsterIdsRecalculated: [...sellers],
     };
   }
 

@@ -63,6 +63,8 @@ export default function AdminMarketplacePage() {
   const [tipsters, setTipsters] = useState<MarketplaceTipster[]>([]);
   const [fixing, setFixing] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const [diagnostic, setDiagnostic] = useState<{
     activeListings?: number;
     ticketsTotal?: number;
@@ -112,6 +114,10 @@ export default function AdminMarketplacePage() {
     loadTipsters();
   }, [loadTipsters]);
 
+  useEffect(() => {
+    setSelectedIds((prev) => prev.filter((id) => picks.some((p) => p.id === id)));
+  }, [picks]);
+
   const loadDiagnostic = () => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -145,6 +151,62 @@ export default function AdminMarketplacePage() {
       alert('Delete failed');
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  const selectAllVisible = () => {
+    setSelectedIds(picks.map((a) => a.id));
+  };
+
+  const clearSelection = () => setSelectedIds([]);
+
+  const allVisibleSelected = picks.length > 0 && picks.every((a) => selectedIds.includes(a.id));
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const n = selectedIds.length;
+    if (
+      !confirm(
+        `Permanently delete ${n} selected pick(s)?\n\nThis will:\n• Refund any pending purchases (per pick)\n• Remove from tipster stats (ROI, win rate, streak)\n• Cannot be undone\n\n(Max 50 per request.)`,
+      )
+    )
+      return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setBulkDeleting(true);
+    try {
+      const res = await fetch(`${getApiUrl()}/admin/picks/bulk-delete`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        const deleted = typeof data.deleted === 'number' ? data.deleted : 0;
+        const refunded = typeof data.refundedBuyersTotal === 'number' ? data.refundedBuyersTotal : 0;
+        const failed = Array.isArray(data.failed) ? data.failed : [];
+        let msg = `Deleted ${deleted} pick(s).`;
+        if (refunded > 0) msg += ` ${refunded} buyer refund group(s) processed.`;
+        if (failed.length > 0) {
+          msg += `\n\nFailed (${failed.length}): ${failed.map((f: { id: number; error: string }) => `#${f.id} ${f.error}`).join('; ')}`;
+        }
+        alert(msg);
+        clearSelection();
+        loadMarketplace();
+      } else {
+        alert(getApiErrorMessage(data, 'Bulk delete failed'));
+      }
+    } catch {
+      alert('Bulk delete failed');
+    } finally {
+      setBulkDeleting(false);
     }
   };
 
@@ -253,20 +315,55 @@ export default function AdminMarketplacePage() {
             )}
           </div>
         </div>
-        <div className="mb-6 flex flex-wrap gap-3">
-          <button type="button"
-            onClick={handleFixMarketplace}
-            disabled={fixing}
-            className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium disabled:opacity-50"
-          >
-            {fixing ? 'Fixing...' : 'Fix duplicates & titles'}
-          </button>
-          <button type="button"
-            onClick={loadDiagnostic}
-            className="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 text-white text-sm font-medium"
-          >
-            Run diagnostic
-          </button>
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800/80 px-4 py-3">
+            <span className="text-sm font-medium text-gray-800 dark:text-gray-200">Multi-select:</span>
+            <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
+              <input
+                type="checkbox"
+                checked={allVisibleSelected}
+                onChange={() => (allVisibleSelected ? clearSelection() : selectAllVisible())}
+                disabled={picks.length === 0 || loading}
+                className="w-4 h-4 rounded border-gray-400 text-emerald-600 focus:ring-emerald-500"
+              />
+              Select visible ({picks.length})
+            </label>
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {selectedIds.length} selected
+            </span>
+            {selectedIds.length > 0 && (
+              <button
+                type="button"
+                onClick={clearSelection}
+                className="text-sm text-gray-600 dark:text-gray-400 hover:underline"
+              >
+                Clear
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              disabled={selectedIds.length === 0 || bulkDeleting}
+              className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {bulkDeleting ? 'Deleting…' : `Delete selected (${selectedIds.length})`}
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <button type="button"
+              onClick={handleFixMarketplace}
+              disabled={fixing}
+              className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium disabled:opacity-50"
+            >
+              {fixing ? 'Fixing...' : 'Fix duplicates & titles'}
+            </button>
+            <button type="button"
+              onClick={loadDiagnostic}
+              className="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 text-white text-sm font-medium"
+            >
+              Run diagnostic
+            </button>
+          </div>
         </div>
 
         {diagnostic && (
@@ -305,6 +402,17 @@ export default function AdminMarketplacePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {picks.map((a) => (
               <div key={a.id} className="relative">
+                <label
+                  className="absolute top-2 left-2 z-20 flex items-center justify-center w-8 h-8 rounded-lg bg-white/95 dark:bg-gray-900/95 border border-gray-200 dark:border-gray-600 shadow cursor-pointer"
+                  title="Select for bulk delete"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(a.id)}
+                    onChange={() => toggleSelect(a.id)}
+                    className="w-4 h-4 rounded border-gray-400 text-emerald-600 focus:ring-emerald-500"
+                  />
+                </label>
                 <PickCard
                   id={a.id}
                   title={a.title}
@@ -329,7 +437,7 @@ export default function AdminMarketplacePage() {
                 />
                 <button type="button"
                   onClick={() => handleDeleteCoupon(a.id, a.title)}
-                  disabled={deletingId === a.id}
+                  disabled={deletingId === a.id || bulkDeleting}
                   className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium disabled:opacity-50 z-10 shadow"
                   title="Delete pick (refunds pending purchases, recalculates tipster stats)"
                 >
