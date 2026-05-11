@@ -779,10 +779,6 @@ export class AccumulatorsService {
       relations: ['picks'],
     });
     if (!ticket) return null;
-    if (!opts?.viewerIsAdmin) {
-      const visibleTickets = await this.filterTicketsByAiRoiVisibility([ticket]);
-      if (visibleTickets.length === 0) return null;
-    }
     const [enriched] = await this.enrichPicksWithFixtureScores([ticket]);
 
     // Include tipster metadata and marketplace row so the detail page has full context
@@ -808,8 +804,7 @@ export class AccumulatorsService {
       where: { id: In(accIds) },
       relations: ['picks'],
     });
-    const visibleTickets = await this.filterTicketsByAiRoiVisibility(tickets);
-    const enrichedTickets = await this.enrichPicksWithFixtureScores(visibleTickets);
+    const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
     const rows = await this.marketplaceRepo.find({
       where: { accumulatorId: In(accIds) },
       select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
@@ -920,24 +915,6 @@ export class AccumulatorsService {
     }
   }
 
-  /** User IDs for AI tipsters currently hidden from user-facing surfaces (negative ROI). */
-  private async getHiddenAiUserIds(): Promise<number[]> {
-    const rows = await this.tipsterRepo.find({
-      where: { isAi: true },
-      select: ['userId', 'roi'],
-    });
-    return rows
-      .filter((r) => r.userId != null && Number(r.roi ?? 0) < 0)
-      .map((r) => r.userId!) as number[];
-  }
-
-  private async filterTicketsByAiRoiVisibility(tickets: AccumulatorTicket[]): Promise<AccumulatorTicket[]> {
-    if (tickets.length === 0) return tickets;
-    const hiddenAiUserIds = new Set(await this.getHiddenAiUserIds());
-    if (hiddenAiUserIds.size === 0) return tickets;
-    return tickets.filter((t) => !hiddenAiUserIds.has(t.userId));
-  }
-
   async getMarketplace(
     userId: number,
     includeAllListings = false,
@@ -969,15 +946,6 @@ export class AccumulatorsService {
         .innerJoin(PickMarketplace, 'pm', "pm.accumulator_id = t.id AND pm.status = 'active'")
         .where("t.status = 'active'")
         .andWhere("t.result = 'pending'")
-        .andWhere(
-          `NOT EXISTS (
-            SELECT 1
-            FROM tipsters ts
-            WHERE ts.user_id = t.user_id
-              AND ts.is_ai = true
-              AND COALESCE(ts.roi, 0) < 0
-          )`,
-        )
         .andWhere(
           `NOT EXISTS (
             SELECT 1
@@ -1044,16 +1012,15 @@ export class AccumulatorsService {
         where: { id: In(pageIds) },
         relations: ['picks'],
       });
-      const visibleTickets = await this.filterTicketsByAiRoiVisibility(tickets);
       const order = new Map(pageIds.map((id, i) => [id, i]));
-      visibleTickets.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+      tickets.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
 
       const rows = await this.marketplaceRepo.find({
         where: { accumulatorId: In(pageIds), status: 'active' },
         select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
       });
 
-      const enrichedTickets = await this.enrichPicksWithFixtureScores(visibleTickets);
+      const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
       const itemsWithMeta = await this.enrichWithTipsterMetadata(enrichedTickets, rows, userId);
       const rowByAccId = new Map(rows.map((r) => [r.accumulatorId, r]));
       const ticketById = new Map(enrichedTickets.map((t) => [t.id, t]));
@@ -1126,9 +1093,7 @@ export class AccumulatorsService {
       relations: ['picks'],
       order: { createdAt: 'DESC' },
     });
-    const visibleTickets = await this.filterTicketsByAiRoiVisibility(tickets);
-
-    const enrichedTickets = await this.enrichPicksWithFixtureScores(visibleTickets);
+    const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
     let validTickets: typeof enrichedTickets;
     if (adminFilterMode) {
       const showPending = options!.showPending !== false;
@@ -1207,15 +1172,6 @@ export class AccumulatorsService {
       .andWhere(
         `NOT EXISTS (
           SELECT 1
-          FROM tipsters ts
-          WHERE ts.user_id = t.user_id
-            AND ts.is_ai = true
-            AND COALESCE(ts.roi, 0) < 0
-        )`,
-      )
-      .andWhere(
-        `NOT EXISTS (
-          SELECT 1
           FROM accumulator_picks ap
           WHERE ap.accumulator_id = t.id
             AND ap.match_date IS NOT NULL
@@ -1275,10 +1231,9 @@ export class AccumulatorsService {
       where: { id: In(pageIds) },
       relations: ['picks'],
     });
-    const visibleTickets = await this.filterTicketsByAiRoiVisibility(tickets);
     const order = new Map(pageIds.map((id, i) => [id, i]));
-    visibleTickets.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
-    const enrichedTickets = await this.enrichPicksWithFixtureScores(visibleTickets);
+    tickets.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+    const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
 
     const rowsForPaginated = await this.marketplaceRepo.find({
       where: { accumulatorId: In(pageIds), status: 'active' },
@@ -1527,17 +1482,14 @@ export class AccumulatorsService {
    */
   async getFreeTipOfTheDay() {
     const now = new Date();
-    const hiddenAiUserIds = await this.getHiddenAiUserIds();
-    const hiddenAiSet = new Set(hiddenAiUserIds);
 
     // Helper: find the best free active pending tip for a given set of user IDs
     const findBestFreeTip = async (userIds: number[]) => {
-      const visibleUserIds = userIds.filter((id) => !hiddenAiSet.has(id));
-      if (!visibleUserIds.length) return null;
+      if (!userIds.length) return null;
 
       const tickets = await this.ticketRepo.find({
         where: {
-          userId: In(visibleUserIds),
+          userId: In(userIds),
           status: 'active',
           result: 'pending',
           isMarketplace: true,
@@ -1569,8 +1521,6 @@ export class AccumulatorsService {
       const items = await this.enrichWithTipsterMetadata([ticket], row ? [row] : []);
       const first = items[0] as { tipster?: { isAi?: boolean; roi?: number } } | undefined;
       if (!first) return null;
-      // Safety net: do not return hidden AI tipsters even if upstream lookup misses one.
-      if (first.tipster?.isAi && Number(first.tipster.roi ?? 0) < 0) return null;
       return first;
     };
 
@@ -1672,13 +1622,6 @@ export class AccumulatorsService {
       SELECT pm.accumulator_id FROM pick_marketplace pm
       INNER JOIN accumulator_tickets t ON t.id = pm.accumulator_id AND t.status = 'active' AND t.result = 'pending'
       WHERE pm.status = 'active'
-      AND NOT EXISTS (
-        SELECT 1
-        FROM tipsters ts
-        WHERE ts.user_id = t.user_id
-          AND ts.is_ai = true
-          AND COALESCE(ts.roi, 0) < 0
-      )
       AND NOT EXISTS (
         SELECT 1 FROM accumulator_picks ap
         JOIN fixtures f ON f.id = ap.fixture_id
@@ -1784,7 +1727,7 @@ export class AccumulatorsService {
       metricNotes: {
         verifiedTipsters: 'tipsters.is_active = true (includes listed AI tipsters)',
         totalPicks: 'Marketplace picks settled won+lost (matches /accumulators/archive total)',
-        activePicks: 'Live buyable listings (active + pending result + no started fixture, excluding hidden negative-ROI AI tipsters)',
+        activePicks: 'Live buyable listings (active + pending result + no started fixture)',
         successfulPurchases: 'user_purchased_picks joined to pick_marketplace',
         winRate: 'Marketplace-listed picks: won / (won + lost)',
         totalPaidOut: 'SUM(wallet_transactions.amount) type=payout, status=completed, amount>0',
@@ -1808,19 +1751,9 @@ export class AccumulatorsService {
       .where('t.id IN (:...accIds)', { accIds })
       .andWhere("t.status = 'active'")
       .andWhere("t.result = 'pending'")
-      .andWhere(
-        `NOT EXISTS (
-          SELECT 1
-          FROM tipsters ts
-          WHERE ts.user_id = t.user_id
-            AND ts.is_ai = true
-            AND COALESCE(ts.roi, 0) < 0
-        )`,
-      )
       .getMany();
 
-    const visibleTickets = await this.filterTicketsByAiRoiVisibility(tickets);
-    const enrichedTickets = await this.enrichPicksWithFixtureScores(visibleTickets);
+    const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
 
     const now = new Date();
     const validTickets = enrichedTickets.filter((ticket: any) => {
@@ -1866,7 +1799,6 @@ export class AccumulatorsService {
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 200);
     const offset = Math.max(options?.offset ?? 0, 0);
     const { fromUtc, toExclusiveUtc } = this.resolveArchiveDateRange(options?.from, options?.to);
-    const hiddenAiUserIds = await this.getHiddenAiUserIds();
 
     const statsQb = this.ticketRepo
       .createQueryBuilder('t')
@@ -1879,19 +1811,7 @@ export class AccumulatorsService {
       )
       .addSelect('COALESCE(AVG(t.totalOdds), 0)', 'avgOdds')
       .where('t.result IN (:...r)', { r: ['won', 'lost'] })
-      .andWhere('EXISTS (SELECT 1 FROM pick_marketplace pm WHERE pm.accumulator_id = t.id)')
-      .andWhere(
-        `NOT EXISTS (
-          SELECT 1
-          FROM tipsters ts
-          WHERE ts.user_id = t.user_id
-            AND ts.is_ai = true
-            AND COALESCE(ts.roi, 0) < 0
-        )`,
-      );
-    if (hiddenAiUserIds.length > 0) {
-      statsQb.andWhere('t.userId NOT IN (:...hiddenAiUserIds)', { hiddenAiUserIds });
-    }
+      .andWhere('EXISTS (SELECT 1 FROM pick_marketplace pm WHERE pm.accumulator_id = t.id)');
     if (fromUtc) {
       statsQb.andWhere('t.updatedAt >= :fromUtc', { fromUtc });
     }
@@ -1930,19 +1850,7 @@ export class AccumulatorsService {
       .createQueryBuilder('t')
       .leftJoinAndSelect('t.picks', 'picks')
       .where('t.result IN (:...r)', { r: ['won', 'lost'] })
-      .andWhere('EXISTS (SELECT 1 FROM pick_marketplace pm WHERE pm.accumulator_id = t.id)')
-      .andWhere(
-        `NOT EXISTS (
-          SELECT 1
-          FROM tipsters ts
-          WHERE ts.user_id = t.user_id
-            AND ts.is_ai = true
-            AND COALESCE(ts.roi, 0) < 0
-        )`,
-      );
-    if (hiddenAiUserIds.length > 0) {
-      listQb.andWhere('t.userId NOT IN (:...hiddenAiUserIds)', { hiddenAiUserIds });
-    }
+      .andWhere('EXISTS (SELECT 1 FROM pick_marketplace pm WHERE pm.accumulator_id = t.id)');
     if (fromUtc) {
       listQb.andWhere('t.updatedAt >= :fromUtc', { fromUtc });
     }

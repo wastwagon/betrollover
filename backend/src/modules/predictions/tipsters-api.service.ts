@@ -119,10 +119,6 @@ function tipsterListingActivityTier(row: { total_wins?: number; total_losses?: n
   return 2;
 }
 
-function isHiddenAiByRoi(row: { is_ai?: boolean; roi?: number }): boolean {
-  return !!row.is_ai && Number(row.roi ?? 0) < 0;
-}
-
 @Injectable()
 export class TipstersApiService {
   constructor(
@@ -259,8 +255,7 @@ export class TipstersApiService {
       };
     });
 
-    const visibleEntries = entries.filter((e) => !isHiddenAiByRoi(e));
-    const withSettled = visibleEntries.filter((e) => settledPickCount(e) > 0);
+    const withSettled = entries.filter((e) => settledPickCount(e) > 0);
     const minPrimary = LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING;
     const primary = withSettled.filter((e) => settledPickCount(e) >= minPrimary).sort(compareLeaderboardRows);
     const secondary = withSettled.filter((e) => settledPickCount(e) < minPrimary).sort(compareLeaderboardRows);
@@ -647,8 +642,6 @@ export class TipstersApiService {
       .andWhere('(t.isAi = true OR (t.userId IS NOT NULL AND u.status = :userActive))', {
         userActive: UserStatus.ACTIVE,
       })
-      // Hide non-performing AI tipsters from user-facing listings until ROI recovers.
-      .andWhere('(t.isAi = false OR COALESCE(t.roi, 0) >= 0)')
       .select([
         't.id',
         't.username',
@@ -767,10 +760,9 @@ export class TipstersApiService {
       };
     });
 
-    const visibleMapped = mapped.filter((r) => !isHiddenAiByRoi(r));
     const sortCol = options.sortBy || 'roi';
     const asc = options.order === 'asc';
-    visibleMapped.sort((a, b) => {
+    mapped.sort((a, b) => {
       const tierA = tipsterListingActivityTier(a);
       const tierB = tipsterListingActivityTier(b);
       if (tierA !== tierB) return tierA - tierB;
@@ -781,7 +773,7 @@ export class TipstersApiService {
       return (b.follower_count ?? 0) - (a.follower_count ?? 0);
     });
 
-    const sliced = visibleMapped.slice(0, options.limit);
+    const sliced = mapped.slice(0, options.limit);
     let rankCounter = 0;
     return sliced.map((row) => ({
       ...row,
@@ -800,7 +792,6 @@ export class TipstersApiService {
       .andWhere('(t.isAi = true OR (t.userId IS NOT NULL AND u.status = :userActive))', {
         userActive: UserStatus.ACTIVE,
       })
-      .andWhere('(t.isAi = false OR COALESCE(t.roi, 0) >= 0)')
       .orderBy('t.username', 'ASC')
       .getRawMany<{ username: string }>();
     return { usernames: rows.map((r) => r.username) };
@@ -811,7 +802,6 @@ export class TipstersApiService {
       where: { username },
     });
     if (!tipster) return null;
-    if (tipster.isAi && Number(tipster.roi ?? 0) < 0) return null;
 
     if (tipster.userId != null) {
       const owner = await this.usersRepo.findOne({
@@ -1208,8 +1198,7 @@ export class TipstersApiService {
       };
     });
 
-    const visibleEnriched = enriched.filter((r) => !(idToIsAi.get(r.id) === true && Number(r.roi ?? 0) < 0));
-    const withSettled = visibleEnriched.filter((r) => settledPickCount(r) > 0);
+    const withSettled = enriched.filter((r) => settledPickCount(r) > 0);
     const minPrimary =
       options.period === 'weekly'
         ? LEADERBOARD_MIN_SETTLED_WEEKLY
@@ -1258,8 +1247,7 @@ export class TipstersApiService {
       where: { id: In(tipsterIds) },
       select: ['id', 'userId', 'username', 'displayName', 'avatarUrl', 'winRate', 'isAi', 'roi'],
     });
-    const visibleTipsters = tipsters.filter((t) => !(t.isAi && Number(t.roi ?? 0) < 0));
-    const followedUserIds = visibleTipsters.filter((t) => t.userId != null).map((t) => t.userId!);
+    const followedUserIds = tipsters.filter((t) => t.userId != null).map((t) => t.userId!);
     if (followedUserIds.length === 0) return [];
 
     const allTimeRankMap = await this.getAllTimeLeaderboardRankMap();
@@ -1295,7 +1283,7 @@ export class TipstersApiService {
         isAi: boolean;
       }
     >();
-    for (const t of visibleTipsters) {
+    for (const t of tipsters) {
       if (t.userId) {
         userMap.set(t.userId, {
           displayName: t.displayName,

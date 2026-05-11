@@ -94,8 +94,7 @@ export function HomeFreeTipOfTheDay() {
         const uniqueVisible = combined.filter((item) => {
           if (!item?.id || seen.has(item.id)) return false;
           seen.add(item.id);
-          // Safety net: negative-ROI AI must never show in this homepage section.
-          return !(item.tipster?.isAi && Number(item.tipster.roi ?? 0) < 0);
+          return true;
         });
         setTip(featured as FreeTip | null);
         setTips(uniqueVisible.slice(0, 4));
