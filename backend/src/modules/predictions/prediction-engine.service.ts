@@ -308,7 +308,8 @@ export class PredictionEngineService {
        FROM predictions p
        INNER JOIN tipsters t ON t.id = p.tipster_id AND t.is_ai = true
        WHERE p.status IN ('won', 'lost')
-         AND p.prediction_date >= $1::date`,
+         AND p.prediction_date >= $1::date
+       GROUP BY p.tipster_id`,
       [sinceStr],
     )) as Array<{ id: number; settled: string | number; wins: string | number | null }>;
     const map = new Map<number, { settled: number; wins: number }>();
