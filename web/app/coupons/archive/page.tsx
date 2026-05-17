@@ -13,6 +13,8 @@ import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { NavBar } from '@/components/ios/NavBar';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
+import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 
 interface Pick {
   id?: number;
@@ -54,6 +56,9 @@ interface Coupon {
   bookmakerKey?: string | null;
   bookingCode?: string | null;
   bookingCodeCopyCount?: number;
+  reactionCount?: number;
+  hasReacted?: boolean;
+  commentCount?: number;
 }
 
 type PeriodPreset = 'all' | '7d' | '30d' | '90d' | 'month' | 'custom';
@@ -209,7 +214,7 @@ export default function CouponsArchivePage() {
       try {
         const archiveRes = await fetch(
           `${getApiUrl()}/accumulators/archive?limit=100${archiveQuerySuffix}`,
-          { cache: 'no-store' },
+          { cache: 'no-store', headers: authHeaders },
         );
         const raw = archiveRes.ok ? await archiveRes.json() : [];
         const { items, summary: nextSummary } = parseArchiveResponse(raw);
@@ -521,6 +526,11 @@ export default function CouponsArchivePage() {
                 bookmakerKey={coupon.bookmakerKey}
                 bookingCode={coupon.bookingCode}
                 bookingCodeCopyCount={coupon.bookingCodeCopyCount ?? 0}
+                {...getPickCardSocialProps(coupon, {
+                  onCountsChange: (id, counts) =>
+                    setCoupons((prev) => mergeSocialCountsIntoList(prev, id, counts)),
+                  loginRedirectPath: currentLoginRedirectPath('/coupons/archive'),
+                })}
               />
             ))}
           </div>

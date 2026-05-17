@@ -8,6 +8,8 @@ import { PickCard } from '@/components/PickCard';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 
 interface Pick {
   id?: number;
@@ -42,6 +44,9 @@ interface Accumulator {
   bookmakerKey?: string | null;
   bookingCode?: string | null;
   bookingCodeCopyCount?: number;
+  reactionCount?: number;
+  hasReacted?: boolean;
+  commentCount?: number;
 }
 
 interface MarketplaceTipster {
@@ -434,6 +439,11 @@ export default function AdminMarketplacePage() {
                   bookmakerKey={a.bookmakerKey}
                   bookingCode={a.bookingCode}
                   bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}
+                  {...getPickCardSocialProps(a, {
+                    onCountsChange: (id, counts) =>
+                      setPicks((prev) => mergeSocialCountsIntoList(prev, id, counts)),
+                    loginRedirectPath: currentLoginRedirectPath('/admin/marketplace'),
+                  })}
                 />
                 <button type="button"
                   onClick={() => handleDeleteCoupon(a.id, a.title)}

@@ -93,7 +93,7 @@ export class TipstersController {
     @CurrentUser() user: User | null,
   ) {
     const window = buildTipsterProfilePerformanceWindow(performance, from, to);
-    const profile = await this.tipstersApi.getTipsterProfile(username, window);
+    const profile = await this.tipstersApi.getTipsterProfile(username, window, user?.id);
     if (!profile) {
       throw new NotFoundException('Tipster not found');
     }

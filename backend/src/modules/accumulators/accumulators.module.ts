@@ -5,6 +5,7 @@ import { AccumulatorBookingCodeCopy } from './entities/accumulator-booking-code-
 import { AccumulatorPick } from './entities/accumulator-pick.entity';
 import { PickMarketplace } from './entities/pick-marketplace.entity';
 import { PickReaction } from './entities/pick-reaction.entity';
+import { PickComment } from './entities/pick-comment.entity';
 import { EscrowFund } from './entities/escrow-fund.entity';
 import { UserPurchasedPick } from './entities/user-purchased-pick.entity';
 import { AccumulatorsController } from './accumulators.controller';
@@ -34,6 +35,7 @@ import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity'
       AccumulatorPick,
       PickMarketplace,
       PickReaction,
+      PickComment,
       EscrowFund,
       UserPurchasedPick,
       Fixture,

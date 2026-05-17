@@ -52,6 +52,9 @@ interface FreeTip {
   bookmakerKey?: string | null;
   bookingCode?: string | null;
   bookingCodeCopyCount?: number;
+  reactionCount?: number;
+  hasReacted?: boolean;
+  commentCount?: number;
 }
 
 export function HomeFreeTipOfTheDay() {
@@ -198,6 +201,9 @@ export function HomeFreeTipOfTheDay() {
               bookmakerKey={item.bookmakerKey}
               bookingCode={item.bookingCode}
               bookingCodeCopyCount={item.bookingCodeCopyCount ?? 0}
+              reactionCount={item.reactionCount}
+              hasReacted={item.hasReacted}
+              commentCount={item.commentCount}
             />
           ))}
         </div>

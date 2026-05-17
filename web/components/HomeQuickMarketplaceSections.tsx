@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PickCard } from '@/components/PickCard';
 import { getApiUrl } from '@/lib/site-config';
+import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { useT } from '@/context/LanguageContext';
 
 interface Pick {
@@ -42,6 +44,9 @@ interface MarketplaceCardItem {
   bookmakerKey?: string | null;
   bookingCode?: string | null;
   bookingCodeCopyCount?: number;
+  reactionCount?: number;
+  hasReacted?: boolean;
+  commentCount?: number;
 }
 
 function parseMarketplacePayload(data: unknown): MarketplaceCardItem[] {
@@ -159,6 +164,10 @@ export function HomeQuickMarketplaceSections() {
         detailsHref={`/coupons/${a.id}`}
         onPurchase={() => {}}
         purchasing={false}
+        {...getPickCardSocialProps(a, {
+          onCountsChange: (id, counts) => setElite((prev) => mergeSocialCountsIntoList(prev, id, counts)),
+          loginRedirectPath: currentLoginRedirectPath('/'),
+        })}
       />
     ));
 

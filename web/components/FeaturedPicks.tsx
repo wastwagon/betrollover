@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PickCard } from '@/components/PickCard';
+import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 
@@ -40,6 +42,9 @@ interface Accumulator {
   bookmakerKey?: string | null;
   bookingCode?: string | null;
   bookingCodeCopyCount?: number;
+  reactionCount?: number;
+  hasReacted?: boolean;
+  commentCount?: number;
 }
 
 export function FeaturedPicks() {
@@ -91,6 +96,11 @@ export function FeaturedPicks() {
               detailsHref="/marketplace"
               onPurchase={() => { }}
               purchasing={false}
+              {...getPickCardSocialProps(a, {
+                onCountsChange: (id, counts) =>
+                  setPicks((prev) => mergeSocialCountsIntoList(prev, id, counts)),
+                loginRedirectPath: currentLoginRedirectPath('/'),
+              })}
             />
           ))}
         </div>

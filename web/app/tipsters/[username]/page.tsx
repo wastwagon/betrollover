@@ -20,6 +20,9 @@ import { FollowersCountButton } from '@/components/TipsterFollowersModal';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { NavBar } from '@/components/ios/NavBar';
+import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 
 interface Pick {
   id?: number;
@@ -56,6 +59,22 @@ interface MarketplaceCoupon {
   bookmakerKey?: string | null;
   bookingCode?: string | null;
   bookingCodeCopyCount?: number;
+  reactionCount?: number;
+  hasReacted?: boolean;
+  commentCount?: number;
+}
+
+function patchProfileCoupons(
+  setProfile: React.Dispatch<React.SetStateAction<TipsterProfile | null>>,
+  listKey: 'marketplace_coupons' | 'archived_coupons',
+  pickId: number,
+  counts: PickSocialCounts,
+) {
+  setProfile((prev) => {
+    if (!prev) return prev;
+    const list = prev[listKey] ?? [];
+    return { ...prev, [listKey]: mergeSocialCountsIntoList(list, pickId, counts) };
+  });
 }
 
 interface SubscriptionPackage {
@@ -869,6 +888,11 @@ export default function TipsterProfilePage() {
                         bookmakerKey={a.bookmakerKey}
                         bookingCode={a.bookingCode}
                         bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}
+                        {...getPickCardSocialProps(a, {
+                          onCountsChange: (id, counts) =>
+                            patchProfileCoupons(setProfile, 'marketplace_coupons', id, counts),
+                          loginRedirectPath: currentLoginRedirectPath(`/tipsters/${username}`),
+                        })}
                       />
                     );
                   })}
@@ -910,6 +934,11 @@ export default function TipsterProfilePage() {
                       bookmakerKey={a.bookmakerKey}
                       bookingCode={a.bookingCode}
                       bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}
+                      {...getPickCardSocialProps(a, {
+                        onCountsChange: (id, counts) =>
+                          patchProfileCoupons(setProfile, 'archived_coupons', id, counts),
+                        loginRedirectPath: currentLoginRedirectPath(`/tipsters/${username}`),
+                      })}
                     />
                   ))}
                 </div>

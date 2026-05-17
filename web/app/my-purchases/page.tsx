@@ -7,6 +7,8 @@ import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 import { PickCard } from '@/components/PickCard';
+import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
@@ -73,6 +75,9 @@ interface Purchase {
     bookmakerKey?: string | null;
     bookingCode?: string | null;
     bookingCodeCopyCount?: number;
+    reactionCount?: number;
+    hasReacted?: boolean;
+    commentCount?: number;
   };
 }
 
@@ -453,6 +458,26 @@ export default function MyPurchasesPage() {
                       }).catch(() => {});
                     }}
                     purchasing={false}
+                    {...getPickCardSocialProps(p.pick, {
+                      onCountsChange: (id, counts) => {
+                        setPurchases((prev) =>
+                          prev.map((row) =>
+                            row.pick?.id === id
+                              ? {
+                                  ...row,
+                                  pick: {
+                                    ...row.pick!,
+                                    reactionCount: counts.reactionCount,
+                                    hasReacted: counts.hasReacted,
+                                    commentCount: counts.commentCount,
+                                  },
+                                }
+                              : row,
+                          ),
+                        );
+                      },
+                      loginRedirectPath: currentLoginRedirectPath('/my-purchases'),
+                    })}
                   />
                 ) : null,
               )}

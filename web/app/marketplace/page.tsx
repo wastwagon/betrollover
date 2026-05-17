@@ -20,6 +20,8 @@ import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { MarketplaceFilterBar } from '@/components/ios/MarketplaceFilterBar';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 
 const API_URL = getApiUrl();
 
@@ -65,6 +67,7 @@ interface Accumulator {
   purchaseCount?: number;
   reactionCount?: number;
   hasReacted?: boolean;
+  commentCount?: number;
   picks: Pick[];
   tipster?: Tipster | null;
   createdAt?: string;
@@ -648,6 +651,11 @@ export default function MarketplacePage() {
                     totalOdds={a.totalOdds}
                     price={a.price}
                     purchaseCount={a.purchaseCount}
+                    {...getPickCardSocialProps(a, {
+                      onCountsChange: (id, counts) =>
+                        setPicks((prev) => mergeSocialCountsIntoList(prev, id, counts)),
+                      loginRedirectPath: currentLoginRedirectPath('/marketplace'),
+                    })}
                     avgRating={a.avgRating}
                     reviewCount={a.reviewCount}
                     status={a.status}

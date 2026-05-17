@@ -14,6 +14,8 @@ import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { NavBar } from '@/components/ios/NavBar';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
+import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 
 const SPORT_FILTER_KEYS = [
   { key: '', labelKey: 'my_picks.filter_all' as const },
@@ -58,6 +60,9 @@ interface Accumulator {
   bookmakerKey?: string | null;
   bookingCode?: string | null;
   bookingCodeCopyCount?: number;
+  reactionCount?: number;
+  hasReacted?: boolean;
+  commentCount?: number;
 }
 
 const SPORT_DISPLAY_MAP: Record<string, string> = {
@@ -233,6 +238,11 @@ export default function MyPicksPage() {
                   createdAt={a.createdAt}
                   onPurchase={() => {}}
                   purchasing={false}
+                  {...getPickCardSocialProps(a, {
+                    onCountsChange: (id, counts) =>
+                      setPicks((prev) => mergeSocialCountsIntoList(prev, id, counts)),
+                    loginRedirectPath: currentLoginRedirectPath('/my-picks'),
+                  })}
                 />
               ))}
             </div>

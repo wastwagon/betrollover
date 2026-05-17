@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { PickCard } from '@/components/PickCard';
+import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getApiUrl } from '@/lib/site-config';
 import { useLanguage, useT } from '@/context/LanguageContext';
@@ -44,6 +46,9 @@ interface FeedPick {
   bookmakerKey?: string | null;
   bookingCode?: string | null;
   bookingCodeCopyCount?: number;
+  reactionCount?: number;
+  hasReacted?: boolean;
+  commentCount?: number;
 }
 
 function SubscriptionsContent() {
@@ -240,6 +245,11 @@ function SubscriptionsContent() {
                         onPurchase={() => {}}
                         viewOnly
                         purchasing={false}
+                        {...getPickCardSocialProps(pick, {
+                          onCountsChange: (id, counts) =>
+                            setFeedPicks((prev) => mergeSocialCountsIntoList(prev, id, counts)),
+                          loginRedirectPath: currentLoginRedirectPath('/subscriptions'),
+                        })}
                       />
                     );
                   })}

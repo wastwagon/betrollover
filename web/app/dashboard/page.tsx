@@ -19,6 +19,8 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { usePendingWithdrawalCount } from '@/hooks/usePendingWithdrawalCount';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { IconStar } from '@/components/ios/icons';
+import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 
 interface FollowedTipster {
   id: number;
@@ -55,6 +57,9 @@ interface FeedPick {
   bookmakerKey?: string | null;
   bookingCode?: string | null;
   bookingCodeCopyCount?: number;
+  reactionCount?: number;
+  hasReacted?: boolean;
+  commentCount?: number;
 }
 
 interface User {
@@ -990,6 +995,11 @@ function DashboardContent() {
                       onPurchase={() => {}}
                       viewOnly
                       purchasing={false}
+                      {...getPickCardSocialProps(pick, {
+                        onCountsChange: (id, counts) =>
+                          setVipFeedPicks((prev) => mergeSocialCountsIntoList(prev, id, counts)),
+                        loginRedirectPath: currentLoginRedirectPath('/dashboard'),
+                      })}
                     />
                   );
                 })}
@@ -1088,6 +1098,11 @@ function DashboardContent() {
                                 }
                               }}
                               purchasing={feedPurchasing === pick.id}
+                              {...getPickCardSocialProps(pick, {
+                                onCountsChange: (id, counts) =>
+                                  setFeedPicks((prev) => mergeSocialCountsIntoList(prev, id, counts)),
+                                loginRedirectPath: currentLoginRedirectPath('/dashboard'),
+                              })}
                             />
                           );
                         })}

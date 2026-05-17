@@ -69,6 +69,38 @@ export function IconPackage(props: { className?: string }) {
   );
 }
 
+export function IconHeart(props: { className?: string; filled?: boolean }) {
+  const { className = 'w-5 h-5', filled } = props;
+  if (filled) {
+    return (
+      <svg className={`shrink-0 ${className}`} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+      </svg>
+    );
+  }
+  return (
+    <IconBase className={className}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 21s-6.5-4.35-8.5-8.5C2 9.5 4.5 6 8 6c2 0 3.5 1.5 4 2.5C12.5 7.5 14 6 16 6c3.5 0 6 3.5 6 6.5C20 16.65 12 21 12 21z"
+      />
+    </IconBase>
+  );
+}
+
+export function IconChat(props: { className?: string }) {
+  return (
+    <IconBase className={props.className}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M8 10h8M8 14h5M6 20l2-4H18a2 2 0 002-2V8a2 2 0 00-2-2H6a2 2 0 00-2 2v10z"
+      />
+    </IconBase>
+  );
+}
+
 export function IconCart(props: { className?: string }) {
   return (
     <IconBase className={props.className}>

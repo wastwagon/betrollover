@@ -616,6 +616,21 @@ const en = {
   'pick_card.funds_in_escrow': 'Funds in Escrow',
   'pick_card.funds_escrow_desc': 'GHS {amount} is held in escrow. If all selections win, the tipster receives their share after the platform fee. If any selection loses, the amount you paid is refunded to your wallet.',
   'pick_card.close': 'Close',
+
+  // Pick social (reactions + comments)
+  'pick_social.like': 'Like',
+  'pick_social.like_pick': 'Like this pick',
+  'pick_social.comment': 'Comment',
+  'pick_social.comments_count': '{n} comments',
+  'pick_social.comments_title': 'Comments',
+  'pick_social.open_comments': 'Open comments',
+  'pick_social.reacted_by': 'Liked by',
+  'pick_social.no_reactors': 'No likes yet',
+  'pick_social.comment_placeholder': 'Share your take…',
+  'pick_social.post_comment': 'Post',
+  'pick_social.delete_comment': 'Delete',
+  'pick_social.no_comments_yet': 'No comments yet. Start the conversation.',
+  'pick_social.load_older_comments': 'Load earlier comments',
   'pick_detail.escrow_free_note':
     'Free picks are shared for information only — there is no purchase to refund.',
   'pick_detail.escrow_paid_note':

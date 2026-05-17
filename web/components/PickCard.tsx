@@ -13,6 +13,8 @@ import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { BookingCodeCopyBlock } from '@/components/BookingCodeCopyBlock';
 import { BottomSheet } from '@/components/ios/BottomSheet';
+import { PickSocialBar, type PickSocialCounts } from '@/components/pick-social/PickSocialBar';
+import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 
 interface Pick {
   id?: number;
@@ -84,8 +86,11 @@ interface PickCardProps {
   purchaseCount?: number;
   reactionCount?: number;
   hasReacted?: boolean;
-  reacting?: boolean;
-  onReact?: () => void;
+  commentCount?: number;
+  /** Show like + comment row (marketplace, feeds). */
+  socialEnabled?: boolean;
+  onSocialCountsChange?: (counts: PickSocialCounts) => void;
+  loginRedirectPath?: string;
   onView?: () => void;
   tipster?: Tipster | null;
   isPurchased?: boolean;
@@ -140,8 +145,10 @@ export function PickCard({
   onUnveilClose,
   reactionCount = 0,
   hasReacted = false,
-  reacting = false,
-  onReact,
+  commentCount = 0,
+  socialEnabled = true,
+  onSocialCountsChange,
+  loginRedirectPath: loginRedirectPathProp,
   onView,
   className = '',
   createdAt,
@@ -160,6 +167,8 @@ export function PickCard({
   const [avatarError, setAvatarError] = useState(false);
   const t = useT();
   const { format, currency } = useCurrency();
+  const loginRedirectPath =
+    loginRedirectPathProp ?? (typeof window !== 'undefined' ? currentLoginRedirectPath() : '/login');
 
   /** Price display: primary in selected currency, secondary shows GHS if different */
   const priceDisplay = price > 0 ? format(price, { showOriginal: true }) : null;
@@ -459,6 +468,18 @@ export function PickCard({
                 <p className="text-[10px] text-[var(--text-muted)]">{t('pick_card.purchase_to_view')}</p>
               </div>
             </div>
+          )}
+
+          {socialEnabled && (
+            <PickSocialBar
+              pickId={id}
+              reactionCount={reactionCount}
+              hasReacted={hasReacted}
+              commentCount={commentCount}
+              enabled
+              loginRedirectPath={loginRedirectPath}
+              onCountsChange={onSocialCountsChange}
+            />
           )}
 
           {/* Action Button - purchased, viewOnly, or free: View; else purchase */}

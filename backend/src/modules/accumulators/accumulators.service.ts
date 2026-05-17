@@ -9,12 +9,15 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, DataSource, EntityManager } from 'typeorm';
+import { Repository, In, DataSource, EntityManager, IsNull } from 'typeorm';
 import { AccumulatorTicket } from './entities/accumulator-ticket.entity';
 import { AccumulatorBookingCodeCopy } from './entities/accumulator-booking-code-copy.entity';
 import { AccumulatorPick } from './entities/accumulator-pick.entity';
 import { PickMarketplace } from './entities/pick-marketplace.entity';
 import { PickReaction } from './entities/pick-reaction.entity';
+import { PickComment } from './entities/pick-comment.entity';
+import { filterPickCommentContent } from './pick-comment-filter.util';
+import { sanitizeText } from '../../common/sanitize.util';
 import { EscrowFund } from './entities/escrow-fund.entity';
 import { UserPurchasedPick } from './entities/user-purchased-pick.entity';
 import { User, UserRole } from '../users/entities/user.entity';
@@ -95,6 +98,8 @@ export class AccumulatorsService {
     private marketplaceRepo: Repository<PickMarketplace>,
     @InjectRepository(PickReaction)
     private reactionRepo: Repository<PickReaction>,
+    @InjectRepository(PickComment)
+    private commentRepo: Repository<PickComment>,
     @InjectRepository(EscrowFund)
     private escrowRepo: Repository<EscrowFund>,
     @InjectRepository(UserPurchasedPick)
@@ -848,10 +853,11 @@ export class AccumulatorsService {
       order: { createdAt: 'DESC' },
     });
     const enriched = await this.enrichPicksWithFixtureScores(tickets);
+    const withSocial = await this.mergeSocialCountsOntoRecords(enriched, userId);
     await this.mergeBookingCodeCopyCountsForTicketsPlain(
-      enriched as unknown as Array<Record<string, unknown> & { id: number; bookmakerKey?: string | null; bookingCode?: string | null }>,
+      withSocial as unknown as Array<Record<string, unknown> & { id: number; bookmakerKey?: string | null; bookingCode?: string | null }>,
     );
-    return enriched;
+    return withSocial;
   }
 
   /** Subscription feed: coupons from tipsters the user is subscribed to */
@@ -1159,6 +1165,7 @@ export class AccumulatorsService {
     freeOnly?: boolean;
     priceFilter?: 'free' | 'paid' | 'sold';
     tipsterSearch?: string;
+    viewerUserId?: number;
   }) {
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
     const offset = Math.max(options?.offset ?? 0, 0);
@@ -1240,7 +1247,11 @@ export class AccumulatorsService {
       select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
     });
 
-    const itemsWithMeta = await this.enrichWithTipsterMetadata(enrichedTickets, rowsForPaginated);
+    const itemsWithMeta = await this.enrichWithTipsterMetadata(
+      enrichedTickets,
+      rowsForPaginated,
+      options?.viewerUserId,
+    );
     const rowByAccId = new Map(rowsForPaginated.map((r) => [r.accumulatorId, r]));
     const ticketById = new Map(enrichedTickets.map((t) => [t.id, t]));
     const items = await Promise.all(
@@ -1249,7 +1260,7 @@ export class AccumulatorsService {
           item as Record<string, unknown>,
           ticketById.get((item as { id: number }).id)!,
           rowByAccId.get((item as { id: number }).id) ?? null,
-          undefined,
+          options?.viewerUserId ?? null,
         ),
       ),
     );
@@ -1340,6 +1351,70 @@ export class AccumulatorsService {
     };
   }
 
+  /** Reaction + comment counts for marketplace cards (reusable across modules). */
+  async loadSocialCountsMap(
+    accIds: number[],
+    currentUserId?: number,
+  ): Promise<Map<number, { reactionCount: number; hasReacted: boolean; commentCount: number }>> {
+    const map = new Map<number, { reactionCount: number; hasReacted: boolean; commentCount: number }>();
+    if (accIds.length === 0) return map;
+    const reactionCountMap = new Map<number, number>();
+    const commentCountMap = new Map<number, number>();
+    let userReactedSet = new Set<number>();
+    const counts = await this.reactionRepo
+      .createQueryBuilder('r')
+      .select('r.accumulatorId', 'aid')
+      .addSelect('COUNT(*)', 'cnt')
+      .where('r.accumulatorId IN (:...ids)', { ids: accIds })
+      .groupBy('r.accumulatorId')
+      .getRawMany();
+    counts.forEach((r: { aid: number; cnt: string }) =>
+      reactionCountMap.set(Number(r.aid), parseInt(r.cnt, 10)),
+    );
+    if (currentUserId) {
+      const reacted = await this.reactionRepo.find({
+        where: { userId: currentUserId, accumulatorId: In(accIds) },
+        select: ['accumulatorId'],
+      });
+      userReactedSet = new Set(reacted.map((r) => r.accumulatorId));
+    }
+    try {
+      const commentCounts = await this.commentRepo
+        .createQueryBuilder('c')
+        .select('c.accumulatorId', 'aid')
+        .addSelect('COUNT(*)', 'cnt')
+        .where('c.accumulatorId IN (:...ids)', { ids: accIds })
+        .andWhere('c.deletedAt IS NULL')
+        .groupBy('c.accumulatorId')
+        .getRawMany();
+      commentCounts.forEach((r: { aid: number; cnt: string }) =>
+        commentCountMap.set(Number(r.aid), parseInt(r.cnt, 10)),
+      );
+    } catch {
+      /* pick_comments table may not exist in older envs */
+    }
+    for (const id of accIds) {
+      map.set(id, {
+        reactionCount: reactionCountMap.get(id) ?? 0,
+        hasReacted: userReactedSet.has(id),
+        commentCount: commentCountMap.get(id) ?? 0,
+      });
+    }
+    return map;
+  }
+
+  async mergeSocialCountsOntoRecords<T extends { id: number }>(
+    records: T[],
+    viewerUserId?: number,
+  ): Promise<Array<T & { reactionCount: number; hasReacted: boolean; commentCount: number }>> {
+    const accIds = records.map((r) => r.id).filter((id) => id > 0);
+    const socialMap = await this.loadSocialCountsMap(accIds, viewerUserId);
+    return records.map((r) => {
+      const social = socialMap.get(r.id) ?? { reactionCount: 0, hasReacted: false, commentCount: 0 };
+      return { ...r, ...social };
+    });
+  }
+
   /** Unified method to add tipster rankings, stats, prices, and reactions to tickets */
   private async enrichWithTipsterMetadata(validTickets: AccumulatorTicket[], marketplaceRows: PickMarketplace[], currentUserId?: number) {
     // Get unique tipster IDs
@@ -1425,23 +1500,8 @@ export class AccumulatorsService {
       } catch { /* coupon_reviews table may not exist yet in older envs */ }
     }
 
-    // Reaction counts and user's reacted state
-    const accIds = validTickets.map(t => t.id);
-    const reactionCountMap = new Map<number, number>();
-    let userReactedSet = new Set<number>();
-    if (accIds.length > 0) {
-      const counts = await this.reactionRepo.createQueryBuilder('r')
-        .select('r.accumulatorId', 'aid')
-        .addSelect('COUNT(*)', 'cnt')
-        .where('r.accumulatorId IN (:...ids)', { ids: accIds })
-        .groupBy('r.accumulatorId')
-        .getRawMany();
-      counts.forEach((r: { aid: number; cnt: string }) => reactionCountMap.set(Number(r.aid), parseInt(r.cnt, 10)));
-      if (currentUserId) {
-        const reacted = await this.reactionRepo.find({ where: { userId: currentUserId, accumulatorId: In(accIds) }, select: ['accumulatorId'] });
-        userReactedSet = new Set(reacted.map(r => r.accumulatorId));
-      }
-    }
+    const accIds = validTickets.map((t) => t.id);
+    const socialMap = await this.loadSocialCountsMap(accIds, currentUserId);
 
     // Enrich tickets with tipster data
     return validTickets.map(ticket => {
@@ -1454,8 +1514,9 @@ export class AccumulatorsService {
         price: priceMap.get(ticket.id) ?? ticket.price,
         purchaseCount: purchaseCountMap.get(ticket.id) ?? 0,
         viewCount: viewCountMap.get(ticket.id) ?? 0,
-        reactionCount: reactionCountMap.get(ticket.id) ?? 0,
-        hasReacted: userReactedSet.has(ticket.id),
+        reactionCount: socialMap.get(ticket.id)?.reactionCount ?? 0,
+        hasReacted: socialMap.get(ticket.id)?.hasReacted ?? false,
+        commentCount: socialMap.get(ticket.id)?.commentCount ?? 0,
         avgRating: reviewMap.get(ticket.id)?.avg ?? null,
         reviewCount: reviewMap.get(ticket.id)?.count ?? null,
         tipster: tipster ? {
@@ -1480,7 +1541,7 @@ export class AccumulatorsService {
    * Priority: TheGambler first, then any other tipster with a free active marketplace pick.
    * Picks are valid only if all matches are still in the future.
    */
-  async getFreeTipOfTheDay() {
+  async getFreeTipOfTheDay(viewerUserId?: number) {
     const now = new Date();
 
     // Helper: find the best free active pending tip for a given set of user IDs
@@ -1518,7 +1579,7 @@ export class AccumulatorsService {
 
       const ticket = validWithListing[0];
       const row = rows.find((r) => r.accumulatorId === ticket.id);
-      const items = await this.enrichWithTipsterMetadata([ticket], row ? [row] : []);
+      const items = await this.enrichWithTipsterMetadata([ticket], row ? [row] : [], viewerUserId);
       const first = items[0] as { tipster?: { isAi?: boolean; roi?: number } } | undefined;
       if (!first) return null;
       return first;
@@ -1736,7 +1797,7 @@ export class AccumulatorsService {
     };
   }
 
-  async getMarketplacePublic(limit = 4) {
+  async getMarketplacePublic(limit = 4, viewerUserId?: number) {
     const rows = await this.marketplaceRepo.find({
       where: { status: 'active' },
       select: ['accumulatorId', 'price', 'purchaseCount'],
@@ -1765,7 +1826,7 @@ export class AccumulatorsService {
       return !hasStartedFixture;
     });
 
-    const featured = await this.enrichWithTipsterMetadata(validTickets, rows);
+    const featured = await this.enrichWithTipsterMetadata(validTickets, rows, viewerUserId);
     await this.mergeBookingCodeCopyCountsForTicketsPlain(
       featured as Array<Record<string, unknown> & { id: number; bookmakerKey?: string | null; bookingCode?: string | null }>,
     );
@@ -1795,7 +1856,13 @@ export class AccumulatorsService {
   }
 
   /** Public archive: settled (won/lost) marketplace coupons, most recent first. Includes global counts (not page-limited). */
-  async getMarketplaceArchive(options?: { limit?: number; offset?: number; from?: string; to?: string }) {
+  async getMarketplaceArchive(options?: {
+    limit?: number;
+    offset?: number;
+    from?: string;
+    to?: string;
+    viewerUserId?: number;
+  }) {
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 200);
     const offset = Math.max(options?.offset ?? 0, 0);
     const { fromUtc, toExclusiveUtc } = this.resolveArchiveDateRange(options?.from, options?.to);
@@ -1868,7 +1935,7 @@ export class AccumulatorsService {
       : [];
 
     const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
-    const items = await this.enrichWithTipsterMetadata(enrichedTickets, rows);
+    const items = await this.enrichWithTipsterMetadata(enrichedTickets, rows, options?.viewerUserId);
     await this.mergeBookingCodeCopyCountsForTicketsPlain(
       items as Array<Record<string, unknown> & { id: number; bookmakerKey?: string | null; bookingCode?: string | null }>,
     );
@@ -2038,6 +2105,169 @@ export class AccumulatorsService {
 
   async unreact(userId: number, accumulatorId: number): Promise<{ success: boolean }> {
     await this.reactionRepo.delete({ userId, accumulatorId });
+    return { success: true };
+  }
+
+  async getPickSocialSummary(
+    accumulatorId: number,
+    viewerUserId?: number,
+  ): Promise<{ reactionCount: number; hasReacted: boolean; commentCount: number }> {
+    const ticket = await this.ticketRepo.findOne({ where: { id: accumulatorId } });
+    if (!ticket) throw new NotFoundException('Pick not found');
+    const map = await this.loadSocialCountsMap([accumulatorId], viewerUserId);
+    return map.get(accumulatorId) ?? { reactionCount: 0, hasReacted: false, commentCount: 0 };
+  }
+
+  async getPickReactions(
+    accumulatorId: number,
+    limit = 20,
+  ): Promise<{ total: number; users: Array<{ id: number; displayName: string; avatarUrl: string | null }> }> {
+    const ticket = await this.ticketRepo.findOne({ where: { id: accumulatorId } });
+    if (!ticket) throw new NotFoundException('Pick not found');
+    const total = await this.reactionRepo.count({ where: { accumulatorId } });
+    const rows = await this.reactionRepo
+      .createQueryBuilder('r')
+      .innerJoin(User, 'u', 'u.id = r.userId')
+      .where('r.accumulatorId = :aid', { aid: accumulatorId })
+      .select('u.id', 'id')
+      .addSelect('COALESCE(u.displayName, u.username)', 'displayName')
+      .addSelect('u.avatar', 'avatarUrl')
+      .orderBy('r.createdAt', 'DESC')
+      .limit(Math.min(Math.max(limit, 1), 50))
+      .getRawMany<{ id: number; displayName: string; avatarUrl: string | null }>();
+    return {
+      total,
+      users: rows.map((r) => ({
+        id: Number(r.id),
+        displayName: r.displayName || 'User',
+        avatarUrl: r.avatarUrl ?? null,
+      })),
+    };
+  }
+
+  async listPickComments(
+    accumulatorId: number,
+    viewerUserId: number,
+    opts?: { limit?: number; beforeId?: number },
+  ): Promise<{
+    items: Array<{
+      id: number;
+      body: string;
+      createdAt: Date;
+      isOwn: boolean;
+      user: { id: number; displayName: string; avatarUrl: string | null };
+    }>;
+    total: number;
+    hasMore: boolean;
+  }> {
+    const ticket = await this.ticketRepo.findOne({ where: { id: accumulatorId } });
+    if (!ticket) throw new NotFoundException('Pick not found');
+    const limit = Math.min(Math.max(opts?.limit ?? 25, 1), 50);
+    const qb = this.commentRepo
+      .createQueryBuilder('c')
+      .innerJoin(User, 'u', 'u.id = c.userId')
+      .where('c.accumulatorId = :aid', { aid: accumulatorId })
+      .andWhere('c.deletedAt IS NULL')
+      .andWhere('c.parentId IS NULL');
+    if (opts?.beforeId) {
+      qb.andWhere('c.id < :beforeId', { beforeId: opts.beforeId });
+    }
+    const total = await this.commentRepo.count({
+      where: { accumulatorId, deletedAt: IsNull(), parentId: IsNull() },
+    });
+    const rows = await qb
+      .select('c.id', 'id')
+      .addSelect('c.body', 'body')
+      .addSelect('c.createdAt', 'createdAt')
+      .addSelect('c.userId', 'userId')
+      .addSelect('COALESCE(u.displayName, u.username)', 'displayName')
+      .addSelect('u.avatar', 'avatarUrl')
+      .orderBy('c.createdAt', 'DESC')
+      .limit(limit + 1)
+      .getRawMany<{
+        id: number;
+        body: string;
+        createdAt: Date;
+        userId: number;
+        displayName: string;
+        avatarUrl: string | null;
+      }>();
+    const hasMore = rows.length > limit;
+    const slice = hasMore ? rows.slice(0, limit) : rows;
+    return {
+      items: slice.map((r) => ({
+        id: Number(r.id),
+        body: r.body,
+        createdAt: r.createdAt,
+        isOwn: Number(r.userId) === viewerUserId,
+        user: {
+          id: Number(r.userId),
+          displayName: r.displayName || 'User',
+          avatarUrl: r.avatarUrl ?? null,
+        },
+      })),
+      total,
+      hasMore,
+    };
+  }
+
+  async createPickComment(
+    userId: number,
+    accumulatorId: number,
+    body: string,
+  ): Promise<{
+    id: number;
+    body: string;
+    createdAt: Date;
+    isOwn: true;
+    user: { id: number; displayName: string; avatarUrl: string | null };
+  }> {
+    const ticket = await this.ticketRepo.findOne({ where: { id: accumulatorId } });
+    if (!ticket) throw new NotFoundException('Pick not found');
+    const sanitized = sanitizeText(body, 500).trim();
+    if (!sanitized) throw new BadRequestException('Comment cannot be empty');
+    const filtered = filterPickCommentContent(sanitized);
+    if (filtered.blocked) throw new BadRequestException(filtered.reason || 'Comment not allowed');
+
+    const recentCount = await this.commentRepo
+      .createQueryBuilder('c')
+      .where('c.userId = :uid', { uid: userId })
+      .andWhere('c.createdAt > NOW() - INTERVAL \'1 minute\'')
+      .getCount();
+    if (recentCount >= 8) {
+      throw new BadRequestException('You are commenting too quickly. Please wait a moment.');
+    }
+
+    const saved = await this.commentRepo.save(
+      this.commentRepo.create({ userId, accumulatorId, body: sanitized, parentId: null }),
+    );
+    const user = await this.usersRepo.findOne({ where: { id: userId }, select: ['id', 'displayName', 'username', 'avatar'] });
+    return {
+      id: saved.id,
+      body: saved.body,
+      createdAt: saved.createdAt,
+      isOwn: true,
+      user: {
+        id: userId,
+        displayName: user?.displayName || user?.username || 'User',
+        avatarUrl: user?.avatar ?? null,
+      },
+    };
+  }
+
+  async deletePickComment(
+    userId: number,
+    accumulatorId: number,
+    commentId: number,
+    isAdmin: boolean,
+  ): Promise<{ success: boolean }> {
+    const comment = await this.commentRepo.findOne({ where: { id: commentId, accumulatorId } });
+    if (!comment || comment.deletedAt) throw new NotFoundException('Comment not found');
+    if (comment.userId !== userId && !isAdmin) {
+      throw new ForbiddenException('You can only delete your own comments');
+    }
+    comment.deletedAt = new Date();
+    await this.commentRepo.save(comment);
     return { success: true };
   }
 

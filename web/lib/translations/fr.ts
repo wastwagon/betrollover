@@ -610,6 +610,20 @@ const fr: Record<string, string> = {
   'pick_card.funds_in_escrow': 'Fonds en séquestre',
   'pick_card.funds_escrow_desc': 'GHS {amount} sont détenus en séquestre. Si toutes les sélections gagnent, le tipster reçoit sa part après les frais plateforme. Si une sélection perd, le montant payé est remboursé sur votre portefeuille.',
   'pick_card.close': 'Fermer',
+
+  'pick_social.like': 'J\'aime',
+  'pick_social.like_pick': 'Aimer ce pronostic',
+  'pick_social.comment': 'Commenter',
+  'pick_social.comments_count': '{n} commentaires',
+  'pick_social.comments_title': 'Commentaires',
+  'pick_social.open_comments': 'Ouvrir les commentaires',
+  'pick_social.reacted_by': 'Aimé par',
+  'pick_social.no_reactors': 'Aucun like',
+  'pick_social.comment_placeholder': 'Votre avis…',
+  'pick_social.post_comment': 'Publier',
+  'pick_social.delete_comment': 'Supprimer',
+  'pick_social.no_comments_yet': 'Aucun commentaire. Lancez la discussion.',
+  'pick_social.load_older_comments': 'Commentaires plus anciens',
   'pick_detail.escrow_free_note':
     'Les pronostics gratuits sont partagés à titre informatif — aucun achat à rembourser.',
   'pick_detail.escrow_paid_note':

@@ -797,7 +797,11 @@ export class TipstersApiService {
     return { usernames: rows.map((r) => r.username) };
   }
 
-  async getTipsterProfile(username: string, window: TipsterProfilePerformanceWindow) {
+  async getTipsterProfile(
+    username: string,
+    window: TipsterProfilePerformanceWindow,
+    viewerUserId?: number,
+  ) {
     const tipster = await this.tipsterRepo.findOne({
       where: { username },
     });
@@ -813,7 +817,7 @@ export class TipstersApiService {
       }
     }
 
-    const marketplaceCoupons = await this.getMarketplaceCouponsForTipster(username, window);
+    const marketplaceCoupons = await this.getMarketplaceCouponsForTipster(username, window, viewerUserId);
 
     let totalPredictions = tipster.totalPredictions;
     let totalWins = tipster.totalWins;
@@ -877,7 +881,7 @@ export class TipstersApiService {
         is_active: tipster.isActive,
       },
       marketplace_coupons: marketplaceCoupons,
-      archived_coupons: await this.getArchivedCouponsForTipster(username, window),
+      archived_coupons: await this.getArchivedCouponsForTipster(username, window, viewerUserId),
       archived_settled_count: await this.getArchivedSettledCount(username, window),
       performance_history: performance,
       performance_period: window.kind === 'settlement_period' ? window.period : null,
@@ -899,7 +903,11 @@ export class TipstersApiService {
   }
 
   /** Settled marketplace coupons for archive; limited to 50 most recent in the selected window. */
-  async getArchivedCouponsForTipster(username: string, window: TipsterProfilePerformanceWindow) {
+  async getArchivedCouponsForTipster(
+    username: string,
+    window: TipsterProfilePerformanceWindow,
+    viewerUserId?: number,
+  ) {
     const tipster = await this.tipsterRepo.findOne({ where: { username } });
     if (!tipster?.userId) return [];
 
@@ -934,7 +942,7 @@ export class TipstersApiService {
       : [];
     const fixtureMap = new Map(fixtures.map((f) => [f.id, f]));
 
-    return validTickets.map((ticket) => ({
+    const mapped = validTickets.map((ticket) => ({
       ...ticket,
       picks: (ticket.picks || []).map((p: AccumulatorPick & { fixtureId?: number | null }) => {
         const fix = p.fixtureId ? fixtureMap.get(p.fixtureId) : null;
@@ -963,10 +971,15 @@ export class TipstersApiService {
           }
         : null,
     }));
+    return this.accumulatorsService.mergeSocialCountsOntoRecords(mapped, viewerUserId);
   }
 
   /** Marketplace coupons for this tipster only. Deduplicated, same format as marketplace. */
-  async getMarketplaceCouponsForTipster(username: string, window: TipsterProfilePerformanceWindow) {
+  async getMarketplaceCouponsForTipster(
+    username: string,
+    window: TipsterProfilePerformanceWindow,
+    viewerUserId?: number,
+  ) {
     const tipster = await this.tipsterRepo.findOne({ where: { username } });
     if (!tipster?.userId) return [];
 
@@ -1019,7 +1032,7 @@ export class TipstersApiService {
     const liveRank =
       window.kind === 'settlement_period' && window.period === 'all' ? allTimeRankMap.get(tipster.id) ?? null : null;
 
-    return deduped.map((ticket) => ({
+    const mapped = deduped.map((ticket) => ({
       ...ticket,
       price: priceMap.get(ticket.id) ?? 0,
       purchaseCount: purchaseCountMap.get(ticket.id) ?? 0,
@@ -1038,6 +1051,7 @@ export class TipstersApiService {
           }
         : null,
     }));
+    return this.accumulatorsService.mergeSocialCountsOntoRecords(mapped, viewerUserId);
   }
 
   async getLeaderboard(options: {

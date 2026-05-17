@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, ParseIntPipe, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards, ParseIntPipe, NotFoundException } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtGuard } from '../auth/guards/optional-jwt.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -61,7 +61,7 @@ export class AccumulatorsController {
   }
 
   @Get('marketplace/public')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(OptionalJwtGuard)
   async getMarketplacePublic(
     @Query('sport') sport?: string,
     @Query('limit') limit?: string,
@@ -69,6 +69,7 @@ export class AccumulatorsController {
     @Query('freeOnly') freeOnly?: string,
     @Query('priceFilter') priceFilter?: string,
     @Query('tipsterSearch') tipsterSearch?: string,
+    @CurrentUser() user?: User | null,
   ) {
     const limitVal = limit != null ? Math.min(Math.max(parseInt(limit, 10) || 24, 1), 100) : undefined;
     const offsetVal = offset != null ? Math.max(parseInt(offset, 10) || 0, 0) : undefined;
@@ -86,6 +87,7 @@ export class AccumulatorsController {
       freeOnly: freeOnly === 'true',
       priceFilter: priceFilterVal,
       tipsterSearch: tipQ || undefined,
+      viewerUserId: user?.id,
     });
     return this.withPageAliases(data);
   }
@@ -134,8 +136,8 @@ export class AccumulatorsController {
 
   @Get('featured')
   @UseGuards(JwtAuthGuard)
-  getFeatured() {
-    return this.accumulatorsService.getMarketplacePublic(8);
+  getFeatured(@CurrentUser() user: User) {
+    return this.accumulatorsService.getMarketplacePublic(8, user.id);
   }
 
   @Get('stats/public')
@@ -144,8 +146,9 @@ export class AccumulatorsController {
   }
 
   @Get('free-tip-of-the-day')
-  getFreeTipOfTheDay() {
-    return this.accumulatorsService.getFreeTipOfTheDay();
+  @UseGuards(OptionalJwtGuard)
+  getFreeTipOfTheDay(@CurrentUser() user?: User | null) {
+    return this.accumulatorsService.getFreeTipOfTheDay(user?.id);
   }
 
   @Get('popular-events')
@@ -155,11 +158,13 @@ export class AccumulatorsController {
   }
 
   @Get('archive')
+  @UseGuards(OptionalJwtGuard)
   getArchive(
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
     @Query('from') from?: string,
     @Query('to') to?: string,
+    @CurrentUser() user?: User | null,
   ) {
     const limitVal = limit != null ? Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200) : undefined;
     const offsetVal = offset != null ? Math.max(parseInt(offset, 10) || 0, 0) : undefined;
@@ -168,6 +173,7 @@ export class AccumulatorsController {
       offset: offsetVal,
       from: from?.trim(),
       to: to?.trim(),
+      viewerUserId: user?.id,
     });
   }
 
@@ -207,6 +213,64 @@ export class AccumulatorsController {
   @UseGuards(JwtAuthGuard)
   purchase(@CurrentUser() user: { id: number }, @Param('id', ParseIntPipe) id: number) {
     return this.accumulatorsService.purchase(user.id, id);
+  }
+
+  @Get(':id/social-summary')
+  @UseGuards(OptionalJwtGuard)
+  getSocialSummary(@Param('id', ParseIntPipe) id: number, @CurrentUser() user?: User | null) {
+    return this.accumulatorsService.getPickSocialSummary(id, user?.id);
+  }
+
+  @Get(':id/reactions')
+  @UseGuards(JwtAuthGuard)
+  getReactions(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('limit') limit?: string,
+  ) {
+    const n = limit ? parseInt(limit, 10) : 20;
+    return this.accumulatorsService.getPickReactions(id, Number.isFinite(n) ? n : 20);
+  }
+
+  @Get(':id/comments')
+  @UseGuards(JwtAuthGuard)
+  listComments(
+    @CurrentUser() user: { id: number },
+    @Param('id', ParseIntPipe) id: number,
+    @Query('limit') limit?: string,
+    @Query('beforeId') beforeId?: string,
+  ) {
+    const n = limit ? parseInt(limit, 10) : 25;
+    const before = beforeId ? parseInt(beforeId, 10) : undefined;
+    return this.accumulatorsService.listPickComments(id, user.id, {
+      limit: Number.isFinite(n) ? n : 25,
+      beforeId: before != null && Number.isFinite(before) ? before : undefined,
+    });
+  }
+
+  @Post(':id/comments')
+  @UseGuards(JwtAuthGuard)
+  createComment(
+    @CurrentUser() user: { id: number },
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { text?: string; body?: string },
+  ) {
+    const text = (body.text ?? body.body ?? '').trim();
+    return this.accumulatorsService.createPickComment(user.id, id, text);
+  }
+
+  @Delete(':id/comments/:commentId')
+  @UseGuards(JwtAuthGuard)
+  deleteComment(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+    @Param('commentId', ParseIntPipe) commentId: number,
+  ) {
+    return this.accumulatorsService.deletePickComment(
+      user.id,
+      id,
+      commentId,
+      user.role === UserRole.ADMIN,
+    );
   }
 
   @Post(':id/react')
