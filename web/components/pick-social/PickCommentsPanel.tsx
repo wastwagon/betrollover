@@ -67,12 +67,16 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const listEndRef = useRef<HTMLDivElement>(null);
+  const onCountChangeRef = useRef(onCommentCountChange);
+  onCountChangeRef.current = onCommentCountChange;
   const API_URL = getApiUrl();
 
   const loadComments = useCallback(
     async (beforeId?: number, append = false) => {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) {
+        throw new Error('Sign in to view comments');
+      }
       const params = new URLSearchParams({ limit: '25' });
       if (beforeId) params.set('beforeId', String(beforeId));
       const res = await fetch(`${API_URL}/accumulators/${pickId}/comments?${params}`, {
@@ -88,7 +92,7 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
         createdAt: typeof c.createdAt === 'string' ? c.createdAt : new Date(c.createdAt).toISOString(),
       }));
       const chronological = [...fetched].reverse();
-      onCommentCountChange?.(data.total ?? chronological.length);
+      onCountChangeRef.current?.(data.total ?? chronological.length);
       setHasMore(data.hasMore === true);
       if (append) {
         setItems((prev) => [...chronological, ...prev]);
@@ -154,7 +158,7 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
       };
       setItems((prev) => {
         const next = [...prev, entry];
-        onCommentCountChange?.(next.length);
+        onCountChangeRef.current?.(next.length);
         return next;
       });
       setText('');
@@ -177,7 +181,7 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
       if (!res.ok) return;
       setItems((prev) => {
         const next = prev.filter((c) => c.id !== commentId);
-        onCommentCountChange?.(next.length);
+        onCountChangeRef.current?.(next.length);
         return next;
       });
     } catch {
@@ -198,8 +202,8 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
   };
 
   return (
-    <div className="flex flex-col min-h-[280px] max-h-[min(70dvh,520px)]">
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
+    <div className="flex flex-col min-h-[240px]">
+      <div className="px-4 py-3 space-y-3">
         {hasMore && (
           <button
             type="button"
@@ -210,7 +214,7 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
             {loadingMore ? t('common.loading') : t('pick_social.load_older_comments')}
           </button>
         )}
-        {loading && (
+        {loading && items.length === 0 && (
           <p className="text-sm text-[var(--text-muted)] text-center py-8">{t('common.loading')}</p>
         )}
         {!loading && error && !items.length && (
@@ -242,7 +246,7 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
         ))}
         <div ref={listEndRef} />
       </div>
-      <div className="border-t border-[var(--separator)] p-3 bg-[var(--card)]">
+      <div className="sticky bottom-0 z-10 border-t border-[var(--separator)] p-3 bg-[var(--card)]">
         {error && items.length > 0 ? <p className="text-xs text-rose-600 mb-2">{error}</p> : null}
         <div className="flex gap-2">
           <textarea

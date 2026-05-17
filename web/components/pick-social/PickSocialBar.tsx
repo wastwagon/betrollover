@@ -90,6 +90,14 @@ export function PickSocialBar({
     [reactionCount, hasReacted, commentCount, onCountsChange],
   );
 
+  const handleCommentCountChange = useCallback(
+    (n: number) => {
+      setCommentCount(n);
+      emitCounts({ commentCount: n });
+    },
+    [emitCounts],
+  );
+
   const requireAuth = (): boolean => {
     if (typeof window === 'undefined') return false;
     if (localStorage.getItem('token')) return true;
@@ -251,55 +259,16 @@ export function PickSocialBar({
         </button>
       </div>
 
-      <div className="lg:hidden">
-        <BottomSheet
-          open={commentsOpen}
-          onClose={() => setCommentsOpen(false)}
-          title={t('pick_social.comments_title')}
-          maxHeightClass="max-h-[min(92dvh,640px)]"
-        >
-          <PickCommentsPanel
-            pickId={pickId}
-            onCommentCountChange={(n) => {
-              setCommentCount(n);
-              emitCounts({ commentCount: n });
-            }}
-          />
-        </BottomSheet>
-      </div>
+      <BottomSheet
+        open={commentsOpen}
+        onClose={() => setCommentsOpen(false)}
+        title={t('pick_social.comments_title')}
+        doneLabel={t('pick_card.close')}
+        maxHeightClass="max-h-[min(92dvh,720px)]"
+      >
+        <PickCommentsPanel pickId={pickId} onCommentCountChange={handleCommentCountChange} />
+      </BottomSheet>
 
-      {commentsOpen && (
-        <div
-          className="hidden lg:flex fixed inset-0 z-[60] items-center justify-center p-6 bg-black/50"
-          role="dialog"
-          aria-modal="true"
-          aria-label={t('pick_social.comments_title')}
-          onClick={() => setCommentsOpen(false)}
-        >
-          <div
-            className="w-full max-w-lg rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-2xl overflow-hidden flex flex-col max-h-[min(85vh,640px)]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--separator)] shrink-0">
-              <h3 className="font-semibold text-[var(--text)]">{t('pick_social.comments_title')}</h3>
-              <button
-                type="button"
-                onClick={() => setCommentsOpen(false)}
-                className="text-sm font-medium text-[var(--primary)]"
-              >
-                {t('pick_card.close')}
-              </button>
-            </div>
-            <PickCommentsPanel
-              pickId={pickId}
-              onCommentCountChange={(n) => {
-                setCommentCount(n);
-                emitCounts({ commentCount: n });
-              }}
-            />
-          </div>
-        </div>
-      )}
     </>
   );
 }
