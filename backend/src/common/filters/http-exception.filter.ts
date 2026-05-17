@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AnalyticsService } from '../../modules/admin/analytics.service';
+import { applyCorsHeaders, buildAllowedOrigins } from '../../config/cors.config';
 
 /** RFC 7807–style problem detail for API error responses */
 export interface ProblemDetail {
@@ -69,6 +70,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
       path: req.url,
       timestamp: new Date().toISOString(),
     };
+
+    // Nest exception filter bypasses cors middleware — browsers report 500s as CORS failures otherwise.
+    const allowedOrigins = buildAllowedOrigins(process.env.NODE_ENV === 'production');
+    applyCorsHeaders(req, res, allowedOrigins);
 
     res.status(status).json(body);
   }

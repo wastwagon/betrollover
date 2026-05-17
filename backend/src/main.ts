@@ -9,6 +9,13 @@ import type { Request, Response, NextFunction } from 'express';
 import { AppModule } from './app.module';
 import { MigrationRunnerService } from './modules/admin/migration-runner.service';
 import { SeedRunnerService } from './modules/admin/seed-runner.service';
+import {
+  applyCorsHeaders,
+  buildAllowedOrigins,
+  CORS_ALLOWED_HEADERS,
+  CORS_ALLOWED_METHODS,
+  getUniqueStringOrigins,
+} from './config/cors.config';
 
 function validateConfig(logger: Logger): void {
   const isProduction = process.env.NODE_ENV === 'production';
@@ -81,6 +88,19 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { bodyParser: false });
 
+  const allowedOrigins = buildAllowedOrigins(isProduction);
+
+  // CORS + OPTIONS preflight before other middleware so errors/proxies never drop ACAO on preflight.
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (applyCorsHeaders(req, res, allowedOrigins) && req.method === 'OPTIONS') {
+      res.setHeader('Access-Control-Allow-Methods', CORS_ALLOWED_METHODS);
+      res.setHeader('Access-Control-Allow-Headers', CORS_ALLOWED_HEADERS);
+      res.setHeader('Access-Control-Max-Age', '86400');
+      return res.status(204).end();
+    }
+    next();
+  });
+
   // API versioning: all routes under /api/v1 except health, Paystack webhook, and Swagger docs
   app.setGlobalPrefix('api/v1', {
     exclude: [
@@ -145,66 +165,13 @@ async function bootstrap() {
     }),
   );
 
-  // CORS: APP_URL + CORS_ORIGINS (comma-separated) in every environment; www/non-www variants included.
-  // Production must have at least one origin string after merge (validateConfig already requires APP_URL).
-  const allowedOrigins: (string | RegExp)[] = [];
-
-  const addOriginWithWwwVariants = (raw: string) => {
-    const clean = raw.replace(/\/$/, '');
-    if (!clean) return;
-    allowedOrigins.push(clean);
-    if (clean.includes('//www.')) {
-      allowedOrigins.push(clean.replace('//www.', '//'));
-    } else if (clean.includes('://')) {
-      const parts = clean.split('://');
-      allowedOrigins.push(`${parts[0]}://www.${parts[1]}`);
-    }
-  };
-
-  if (isProduction) {
-    const appUrl = process.env.APP_URL?.trim();
-    if (appUrl) addOriginWithWwwVariants(appUrl);
-  } else {
-    allowedOrigins.push(
-      'http://localhost:6000',
-      'http://localhost:6001',
-      'http://localhost:6002',
-      'http://localhost:3000',
-      'http://localhost:3001',
-      /^https?:\/\/localhost:(6000|6001|6002|3000|3001|5173|8080)$/,
-    );
-    const devAppUrl = process.env.APP_URL?.trim();
-    if (devAppUrl) addOriginWithWwwVariants(devAppUrl);
-  }
-
-  const extraOrigins = process.env.CORS_ORIGINS?.split(',').map((o) => o.trim()).filter(Boolean) ?? [];
-  extraOrigins.forEach((o) => addOriginWithWwwVariants(o));
-
-  const stringOriginCount = allowedOrigins.filter((o) => typeof o === 'string').length;
-  if (isProduction && stringOriginCount === 0) {
-    logger.error(
-      '❌ No CORS origins in production. Set APP_URL to your frontend origin (e.g. https://betrollover.com) and/or CORS_ORIGINS.',
-    );
-    process.exit(1);
-  }
-
-  const uniqueStringOrigins = [...new Set(allowedOrigins.filter((o): o is string => typeof o === 'string'))];
+  const uniqueStringOrigins = getUniqueStringOrigins(allowedOrigins);
 
   app.enableCors({
     origin: allowedOrigins.length > 0 ? allowedOrigins : false,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'X-Session-Id',
-      'X-Tipster-Id',
-      'X-Requested-With',
-      'Accept',
-      'Accept-Language',
-      'sentry-trace',
-      'baggage',
-    ],
+    methods: CORS_ALLOWED_METHODS.split(',').map((m) => m.trim()),
+    allowedHeaders: CORS_ALLOWED_HEADERS.split(',').map((h) => h.trim()),
     maxAge: 86400,
   });
 
