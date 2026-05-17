@@ -10,6 +10,8 @@ import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { useT } from '@/context/LanguageContext';
+import { NavBar } from '@/components/ios/NavBar';
+import { hapticSuccess } from '@/lib/haptic';
 
 interface PackageInfo {
   id: number;
@@ -85,6 +87,7 @@ function CheckoutContent() {
         setError(getApiErrorMessage(data, t('subscriptions.checkout_error_payment_failed')));
         return false;
       }
+      hapticSuccess();
       router.push('/subscriptions?subscribed=1');
       return true;
     } catch {
@@ -130,7 +133,15 @@ function CheckoutContent() {
   return (
     <DashboardShell>
       <div className="section-ux-dashboard-shell max-w-lg mx-auto w-full min-w-0 max-w-full px-1 sm:px-0">
-        <Link href={backHref} className="text-sm text-[var(--primary)] hover:underline mb-4 inline-block">
+        <div className="lg:hidden -mx-1 mb-2">
+          <NavBar
+            title={t('subscriptions.checkout_title')}
+            backHref={backHref}
+            backLabel={t('tipster.back_to_tipsters')}
+            sticky={false}
+          />
+        </div>
+        <Link href={backHref} className="hidden lg:inline-block text-sm text-[var(--primary)] hover:underline mb-4">
           ← {t('tipster.back_to_tipsters')}
         </Link>
         <PageHeader

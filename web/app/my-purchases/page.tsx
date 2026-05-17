@@ -14,6 +14,8 @@ import { useErrorToast } from '@/hooks/useErrorToast';
 import { ErrorToast } from '@/components/ErrorToast';
 import { getApiUrl } from '@/lib/site-config';
 import { useLanguage, useT } from '@/context/LanguageContext';
+import { PullToRefresh } from '@/components/ios/PullToRefresh';
+import { IconShield } from '@/components/ios/icons';
 
 /* ─── Types ─────────────────────────────────────────────────── */
 interface PickItem {
@@ -76,25 +78,25 @@ interface Purchase {
 
 /* ─── Filters ────────────────────────────────────────────────── */
 const RESULT_FILTERS = [
-  { key: 'all',     labelKey: 'my_purchases.filter_all' as const,     icon: '🌍' },
-  { key: 'pending', labelKey: 'my_purchases.filter_pending' as const, icon: '⏳' },
-  { key: 'won',     labelKey: 'my_purchases.filter_won' as const,     icon: '✅' },
-  { key: 'lost',    labelKey: 'my_purchases.filter_lost' as const,    icon: '❌' },
-  { key: 'void',    labelKey: 'my_purchases.filter_void' as const,    icon: '↩️' },
+  { key: 'all', labelKey: 'my_purchases.filter_all' as const },
+  { key: 'pending', labelKey: 'my_purchases.filter_pending' as const },
+  { key: 'won', labelKey: 'my_purchases.filter_won' as const },
+  { key: 'lost', labelKey: 'my_purchases.filter_lost' as const },
+  { key: 'void', labelKey: 'my_purchases.filter_void' as const },
 ] as const;
 type ResultFilter = typeof RESULT_FILTERS[number]['key'];
 
 const SPORT_CHIPS = [
-  { key: 'all',               icon: '🌍', labelKey: 'my_purchases.filter_all' as const },
-  { key: 'football',          icon: '⚽', labelKey: 'nav.football' as const },
-  { key: 'basketball',        icon: '🏀', labelKey: 'nav.basketball' as const },
-  { key: 'rugby',             icon: '🏉', labelKey: 'nav.rugby' as const },
-  { key: 'mma',               icon: '🥊', labelKey: 'nav.mma' as const },
-  { key: 'volleyball',        icon: '🏐', labelKey: 'nav.volleyball' as const },
-  { key: 'hockey',            icon: '🏒', labelKey: 'nav.hockey' as const },
-  { key: 'american_football', icon: '🏈', labelKey: 'nav.american_football' as const },
-  { key: 'tennis',            icon: '🎾', labelKey: 'create_pick.sport_tennis' as const },
-  { key: 'multi',             icon: '🌐', labelKey: 'pick.multi_sport' as const },
+  { key: 'all', labelKey: 'my_purchases.filter_all' as const },
+  { key: 'football', labelKey: 'nav.football' as const },
+  { key: 'basketball', labelKey: 'nav.basketball' as const },
+  { key: 'rugby', labelKey: 'nav.rugby' as const },
+  { key: 'mma', labelKey: 'nav.mma' as const },
+  { key: 'volleyball', labelKey: 'nav.volleyball' as const },
+  { key: 'hockey', labelKey: 'nav.hockey' as const },
+  { key: 'american_football', labelKey: 'nav.american_football' as const },
+  { key: 'tennis', labelKey: 'create_pick.sport_tennis' as const },
+  { key: 'multi', labelKey: 'pick.multi_sport' as const },
 ];
 
 /* ─── Page ───────────────────────────────────────────────────── */
@@ -194,7 +196,8 @@ export default function MyPurchasesPage() {
   return (
     <DashboardShell>
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
-      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden">
+      <div className="min-h-[calc(100vh-8rem)] bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
+        <PullToRefresh onRefresh={() => fetchPurchases()} disabled={loading}>
         <div className="section-ux-dashboard-shell min-w-0 max-w-full">
 
           <PageHeader
@@ -203,7 +206,7 @@ export default function MyPurchasesPage() {
             tagline={t('my_purchases.tagline')}
           />
           <p className="text-sm text-[var(--text-muted)] mb-4 flex items-start gap-2 min-w-0 break-words">
-            <span aria-hidden>🛡</span>
+            <IconShield className="w-4 h-4 shrink-0 mt-0.5 text-[var(--primary)]" aria-hidden />
             {t('my_purchases.escrow_refund_note')}
           </p>
           {!loading && (resultFilter === 'lost' || resultFilter === 'void') && (
@@ -290,7 +293,7 @@ export default function MyPurchasesPage() {
           {/* ─── Result filter pills ───────────────────────────── */}
           {!loading && stats.total > 0 && (
             <div className="flex flex-wrap gap-2 mb-4 min-w-0 max-w-full">
-              {RESULT_FILTERS.map(({ key, labelKey, icon }) => {
+              {RESULT_FILTERS.map(({ key, labelKey }) => {
                 const count =
                   key === 'all'
                     ? stats.total
@@ -306,13 +309,12 @@ export default function MyPurchasesPage() {
                     key={key}
                     type="button"
                     onClick={() => setResultFilter(key)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${
                       resultFilter === key
                         ? 'bg-[var(--primary)] text-white shadow-sm'
                         : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
                     }`}
                   >
-                    <span>{icon}</span>
                     {t(labelKey)}
                     <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold ${
                       resultFilter === key ? 'bg-white/20 text-white' : 'bg-[var(--bg)] text-[var(--text-muted)]'
@@ -331,18 +333,18 @@ export default function MyPurchasesPage() {
             <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
               {SPORT_CHIPS.filter(
                 (c) => c.key === 'all' || availableSports.includes(c.key),
-              ).map(({ key, icon, labelKey }) => (
+              ).map(({ key, labelKey }) => (
                 <button
                   key={key}
                   type="button"
                   onClick={() => setSportFilter(key)}
-                  className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                     sportFilter === key
                       ? 'bg-[var(--primary)] text-white shadow-sm'
                       : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
                   }`}
                 >
-                  {icon} {t(labelKey)}
+                  {t(labelKey)}
                 </button>
               ))}
             </div>
@@ -473,6 +475,7 @@ export default function MyPurchasesPage() {
           )}
 
         </div>
+        </PullToRefresh>
       </div>
     </DashboardShell>
   );

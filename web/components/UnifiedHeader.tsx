@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useLayoutEffect, useRef, useCallback, type Ref } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, type Ref, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -11,6 +11,32 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { trackEvent } from '@/lib/analytics';
 import { usePendingWithdrawalCount } from '@/hooks/usePendingWithdrawalCount';
+import { MobileAccountSheet } from '@/components/ios/MobileAccountSheet';
+import {
+  IconSearch,
+  IconTrophy,
+  IconTrending,
+  IconChart,
+  IconRocket,
+  IconTarget,
+  IconPackage,
+  IconCart,
+  IconDiamond,
+  IconLive,
+  IconArchive,
+  IconTable,
+  IconUsers,
+  IconBook,
+  IconShield,
+  IconPerson,
+  IconDashboard,
+  IconWallet,
+  IconEarnings,
+  IconPicks,
+  IconBag,
+  IconStar,
+  IconBell,
+} from '@/components/ios/icons';
 
 /* ─── Types ─────────────────────────────────────────────── */
 interface Notification { id: number; isRead: boolean }
@@ -39,16 +65,16 @@ function NavChevron({ open }: { open: boolean }) {
 function MegaLink({
   href, icon, label, desc, badge, badgeColor, onClick,
 }: {
-  href: string; icon: string; label: string; desc?: string;
+  href: string; icon: ReactNode; label: string; desc?: string;
   badge?: string; badgeColor?: string; onClick?: () => void;
 }) {
   return (
     <Link
       href={href}
       onClick={onClick}
-      className="group flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-emerald-50/80 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+      className="group flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-[var(--fill-secondary)] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/50"
     >
-      <span className="text-xl leading-none mt-0.5 flex-shrink-0">{icon}</span>
+      <span className="w-6 flex items-center justify-center flex-shrink-0 text-[var(--primary)] mt-0.5">{icon}</span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-nowrap">
           <span className="text-sm font-semibold text-slate-800 group-hover:text-emerald-700 transition-colors whitespace-nowrap">{label}</span>
@@ -77,7 +103,7 @@ function CompactNavLink({
   onClick,
 }: {
   href: string;
-  icon: string;
+  icon: ReactNode;
   label: string;
   onClick?: () => void;
 }) {
@@ -85,9 +111,9 @@ function CompactNavLink({
     <Link
       href={href}
       onClick={onClick}
-      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-800 hover:bg-emerald-50 hover:text-emerald-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-[var(--text)] hover:bg-[var(--fill-secondary)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/50"
     >
-      <span className="text-base leading-none w-6 text-center flex-shrink-0" aria-hidden>
+      <span className="w-6 flex items-center justify-center flex-shrink-0 text-[var(--primary)]" aria-hidden>
         {icon}
       </span>
       <span className="min-w-0 leading-snug">{label}</span>
@@ -198,44 +224,12 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
   const hoverTimeout  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const headerRef     = useRef<HTMLElement>(null);
-  /** Mobile account drawer is portaled to `document.body`, so it is NOT under `headerRef`. Without this, document `mousedown` treats every tap in the drawer as "outside the header" and closes the menu before `click` / `router.push` — especially noticeable in iOS WKWebView (WebViewGold). */
-  const mobileAccountDrawerRef = useRef<HTMLDivElement | null>(null);
   /** Desktop Tipsters / Browse / Account menus are portaled for the same reason (overflow clipping). */
   const desktopMenuPortalRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  /** Mobile drawer: backdrop was full-screen `absolute inset-0` over the panel in some browsers, eating taps. Also force client nav so links always work from the portal. */
-  const onMobileAccountNav = useCallback(
-    (href: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
-      setMobileOpen(false);
-      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-      e.preventDefault();
-      router.push(href);
-    },
-    [router],
-  );
-
-  /* ── Lock body scroll when mobile sidebar open ───────── */
-  useEffect(() => {
-    if (!mobileOpen) return;
-    const html = document.documentElement;
-    const body = document.body;
-    const prevHtmlOverflow = html.style.overflow;
-    const prevBodyOverflow = body.style.overflow;
-    const prevBodyPaddingRight = body.style.paddingRight;
-    const gap = window.innerWidth - html.clientWidth;
-    html.style.overflow = 'hidden';
-    body.style.overflow = 'hidden';
-    if (gap > 0) body.style.paddingRight = `${gap}px`;
-    return () => {
-      html.style.overflow = prevHtmlOverflow;
-      body.style.overflow = prevBodyOverflow;
-      body.style.paddingRight = prevBodyPaddingRight;
-    };
-  }, [mobileOpen]);
 
   /* ── Auth / data ─────────────────────────────────────── */
   const syncAuth = useCallback(() => {
@@ -310,7 +304,6 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
     }
     function onPointerDown(e: PointerEvent) {
       const t = e.target as Node;
-      if (mobileAccountDrawerRef.current?.contains(t)) return;
       if (desktopMenuPortalRef.current?.contains(t)) return;
       if (headerRef.current && !headerRef.current.contains(t)) {
         closeAll();
@@ -410,7 +403,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
       <header
         ref={headerRef}
-        className={`sticky z-50 w-full min-w-0 max-w-full bg-white/95 backdrop-blur-xl border-b border-slate-200/70 shadow-sm ${
+        className={`sticky z-50 w-full min-w-0 max-w-full ios-chrome border-b shadow-sm ${
           hideTopBar ? 'top-0' : 'max-md:top-[calc(env(safe-area-inset-top,0px)+2.75rem)] md:top-0'
         }`}
       >
@@ -457,26 +450,26 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                 >
                     <div className="py-1 px-1">
                       <SectionLabel>{t('header.section_discover_tipsters')}</SectionLabel>
-                      <CompactNavLink href="/tipsters" icon="🔍" label={t('nav.browse')} onClick={closeAll} />
-                      <CompactNavLink href="/leaderboard" icon="🏆" label={t('nav.leaderboard')} onClick={closeAll} />
+                      <CompactNavLink href="/tipsters" icon={<IconSearch />} label={t('nav.browse')} onClick={closeAll} />
+                      <CompactNavLink href="/leaderboard" icon={<IconTrophy />} label={t('nav.leaderboard')} onClick={closeAll} />
                       <CompactNavLink
                         href="/tipsters?sort=winRate"
-                        icon="📈"
+                        icon={<IconTrending />}
                         label={t('tipster.top_win_rate')}
                         onClick={closeAll}
                       />
-                      <CompactNavLink href="/tipsters?sort=roi" icon="💹" label={t('tipster.best_roi')} onClick={closeAll} />
+                      <CompactNavLink href="/tipsters?sort=roi" icon={<IconChart />} label={t('tipster.best_roi')} onClick={closeAll} />
                     </div>
 
                     <div className="py-1 px-1 border-t border-slate-100">
                       <SectionLabel>{t('header.section_become_tipster')}</SectionLabel>
                       {!isSignedIn && (
-                        <CompactNavLink href="/register" icon="🚀" label={t('nav.register')} onClick={closeAll} />
+                        <CompactNavLink href="/register" icon={<IconRocket />} label={t('nav.register')} onClick={closeAll} />
                       )}
-                      <CompactNavLink href="/create-pick" icon="🎯" label={t('nav.create_pick')} onClick={closeAll} />
+                      <CompactNavLink href="/create-pick" icon={<IconTarget />} label={t('nav.create_pick')} onClick={closeAll} />
                       <CompactNavLink
                         href="/dashboard/subscription-packages"
-                        icon="📦"
+                        icon={<IconPackage />}
                         label={t('tipster.subscription_packages')}
                         onClick={closeAll}
                       />
@@ -484,7 +477,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
                     <div className="mx-2 mb-2 mt-1 p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 text-white">
                       <p className="text-xs font-bold mb-1">
-                        <span aria-hidden>🛡️ </span>
+                        <IconShield className="w-4 h-4 inline-block mr-1 -mt-0.5" />
                         {t('home.feature_escrow_title')}
                       </p>
                       <p className="text-[11px] text-slate-300 leading-relaxed">{t('header.escrow_box')}</p>
@@ -513,20 +506,20 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       <SectionLabel>{t('header.section_picks')}</SectionLabel>
                       <CompactNavLink
                         href="/marketplace"
-                        icon="🛒"
+                        icon={<IconCart />}
                         label={t('nav.picks_marketplace')}
                         onClick={closeAll}
                       />
                       <CompactNavLink
                         href="/subscriptions/marketplace"
-                        icon="💎"
+                        icon={<IconDiamond />}
                         label={t('nav.subscription_marketplace')}
                         onClick={closeAll}
                       />
-                      <CompactNavLink href="/live-scores" icon="📡" label={t('nav.live_scores')} onClick={closeAll} />
+                      <CompactNavLink href="/live-scores" icon={<IconLive />} label={t('nav.live_scores')} onClick={closeAll} />
                       <CompactNavLink
                         href="/coupons/archive"
-                        icon="📦"
+                        icon={<IconArchive />}
                         label={t('header.settled_archive')}
                         onClick={closeAll}
                       />
@@ -534,10 +527,10 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
                     <div className="py-1 px-1 border-t border-slate-100">
                       <SectionLabel>{t('header.section_platform')}</SectionLabel>
-                      <CompactNavLink href="/leaderboard" icon="🏆" label={t('nav.leaderboard')} onClick={closeAll} />
-                      <CompactNavLink href="/league-tables" icon="📊" label={t('nav.league_tables')} onClick={closeAll} />
-                      <CompactNavLink href="/tipsters" icon="👥" label={t('nav.top_tipsters')} onClick={closeAll} />
-                      <CompactNavLink href="/guides" icon="📘" label={t('nav.short_guides')} onClick={closeAll} />
+                      <CompactNavLink href="/leaderboard" icon={<IconTrophy />} label={t('nav.leaderboard')} onClick={closeAll} />
+                      <CompactNavLink href="/league-tables" icon={<IconTable />} label={t('nav.league_tables')} onClick={closeAll} />
+                      <CompactNavLink href="/tipsters" icon={<IconUsers />} label={t('nav.top_tipsters')} onClick={closeAll} />
+                      <CompactNavLink href="/guides" icon={<IconBook />} label={t('nav.short_guides')} onClick={closeAll} />
                     </div>
                 </DesktopMenuPortal>
               </div>
@@ -669,17 +662,17 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                         <div className="w-64 border-r border-slate-100 py-4 px-2">
                           <SectionLabel>{t('header.section_my_account')}</SectionLabel>
                           {[
-                            { href: '/profile',       icon: '👤', label: t('profile.title'),       desc: t('profile.tagline') },
-                            { href: '/dashboard',     icon: '📊', label: t('nav.dashboard'),         desc: t('dashboard.subtitle') },
+                            { href: '/profile',       icon: <IconPerson />, label: t('profile.title'),       desc: t('profile.tagline') },
+                            { href: '/dashboard',     icon: <IconDashboard />, label: t('nav.dashboard'),         desc: t('dashboard.subtitle') },
                             {
                               href: '/wallet',
-                              icon: '💰',
+                              icon: <IconWallet />,
                               label: t('nav.wallet'),
                               desc: t('dashboard.wallet_desc'),
                               badge: pendingWithdrawalCount > 0 ? String(pendingWithdrawalCount) : undefined,
                               badgeColor: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
                             },
-                            { href: '/earnings',      icon: '📈', label: t('nav.earnings'),          desc: t('earnings.subtitle') },
+                            { href: '/earnings',      icon: <IconEarnings />, label: t('nav.earnings'),          desc: t('earnings.subtitle') },
                           ].map((item) => (
                             <MegaLink
                               key={item.href}
@@ -697,10 +690,10 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                         <div className="flex-1 py-4 px-2">
                           <SectionLabel>{t('header.section_activity')}</SectionLabel>
                           {[
-                            { href: '/my-picks',      icon: '🎯', label: t('nav.my_picks'),          desc: t('dashboard.my_picks_desc') },
-                            { href: '/my-purchases',  icon: '🛍️', label: t('my_purchases.title'),      desc: t('my_purchases.tagline') },
-                            { href: '/subscriptions', icon: '🔔', label: t('dashboard.card_subscriptions'),     desc: t('dashboard.card_subscriptions_desc') },
-                            { href: '/notifications', icon: '🛎️', label: t('nav.notifications'),     desc: unreadCount > 0 ? t('dashboard.card_notifications_unread', { n: String(unreadCount) }) : t('notifications.caught_up'), badge: unreadCount > 0 ? String(unreadCount) : undefined, badgeColor: 'bg-red-100 text-red-600' },
+                            { href: '/my-picks',      icon: <IconPicks />, label: t('nav.my_picks'),          desc: t('dashboard.my_picks_desc') },
+                            { href: '/my-purchases',  icon: <IconBag />, label: t('my_purchases.title'),      desc: t('my_purchases.tagline') },
+                            { href: '/subscriptions', icon: <IconStar />, label: t('dashboard.card_subscriptions'),     desc: t('dashboard.card_subscriptions_desc') },
+                            { href: '/notifications', icon: <IconBell />, label: t('nav.notifications'),     desc: unreadCount > 0 ? t('dashboard.card_notifications_unread', { n: String(unreadCount) }) : t('notifications.caught_up'), badge: unreadCount > 0 ? String(unreadCount) : undefined, badgeColor: 'bg-red-100 text-red-600' },
                           ].map(item => (
                             <MegaLink key={item.href} href={item.href} icon={item.icon} label={item.label} desc={item.desc} badge={item.badge} badgeColor={item.badgeColor} onClick={closeAll} />
                           ))}
@@ -751,114 +744,31 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </button>
-                  {mobileOpen && mounted && createPortal(
-                    <div
-                      ref={mobileAccountDrawerRef}
-                      className="fixed inset-0 z-[100] flex flex-row"
-                      role="dialog"
-                      aria-modal="true"
-                      aria-labelledby="mobile-account-menu-title"
-                    >
-                      {/* Sidebar first — backdrop must NOT overlap this strip (was intercepting all taps) */}
-                      <div
-                        className="relative z-10 w-[280px] sm:w-[320px] max-w-[85vw] shrink-0 h-full min-h-[100dvh] min-h-screen bg-[var(--card)] border-r border-[var(--border)] shadow-2xl flex flex-col animate-slide-in-left pointer-events-auto"
-                        style={{
-                          paddingTop: 'max(0px, env(safe-area-inset-top, 0px))',
-                          paddingBottom: 'max(0px, env(safe-area-inset-bottom, 0px))',
-                        }}
-                      >
-                        {/* Header with balance */}
-                        <div className="px-4 pt-6 pb-4 border-b border-[var(--border)] shrink-0">
-                          <div className="flex items-center justify-between gap-2 mb-4 min-w-0">
-                            <h2 id="mobile-account-menu-title" className="text-base font-semibold text-[var(--text)] min-w-0 flex-1 truncate pr-2">
-                              {t('header.account')}
-                            </h2>
-                            <button
-                              type="button"
-                              onClick={() => setMobileOpen(false)}
-                              className="shrink-0 rounded-lg p-2 text-[var(--text-muted)] hover:bg-[var(--bg)] hover:text-[var(--text)]"
-                              aria-label={t('common.close')}
-                            >
-                              ✕
-                            </button>
-                          </div>
-                          {balance !== null && (
-                            <div className="px-3 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200/60">
-                              <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400 mb-1">
-                                {t('nav.wallet')}
-                              </p>
-                              <p className="text-lg font-bold text-emerald-800 dark:text-emerald-200">{format(balance).primary}</p>
-                            </div>
-                          )}
-                        </div>
-                        {/* Menu items — min-h-0 lets flex child scroll instead of overflowing */}
-                        <nav className="flex-1 min-h-0 overflow-y-auto py-2 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' as const }}>
-                          {([
-                            { href: '/dashboard',      icon: '📊', label: t('nav.dashboard') },
-                            { href: '/league-tables', icon: '📋', label: t('nav.league_tables') },
-                            { href: '/profile',       icon: '👤', label: t('profile.title') },
-                            {
-                              href: '/wallet',
-                              icon: '💰',
-                              label: t('nav.wallet'),
-                              badge: pendingWithdrawalCount > 0 ? String(pendingWithdrawalCount) : undefined,
-                              badgeClass: 'bg-amber-500',
-                            },
-                            { href: '/earnings',      icon: '📈', label: t('nav.earnings') },
-                            { href: '/my-picks',      icon: '🎯', label: t('nav.my_picks') },
-                            { href: '/my-purchases',  icon: '🛍️', label: t('my_purchases.title') },
-                            { href: '/subscriptions', icon: '🔔', label: t('dashboard.card_subscriptions') },
-                            {
-                              href: '/notifications',
-                              icon: '🛎️',
-                              label: t('nav.notifications'),
-                              badge: unreadCount > 0 ? String(unreadCount) : undefined,
-                              badgeClass: 'bg-red-500',
-                            },
-                          ]).map((item) => (
-                            <Link
-                              key={item.href}
-                              href={item.href}
-                              onClick={onMobileAccountNav(item.href)}
-                              className={`flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors ${
-                                isActive(pathname, item.href)
-                                  ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border-r-2 border-emerald-600'
-                                  : 'text-[var(--text)] hover:bg-[var(--bg)]'
-                              }`}
-                            >
-                              <span className="text-lg" aria-hidden>{item.icon}</span>
-                              <span className="flex-1">{item.label}</span>
-                              {'badge' in item && item.badge && (
-                                <span className={`min-w-[20px] h-5 flex items-center justify-center text-xs font-bold text-white rounded-full ${'badgeClass' in item && item.badgeClass ? item.badgeClass : 'bg-red-500'}`}>
-                                  {item.badge}
-                                </span>
-                              )}
-                            </Link>
-                          ))}
-                        </nav>
-                        {/* Sign out — shrink-0 so it always stays visible */}
-                        <div className="px-4 py-3 border-t border-[var(--border)] shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => { signOut(); setMobileOpen(false); }}
-                            className="flex items-center gap-3 w-full px-4 py-3 text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                            aria-label={t('auth.logout')}
-                          >
-                            <span aria-hidden>🚪</span>
-                            <span>{t('auth.logout')}</span>
-                          </button>
-                        </div>
-                      </div>
-                      {/* Backdrop only beside the drawer — full-screen overlay no longer covers links */}
-                      <button
-                        type="button"
-                        className="flex-1 min-w-0 min-h-0 self-stretch bg-black/50"
-                        style={{ backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
-                        aria-label={t('common.close')}
-                        onClick={() => setMobileOpen(false)}
-                      />
-                    </div>,
-                    document.body
+                  {mounted && (
+                    <MobileAccountSheet
+                      open={mobileOpen}
+                      onClose={() => setMobileOpen(false)}
+                      title={t('header.account')}
+                      doneLabel={t('common.close')}
+                      logoutLabel={t('auth.logout')}
+                      balance={balance}
+                      balanceFormatted={balance !== null ? format(balance).primary : ''}
+                      walletLabel={t('nav.wallet')}
+                      pendingWithdrawalCount={pendingWithdrawalCount}
+                      unreadCount={unreadCount}
+                      onSignOut={signOut}
+                      labels={{
+                        dashboard: t('nav.dashboard'),
+                        leagueTables: t('nav.league_tables'),
+                        profile: t('profile.title'),
+                        wallet: t('nav.wallet'),
+                        earnings: t('nav.earnings'),
+                        myPicks: t('nav.my_picks'),
+                        myPurchases: t('my_purchases.title'),
+                        subscriptions: t('dashboard.card_subscriptions'),
+                        notifications: t('nav.notifications'),
+                      }}
+                    />
                   )}
                 </>
               ) : (

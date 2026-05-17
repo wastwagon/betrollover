@@ -1,12 +1,15 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
+import { SegmentedControl } from '@/components/ios/SegmentedControl';
+import { IconBell } from '@/components/ios/icons';
+import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { useLanguage, useT } from '@/context/LanguageContext';
 import { getApiUrl } from '@/lib/site-config';
 
@@ -68,17 +71,28 @@ export default function NotificationsPage() {
   const [markingAll, setMarkingAll] = useState(false);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
-  useEffect(() => {
+  const loadNotifications = useCallback(async () => {
     const token = localStorage.getItem('token');
-    if (!token) { router.push('/login'); return; }
-    fetch(`${getApiUrl()}/notifications?limit=100`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => setItems(Array.isArray(data) ? data : []))
-      .catch(() => setItems([]))
-      .finally(() => setLoading(false));
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+    try {
+      const r = await fetch(`${getApiUrl()}/notifications?limit=100`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = r.ok ? await r.json() : [];
+      setItems(Array.isArray(data) ? data : []);
+    } catch {
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
   }, [router]);
+
+  useEffect(() => {
+    void loadNotifications();
+  }, [loadNotifications]);
 
   const markRead = async (id: number) => {
     const token = localStorage.getItem('token');
@@ -127,7 +141,8 @@ export default function NotificationsPage() {
 
   return (
     <DashboardShell>
-      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden">
+      <div className="min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden bg-[var(--bg)]">
+        <PullToRefresh onRefresh={loadNotifications} disabled={loading}>
         <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full">
 
           {/* ─── Header row ──────────────────────────────── */}
@@ -138,23 +153,16 @@ export default function NotificationsPage() {
               tagline={t('notifications.tagline')}
             />
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0 min-w-0">
-              {/* Filter tabs */}
-              <div className="flex rounded-lg border border-[var(--border)] overflow-hidden bg-[var(--card)] w-full sm:w-auto">
-                {(['all', 'unread'] as const).map((f) => (
-                  <button
-                    key={f}
-                    type="button"
-                    onClick={() => setFilter(f)}
-                    className={`flex-1 sm:flex-initial px-3 py-1.5 text-xs font-semibold transition-colors ${
-                      filter === f
-                        ? 'bg-[var(--primary)] text-white'
-                        : 'text-[var(--text-muted)] hover:text-[var(--text)]'
-                    }`}
-                  >
-                    {f === 'all' ? t('notifications.all', { n: String(items.length) }) : t('notifications.unread', { n: String(unreadCount) })}
-                  </button>
-                ))}
-              </div>
+              <SegmentedControl
+                aria-label={t('notifications.title')}
+                className="w-full sm:w-auto"
+                options={[
+                  { value: 'all' as const, label: t('notifications.all', { n: String(items.length) }) },
+                  { value: 'unread' as const, label: t('notifications.unread', { n: String(unreadCount) }) },
+                ]}
+                value={filter}
+                onChange={setFilter}
+              />
               {/* Mark all read */}
               {unreadCount > 0 && (
                 <button
@@ -191,22 +199,21 @@ export default function NotificationsPage() {
               />
             </div>
           ) : (
-            <div className="space-y-2 min-w-0 max-w-full">
+            <div className="ios-grouped-section mx-0 min-w-0 max-w-full">
               {displayed.map((n) => {
                 const meta = getTypeMeta(n.type);
                 const content = (
                   <div
-                    className={`card-gradient rounded-2xl p-4 transition-all duration-200 hover:shadow-md min-w-0 max-w-full ${
-                      !isNotificationRead(n)
-                        ? 'border-l-4 border-l-[var(--primary)]'
-                        : 'opacity-75 hover:opacity-100'
+                    className={`ios-list-row flex items-start gap-3 px-4 py-3 border-b border-[var(--separator)] last:border-b-0 min-w-0 max-w-full transition-colors ${
+                      !isNotificationRead(n) ? 'bg-[var(--primary-light)]/40' : ''
                     }`}
                   >
-                    <div className="flex items-start gap-3 min-w-0">
-                      {/* Icon */}
-                      <div className={`shrink-0 w-9 h-9 rounded-full bg-[var(--bg)] flex items-center justify-center text-lg border border-[var(--border)]`}>
-                        {meta.icon}
-                      </div>
+                    <div className={`relative shrink-0 w-9 h-9 rounded-full bg-[var(--fill-secondary)] flex items-center justify-center ${meta.color}`}>
+                      <IconBell className="w-5 h-5" />
+                      {!isNotificationRead(n) ? (
+                        <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-[var(--primary)] ring-2 ring-[var(--card)]" />
+                      ) : null}
+                    </div>
 
                       {/* Body */}
                       <div className="flex-1 min-w-0">
@@ -253,7 +260,6 @@ export default function NotificationsPage() {
                         </div>
                       </div>
                     </div>
-                  </div>
                 );
 
                 return n.link ? (
@@ -273,6 +279,7 @@ export default function NotificationsPage() {
           )}
 
         </div>
+        </PullToRefresh>
       </div>
     </DashboardShell>
   );

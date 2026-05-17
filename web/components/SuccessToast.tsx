@@ -25,7 +25,7 @@ export function SuccessToast({ message, onClose, duration = 4000 }: SuccessToast
 
   return (
     <div
-      className="fixed top-4 right-4 z-50 max-w-md animate-slide-in-right"
+      className="fixed z-50 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-md top-[max(0.75rem,env(safe-area-inset-top,0px))] animate-slide-in-right"
       role="status"
       aria-live="polite"
     >

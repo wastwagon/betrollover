@@ -175,12 +175,13 @@ function isAdminRoute(pathname: string | null) {
 export function TopBar() {
   const pathname = usePathname();
   const t = useT();
-  const [reduceMotion, setReduceMotion] = useState(false);
+  /** Calm iOS-style bar: static disclaimer (no marquee) unless user explicitly prefers reduced motion scrolling. */
+  const [reduceMotion, setReduceMotion] = useState(true);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduceMotion(mq.matches);
+    const update = () => setReduceMotion(true);
     update();
     mq.addEventListener('change', update);
     return () => mq.removeEventListener('change', update);

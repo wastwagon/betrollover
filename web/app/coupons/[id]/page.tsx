@@ -17,6 +17,8 @@ import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
 import { BookingCodeCopyBlock } from '@/components/BookingCodeCopyBlock';
+import { NavBar } from '@/components/ios/NavBar';
+import { hapticSuccess } from '@/lib/haptic';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Pick {
@@ -392,6 +394,7 @@ export default function CouponDetailPage() {
       });
       if (res.ok) {
         try { (await import('@/lib/analytics')).trackEvent('coupon_purchased', { couponId: id }, token); } catch { /* noop */ }
+        hapticSuccess();
         setIsPurchased(true);
         setPurchaseSuccess(true);
         try {
@@ -465,15 +468,22 @@ export default function CouponDetailPage() {
       <UnifiedHeader />
       <main className="section-ux-page-mid w-full min-w-0 max-w-full">
 
+        <div className="lg:hidden -mx-4 sm:mx-0 mb-2">
+          <NavBar
+            title={coupon.title}
+            backHref="/marketplace"
+            backLabel={t('nav.marketplace')}
+            sticky={false}
+          />
+        </div>
         <nav
-          className="flex flex-wrap items-center gap-2 py-2.5 px-3 rounded-xl bg-[var(--card)] border border-[var(--border)] mb-4 text-sm shadow-sm min-w-0 max-w-full"
+          className="hidden lg:flex flex-wrap items-center gap-2 py-2.5 px-3 rounded-xl bg-[var(--card)] border border-[var(--border)] mb-4 text-sm shadow-sm min-w-0 max-w-full"
           aria-label="Breadcrumb"
         >
           <Link
             href="/marketplace"
             className="inline-flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors font-medium"
           >
-            <span className="text-base opacity-70" aria-hidden>🎫</span>
             {t('nav.marketplace')}
           </Link>
           <span className="text-[var(--text-muted)]" aria-hidden>
@@ -483,7 +493,7 @@ export default function CouponDetailPage() {
             {coupon.title}
           </span>
         </nav>
-        <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)] mb-6 tracking-tight min-w-0 break-words">{coupon.title}</h1>
+        <h1 className="hidden lg:block text-2xl sm:text-3xl font-bold text-[var(--text)] mb-6 tracking-tight min-w-0 break-words">{coupon.title}</h1>
 
         {Number(coupon.price) > 0 ? (
           <EscrowTrustCallout

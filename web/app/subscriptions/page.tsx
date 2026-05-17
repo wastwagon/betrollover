@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
@@ -9,6 +9,7 @@ import { PickCard } from '@/components/PickCard';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getApiUrl } from '@/lib/site-config';
 import { useLanguage, useT } from '@/context/LanguageContext';
+import { PullToRefresh } from '@/components/ios/PullToRefresh';
 
 interface Subscription {
   id: number;
@@ -57,7 +58,7 @@ function SubscriptionsContent() {
   const [feedLoading, setFeedLoading] = useState(true);
   const justSubscribed = searchParams.get('subscribed') === '1';
 
-  useEffect(() => {
+  const loadSubscriptions = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!token) {
       router.push('/login?redirect=/subscriptions');
@@ -65,23 +66,31 @@ function SubscriptionsContent() {
     }
     const headers = { Authorization: `Bearer ${token}` };
     const apiUrl = getApiUrl();
-    // Keep above-the-fold content responsive by not blocking subscription render on feed fetch.
-    fetch(`${apiUrl}/subscriptions/me`, { headers, cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((subs) => {
-        setSubscriptions(Array.isArray(subs) ? subs : []);
-      })
-      .catch(() => {})
-      .finally(() => setSubsLoading(false));
-
-    fetch(`${apiUrl}/accumulators/subscription-feed?limit=20`, { headers, cache: 'no-store' })
-      .then((r) => (r.ok ? r.json().then((d: { items?: FeedPick[] }) => d?.items ?? []) : []))
-      .then((feed) => {
-        setFeedPicks(Array.isArray(feed) ? feed : []);
-      })
-      .catch(() => {})
-      .finally(() => setFeedLoading(false));
+    setSubsLoading(true);
+    setFeedLoading(true);
+    try {
+      const [subsRes, feedRes] = await Promise.all([
+        fetch(`${apiUrl}/subscriptions/me`, { headers, cache: 'no-store' }),
+        fetch(`${apiUrl}/accumulators/subscription-feed?limit=20`, { headers, cache: 'no-store' }),
+      ]);
+      const subs = subsRes.ok ? await subsRes.json() : [];
+      setSubscriptions(Array.isArray(subs) ? subs : []);
+      const feed = feedRes.ok
+        ? await feedRes.json().then((d: { items?: FeedPick[] }) => d?.items ?? [])
+        : [];
+      setFeedPicks(Array.isArray(feed) ? feed : []);
+    } catch {
+      setSubscriptions([]);
+      setFeedPicks([]);
+    } finally {
+      setSubsLoading(false);
+      setFeedLoading(false);
+    }
   }, [router]);
+
+  useEffect(() => {
+    void loadSubscriptions();
+  }, [loadSubscriptions]);
 
   useEffect(() => {
     if (!justSubscribed) return;
@@ -109,6 +118,7 @@ function SubscriptionsContent() {
 
   return (
     <DashboardShell>
+      <PullToRefresh onRefresh={loadSubscriptions} disabled={subsLoading || feedLoading}>
       <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full overflow-x-hidden">
         <PageHeader
           label={t('subscriptions.page_label')}
@@ -239,6 +249,7 @@ function SubscriptionsContent() {
           </>
         )}
       </div>
+      </PullToRefresh>
     </DashboardShell>
   );
 }

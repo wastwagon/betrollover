@@ -19,6 +19,7 @@ import { useT } from '@/context/LanguageContext';
 import { FollowersCountButton } from '@/components/TipsterFollowersModal';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
+import { NavBar } from '@/components/ios/NavBar';
 
 interface Pick {
   id?: number;
@@ -330,6 +331,8 @@ export default function TipsterProfilePage() {
       if (res.ok) {
         const purchased = await res.json().catch(() => null);
         try { (await import('@/lib/analytics')).trackEvent('coupon_purchased', { couponId: id, tipsterUsername: username }, token); } catch { /* noop */ }
+        const { hapticSuccess } = await import('@/lib/haptic');
+        hapticSuccess();
         showSuccess(t('tipster.toast_pick_purchased'));
         setPurchasedIds((prev) => new Set([...Array.from(prev), id]));
         const walletRes = await fetch(`${getApiUrl()}/wallet/balance`, {
@@ -451,9 +454,12 @@ export default function TipsterProfilePage() {
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <UnifiedHeader />
-      <main className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] w-full min-w-0">
+      <main className="min-h-[calc(100vh-8rem)] w-full min-w-0 bg-[var(--bg)]">
         <div className="section-ux-page w-full min-w-0">
-          <Link href="/tipsters" className="text-sm text-[var(--primary)] hover:underline mb-4 inline-block">
+          <div className="lg:hidden -mx-4 sm:mx-0 mb-3">
+            <NavBar title={tipster.display_name} backHref="/tipsters" backLabel={t('tipster.back_to_tipsters')} sticky={false} />
+          </div>
+          <Link href="/tipsters" className="hidden lg:inline-block text-sm text-[var(--primary)] hover:underline mb-4">
             {t('tipster.back_to_tipsters')}
           </Link>
 

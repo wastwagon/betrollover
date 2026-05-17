@@ -5,61 +5,97 @@
 /* Dark Mode Overhaul - Forced Refresh */
 
 :root {
-  /* Professional Trust palette - Clean Light Mode */
+  color-scheme: light;
 
   /* Primary Brand (Emerald - Trust & Growth) */
   --primary: #10b981;
-  /* Emerald-500 */
   --primary-hover: #059669;
-  /* Emerald-600 */
   --primary-light: #d1fae5;
-  /* Emerald-100 */
 
   /* Accent (Amber - Action & Energy) */
   --accent: #f59e0b;
-  /* Amber-500 */
   --accent-light: #fef3c7;
-  /* Amber-100 */
 
-  /* Backgrounds (Clean & Professional) */
-  --bg: #ffffff;
-  /* Pure white */
-  --bg-warm: #fafaf9;
-  /* Stone-50: Subtle warm tint */
+  /* Surfaces */
+  --bg: #f2f2f7;
+  --bg-warm: #f2f2f7;
   --card: #ffffff;
-  /* White cards */
+  --card-elevated: #ffffff;
+  --separator: rgba(60, 60, 67, 0.12);
+  --fill-secondary: rgba(120, 120, 128, 0.12);
 
-  /* Text (High Contrast) */
-  --text: #0f172a;
-  /* Slate-900: Primary text */
-  --text-muted: #64748b;
-  /* Slate-500: Secondary text */
-  --border: #e2e8f0;
-  /* Slate-200: Borders */
+  /* Labels */
+  --text: #1c1c1e;
+  --text-muted: #636366;
+  --text-tertiary: #8e8e93;
+  --border: #c6c6c8;
 
   /* Status */
   --success: #10b981;
   --success-light: #d1fae5;
+  --destructive: #ff3b30;
 
-  /* Effects (Subtle & Professional) */
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-glow: 0 0 20px rgba(16, 185, 129, 0.15);
+  /* Effects */
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+  --shadow-glow: 0 0 20px rgba(16, 185, 129, 0.12);
 
   --radius: 0.75rem;
   --radius-sm: 0.5rem;
+  --radius-ios-group: 0.625rem;
   --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
 
-  /* Gradients (Subtle & Modern) */
   --gradient-primary: linear-gradient(135deg, #10b981 0%, #059669 100%);
   --gradient-accent: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   --gradient-mesh:
-    radial-gradient(at 15% 20%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
-    radial-gradient(at 85% 15%, rgba(245, 158, 11, 0.06) 0px, transparent 50%);
+    radial-gradient(at 15% 20%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
+    radial-gradient(at 85% 15%, rgba(245, 158, 11, 0.04) 0px, transparent 50%);
 
-  /* Glassmorphism (Light) */
-  --glass-bg: rgba(255, 255, 255, 0.9);
-  --glass-border: rgba(0, 0, 0, 0.05);
+  --glass-bg: rgba(255, 255, 255, 0.82);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --chrome-bg: rgba(255, 255, 255, 0.92);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --primary: #34d399;
+    --primary-hover: #10b981;
+    --primary-light: rgba(52, 211, 153, 0.15);
+
+    --accent: #fbbf24;
+    --accent-light: rgba(251, 191, 36, 0.15);
+
+    --bg: #000000;
+    --bg-warm: #000000;
+    --card: #1c1c1e;
+    --card-elevated: #2c2c2e;
+    --separator: rgba(84, 84, 88, 0.65);
+    --fill-secondary: rgba(120, 120, 128, 0.24);
+
+    --text: #f5f5f7;
+    --text-muted: #aeaeb2;
+    --text-tertiary: #8e8e93;
+    --border: #38383a;
+
+    --success: #34d399;
+    --success-light: rgba(52, 211, 153, 0.15);
+    --destructive: #ff453a;
+
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+    --shadow-glow: 0 0 20px rgba(52, 211, 153, 0.2);
+
+    --gradient-mesh:
+      radial-gradient(at 15% 20%, rgba(52, 211, 153, 0.08) 0px, transparent 50%),
+      radial-gradient(at 85% 15%, rgba(251, 191, 36, 0.05) 0px, transparent 50%);
+
+    --glass-bg: rgba(28, 28, 30, 0.88);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --chrome-bg: rgba(28, 28, 30, 0.92);
+  }
 }
 
 
@@ -83,13 +119,13 @@ body {
   font-feature-settings: "cv11", "ss01";
 }
 
-/* Mobile-first touch targets */
+/* iOS-style touch targets — opt-in so inline text links stay compact */
 @media (pointer: coarse) {
-
-  button,
-  a {
+  .touch-target,
+  nav[role="navigation"] a,
+  nav[role="navigation"] button,
+  .ios-list-row {
     min-height: 44px;
-    min-width: 44px;
   }
 }
 
@@ -369,6 +405,55 @@ body {
 
 .safe-area-inset-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* ── iOS shell utilities ── */
+@layer components {
+  .ios-chrome {
+    background: var(--chrome-bg);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-color: var(--separator);
+  }
+
+  .ios-sheet-grabber {
+    width: 2.25rem;
+    height: 0.25rem;
+    border-radius: 9999px;
+    background: var(--text-tertiary);
+    opacity: 0.5;
+    margin: 0.5rem auto 0.25rem;
+  }
+
+  .ios-grouped-section {
+    background: var(--card);
+    border-radius: var(--radius-ios-group);
+    border: 1px solid var(--separator);
+    overflow: hidden;
+  }
+
+  .ios-segmented {
+    display: inline-flex;
+    padding: 2px;
+    border-radius: 0.5rem;
+    background: var(--fill-secondary);
+  }
+
+  .ios-segmented-btn {
+    min-height: 2rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    transition: background var(--transition), color var(--transition), box-shadow var(--transition);
+  }
+
+  .ios-segmented-btn[data-active="true"] {
+    background: var(--card);
+    color: var(--text);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+  }
 }
 
 /* Respect reduced motion preference */

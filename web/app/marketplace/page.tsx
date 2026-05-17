@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useT } from '@/context/LanguageContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -16,6 +16,8 @@ import { formatError } from '@/utils/errorMessages';
 import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
+import { PullToRefresh } from '@/components/ios/PullToRefresh';
+import { MarketplaceFilterBar } from '@/components/ios/MarketplaceFilterBar';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 
@@ -214,7 +216,9 @@ export default function MarketplacePage() {
     [picks],
   );
 
-  useEffect(() => {
+  const fetchMarketplaceRef = useRef<() => Promise<void>>(async () => {});
+
+  const fetchMarketplace = useCallback(async () => {
     const token = localStorage.getItem('token');
     const sportParam = sportFilter ? `&sport=${encodeURIComponent(sportFilter)}` : '';
 
@@ -225,8 +229,7 @@ export default function MarketplacePage() {
       return;
     }
 
-    // Logged in: fetch marketplace, wallet, purchased, user, following
-    Promise.all([
+    await Promise.all([
       fetch(`${API_URL}/accumulators/marketplace?limit=24${sportParam}${tipsterParam}${priceParam}`, {
         headers: { Authorization: `Bearer ${token}` },
       }).then((r) => (r.ok ? r.json() : { items: [], total: 0, hasMore: false })),
@@ -268,6 +271,12 @@ export default function MarketplacePage() {
       })
       .finally(() => setLoading(false));
   }, [router, sportFilter, tipsterParam, priceParam, showError]);
+
+  fetchMarketplaceRef.current = fetchMarketplace;
+
+  useEffect(() => {
+    void fetchMarketplace();
+  }, [fetchMarketplace]);
 
   /** Refresh coupon cards while any listing is still pending (visibility-aware, 45s). */
   useEffect(() => {
@@ -362,6 +371,8 @@ export default function MarketplacePage() {
       if (res.ok) {
         const purchasedTicket = await res.json();
         try { (await import('@/lib/analytics')).trackEvent('coupon_purchased', { couponId: id }, token); } catch { /* noop */ }
+        const { hapticSuccess } = await import('@/lib/haptic');
+        hapticSuccess();
         showSuccess(t('tipster.toast_pick_purchased'));
         // Mark as purchased
         setPurchasedIds(prev => new Set([...Array.from(prev), id]));
@@ -425,7 +436,8 @@ export default function MarketplacePage() {
     <DashboardShell>
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
-      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden">
+      <div className="min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden bg-[var(--bg)]">
+        <PullToRefresh onRefresh={() => fetchMarketplaceRef.current()} disabled={loading}>
         <div className="section-ux-dashboard-shell">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-0 min-w-0">
             <PageHeader
@@ -513,22 +525,22 @@ export default function MarketplacePage() {
           <div className="mb-4 w-full min-w-0 overflow-hidden">
           <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
             {([
-              { key: '',                label: `🌍 ${t('marketplace.filter_all_sports')}` },
-              { key: 'football',        label: `⚽ ${t('nav.football')}` },
-              { key: 'basketball',      label: `🏀 ${t('nav.basketball')}` },
-              { key: 'rugby',           label: '🏉 Rugby' },
-              { key: 'mma',             label: '🥊 MMA' },
-              { key: 'volleyball',      label: '🏐 Volleyball' },
-              { key: 'hockey',          label: '🏒 Hockey' },
-              { key: 'american_football', label: '🏈 Amer. Football' },
-              { key: 'tennis',          label: '🎾 Tennis' },
-              { key: 'multi',           label: '🌐 Multi-Sport' },
+              { key: '', label: t('marketplace.filter_all_sports') },
+              { key: 'football', label: t('nav.football') },
+              { key: 'basketball', label: t('nav.basketball') },
+              { key: 'rugby', label: 'Rugby' },
+              { key: 'mma', label: 'MMA' },
+              { key: 'volleyball', label: 'Volleyball' },
+              { key: 'hockey', label: 'Hockey' },
+              { key: 'american_football', label: 'Amer. Football' },
+              { key: 'tennis', label: 'Tennis' },
+              { key: 'multi', label: 'Multi-Sport' },
             ] as { key: string; label: string }[]).map(({ key, label }) => (
               <button
                 key={key}
                 type="button"
                 onClick={() => setSportFilter(key)}
-                className={`flex-shrink-0 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                className={`flex-shrink-0 px-4 py-2 rounded-full font-medium text-sm transition-colors ${
                   sportFilter === key
                     ? 'bg-[var(--primary)] text-white shadow-md'
                     : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
@@ -540,74 +552,42 @@ export default function MarketplacePage() {
           </div>
           </div>
 
-          {/* Filters — show after load so empty search results still have controls */}
           {!loading && (
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end mb-4 min-w-0 max-w-full">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 flex-1 min-w-0 w-full sm:min-w-[200px] sm:max-w-md">
-                <label htmlFor="marketplace-tipster-search" className="text-sm font-medium text-[var(--text)] shrink-0">
-                  {t('marketplace.tipster_search_label')}
-                </label>
-                <div className="relative flex-1 min-w-0">
-                  <input
-                    id="marketplace-tipster-search"
-                    type="search"
-                    enterKeyHint="search"
-                    autoComplete="off"
-                    placeholder={t('marketplace.tipster_search_placeholder')}
-                    value={tipsterSearch}
-                    onChange={(e) => setTipsterSearch(e.target.value)}
-                    className="w-full px-3 py-2 pr-24 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                  />
-                  {tipsterSearch.trim() !== debouncedTipster && (
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[var(--text-muted)] pointer-events-none">
-                      {t('marketplace.tipster_search_loading')}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 w-full sm:w-auto min-w-0">
-                <label className="text-sm font-medium text-[var(--text)] shrink-0">{t('marketplace.filter_price')}</label>
-                <select
-                  value={priceFilter}
-                  onChange={(e) => setPriceFilter(e.target.value as PriceFilter)}
-                  className="w-full sm:w-auto sm:min-w-[120px] px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                >
-                  <option value="all">{t('common.all')}</option>
-                  <option value="free">{t('marketplace.filter_free_only')}</option>
-                  <option value="paid">{t('marketplace.filter_paid_only')}</option>
-                  <option value="sold">{t('marketplace.filter_sold_only')}</option>
-                </select>
-              </div>
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 w-full sm:w-auto min-w-0">
-                <label className="text-sm font-medium text-[var(--text)] shrink-0">{t('marketplace.sort_by')}</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortBy)}
-                  className="w-full sm:w-auto sm:min-w-[140px] px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                >
-                  <option value="newest">{t('marketplace.sort_newest_first')}</option>
-                  {followedTipsterUsernames.size > 0 && (
-                    <option value="following-only">{t('marketplace.sort_following_only')}</option>
-                  )}
-                  <option value="price-low">{t('marketplace.sort_price_asc')}</option>
-                  <option value="price-high">{t('marketplace.sort_price_desc')}</option>
-                  <option value="tipster-rank">{t('marketplace.sort_tipster_rank')}</option>
-                </select>
-              </div>
-              {(priceFilter !== 'all' || sortBy !== 'newest' || debouncedTipster) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPriceFilter('all');
-                    setSortBy('newest');
-                    setTipsterSearch('');
-                  }}
-                  className="w-full sm:w-auto px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                >
-                  {t('marketplace.clear_filters')}
-                </button>
-              )}
-            </div>
+            <MarketplaceFilterBar
+              priceFilter={priceFilter}
+              onPriceFilterChange={setPriceFilter}
+              sortBy={sortBy}
+              onSortByChange={setSortBy}
+              tipsterSearch={tipsterSearch}
+              onTipsterSearchChange={setTipsterSearch}
+              debouncedTipster={debouncedTipster}
+              showFollowingSort={followedTipsterUsernames.size > 0}
+              hasActiveFilters={priceFilter !== 'all' || sortBy !== 'newest' || !!debouncedTipster}
+              onClear={() => {
+                setPriceFilter('all');
+                setSortBy('newest');
+                setTipsterSearch('');
+              }}
+              labels={{
+                filterPrice: t('marketplace.filter_price'),
+                sortBy: t('marketplace.sort_by'),
+                all: t('common.all'),
+                free: t('marketplace.filter_free_only'),
+                paid: t('marketplace.filter_paid_only'),
+                sold: t('marketplace.filter_sold_only'),
+                sortNewest: t('marketplace.sort_newest_first'),
+                sortFollowing: t('marketplace.sort_following_only'),
+                sortPriceAsc: t('marketplace.sort_price_asc'),
+                sortPriceDesc: t('marketplace.sort_price_desc'),
+                sortRank: t('marketplace.sort_tipster_rank'),
+                tipsterSearch: t('marketplace.tipster_search_label'),
+                tipsterPlaceholder: t('marketplace.tipster_search_placeholder'),
+                tipsterSearching: t('marketplace.tipster_search_loading'),
+                moreFilters: t('marketplace.sort_by'),
+                clearFilters: t('marketplace.clear_filters'),
+                done: t('common.close'),
+              }}
+            />
           )}
 
           {loading && (
@@ -709,6 +689,7 @@ export default function MarketplacePage() {
             </div>
           )}
         </div>
+        </PullToRefresh>
       </div>
     </DashboardShell>
   );

@@ -180,7 +180,7 @@ function LoginForm() {
                   <div className="w-full border-t border-[var(--border)]" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-3 bg-white text-[var(--text-muted)]">{t('auth.or_continue_with')}</span>
+                  <span className="px-3 bg-[var(--card)] text-[var(--text-muted)]">{t('auth.or_continue_with')}</span>
                 </div>
               </div>
               <GoogleSignInButton variant="signin" redirect={oauthRedirect} className="mb-4" disabled={loading} />

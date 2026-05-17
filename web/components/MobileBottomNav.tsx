@@ -1,10 +1,11 @@
 'use client';
 
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
+import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 type NavItemId = 'home' | 'marketplace' | 'tipsters' | 'create' | 'subscribe';
 
 interface NavItem {
@@ -53,14 +54,20 @@ function SubscribeIcon({ active }: { active?: boolean }) {
   );
 }
 
-/** Touch nav: visible below xl (1280px). Hidden on laptop/desktop — they use the full header. Portaled to document.body so position:fixed pins to the viewport (avoids “floating” mid-page if a parent uses transform). */
-const NAV_ITEMS: NavItem[] = [
-  { id: 'home', href: '/', labelKey: 'header.home', primary: false },
-  { id: 'marketplace', href: '/marketplace', labelKey: 'nav.bottom_picks', primary: false },
-  { id: 'tipsters', href: '/tipsters', labelKey: 'nav.tipsters', primary: false },
-  { id: 'create', href: '/create-pick', labelKey: 'nav.pick_tab', primary: true },
-  { id: 'subscribe', href: '/subscriptions/marketplace', labelKey: 'nav.bottom_subscribe', primary: false },
-];
+function buildNavItems(signedIn: boolean): NavItem[] {
+  return [
+    {
+      id: 'home',
+      href: signedIn ? '/dashboard' : '/',
+      labelKey: signedIn ? 'nav.dashboard' : 'header.home',
+      primary: false,
+    },
+    { id: 'marketplace', href: '/marketplace', labelKey: 'nav.bottom_picks', primary: false },
+    { id: 'tipsters', href: '/tipsters', labelKey: 'nav.tipsters', primary: false },
+    { id: 'create', href: '/create-pick', labelKey: 'nav.pick_tab', primary: true },
+    { id: 'subscribe', href: '/subscriptions/marketplace', labelKey: 'nav.bottom_subscribe', primary: false },
+  ];
+}
 
 const ICONS: Record<NavItemId, (p: { active?: boolean }) => JSX.Element> = {
   home: HomeIcon,
@@ -86,25 +93,43 @@ export function MobileBottomNav() {
   const pathname = usePathname();
   const { t } = useLanguage();
   const [mounted, setMounted] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
 
-  // useLayoutEffect: paint bottom nav on the first client frame (before paint).
-  // Headless/Play Store captures used to fire while `mounted` was still false, leaving a blank band above the real bottom inset.
-  useLayoutEffect(() => {
-    setMounted(true);
+  const syncAuth = useCallback(() => {
+    setSignedIn(typeof window !== 'undefined' && !!localStorage.getItem('token'));
   }, []);
 
+  useLayoutEffect(() => {
+    setMounted(true);
+    syncAuth();
+  }, [syncAuth]);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'token' || e.key === null) syncAuth();
+    };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener(AUTH_STORAGE_SYNC, syncAuth);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener(AUTH_STORAGE_SYNC, syncAuth);
+    };
+  }, [syncAuth]);
+
   if (!mounted || shouldHideNav(pathname)) return null;
+
+  const navItems = buildNavItems(signedIn);
 
   const nav = (
     <nav
       role="navigation"
       aria-label={t('a11y.bottom_tab_bar')}
-      className="fixed inset-x-0 bottom-0 z-50 xl:hidden bg-[var(--card)] border-t border-[var(--border)] shadow-[0_-4px_20px_rgba(0,0,0,0.07)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.35)]"
+      className="fixed inset-x-0 bottom-0 z-50 xl:hidden ios-chrome border-t shadow-[0_-1px_0_var(--separator)]"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       {/* Edge-to-edge docked tab bar (same bg + safe-area padding avoids a “floating” gap above the home indicator). */}
       <div className="flex w-full flex-nowrap items-stretch gap-0.5 px-0.5 min-h-[56px] py-1 max-sm:overflow-x-auto max-sm:overscroll-x-contain scrollbar-hide max-sm:snap-x max-sm:snap-mandatory sm:gap-1 sm:px-3">
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
             const active = isActive(pathname, item.href);
             const Icon = ICONS[item.id];
             /** Fixed slots on narrow phones (scroll if needed); equal flex columns on sm+ so items span the full bar. */

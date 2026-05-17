@@ -120,7 +120,7 @@ export default function MyPicksPage() {
   return (
     <DashboardShell>
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
-      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden">
+      <div className="min-h-[calc(100vh-8rem)] bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <div className="section-ux-dashboard-shell min-w-0 max-w-full">
           <PageHeader
             label={t('my_picks.title')}

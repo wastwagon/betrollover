@@ -4,7 +4,7 @@
   "description": "Verified tips for Football, Basketball, Rugby & more. Escrow protection on every pick.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
+  "background_color": "#f2f2f7",
   "theme_color": "#047857",
   "orientation": "portrait-primary",
   "categories": ["sports", "finance", "entertainment"],

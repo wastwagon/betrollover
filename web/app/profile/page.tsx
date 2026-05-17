@@ -264,7 +264,7 @@ export default function ProfilePage() {
 
   return (
     <DashboardShell>
-      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden">
+      <div className="min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden bg-[var(--bg)]">
         <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full">
           <PageHeader
             label={t('profile.title')}
@@ -277,7 +277,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="space-y-4 min-w-0 max-w-full">
-            <form onSubmit={saveProfile} className="card-gradient rounded-2xl p-5 shadow-lg animate-fade-in-up animate-delay-100 min-w-0">
+            <form onSubmit={saveProfile} className="ios-grouped-section p-5 min-w-0">
               <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('profile.account')}</h2>
               <div className="flex flex-col sm:flex-row gap-6 mb-6 min-w-0">
                 <div className="flex flex-col items-center gap-2 shrink-0">
@@ -381,7 +381,7 @@ export default function ProfilePage() {
               </div>
             </form>
 
-          <form onSubmit={changePassword} className="card-gradient rounded-2xl p-5 shadow-lg animate-fade-in-up animate-delay-200 min-w-0">
+          <form onSubmit={changePassword} className="ios-grouped-section p-5 min-w-0">
             <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('profile.change_password')}</h2>
             <div className="space-y-3">
               <div>
@@ -426,7 +426,7 @@ export default function ProfilePage() {
             </div>
           </form>
 
-          <div className="card-gradient rounded-2xl p-5 shadow-lg animate-fade-in-up animate-delay-250 min-w-0">
+          <div className="ios-grouped-section p-5 min-w-0">
             <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('profile.logout_all_devices')}</h2>
             <p className="text-sm text-[var(--text-muted)] mb-4">{t('profile.logout_all_devices_hint')}</p>
             <button
@@ -439,7 +439,7 @@ export default function ProfilePage() {
             </button>
           </div>
 
-          <form onSubmit={deleteAccount} className="card-gradient rounded-2xl p-5 shadow-lg border border-red-200 dark:border-red-900/50 animate-fade-in-up animate-delay-300 min-w-0">
+          <form onSubmit={deleteAccount} className="ios-grouped-section p-5 min-w-0 border border-[var(--destructive)]/30">
             <h2 className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider mb-3">{t('profile.delete_account')}</h2>
             <p className="text-sm text-[var(--text-muted)] mb-4">{t('profile.delete_account_warning')}</p>
             <div className="space-y-3">

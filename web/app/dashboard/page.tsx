@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useCallback, useEffect, useState, Suspense } from 'react';
 import { useT } from '@/context/LanguageContext';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -17,6 +17,8 @@ import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 import { PickCard } from '@/components/PickCard';
 import { useCurrency } from '@/context/CurrencyContext';
 import { usePendingWithdrawalCount } from '@/hooks/usePendingWithdrawalCount';
+import { PullToRefresh } from '@/components/ios/PullToRefresh';
+import { IconStar } from '@/components/ios/icons';
 
 interface FollowedTipster {
   id: number;
@@ -278,6 +280,67 @@ function DashboardContent() {
     void initAuth();
   }, [router]);
 
+  const refreshDashboard = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token || !user) return;
+    const headers = { Authorization: `Bearer ${token}` };
+    const apiUrl = getApiUrl();
+    const isAdmin = user.role === 'admin';
+    try {
+      const [s, ts, wallet, thresholds, purchasedData, feedData, vipFeedData, followingData, notifData, quota] =
+        await Promise.all([
+          isAdmin ? fetch(`${apiUrl}/admin/stats`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null) : null,
+          fetch(`${apiUrl}/tipster/stats`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+          fetch(`${apiUrl}/wallet/balance`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+          fetch(`${apiUrl}/tipster/selling-thresholds`, { cache: 'no-store' })
+            .then((r) => (r.ok ? r.json() : null))
+            .catch(() => null)
+            .then((th) => parseSellingThresholds(th)),
+          fetch(`${apiUrl}/accumulators/purchased`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+          fetch(`${apiUrl}/tipsters/feed?limit=10`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+          fetch(`${apiUrl}/accumulators/subscription-feed?limit=8`, { headers })
+            .then((r) => (r.ok ? r.json().then((d: { items?: FeedPick[] }) => d?.items ?? []) : []))
+            .catch(() => []),
+          fetch(`${apiUrl}/tipsters/me/following`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+          fetch(`${apiUrl}/notifications?limit=50`, { headers }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+          fetch(`${apiUrl}/accumulators/daily-coupon-quota`, { headers, cache: 'no-store' })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((j) => parseDailyCouponQuota(j))
+            .catch(() => null),
+        ]);
+      if (isAdmin) setStats(s || {});
+      setTipsterStats(ts || { totalPicks: 0, wonPicks: 0, lostPicks: 0, winRate: 0, totalEarnings: 0, roi: 0 });
+      if (wallet) setWalletBalance(Number(wallet.balance));
+      setMinimumROI(thresholds.minimumROI);
+      setMinimumWinRate(thresholds.minimumWinRate);
+      const purchasesList = Array.isArray(purchasedData) ? purchasedData : [];
+      setPurchases(purchasesList);
+      const totalSpent = purchasesList.reduce(
+        (sum: number, p: Purchase) => sum + (p.pick?.result === 'won' ? Number(p.purchasePrice || 0) : 0),
+        0,
+      );
+      const active = purchasesList.filter(
+        (p: Purchase) => p.pick && p.pick.status === 'active' && p.pick.result === 'pending',
+      ).length;
+      const pendingEscrowAmount = purchasesList.reduce(
+        (sum: number, p: Purchase) =>
+          sum + (p.pick?.status === 'active' && p.pick?.result === 'pending' ? Number(p.purchasePrice || 0) : 0),
+        0,
+      );
+      setPurchaseStats({ total: purchasesList.length, totalSpent, active, pendingEscrowAmount });
+      setFeedPicks(Array.isArray(feedData) ? feedData : []);
+      setVipFeedPicks(Array.isArray(vipFeedData) ? vipFeedData : []);
+      setFollowing(Array.isArray(followingData) ? followingData : []);
+      const notifList = Array.isArray(notifData) ? notifData : [];
+      setUnreadNotifications(
+        notifList.filter((n: { isRead?: boolean; read?: boolean }) => !(n.isRead ?? n.read ?? false)).length,
+      );
+      setDailyQuota(quota);
+    } catch {
+      /* noop */
+    }
+  }, [user]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] relative overflow-x-hidden w-full min-w-0 max-w-full">
@@ -520,7 +583,8 @@ function DashboardContent() {
   return (
     <DashboardShell>
       {/* Premium dashboard: mobile-first background and layout */}
-      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] relative">
+      <div className="min-h-[calc(100vh-8rem)] bg-[var(--bg)] relative">
+        <PullToRefresh onRefresh={refreshDashboard} disabled={loading}>
         <div className="section-ux-dashboard-shell-spacious">
           <PageHeader
             label={t('dashboard.tipster_label')}
@@ -538,7 +602,9 @@ function DashboardContent() {
             className="mb-6 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/50 dark:to-teal-950/50 hover:shadow-md transition-shadow"
           >
             <div className="flex items-start gap-4 min-w-0 flex-1">
-              <span className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-2xl flex-shrink-0">🎁</span>
+              <span className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0 text-emerald-600 dark:text-emerald-400">
+                <IconStar className="w-6 h-6" />
+              </span>
               <div className="min-w-0 flex-1">
                 <span className="font-semibold text-[var(--text)] block">{t('dashboard.invite')}</span>
                 <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_invite_desc')} — {t('dashboard.invite_cta_short')}</span>
@@ -1240,6 +1306,7 @@ function DashboardContent() {
             </div>
           </section>
         </div>
+        </PullToRefresh>
       </div>
     </DashboardShell>
   );

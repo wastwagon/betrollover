@@ -12,6 +12,7 @@ import { tipsterRankBadgeClass, tipsterRankBadgeContent } from '@/lib/tipster-ra
 import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { BookingCodeCopyBlock } from '@/components/BookingCodeCopyBlock';
+import { BottomSheet } from '@/components/ios/BottomSheet';
 
 interface Pick {
   id?: number;
@@ -490,27 +491,13 @@ export function PickCard({
         </div>
       </article>
 
-      {/* Details Modal (Lightbox) */}
-      {showDetailsModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={() => setShowDetailsModal(false)}
-        >
-          <div
-            className="bg-[var(--card)] rounded-2xl shadow-2xl max-w-2xl w-full min-w-0 max-h-[90vh] overflow-auto border border-[var(--border)]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 bg-[var(--card)] border-b border-[var(--border)] px-4 sm:px-6 py-4 flex items-center justify-between gap-3 z-10 min-w-0">
-              <h3 className="text-base font-semibold text-[var(--text)] min-w-0 flex-1 pr-2">{t('pick_card.pick_details')}</h3>
-              <button
-                type="button"
-                onClick={() => setShowDetailsModal(false)}
-                className="text-[var(--text-muted)] hover:text-[var(--text)] text-2xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-            <div className="p-6">
+      <BottomSheet
+        open={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+        title={t('pick_card.pick_details')}
+        maxHeightClass="max-h-[min(92dvh,800px)]"
+      >
+            <div className="p-4 sm:p-6">
               {/* Tipster Info */}
               {tipster && (
                 <div className="mb-6 pb-6 border-b border-[var(--border)]">
@@ -637,56 +624,34 @@ export function PickCard({
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      )}
+      </BottomSheet>
 
-      {/* Unveil Modal (After Purchase) */}
-      {(showUnveilModal || showUnveil) && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn"
-          onClick={() => {
-            setShowUnveilModal(false);
-            if (onUnveilClose) onUnveilClose();
-          }}
-        >
-          <div
-            className="bg-gradient-to-br from-emerald-50 to-green-100 dark:from-emerald-900/20 dark:to-green-900/20 rounded-2xl shadow-2xl max-w-2xl w-full min-w-0 max-h-[90vh] overflow-auto border-2 border-emerald-300 dark:border-emerald-700"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 bg-gradient-to-r from-emerald-500 to-green-600 text-white px-4 sm:px-6 py-4 flex items-center justify-between gap-3 z-10 rounded-t-2xl min-w-0">
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                <span className="text-2xl sm:text-3xl shrink-0">🎉</span>
-                <h3 className="text-base font-semibold min-w-0">{t('pick_card.pick_unlocked')}</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowUnveilModal(false);
-                  if (onUnveilClose) onUnveilClose();
-                }}
-                className="text-white hover:text-gray-200 text-2xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-            <div className="p-6">
+      <BottomSheet
+        open={showUnveilModal || showUnveil}
+        onClose={() => {
+          setShowUnveilModal(false);
+          if (onUnveilClose) onUnveilClose();
+        }}
+        title={t('pick_card.pick_unlocked')}
+        maxHeightClass="max-h-[min(92dvh,800px)]"
+      >
+            <div className="p-4 sm:p-6">
               {/* Success Message */}
               <div className="text-center mb-6">
-                <p className="text-lg text-gray-700 dark:text-gray-300 mb-2">
+                <p className="text-base text-[var(--text)] mb-2">
                   {t('pick_card.pick_unlocked_msg')}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {price > 0 && (
-                    <>{t('pick_card.funds_escrow_note')}</>
-                  )}
-                </p>
+                {price > 0 ? (
+                  <p className="text-sm text-[var(--text-muted)]">
+                    {t('pick_card.funds_escrow_note')}
+                  </p>
+                ) : null}
               </div>
 
               {/* Coupon Details */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 mb-6">
+              <div className="ios-grouped-section p-4 sm:p-5 mb-6">
                 {tipster && (
-                  <div className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+                  <div className="mb-4 pb-4 border-b border-[var(--separator)]">
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold ${tipsterRankBadgeClass(tipster.rank)}`}>
                         {tipsterRankBadgeContent(tipster.rank)}
@@ -723,7 +688,7 @@ export function PickCard({
                       const hasScore = p.homeScore != null && p.awayScore != null;
                       const pickResult = p.result || p.status;
                       return (
-                        <li key={i} className="flex justify-between items-start gap-2 min-w-0 p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
+                        <li key={i} className="flex justify-between items-start gap-2 min-w-0 p-2 bg-[var(--fill-secondary)] rounded-lg">
                           <div className="flex-1 pr-2 sm:pr-4 min-w-0">
                             <span className="text-sm text-[var(--text)] font-medium flex items-center gap-2 min-w-0">
                               {(p.homeTeamLogo || p.awayTeamLogo || p.homeCountryCode || p.awayCountryCode) && (
@@ -765,14 +730,13 @@ export function PickCard({
                 </div>
               </div>
 
-              {/* Escrow Info */}
               {price > 0 && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6">
+                <div className="bg-[var(--fill-secondary)] border border-[var(--separator)] rounded-xl p-4 mb-6">
                   <div className="flex items-start gap-3">
-                    <span className="text-xl">🔒</span>
+                    <span className="text-sm font-semibold text-[var(--primary)]">Escrow</span>
                     <div>
-                      <p className="font-semibold text-blue-900 dark:text-blue-200 mb-1">{t('pick_card.funds_in_escrow')}</p>
-                      <p className="text-sm text-blue-700 dark:text-blue-300">
+                      <p className="font-semibold text-[var(--text)] mb-1">{t('pick_card.funds_in_escrow')}</p>
+                      <p className="text-sm text-[var(--text-muted)]">
                         {t('pick_card.funds_escrow_desc', { amount: Number(price).toFixed(2) })}
                       </p>
                     </div>
@@ -794,15 +758,13 @@ export function PickCard({
                     setShowUnveilModal(false);
                     if (onUnveilClose) onUnveilClose();
                   }}
-                  className="px-6 py-3 rounded-lg font-semibold bg-gray-200 hover:bg-gray-300 text-gray-800 transition-colors"
+                  className="px-6 py-3 rounded-xl font-semibold bg-[var(--fill-secondary)] text-[var(--text)] hover:opacity-90 transition-opacity"
                 >
                   {t('pick_card.close')}
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+      </BottomSheet>
 
       <style jsx>{`
         @keyframes fadeIn {

@@ -21,6 +21,8 @@ import { useToast } from '@/hooks/useToast';
 import { PENDING_WITHDRAWALS_INVALIDATE } from '@/hooks/usePendingWithdrawalCount';
 import { SuccessToast } from '@/components/SuccessToast';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
+import { PullToRefresh } from '@/components/ios/PullToRefresh';
+import { GroupedListSection } from '@/components/ios/GroupedList';
 
 interface Transaction {
   id: number;
@@ -369,7 +371,8 @@ function WalletContent() {
 
   return (
     <DashboardShell>
-      <div className="dashboard-bg dashboard-pattern min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden">
+      <div className="min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden bg-[var(--bg)]">
+        <PullToRefresh onRefresh={() => { loadData(); }} disabled={loading}>
         <div className="section-ux-dashboard-shell min-w-0 max-w-full">
           <PageHeader
             label={t('wallet.title')}
@@ -413,8 +416,8 @@ function WalletContent() {
           {loading && <LoadingSkeleton count={2} variant="list" />}
           {!loading && (
             <div className="space-y-4 pb-6 min-w-0 max-w-full">
-              <div className="card-gradient rounded-2xl p-5 shadow-lg min-w-0">
-                <p className="text-xs text-[var(--text-muted)] mb-0.5 font-medium uppercase tracking-wider">{t('wallet.balance')}</p>
+              <div className="ios-grouped-section p-4 min-w-0">
+                <p className="text-xs text-[var(--text-muted)] mb-0.5 font-medium uppercase tracking-wide">{t('wallet.balance')}</p>
               <p className="text-xl sm:text-2xl font-semibold text-[var(--primary)]">
                 {format(Number(balance?.balance ?? 0)).primary}
               </p>
@@ -804,15 +807,14 @@ function WalletContent() {
               </div>
             )}
 
-            <div className="card-gradient rounded-2xl p-5 shadow-lg min-w-0">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-3 min-w-0">
-                <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider min-w-0">{t('wallet.recent_transactions')}</h2>
-                <Link href="/earnings" className="text-xs text-[var(--primary)] hover:underline w-fit shrink-0">{t('wallet.full_earnings')}</Link>
+            <GroupedListSection title={t('wallet.recent_transactions')} className="min-w-0">
+              <div className="flex justify-end px-4 pt-2">
+                <Link href="/earnings" className="text-xs text-[var(--primary)] hover:underline">{t('wallet.full_earnings')}</Link>
               </div>
               {transactions.length === 0 ? (
-                <p className="text-[var(--text-muted)] text-sm">{t('wallet.no_transactions')}</p>
+                <p className="px-4 py-6 text-[var(--text-muted)] text-sm">{t('wallet.no_transactions')}</p>
               ) : (
-                <ul className="space-y-1">
+                <ul className="divide-y divide-[var(--separator)]">
                   {transactions.map((tx) => {
                     const isRealCommission = tx.type === 'commission' && (tx.reference?.startsWith('commission-') ?? false);
                     const isMisclassifiedCredit = tx.type === 'commission' && !isRealCommission && Number(tx.amount) > 0;
@@ -823,9 +825,9 @@ function WalletContent() {
                     const TX_LABEL: Record<string, string> = { payout: t('wallet.net_payout'), commission: t('wallet.commission'), refund: t('wallet.refund'), deposit: t('wallet.deposit'), withdrawal: t('wallet.withdrawal'), purchase: t('wallet.purchase'), credit: t('wallet.credit'), adjustment: t('wallet.adjustment') };
                     const refundFromPick = displayType === 'refund' && (tx.reference?.startsWith('pick-') ?? false);
                     return (
-                      <li key={tx.id} className={`flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 py-3 sm:py-2 border-b border-[var(--border)] last:border-0 ${isCommission ? 'opacity-70' : ''}`}>
+                      <li key={tx.id} className={`ios-list-row flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 px-4 py-3 ${isCommission ? 'opacity-70' : ''}`}>
                         <div className="flex items-start gap-3 min-w-0 flex-1">
-                          <span className="text-base w-6 text-center shrink-0 pt-0.5">{TX_ICON[displayType] ?? '↔'}</span>
+                          <span className="text-xs font-semibold w-8 text-center shrink-0 pt-0.5 text-[var(--primary)]">{displayType.slice(0, 3).toUpperCase()}</span>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-sm text-[var(--text)]">{TX_LABEL[displayType] ?? displayType}</p>
                             <p className="text-xs text-[var(--text-muted)] truncate">{tx.description || new Date(tx.createdAt).toLocaleDateString(locale, { day:'numeric', month:'short' })}</p>
@@ -850,15 +852,16 @@ function WalletContent() {
                 </ul>
               )}
               {transactions.some(tx => tx.type === 'commission' && (tx.reference?.startsWith('commission-') ?? false)) && (
-                <p className="text-[10px] text-[var(--text-muted)] mt-3 pt-2 border-t border-[var(--border)]">
+                <p className="text-[10px] text-[var(--text-muted)] mx-4 mb-3 pt-2 border-t border-[var(--separator)]">
                   {t('wallet.platform_fee_note')}
-                  <Link href="/earnings" className="ml-1 text-amber-600 hover:underline">{t('wallet.view_full_breakdown')}</Link>
+                  <Link href="/earnings" className="ml-1 text-[var(--primary)] hover:underline">{t('wallet.view_full_breakdown')}</Link>
                 </p>
               )}
-            </div>
+            </GroupedListSection>
           </div>
         )}
         </div>
+        </PullToRefresh>
       </div>
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
     </DashboardShell>
