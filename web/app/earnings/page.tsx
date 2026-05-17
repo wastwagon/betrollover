@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -10,6 +10,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 import { getApiUrl } from '@/lib/site-config';
 import { NavBar } from '@/components/ios/NavBar';
+import { PullToRefresh } from '@/components/ios/PullToRefresh';
 
 // Load chart lazily — avoids SSR issues with recharts
 const AreaChart    = dynamic(() => import('recharts').then(m => m.AreaChart), { ssr: false });
@@ -68,17 +69,6 @@ const TX_COLOR: Record<string, string> = {
   adjustment: 'text-red-500',
 };
 
-const TX_ICON: Record<string, string> = {
-  payout:     '💰',
-  commission: '🏛',
-  refund:     '↩',
-  deposit:    '⬆',
-  withdrawal: '💸',
-  purchase:   '🛒',
-  credit:     '✨',
-  adjustment: '⚙️',
-};
-
 const RESULT_STYLE: Record<string, string> = {
   won:     'bg-emerald-100 text-emerald-700',
   lost:    'bg-red-100 text-red-700',
@@ -112,31 +102,43 @@ export default function EarningsPage() {
 
   const [reviewSummary, setReviewSummary] = useState<{ avg: number; total: number } | null>(null);
 
-  useEffect(() => {
+  const loadEarnings = useCallback(async () => {
     const token = localStorage.getItem('token');
-    if (!token) { router.push('/login?redirect=/earnings'); return; }
+    if (!token) {
+      router.push('/login?redirect=/earnings');
+      return;
+    }
     const h = { Authorization: `Bearer ${token}` };
-
-    // Decode user id from JWT for reviews lookup
     let userId: number | null = null;
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       userId = payload.sub ?? null;
-    } catch { /* ignore */ }
-
-    Promise.all([
-      fetch(`${getApiUrl()}/wallet/balance`, { headers: h }).then(r => r.ok ? r.json() : null),
-      fetch(`${getApiUrl()}/wallet/transactions?limit=100`, { headers: h }).then(r => r.ok ? r.json() : []),
-      fetch(`${getApiUrl()}/accumulators/my`, { headers: h }).then(r => r.ok ? r.json() : []),
-      userId ? fetch(`${getApiUrl()}/reviews/tipster/${userId}?limit=1`).then(r => r.ok ? r.json() : null) : Promise.resolve(null),
-    ]).then(([balData, txData, picksPayload, revData]) => {
+    } catch {
+      /* ignore */
+    }
+    try {
+      const [balData, txData, picksPayload, revData] = await Promise.all([
+        fetch(`${getApiUrl()}/wallet/balance`, { headers: h }).then((r) => (r.ok ? r.json() : null)),
+        fetch(`${getApiUrl()}/wallet/transactions?limit=100`, { headers: h }).then((r) => (r.ok ? r.json() : [])),
+        fetch(`${getApiUrl()}/accumulators/my`, { headers: h }).then((r) => (r.ok ? r.json() : [])),
+        userId
+          ? fetch(`${getApiUrl()}/reviews/tipster/${userId}?limit=1`).then((r) => (r.ok ? r.json() : null))
+          : Promise.resolve(null),
+      ]);
       if (balData) setBalance(Number(balData.balance));
-      setTransactions(Array.isArray(txData) ? txData : []);
       setTransactions(Array.isArray(txData) ? txData : (txData?.items ?? []));
       setPublishedPicks(Array.isArray(picksPayload) ? picksPayload : (picksPayload?.items ?? []));
       if (revData?.total > 0) setReviewSummary({ avg: revData.avg, total: revData.total });
-    }).catch(() => {}).finally(() => setLoading(false));
+    } catch {
+      /* noop */
+    } finally {
+      setLoading(false);
+    }
   }, [router]);
+
+  useEffect(() => {
+    void loadEarnings();
+  }, [loadEarnings]);
 
   // Net payouts credited to wallet (after commission deduction)
   const totalEarned = useMemo(() =>
@@ -231,6 +233,7 @@ export default function EarningsPage() {
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
       <main className="section-ux-page w-full min-w-0 max-w-full">
+        <PullToRefresh onRefresh={loadEarnings} disabled={loading}>
         <div className="lg:hidden -mx-4 sm:mx-0 mb-3">
           <NavBar
             title={t('earnings.title')}
@@ -507,8 +510,10 @@ export default function EarningsPage() {
                 const amtSign = isPlatformFee ? '−' : rawAmt > 0 ? '+' : '−';
                 return (
                   <li key={tx.id} className={`flex items-center gap-4 px-5 py-3.5 min-w-0 ${isPlatformFee ? 'bg-amber-50/40 dark:bg-amber-900/5' : ''}`}>
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base bg-[var(--bg)] border border-[var(--border)]">
-                      {TX_ICON[displayType] ?? '↔'}
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-[var(--fill-secondary)] border border-[var(--separator)]">
+                      <span className={`text-xs font-bold uppercase ${colorClass}`}>
+                        {(displayType.slice(0, 1) || '?')}
+                      </span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-[var(--text)] truncate">
@@ -547,6 +552,7 @@ export default function EarningsPage() {
             </ul>
           )}
         </div>
+        </PullToRefresh>
       </main>
     </div>
   );

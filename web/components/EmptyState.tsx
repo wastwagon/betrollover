@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { IconPicks } from '@/components/ios/icons';
 
 export function EmptyState({
   title,
@@ -9,7 +10,7 @@ export function EmptyState({
   actionLabel,
   actionHref,
   onActionClick,
-  icon = '📋',
+  icon,
   imageSrc,
   imageAlt = '',
 }: {
@@ -18,6 +19,7 @@ export function EmptyState({
   actionLabel: string;
   actionHref?: string;
   onActionClick?: () => void;
+  /** Omit for default SVG; pass a string only for legacy emoji (discouraged). */
   icon?: string;
   /** Optional marketing / empty-state illustration (served from `/public`). */
   imageSrc?: string;
@@ -35,8 +37,10 @@ export function EmptyState({
           height={200}
           className="mb-6 max-w-full h-auto rounded-xl object-contain border border-[var(--border)] bg-[var(--card)]/50"
         />
-      ) : (
+      ) : icon ? (
         <span className="text-5xl mb-6" aria-hidden>{icon}</span>
+      ) : (
+        <IconPicks className="w-14 h-14 mb-6 text-[var(--text-muted)] opacity-50" aria-hidden />
       )}
       <h3 className="text-xl font-semibold text-[var(--text)] mb-3 min-w-0 max-w-full break-words px-1">{title}</h3>
       <p className="text-[var(--text-muted)] max-w-full sm:max-w-md mb-10 leading-relaxed min-w-0 break-words px-1">{description}</p>

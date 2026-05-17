@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useT } from '@/context/LanguageContext';
 import { DashboardShell } from '@/components/DashboardShell';
+import { NavBar } from '@/components/ios/NavBar';
 import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
@@ -777,11 +778,21 @@ export default function CreatePickPage() {
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <div className="min-h-[calc(100vh-8rem)] bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <div className="section-ux-dashboard-shell min-w-0 max-w-full">
-          <PageHeader
-            label={t('create_pick.title')}
-            title={t('create_pick.title')}
-            tagline={t('create_pick.tagline')}
-          />
+          <div className="lg:hidden -mx-1 mb-3">
+            <NavBar
+              title={t('create_pick.title')}
+              backHref="/dashboard"
+              backLabel={t('nav.dashboard')}
+              sticky={false}
+            />
+          </div>
+          <div className="hidden lg:block">
+            <PageHeader
+              label={t('create_pick.title')}
+              title={t('create_pick.title')}
+              tagline={t('create_pick.tagline')}
+            />
+          </div>
           {dailyQuota && (
             <div
               className={`mb-4 rounded-xl border px-4 py-3 text-sm ${
@@ -821,20 +832,20 @@ export default function CreatePickPage() {
           <div className="mb-4 w-full min-w-0 overflow-hidden">
             <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide touch-pan-x [-webkit-overflow-scrolling:touch]">
             {([
-              { key: 'football',          label: `⚽ ${t('create_pick.sport_football')}` },
-              { key: 'basketball',        label: `🏀 ${t('create_pick.sport_basketball')}` },
-              { key: 'rugby',             label: `🏉 ${t('create_pick.sport_rugby')}` },
-              { key: 'mma',               label: `🥊 ${t('create_pick.sport_mma')}` },
-              { key: 'volleyball',        label: `🏐 ${t('create_pick.sport_volleyball')}` },
-              { key: 'hockey',            label: `🏒 ${t('create_pick.sport_hockey')}` },
-              { key: 'american_football', label: `🏈 ${t('create_pick.sport_american_football')}` },
-              { key: 'tennis',            label: `🎾 ${t('create_pick.sport_tennis')}` },
+              { key: 'football', label: t('create_pick.sport_football') },
+              { key: 'basketball', label: t('create_pick.sport_basketball') },
+              { key: 'rugby', label: t('create_pick.sport_rugby') },
+              { key: 'mma', label: t('create_pick.sport_mma') },
+              { key: 'volleyball', label: t('create_pick.sport_volleyball') },
+              { key: 'hockey', label: t('create_pick.sport_hockey') },
+              { key: 'american_football', label: t('create_pick.sport_american_football') },
+              { key: 'tennis', label: t('create_pick.sport_tennis') },
             ] as { key: typeof sport; label: string }[]).map(({ key, label }) => (
               <button
                 key={key}
                 type="button"
                 onClick={() => setSport(key)}
-                className={`shrink-0 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                className={`shrink-0 px-4 py-2 rounded-full font-medium text-sm transition-colors ${
                   sport === key
                     ? 'bg-[var(--primary)] text-white shadow-md'
                     : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
@@ -1148,7 +1159,6 @@ export default function CreatePickPage() {
                         }
                       : undefined
                   }
-                  icon="⚽"
                 />
               </div>
             )}
@@ -1159,7 +1169,6 @@ export default function CreatePickPage() {
                   description="All shown fixtures have already started or are live. Check back tomorrow for new matches."
                   actionLabel="Select Tomorrow"
                   actionHref="#"
-                  icon="⏰"
                 />
               </div>
             )}

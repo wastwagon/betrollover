@@ -91,6 +91,6 @@ This keeps the site safe to deploy step by step; you can stop after Phase 1 and 
 
 ---
 
-## `DashboardBottomNav` (deprecated)
+## `DashboardBottomNav` (removed)
 
-`web/components/DashboardBottomNav.tsx` is an older bottom bar with fold sheets for picks and account. It is **not** mounted in the root layout. Production mobile navigation uses **`MobileBottomNav`** plus **`MobileAccountSheet`** in `UnifiedHeader`. Keep `DashboardBottomNav` only as reference unless reintroducing fold-sheet UX deliberately.
+The legacy fold-sheet bottom bar was removed from the codebase. Production mobile navigation uses **`MobileBottomNav`** plus **`MobileAccountSheet`** in `UnifiedHeader`.

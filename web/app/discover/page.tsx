@@ -10,6 +10,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
 import { getApiUrl } from '@/lib/site-config';
+import { IconBook } from '@/components/ios/icons';
 
 const NEWS_API = '/api/news';
 
@@ -432,7 +433,7 @@ function GuidesTab({ sport }: { sport: NewsSport | '' }) {
           </>
         ) : (
           <>
-            <div className="text-5xl mb-4">📚</div>
+            <IconBook className="w-14 h-14 mx-auto mb-4 text-[var(--text-muted)] opacity-50" aria-hidden />
             <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('discover.guides_coming_generic')}</h3>
             <p className="text-[var(--text-muted)] max-w-md mx-auto">
               {t('discover.guides_coming_generic_desc')}

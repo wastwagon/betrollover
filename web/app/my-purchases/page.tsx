@@ -367,7 +367,6 @@ export default function MyPurchasesPage() {
                 description={t('my_purchases.no_purchases_desc')}
                 actionLabel={t('my_purchases.browse_marketplace')}
                 actionHref="/marketplace"
-                icon="🛒"
               />
               <div className="pb-8 px-4 sm:px-8 -mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2">
                 <Link
@@ -393,7 +392,6 @@ export default function MyPurchasesPage() {
                 description={t('my_purchases.no_pick_purchases_desc')}
                 actionLabel={t('my_purchases.browse_marketplace')}
                 actionHref="/marketplace"
-                icon="🛒"
               />
               <div className="pb-8 px-4 sm:px-8 -mt-6 flex justify-center">
                 <Link
@@ -416,7 +414,6 @@ export default function MyPurchasesPage() {
                   setResultFilter('all');
                   setSportFilter('all');
                 }}
-                icon="🔍"
               />
             </div>
           )}

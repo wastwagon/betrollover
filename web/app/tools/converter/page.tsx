@@ -54,7 +54,7 @@ export default function ConverterPage() {
         </div>
 
         {/* Input */}
-        <div className="card-gradient rounded-2xl p-6 mb-6 shadow-sm">
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 mb-6 shadow-sm">
           <label className="block text-sm font-semibold text-[var(--text-muted)] mb-2 uppercase tracking-wider">
             Amount in GHS (₵)
           </label>
@@ -77,7 +77,7 @@ export default function ConverterPage() {
           {rows.map((c) => (
             <div
               key={c.code}
-              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 card-gradient rounded-xl border border-[var(--border)] hover:border-[var(--primary)] transition-colors min-w-0"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border border-[var(--border)] bg-[var(--card)] hover:border-[var(--primary)] transition-colors min-w-0"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-2xl">{c.flag}</span>

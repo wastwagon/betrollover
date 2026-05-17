@@ -630,7 +630,6 @@ export default function MarketplacePage() {
                   setSortBy('newest');
                   setTipsterSearch('');
                 }}
-                icon="🔍"
               />
             </div>
           )}

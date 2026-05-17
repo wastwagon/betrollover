@@ -269,6 +269,8 @@ export default function TipsterProfilePage() {
         body: JSON.stringify({ packageId }),
       });
       if (res.ok) {
+        const { hapticSuccess } = await import('@/lib/haptic');
+        hapticSuccess();
         showSuccess(t('tipster.toast_subscribed', { name: pkg.name }));
         setSubscribedPackageIds((prev) => new Set(Array.from(prev).concat(packageId)));
         const walletRes = await fetch(`${getApiUrl()}/wallet/balance`, { headers: { Authorization: `Bearer ${token}` } });

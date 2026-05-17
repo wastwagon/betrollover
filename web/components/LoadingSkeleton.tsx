@@ -28,7 +28,9 @@ export function LoadingSkeleton({
         <div
           key={i}
           className={
-            isCards ? 'card-gradient rounded-xl p-4 md:p-5' : 'card-gradient rounded-2xl p-4 md:p-5'
+            isCards
+              ? 'rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 md:p-5'
+              : 'rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 md:p-5'
           }
         >
           <div className="flex items-center gap-2 mb-3">

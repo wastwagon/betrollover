@@ -108,7 +108,7 @@
 
 ### What’s in place
 - **MobileBottomNav**: `style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}` so the bar sits above the home indicator.
-- **DashboardBottomNav** and **create-pick** slip sheet: `env(safe-area-inset-bottom)` in padding.
+- **MobileBottomNav** and **create-pick** slip sheet: `env(safe-area-inset-bottom)` in padding.
 - **globals.css**: `.safe-area-inset-top` and `.safe-area-inset-bottom` utility classes.
 - **DashboardHeader**: Uses `safe-area-inset-top` class.
 

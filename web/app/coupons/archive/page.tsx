@@ -12,6 +12,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { NavBar } from '@/components/ios/NavBar';
+import { PullToRefresh } from '@/components/ios/PullToRefresh';
 
 interface Pick {
   id?: number;
@@ -302,6 +303,12 @@ export default function CouponsArchivePage() {
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
       <main className="section-ux-page-wide w-full min-w-0 max-w-full">
+        <PullToRefresh
+          onRefresh={async () => {
+            await loadArchive({ withWallet: true });
+          }}
+          disabled={loading}
+        >
         <div className="lg:hidden -mx-4 sm:mx-0 mb-3">
           <NavBar
             title={t('picks.archive.page_title')}
@@ -518,6 +525,7 @@ export default function CouponsArchivePage() {
             ))}
           </div>
         )}
+        </PullToRefresh>
       </main>
       <AppFooter />
     </div>

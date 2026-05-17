@@ -22,6 +22,7 @@ import { PENDING_WITHDRAWALS_INVALIDATE } from '@/hooks/usePendingWithdrawalCoun
 import { SuccessToast } from '@/components/SuccessToast';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
+import { NavBar } from '@/components/ios/NavBar';
 import { GroupedListSection } from '@/components/ios/GroupedList';
 
 interface Transaction {
@@ -374,11 +375,21 @@ function WalletContent() {
       <div className="min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden bg-[var(--bg)]">
         <PullToRefresh onRefresh={() => { loadData(); }} disabled={loading}>
         <div className="section-ux-dashboard-shell min-w-0 max-w-full">
-          <PageHeader
-            label={t('wallet.title')}
-            title={t('wallet.title')}
-            tagline={t('wallet.tagline')}
-          />
+          <div className="lg:hidden -mx-1 mb-3">
+            <NavBar
+              title={t('wallet.title')}
+              backHref="/dashboard"
+              backLabel={t('nav.dashboard')}
+              sticky={false}
+            />
+          </div>
+          <div className="hidden lg:block">
+            <PageHeader
+              label={t('wallet.title')}
+              title={t('wallet.title')}
+              tagline={t('wallet.tagline')}
+            />
+          </div>
 
           <EscrowTrustCallout
             className="mb-4"
@@ -501,7 +512,7 @@ function WalletContent() {
             )}
 
             {canWithdraw && (
-              <div id="withdraw" className="card-gradient rounded-2xl p-5 shadow-lg scroll-mt-24 min-w-0">
+              <div id="withdraw" className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm scroll-mt-24 min-w-0">
                 <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{withdrawSectionTitle}</h2>
 
                 {/* Pending withdrawal warning */}
@@ -745,7 +756,7 @@ function WalletContent() {
 
             {/* Withdrawal history — anyone who can withdraw */}
             {canWithdraw && withdrawals.length > 0 && (
-              <div className="card-gradient rounded-2xl p-5 shadow-lg min-w-0">
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm min-w-0">
                 <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('wallet.withdrawal_history')}</h2>
                 <ul className="space-y-2">
                   {withdrawals.slice(0, 8).map((w) => {

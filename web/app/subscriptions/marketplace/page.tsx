@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
@@ -13,6 +13,8 @@ import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/sit
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { fetchSellingThresholds, type SellingThresholds, SELLING_THRESHOLDS_FALLBACK } from '@/lib/selling-thresholds';
 import { useT } from '@/context/LanguageContext';
+import { NavBar } from '@/components/ios/NavBar';
+import { PullToRefresh } from '@/components/ios/PullToRefresh';
 
 interface MarketplaceItem {
   package: {
@@ -80,14 +82,22 @@ export default function SubscriptionMarketplacePage() {
     void fetchSellingThresholds().then(setThresholds);
   }, []);
 
-  useEffect(() => {
+  const loadMarketplace = useCallback(async () => {
     const apiUrl = getApiUrl();
-    fetch(`${apiUrl}/subscriptions/marketplace?limit=48`)
-      .then((r) => (r.ok ? r.json() : { items: [] }))
-      .then((d) => setItems(Array.isArray(d?.items) ? d.items : []))
-      .catch(() => setItems([]))
-      .finally(() => setLoading(false));
+    try {
+      const r = await fetch(`${apiUrl}/subscriptions/marketplace?limit=48`);
+      const d = r.ok ? await r.json() : { items: [] };
+      setItems(Array.isArray(d?.items) ? d.items : []);
+    } catch {
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadMarketplace();
+  }, [loadMarketplace]);
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -110,11 +120,22 @@ export default function SubscriptionMarketplacePage() {
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
       <main className="section-ux-page w-full min-w-0">
-        <PageHeader
-          label={t('nav.subscription_marketplace')}
-          title={t('subscriptions.marketplace_title')}
-          tagline={t('subscriptions.marketplace_tagline')}
-        />
+        <PullToRefresh onRefresh={loadMarketplace} disabled={loading}>
+        <div className="lg:hidden -mx-4 sm:mx-0 mb-3">
+          <NavBar
+            title={t('subscriptions.marketplace_title')}
+            backHref="/subscriptions"
+            backLabel={t('nav.subscriptions')}
+            sticky={false}
+          />
+        </div>
+        <div className="hidden lg:block">
+          <PageHeader
+            label={t('nav.subscription_marketplace')}
+            title={t('subscriptions.marketplace_title')}
+            tagline={t('subscriptions.marketplace_tagline')}
+          />
+        </div>
         <EscrowTrustCallout
           className="mb-6"
           title={t('marketplace.trust_callout_title')}
@@ -159,7 +180,7 @@ export default function SubscriptionMarketplacePage() {
               return (
       <article
         key={pkg.id}
-        className="card-gradient rounded-2xl border border-[var(--border)] shadow-lg overflow-hidden flex flex-col w-full min-w-0 max-w-full hover:shadow-xl hover:-translate-y-px transition-[box-shadow,transform] duration-200 ease-out"
+        className="rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-sm overflow-hidden flex flex-col w-full min-w-0 max-w-full hover:shadow-md hover:-translate-y-px transition-[box-shadow,transform] duration-200 ease-out"
       >
                   <div className="p-4 sm:p-5 flex flex-col flex-1 min-w-0">
                     <div className="flex items-start gap-3 mb-3 min-w-0">
@@ -328,6 +349,7 @@ export default function SubscriptionMarketplacePage() {
             {t('subscriptions.marketplace_link_eval')}
           </Link>
         </div>
+        </PullToRefresh>
       </main>
       <AppFooter />
     </div>

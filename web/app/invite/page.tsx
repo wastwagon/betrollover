@@ -8,6 +8,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 import { useT } from '@/context/LanguageContext';
 import { getApiUrl } from '@/lib/site-config';
+import { NavBar } from '@/components/ios/NavBar';
+import { PullToRefresh } from '@/components/ios/PullToRefresh';
 
 interface Conversion {
   id: number;
@@ -70,11 +72,22 @@ export default function InvitePage() {
   return (
     <DashboardShell>
       <div className="section-ux-dashboard-shell max-w-2xl mx-auto w-full min-w-0 overflow-x-hidden px-4 sm:px-0">
-        <PageHeader
-          label={t('invite.grow_together')}
-          title={t('invite.invite_earn')}
-          tagline={t('invite.invite_desc', { amount: stats?.rewardPerReferral?.toFixed(2) ?? '5.00' })}
-        />
+        <PullToRefresh onRefresh={load} disabled={loading}>
+        <div className="lg:hidden -mx-1 mb-3">
+          <NavBar
+            title={t('invite.invite_earn')}
+            backHref="/dashboard"
+            backLabel={t('nav.dashboard')}
+            sticky={false}
+          />
+        </div>
+        <div className="hidden lg:block">
+          <PageHeader
+            label={t('invite.grow_together')}
+            title={t('invite.invite_earn')}
+            tagline={t('invite.invite_desc', { amount: stats?.rewardPerReferral?.toFixed(2) ?? '5.00' })}
+          />
+        </div>
 
         <div className="mb-6">
           <AdSlot zoneSlug="invite-full" fullWidth className="w-full max-w-3xl" />
@@ -200,6 +213,7 @@ export default function InvitePage() {
 
           </div>
         )}
+        </PullToRefresh>
       </div>
     </DashboardShell>
   );

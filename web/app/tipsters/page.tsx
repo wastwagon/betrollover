@@ -16,6 +16,8 @@ import { useT } from '@/context/LanguageContext';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
+import { IconPackage, IconTarget, IconTrophy } from '@/components/ios/icons';
+import { PullToRefresh } from '@/components/ios/PullToRefresh';
 
 type Period = 'all_time' | 'monthly' | 'weekly';
 type SportFilter = 'all' | 'football' | 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football';
@@ -163,6 +165,13 @@ export default function TipstersPage() {
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <UnifiedHeader />
       <main className="section-ux-page w-full min-w-0">
+        <PullToRefresh
+          onRefresh={() => {
+            fetchTipsters(search, sortBy, period, sportFilter);
+            return Promise.resolve();
+          }}
+          disabled={loading}
+        >
         <PageHeader
           label={t('nav.tipsters')}
           title={t('seo.tipsters_title').split(' | ')[0]}
@@ -178,20 +187,20 @@ export default function TipstersPage() {
             href="/leaderboard"
             className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
           >
-            <span aria-hidden>🏆</span> {t('nav.leaderboard')}
+            <IconTrophy className="w-4 h-4 shrink-0" aria-hidden /> {t('nav.leaderboard')}
           </Link>
           <Link
             href="/create-pick"
             className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--primary)]/50 bg-[var(--primary)]/10 text-sm font-medium text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors w-full sm:w-auto"
           >
-            <span aria-hidden>🎯</span> {t('nav.create_pick')}
+            <IconTarget className="w-4 h-4 shrink-0" aria-hidden /> {t('nav.create_pick')}
           </Link>
           {isSignedIn && (
             <Link
               href="/dashboard/subscription-packages"
               className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
             >
-              <span aria-hidden>📦</span> {t('tipster.subscription_packages')}
+              <IconPackage className="w-4 h-4 shrink-0" aria-hidden /> {t('tipster.subscription_packages')}
             </Link>
           )}
         </div>
@@ -199,14 +208,14 @@ export default function TipstersPage() {
           {/* Sport filter pills */}
           <div className="flex flex-nowrap sm:flex-wrap gap-2 mb-3 w-full min-w-0 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch] sm:mx-0 sm:px-0 sm:pb-0 sm:overflow-visible">
             {([
-              { key: 'all' as SportFilter,               icon: '🌍', labelKey: 'marketplace.filter_all_sports' },
-              { key: 'football' as SportFilter,          icon: '⚽', labelKey: 'nav.football' },
-              { key: 'basketball' as SportFilter,        icon: '🏀', labelKey: 'nav.basketball' },
-              { key: 'rugby' as SportFilter,             icon: '🏉', labelKey: 'nav.rugby' },
-              { key: 'mma' as SportFilter,               icon: '🥊', labelKey: 'nav.mma' },
-              { key: 'volleyball' as SportFilter,        icon: '🏐', labelKey: 'nav.volleyball' },
-              { key: 'hockey' as SportFilter,            icon: '🏒', labelKey: 'nav.hockey' },
-              { key: 'american_football' as SportFilter, icon: '🏈', labelKey: 'nav.american_football' },
+              { key: 'all' as SportFilter, labelKey: 'marketplace.filter_all_sports' },
+              { key: 'football' as SportFilter, labelKey: 'nav.football' },
+              { key: 'basketball' as SportFilter, labelKey: 'nav.basketball' },
+              { key: 'rugby' as SportFilter, labelKey: 'nav.rugby' },
+              { key: 'mma' as SportFilter, labelKey: 'nav.mma' },
+              { key: 'volleyball' as SportFilter, labelKey: 'nav.volleyball' },
+              { key: 'hockey' as SportFilter, labelKey: 'nav.hockey' },
+              { key: 'american_football' as SportFilter, labelKey: 'nav.american_football' },
             ]).map((sp) => (
               <button
                 type="button"
@@ -218,7 +227,6 @@ export default function TipstersPage() {
                     : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
                 }`}
               >
-                <span>{sp.icon}</span>
                 <span>{t(sp.labelKey)}</span>
               </button>
             ))}
@@ -295,6 +303,7 @@ export default function TipstersPage() {
             ))}
           </div>
         )}
+        </PullToRefresh>
       </main>
     </div>
   );

@@ -371,19 +371,16 @@ function DashboardContent() {
                 title="Member accounts"
                 hint="Users with role user or tipster (excludes admins)."
                 value={stats?.users?.total ?? 0}
-                icon="👥"
               />
               <StatCard
                 title="Active tipster profiles"
                 hint="tipsters.is_active — matches public homepage count."
                 value={stats?.users?.tipsters ?? 0}
-                icon="🎯"
               />
-              <StatCard title="Wallets" value={stats?.wallets?.count ?? 0} icon="💰" />
+              <StatCard title="Wallets" value={stats?.wallets?.count ?? 0} />
               <StatCard
                 title="Total Balance (GHS)"
                 value={stats?.wallets?.totalBalance ?? 0}
-                icon="💵"
                 format="currency"
               />
             </div>
@@ -393,21 +390,18 @@ function DashboardContent() {
                 title={t('admin.stats_all_picks_title')}
                 hint={t('admin.stats_all_picks_hint')}
                 value={stats?.picks?.total ?? 0}
-                icon="📋"
               />
               <StatCard
                 title={t('admin.stats_marketplace_buyable_title')}
                 hint={t('admin.stats_marketplace_buyable_hint')}
                 value={stats?.picks?.liveMarketplace ?? 0}
-                icon="🎫"
               />
               <StatCard
                 title={t('admin.stats_marketplace_active_title')}
                 hint={t('admin.stats_marketplace_active_hint')}
                 value={stats?.picks?.activeMarketplace ?? 0}
-                icon="🛒"
               />
-              <StatCard title="Escrow Held (GHS)" value={stats?.escrow?.held ?? 0} icon="🔒" format="currency" />
+              <StatCard title="Escrow Held (GHS)" value={stats?.escrow?.held ?? 0} format="currency" />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
@@ -415,36 +409,31 @@ function DashboardContent() {
                 title="Total purchases"
                 hint="All pick checkouts (includes non-marketplace paths)."
                 value={stats?.purchases?.total ?? 0}
-                icon="🛍️"
               />
               <StatCard
                 title="Gross purchase revenue"
                 hint="Sum of purchase prices (not platform commission or net tipster pay)."
                 value={stats?.purchases?.revenue ?? 0}
-                icon="💵"
                 format="currency"
               />
               <StatCard
                 title="Marketplace purchases"
                 hint="Joined to pick_marketplace — aligns with public homepage."
                 value={stats?.purchases?.marketplaceCount ?? 0}
-                icon="🛒"
               />
               <StatCard
                 title="Marketplace revenue (GHS)"
                 hint="Gross spend on marketplace-listed picks only."
                 value={stats?.purchases?.marketplaceRevenue ?? 0}
-                icon="📊"
                 format="currency"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-              <StatCard title="Pending Deposits" value={stats?.deposits?.pending ?? 0} icon="💳" />
+              <StatCard title="Pending Deposits" value={stats?.deposits?.pending ?? 0} />
               <StatCard
                 title="Pending Withdrawals"
                 value={stats?.withdrawals?.pending ?? 0}
-                icon="💸"
                 link="/admin/withdrawals"
               />
             </div>
@@ -933,13 +922,12 @@ function DashboardContent() {
             <section className="mb-6 sm:mb-8">
               <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">{t('dashboard.performance')}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                <StatCard title={t("dashboard.roi")} value={tipsterStats.roi} icon="📈" suffix="%" variant="teal" glass index={0} />
-                <StatCard title={t("dashboard.win_rate")} value={tipsterStats.winRate} icon="📊" suffix="%" variant="emerald" glass index={1} />
-                <StatCard title={t("dashboard.total_picks")} value={tipsterStats.totalPicks} icon="🎯" variant="amber" glass index={2} />
+                <StatCard title={t("dashboard.roi")} value={tipsterStats.roi} suffix="%" variant="teal" glass index={0} />
+                <StatCard title={t("dashboard.win_rate")} value={tipsterStats.winRate} suffix="%" variant="emerald" glass index={1} />
+                <StatCard title={t("dashboard.total_picks")} value={tipsterStats.totalPicks} variant="amber" glass index={2} />
                 <StatCard
                   title={t('dashboard.card_wallet')}
                   value={walletBalance ?? 0}
-                  icon="💰"
                   format="currency"
                   displayValue={format(walletBalance ?? 0).primary}
                   variant="teal"
@@ -1127,11 +1115,10 @@ function DashboardContent() {
             <section className="mb-6 sm:mb-8">
               <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">{t('dashboard.purchase_summary')}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                <StatCard title={t('dashboard.purchases')} value={purchaseStats.total} icon="🛍️" variant="slate" link="/my-purchases" glass index={4} />
+                <StatCard title={t('dashboard.purchases')} value={purchaseStats.total} variant="slate" link="/my-purchases" glass index={4} />
                 <StatCard
                   title={t('dashboard.total_spent')}
                   value={purchaseStats.totalSpent}
-                  icon="💸"
                   format="currency"
                   displayValue={format(purchaseStats.totalSpent).primary}
                   variant="slate"
@@ -1139,7 +1126,7 @@ function DashboardContent() {
                   index={5}
                   hint={t('dashboard.total_spent_hint')}
                 />
-                <StatCard title={t('status.active')} value={purchaseStats.active} icon="⏳" variant="slate" glass index={6} />
+                <StatCard title={t('status.active')} value={purchaseStats.active} variant="slate" glass index={6} />
               </div>
               {purchaseStats.pendingEscrowAmount > 0 && (
                 <p className="text-xs text-[var(--text-muted)] mt-3 px-0.5 leading-relaxed">
@@ -1334,7 +1321,8 @@ function StatCard({
 }: {
   title: string;
   value: number;
-  icon: string;
+  /** Optional 1–2 character label (defaults to first letter of title). */
+  icon?: string;
   format?: 'number' | 'currency';
   suffix?: string;
   link?: string;
@@ -1354,19 +1342,20 @@ function StatCard({
     slate: 'border-l-4 border-l-slate-400',
   };
   const iconBg = {
-    teal: 'bg-teal-100 text-teal-700',
-    emerald: 'bg-emerald-100 text-emerald-700',
-    amber: 'bg-amber-100 text-amber-700',
-    slate: 'bg-slate-100 text-slate-600',
+    teal: 'bg-[var(--fill-secondary)] text-[var(--primary)]',
+    emerald: 'bg-[var(--fill-secondary)] text-emerald-600',
+    amber: 'bg-[var(--fill-secondary)] text-amber-600',
+    slate: 'bg-[var(--fill-secondary)] text-[var(--text-muted)]',
   };
+  const iconLabel = (icon ?? (title.trim().charAt(0) || '?')).slice(0, 2).toUpperCase();
   const baseCard = glass
-    ? `glass-card rounded-2xl p-4 sm:p-5 border border-[var(--border)]/60 hover:shadow-lg transition-all duration-200 min-w-0 ${variantStyles[variant]}`
-    : `rounded-2xl border border-[var(--border)] p-5 bg-white hover:shadow-lg transition-all duration-200 min-w-0 ${variantStyles[variant]}`;
+    ? `glass-card rounded-2xl p-4 sm:p-5 border border-[var(--border)] hover:shadow-md transition-all duration-200 min-w-0 ${variantStyles[variant]}`
+    : `rounded-2xl border border-[var(--border)] p-5 bg-[var(--card)] hover:shadow-md transition-all duration-200 min-w-0 ${variantStyles[variant]}`;
   const content = (
     <div className={baseCard}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3 min-w-0">
-        <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-base sm:text-lg shrink-0 ${iconBg[variant]}`}>
-          {icon}
+        <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 ${iconBg[variant]}`}>
+          {iconLabel}
         </div>
         <span className="text-xl sm:text-2xl font-bold text-[var(--text)] tabular-nums truncate text-left sm:text-right sm:ml-auto">{display}{suffix}</span>
       </div>

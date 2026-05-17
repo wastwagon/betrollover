@@ -91,11 +91,10 @@ function ForgotPasswordForm() {
     const t = useT();
     return (
         <div className="min-h-screen bg-[var(--bg)] relative overflow-x-hidden w-full min-w-0 max-w-full">
-            <div className="absolute inset-0 bg-gradient-mesh pointer-events-none" />
             <UnifiedHeader />
             <main className="section-ux-auth-main w-full min-w-0 max-w-full">
                 <div className="w-full max-w-md min-w-0 mx-auto px-4 sm:px-0">
-                    <div className="bg-white rounded-2xl shadow-xl border border-[var(--border)] p-6 sm:p-8 md:p-10 min-w-0 max-w-full">
+                    <div className="bg-[var(--card)] rounded-2xl shadow-sm border border-[var(--border)] p-6 sm:p-8 md:p-10 min-w-0 max-w-full">
                         <div className="text-center mb-8">
                             <h1 className="text-xl font-semibold text-[var(--text)]">
                                 {step === 'request' ? t('auth.forgot_title') : t('auth.forgot_reset_title')}

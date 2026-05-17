@@ -453,7 +453,7 @@ export function PickCard({
 
           {/* Locked Message for Paid Coupons */}
           {!showFullDetails && (
-            <div className="mb-2 flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-md py-2 px-2">
+            <div className="mb-2 flex-1 flex items-center justify-center bg-[var(--fill-secondary)] rounded-md py-2 px-2">
               <div className="text-center">
                 <span className="text-lg mb-0.5 block">🔒</span>
                 <p className="text-[10px] text-[var(--text-muted)]">{t('pick_card.purchase_to_view')}</p>
@@ -557,7 +557,7 @@ export function PickCard({
                     const hasScore = p.homeScore != null && p.awayScore != null;
                     const pickResult = p.result || p.status;
                     return (
-                      <li key={i} className="flex justify-between items-start gap-2 min-w-0 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                      <li key={i} className="flex justify-between items-start gap-2 min-w-0 p-3 bg-[var(--fill-secondary)] rounded-lg">
                         <div className="flex-1 pr-2 sm:pr-4 min-w-0">
                           <span className="text-[var(--text)] font-medium flex items-center gap-2 min-w-0">
                             {(p.homeTeamLogo || p.awayTeamLogo || p.homeCountryCode || p.awayCountryCode) && (

@@ -77,12 +77,12 @@ function MegaLink({
       <span className="w-6 flex items-center justify-center flex-shrink-0 text-[var(--primary)] mt-0.5">{icon}</span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-nowrap">
-          <span className="text-sm font-semibold text-slate-800 group-hover:text-emerald-700 transition-colors whitespace-nowrap">{label}</span>
+          <span className="text-sm font-semibold text-[var(--text)] group-hover:text-[var(--primary)] transition-colors whitespace-nowrap">{label}</span>
           {badge && (
             <span className={`inline-flex items-center flex-shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${badgeColor}`}>{badge}</span>
           )}
         </div>
-        {desc && <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">{desc}</p>}
+        {desc && <p className="text-xs text-[var(--text-muted)] mt-0.5 leading-relaxed">{desc}</p>}
       </div>
     </Link>
   );
@@ -91,7 +91,7 @@ function MegaLink({
 /* ─── SectionLabel ───────────────────────────────────────── */
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="px-3 pt-2 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500">{children}</p>
+    <p className="px-3 pt-2 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{children}</p>
   );
 }
 

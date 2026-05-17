@@ -10,6 +10,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
 import { ArticleJsonLd } from '@/components/ArticleJsonLd';
+import { IconBook } from '@/components/ios/icons';
 
 interface NewsArticle {
   id: number;
@@ -120,7 +121,7 @@ export default function NewsArticlePage() {
       <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <UnifiedHeader />
         <main className="section-ux-empty w-full min-w-0 px-4 sm:px-0">
-          <p className="text-5xl mb-4">📰</p>
+          <IconBook className="w-14 h-14 mx-auto mb-4 text-[var(--text-muted)] opacity-50" aria-hidden />
           <h1 className="text-lg font-semibold text-[var(--text)] mb-3">{t('news.article_not_found')}</h1>
           <p className="text-[var(--text-muted)] mb-6">{t('news.article_not_found_desc')}</p>
           <Link href="/news" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] transition-colors">

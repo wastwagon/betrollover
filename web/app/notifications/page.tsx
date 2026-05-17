@@ -28,25 +28,25 @@ function isNotificationRead(n: Notification): boolean {
   return n.isRead ?? n.read ?? false;
 }
 
-const TYPE_META: Record<string, { icon: string; color: string }> = {
-  purchase:    { icon: '🛒', color: 'text-emerald-600' },
-  settlement:  { icon: '✅', color: 'text-blue-600' },
-  refund:      { icon: '💸', color: 'text-amber-600' },
-  payout:      { icon: '💰', color: 'text-emerald-600' },
-  withdrawal:  { icon: '🏦', color: 'text-violet-600' },
-  withdrawal_done: { icon: '✅', color: 'text-emerald-600' },
-  withdrawal_failed: { icon: '⚠️', color: 'text-red-600' },
-  withdrawal_rejected: { icon: '🚫', color: 'text-orange-600' },
-  system:      { icon: '📣', color: 'text-slate-500' },
-  follow:      { icon: '👥', color: 'text-cyan-600' },
-  subscription:{ icon: '⭐', color: 'text-yellow-500' },
+const TYPE_META: Record<string, { color: string }> = {
+  purchase: { color: 'text-emerald-600' },
+  settlement: { color: 'text-blue-600' },
+  refund: { color: 'text-amber-600' },
+  payout: { color: 'text-emerald-600' },
+  withdrawal: { color: 'text-violet-600' },
+  withdrawal_done: { color: 'text-emerald-600' },
+  withdrawal_failed: { color: 'text-red-600' },
+  withdrawal_rejected: { color: 'text-orange-600' },
+  system: { color: 'text-slate-500' },
+  follow: { color: 'text-cyan-600' },
+  subscription: { color: 'text-yellow-600' },
 };
 
 function getTypeMeta(type: string) {
   const lower = type?.toLowerCase() ?? '';
   if (TYPE_META[lower]) return TYPE_META[lower];
-  if (lower.includes('withdrawal')) return { icon: '💸', color: 'text-violet-600' };
-  return { icon: '🔔', color: 'text-slate-500' };
+  if (lower.includes('withdrawal')) return { color: 'text-violet-600' };
+  return { color: 'text-slate-500' };
 }
 
 export default function NotificationsPage() {
@@ -185,7 +185,6 @@ export default function NotificationsPage() {
                 description={t('notifications.all_clear_desc')}
                 actionLabel={t('notifications.browse_marketplace')}
                 actionHref="/marketplace"
-                icon="🔔"
               />
             </div>
           ) : displayed.length === 0 ? (
@@ -195,7 +194,6 @@ export default function NotificationsPage() {
                 description={t('notifications.caught_up')}
                 actionLabel={t('notifications.show_all')}
                 actionHref="#"
-                icon="✅"
               />
             </div>
           ) : (

@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/useToast';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { useT } from '@/context/LanguageContext';
+import { NavBar } from '@/components/ios/NavBar';
 import { fetchSellingThresholds, SELLING_THRESHOLDS_FALLBACK, type SellingThresholds } from '@/lib/selling-thresholds';
 
 interface SubscriptionPackage {
@@ -117,14 +118,24 @@ export default function SubscriptionPackagesPage() {
     <DashboardShell>
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <div className="section-ux-dashboard-shell">
-        <Link href="/dashboard" className="text-sm text-[var(--primary)] hover:underline mb-4 inline-block">
+        <div className="lg:hidden -mx-1 mb-3">
+          <NavBar
+            title="VIP subscription package"
+            backHref="/dashboard"
+            backLabel={t('nav.dashboard')}
+            sticky={false}
+          />
+        </div>
+        <Link href="/dashboard" className="hidden lg:inline-block text-sm text-[var(--primary)] hover:underline mb-4">
           ← Dashboard
         </Link>
-        <PageHeader
-          label="Subscription Packages"
-          title="VIP subscription package"
-          tagline="One active VIP channel per tipster. Subscribers pay from wallet; funds follow your escrow rules."
-        />
+        <div className="hidden lg:block">
+          <PageHeader
+            label="Subscription Packages"
+            title="VIP subscription package"
+            tagline="One active VIP channel per tipster. Subscribers pay from wallet; funds follow your escrow rules."
+          />
+        </div>
         <p className="text-sm text-[var(--text-muted)] mb-4 max-w-xl border border-amber-200/80 bg-amber-50/50 dark:bg-amber-950/20 rounded-xl px-4 py-3 leading-relaxed">
           {t('subscriptions.vip_create_eligibility', {
             minRoi: String(thresholds.minimumROI),
