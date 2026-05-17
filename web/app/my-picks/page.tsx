@@ -171,7 +171,7 @@ export default function MyPicksPage() {
           {loading && <LoadingSkeleton count={3} />}
 
           {!loading && picks.length === 0 && (
-            <div className="card-gradient rounded-2xl">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)]">
               <EmptyState
                 title={t('my_picks.no_picks')}
                 description={t('my_picks.no_picks_desc')}
@@ -183,7 +183,7 @@ export default function MyPicksPage() {
           )}
 
           {!loading && picks.length > 0 && filtered.length === 0 && (
-            <div className="card-gradient rounded-2xl">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)]">
               <EmptyState
                 title={t('my_picks.no_sport_picks', { sport: SPORT_DISPLAY_MAP[sportFilter] ?? sportFilter })}
                 description={t('my_picks.no_sport_desc')}

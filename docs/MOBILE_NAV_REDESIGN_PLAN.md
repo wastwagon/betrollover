@@ -88,3 +88,9 @@ So on mobile you have both: bottom nav + hamburger. The hamburger feels “web�
 - Phase 2: Re-adding the hamburger button and mobile menu in `UnifiedHeader` (from git history) restores the old mobile menu.
 
 This keeps the site safe to deploy step by step; you can stop after Phase 1 and only proceed to Phase 2 when you’re happy with in-page navigation.
+
+---
+
+## `DashboardBottomNav` (deprecated)
+
+`web/components/DashboardBottomNav.tsx` is an older bottom bar with fold sheets for picks and account. It is **not** mounted in the root layout. Production mobile navigation uses **`MobileBottomNav`** plus **`MobileAccountSheet`** in `UnifiedHeader`. Keep `DashboardBottomNav` only as reference unless reintroducing fold-sheet UX deliberately.

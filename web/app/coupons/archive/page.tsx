@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { PageHeader } from '@/components/PageHeader';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
+import { NavBar } from '@/components/ios/NavBar';
 
 interface Pick {
   id?: number;
@@ -301,7 +302,15 @@ export default function CouponsArchivePage() {
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
       <main className="section-ux-page-wide w-full min-w-0 max-w-full">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6 min-w-0">
+        <div className="lg:hidden -mx-4 sm:mx-0 mb-3">
+          <NavBar
+            title={t('picks.archive.page_title')}
+            backHref="/marketplace"
+            backLabel={t('nav.marketplace')}
+            sticky={false}
+          />
+        </div>
+        <div className="hidden lg:flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6 min-w-0">
           <div className="min-w-0 flex-1 max-w-full">
             <PageHeader
               label={t('picks.archive.page_label')}
@@ -310,7 +319,7 @@ export default function CouponsArchivePage() {
             />
           </div>
           <Link
-            href="/coupons"
+            href="/marketplace"
             className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto self-stretch sm:self-auto shrink-0"
           >
             {t('picks.archive.back_marketplace')}

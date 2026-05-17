@@ -9,6 +9,7 @@ import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 import { getApiUrl } from '@/lib/site-config';
+import { NavBar } from '@/components/ios/NavBar';
 
 // Load chart lazily — avoids SSR issues with recharts
 const AreaChart    = dynamic(() => import('recharts').then(m => m.AreaChart), { ssr: false });
@@ -230,11 +231,21 @@ export default function EarningsPage() {
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
       <main className="section-ux-page w-full min-w-0 max-w-full">
-        <PageHeader
-          label={t('earnings.title')}
-          title={t('earnings.subtitle')}
-          tagline={t('earnings.track_desc_full')}
-        />
+        <div className="lg:hidden -mx-4 sm:mx-0 mb-3">
+          <NavBar
+            title={t('earnings.title')}
+            backHref="/dashboard"
+            backLabel={t('nav.dashboard')}
+            sticky={false}
+          />
+        </div>
+        <div className="hidden lg:block">
+          <PageHeader
+            label={t('earnings.title')}
+            title={t('earnings.subtitle')}
+            tagline={t('earnings.track_desc_full')}
+          />
+        </div>
 
         <div className="mb-6">
           <AdSlot zoneSlug="earnings-full" fullWidth className="w-full max-w-3xl" />

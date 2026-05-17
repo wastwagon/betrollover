@@ -344,7 +344,6 @@ function DashboardContent() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] relative overflow-x-hidden w-full min-w-0 max-w-full">
-        <div className="fixed inset-0 bg-gradient-mesh pointer-events-none -z-10" />
         <div className="flex flex-col items-center gap-4 animate-fade-in">
           <div className="w-12 h-12 rounded-full border-2 border-[var(--primary)] border-t-transparent animate-spin" />
           <p className="text-[var(--text-muted)] font-medium">{t('dashboard.loading')}</p>

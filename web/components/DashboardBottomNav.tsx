@@ -1,5 +1,11 @@
 'use client';
 
+/**
+ * Legacy dashboard bottom nav with fold sheets (picks / account).
+ * @deprecated Not mounted in the app layout — superseded by {@link MobileBottomNav}
+ * and {@link MobileAccountSheet}. Kept for reference only; see docs/MOBILE_NAV_REDESIGN_PLAN.md.
+ */
+
 import { useState, useEffect, type ComponentType } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';

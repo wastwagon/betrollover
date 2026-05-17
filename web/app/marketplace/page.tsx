@@ -598,7 +598,7 @@ export default function MarketplacePage() {
             />
           )}
           {!loading && picks.length === 0 && (
-            <div className="card-gradient rounded-2xl">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)]">
               <EmptyState
                 title={debouncedTipster ? t('marketplace.no_tipster_matches') : t('marketplace.no_picks')}
                 description={
@@ -620,7 +620,7 @@ export default function MarketplacePage() {
             </div>
           )}
           {!loading && picks.length > 0 && filteredAndSortedPicks.length === 0 && (
-            <div className="card-gradient rounded-2xl p-6">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6">
               <EmptyState
                 title={t('common.no_results')}
                 description={t('marketplace.no_picks_sub')}

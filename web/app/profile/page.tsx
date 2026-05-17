@@ -12,6 +12,7 @@ import { useT } from '@/context/LanguageContext';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
+import { NavBar } from '@/components/ios/NavBar';
 
 interface Profile {
   id: number;
@@ -266,11 +267,21 @@ export default function ProfilePage() {
     <DashboardShell>
       <div className="min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden bg-[var(--bg)]">
         <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full">
-          <PageHeader
-            label={t('profile.title')}
-            title={t('profile.title')}
-            tagline={t('profile.tagline')}
-          />
+          <div className="lg:hidden -mx-1 mb-3">
+            <NavBar
+              title={t('profile.title')}
+              backHref="/dashboard"
+              backLabel={t('nav.dashboard')}
+              sticky={false}
+            />
+          </div>
+          <div className="hidden lg:block">
+            <PageHeader
+              label={t('profile.title')}
+              title={t('profile.title')}
+              tagline={t('profile.tagline')}
+            />
+          </div>
 
           <div className="mb-4">
             <AdSlot zoneSlug="profile-full" fullWidth className="w-full" />

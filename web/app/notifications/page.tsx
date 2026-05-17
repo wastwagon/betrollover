@@ -179,7 +179,7 @@ export default function NotificationsPage() {
 
           {/* ─── Content ─────────────────────────────────── */}
           {items.length === 0 ? (
-            <div className="card-gradient rounded-2xl">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)]">
               <EmptyState
                 title={t('notifications.all_clear')}
                 description={t('notifications.all_clear_desc')}
@@ -189,7 +189,7 @@ export default function NotificationsPage() {
               />
             </div>
           ) : displayed.length === 0 ? (
-            <div className="card-gradient rounded-2xl">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)]">
               <EmptyState
                 title={t('notifications.no_unread')}
                 description={t('notifications.caught_up')}
