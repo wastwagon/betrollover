@@ -211,8 +211,8 @@ export function PickSocialBar({
             aria-label={t('pick_social.like_pick')}
             className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${
               hasReacted
-                ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
-                : 'bg-[var(--fill-secondary)] text-[var(--text-muted)] hover:text-rose-600 hover:bg-rose-500/10'
+                ? 'bg-[var(--primary)]/15 text-[var(--primary)]'
+                : 'bg-[var(--fill-secondary)] text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10'
             } ${reacting ? 'opacity-60' : ''}`}
           >
             <IconHeart className="w-4 h-4" filled={hasReacted} />
