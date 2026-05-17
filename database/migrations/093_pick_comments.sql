@@ -5,9 +5,9 @@ CREATE TABLE IF NOT EXISTS "pick_comments" (
   "user_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
   "parent_id" integer REFERENCES "pick_comments"("id") ON DELETE SET NULL,
   "body" text NOT NULL,
-  "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
-  "deletedAt" TIMESTAMP NULL
+  "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+  "deleted_at" TIMESTAMP NULL
 );
 CREATE INDEX IF NOT EXISTS "IDX_pick_comments_accumulator" ON "pick_comments" ("accumulator_id");
 CREATE INDEX IF NOT EXISTS "IDX_pick_comments_user" ON "pick_comments" ("user_id");
-CREATE INDEX IF NOT EXISTS "IDX_pick_comments_accumulator_created" ON "pick_comments" ("accumulator_id", "createdAt" DESC);
+CREATE INDEX IF NOT EXISTS "IDX_pick_comments_accumulator_created" ON "pick_comments" ("accumulator_id", "created_at" DESC);

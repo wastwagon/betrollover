@@ -5,21 +5,21 @@ export class PickComment {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ name: 'accumulator_id' })
   accumulatorId: number;
 
-  @Column()
+  @Column({ name: 'user_id' })
   userId: number;
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ name: 'parent_id', type: 'int', nullable: true })
   parentId: number | null;
 
   @Column({ type: 'text' })
   body: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ name: 'deleted_at', type: 'timestamp', nullable: true })
   deletedAt: Date | null;
 }

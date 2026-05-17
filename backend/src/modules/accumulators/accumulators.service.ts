@@ -2163,52 +2163,63 @@ export class AccumulatorsService {
     const ticket = await this.ticketRepo.findOne({ where: { id: accumulatorId } });
     if (!ticket) throw new NotFoundException('Pick not found');
     const limit = Math.min(Math.max(opts?.limit ?? 25, 1), 50);
-    const qb = this.commentRepo
-      .createQueryBuilder('c')
-      .innerJoin(User, 'u', 'u.id = c.userId')
-      .where('c.accumulatorId = :aid', { aid: accumulatorId })
-      .andWhere('c.deletedAt IS NULL')
-      .andWhere('c.parentId IS NULL');
-    if (opts?.beforeId) {
-      qb.andWhere('c.id < :beforeId', { beforeId: opts.beforeId });
+    try {
+      const qb = this.commentRepo
+        .createQueryBuilder('c')
+        .innerJoin(User, 'u', 'u.id = c.userId')
+        .where('c.accumulator_id = :aid', { aid: accumulatorId })
+        .andWhere('c.deleted_at IS NULL')
+        .andWhere('c.parent_id IS NULL');
+      if (opts?.beforeId) {
+        qb.andWhere('c.id < :beforeId', { beforeId: opts.beforeId });
+      }
+      const total = await this.commentRepo.count({
+        where: { accumulatorId, deletedAt: IsNull(), parentId: IsNull() },
+      });
+      const rows = await qb
+        .select('c.id', 'id')
+        .addSelect('c.body', 'body')
+        .addSelect('c.created_at', 'createdAt')
+        .addSelect('c.user_id', 'userId')
+        .addSelect('COALESCE(u.display_name, u.username)', 'displayName')
+        .addSelect('u.avatar', 'avatarUrl')
+        .orderBy('c.created_at', 'DESC')
+        .limit(limit + 1)
+        .getRawMany<{
+          id: number;
+          body: string;
+          createdAt: Date;
+          userId: number;
+          displayName: string;
+          avatarUrl: string | null;
+        }>();
+      const hasMore = rows.length > limit;
+      const slice = hasMore ? rows.slice(0, limit) : rows;
+      return {
+        items: slice.map((r) => ({
+          id: Number(r.id),
+          body: r.body,
+          createdAt: r.createdAt,
+          isOwn: Number(r.userId) === viewerUserId,
+          user: {
+            id: Number(r.userId),
+            displayName: r.displayName || 'User',
+            avatarUrl: r.avatarUrl ?? null,
+          },
+        })),
+        total,
+        hasMore,
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.error(`listPickComments failed for accumulator ${accumulatorId}: ${message}`);
+      if (/pick_comments|relation.*does not exist|column.*does not exist/i.test(message)) {
+        throw new InternalServerErrorException(
+          'Comments are not available yet. Run migrations 093_pick_comments and 094_pick_comments_snake_case_timestamps.',
+        );
+      }
+      throw err;
     }
-    const total = await this.commentRepo.count({
-      where: { accumulatorId, deletedAt: IsNull(), parentId: IsNull() },
-    });
-    const rows = await qb
-      .select('c.id', 'id')
-      .addSelect('c.body', 'body')
-      .addSelect('c.createdAt', 'createdAt')
-      .addSelect('c.userId', 'userId')
-      .addSelect('COALESCE(u.displayName, u.username)', 'displayName')
-      .addSelect('u.avatar', 'avatarUrl')
-      .orderBy('c.createdAt', 'DESC')
-      .limit(limit + 1)
-      .getRawMany<{
-        id: number;
-        body: string;
-        createdAt: Date;
-        userId: number;
-        displayName: string;
-        avatarUrl: string | null;
-      }>();
-    const hasMore = rows.length > limit;
-    const slice = hasMore ? rows.slice(0, limit) : rows;
-    return {
-      items: slice.map((r) => ({
-        id: Number(r.id),
-        body: r.body,
-        createdAt: r.createdAt,
-        isOwn: Number(r.userId) === viewerUserId,
-        user: {
-          id: Number(r.userId),
-          displayName: r.displayName || 'User',
-          avatarUrl: r.avatarUrl ?? null,
-        },
-      })),
-      total,
-      hasMore,
-    };
   }
 
   async createPickComment(
