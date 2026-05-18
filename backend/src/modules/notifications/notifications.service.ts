@@ -12,7 +12,7 @@ import { PushService } from '../push/push.service';
 const PUSH_NOTIFICATION_TYPES = new Set([
   'subscription', 'subscription_refund', 'subscription_payout',
   'pick_published', 'new_pick_from_followed', 'settlement',
-  'pick_comment', 'pick_comment_reply', 'pick_comment_thread',
+  'pick_comment', 'pick_comment_reply', 'pick_comment_thread', 'pick_comment_reaction',
 ]);
 
 @Injectable()

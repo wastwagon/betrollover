@@ -2232,8 +2232,29 @@ export class AccumulatorsService {
       .andWhere('c.user_id != :actorId', { actorId: actorUserId })
       .limit(AccumulatorsService.PICK_COMMENT_THREAD_NOTIFY_CAP)
       .getRawMany<{ userId: number }>();
+    const commentParticipantIds = new Set<number>();
     participantRows.forEach((r) => {
-      if (r.userId) recipients.add(Number(r.userId));
+      if (r.userId) {
+        const uid = Number(r.userId);
+        commentParticipantIds.add(uid);
+        recipients.add(uid);
+      }
+    });
+
+    const reactorIds = new Set<number>();
+    const reactorRows = await this.reactionRepo
+      .createQueryBuilder('r')
+      .select('DISTINCT r.user_id', 'userId')
+      .where('r.accumulator_id = :aid', { aid: ticket.id })
+      .andWhere('r.user_id != :actorId', { actorId: actorUserId })
+      .limit(AccumulatorsService.PICK_COMMENT_THREAD_NOTIFY_CAP)
+      .getRawMany<{ userId: number }>();
+    reactorRows.forEach((r) => {
+      if (r.userId) {
+        const uid = Number(r.userId);
+        reactorIds.add(uid);
+        recipients.add(uid);
+      }
     });
 
     if (recipients.size === 0) return;
@@ -2247,7 +2268,11 @@ export class AccumulatorsService {
     const link = `/coupons/${ticket.id}`;
 
     for (const recipientId of recipients) {
-      let type: 'pick_comment' | 'pick_comment_reply' | 'pick_comment_thread' = 'pick_comment_thread';
+      let type:
+        | 'pick_comment'
+        | 'pick_comment_reply'
+        | 'pick_comment_thread'
+        | 'pick_comment_reaction' = 'pick_comment_thread';
       let title = 'New comment on a thread you joined';
       let message = `${actorName} commented on "${pickLabel}"`;
 
@@ -2259,6 +2284,10 @@ export class AccumulatorsService {
         type = 'pick_comment_reply';
         title = 'New reply to your comment';
         message = `${actorName} replied on "${pickLabel}"`;
+      } else if (reactorIds.has(recipientId) && !commentParticipantIds.has(recipientId)) {
+        type = 'pick_comment_reaction';
+        title = 'New comment on a pick you liked';
+        message = `${actorName} commented on "${pickLabel}"`;
       }
 
       await this.notificationsService.create({
