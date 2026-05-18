@@ -184,6 +184,13 @@ export const NOTIFICATION_TYPES = {
     ctaText: 'View thread',
     category: 'social',
   },
+  pick_comment_thread: {
+    icon: 'comment',
+    defaultSubject: 'New activity on a pick you commented on',
+    emailSubject: () => 'New comment on a discussion you joined',
+    ctaText: 'View thread',
+    category: 'social',
+  },
 } as const;
 
 export type NotificationTypeKey = keyof typeof NOTIFICATION_TYPES;

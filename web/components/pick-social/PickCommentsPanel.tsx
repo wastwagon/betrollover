@@ -73,6 +73,70 @@ function CommentAvatar({ user, size = 32 }: { user: PickCommentItem['user']; siz
   );
 }
 
+function findInTree(items: PickCommentItem[], id: number): PickCommentItem | null {
+  for (const c of items) {
+    if (c.id === id) return c;
+    const nested = findInTree(c.replies ?? [], id);
+    if (nested) return nested;
+  }
+  return null;
+}
+
+function countSubtree(comment: PickCommentItem): number {
+  return 1 + (comment.replies ?? []).reduce((sum, r) => sum + countSubtree(r), 0);
+}
+
+function addReplyToTree(
+  items: PickCommentItem[],
+  parentId: number,
+  reply: PickCommentItem,
+): PickCommentItem[] {
+  return items.map((c) => {
+    if (c.id === parentId) {
+      return { ...c, replies: [...(c.replies ?? []), { ...reply, replies: reply.replies ?? [] }] };
+    }
+    if (c.replies?.length) {
+      return { ...c, replies: addReplyToTree(c.replies, parentId, reply) };
+    }
+    return c;
+  });
+}
+
+function CommentThread({
+  comment,
+  depth,
+  onReply,
+  onDelete,
+}: {
+  comment: PickCommentItem;
+  depth: number;
+  onReply: (comment: PickCommentItem) => void;
+  onDelete: (comment: PickCommentItem) => void;
+}) {
+  const compact = depth > 0;
+  return (
+    <div className={depth > 0 ? 'mt-2.5' : ''}>
+      <div className={depth > 0 ? 'pl-3 sm:pl-4 border-l-2 border-[var(--separator)] ml-1' : ''}>
+        <CommentBody
+          comment={comment}
+          compact={compact}
+          onReply={() => onReply(comment)}
+          onDelete={() => onDelete(comment)}
+        />
+        {(comment.replies ?? []).map((reply) => (
+          <CommentThread
+            key={reply.id}
+            comment={reply}
+            depth={depth + 1}
+            onReply={onReply}
+            onDelete={onDelete}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function CommentBody({
   comment,
   onReply,
@@ -216,14 +280,8 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
         throw new Error(getApiErrorMessage(err, 'Failed to post comment'));
       }
       const created = normalizeComment(await res.json());
-      if (created.parentId) {
-        setItems((prev) =>
-          prev.map((c) =>
-            c.id === created.parentId
-              ? { ...c, replies: [...(c.replies ?? []), created] }
-              : c,
-          ),
-        );
+      if (created.parentId != null) {
+        setItems((prev) => addReplyToTree(prev, created.parentId as number, created));
       } else {
         setItems((prev) => [...prev, { ...created, replies: created.replies ?? [] }]);
       }
@@ -251,26 +309,21 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
       }));
   };
 
-  const handleDelete = async (commentId: number, isTopLevel: boolean) => {
+  const handleDelete = async (comment: PickCommentItem) => {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch(`${API_URL}/accumulators/${pickId}/comments/${commentId}`, {
+      const res = await fetch(`${API_URL}/accumulators/${pickId}/comments/${comment.id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) return;
-      setItems((prev) => {
-        const target = isTopLevel ? prev.find((c) => c.id === commentId) : null;
-        const removed = 1 + (target?.replies?.length ?? 0);
-        const next = removeCommentFromTree(prev, commentId);
-        setTotalCount((prevTotal) => {
-          const delta = isTopLevel && target?.replies?.length ? removed : 1;
-          const newTotal = Math.max(0, prevTotal - delta);
-          onCountChangeRef.current?.(newTotal);
-          return newTotal;
-        });
-        return next;
+      const removed = countSubtree(comment);
+      setItems((prev) => removeCommentFromTree(prev, comment.id));
+      setTotalCount((prevTotal) => {
+        const newTotal = Math.max(0, prevTotal - removed);
+        onCountChangeRef.current?.(newTotal);
+        return newTotal;
       });
     } catch {
       /* noop */
@@ -312,25 +365,13 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
           <p className="text-sm text-[var(--text-muted)] text-center py-8">{t('pick_social.no_comments_yet')}</p>
         )}
         {items.map((c) => (
-          <div key={c.id} className="space-y-2.5">
-            <CommentBody
-              comment={c}
-              onReply={() => setReplyTo({ id: c.id, displayName: c.user.displayName })}
-              onDelete={() => void handleDelete(c.id, true)}
-            />
-            {(c.replies ?? []).length > 0 && (
-              <div className="pl-4 border-l-2 border-[var(--separator)] space-y-2.5 ml-3">
-                {(c.replies ?? []).map((reply) => (
-                  <CommentBody
-                    key={reply.id}
-                    comment={reply}
-                    compact
-                    onDelete={() => void handleDelete(reply.id, false)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+          <CommentThread
+            key={c.id}
+            comment={c}
+            depth={0}
+            onReply={(target) => setReplyTo({ id: target.id, displayName: target.user.displayName })}
+            onDelete={(target) => void handleDelete(target)}
+          />
         ))}
         <div ref={listEndRef} />
       </div>

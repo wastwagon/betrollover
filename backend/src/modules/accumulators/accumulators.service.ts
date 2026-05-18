@@ -83,6 +83,16 @@ export interface CreateAccumulatorDto {
   }[];
 }
 
+type PickCommentTreeNode = {
+  id: number;
+  body: string;
+  createdAt: Date;
+  parentId: number | null;
+  isOwn: boolean;
+  user: { id: number; displayName: string; avatarUrl: string | null };
+  replies: PickCommentTreeNode[];
+};
+
 @Injectable()
 export class AccumulatorsService {
   private readonly logger = new Logger(AccumulatorsService.name);
@@ -2162,6 +2172,49 @@ export class AccumulatorsService {
     };
   }
 
+  private static readonly PICK_COMMENT_MAX_DEPTH = 4;
+  private static readonly PICK_COMMENT_THREAD_NOTIFY_CAP = 25;
+
+  private async getPickCommentDepth(comment: PickComment): Promise<number> {
+    let depth = 1;
+    let parentId = comment.parentId;
+    while (parentId) {
+      depth += 1;
+      const parent = await this.commentRepo.findOne({
+        where: { id: parentId, deletedAt: IsNull() },
+        select: ['id', 'parentId'],
+      });
+      if (!parent) break;
+      parentId = parent.parentId;
+    }
+    return depth;
+  }
+
+  private buildNestedPickCommentReplies(
+    parentId: number,
+    byParent: Map<
+      number,
+      Array<{
+        id: number;
+        body: string;
+        createdAt: Date;
+        userId: number;
+        displayName: string;
+        avatarUrl: string | null;
+        parentId: number;
+      }>
+    >,
+    viewerUserId: number,
+  ): PickCommentTreeNode[] {
+    return (byParent.get(parentId) ?? []).map((row) => {
+      const id = Number(row.id);
+      return {
+        ...this.mapPickCommentRow({ ...row, parentId: Number(row.parentId) }, viewerUserId),
+        replies: this.buildNestedPickCommentReplies(id, byParent, viewerUserId),
+      };
+    });
+  }
+
   private async notifyPickCommentActivity(
     actorUserId: number,
     ticket: AccumulatorTicket,
@@ -2170,6 +2223,19 @@ export class AccumulatorsService {
     const recipients = new Set<number>();
     if (ticket.userId !== actorUserId) recipients.add(ticket.userId);
     if (parent && parent.userId !== actorUserId) recipients.add(parent.userId);
+
+    const participantRows = await this.commentRepo
+      .createQueryBuilder('c')
+      .select('DISTINCT c.user_id', 'userId')
+      .where('c.accumulator_id = :aid', { aid: ticket.id })
+      .andWhere('c.deleted_at IS NULL')
+      .andWhere('c.user_id != :actorId', { actorId: actorUserId })
+      .limit(AccumulatorsService.PICK_COMMENT_THREAD_NOTIFY_CAP)
+      .getRawMany<{ userId: number }>();
+    participantRows.forEach((r) => {
+      if (r.userId) recipients.add(Number(r.userId));
+    });
+
     if (recipients.size === 0) return;
 
     const actor = await this.usersRepo.findOne({
@@ -2181,16 +2247,29 @@ export class AccumulatorsService {
     const link = `/coupons/${ticket.id}`;
 
     for (const recipientId of recipients) {
-      const isReplyToAuthor = parent != null && recipientId === parent.userId;
+      let type: 'pick_comment' | 'pick_comment_reply' | 'pick_comment_thread' = 'pick_comment_thread';
+      let title = 'New comment on a thread you joined';
+      let message = `${actorName} commented on "${pickLabel}"`;
+
+      if (recipientId === ticket.userId) {
+        type = 'pick_comment';
+        title = 'New comment on your pick';
+        message = `${actorName} commented on "${pickLabel}"`;
+      } else if (parent && recipientId === parent.userId) {
+        type = 'pick_comment_reply';
+        title = 'New reply to your comment';
+        message = `${actorName} replied on "${pickLabel}"`;
+      }
+
       await this.notificationsService.create({
         userId: recipientId,
-        type: isReplyToAuthor ? 'pick_comment_reply' : 'pick_comment',
-        title: isReplyToAuthor ? 'New reply to your comment' : 'New comment on your pick',
-        message: isReplyToAuthor
-          ? `${actorName} replied on "${pickLabel}"`
-          : `${actorName} commented on "${pickLabel}"`,
+        type,
+        title,
+        message,
         link,
         icon: 'comment',
+        sendEmail: true,
+        metadata: { pickId: String(ticket.id), actorUserId: String(actorUserId) },
       });
     }
   }
@@ -2503,14 +2582,18 @@ export class AccumulatorsService {
       throw new ForbiddenException('You can only delete your own comments');
     }
     const now = new Date();
-    comment.deletedAt = now;
-    await this.commentRepo.save(comment);
-    if (comment.parentId == null) {
-      await this.commentRepo.update(
-        { accumulatorId, parentId: commentId, deletedAt: IsNull() },
-        { deletedAt: now },
-      );
-    }
+    await this.dataSource.query(
+      `WITH RECURSIVE subtree AS (
+         SELECT id FROM pick_comments WHERE id = $1 AND accumulator_id = $2
+         UNION ALL
+         SELECT c.id FROM pick_comments c
+         INNER JOIN subtree s ON c.parent_id = s.id
+         WHERE c.accumulator_id = $2 AND c.deleted_at IS NULL
+       )
+       UPDATE pick_comments SET deleted_at = $3
+       WHERE id IN (SELECT id FROM subtree) AND deleted_at IS NULL`,
+      [commentId, accumulatorId, now],
+    );
     return { success: true };
   }
 
