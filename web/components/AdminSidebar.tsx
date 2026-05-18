@@ -21,6 +21,7 @@ const menuItems = [
   { href: '/admin/support',     icon: '🎫', label: 'Support' },
   { href: '/admin/audit-log',   icon: '📋', label: 'Audit log' },
   { href: '/admin/chat',        icon: '💬', label: 'Chat Moderation' },
+  { href: '/admin/pick-comments', icon: '🗨️', label: 'Pick Comments' },
   { href: '/admin/escrow', icon: '🔒', label: 'Escrow' },
   { href: '/admin/wallet', icon: '💰', label: 'Wallet' },
   { href: '/admin/notifications', icon: '🔔', label: 'Notifications' },

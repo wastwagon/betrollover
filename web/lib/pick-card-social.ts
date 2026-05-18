@@ -11,6 +11,8 @@ export function getPickCardSocialProps(
   pick: PickSocialFields,
   options?: {
     enabled?: boolean;
+    /** When true, skip per-card social-summary fetch (list APIs already returned counts). */
+    countsFromServer?: boolean;
     loginRedirectPath?: string;
     onCountsChange?: (pickId: number, counts: PickSocialCounts) => void;
   },
@@ -18,6 +20,7 @@ export function getPickCardSocialProps(
   const enabled = options?.enabled !== false;
   return {
     socialEnabled: enabled,
+    socialCountsFromServer: options?.countsFromServer !== false,
     reactionCount: pick.reactionCount ?? 0,
     hasReacted: pick.hasReacted ?? false,
     commentCount: pick.commentCount ?? 0,

@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards, ParseIntPipe, NotFoundException } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtGuard } from '../auth/guards/optional-jwt.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -178,8 +179,9 @@ export class AccumulatorsController {
   }
 
   @Get(':id/public')
-  async getByIdPublic(@Param('id', ParseIntPipe) id: number) {
-    const coupon = await this.accumulatorsService.getByIdPublic(id);
+  @UseGuards(OptionalJwtGuard)
+  async getByIdPublic(@Param('id', ParseIntPipe) id: number, @CurrentUser() user?: User | null) {
+    const coupon = await this.accumulatorsService.getByIdPublic(id, user?.id);
     if (!coupon) throw new NotFoundException('Pick not found or not available without login');
     return coupon;
   }
@@ -248,7 +250,8 @@ export class AccumulatorsController {
   }
 
   @Post(':id/comments')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   createComment(
     @CurrentUser() user: { id: number },
     @Param('id', ParseIntPipe) id: number,
@@ -274,7 +277,8 @@ export class AccumulatorsController {
   }
 
   @Post(':id/react')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
   react(@CurrentUser() user: { id: number }, @Param('id', ParseIntPipe) id: number) {
     return this.accumulatorsService.react(user.id, id);
   }

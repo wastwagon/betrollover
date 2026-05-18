@@ -624,6 +624,9 @@ const fr: Record<string, string> = {
   'pick_social.delete_comment': 'Supprimer',
   'pick_social.no_comments_yet': 'Aucun commentaire. Lancez la discussion.',
   'pick_social.load_older_comments': 'Commentaires plus anciens',
+  'pick_social.sign_in_to_view_comments': 'Connectez-vous pour voir les commentaires',
+  'pick_social.sign_in_to_comment': 'Connectez-vous pour commenter',
+  'pick_social.community_title': 'Communauté',
   'pick_detail.escrow_free_note':
     'Les pronostics gratuits sont partagés à titre informatif — aucun achat à rembourser.',
   'pick_detail.escrow_paid_note':

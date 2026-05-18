@@ -96,6 +96,35 @@ export class AdminController {
     return this.accumulatorsService.getMarketplaceTipsters();
   }
 
+  @Get('pick-comments')
+  async listPickComments(
+    @CurrentUser() user: User,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+    @Query('accumulatorId') accumulatorId?: string,
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const limitVal = limit != null ? parseInt(limit, 10) : undefined;
+    const offsetVal = offset != null ? parseInt(offset, 10) : undefined;
+    const accId =
+      accumulatorId != null && accumulatorId !== '' ? parseInt(accumulatorId, 10) : undefined;
+    return this.accumulatorsService.adminListPickComments({
+      limit: Number.isFinite(limitVal) ? limitVal : undefined,
+      offset: Number.isFinite(offsetVal) ? offsetVal : undefined,
+      accumulatorId: Number.isFinite(accId) ? accId : undefined,
+    });
+  }
+
+  @Delete('pick-comments/:commentId')
+  async deletePickComment(
+    @CurrentUser() user: User,
+    @Param('commentId', ParseIntPipe) commentId: number,
+    @Query('accumulatorId', ParseIntPipe) accumulatorId: number,
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.accumulatorsService.deletePickComment(user.id, accumulatorId, commentId, true);
+  }
+
   @Get('subscriptions/tipsters')
   async getAdminSubscriptionTipsters(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');

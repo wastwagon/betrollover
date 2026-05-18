@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PickCard } from '@/components/PickCard';
+import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 
@@ -65,6 +67,11 @@ export function HomeFreeTipOfTheDay() {
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
   const [isPurchased, setIsPurchased] = useState(false);
+
+  const applySocialCounts = (pickId: number, counts: PickSocialCounts) => {
+    setTips((prev) => mergeSocialCountsIntoList(prev, pickId, counts));
+    setTip((prev) => (prev?.id === pickId ? { ...prev, ...counts } : prev));
+  };
 
   useEffect(() => {
     const api = getApiUrl();
@@ -201,9 +208,9 @@ export function HomeFreeTipOfTheDay() {
               bookmakerKey={item.bookmakerKey}
               bookingCode={item.bookingCode}
               bookingCodeCopyCount={item.bookingCodeCopyCount ?? 0}
-              reactionCount={item.reactionCount}
-              hasReacted={item.hasReacted}
-              commentCount={item.commentCount}
+              {...getPickCardSocialProps(item, {
+                onCountsChange: applySocialCounts,
+              })}
             />
           ))}
         </div>

@@ -89,6 +89,8 @@ interface PickCardProps {
   commentCount?: number;
   /** Show like + comment row (marketplace, feeds). */
   socialEnabled?: boolean;
+  /** List/detail APIs already included counts — avoids N+1 social-summary calls. */
+  socialCountsFromServer?: boolean;
   onSocialCountsChange?: (counts: PickSocialCounts) => void;
   loginRedirectPath?: string;
   onView?: () => void;
@@ -147,6 +149,7 @@ export function PickCard({
   hasReacted = false,
   commentCount = 0,
   socialEnabled = true,
+  socialCountsFromServer = false,
   onSocialCountsChange,
   loginRedirectPath: loginRedirectPathProp,
   onView,
@@ -476,6 +479,7 @@ export function PickCard({
               reactionCount={reactionCount}
               hasReacted={hasReacted}
               commentCount={commentCount}
+              socialCountsFromServer={socialCountsFromServer}
               enabled
               loginRedirectPath={loginRedirectPath}
               onCountsChange={onSocialCountsChange}

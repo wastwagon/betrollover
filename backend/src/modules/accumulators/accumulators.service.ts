@@ -791,7 +791,11 @@ export class AccumulatorsService {
       where: { accumulatorId: id },
       select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
     });
-    const [withTipster] = await this.enrichWithTipsterMetadata([enriched], row ? [row] : []);
+    const [withTipster] = await this.enrichWithTipsterMetadata(
+      [enriched],
+      row ? [row] : [],
+      viewerUserId ?? undefined,
+    );
     const base = (withTipster ?? enriched) as Record<string, unknown>;
     const out = await this.applyCouponPickVisibility(base, ticket, row, viewerUserId ?? undefined, opts);
     await this.mergeBookingCodeCopyCountsIntoPayloads([out]);
@@ -1273,7 +1277,7 @@ export class AccumulatorsService {
    * - Pending: only free (price 0) coupons with an active marketplace listing (unchanged).
    * - Settled (won/lost/void): any marketplace coupon so guests can see results and tipster quality (drives sign-ups).
    */
-  async getByIdPublic(id: number) {
+  async getByIdPublic(id: number, viewerUserId?: number) {
     const ticket = await this.ticketRepo.findOne({
       where: { id },
       select: ['id', 'isMarketplace', 'result', 'status', 'price'],
@@ -1287,14 +1291,14 @@ export class AccumulatorsService {
 
     const settled = ['won', 'lost', 'void'].includes((ticket.result || 'pending').toLowerCase());
     if (settled) {
-      return this.getById(id);
+      return this.getById(id, viewerUserId);
     }
 
     if (!row || row.status !== 'active') return null;
     const listingPrice = Number(row.price);
     if (listingPrice !== 0) return null;
 
-    return this.getById(id);
+    return this.getById(id, viewerUserId);
   }
 
   /** Tipsters who have marketplace coupons (for admin filter dropdown) */
@@ -2263,6 +2267,76 @@ export class AccumulatorsService {
         displayName: user?.displayName || user?.username || 'User',
         avatarUrl: user?.avatar ?? null,
       },
+    };
+  }
+
+  async adminListPickComments(opts?: {
+    limit?: number;
+    offset?: number;
+    accumulatorId?: number;
+  }): Promise<{
+    items: Array<{
+      id: number;
+      body: string;
+      createdAt: Date;
+      accumulatorId: number;
+      pickTitle: string;
+      user: { id: number; displayName: string; username: string };
+    }>;
+    total: number;
+    hasMore: boolean;
+  }> {
+    const limit = Math.min(Math.max(opts?.limit ?? 50, 1), 100);
+    const offset = Math.max(opts?.offset ?? 0, 0);
+    const qb = this.commentRepo
+      .createQueryBuilder('c')
+      .innerJoin(User, 'u', 'u.id = c.userId')
+      .innerJoin(AccumulatorTicket, 't', 't.id = c.accumulatorId')
+      .where('c.deleted_at IS NULL')
+      .andWhere('c.parent_id IS NULL');
+    if (opts?.accumulatorId) {
+      qb.andWhere('c.accumulator_id = :aid', { aid: opts.accumulatorId });
+    }
+    const total = await qb.getCount();
+    const rows = await qb
+      .select('c.id', 'id')
+      .addSelect('c.body', 'body')
+      .addSelect('c.created_at', 'createdAt')
+      .addSelect('c.accumulator_id', 'accumulatorId')
+      .addSelect('t.title', 'pickTitle')
+      .addSelect('c.user_id', 'userId')
+      .addSelect('COALESCE(u.display_name, u.username)', 'displayName')
+      .addSelect('u.username', 'username')
+      .orderBy('c.created_at', 'DESC')
+      .offset(offset)
+      .limit(limit + 1)
+      .getRawMany<{
+        id: number;
+        body: string;
+        createdAt: Date;
+        accumulatorId: number;
+        pickTitle: string;
+        userId: number;
+        displayName: string;
+        username: string;
+      }>();
+    const hasMore = rows.length > limit;
+    const slice = hasMore ? rows.slice(0, limit) : rows;
+    return {
+      items: slice.map((r) => ({
+        id: Number(r.id),
+        body: r.body,
+        createdAt: r.createdAt,
+        accumulatorId: Number(r.accumulatorId),
+        pickTitle: r.pickTitle || `Pick #${r.accumulatorId}`,
+        user: {
+          id: Number(r.userId),
+          displayName: r.displayName || r.username || 'User',
+          username: r.username || '',
+        },
+      })),
+      total,
+      hasMore,
     };
   }
 

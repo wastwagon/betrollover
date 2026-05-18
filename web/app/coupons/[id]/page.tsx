@@ -20,6 +20,9 @@ import { BookingCodeCopyBlock } from '@/components/BookingCodeCopyBlock';
 import { NavBar } from '@/components/ios/NavBar';
 import { IconPicks } from '@/components/ios/icons';
 import { hapticSuccess } from '@/lib/haptic';
+import { PickSocialBar } from '@/components/pick-social/PickSocialBar';
+import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Pick {
@@ -80,6 +83,9 @@ interface Coupon {
   createdAt?: string;
   picks: Pick[];
   tipster?: Tipster | null;
+  reactionCount?: number;
+  hasReacted?: boolean;
+  commentCount?: number;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -309,6 +315,11 @@ export default function CouponDetailPage() {
   const [copied, setCopied] = useState(false);
   /** false = browsing as guest (public coupon); true = logged in */
   const [isAuthed, setIsAuthed] = useState(false);
+  const [socialCounts, setSocialCounts] = useState<PickSocialCounts>({
+    reactionCount: 0,
+    hasReacted: false,
+    commentCount: 0,
+  });
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -382,6 +393,15 @@ export default function CouponDetailPage() {
       document.removeEventListener('visibilitychange', onVis);
     };
   }, [coupon?.result, id]);
+
+  useEffect(() => {
+    if (!coupon) return;
+    setSocialCounts({
+      reactionCount: coupon.reactionCount ?? 0,
+      hasReacted: coupon.hasReacted ?? false,
+      commentCount: coupon.commentCount ?? 0,
+    });
+  }, [coupon?.id, coupon?.reactionCount, coupon?.hasReacted, coupon?.commentCount]);
 
   const handlePurchase = async () => {
     const token = localStorage.getItem('token');
@@ -948,6 +968,33 @@ export default function CouponDetailPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-4">
+                <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">
+                  {t('pick_social.community_title')}
+                </p>
+                <PickSocialBar
+                  pickId={id}
+                  reactionCount={socialCounts.reactionCount}
+                  hasReacted={socialCounts.hasReacted}
+                  commentCount={socialCounts.commentCount}
+                  socialCountsFromServer
+                  loginRedirectPath={currentLoginRedirectPath(`/coupons/${id}`)}
+                  onCountsChange={(counts) => {
+                    setSocialCounts(counts);
+                    setCoupon((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            reactionCount: counts.reactionCount,
+                            hasReacted: counts.hasReacted,
+                            commentCount: counts.commentCount,
+                          }
+                        : prev,
+                    );
+                  }}
+                />
               </div>
 
               {/* Tipster card */}

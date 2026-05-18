@@ -75,7 +75,7 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
     async (beforeId?: number, append = false) => {
       const token = localStorage.getItem('token');
       if (!token) {
-        throw new Error('Sign in to view comments');
+        throw new Error(t('pick_social.sign_in_to_view_comments'));
       }
       const params = new URLSearchParams({ limit: '25' });
       if (beforeId) params.set('beforeId', String(beforeId));
@@ -100,7 +100,7 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
         setItems(chronological);
       }
     },
-    [API_URL, pickId, onCommentCountChange],
+    [API_URL, pickId, t],
   );
 
   useEffect(() => {

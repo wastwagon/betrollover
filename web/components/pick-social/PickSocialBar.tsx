@@ -29,6 +29,8 @@ interface PickSocialBarProps {
   hasReacted?: boolean;
   commentCount?: number;
   enabled?: boolean;
+  /** Skip mount-time social-summary when parent already hydrated counts from a list API. */
+  socialCountsFromServer?: boolean;
   loginRedirectPath?: string;
   onCountsChange?: (counts: PickSocialCounts) => void;
 }
@@ -39,6 +41,7 @@ export function PickSocialBar({
   hasReacted: hasReactedProp = false,
   commentCount: commentCountProp = 0,
   enabled = true,
+  socialCountsFromServer = false,
   loginRedirectPath = '/login',
   onCountsChange,
 }: PickSocialBarProps) {
@@ -76,7 +79,7 @@ export function PickSocialBar({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sync counts once per pick id
-  }, [pickId, enabled]);
+  }, [pickId, enabled, socialCountsFromServer]);
 
   const emitCounts = useCallback(
     (next: Partial<PickSocialCounts>) => {
@@ -248,6 +251,11 @@ export function PickSocialBar({
           type="button"
           onClick={openComments}
           aria-label={t('pick_social.open_comments')}
+          title={
+            typeof window !== 'undefined' && !localStorage.getItem('token')
+              ? t('pick_social.sign_in_to_comment')
+              : undefined
+          }
           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-[var(--fill-secondary)] text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 transition-colors"
         >
           <IconChat className="w-4 h-4" />

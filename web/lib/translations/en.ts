@@ -631,6 +631,9 @@ const en = {
   'pick_social.delete_comment': 'Delete',
   'pick_social.no_comments_yet': 'No comments yet. Start the conversation.',
   'pick_social.load_older_comments': 'Load earlier comments',
+  'pick_social.sign_in_to_view_comments': 'Sign in to view comments',
+  'pick_social.sign_in_to_comment': 'Sign in to comment',
+  'pick_social.community_title': 'Community',
   'pick_detail.escrow_free_note':
     'Free picks are shared for information only — there is no purchase to refund.',
   'pick_detail.escrow_paid_note':
