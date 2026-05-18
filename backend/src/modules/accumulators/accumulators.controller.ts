@@ -152,6 +152,16 @@ export class AccumulatorsController {
     return this.accumulatorsService.getFreeTipOfTheDay(user?.id);
   }
 
+  @Post('social-summary/batch')
+  @UseGuards(OptionalJwtGuard)
+  batchSocialSummary(
+    @Body() body: { ids?: number[] },
+    @CurrentUser() user?: User | null,
+  ) {
+    const ids = Array.isArray(body?.ids) ? body.ids : [];
+    return this.accumulatorsService.getPickSocialSummaryBatch(ids, user?.id);
+  }
+
   @Get('popular-events')
   getPopularEvents(@Query('limit') limit?: string) {
     const limitVal = Math.min(Math.max(parseInt(limit || '6', 10) || 6, 1), 20);
@@ -255,10 +265,12 @@ export class AccumulatorsController {
   createComment(
     @CurrentUser() user: { id: number },
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: { text?: string; body?: string },
+    @Body() body: { text?: string; body?: string; parentId?: number },
   ) {
     const text = (body.text ?? body.body ?? '').trim();
-    return this.accumulatorsService.createPickComment(user.id, id, text);
+    const parentId =
+      body.parentId != null && Number.isFinite(Number(body.parentId)) ? Number(body.parentId) : undefined;
+    return this.accumulatorsService.createPickComment(user.id, id, text, parentId);
   }
 
   @Delete(':id/comments/:commentId')

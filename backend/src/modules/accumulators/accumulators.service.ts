@@ -2122,6 +2122,79 @@ export class AccumulatorsService {
     return map.get(accumulatorId) ?? { reactionCount: 0, hasReacted: false, commentCount: 0 };
   }
 
+  /** Batch social counts for up to 80 pick ids (marketplace grids). */
+  async getPickSocialSummaryBatch(
+    ids: number[],
+    viewerUserId?: number,
+  ): Promise<Record<string, { reactionCount: number; hasReacted: boolean; commentCount: number }>> {
+    const unique = [...new Set(ids.filter((id) => Number.isFinite(id) && id > 0))].slice(0, 80);
+    const map = await this.loadSocialCountsMap(unique, viewerUserId);
+    const out: Record<string, { reactionCount: number; hasReacted: boolean; commentCount: number }> = {};
+    for (const id of unique) {
+      out[String(id)] = map.get(id) ?? { reactionCount: 0, hasReacted: false, commentCount: 0 };
+    }
+    return out;
+  }
+
+  private mapPickCommentRow(
+    r: {
+      id: number;
+      body: string;
+      createdAt: Date;
+      userId: number;
+      displayName: string;
+      avatarUrl: string | null;
+      parentId?: number | null;
+    },
+    viewerUserId: number,
+  ) {
+    return {
+      id: Number(r.id),
+      body: r.body,
+      createdAt: r.createdAt,
+      parentId: r.parentId != null ? Number(r.parentId) : null,
+      isOwn: Number(r.userId) === viewerUserId,
+      user: {
+        id: Number(r.userId),
+        displayName: r.displayName || 'User',
+        avatarUrl: r.avatarUrl ?? null,
+      },
+    };
+  }
+
+  private async notifyPickCommentActivity(
+    actorUserId: number,
+    ticket: AccumulatorTicket,
+    parent: PickComment | null,
+  ): Promise<void> {
+    const recipients = new Set<number>();
+    if (ticket.userId !== actorUserId) recipients.add(ticket.userId);
+    if (parent && parent.userId !== actorUserId) recipients.add(parent.userId);
+    if (recipients.size === 0) return;
+
+    const actor = await this.usersRepo.findOne({
+      where: { id: actorUserId },
+      select: ['displayName', 'username'],
+    });
+    const actorName = actor?.displayName || actor?.username || 'Someone';
+    const pickLabel = (ticket.title || 'your pick').slice(0, 72);
+    const link = `/coupons/${ticket.id}`;
+
+    for (const recipientId of recipients) {
+      const isReplyToAuthor = parent != null && recipientId === parent.userId;
+      await this.notificationsService.create({
+        userId: recipientId,
+        type: isReplyToAuthor ? 'pick_comment_reply' : 'pick_comment',
+        title: isReplyToAuthor ? 'New reply to your comment' : 'New comment on your pick',
+        message: isReplyToAuthor
+          ? `${actorName} replied on "${pickLabel}"`
+          : `${actorName} commented on "${pickLabel}"`,
+        link,
+        icon: 'comment',
+      });
+    }
+  }
+
   async getPickReactions(
     accumulatorId: number,
     limit = 20,
@@ -2158,8 +2231,17 @@ export class AccumulatorsService {
       id: number;
       body: string;
       createdAt: Date;
+      parentId: number | null;
       isOwn: boolean;
       user: { id: number; displayName: string; avatarUrl: string | null };
+      replies: Array<{
+        id: number;
+        body: string;
+        createdAt: Date;
+        parentId: number | null;
+        isOwn: boolean;
+        user: { id: number; displayName: string; avatarUrl: string | null };
+      }>;
     }>;
     total: number;
     hasMore: boolean;
@@ -2178,7 +2260,7 @@ export class AccumulatorsService {
         qb.andWhere('c.id < :beforeId', { beforeId: opts.beforeId });
       }
       const total = await this.commentRepo.count({
-        where: { accumulatorId, deletedAt: IsNull(), parentId: IsNull() },
+        where: { accumulatorId, deletedAt: IsNull() },
       });
       const rows = await qb
         .select('c.id', 'id')
@@ -2199,18 +2281,61 @@ export class AccumulatorsService {
         }>();
       const hasMore = rows.length > limit;
       const slice = hasMore ? rows.slice(0, limit) : rows;
+      const topIds = slice.map((r) => Number(r.id));
+      const repliesByParent = new Map<
+        number,
+        Array<{
+          id: number;
+          body: string;
+          createdAt: Date;
+          userId: number;
+          displayName: string;
+          avatarUrl: string | null;
+          parentId: number;
+        }>
+      >();
+      if (topIds.length > 0) {
+        const replyRows = await this.commentRepo
+          .createQueryBuilder('c')
+          .innerJoin(User, 'u', 'u.id = c.userId')
+          .where('c.accumulator_id = :aid', { aid: accumulatorId })
+          .andWhere('c.deleted_at IS NULL')
+          .andWhere('c.parent_id IN (:...pids)', { pids: topIds })
+          .select('c.id', 'id')
+          .addSelect('c.body', 'body')
+          .addSelect('c.created_at', 'createdAt')
+          .addSelect('c.user_id', 'userId')
+          .addSelect('c.parent_id', 'parentId')
+          .addSelect('COALESCE(u.display_name, u.username)', 'displayName')
+          .addSelect('u.avatar', 'avatarUrl')
+          .orderBy('c.created_at', 'ASC')
+          .getRawMany<{
+            id: number;
+            body: string;
+            createdAt: Date;
+            userId: number;
+            parentId: number;
+            displayName: string;
+            avatarUrl: string | null;
+          }>();
+        for (const row of replyRows) {
+          const pid = Number(row.parentId);
+          const list = repliesByParent.get(pid) ?? [];
+          list.push(row);
+          repliesByParent.set(pid, list);
+        }
+      }
       return {
-        items: slice.map((r) => ({
-          id: Number(r.id),
-          body: r.body,
-          createdAt: r.createdAt,
-          isOwn: Number(r.userId) === viewerUserId,
-          user: {
-            id: Number(r.userId),
-            displayName: r.displayName || 'User',
-            avatarUrl: r.avatarUrl ?? null,
-          },
-        })),
+        items: slice.map((r) => {
+          const id = Number(r.id);
+          const replies = (repliesByParent.get(id) ?? []).map((reply) =>
+            this.mapPickCommentRow({ ...reply, parentId: id }, viewerUserId),
+          );
+          return {
+            ...this.mapPickCommentRow({ ...r, parentId: null }, viewerUserId),
+            replies,
+          };
+        }),
         total,
         hasMore,
       };
@@ -2230,10 +2355,12 @@ export class AccumulatorsService {
     userId: number,
     accumulatorId: number,
     body: string,
+    parentId?: number,
   ): Promise<{
     id: number;
     body: string;
     createdAt: Date;
+    parentId: number | null;
     isOwn: true;
     user: { id: number; displayName: string; avatarUrl: string | null };
   }> {
@@ -2243,6 +2370,17 @@ export class AccumulatorsService {
     if (!sanitized) throw new BadRequestException('Comment cannot be empty');
     const filtered = filterPickCommentContent(sanitized);
     if (filtered.blocked) throw new BadRequestException(filtered.reason || 'Comment not allowed');
+
+    let parentComment: PickComment | null = null;
+    if (parentId != null && Number.isFinite(parentId)) {
+      parentComment = await this.commentRepo.findOne({
+        where: { id: parentId, accumulatorId, deletedAt: IsNull() },
+      });
+      if (!parentComment) throw new BadRequestException('Comment you are replying to was not found');
+      if (parentComment.parentId != null) {
+        throw new BadRequestException('Replies are only supported one level deep');
+      }
+    }
 
     const recentCount = await this.commentRepo
       .createQueryBuilder('c')
@@ -2254,13 +2392,24 @@ export class AccumulatorsService {
     }
 
     const saved = await this.commentRepo.save(
-      this.commentRepo.create({ userId, accumulatorId, body: sanitized, parentId: null }),
+      this.commentRepo.create({
+        userId,
+        accumulatorId,
+        body: sanitized,
+        parentId: parentComment?.id ?? null,
+      }),
     );
     const user = await this.usersRepo.findOne({ where: { id: userId }, select: ['id', 'displayName', 'username', 'avatar'] });
+
+    void this.notifyPickCommentActivity(userId, ticket, parentComment).catch((err) => {
+      this.logger.warn(`pick comment notification failed: ${err instanceof Error ? err.message : err}`);
+    });
+
     return {
       id: saved.id,
       body: saved.body,
       createdAt: saved.createdAt,
+      parentId: saved.parentId,
       isOwn: true,
       user: {
         id: userId,
@@ -2280,6 +2429,7 @@ export class AccumulatorsService {
       body: string;
       createdAt: Date;
       accumulatorId: number;
+      parentId: number | null;
       pickTitle: string;
       user: { id: number; displayName: string; username: string };
     }>;
@@ -2292,8 +2442,7 @@ export class AccumulatorsService {
       .createQueryBuilder('c')
       .innerJoin(User, 'u', 'u.id = c.userId')
       .innerJoin(AccumulatorTicket, 't', 't.id = c.accumulatorId')
-      .where('c.deleted_at IS NULL')
-      .andWhere('c.parent_id IS NULL');
+      .where('c.deleted_at IS NULL');
     if (opts?.accumulatorId) {
       qb.andWhere('c.accumulator_id = :aid', { aid: opts.accumulatorId });
     }
@@ -2315,6 +2464,7 @@ export class AccumulatorsService {
         body: string;
         createdAt: Date;
         accumulatorId: number;
+        parentId: number | null;
         pickTitle: string;
         userId: number;
         displayName: string;
@@ -2328,6 +2478,7 @@ export class AccumulatorsService {
         body: r.body,
         createdAt: r.createdAt,
         accumulatorId: Number(r.accumulatorId),
+        parentId: r.parentId != null ? Number(r.parentId) : null,
         pickTitle: r.pickTitle || `Pick #${r.accumulatorId}`,
         user: {
           id: Number(r.userId),
@@ -2351,8 +2502,15 @@ export class AccumulatorsService {
     if (comment.userId !== userId && !isAdmin) {
       throw new ForbiddenException('You can only delete your own comments');
     }
-    comment.deletedAt = new Date();
+    const now = new Date();
+    comment.deletedAt = now;
     await this.commentRepo.save(comment);
+    if (comment.parentId == null) {
+      await this.commentRepo.update(
+        { accumulatorId, parentId: commentId, deletedAt: IsNull() },
+        { deletedAt: now },
+      );
+    }
     return { success: true };
   }
 

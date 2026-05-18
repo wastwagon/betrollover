@@ -9,7 +9,7 @@ import { BottomSheet } from '@/components/ios/BottomSheet';
 import { PickCommentsPanel } from './PickCommentsPanel';
 import { useT } from '@/context/LanguageContext';
 import { hapticSuccess } from '@/lib/haptic';
-import { fetchPickSocialSummary } from '@/lib/pick-social-summary';
+import { requestPickSocialSummaryBatch } from '@/lib/pick-social-batch';
 
 export interface PickSocialCounts {
   reactionCount: number;
@@ -68,7 +68,7 @@ export function PickSocialBar({
   useEffect(() => {
     if (!enabled || pickId <= 0) return;
     let cancelled = false;
-    void fetchPickSocialSummary(pickId).then((summary) => {
+    void requestPickSocialSummaryBatch(pickId).then((summary) => {
       if (cancelled || !summary) return;
       setReactionCount(summary.reactionCount);
       setHasReacted(summary.hasReacted);

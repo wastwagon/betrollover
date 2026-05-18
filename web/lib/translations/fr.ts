@@ -627,6 +627,11 @@ const fr: Record<string, string> = {
   'pick_social.sign_in_to_view_comments': 'Connectez-vous pour voir les commentaires',
   'pick_social.sign_in_to_comment': 'Connectez-vous pour commenter',
   'pick_social.community_title': 'Communauté',
+  'pick_social.reply': 'Répondre',
+  'pick_social.replying_to': 'Réponse à {name}',
+  'pick_social.cancel_reply': 'Annuler',
+  'pick_social.reply_placeholder': 'Répondre à {name}…',
+  'pick_social.post_reply': 'Répondre',
   'pick_detail.escrow_free_note':
     'Les pronostics gratuits sont partagés à titre informatif — aucun achat à rembourser.',
   'pick_detail.escrow_paid_note':

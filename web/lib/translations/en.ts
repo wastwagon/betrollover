@@ -634,6 +634,11 @@ const en = {
   'pick_social.sign_in_to_view_comments': 'Sign in to view comments',
   'pick_social.sign_in_to_comment': 'Sign in to comment',
   'pick_social.community_title': 'Community',
+  'pick_social.reply': 'Reply',
+  'pick_social.replying_to': 'Replying to {name}',
+  'pick_social.cancel_reply': 'Cancel',
+  'pick_social.reply_placeholder': 'Reply to {name}…',
+  'pick_social.post_reply': 'Reply',
   'pick_detail.escrow_free_note':
     'Free picks are shared for information only — there is no purchase to refund.',
   'pick_detail.escrow_paid_note':

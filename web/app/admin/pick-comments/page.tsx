@@ -15,6 +15,7 @@ interface AdminPickComment {
   body: string;
   createdAt: string;
   accumulatorId: number;
+  parentId: number | null;
   pickTitle: string;
   user: { id: number; displayName: string; username: string };
 }
@@ -122,7 +123,8 @@ export default function AdminPickCommentsPage() {
                       <span className="text-[var(--text-muted)] font-normal"> @{c.user.username}</span>
                     </p>
                     <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                      {new Date(c.createdAt).toLocaleString()} ·{' '}
+                      {new Date(c.createdAt).toLocaleString()}
+                      {c.parentId ? ' · reply' : ''} ·{' '}
                       <Link
                         href={`/coupons/${c.accumulatorId}`}
                         className="text-[var(--primary)] hover:underline"

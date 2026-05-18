@@ -170,6 +170,20 @@ export const NOTIFICATION_TYPES = {
     ctaText: 'View Details',
     category: 'system',
   },
+  pick_comment: {
+    icon: 'comment',
+    defaultSubject: 'New comment on your pick',
+    emailSubject: () => 'Someone commented on your pick',
+    ctaText: 'View pick',
+    category: 'social',
+  },
+  pick_comment_reply: {
+    icon: 'comment',
+    defaultSubject: 'New reply to your comment',
+    emailSubject: () => 'Someone replied to your comment',
+    ctaText: 'View thread',
+    category: 'social',
+  },
 } as const;
 
 export type NotificationTypeKey = keyof typeof NOTIFICATION_TYPES;
