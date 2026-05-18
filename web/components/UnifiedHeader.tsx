@@ -12,6 +12,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { trackEvent } from '@/lib/analytics';
 import { usePendingWithdrawalCount } from '@/hooks/usePendingWithdrawalCount';
 import { MobileAccountSheet } from '@/components/ios/MobileAccountSheet';
+import { NotificationBellMenu } from '@/components/notifications/NotificationBellMenu';
 import {
   IconSearch,
   IconTrophy,
@@ -39,7 +40,6 @@ import {
 } from '@/components/ios/icons';
 
 /* ─── Types ─────────────────────────────────────────────── */
-interface Notification { id: number; isRead: boolean }
 interface UnifiedHeaderProps { slipCount?: number }
 
 type MenuKey = 'browse' | 'tipsters' | 'account' | null;
@@ -272,15 +272,6 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
     if (!token) return;
     fetch(`${getApiUrl()}/wallet/balance`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : null).then(d => d && setBalance(+d.balance)).catch(() => {});
-  }, [pathname, isSignedIn]);
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    fetch(`${getApiUrl()}/notifications?limit=20`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : [])
-      .then((arr: Notification[]) => setUnreadCount(arr.filter(n => !n.isRead).length))
-      .catch(() => {});
   }, [pathname, isSignedIn]);
 
   /* ── Close on outside click / Escape ─────────────────── */
@@ -603,21 +594,10 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                   </Link>
                 )}
 
-                {/* Notifications */}
-                <Link
-                  href="/notifications"
-                  className="relative p-2.5 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                  aria-label={unreadCount > 0 ? `Notifications: ${unreadCount} unread` : 'Notifications'}
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] flex items-center justify-center text-[9px] font-bold bg-red-500 text-white rounded-full ring-2 ring-white">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </Link>
+                <NotificationBellMenu
+                  refreshKey={pathname}
+                  onUnreadCountChange={setUnreadCount}
+                />
 
                 {/* Account ▾ */}
                 <div className="relative">

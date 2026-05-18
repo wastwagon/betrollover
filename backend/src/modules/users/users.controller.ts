@@ -1,4 +1,16 @@
-import { BadRequestException, Body, Controller, Delete, Get, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -9,6 +21,30 @@ import { User } from './entities/user.entity';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Get('mentions/resolve')
+  async resolveMentions(@Query('usernames') usernames?: string) {
+    const list = (usernames || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 10);
+    const profiles = await this.usersService.resolveMentionProfiles(list);
+    return { profiles };
+  }
+
+  @Get('mentions/search')
+  @UseGuards(JwtAuthGuard)
+  async searchMentions(
+    @Query('q') q: string | undefined,
+    @Query('limit') limit: string | undefined,
+  ) {
+    const items = await this.usersService.searchUsersForMention(
+      q || '',
+      limit ? parseInt(limit, 10) : 8,
+    );
+    return { items };
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   async getProfile(@CurrentUser() user: User) {
@@ -17,7 +53,20 @@ export class UsersController {
 
   @Patch('me')
   @UseGuards(JwtAuthGuard)
-  async updateProfile(@CurrentUser() user: User, @Body() body: { displayName?: string; phone?: string; avatar?: string | null; contactEmail?: string | null; bio?: string | null; marketingConsent?: boolean }) {
+  async updateProfile(
+    @CurrentUser() user: User,
+    @Body()
+    body: {
+      displayName?: string;
+      phone?: string;
+      avatar?: string | null;
+      contactEmail?: string | null;
+      bio?: string | null;
+      marketingConsent?: boolean;
+      emailNotifications?: boolean;
+      pushNotifications?: boolean;
+    },
+  ) {
     return this.usersService.updateProfile(user.id, body);
   }
 

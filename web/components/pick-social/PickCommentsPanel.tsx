@@ -5,6 +5,15 @@ import Image from 'next/image';
 import { getAvatarUrl, getApiUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { useT } from '@/context/LanguageContext';
+import { CommentBodyText } from '@/components/pick-social/CommentBodyText';
+import { scrollCommentsToEnd, shouldAutoScrollComments } from '@/lib/comment-scroll';
+import { CommentMentionTextarea } from '@/components/pick-social/CommentMentionTextarea';
+import {
+  addReplyToTree,
+  findInTree,
+  maxCommentIdInTree,
+  mergePollComments,
+} from '@/lib/pick-comment-tree';
 
 export interface PickCommentItem {
   id: number;
@@ -73,33 +82,8 @@ function CommentAvatar({ user, size = 32 }: { user: PickCommentItem['user']; siz
   );
 }
 
-function findInTree(items: PickCommentItem[], id: number): PickCommentItem | null {
-  for (const c of items) {
-    if (c.id === id) return c;
-    const nested = findInTree(c.replies ?? [], id);
-    if (nested) return nested;
-  }
-  return null;
-}
-
 function countSubtree(comment: PickCommentItem): number {
   return 1 + (comment.replies ?? []).reduce((sum, r) => sum + countSubtree(r), 0);
-}
-
-function addReplyToTree(
-  items: PickCommentItem[],
-  parentId: number,
-  reply: PickCommentItem,
-): PickCommentItem[] {
-  return items.map((c) => {
-    if (c.id === parentId) {
-      return { ...c, replies: [...(c.replies ?? []), { ...reply, replies: reply.replies ?? [] }] };
-    }
-    if (c.replies?.length) {
-      return { ...c, replies: addReplyToTree(c.replies, parentId, reply) };
-    }
-    return c;
-  });
 }
 
 function CommentThread({
@@ -157,7 +141,9 @@ function CommentBody({
           <span className="text-xs font-semibold text-[var(--text)]">{comment.user.displayName}</span>
           <span className="text-[10px] text-[var(--text-muted)]">{formatCommentTime(comment.createdAt)}</span>
         </div>
-        <p className="text-sm text-[var(--text)] mt-0.5 break-words leading-relaxed">{comment.body}</p>
+        <p className="text-sm text-[var(--text)] mt-0.5 break-words leading-relaxed">
+          <CommentBodyText body={comment.body} />
+        </p>
         <div className="flex items-center gap-3 mt-1">
           {onReply && (
             <button
@@ -196,8 +182,13 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
   const [error, setError] = useState<string | null>(null);
   const listEndRef = useRef<HTMLDivElement>(null);
   const onCountChangeRef = useRef(onCommentCountChange);
+  const latestSnapshotRef = useRef({ total: 0, latestId: 0 });
+  const pollIdleRef = useRef(0);
+  const didInitialScrollRef = useRef(false);
+  const itemsRef = useRef<PickCommentItem[]>([]);
   onCountChangeRef.current = onCommentCountChange;
   const API_URL = getApiUrl();
+  itemsRef.current = items;
 
   const syncTotal = (total: number) => {
     setTotalCount(total);
@@ -205,7 +196,7 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
   };
 
   const loadComments = useCallback(
-    async (beforeId?: number, append = false) => {
+    async (beforeId?: number, append = false, silent = false) => {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error(t('pick_social.sign_in_to_view_comments'));
@@ -222,7 +213,18 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
       const data = await res.json();
       const fetched: PickCommentItem[] = (data.items ?? []).map((c: PickCommentItem) => normalizeComment(c));
       const chronological = [...fetched].reverse();
-      syncTotal(data.total ?? chronological.length);
+      const total = data.total ?? chronological.length;
+      const latestId = chronological[chronological.length - 1]?.id ?? 0;
+      if (
+        silent &&
+        !append &&
+        latestSnapshotRef.current.total === total &&
+        latestSnapshotRef.current.latestId === latestId
+      ) {
+        return;
+      }
+      latestSnapshotRef.current = { total, latestId };
+      syncTotal(total);
       setHasMore(data.hasMore === true);
       if (append) {
         setItems((prev) => [...chronological, ...prev]);
@@ -251,10 +253,85 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
   }, [loadComments]);
 
   useEffect(() => {
-    if (!loading && items.length > 0) {
-      listEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!loading && items.length > 0 && !didInitialScrollRef.current) {
+      didInitialScrollRef.current = true;
+      requestAnimationFrame(() => scrollCommentsToEnd(listEndRef.current));
     }
   }, [loading, items.length]);
+
+  useEffect(() => {
+    if (!loading) return;
+    didInitialScrollRef.current = false;
+  }, [loading, pickId]);
+
+  const pollNewComments = useCallback(async () => {
+    if (loading || posting || document.visibilityState !== 'visible') return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const afterId = maxCommentIdInTree(itemsRef.current);
+    if (afterId <= 0) return;
+    try {
+      const res = await fetch(`${API_URL}/accumulators/${pickId}/comments/poll?afterId=${afterId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const incoming: PickCommentItem[] = (data.items ?? []).map((c: PickCommentItem) => normalizeComment(c));
+      if (incoming.length === 0) {
+        pollIdleRef.current += 1;
+        if (typeof data.total === 'number') {
+          syncTotal(data.total);
+        }
+        return;
+      }
+      pollIdleRef.current = 0;
+      setItems((prev) => {
+        const { tree, needsFullReload } = mergePollComments(prev, incoming);
+        if (needsFullReload) {
+          void loadComments(undefined, false, true);
+          return prev;
+        }
+        return tree;
+      });
+      if (typeof data.total === 'number') {
+        syncTotal(data.total);
+      }
+      if (shouldAutoScrollComments(listEndRef.current)) {
+        requestAnimationFrame(() => scrollCommentsToEnd(listEndRef.current));
+      }
+    } catch {
+      /* noop */
+    }
+  }, [API_URL, pickId, loading, posting, loadComments]);
+
+  /** Incremental poll (chat-style) + occasional full sync for consistency. */
+  useEffect(() => {
+    if (loading || posting) return;
+    let cancelled = false;
+    let pollTimer: number | undefined;
+
+    const schedulePoll = () => {
+      const delay = pollIdleRef.current >= 4 ? 12_000 : 5_000;
+      pollTimer = window.setTimeout(() => {
+        if (cancelled) return;
+        void pollNewComments().finally(() => {
+          if (!cancelled) schedulePoll();
+        });
+      }, delay);
+    };
+
+    schedulePoll();
+    const syncId = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      loadComments(undefined, false, true).catch(() => {});
+    }, 60_000);
+
+    return () => {
+      cancelled = true;
+      if (pollTimer) window.clearTimeout(pollTimer);
+      window.clearInterval(syncId);
+    };
+  }, [loading, posting, pollNewComments, loadComments]);
 
   const handlePost = async () => {
     const trimmed = text.trim();
@@ -292,7 +369,7 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
       });
       setText('');
       setReplyTo(null);
-      requestAnimationFrame(() => listEndRef.current?.scrollIntoView({ behavior: 'smooth' }));
+      requestAnimationFrame(() => scrollCommentsToEnd(listEndRef.current));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to post');
     } finally {
@@ -392,23 +469,16 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
         )}
         {error && items.length > 0 ? <p className="text-xs text-rose-600 mb-2">{error}</p> : null}
         <div className="flex gap-2">
-          <textarea
+          <CommentMentionTextarea
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={setText}
+            onSubmit={() => void handlePost()}
             placeholder={
               replyTo
                 ? t('pick_social.reply_placeholder', { name: replyTo.displayName })
                 : t('pick_social.comment_placeholder')
             }
-            rows={2}
-            maxLength={500}
-            className="flex-1 resize-none rounded-xl border border-[var(--border)] bg-[var(--fill-secondary)] px-3 py-2 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                void handlePost();
-              }
-            }}
+            disabled={posting}
           />
           <button
             type="button"
@@ -419,6 +489,7 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
             {posting ? '…' : replyTo ? t('pick_social.post_reply') : t('pick_social.post_comment')}
           </button>
         </div>
+        <p className="text-[10px] text-[var(--text-muted)] mt-1.5">{t('pick_social.mention_hint')}</p>
       </div>
     </div>
   );

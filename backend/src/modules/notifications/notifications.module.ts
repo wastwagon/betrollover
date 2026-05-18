@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
 import { Notification } from './entities/notification.entity';
+import { UserNotificationPreference } from './entities/user-notification-preference.entity';
 import { User } from '../users/entities/user.entity';
 import { TipsterFollow } from '../predictions/entities/tipster-follow.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
@@ -12,7 +13,14 @@ import { PushModule } from '../push/push.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Notification, User, TipsterFollow, Tipster, AccumulatorTicket]),
+    TypeOrmModule.forFeature([
+      Notification,
+      UserNotificationPreference,
+      User,
+      TipsterFollow,
+      Tipster,
+      AccumulatorTicket,
+    ]),
     EmailModule,
     PushModule,
   ],

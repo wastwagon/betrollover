@@ -388,6 +388,13 @@ export class EmailService {
     const tipsterFormTrustNote = data.metadata?.tipsterForm
       ? `<p style="font-size:11px;color:${BR.muted};margin:0 0 14px;">Stats source: settled pick results on BetRollover. Performance can change as new picks settle.</p>`
       : '';
+    const isPickSocial = data.type.startsWith('pick_comment');
+    const actorName = data.metadata?.actorName?.trim();
+    const pickLabel = data.metadata?.pickLabel?.trim() || data.metadata?.pickTitle?.trim();
+    const socialContextLine =
+      isPickSocial && actorName
+        ? `<p style="font-size:13px;color:${BR.muted};margin:0 0 14px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;"><strong style="color:${BR.ink};">${this.escapeEmailText(actorName)}</strong>${pickLabel ? ` · ${this.escapeEmailText(pickLabel)}` : ''}</p>`
+        : '';
     const ctaGradient =
       accentColor === '#10b981'
         ? 'linear-gradient(180deg,#10b981,#059669)'
@@ -413,6 +420,7 @@ export class EmailService {
   <td style="padding:8px 32px 28px;">
     ${tipsterFormLine}
     ${tipsterFormTrustNote}
+    ${socialContextLine}
     <p style="font-size:16px;line-height:1.65;color:#334155;margin:0 0 22px;">${safeMessage}</p>
     ${data.link ? `
     <div style="text-align:center;">

@@ -1,7 +1,14 @@
-import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification } from './entities/notification.entity';
+import { UserNotificationPreference } from './entities/user-notification-preference.entity';
+import {
+  NOTIFICATION_PREFERENCE_GROUPS,
+  NotificationPreferenceGroup,
+  isNotificationPreferenceGroup,
+  resolveNotificationPreferenceGroup,
+} from './notification-preference-groups';
 import { User } from '../users/entities/user.entity';
 import { TipsterFollow } from '../predictions/entities/tipster-follow.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
@@ -13,6 +20,7 @@ const PUSH_NOTIFICATION_TYPES = new Set([
   'subscription', 'subscription_refund', 'subscription_payout',
   'pick_published', 'new_pick_from_followed', 'settlement',
   'pick_comment', 'pick_comment_reply', 'pick_comment_thread', 'pick_comment_reaction',
+  'pick_comment_mention',
 ]);
 
 @Injectable()
@@ -22,6 +30,8 @@ export class NotificationsService {
   constructor(
     @InjectRepository(Notification)
     private repo: Repository<Notification>,
+    @InjectRepository(UserNotificationPreference)
+    private prefRepo: Repository<UserNotificationPreference>,
     @InjectRepository(User)
     private userRepo: Repository<User>,
     @InjectRepository(TipsterFollow)
@@ -84,7 +94,7 @@ export class NotificationsService {
       where: { userId },
       order: { createdAt: 'DESC' },
       take: limit,
-      select: ['id', 'type', 'title', 'message', 'link', 'icon', 'isRead', 'createdAt'],
+      select: ['id', 'type', 'title', 'message', 'link', 'icon', 'metadata', 'isRead', 'createdAt'],
     });
     // Backward-compatible alias (`read`) while `isRead` remains canonical.
     return items.map((n) => ({ ...n, read: n.isRead }));
@@ -99,6 +109,122 @@ export class NotificationsService {
     return { ok: true };
   }
 
+  private defaultGroupChannels(): {
+    emailEnabled: boolean;
+    inAppEnabled: boolean;
+    pushEnabled: boolean;
+  } {
+    return { emailEnabled: true, inAppEnabled: true, pushEnabled: false };
+  }
+
+  private async loadGroupPreferences(userId: number): Promise<Map<NotificationPreferenceGroup, UserNotificationPreference>> {
+    const rows = await this.prefRepo.find({ where: { userId } });
+    const map = new Map<NotificationPreferenceGroup, UserNotificationPreference>();
+    for (const row of rows) {
+      if (isNotificationPreferenceGroup(row.notificationType)) {
+        map.set(row.notificationType, row);
+      }
+    }
+    return map;
+  }
+
+  private groupChannelsFromRow(
+    group: NotificationPreferenceGroup,
+    map: Map<NotificationPreferenceGroup, UserNotificationPreference>,
+  ) {
+    const row = map.get(group);
+    const defaults = this.defaultGroupChannels();
+    return {
+      emailEnabled: row?.emailEnabled ?? defaults.emailEnabled,
+      inAppEnabled: row?.inAppEnabled ?? defaults.inAppEnabled,
+      pushEnabled: row?.pushEnabled ?? defaults.pushEnabled,
+    };
+  }
+
+  async getPreferenceGroups(userId: number) {
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      select: ['id', 'emailNotifications', 'pushNotifications'],
+    });
+    if (!user) throw new NotFoundException('User not found');
+    const map = await this.loadGroupPreferences(userId);
+    return {
+      emailNotifications: user.emailNotifications,
+      pushNotifications: user.pushNotifications,
+      groups: NOTIFICATION_PREFERENCE_GROUPS.map((group) => ({
+        group,
+        ...this.groupChannelsFromRow(group, map),
+      })),
+    };
+  }
+
+  async updatePreferenceGroups(
+    userId: number,
+    body: {
+      emailNotifications?: boolean;
+      pushNotifications?: boolean;
+      groups?: Array<{
+        group: string;
+        emailEnabled?: boolean;
+        inAppEnabled?: boolean;
+        pushEnabled?: boolean;
+      }>;
+    },
+  ) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    if (body.emailNotifications !== undefined) {
+      user.emailNotifications = body.emailNotifications === true;
+    }
+    if (body.pushNotifications !== undefined) {
+      user.pushNotifications = body.pushNotifications === true;
+    }
+    await this.userRepo.save(user);
+
+    if (body.groups?.length) {
+      for (const g of body.groups) {
+        if (!isNotificationPreferenceGroup(g.group)) {
+          throw new BadRequestException(`Invalid notification group: ${g.group}`);
+        }
+        let row = await this.prefRepo.findOne({
+          where: { userId, notificationType: g.group },
+        });
+        if (!row) {
+          row = this.prefRepo.create({
+            userId,
+            notificationType: g.group,
+            ...this.defaultGroupChannels(),
+          });
+        }
+        if (g.emailEnabled !== undefined) row.emailEnabled = g.emailEnabled === true;
+        if (g.inAppEnabled !== undefined) row.inAppEnabled = g.inAppEnabled === true;
+        if (g.pushEnabled !== undefined) row.pushEnabled = g.pushEnabled === true;
+        await this.prefRepo.save(row);
+      }
+    }
+
+    return this.getPreferenceGroups(userId);
+  }
+
+  private async resolveDeliveryChannels(
+    userId: number,
+    type: string,
+  ): Promise<{ inApp: boolean; email: boolean; push: boolean }> {
+    const group = resolveNotificationPreferenceGroup(type);
+    const map = await this.loadGroupPreferences(userId);
+    const channels = this.groupChannelsFromRow(group, map);
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      select: ['pushNotifications'],
+    });
+    return {
+      inApp: channels.inAppEnabled,
+      email: channels.emailEnabled,
+      push: channels.pushEnabled && user?.pushNotifications === true,
+    };
+  }
+
   async create(data: {
     userId: number;
     type: string;
@@ -110,19 +236,38 @@ export class NotificationsService {
     /** If true, send email whenever user has an email address (bypasses emailNotifications). Use for follower new-pick alerts. */
     alwaysSendEmail?: boolean;
     metadata?: Record<string, string>;
-  }) {
-    const n = this.repo.create({
-      userId: data.userId,
-      type: data.type,
-      title: data.title,
-      message: data.message,
-      link: data.link ?? null,
-      icon: data.icon ?? 'bell',
-      metadata: data.metadata ?? null,
-    });
-    await this.repo.save(n);
+  }): Promise<Notification | null> {
+    const channels = await this.resolveDeliveryChannels(data.userId, data.type);
+    let allowEmail = false;
+    if (data.sendEmail && channels.email) {
+      const user = await this.userRepo.findOne({
+        where: { id: data.userId },
+        select: ['email', 'emailNotifications'],
+      });
+      allowEmail = Boolean(
+        user?.email && (user.emailNotifications || data.alwaysSendEmail === true),
+      );
+    }
 
-    if (this.pushService && PUSH_NOTIFICATION_TYPES.has(data.type)) {
+    if (!channels.inApp && !allowEmail && !channels.push) {
+      return null;
+    }
+
+    let n: Notification | null = null;
+    if (channels.inApp) {
+      n = this.repo.create({
+        userId: data.userId,
+        type: data.type,
+        title: data.title,
+        message: data.message,
+        link: data.link ?? null,
+        icon: data.icon ?? 'bell',
+        metadata: data.metadata ?? null,
+      });
+      await this.repo.save(n);
+    }
+
+    if (channels.push && this.pushService && PUSH_NOTIFICATION_TYPES.has(data.type)) {
       this.pushService
         .sendToUser(data.userId, {
           title: data.title,
@@ -133,15 +278,12 @@ export class NotificationsService {
         .catch(() => {});
     }
 
-    if (data.sendEmail) {
+    if (allowEmail) {
       const user = await this.userRepo.findOne({
         where: { id: data.userId },
-        select: ['email', 'emailNotifications'],
+        select: ['email'],
       });
-      if (
-        user?.email &&
-        (user.emailNotifications || data.alwaysSendEmail === true)
-      ) {
+      if (user?.email) {
         this.emailService
           .sendNotificationEmail(user.email, {
             type: data.type,

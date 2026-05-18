@@ -24,6 +24,21 @@ describe('notification-types.config', () => {
     it('should return fallback for unknown type', () => {
       expect(getEmailSubject('unknown', 'Default Title')).toBe('Default Title');
     });
+
+    it('should include pick ref in pick_comment email subject', () => {
+      expect(
+        getEmailSubject('pick_comment', 'New comment', {
+          pickId: '99',
+          pickTitle: 'Weekend acca',
+        }),
+      ).toBe('Someone commented on your pick · Weekend acca · #99');
+    });
+
+    it('should include pick ref in pick_comment_reply email subject', () => {
+      expect(getEmailSubject('pick_comment_reply', 'Reply', { pickId: '12' })).toBe(
+        'Someone replied to your comment · Pick #12',
+      );
+    });
   });
 
   describe('getCtaText', () => {

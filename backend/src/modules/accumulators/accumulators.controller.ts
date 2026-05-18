@@ -243,6 +243,21 @@ export class AccumulatorsController {
     return this.accumulatorsService.getPickReactions(id, Number.isFinite(n) ? n : 20);
   }
 
+  @Get(':id/comments/poll')
+  @UseGuards(JwtAuthGuard)
+  pollComments(
+    @CurrentUser() user: { id: number },
+    @Param('id', ParseIntPipe) id: number,
+    @Query('afterId') afterId?: string,
+  ) {
+    const after = afterId ? parseInt(afterId, 10) : 0;
+    return this.accumulatorsService.pollPickComments(
+      id,
+      user.id,
+      Number.isFinite(after) ? after : 0,
+    );
+  }
+
   @Get(':id/comments')
   @UseGuards(JwtAuthGuard)
   listComments(

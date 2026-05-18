@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import * as fs from 'fs';
 import * as path from 'path';
-import { User, UserRole } from './entities/user.entity';
+import { User, UserRole, UserStatus } from './entities/user.entity';
 import { TipsterRequest } from './entities/tipster-request.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 
@@ -57,10 +57,79 @@ export class UsersService {
     });
   }
 
+  async resolveMentionProfiles(
+    usernames: string[],
+  ): Promise<Record<string, { href: string | null; displayName: string }>> {
+    const keys = [...new Set(usernames.map((u) => u.trim().toLowerCase()).filter((u) => u.length >= 2))].slice(
+      0,
+      10,
+    );
+    if (keys.length === 0) return {};
+
+    const rows = await this.usersRepository
+      .createQueryBuilder('u')
+      .leftJoin(Tipster, 't', 't.userId = u.id')
+      .where('LOWER(u.username) IN (:...names)', { names: keys })
+      .andWhere('u.status = :status', { status: UserStatus.ACTIVE })
+      .select('u.username', 'username')
+      .addSelect('u.displayName', 'displayName')
+      .addSelect('t.id', 'tipsterId')
+      .getRawMany<{ username: string; displayName: string; tipsterId: string | null }>();
+
+    const out: Record<string, { href: string | null; displayName: string }> = {};
+    for (const row of rows) {
+      const username = row.username;
+      const key = username.toLowerCase();
+      out[key] = {
+        displayName: row.displayName || username,
+        href: row.tipsterId != null ? `/tipsters/${encodeURIComponent(username)}` : null,
+      };
+    }
+    return out;
+  }
+
+  async searchUsersForMention(query: string, limit = 8): Promise<
+    Array<{ username: string; displayName: string; avatar: string | null }>
+  > {
+    const q = query.trim().toLowerCase();
+    if (q.length < 2) return [];
+    const take = Math.min(Math.max(limit, 1), 12);
+    const rows = await this.usersRepository
+      .createQueryBuilder('u')
+      .where('LOWER(u.username) LIKE :prefix', { prefix: `${q}%` })
+      .andWhere('u.status = :status', { status: UserStatus.ACTIVE })
+      .select(['u.username', 'u.displayName', 'u.avatar'])
+      .orderBy('u.username', 'ASC')
+      .take(take)
+      .getMany();
+    return rows.map((u) => ({
+      username: u.username,
+      displayName: u.displayName || u.username,
+      avatar: u.avatar ?? null,
+    }));
+  }
+
   async findById(id: number): Promise<User | null> {
     return this.usersRepository.findOne({
       where: { id },
-      select: ['id', 'email', 'contactEmail', 'username', 'displayName', 'avatar', 'phone', 'role', 'status', 'createdAt', 'emailVerifiedAt', 'ageVerifiedAt', 'bio', 'marketingConsent'],
+      select: [
+        'id',
+        'email',
+        'contactEmail',
+        'username',
+        'displayName',
+        'avatar',
+        'phone',
+        'role',
+        'status',
+        'createdAt',
+        'emailVerifiedAt',
+        'ageVerifiedAt',
+        'bio',
+        'marketingConsent',
+        'emailNotifications',
+        'pushNotifications',
+      ],
     });
   }
 
@@ -210,7 +279,16 @@ export class UsersService {
 
   async updateProfile(
     id: number,
-    data: { displayName?: string; phone?: string; avatar?: string | null; contactEmail?: string | null; bio?: string | null; marketingConsent?: boolean },
+    data: {
+      displayName?: string;
+      phone?: string;
+      avatar?: string | null;
+      contactEmail?: string | null;
+      bio?: string | null;
+      marketingConsent?: boolean;
+      emailNotifications?: boolean;
+      pushNotifications?: boolean;
+    },
   ): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) throw new BadRequestException('Account not found.');
@@ -231,6 +309,12 @@ export class UsersService {
     }
     if (data.marketingConsent !== undefined) {
       user.marketingConsent = data.marketingConsent === true;
+    }
+    if (data.emailNotifications !== undefined) {
+      user.emailNotifications = data.emailNotifications === true;
+    }
+    if (data.pushNotifications !== undefined) {
+      user.pushNotifications = data.pushNotifications === true;
     }
     await this.usersRepository.save(user);
     return this.findById(id) as Promise<User>;

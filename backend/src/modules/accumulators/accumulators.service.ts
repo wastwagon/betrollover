@@ -17,6 +17,7 @@ import { PickMarketplace } from './entities/pick-marketplace.entity';
 import { PickReaction } from './entities/pick-reaction.entity';
 import { PickComment } from './entities/pick-comment.entity';
 import { filterPickCommentContent } from './pick-comment-filter.util';
+import { extractMentionUsernames } from './pick-comment-mentions.util';
 import { sanitizeText } from '../../common/sanitize.util';
 import { EscrowFund } from './entities/escrow-fund.entity';
 import { UserPurchasedPick } from './entities/user-purchased-pick.entity';
@@ -2215,6 +2216,216 @@ export class AccumulatorsService {
     });
   }
 
+  private async loadPickCommentRowsGrouped(accumulatorId: number): Promise<{
+    roots: Array<{
+      id: number;
+      body: string;
+      createdAt: Date;
+      userId: number;
+      displayName: string;
+      avatarUrl: string | null;
+      parentId: number | null;
+    }>;
+    byParent: Map<
+      number,
+      Array<{
+        id: number;
+        body: string;
+        createdAt: Date;
+        userId: number;
+        displayName: string;
+        avatarUrl: string | null;
+        parentId: number;
+      }>
+    >;
+    total: number;
+  }> {
+    const rows = await this.commentRepo
+      .createQueryBuilder('c')
+      .innerJoin(User, 'u', 'u.id = c.userId')
+      .where('c.accumulator_id = :aid', { aid: accumulatorId })
+      .andWhere('c.deleted_at IS NULL')
+      .select('c.id', 'id')
+      .addSelect('c.body', 'body')
+      .addSelect('c.created_at', 'createdAt')
+      .addSelect('c.user_id', 'userId')
+      .addSelect('c.parent_id', 'parentId')
+      .addSelect('COALESCE(u.display_name, u.username)', 'displayName')
+      .addSelect('u.avatar', 'avatarUrl')
+      .orderBy('c.created_at', 'ASC')
+      .getRawMany<{
+        id: number;
+        body: string;
+        createdAt: Date;
+        userId: number;
+        parentId: number | null;
+        displayName: string;
+        avatarUrl: string | null;
+      }>();
+
+    const roots: Array<{
+      id: number;
+      body: string;
+      createdAt: Date;
+      userId: number;
+      displayName: string;
+      avatarUrl: string | null;
+      parentId: number | null;
+    }> = [];
+    const byParent = new Map<
+      number,
+      Array<{
+        id: number;
+        body: string;
+        createdAt: Date;
+        userId: number;
+        displayName: string;
+        avatarUrl: string | null;
+        parentId: number;
+      }>
+    >();
+
+    for (const row of rows) {
+      const mapped = {
+        id: Number(row.id),
+        body: row.body,
+        createdAt: row.createdAt,
+        userId: Number(row.userId),
+        displayName: row.displayName,
+        avatarUrl: row.avatarUrl ?? null,
+        parentId: row.parentId != null ? Number(row.parentId) : null,
+      };
+      if (mapped.parentId == null) {
+        roots.push(mapped);
+      } else {
+        const list = byParent.get(mapped.parentId) ?? [];
+        list.push({ ...mapped, parentId: mapped.parentId });
+        byParent.set(mapped.parentId, list);
+      }
+    }
+
+    return { roots, byParent, total: rows.length };
+  }
+
+  async pollPickComments(
+    accumulatorId: number,
+    viewerUserId: number,
+    afterId: number,
+  ): Promise<{
+    items: Array<{
+      id: number;
+      body: string;
+      createdAt: Date;
+      parentId: number | null;
+      isOwn: boolean;
+      user: { id: number; displayName: string; avatarUrl: string | null };
+    }>;
+    total: number;
+  }> {
+    const ticket = await this.ticketRepo.findOne({ where: { id: accumulatorId } });
+    if (!ticket) throw new NotFoundException('Pick not found');
+    const after = Math.max(0, Math.floor(afterId));
+    const total = await this.commentRepo.count({
+      where: { accumulatorId, deletedAt: IsNull() },
+    });
+    if (after <= 0) {
+      return { items: [], total };
+    }
+    try {
+      const rows = await this.commentRepo
+        .createQueryBuilder('c')
+        .innerJoin(User, 'u', 'u.id = c.userId')
+        .where('c.accumulator_id = :aid', { aid: accumulatorId })
+        .andWhere('c.deleted_at IS NULL')
+        .andWhere('c.id > :afterId', { afterId: after })
+        .select('c.id', 'id')
+        .addSelect('c.body', 'body')
+        .addSelect('c.created_at', 'createdAt')
+        .addSelect('c.user_id', 'userId')
+        .addSelect('c.parent_id', 'parentId')
+        .addSelect('COALESCE(u.display_name, u.username)', 'displayName')
+        .addSelect('u.avatar', 'avatarUrl')
+        .orderBy('c.id', 'ASC')
+        .limit(40)
+        .getRawMany<{
+          id: number;
+          body: string;
+          createdAt: Date;
+          userId: number;
+          parentId: number | null;
+          displayName: string;
+          avatarUrl: string | null;
+        }>();
+      return {
+        items: rows.map((r) =>
+          this.mapPickCommentRow(
+            {
+              id: Number(r.id),
+              body: r.body,
+              createdAt: r.createdAt,
+              userId: Number(r.userId),
+              displayName: r.displayName,
+              avatarUrl: r.avatarUrl,
+              parentId: r.parentId != null ? Number(r.parentId) : null,
+            },
+            viewerUserId,
+          ),
+        ),
+        total,
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.error(`pollPickComments failed for accumulator ${accumulatorId}: ${message}`);
+      throw err;
+    }
+  }
+
+  private async notifyPickCommentMentions(
+    actorUserId: number,
+    ticket: AccumulatorTicket,
+    body: string,
+  ): Promise<void> {
+    const usernames = extractMentionUsernames(body);
+    if (usernames.length === 0) return;
+
+    const lowerNames = usernames.map((u) => u.toLowerCase());
+    const mentioned = await this.usersRepo
+      .createQueryBuilder('u')
+      .where('LOWER(u.username) IN (:...names)', { names: lowerNames })
+      .select(['u.id', 'u.username', 'u.displayName'])
+      .getMany();
+
+    if (mentioned.length === 0) return;
+
+    const actor = await this.usersRepo.findOne({
+      where: { id: actorUserId },
+      select: ['displayName', 'username'],
+    });
+    const actorName = actor?.displayName || actor?.username || 'Someone';
+    const pickLabel = (ticket.title || 'a pick').slice(0, 72);
+    const link = `/coupons/${ticket.id}`;
+
+    for (const user of mentioned) {
+      if (user.id === actorUserId) continue;
+      await this.notificationsService.create({
+        userId: user.id,
+        type: 'pick_comment_mention',
+        title: 'You were mentioned in a comment',
+        message: `${actorName} mentioned you on "${pickLabel}"`,
+        link,
+        icon: 'comment',
+        sendEmail: true,
+        metadata: {
+          pickId: String(ticket.id),
+          pickTitle: ticket.title?.trim() || pickLabel,
+          pickLabel,
+          actorName,
+          actorUserId: String(actorUserId),
+        },
+      });
+    }
+  }
+
   private async notifyPickCommentActivity(
     actorUserId: number,
     ticket: AccumulatorTicket,
@@ -2298,7 +2509,13 @@ export class AccumulatorsService {
         link,
         icon: 'comment',
         sendEmail: true,
-        metadata: { pickId: String(ticket.id), actorUserId: String(actorUserId) },
+        metadata: {
+          pickId: String(ticket.id),
+          pickTitle: ticket.title?.trim() || pickLabel,
+          pickLabel,
+          actorName,
+          actorUserId: String(actorUserId),
+        },
       });
     }
   }
@@ -2358,90 +2575,19 @@ export class AccumulatorsService {
     if (!ticket) throw new NotFoundException('Pick not found');
     const limit = Math.min(Math.max(opts?.limit ?? 25, 1), 50);
     try {
-      const qb = this.commentRepo
-        .createQueryBuilder('c')
-        .innerJoin(User, 'u', 'u.id = c.userId')
-        .where('c.accumulator_id = :aid', { aid: accumulatorId })
-        .andWhere('c.deleted_at IS NULL')
-        .andWhere('c.parent_id IS NULL');
+      const { roots, byParent, total } = await this.loadPickCommentRowsGrouped(accumulatorId);
+      let rootPage = [...roots].sort((a, b) => Number(b.id) - Number(a.id));
       if (opts?.beforeId) {
-        qb.andWhere('c.id < :beforeId', { beforeId: opts.beforeId });
+        rootPage = rootPage.filter((r) => Number(r.id) < opts.beforeId!);
       }
-      const total = await this.commentRepo.count({
-        where: { accumulatorId, deletedAt: IsNull() },
-      });
-      const rows = await qb
-        .select('c.id', 'id')
-        .addSelect('c.body', 'body')
-        .addSelect('c.created_at', 'createdAt')
-        .addSelect('c.user_id', 'userId')
-        .addSelect('COALESCE(u.display_name, u.username)', 'displayName')
-        .addSelect('u.avatar', 'avatarUrl')
-        .orderBy('c.created_at', 'DESC')
-        .limit(limit + 1)
-        .getRawMany<{
-          id: number;
-          body: string;
-          createdAt: Date;
-          userId: number;
-          displayName: string;
-          avatarUrl: string | null;
-        }>();
-      const hasMore = rows.length > limit;
-      const slice = hasMore ? rows.slice(0, limit) : rows;
-      const topIds = slice.map((r) => Number(r.id));
-      const repliesByParent = new Map<
-        number,
-        Array<{
-          id: number;
-          body: string;
-          createdAt: Date;
-          userId: number;
-          displayName: string;
-          avatarUrl: string | null;
-          parentId: number;
-        }>
-      >();
-      if (topIds.length > 0) {
-        const replyRows = await this.commentRepo
-          .createQueryBuilder('c')
-          .innerJoin(User, 'u', 'u.id = c.userId')
-          .where('c.accumulator_id = :aid', { aid: accumulatorId })
-          .andWhere('c.deleted_at IS NULL')
-          .andWhere('c.parent_id IN (:...pids)', { pids: topIds })
-          .select('c.id', 'id')
-          .addSelect('c.body', 'body')
-          .addSelect('c.created_at', 'createdAt')
-          .addSelect('c.user_id', 'userId')
-          .addSelect('c.parent_id', 'parentId')
-          .addSelect('COALESCE(u.display_name, u.username)', 'displayName')
-          .addSelect('u.avatar', 'avatarUrl')
-          .orderBy('c.created_at', 'ASC')
-          .getRawMany<{
-            id: number;
-            body: string;
-            createdAt: Date;
-            userId: number;
-            parentId: number;
-            displayName: string;
-            avatarUrl: string | null;
-          }>();
-        for (const row of replyRows) {
-          const pid = Number(row.parentId);
-          const list = repliesByParent.get(pid) ?? [];
-          list.push(row);
-          repliesByParent.set(pid, list);
-        }
-      }
+      const hasMore = rootPage.length > limit;
+      const slice = hasMore ? rootPage.slice(0, limit) : rootPage;
       return {
         items: slice.map((r) => {
           const id = Number(r.id);
-          const replies = (repliesByParent.get(id) ?? []).map((reply) =>
-            this.mapPickCommentRow({ ...reply, parentId: id }, viewerUserId),
-          );
           return {
             ...this.mapPickCommentRow({ ...r, parentId: null }, viewerUserId),
-            replies,
+            replies: this.buildNestedPickCommentReplies(id, byParent, viewerUserId),
           };
         }),
         total,
@@ -2485,8 +2631,9 @@ export class AccumulatorsService {
         where: { id: parentId, accumulatorId, deletedAt: IsNull() },
       });
       if (!parentComment) throw new BadRequestException('Comment you are replying to was not found');
-      if (parentComment.parentId != null) {
-        throw new BadRequestException('Replies are only supported one level deep');
+      const parentDepth = await this.getPickCommentDepth(parentComment);
+      if (parentDepth >= AccumulatorsService.PICK_COMMENT_MAX_DEPTH) {
+        throw new BadRequestException('Maximum reply depth reached');
       }
     }
 
@@ -2511,6 +2658,9 @@ export class AccumulatorsService {
 
     void this.notifyPickCommentActivity(userId, ticket, parentComment).catch((err) => {
       this.logger.warn(`pick comment notification failed: ${err instanceof Error ? err.message : err}`);
+    });
+    void this.notifyPickCommentMentions(userId, ticket, sanitized).catch((err) => {
+      this.logger.warn(`pick comment mention notification failed: ${err instanceof Error ? err.message : err}`);
     });
 
     return {

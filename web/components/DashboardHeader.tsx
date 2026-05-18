@@ -2,21 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { NotificationBellMenu } from '@/components/notifications/NotificationBellMenu';
 import { getApiUrl } from '@/lib/site-config';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 import { useCurrency } from '@/context/CurrencyContext';
 
-interface Notification {
-  id: number;
-  isRead: boolean;
-}
-
 export function DashboardHeader() {
   const router = useRouter();
+  const pathname = usePathname();
   const { format, currency } = useCurrency();
   const [balance, setBalance] = useState<number | null>(null);
-  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -24,10 +20,6 @@ export function DashboardHeader() {
     fetch(`${getApiUrl()}/wallet/balance`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => data && setBalance(Number(data.balance)))
-      .catch(() => {});
-    fetch(`${getApiUrl()}/notifications?limit=20`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((arr: Notification[]) => setUnreadCount(arr.filter((n) => !n.isRead).length))
       .catch(() => {});
   }, []);
 
@@ -63,20 +55,7 @@ export function DashboardHeader() {
               )}
             </Link>
           )}
-          <Link
-            href="/notifications"
-            className="relative p-2.5 rounded-xl text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-warm)] transition-colors"
-            aria-label="Notifications"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold bg-[var(--accent)] text-white rounded-full ring-2 ring-white">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </Link>
+          <NotificationBellMenu refreshKey={pathname} variant="dashboard" />
           <button
             type="button"
             onClick={handleSignOut}

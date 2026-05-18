@@ -27,6 +27,11 @@ All platform notifications use **SendGrid** for email delivery. In-app notificat
 | Withdrawal failed | `withdrawal_failed` | Tipster | ✓ | `WalletService.requestWithdrawal()` (catch) |
 | User registers | (auth) | User | ✓ | `AuthService.register()` – verification email |
 | Resend verification | (auth) | User | ✓ | `AuthService.resendVerificationEmail()` |
+| Comment on your pick | `pick_comment` | Pick owner | ✓ | `AccumulatorsService.notifyPickCommentActivity()` |
+| Reply to your comment | `pick_comment_reply` | Parent author | ✓ | Same |
+| Thread you joined | `pick_comment_thread` | Prior commenters | ✓ | Same |
+| Comment on pick you liked | `pick_comment_reaction` | Reactors | ✓ | Same |
+| @mention in comment | `pick_comment_mention` | Mentioned user | ✓ | `notifyPickCommentMentions()` |
 
 ## Notification Type Config
 
@@ -43,13 +48,23 @@ Defined in `backend/src/modules/notifications/notification-types.config.ts`:
 - `withdrawal_done` – Withdrawal completed
 - `withdrawal_failed` – Withdrawal failed (refunded)
 - `system_announcement` – Platform announcements
+- `pick_comment` – Someone commented on your pick
+- `pick_comment_reply` – Reply to your comment
+- `pick_comment_thread` – New activity on a thread you joined
+- `pick_comment_reaction` – Comment on a pick you reacted to
+
+## In-app UI (web)
+
+- `/notifications` — full list with `NotificationListRow` + `notification-ui.tsx` (per-type icons/tints).
+- Header bell — `NotificationBellMenu` shows last 5 with the same visuals; pick-comment copy is localized via `notification-display.ts` when `metadata.actorName` is present (EN/FR from cookie).
+- Pick-comment emails include a green “From **actor** · pick” context line when `metadata.actorName` is set.
 
 ## Email Templates
 
 All notification emails use professional HTML templates:
 
 ### Notification emails (`sendNotificationEmail`)
-- **Category-based accent colors**: marketplace (green), wallet (blue), account (purple), social (pink), achievement (amber), system (gray)
+- **Category-based accent colors**: marketplace (green), wallet (blue), account (purple), social (green, same as marketplace), achievement (amber), system (gray)
 - **Contextual subject lines** from `notification-types.config` (e.g. "Purchase confirmed: Pick Title", "Deposit of GHS 50 received")
 - **Type-specific CTA buttons**: "View Marketplace", "View My Purchases", "View Wallet", etc.
 - **Header banner** with BetRollover branding and notification title
@@ -76,5 +91,7 @@ Admins (users with `role=admin`) receive email notifications for:
 
 ## User Preferences
 
-- `users.emailNotifications` – Global email toggle (default: true)
-- Future: `user_notification_preferences` table for per-type control (see `create_notifications_system.sql`)
+- `users.emailNotifications` – Master email toggle (default: true), editable on Profile
+- `users.pushNotifications` – Master push toggle (default: false)
+- `user_notification_preferences` – Per-category group channels (`marketplace`, `wallet`, `social`, `account`, `system`) with `email_enabled`, `in_app_enabled`, `push_enabled` (migration `095_user_notification_preferences.sql`)
+- API: `GET/PATCH /notifications/preferences` — returns master toggles + group matrix; enforced in `NotificationsService.create()`

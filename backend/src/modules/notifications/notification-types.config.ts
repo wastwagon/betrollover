@@ -173,29 +173,39 @@ export const NOTIFICATION_TYPES = {
   pick_comment: {
     icon: 'comment',
     defaultSubject: 'New comment on your pick',
-    emailSubject: () => 'Someone commented on your pick',
+    emailSubject: (ctx: Record<string, string>) => emailSubjectWithPickRef('Someone commented on your pick', ctx),
     ctaText: 'View pick',
     category: 'social',
   },
   pick_comment_reply: {
     icon: 'comment',
     defaultSubject: 'New reply to your comment',
-    emailSubject: () => 'Someone replied to your comment',
+    emailSubject: (ctx: Record<string, string>) => emailSubjectWithPickRef('Someone replied to your comment', ctx),
     ctaText: 'View thread',
     category: 'social',
   },
   pick_comment_thread: {
     icon: 'comment',
     defaultSubject: 'New activity on a pick you commented on',
-    emailSubject: () => 'New comment on a discussion you joined',
+    emailSubject: (ctx: Record<string, string>) =>
+      emailSubjectWithPickRef('New comment on a discussion you joined', ctx),
     ctaText: 'View thread',
     category: 'social',
   },
   pick_comment_reaction: {
     icon: 'comment',
     defaultSubject: 'New comment on a pick you liked',
-    emailSubject: () => 'New comment on a pick you reacted to',
+    emailSubject: (ctx: Record<string, string>) =>
+      emailSubjectWithPickRef('New comment on a pick you reacted to', ctx),
     ctaText: 'View pick',
+    category: 'social',
+  },
+  pick_comment_mention: {
+    icon: 'comment',
+    defaultSubject: 'You were mentioned in a comment',
+    emailSubject: (ctx: Record<string, string>) =>
+      emailSubjectWithPickRef('You were mentioned in a comment', ctx),
+    ctaText: 'View thread',
     category: 'social',
   },
 } as const;

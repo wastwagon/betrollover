@@ -13,6 +13,7 @@ import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/sit
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 import { NavBar } from '@/components/ios/NavBar';
+import { NotificationPreferencesSection } from '@/components/notifications/NotificationPreferencesSection';
 
 interface Profile {
   id: number;
@@ -391,6 +392,8 @@ export default function ProfilePage() {
                 </div>
               </div>
             </form>
+
+            <NotificationPreferencesSection />
 
           <form onSubmit={changePassword} className="ios-grouped-section p-5 min-w-0">
             <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('profile.change_password')}</h2>
