@@ -15,6 +15,7 @@ import { TipstersSetupService } from '../predictions/tipsters-setup.service';
 import { NewsService } from '../news/news.service';
 import { TransfersSyncService } from '../news/transfers-sync.service';
 import { InjuriesSyncService } from '../news/injuries-sync.service';
+import { NewsSyncProbeService } from '../news/news-sync-probe.service';
 import { BasketballSyncService } from '../basketball/basketball-sync.service';
 import { RugbySyncService } from '../rugby/rugby-sync.service';
 import { MmaSyncService } from '../mma/mma-sync.service';
@@ -49,6 +50,7 @@ export class AdminController {
     private readonly newsService: NewsService,
     private readonly transfersSyncService: TransfersSyncService,
     private readonly injuriesSyncService: InjuriesSyncService,
+    private readonly newsSyncProbeService: NewsSyncProbeService,
     private readonly basketballSyncService: BasketballSyncService,
     private readonly rugbySyncService: RugbySyncService,
     private readonly mmaSyncService: MmaSyncService,
@@ -337,6 +339,12 @@ export class AdminController {
   async syncInjuries(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.injuriesSyncService.sync();
+  }
+
+  @Post('news/sync/probe')
+  async probeNewsSync(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.newsSyncProbeService.probe();
   }
 
   @Post('sport-sync/all')

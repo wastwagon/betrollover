@@ -25,8 +25,21 @@ export default function AdminNewsPage() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [syncingInjuries, setSyncingInjuries] = useState(false);
+  const [probing, setProbing] = useState(false);
   const [syncResult, setSyncResult] = useState<{ added: number; errors: string[] } | null>(null);
-  const [injurySyncResult, setInjurySyncResult] = useState<{ added: number; errors: string[] } | null>(null);
+  const [injurySyncResult, setInjurySyncResult] = useState<{ added: number; errors: string[]; bySport?: Record<string, number> } | null>(null);
+  const [probeResult, setProbeResult] = useState<{
+    configured: boolean;
+    results: Array<{
+      sport: string;
+      kind: string;
+      label: string;
+      ok: boolean;
+      candidateOnly: boolean;
+      resultCount: number;
+      message: string;
+    }>;
+  } | null>(null);
 
   const syncTransfers = () => {
     const token = localStorage.getItem('token');
@@ -57,11 +70,30 @@ export default function AdminNewsPage() {
     })
       .then((r) => r.json())
       .then((data) => {
-        setInjurySyncResult({ added: data.added ?? 0, errors: data.errors ?? [] });
+        setInjurySyncResult({
+          added: data.added ?? 0,
+          errors: data.errors ?? [],
+          bySport: data.bySport,
+        });
         if (data.added > 0) load();
       })
       .catch(() => setInjurySyncResult({ added: 0, errors: ['Request failed'] }))
       .finally(() => setSyncingInjuries(false));
+  };
+
+  const probeNewsSync = () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setProbing(true);
+    setProbeResult(null);
+    fetch(`${getApiUrl()}/admin/news/sync/probe`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => setProbeResult(data))
+      .catch(() => setProbeResult({ configured: false, results: [] }))
+      .finally(() => setProbing(false));
   };
 
   const load = () => {
@@ -94,8 +126,16 @@ export default function AdminNewsPage() {
           <div className="flex flex-col sm:flex-row flex-wrap gap-3 w-full sm:w-auto shrink-0">
             <button
               type="button"
+              onClick={probeNewsSync}
+              disabled={probing || syncing || syncingInjuries}
+              className="w-full sm:w-auto text-center px-5 py-2.5 rounded-xl border border-gray-400 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50"
+            >
+              {probing ? 'Probing...' : 'Probe APIs'}
+            </button>
+            <button
+              type="button"
               onClick={syncTransfers}
-              disabled={syncing || syncingInjuries}
+              disabled={syncing || syncingInjuries || probing}
               className="w-full sm:w-auto text-center px-5 py-2.5 rounded-xl border border-[var(--primary)] text-[var(--primary)] font-semibold hover:bg-[var(--primary)]/10 disabled:opacity-50"
             >
               {syncing ? 'Syncing...' : 'Sync Transfers'}
@@ -103,7 +143,7 @@ export default function AdminNewsPage() {
             <button
               type="button"
               onClick={syncInjuries}
-              disabled={syncingInjuries || syncing}
+              disabled={syncingInjuries || syncing || probing}
               className="w-full sm:w-auto text-center px-5 py-2.5 rounded-xl border border-amber-600 text-amber-700 dark:text-amber-300 font-semibold hover:bg-amber-50 dark:hover:bg-amber-900/20 disabled:opacity-50"
             >
               {syncingInjuries ? 'Syncing...' : 'Sync Injuries'}
@@ -133,7 +173,12 @@ export default function AdminNewsPage() {
         {injurySyncResult && (
           <div className={`mb-6 p-4 rounded-xl ${injurySyncResult.added > 0 ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200'}`}>
             {injurySyncResult.added > 0 ? (
-              <p>Added {injurySyncResult.added} new injury article(s) from API-Sports.</p>
+              <p>
+                Added {injurySyncResult.added} new injury article(s) from API-Sports
+                {injurySyncResult.bySport
+                  ? ` (${Object.entries(injurySyncResult.bySport).map(([s, n]) => `${s}: ${n}`).join(', ')})`
+                  : ''}.
+              </p>
             ) : (
               <p>
                 {injurySyncResult.errors.length > 0
@@ -141,6 +186,33 @@ export default function AdminNewsPage() {
                   : 'No new injuries found. Ensure API_SPORTS_KEY is set in Admin → Settings.'}
               </p>
             )}
+          </div>
+        )}
+
+        {probeResult && (
+          <div className="mb-6 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                API probe {probeResult.configured ? '(key configured)' : '(no API key)'}
+              </p>
+            </div>
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+              {probeResult.results.map((r) => (
+                <li key={`${r.sport}-${r.kind}-${r.label}`} className="px-4 py-3 text-sm">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${r.ok ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
+                      {r.ok ? 'OK' : 'No data'}
+                    </span>
+                    <span className="font-medium text-gray-900 dark:text-white">{r.label}</span>
+                    {r.candidateOnly ? (
+                      <span className="text-xs text-gray-500">candidate</span>
+                    ) : null}
+                    <span className="text-xs text-gray-500">{r.resultCount} rows</span>
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-400">{r.message}</p>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 

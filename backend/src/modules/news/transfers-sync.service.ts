@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NewsArticle } from './entities/news-article.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
-import { getSportApiBaseUrl, isSportEnabled } from '../../config/sports.config';
+import { getSportApiBaseUrl, isSportEnabled, type SportType } from '../../config/sports.config';
 import { API_CALL_DELAY_MS } from '../../config/api-limits.config';
 import { NEWS_TRANSFERS_SYNC } from '../../config/news-sync.config';
 
@@ -68,7 +68,7 @@ export class TransfersSyncService {
   }
 
   private async fetchTransfersForTeam(
-    sport: 'football',
+    sport: SportType,
     teamId: number,
     headers: Record<string, string>,
   ): Promise<Transfer[]> {
@@ -117,7 +117,7 @@ export class TransfersSyncService {
 
       for (const teamId of cfg.teamIds) {
         try {
-          const transfers = await this.fetchTransfersForTeam(cfg.sport as 'football', teamId, headers);
+          const transfers = await this.fetchTransfersForTeam(cfg.sport, teamId, headers);
           for (const t of transfers) {
             const publishedAt = t.date ? new Date(t.date) : new Date();
             if (isNaN(publishedAt.getTime())) continue;
