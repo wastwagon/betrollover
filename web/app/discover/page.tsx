@@ -16,6 +16,7 @@ import {
   SPORT_ICONS,
   SPORT_META,
   getContentSportLabel,
+  isContentSportFilter,
   type ContentSport,
   type ContentSportFilter,
 } from '@/lib/sports-content';
@@ -312,7 +313,8 @@ function NewsTab({ sport }: { sport: ContentSport }) {
       ) : (
         <div className="space-y-6">
           {articles.map((a) => {
-            const artSportMeta = a.sport ? SPORT_META[a.sport] : null;
+            const articleSport =
+              a.sport && isContentSportFilter(a.sport) ? a.sport : null;
             return (
               <Link
                 key={a.id}
@@ -330,9 +332,9 @@ function NewsTab({ sport }: { sport: ContentSport }) {
                       <span className="text-xs font-medium text-[var(--primary)] uppercase">
                         {getCategoryLabel(t, a.category)}
                       </span>
-                      {artSportMeta && !sport && (
-                        <span className={`text-xs font-semibold ${artSportMeta.color}`}>
-                          {artSportMeta.icon} {getContentSportLabel(t, a.sport as ContentSportFilter)}
+                      {articleSport && !sport && (
+                        <span className={`text-xs font-semibold ${SPORT_META[articleSport].color}`}>
+                          {SPORT_META[articleSport].icon} {getContentSportLabel(t, articleSport)}
                         </span>
                       )}
                     </div>

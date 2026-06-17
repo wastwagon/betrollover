@@ -54,7 +54,7 @@ export function FeaturedPicks({
 }) {
   const t = useT();
   const [picks, setPicks] = useState<Accumulator[]>(
-    Array.isArray(initialFeatured) ? (initialFeatured as Accumulator[]) : [],
+    Array.isArray(initialFeatured) ? (initialFeatured as unknown as Accumulator[]) : [],
   );
 
   useEffect(() => {
