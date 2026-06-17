@@ -9,8 +9,14 @@ import { AdSlot } from '@/components/AdSlot';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
-
-type ResourceSport = '' | 'football' | 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football' | 'tennis';
+import {
+  CONTENT_SPORT_KEYS,
+  SPORT_ICONS,
+  SPORT_META,
+  getContentSportLabel,
+  type ContentSport,
+  type ContentSportFilter,
+} from '@/lib/sports-content';
 
 interface ResourceItem {
   id: number;
@@ -54,28 +60,11 @@ const TYPE_LABELS: Record<string, string> = {
   tool:     'Tool',
 };
 
-const SPORT_FILTERS: { key: ResourceSport; icon: string; label: string }[] = [
-  { key: '',                  icon: '🌍', label: 'All Sports' },
-  { key: 'football',          icon: '⚽', label: 'Football' },
-  { key: 'basketball',        icon: '🏀', label: 'Basketball' },
-  { key: 'rugby',             icon: '🏉', label: 'Rugby' },
-  { key: 'mma',               icon: '🥊', label: 'MMA' },
-  { key: 'volleyball',        icon: '🏐', label: 'Volleyball' },
-  { key: 'hockey',            icon: '🏒', label: 'Hockey' },
-  { key: 'american_football', icon: '🏈', label: 'Amer. Football' },
-  { key: 'tennis',            icon: '🎾', label: 'Tennis' },
-];
-
-const SPORT_META: Record<string, { icon: string; label: string }> = {
-  football:          { icon: '⚽', label: 'Football' },
-  basketball:        { icon: '🏀', label: 'Basketball' },
-  rugby:             { icon: '🏉', label: 'Rugby' },
-  mma:               { icon: '🥊', label: 'MMA' },
-  volleyball:        { icon: '🏐', label: 'Volleyball' },
-  hockey:            { icon: '🏒', label: 'Hockey' },
-  american_football: { icon: '🏈', label: 'Amer. Football' },
-  tennis:            { icon: '🎾', label: 'Tennis' },
-};
+const SPORT_FILTERS = CONTENT_SPORT_KEYS.map((key) => ({
+  key,
+  icon: SPORT_ICONS[key],
+  label: key ? SPORT_META[key as ContentSportFilter].label : 'All Sports',
+}));
 
 const SKILL_OVERVIEW_LEVELS = ['beginner', 'intermediate', 'advanced'] as const;
 
@@ -99,7 +88,7 @@ export default function ResourcesPage() {
   const t = useT();
   const [categories, setCategories] = useState<ResourceCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeSport, setActiveSport] = useState<ResourceSport>('');
+  const [activeSport, setActiveSport] = useState<ContentSport>('');
 
   useEffect(() => {
     setLoading(true);

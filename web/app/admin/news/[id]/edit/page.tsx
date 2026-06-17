@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { NEWS_SPORT_OPTIONS } from '@/lib/sports-content';
 
 const CATEGORIES = ['news', 'transfer_rumour', 'confirmed_transfer', 'gossip', 'injury'] as const;
 const LANGUAGES = ['en', 'fr'] as const;
@@ -20,6 +21,7 @@ export default function AdminNewsEditPage() {
     excerpt: '',
     content: '',
     category: 'news' as (typeof CATEGORIES)[number],
+    sport: 'football',
     language: 'en' as (typeof LANGUAGES)[number],
     imageUrl: '',
     sourceUrl: '',
@@ -55,6 +57,7 @@ export default function AdminNewsEditPage() {
           excerpt: a.excerpt || '',
           content: a.content || '',
           category: (a.category || 'news') as (typeof CATEGORIES)[number],
+          sport: a.sport || 'football',
           language: (a.language || 'en') as (typeof LANGUAGES)[number],
           imageUrl: a.imageUrl || '',
           sourceUrl: a.sourceUrl || '',
@@ -153,7 +156,7 @@ export default function AdminNewsEditPage() {
               required
             />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
               <select
@@ -163,6 +166,18 @@ export default function AdminNewsEditPage() {
               >
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>{c.replace('_', ' ')}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sport</label>
+              <select
+                value={form.sport}
+                onChange={(e) => setForm((f) => ({ ...f, sport: e.target.value }))}
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+              >
+                {NEWS_SPORT_OPTIONS.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
                 ))}
               </select>
             </div>

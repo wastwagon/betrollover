@@ -66,7 +66,7 @@ function SubscriptionsContent() {
   const loadSubscriptions = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      router.push('/login?redirect=/subscriptions');
+      router.replace('/subscriptions/marketplace');
       return;
     }
     const headers = { Authorization: `Bearer ${token}` };

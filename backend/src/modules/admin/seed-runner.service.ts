@@ -11,6 +11,7 @@ import * as path from 'path';
 const SEED_FILES = [
   'news-resources-seed.sql',
   'news-2026-seed.sql',
+  'multisport-content-seed.sql',
   'comprehensive-seed-data.sql',
   'ai-tipsters-full-seed.sql',
 ];

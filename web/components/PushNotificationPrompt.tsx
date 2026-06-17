@@ -1,13 +1,18 @@
 'use client';
 
 import { usePushNotifications } from '@/hooks/usePushNotifications';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export function PushNotificationPrompt() {
   const { supported, permission, registered, loading, error, requestAndRegister } = usePushNotifications();
   const [dismissed, setDismissed] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
 
-  if (!supported || permission === 'denied' || registered || dismissed) return null;
+  useEffect(() => {
+    setLoggedIn(!!localStorage.getItem('token'));
+  }, []);
+
+  if (!loggedIn || !supported || permission === 'denied' || registered || dismissed) return null;
 
   return (
     <div className="fixed bottom-20 left-4 right-4 z-40 md:left-auto md:right-4 md:max-w-sm rounded-xl bg-[var(--card)] border border-[var(--border)] shadow-lg p-4 animate-fade-in">

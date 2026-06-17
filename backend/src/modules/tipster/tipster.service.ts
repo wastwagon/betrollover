@@ -81,10 +81,10 @@ export class TipsterService {
       const row = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
       return {
         minimumROI: Number(row?.minimumROI ?? 20.0),
-        minimumWinRate: Number(row?.minimumWinRate ?? 45.0),
+        minimumWinRate: Number(row?.minimumWinRate ?? 30.0),
       };
     } catch {
-      return { minimumROI: 20.0, minimumWinRate: 45.0 };
+      return { minimumROI: 20.0, minimumWinRate: 30.0 };
     }
   }
 }

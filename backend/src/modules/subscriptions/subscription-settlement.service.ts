@@ -107,7 +107,7 @@ export class SubscriptionSettlementService {
           type: 'subscription_refund',
           title: 'Subscription Refunded',
           message: `Your subscription to ${pkg.name} was refunded (ROI guarantee). GHS ${amount.toFixed(2)} credited.`,
-          link: '/dashboard/subscriptions',
+          link: '/subscriptions',
           icon: 'refund',
           sendEmail: true,
           metadata: { packageName: pkg.name },

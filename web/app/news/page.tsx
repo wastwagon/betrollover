@@ -12,11 +12,15 @@ import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getApiUrl } from '@/lib/site-config';
+import {
+  CONTENT_SPORT_KEYS,
+  SPORT_ICONS,
+  getContentSportLabel,
+  type ContentSport,
+  type ContentSportFilter,
+} from '@/lib/sports-content';
 
 type NewsCategory = 'all' | 'news' | 'transfer_rumour' | 'confirmed_transfer' | 'injury' | 'gossip';
-type NewsSport =
-  | 'football' | 'basketball' | 'rugby' | 'mma'
-  | 'volleyball' | 'hockey' | 'american_football' | 'tennis';
 
 interface NewsArticle {
   id: number;
@@ -37,11 +41,6 @@ const CATEGORY_COLORS: Record<string, string> = {
   gossip:              'bg-purple-100 text-purple-700',
 };
 
-const SPORT_KEYS: (NewsSport | '')[] = ['', 'football', 'basketball', 'rugby', 'mma', 'volleyball', 'hockey', 'american_football', 'tennis'];
-const SPORT_ICONS: Record<string, string> = {
-  '': '🌍', football: '⚽', basketball: '🏀', rugby: '🏉', mma: '🥊',
-  volleyball: '🏐', hockey: '🏒', american_football: '🏈', tennis: '🎾',
-};
 const CATEGORY_KEYS: NewsCategory[] = ['all', 'news', 'transfer_rumour', 'confirmed_transfer', 'injury', 'gossip'];
 
 function formatDate(s: string | null) {
@@ -61,11 +60,6 @@ function getCategoryLabel(t: (k: string) => string, key: NewsCategory): string {
   return t(map[key] ?? key);
 }
 
-function getSportLabel(t: (k: string) => string, key: NewsSport | ''): string {
-  if (!key) return t('news.all_sports');
-  return t(`create_pick.sport_${key}` as 'create_pick.sport_football');
-}
-
 function NewsContent() {
   const { t, lang } = useLanguage();
   const searchParams = useSearchParams();
@@ -76,12 +70,12 @@ function NewsContent() {
   const [activeCategory, setActiveCategory] = useState<NewsCategory>(
     (searchParams.get('category') as NewsCategory) ?? 'all'
   );
-  const [activeSport, setActiveSport] = useState<NewsSport | ''>(
-    (searchParams.get('sport') as NewsSport) ?? ''
+  const [activeSport, setActiveSport] = useState<ContentSport>(
+    (searchParams.get('sport') as ContentSportFilter) ?? ''
   );
 
   const pushUrl = useCallback(
-    (cat: NewsCategory, sport: NewsSport | '') => {
+    (cat: NewsCategory, sport: ContentSport) => {
       const p = new URLSearchParams();
       if (cat !== 'all') p.set('category', cat);
       if (sport) p.set('sport', sport);
@@ -117,7 +111,7 @@ function NewsContent() {
         <div className="mb-5 w-full min-w-0 overflow-hidden">
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">{t('news.filter_by_sport')}</p>
           <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
-            {SPORT_KEYS.map(sfKey => (
+            {CONTENT_SPORT_KEYS.map(sfKey => (
               <button
                 key={sfKey || 'all'}
                 type="button"
@@ -128,7 +122,7 @@ function NewsContent() {
                     : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--text)]'
                 }`}
               >
-                <span>{SPORT_ICONS[sfKey]}</span><span>{getSportLabel(t, sfKey)}</span>
+                <span>{SPORT_ICONS[sfKey]}</span><span>{getContentSportLabel(t, sfKey)}</span>
               </button>
             ))}
           </div>
@@ -173,7 +167,7 @@ function NewsContent() {
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors"
                 >
                   {activeSport
-                    ? t('news.browse_sport_picks', { sport: getSportLabel(t, activeSport) })
+                    ? t('news.browse_sport_picks', { sport: getContentSportLabel(t, activeSport) })
                     : t('news.browse_picks')}
                 </Link>
               </div>
@@ -181,7 +175,7 @@ function NewsContent() {
               <div className="space-y-4">
                 {activeSport && (
                   <p className="text-sm text-[var(--text-muted)]">
-                    {articles.length} {articles.length === 1 ? t('news.article') : t('news.articles')} · {SPORT_ICONS[activeSport]} {getSportLabel(t, activeSport)}
+                    {articles.length} {articles.length === 1 ? t('news.article') : t('news.articles')} · {SPORT_ICONS[activeSport]} {getContentSportLabel(t, activeSport)}
                   </p>
                 )}
                 {articles.map(article => (
@@ -207,7 +201,7 @@ function NewsContent() {
                           </span>
                           {article.sport && !activeSport && (
                             <span className="text-xs font-semibold text-[var(--text-muted)]">
-                              {SPORT_ICONS[article.sport]} {getSportLabel(t, article.sport as NewsSport)}
+                              {SPORT_ICONS[article.sport as ContentSportFilter]} {getContentSportLabel(t, article.sport as ContentSportFilter)}
                             </span>
                           )}
                           {article.publishedAt && (

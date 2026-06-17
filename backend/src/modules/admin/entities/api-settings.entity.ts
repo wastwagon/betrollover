@@ -33,8 +33,8 @@ export class ApiSettings {
   minimumROI: number = 20.0;
 
   /** Min win rate % (settled picks) to list paid coupons on marketplace. */
-  @Column({ type: 'decimal', precision: 5, scale: 2, name: 'minimum_win_rate', default: 45.0 })
-  minimumWinRate: number = 45.0;
+  @Column({ type: 'decimal', precision: 5, scale: 2, name: 'minimum_win_rate', default: 30.0 })
+  minimumWinRate: number = 30.0;
 
   /** Max coupons per UTC day per human tipster; 0 = unlimited. AI tipsters exempt at application layer. */
   @Column({ type: 'int', name: 'max_coupons_per_day', default: 0 })

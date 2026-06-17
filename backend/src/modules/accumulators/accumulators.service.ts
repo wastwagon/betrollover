@@ -2798,12 +2798,12 @@ export class AccumulatorsService {
     maxCouponsPerDay: number;
   }> {
     let minimumROI = 20.0;
-    let minimumWinRate = 45.0;
+    let minimumWinRate = 30.0;
     let maxCouponsPerDay = 0;
     try {
       const apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
       minimumROI = Number(apiSettings?.minimumROI ?? 20.0);
-      minimumWinRate = Number(apiSettings?.minimumWinRate ?? 45.0);
+      minimumWinRate = Number(apiSettings?.minimumWinRate ?? 30.0);
       maxCouponsPerDay = Math.max(0, Math.floor(Number(apiSettings?.maxCouponsPerDay ?? 0)));
     } catch {
       this.logger.warn('Could not load api_settings for selling policy, using defaults');

@@ -113,11 +113,11 @@ export class SubscriptionsService {
     const roi = ts?.roi ?? 0;
     const winRate = ts?.winRate ?? 0;
     let minimumROI = 20.0;
-    let minimumWinRate = 45.0;
+    let minimumWinRate = 30.0;
     try {
       const row = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
       minimumROI = Number(row?.minimumROI ?? 20.0);
-      minimumWinRate = Number(row?.minimumWinRate ?? 45.0);
+      minimumWinRate = Number(row?.minimumWinRate ?? 30.0);
     } catch {
       /* use defaults */
     }
@@ -408,7 +408,7 @@ export class SubscriptionsService {
         type: 'subscription',
         title: 'Subscription Active',
         message: `You're now subscribed to ${pkg.name}. You can view the tipster's subscription picks in your dashboard.`,
-        link: '/dashboard/subscriptions',
+        link: '/subscriptions',
         icon: 'star',
         sendEmail: true,
         metadata: { packageName: pkg.name },

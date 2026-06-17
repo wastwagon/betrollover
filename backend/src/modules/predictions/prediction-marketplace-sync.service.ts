@@ -47,11 +47,11 @@ export class PredictionMarketplaceSyncService {
       const row = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
       return {
         minimumROI: Number(row?.minimumROI ?? 20.0),
-        minimumWinRate: Number(row?.minimumWinRate ?? 45.0),
+        minimumWinRate: Number(row?.minimumWinRate ?? 30.0),
         aiMarketplaceCouponPrice: Math.max(0, Math.round(Number(row?.aiMarketplaceCouponPrice ?? 5.0) * 100) / 100),
       };
     } catch {
-      return { minimumROI: 20.0, minimumWinRate: 45.0, aiMarketplaceCouponPrice: 5.0 };
+      return { minimumROI: 20.0, minimumWinRate: 30.0, aiMarketplaceCouponPrice: 5.0 };
     }
   }
 

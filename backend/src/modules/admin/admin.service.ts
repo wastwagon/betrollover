@@ -520,7 +520,7 @@ export class AdminService {
       lastTestDate: apiSettings?.lastTestDate || null,
       isActive: apiSettings?.isActive || false,
       minimumROI: Number(apiSettings?.minimumROI ?? 20.0),
-      minimumWinRate: Number(apiSettings?.minimumWinRate ?? 45.0),
+      minimumWinRate: Number(apiSettings?.minimumWinRate ?? 30.0),
       maxCouponsPerDay: Math.max(0, Math.floor(Number(apiSettings?.maxCouponsPerDay ?? 0))),
       aiMaxCouponsPerDay: Math.min(
         50,

@@ -853,7 +853,7 @@ export class AdminController {
   @Post('news')
   async createNewsArticle(
     @CurrentUser() user: User,
-    @Body() body: { slug: string; title: string; excerpt?: string; content: string; category?: string; imageUrl?: string; sourceUrl?: string; featured?: boolean; metaDescription?: string; publishedAt?: string; language?: string },
+    @Body() body: { slug: string; title: string; excerpt?: string; content: string; category?: string; sport?: string; imageUrl?: string; sourceUrl?: string; featured?: boolean; metaDescription?: string; publishedAt?: string; language?: string },
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.newsService.create({
@@ -868,7 +868,7 @@ export class AdminController {
   async updateNewsArticle(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: { slug?: string; title?: string; excerpt?: string; content?: string; category?: string; imageUrl?: string; sourceUrl?: string; featured?: boolean; metaDescription?: string; publishedAt?: string; language?: string },
+    @Body() body: { slug?: string; title?: string; excerpt?: string; content?: string; category?: string; sport?: string; imageUrl?: string; sourceUrl?: string; featured?: boolean; metaDescription?: string; publishedAt?: string; language?: string },
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     const update: any = { ...body, category: body.category as any, publishedAt: body.publishedAt !== undefined ? (body.publishedAt ? new Date(body.publishedAt) : null) : undefined };
@@ -940,12 +940,13 @@ export class AdminController {
   @Post('resources/items')
   async createResourceItem(
     @CurrentUser() user: User,
-    @Body() body: { categoryId: number; slug: string; title: string; excerpt?: string; content: string; type?: string; durationMinutes?: number; toolConfig?: object; featured?: boolean; sortOrder?: number; publishedAt?: string; language?: string },
+    @Body() body: { categoryId: number; slug: string; title: string; excerpt?: string; content: string; type?: string; sport?: string | null; durationMinutes?: number; toolConfig?: object; featured?: boolean; sortOrder?: number; publishedAt?: string; language?: string },
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.resourcesService.adminCreateItem({
       ...body,
       type: body.type as any,
+      sport: body.sport?.trim() ? body.sport.trim().toLowerCase() : null,
       toolConfig: body.toolConfig as any,
       publishedAt: body.publishedAt ? new Date(body.publishedAt) : null,
       language: body.language || 'en',
@@ -956,11 +957,12 @@ export class AdminController {
   async updateResourceItem(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: { slug?: string; title?: string; excerpt?: string; content?: string; type?: string; durationMinutes?: number; toolConfig?: object; featured?: boolean; sortOrder?: number; publishedAt?: string; language?: string },
+    @Body() body: { slug?: string; title?: string; excerpt?: string; content?: string; type?: string; sport?: string | null; durationMinutes?: number; toolConfig?: object; featured?: boolean; sortOrder?: number; publishedAt?: string; language?: string },
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     const update: any = { ...body, type: body.type as any, toolConfig: body.toolConfig as any, publishedAt: body.publishedAt !== undefined ? (body.publishedAt ? new Date(body.publishedAt) : null) : undefined };
     if (body.language !== undefined) update.language = body.language;
+    if (body.sport !== undefined) update.sport = body.sport?.trim() ? body.sport.trim().toLowerCase() : null;
     return this.resourcesService.adminUpdateItem(id, update);
   }
 

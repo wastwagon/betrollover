@@ -69,7 +69,7 @@ export default function AdminSettingsPage() {
   const [syncingOdds, setSyncingOdds] = useState(false);
   const [minimumROI, setMinimumROI] = useState<number>(20.0);
   const [savingROI, setSavingROI] = useState(false);
-  const [minimumWinRate, setMinimumWinRate] = useState<number>(45.0);
+  const [minimumWinRate, setMinimumWinRate] = useState<number>(30.0);
   const [savingWinRate, setSavingWinRate] = useState(false);
   const [aiMarketplaceCouponPrice, setAiMarketplaceCouponPrice] = useState<number>(5.0);
   const [savingAiCouponPrice, setSavingAiCouponPrice] = useState(false);

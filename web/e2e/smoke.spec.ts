@@ -27,9 +27,26 @@ test.describe('Smoke tests', () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test('subscriptions redirects to login when unauthenticated', async ({ page }) => {
+  test('subscriptions redirects guests to marketplace', async ({ page }) => {
     await page.goto('/subscriptions');
-    await expect(page).toHaveURL(/\/login/);
+    await expect(page).toHaveURL(/\/subscriptions\/marketplace/);
+  });
+
+  test('discover page loads with sport filters', async ({ page }) => {
+    await page.goto('/discover');
+    await expect(page).toHaveURL(/\/discover/);
+    await expect(page.getByRole('button', { name: /football/i }).first()).toBeVisible();
+  });
+
+  test('discover sport filter updates URL', async ({ page }) => {
+    await page.goto('/discover');
+    await page.getByRole('button', { name: /basketball/i }).first().click();
+    await expect(page).toHaveURL(/sport=basketball/);
+  });
+
+  test('French locale home loads', async ({ page }) => {
+    await page.goto('/fr');
+    await expect(page).toHaveTitle(/BetRollover/i);
   });
 
   test('VIP subscriptions marketplace loads for guests', async ({ page }) => {
