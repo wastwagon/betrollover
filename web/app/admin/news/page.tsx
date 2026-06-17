@@ -24,7 +24,9 @@ export default function AdminNewsPage() {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [syncingInjuries, setSyncingInjuries] = useState(false);
   const [syncResult, setSyncResult] = useState<{ added: number; errors: string[] } | null>(null);
+  const [injurySyncResult, setInjurySyncResult] = useState<{ added: number; errors: string[] } | null>(null);
 
   const syncTransfers = () => {
     const token = localStorage.getItem('token');
@@ -42,6 +44,24 @@ export default function AdminNewsPage() {
       })
       .catch(() => setSyncResult({ added: 0, errors: ['Request failed'] }))
       .finally(() => setSyncing(false));
+  };
+
+  const syncInjuries = () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setSyncingInjuries(true);
+    setInjurySyncResult(null);
+    fetch(`${getApiUrl()}/admin/news/sync/injuries`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        setInjurySyncResult({ added: data.added ?? 0, errors: data.errors ?? [] });
+        if (data.added > 0) load();
+      })
+      .catch(() => setInjurySyncResult({ added: 0, errors: ['Request failed'] }))
+      .finally(() => setSyncingInjuries(false));
   };
 
   const load = () => {
@@ -69,15 +89,24 @@ export default function AdminNewsPage() {
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start">
           <div className="min-w-0">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">News Articles</h1>
-            <p className="text-gray-600 dark:text-gray-400">Manage football news, transfers, and gossip.</p>
+            <p className="text-gray-600 dark:text-gray-400">Manage news across sports. API sync (transfers &amp; injuries) is football-only until other sport endpoints are verified.</p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto shrink-0">
-            <button type="button"
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 w-full sm:w-auto shrink-0">
+            <button
+              type="button"
               onClick={syncTransfers}
-              disabled={syncing}
+              disabled={syncing || syncingInjuries}
               className="w-full sm:w-auto text-center px-5 py-2.5 rounded-xl border border-[var(--primary)] text-[var(--primary)] font-semibold hover:bg-[var(--primary)]/10 disabled:opacity-50"
             >
-              {syncing ? 'Syncing...' : 'Sync Real Transfers'}
+              {syncing ? 'Syncing...' : 'Sync Transfers'}
+            </button>
+            <button
+              type="button"
+              onClick={syncInjuries}
+              disabled={syncingInjuries || syncing}
+              className="w-full sm:w-auto text-center px-5 py-2.5 rounded-xl border border-amber-600 text-amber-700 dark:text-amber-300 font-semibold hover:bg-amber-50 dark:hover:bg-amber-900/20 disabled:opacity-50"
+            >
+              {syncingInjuries ? 'Syncing...' : 'Sync Injuries'}
             </button>
             <Link
               href="/admin/news/create"
@@ -96,6 +125,20 @@ export default function AdminNewsPage() {
                 {syncResult.errors.length > 0
                   ? `No new transfers. ${syncResult.errors[0]}`
                   : 'No new transfers found. Ensure API_SPORTS_KEY is set in Admin → Settings.'}
+              </p>
+            )}
+          </div>
+        )}
+
+        {injurySyncResult && (
+          <div className={`mb-6 p-4 rounded-xl ${injurySyncResult.added > 0 ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200'}`}>
+            {injurySyncResult.added > 0 ? (
+              <p>Added {injurySyncResult.added} new injury article(s) from API-Sports.</p>
+            ) : (
+              <p>
+                {injurySyncResult.errors.length > 0
+                  ? `No new injuries. ${injurySyncResult.errors[0]}`
+                  : 'No new injuries found. Ensure API_SPORTS_KEY is set in Admin → Settings.'}
               </p>
             )}
           </div>

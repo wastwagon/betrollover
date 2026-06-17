@@ -1845,7 +1845,19 @@ export class AccumulatorsService {
     await this.mergeBookingCodeCopyCountsForTicketsPlain(
       featured as Array<Record<string, unknown> & { id: number; bookmakerKey?: string | null; bookingCode?: string | null }>,
     );
-    return featured;
+
+    const rowByAccId = new Map(rows.map((r) => [r.accumulatorId, r]));
+    const ticketById = new Map(validTickets.map((t) => [t.id, t]));
+    return Promise.all(
+      featured.map((item) =>
+        this.applyCouponPickVisibility(
+          item as Record<string, unknown>,
+          ticketById.get((item as { id: number }).id)!,
+          rowByAccId.get((item as { id: number }).id) ?? null,
+          viewerUserId ?? null,
+        ),
+      ),
+    );
   }
 
   /**

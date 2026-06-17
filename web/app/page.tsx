@@ -15,6 +15,7 @@ import { AdSlot } from '@/components/AdSlot';
 import { HomeHero } from '@/components/HomeHero';
 import { HomeJoinCtaCard } from '@/components/HomeJoinCtaCard';
 import { HomePopularTipsters } from '@/components/HomePopularTipsters';
+import { FeaturedPicks } from '@/components/FeaturedPicks';
 import { HomeFreeTipOfTheDay } from '@/components/HomeFreeTipOfTheDay';
 import { HomeQuickMarketplaceSections } from '@/components/HomeQuickMarketplaceSections';
 import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
@@ -167,6 +168,7 @@ export default async function HomePage() {
           </div>
         </section>
         <HomePopularTipsters initialLeaderboard={homeData.topTipsters.slice(0, 6)} />
+        <FeaturedPicks initialFeatured={homeData.featuredPicks} />
         <section id="free-tip-of-the-day" className="w-full min-w-0">
           <HomeFreeTipOfTheDay initialFreeTip={homeData.freeTip} initialMarketItems={homeData.marketplaceItems} />
         </section>

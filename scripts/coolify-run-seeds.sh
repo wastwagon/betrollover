@@ -25,7 +25,7 @@ echo ""
 # The API container has psql and /app/database/seeds. Run each seed via psql.
 docker exec "$API_CONTAINER" sh -c '
   export PGPASSWORD="${POSTGRES_PASSWORD}"
-  for f in /app/database/seeds/news-resources-seed.sql /app/database/seeds/news-2026-seed.sql /app/database/seeds/multisport-content-seed.sql /app/database/seeds/comprehensive-seed-data.sql /app/database/seeds/ai-tipsters-full-seed.sql; do
+  for f in /app/database/seeds/news-resources-seed.sql /app/database/seeds/news-2026-seed.sql /app/database/seeds/multisport-content-seed.sql /app/database/seeds/multisport-content-phase2-seed.sql /app/database/seeds/comprehensive-seed-data.sql /app/database/seeds/ai-tipsters-full-seed.sql; do
     if [ -f "$f" ]; then
       echo "Applying $(basename $f)..."
       psql -h "${POSTGRES_HOST:-postgres}" -p "${POSTGRES_PORT:-5432}" -U "${POSTGRES_USER:-betrollover}" -d "${POSTGRES_DB:-betrollover}" -f "$f" -v ON_ERROR_STOP=1 || echo "  (errors - may be duplicates)"

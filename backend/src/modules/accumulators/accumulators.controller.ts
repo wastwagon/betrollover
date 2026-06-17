@@ -136,9 +136,9 @@ export class AccumulatorsController {
   }
 
   @Get('featured')
-  @UseGuards(JwtAuthGuard)
-  getFeatured(@CurrentUser() user: User) {
-    return this.accumulatorsService.getMarketplacePublic(8, user.id);
+  @UseGuards(OptionalJwtGuard)
+  getFeatured(@CurrentUser() user?: User | null) {
+    return this.accumulatorsService.getMarketplacePublic(8, user?.id);
   }
 
   @Get('stats/public')

@@ -5,13 +5,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NewsArticle } from './entities/news-article.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
-import { getSportApiBaseUrl } from '../../config/sports.config';
+import { getSportApiBaseUrl, isSportEnabled } from '../../config/sports.config';
 import { API_CALL_DELAY_MS } from '../../config/api-limits.config';
-
-// Major club team IDs from API-Football
-const MAJOR_TEAM_IDS = [
-  33, 40, 42, 47, 49, 50, 529, 541, 157, 489, 505, 492, 165, 116, 113, 81, 82,
-]; // Man Utd, Liverpool, Arsenal, Spurs, Chelsea, Man City, Barcelona, Real Madrid, Bayern, etc.
+import { NEWS_TRANSFERS_SYNC } from '../../config/news-sync.config';
 
 interface TransferPlayer {
   id: number;
@@ -71,8 +67,12 @@ export class TransfersSyncService {
       .slice(0, 90);
   }
 
-  private async fetchTransfersForTeam(teamId: number, headers: Record<string, string>): Promise<Transfer[]> {
-    const url = `${getSportApiBaseUrl('football')}/transfers?team=${teamId}`;
+  private async fetchTransfersForTeam(
+    sport: 'football',
+    teamId: number,
+    headers: Record<string, string>,
+  ): Promise<Transfer[]> {
+    const url = `${getSportApiBaseUrl(sport)}/transfers?team=${teamId}`;
     const res = await fetch(url, { headers });
     const data = (await res.json()) as TransfersResponse;
     if (data.errors && Object.keys(data.errors).length > 0) {
@@ -90,12 +90,12 @@ export class TransfersSyncService {
     return all;
   }
 
-  /** Sync real transfers from API-Football into news_articles */
-  async sync(): Promise<{ added: number; skipped: number; errors: string[] }> {
+  /** Sync real transfers from API-Sports into news_articles (per sport config). */
+  async sync(): Promise<{ added: number; skipped: number; errors: string[]; bySport: Record<string, number> }> {
     const key = await this.getKey();
     if (!key) {
       this.logger.warn('API_SPORTS_KEY not set. Configure in Admin → Settings or .env');
-      return { added: 0, skipped: 0, errors: ['API key not configured'] };
+      return { added: 0, skipped: 0, errors: ['API key not configured'], bySport: {} };
     }
 
     const headers = { 'x-apisports-key': key };
@@ -105,68 +105,75 @@ export class TransfersSyncService {
     const seen = new Set<string>();
     let added = 0;
     const errors: string[] = [];
+    const bySport: Record<string, number> = {};
 
-    this.logger.log(`Syncing transfers for major teams (filtering for matches after ${oneYearAgo.toISOString().split('T')[0]})...`);
+    for (const cfg of NEWS_TRANSFERS_SYNC) {
+      if (!isSportEnabled(cfg.sport)) continue;
+      bySport[cfg.sport] = 0;
 
-    for (const teamId of MAJOR_TEAM_IDS) {
-      try {
-        const transfers = await this.fetchTransfersForTeam(teamId, headers);
-        for (const t of transfers) {
-          const publishedAt = t.date ? new Date(t.date) : new Date();
-          if (isNaN(publishedAt.getTime())) continue;
+      this.logger.log(
+        `Syncing ${cfg.sport} transfers (${cfg.teamIds.length} teams, after ${oneYearAgo.toISOString().split('T')[0]})...`,
+      );
 
-          // Filter: only include transfers from the last 12 months
-          if (publishedAt < oneYearAgo) continue;
+      for (const teamId of cfg.teamIds) {
+        try {
+          const transfers = await this.fetchTransfersForTeam(cfg.sport as 'football', teamId, headers);
+          for (const t of transfers) {
+            const publishedAt = t.date ? new Date(t.date) : new Date();
+            if (isNaN(publishedAt.getTime())) continue;
+            if (publishedAt < oneYearAgo) continue;
 
-          const dedupKey = `${t.player.id}-${t.teams.out.id}-${t.teams.in.id}-${t.date}`;
-          if (seen.has(dedupKey)) continue;
-          seen.add(dedupKey);
+            const dedupKey = `${cfg.sport}-${t.player.id}-${t.teams.out.id}-${t.teams.in.id}-${t.date}`;
+            if (seen.has(dedupKey)) continue;
+            seen.add(dedupKey);
 
-          const player = t.player.name;
-          const fromTeam = t.teams.out.name;
-          const toTeam = t.teams.in.name;
-          const fee = t.type || 'Undisclosed';
-          const dateStr = t.date;
+            const player = t.player.name;
+            const fromTeam = t.teams.out.name;
+            const toTeam = t.teams.in.name;
+            const fee = t.type || 'Undisclosed';
+            const dateStr = t.date;
 
-          const slug = this.slugify(`${player}-${toTeam}-${dateStr}`);
-          const existing = await this.newsRepo.findOne({ where: { slug } });
-          if (existing) continue;
+            const slug = this.slugify(`${player}-${toTeam}-${dateStr}`);
+            const existing = await this.newsRepo.findOne({ where: { slug, language: 'en' } });
+            if (existing) continue;
 
-          const title = `${player} completes move from ${fromTeam} to ${toTeam}`;
-          const excerpt =
-            fee !== 'N/A' && fee !== 'Free' && fee
-              ? `The transfer has been confirmed. Reported fee: ${fee}.`
-              : 'The transfer has been confirmed.';
-          const content =
-            fee !== 'N/A' && fee !== 'Free' && fee
-              ? `${player} has completed a move from ${fromTeam} to ${toTeam}. The transfer was confirmed on ${dateStr}. The transfer fee is reported as ${fee}.`
-              : `${player} has completed a move from ${fromTeam} to ${toTeam}. The transfer was confirmed on ${dateStr}.`;
+            const title = `${player} completes move from ${fromTeam} to ${toTeam}`;
+            const excerpt =
+              fee !== 'N/A' && fee !== 'Free' && fee
+                ? `The transfer has been confirmed. Reported fee: ${fee}.`
+                : 'The transfer has been confirmed.';
+            const content =
+              fee !== 'N/A' && fee !== 'Free' && fee
+                ? `${player} has completed a move from ${fromTeam} to ${toTeam}. The transfer was confirmed on ${dateStr}. The transfer fee is reported as ${fee}.`
+                : `${player} has completed a move from ${fromTeam} to ${toTeam}. The transfer was confirmed on ${dateStr}.`;
 
-          await this.newsRepo.save(
-            this.newsRepo.create({
-              slug,
-              title,
-              excerpt,
-              content,
-              category: 'confirmed_transfer',
-              sport: 'football',
-              featured: false,
-              metaDescription: title,
-              publishedAt,
-            }),
-          );
-          added++;
+            await this.newsRepo.save(
+              this.newsRepo.create({
+                slug,
+                title,
+                excerpt,
+                content,
+                category: 'confirmed_transfer',
+                sport: cfg.sport,
+                featured: false,
+                metaDescription: title,
+                publishedAt,
+              }),
+            );
+            added++;
+            bySport[cfg.sport]++;
+          }
+        } catch (err: any) {
+          const msg = err?.message || String(err);
+          errors.push(`${cfg.sport} team ${teamId}: ${msg}`);
+          this.logger.warn(`Transfers sync ${cfg.sport} team ${teamId}: ${msg}`);
         }
-      } catch (err: any) {
-        const msg = err?.message || String(err);
-        errors.push(`Team ${teamId}: ${msg}`);
-        this.logger.warn(`Transfers sync team ${teamId}: ${msg}`);
+        await new Promise((r) => setTimeout(r, API_CALL_DELAY_MS));
       }
-      await new Promise((r) => setTimeout(r, API_CALL_DELAY_MS));
     }
 
     this.logger.log(`Transfers sync complete: ${added} new articles added`);
-    return { added, skipped: seen.size - added, errors };
+    return { added, skipped: seen.size - added, errors, bySport };
   }
 
   /** Runs daily at 12:55 AM - syncs real transfers from API-Football */

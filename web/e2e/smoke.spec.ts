@@ -1,9 +1,18 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Smoke tests', () => {
-  test('home page loads', async ({ page }) => {
+  test('home page loads for guests', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveTitle(/BetRollover/i);
+    await expect(page.getByRole('link', { name: /marketplace/i }).first()).toBeVisible();
+  });
+
+  test('featured picks API is guest-accessible', async ({ request }) => {
+    const apiBase = process.env.PLAYWRIGHT_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+    const res = await request.get(`${apiBase.replace(/\/$/, '')}/accumulators/featured`);
+    expect(res.status()).toBeLessThan(500);
+    const body = await res.json();
+    expect(Array.isArray(body)).toBe(true);
   });
 
   test('tipsters page loads', async ({ page }) => {

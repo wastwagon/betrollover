@@ -47,23 +47,27 @@ interface Accumulator {
   commentCount?: number;
 }
 
-export function FeaturedPicks() {
+export function FeaturedPicks({
+  initialFeatured = [],
+}: {
+  initialFeatured?: Record<string, unknown>[];
+}) {
   const t = useT();
-  const [picks, setPicks] = useState<Accumulator[]>([]);
+  const [picks, setPicks] = useState<Accumulator[]>(
+    Array.isArray(initialFeatured) ? (initialFeatured as Accumulator[]) : [],
+  );
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) {
-      setPicks([]);
-      return;
-    }
-    fetch(`${getApiUrl()}/accumulators/featured`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+    fetch(`${getApiUrl()}/accumulators/featured`, { headers })
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setPicks(Array.isArray(data) ? data : []))
-      .catch(() => setPicks([]));
-  }, []);
+      .catch(() => {
+        if (initialFeatured.length === 0) setPicks([]);
+      });
+  }, [initialFeatured.length]);
 
   if (picks.length === 0) return null;
 

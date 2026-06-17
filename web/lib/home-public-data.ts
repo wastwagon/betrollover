@@ -15,6 +15,7 @@ export interface HomePublicData {
   leadingRoi: number | null;
   topTipsters: Record<string, unknown>[];
   marketplaceItems: Record<string, unknown>[];
+  featuredPicks: Record<string, unknown>[];
   freeTip: Record<string, unknown> | null;
 }
 
@@ -54,30 +55,35 @@ export async function fetchHomePublicData(options?: { revalidate?: number }): Pr
     leadingRoi: null,
     topTipsters: [],
     marketplaceItems: [],
+    featuredPicks: [],
     freeTip: null,
   };
 
   try {
-    const [statsRes, lbRes, marketRes, freeTipRes] = await Promise.all([
+    const [statsRes, lbRes, marketRes, featuredRes, freeTipRes] = await Promise.all([
       fetch(`${api}/accumulators/stats/public`, init),
       fetch(`${api}/leaderboard?period=all_time&limit=24`, init),
       fetch(`${api}/accumulators/marketplace/public?limit=48`, init),
+      fetch(`${api}/accumulators/featured`, init),
       fetch(`${api}/accumulators/free-tip-of-the-day`, init),
     ]);
 
     const statsJson = statsRes.ok ? await statsRes.json() : null;
     const lbJson = lbRes.ok ? await lbRes.json() : { leaderboard: [] };
     const marketJson = marketRes.ok ? await marketRes.json() : { items: [] };
+    const featuredJson = featuredRes.ok ? await featuredRes.json() : [];
     const freeTipJson = freeTipRes.ok ? await freeTipRes.json() : null;
 
     const topTipsters = Array.isArray(lbJson?.leaderboard) ? lbJson.leaderboard : [];
     const marketplaceItems = Array.isArray(marketJson?.items) ? marketJson.items : [];
+    const featuredPicks = Array.isArray(featuredJson) ? featuredJson : [];
 
     return {
       stats: parseStats(statsJson),
       leadingRoi: leadingRoiFromLeaderboard(lbJson),
       topTipsters,
       marketplaceItems,
+      featuredPicks,
       freeTip: freeTipJson && typeof freeTipJson === 'object' ? (freeTipJson as Record<string, unknown>) : null,
     };
   } catch {

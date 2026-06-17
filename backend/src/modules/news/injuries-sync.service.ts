@@ -5,11 +5,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NewsArticle } from './entities/news-article.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
-import { getSportApiBaseUrl } from '../../config/sports.config';
+import { getSportApiBaseUrl, isSportEnabled } from '../../config/sports.config';
 import { API_CALL_DELAY_MS } from '../../config/api-limits.config';
-
-// Major League IDs from API-Football
-const LEAGUE_IDS = [39, 140, 78, 135, 61]; // Premier League, La Liga, Bundesliga, Serie A, Ligue 1
+import { NEWS_INJURIES_SYNC, resolveNewsSyncSeason } from '../../config/news-sync.config';
 
 interface InjuryPlayer {
     id: number;
@@ -69,15 +67,13 @@ export class InjuriesSyncService {
             .slice(0, 90);
     }
 
-    private getCurrentSeason(): number {
-        const now = new Date();
-        const year = now.getFullYear();
-        // Football seasons usually start around August (Month 7)
-        return now.getMonth() >= 7 ? year : year - 1;
-    }
-
-    private async fetchInjuriesForLeague(leagueId: number, season: number, headers: Record<string, string>): Promise<Injury[]> {
-        const url = `${getSportApiBaseUrl('football')}/injuries?league=${leagueId}&season=${season}`;
+    private async fetchInjuriesForLeague(
+        sport: 'football',
+        leagueId: number,
+        season: number,
+        headers: Record<string, string>,
+    ): Promise<Injury[]> {
+        const url = `${getSportApiBaseUrl(sport)}/injuries?league=${leagueId}&season=${season}`;
         const res = await fetch(url, { headers });
         const data = (await res.json()) as InjuriesResponse;
         if (data.errors && Object.keys(data.errors).length > 0) {
@@ -86,73 +82,79 @@ export class InjuriesSyncService {
         return data.response || [];
     }
 
-    /** Sync real injuries from API-Football into news_articles */
-    async sync(): Promise<{ added: number; skipped: number; errors: string[] }> {
+    /** Sync real injuries from API-Sports into news_articles (per sport config). */
+    async sync(): Promise<{ added: number; skipped: number; errors: string[]; bySport: Record<string, number> }> {
         const key = await this.getKey();
         if (!key) {
             this.logger.warn('API_SPORTS_KEY not set.');
-            return { added: 0, skipped: 0, errors: ['API key not configured'] };
+            return { added: 0, skipped: 0, errors: ['API key not configured'], bySport: {} };
         }
 
         const headers = { 'x-apisports-key': key };
-        const season = this.getCurrentSeason();
         let added = 0;
         let skipped = 0;
         const errors: string[] = [];
+        const bySport: Record<string, number> = {};
 
-        this.logger.log(`Syncing injuries for major leagues (season ${season})...`);
+        for (const cfg of NEWS_INJURIES_SYNC) {
+            if (!isSportEnabled(cfg.sport)) continue;
+            bySport[cfg.sport] = 0;
+            const season = resolveNewsSyncSeason(cfg.seasonMode);
 
-        for (const leagueId of LEAGUE_IDS) {
-            try {
-                const injuries = await this.fetchInjuriesForLeague(leagueId, season, headers);
-                for (const inj of injuries) {
-                    const { player, team, fixture } = inj;
-                    if (!player.name || !team.name) continue;
+            this.logger.log(`Syncing ${cfg.sport} injuries (${cfg.leagueIds.length} leagues, season ${season})...`);
 
-                    const publishedAt = fixture.date ? new Date(fixture.date) : new Date();
-                    const dateStr = publishedAt.toISOString().split('T')[0];
+            for (const leagueId of cfg.leagueIds) {
+                try {
+                    const injuries = await this.fetchInjuriesForLeague(cfg.sport as 'football', leagueId, season, headers);
+                    for (const inj of injuries) {
+                        const { player, team, fixture } = inj;
+                        if (!player.name || !team.name) continue;
 
-                    // Slug format: injury-{playerId}-{teamId}-{date}
-                    const slug = this.slugify(`injury-${player.id}-${team.id}-${dateStr}`);
+                        const publishedAt = fixture.date ? new Date(fixture.date) : new Date();
+                        const dateStr = publishedAt.toISOString().split('T')[0];
 
-                    const existing = await this.newsRepo.findOne({ where: { slug } });
-                    if (existing) {
-                        skipped++;
-                        continue;
+                        const slug = this.slugify(`injury-${player.id}-${team.id}-${dateStr}`);
+
+                        const existing = await this.newsRepo.findOne({ where: { slug, language: 'en' } });
+                        if (existing) {
+                            skipped++;
+                            continue;
+                        }
+
+                        const reason = player.reason || 'an undisclosed issue';
+                        const type = player.type || 'Missing Fixture';
+
+                        const title = `${player.name} sidelined for ${team.name}`;
+                        const excerpt = `${player.name} is listed as ${type.toLowerCase()} for the upcoming fixture due to ${reason.toLowerCase()}.`;
+                        const content = `Team news update: ${player.name} will be unavailable for ${team.name}'s upcoming match. The player is currently classified as "${type}" due to ${reason.toLowerCase()}. This status was confirmed ahead of the fixture on ${dateStr}.`;
+
+                        await this.newsRepo.save(
+                            this.newsRepo.create({
+                                slug,
+                                title,
+                                excerpt,
+                                content,
+                                category: 'injury',
+                                sport: cfg.sport,
+                                featured: false,
+                                metaDescription: title,
+                                publishedAt,
+                            }),
+                        );
+                        added++;
+                        bySport[cfg.sport]++;
                     }
-
-                    const reason = player.reason || 'an undisclosed issue';
-                    const type = player.type || 'Missing Fixture';
-
-                    const title = `${player.name} sidelined for ${team.name}`;
-                    const excerpt = `${player.name} is listed as ${type.toLowerCase()} for the upcoming fixture due to ${reason.toLowerCase()}.`;
-                    const content = `Team news update: ${player.name} will be unavailable for ${team.name}'s upcoming match. The player is currently classified as "${type}" due to ${reason.toLowerCase()}. This status was confirmed ahead of the fixture on ${dateStr}.`;
-
-                    await this.newsRepo.save(
-                        this.newsRepo.create({
-                            slug,
-                            title,
-                            excerpt,
-                            content,
-                            category: 'injury',
-                            sport: 'football',
-                            featured: false,
-                            metaDescription: title,
-                            publishedAt,
-                        }),
-                    );
-                    added++;
+                } catch (err: any) {
+                    const msg = err?.message || String(err);
+                    errors.push(`${cfg.sport} league ${leagueId}: ${msg}`);
+                    this.logger.warn(`Injuries sync ${cfg.sport} league ${leagueId}: ${msg}`);
                 }
-            } catch (err: any) {
-                const msg = err?.message || String(err);
-                errors.push(`League ${leagueId}: ${msg}`);
-                this.logger.warn(`Injuries sync league ${leagueId}: ${msg}`);
+                await new Promise((r) => setTimeout(r, API_CALL_DELAY_MS));
             }
-            await new Promise((r) => setTimeout(r, API_CALL_DELAY_MS));
         }
 
         this.logger.log(`Injuries sync complete: ${added} new articles added, ${skipped} skipped`);
-        return { added, skipped, errors };
+        return { added, skipped, errors, bySport };
     }
 
     /** Runs daily at 1:05 AM - syncs real injuries from API-Football */
