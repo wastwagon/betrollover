@@ -163,29 +163,19 @@ function NewsContent() {
               </div>
             ) : articles.length === 0 ? (
               <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-12 text-center">
-                {activeSport && ['basketball', 'rugby', 'mma', 'volleyball', 'hockey', 'american_football', 'tennis'].includes(activeSport) ? (
-                  <>
-                    <div className="text-5xl mb-4">{SPORT_ICONS[activeSport]}</div>
-                    <h3 className="text-base font-semibold text-[var(--text)] mb-2">{getSportLabel(t, activeSport)} {t('nav.news')} — {t('common.coming_soon')}</h3>
-                    <p className="text-[var(--text-muted)] text-sm max-w-md mx-auto mb-4">
-                      {t('news.coming_soon_desc', { sport: getSportLabel(t, activeSport) })}
-                    </p>
-                    <Link href={`/marketplace?sport=${activeSport}`} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors">
-                      {t('news.browse_sport_picks', { sport: getSportLabel(t, activeSport) })}
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-4xl mb-3">📰</p>
-                    <p className="font-semibold text-[var(--text)] mb-1">{t('news.no_articles')}</p>
-                    <p className="text-[var(--text-muted)] text-sm max-w-md mx-auto mb-4">
-                      {activeSport ? t('news.no_articles_filtered') : t('news.no_articles_default')}
-                    </p>
-                    <Link href="/marketplace" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors">
-                      {t('news.browse_picks')}
-                    </Link>
-                  </>
-                )}
+                <p className="text-4xl mb-3">📰</p>
+                <p className="font-semibold text-[var(--text)] mb-1">{t('news.no_articles')}</p>
+                <p className="text-[var(--text-muted)] text-sm max-w-md mx-auto mb-4">
+                  {activeSport ? t('news.no_articles_filtered') : t('news.no_articles_default')}
+                </p>
+                <Link
+                  href={activeSport ? `/marketplace?sport=${activeSport}` : '/marketplace'}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors"
+                >
+                  {activeSport
+                    ? t('news.browse_sport_picks', { sport: getSportLabel(t, activeSport) })
+                    : t('news.browse_picks')}
+                </Link>
               </div>
             ) : (
               <div className="space-y-4">

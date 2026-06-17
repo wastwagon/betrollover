@@ -5,7 +5,7 @@ export type SellingThresholds = { minimumROI: number; minimumWinRate: number };
 /** Used only when the API is unreachable; keep aligned with backend entity defaults. */
 export const SELLING_THRESHOLDS_FALLBACK: SellingThresholds = {
   minimumROI: 20,
-  minimumWinRate: 45,
+  minimumWinRate: 30,
 };
 
 export function parseSellingThresholds(data: unknown): SellingThresholds {

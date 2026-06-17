@@ -20,6 +20,7 @@ import { HomeQuickMarketplaceSections } from '@/components/HomeQuickMarketplaceS
 import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, getAlternates } from '@/lib/site-config';
 import { fetchSellingThresholds } from '@/lib/selling-thresholds';
+import { fetchHomePublicData } from '@/lib/home-public-data';
 import { getLocale, buildT } from '@/lib/i18n';
 import type { Metadata } from 'next';
 
@@ -40,7 +41,10 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const locale = await getLocale();
   const t = buildT(locale);
-  const th = await fetchSellingThresholds({ revalidate: 300 });
+  const [th, homeData] = await Promise.all([
+    fetchSellingThresholds({ revalidate: 300 }),
+    fetchHomePublicData({ revalidate: 60 }),
+  ]);
   const sellVars = { minRoi: String(th.minimumROI), minWr: String(th.minimumWinRate) };
 
   return (
@@ -49,7 +53,7 @@ export default async function HomePage() {
       <UnifiedHeader />
 
       <main className="bg-[var(--bg)] w-full min-w-0">
-        <HomeHero />
+        <HomeHero initialStats={homeData.stats} initialLeadingRoi={homeData.leadingRoi} />
         <div className="section-ux-rail-4xl w-full min-w-0">
           <AdSlot zoneSlug="home-below-hero" fullWidth className="w-full" />
         </div>
@@ -162,14 +166,14 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
-        <HomePopularTipsters />
+        <HomePopularTipsters initialLeaderboard={homeData.topTipsters.slice(0, 6)} />
         <section id="free-tip-of-the-day" className="w-full min-w-0">
-          <HomeFreeTipOfTheDay />
+          <HomeFreeTipOfTheDay initialFreeTip={homeData.freeTip} initialMarketItems={homeData.marketplaceItems} />
         </section>
         <div className="section-ux-rail-4xl w-full min-w-0">
           <AdSlot zoneSlug="between-sections" fullWidth className="w-full" />
         </div>
-        <HomeQuickMarketplaceSections />
+        <HomeQuickMarketplaceSections initialMarketItems={homeData.marketplaceItems} initialLeaderboard={homeData.topTipsters} />
 
         {/* Platform Features — Bento Grid */}
         <section className="py-14 md:py-20 border-t border-[var(--border)] w-full min-w-0 max-w-full overflow-x-hidden">

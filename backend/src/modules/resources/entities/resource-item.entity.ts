@@ -44,6 +44,10 @@ export class ResourceItem {
   @Column({ type: 'int', nullable: true })
   durationMinutes: number | null = null;
 
+  /** NULL = all sports; otherwise tags this guide to a specific sport marketplace. */
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  sport: string | null = null;
+
   @Column('jsonb', { nullable: true })
   toolConfig: Record<string, unknown> | null = null;
 

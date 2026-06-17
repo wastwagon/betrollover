@@ -66,15 +66,15 @@ const SPORT_FILTERS: { key: ResourceSport; icon: string; label: string }[] = [
   { key: 'tennis',            icon: '🎾', label: 'Tennis' },
 ];
 
-const SPORT_META: Record<string, { icon: string; label: string; comingSoon?: boolean }> = {
+const SPORT_META: Record<string, { icon: string; label: string }> = {
   football:          { icon: '⚽', label: 'Football' },
-  basketball:        { icon: '🏀', label: 'Basketball',    comingSoon: true },
-  rugby:             { icon: '🏉', label: 'Rugby',          comingSoon: true },
-  mma:               { icon: '🥊', label: 'MMA',            comingSoon: true },
-  volleyball:        { icon: '🏐', label: 'Volleyball',     comingSoon: true },
-  hockey:            { icon: '🏒', label: 'Hockey',         comingSoon: true },
-  american_football: { icon: '🏈', label: 'Amer. Football', comingSoon: true },
-  tennis:            { icon: '🎾', label: 'Tennis',         comingSoon: true },
+  basketball:        { icon: '🏀', label: 'Basketball' },
+  rugby:             { icon: '🏉', label: 'Rugby' },
+  mma:               { icon: '🥊', label: 'MMA' },
+  volleyball:        { icon: '🏐', label: 'Volleyball' },
+  hockey:            { icon: '🏒', label: 'Hockey' },
+  american_football: { icon: '🏈', label: 'Amer. Football' },
+  tennis:            { icon: '🎾', label: 'Tennis' },
 };
 
 const SKILL_OVERVIEW_LEVELS = ['beginner', 'intermediate', 'advanced'] as const;
@@ -102,14 +102,17 @@ export default function ResourcesPage() {
   const [activeSport, setActiveSport] = useState<ResourceSport>('');
 
   useEffect(() => {
-    fetch(`${getApiUrl()}/resources/categories`)
+    setLoading(true);
+    const params = activeSport ? `?sport=${encodeURIComponent(activeSport)}` : '';
+    fetch(`${getApiUrl()}/resources/categories${params}`)
       .then(r => r.ok ? r.json() : [])
       .then(data => setCategories(Array.isArray(data) ? data : []))
       .catch(() => setCategories([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [activeSport]);
 
   const sportMeta = activeSport ? SPORT_META[activeSport] : null;
+  const visibleCategories = categories.filter(cat => (cat.items?.length ?? 0) > 0);
 
   return (
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
@@ -192,17 +195,16 @@ export default function ResourcesPage() {
         <div className="flex flex-col lg:flex-row gap-8 min-w-0">
           <div className="flex-1 min-w-0">
 
-            {/* Non-football coming-soon banner */}
-            {sportMeta?.comingSoon && (
+            {sportMeta && (
               <div className="mb-6 p-5 rounded-2xl border border-[var(--primary)]/20 bg-[var(--primary-light)]/10">
                 <div className="flex flex-col sm:flex-row sm:items-start gap-4">
                   <span className="text-4xl shrink-0">{sportMeta.icon}</span>
                   <div>
                     <h3 className="font-bold text-[var(--text)] mb-1">
-                      {t('resources.sport_guides_coming_title', { sport: sportMeta.label })}
+                      {t('resources.sport_guides_title', { sport: sportMeta.label })}
                     </h3>
                     <p className="text-sm text-[var(--text-muted)] mb-3">
-                      {t('resources.sport_guides_coming_desc', { sportLower: sportMeta.label.toLowerCase() })}
+                      {t('resources.sport_guides_desc', { sport: sportMeta.label })}
                     </p>
                     <Link
                       href={`/marketplace?sport=${activeSport}`}
@@ -219,7 +221,7 @@ export default function ResourcesPage() {
               <div className="space-y-8">
                 {[1, 2, 3].map(i => <LoadingSkeleton key={i} count={1} className="h-56 rounded-2xl" />)}
               </div>
-            ) : categories.length === 0 ? (
+            ) : visibleCategories.length === 0 ? (
               <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-12 text-center">
                 <p className="text-4xl mb-3">📚</p>
                 <p className="font-semibold text-[var(--text)] mb-1">{t('resources.empty_guides_title')}</p>
@@ -237,7 +239,7 @@ export default function ResourcesPage() {
               </div>
             ) : (
               <div className="space-y-8">
-                {categories.map(cat => (
+                {visibleCategories.map(cat => (
                   <section key={cat.id} className="rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-hidden">
                     <div className="px-4 sm:px-6 py-5 border-b border-[var(--border)] flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                       <span className={`inline-flex w-fit px-2.5 py-1 rounded-lg text-xs font-bold uppercase ${LEVEL_COLORS[cat.level] ?? 'bg-slate-100 text-slate-600'}`}>

@@ -17,7 +17,8 @@ export const getApiBaseUrl = (): string => {
 
 /** API base URL including /api/v1. Use for all API fetch calls. */
 export const getApiUrl = (): string => {
-  const baseClean = getApiBaseUrl();
+  // Strip a trailing /api/v1 so misconfigured NEXT_PUBLIC_API_URL does not double-prefix.
+  const baseClean = getApiBaseUrl().replace(/\/api\/v1\/?$/, '');
   if (baseClean === '/api/backend') return baseClean;
   return `${baseClean}/api/v1`;
 };

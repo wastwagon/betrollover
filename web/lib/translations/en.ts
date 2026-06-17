@@ -1203,7 +1203,10 @@ const en = {
   'resources.filter_by_sport': 'Filter by sport',
   'resources.sport_guides_coming_title': '{sport} guides — Coming soon',
   'resources.sport_guides_coming_desc':
-    'Sport-specific {sportLower} strategy guides are in development. The universal guides below apply across all sports and are a great starting point.',
+    'Sport-specific strategy guides for {sportLower} are on the way. Universal guides below still apply — bankroll, value, and evaluating tipsters work across every sport.',
+  'resources.sport_guides_title': '{sport} tipster guides',
+  'resources.sport_guides_desc':
+    'Sport-specific guides for {sport}, plus universal strategy articles that apply across the marketplace.',
   'resources.browse_sport_tipster_picks': 'Browse {sport} tipster picks →',
   'resources.empty_guides_title': 'Guides coming soon',
   'resources.empty_guides_body':
@@ -1812,6 +1815,10 @@ const en = {
   'discover.already_cover': 'already cover {sport} picks.',
   'discover.guides_coming_generic': 'Guides Coming Soon',
   'discover.guides_coming_generic_desc': 'We\'re building beginner and advanced tipster guides covering odds, budget management, and multi-sport multi-selection strategies. Check back soon.',
+  'discover.guides_sport_banner': 'Guides tagged for {sport}, plus universal tipster strategy articles that apply to every sport on the platform.',
+  'discover.no_guides_for_sport': 'No guides tagged for {sport} yet',
+  'discover.no_guides_for_sport_desc': 'Try all-sports guides or browse live tipster picks for this sport.',
+  'discover.view_all_guides': 'View all guides →',
   'discover.no_items': 'No items yet.',
 };
 

@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PickCard } from '@/components/PickCard';
-import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
-import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 import { getApiUrl } from '@/lib/site-config';
+import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { useT } from '@/context/LanguageContext';
 
 const SPORT_META: Record<string, { label: string; emoji: string }> = {
@@ -59,16 +59,45 @@ interface FreeTip {
   commentCount?: number;
 }
 
-export function HomeFreeTipOfTheDay() {
+function parseFreeTip(data: unknown): FreeTip | null {
+  if (!data || typeof data !== 'object' || !('id' in data)) return null;
+  return data as FreeTip;
+}
+
+function parseMarketItems(data: unknown[]): FreeTip[] {
+  return data.filter((item) => item && typeof item === 'object' && 'id' in item) as FreeTip[];
+}
+
+function buildVisibleTips(freeTip: FreeTip | null, marketItems: FreeTip[]): FreeTip[] {
+  const combined = [freeTip, ...marketItems].filter(Boolean) as FreeTip[];
+  const seen = new Set<number>();
+  return combined.filter((item) => {
+    if (!item?.id || seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+}
+
+export function HomeFreeTipOfTheDay({
+  initialFreeTip = null,
+  initialMarketItems = [],
+}: {
+  initialFreeTip?: Record<string, unknown> | null;
+  initialMarketItems?: Record<string, unknown>[];
+}) {
   const t = useT();
   const router = useRouter();
-  const [tip, setTip] = useState<FreeTip | null>(null);
-  const [tips, setTips] = useState<FreeTip[]>([]);
-  const [loading, setLoading] = useState(true);
+  const seededFree = parseFreeTip(initialFreeTip);
+  const seededMarket = parseMarketItems(initialMarketItems).filter((i) => i.price === 0);
+  const seededVisible = buildVisibleTips(seededFree, seededMarket).slice(0, 4);
+
+  const [tip, setTip] = useState<FreeTip | null>(seededFree);
+  const [tips, setTips] = useState<FreeTip[]>(seededVisible);
+  const [loading, setLoading] = useState(seededVisible.length === 0);
   const [purchasing, setPurchasing] = useState(false);
   const [isPurchased, setIsPurchased] = useState(false);
 
-  const applySocialCounts = (pickId: number, counts: PickSocialCounts) => {
+  const applySocialCounts = (pickId: number, counts: import('@/components/pick-social/PickSocialBar').PickSocialCounts) => {
     setTips((prev) => mergeSocialCountsIntoList(prev, pickId, counts));
     setTip((prev) => (prev?.id === pickId ? { ...prev, ...counts } : prev));
   };
@@ -77,20 +106,15 @@ export function HomeFreeTipOfTheDay() {
     const api = getApiUrl();
     const token = localStorage.getItem('token');
     const auth = token ? { Authorization: `Bearer ${token}` } : undefined;
-    const marketFree = token
-      ? fetch(`${api}/accumulators/marketplace/public?limit=12&priceFilter=free`, { headers: auth }).then((r) =>
-          r.ok ? r.json() : { items: [] },
-        )
-      : Promise.resolve({ items: [] });
-    const marketAny = token
-      ? fetch(`${api}/accumulators/marketplace/public?limit=12`, { headers: auth }).then((r) =>
-          r.ok ? r.json() : { items: [] },
-        )
-      : Promise.resolve({ items: [] });
+
     Promise.all([
-      fetch(`${api}/accumulators/free-tip-of-the-day`).then((r) => (r.ok ? r.json() : null)),
-      marketFree,
-      marketAny,
+      fetch(`${api}/accumulators/free-tip-of-the-day`, { headers: auth }).then((r) => (r.ok ? r.json() : null)),
+      fetch(`${api}/accumulators/marketplace/public?limit=12&priceFilter=free`, { headers: auth }).then((r) =>
+        r.ok ? r.json() : { items: [] },
+      ),
+      fetch(`${api}/accumulators/marketplace/public?limit=12`, { headers: auth }).then((r) =>
+        r.ok ? r.json() : { items: [] },
+      ),
     ])
       .then(([featured, market, anyMarket]) => {
         const marketItems = Array.isArray((market as { items?: unknown[] })?.items)
@@ -99,19 +123,16 @@ export function HomeFreeTipOfTheDay() {
         const anyItems = Array.isArray((anyMarket as { items?: unknown[] })?.items)
           ? ((anyMarket as { items?: FreeTip[] }).items ?? [])
           : [];
-        const combined = [featured, ...marketItems, ...anyItems].filter(Boolean) as FreeTip[];
-        const seen = new Set<number>();
-        const uniqueVisible = combined.filter((item) => {
-          if (!item?.id || seen.has(item.id)) return false;
-          seen.add(item.id);
-          return true;
-        });
-        setTip(featured as FreeTip | null);
-        setTips(uniqueVisible.slice(0, 4));
+        const featuredTip = parseFreeTip(featured);
+        const uniqueVisible = buildVisibleTips(featuredTip, [...marketItems, ...anyItems]).slice(0, 4);
+        setTip(featuredTip);
+        setTips(uniqueVisible);
       })
       .catch(() => {
-        setTip(null);
-        setTips([]);
+        if (seededVisible.length === 0) {
+          setTip(null);
+          setTips([]);
+        }
       })
       .finally(() => setLoading(false));
   }, []);
@@ -131,11 +152,9 @@ export function HomeFreeTipOfTheDay() {
       });
       if (res.ok) {
         setIsPurchased(true);
-      } else {
-        router.push(`/marketplace?highlight=${tip.id}`);
+        const { hapticSuccess } = await import('@/lib/haptic');
+        hapticSuccess();
       }
-    } catch {
-      router.push(`/marketplace?highlight=${tip.id}`);
     } finally {
       setPurchasing(false);
     }
@@ -210,6 +229,7 @@ export function HomeFreeTipOfTheDay() {
               bookingCodeCopyCount={item.bookingCodeCopyCount ?? 0}
               {...getPickCardSocialProps(item, {
                 onCountsChange: applySocialCounts,
+                loginRedirectPath: currentLoginRedirectPath('/'),
               })}
             />
           ))}

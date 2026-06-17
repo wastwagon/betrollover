@@ -224,18 +224,37 @@ export default function MarketplacePage() {
   const fetchMarketplace = useCallback(async () => {
     const token = localStorage.getItem('token');
     const sportParam = sportFilter ? `&sport=${encodeURIComponent(sportFilter)}` : '';
+    const listUrl = `${API_URL}/accumulators/marketplace/public?limit=24${sportParam}${tipsterParam}${priceParam}`;
+    const listHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+    const listPromise = fetch(listUrl, { headers: listHeaders }).then((r) =>
+      r.ok ? r.json() : { items: [], total: 0, hasMore: false },
+    );
 
     if (!token) {
-      const path = `${window.location.pathname}${window.location.search}`;
-      router.replace(`/login?redirect=${encodeURIComponent(path)}`);
-      setLoading(false);
+      try {
+        const marketplaceData = await listPromise;
+        const items = marketplaceData?.items ?? (Array.isArray(marketplaceData) ? marketplaceData : []);
+        setPicks(items);
+        setTotal(marketplaceData?.total ?? items.length);
+        setHasMore(marketplaceData?.hasMore ?? false);
+        setWalletBalance(null);
+        setCurrentUserId(null);
+        setPurchasedIds(new Set());
+        setFollowedTipsterUsernames(new Set());
+      } catch (err) {
+        setPicks([]);
+        setTotal(0);
+        setHasMore(false);
+        showError(err);
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
     await Promise.all([
-      fetch(`${API_URL}/accumulators/marketplace?limit=24${sportParam}${tipsterParam}${priceParam}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }).then((r) => (r.ok ? r.json() : { items: [], total: 0, hasMore: false })),
+      listPromise,
       fetch(`${API_URL}/wallet/balance`, {
         headers: { Authorization: `Bearer ${token}` },
       }).then((r) => (r.ok ? r.json() : null)),
@@ -273,7 +292,7 @@ export default function MarketplacePage() {
         showError(err);
       })
       .finally(() => setLoading(false));
-  }, [router, sportFilter, tipsterParam, priceParam, showError]);
+  }, [sportFilter, tipsterParam, priceParam, showError]);
 
   fetchMarketplaceRef.current = fetchMarketplace;
 
@@ -288,9 +307,9 @@ export default function MarketplacePage() {
     const poll = () => {
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
       const token = localStorage.getItem('token');
-      if (!token) return;
-      const url = `${API_URL}/accumulators/marketplace?limit=24${sportParam}${tipsterParam}${priceParam}`;
-      fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      const url = `${API_URL}/accumulators/marketplace/public?limit=24${sportParam}${tipsterParam}${priceParam}`;
+      fetch(url, { headers })
         .then((r) => (r.ok ? r.json() : { items: [], total: 0, hasMore: false }))
         .then((data) => {
           const items = data?.items ?? (Array.isArray(data) ? data : []);
@@ -320,17 +339,12 @@ export default function MarketplacePage() {
   const loadMore = async () => {
     if (loadingMore || !hasMore) return;
     const token = localStorage.getItem('token');
-    if (!token) {
-      router.push(`/login?redirect=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`);
-      return;
-    }
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
     const sportParam = sportFilter ? `&sport=${encodeURIComponent(sportFilter)}` : '';
-    const url = `${API_URL}/accumulators/marketplace?limit=24&offset=${picks.length}${sportParam}${tipsterParam}${priceParam}`;
+    const url = `${API_URL}/accumulators/marketplace/public?limit=24&offset=${picks.length}${sportParam}${tipsterParam}${priceParam}`;
     setLoadingMore(true);
     try {
-      const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(url, { headers });
       const data = await res.json().catch(() => ({}));
       const items = data?.items ?? [];
       setPicks((prev) => [...prev, ...items]);

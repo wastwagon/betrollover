@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { PickCard } from '@/components/PickCard';
 import { getApiUrl } from '@/lib/site-config';
@@ -56,7 +56,15 @@ function parseMarketplacePayload(data: unknown): MarketplaceCardItem[] {
 
 function leaderboardUsernameSet(data: unknown): Set<string> {
   const raw = (data as { leaderboard?: unknown[] })?.leaderboard;
-  if (!Array.isArray(raw)) return new Set();
+  if (!Array.isArray(raw)) {
+    const entries = Array.isArray(data) ? data : [];
+    const names = new Set<string>();
+    for (const row of entries) {
+      const u = (row as { username?: string })?.username?.trim().toLowerCase();
+      if (u) names.add(u);
+    }
+    return names;
+  }
   const names = new Set<string>();
   for (const row of raw) {
     const u = (row as { username?: string })?.username?.trim().toLowerCase();
@@ -87,11 +95,29 @@ function pickEliteShowcase(all: MarketplaceCardItem[], eliteNames: Set<string>, 
   return out;
 }
 
-export function HomeQuickMarketplaceSections() {
+function seedElite(
+  marketItems: Record<string, unknown>[],
+  leaderboard: Record<string, unknown>[],
+): MarketplaceCardItem[] {
+  const allItems = parseMarketplacePayload({ items: marketItems });
+  const eliteNames = leaderboardUsernameSet(leaderboard);
+  return pickEliteShowcase(allItems, eliteNames, 8);
+}
+
+export function HomeQuickMarketplaceSections({
+  initialMarketItems = [],
+  initialLeaderboard = [],
+}: {
+  initialMarketItems?: Record<string, unknown>[];
+  initialLeaderboard?: Record<string, unknown>[];
+}) {
   const t = useT();
-  const [elite, setElite] = useState<MarketplaceCardItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [needsAuth, setNeedsAuth] = useState(false);
+  const seeded = useMemo(
+    () => seedElite(initialMarketItems, initialLeaderboard),
+    [initialMarketItems, initialLeaderboard],
+  );
+  const [elite, setElite] = useState<MarketplaceCardItem[]>(seeded);
+  const [loading, setLoading] = useState(seeded.length === 0);
 
   useEffect(() => {
     let cancelled = false;
@@ -99,20 +125,10 @@ export function HomeQuickMarketplaceSections() {
     (async () => {
       try {
         const token = localStorage.getItem('token');
-        if (!token) {
-          if (!cancelled) {
-            setNeedsAuth(true);
-            setElite([]);
-            setLoading(false);
-          }
-          return;
-        }
-        setNeedsAuth(false);
+        const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
         const [lbRes, allRes] = await Promise.all([
           fetch(`${api}/leaderboard?period=all_time&limit=24`),
-          fetch(`${api}/accumulators/marketplace/public?limit=48`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+          fetch(`${api}/accumulators/marketplace/public?limit=48`, { headers }),
         ]);
         const lbJson = lbRes.ok ? await lbRes.json() : {};
         const allJson = allRes.ok ? await allRes.json() : {};
@@ -121,7 +137,7 @@ export function HomeQuickMarketplaceSections() {
         const allItems = parseMarketplacePayload(allJson);
         setElite(pickEliteShowcase(allItems, eliteNames, 8));
       } catch {
-        if (!cancelled) {
+        if (!cancelled && seeded.length === 0) {
           setElite([]);
         }
       } finally {
@@ -131,7 +147,7 @@ export function HomeQuickMarketplaceSections() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [seeded.length]);
 
   const skeleton = (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">
@@ -186,22 +202,12 @@ export function HomeQuickMarketplaceSections() {
             skeleton
           ) : elite.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">{renderCards(elite)}</div>
-          ) : needsAuth ? (
-            <p className="text-center text-[var(--text-muted)] py-8 text-sm">
-              {t('home.marketplace_login_to_browse')}{' '}
-              <Link
-                href="/login?redirect=/"
-                className="font-semibold text-[var(--primary)] hover:underline"
-              >
-                {t('nav.login')}
-              </Link>
-            </p>
           ) : (
             <p className="text-center text-[var(--text-muted)] py-8 text-sm">{t('common.no_results')}</p>
           )}
           <div className="text-center mt-6">
             <Link
-              href="/tipsters"
+              href="/marketplace"
               className="inline-flex items-center justify-center text-sm font-semibold text-[var(--primary)] hover:underline min-h-[44px] sm:min-h-0"
             >
               {t('home.marketplace_active_cta')} →

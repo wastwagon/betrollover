@@ -33,10 +33,15 @@ function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: numb
   };
 }
 
-export function HomePopularTipsters() {
+export function HomePopularTipsters({
+  initialLeaderboard = [],
+}: {
+  initialLeaderboard?: Record<string, unknown>[];
+}) {
   const t = useT();
-  const [tipsters, setTipsters] = useState<TipsterCardData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const seeded = initialLeaderboard.map((e, i) => mapLeaderboardToTipsterCard(e, i));
+  const [tipsters, setTipsters] = useState<TipsterCardData[]>(seeded);
+  const [loading, setLoading] = useState(seeded.length === 0);
 
   useEffect(() => {
     fetch(getApiUrl() + '/leaderboard?period=all_time&limit=6')

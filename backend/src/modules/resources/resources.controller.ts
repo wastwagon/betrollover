@@ -7,8 +7,8 @@ export class ResourcesController {
   constructor(private readonly resourcesService: ResourcesService) {}
 
   @Get('categories')
-  async getCategories(@Query('language') language?: string) {
-    return this.resourcesService.getCategories(language || 'en');
+  async getCategories(@Query('language') language?: string, @Query('sport') sport?: string) {
+    return this.resourcesService.getCategories(language || 'en', sport);
   }
 
   @Get('items')

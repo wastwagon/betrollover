@@ -1199,6 +1199,9 @@ const fr: Record<string, string> = {
   'resources.sport_guides_coming_title': 'Guides {sport} — Bientôt',
   'resources.sport_guides_coming_desc':
     'Les guides stratégiques dédiés au {sportLower} sont en cours de rédaction. Les guides universels ci-dessous couvrent tous les sports et sont un bon point de départ.',
+  'resources.sport_guides_title': 'Guides tipster {sport}',
+  'resources.sport_guides_desc':
+    'Guides dédiés au {sport}, plus des articles stratégiques universels applicables sur tout le marché.',
   'resources.browse_sport_tipster_picks': 'Parcourir les pronostics {sport} des tipsters →',
   'resources.empty_guides_title': 'Guides bientôt disponibles',
   'resources.empty_guides_body':
@@ -1815,6 +1818,10 @@ const fr: Record<string, string> = {
   'discover.already_cover': 'couvrent déjà les pronostics {sport}.',
   'discover.guides_coming_generic': 'Guides Bientôt',
   'discover.guides_coming_generic_desc': 'Nous développons des guides tipsters début et avancé couvrant les cotes, la gestion du bankroll et les stratégies paris multi-sports. Revenez bientôt.',
+  'discover.guides_sport_banner': 'Guides pour le {sport}, plus des articles stratégiques universels applicables à tous les sports de la plateforme.',
+  'discover.no_guides_for_sport': 'Aucun guide étiqueté {sport} pour le moment',
+  'discover.no_guides_for_sport_desc': 'Essayez les guides tous sports ou parcourez les pronostics tipsters pour ce sport.',
+  'discover.view_all_guides': 'Voir tous les guides →',
   'discover.no_items': 'Aucun élément pour le moment.',
 };
 

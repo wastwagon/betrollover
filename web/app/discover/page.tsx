@@ -39,15 +39,15 @@ function getSportLabel(t: (k: string) => string, key: NewsSport | ''): string {
   return t(`create_pick.sport_${key}` as 'create_pick.sport_football');
 }
 
-const SPORT_META: Record<string, { icon: string; label: string; color: string; comingSoon?: boolean }> = {
+const SPORT_META: Record<string, { icon: string; label: string; color: string }> = {
   football:          { icon: '⚽', label: 'Football',         color: 'text-emerald-400' },
-  basketball:        { icon: '🏀', label: 'Basketball',        color: 'text-orange-400',  comingSoon: true },
-  rugby:             { icon: '🏉', label: 'Rugby',             color: 'text-amber-400',   comingSoon: true },
-  mma:               { icon: '🥊', label: 'MMA',               color: 'text-red-400',     comingSoon: true },
-  volleyball:        { icon: '🏐', label: 'Volleyball',        color: 'text-blue-400',    comingSoon: true },
-  hockey:            { icon: '🏒', label: 'Hockey',            color: 'text-cyan-400',    comingSoon: true },
-  american_football: { icon: '🏈', label: 'Amer. Football',    color: 'text-purple-400',  comingSoon: true },
-  tennis:            { icon: '🎾', label: 'Tennis',            color: 'text-yellow-400',  comingSoon: true },
+  basketball:        { icon: '🏀', label: 'Basketball',        color: 'text-orange-400' },
+  rugby:             { icon: '🏉', label: 'Rugby',             color: 'text-amber-400' },
+  mma:               { icon: '🥊', label: 'MMA',               color: 'text-red-400' },
+  volleyball:        { icon: '🏐', label: 'Volleyball',        color: 'text-blue-400' },
+  hockey:            { icon: '🏒', label: 'Hockey',            color: 'text-cyan-400' },
+  american_football: { icon: '🏈', label: 'Amer. Football',    color: 'text-purple-400' },
+  tennis:            { icon: '🎾', label: 'Tennis',            color: 'text-yellow-400' },
 };
 
 interface NewsArticle {
@@ -321,27 +321,16 @@ function NewsTab({ sport }: { sport: NewsSport | '' }) {
         </div>
       ) : articles.length === 0 ? (
         <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-12 text-center">
-          {sportMeta && sportMeta.comingSoon ? (
-            <>
-              <div className="text-5xl mb-4">{sportMeta.icon}</div>
-              <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('discover.sport_news_coming_soon', { sport: getSportLabel(t, sport) })}</h3>
-              <p className="text-[var(--text-muted)] max-w-md mx-auto mb-4">
-                {t('news.coming_soon_desc', { sport: getSportLabel(t, sport) })}
-              </p>
-              <p className="text-sm text-[var(--text-muted)]">
-                {t('discover.no_news_sub')}{' '}
-                <Link href={`/marketplace?sport=${sport}`} className="text-[var(--primary)] hover:underline">
-                  {t('news.browse_sport_picks', { sport: getSportLabel(t, sport) })}
-                </Link>
-              </p>
-            </>
-          ) : (
-            <>
-              <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('news.no_articles')}</h3>
-              <p className="text-[var(--text-muted)] max-w-md mx-auto">
-                {sport ? t('news.no_articles_filtered') : t('news.no_articles_default')}
-              </p>
-            </>
+          <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('news.no_articles')}</h3>
+          <p className="text-[var(--text-muted)] max-w-md mx-auto mb-4">
+            {sport ? t('news.no_articles_filtered') : t('news.no_articles_default')}
+          </p>
+          {sport && (
+            <p className="text-sm text-[var(--text-muted)] mb-4">
+              <Link href={`/marketplace?sport=${sport}`} className="text-[var(--primary)] hover:underline">
+                {t('news.browse_sport_picks', { sport: getSportLabel(t, sport) })}
+              </Link>
+            </p>
           )}
         </div>
       ) : (
@@ -395,14 +384,17 @@ function GuidesTab({ sport }: { sport: NewsSport | '' }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${getApiUrl()}/resources/categories`)
+    setLoading(true);
+    const params = sport ? `?sport=${encodeURIComponent(sport)}` : '';
+    fetch(`${getApiUrl()}/resources/categories${params}`)
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setCategories(Array.isArray(data) ? data : []))
       .catch(() => setCategories([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [sport]);
 
   const sportMeta = sport ? SPORT_META[sport] : null;
+  const visibleCategories = categories.filter((cat) => (cat.items?.length ?? 0) > 0);
 
   if (loading) {
     return (
@@ -414,22 +406,26 @@ function GuidesTab({ sport }: { sport: NewsSport | '' }) {
     );
   }
 
-  if (categories.length === 0) {
+  if (visibleCategories.length === 0) {
     return (
       <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-12 text-center">
         {sportMeta ? (
           <>
             <div className="text-5xl mb-4">{sportMeta.icon}</div>
-            <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('discover.guides_coming_soon', { sport: getSportLabel(t, sport) })}</h3>
+            <h3 className="text-base font-semibold text-[var(--text)] mb-2">
+              {t('discover.no_guides_for_sport', { sport: getSportLabel(t, sport) })}
+            </h3>
             <p className="text-[var(--text-muted)] max-w-md mx-auto mb-4">
-              {t('discover.guides_coming_desc', { sport: getSportLabel(t, sport) })}
+              {t('discover.no_guides_for_sport_desc')}
             </p>
-            <p className="text-sm text-[var(--text-muted)]">
-              <Link href="/marketplace" className="text-[var(--primary)] hover:underline">
-                {t('discover.marketplace_tipsters')}
-              </Link>{' '}
-              {t('discover.already_cover', { sport: getSportLabel(t, sport) })}
-            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link href="/discover?tab=guides" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                {t('discover.view_all_guides')}
+              </Link>
+              <Link href={`/marketplace?sport=${sport}`} className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                {t('news.browse_sport_picks', { sport: getSportLabel(t, sport) })}
+              </Link>
+            </div>
           </>
         ) : (
           <>
@@ -450,11 +446,11 @@ function GuidesTab({ sport }: { sport: NewsSport | '' }) {
         <div className="rounded-xl bg-[var(--primary-light)]/30 border border-[var(--primary)]/20 p-4 flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
           <span className="text-2xl shrink-0">{sportMeta.icon}</span>
           <p className="text-sm text-[var(--text-muted)] min-w-0">
-            These guides cover universal tipster strategy principles that apply to <strong className="text-[var(--text)]">{sportMeta.label}</strong> and all sports we cover. Sport-specific guides are coming soon.
+            {t('discover.guides_sport_banner', { sport: getSportLabel(t, sport) })}
           </p>
         </div>
       )}
-      {categories.map((cat) => (
+      {visibleCategories.map((cat) => (
         <div key={cat.id} className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-6 min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-6 min-w-0">
             <span className="px-3 py-1 rounded-lg text-sm font-medium bg-[var(--primary-light)] text-[var(--primary)] w-fit">

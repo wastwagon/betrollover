@@ -13,8 +13,9 @@ export class ResourcesService {
     private itemRepo: Repository<ResourceItem>,
   ) {}
 
-  async getCategories(language = 'en'): Promise<ResourceCategory[]> {
+  async getCategories(language = 'en', sport?: string): Promise<ResourceCategory[]> {
     const lang = language.toLowerCase().slice(0, 5);
+    const sportKey = sport?.trim().toLowerCase() || '';
     let categories = await this.categoryRepo.find({
       where: { language: lang },
       order: { sortOrder: 'ASC', id: 'ASC' },
@@ -30,9 +31,13 @@ export class ResourcesService {
     const now = new Date();
     for (const cat of categories) {
       const catLang = (cat as any).language || 'en';
-      (cat as any).items = (cat.items || []).filter(
+      let items = (cat.items || []).filter(
         (i: ResourceItem) => i.publishedAt && i.publishedAt <= now && i.language === catLang,
       );
+      if (sportKey) {
+        items = items.filter((i: ResourceItem) => !i.sport || i.sport === sportKey);
+      }
+      (cat as any).items = items;
     }
     return categories;
   }

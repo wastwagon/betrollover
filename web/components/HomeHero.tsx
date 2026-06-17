@@ -1,26 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
+import type { HomePublicStats } from '@/lib/home-public-data';
 
-interface PublicStats {
-  verifiedTipsters: number;
-  totalPicks: number;
-  activePicks: number;
-  successfulPurchases: number;
-  winRate: number;
-  totalPaidOut: number;
-  /** Gross buyer stakes on wins (optional; net tipster pay is totalPaidOut) */
-  grossWinningStakesGhs?: number;
-  statsScope?: string;
-  platformCommissionPercent?: number;
-  metricNotes?: Record<string, string>;
-}
-
-const defaultStats: PublicStats = {
+const defaultStats: HomePublicStats = {
   verifiedTipsters: 0,
   totalPicks: 0,
   activePicks: 0,
@@ -108,11 +96,19 @@ const STAT_HINT_KEYS: Record<StatKey, string> = {
   paidOut: 'home.stats_hint_paid_out',
 };
 
-export function HomeHero() {
+export interface HomeHeroProps {
+  initialStats?: HomePublicStats | null;
+  initialLeadingRoi?: number | null;
+}
+
+export function HomeHero({ initialStats = null, initialLeadingRoi = null }: HomeHeroProps) {
   const t = useT();
   const { format } = useCurrency();
-  const [stats, setStats] = useState<PublicStats | null>(null);
-  const [leadingTipster, setLeadingTipster] = useState<LeadingTipsterStats>({ winRate: null, roi: null });
+  const [stats, setStats] = useState<HomePublicStats | null>(initialStats);
+  const [leadingTipster, setLeadingTipster] = useState<LeadingTipsterStats>({
+    winRate: null,
+    roi: initialLeadingRoi,
+  });
 
   const fetchStats = () => {
     Promise.all([
@@ -140,7 +136,9 @@ export function HomeHero() {
       } else {
         setLeadingTipster({ winRate: null, roi: null });
       }
-    }).catch(() => setStats(defaultStats));
+    }).catch(() => {
+      if (!initialStats) setStats(defaultStats);
+    });
   };
 
   useEffect(() => {
@@ -152,7 +150,7 @@ export function HomeHero() {
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, []);
 
-  const s = stats || defaultStats;
+  const s = stats || initialStats || defaultStats;
   const paidOutFormatted = format(s.totalPaidOut).primary;
 
   const leadingRoiStr =
@@ -168,7 +166,7 @@ export function HomeHero() {
   ];
 
   return (
-    <section className="relative overflow-hidden min-h-[380px] sm:min-h-[420px] md:min-h-[480px] w-full min-w-0 max-w-full">
+    <section className="relative overflow-hidden min-h-[420px] sm:min-h-[460px] md:min-h-[520px] w-full min-w-0 max-w-full">
       {/* Photoreal hero — AVIF (~40KB) + WebP (~52KB) @ 1376×768; no SVG collage */}
       <div className="absolute inset-0">
         {/* eslint-disable-next-line @next/next/no-img-element -- static AVIF/WebP pair; avoids optimizer re-encoding */}
@@ -185,15 +183,42 @@ export function HomeHero() {
           />
         </picture>
         <div
-          className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/30 pointer-events-none"
+          className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/35 to-black/40 pointer-events-none"
           aria-hidden
         />
       </div>
 
-      <div className="relative max-w-7xl mx-auto section-ux-hero w-full min-w-0">
-        <h1 className="sr-only">{t('home.hero_title')}</h1>
+      <div className="relative max-w-7xl mx-auto section-ux-hero w-full min-w-0 flex flex-col gap-6 md:gap-8">
+        <div className="max-w-2xl animate-fade-in-up" style={{ animationFillMode: 'both' }}>
+          <p className="text-emerald-300/95 text-[10px] sm:text-xs font-semibold uppercase tracking-widest mb-2">
+            {t('home.hero_badge')}
+          </p>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight leading-tight">
+            {t('home.hero_title')}
+          </h1>
+          <p className="text-slate-200 text-sm sm:text-base mt-2 leading-relaxed max-w-xl">
+            {t('home.hero_subtitle')}
+          </p>
+          <p className="text-emerald-100/90 text-xs sm:text-sm mt-2 leading-relaxed max-w-xl">
+            {t('home.hero_escrow_line')}
+          </p>
+          <div className="flex flex-wrap gap-2 sm:gap-3 mt-4">
+            <Link
+              href="/marketplace"
+              className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold shadow-lg transition-colors"
+            >
+              {t('home.hero_cta_primary')}
+            </Link>
+            <Link
+              href="/register"
+              className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-xl border border-white/30 bg-white/10 hover:bg-white/15 text-white text-sm font-semibold backdrop-blur-sm transition-colors"
+            >
+              {t('home.hero_cta_secondary')}
+            </Link>
+          </div>
+        </div>
+
         {/* Compact KPI Dashboard - 6 cards: platform + leading ROI + paid out */}
-        {/* sm=640px: avoid 2-up stats on typical phone widths (390–430), which looked like a shrunk desktop layout in store shots */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3 min-w-0">
           {statItems.map((item, idx) => {
             const cfg = statConfigBase[item.key];
