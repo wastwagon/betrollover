@@ -13,6 +13,7 @@ interface NewsArticle {
   title: string;
   excerpt: string | null;
   category: string;
+  sport?: string;
   language?: string;
   featured: boolean;
   publishedAt: string | null;
@@ -26,7 +27,7 @@ export default function AdminNewsPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncingInjuries, setSyncingInjuries] = useState(false);
   const [probing, setProbing] = useState(false);
-  const [syncResult, setSyncResult] = useState<{ added: number; errors: string[] } | null>(null);
+  const [syncResult, setSyncResult] = useState<{ added: number; errors: string[]; bySport?: Record<string, number> } | null>(null);
   const [injurySyncResult, setInjurySyncResult] = useState<{ added: number; errors: string[]; bySport?: Record<string, number> } | null>(null);
   const [probeResult, setProbeResult] = useState<{
     configured: boolean;
@@ -52,7 +53,7 @@ export default function AdminNewsPage() {
     })
       .then((r) => r.json())
       .then((data) => {
-        setSyncResult({ added: data.added ?? 0, errors: data.errors ?? [] });
+        setSyncResult({ added: data.added ?? 0, errors: data.errors ?? [], bySport: data.bySport });
         if (data.added > 0) load();
       })
       .catch(() => setSyncResult({ added: 0, errors: ['Request failed'] }))
@@ -121,7 +122,9 @@ export default function AdminNewsPage() {
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start">
           <div className="min-w-0">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">News Articles</h1>
-            <p className="text-gray-600 dark:text-gray-400">Manage news across sports. API sync (transfers &amp; injuries) is football-only until other sport endpoints are verified.</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              Manage news across sports. Auto-sync: football transfers, football + NFL injuries. Use Probe APIs to test other sports.
+            </p>
           </div>
           <div className="flex flex-col sm:flex-row flex-wrap gap-3 w-full sm:w-auto shrink-0">
             <button
@@ -159,7 +162,12 @@ export default function AdminNewsPage() {
         {syncResult && (
           <div className={`mb-6 p-4 rounded-xl ${syncResult.added > 0 ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200'}`}>
             {syncResult.added > 0 ? (
-              <p>Added {syncResult.added} new transfer article(s) from API-Football.</p>
+              <p>
+                Added {syncResult.added} new transfer article(s) from API-Sports
+                {syncResult.bySport
+                  ? ` (${Object.entries(syncResult.bySport).map(([s, n]) => `${s}: ${n}`).join(', ')})`
+                  : ''}.
+              </p>
             ) : (
               <p>
                 {syncResult.errors.length > 0
@@ -233,6 +241,7 @@ export default function AdminNewsPage() {
                 <tr>
                   <th className="text-left px-6 py-4 font-semibold text-gray-900 dark:text-white">Title</th>
                   <th className="text-left px-6 py-4 font-semibold text-gray-900 dark:text-white">Category</th>
+                  <th className="text-left px-6 py-4 font-semibold text-gray-900 dark:text-white">Sport</th>
                   <th className="text-left px-6 py-4 font-semibold text-gray-900 dark:text-white">Lang</th>
                   <th className="text-left px-6 py-4 font-semibold text-gray-900 dark:text-white">Status</th>
                   <th className="text-left px-6 py-4 font-semibold text-gray-900 dark:text-white">Date</th>
@@ -248,6 +257,7 @@ export default function AdminNewsPage() {
                       </Link>
                     </td>
                     <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{a.category}</td>
+                    <td className="px-6 py-4 text-gray-600 dark:text-gray-400 text-sm">{a.sport || 'football'}</td>
                     <td className="px-6 py-4 text-gray-600 dark:text-gray-400 text-sm">{a.language || 'en'}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${a.publishedAt ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
