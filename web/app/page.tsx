@@ -54,11 +54,25 @@ export default async function HomePage() {
       <UnifiedHeader />
 
       <main className="bg-[var(--bg)] w-full min-w-0">
-        <HomeHero initialStats={homeData.stats} initialLeadingRoi={homeData.leadingRoi} />
+        <HomeHero
+          initialStats={homeData.stats}
+          initialTodayMatches={homeData.todayMatches}
+          marketplaceItems={homeData.marketplaceItems}
+        />
         <div className="section-ux-rail-4xl w-full min-w-0">
           <AdSlot zoneSlug="home-below-hero" fullWidth className="w-full" />
         </div>
-        {/* How It Works — placed high so escrow and buyer/seller flows are visible without long scroll */}
+        <HomePopularTipsters initialLeaderboard={homeData.topTipsters.slice(0, 6)} />
+        <FeaturedPicks initialFeatured={homeData.featuredPicks} />
+        <section id="free-tip-of-the-day" className="w-full min-w-0">
+          <HomeFreeTipOfTheDay initialFreeTip={homeData.freeTip} initialMarketItems={homeData.marketplaceItems} />
+        </section>
+        <div className="section-ux-rail-4xl w-full min-w-0">
+          <AdSlot zoneSlug="between-sections" fullWidth className="w-full" />
+        </div>
+        <HomeQuickMarketplaceSections initialMarketItems={homeData.marketplaceItems} initialLeaderboard={homeData.topTipsters} />
+
+        {/* How It Works — after marketplace teasers so action content appears first */}
         <section className="py-10 sm:py-14 md:py-20 px-4 sm:px-6 lg:px-8 border-t border-[var(--border)] w-full min-w-0 max-w-full overflow-x-hidden">
           <div className="section-ux-cap-4xl w-full min-w-0">
             <div className="text-center mb-8 sm:mb-12 px-1">
@@ -167,15 +181,6 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
-        <HomePopularTipsters initialLeaderboard={homeData.topTipsters.slice(0, 6)} />
-        <FeaturedPicks initialFeatured={homeData.featuredPicks} />
-        <section id="free-tip-of-the-day" className="w-full min-w-0">
-          <HomeFreeTipOfTheDay initialFreeTip={homeData.freeTip} initialMarketItems={homeData.marketplaceItems} />
-        </section>
-        <div className="section-ux-rail-4xl w-full min-w-0">
-          <AdSlot zoneSlug="between-sections" fullWidth className="w-full" />
-        </div>
-        <HomeQuickMarketplaceSections initialMarketItems={homeData.marketplaceItems} initialLeaderboard={homeData.topTipsters} />
 
         {/* Platform Features — Bento Grid */}
         <section className="py-14 md:py-20 border-t border-[var(--border)] w-full min-w-0 max-w-full overflow-x-hidden">

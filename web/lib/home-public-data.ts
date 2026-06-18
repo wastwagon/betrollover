@@ -1,5 +1,9 @@
 import { getApiUrl } from '@/lib/site-config';
 import { LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
+import {
+  parseHeadlineMatchesPayload,
+  type TodayMatchRow,
+} from '@/lib/home-today-matches';
 
 export interface HomePublicStats {
   verifiedTipsters: number;
@@ -17,6 +21,7 @@ export interface HomePublicData {
   marketplaceItems: Record<string, unknown>[];
   featuredPicks: Record<string, unknown>[];
   freeTip: Record<string, unknown> | null;
+  todayMatches: TodayMatchRow[];
 }
 
 function parseStats(data: unknown): HomePublicStats | null {
@@ -57,15 +62,17 @@ export async function fetchHomePublicData(options?: { revalidate?: number }): Pr
     marketplaceItems: [],
     featuredPicks: [],
     freeTip: null,
+    todayMatches: [],
   };
 
   try {
-    const [statsRes, lbRes, marketRes, featuredRes, freeTipRes] = await Promise.all([
+    const [statsRes, lbRes, marketRes, featuredRes, freeTipRes, headlineRes] = await Promise.all([
       fetch(`${api}/accumulators/stats/public`, init),
       fetch(`${api}/leaderboard?period=all_time&limit=24`, init),
       fetch(`${api}/accumulators/marketplace/public?limit=48`, init),
       fetch(`${api}/accumulators/featured`, init),
       fetch(`${api}/accumulators/free-tip-of-the-day`, init),
+      fetch(`${api}/fixtures/platform/headline-matches?limit=8`, init),
     ]);
 
     const statsJson = statsRes.ok ? await statsRes.json() : null;
@@ -73,10 +80,12 @@ export async function fetchHomePublicData(options?: { revalidate?: number }): Pr
     const marketJson = marketRes.ok ? await marketRes.json() : { items: [] };
     const featuredJson = featuredRes.ok ? await featuredRes.json() : [];
     const freeTipJson = freeTipRes.ok ? await freeTipRes.json() : null;
+    const headlineJson = headlineRes.ok ? await headlineRes.json() : null;
 
     const topTipsters = Array.isArray(lbJson?.leaderboard) ? lbJson.leaderboard : [];
     const marketplaceItems = Array.isArray(marketJson?.items) ? marketJson.items : [];
     const featuredPicks = Array.isArray(featuredJson) ? featuredJson : [];
+    const todayMatches = parseHeadlineMatchesPayload(headlineJson);
 
     return {
       stats: parseStats(statsJson),
@@ -85,6 +94,7 @@ export async function fetchHomePublicData(options?: { revalidate?: number }): Pr
       marketplaceItems,
       featuredPicks,
       freeTip: freeTipJson && typeof freeTipJson === 'object' ? (freeTipJson as Record<string, unknown>) : null,
+      todayMatches,
     };
   } catch {
     return empty;

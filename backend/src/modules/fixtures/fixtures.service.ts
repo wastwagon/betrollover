@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, In } from 'typeorm';
 import { Fixture } from './entities/fixture.entity';
@@ -7,7 +7,52 @@ import { League } from './entities/league.entity';
 import { EnabledLeague } from './entities/enabled-league.entity';
 import { FootballSyncService } from './football-sync.service';
 import { OddsSyncService } from './odds-sync.service';
+import { LeagueInsightsService } from './league-insights.service';
+import { AccumulatorsService } from '../accumulators/accumulators.service';
 import { SYNC_LOOKAHEAD_DAYS } from '../../config/api-limits.config';
+import { pickHeadlineMatches, type HeadlineMatchRow } from './headline-matches.util';
+import { pickSpotlightPlayer, type MatchSpotlightPlayer } from './match-spotlight.util';
+import { findStandingRowForTeam } from './standings-lookup.util';
+
+export type HomeHeadlineMatch = HeadlineMatchRow & {
+  spotlightPlayer: MatchSpotlightPlayer | null;
+};
+
+export interface PublicFixtureStandingSnippet {
+  rank: number;
+  points: number;
+  played: number;
+  win: number;
+  draw: number;
+  loss: number;
+}
+
+export interface PublicFixtureDetail {
+  id: number;
+  apiId: number;
+  homeTeamName: string;
+  awayTeamName: string;
+  homeTeamLogo: string | null;
+  awayTeamLogo: string | null;
+  homeCountryCode: string | null;
+  awayCountryCode: string | null;
+  leagueName: string | null;
+  leagueApiId: number | null;
+  country: string | null;
+  matchDate: string;
+  status: string;
+  statusElapsed: number | null;
+  homeScore: number | null;
+  awayScore: number | null;
+  htHomeScore: number | null;
+  htAwayScore: number | null;
+  spotlightPlayer: MatchSpotlightPlayer | null;
+  standings: {
+    home: PublicFixtureStandingSnippet | null;
+    away: PublicFixtureStandingSnippet | null;
+  };
+  relatedPicks: { items: Record<string, unknown>[]; total: number };
+}
 
 // Expose fixtureRepo for controller use
 declare module './fixtures.service' {
@@ -29,6 +74,9 @@ export class FixturesService {
     private enabledLeagueRepo: Repository<EnabledLeague>,
     private syncService: FootballSyncService,
     private oddsSyncService: OddsSyncService,
+    private leagueInsightsService: LeagueInsightsService,
+    @Inject(forwardRef(() => AccumulatorsService))
+    private accumulatorsService: AccumulatorsService,
   ) {}
 
   async list(
@@ -438,6 +486,122 @@ export class FixturesService {
       upcoming: upcomingRows.map(mapRow),
       recent: recentRows.map(mapRow),
       generatedAt: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Headline fixtures for the home carousel with optional "player to watch" from cached top scorers.
+   * Public, cache-only for player data (no API calls).
+   */
+  async getHomeHeadlineMatches(limit = 8): Promise<{
+    matches: HomeHeadlineMatch[];
+    generatedAt: string;
+  }> {
+    const payload = await this.getPlatformLiveScores({ archiveHours: 24, lookaheadDays: 2 });
+    const toHeadline = (row: Record<string, unknown>): HeadlineMatchRow => ({
+      id: Number(row.id),
+      apiId: Number(row.apiId),
+      homeTeamName: String(row.homeTeamName ?? 'Home'),
+      awayTeamName: String(row.awayTeamName ?? 'Away'),
+      homeTeamLogo: row.homeTeamLogo != null ? String(row.homeTeamLogo) : null,
+      awayTeamLogo: row.awayTeamLogo != null ? String(row.awayTeamLogo) : null,
+      leagueName: row.leagueName != null ? String(row.leagueName) : null,
+      leagueApiId: row.leagueApiId != null ? Number(row.leagueApiId) : null,
+      matchDate: String(row.matchDate ?? ''),
+      status: String(row.status ?? 'NS'),
+      statusElapsed: row.statusElapsed != null ? Number(row.statusElapsed) : null,
+      homeScore: row.homeScore != null ? Number(row.homeScore) : null,
+      awayScore: row.awayScore != null ? Number(row.awayScore) : null,
+    });
+
+    const live = (payload.live ?? []).map(toHeadline);
+    const upcoming = (payload.upcoming ?? []).map(toHeadline);
+    const headline = pickHeadlineMatches(live, upcoming, limit);
+
+    const leagueIds = [
+      ...new Set(headline.map((m) => m.leagueApiId).filter((id): id is number => id != null && id > 0)),
+    ];
+    const scorersByLeague = new Map<number, Awaited<ReturnType<LeagueInsightsService['getCachedTopScorers']>>>();
+    await Promise.all(
+      leagueIds.map(async (leagueApiId) => {
+        const rows = await this.leagueInsightsService.getCachedTopScorers(leagueApiId);
+        scorersByLeague.set(leagueApiId, rows);
+      }),
+    );
+
+    const matches: HomeHeadlineMatch[] = headline.map((m) => {
+      const scorers =
+        m.leagueApiId != null ? scorersByLeague.get(m.leagueApiId) ?? [] : [];
+      const spotlightPlayer = pickSpotlightPlayer(m.homeTeamName, m.awayTeamName, scorers);
+      return { ...m, spotlightPlayer };
+    });
+
+    return { matches, generatedAt: payload.generatedAt };
+  }
+
+  /**
+   * Public match hub page: fixture in platform catalog + cached league context + marketplace picks.
+   */
+  async getPublicFixtureDetail(id: number): Promise<PublicFixtureDetail | null> {
+    const fixture = await this.fixtureRepo.findOne({
+      where: { id },
+      relations: ['league'],
+    });
+    if (!fixture) return null;
+
+    const hasOdds = await this.oddsRepo.exists({ where: { fixtureId: id } });
+    if (!hasOdds) return null;
+
+    const leagueApiId = fixture.league?.apiId ?? null;
+    let spotlightPlayer: MatchSpotlightPlayer | null = null;
+    let standings: PublicFixtureDetail['standings'] = { home: null, away: null };
+
+    if (leagueApiId != null) {
+      const [scorers, table] = await Promise.all([
+        this.leagueInsightsService.getCachedTopScorers(leagueApiId),
+        this.leagueInsightsService.getCachedStandingsTable(leagueApiId),
+      ]);
+      spotlightPlayer = pickSpotlightPlayer(fixture.homeTeamName, fixture.awayTeamName, scorers);
+      const homeRow = findStandingRowForTeam(table, fixture.homeTeamName);
+      const awayRow = findStandingRowForTeam(table, fixture.awayTeamName);
+      const toSnippet = (row: typeof homeRow): PublicFixtureStandingSnippet | null =>
+        row
+          ? {
+              rank: row.rank,
+              points: row.points,
+              played: row.played,
+              win: row.win,
+              draw: row.draw,
+              loss: row.loss,
+            }
+          : null;
+      standings = { home: toSnippet(homeRow), away: toSnippet(awayRow) };
+    }
+
+    const related = await this.accumulatorsService.getMarketplacePublicForFixture(id, 12);
+
+    return {
+      id: fixture.id,
+      apiId: fixture.apiId,
+      homeTeamName: fixture.homeTeamName,
+      awayTeamName: fixture.awayTeamName,
+      homeTeamLogo: fixture.homeTeamLogo,
+      awayTeamLogo: fixture.awayTeamLogo,
+      homeCountryCode: fixture.homeCountryCode,
+      awayCountryCode: fixture.awayCountryCode,
+      leagueName: fixture.leagueName,
+      leagueApiId,
+      country: fixture.league?.country ?? null,
+      matchDate: fixture.matchDate?.toISOString?.() ?? String(fixture.matchDate),
+      status: fixture.status,
+      statusElapsed: fixture.statusElapsed ?? null,
+      homeScore: fixture.homeScore,
+      awayScore: fixture.awayScore,
+      htHomeScore: fixture.htHomeScore ?? null,
+      htAwayScore: fixture.htAwayScore ?? null,
+      spotlightPlayer,
+      standings,
+      relatedPicks: { items: related.items as Record<string, unknown>[], total: related.total },
     };
   }
 }

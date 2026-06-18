@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { useCurrency } from '@/context/CurrencyContext';
-import { LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
 import type { HomePublicStats } from '@/lib/home-public-data';
+import { HomeTodayMatches } from '@/components/HomeTodayMatches';
+import type { TodayMatchRow } from '@/lib/home-today-matches';
 
 const defaultStats: HomePublicStats = {
   verifiedTipsters: 0,
@@ -17,26 +18,12 @@ const defaultStats: HomePublicStats = {
   totalPaidOut: 0,
 };
 
-/** Show real counts (no + or rounding). Uses locale grouping for thousands. */
 function formatNumber(n: number): string {
   if (n <= 0) return '0';
   return n.toLocaleString();
 }
 
-/** Current leading tipster from leaderboard (win rate & ROI) — varies as leader changes */
-interface LeadingTipsterStats {
-  winRate: number | null;
-  roi: number | null;
-}
-
-/** Six stats: platform counts + leading ROI + net paid to tipsters (wallet payouts) */
-type StatKey =
-  | 'verified'
-  | 'settledPicks'
-  | 'marketplacePurchases'
-  | 'leadingRoi'
-  | 'marketplace'
-  | 'paidOut';
+type StatKey = 'verified' | 'marketplacePurchases' | 'paidOut';
 
 const statConfigBase: Record<
   StatKey,
@@ -49,33 +36,12 @@ const statConfigBase: Record<
     border: 'border-emerald-500/40',
     iconBg: 'bg-emerald-500/25 text-emerald-300',
   },
-  settledPicks: {
-    labelKey: 'home.stats_picks',
-    icon: '📊',
-    bg: 'bg-blue-500/15',
-    border: 'border-blue-500/40',
-    iconBg: 'bg-blue-500/25 text-blue-300',
-  },
   marketplacePurchases: {
     labelKey: 'home.stats_marketplace_purchases',
     icon: '🛍️',
     bg: 'bg-sky-500/15',
     border: 'border-sky-500/40',
     iconBg: 'bg-sky-500/25 text-sky-300',
-  },
-  leadingRoi: {
-    labelKey: 'home.stats_leading_roi',
-    icon: '💰',
-    bg: 'bg-rose-500/15',
-    border: 'border-rose-500/40',
-    iconBg: 'bg-rose-500/25 text-rose-300',
-  },
-  marketplace: {
-    labelKey: 'home.stats_marketplace',
-    icon: '🛒',
-    bg: 'bg-violet-500/15',
-    border: 'border-violet-500/40',
-    iconBg: 'bg-violet-500/25 text-violet-300',
   },
   paidOut: {
     labelKey: 'home.stats_paid_out',
@@ -86,90 +52,60 @@ const statConfigBase: Record<
   },
 };
 
-/** Native tooltips: how each KPI is computed (hover). */
 const STAT_HINT_KEYS: Record<StatKey, string> = {
   verified: 'home.stats_hint_tipsters',
-  settledPicks: 'home.stats_hint_settled_picks',
   marketplacePurchases: 'home.stats_hint_marketplace_purchases',
-  leadingRoi: 'home.stats_hint_leading_roi',
-  marketplace: 'home.stats_hint_marketplace',
   paidOut: 'home.stats_hint_paid_out',
 };
 
 export interface HomeHeroProps {
   initialStats?: HomePublicStats | null;
-  initialLeadingRoi?: number | null;
+  initialTodayMatches?: TodayMatchRow[];
+  marketplaceItems?: Record<string, unknown>[];
 }
 
-export function HomeHero({ initialStats = null, initialLeadingRoi = null }: HomeHeroProps) {
+export function HomeHero({
+  initialStats = null,
+  initialTodayMatches = [],
+  marketplaceItems = [],
+}: HomeHeroProps) {
   const t = useT();
   const { format } = useCurrency();
   const [stats, setStats] = useState<HomePublicStats | null>(initialStats);
-  const [leadingTipster, setLeadingTipster] = useState<LeadingTipsterStats>({
-    winRate: null,
-    roi: initialLeadingRoi,
-  });
-
-  const fetchStats = () => {
-    Promise.all([
-      fetch(getApiUrl() + '/accumulators/stats/public', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)),
-      fetch(getApiUrl() + '/leaderboard?period=all_time&limit=20', { cache: 'no-store' }).then((r) =>
-        r.ok ? r.json() : { leaderboard: [] },
-      ),
-    ]).then(([data, leaderData]) => {
-      if (data) setStats(data);
-      const entries = (leaderData?.leaderboard || []) as {
-        win_rate?: number;
-        roi?: number;
-        total_wins?: number;
-        total_losses?: number;
-      }[];
-      const settled = (e: (typeof entries)[0]) => (e.total_wins ?? 0) + (e.total_losses ?? 0);
-      const topWithEnoughSettled = entries.find(
-        (e) => settled(e) >= LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING,
-      );
-      if (topWithEnoughSettled) {
-        setLeadingTipster({
-          winRate: typeof topWithEnoughSettled.win_rate === 'number' ? topWithEnoughSettled.win_rate : null,
-          roi: typeof topWithEnoughSettled.roi === 'number' ? topWithEnoughSettled.roi : null,
-        });
-      } else {
-        setLeadingTipster({ winRate: null, roi: null });
-      }
-    }).catch(() => {
-      if (!initialStats) setStats(defaultStats);
-    });
-  };
 
   useEffect(() => {
+    const fetchStats = () => {
+      fetch(getApiUrl() + '/accumulators/stats/public', { cache: 'no-store' })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data) setStats(data);
+        })
+        .catch(() => {
+          if (!initialStats) setStats(defaultStats);
+        });
+    };
+
     fetchStats();
     const onVisible = () => {
       if (document.visibilityState === 'visible') fetchStats();
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
-  }, []);
+  }, [initialStats]);
 
   const s = stats || initialStats || defaultStats;
   const paidOutFormatted = format(s.totalPaidOut).primary;
 
-  const leadingRoiStr =
-    leadingTipster.roi != null ? Number(leadingTipster.roi).toFixed(1) + '%' : '—';
-
   const statItems: { key: StatKey; value: string }[] = [
     { key: 'verified', value: formatNumber(s.verifiedTipsters) },
-    { key: 'settledPicks', value: formatNumber(s.totalPicks) },
     { key: 'marketplacePurchases', value: formatNumber(s.successfulPurchases) },
-    { key: 'leadingRoi', value: leadingRoiStr },
-    { key: 'marketplace', value: formatNumber(s.activePicks) },
     { key: 'paidOut', value: paidOutFormatted },
   ];
 
   return (
-    <section className="relative overflow-hidden min-h-[420px] sm:min-h-[460px] md:min-h-[520px] w-full min-w-0 max-w-full">
-      {/* Photoreal hero — AVIF (~40KB) + WebP (~52KB) @ 1376×768; no SVG collage */}
-      <div className="absolute inset-0">
-        {/* eslint-disable-next-line @next/next/no-img-element -- static AVIF/WebP pair; avoids optimizer re-encoding */}
+    <section className="relative overflow-hidden w-full min-w-0 max-w-full bg-slate-950">
+      <div className="absolute inset-0 min-h-[360px] sm:min-h-[400px]">
+        {/* eslint-disable-next-line @next/next/no-img-element -- static AVIF/WebP pair */}
         <picture className="absolute inset-0 block h-full min-h-full w-full">
           <source srcSet="/images/marketing/hero-cinematic.avif" type="image/avif" />
           <img
@@ -177,49 +113,54 @@ export function HomeHero({ initialStats = null, initialLeadingRoi = null }: Home
             alt=""
             width={1376}
             height={768}
-            className="absolute inset-0 h-full w-full object-cover object-center"
+            className="absolute inset-0 h-full w-full object-cover object-[center_30%] sm:object-center opacity-90"
             fetchPriority="high"
             decoding="sync"
           />
         </picture>
         <div
-          className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/35 to-black/40 pointer-events-none"
+          className="absolute inset-0 bg-gradient-to-b from-slate-950/50 via-slate-950/60 to-slate-950/95 pointer-events-none"
           aria-hidden
         />
       </div>
 
-      <div className="relative max-w-7xl mx-auto section-ux-hero w-full min-w-0 flex flex-col gap-6 md:gap-8">
+      <div className="relative max-w-7xl mx-auto section-ux-hero !pb-6 sm:!pb-8 w-full min-w-0 flex flex-col gap-5 md:gap-6">
         <div className="max-w-2xl animate-fade-in-up" style={{ animationFillMode: 'both' }}>
           <p className="text-emerald-300/95 text-[10px] sm:text-xs font-semibold uppercase tracking-widest mb-2">
             {t('home.hero_badge')}
           </p>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight leading-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-[2.35rem] font-bold text-white tracking-tight leading-tight">
             {t('home.hero_title')}
           </h1>
           <p className="text-slate-200 text-sm sm:text-base mt-2 leading-relaxed max-w-xl">
             {t('home.hero_subtitle')}
           </p>
-          <p className="text-emerald-100/90 text-xs sm:text-sm mt-2 leading-relaxed max-w-xl">
+          <p className="text-emerald-100/85 text-xs sm:text-sm mt-2 leading-relaxed max-w-xl">
             {t('home.hero_escrow_line')}
           </p>
           <div className="flex flex-wrap gap-2 sm:gap-3 mt-4">
             <Link
               href="/marketplace"
-              className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold shadow-lg transition-colors"
+              className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold shadow-lg shadow-emerald-900/30 transition-colors"
             >
               {t('home.hero_cta_primary')}
             </Link>
             <Link
-              href="/register"
-              className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-xl border border-white/30 bg-white/10 hover:bg-white/15 text-white text-sm font-semibold backdrop-blur-sm transition-colors"
+              href="/live-scores"
+              className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-xl border border-white/25 bg-white/10 hover:bg-white/15 text-white text-sm font-semibold backdrop-blur-sm transition-colors"
             >
-              {t('home.hero_cta_secondary')}
+              {t('home.hero_cta_live')}
+            </Link>
+            <Link
+              href="/register"
+              className="inline-flex items-center justify-center min-h-[44px] px-4 py-2.5 rounded-xl text-emerald-200/90 hover:text-white text-sm font-medium transition-colors"
+            >
+              {t('home.hero_cta_secondary')} →
             </Link>
           </div>
         </div>
 
-        {/* Compact KPI Dashboard - 6 cards: platform + leading ROI + paid out */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3 min-w-0">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3 min-w-0 max-w-3xl">
           {statItems.map((item, idx) => {
             const cfg = statConfigBase[item.key];
             return (
@@ -227,7 +168,7 @@ export function HomeHero({ initialStats = null, initialLeadingRoi = null }: Home
                 key={item.key}
                 title={t(STAT_HINT_KEYS[item.key])}
                 className={`group relative overflow-hidden rounded-xl backdrop-blur-sm border ${cfg.bg} ${cfg.border} px-3 py-2.5 md:px-4 md:py-3 hover:opacity-90 transition-all duration-200 ease-out animate-fade-in-up`}
-                style={{ animationDelay: `${300 + idx * 60}ms`, animationFillMode: 'both' as const }}
+                style={{ animationDelay: `${200 + idx * 60}ms`, animationFillMode: 'both' as const }}
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <span
@@ -247,6 +188,11 @@ export function HomeHero({ initialStats = null, initialLeadingRoi = null }: Home
           })}
         </div>
       </div>
+
+      <HomeTodayMatches
+        initialMatches={initialTodayMatches}
+        marketplaceItems={marketplaceItems}
+      />
     </section>
   );
 }

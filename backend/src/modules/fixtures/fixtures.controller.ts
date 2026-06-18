@@ -104,6 +104,33 @@ export class FixturesController {
   }
 
   /**
+   * Home carousel: headline live/upcoming fixtures + cached top-scorer spotlight per match.
+   * Public, throttled. Player photos come from league_insights_cache only (no API quota).
+   */
+  @Get('platform/headline-matches')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 120, ttl: 60000 } })
+  getHomeHeadlineMatches(@Query('limit') limit?: string) {
+    const raw = limit ? parseInt(limit, 10) : 8;
+    const n = Number.isFinite(raw) ? Math.min(Math.max(raw, 1), 12) : 8;
+    return this.fixturesService.getHomeHeadlineMatches(n);
+  }
+
+  /**
+   * Public match detail hub (SEO / guests): scores, standings snippet, spotlight, related picks.
+   */
+  @Get('platform/matches/:id')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 120, ttl: 60000 } })
+  async getPublicFixtureDetail(@Param('id', ParseIntPipe) id: number) {
+    const detail = await this.fixturesService.getPublicFixtureDetail(id);
+    if (!detail) {
+      return { found: false as const };
+    }
+    return { found: true as const, ...detail };
+  }
+
+  /**
    * SSE stream for platform-scoped live scores.
    * First emit is a full snapshot; subsequent emits are deltas only.
    */

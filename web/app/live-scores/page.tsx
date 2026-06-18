@@ -527,10 +527,10 @@ export default function LiveScoresPage() {
                         <p className="text-xs text-[var(--text-muted)] truncate">
                           {row.leagueName ?? '—'} · {formatTime(row.matchDate)}
                         </p>
-                        <p className="font-semibold text-[var(--text)] truncate">
+                        <Link href={`/matches/${row.id}`} className="font-semibold text-[var(--text)] truncate hover:text-[var(--primary)] block">
                           {row.homeTeamName} <span className="text-[var(--text-muted)] font-normal">vs</span>{' '}
                           {row.awayTeamName}
-                        </p>
+                        </Link>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <div className="flex flex-col items-end gap-0.5">
@@ -572,10 +572,10 @@ export default function LiveScoresPage() {
                         <p className="text-xs text-[var(--text-muted)] truncate">
                           {row.leagueName ?? '—'} · {formatTime(row.matchDate)}
                         </p>
-                        <p className="font-semibold text-[var(--text)] truncate">
+                        <Link href={`/matches/${row.id}`} className="font-semibold text-[var(--text)] truncate hover:text-[var(--primary)] block">
                           {row.homeTeamName} <span className="text-[var(--text-muted)] font-normal">vs</span>{' '}
                           {row.awayTeamName}
-                        </p>
+                        </Link>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <span className="text-sm text-[var(--text-muted)] tabular-nums">{t('live_scores.vs_score')}</span>
@@ -608,10 +608,10 @@ export default function LiveScoresPage() {
                         <p className="text-xs text-[var(--text-muted)] truncate">
                           {row.leagueName ?? '—'} · {formatTime(row.matchDate)}
                         </p>
-                        <p className="font-semibold text-[var(--text)] truncate">
+                        <Link href={`/matches/${row.id}`} className="font-semibold text-[var(--text)] truncate hover:text-[var(--primary)] block">
                           {row.homeTeamName} <span className="text-[var(--text-muted)] font-normal">vs</span>{' '}
                           {row.awayTeamName}
-                        </p>
+                        </Link>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <div className="flex flex-col items-end gap-0.5">

@@ -422,4 +422,35 @@ export class LeagueInsightsService {
       ...(errorMessage ? { error: errorMessage } : {}),
     };
   }
+
+  /** Read top scorers from DB cache only — safe for public home page (no API quota). */
+  async getCachedTopScorers(leagueApiId: number): Promise<TopScorerRow[]> {
+    const league = await this.leagueRepo.findOne({
+      where: { apiId: leagueApiId },
+      select: ['season'],
+    });
+    const season = league?.season ?? new Date().getFullYear();
+    const scoreRow = await this.cacheRepo.findOne({
+      where: { leagueApiId, season, kind: 'topscorers' },
+    });
+    if (!scoreRow?.payload) return [];
+    const payload = scoreRow.payload as unknown as CachedScorersPayload;
+    return payload?.rows ?? [];
+  }
+
+  /** Flattened standings rows from DB cache only (no API). */
+  async getCachedStandingsTable(leagueApiId: number): Promise<StandingsTableRow[]> {
+    const league = await this.leagueRepo.findOne({
+      where: { apiId: leagueApiId },
+      select: ['season'],
+    });
+    const season = league?.season ?? new Date().getFullYear();
+    const standRow = await this.cacheRepo.findOne({
+      where: { leagueApiId, season, kind: 'standings' },
+    });
+    if (!standRow?.payload) return [];
+    const payload = standRow.payload as unknown as CachedStandingsPayload;
+    const groups = payload?.groups ?? [];
+    return groups.flatMap((g) => g.table ?? []);
+  }
 }

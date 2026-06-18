@@ -1283,6 +1283,81 @@ export class AccumulatorsService {
     return { items, total, hasMore: offset + items.length < total };
   }
 
+  /** Active marketplace coupons that include a leg on this fixture (public). */
+  async getMarketplacePublicForFixture(fixtureId: number, limit = 12, viewerUserId?: number) {
+    const lim = Math.min(Math.max(limit, 1), 24);
+    const now = new Date();
+    const validMarketplaceSubQuery = `
+      SELECT pm.accumulator_id FROM pick_marketplace pm
+      INNER JOIN accumulator_tickets t ON t.id = pm.accumulator_id AND t.status = 'active' AND t.result = 'pending'
+      WHERE pm.status = 'active'
+      AND NOT EXISTS (
+        SELECT 1 FROM accumulator_picks ap2
+        JOIN fixtures f2 ON f2.id = ap2.fixture_id
+        WHERE ap2.accumulator_id = pm.accumulator_id AND f2.match_date <= :now
+      )
+    `;
+
+    const idRows = await this.dataSource
+      .createQueryBuilder()
+      .select('DISTINCT t.id', 'id')
+      .from('accumulator_tickets', 't')
+      .innerJoin('accumulator_picks', 'ap', 'ap.accumulator_id = t.id')
+      .where('ap.fixture_id = :fixtureId', { fixtureId })
+      .andWhere(`t.id IN (${validMarketplaceSubQuery})`)
+      .setParameter('now', now)
+      .orderBy('t.created_at', 'DESC')
+      .limit(lim)
+      .getRawMany<{ id: number }>();
+
+    const pageIds = idRows.map((r) => Number(r.id)).filter(Boolean);
+    if (pageIds.length === 0) return { items: [], total: 0 };
+
+    const totalRow = await this.dataSource
+      .createQueryBuilder()
+      .select('COUNT(DISTINCT t.id)', 'cnt')
+      .from('accumulator_tickets', 't')
+      .innerJoin('accumulator_picks', 'ap', 'ap.accumulator_id = t.id')
+      .where('ap.fixture_id = :fixtureId', { fixtureId })
+      .andWhere(`t.id IN (${validMarketplaceSubQuery})`)
+      .setParameter('now', now)
+      .getRawOne<{ cnt: string }>();
+    const total = Number(totalRow?.cnt ?? 0);
+
+    const tickets = await this.ticketRepo.find({
+      where: { id: In(pageIds) },
+      relations: ['picks'],
+    });
+    const order = new Map(pageIds.map((id, i) => [id, i]));
+    tickets.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+    const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
+
+    const rowsForPaginated = await this.marketplaceRepo.find({
+      where: { accumulatorId: In(pageIds), status: 'active' },
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
+    });
+
+    const itemsWithMeta = await this.enrichWithTipsterMetadata(
+      enrichedTickets,
+      rowsForPaginated,
+      viewerUserId,
+    );
+    const rowByAccId = new Map(rowsForPaginated.map((r) => [r.accumulatorId, r]));
+    const ticketById = new Map(enrichedTickets.map((t) => [t.id, t]));
+    const items = await Promise.all(
+      itemsWithMeta.map((item) =>
+        this.applyCouponPickVisibility(
+          item as Record<string, unknown>,
+          ticketById.get((item as { id: number }).id)!,
+          rowByAccId.get((item as { id: number }).id) ?? null,
+          viewerUserId ?? null,
+        ),
+      ),
+    );
+    await this.mergeBookingCodeCopyCountsIntoPayloads(items as Record<string, unknown>[]);
+    return { items, total };
+  }
+
   /**
    * Public coupon by id (no login).
    * - Pending: only free (price 0) coupons with an active marketplace listing (unchanged).
