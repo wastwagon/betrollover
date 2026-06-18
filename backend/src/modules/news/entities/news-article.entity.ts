@@ -19,6 +19,22 @@ export type NewsSport =
   | 'american_football'
   | 'tennis';
 
+const NEWS_SPORT_VALUES: readonly NewsSport[] = [
+  'football',
+  'basketball',
+  'rugby',
+  'mma',
+  'volleyball',
+  'hockey',
+  'american_football',
+  'tennis',
+];
+
+export function normalizeNewsSport(value?: string | null): NewsSport {
+  const s = (value ?? '').trim().toLowerCase();
+  return (NEWS_SPORT_VALUES as readonly string[]).includes(s) ? (s as NewsSport) : 'football';
+}
+
 @Entity('news_articles')
 export class NewsArticle {
   @PrimaryGeneratedColumn()

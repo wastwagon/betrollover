@@ -12,6 +12,7 @@ import { PredictionEngineService } from '../predictions/prediction-engine.servic
 import { PredictionMarketplaceSyncService } from '../predictions/prediction-marketplace-sync.service';
 import { ResultTrackerService } from '../predictions/result-tracker.service';
 import { TipstersSetupService } from '../predictions/tipsters-setup.service';
+import { NewsArticle, NewsCategory, normalizeNewsSport } from '../news/entities/news-article.entity';
 import { NewsService } from '../news/news.service';
 import { TransfersSyncService } from '../news/transfers-sync.service';
 import { InjuriesSyncService } from '../news/injuries-sync.service';
@@ -865,8 +866,16 @@ export class AdminController {
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.newsService.create({
-      ...body,
-      category: body.category as any,
+      slug: body.slug,
+      title: body.title,
+      excerpt: body.excerpt,
+      content: body.content,
+      category: (body.category as NewsCategory) || 'news',
+      sport: normalizeNewsSport(body.sport),
+      imageUrl: body.imageUrl,
+      sourceUrl: body.sourceUrl,
+      featured: body.featured,
+      metaDescription: body.metaDescription,
       publishedAt: body.publishedAt ? new Date(body.publishedAt) : null,
       language: body.language || 'en',
     });
@@ -879,7 +888,18 @@ export class AdminController {
     @Body() body: { slug?: string; title?: string; excerpt?: string; content?: string; category?: string; sport?: string; imageUrl?: string; sourceUrl?: string; featured?: boolean; metaDescription?: string; publishedAt?: string; language?: string },
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
-    const update: any = { ...body, category: body.category as any, publishedAt: body.publishedAt !== undefined ? (body.publishedAt ? new Date(body.publishedAt) : null) : undefined };
+    const update: Partial<NewsArticle> = {};
+    if (body.slug !== undefined) update.slug = body.slug;
+    if (body.title !== undefined) update.title = body.title;
+    if (body.excerpt !== undefined) update.excerpt = body.excerpt;
+    if (body.content !== undefined) update.content = body.content;
+    if (body.category !== undefined) update.category = body.category as NewsCategory;
+    if (body.sport !== undefined) update.sport = normalizeNewsSport(body.sport);
+    if (body.imageUrl !== undefined) update.imageUrl = body.imageUrl;
+    if (body.sourceUrl !== undefined) update.sourceUrl = body.sourceUrl;
+    if (body.featured !== undefined) update.featured = body.featured;
+    if (body.metaDescription !== undefined) update.metaDescription = body.metaDescription;
+    if (body.publishedAt !== undefined) update.publishedAt = body.publishedAt ? new Date(body.publishedAt) : null;
     if (body.language !== undefined) update.language = body.language;
     return this.newsService.update(id, update);
   }
