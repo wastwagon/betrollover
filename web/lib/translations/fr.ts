@@ -160,6 +160,9 @@ const fr: Record<string, string> = {
   'home.today_matches_details': 'Détails',
   'home.today_matches_player_watch': 'Joueur à suivre',
   'home.today_matches_player_goals': '{count} buts en championnat',
+  'home.slider_prev': 'Match précédent',
+  'home.slider_next': 'Match suivant',
+  'home.slider_go_to': 'Aller au match {n}',
 
   // ── Match detail page ────────────────────────────────────────────────────
   'match.breadcrumb': 'Aperçu du match',

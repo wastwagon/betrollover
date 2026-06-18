@@ -163,6 +163,9 @@ const en = {
   'home.today_matches_details': 'Details',
   'home.today_matches_player_watch': 'Player to watch',
   'home.today_matches_player_goals': '{count} league goals',
+  'home.slider_prev': 'Previous match',
+  'home.slider_next': 'Next match',
+  'home.slider_go_to': 'Go to match {n}',
 
   // ── Match detail page ────────────────────────────────────────────────────
   'match.breadcrumb': 'Match preview',
