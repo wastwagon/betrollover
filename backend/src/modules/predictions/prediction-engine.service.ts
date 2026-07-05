@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, Between, DataSource } from 'typeorm';
 import { Fixture } from '../fixtures/entities/fixture.entity';
+import { League } from '../fixtures/entities/league.entity';
 import { FixtureOdd } from '../fixtures/entities/fixture-odd.entity';
 import { SyncStatus } from '../fixtures/entities/sync-status.entity';
 import { Tipster } from './entities/tipster.entity';
@@ -15,10 +16,12 @@ import {
   isLikelyEplBigSixTeam,
 } from '../../config/epl-big-six.config';
 import { leagueMatchesFocus } from '../../config/league-focus.util';
+import { isMajorLeagueForSafeAcca } from '../../config/major-leagues.config';
 import { ApiPredictionsService, ApiFixturePredictions } from '../fixtures/api-predictions.service';
 import { OddsSyncService } from '../fixtures/odds-sync.service';
 import { PredictionMarketplaceSyncService } from './prediction-marketplace-sync.service';
 import { engineOutcomeKeyFromOddsLine } from '../fixtures/odds-outcome-keys';
+import { findSafest2LegPair, resolveAccaPolicy } from './safe-acca.util';
 
 /** Settled AI coupons in this window drive sort order, cold-skip, and tepid tightening. */
 const AI_ROLLING_STATS_DAYS = 56;
@@ -37,6 +40,8 @@ interface FixturePrediction {
   matchDate: Date;
   leagueName: string | null;
   leagueId: number | null;
+  /** API-Football league id (from leagues.api_id) for major-league gate. */
+  apiLeagueId: number | null;
   homeTeam: string;
   awayTeam: string;
   selectedOutcome: string;
@@ -150,6 +155,7 @@ export class PredictionEngineService {
     const allFixtures = await this.fixtureRepo
       .createQueryBuilder('f')
       .leftJoinAndSelect('f.odds', 'o')
+      .leftJoinAndSelect('f.league', 'league')
       .where("f.status IN ('NS', 'TBD')")
       .andWhere('f.match_date >= :startOfDay', { startOfDay })
       .andWhere('f.match_date <= :endOfDay', { endOfDay })
@@ -176,6 +182,7 @@ export class PredictionEngineService {
     const fixturesWithOdds = await this.fixtureRepo
       .createQueryBuilder('f')
       .leftJoinAndSelect('f.odds', 'o')
+      .leftJoinAndSelect('f.league', 'league')
       .where("f.status IN ('NS', 'TBD')")
       .andWhere('f.match_date >= :startOfDay', { startOfDay })
       .andWhere('f.match_date <= :endOfDay', { endOfDay })
@@ -203,7 +210,7 @@ export class PredictionEngineService {
     const fixturePredictions = await this.generateFixturePredictionsHybrid(withOdds, apiPredictionsMap);
     this.logger.log(`Generated predictions for ${fixturePredictions.length} fixtures`);
 
-    // 6. For each tipster, create single-fixture coupons only (up to max_daily_predictions).
+    // 6. For each tipster, create 2-leg safe accas (or singles for draw/longshot profiles).
     // Global usedFixtureIds: once a fixture is used by any tipster, no other tipster can use it (avoids duplicate fixture+market across AI tipsters).
     // Seed from existing marketplace coupons for this date so re-runs (e.g. catch-up or manual) do not assign the same fixture to another tipster.
     const allPredictions: TipsterPredictionResult[] = [];
@@ -324,7 +331,7 @@ export class PredictionEngineService {
 
   /**
    * Tipsters with enough recent settled coupons are processed first (higher win rate → earlier),
-   * so they claim the best remaining EV legs under global usedFixtureIds deduping.
+   * so they claim the best remaining legs under global usedFixtureIds deduping.
    */
   private sortTipstersByPerformance(
     configs: AiTipsterConfig[],
@@ -413,6 +420,7 @@ export class PredictionEngineService {
 
       const leagueName = fixture.leagueName || (fixture.league as any)?.name || null;
       const leagueId = fixture.leagueId ?? (fixture.league as any)?.id ?? null;
+      const apiLeagueId = (fixture.league as League | null)?.apiId ?? null;
       const apiPred = apiPredictionsMap.get(fixture.id);
 
       const candidates: { outcome: string; odds: number; prob: number; ev: number; fromApi: boolean }[] = [];
@@ -515,7 +523,8 @@ export class PredictionEngineService {
       for (const outcomeKey of EMIT_OUTCOMES) {
         const group = candidates.filter((c) => c.outcome === outcomeKey);
         if (group.length === 0) continue;
-        const best = [...group].sort((a, b) => b.ev - a.ev)[0];
+        /** Prefer highest API probability (safe acca legs), not highest EV (longshots). */
+        const best = [...group].sort((a, b) => b.prob - a.prob)[0];
         if (!best) continue;
         results.push({
           fixtureId: fixture.id,
@@ -523,6 +532,7 @@ export class PredictionEngineService {
           matchDate: fixture.matchDate,
           leagueName,
           leagueId,
+          apiLeagueId,
           homeTeam: fixture.homeTeamName,
           awayTeam: fixture.awayTeamName,
           selectedOutcome: best.outcome,
@@ -572,6 +582,7 @@ export class PredictionEngineService {
     fixturePredictions: FixturePrediction[],
     personality: AiTipsterPersonality,
   ): FixturePrediction[] {
+    const policy = resolveAccaPolicy(personality);
     const leagues = personality.leagues_focus || [];
     const hasAll = leagues.some((l) => l.toLowerCase() === 'all');
     // When API data available, use min_api_confidence (or 0.52 fallback); else min_win_probability
@@ -579,6 +590,8 @@ export class PredictionEngineService {
     const minProb = personality.min_win_probability;
     const evRelax = personality.ev_min_relaxation ?? 0;
     const evMin = Math.max(0, personality.min_expected_value - evRelax);
+    const oddsMin = policy.legOddsMin;
+    const oddsMax = policy.legOddsMax;
 
     return fixturePredictions.filter((fp) => {
       if (!this.matchesFixtureDays(fp.matchDate, personality.fixture_days)) return false;
@@ -591,14 +604,18 @@ export class PredictionEngineService {
 
       if (!this.matchesTeamFilter(fp, personality)) return false;
 
-      if (fp.odds < personality.target_odds_min || fp.odds > personality.target_odds_max)
-        return false;
+      if (fp.odds < oddsMin || fp.odds > oddsMax) return false;
+      if (policy.requireApiProbability && !fp.fromApi) return false;
       if (fp.fromApi) {
         if (fp.probability < minConf) return false;
       } else {
         if (fp.probability < minProb) return false;
       }
-      if (fp.ev < evMin) return false;
+      if (!policy.skipEvFilter && fp.ev < evMin) return false;
+
+      if (policy.majorLeaguesOnly && !isMajorLeagueForSafeAcca(fp.leagueName, fp.apiLeagueId)) {
+        return false;
+      }
 
       if (personality.selection_filter === 'home_only' && fp.selectedOutcome !== 'home')
         return false;
@@ -686,7 +703,8 @@ export class PredictionEngineService {
   }
 
   /**
-   * AI coupons are single-fixture only. Picks the best suitable fixture by EV.
+   * Builds one coupon: 2-leg safe acca (default) or single for draw/longshot profiles.
+   * Pairs ranked by joint API probability; singles by confidence or EV per policy.
    */
   private createTipsterPrediction(
     tipsterConfig: AiTipsterConfig,
@@ -695,13 +713,48 @@ export class PredictionEngineService {
     excludeFixtureIds: Set<number> = new Set(),
   ): TipsterPredictionResult | null {
     const personality = tipsterConfig.personality;
+    const policy = resolveAccaPolicy(personality);
     const available = fixturePredictions.filter((fp) => !excludeFixtureIds.has(fp.fixtureId));
     const suitable = this.filterByPersonality(available, personality);
     if (suitable.length === 0) {
-      this.logger.debug(`${tipsterConfig.username}: 0 suitable → no prediction`);
+      this.logger.debug(`${tipsterConfig.username}: 0 suitable legs → no prediction`);
       return null;
     }
-    const best = [...suitable].sort((a, b) => b.ev - a.ev)[0];
+
+    if (policy.couponLegs === 2) {
+      const pair = findSafest2LegPair(suitable, policy);
+      if (!pair) {
+        this.logger.debug(
+          `${tipsterConfig.username}: ${suitable.length} suitable legs but no valid 2.0+ pair`,
+        );
+        return null;
+      }
+      const [leg1, leg2] = pair;
+      const combinedOdds = Math.round(leg1.odds * leg2.odds * 1000) / 1000;
+      const jointProb = leg1.probability * leg2.probability;
+      const confidenceLevel = this.getConfidenceLevel(jointProb);
+      const stakeUnits = this.calculateKellyStake(jointProb, combinedOdds);
+      const source = leg1.fromApi && leg2.fromApi ? 'api_football' : 'internal';
+      this.logger.debug(
+        `${tipsterConfig.username}: 2-leg acca @ ${combinedOdds.toFixed(2)} joint=${(jointProb * 100).toFixed(0)}%`,
+      );
+      return {
+        tipsterUsername: tipsterConfig.username,
+        tipsterDisplayName: tipsterConfig.display_name,
+        tipsterId,
+        predictionTitle: '2-Pick Acca',
+        combinedOdds,
+        stakeUnits,
+        confidenceLevel,
+        fixtures: [leg1, leg2],
+        source,
+      };
+    }
+
+    const sortKey = policy.selectionMode === 'confidence' ? 'probability' : 'ev';
+    const best = [...suitable].sort((a, b) =>
+      sortKey === 'probability' ? b.probability - a.probability : b.ev - a.ev,
+    )[0];
     const confidenceLevel = this.getConfidenceLevel(best.probability);
     const stakeUnits = this.calculateKellyStake(best.probability, best.odds);
     const source = best.fromApi ? 'api_football' : 'internal';
@@ -747,10 +800,10 @@ export class PredictionEngineService {
   ): Promise<void> {
 
     for (const pred of predictions) {
-      // AI coupons are single-fixture only
+      const isAcca = pred.fixtures.length > 1;
       const prediction = await this.predictionRepo.save({
         tipsterId: pred.tipsterId,
-        predictionTitle: 'Single',
+        predictionTitle: isAcca ? '2-Pick Acca' : 'Single',
         combinedOdds: pred.combinedOdds,
         stakeUnits: pred.stakeUnits,
         confidenceLevel: pred.confidenceLevel,

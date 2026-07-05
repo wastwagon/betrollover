@@ -1,20 +1,63 @@
 /**
  * AI Tipsters Configuration
- * 25 tipsters. Single-fixture coupons only. Each tipster sets max_daily_predictions (up to 3 here);
- * the live cap is min(that value, api_settings.ai_max_coupons_per_day, default 1 — editable in Admin → Settings).
+ * 25 tipsters. Default: 2-leg safe accas — two high-confidence API legs combined to 2.0–3.5 odds.
+ * Each tipster sets max_daily_predictions (up to 3); live cap is min(that, api_settings.ai_max_coupons_per_day).
  * Fixtures limited to target day only (no advance/future coupons).
- * All leagues; global usedFixtureIds ensures no two AI tipsters pick the same fixture.
+ * Global usedFixtureIds ensures no two AI tipsters reuse the same fixture on a given day.
  *
- * Engine builds multiple candidate rows per fixture (best EV per outcome: home, away, draw,
- * O/U 2.5, BTTS, double chance, DNB, first-half 1X2 when odds exist). Each tipster uses
- * outcome_specialization for strict one-market profiles, or omits it and uses bet_types for multi-market picks.
- * bet_types may include "DNB" / "Draw no bet" and "First half" / "Half time" for those markets.
- * team_filter: ['top_6'] restricts to EPL Big 6 name matching (see epl-big-six.config.ts).
- * TopSixSniper also uses leagues_focus Premier League only (not cups/Europe in that profile).
- *
- * Non–The Gambler tipsters target 2.0+ decimal odds on the single leg.
- * The Gambler keeps ~1.41–2.2 (unchanged).
+ * Engine builds candidate rows per fixture/outcome. Pairs are ranked by joint API probability, not EV.
+ * outcome_specialization = strict one-market legs; omit for multi-market flex tipsters.
+ * Draw / away-longshot profiles use coupon_legs: 1 when a safe 2-leg pair is not viable.
  */
+
+/** Default 2-leg safe acca: high-confidence favorites / DC, 2.0+ combined. */
+export const SAFE_2_LEG_ACCA: Pick<
+  AiTipsterPersonality,
+  | 'coupon_legs'
+  | 'leg_odds_min'
+  | 'leg_odds_max'
+  | 'min_combined_odds'
+  | 'max_combined_odds'
+  | 'min_joint_probability'
+  | 'min_win_probability'
+  | 'min_api_confidence'
+  | 'min_expected_value'
+  | 'require_api_probability'
+  | 'selection_mode'
+  | 'major_leagues_only'
+> = {
+  coupon_legs: 2,
+  leg_odds_min: 1.28,
+  leg_odds_max: 1.85,
+  min_combined_odds: 2.0,
+  max_combined_odds: 3.5,
+  min_joint_probability: 0.42,
+  min_win_probability: 0.52,
+  min_api_confidence: 0.60,
+  min_expected_value: 0,
+  require_api_probability: true,
+  selection_mode: 'confidence',
+  major_leagues_only: true,
+};
+
+/** Double-chance specialists: slightly wider per-leg band, same combined target. */
+export const SAFE_2_LEG_DC: typeof SAFE_2_LEG_ACCA = {
+  ...SAFE_2_LEG_ACCA,
+  leg_odds_min: 1.25,
+  leg_odds_max: 1.75,
+};
+
+/** The Gambler: slightly riskier legs, wider combined cap. */
+export const GAMBLER_2_LEG: typeof SAFE_2_LEG_ACCA = {
+  ...SAFE_2_LEG_ACCA,
+  leg_odds_min: 1.41,
+  leg_odds_max: 2.2,
+  max_combined_odds: 4.0,
+  min_joint_probability: 0.40,
+  min_api_confidence: 0.58,
+  require_api_probability: true,
+  major_leagues_only: true,
+};
 
 /** Strict single-outcome selection; omit for flexible tipsters (bet_types only). */
 export type OutcomeSpecialization =
@@ -30,8 +73,22 @@ export type OutcomeSpecialization =
 
 export interface AiTipsterPersonality {
   risk_level: 'conservative' | 'balanced' | 'aggressive';
+  /** @deprecated For 2-leg accas use leg_odds_min/max. Kept for coupon_legs: 1 profiles. */
   target_odds_min: number;
   target_odds_max: number;
+  /** 2 = safe double (default in engine); 1 = single high-odds coupon. */
+  coupon_legs?: 1 | 2;
+  /** Per-leg odds when coupon_legs === 2. */
+  leg_odds_min?: number;
+  leg_odds_max?: number;
+  min_combined_odds?: number;
+  max_combined_odds?: number;
+  /** Minimum prob1 × prob2 for a 2-leg pair. */
+  min_joint_probability?: number;
+  /** Rank pairs by joint API probability instead of EV. */
+  selection_mode?: 'ev' | 'confidence';
+  /** When true, only API-backed probabilities qualify (recommended for 2-leg). */
+  require_api_probability?: boolean;
   min_win_probability: number;
   min_expected_value: number;
   /**
@@ -50,6 +107,8 @@ export interface AiTipsterPersonality {
   selection_filter?: string;
   /** Filter by fixture kickoff day. weekend=Sat/Sun, midweek=Tue/Wed/Thu */
   fixture_days?: 'weekend' | 'midweek';
+  /** When true (default for 2-leg), only major domestic/international leagues qualify. */
+  major_leagues_only?: boolean;
   /** When set, this tipster only selects coupons on this outcome (API + odds per market). */
   outcome_specialization?: OutcomeSpecialization;
 }
@@ -69,15 +128,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'SafetyFirstPro',
     display_name: 'Weekly Home Value',
-    bio: 'Home win only. API-Football probabilities plus odds filter; 2.0+ when we publish. All leagues.',
+    bio: 'Home win 2-pick acca. Two high-confidence home legs from API-Football, combined 2.0+ odds.',
     avatar_url: '/avatars/safety_first.png',
     personality: {
+      ...SAFE_2_LEG_ACCA,
       risk_level: 'conservative',
       target_odds_min: 2.0,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['1X2'],
       outcome_specialization: 'home',
@@ -87,15 +144,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'TheBankroller',
     display_name: 'Weekly Over 2.5',
-    bio: 'Over 2.5 goals only. Targets games where API goal outlook and price align. All leagues.',
+    bio: 'Over 2.5 goals 2-pick acca. Two API-backed over selections combined to 2.0+ odds.',
     avatar_url: '/avatars/bankroller.png',
     personality: {
+      ...SAFE_2_LEG_ACCA,
       risk_level: 'conservative',
       target_odds_min: 2.0,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['Over 2.5'],
       outcome_specialization: 'over25',
@@ -105,15 +160,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'SteadyEddie',
     display_name: 'Weekly Away Value',
-    bio: 'Away win only. Road dogs and value away prices when the model and odds agree. All leagues.',
+    bio: 'Away win 2-pick acca. Two confident away legs when API and prices align; 2.0+ combined.',
     avatar_url: '/avatars/steady_eddie.png',
     personality: {
+      ...SAFE_2_LEG_ACCA,
       risk_level: 'conservative',
       target_odds_min: 2.0,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['1X2'],
       outcome_specialization: 'away',
@@ -123,19 +176,22 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'ConsistentCarl',
     display_name: 'Weekly Draw',
-    bio: 'Draw (X) only. Selective picks from API match-winner % vs draw price; lower min odds than 2.0 goal markets. All leagues.',
+    bio: 'Draw (X) singles when price is high enough. Draw odds rarely pair into a 2.0+ double safely.',
     avatar_url: '/avatars/consistent_carl.png',
     personality: {
+      coupon_legs: 1,
+      selection_mode: 'confidence',
+      require_api_probability: true,
       risk_level: 'conservative',
-      target_odds_min: 1.35,
+      target_odds_min: 2.8,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
+      min_win_probability: 0.32,
+      min_expected_value: 0,
+      min_api_confidence: 0.32,
       leagues_focus: ['All'],
       bet_types: ['1X2'],
       outcome_specialization: 'draw',
-      max_daily_predictions: 3,
+      max_daily_predictions: 2,
     },
   },
 
@@ -145,15 +201,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'WeekendWarrior',
     display_name: 'Weekend Double Chance 12',
-    bio: 'Double chance Home or Away (12) only on weekends. DC lines are often below 2.0 — lower odds floor than goal markets. All leagues.',
+    bio: 'Weekend 2-pick double chance (12). Two safe Home-or-Away legs combined to 2.0+ odds.',
     avatar_url: '/avatars/weekend_warrior.png',
     personality: {
+      ...SAFE_2_LEG_DC,
       risk_level: 'balanced',
       target_odds_min: 1.25,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['Double Chance'],
       fixture_days: 'weekend',
@@ -164,15 +218,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'PremierLeaguePro',
     display_name: 'Weekend Multi-Market',
-    bio: 'Weekend only. Picks the strongest edge across 1X2 (incl. draw), goals, BTTS or double chance per pick. All leagues.',
+    bio: 'Weekend 2-pick flex acca. Best two high-confidence legs across 1X2, goals, BTTS or DC; 2.0+ combined.',
     avatar_url: '/avatars/epl_pro.png',
     personality: {
+      ...SAFE_2_LEG_ACCA,
       risk_level: 'balanced',
       target_odds_min: 2.0,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['1X2', 'Over/Under', 'BTTS', 'Double Chance'],
       fixture_days: 'weekend',
@@ -182,15 +234,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'LaLigaLegend',
     display_name: 'Weekend BTTS',
-    bio: 'Both teams to score — weekends only. API BTTS signal vs Yes price. All leagues.',
+    bio: 'Weekend BTTS 2-pick acca. Two confident both-teams-to-score legs combined to 2.0+ odds.',
     avatar_url: '/avatars/laliga_legend.png',
     personality: {
+      ...SAFE_2_LEG_ACCA,
       risk_level: 'balanced',
       target_odds_min: 2.0,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['BTTS'],
       fixture_days: 'weekend',
@@ -201,15 +251,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'BundesligaBoss',
     display_name: 'Weekend Under 2.5',
-    bio: 'Under 2.5 goals only on weekends. Low-scoring angles when API and unders align. All leagues.',
+    bio: 'Weekend Under 2.5 2-pick acca. Two low-scoring selections with strong API backing; 2.0+ combined.',
     avatar_url: '/avatars/bundesliga_boss.png',
     personality: {
+      ...SAFE_2_LEG_ACCA,
       risk_level: 'balanced',
       target_odds_min: 2.0,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['Under 2.5'],
       fixture_days: 'weekend',
@@ -224,15 +272,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'MidweekMagic',
     display_name: 'Midweek Home',
-    bio: 'Home win only on midweek slates (cups, Europe). Same API + odds rules as our other home profile.',
+    bio: 'Midweek home 2-pick acca. Two confident home wins on Tue–Thu slates; 2.0+ combined.',
     avatar_url: '/avatars/midweek_magic.png',
     personality: {
+      ...SAFE_2_LEG_ACCA,
       risk_level: 'aggressive',
       target_odds_min: 2.0,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['1X2'],
       fixture_days: 'midweek',
@@ -243,15 +289,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'LateBloomer',
     display_name: 'Midweek Away',
-    bio: 'Away win only midweek. Rotation and travel spots when away value clears the bar. All leagues.',
+    bio: 'Midweek away 2-pick acca. Two API-backed away legs on Tue–Thu; 2.0+ combined.',
     avatar_url: '/avatars/late_bloomer.png',
     personality: {
+      ...SAFE_2_LEG_ACCA,
       risk_level: 'balanced',
       target_odds_min: 2.0,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['1X2'],
       fixture_days: 'midweek',
@@ -266,15 +310,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'TheAnalyst',
     display_name: 'Daily Multi-Market',
-    bio: 'Daily flex: best single leg across 1X2 (incl. draw), double chance, BTTS or goals where data and price match.',
+    bio: 'Daily 2-pick flex acca. Two highest-confidence legs across 1X2, DC, BTTS or goals; 2.0+ combined.',
     avatar_url: '/avatars/analyst.png',
     personality: {
+      ...SAFE_2_LEG_ACCA,
       risk_level: 'balanced',
       target_odds_min: 2.0,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['1X2', 'Double Chance', 'BTTS', 'Over/Under'],
       max_daily_predictions: 3,
@@ -283,33 +325,34 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'ValueHunter',
     display_name: 'Daily Draw',
-    bio: 'Draw (X) specialist — second draw-focused profile for volume days. API draw % vs draw odds; min odds relaxed vs 2.0 goal picks.',
+    bio: 'Draw (X) singles on volume days. Draw prices rarely form a safe 2.0+ double.',
     avatar_url: '/avatars/value_hunter.png',
     personality: {
+      coupon_legs: 1,
+      selection_mode: 'confidence',
+      require_api_probability: true,
       risk_level: 'balanced',
-      target_odds_min: 1.35,
+      target_odds_min: 2.8,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
+      min_win_probability: 0.32,
+      min_expected_value: 0,
+      min_api_confidence: 0.32,
       leagues_focus: ['All'],
       bet_types: ['1X2'],
       outcome_specialization: 'draw',
-      max_daily_predictions: 3,
+      max_daily_predictions: 2,
     },
   },
   {
     username: 'FormExpert',
     display_name: 'Daily Double Chance 1X',
-    bio: 'Home or draw (1X) only. Safer wrapper when API probs and the 1X price align; lower odds floor for DC.',
+    bio: 'Daily 2-pick 1X acca. Two home-or-draw legs when API and prices align; 2.0+ combined.',
     avatar_url: '/avatars/form_expert.png',
     personality: {
+      ...SAFE_2_LEG_DC,
       risk_level: 'balanced',
       target_odds_min: 1.25,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['Double Chance'],
       outcome_specialization: 'home_draw',
@@ -319,15 +362,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'StatsMachine',
     display_name: 'Daily Under 2.5',
-    bio: 'Under 2.5 only — cagey fixtures where API under signal and price line up. All leagues.',
+    bio: 'Daily Under 2.5 2-pick acca. Two cagey unders with API backing; 2.0+ combined.',
     avatar_url: '/avatars/stats_machine.png',
     personality: {
+      ...SAFE_2_LEG_ACCA,
       risk_level: 'balanced',
       target_odds_min: 2.0,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['Under 2.5'],
       outcome_specialization: 'under25',
@@ -341,15 +382,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'BTTSMaster',
     display_name: 'BTTS Daily',
-    bio: 'BTTS Yes only — every day. Pure both-teams-to-score vs API and bookmaker Yes odds.',
+    bio: 'BTTS 2-pick acca. Two confident both-teams-to-score legs; 2.0+ combined.',
     avatar_url: '/avatars/btts_master.png',
     personality: {
+      ...SAFE_2_LEG_ACCA,
       risk_level: 'balanced',
       target_odds_min: 2.0,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['BTTS'],
       outcome_specialization: 'btts',
@@ -359,15 +398,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'OverUnderGuru',
     display_name: 'Over 2.5 Daily',
-    bio: 'Over 2.5 goals only. Goals-market specialist; API over % vs Over 2.5 price.',
+    bio: 'Over 2.5 2-pick acca. Two goal-heavy selections with API support; 2.0+ combined.',
     avatar_url: '/avatars/over_under_guru.png',
     personality: {
+      ...SAFE_2_LEG_ACCA,
       risk_level: 'balanced',
       target_odds_min: 2.0,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['Over 2.5'],
       outcome_specialization: 'over25',
@@ -377,15 +414,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'CleanSheetChaser',
     display_name: 'Under 2.5 Daily',
-    bio: 'Under 2.5 only — low-event games when unders are the clearest edge.',
+    bio: 'Under 2.5 2-pick acca. Two low-event games when API unders align; 2.0+ combined.',
     avatar_url: '/avatars/clean_sheet_chaser.png',
     personality: {
+      ...SAFE_2_LEG_ACCA,
       risk_level: 'aggressive',
       target_odds_min: 2.0,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['Under 2.5'],
       outcome_specialization: 'under25',
@@ -399,15 +434,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'SerieASavant',
     display_name: 'Tactical Home',
-    bio: 'Home win only — “tactical” tight-game lean. All leagues; same engine as other home specialists.',
+    bio: 'Tactical home 2-pick acca. Two tight home-win angles; 2.0+ combined.',
     avatar_url: '/avatars/serie_a_savant.png',
     personality: {
+      ...SAFE_2_LEG_ACCA,
       risk_level: 'balanced',
       target_odds_min: 2.0,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['1X2'],
       outcome_specialization: 'home',
@@ -417,15 +450,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'Ligue1Lion',
     display_name: 'Double Chance X2',
-    bio: 'Draw or away (X2) only. Underdog cushion when API and X2 price align; lower odds floor for double chance.',
+    bio: 'Daily 2-pick X2 acca. Two draw-or-away cushions when API and price align; 2.0+ combined.',
     avatar_url: '/avatars/ligue1_lion.png',
     personality: {
+      ...SAFE_2_LEG_DC,
       risk_level: 'balanced',
       target_odds_min: 1.25,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['Double Chance'],
       outcome_specialization: 'draw_away',
@@ -435,15 +466,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'ChampionshipChamp',
     display_name: 'Away Underdog',
-    bio: 'Away win only — physical league narrative; requires away side and value filters.',
+    bio: 'Away 2-pick acca. Two confident away wins when API and prices align; 2.0+ combined.',
     avatar_url: '/avatars/championship_champ.png',
     personality: {
+      ...SAFE_2_LEG_ACCA,
       risk_level: 'balanced',
       target_odds_min: 2.0,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['1X2'],
       outcome_specialization: 'away',
@@ -453,15 +482,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'HomeHeroes',
     display_name: 'Home Fortress',
-    bio: 'Home win only — fortress narrative. Same outcome_specialization as other home AI tipsters.',
+    bio: 'Home fortress 2-pick acca. Two strong home-win legs; 2.0+ combined.',
     avatar_url: '/avatars/home_heroes.png',
     personality: {
+      ...SAFE_2_LEG_ACCA,
       risk_level: 'conservative',
       target_odds_min: 2.0,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['1X2'],
       outcome_specialization: 'home',
@@ -471,34 +498,36 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'UnderdogKing',
     display_name: 'Away Longshot',
-    bio: 'Away win only with minimum price 2.5 — underdog lane on the same API + EV rules.',
+    bio: 'Away longshot singles only (2.5+). Too volatile for the safe 2-leg acca model.',
     avatar_url: '/avatars/underdog_king.png',
     personality: {
+      coupon_legs: 1,
+      selection_mode: 'ev',
       risk_level: 'aggressive',
-      target_odds_min: 2.0,
-      target_odds_max: 5.0,
-      min_win_probability: 0.44,
+      target_odds_min: 2.5,
+      target_odds_max: 6.0,
+      min_win_probability: 0.38,
       min_expected_value: 0.02,
-      min_api_confidence: 0.44,
+      min_api_confidence: 0.38,
       leagues_focus: ['All'],
       bet_types: ['1X2'],
       preference: 'underdogs',
       outcome_specialization: 'away',
-      max_daily_predictions: 3,
+      max_daily_predictions: 2,
     },
   },
   {
     username: 'HighRollerHQ',
     display_name: 'High-Odds Multi',
-    bio: 'Daily flex: 1X2, DNB, first-half (result + goals), odd/even, BTTS and goals — best EV in the 2.0–5.0 band.',
+    bio: 'Daily 2-pick flex acca across 1X2, DNB, HT, odd/even, BTTS and goals; 2.0+ combined.',
     avatar_url: '/avatars/high_roller.png',
     personality: {
+      ...SAFE_2_LEG_ACCA,
+      leg_odds_max: 2.0,
+      max_combined_odds: 4.0,
       risk_level: 'aggressive',
       target_odds_min: 2.0,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['All'],
       bet_types: ['1X2', 'BTTS', 'Over/Under', 'DNB', 'First half', 'Odd/Even'],
       max_daily_predictions: 3,
@@ -507,16 +536,14 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'TheGambler',
     display_name: 'The Gambler',
-    bio: 'All-league flex: 1X2 (home, away or draw), BTTS or Under 2.5 — tighter odds band, unchanged profile.',
+    bio: 'All-league 2-pick flex acca. 1X2, BTTS or Under 2.5 — slightly wider leg band; 2.0+ combined.',
     avatar_url: '/avatars/gambler.png',
     personality: {
+      ...GAMBLER_2_LEG,
       risk_level: 'aggressive',
       target_odds_min: 1.41,
       target_odds_max: 2.2,
-      min_win_probability: 0.52,
-      min_expected_value: 0.04,
       ev_min_relaxation: 0.08,
-      min_api_confidence: 0.5,
       leagues_focus: ['All'],
       bet_types: ['1X2', 'BTTS', 'Under 2.5'],
       max_daily_predictions: 3,
@@ -525,15 +552,13 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'TopSixSniper',
     display_name: 'Big 6 Home (EPL)',
-    bio: 'Premier League only. Home win when the home team is a Big 6 club: Arsenal, Chelsea, Liverpool, Man City, Man Utd, or Tottenham.',
+    bio: 'Premier League Big 6 home 2-pick acca. Two confident home wins; 2.0+ combined.',
     avatar_url: '/avatars/top_six_sniper.png',
     personality: {
+      ...SAFE_2_LEG_ACCA,
       risk_level: 'conservative',
       target_odds_min: 2.0,
       target_odds_max: 5.0,
-      min_win_probability: 0.44,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.44,
       leagues_focus: ['Premier League'],
       team_filter: ['top_6'],
       bet_types: ['1X2'],
