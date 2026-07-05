@@ -3,10 +3,10 @@ import type { AiTipsterPersonality } from '../../config/ai-tipsters.config';
 /** Shared defaults for 2-leg safe accas (high confidence, 2.0+ combined). */
 export const SAFE_ACCA_DEFAULTS = {
   couponLegs: 2,
-  legOddsMin: 1.28,
-  legOddsMax: 1.85,
+  legOddsMin: 1.5,
+  legOddsMax: 1.75,
   minCombinedOdds: 2.0,
-  maxCombinedOdds: 3.5,
+  maxCombinedOdds: 3.0,
   minJointProbability: 0.42,
 } as const;
 

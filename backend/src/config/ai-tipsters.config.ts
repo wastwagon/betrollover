@@ -1,6 +1,6 @@
 /**
  * AI Tipsters Configuration
- * 25 tipsters. Default: 2-leg safe accas — two high-confidence API legs combined to 2.0–3.5 odds.
+ * 25 tipsters. Default: 2-leg safe accas — each leg ≥1.50 odds, combined 2.0–3.0 (e.g. 1.50×1.50=2.25).
  * Each tipster sets max_daily_predictions (up to 3); live cap is min(that, api_settings.ai_max_coupons_per_day).
  * Fixtures limited to target day only (no advance/future coupons).
  * Global usedFixtureIds ensures no two AI tipsters reuse the same fixture on a given day.
@@ -10,7 +10,7 @@
  * Draw / away-longshot profiles use coupon_legs: 1 when a safe 2-leg pair is not viable.
  */
 
-/** Default 2-leg safe acca: high-confidence favorites / DC, 2.0+ combined. */
+/** Default 2-leg safe acca: each leg ≥1.50, combined 2.0–3.0 (not 3+ on a single leg). */
 export const SAFE_2_LEG_ACCA: Pick<
   AiTipsterPersonality,
   | 'coupon_legs'
@@ -27,10 +27,10 @@ export const SAFE_2_LEG_ACCA: Pick<
   | 'major_leagues_only'
 > = {
   coupon_legs: 2,
-  leg_odds_min: 1.28,
-  leg_odds_max: 1.85,
+  leg_odds_min: 1.5,
+  leg_odds_max: 1.75,
   min_combined_odds: 2.0,
-  max_combined_odds: 3.5,
+  max_combined_odds: 3.0,
   min_joint_probability: 0.42,
   min_win_probability: 0.52,
   min_api_confidence: 0.60,
@@ -40,19 +40,18 @@ export const SAFE_2_LEG_ACCA: Pick<
   major_leagues_only: true,
 };
 
-/** Double-chance specialists: slightly wider per-leg band, same combined target. */
+/** Double-chance specialists: same 1.50+ leg floor, combined 2.0–3.0. */
 export const SAFE_2_LEG_DC: typeof SAFE_2_LEG_ACCA = {
   ...SAFE_2_LEG_ACCA,
-  leg_odds_min: 1.25,
-  leg_odds_max: 1.75,
+  leg_odds_max: 1.72,
 };
 
-/** The Gambler: slightly riskier legs, wider combined cap. */
+/** The Gambler: same 1.50+ leg floor; slightly wider per-leg ceiling, combined cap 3.2. */
 export const GAMBLER_2_LEG: typeof SAFE_2_LEG_ACCA = {
   ...SAFE_2_LEG_ACCA,
-  leg_odds_min: 1.41,
-  leg_odds_max: 2.2,
-  max_combined_odds: 4.0,
+  leg_odds_min: 1.5,
+  leg_odds_max: 1.8,
+  max_combined_odds: 3.2,
   min_joint_probability: 0.40,
   min_api_confidence: 0.58,
   require_api_probability: true,
@@ -523,8 +522,6 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
     avatar_url: '/avatars/high_roller.png',
     personality: {
       ...SAFE_2_LEG_ACCA,
-      leg_odds_max: 2.0,
-      max_combined_odds: 4.0,
       risk_level: 'aggressive',
       target_odds_min: 2.0,
       target_odds_max: 5.0,
