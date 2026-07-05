@@ -1,22 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
+import { buildGoogleOAuthState, getRedirectBase } from '@/lib/google-auth-exchange';
 
 const APPLE_AUTH_URL = 'https://appleid.apple.com/auth/authorize';
 const APPLE_STATE_COOKIE = 'apple_oauth_state';
 const APPLE_NONCE_COOKIE = 'apple_oauth_nonce';
 
-function getRedirectBase(request: NextRequest): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
-  if (appUrl && appUrl.startsWith('http')) return appUrl.replace(/\/$/, '');
-  try {
-    const u = new URL(request.url);
-    return `${u.protocol}//${u.host}`;
-  } catch {
-    return 'http://localhost:6002';
-  }
+function oauthStateSecret(): string {
+  return (process.env.GOOGLE_CLIENT_SECRET || process.env.APPLE_CLIENT_ID || '').trim();
 }
 
-/** GET: Redirect user to Apple Sign In (state stored in cookie for callback). */
+/** GET: Redirect user to Apple Sign In. State/nonce are HMAC-signed (cookie is fallback). */
 export async function GET(request: NextRequest) {
   const clientId = process.env.NEXT_PUBLIC_APPLE_CLIENT_ID || process.env.APPLE_CLIENT_ID;
   if (!clientId?.trim()) {
@@ -26,10 +20,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(loginUrl, 302);
   }
 
+  const secret = oauthStateSecret();
   const base = getRedirectBase(request);
   const redirectUri = `${base}/api/auth/apple/callback`;
-  const state = randomBytes(24).toString('hex');
   const nonce = randomBytes(24).toString('hex');
+  const state = secret ? buildGoogleOAuthState(secret, null, nonce) : randomBytes(24).toString('hex');
 
   const params = new URLSearchParams({
     client_id: clientId,
@@ -42,7 +37,6 @@ export async function GET(request: NextRequest) {
   });
 
   const response = NextResponse.redirect(`${APPLE_AUTH_URL}?${params.toString()}`, 302);
-  // SameSite=None + Secure so cookie is sent when Apple POSTs back (cross-site form POST)
   response.cookies.set(APPLE_STATE_COOKIE, state, {
     httpOnly: true,
     secure: true,

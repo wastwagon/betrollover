@@ -155,6 +155,9 @@ const en = {
   'home.hero_cta_secondary': 'Become a tipster',
   'home.hero_cta_live': 'Live scores',
   'home.hero_badge': 'Live football · Multi-sport marketplace',
+  'home.app_today_title': 'Today',
+  'home.app_today_subtitle': 'Live matches, trusted picks, and automatic refunds in one place.',
+  'home.app_snapshot_title': 'Platform snapshot',
   'home.today_matches_title': 'Today\'s headline matches',
   'home.today_matches_sub': 'Kickoff times and live scores from our platform catalog',
   'home.today_matches_see_all': 'All live scores',
@@ -1641,6 +1644,8 @@ const en = {
   'auth.sign_in_desc': 'Sign in to access your BetRollover dashboard',
   'auth.invalid_credentials': 'Invalid email or password',
   'auth.server_error': 'Unable to connect to server. Please try again.',
+  'auth.storage_unavailable':
+    'Sign-in succeeded but this browser blocked saving your session. Turn off Private Browsing or allow site data, then try again.',
   'auth.retry': 'Try again',
   'auth.backend_unavailable_hint': 'If this persists, the service may be temporarily down. Check your connection and retry.',
   'auth.send_reset': 'Send reset link',

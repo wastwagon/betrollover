@@ -152,6 +152,9 @@ const fr: Record<string, string> = {
   'home.hero_cta_secondary': 'Devenir tipster',
   'home.hero_cta_live': 'Scores en direct',
   'home.hero_badge': 'Football en direct · Marketplace multi-sports',
+  'home.app_today_title': 'Aujourd\'hui',
+  'home.app_today_subtitle': 'Matchs en direct, pronostics fiables et remboursements automatiques au même endroit.',
+  'home.app_snapshot_title': 'Aperçu de la plateforme',
   'home.today_matches_title': 'Matchs phares du jour',
   'home.today_matches_sub': 'Heures de coup d\'envoi et scores en direct',
   'home.today_matches_see_all': 'Tous les scores',
@@ -1644,6 +1647,8 @@ const fr: Record<string, string> = {
   'auth.sign_in_desc': 'Connectez-vous pour accéder à votre tableau de bord BetRollover',
   'auth.invalid_credentials': 'E-mail ou mot de passe incorrect',
   'auth.server_error': 'Impossible de se connecter au serveur. Veuillez réessayer.',
+  'auth.storage_unavailable':
+    'Connexion réussie, mais ce navigateur a bloqué l\'enregistrement de la session. Désactivez la navigation privée ou autorisez les données du site, puis réessayez.',
   'auth.retry': 'Réessayer',
   'auth.backend_unavailable_hint': 'Si le problème persiste, le service peut être temporairement indisponible. Vérifiez votre connexion et réessayez.',
   'auth.send_reset': 'Envoyer le lien',

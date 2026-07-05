@@ -14,6 +14,7 @@ import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/sit
 import { parseSellingThresholds } from '@/lib/selling-thresholds';
 import { parseDailyCouponQuota, formatQuotaResetUtc, type DailyCouponQuota } from '@/lib/daily-coupon-quota';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
+import { consumeOAuthSessionToken } from '@/lib/auth-token-storage';
 import { PickCard } from '@/components/PickCard';
 import { useCurrency } from '@/context/CurrencyContext';
 import { usePendingWithdrawalCount } from '@/hooks/usePendingWithdrawalCount';
@@ -168,16 +169,8 @@ function DashboardContent() {
       let token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       if (!token && typeof window !== 'undefined') {
         try {
-          const sessionRes = await fetch('/api/auth/session-token', { method: 'GET' });
-          if (sessionRes.ok) {
-            const sessionData = await sessionRes.json().catch(() => ({ token: null }));
-            if (typeof sessionData?.token === 'string' && sessionData.token.trim()) {
-              const nextToken = sessionData.token.trim();
-              token = nextToken;
-              localStorage.setItem('token', nextToken);
-              emitAuthStorageSync();
-            }
-          }
+          const exchanged = await consumeOAuthSessionToken();
+          if (exchanged) token = exchanged;
         } catch {
           // Ignore transient session exchange issues and fall back to login redirect.
         }

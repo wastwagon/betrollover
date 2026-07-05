@@ -1,24 +1,30 @@
 import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { buildOAuthCompleteLoginUrl } from '@/lib/oauth-complete-url';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:6001';
 export const GOOGLE_OAUTH_STATE_COOKIE = 'google_oauth_state';
 export const OAUTH_TOKEN_COOKIE = 'br_oauth_token';
 
-type GoogleOAuthStatePayload = { v: 1; exp: number; n: string; next: string | null };
+type GoogleOAuthStatePayload = { v: 1; exp: number; n: string; next: string | null; nonce?: string };
 
 /**
  * HMAC-signed OAuth `state` so `/callback` can verify CSRF without relying on the
  * state cookie (WKWebView vs Safari / Custom Tabs use different cookie jars).
  */
-export function buildGoogleOAuthState(secret: string, next: string | null): string {
+export function buildGoogleOAuthState(
+  secret: string,
+  next: string | null,
+  nonce?: string | null,
+): string {
   const n = crypto.randomBytes(16).toString('hex');
   const payload: GoogleOAuthStatePayload = {
     v: 1,
     exp: Date.now() + 15 * 60 * 1000,
     n,
     next: next && next.startsWith('/') && !next.startsWith('//') ? next.slice(0, 512) : null,
+    nonce: typeof nonce === 'string' && nonce.trim() ? nonce.trim().slice(0, 128) : undefined,
   };
   const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
   const sig = crypto.createHmac('sha256', secret).update(payloadB64).digest('base64url');
@@ -28,7 +34,7 @@ export function buildGoogleOAuthState(secret: string, next: string | null): stri
 export function verifyGoogleOAuthState(
   state: string | null,
   secret: string,
-): { ok: true; next: string | null } | { ok: false } {
+): { ok: true; next: string | null; nonce: string | null } | { ok: false } {
   if (!state || !secret) return { ok: false };
   const dot = state.lastIndexOf('.');
   if (dot <= 0) return { ok: false };
@@ -46,7 +52,9 @@ export function verifyGoogleOAuthState(
       typeof parsed.next === 'string' && parsed.next.startsWith('/') && !parsed.next.startsWith('//')
         ? parsed.next
         : null;
-    return { ok: true, next };
+    const nonce =
+      typeof parsed.nonce === 'string' && parsed.nonce.trim() ? parsed.nonce.trim() : null;
+    return { ok: true, next, nonce };
   } catch {
     return { ok: false };
   }
@@ -78,7 +86,6 @@ export async function completeGoogleSignInFromIdToken(
 ): Promise<NextResponse> {
   const base = getRedirectBase(request);
   const loginUrl = new URL('/login', base);
-  const dashboardUrl = new URL('/dashboard', base);
 
   const trimmed = idToken.trim();
   if (!trimmed) {
@@ -116,10 +123,10 @@ export async function completeGoogleSignInFromIdToken(
       return NextResponse.redirect(loginUrl, 302);
     }
 
-    const redirectTo =
-      typeof redirectPath === 'string' && redirectPath.startsWith('/')
-        ? new URL(redirectPath, base)
-        : dashboardUrl;
+    const redirectTo = buildOAuthCompleteLoginUrl(
+      request,
+      typeof redirectPath === 'string' && redirectPath.startsWith('/') ? redirectPath : '/dashboard',
+    );
     const response = NextResponse.redirect(redirectTo, 302);
     response.cookies.set(OAUTH_TOKEN_COOKIE, token, {
       httpOnly: true,

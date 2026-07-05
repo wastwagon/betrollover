@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useT } from '@/context/LanguageContext';
 import { trackRegistrationStartedOnce } from '@/lib/analytics';
-import { shouldPreferGoogleOAuthRedirect } from '@/lib/webview-context';
+import { shouldPreferGoogleOAuthRedirect, shouldOpenOAuthInExternalTab } from '@/lib/webview-context';
 
 declare global {
   interface Window {
@@ -208,16 +208,18 @@ export function GoogleSignInButton({
 
   const startHref = `/api/auth/google/start${redirect ? `?next=${encodeURIComponent(redirect)}` : ''}`;
   const label = variant === 'signup' ? t('auth.sign_up_with_google') : t('auth.sign_in_with_google');
+  const openExternal = shouldOpenOAuthInExternalTab();
 
   return (
     <div className={className}>
       {preferRedirect ? (
         <div className="space-y-2">
-          <p className="text-center text-xs text-[var(--text-muted)] leading-snug">{t('auth.google_webview_hint')}</p>
+          {openExternal ? (
+            <p className="text-center text-xs text-[var(--text-muted)] leading-snug">{t('auth.google_webview_hint')}</p>
+          ) : null}
           <a
             href={startHref}
-            target="_blank"
-            rel="noopener noreferrer"
+            {...(openExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
             className="min-h-[44px] w-full flex items-center justify-center gap-2 rounded-xl border-2 border-[var(--border)] bg-white dark:bg-slate-900 text-[var(--text)] font-medium hover:bg-slate-50 dark:hover:bg-slate-800 focus:ring-2 focus:ring-[var(--primary)] focus:ring-offset-2 transition-colors"
             style={{ opacity: disabled ? 0.7 : 1, pointerEvents: disabled ? 'none' : 'auto' }}
             aria-label={label}

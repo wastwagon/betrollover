@@ -49,3 +49,13 @@ export function shouldPreferGoogleOAuthRedirect(): boolean {
   }
   return isLikelyMobileClient();
 }
+
+/**
+ * Open Google OAuth in a new tab only for embedded/in-app browsers where same-tab
+ * navigation breaks the return path. Mobile Safari/Chrome should stay same-tab.
+ */
+export function shouldOpenOAuthInExternalTab(): boolean {
+  if (isLikelyEmbeddedWebView()) return true;
+  if (/WebViewGold/i.test(typeof navigator !== 'undefined' ? navigator.userAgent || '' : '')) return true;
+  return false;
+}

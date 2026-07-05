@@ -78,7 +78,7 @@ const ICONS: Record<NavItemId, (p: { active?: boolean }) => JSX.Element> = {
 };
 
 /** Admin only — auth pages keep bottom nav so tablets can reach Home/Marketplace without the desktop mega-header. */
-const HIDE_PATHS = ['/admin'];
+const HIDE_PATHS = ['/admin', '/login', '/register'];
 
 function isActive(pathname: string, href: string): boolean {
   if (href === '/') return pathname === '/';

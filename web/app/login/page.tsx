@@ -10,7 +10,7 @@ import { AppleSignInButton } from '@/components/AppleSignInButton';
 import { ApiErrorBanner } from '@/components/ApiErrorBanner';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { getApiUrl } from '@/lib/site-config';
-import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
+import { consumeOAuthSessionToken, setAuthToken } from '@/lib/auth-token-storage';
 
 /** Relative in-app path only; blocks protocol-relative and off-site redirects. */
 function safePostLoginPath(redirectParam: string | null): string {
@@ -47,13 +47,8 @@ function LoginForm() {
     // This prevents stale cookie state from blocking future login attempts.
     const consumeSessionCookie = async () => {
       try {
-        const res = await fetch('/api/auth/session-token', { method: 'GET' });
-        if (!res.ok) return;
-        const data = await res.json().catch(() => ({ token: null }));
-        const token = typeof data?.token === 'string' ? data.token.trim() : '';
+        const token = await consumeOAuthSessionToken();
         if (!token || cancelled) return;
-        localStorage.setItem('token', token);
-        emitAuthStorageSync();
         router.push(nextPath);
         router.refresh();
       } catch {
@@ -85,8 +80,10 @@ function LoginForm() {
         return;
       }
 
-      localStorage.setItem('token', data.access_token.trim());
-      emitAuthStorageSync();
+      if (!setAuthToken(data.access_token.trim())) {
+        setError(t('auth.storage_unavailable'));
+        return;
+      }
       router.push(nextPath);
       router.refresh();
     } catch (err) {

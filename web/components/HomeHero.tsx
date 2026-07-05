@@ -7,6 +7,7 @@ import { useT } from '@/context/LanguageContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import type { HomePublicStats } from '@/lib/home-public-data';
 import { HomeMatchSlider } from '@/components/HomeMatchSlider';
+import { HomeNativeMatchRail } from '@/components/HomeNativeMatchRail';
 import type { TodayMatchRow } from '@/lib/home-today-matches';
 
 const defaultStats: HomePublicStats = {
@@ -103,7 +104,76 @@ export function HomeHero({
   ];
 
   return (
-    <section className="relative overflow-hidden w-full min-w-0 max-w-full bg-slate-950">
+    <>
+      <section className="md:hidden w-full min-w-0 bg-[var(--bg)] px-4 pt-5 pb-7">
+        <div className="mb-5">
+          <p className="text-[13px] font-semibold text-[var(--primary)]">{t('home.hero_badge')}</p>
+          <h1 className="mt-1 text-[34px] font-bold tracking-tight leading-none text-[var(--text)]">
+            {t('home.app_today_title')}
+          </h1>
+          <p className="mt-2 text-[15px] leading-snug text-[var(--text-muted)]">
+            {t('home.app_today_subtitle')}
+          </p>
+        </div>
+
+        <div className="mb-6">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-[13px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+              {t('home.today_matches_title')}
+            </h2>
+            <Link href="/live-scores" className="text-[13px] font-semibold text-[var(--primary)]">
+              {t('home.today_matches_see_all')}
+            </Link>
+          </div>
+          <HomeNativeMatchRail initialMatches={initialTodayMatches} marketplaceItems={marketplaceItems} />
+        </div>
+
+        <section className="mb-6">
+          <p className="px-1 mb-1.5 text-xs font-medium uppercase tracking-wide text-[var(--text-muted)]">
+            {t('home.app_snapshot_title')}
+          </p>
+          <div className="ios-grouped-section mx-0 grid grid-cols-3 divide-x divide-[var(--separator)]">
+            {statItems.map((item) => {
+              const cfg = statConfigBase[item.key];
+              return (
+                <div key={item.key} title={t(STAT_HINT_KEYS[item.key])} className="min-w-0 px-2 py-3 text-center">
+                  <p className="text-[17px] font-bold tabular-nums text-[var(--text)] truncate">{item.value}</p>
+                  <p className="mt-0.5 text-[11px] leading-tight text-[var(--text-muted)] truncate">
+                    {t(cfg.labelKey)}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <div className="ios-grouped-section mx-0 overflow-hidden">
+          <Link
+            href="/marketplace"
+            className="ios-list-row flex min-h-[48px] items-center justify-between border-b border-[var(--separator)] px-4 text-[15px] font-semibold text-[var(--text)] active:bg-[var(--fill-secondary)]"
+          >
+            <span>{t('home.hero_cta_primary')}</span>
+            <span className="text-[var(--text-tertiary)]" aria-hidden>
+              ›
+            </span>
+          </Link>
+          <Link
+            href="/register"
+            className="ios-list-row flex min-h-[48px] items-center justify-between px-4 text-[15px] font-semibold text-[var(--text)] active:bg-[var(--fill-secondary)]"
+          >
+            <span>{t('home.hero_cta_secondary')}</span>
+            <span className="text-[var(--text-tertiary)]" aria-hidden>
+              ›
+            </span>
+          </Link>
+        </div>
+
+        <p className="px-1 pt-3 text-xs leading-relaxed text-[var(--text-muted)]">
+          {t('home.hero_escrow_line')}
+        </p>
+      </section>
+
+      <section className="relative hidden overflow-hidden w-full min-w-0 max-w-full bg-slate-950 md:block">
       <div className="absolute inset-0 min-h-[520px] sm:min-h-[580px] md:min-h-[640px]">
         {/* eslint-disable-next-line @next/next/no-img-element -- static AVIF/WebP pair */}
         <picture className="absolute inset-0 block h-full min-h-full w-full">
@@ -207,6 +277,7 @@ export function HomeHero({
           {t('home.hero_escrow_line')}
         </p>
       </div>
-    </section>
+      </section>
+    </>
   );
 }
