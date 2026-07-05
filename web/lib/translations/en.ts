@@ -158,6 +158,7 @@ const en = {
   'home.app_today_title': 'Today',
   'home.app_today_subtitle': 'Live matches, trusted picks, and automatic refunds in one place.',
   'home.app_snapshot_title': 'Platform snapshot',
+  'home.featured_matches_title': 'Headline matches',
   'home.today_matches_title': 'Today\'s headline matches',
   'home.today_matches_sub': 'Kickoff times and live scores from our platform catalog',
   'home.today_matches_see_all': 'All live scores',

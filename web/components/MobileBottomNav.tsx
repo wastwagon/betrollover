@@ -54,12 +54,12 @@ function SubscribeIcon({ active }: { active?: boolean }) {
   );
 }
 
-function buildNavItems(signedIn: boolean): NavItem[] {
+function buildNavItems(_signedIn: boolean): NavItem[] {
   return [
     {
       id: 'home',
-      href: signedIn ? '/dashboard' : '/',
-      labelKey: signedIn ? 'nav.dashboard' : 'header.home',
+      href: '/',
+      labelKey: 'header.home',
       primary: false,
     },
     { id: 'marketplace', href: '/marketplace', labelKey: 'nav.bottom_picks', primary: false },

@@ -776,6 +776,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
             aria-label={t('nav.browse')}
           >
             {[
+              { href: '/', label: t('header.home') },
               { href: '/marketplace', label: t('nav.picks') },
               { href: '/live-scores', label: t('nav.live_scores_short') },
               { href: '/league-tables', label: t('nav.league_tables_short') },

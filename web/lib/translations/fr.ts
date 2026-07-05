@@ -155,6 +155,7 @@ const fr: Record<string, string> = {
   'home.app_today_title': 'Aujourd\'hui',
   'home.app_today_subtitle': 'Matchs en direct, pronostics fiables et remboursements automatiques au même endroit.',
   'home.app_snapshot_title': 'Aperçu de la plateforme',
+  'home.featured_matches_title': 'Matchs phares',
   'home.today_matches_title': 'Matchs phares du jour',
   'home.today_matches_sub': 'Heures de coup d\'envoi et scores en direct',
   'home.today_matches_see_all': 'Tous les scores',

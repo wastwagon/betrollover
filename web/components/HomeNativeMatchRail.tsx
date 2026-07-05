@@ -15,15 +15,22 @@ import {
 
 const REFRESH_MS = 60_000;
 
-function formatKickoff(iso: string): string {
+function formatMatchSchedule(iso: string): { date: string; time: string; combined: string } {
   try {
-    return new Date(iso).toLocaleString(undefined, {
-      weekday: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    const d = new Date(iso);
+    return {
+      date: d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
+      time: d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
+      combined: d.toLocaleString(undefined, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    };
   } catch {
-    return iso;
+    return { date: iso, time: '', combined: iso };
   }
 }
 
@@ -97,16 +104,17 @@ export function HomeNativeMatchRail({
   }
 
   return (
-    <div className="-mx-4 overflow-x-auto overscroll-x-contain px-4 pb-1 scrollbar-hide snap-x snap-mandatory touch-pan-x [-webkit-overflow-scrolling:touch]">
+    <div className="-mx-4 md:mx-0 overflow-x-auto overscroll-x-contain px-4 md:px-0 pb-1 scrollbar-hide snap-x snap-mandatory touch-pan-x [-webkit-overflow-scrolling:touch]">
       <div className="flex gap-3">
         {matches.map((m) => {
           const live = isFixtureLive(m.status);
           const picks = pickCounts.get(m.id) ?? 0;
+          const schedule = formatMatchSchedule(m.matchDate);
 
           return (
             <article
               key={m.id}
-              className="w-[min(84vw,340px)] shrink-0 snap-start rounded-[1.25rem] border border-[var(--separator)] bg-[var(--card)] shadow-sm overflow-hidden"
+              className="w-[min(84vw,340px)] md:w-[300px] lg:w-[340px] shrink-0 snap-start rounded-[1.25rem] border border-[var(--separator)] bg-[var(--card)] shadow-sm overflow-hidden"
             >
               <div className="px-4 py-3 border-b border-[var(--separator)]">
                 <div className="flex items-center justify-between gap-3">
@@ -118,12 +126,11 @@ export function HomeNativeMatchRail({
                       <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden />
                       {formatLiveFixturePeriod(m.status, m.statusElapsed) || 'Live'}
                     </span>
-                  ) : (
-                    <span className="shrink-0 text-[11px] font-medium text-[var(--text-muted)] tabular-nums">
-                      {formatKickoff(m.matchDate)}
-                    </span>
-                  )}
+                  ) : null}
                 </div>
+                <p className="mt-1.5 text-[13px] font-semibold text-[var(--text)] tabular-nums">
+                  {schedule.combined}
+                </p>
               </div>
 
               <div className="px-4 py-3 space-y-2">
