@@ -714,6 +714,12 @@ export class PredictionEngineService {
   ): TipsterPredictionResult | null {
     const personality = tipsterConfig.personality;
     const policy = resolveAccaPolicy(personality);
+    if (policy.couponLegs === 1) {
+      this.logger.debug(
+        `${tipsterConfig.username}: single-leg coupons disabled — requires valid 2-leg safe acca`,
+      );
+      return null;
+    }
     const available = fixturePredictions.filter((fp) => !excludeFixtureIds.has(fp.fixtureId));
     const suitable = this.filterByPersonality(available, personality);
     if (suitable.length === 0) {

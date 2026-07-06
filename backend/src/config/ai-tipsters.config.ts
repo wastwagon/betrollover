@@ -7,7 +7,7 @@
  *
  * Engine builds candidate rows per fixture/outcome. Pairs are ranked by joint API probability, not EV.
  * outcome_specialization = strict one-market legs; omit for multi-market flex tipsters.
- * Draw / away-longshot profiles use coupon_legs: 1 when a safe 2-leg pair is not viable.
+ * All tipsters use coupon_legs: 2 — singles are blocked in the engine.
  */
 
 /** Default 2-leg safe acca: each leg ≥1.50, combined 2.0–3.0 (not 3+ on a single leg). */
@@ -174,22 +174,17 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   },
   {
     username: 'ConsistentCarl',
-    display_name: 'Weekly Draw',
-    bio: 'Draw (X) singles when price is high enough. Draw odds rarely pair into a 2.0+ double safely.',
+    display_name: 'Weekly Elite',
+    bio: 'Weekly 2-pick X2 acca. Two draw-or-away legs when API confidence and prices align; 2.0+ combined.',
     avatar_url: '/avatars/consistent_carl.png',
     personality: {
-      coupon_legs: 1,
-      selection_mode: 'confidence',
-      require_api_probability: true,
+      ...SAFE_2_LEG_DC,
       risk_level: 'conservative',
-      target_odds_min: 2.8,
+      target_odds_min: 1.25,
       target_odds_max: 5.0,
-      min_win_probability: 0.32,
-      min_expected_value: 0,
-      min_api_confidence: 0.32,
       leagues_focus: ['All'],
-      bet_types: ['1X2'],
-      outcome_specialization: 'draw',
+      bet_types: ['Double Chance'],
+      outcome_specialization: 'draw_away',
       max_daily_predictions: 2,
     },
   },
@@ -323,22 +318,17 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   },
   {
     username: 'ValueHunter',
-    display_name: 'Daily Draw',
-    bio: 'Draw (X) singles on volume days. Draw prices rarely form a safe 2.0+ double.',
+    display_name: 'Daily Value Hunter',
+    bio: 'Daily 2-pick 1X acca. Two home-or-draw legs when value and API confidence align; 2.0+ combined.',
     avatar_url: '/avatars/value_hunter.png',
     personality: {
-      coupon_legs: 1,
-      selection_mode: 'confidence',
-      require_api_probability: true,
+      ...SAFE_2_LEG_DC,
       risk_level: 'balanced',
-      target_odds_min: 2.8,
+      target_odds_min: 1.25,
       target_odds_max: 5.0,
-      min_win_probability: 0.32,
-      min_expected_value: 0,
-      min_api_confidence: 0.32,
       leagues_focus: ['All'],
-      bet_types: ['1X2'],
-      outcome_specialization: 'draw',
+      bet_types: ['Double Chance'],
+      outcome_specialization: 'home_draw',
       max_daily_predictions: 2,
     },
   },
@@ -496,21 +486,16 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   },
   {
     username: 'UnderdogKing',
-    display_name: 'Away Longshot',
-    bio: 'Away longshot singles only (2.5+). Too volatile for the safe 2-leg acca model.',
+    display_name: 'Underdog Daily',
+    bio: 'Daily away 2-pick acca. Two confident away legs at 1.50+ each; 2.0+ combined (no longshot singles).',
     avatar_url: '/avatars/underdog_king.png',
     personality: {
-      coupon_legs: 1,
-      selection_mode: 'ev',
+      ...SAFE_2_LEG_ACCA,
       risk_level: 'aggressive',
-      target_odds_min: 2.5,
-      target_odds_max: 6.0,
-      min_win_probability: 0.38,
-      min_expected_value: 0.02,
-      min_api_confidence: 0.38,
+      target_odds_min: 2.0,
+      target_odds_max: 5.0,
       leagues_focus: ['All'],
       bet_types: ['1X2'],
-      preference: 'underdogs',
       outcome_specialization: 'away',
       max_daily_predictions: 2,
     },

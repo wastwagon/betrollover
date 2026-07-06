@@ -321,7 +321,7 @@ async function main() {
     for (const outcomeKey of EMIT_OUTCOMES) {
       const group = candidates.filter((c) => c.outcome === outcomeKey);
       if (group.length === 0) continue;
-      const best = [...group].sort((a, b) => b.probability - a.probability)[0];
+      const best = [...group].sort((a, b) => b.prob - a.prob)[0];
       if (!best || best.odds < 1.2 || best.odds > 5.5) continue;
       fixturePredictions.push({
         fixtureId: f.apiId,
@@ -431,7 +431,7 @@ async function main() {
   console.log(`  Tipsters with 0 coupons: ${withZero.length}`);
   console.log(`  Total coupons (simulated): ${totalPicks}`);
   console.log(
-    '  Model: 2 high-confidence API legs per coupon (2.0–3.5 combined) unless coupon_legs=1 profile.',
+    '  Model: 2 high-confidence API legs per coupon (2.0–3.5 combined). Singles disabled.',
   );
   console.log('  (No DB – fetched directly from API-Football)\n');
 }
