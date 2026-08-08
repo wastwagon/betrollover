@@ -1298,12 +1298,19 @@ export class AccumulatorsService {
       )
     `;
 
+    // Use EXISTS (not JOIN + DISTINCT): Postgres rejects DISTINCT t.id ORDER BY t.created_at
+    // unless created_at is in the select list.
     const idRows = await this.dataSource
       .createQueryBuilder()
-      .select('DISTINCT t.id', 'id')
+      .select('t.id', 'id')
       .from('accumulator_tickets', 't')
-      .innerJoin('accumulator_picks', 'ap', 'ap.accumulator_id = t.id')
-      .where('ap.fixture_id = :fixtureId', { fixtureId })
+      .where(
+        `EXISTS (
+          SELECT 1 FROM accumulator_picks ap
+          WHERE ap.accumulator_id = t.id AND ap.fixture_id = :fixtureId
+        )`,
+        { fixtureId },
+      )
       .andWhere(`t.id IN (${validMarketplaceSubQuery})`)
       .setParameter('now', now)
       .orderBy('t.created_at', 'DESC')
@@ -1315,10 +1322,15 @@ export class AccumulatorsService {
 
     const totalRow = await this.dataSource
       .createQueryBuilder()
-      .select('COUNT(DISTINCT t.id)', 'cnt')
+      .select('COUNT(t.id)', 'cnt')
       .from('accumulator_tickets', 't')
-      .innerJoin('accumulator_picks', 'ap', 'ap.accumulator_id = t.id')
-      .where('ap.fixture_id = :fixtureId', { fixtureId })
+      .where(
+        `EXISTS (
+          SELECT 1 FROM accumulator_picks ap
+          WHERE ap.accumulator_id = t.id AND ap.fixture_id = :fixtureId
+        )`,
+        { fixtureId },
+      )
       .andWhere(`t.id IN (${validMarketplaceSubQuery})`)
       .setParameter('now', now)
       .getRawOne<{ cnt: string }>();
