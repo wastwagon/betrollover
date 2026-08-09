@@ -18,10 +18,15 @@ import {
 import { leagueMatchesFocus } from '../../config/league-focus.util';
 import { isMajorLeagueForSafeAcca } from '../../config/major-leagues.config';
 import { ApiPredictionsService, ApiFixturePredictions } from '../fixtures/api-predictions.service';
+import {
+  adviceAlignsWithOutcome,
+  isCoarseApiPercent,
+  underOverAligns,
+  type ApiPredictionMeta,
+} from '../fixtures/api-football-predictions.parser';
 import { OddsSyncService } from '../fixtures/odds-sync.service';
 import { PredictionMarketplaceSyncService } from './prediction-marketplace-sync.service';
 import { engineOutcomeKeyFromOddsLine } from '../fixtures/odds-outcome-keys';
-import { findSafest2LegPair, resolveAccaPolicy } from './safe-acca.util';
 
 /** Settled AI coupons in this window drive sort order, cold-skip, and tepid tightening. */
 const AI_ROLLING_STATS_DAYS = 56;
@@ -40,7 +45,6 @@ interface FixturePrediction {
   matchDate: Date;
   leagueName: string | null;
   leagueId: number | null;
-  /** API-Football league id (from leagues.api_id) for major-league gate. */
   apiLeagueId: number | null;
   homeTeam: string;
   awayTeam: string;
@@ -50,6 +54,8 @@ interface FixturePrediction {
   ev: number;
   /** true when probability came from API-Football predictions */
   fromApi?: boolean;
+  /** API advice / comparison side-channel for strategy gates */
+  apiMeta?: ApiPredictionMeta | null;
 }
 
 export interface TipsterPredictionResult {
@@ -140,7 +146,7 @@ export class PredictionEngineService {
   }
 
   /**
-   * Main entry: generate predictions for all 25 AI tipsters (Hybrid: API-Football + value filter).
+   * Main entry: generate predictions for configured AI tipsters (Hybrid: API-Football + value filter).
    * Fixtures are limited to the given calendar day (kickoff on that date in UTC window).
    * @param forDate Optional date (YYYY-MM-DD) for prediction_date; defaults to today
    */
@@ -210,7 +216,7 @@ export class PredictionEngineService {
     const fixturePredictions = await this.generateFixturePredictionsHybrid(withOdds, apiPredictionsMap);
     this.logger.log(`Generated predictions for ${fixturePredictions.length} fixtures`);
 
-    // 6. For each tipster, create 2-leg safe accas (or singles for draw/longshot profiles).
+    // 6. For each tipster, create single-fixture coupons only (up to max_daily_predictions).
     // Global usedFixtureIds: once a fixture is used by any tipster, no other tipster can use it (avoids duplicate fixture+market across AI tipsters).
     // Seed from existing marketplace coupons for this date so re-runs (e.g. catch-up or manual) do not assign the same fixture to another tipster.
     const allPredictions: TipsterPredictionResult[] = [];
@@ -222,24 +228,25 @@ export class PredictionEngineService {
       this.logger.log(`Seeded usedFixtureIds with ${usedFixtureIds.size} fixture(s) already on marketplace for ${dateStr}`);
     }
 
-    let adminAiMaxPerDay = 1;
+    let adminAiMaxPerDay = 2;
     try {
       // Raw SQL: avoids TypeORM find({ select }) without primary key (can throw) and missing-column errors pre-migration.
       const rows = (await this.dataSource.query(
         `SELECT ai_max_coupons_per_day AS v FROM api_settings WHERE id = 1 LIMIT 1`,
       )) as Array<{ v: number | string | null }>;
-      const raw = rows?.[0]?.v != null ? Math.floor(Number(rows[0].v)) : 1;
-      adminAiMaxPerDay = Number.isFinite(raw) && raw >= 1 ? Math.min(50, raw) : 1;
+      const raw = rows?.[0]?.v != null ? Math.floor(Number(rows[0].v)) : 2;
+      adminAiMaxPerDay = Number.isFinite(raw) && raw >= 1 ? Math.min(50, raw) : 2;
     } catch (e) {
-      this.logger.warn(`ai_max_coupons_per_day unreadable (${(e as Error)?.message}); using default 1`);
-      adminAiMaxPerDay = 1;
+      this.logger.warn(`ai_max_coupons_per_day unreadable (${(e as Error)?.message}); using default 2`);
+      adminAiMaxPerDay = 2;
     }
     this.logger.log(`AI daily pick cap (admin): ${adminAiMaxPerDay} per tipster (UTC day)`);
 
     const rollingStats = await this.fetchAiRollingCouponStats(AI_ROLLING_STATS_DAYS);
-    const orderedConfigs = this.sortTipstersByPerformance(AI_TIPSTERS, tipsterByUsername, rollingStats);
+    // Fixed config order (not WR-sorted) so distinct strategies get fair fixture access for tracking.
+    const orderedConfigs = AI_TIPSTERS;
     this.logger.debug(
-      `AI tipster processing order (performance-prioritized): ${orderedConfigs.map((c) => c.username).join(', ')}`,
+      `AI tipster processing order (strategy config): ${orderedConfigs.map((c) => c.username).join(', ')}`,
     );
 
     for (const tipsterConfig of orderedConfigs) {
@@ -327,36 +334,6 @@ export class PredictionEngineService {
       });
     }
     return map;
-  }
-
-  /**
-   * Tipsters with enough recent settled coupons are processed first (higher win rate → earlier),
-   * so they claim the best remaining legs under global usedFixtureIds deduping.
-   */
-  private sortTipstersByPerformance(
-    configs: AiTipsterConfig[],
-    tipsterByUsername: Map<string, Tipster>,
-    stats: Map<number, { settled: number; wins: number }>,
-  ): AiTipsterConfig[] {
-    const withMeta = configs.map((c, idx) => {
-      const t = tipsterByUsername.get(c.username);
-      const s = t ? stats.get(t.id) : undefined;
-      const n = s?.settled ?? 0;
-      const wr = n > 0 ? s!.wins / n : 0;
-      return { c, idx, n, wr };
-    });
-    withMeta.sort((a, b) => {
-      const aHas = a.n >= AI_SORT_MIN_SAMPLE;
-      const bHas = b.n >= AI_SORT_MIN_SAMPLE;
-      if (aHas && bHas) {
-        if (b.wr !== a.wr) return b.wr - a.wr;
-        return a.idx - b.idx;
-      }
-      if (aHas && !bHas) return -1;
-      if (!aHas && bHas) return 1;
-      return a.idx - b.idx;
-    });
-    return withMeta.map((x) => x.c);
   }
 
   /**
@@ -523,8 +500,7 @@ export class PredictionEngineService {
       for (const outcomeKey of EMIT_OUTCOMES) {
         const group = candidates.filter((c) => c.outcome === outcomeKey);
         if (group.length === 0) continue;
-        /** Prefer highest API probability (safe acca legs), not highest EV (longshots). */
-        const best = [...group].sort((a, b) => b.prob - a.prob)[0];
+        const best = [...group].sort((a, b) => b.ev - a.ev)[0];
         if (!best) continue;
         results.push({
           fixtureId: fixture.id,
@@ -540,6 +516,7 @@ export class PredictionEngineService {
           probability: best.prob,
           ev: best.ev,
           fromApi: best.fromApi,
+          apiMeta: apiPred?.meta ?? null,
         });
       }
     }
@@ -582,7 +559,6 @@ export class PredictionEngineService {
     fixturePredictions: FixturePrediction[],
     personality: AiTipsterPersonality,
   ): FixturePrediction[] {
-    const policy = resolveAccaPolicy(personality);
     const leagues = personality.leagues_focus || [];
     const hasAll = leagues.some((l) => l.toLowerCase() === 'all');
     // When API data available, use min_api_confidence (or 0.52 fallback); else min_win_probability
@@ -590,8 +566,6 @@ export class PredictionEngineService {
     const minProb = personality.min_win_probability;
     const evRelax = personality.ev_min_relaxation ?? 0;
     const evMin = Math.max(0, personality.min_expected_value - evRelax);
-    const oddsMin = policy.legOddsMin;
-    const oddsMax = policy.legOddsMax;
 
     return fixturePredictions.filter((fp) => {
       if (!this.matchesFixtureDays(fp.matchDate, personality.fixture_days)) return false;
@@ -604,23 +578,66 @@ export class PredictionEngineService {
 
       if (!this.matchesTeamFilter(fp, personality)) return false;
 
-      if (fp.odds < oddsMin || fp.odds > oddsMax) return false;
-      if (policy.requireApiProbability && !fp.fromApi) return false;
+      if (fp.odds < personality.target_odds_min || fp.odds > personality.target_odds_max)
+        return false;
+      if (
+        personality.major_leagues_only &&
+        !isMajorLeagueForSafeAcca(fp.leagueName, fp.apiLeagueId)
+      ) {
+        return false;
+      }
+      if (personality.require_api_probability && !fp.fromApi) return false;
       if (fp.fromApi) {
         if (fp.probability < minConf) return false;
       } else {
         if (fp.probability < minProb) return false;
       }
-      if (!policy.skipEvFilter && fp.ev < evMin) return false;
-
-      if (policy.majorLeaguesOnly && !isMajorLeagueForSafeAcca(fp.leagueName, fp.apiLeagueId)) {
+      if (fp.ev < evMin) return false;
+      if (personality.reject_coarse_api_pct && fp.fromApi && isCoarseApiPercent(fp.probability)) {
         return false;
+      }
+      if (personality.min_prob_edge != null && personality.min_prob_edge > 0) {
+        const edge = fp.probability - 1 / fp.odds;
+        if (edge < personality.min_prob_edge) return false;
+      }
+
+      if (personality.require_advice_align) {
+        if (
+          !fp.apiMeta ||
+          !adviceAlignsWithOutcome(fp.apiMeta, fp.selectedOutcome, fp.homeTeam, fp.awayTeam)
+        ) {
+          return false;
+        }
+      }
+      if (personality.require_under_over) {
+        if (!underOverAligns(fp.apiMeta?.underOver, personality.require_under_over)) {
+          return false;
+        }
+      }
+      if (personality.min_form_edge != null && personality.min_form_edge > 0) {
+        const meta = fp.apiMeta;
+        if (meta?.formHome != null && meta?.formAway != null) {
+          const outcome = fp.selectedOutcome.toLowerCase();
+          const edge =
+            outcome === 'away' || outcome === 'draw_away' || outcome === 'dnb_away'
+              ? meta.formAway - meta.formHome
+              : meta.formHome - meta.formAway;
+          if (edge < personality.min_form_edge) return false;
+        }
+      }
+      if (personality.max_form_imbalance != null && personality.max_form_imbalance >= 0) {
+        const meta = fp.apiMeta;
+        if (meta?.formHome != null && meta?.formAway != null) {
+          if (Math.abs(meta.formHome - meta.formAway) > personality.max_form_imbalance) {
+            return false;
+          }
+        }
       }
 
       if (personality.selection_filter === 'home_only' && fp.selectedOutcome !== 'home')
         return false;
       if (personality.preference === 'underdogs') {
-        if (fp.selectedOutcome !== 'away' || fp.odds < 2.5) return false;
+        if (fp.selectedOutcome !== 'away' || fp.odds < 2.8) return false;
       }
 
       const outcomeNorm = fp.selectedOutcome.toLowerCase();
@@ -703,8 +720,7 @@ export class PredictionEngineService {
   }
 
   /**
-   * Builds one coupon: 2-leg safe acca (default) or single for draw/longshot profiles.
-   * Pairs ranked by joint API probability; singles by confidence or EV per policy.
+   * AI coupons are single-fixture only. Picks the best suitable fixture by EV.
    */
   private createTipsterPrediction(
     tipsterConfig: AiTipsterConfig,
@@ -713,54 +729,13 @@ export class PredictionEngineService {
     excludeFixtureIds: Set<number> = new Set(),
   ): TipsterPredictionResult | null {
     const personality = tipsterConfig.personality;
-    const policy = resolveAccaPolicy(personality);
-    if (policy.couponLegs === 1) {
-      this.logger.debug(
-        `${tipsterConfig.username}: single-leg coupons disabled — requires valid 2-leg safe acca`,
-      );
-      return null;
-    }
     const available = fixturePredictions.filter((fp) => !excludeFixtureIds.has(fp.fixtureId));
     const suitable = this.filterByPersonality(available, personality);
     if (suitable.length === 0) {
-      this.logger.debug(`${tipsterConfig.username}: 0 suitable legs → no prediction`);
+      this.logger.debug(`${tipsterConfig.username}: 0 suitable → no prediction`);
       return null;
     }
-
-    if (policy.couponLegs === 2) {
-      const pair = findSafest2LegPair(suitable, policy);
-      if (!pair) {
-        this.logger.debug(
-          `${tipsterConfig.username}: ${suitable.length} suitable legs but no valid 2.0+ pair`,
-        );
-        return null;
-      }
-      const [leg1, leg2] = pair;
-      const combinedOdds = Math.round(leg1.odds * leg2.odds * 1000) / 1000;
-      const jointProb = leg1.probability * leg2.probability;
-      const confidenceLevel = this.getConfidenceLevel(jointProb);
-      const stakeUnits = this.calculateKellyStake(jointProb, combinedOdds);
-      const source = leg1.fromApi && leg2.fromApi ? 'api_football' : 'internal';
-      this.logger.debug(
-        `${tipsterConfig.username}: 2-leg acca @ ${combinedOdds.toFixed(2)} joint=${(jointProb * 100).toFixed(0)}%`,
-      );
-      return {
-        tipsterUsername: tipsterConfig.username,
-        tipsterDisplayName: tipsterConfig.display_name,
-        tipsterId,
-        predictionTitle: '2-Pick Acca',
-        combinedOdds,
-        stakeUnits,
-        confidenceLevel,
-        fixtures: [leg1, leg2],
-        source,
-      };
-    }
-
-    const sortKey = policy.selectionMode === 'confidence' ? 'probability' : 'ev';
-    const best = [...suitable].sort((a, b) =>
-      sortKey === 'probability' ? b.probability - a.probability : b.ev - a.ev,
-    )[0];
+    const best = [...suitable].sort((a, b) => b.ev - a.ev)[0];
     const confidenceLevel = this.getConfidenceLevel(best.probability);
     const stakeUnits = this.calculateKellyStake(best.probability, best.odds);
     const source = best.fromApi ? 'api_football' : 'internal';
@@ -780,7 +755,7 @@ export class PredictionEngineService {
 
   private shouldTipsterPostToday(_tipsterConfig: AiTipsterConfig): boolean {
     // All tipsters post when fixtures meet criteria. Value filters in createTipsterPrediction
-    // determine whether a qualifying acca exists; if not, no prediction is saved.
+    // determine whether a qualifying single exists; if not, no prediction is saved.
     return true;
   }
 
@@ -806,10 +781,10 @@ export class PredictionEngineService {
   ): Promise<void> {
 
     for (const pred of predictions) {
-      const isAcca = pred.fixtures.length > 1;
+      // AI coupons are single-fixture only
       const prediction = await this.predictionRepo.save({
         tipsterId: pred.tipsterId,
-        predictionTitle: isAcca ? '2-Pick Acca' : 'Single',
+        predictionTitle: 'Single',
         combinedOdds: pred.combinedOdds,
         stakeUnits: pred.stakeUnits,
         confidenceLevel: pred.confidenceLevel,

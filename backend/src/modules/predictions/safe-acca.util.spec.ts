@@ -1,9 +1,8 @@
 import { findSafest2LegPair, resolveAccaPolicy, SAFE_ACCA_DEFAULTS } from './safe-acca.util';
-import type { AiTipsterPersonality } from '../../config/ai-tipsters.config';
 
 describe('resolveAccaPolicy', () => {
   it('defaults to 2-leg confidence mode', () => {
-    const p = resolveAccaPolicy({} as AiTipsterPersonality);
+    const p = resolveAccaPolicy({});
     expect(p.couponLegs).toBe(2);
     expect(p.selectionMode).toBe('confidence');
     expect(p.skipEvFilter).toBe(true);
@@ -15,7 +14,7 @@ describe('resolveAccaPolicy', () => {
       coupon_legs: 1,
       target_odds_min: 2.5,
       target_odds_max: 5,
-    } as AiTipsterPersonality);
+    });
     expect(p.couponLegs).toBe(1);
     expect(p.legOddsMin).toBe(2.5);
     expect(p.skipEvFilter).toBe(false);
@@ -31,7 +30,7 @@ describe('findSafest2LegPair', () => {
     max_combined_odds: 3.5,
     min_joint_probability: 0.4,
     require_api_probability: true,
-  } as AiTipsterPersonality);
+  });
 
   const legs = [
     { fixtureId: 1, odds: 1.45, probability: 0.7, fromApi: true },

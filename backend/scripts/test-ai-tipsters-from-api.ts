@@ -22,9 +22,15 @@ const DELAY_MS = 350;
 import { AI_TIPSTERS, AiTipsterPersonality } from '../src/config/ai-tipsters.config';
 import { fixtureInvolvesBigSix, isLikelyEplBigSixTeam } from '../src/config/epl-big-six.config';
 import { leagueMatchesFocus } from '../src/config/league-focus.util';
-import { parseApiFootballPredictionsOutcomes } from '../src/modules/fixtures/api-football-predictions.parser';
-import { findSafest2LegPair, resolveAccaPolicy } from '../src/modules/predictions/safe-acca.util';
 import { isMajorLeagueForSafeAcca } from '../src/config/major-leagues.config';
+import {
+  adviceAlignsWithOutcome,
+  isCoarseApiPercent,
+  parseApiFootballPredictionMeta,
+  parseApiFootballPredictionsOutcomes,
+  underOverAligns,
+  type ApiPredictionMeta,
+} from '../src/modules/fixtures/api-football-predictions.parser';
 
 interface FixturePrediction {
   fixtureId: number;
@@ -38,6 +44,7 @@ interface FixturePrediction {
   fromApi: boolean;
   homeTeam: string;
   awayTeam: string;
+  apiMeta?: ApiPredictionMeta | null;
 }
 
 function impliedProb(odds: number, edge = 0.02): number {
@@ -82,7 +89,6 @@ function filterByPersonality(
   personality: AiTipsterPersonality,
   excludeFixtureIds: Set<number>,
 ): FixturePrediction[] {
-  const policy = resolveAccaPolicy(personality);
   const leagues = personality.leagues_focus || [];
   const hasAll = leagues.some((l) => l.toLowerCase() === 'all');
   const minConf = personality.min_api_confidence ?? Math.min(0.52, personality.min_win_probability);
@@ -98,18 +104,57 @@ function filterByPersonality(
       if (!leagues.some((l) => leagueMatchesFocus(fp.leagueName, l))) return false;
     }
     if (!matchesTeamFilter(fp, personality)) return false;
-    if (fp.odds < policy.legOddsMin || fp.odds > policy.legOddsMax) return false;
-    if (policy.requireApiProbability && !fp.fromApi) return false;
+    if (fp.odds < personality.target_odds_min || fp.odds > personality.target_odds_max) return false;
+    if (
+      personality.major_leagues_only &&
+      !isMajorLeagueForSafeAcca(fp.leagueName, fp.apiLeagueId)
+    ) {
+      return false;
+    }
+    if (personality.require_api_probability && !fp.fromApi) return false;
     if (fp.fromApi) {
       if (fp.probability < minConf) return false;
     } else {
       if (fp.probability < minProb) return false;
     }
-    if (!policy.skipEvFilter && fp.ev < evMin) return false;
-    if (policy.majorLeaguesOnly && !isMajorLeagueForSafeAcca(fp.leagueName, fp.apiLeagueId)) return false;
+    if (fp.ev < evMin) return false;
+    if (personality.reject_coarse_api_pct && fp.fromApi && isCoarseApiPercent(fp.probability)) {
+      return false;
+    }
+    if (personality.min_prob_edge != null && personality.min_prob_edge > 0) {
+      if (fp.probability - 1 / fp.odds < personality.min_prob_edge) return false;
+    }
+    if (personality.require_advice_align) {
+      if (
+        !fp.apiMeta ||
+        !adviceAlignsWithOutcome(fp.apiMeta, fp.selectedOutcome, fp.homeTeam, fp.awayTeam)
+      ) {
+        return false;
+      }
+    }
+    if (personality.require_under_over) {
+      if (!underOverAligns(fp.apiMeta?.underOver, personality.require_under_over)) return false;
+    }
+    if (personality.min_form_edge != null && personality.min_form_edge > 0) {
+      const meta = fp.apiMeta;
+      if (meta?.formHome != null && meta?.formAway != null) {
+        const outcome = fp.selectedOutcome.toLowerCase();
+        const edge =
+          outcome === 'away' || outcome === 'draw_away' || outcome === 'dnb_away'
+            ? meta.formAway - meta.formHome
+            : meta.formHome - meta.formAway;
+        if (edge < personality.min_form_edge) return false;
+      }
+    }
+    if (personality.max_form_imbalance != null && personality.max_form_imbalance >= 0) {
+      const meta = fp.apiMeta;
+      if (meta?.formHome != null && meta?.formAway != null) {
+        if (Math.abs(meta.formHome - meta.formAway) > personality.max_form_imbalance) return false;
+      }
+    }
     if (personality.selection_filter === 'home_only' && fp.selectedOutcome !== 'home') return false;
     if (personality.preference === 'underdogs') {
-      if (fp.selectedOutcome !== 'away' || fp.odds < 2.5) return false;
+      if (fp.selectedOutcome !== 'away' || fp.odds < 2.8) return false;
     }
 
     const outcomeNorm = fp.selectedOutcome.toLowerCase();
@@ -236,6 +281,12 @@ async function main() {
     const oddsData = await oddsRes.json();
     const resp = predData?.response?.[0];
     const predictions = resp?.predictions || {};
+    const apiMeta = resp?.predictions
+      ? parseApiFootballPredictionMeta(
+          predictions as Record<string, unknown>,
+          (resp.comparison as Record<string, unknown> | undefined) ?? null,
+        )
+      : null;
     const parsed = parseApiFootballPredictionsOutcomes(predictions as Record<string, unknown>);
     const outcomes: { outcome: string; prob: number; fromApi: boolean }[] = parsed.map((o) => ({
       outcome: o.outcome,
@@ -321,7 +372,7 @@ async function main() {
     for (const outcomeKey of EMIT_OUTCOMES) {
       const group = candidates.filter((c) => c.outcome === outcomeKey);
       if (group.length === 0) continue;
-      const best = [...group].sort((a, b) => b.prob - a.prob)[0];
+      const best = [...group].sort((a, b) => b.ev - a.ev)[0];
       if (!best || best.odds < 1.2 || best.odds > 5.5) continue;
       fixturePredictions.push({
         fixtureId: f.apiId,
@@ -335,6 +386,7 @@ async function main() {
         fromApi: best.fromApi,
         homeTeam: f.home,
         awayTeam: f.away,
+        apiMeta,
       });
     }
 
@@ -353,7 +405,7 @@ async function main() {
   }
   console.log('');
 
-  // 3. Simulate per-tipster: global usedFixtureIds, 2-leg safe accas (or singles)
+  // 3. Simulate per-tipster: global usedFixtureIds, single-fixture coupons
   const usedFixtureIds = new Set<number>();
   const picksByTipster = new Map<string, { count: number; samples: string[] }>();
 
@@ -362,7 +414,6 @@ async function main() {
   }
 
   for (const tipsterConfig of AI_TIPSTERS) {
-    const policy = resolveAccaPolicy(tipsterConfig.personality);
     const maxForTipster = tipsterConfig.personality.max_daily_predictions ?? 999;
     let count = 0;
     while (count < maxForTipster) {
@@ -373,34 +424,15 @@ async function main() {
       );
       if (available.length === 0) break;
 
-      if (policy.couponLegs === 2) {
-        const pair = findSafest2LegPair(available, policy);
-        if (!pair) break;
-        const [a, b] = pair;
-        const comb = a.odds * b.odds;
-        usedFixtureIds.add(a.fixtureId);
-        usedFixtureIds.add(b.fixtureId);
-        const entry = picksByTipster.get(tipsterConfig.username)!;
-        entry.count++;
-        if (entry.samples.length < 2) {
-          entry.samples.push(
-            `@${comb.toFixed(2)}: ${a.homeTeam} vs ${a.awayTeam} (${a.selectedOutcome} ${a.odds.toFixed(2)}) + ${b.homeTeam} vs ${b.awayTeam} (${b.selectedOutcome} ${b.odds.toFixed(2)})`,
-          );
-        }
-      } else {
-        const sortKey = policy.selectionMode === 'confidence' ? 'probability' : 'ev';
-        const best = [...available].sort((x, y) =>
-          sortKey === 'probability' ? y.probability - x.probability : y.ev - x.ev,
-        )[0];
-        if (!best) break;
-        usedFixtureIds.add(best.fixtureId);
-        const entry = picksByTipster.get(tipsterConfig.username)!;
-        entry.count++;
-        if (entry.samples.length < 2) {
-          entry.samples.push(
-            `@${best.odds.toFixed(2)}: ${best.homeTeam} vs ${best.awayTeam} (${best.selectedOutcome})`,
-          );
-        }
+      const best = [...available].sort((x, y) => y.ev - x.ev)[0];
+      if (!best) break;
+      usedFixtureIds.add(best.fixtureId);
+      const entry = picksByTipster.get(tipsterConfig.username)!;
+      entry.count++;
+      if (entry.samples.length < 2) {
+        entry.samples.push(
+          `@${best.odds.toFixed(2)}: ${best.homeTeam} vs ${best.awayTeam} (${best.selectedOutcome})`,
+        );
       }
       count++;
     }
@@ -412,7 +444,7 @@ async function main() {
     .sort((a, b) => b[1].count - a[1].count);
   const withZero = [...picksByTipster.entries()].filter(([, v]) => v.count === 0);
 
-  console.log('--- Tipsters WITH coupons (2-leg safe acca simulation) ---');
+  console.log('--- Tipsters WITH coupons (single-fixture simulation) ---');
   for (const [username, v] of withPicks) {
     const cfg = AI_TIPSTERS.find((t) => t.username === username);
     console.log(`  ${cfg?.display_name ?? username} (${username}): ${v.count} coupon(s)`);
@@ -430,9 +462,7 @@ async function main() {
   console.log(`  Tipsters with ≥1 coupon: ${withPicks.length}/${AI_TIPSTERS.length}`);
   console.log(`  Tipsters with 0 coupons: ${withZero.length}`);
   console.log(`  Total coupons (simulated): ${totalPicks}`);
-  console.log(
-    '  Model: 2 high-confidence API legs per coupon (2.0–3.5 combined). Singles disabled.',
-  );
+  console.log('  Model: single-fixture coupons ranked by EV (pre-combine behavior).');
   console.log('  (No DB – fetched directly from API-Football)\n');
 }
 

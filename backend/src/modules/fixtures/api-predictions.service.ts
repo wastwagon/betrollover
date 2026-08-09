@@ -8,11 +8,13 @@ import { Repository } from 'typeorm';
 import { getSportApiBaseUrl } from '../../config/sports.config';
 import { PREDICTION_API_DELAY_MS } from '../../config/api-limits.config';
 import {
+  parseApiFootballPredictionMeta,
   parseApiFootballPredictionsOutcomes,
+  type ApiPredictionMeta,
   type ApiPredictionOutcome,
 } from './api-football-predictions.parser';
 
-export type { ApiPredictionOutcome };
+export type { ApiPredictionOutcome, ApiPredictionMeta };
 
 const PREDICTIONS_CACHE_TTL = 24 * 60 * 60; // 24 hours
 
@@ -21,6 +23,7 @@ export interface ApiFixturePredictions {
   fixtureId: number;
   apiId: number;
   outcomes: ApiPredictionOutcome[];
+  meta: ApiPredictionMeta;
 }
 
 /**
@@ -77,13 +80,19 @@ export class ApiPredictionsService {
         return null;
       }
 
-      const outcomes = parseApiFootballPredictionsOutcomes(response.predictions as Record<string, unknown>);
+      const predictionsObj = response.predictions as Record<string, unknown>;
+      const outcomes = parseApiFootballPredictionsOutcomes(predictionsObj);
       if (outcomes.length === 0) return null;
+      const meta = parseApiFootballPredictionMeta(
+        predictionsObj,
+        (response.comparison as Record<string, unknown> | undefined) ?? null,
+      );
 
       return {
         fixtureId: 0, // Caller will set from DB fixture
         apiId: apiFixtureId,
         outcomes,
+        meta,
       };
     } catch (err: any) {
       this.logger.warn(`Failed to fetch predictions for fixture ${apiFixtureId}: ${err?.message}`);

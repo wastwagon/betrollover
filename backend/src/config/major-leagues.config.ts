@@ -1,5 +1,5 @@
 /**
- * Major-league gate for safe 2-leg AI accas.
+ * Major-league gate for high-odds / underdog AI strategies.
  * Prefers API league IDs; falls back to name patterns with an amateur blocklist.
  */
 

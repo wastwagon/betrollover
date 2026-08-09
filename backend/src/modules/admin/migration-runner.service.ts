@@ -129,11 +129,15 @@ export class MigrationRunnerService {
     }
   }
 
-  /** Ensure ai_max_coupons_per_day on api_settings (089). */
+  /** Ensure ai_max_coupons_per_day on api_settings (089). Default 2 for single-fixture tipsters. */
   async ensureAiMaxCouponsPerDayColumn(): Promise<void> {
     try {
       await this.dataSource.query(
-        `ALTER TABLE api_settings ADD COLUMN IF NOT EXISTS ai_max_coupons_per_day INTEGER NOT NULL DEFAULT 1`,
+        `ALTER TABLE api_settings ADD COLUMN IF NOT EXISTS ai_max_coupons_per_day INTEGER NOT NULL DEFAULT 2`,
+      );
+      // Restore two singles/day after the combine-era default of 1.
+      await this.dataSource.query(
+        `UPDATE api_settings SET ai_max_coupons_per_day = 2 WHERE id = 1 AND ai_max_coupons_per_day = 1`,
       );
     } catch (err: any) {
       this.logger.warn(`ensureAiMaxCouponsPerDayColumn failed (non-fatal): ${err?.message || err}`);

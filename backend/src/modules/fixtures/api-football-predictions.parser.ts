@@ -142,3 +142,144 @@ export function parseApiFootballPredictionsOutcomes(
 
   return outcomes;
 }
+
+/** Side-channel fields from /predictions used for strategy gates (not market odds). */
+export interface ApiPredictionMeta {
+  advice: string | null;
+  winOrDraw: boolean | null;
+  underOver: string | null;
+  winnerName: string | null;
+  /** comparison.form / att / def as 0–1 fractions when present */
+  formHome: number | null;
+  formAway: number | null;
+  attHome: number | null;
+  attAway: number | null;
+  defHome: number | null;
+  defAway: number | null;
+}
+
+function parseComparisonSide(
+  block: Record<string, unknown> | undefined,
+  side: 'home' | 'away',
+): number | null {
+  if (!block) return null;
+  const raw = block[side];
+  if (raw == null || !String(raw).trim()) return null;
+  return parsePercent(raw as string | number);
+}
+
+/**
+ * Parse advice / winner / under_over / comparison from a full /predictions response item.
+ * Pass `response.predictions` plus optional sibling `comparison` object.
+ */
+export function parseApiFootballPredictionMeta(
+  predictions: Record<string, unknown>,
+  comparison?: Record<string, unknown> | null,
+): ApiPredictionMeta {
+  const winner = predictions?.winner as Record<string, unknown> | undefined;
+  const underOverRaw = predictions?.under_over ?? predictions?.underOver;
+  const winOrDrawRaw = predictions?.win_or_draw ?? predictions?.winOrDraw;
+  const adviceRaw = predictions?.advice;
+
+  let winOrDraw: boolean | null = null;
+  if (typeof winOrDrawRaw === 'boolean') winOrDraw = winOrDrawRaw;
+  else if (winOrDrawRaw != null) {
+    const s = String(winOrDrawRaw).toLowerCase();
+    if (s === 'true' || s === '1' || s === 'yes') winOrDraw = true;
+    else if (s === 'false' || s === '0' || s === 'no') winOrDraw = false;
+  }
+
+  const form = comparison?.form as Record<string, unknown> | undefined;
+  const att = (comparison?.att ?? comparison?.attack) as Record<string, unknown> | undefined;
+  const def = (comparison?.def ?? comparison?.defence ?? comparison?.defense) as
+    | Record<string, unknown>
+    | undefined;
+
+  return {
+    advice: adviceRaw != null && String(adviceRaw).trim() ? String(adviceRaw) : null,
+    winOrDraw,
+    underOver: underOverRaw != null && String(underOverRaw).trim() ? String(underOverRaw) : null,
+    winnerName:
+      winner?.name != null && String(winner.name).trim() ? String(winner.name) : null,
+    formHome: parseComparisonSide(form, 'home'),
+    formAway: parseComparisonSide(form, 'away'),
+    attHome: parseComparisonSide(att, 'home'),
+    attAway: parseComparisonSide(att, 'away'),
+    defHome: parseComparisonSide(def, 'home'),
+    defAway: parseComparisonSide(def, 'away'),
+  };
+}
+
+/** True when API under_over string agrees with over/under 2.5 direction. */
+export function underOverAligns(underOver: string | null | undefined, want: 'over' | 'under'): boolean {
+  if (!underOver) return false;
+  const s = underOver.toLowerCase().replace(/\s+/g, '');
+  if (want === 'over') {
+    if (s.includes('under')) return false;
+    if (s.includes('over')) return true;
+    // API sometimes returns "-2.5" meaning expect under that line
+    if (/^-[\d.]+$/.test(s)) return false;
+    if (/^\+?[\d.]+$/.test(s) || /^[\d.]+$/.test(s)) return true;
+    return false;
+  }
+  if (s.includes('under')) return true;
+  if (s.includes('over')) return false;
+  if (/^-[\d.]+$/.test(s)) return true;
+  return false;
+}
+
+function teamNameMatches(a: string, b: string): boolean {
+  const na = a.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const nb = b.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (!na || !nb) return false;
+  return na.includes(nb) || nb.includes(na);
+}
+
+/**
+ * API-Football often emits coarse percent bins (40/45/50/55/60) that look like
+ * massive +EV vs long prices but are poorly calibrated. Reject those placeholders.
+ */
+export function isCoarseApiPercent(probability: number): boolean {
+  if (!Number.isFinite(probability) || probability <= 0) return false;
+  const nearest5 = Math.round(probability * 20) / 20;
+  if (Math.abs(probability - nearest5) > 0.0015) return false;
+  return [0.4, 0.45, 0.5, 0.55, 0.6].includes(nearest5);
+}
+
+/**
+ * Whether API advice/winner agrees with a 1X2 (or DC) selection.
+ */
+export function adviceAlignsWithOutcome(
+  meta: ApiPredictionMeta,
+  outcome: string,
+  homeTeam: string,
+  awayTeam: string,
+): boolean {
+  const o = outcome.toLowerCase();
+  const advice = (meta.advice || '').toLowerCase();
+  const winner = meta.winnerName || '';
+
+  if (o === 'home' || o === 'home_draw' || o === 'dnb_home' || o === 'ht_home') {
+    if (winner && teamNameMatches(winner, homeTeam)) return true;
+    if (homeTeam && advice.includes(homeTeam.toLowerCase().slice(0, Math.min(6, homeTeam.length))))
+      return true;
+    if (advice.includes('home') && !advice.includes('away')) return true;
+    // win_or_draw alone is only enough for 1X (not pure home)
+    if (o === 'home_draw' && meta.winOrDraw === true) return true;
+    return false;
+  }
+  if (o === 'away' || o === 'draw_away' || o === 'dnb_away' || o === 'ht_away') {
+    if (winner && teamNameMatches(winner, awayTeam)) return true;
+    if (advice.includes('away') && !advice.includes('home')) return true;
+    if (awayTeam && advice.includes(awayTeam.toLowerCase().slice(0, Math.min(5, awayTeam.length))))
+      return true;
+    return false;
+  }
+  if (o === 'draw' || o === 'ht_draw') {
+    return advice.includes('draw') || advice.includes('x');
+  }
+  if (o === 'home_away') {
+    return Boolean(winner) || advice.includes('win');
+  }
+  return true;
+}

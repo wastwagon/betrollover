@@ -11,9 +11,13 @@ import * as path from 'path';
 config({ path: path.resolve(__dirname, '../../.env') });
 
 import { parseApiFootballPredictionsOutcomes } from '../src/modules/fixtures/api-football-predictions.parser';
-import { findSafest2LegPair, resolveAccaPolicy } from '../src/modules/predictions/safe-acca.util';
+import {
+  findSafest2LegPair,
+  resolveAccaPolicy,
+  SAFE_2_LEG_ACCA,
+} from '../src/modules/predictions/safe-acca.util';
 import { isMajorLeagueForSafeAcca } from '../src/config/major-leagues.config';
-import { AI_TIPSTERS, SAFE_2_LEG_ACCA } from '../src/config/ai-tipsters.config';
+import { AI_TIPSTERS } from '../src/config/ai-tipsters.config';
 
 const BASE = 'https://v3.football.api-sports.io';
 const API_KEY = process.env.API_SPORTS_KEY || '';
@@ -160,15 +164,8 @@ async function main() {
     console.log(`  Leg2: ${lb.home} vs ${lb.away} — ${lb.outcome} @ ${lb.odds.toFixed(2)} (${(lb.prob * 100).toFixed(0)}%)`);
   }
 
-  const singleLegTipsters = AI_TIPSTERS.filter((t) => (t.personality.coupon_legs ?? 2) === 1);
-  console.log(`\n--- Single-leg tipsters (coupon_legs: 1) ---`);
-  if (singleLegTipsters.length === 0) {
-    console.log('  None — all tipsters require 2-leg safe accas');
-  } else {
-    for (const t of singleLegTipsters) {
-      console.log(`  ${t.display_name} (${t.username})`);
-    }
-  }
+  console.log(`\n--- Live tipsters (single-fixture) ---`);
+  console.log(`  ${AI_TIPSTERS.length} tipsters configured for single-fixture coupons`);
 
   console.log('\n--- Day-of-week filter (today is ' + new Date(TARGET_DATE + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long' }) + ') ---');
   const day = new Date(TARGET_DATE + 'T12:00:00Z').getDay();

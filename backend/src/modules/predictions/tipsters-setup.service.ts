@@ -82,8 +82,9 @@ export class TipstersSetupService {
   }
 
   /**
-   * Initialize/sync 25 AI tipsters from config.
+   * Initialize/sync AI tipsters from config (25 distinct strategies).
    * Idempotent: upserts by username, preserves existing stats.
+   * Deactivates AI tipsters no longer in config; re-activates those restored to config.
    * Creates User records for marketplace display.
    */
   async initializeAiTipsters(): Promise<{ created: number; updated: number }> {
@@ -91,6 +92,7 @@ export class TipstersSetupService {
     let updated = 0;
     let packagesCreated = 0;
     let packagesFound = 0;
+    const activeUsernames = new Set(AI_TIPSTERS.map((c) => c.username));
 
     for (const config of AI_TIPSTERS) {
       const existing = await this.tipsterRepo.findOne({
@@ -128,7 +130,8 @@ export class TipstersSetupService {
           isAi: payload.isAi,
           tipsterType: payload.tipsterType,
           personalityProfile: personalityProfile as any,
-          isActive: payload.isActive,
+          // Re-enable tipsters restored to config after a prior retirement.
+          isActive: true,
           userId: payload.userId,
         });
         updated++;
@@ -147,8 +150,18 @@ export class TipstersSetupService {
       else packagesFound++;
     }
 
+    const retired = await this.tipsterRepo.find({ where: { isAi: true } });
+    let deactivated = 0;
+    for (const tipster of retired) {
+      if (activeUsernames.has(tipster.username)) continue;
+      if (!tipster.isActive) continue;
+      await this.tipsterRepo.update(tipster.id, { isActive: false });
+      deactivated++;
+      this.logger.log(`Deactivated retired AI tipster: ${tipster.username}`);
+    }
+
     this.logger.log(
-      `AI tipsters initialized: ${created} created, ${updated} updated, packages ${packagesCreated} created / ${packagesFound} existing`,
+      `AI tipsters initialized: ${created} created, ${updated} updated, ${deactivated} deactivated, packages ${packagesCreated} created / ${packagesFound} existing`,
     );
     return { created, updated };
   }

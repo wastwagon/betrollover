@@ -27,8 +27,12 @@ import { isMajorLeagueForSafeAcca } from '../src/config/major-leagues.config';
 import { normalizeApiMarketName } from '../src/modules/fixtures/api-market-aliases';
 import { outcomeKeyFromOddsLine } from '../src/modules/fixtures/odds-outcome-keys';
 import { parseApiFootballPredictionsOutcomes } from '../src/modules/fixtures/api-football-predictions.parser';
-import { findSafest2LegPair, resolveAccaPolicy, SAFE_ACCA_DEFAULTS } from '../src/modules/predictions/safe-acca.util';
-import { SAFE_2_LEG_ACCA } from '../src/config/ai-tipsters.config';
+import {
+  findSafest2LegPair,
+  resolveAccaPolicy,
+  SAFE_ACCA_DEFAULTS,
+  SAFE_2_LEG_ACCA,
+} from '../src/modules/predictions/safe-acca.util';
 import { DataSource } from 'typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 

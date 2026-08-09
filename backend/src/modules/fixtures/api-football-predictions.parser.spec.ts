@@ -1,6 +1,10 @@
 import {
+  adviceAlignsWithOutcome,
+  isCoarseApiPercent,
+  parseApiFootballPredictionMeta,
   parseApiFootballPredictionsOutcomes,
   parsePercent,
+  underOverAligns,
 } from './api-football-predictions.parser';
 
 describe('parsePercent', () => {
@@ -68,5 +72,57 @@ describe('parseApiFootballPredictionsOutcomes', () => {
     expect(by.fh_under25).toBeCloseTo(0.45);
     expect(by.odd_goals).toBeCloseTo(0.48);
     expect(by.even_goals).toBeCloseTo(0.52);
+  });
+});
+
+describe('parseApiFootballPredictionMeta', () => {
+  it('parses advice, under_over and comparison form', () => {
+    const meta = parseApiFootballPredictionMeta(
+      {
+        advice: 'Win or draw for Arsenal',
+        win_or_draw: true,
+        under_over: 'Over 2.5',
+        winner: { name: 'Arsenal' },
+      },
+      { form: { home: '60%', away: '40%' }, att: { home: '55%', away: '45%' } },
+    );
+    expect(meta.advice).toContain('Arsenal');
+    expect(meta.winOrDraw).toBe(true);
+    expect(meta.underOver).toBe('Over 2.5');
+    expect(meta.winnerName).toBe('Arsenal');
+    expect(meta.formHome).toBeCloseTo(0.6);
+    expect(meta.formAway).toBeCloseTo(0.4);
+  });
+});
+
+describe('underOverAligns / adviceAlignsWithOutcome', () => {
+  it('matches over/under direction', () => {
+    expect(underOverAligns('Over 2.5', 'over')).toBe(true);
+    expect(underOverAligns('Under 2.5', 'under')).toBe(true);
+    expect(underOverAligns('Over 2.5', 'under')).toBe(false);
+  });
+
+  it('matches home advice to home team', () => {
+    const meta = parseApiFootballPredictionMeta({
+      advice: 'Winner : Arsenal',
+      winner: { name: 'Arsenal' },
+      win_or_draw: false,
+    });
+    expect(adviceAlignsWithOutcome(meta, 'home', 'Arsenal', 'Chelsea')).toBe(true);
+    expect(adviceAlignsWithOutcome(meta, 'away', 'Arsenal', 'Chelsea')).toBe(false);
+  });
+});
+
+describe('isCoarseApiPercent', () => {
+  it('flags common placeholder bins', () => {
+    expect(isCoarseApiPercent(0.45)).toBe(true);
+    expect(isCoarseApiPercent(0.5)).toBe(true);
+    expect(isCoarseApiPercent(0.55)).toBe(true);
+  });
+
+  it('allows non-bin probabilities', () => {
+    expect(isCoarseApiPercent(0.47)).toBe(false);
+    expect(isCoarseApiPercent(0.33)).toBe(false);
+    expect(isCoarseApiPercent(0.62)).toBe(false);
   });
 });

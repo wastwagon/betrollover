@@ -1,6 +1,4 @@
-import type { AiTipsterPersonality } from '../../config/ai-tipsters.config';
-
-/** Shared defaults for 2-leg safe accas (high confidence, 2.0+ combined). */
+/** Shared defaults for 2-leg safe accas (high confidence, 2.0+ combined). Diagnostic/backtest only. */
 export const SAFE_ACCA_DEFAULTS = {
   couponLegs: 2,
   legOddsMin: 1.5,
@@ -9,6 +7,44 @@ export const SAFE_ACCA_DEFAULTS = {
   maxCombinedOdds: 3.0,
   minJointProbability: 0.42,
 } as const;
+
+/** Personality-shaped input for acca diagnostics (live tipsters are single-fixture again). */
+export interface AccaPersonalityInput {
+  target_odds_min?: number;
+  target_odds_max?: number;
+  coupon_legs?: 1 | 2;
+  leg_odds_min?: number;
+  leg_odds_max?: number;
+  min_combined_odds?: number;
+  max_combined_odds?: number;
+  min_joint_probability?: number;
+  require_api_probability?: boolean;
+  selection_mode?: 'ev' | 'confidence';
+  major_leagues_only?: boolean;
+  min_win_probability?: number;
+  min_api_confidence?: number;
+  min_expected_value?: number;
+  risk_level?: 'conservative' | 'balanced' | 'aggressive';
+  leagues_focus?: string[];
+  bet_types?: string[];
+  max_daily_predictions?: number;
+}
+
+/** Convenience profile for diagnostic scripts that still evaluate 2-leg pairs. */
+export const SAFE_2_LEG_ACCA: AccaPersonalityInput = {
+  coupon_legs: 2,
+  leg_odds_min: SAFE_ACCA_DEFAULTS.legOddsMin,
+  leg_odds_max: SAFE_ACCA_DEFAULTS.legOddsMax,
+  min_combined_odds: SAFE_ACCA_DEFAULTS.minCombinedOdds,
+  max_combined_odds: SAFE_ACCA_DEFAULTS.maxCombinedOdds,
+  min_joint_probability: SAFE_ACCA_DEFAULTS.minJointProbability,
+  min_win_probability: 0.52,
+  min_api_confidence: 0.6,
+  min_expected_value: 0,
+  require_api_probability: true,
+  selection_mode: 'confidence',
+  major_leagues_only: true,
+};
 
 export interface AccaLegCandidate {
   fixtureId: number;
@@ -30,7 +66,7 @@ export interface ResolvedAccaPolicy {
   majorLeaguesOnly: boolean;
 }
 
-export function resolveAccaPolicy(personality: AiTipsterPersonality): ResolvedAccaPolicy {
+export function resolveAccaPolicy(personality: AccaPersonalityInput): ResolvedAccaPolicy {
   const couponLegs = (personality.coupon_legs ?? SAFE_ACCA_DEFAULTS.couponLegs) as 1 | 2;
   const selectionMode = personality.selection_mode ?? (couponLegs === 2 ? 'confidence' : 'ev');
 
@@ -51,10 +87,10 @@ export function resolveAccaPolicy(personality: AiTipsterPersonality): ResolvedAc
 
   return {
     couponLegs: 1,
-    legOddsMin: personality.target_odds_min,
-    legOddsMax: personality.target_odds_max,
-    minCombinedOdds: personality.target_odds_min,
-    maxCombinedOdds: personality.target_odds_max,
+    legOddsMin: personality.target_odds_min ?? 2.0,
+    legOddsMax: personality.target_odds_max ?? 5.0,
+    minCombinedOdds: personality.target_odds_min ?? 2.0,
+    maxCombinedOdds: personality.target_odds_max ?? 5.0,
     minJointProbability: personality.min_joint_probability ?? 0,
     requireApiProbability: personality.require_api_probability ?? false,
     selectionMode,

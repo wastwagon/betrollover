@@ -120,9 +120,13 @@ export class PredictionMarketplaceSyncService {
 
     // Unique (user_id, title): include prediction.id so concurrent syncs cannot collide on the same serial
     // (getCount()+1 races when two jobs insert for the same tipster/day before either commits).
-    const baseTitle = this.isMatchBasedTitle(prediction.predictionTitle)
-      ? '2-Pick Acca'
-      : (prediction.predictionTitle || '2-Pick Acca');
+    const isMulti = fixtures.length > 1;
+    const rawTitle = prediction.predictionTitle || '';
+    const baseTitle = this.isMatchBasedTitle(rawTitle)
+      ? isMulti
+        ? '2-Pick Acca'
+        : 'Single'
+      : rawTitle || (isMulti ? '2-Pick Acca' : 'Single');
     const dateStr = prediction.predictionDate
       ? new Date(prediction.predictionDate).toISOString().slice(0, 10)
       : new Date().toISOString().slice(0, 10);
@@ -133,7 +137,9 @@ export class PredictionMarketplaceSyncService {
     const ticket = this.ticketRepo.create({
       userId: tipster.userId,
       title,
-      description: 'Hand-picked accumulator from our tipsters.',
+      description: isMulti
+        ? 'Hand-picked accumulator from our tipsters.'
+        : 'Single-fixture tip from our AI tipsters.',
       sport: 'Football',
       totalPicks: fixtures.length,
       totalOdds: Math.round(totalOdds * 1000) / 1000,
@@ -287,7 +293,8 @@ export class PredictionMarketplaceSyncService {
       }
       seen.set(key, ticket.id);
 
-      const newTitle = '2-Pick Acca';
+      const legCount = ticket.picks?.length ?? ticket.totalPicks ?? 1;
+      const newTitle = legCount > 1 ? '2-Pick Acca' : 'Single';
       if (ticket.title !== newTitle) {
         await this.ticketRepo.update(ticket.id, { title: newTitle });
         titlesUpdated++;
