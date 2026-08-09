@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getApiUrl, SITE_NAME } from '@/lib/site-config';
+import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import type { HomePublicStats } from '@/lib/home-public-data';
@@ -90,36 +90,38 @@ export function HomeHero({
 
   return (
     <div className="w-full min-w-0">
-      {/* Full-bleed hero banner — brand + one message + CTAs */}
+      {/* Full-bleed football hero — one headline, one line, CTAs */}
       <section
         className="relative w-full min-w-0 overflow-hidden text-white"
-        aria-label={SITE_NAME}
+        aria-label={t('home.hero_title')}
       >
         <div className="absolute inset-0">
-          <Image
-            src="/images/marketing/hero-cinematic.webp"
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className={`object-cover object-center transition-transform duration-[1.4s] ease-out ${
-              entered ? 'scale-100' : 'scale-105'
-            }`}
-          />
-          {/* Readability + brand atmosphere — not card chrome */}
+          <picture>
+            <source srcSet="/images/marketing/hero-cinematic.avif" type="image/avif" />
+            <Image
+              src="/images/marketing/hero-cinematic.webp"
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className={`object-cover object-[center_40%] transition-transform duration-[1.4s] ease-out ${
+                entered ? 'scale-100' : 'scale-105'
+              }`}
+            />
+          </picture>
           <div
             className="absolute inset-0"
             style={{
               background:
-                'linear-gradient(180deg, rgba(2, 20, 14, 0.35) 0%, rgba(2, 20, 14, 0.55) 45%, rgba(2, 20, 14, 0.88) 100%)',
+                'linear-gradient(180deg, rgba(2, 16, 12, 0.28) 0%, rgba(2, 16, 12, 0.52) 42%, rgba(2, 12, 10, 0.9) 100%)',
             }}
             aria-hidden
           />
           <div
-            className="absolute inset-0 opacity-70"
+            className="absolute inset-0 opacity-65"
             style={{
               background:
-                'radial-gradient(ellipse 90% 60% at 20% 100%, rgba(16, 185, 129, 0.35), transparent 55%)',
+                'radial-gradient(ellipse 85% 55% at 18% 100%, rgba(16, 185, 129, 0.32), transparent 58%)',
             }}
             aria-hidden
           />
@@ -127,17 +129,17 @@ export function HomeHero({
 
         <div className="relative mx-auto flex min-h-[min(72svh,520px)] w-full max-w-7xl flex-col justify-end px-4 pb-8 pt-14 sm:min-h-[420px] sm:px-6 sm:pb-10 sm:pt-16 lg:px-8 lg:pb-12">
           <div
-            className={`max-w-xl transition-all duration-700 ease-out ${
+            className={`max-w-2xl transition-all duration-700 ease-out ${
               entered ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'
             }`}
           >
-            <p className="text-[2rem] font-bold leading-none tracking-tight sm:text-5xl md:text-6xl">
-              {SITE_NAME}
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200/90 sm:text-xs">
+              {t('home.hero_badge')}
             </p>
-            <h1 className="mt-3 text-lg font-semibold leading-snug tracking-tight text-white sm:mt-4 sm:text-2xl md:text-[1.75rem]">
+            <h1 className="text-[1.85rem] font-bold leading-[1.12] tracking-tight text-white sm:text-4xl md:text-5xl md:leading-[1.08]">
               {t('home.hero_title')}
             </h1>
-            <p className="mt-2 max-w-md text-sm leading-relaxed text-white/85 sm:text-base">
+            <p className="mt-3 max-w-lg text-sm leading-relaxed text-white/85 sm:mt-4 sm:text-base">
               {t('home.hero_escrow_line')}
             </p>
           </div>
