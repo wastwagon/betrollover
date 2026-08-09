@@ -22,12 +22,21 @@ import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import {
+  FOOTBALL_SPORT_KEY,
+  filterDiscoverySports,
+  isDiscoverySportAllowed,
+  isFootballOnlyDiscovery,
+} from '@/lib/football-only-discovery';
 
 const API_URL = getApiUrl();
 
-const VALID_SPORT_KEYS = new Set([
+const VALID_SPORT_KEYS_ALL = [
   'football', 'basketball', 'rugby', 'mma', 'volleyball', 'hockey', 'american_football', 'tennis', 'multi',
-]);
+] as const;
+const VALID_SPORT_KEYS = new Set<string>(
+  filterDiscoverySports([...VALID_SPORT_KEYS_ALL]),
+);
 
 type PriceFilter = 'all' | 'free' | 'paid' | 'sold';
 type SortBy = 'newest' | 'price-low' | 'price-high' | 'tipster-rank' | 'following-only';
@@ -106,7 +115,8 @@ export default function MarketplacePage() {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
   const [sortBy, setSortBy] = useState<SortBy>('newest');
-  const [sportFilter, setSportFilter] = useState<string>('');
+  const footballOnly = isFootballOnlyDiscovery();
+  const [sportFilter, setSportFilter] = useState<string>(footballOnly ? FOOTBALL_SPORT_KEY : '');
   const [tipsterSearch, setTipsterSearch] = useState('');
   const [debouncedTipster, setDebouncedTipster] = useState('');
   useEffect(() => {
@@ -121,15 +131,19 @@ export default function MarketplacePage() {
   // Sync sport + tipster search from URL (shareable links, back/forward)
   useEffect(() => {
     const sport = searchParams.get('sport');
-    const value = sport && VALID_SPORT_KEYS.has(sport) ? sport : '';
-    setSportFilter(value);
+    if (footballOnly) {
+      setSportFilter(FOOTBALL_SPORT_KEY);
+    } else {
+      const value = sport && VALID_SPORT_KEYS.has(sport) ? sport : '';
+      setSportFilter(value);
+    }
     const tip = searchParams.get('tipster') || '';
     setTipsterSearch(tip);
     setDebouncedTipster(tip);
     const pf = searchParams.get('priceFilter');
     if (pf === 'free' || pf === 'paid' || pf === 'sold') setPriceFilter(pf);
     else if (pf === 'all') setPriceFilter('all');
-  }, [searchParams]);
+  }, [searchParams, footballOnly]);
 
   // Keep URL in sync with filters (debounced tipster avoids history spam while typing)
   useEffect(() => {
@@ -190,6 +204,9 @@ export default function MarketplacePage() {
 
   const filteredAndSortedPicks = useMemo(() => {
     let list = [...picks]; // API already filters by sport when sportFilter is set
+    if (footballOnly) {
+      list = list.filter((p) => isDiscoverySportAllowed(p.sport));
+    }
     if (sortBy === 'following-only' && followedTipsterUsernames.size > 0) {
       list = list.filter((p) => p.tipster?.username && followedTipsterUsernames.has(p.tipster.username));
     }
@@ -203,7 +220,7 @@ export default function MarketplacePage() {
       list.sort((a, b) => (a.tipster?.rank ?? 999) - (b.tipster?.rank ?? 999));
     }
     return list;
-  }, [picks, sortBy, followedTipsterUsernames]);
+  }, [picks, sortBy, followedTipsterUsernames, footballOnly]);
 
   const tipsterParam = useMemo(
     () => (debouncedTipster ? `&tipsterSearch=${encodeURIComponent(debouncedTipster)}` : ''),
@@ -223,7 +240,8 @@ export default function MarketplacePage() {
 
   const fetchMarketplace = useCallback(async () => {
     const token = localStorage.getItem('token');
-    const sportParam = sportFilter ? `&sport=${encodeURIComponent(sportFilter)}` : '';
+    const effectiveSport = footballOnly ? FOOTBALL_SPORT_KEY : sportFilter;
+    const sportParam = effectiveSport ? `&sport=${encodeURIComponent(effectiveSport)}` : '';
     const listUrl = `${API_URL}/accumulators/marketplace/public?limit=24${sportParam}${tipsterParam}${priceParam}`;
     const listHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
@@ -292,7 +310,7 @@ export default function MarketplacePage() {
         showError(err);
       })
       .finally(() => setLoading(false));
-  }, [sportFilter, tipsterParam, priceParam, showError]);
+  }, [sportFilter, tipsterParam, priceParam, showError, footballOnly]);
 
   fetchMarketplaceRef.current = fetchMarketplace;
 
@@ -538,7 +556,7 @@ export default function MarketplacePage() {
             </Link>
           </div>
 
-          {sportFilter ? (
+          {!footballOnly && sportFilter ? (
             <div className="mb-4 rounded-2xl border border-[var(--separator)] bg-[var(--card)] px-4 py-3.5">
               <p className="text-sm font-semibold text-[var(--text)]">
                 {t('marketplace.sport_hub_title', {
@@ -581,6 +599,7 @@ export default function MarketplacePage() {
 
           {/* Sticky discovery chrome — sports + filters stay visible while scrolling */}
           <div className="sticky z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 py-2 mb-4 bg-[var(--bg)]/95 backdrop-blur-md border-b border-[var(--separator)] top-[calc(env(safe-area-inset-top,0px)+2.75rem+3.5rem)] md:top-[calc(2.75rem+4rem)] lg:top-16">
+            {!footballOnly ? (
             <div className="w-full min-w-0 overflow-hidden mb-2">
               <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
                 {(
@@ -612,6 +631,7 @@ export default function MarketplacePage() {
                 ))}
               </div>
             </div>
+            ) : null}
 
             {!loading && (
               <MarketplaceFilterBar

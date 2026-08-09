@@ -17,7 +17,9 @@ import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 
-const SPORT_FILTER_KEYS = [
+import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
+
+const SPORT_FILTER_KEYS_ALL = [
   { key: '', labelKey: 'my_picks.filter_all' as const },
   { key: 'football', labelKey: 'nav.football' as const },
   { key: 'basketball', labelKey: 'nav.basketball' as const },
@@ -29,6 +31,10 @@ const SPORT_FILTER_KEYS = [
   { key: 'tennis', labelKey: 'create_pick.sport_tennis' as const },
   { key: 'multi', labelKey: 'pick.multi_sport' as const },
 ] as const;
+
+const SPORT_FILTER_KEYS = isFootballOnlyDiscovery()
+  ? SPORT_FILTER_KEYS_ALL.filter((s) => s.key === '' || s.key === 'football')
+  : SPORT_FILTER_KEYS_ALL;
 
 type SportKey = typeof SPORT_FILTER_KEYS[number]['key'];
 

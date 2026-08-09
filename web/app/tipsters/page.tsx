@@ -18,6 +18,7 @@ import { getApiErrorMessage } from '@/lib/api-error-message';
 import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 import { IconPackage, IconTarget, IconTrophy } from '@/components/ios/icons';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
+import { filterDiscoverySports, isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 
 type Period = 'all_time' | 'monthly' | 'weekly';
 type SportFilter = 'all' | 'football' | 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football';
@@ -211,32 +212,40 @@ export default function TipstersPage() {
           )}
         </div>
         <div className="mb-8 w-full min-w-0 max-w-full">
-          {/* Sport filter pills */}
+          {/* Sport filter pills — hidden in football-only discovery */}
+          {!isFootballOnlyDiscovery() ? (
           <div className="flex flex-nowrap sm:flex-wrap gap-2 mb-3 w-full min-w-0 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch] sm:mx-0 sm:px-0 sm:pb-0 sm:overflow-visible">
-            {([
-              { key: 'all' as SportFilter, labelKey: 'marketplace.filter_all_sports' },
-              { key: 'football' as SportFilter, labelKey: 'nav.football' },
-              { key: 'basketball' as SportFilter, labelKey: 'nav.basketball' },
-              { key: 'rugby' as SportFilter, labelKey: 'nav.rugby' },
-              { key: 'mma' as SportFilter, labelKey: 'nav.mma' },
-              { key: 'volleyball' as SportFilter, labelKey: 'nav.volleyball' },
-              { key: 'hockey' as SportFilter, labelKey: 'nav.hockey' },
-              { key: 'american_football' as SportFilter, labelKey: 'nav.american_football' },
-            ]).map((sp) => (
+            {filterDiscoverySports([
+              'all',
+              'football',
+              'basketball',
+              'rugby',
+              'mma',
+              'volleyball',
+              'hockey',
+              'american_football',
+            ] as SportFilter[]).map((key) => {
+              const labelKey =
+                key === 'all'
+                  ? 'marketplace.filter_all_sports'
+                  : (`nav.${key}` as 'nav.football');
+              return (
               <button
                 type="button"
-                key={sp.key}
-                onClick={() => setSportFilter(sp.key)}
+                key={key}
+                onClick={() => setSportFilter(key)}
                 className={`inline-flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
-                  sportFilter === sp.key
+                  sportFilter === key
                     ? 'bg-[var(--primary)] text-white border-[var(--primary)] shadow-sm'
                     : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
                 }`}
               >
-                <span>{t(sp.labelKey)}</span>
+                <span>{t(labelKey)}</span>
               </button>
-            ))}
+              );
+            })}
           </div>
+          ) : null}
 
           {/* Period tabs */}
           <div className="flex flex-nowrap sm:flex-wrap gap-2 mb-4 w-full min-w-0 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch] sm:mx-0 sm:px-0 sm:pb-0 sm:overflow-visible">

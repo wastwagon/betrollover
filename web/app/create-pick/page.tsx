@@ -31,6 +31,7 @@ import type { Fixture, FixtureOdd, SportEventItem, CreatePickSport, FilterOption
 import { SportLoadingSpinner } from './components/SportLoadingSpinner';
 import { SportEmptyState } from './components/SportEmptyState';
 import { AFRICAN_BOOKMAKERS, formatFootballOutcomeLabel } from '@betrollover/shared-types';
+import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 import { FootballFixtureCard } from './components/FootballFixtureCard';
 import { SportEventCard } from './components/SportEventCard';
 
@@ -79,6 +80,9 @@ export default function CreatePickPage() {
   const t = useT();
   const { selections, addSelection: addToCart, removeSelection: removeFromCart, clearCart } = useSlipCart();
   const [sport, setSport] = useState<CreatePickSport>('football');
+  useEffect(() => {
+    if (isFootballOnlyDiscovery() && sport !== 'football') setSport('football');
+  }, [sport]);
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [basketballEvents, setBasketballEvents] = useState<SportEventItem[]>([]);
   const [rugbyEvents, setRugbyEvents] = useState<SportEventItem[]>([]);
@@ -830,19 +834,26 @@ export default function CreatePickPage() {
           <div className="mb-4">
             <AdSlot zoneSlug="create-pick-full" fullWidth className="w-full" />
           </div>
-          {/* Sport tabs — horizontal scroll contained here so the page does not pan sideways (WebView / iOS). */}
+          {/* Sport tabs — football-only when FOOTBALL_ONLY_DISCOVERY is on. */}
           <div className="mb-4 w-full min-w-0 overflow-hidden">
             <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide touch-pan-x [-webkit-overflow-scrolling:touch]">
-            {([
-              { key: 'football', label: t('create_pick.sport_football') },
-              { key: 'basketball', label: t('create_pick.sport_basketball') },
-              { key: 'rugby', label: t('create_pick.sport_rugby') },
-              { key: 'mma', label: t('create_pick.sport_mma') },
-              { key: 'volleyball', label: t('create_pick.sport_volleyball') },
-              { key: 'hockey', label: t('create_pick.sport_hockey') },
-              { key: 'american_football', label: t('create_pick.sport_american_football') },
-              { key: 'tennis', label: t('create_pick.sport_tennis') },
-            ] as { key: typeof sport; label: string }[]).map(({ key, label }) => (
+            {(
+              isFootballOnlyDiscovery()
+                ? ([{ key: 'football' as const, label: t('create_pick.sport_football') }] as {
+                    key: typeof sport;
+                    label: string;
+                  }[])
+                : ([
+                    { key: 'football', label: t('create_pick.sport_football') },
+                    { key: 'basketball', label: t('create_pick.sport_basketball') },
+                    { key: 'rugby', label: t('create_pick.sport_rugby') },
+                    { key: 'mma', label: t('create_pick.sport_mma') },
+                    { key: 'volleyball', label: t('create_pick.sport_volleyball') },
+                    { key: 'hockey', label: t('create_pick.sport_hockey') },
+                    { key: 'american_football', label: t('create_pick.sport_american_football') },
+                    { key: 'tennis', label: t('create_pick.sport_tennis') },
+                  ] as { key: typeof sport; label: string }[])
+            ).map(({ key, label }) => (
               <button
                 key={key}
                 type="button"

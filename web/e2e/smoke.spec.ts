@@ -49,8 +49,8 @@ test.describe('Smoke tests', () => {
 
   test('discover sport filter updates URL', async ({ page }) => {
     await page.goto('/discover');
-    await page.getByRole('button', { name: /basketball/i }).first().click();
-    await expect(page).toHaveURL(/sport=basketball/);
+    await page.getByRole('button', { name: /football/i }).first().click();
+    await expect(page).toHaveURL(/sport=football/);
   });
 
   test('French locale home loads', async ({ page }) => {

@@ -4,13 +4,19 @@ import { AppFooter } from '@/components/AppFooter';
 import Link from 'next/link';
 import { getLocale, buildT } from '@/lib/i18n';
 import { SITE_URL, SITE_NAME, getAlternates } from '@/lib/site-config';
+import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 import { fetchSellingThresholds } from '@/lib/selling-thresholds';
 import type { Metadata } from 'next';
 
+const footballOnly = isFootballOnlyDiscovery();
+
 export const metadata: Metadata = {
-  title: `About ${SITE_NAME} | Ghana-based, Global Tipster Marketplace`,
-  description:
-    `Learn about ${SITE_NAME} — Ghana-based, global audience. All major global sports: football, basketball, tennis, MMA, rugby and more. Escrow-protected picks, verified tipsters. Refund if tips lose. Worldwide coverage.`,
+  title: footballOnly
+    ? `About ${SITE_NAME} | Football Predictions & Escrow-Protected Picks`
+    : `About ${SITE_NAME} | Ghana-based, Global Tipster Marketplace`,
+  description: footballOnly
+    ? `About ${SITE_NAME}: Ghana-based football predictions marketplace for Africa and a global match audience. Escrow-protected picks, verified tipsters, refund if tips lose.`
+    : `Learn about ${SITE_NAME} — Ghana-based, global audience. All major global sports: football, basketball, tennis, MMA, rugby and more. Escrow-protected picks, verified tipsters. Refund if tips lose. Worldwide coverage.`,
   alternates: {
     canonical: `${SITE_URL}/about`,
     languages: getAlternates('/about'),
@@ -57,7 +63,11 @@ export default async function AboutPage() {
                 <li><strong>{t('about.value_transparency')}</strong> — {t('about.value_transparency_desc')}</li>
                 <li><strong>{t('about.value_fairness')}</strong> — {t('about.value_fairness_desc')}</li>
                 <li><strong>{t('about.value_education')}</strong> — {t('about.value_education_desc')}</li>
-                <li><strong>{t('about.value_multisport')}</strong> — {t('about.value_multisport_desc')}</li>
+                {!isFootballOnlyDiscovery() ? (
+                  <li><strong>{t('about.value_multisport')}</strong> — {t('about.value_multisport_desc')}</li>
+                ) : (
+                  <li><strong>{t('about.value_football')}</strong> — {t('about.value_football_desc')}</li>
+                )}
               </ul>
             </section>
 

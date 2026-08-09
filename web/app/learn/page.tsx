@@ -120,7 +120,7 @@ export default async function LearnPage() {
                 The marketplace is where tipsters list their picks. Here&apos;s how to use it well:
               </p>
               <ul className="list-disc pl-6 space-y-2">
-                <li><strong>Filter by sport</strong> — Focus on football, basketball, tennis, MMA, or another sport you follow. You can compare tipsters within that sport.</li>
+                <li><strong>Focus on football</strong> — Compare tipsters by win rate, ROI, and streak within football picks on the marketplace.</li>
                 <li><strong>Compare stats</strong> — Win rate, ROI, and streak are on every tipster card. Use them to shortlist who fits your risk and style.</li>
                 <li><strong>Free vs paid</strong> — Many tipsters offer free picks so you can test their style. Paid picks may bundle more selective matchups.</li>
                 <li><strong>Escrow protection</strong> — Every purchase is protected. If the pick loses, you get a refund. There&apos;s no need to &quot;claim&quot; — it&apos;s automatic.</li>

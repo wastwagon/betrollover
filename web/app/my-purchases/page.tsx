@@ -18,6 +18,7 @@ import { getApiUrl } from '@/lib/site-config';
 import { useLanguage, useT } from '@/context/LanguageContext';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { IconShield } from '@/components/ios/icons';
+import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 
 /* ─── Types ─────────────────────────────────────────────────── */
 interface PickItem {
@@ -91,7 +92,7 @@ const RESULT_FILTERS = [
 ] as const;
 type ResultFilter = typeof RESULT_FILTERS[number]['key'];
 
-const SPORT_CHIPS = [
+const SPORT_CHIPS_ALL = [
   { key: 'all', labelKey: 'my_purchases.filter_all' as const },
   { key: 'football', labelKey: 'nav.football' as const },
   { key: 'basketball', labelKey: 'nav.basketball' as const },
@@ -102,7 +103,11 @@ const SPORT_CHIPS = [
   { key: 'american_football', labelKey: 'nav.american_football' as const },
   { key: 'tennis', labelKey: 'create_pick.sport_tennis' as const },
   { key: 'multi', labelKey: 'pick.multi_sport' as const },
-];
+] as const;
+
+const SPORT_CHIPS = isFootballOnlyDiscovery()
+  ? SPORT_CHIPS_ALL.filter((c) => c.key === 'all' || c.key === 'football')
+  : [...SPORT_CHIPS_ALL];
 
 /* ─── Page ───────────────────────────────────────────────────── */
 export default function MyPurchasesPage() {

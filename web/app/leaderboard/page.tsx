@@ -19,6 +19,7 @@ import {
   LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING,
   LEADERBOARD_MIN_SETTLED_WEEKLY,
 } from '@betrollover/shared-types';
+import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 
 type Period = 'all_time' | 'monthly' | 'weekly';
 type SportFilter = 'all' | 'football' | 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football';
@@ -223,7 +224,8 @@ export default function LeaderboardPage() {
           <AdSlot zoneSlug="leaderboard-full" fullWidth className="w-full max-w-3xl mx-auto" />
         </div>
 
-        {/* Sport filter */}
+        {/* Sport filter — hidden in football-only discovery */}
+        {!isFootballOnlyDiscovery() ? (
         <div className="mb-8 w-full min-w-0 overflow-hidden">
         <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
           {([
@@ -251,6 +253,7 @@ export default function LeaderboardPage() {
           ))}
         </div>
         </div>
+        ) : null}
 
         <div
           className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--card)]/80 px-3 py-3 sm:px-4 sm:py-3.5 text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed max-w-4xl"

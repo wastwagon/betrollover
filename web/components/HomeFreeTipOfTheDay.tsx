@@ -8,6 +8,11 @@ import { getApiUrl } from '@/lib/site-config';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { useT } from '@/context/LanguageContext';
+import {
+  FOOTBALL_SPORT_KEY,
+  isDiscoverySportAllowed,
+  isFootballOnlyDiscovery,
+} from '@/lib/football-only-discovery';
 
 const SPORT_META: Record<string, { label: string; emoji: string }> = {
   football:          { label: 'Football',          emoji: '⚽' },
@@ -106,13 +111,15 @@ export function HomeFreeTipOfTheDay({
     const api = getApiUrl();
     const token = localStorage.getItem('token');
     const auth = token ? { Authorization: `Bearer ${token}` } : undefined;
+    const footballOnly = isFootballOnlyDiscovery();
+    const sportQs = footballOnly ? `&sport=${FOOTBALL_SPORT_KEY}` : '';
 
     Promise.all([
       fetch(`${api}/accumulators/free-tip-of-the-day`, { headers: auth }).then((r) => (r.ok ? r.json() : null)),
-      fetch(`${api}/accumulators/marketplace/public?limit=12&priceFilter=free`, { headers: auth }).then((r) =>
+      fetch(`${api}/accumulators/marketplace/public?limit=12&priceFilter=free${sportQs}`, { headers: auth }).then((r) =>
         r.ok ? r.json() : { items: [] },
       ),
-      fetch(`${api}/accumulators/marketplace/public?limit=12`, { headers: auth }).then((r) =>
+      fetch(`${api}/accumulators/marketplace/public?limit=12${sportQs}`, { headers: auth }).then((r) =>
         r.ok ? r.json() : { items: [] },
       ),
     ])
@@ -123,8 +130,10 @@ export function HomeFreeTipOfTheDay({
         const anyItems = Array.isArray((anyMarket as { items?: unknown[] })?.items)
           ? ((anyMarket as { items?: FreeTip[] }).items ?? [])
           : [];
-        const featuredTip = parseFreeTip(featured);
-        const uniqueVisible = buildVisibleTips(featuredTip, [...marketItems, ...anyItems]).slice(0, 4);
+        let featuredTip = parseFreeTip(featured);
+        if (featuredTip && !isDiscoverySportAllowed(featuredTip.sport)) featuredTip = null;
+        const allowed = [...marketItems, ...anyItems].filter((i) => isDiscoverySportAllowed(i.sport));
+        const uniqueVisible = buildVisibleTips(featuredTip, allowed).slice(0, 4);
         setTip(featuredTip);
         setTips(uniqueVisible);
       })

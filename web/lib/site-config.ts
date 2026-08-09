@@ -1,8 +1,10 @@
 /**
  * Site configuration for SEO, canonical URLs, and Open Graph.
  * Uses NEXT_PUBLIC_APP_URL in production; falls back to localhost for dev.
- * Ghana-based; global audience standard. Covers all major global sports and leagues worldwide.
+ * Ghana-based; global audience standard.
  */
+import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
+
 export const SITE_URL =
   process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:6002';
 
@@ -43,11 +45,48 @@ export function getGaMeasurementId(): string | null {
 export const TELEGRAM_ADS_HANDLE = process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE || 'betrollovertips';
 export const TELEGRAM_ADS_URL = `https://t.me/${TELEGRAM_ADS_HANDLE}`;
 
-export const SITE_DESCRIPTION =
-  "Ghana-based tipster marketplace for a global audience. All major global sports — football, basketball, tennis, MMA, rugby, hockey and more. Verified tipsters, win rate & ROI, escrow-protected picks (refunded if tips lose). GHS & multi-currency. Worldwide coverage.";
+const SITE_DESCRIPTION_FOOTBALL =
+  'Football predictions & escrow-protected picks for a global match audience. Ghana-based tipster marketplace trusted across Africa — Nigeria, Kenya, South Africa & beyond. Verified tipsters, win rate & ROI. Refunded if tips lose. GHS & multi-currency.';
 
-/** Global audience standard — SEO keywords (global sports + discoverability) */
-export const SITE_KEYWORDS = [
+const SITE_DESCRIPTION_MULTISPORT =
+  'Ghana-based tipster marketplace for a global audience. All major global sports — football, basketball, tennis, MMA, rugby, hockey and more. Verified tipsters, win rate & ROI, escrow-protected picks (refunded if tips lose). GHS & multi-currency. Worldwide coverage.';
+
+export const SITE_DESCRIPTION = isFootballOnlyDiscovery()
+  ? SITE_DESCRIPTION_FOOTBALL
+  : SITE_DESCRIPTION_MULTISPORT;
+
+export const SITE_DEFAULT_TITLE = isFootballOnlyDiscovery()
+  ? `Football Predictions & Escrow-Protected Picks — ${SITE_NAME}`
+  : `Verified Sports Tips | Football, Basketball & More — ${SITE_NAME}`;
+
+const SITE_KEYWORDS_FOOTBALL = [
+  'football predictions',
+  'football tips today',
+  'escrow-protected picks',
+  'escrow protected football tips',
+  'verified football tipsters',
+  'football tipster marketplace',
+  'free football tips',
+  'buy football picks',
+  'accumulator picks',
+  'football predictions Africa',
+  'football tips Ghana',
+  'football predictions Ghana',
+  'Nigeria football tips',
+  'Kenya football predictions',
+  'South Africa football tips',
+  'Premier League predictions',
+  'Champions League tips',
+  'win rate tipsters',
+  'ROI football tips',
+  'refund if tips lose',
+  'global football tips',
+  'African tipster platform',
+  'GHS football tips',
+  'tipster marketplace Africa',
+];
+
+const SITE_KEYWORDS_MULTISPORT = [
   'tipster marketplace',
   'verified tipsters',
   'sports picks',
@@ -84,6 +123,11 @@ export const SITE_KEYWORDS = [
   'Kenya football tips',
   'South Africa sports picks',
 ];
+
+/** SEO keywords — football-only when discovery flag is on. */
+export const SITE_KEYWORDS = isFootballOnlyDiscovery()
+  ? SITE_KEYWORDS_FOOTBALL
+  : SITE_KEYWORDS_MULTISPORT;
 
 /** English Africa locale codes for hreflang */
 export const AFRICA_LOCALE_CODES = ['en-GH', 'en-NG', 'en-ZA', 'en-KE', 'en', 'x-default'] as const;

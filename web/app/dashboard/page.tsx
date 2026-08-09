@@ -22,6 +22,7 @@ import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { IconStar } from '@/components/ios/icons';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 
 interface FollowedTipster {
   id: number;
@@ -441,15 +442,11 @@ function DashboardContent() {
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4 min-w-0 sm:gap-3">
                 <h2 className="text-base sm:text-lg font-semibold text-[var(--text)]">Sports Overview</h2>
                 <span className="inline-flex w-fit items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-300">
-                  🌍 Multi-Sport Expansion
+                  Football marketplace
                 </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 max-w-xl min-w-0">
-                {[
-                  { icon: '⚽', sport: 'Football' },
-                  { icon: '🏀', sport: 'Basketball' },
-                  { icon: '🎾', sport: 'Tennis' },
-                ].map(({ icon, sport }) => (
+                {[{ icon: '⚽', sport: 'Football' }].map(({ icon, sport }) => (
                   <div
                     key={sport}
                     className="flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center bg-emerald-50 border-emerald-200"
@@ -460,8 +457,7 @@ function DashboardContent() {
                 ))}
               </div>
               <p className="text-xs text-[var(--text-muted)] mt-3">
-                Core sports: Football, Basketball, Tennis. Additional sports (Rugby, MMA, Volleyball, Hockey, American
-                Football, etc.) may still appear in fixtures and marketplace where sync is configured.
+                Public discovery is football-only. Multi-sport can be re-enabled via NEXT_PUBLIC_FOOTBALL_ONLY_DISCOVERY=false when API access is funded.
               </p>
             </div>
 
@@ -877,7 +873,8 @@ function DashboardContent() {
             </div>
           </section>
 
-          {/* Multi-Sport Live Banner */}
+          {/* Multi-Sport Live Banner — hidden while public discovery is football-only */}
+          {!isFootballOnlyDiscovery() ? (
           <section className="mb-6 sm:mb-8">
             <div className="rounded-2xl sm:rounded-3xl overflow-hidden bg-gradient-to-br from-slate-800 via-teal-900/80 to-slate-800 border border-teal-500/30 shadow-lg">
               <div className="p-5 sm:p-6">
@@ -914,6 +911,7 @@ function DashboardContent() {
               </div>
             </div>
           </section>
+          ) : null}
 
           {/* Performance stats — glass cards, 2 cols mobile → 4 cols desktop */}
           {tipsterStats && (

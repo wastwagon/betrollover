@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { SITE_NAME } from '@/lib/site-config';
+import { FOOTBALL_SPORT_KEY, isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 
 const VALID_SPORTS = [
   'football',
@@ -28,13 +29,20 @@ const SPORT_LABELS: Record<(typeof VALID_SPORTS)[number], string> = {
 
 /**
  * Friendly sport hub URL: /marketplace/football → filtered marketplace.
- * Keeps shareable sport URLs while the main page owns sticky discovery chrome.
+ * Multi-sport hubs redirect away while FOOTBALL_ONLY_DISCOVERY is on.
  */
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ sport: string }>;
 }): Promise<Metadata> {
+  if (isFootballOnlyDiscovery()) {
+    return {
+      title: `Football Predictions & Escrow-Protected Picks | ${SITE_NAME}`,
+      description: `Football predictions from verified tipsters. Escrow-protected picks for a global match audience — strong across Africa. Refunded if tips lose.`,
+      robots: { index: false, follow: true },
+    };
+  }
   const { sport } = await params;
   const normalized = sport?.toLowerCase().trim() as (typeof VALID_SPORTS)[number];
   const label = SPORT_LABELS[normalized];
@@ -52,6 +60,14 @@ export default async function MarketplaceSportPage({
 }) {
   const { sport } = await params;
   const normalized = sport?.toLowerCase().trim();
+
+  if (isFootballOnlyDiscovery()) {
+    if (normalized === FOOTBALL_SPORT_KEY) {
+      redirect(`/marketplace?sport=${FOOTBALL_SPORT_KEY}`);
+    }
+    redirect('/marketplace');
+  }
+
   if (normalized && (VALID_SPORTS as readonly string[]).includes(normalized)) {
     redirect(`/marketplace?sport=${encodeURIComponent(normalized)}`);
   }

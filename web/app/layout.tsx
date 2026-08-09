@@ -13,7 +13,7 @@ import { AnalyticsBeacon } from '@/components/AnalyticsBeacon';
 import { GoogleTagManagerNoScript } from '@/components/GoogleTagManagerNoScript';
 import { ThirdPartyTags } from '@/components/ThirdPartyTags';
 import { JsonLdScript } from '@/components/JsonLdScript';
-import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS } from '@/lib/site-config';
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_DEFAULT_TITLE } from '@/lib/site-config';
 import './globals.css';
 
 const SUPPORTED_LOCALES: SupportedLanguage[] = ['en', 'fr'];
@@ -42,7 +42,7 @@ const googleSiteVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `Verified Sports Tips | Football, Basketball & More — ${SITE_NAME}`,
+    default: SITE_DEFAULT_TITLE,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
@@ -66,13 +66,13 @@ export const metadata: Metadata = {
     alternateLocale: ['en_GH', 'en_GB', 'en_US', 'en_NG', 'en_ZA', 'en_KE', 'fr'],
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: `Verified Sports Tips | Football, Basketball & More — ${SITE_NAME}`,
+    title: SITE_DEFAULT_TITLE,
     description: SITE_DESCRIPTION,
-    images: [{ url: '/og-image.png', type: 'image/png', width: 1200, height: 630, alt: `${SITE_NAME} — verified sports tips marketplace` }],
+    images: [{ url: '/og-image.png', type: 'image/png', width: 1200, height: 630, alt: `${SITE_NAME} — verified football tipster marketplace` }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: `Verified Sports Tips | Football, Basketball & More — ${SITE_NAME}`,
+    title: SITE_DEFAULT_TITLE,
     description: SITE_DESCRIPTION,
     creator: '@betrollover',
     images: [{ url: '/og-image.png', type: 'image/png', alt: `${SITE_NAME} — verified sports tips marketplace` }],

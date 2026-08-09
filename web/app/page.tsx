@@ -21,14 +21,14 @@ import { FeaturedPicks } from '@/components/FeaturedPicks';
 import { HomeFreeTipOfTheDay } from '@/components/HomeFreeTipOfTheDay';
 import { HomeQuickMarketplaceSections } from '@/components/HomeQuickMarketplaceSections';
 import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
-import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, getAlternates } from '@/lib/site-config';
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_DEFAULT_TITLE, getAlternates } from '@/lib/site-config';
 import { fetchSellingThresholds } from '@/lib/selling-thresholds';
 import { fetchHomePublicData } from '@/lib/home-public-data';
 import { getLocale, buildT } from '@/lib/i18n';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: `Verified Sports Tips | Football, Basketball & More — ${SITE_NAME}`,
+  title: SITE_DEFAULT_TITLE,
   description: SITE_DESCRIPTION,
   alternates: {
     canonical: SITE_URL,
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     url: SITE_URL,
-    title: `Verified Sports Tips | Football, Basketball & More — ${SITE_NAME}`,
+    title: SITE_DEFAULT_TITLE,
     description: SITE_DESCRIPTION,
   },
 };

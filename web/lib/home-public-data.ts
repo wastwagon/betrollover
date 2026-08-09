@@ -1,6 +1,11 @@
 import { getApiUrl } from '@/lib/site-config';
 import { LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
 import {
+  FOOTBALL_SPORT_KEY,
+  isDiscoverySportAllowed,
+  isFootballOnlyDiscovery,
+} from '@/lib/football-only-discovery';
+import {
   parseHeadlineMatchesPayload,
   type TodayMatchRow,
 } from '@/lib/home-today-matches';
@@ -66,10 +71,15 @@ export async function fetchHomePublicData(options?: { revalidate?: number }): Pr
   };
 
   try {
+    const footballOnly = isFootballOnlyDiscovery();
+    const marketQs = footballOnly
+      ? `limit=48&sport=${FOOTBALL_SPORT_KEY}`
+      : 'limit=48';
+
     const [statsRes, lbRes, marketRes, featuredRes, freeTipRes, headlineRes] = await Promise.all([
       fetch(`${api}/accumulators/stats/public`, init),
       fetch(`${api}/leaderboard?period=all_time&limit=24`, init),
-      fetch(`${api}/accumulators/marketplace/public?limit=48`, init),
+      fetch(`${api}/accumulators/marketplace/public?${marketQs}`, init),
       fetch(`${api}/accumulators/featured`, init),
       fetch(`${api}/accumulators/free-tip-of-the-day`, init),
       fetch(`${api}/fixtures/platform/headline-matches?limit=8`, init),
@@ -83,9 +93,25 @@ export async function fetchHomePublicData(options?: { revalidate?: number }): Pr
     const headlineJson = headlineRes.ok ? await headlineRes.json() : null;
 
     const topTipsters = Array.isArray(lbJson?.leaderboard) ? lbJson.leaderboard : [];
-    const marketplaceItems = Array.isArray(marketJson?.items) ? marketJson.items : [];
-    const featuredPicks = Array.isArray(featuredJson) ? featuredJson : [];
+    let marketplaceItems = Array.isArray(marketJson?.items) ? marketJson.items : [];
+    let featuredPicks = Array.isArray(featuredJson) ? featuredJson : [];
+    let freeTip: Record<string, unknown> | null =
+      freeTipJson && typeof freeTipJson === 'object' ? (freeTipJson as Record<string, unknown>) : null;
     const todayMatches = parseHeadlineMatchesPayload(headlineJson);
+
+    if (footballOnly) {
+      const sportOf = (item: unknown): string | undefined =>
+        item && typeof item === 'object' ? (item as { sport?: string }).sport : undefined;
+      marketplaceItems = marketplaceItems.filter((item: unknown) =>
+        isDiscoverySportAllowed(sportOf(item)),
+      );
+      featuredPicks = featuredPicks.filter((item: unknown) =>
+        isDiscoverySportAllowed(sportOf(item)),
+      );
+      if (freeTip && !isDiscoverySportAllowed(freeTip.sport as string | undefined)) {
+        freeTip = null;
+      }
+    }
 
     return {
       stats: parseStats(statsJson),
@@ -93,7 +119,7 @@ export async function fetchHomePublicData(options?: { revalidate?: number }): Pr
       topTipsters,
       marketplaceItems,
       featuredPicks,
-      freeTip: freeTipJson && typeof freeTipJson === 'object' ? (freeTipJson as Record<string, unknown>) : null,
+      freeTip,
       todayMatches,
     };
   } catch {

@@ -2,7 +2,9 @@
  * Shared sport keys/icons for content pages (discover, news, resources).
  * Keep in sync with backend `SPORT_TYPES` in sports.config.ts.
  */
-export const CONTENT_SPORT_KEYS = [
+import { filterDiscoverySports } from '@/lib/football-only-discovery';
+
+export const CONTENT_SPORT_KEYS_ALL = [
   '',
   'football',
   'basketball',
@@ -14,9 +16,14 @@ export const CONTENT_SPORT_KEYS = [
   'tennis',
 ] as const;
 
-export type ContentSport = (typeof CONTENT_SPORT_KEYS)[number];
+export type ContentSport = (typeof CONTENT_SPORT_KEYS_ALL)[number];
 
 export type ContentSportFilter = Exclude<ContentSport, ''>;
+
+/** Public discovery filters — football-only when FOOTBALL_ONLY_DISCOVERY is on. */
+export const CONTENT_SPORT_KEYS = filterDiscoverySports([
+  ...CONTENT_SPORT_KEYS_ALL,
+]) as ContentSport[];
 
 export const SPORT_ICONS: Record<ContentSport, string> = {
   '': '🌍',
@@ -47,7 +54,7 @@ export const SPORT_META: Record<
 /** Admin + forms: sport tag options (empty = all sports / universal). */
 export const SPORT_TAG_OPTIONS: { value: string; label: string }[] = [
   { value: '', label: 'All sports (universal)' },
-  ...CONTENT_SPORT_KEYS.filter((k): k is ContentSportFilter => k !== '').map((k) => ({
+  ...CONTENT_SPORT_KEYS_ALL.filter((k): k is ContentSportFilter => k !== '').map((k) => ({
     value: k,
     label: SPORT_META[k].label,
   })),
@@ -61,7 +68,7 @@ export function getContentSportLabel(
   return t(`create_pick.sport_${key}` as 'create_pick.sport_football');
 }
 
-export const NEWS_SPORT_OPTIONS = CONTENT_SPORT_KEYS.filter(
+export const NEWS_SPORT_OPTIONS = CONTENT_SPORT_KEYS_ALL.filter(
   (k): k is ContentSportFilter => k !== '',
 ).map((k) => ({
   value: k,
@@ -69,5 +76,5 @@ export const NEWS_SPORT_OPTIONS = CONTENT_SPORT_KEYS.filter(
 }));
 
 export function isContentSportFilter(value: string): value is ContentSportFilter {
-  return value !== '' && (CONTENT_SPORT_KEYS as readonly string[]).includes(value);
+  return value !== '' && (CONTENT_SPORT_KEYS_ALL as readonly string[]).includes(value);
 }
