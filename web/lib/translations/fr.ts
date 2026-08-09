@@ -56,7 +56,7 @@ const fr: Record<string, string> = {
   'nav.create_pick': 'Créer un pronostic',
   'nav.create_pick_short': '+Picks',
   'nav.acca_generator': 'Générateur d\'acca',
-  'nav.acca_generator_short': '+Generate',
+  'nav.acca_generator_short': '+Générer',
   'nav.pick_tab': 'Pronostic',
 
   // ── Auth ─────────────────────────────────────────────────────────────────

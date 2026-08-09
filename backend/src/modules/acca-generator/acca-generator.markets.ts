@@ -80,10 +80,7 @@ export const DEFAULT_ACCA_RISK: AccaRiskLevel = 'medium';
 /** Best-practice defaults for first-time UI. */
 export const ACCA_GENERATOR_DEFAULTS = {
   riskLevel: DEFAULT_ACCA_RISK,
-  oddMin: ACCA_RISK_PROFILES.find((p) => p.key === DEFAULT_ACCA_RISK)!.oddMin,
-  oddMax: ACCA_RISK_PROFILES.find((p) => p.key === DEFAULT_ACCA_RISK)!.oddMax,
   legs: 4,
-  daysAhead: 1,
   markets: [...DEFAULT_ACCA_MARKETS],
 } as const;
 

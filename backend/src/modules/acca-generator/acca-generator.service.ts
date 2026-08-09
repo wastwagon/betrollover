@@ -2,12 +2,11 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
-  Logger,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { Fixture } from '../fixtures/entities/fixture.entity';
@@ -48,21 +47,12 @@ export type AccaGeneratorSelection = {
 export type GenerateAccaDto = {
   markets: string[];
   legs: number;
-  /** Preferred: safe | medium | high — sets per-leg odd band server-side. */
+  /** safe | medium | high — sets per-leg odd band server-side. */
   riskLevel?: AccaRiskLevel | string;
-  /** Legacy; ignored when riskLevel is set. */
-  oddMin?: number;
-  oddMax?: number;
-  /** Ignored — generator is same-day only. */
-  daysAhead?: number;
-  /** Optional league name substrings to keep. */
-  leagues?: string[];
 };
 
 @Injectable()
 export class AccaGeneratorService {
-  private readonly logger = new Logger(AccaGeneratorService.name);
-
   constructor(
     @InjectRepository(ApiSettings)
     private readonly apiSettingsRepo: Repository<ApiSettings>,
@@ -87,10 +77,11 @@ export class AccaGeneratorService {
       dailyGenerations: limits.dailyGenerations,
       /** Same calendar day only — denser markets, avoids thin future days. */
       sameDayOnly: true,
-      maxDaysAhead: 1,
       riskProfiles: ACCA_RISK_PROFILES,
       markets: ACCA_GENERATOR_MARKETS.map((m) => ({ key: m.key, label: m.label })),
       defaults: ACCA_GENERATOR_DEFAULTS,
+      /** Admins may generate/publish when the feature flag is off. */
+      adminBypassDisabled: quota.exempt,
       quota,
       /**
        * Odds source note for clients:
@@ -176,7 +167,6 @@ export class AccaGeneratorService {
       oddMin,
       oddMax,
       targetOdd,
-      leagues: Array.isArray(dto.leagues) ? dto.leagues.map((s) => String(s).trim()).filter(Boolean) : [],
     });
 
     if (candidates.length < legs) {
@@ -216,30 +206,14 @@ export class AccaGeneratorService {
   }
 
   private resolveRiskFromDto(dto: GenerateAccaDto): AccaRiskProfile {
-    if (dto.riskLevel) {
-      const key = String(dto.riskLevel).toLowerCase();
-      if (!ACCA_RISK_PROFILES.some((p) => p.key === key)) {
-        throw new BadRequestException('riskLevel must be safe, medium, or high');
-      }
-      return resolveRiskProfile(key);
+    if (!dto.riskLevel) {
+      return resolveRiskProfile(ACCA_GENERATOR_DEFAULTS.riskLevel);
     }
-    // Legacy clients sending oddMin/oddMax — map to closest profile mid
-    const oddMin = Number(dto.oddMin);
-    const oddMax = Number(dto.oddMax);
-    if (Number.isFinite(oddMin) && Number.isFinite(oddMax) && oddMin <= oddMax) {
-      const mid = (oddMin + oddMax) / 2;
-      let best = ACCA_RISK_PROFILES[1];
-      let bestDist = Infinity;
-      for (const p of ACCA_RISK_PROFILES) {
-        const d = Math.abs(p.targetOdd - mid);
-        if (d < bestDist) {
-          bestDist = d;
-          best = p;
-        }
-      }
-      return best;
+    const key = String(dto.riskLevel).toLowerCase();
+    if (!ACCA_RISK_PROFILES.some((p) => p.key === key)) {
+      throw new BadRequestException('riskLevel must be safe, medium, or high');
     }
-    return resolveRiskProfile(ACCA_GENERATOR_DEFAULTS.riskLevel);
+    return resolveRiskProfile(key);
   }
 
   async publish(userId: number, body: { generationId: number; title?: string; description?: string }) {
@@ -285,17 +259,43 @@ export class AccaGeneratorService {
       })),
     };
 
+    // Re-check under load to cut down double-publish races before create.
+    const stillOpen = await this.runRepo.findOne({
+      where: { id: run.id, userId, publishedTicketId: IsNull() },
+    });
+    if (!stillOpen) {
+      throw new BadRequestException('This generation was already published');
+    }
+
     const ticket = await this.accumulatorsService.create(userId, dto);
     const ticketId = Number((ticket as { id?: number })?.id);
-    if (Number.isFinite(ticketId) && ticketId > 0) {
-      run.publishedTicketId = ticketId;
-      await this.runRepo.save(run);
+    if (!Number.isFinite(ticketId) || ticketId < 1) {
+      throw new BadRequestException('Publish failed: marketplace ticket was not created');
+    }
+
+    const claim = await this.runRepo.update(
+      { id: run.id, userId, publishedTicketId: IsNull() },
+      { publishedTicketId: ticketId },
+    );
+    if (!claim.affected) {
+      const existing = await this.runRepo.findOne({ where: { id: run.id, userId } });
+      if (existing?.publishedTicketId) {
+        return {
+          ticket,
+          generationId: run.id,
+          publishedTicketId: existing.publishedTicketId,
+          note: 'Generation was already linked to a published pick.',
+        };
+      }
+      throw new BadRequestException(
+        `Pick was created (#${ticketId}) but could not be linked to this generation. Do not republish — check My picks / marketplace.`,
+      );
     }
 
     return {
       ticket,
       generationId: run.id,
-      publishedTicketId: run.publishedTicketId,
+      publishedTicketId: ticketId,
     };
   }
 
@@ -523,17 +523,8 @@ export class AccaGeneratorService {
     oddMin: number;
     oddMax: number;
     targetOdd: number;
-    leagues: string[];
   }): Promise<AccaGeneratorSelection[]> {
-    let pool = await this.loadTodayOddsInBand(opts.oddMin, opts.oddMax);
-    if (opts.leagues.length) {
-      const needles = opts.leagues.map((l) => l.toLowerCase());
-      pool = pool.filter((r) => {
-        const name = (r.leagueName || '').toLowerCase();
-        return needles.some((n) => name.includes(n));
-      });
-    }
-
+    const pool = await this.loadTodayOddsInBand(opts.oddMin, opts.oddMax);
     const halfSpan = Math.max((opts.oddMax - opts.oddMin) / 2, 0.05);
     const bestByFixture = new Map<number, AccaGeneratorSelection>();
 

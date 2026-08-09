@@ -55,15 +55,13 @@ type Config = {
   maxLegs: number;
   dailyGenerations: number;
   sameDayOnly?: boolean;
-  maxDaysAhead?: number;
+  /** True when the signed-in user is admin (may use tool while disabled). */
+  adminBypassDisabled?: boolean;
   riskProfiles?: RiskProfile[];
   markets: MarketOption[];
   defaults: {
     riskLevel?: 'safe' | 'medium' | 'high';
-    oddMin?: number;
-    oddMax?: number;
     legs: number;
-    daysAhead?: number;
     markets: string[];
   };
   quota: Quota;
@@ -94,6 +92,7 @@ type GenerateResult = {
   quota: Quota;
 };
 
+/** Offline fallback — keep in sync with backend ACCA_RISK_PROFILES. */
 const FALLBACK_RISK_PROFILES: RiskProfile[] = [
   {
     key: 'safe',
@@ -508,8 +507,11 @@ export default function AccaGeneratorPage() {
     setLegs((prev) => Math.min(maxSelectableLegs, Math.max(config.minLegs, prev)));
   }, [config, maxSelectableLegs]);
 
+  const generatorAllowed =
+    !!config?.enabled || !!config?.adminBypassDisabled || !!config?.quota?.exempt;
+
   const canGenerate =
-    !!config?.enabled &&
+    generatorAllowed &&
     selectedMarkets.length > 0 &&
     !availabilityLoading &&
     (availability?.selectedFixtureCount ?? 0) >= legs &&
@@ -611,7 +613,8 @@ export default function AccaGeneratorPage() {
             <p className="mb-4 text-sm text-[var(--text-muted)]">{quotaLabel}</p>
           )}
           <p className="mb-4 text-sm text-[var(--text-muted)]">
-            Same day only — today’s remaining kickoffs (Africa/Accra). Odds are live from our synced database (not a fresh bookmaker pull on each click).
+            Same day only — today’s remaining kickoffs. Odds are live from our synced database (not a
+            fresh bookmaker pull on each click).
           </p>
 
           <aside
@@ -643,7 +646,9 @@ export default function AccaGeneratorPage() {
 
           {!config?.enabled && (
             <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
-              Acca Generator is currently disabled by admin.
+              {generatorAllowed
+                ? 'Acca Generator is disabled for users. As an admin you can still generate and publish.'
+                : 'Acca Generator is currently disabled by admin.'}
             </div>
           )}
 
@@ -792,7 +797,7 @@ export default function AccaGeneratorPage() {
         >
           {generating ? 'Generating…' : 'Generate accumulator'}
         </button>
-        {!canGenerate && config?.enabled && !availabilityLoading && (
+        {!canGenerate && generatorAllowed && !availabilityLoading && (
           <p className="text-center text-xs text-slate-500">
             {selectedMarkets.length === 0
               ? 'Select at least one market with fixtures in this risk band.'
@@ -829,8 +834,8 @@ export default function AccaGeneratorPage() {
             <button
               type="button"
               onClick={() => void onGenerate()}
-              disabled={generating}
-              className="text-xs font-medium text-emerald-700 hover:underline"
+              disabled={generating || !canGenerate}
+              className="text-xs font-medium text-emerald-700 hover:underline disabled:text-slate-400 disabled:no-underline"
             >
               Regenerate
             </button>
