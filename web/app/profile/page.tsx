@@ -13,6 +13,7 @@ import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/sit
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 import { NavBar } from '@/components/ios/NavBar';
+import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { NotificationPreferencesSection } from '@/components/notifications/NotificationPreferencesSection';
 
 interface Profile {
@@ -55,13 +56,14 @@ export default function ProfilePage() {
   const [deleteMsg, setDeleteMsg] = useState('');
   const [logoutAllLoading, setLogoutAllLoading] = useState(false);
 
-  useEffect(() => {
+  const loadProfile = (opts?: { soft?: boolean }) => {
     const token = localStorage.getItem('token');
     if (!token) {
       router.push('/login');
-      return;
+      return Promise.resolve();
     }
-    fetch(`${getApiUrl()}/users/me`, { headers: { Authorization: `Bearer ${token}` } })
+    if (!opts?.soft) setLoading(true);
+    return fetch(`${getApiUrl()}/users/me`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data) => {
         setProfile(data);
@@ -72,7 +74,14 @@ export default function ProfilePage() {
         setMarketingConsent(data.marketingConsent === true);
       })
       .catch(() => router.push('/login'))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!opts?.soft) setLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    void loadProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only load
   }, [router]);
 
   const saveProfile = async (e: React.FormEvent) => {
@@ -267,6 +276,7 @@ export default function ProfilePage() {
   return (
     <DashboardShell>
       <div className="min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden bg-[var(--bg)]">
+        <PullToRefresh onRefresh={() => loadProfile({ soft: true })} disabled={loading}>
         <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full">
           <div className="lg:hidden -mx-1 mb-3">
             <NavBar
@@ -489,6 +499,7 @@ export default function ProfilePage() {
           </form>
         </div>
         </div>
+        </PullToRefresh>
       </div>
     </DashboardShell>
   );

@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
 import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
+import { hapticLight } from '@/lib/haptic';
+
 type NavItemId = 'home' | 'marketplace' | 'tipsters' | 'create' | 'subscribe';
 
 interface NavItem {
@@ -127,28 +129,26 @@ export function MobileBottomNav() {
       className="fixed inset-x-0 bottom-0 z-50 xl:hidden ios-chrome border-t shadow-[0_-1px_0_var(--separator)]"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      {/* Edge-to-edge docked tab bar (same bg + safe-area padding avoids a “floating” gap above the home indicator). */}
-      <div className="flex w-full flex-nowrap items-stretch gap-0.5 px-0.5 min-h-[56px] py-1 max-sm:overflow-x-auto max-sm:overscroll-x-contain scrollbar-hide max-sm:snap-x max-sm:snap-mandatory sm:gap-1 sm:px-3">
+      {/* Equal-width tabs — no horizontal scroll on phones. */}
+      <div className="flex w-full items-stretch gap-0.5 px-1 min-h-[56px] py-1 sm:gap-1 sm:px-3">
         {navItems.map((item) => {
             const active = isActive(pathname, item.href);
             const Icon = ICONS[item.id];
-            /** Fixed slots on narrow phones (scroll if needed); equal flex columns on sm+ so items span the full bar. */
-            const slotW = item.primary
-              ? 'w-[4.75rem] max-sm:shrink-0 sm:w-auto sm:flex-1 sm:min-w-0'
-              : 'w-[4.1rem] max-sm:shrink-0 sm:w-auto sm:flex-1 sm:min-w-0';
-            const linkClass = `flex flex-col items-center justify-center snap-center ${slotW} gap-1 py-2 px-0.5 rounded-xl transition-all duration-200 active:scale-[0.98] min-h-[52px] touch-manipulation`;
+            const linkClass =
+              'flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 py-1.5 px-0.5 rounded-xl transition-all duration-200 active:scale-[0.98] min-h-[52px] touch-manipulation';
 
             if (item.primary) {
               return (
                 <Link
                   key={item.id}
                   href={item.href}
+                  onClick={() => hapticLight()}
                   className={`${linkClass} ${active ? 'bg-[var(--primary)] text-white shadow-md' : 'bg-[var(--primary)]/12 text-[var(--primary)] hover:bg-[var(--primary)]/20'}`}
                 >
-                  <span className="flex items-center justify-center w-9 h-9 rounded-full bg-white/20">
+                  <span className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/20">
                     <Icon active />
                   </span>
-                  <span className={`text-[10px] font-semibold truncate w-full text-center ${active ? 'text-white' : ''}`}>
+                  <span className={`text-[9px] sm:text-[10px] font-semibold truncate w-full text-center leading-tight ${active ? 'text-white' : ''}`}>
                     {t(item.labelKey)}
                   </span>
                 </Link>
@@ -159,13 +159,14 @@ export function MobileBottomNav() {
               <Link
                 key={item.id}
                 href={item.href}
+                onClick={() => hapticLight()}
                 className={`${linkClass} relative ${active ? 'text-[var(--primary)] bg-[var(--primary)]/8' : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/30'}`}
               >
                 {active && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-[var(--primary)]" aria-hidden />}
                 <span className="relative inline-flex">
                   <Icon active={active} />
                 </span>
-                <span className={`text-[10px] font-medium truncate w-full text-center ${active ? 'font-semibold' : ''}`}>
+                <span className={`text-[9px] sm:text-[10px] font-medium truncate w-full text-center leading-tight ${active ? 'font-semibold' : ''}`}>
                   {t(item.labelKey)}
                 </span>
               </Link>

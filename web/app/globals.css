@@ -119,12 +119,21 @@ body {
   font-feature-settings: "cv11", "ss01";
 }
 
-/* iOS-style touch targets — opt-in so inline text links stay compact */
+/* iOS-style touch targets (HIG ≥44px) on coarse pointers */
 @media (pointer: coarse) {
   .touch-target,
   nav[role="navigation"] a,
   nav[role="navigation"] button,
-  .ios-list-row {
+  .ios-list-row,
+  button:not(.no-touch-target),
+  a.btn,
+  [role="button"]:not(.no-touch-target) {
+    min-height: 44px;
+  }
+
+  button.p-1,
+  button.p-1\.5 {
+    min-width: 44px;
     min-height: 44px;
   }
 }

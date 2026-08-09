@@ -770,24 +770,22 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
             </div>
           </div>
 
-          {/* Mobile / tablet: discoverability without mega menus */}
+          {/* Tablet only: secondary browse chips (phones use bottom tab bar). */}
           <nav
-            className="lg:hidden border-t border-slate-100/90 flex flex-wrap justify-center sm:flex-nowrap sm:justify-start gap-2 overflow-x-auto overscroll-x-contain scrollbar-hide py-2.5 -mx-4 px-3 sm:-mx-6 sm:px-4 sm:snap-x sm:snap-mandatory"
+            className="hidden md:flex lg:hidden border-t border-slate-100/90 flex-nowrap justify-start gap-2 overflow-x-auto overscroll-x-contain scrollbar-hide py-2 -mx-6 px-4 snap-x snap-mandatory"
             aria-label={t('nav.browse')}
           >
             {[
-              { href: '/', label: t('header.home') },
-              { href: '/marketplace', label: t('nav.picks') },
               { href: '/live-scores', label: t('nav.live_scores_short') },
               { href: '/league-tables', label: t('nav.league_tables_short') },
-              { href: '/tipsters', label: t('nav.tipsters') },
+              { href: '/leaderboard', label: t('nav.leaderboard') },
               { href: '/learn', label: t('nav.learn') },
               { href: '/guides', label: t('nav.short_guides') },
             ].map((q) => (
               <Link
                 key={q.href}
                 href={q.href}
-                className={`shrink-0 sm:snap-start inline-flex items-center min-h-[40px] sm:min-h-[44px] px-3 sm:px-3.5 rounded-full text-[11px] sm:text-xs font-bold border transition-colors touch-manipulation ${
+                className={`shrink-0 snap-start inline-flex items-center min-h-[40px] px-3 rounded-full text-[11px] font-bold border transition-colors touch-manipulation ${
                   isActive(pathname, q.href)
                     ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
                     : 'bg-slate-50 text-slate-700 border-slate-200/80 hover:border-emerald-300 hover:text-emerald-800'

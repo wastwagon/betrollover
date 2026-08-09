@@ -14,6 +14,7 @@ import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/sit
 import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 import { tipsterRankMedal } from '@/lib/tipster-rank-ui';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
+import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import {
   LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING,
   LEADERBOARD_MIN_SETTLED_WEEKLY,
@@ -165,6 +166,13 @@ export default function LeaderboardPage() {
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
       <main className="section-ux-page w-full min-w-0">
+        <PullToRefresh
+          onRefresh={() => {
+            fetchLeaderboard(period, sport);
+            return Promise.resolve();
+          }}
+          disabled={loading}
+        >
         <PageHeader
           label={t('nav.leaderboard')}
           title={t('seo.leaderboard_title').split(' | ')[0]}
@@ -481,6 +489,7 @@ export default function LeaderboardPage() {
             Browse all tipster profiles →
           </Link>
         </div>
+        </PullToRefresh>
       </main>
       <AppFooter />
     </div>

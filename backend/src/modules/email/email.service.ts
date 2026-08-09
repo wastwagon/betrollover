@@ -179,8 +179,27 @@ export class EmailService {
       } catch (err: unknown) {
         const body = (err as { response?: { body?: unknown } })?.response?.body ?? err;
         this.logger.warn(`SendGrid attempt ${attempt}/${this.SEND_RETRIES} failed: ${JSON.stringify(body)}`);
-        const errObj = err as { response?: { body?: { errors?: { message?: string }[] } }; message?: string };
-        lastError = String(errObj?.response?.body?.errors?.[0]?.message || errObj?.message || (err instanceof Error ? err.message : err));
+        const errObj = err as {
+          code?: number;
+          response?: { statusCode?: number; body?: { errors?: { message?: string }[] } };
+          message?: string;
+        };
+        lastError = String(
+          errObj?.response?.body?.errors?.[0]?.message ||
+            errObj?.message ||
+            (err instanceof Error ? err.message : err),
+        );
+        const status = errObj?.code ?? errObj?.response?.statusCode;
+        const nonRetryable =
+          status === 401 ||
+          status === 403 ||
+          /not authorized to send mail|unauthorized|forbidden/i.test(lastError);
+        if (nonRetryable) {
+          this.logger.error(
+            `SendGrid rejected send (non-retryable): ${lastError}. Check API key Mail Send permission and verified sender/domain for: ${from}`,
+          );
+          return { sent: false, error: lastError };
+        }
         if (attempt < this.SEND_RETRIES) await this.sleep(this.RETRY_DELAY_MS * attempt);
       }
     }

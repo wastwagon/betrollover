@@ -36,24 +36,27 @@ interface TipsterCardProps {
   className?: string;
 }
 
+/**
+ * Tipstrr-inspired quiet tipster card: one hero metric, light borders, no gradient chrome.
+ */
 export function TipsterCard({ tipster, onFollow, followLoading = false, className = '' }: TipsterCardProps) {
   const t = useT();
   const [avatarError, setAvatarError] = useState(false);
   const showAvatar = tipster.avatar_url && !avatarError;
   const hasSettledPicks = ((tipster.total_wins ?? 0) + (tipster.total_losses ?? 0)) > 0;
-  const roiDisplay = hasSettledPicks ? `${Number(tipster.roi).toFixed(2)}%` : '—';
-  const winRateDisplay = hasSettledPicks ? `${Number(tipster.win_rate).toFixed(1)}%` : '—';
-  const roiColor = tipster.roi > 0 ? 'text-emerald-600 dark:text-emerald-400' : tipster.roi < 0 ? 'text-red-600 dark:text-red-400' : 'text-[var(--text)]';
+  const roiDisplay = hasSettledPicks ? `${Number(tipster.roi).toFixed(1)}%` : '—';
+  const winRateDisplay = hasSettledPicks ? `${Number(tipster.win_rate).toFixed(0)}%` : '—';
+  const roiPositive = tipster.roi > 0;
+  const roiNegative = tipster.roi < 0;
 
   return (
     <article
-      className={`card-gradient rounded-2xl shadow-lg overflow-hidden hover:shadow-xl hover:shadow-[var(--primary)]/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col w-full min-w-0 max-w-full ${className}`}
+      className={`rounded-[var(--radius-ios-group)] bg-[var(--card)] border border-[var(--separator)] overflow-hidden flex flex-col w-full min-w-0 max-w-full ${className}`}
     >
-      <div className="p-3 sm:p-4 flex flex-col flex-1 min-w-0">
-        {/* Header — avatar + name link; follower count is separate (opens list) */}
-        <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3 min-w-0">
-          <Link href={`/tipsters/${tipster.username}`} className="shrink-0 group">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-[var(--bg)] border border-[var(--border)]">
+      <div className="p-4 flex flex-col flex-1 min-w-0">
+        <div className="flex items-start gap-3 mb-3 min-w-0">
+          <Link href={`/tipsters/${tipster.username}`} className="shrink-0 touch-target">
+            <div className="w-11 h-11 rounded-full overflow-hidden bg-[var(--fill-secondary)] border border-[var(--separator)]">
               {showAvatar ? (
                 <Image
                   src={getAvatarUrl(tipster.avatar_url!, 48)!}
@@ -65,7 +68,7 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
                   onError={() => setAvatarError(true)}
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-sm sm:text-lg font-bold text-[var(--primary)] bg-[var(--primary-light)]">
+                <div className="w-full h-full flex items-center justify-center text-sm font-bold text-[var(--primary)] bg-[var(--primary-light)]">
                   {tipster.display_name.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -74,13 +77,18 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
           <div className="min-w-0 flex-1">
             <Link href={`/tipsters/${tipster.username}`} className="block group min-w-0">
               <span className="flex items-center gap-2 min-w-0">
-                <h3 className="font-semibold text-sm sm:text-base text-[var(--text)] truncate min-w-0">{tipster.display_name}</h3>
+                <h3 className="font-semibold text-[15px] text-[var(--text)] truncate min-w-0">
+                  {tipster.display_name}
+                </h3>
                 {tipster.is_ai ? <AiTipsterBadge /> : null}
               </span>
             </Link>
-            <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1 mt-0.5 text-[10px] sm:text-xs text-[var(--text-muted)]">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5 text-xs text-[var(--text-muted)]">
               {tipster.leaderboard_rank != null && (
-                <span>{t('tipster.rank_prefix')}{tipster.leaderboard_rank}</span>
+                <span>
+                  {t('tipster.rank_prefix')}
+                  {tipster.leaderboard_rank}
+                </span>
               )}
               <FollowersCountButton
                 count={tipster.follower_count ?? 0}
@@ -91,29 +99,50 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
           </div>
         </div>
 
-        {/* Bio */}
-        {tipster.bio && (
-          <p className="text-xs sm:text-sm text-[var(--text-muted)] line-clamp-2 mb-2 sm:mb-4">{tipster.bio}</p>
-        )}
-
-        {/* Stats */}
-        <div className="flex flex-wrap gap-3 sm:gap-4 mb-2 sm:mb-4 min-w-0">
-          <div className="flex flex-col">
-            <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{t('tipster.roi')}</span>
-            <span className={`text-xs sm:text-sm font-bold ${roiColor}`}>{roiDisplay}</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{t('tipster.win_rate')}</span>
-            <span className="text-xs sm:text-sm font-bold text-[var(--text)]">{winRateDisplay}</span>
-          </div>
+        {/* Hero metric — Tipstrr-style primary number */}
+        <div className="border-t border-[var(--separator)] pt-3 mb-3 text-center">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)] mb-0.5">
+            {t('tipster.roi')}
+          </p>
+          <p
+            className={`text-[28px] font-bold tracking-tight tabular-nums leading-none ${
+              roiPositive
+                ? 'text-[var(--primary)]'
+                : roiNegative
+                  ? 'text-[var(--destructive)]'
+                  : 'text-[var(--text)]'
+            }`}
+          >
+            {roiDisplay}
+          </p>
         </div>
 
-        {/* Follow + Join VIP */}
+        <dl className="grid grid-cols-2 gap-px rounded-lg overflow-hidden border border-[var(--separator)] bg-[var(--separator)] mb-3">
+          <div className="bg-[var(--card)] px-3 py-2.5 text-center">
+            <dt className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)]">
+              {t('tipster.win_rate')}
+            </dt>
+            <dd className="text-sm font-bold text-[var(--text)] tabular-nums mt-0.5">{winRateDisplay}</dd>
+          </div>
+          <div className="bg-[var(--card)] px-3 py-2.5 text-center">
+            <dt className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)]">
+              {t('tipster.total_picks')}
+            </dt>
+            <dd className="text-sm font-bold text-[var(--text)] tabular-nums mt-0.5">
+              {tipster.total_predictions ?? 0}
+            </dd>
+          </div>
+        </dl>
+
+        {tipster.bio ? (
+          <p className="text-xs text-[var(--text-muted)] line-clamp-2 mb-3">{tipster.bio}</p>
+        ) : null}
+
         <div className="mt-auto flex flex-col gap-2">
           {tipster.vip_package_id != null && tipster.vip_package_id > 0 && (
             <Link
               href={`/subscriptions/checkout?packageId=${tipster.vip_package_id}`}
-              className="w-full text-center px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-semibold text-xs sm:text-sm bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-400/40 hover:bg-amber-500/25 transition-colors"
+              className="touch-target w-full text-center px-3 py-2.5 rounded-xl font-semibold text-sm bg-[var(--accent-light)] text-[var(--text)] border border-[var(--separator)] hover:opacity-90 transition-opacity"
             >
               {t('tipster.join_vip')}
             </Link>
@@ -121,11 +150,14 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
           {onFollow && (
             <button
               type="button"
-              onClick={(e) => { e.preventDefault(); onFollow(); }}
+              onClick={(e) => {
+                e.preventDefault();
+                onFollow();
+              }}
               disabled={followLoading}
-              className={`w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-colors disabled:opacity-70 ${
+              className={`touch-target w-full px-3 py-2.5 rounded-xl font-semibold text-sm transition-colors disabled:opacity-70 ${
                 tipster.is_following
-                  ? 'bg-[var(--border)] text-[var(--text-muted)] hover:bg-gray-300 dark:hover:bg-gray-600'
+                  ? 'bg-[var(--fill-secondary)] text-[var(--text-muted)]'
                   : 'bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white'
               }`}
             >

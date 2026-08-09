@@ -203,10 +203,10 @@ export function TopBar() {
 
   return (
     <>
-      <div className="z-[60] w-full min-w-0 max-w-full bg-[#047857] text-white/95 text-xs sm:text-sm border-b border-emerald-900/40 overflow-x-hidden safe-area-inset-top max-md:fixed max-md:top-0 max-md:left-0 max-md:right-0 md:relative">
+      <div className="z-[60] w-full min-w-0 max-w-full bg-[var(--primary)] text-white/95 text-xs sm:text-sm border-b border-emerald-900/25 dark:border-white/10 overflow-x-hidden safe-area-inset-top max-md:fixed max-md:top-0 max-md:left-0 max-md:right-0 md:relative">
         <div className="flex items-center justify-between min-h-9 h-auto sm:h-9 py-1 sm:py-0 px-3 sm:px-4 gap-2 min-w-0 max-w-full">
-          {/* Scrolling disclaimer — seamless loop; static scroll when prefers-reduced-motion */}
-          <div className="flex-1 min-w-0 overflow-hidden">
+          {/* Compact on mobile app chrome: hide marquee, keep a11y text + switchers */}
+          <div className="flex-1 min-w-0 overflow-hidden max-md:hidden">
             {reduceMotion ? (
               <div className="overflow-x-auto overflow-y-hidden [-webkit-overflow-scrolling:touch] pb-0.5">
                 <p className="whitespace-nowrap pr-4 text-emerald-50/95 leading-snug">{disclaimerText}</p>
@@ -223,14 +223,16 @@ export function TopBar() {
               </>
             )}
           </div>
+          <p className="md:hidden sr-only">{disclaimerText}</p>
+          <p className="md:hidden text-[11px] font-medium text-white/90 truncate flex-1 min-w-0">
+            {t('topbar.disclaimer_1')}
+          </p>
 
-          {/* Currency & language only (live support + draft pick removed from top bar) */}
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <TopBarSwitchers />
           </div>
         </div>
       </div>
-      {/* Reserve space when the bar is fixed so main content is not hidden underneath */}
       <div className="md:hidden w-full shrink-0 pointer-events-none" style={mobileSpacerStyle} aria-hidden />
     </>
   );

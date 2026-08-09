@@ -15,3 +15,4 @@ export { PullToRefresh } from './PullToRefresh';
 export { MarketplaceFilterBar } from './MarketplaceFilterBar';
 export type { MarketplacePriceFilter, MarketplaceSortBy } from './MarketplaceFilterBar';
 export * from './icons';
+export { hapticLight, hapticSuccess, hapticError } from '@/lib/haptic';

@@ -97,11 +97,11 @@ function LoginForm() {
   return (
     <div className="min-h-screen bg-[var(--bg)] relative overflow-hidden w-full min-w-0 max-w-full">
       <UnifiedHeader />
-      <main className="section-ux-auth-main w-full min-w-0 max-w-full">
+      <main className="section-ux-auth-main w-full min-w-0 max-w-full pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <div className="w-full max-w-md min-w-0 mx-auto px-4 sm:px-0">
-          <div className="bg-[var(--card)] rounded-2xl shadow-sm border border-[var(--border)] p-6 sm:p-8 md:p-10 min-w-0 max-w-full">
-            <div className="text-center mb-8">
-              <h1 className="sr-only">{t('auth.login')}</h1>
+          <div className="bg-[var(--card)] rounded-2xl shadow-sm border border-[var(--border)] p-5 sm:p-8 md:p-10 min-w-0 max-w-full">
+            <div className="text-center mb-6 sm:mb-8">
+              <h1 className="text-2xl font-bold tracking-tight text-[var(--text)] mb-2 sm:sr-only">{t('auth.login')}</h1>
               <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('auth.sign_in_desc')}</p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-5 min-w-0">
@@ -118,7 +118,7 @@ function LoginForm() {
                   required
                   autoComplete="email"
                   disabled={loading}
-                  className="w-full min-w-0 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200 disabled:opacity-50"
+                  className="w-full min-w-0 min-h-[48px] px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200 disabled:opacity-50"
                   placeholder="you@example.com"
                 />
               </div>
@@ -136,12 +136,12 @@ function LoginForm() {
                     required
                     autoComplete="current-password"
                     disabled={loading}
-                    className="w-full min-w-0 px-4 py-3 pr-12 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200 disabled:opacity-50"
+                    className="w-full min-w-0 min-h-[48px] px-4 py-3 pr-12 text-base rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200 disabled:opacity-50"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 touch-target inline-flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
                     aria-pressed={showPassword}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
@@ -184,7 +184,7 @@ function LoginForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-[var(--primary)]/25 hover:shadow-xl hover:shadow-[var(--primary)]/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="touch-target w-full min-h-[52px] py-3.5 rounded-xl font-semibold bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white shadow-lg shadow-[var(--primary)]/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>

@@ -55,11 +55,21 @@ export function HomePopularTipsters({
   }, []);
 
   return (
-    <section className="py-12 md:py-16 bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
+    <section className="pt-6 pb-10 sm:py-12 md:py-16 bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <div className="section-ux-gutter-wide w-full min-w-0">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
-          <h2 className="text-lg font-bold text-[var(--text)] sm:text-xl md:text-2xl min-w-0">{t('home.featured_tipsters')}</h2>
-          <Link href="/tipsters" className="text-xs font-medium text-emerald-600 hover:text-emerald-700 hover:underline sm:text-sm shrink-0 w-fit">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between mb-4 sm:mb-6">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)] mb-0.5">
+              {t('nav.tipsters')}
+            </p>
+            <h2 className="text-xl font-bold text-[var(--text)] sm:text-2xl md:text-[28px] tracking-tight min-w-0">
+              {t('home.featured_tipsters')}
+            </h2>
+          </div>
+          <Link
+            href="/tipsters"
+            className="touch-target inline-flex items-center text-sm font-semibold text-[var(--primary)] hover:underline shrink-0 w-fit"
+          >
             {t('home.see_tipsters')} →
           </Link>
         </div>

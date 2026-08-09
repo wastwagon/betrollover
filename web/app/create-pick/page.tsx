@@ -7,6 +7,8 @@ import { useT } from '@/context/LanguageContext';
 import { DashboardShell } from '@/components/DashboardShell';
 import { NavBar } from '@/components/ios/NavBar';
 import { PageHeader } from '@/components/PageHeader';
+import { BottomSheet } from '@/components/ios/BottomSheet';
+import { hapticLight } from '@/lib/haptic';
 import { AdSlot } from '@/components/AdSlot';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
@@ -1554,24 +1556,31 @@ export default function CreatePickPage() {
         </div>
       </div>
 
-      {/* Mobile: Sticky slip bar above nav — tap to open slip sheet */}
+      {/* Mobile: Sticky slip bar above tab bar — tap to open slip sheet */}
       {selections.length > 0 && (
         <div
-          className="lg:hidden fixed left-0 right-0 bottom-16 z-40 px-4 pb-2 min-w-0 max-w-full"
-          style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+          className="lg:hidden fixed left-0 right-0 z-40 px-4 min-w-0 max-w-full pointer-events-none"
+          style={{ bottom: 'calc(3.5rem + env(safe-area-inset-bottom, 0px) + 0.5rem)' }}
         >
           <button
             type="button"
-            onClick={() => setSlipSheetOpen(true)}
-            className={`w-full min-w-0 max-w-full flex items-center justify-between gap-2 sm:gap-3 px-4 sm:px-5 py-4 rounded-2xl bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-teal-500/30 active:scale-[0.99] transition-transform touch-manipulation ${
+            onClick={() => {
+              hapticLight();
+              setSlipSheetOpen(true);
+            }}
+            className={`pointer-events-auto w-full min-w-0 max-w-full flex items-center justify-between gap-2 sm:gap-3 px-4 sm:px-5 py-3.5 rounded-2xl bg-[var(--primary)] text-white shadow-lg shadow-teal-500/25 active:scale-[0.99] transition-transform touch-manipulation touch-target ${
               createPickDisabled && selections.length > 0 ? 'opacity-85' : ''
             }`}
             aria-label="Open pick slip to review and create"
           >
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-              <span className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg shrink-0">📝</span>
+              <span className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg shrink-0" aria-hidden>
+                📝
+              </span>
               <div className="text-left min-w-0">
-                <p className="font-semibold text-sm truncate">{selections.length} selection{selections.length !== 1 ? 's' : ''}</p>
+                <p className="font-semibold text-sm truncate">
+                  {selections.length} selection{selections.length !== 1 ? 's' : ''}
+                </p>
                 <p className="text-xs text-white/85 tabular-nums">Total @ {totalOdds.toFixed(2)}</p>
                 {createPickDisabled && selections.length > 0 && (
                   <p className="text-[10px] text-white/75 mt-0.5 max-w-full sm:max-w-[200px] leading-tight">
@@ -1585,247 +1594,224 @@ export default function CreatePickPage() {
         </div>
       )}
 
-      {/* Mobile: Slip bottom sheet */}
-      {slipSheetOpen && (
-        <div
-          className="lg:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
-          onClick={() => setSlipSheetOpen(false)}
-          aria-hidden
+      {/* Mobile: Slip sheet (theme card + drag-to-dismiss) */}
+      <div className="lg:hidden">
+        <BottomSheet
+          open={slipSheetOpen && selections.length > 0}
+          onClose={() => setSlipSheetOpen(false)}
+          title={t('create_pick.pick_slip')}
+          doneLabel={t('common.close')}
+          maxHeightClass="max-h-[min(92dvh,720px)]"
         >
-          <div
-            className="absolute bottom-0 left-0 right-0 max-h-[90vh] min-w-0 max-w-full overflow-y-auto overflow-x-hidden bg-white rounded-t-3xl shadow-2xl animate-slide-up"
-            onClick={(e) => e.stopPropagation()}
-            style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
-          >
-            <div className="sticky top-0 z-10 bg-white rounded-t-3xl pt-4 pb-3 px-4 border-b border-[var(--border)] min-w-0">
-              <div className="w-12 h-1 rounded-full bg-[var(--border)] mx-auto mb-4" />
+          <div className="p-4 sm:p-5 space-y-4">
+            <div className="space-y-2 max-h-[180px] overflow-y-auto">
+              {selections.map((s, i) => {
+                const SHEET_SPORT_ICONS: Record<string, string> = {
+                  football: '⚽', basketball: '🏀', rugby: '🏉', mma: '🥊',
+                  volleyball: '🏐', hockey: '🏒', american_football: '🏈', tennis: '🎾',
+                };
+                const sheetSportIcon = SHEET_SPORT_ICONS[s.sport ?? 'football'] ?? '🎯';
+                return (
+                  <div
+                    key={i}
+                    className="bg-[var(--fill-secondary)] rounded-xl p-4 border border-[var(--separator)]"
+                  >
+                    <div className="flex items-start justify-between gap-3 min-w-0">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 mb-0.5 min-w-0">
+                          <span className="text-sm shrink-0">{sheetSportIcon}</span>
+                          <p className="text-sm font-semibold text-[var(--text)] truncate min-w-0">{s.matchDescription}</p>
+                        </div>
+                        <p className="text-xs text-[var(--text-muted)] mt-1 break-words">
+                          {formatFootballOutcomeLabel(s.prediction)}
+                        </p>
+                        <p className="text-base font-bold text-[var(--primary)] mt-2 tabular-nums">@ {s.odds.toFixed(2)}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeSelection(i)}
+                        className="touch-target shrink-0 inline-flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                        aria-label="Remove selection"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="bg-[var(--primary-light)]/50 rounded-xl p-4 border border-[var(--primary)]/30 min-w-0">
               <div className="flex items-center justify-between gap-2 min-w-0">
-                <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2 min-w-0 flex-1 truncate">
-                  <span className="shrink-0">📝</span>
-                  <span className="truncate">{t('create_pick.pick_slip')}</span>
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => setSlipSheetOpen(false)}
-                  className="shrink-0 p-2 -m-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-warm)] transition-colors"
-                  aria-label="Close"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                <span className="text-sm font-medium text-[var(--text-muted)] min-w-0">{t('create_pick.total_odds')}</span>
+                <span className="text-xl font-bold text-[var(--primary)] tabular-nums shrink-0">{totalOdds.toFixed(2)}</span>
               </div>
             </div>
-            <div className="p-5 space-y-4">
-              <div className="space-y-2 max-h-[180px] overflow-y-auto">
-                {selections.map((s, i) => {
-                  const SHEET_SPORT_ICONS: Record<string, string> = {
-                    football: '⚽', basketball: '🏀', rugby: '🏉', mma: '🥊',
-                    volleyball: '🏐', hockey: '🏒', american_football: '🏈', tennis: '🎾',
-                  };
-                  const sheetSportIcon = SHEET_SPORT_ICONS[s.sport ?? 'football'] ?? '🎯';
-                  return (
-                    <div
-                      key={i}
-                      className="bg-[var(--bg-warm)] rounded-xl p-4 border border-[var(--border)]"
-                    >
-                      <div className="flex items-start justify-between gap-3 min-w-0">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 mb-0.5 min-w-0">
-                            <span className="text-sm shrink-0">{sheetSportIcon}</span>
-                            <p className="text-sm font-semibold text-[var(--text)] truncate min-w-0">{s.matchDescription}</p>
-                          </div>
-                          <p className="text-xs text-[var(--text-muted)] mt-1 break-words">
-                            {formatFootballOutcomeLabel(s.prediction)}
-                          </p>
-                          <p className="text-base font-bold text-[var(--primary)] mt-2 tabular-nums">@ {s.odds.toFixed(2)}</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeSelection(i)}
-                          className="shrink-0 p-2 rounded-lg text-red-500 hover:bg-red-50 active:bg-red-100 transition-colors touch-manipulation"
-                          aria-label="Remove selection"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+            <div className="space-y-3 pt-2 border-t border-[var(--separator)]">
+              <div>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">{t('create_pick.title_label')} <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    setFormError(null);
+                  }}
+                  placeholder="e.g. Saturday Banker"
+                  className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                />
               </div>
-              <div className="bg-[var(--primary-light)]/50 rounded-xl p-4 border-2 border-[var(--primary)]/30 min-w-0">
-                <div className="flex items-center justify-between gap-2 min-w-0">
-                  <span className="text-sm font-medium text-[var(--text-muted)] min-w-0">{t('create_pick.total_odds')}</span>
-                  <span className="text-xl font-bold text-[var(--primary)] tabular-nums shrink-0">{totalOdds.toFixed(2)}</span>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">{t('create_pick.bookie_label')}</label>
+                <select
+                  value={bookmakerKey}
+                  onChange={(e) => {
+                    setBookmakerKey(e.target.value);
+                    setFormError(null);
+                  }}
+                  className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)]"
+                >
+                  <option value="">{t('create_pick.bookie_none')}</option>
+                  {AFRICAN_BOOKMAKERS.map((b) => (
+                    <option key={b.key} value={b.key}>
+                      {b.label}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div className="space-y-3 pt-2 border-t border-[var(--border)]">
-                <div>
-                  <label className="block text-sm font-medium text-[var(--text)] mb-1">{t('create_pick.title_label')} <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => {
-                      setTitle(e.target.value);
-                      setFormError(null);
-                    }}
-                    placeholder="e.g. Saturday Banker"
-                    className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[var(--text)] mb-1">{t('create_pick.bookie_label')}</label>
-                  <select
-                    value={bookmakerKey}
-                    onChange={(e) => {
-                      setBookmakerKey(e.target.value);
-                      setFormError(null);
-                    }}
-                    className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)]"
-                  >
-                    <option value="">{t('create_pick.bookie_none')}</option>
-                    {AFRICAN_BOOKMAKERS.map((b) => (
-                      <option key={b.key} value={b.key}>
-                        {b.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[var(--text)] mb-1">{t('create_pick.booking_code_label')}</label>
-                  <input
-                    type="text"
-                    value={bookingCode}
-                    onChange={(e) => {
-                      setBookingCode(e.target.value);
-                      setFormError(null);
-                    }}
-                    placeholder={t('create_pick.booking_code_placeholder')}
-                    autoComplete="off"
-                    className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-                  />
-                  <p className="text-xs text-[var(--text-muted)] mt-1.5 leading-snug">{t('create_pick.booking_code_hint_short')}</p>
-                </div>
-                {sellTh &&
-                  (placement === 'marketplace' || (placement === 'subscription' && price > 0)) && (
-                  <div className="rounded-xl border border-amber-200/80 bg-amber-50/40 dark:bg-amber-950/25 px-3 py-2.5 space-y-1.5">
-                    <p className="text-xs font-semibold text-[var(--text)]">{t('create_pick.paid_marketplace_rules_title')}</p>
-                    <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                      {t('create_pick.paid_marketplace_rules_body', {
-                        minRoi: String(sellTh.minimumROI),
-                        minWr: String(sellTh.minimumWinRate),
-                      })}
-                    </p>
-                    {price > 0 && myTipStats && (
-                      <p
-                        className={`text-xs font-medium leading-relaxed ${
-                          myTipStats.roi >= sellTh.minimumROI && myTipStats.winRate >= sellTh.minimumWinRate
-                            ? 'text-emerald-700 dark:text-emerald-300'
-                            : 'text-amber-800 dark:text-amber-200'
-                        }`}
-                      >
-                        {t('create_pick.paid_marketplace_your_stats', {
-                          roi: myTipStats.roi.toFixed(2),
-                          wr: String(myTipStats.winRate),
-                        })}{' '}
-                        {myTipStats.roi >= sellTh.minimumROI && myTipStats.winRate >= sellTh.minimumWinRate
-                          ? t('create_pick.paid_marketplace_ready')
-                          : t('create_pick.paid_marketplace_not_ready')}
-                      </p>
-                    )}
-                  </div>
-                )}
-                <div>
-                  <label className="block text-sm font-medium text-[var(--text)] mb-1">{t('create_pick.price_label')} {t('create_pick.price_note')}</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={price || ''}
-                    onChange={(e) => {
-                      setPrice(Number(e.target.value) || 0);
-                      setFormError(null);
-                    }}
-                    placeholder="0"
-                    className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-                  />
-                  {Number(price) > 0 && sellTh && myTipStats && !paidSaleAllowed && (
-                    <p className="text-xs text-amber-800 dark:text-amber-200 mt-2 leading-snug">{t('create_pick.paid_price_blocked_hint')}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[var(--text)] mb-1">Placement</label>
-                  <select
-                    value={placement}
-                    onChange={(e) => {
-                      const v = e.target.value as 'marketplace' | 'subscription';
-                      setPlacement(v);
-                      setFormError(null);
-                      if (v === 'marketplace') setSubscriptionPackageIds([]);
-                    }}
-                    className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-                  >
-                    <option value="marketplace">Marketplace only</option>
-                    <option value="subscription">VIP / subscription only</option>
-                  </select>
-                </div>
-                {placement === 'subscription' && myPackages.length > 0 && (
-                  <div className="space-y-1">
-                    <span className="text-sm text-[var(--text-muted)]">Add to package:</span>
-                    {myPackages.map((p) => (
-                      <label key={p.id} className="flex items-center gap-2 cursor-pointer text-sm">
-                        <input
-                          type="checkbox"
-                          checked={subscriptionPackageIds.includes(p.id)}
-                          onChange={(e) => {
-                            setFormError(null);
-                            if (e.target.checked) setSubscriptionPackageIds((prev) => [...prev, p.id]);
-                            else setSubscriptionPackageIds((prev) => prev.filter((id) => id !== p.id));
-                          }}
-                          className="w-4 h-4 rounded border-[var(--border)]"
-                        />
-                        <span>{p.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-                {placement === 'subscription' && myPackages.length === 0 && (
-                  <p className="text-sm text-[var(--text-muted)]">
-                    <Link href="/dashboard/subscription-packages" className="text-[var(--primary)] hover:underline">Create a VIP package</Link> first.
-                  </p>
-                )}
-                {sellTh && placement === 'subscription' && price === 0 && (
+              <div>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">{t('create_pick.booking_code_label')}</label>
+                <input
+                  type="text"
+                  value={bookingCode}
+                  onChange={(e) => {
+                    setBookingCode(e.target.value);
+                    setFormError(null);
+                  }}
+                  placeholder={t('create_pick.booking_code_placeholder')}
+                  autoComplete="off"
+                  className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                />
+                <p className="text-xs text-[var(--text-muted)] mt-1.5 leading-snug">{t('create_pick.booking_code_hint_short')}</p>
+              </div>
+              {sellTh &&
+                (placement === 'marketplace' || (placement === 'subscription' && price > 0)) && (
+                <div className="rounded-xl border border-amber-200/80 bg-amber-50/40 dark:bg-amber-950/25 px-3 py-2.5 space-y-1.5">
+                  <p className="text-xs font-semibold text-[var(--text)]">{t('create_pick.paid_marketplace_rules_title')}</p>
                   <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                    {t('create_pick.vip_same_bar', {
+                    {t('create_pick.paid_marketplace_rules_body', {
                       minRoi: String(sellTh.minimumROI),
                       minWr: String(sellTh.minimumWinRate),
                     })}
                   </p>
+                  {price > 0 && myTipStats && (
+                    <p
+                      className={`text-xs font-medium leading-relaxed ${
+                        myTipStats.roi >= sellTh.minimumROI && myTipStats.winRate >= sellTh.minimumWinRate
+                          ? 'text-emerald-700 dark:text-emerald-300'
+                          : 'text-amber-800 dark:text-amber-200'
+                      }`}
+                    >
+                      {t('create_pick.paid_marketplace_your_stats', {
+                        roi: myTipStats.roi.toFixed(2),
+                        wr: String(myTipStats.winRate),
+                      })}{' '}
+                      {myTipStats.roi >= sellTh.minimumROI && myTipStats.winRate >= sellTh.minimumWinRate
+                        ? t('create_pick.paid_marketplace_ready')
+                        : t('create_pick.paid_marketplace_not_ready')}
+                    </p>
+                  )}
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">{t('create_pick.price_label')} {t('create_pick.price_note')}</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={price || ''}
+                  onChange={(e) => {
+                    setPrice(Number(e.target.value) || 0);
+                    setFormError(null);
+                  }}
+                  placeholder="0"
+                  className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                />
+                {Number(price) > 0 && sellTh && myTipStats && !paidSaleAllowed && (
+                  <p className="text-xs text-amber-800 dark:text-amber-200 mt-2 leading-snug">{t('create_pick.paid_price_blocked_hint')}</p>
                 )}
-                {formError && (
-                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3">
-                    <p className="text-xs font-semibold text-red-900 dark:text-red-200 mb-1">{t('create_pick.publish_error_title')}</p>
-                    <p className="text-red-700 dark:text-red-300 text-sm">{formError}</p>
-                  </div>
-                )}
-                {createPickDisabled && selections.length > 0 && !submitting && (
-                  <p className="text-xs text-[var(--text-muted)] leading-snug">{t('create_pick.desktop_create_hint')}</p>
-                )}
-                <button
-                  type="button"
-                  onClick={() => submit()}
-                  disabled={createPickDisabled}
-                  className="w-full py-4 rounded-xl font-bold text-base bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-teal-500/30 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] transition-all flex items-center justify-center gap-2 touch-manipulation min-h-[52px]"
-                >
-                  {submitting && <LoadingSpinner size="sm" />}
-                  {submitting ? t('create_pick.creating') : t('create_pick.create_btn')}
-                </button>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">Placement</label>
+                <select
+                  value={placement}
+                  onChange={(e) => {
+                    const v = e.target.value as 'marketplace' | 'subscription';
+                    setPlacement(v);
+                    setFormError(null);
+                    if (v === 'marketplace') setSubscriptionPackageIds([]);
+                  }}
+                  className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                >
+                  <option value="marketplace">Marketplace only</option>
+                  <option value="subscription">VIP / subscription only</option>
+                </select>
+              </div>
+              {placement === 'subscription' && myPackages.length > 0 && (
+                <div className="space-y-1">
+                  <span className="text-sm text-[var(--text-muted)]">Add to package:</span>
+                  {myPackages.map((p) => (
+                    <label key={p.id} className="flex items-center gap-2 cursor-pointer text-sm touch-target">
+                      <input
+                        type="checkbox"
+                        checked={subscriptionPackageIds.includes(p.id)}
+                        onChange={(e) => {
+                          setFormError(null);
+                          if (e.target.checked) setSubscriptionPackageIds((prev) => [...prev, p.id]);
+                          else setSubscriptionPackageIds((prev) => prev.filter((id) => id !== p.id));
+                        }}
+                        className="w-4 h-4 rounded border-[var(--border)]"
+                      />
+                      <span>{p.name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              {placement === 'subscription' && myPackages.length === 0 && (
+                <p className="text-sm text-[var(--text-muted)]">
+                  <Link href="/dashboard/subscription-packages" className="text-[var(--primary)] hover:underline">Create a VIP package</Link> first.
+                </p>
+              )}
+              {sellTh && placement === 'subscription' && price === 0 && (
+                <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                  {t('create_pick.vip_same_bar', {
+                    minRoi: String(sellTh.minimumROI),
+                    minWr: String(sellTh.minimumWinRate),
+                  })}
+                </p>
+              )}
+              {formError && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3">
+                  <p className="text-xs font-semibold text-red-900 dark:text-red-200 mb-1">{t('create_pick.publish_error_title')}</p>
+                  <p className="text-red-700 dark:text-red-300 text-sm">{formError}</p>
+                </div>
+              )}
+              {createPickDisabled && selections.length > 0 && !submitting && (
+                <p className="text-xs text-[var(--text-muted)] leading-snug">{t('create_pick.desktop_create_hint')}</p>
+              )}
+              <button
+                type="button"
+                onClick={() => submit()}
+                disabled={createPickDisabled}
+                className="w-full py-4 rounded-xl font-bold text-base bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white shadow-lg shadow-teal-500/25 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] transition-all flex items-center justify-center gap-2 touch-manipulation min-h-[52px]"
+              >
+                {submitting && <LoadingSpinner size="sm" />}
+                {submitting ? t('create_pick.creating') : t('create_pick.create_btn')}
+              </button>
             </div>
           </div>
-        </div>
-      )}
+        </BottomSheet>
+      </div>
     </DashboardShell>
   );
 }

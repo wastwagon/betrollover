@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { getApiUrl } from '@/lib/site-config';
+import { getApiUrl, SITE_NAME } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import type { HomePublicStats } from '@/lib/home-public-data';
@@ -51,6 +52,12 @@ export function HomeHero({
   const t = useT();
   const { format } = useCurrency();
   const [stats, setStats] = useState<HomePublicStats | null>(initialStats);
+  const [entered, setEntered] = useState(false);
+
+  useEffect(() => {
+    const id = window.requestAnimationFrame(() => setEntered(true));
+    return () => window.cancelAnimationFrame(id);
+  }, []);
 
   useEffect(() => {
     const fetchStats = () => {
@@ -82,85 +89,130 @@ export function HomeHero({
   ];
 
   return (
-    <section className="w-full min-w-0 bg-[var(--bg)] border-b border-[var(--separator)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 md:pt-10 pb-8 md:pb-10">
-        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5 lg:gap-10 mb-8">
-          <div className="max-w-2xl min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--primary)]">
-              {t('home.hero_badge')}
+    <div className="w-full min-w-0">
+      {/* Full-bleed hero banner — brand + one message + CTAs */}
+      <section
+        className="relative w-full min-w-0 overflow-hidden text-white"
+        aria-label={SITE_NAME}
+      >
+        <div className="absolute inset-0">
+          <Image
+            src="/images/marketing/hero-cinematic.webp"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className={`object-cover object-center transition-transform duration-[1.4s] ease-out ${
+              entered ? 'scale-100' : 'scale-105'
+            }`}
+          />
+          {/* Readability + brand atmosphere — not card chrome */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(180deg, rgba(2, 20, 14, 0.35) 0%, rgba(2, 20, 14, 0.55) 45%, rgba(2, 20, 14, 0.88) 100%)',
+            }}
+            aria-hidden
+          />
+          <div
+            className="absolute inset-0 opacity-70"
+            style={{
+              background:
+                'radial-gradient(ellipse 90% 60% at 20% 100%, rgba(16, 185, 129, 0.35), transparent 55%)',
+            }}
+            aria-hidden
+          />
+        </div>
+
+        <div className="relative mx-auto flex min-h-[min(72svh,520px)] w-full max-w-7xl flex-col justify-end px-4 pb-8 pt-14 sm:min-h-[420px] sm:px-6 sm:pb-10 sm:pt-16 lg:px-8 lg:pb-12">
+          <div
+            className={`max-w-xl transition-all duration-700 ease-out ${
+              entered ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'
+            }`}
+          >
+            <p className="text-[2rem] font-bold leading-none tracking-tight sm:text-5xl md:text-6xl">
+              {SITE_NAME}
             </p>
-            <h1 className="mt-2 text-2xl md:text-3xl font-bold tracking-tight text-[var(--text)] leading-snug">
+            <h1 className="mt-3 text-lg font-semibold leading-snug tracking-tight text-white sm:mt-4 sm:text-2xl md:text-[1.75rem]">
               {t('home.hero_title')}
             </h1>
-            <p className="mt-2 text-sm md:text-base leading-relaxed text-[var(--text-muted)] max-w-xl">
-              {t('home.hero_subtitle')}
-            </p>
-            <p className="mt-2 text-xs md:text-sm leading-relaxed text-[var(--text-muted)] max-w-xl">
+            <p className="mt-2 max-w-md text-sm leading-relaxed text-white/85 sm:text-base">
               {t('home.hero_escrow_line')}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2.5 shrink-0">
+
+          <div
+            className={`mt-6 flex w-full max-w-md flex-col gap-2.5 transition-all delay-150 duration-700 ease-out sm:mt-8 sm:max-w-none sm:flex-row sm:flex-wrap ${
+              entered ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'
+            }`}
+          >
             <Link
               href="/marketplace"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-[var(--primary)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--primary-hover)] transition-colors"
+              className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl bg-[var(--primary)] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-950/30 transition-colors hover:bg-[var(--primary-hover)] sm:flex-none sm:min-w-[10.5rem]"
             >
               {t('home.hero_cta_primary')}
             </Link>
             <Link
-              href="/live-scores"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-5 py-2.5 text-sm font-semibold text-[var(--text)] hover:bg-[var(--fill-secondary)] transition-colors"
+              href="/tipsters"
+              className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl border border-white/35 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/18 sm:flex-none sm:min-w-[10.5rem]"
             >
-              {t('home.hero_cta_live')}
+              {t('nav.tipsters')}
             </Link>
             <Link
               href="/register"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-[var(--primary)] hover:underline"
+              className="inline-flex min-h-[48px] items-center justify-center px-2 py-3 text-sm font-semibold text-white/90 underline-offset-4 hover:underline sm:px-4"
             >
               {t('home.hero_cta_secondary')} →
             </Link>
           </div>
         </div>
+      </section>
 
-        <div className="mb-8">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-xs md:text-sm font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-              {t('home.featured_matches_title')}
-            </h2>
-            <Link
-              href="/live-scores"
-              className="text-xs md:text-sm font-semibold text-[var(--primary)] whitespace-nowrap"
-            >
-              {t('home.today_matches_see_all')} →
-            </Link>
-          </div>
-          <HomeNativeMatchRail
-            initialMatches={initialTodayMatches}
-            marketplaceItems={marketplaceItems}
-          />
-        </div>
-
-        <div>
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[var(--text-muted)]">
-            {t('home.app_snapshot_title')}
-          </p>
-          <div className="ios-grouped-section mx-0 grid grid-cols-1 sm:grid-cols-3 sm:divide-x sm:divide-y-0 divide-y divide-[var(--separator)]">
-            {statItems.map((item) => (
-              <div
-                key={item.key}
-                title={t(STAT_HINT_KEYS[item.key])}
-                className="min-w-0 px-4 py-4 sm:py-3 text-center sm:text-left"
+      {/* Below-fold utility: matches + snapshot (kept out of the hero budget) */}
+      <section className="w-full min-w-0 border-b border-[var(--separator)] bg-[var(--bg)]">
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+          <div className="mb-6">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] md:text-sm">
+                {t('home.featured_matches_title')}
+              </h2>
+              <Link
+                href="/live-scores"
+                className="touch-target inline-flex items-center text-xs font-semibold text-[var(--primary)] whitespace-nowrap md:text-sm"
               >
-                <p className="text-xl md:text-2xl font-bold tabular-nums text-[var(--text)]">
-                  {item.value}
-                </p>
-                <p className="mt-0.5 text-xs md:text-sm text-[var(--text-muted)]">
-                  {t(STAT_LABEL_KEYS[item.key])}
-                </p>
-              </div>
-            ))}
+                {t('home.today_matches_see_all')} →
+              </Link>
+            </div>
+            <HomeNativeMatchRail
+              initialMatches={initialTodayMatches}
+              marketplaceItems={marketplaceItems}
+            />
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[var(--text-muted)]">
+              {t('home.app_snapshot_title')}
+            </p>
+            <div className="ios-grouped-section mx-0 grid grid-cols-1 divide-y divide-[var(--separator)] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+              {statItems.map((item) => (
+                <div
+                  key={item.key}
+                  title={t(STAT_HINT_KEYS[item.key])}
+                  className="min-w-0 px-4 py-4 text-center sm:py-3 sm:text-left"
+                >
+                  <p className="text-xl font-bold tabular-nums text-[var(--text)] md:text-2xl">
+                    {item.value}
+                  </p>
+                  <p className="mt-0.5 text-xs text-[var(--text-muted)] md:text-sm">
+                    {t(STAT_LABEL_KEYS[item.key])}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }

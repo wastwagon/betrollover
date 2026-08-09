@@ -37,16 +37,20 @@ export function PageHeader({
   }
 
   return (
-    <div className="mb-5 sm:mb-6 w-full min-w-0 max-w-full flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+    <div className="mb-4 sm:mb-6 w-full min-w-0 max-w-full flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-3">
       <div className="min-w-0 flex-1 px-0.5">
         {label && label !== title ? (
-          <p className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide mb-0.5 truncate">{label}</p>
+          <p className="hidden sm:block text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide mb-0.5 truncate">
+            {label}
+          </p>
         ) : null}
-        <h1 className="text-[28px] sm:text-[34px] font-bold tracking-tight text-[var(--text)] leading-tight min-w-0 break-words">
+        <h1 className="text-[22px] sm:text-[34px] font-bold tracking-tight text-[var(--text)] leading-tight min-w-0 break-words">
           {title}
         </h1>
         {tagline ? (
-          <p className="text-[15px] text-[var(--text-muted)] mt-1 max-w-full sm:max-w-xl leading-snug">{tagline}</p>
+          <p className="hidden sm:block text-[15px] text-[var(--text-muted)] mt-1 max-w-full sm:max-w-xl leading-snug">
+            {tagline}
+          </p>
         ) : null}
       </div>
       {action ? (

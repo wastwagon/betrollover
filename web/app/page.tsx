@@ -15,6 +15,7 @@ import { AdSlot } from '@/components/AdSlot';
 import { HomeHero } from '@/components/HomeHero';
 import { HomeJoinCtaCard } from '@/components/HomeJoinCtaCard';
 import { HomePopularTipsters } from '@/components/HomePopularTipsters';
+import { HomePullToRefresh } from '@/components/HomePullToRefresh';
 import { FeaturedPicks } from '@/components/FeaturedPicks';
 import { HomeFreeTipOfTheDay } from '@/components/HomeFreeTipOfTheDay';
 import { HomeQuickMarketplaceSections } from '@/components/HomeQuickMarketplaceSections';
@@ -54,6 +55,7 @@ export default async function HomePage() {
       <UnifiedHeader />
 
       <main className="bg-[var(--bg)] w-full min-w-0">
+        <HomePullToRefresh>
         <HomeHero
           initialStats={homeData.stats}
           initialTodayMatches={homeData.todayMatches}
@@ -62,6 +64,7 @@ export default async function HomePage() {
         <div className="section-ux-rail-4xl w-full min-w-0">
           <AdSlot zoneSlug="home-below-hero" fullWidth className="w-full" />
         </div>
+        {/* Tipsters immediately after the banner — Tipstrr-style discovery */}
         <HomePopularTipsters initialLeaderboard={homeData.topTipsters.slice(0, 6)} />
         <FeaturedPicks initialFeatured={homeData.featuredPicks} />
         <section id="free-tip-of-the-day" className="w-full min-w-0">
@@ -309,7 +312,7 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
-
+        </HomePullToRefresh>
       </main>
 
       <AppFooter />

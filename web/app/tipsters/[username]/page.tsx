@@ -20,6 +20,7 @@ import { FollowersCountButton } from '@/components/TipsterFollowersModal';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { NavBar } from '@/components/ios/NavBar';
+import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
@@ -476,6 +477,13 @@ export default function TipsterProfilePage() {
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <UnifiedHeader />
       <main className="min-h-[calc(100vh-8rem)] w-full min-w-0 bg-[var(--bg)]">
+        <PullToRefresh
+          onRefresh={() => {
+            refetchProfile();
+            return Promise.resolve();
+          }}
+          disabled={loading}
+        >
         <div className="section-ux-page w-full min-w-0">
           <div className="lg:hidden -mx-4 sm:mx-0 mb-3">
             <NavBar title={tipster.display_name} backHref="/tipsters" backLabel={t('tipster.back_to_tipsters')} sticky={false} />
@@ -947,6 +955,7 @@ export default function TipsterProfilePage() {
           )}
         </section>
         </div>
+        </PullToRefresh>
       </main>
     </div>
   );

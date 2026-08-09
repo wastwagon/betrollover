@@ -56,12 +56,14 @@ function RegisterForm() {
         }}
       />
       <UnifiedHeader />
-      <main className="section-ux-register-main w-full min-w-0 max-w-full">
+      <main className="section-ux-register-main w-full min-w-0 max-w-full pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <div className="relative w-full max-w-[440px] min-w-0 mx-auto px-4 sm:px-0">
-          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white/90 dark:bg-slate-900/60 backdrop-blur-sm shadow-[0_1px_2px_rgb(0_0_0/0.04),0_24px_48px_-12px_rgb(0_0_0/0.08)] dark:shadow-[0_24px_48px_-12px_rgb(0_0_0/0.35)] px-5 py-8 sm:px-10 sm:py-11 min-w-0 max-w-full">
-              <div className="text-center mb-9">
-                <h1 className="sr-only">{t('auth.register_cta')}</h1>
-                <p className="text-base sm:text-lg font-medium text-[var(--text)] leading-relaxed">
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-5 py-8 sm:px-10 sm:py-11 min-w-0 max-w-full shadow-sm">
+              <div className="text-center mb-8 sm:mb-9">
+                <h1 className="text-2xl font-bold tracking-tight text-[var(--text)] mb-2 sm:sr-only">
+                  {t('auth.register_cta')}
+                </h1>
+                <p className="text-sm sm:text-base font-medium text-[var(--text-muted)] leading-relaxed">
                   {t('auth.register_subtitle')}
                 </p>
               </div>
