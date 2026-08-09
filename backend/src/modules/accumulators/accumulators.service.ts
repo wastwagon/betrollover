@@ -22,6 +22,7 @@ import { sanitizeText } from '../../common/sanitize.util';
 import { EscrowFund } from './entities/escrow-fund.entity';
 import { UserPurchasedPick } from './entities/user-purchased-pick.entity';
 import { User, UserRole } from '../users/entities/user.entity';
+import { UsersService } from '../users/users.service';
 import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { EmailService } from '../email/email.service';
@@ -135,6 +136,7 @@ export class AccumulatorsService {
     private emailService: EmailService,
     private footballService: FootballService,
     private tipsterService: TipsterService,
+    private usersService: UsersService,
     private subscriptionsService: SubscriptionsService,
     private referralsService: ReferralsService,
     private dataSource: DataSource,
@@ -143,6 +145,11 @@ export class AccumulatorsService {
   ) { }
 
   async create(userId: number, dto: CreateAccumulatorDto) {
+    // Public tipster list/leaderboard require a tipsters row — create/reactivate if missing.
+    await this.usersService.ensureTipsterProfileForUserId(userId).catch((err) => {
+      this.logger.warn(`ensureTipsterProfileForUserId(${userId}) failed: ${err?.message || err}`);
+    });
+
     // Validate inputs
     if (!dto.title || dto.title.trim().length === 0) {
       throw new BadRequestException('Title is required');

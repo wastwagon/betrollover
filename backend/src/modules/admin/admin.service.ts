@@ -36,6 +36,7 @@ import { AuditService } from '../audit/audit.service';
 import { clampPlatformCommissionPercent, splitGrossForTipsterPayout } from '../../common/platform-commission';
 import { SubscriptionEscrow } from '../subscriptions/entities/subscription-escrow.entity';
 import { AccumulatorsService } from '../accumulators/accumulators.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class AdminService {
@@ -43,6 +44,7 @@ export class AdminService {
 
   constructor(
     private readonly auditService: AuditService,
+    private readonly usersService: UsersService,
     @InjectRepository(SyncStatus)
     private syncStatusRepo: Repository<SyncStatus>,
     @InjectRepository(User)
@@ -300,6 +302,14 @@ export class AdminService {
       await this.syncAvatarToTipster(id, user.avatar);
     }
     await this.usersRepo.save(user);
+
+    // Tipster role (or publishing sellers) need a public tipsters profile for browse/leaderboard.
+    if (user.role === UserRole.TIPSTER || user.role === UserRole.ADMIN) {
+      await this.usersService.ensureTipsterProfileForUserId(id).catch((err) => {
+        this.logger.warn(`ensureTipsterProfileForUserId(${id}) after admin update: ${err?.message}`);
+      });
+    }
+
     if (data.status !== undefined && user.status !== prevStatus) {
       const tipsterRepo = this.dataSource.getRepository(Tipster);
       const linkedTipster = await tipsterRepo.findOne({ where: { userId: id }, select: ['id'] });

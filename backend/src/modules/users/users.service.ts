@@ -421,21 +421,35 @@ export class UsersService {
     return { status: 'approved', message: 'You are now a tipster. Post free picks to build your ROI before selling paid picks.' };
   }
 
-  private async ensureTipsterForUser(user: User): Promise<void> {
+  /**
+   * Ensure a public tipster profile exists and is active for browse/leaderboard.
+   * Safe to call on every pick publish / role change.
+   */
+  async ensureTipsterForUser(
+    user: Pick<User, 'id' | 'username' | 'displayName' | 'avatar' | 'bio'>,
+  ): Promise<Tipster> {
     const existing = await this.tipsterRepo.findOne({ where: { userId: user.id } });
-    if (existing) return;
+    if (existing) {
+      if (!existing.isActive) {
+        existing.isActive = true;
+        await this.tipsterRepo.save(existing);
+      }
+      return existing;
+    }
     const byUsername = await this.tipsterRepo.findOne({ where: { username: user.username } });
     if (byUsername) {
       byUsername.userId = user.id;
-      byUsername.displayName = user.displayName;
-      byUsername.avatarUrl = user.avatar;
-      byUsername.bio = user.bio;
+      byUsername.displayName = user.displayName || byUsername.displayName;
+      byUsername.avatarUrl = user.avatar ?? byUsername.avatarUrl;
+      byUsername.bio = user.bio ?? byUsername.bio;
+      byUsername.isActive = true;
+      if (!byUsername.tipsterType) byUsername.tipsterType = 'human';
       await this.tipsterRepo.save(byUsername);
-      return;
+      return byUsername;
     }
     const tipster = this.tipsterRepo.create({
       username: user.username,
-      displayName: user.displayName,
+      displayName: user.displayName || user.username,
       avatarUrl: user.avatar,
       bio: user.bio,
       userId: user.id,
@@ -443,7 +457,17 @@ export class UsersService {
       tipsterType: 'human',
       isActive: true,
     });
-    await this.tipsterRepo.save(tipster);
+    return this.tipsterRepo.save(tipster);
+  }
+
+  /** Load user fields and ensure tipster profile (no-op if user missing). */
+  async ensureTipsterProfileForUserId(userId: number): Promise<Tipster | null> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      select: ['id', 'username', 'displayName', 'avatar', 'bio'],
+    });
+    if (!user?.username) return null;
+    return this.ensureTipsterForUser(user);
   }
 
   async getMyTipsterRequest(userId: number) {
