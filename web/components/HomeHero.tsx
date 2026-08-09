@@ -104,66 +104,68 @@ export function HomeHero({
               fill
               priority
               sizes="100vw"
-              className={`object-cover object-[center_40%] transition-transform duration-[1.4s] ease-out ${
+              className={`object-cover object-[center_42%] brightness-[1.04] contrast-[1.02] saturate-[1.08] transition-transform duration-[1.4s] ease-out ${
                 entered ? 'scale-100' : 'scale-105'
               }`}
             />
           </picture>
+          {/* Bright stadium overall; left/bottom scrim only for copy contrast */}
           <div
             className="absolute inset-0"
             style={{
               background:
-                'linear-gradient(180deg, rgba(2, 16, 12, 0.28) 0%, rgba(2, 16, 12, 0.52) 42%, rgba(2, 12, 10, 0.9) 100%)',
+                'linear-gradient(105deg, rgba(4, 22, 18, 0.72) 0%, rgba(4, 22, 18, 0.45) 32%, rgba(4, 22, 18, 0.12) 58%, transparent 72%), linear-gradient(180deg, transparent 40%, rgba(4, 22, 18, 0.5) 100%)',
             }}
             aria-hidden
           />
           <div
-            className="absolute inset-0 opacity-65"
+            className="absolute inset-0 opacity-35"
             style={{
               background:
-                'radial-gradient(ellipse 85% 55% at 18% 100%, rgba(16, 185, 129, 0.32), transparent 58%)',
+                'radial-gradient(ellipse 95% 70% at 85% 18%, rgba(255, 255, 255, 0.2), transparent 52%)',
             }}
             aria-hidden
           />
         </div>
 
-        <div className="relative mx-auto flex min-h-[min(72svh,520px)] w-full max-w-7xl flex-col justify-end px-4 pb-8 pt-14 sm:min-h-[420px] sm:px-6 sm:pb-10 sm:pt-16 lg:px-8 lg:pb-12">
+        <div className="relative mx-auto flex min-h-[min(68svh,480px)] w-full max-w-7xl flex-col justify-end px-4 pb-8 pt-14 sm:min-h-[400px] sm:px-6 sm:pb-10 sm:pt-16 lg:px-8 lg:pb-12">
           <div
-            className={`max-w-2xl transition-all duration-700 ease-out ${
+            className={`max-w-xl transition-all duration-700 ease-out ${
               entered ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'
             }`}
           >
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200/90 sm:text-xs">
-              {t('home.hero_badge')}
+            <h1 className="sr-only">{t('home.hero_title')}</h1>
+            <p className="mb-3 inline-flex max-w-full items-center rounded-full border border-emerald-300/40 bg-emerald-950/75 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-50 shadow-[0_4px_20px_-6px_rgba(0,0,0,0.55)] backdrop-blur-md sm:px-3.5 sm:text-[11px]">
+              <span className="truncate">{t('home.hero_badge')}</span>
             </p>
-            <h1 className="text-[1.85rem] font-bold leading-[1.12] tracking-tight text-white sm:text-4xl md:text-5xl md:leading-[1.08]">
-              {t('home.hero_title')}
-            </h1>
-            <p className="mt-3 max-w-lg text-sm leading-relaxed text-white/85 sm:mt-4 sm:text-base">
+            <p
+              className="max-w-md text-sm font-semibold leading-relaxed text-white sm:text-[15px]"
+              style={{ textShadow: '0 1px 3px rgba(0,0,0,0.65), 0 2px 18px rgba(0,0,0,0.4)' }}
+            >
               {t('home.hero_escrow_line')}
             </p>
           </div>
 
           <div
-            className={`mt-6 flex w-full max-w-md flex-col gap-2.5 transition-all delay-150 duration-700 ease-out sm:mt-8 sm:max-w-none sm:flex-row sm:flex-wrap ${
+            className={`mt-5 flex w-full max-w-md flex-col gap-2.5 transition-all delay-150 duration-700 ease-out sm:mt-7 sm:max-w-none sm:flex-row sm:flex-wrap ${
               entered ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'
             }`}
           >
             <Link
               href="/marketplace"
-              className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl bg-[var(--primary)] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-950/30 transition-colors hover:bg-[var(--primary-hover)] sm:flex-none sm:min-w-[10.5rem]"
+              className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(16,185,129,0.55)] transition-colors hover:bg-emerald-400 sm:flex-none sm:min-w-[10.5rem]"
             >
               {t('home.hero_cta_primary')}
             </Link>
             <Link
               href="/tipsters"
-              className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl border border-white/35 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/18 sm:flex-none sm:min-w-[10.5rem]"
+              className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl border border-white/45 bg-white/15 px-5 py-3 text-sm font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/25 sm:flex-none sm:min-w-[10.5rem]"
             >
               {t('nav.tipsters')}
             </Link>
             <Link
               href="/register"
-              className="inline-flex min-h-[48px] items-center justify-center px-2 py-3 text-sm font-semibold text-white/90 underline-offset-4 hover:underline sm:px-4"
+              className="inline-flex min-h-[48px] items-center justify-center px-2 py-3 text-sm font-semibold text-white underline-offset-4 hover:underline sm:px-4"
             >
               {t('home.hero_cta_secondary')} →
             </Link>
