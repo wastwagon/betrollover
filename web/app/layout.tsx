@@ -8,7 +8,6 @@ import { LanguageProvider, type SupportedLanguage } from '@/context/LanguageCont
 import { TopBar } from '@/components/TopBar';
 import { SkipToMainContent } from '@/components/SkipToMainContent';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
-import { PushNotificationPrompt } from '@/components/PushNotificationPrompt';
 import { AnalyticsBeacon } from '@/components/AnalyticsBeacon';
 import { GoogleTagManagerNoScript } from '@/components/GoogleTagManagerNoScript';
 import { ThirdPartyTags } from '@/components/ThirdPartyTags';
@@ -139,7 +138,6 @@ export default async function RootLayout({
                   {children}
                 </div>
                 <MobileBottomNav />
-                <PushNotificationPrompt />
               </SlipCartProvider>
             </CurrencyProvider>
           </LanguageProvider>
