@@ -84,7 +84,11 @@ services:
       ODDS_API_KEY: ${ODDS_API_KEY:-}
       TENNIS_ODDS_API_KEY: ${TENNIS_ODDS_API_KEY:-}  # legacy fallback — use ODDS_API_KEY going forward
       # Comma-separated list of enabled sports. Football is always included.
-      ENABLED_SPORTS: ${ENABLED_SPORTS:-football,basketball,rugby,mma,volleyball,hockey,american_football,tennis}
+      ENABLED_SPORTS: ${ENABLED_SPORTS:-football}
+      ENABLE_SCHEDULING: ${ENABLE_SCHEDULING:-true}
+      PREDICTION_TIMEZONE: ${PREDICTION_TIMEZONE:-Africa/Accra}
+      PREDICTION_DAILY_CRON: ${PREDICTION_DAILY_CRON:-0 20 * * *}
+      PREDICTION_CATCHUP_CRON: ${PREDICTION_CATCHUP_CRON:-0 2 * * *}
       PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY:-}
       PAYSTACK_PUBLIC_KEY: ${PAYSTACK_PUBLIC_KEY:-}
       PAYSTACK_WEBHOOK_SECRET: ${PAYSTACK_WEBHOOK_SECRET:-}
@@ -121,6 +125,8 @@ services:
       # Canonical app URL - used for login redirects (avoids wrong port e.g. 3000 vs 6002)
       NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:6002}
       APP_URL: ${APP_URL:-http://localhost:6002}
+      NEXT_PUBLIC_FOOTBALL_ONLY_DISCOVERY: ${NEXT_PUBLIC_FOOTBALL_ONLY_DISCOVERY:-true}
+      FOOTBALL_ONLY_DISCOVERY: ${FOOTBALL_ONLY_DISCOVERY:-true}
       # Server-side: web container must reach api via Docker network (not localhost)
       BACKEND_URL: http://api:3001
     depends_on:
@@ -128,6 +134,8 @@ services:
     volumes:
       - ./web:/app
       - /app/node_modules
+      # Host package path for file:../packages/shared-types symlink inside node_modules
+      - ./packages:/packages
       # .next is a named Docker volume so it lives inside the Linux VM (not the macOS
       # host bind mount). This eliminates osxfs/virtiofs sync issues that cause webpack
       # to read stale/incomplete chunk files and throw "Cannot read properties of
