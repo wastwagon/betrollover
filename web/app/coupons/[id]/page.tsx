@@ -23,6 +23,7 @@ import { hapticSuccess } from '@/lib/haptic';
 import { PickSocialBar } from '@/components/pick-social/PickSocialBar';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
+import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Pick {
@@ -920,12 +921,14 @@ export default function CouponDetailPage() {
                           </p>
                         </div>
                       </div>
-                      <Link
-                        href="/subscriptions"
-                        className="block text-center text-sm text-[var(--primary)] hover:underline"
-                      >
-                        Manage subscriptions →
-                      </Link>
+                      {isSubscriptionsEnabled() ? (
+                        <Link
+                          href="/subscriptions"
+                          className="block text-center text-sm text-[var(--primary)] hover:underline"
+                        >
+                          Manage subscriptions →
+                        </Link>
+                      ) : null}
                     </div>
                   ) : (
                     <div className="space-y-3">

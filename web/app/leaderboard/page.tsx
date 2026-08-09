@@ -20,6 +20,7 @@ import {
   LEADERBOARD_MIN_SETTLED_WEEKLY,
 } from '@betrollover/shared-types';
 import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
+import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
 type Period = 'all_time' | 'monthly' | 'weekly';
 type SportFilter = 'all' | 'football' | 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football';
@@ -315,7 +316,8 @@ export default function LeaderboardPage() {
               const rank = entry.rank ?? entry.leaderboard_rank ?? idx + 1;
               const roi = entry.roi ?? 0;
               const avatarSrc = getAvatarUrl(entry.avatar_url, 48);
-              const hasVipPackage = entry.vip_package_id != null && entry.vip_package_id > 0;
+              const hasVipPackage =
+                isSubscriptionsEnabled() && entry.vip_package_id != null && entry.vip_package_id > 0;
               const subbedToThisVip =
                 hasVipPackage &&
                 meResolved &&

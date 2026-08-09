@@ -32,6 +32,7 @@ import { SportLoadingSpinner } from './components/SportLoadingSpinner';
 import { SportEmptyState } from './components/SportEmptyState';
 import { AFRICAN_BOOKMAKERS, formatFootballOutcomeLabel } from '@betrollover/shared-types';
 import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
+import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import { FootballFixtureCard } from './components/FootballFixtureCard';
 import { SportEventCard } from './components/SportEventCard';
 
@@ -104,6 +105,12 @@ export default function CreatePickPage() {
   const [price, setPrice] = useState(0);
   const [placement, setPlacement] = useState<'marketplace' | 'subscription'>('marketplace');
   const [subscriptionPackageIds, setSubscriptionPackageIds] = useState<number[]>([]);
+  useEffect(() => {
+    if (!isSubscriptionsEnabled() && placement !== 'marketplace') {
+      setPlacement('marketplace');
+      setSubscriptionPackageIds([]);
+    }
+  }, [placement]);
   const [myPackages, setMyPackages] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -1490,6 +1497,7 @@ export default function CreatePickPage() {
                           <p className="text-[11px] text-amber-800 dark:text-amber-200 mt-1.5 leading-snug">{t('create_pick.paid_price_blocked_hint')}</p>
                         )}
                       </div>
+                      {isSubscriptionsEnabled() ? (
                       <div>
                         <label className="block text-xs font-medium text-[var(--text)] mb-1">Placement</label>
                         <select
@@ -1539,6 +1547,7 @@ export default function CreatePickPage() {
                           </p>
                         )}
                       </div>
+                      ) : null}
                       {formError && (
                         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
                           <p className="text-[11px] font-semibold text-red-900 dark:text-red-200 mb-1">{t('create_pick.publish_error_title')}</p>
@@ -1752,6 +1761,8 @@ export default function CreatePickPage() {
                   <p className="text-xs text-amber-800 dark:text-amber-200 mt-2 leading-snug">{t('create_pick.paid_price_blocked_hint')}</p>
                 )}
               </div>
+              {isSubscriptionsEnabled() ? (
+              <>
               <div>
                 <label className="block text-sm font-medium text-[var(--text)] mb-1">Placement</label>
                 <select
@@ -1801,6 +1812,8 @@ export default function CreatePickPage() {
                   })}
                 </p>
               )}
+              </>
+              ) : null}
               {formError && (
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3">
                   <p className="text-xs font-semibold text-red-900 dark:text-red-200 mb-1">{t('create_pick.publish_error_title')}</p>

@@ -16,6 +16,7 @@ import {
   LEADERBOARD_MIN_SETTLED_WEEKLY,
 } from '@betrollover/shared-types';
 import { AccumulatorsService } from '../accumulators/accumulators.service';
+import { isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
 
 const SORT_COLUMNS: Record<string, string> = {
   roi: 'roi',
@@ -148,6 +149,7 @@ export class TipstersApiService {
 
   /** At most one active package per tipster (DB-enforced); map user id → package id. */
   private async loadActiveVipPackageIdsByUserIds(userIds: number[]): Promise<Map<number, number>> {
+    if (!isSubscriptionsEnabled()) return new Map();
     if (userIds.length === 0) return new Map();
     const unique = [...new Set(userIds)];
     const rows = await this.subscriptionPackageRepo.find({

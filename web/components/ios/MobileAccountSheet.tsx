@@ -18,6 +18,7 @@ import {
   IconTarget,
   IconChart,
 } from './icons';
+import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
 export interface MobileAccountSheetProps {
   open: boolean;
@@ -91,7 +92,9 @@ export function MobileAccountSheet({
     { href: '/acca-generator', icon: <IconChart />, label: labels.accaGenerator },
     { href: '/my-picks', icon: <IconPicks />, label: labels.myPicks },
     { href: '/my-purchases', icon: <IconBag />, label: labels.myPurchases },
-    { href: '/subscriptions', icon: <IconStar />, label: labels.subscriptions },
+    ...(isSubscriptionsEnabled()
+      ? [{ href: '/subscriptions', icon: <IconStar />, label: labels.subscriptions }]
+      : []),
     {
       href: '/notifications',
       icon: <IconBell />,

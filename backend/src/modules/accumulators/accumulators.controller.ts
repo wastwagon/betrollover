@@ -5,6 +5,7 @@ import { OptionalJwtGuard } from '../auth/guards/optional-jwt.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AccumulatorsService, CreateAccumulatorDto } from './accumulators.service';
 import { User, UserRole } from '../users/entities/user.entity';
+import { isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
 
 @Controller('accumulators')
 export class AccumulatorsController {
@@ -52,6 +53,9 @@ export class AccumulatorsController {
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
+    if (!isSubscriptionsEnabled()) {
+      return this.withPageAliases({ items: [], total: 0, hasMore: false });
+    }
     const limitVal = limit != null ? Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100) : undefined;
     const offsetVal = offset != null ? Math.max(parseInt(offset, 10) || 0, 0) : undefined;
     const data = await this.accumulatorsService.getSubscriptionFeed(user.id, {

@@ -5,16 +5,21 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
+import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
 const menuItems = [
   { href: '/', icon: '🏠', label: 'Home' },
   { href: '/dashboard', icon: '📊', label: 'Dashboard' },
   { href: '/admin/analytics', icon: '📈', label: 'Analytics' },
   { href: '/admin/ai-predictions', icon: '🤖', label: 'AI Predictions' },
-  { href: '/admin/ai-tipster-packages', icon: '📦', label: 'AI Packages' },
+  ...(isSubscriptionsEnabled()
+    ? [
+        { href: '/admin/ai-tipster-packages', icon: '📦', label: 'AI Packages' },
+        { href: '/admin/subscriptions', icon: '⭐', label: 'VIP subscribers' },
+      ]
+    : []),
   { href: '/admin/users', icon: '👥', label: 'Users' },
   { href: '/admin/marketplace', icon: '🛒', label: 'Marketplace' },
-  { href: '/admin/subscriptions', icon: '⭐', label: 'VIP subscribers' },
   { href: '/admin/purchases', icon: '🛍️', label: 'Purchases' },
   { href: '/admin/deposits', icon: '💳', label: 'Deposits' },
   { href: '/admin/withdrawals', icon: '💸', label: 'Withdrawals' },

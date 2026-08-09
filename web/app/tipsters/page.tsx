@@ -19,6 +19,7 @@ import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 import { IconPackage, IconTarget, IconTrophy } from '@/components/ios/icons';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { filterDiscoverySports, isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
+import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
 type Period = 'all_time' | 'monthly' | 'weekly';
 type SportFilter = 'all' | 'football' | 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football';
@@ -202,7 +203,7 @@ export default function TipstersPage() {
           >
             <IconTarget className="w-4 h-4 shrink-0" aria-hidden /> {t('nav.create_pick')}
           </Link>
-          {isSignedIn && (
+          {isSignedIn && isSubscriptionsEnabled() && (
             <Link
               href="/dashboard/subscription-packages"
               className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"

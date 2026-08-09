@@ -5,6 +5,7 @@ import {
   fetchAllResourceItemsForSitemap,
   fetchTipsterUsernamesForSitemap,
 } from '@/lib/seo/public-content';
+import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
 /**
  * Core pages that exist in both English (canonical) and French (/fr/...) versions.
@@ -44,7 +45,9 @@ const EN_ONLY_PAGES: Array<{
   { path: '/login',             changeFrequency: 'monthly', priority: 0.5 },
   { path: '/register',          changeFrequency: 'monthly', priority: 0.5 },
   { path: '/earnings',          changeFrequency: 'weekly',  priority: 0.6 },
-  { path: '/subscriptions',    changeFrequency: 'weekly',  priority: 0.5 },
+  ...(isSubscriptionsEnabled()
+    ? [{ path: '/subscriptions', changeFrequency: 'weekly' as const, priority: 0.5 }]
+    : []),
   { path: '/tools/converter',   changeFrequency: 'weekly',  priority: 0.5 },
 ];
 

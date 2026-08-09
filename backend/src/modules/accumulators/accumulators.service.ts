@@ -38,6 +38,7 @@ import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity'
 import { clampPlatformCommissionPercent } from '../../common/platform-commission';
 import { couponUserFacingRef } from '../../common/coupon-public-label';
 import { isAllowedAfricanBookmakerKey } from '@betrollover/shared-types';
+import { isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
 
 /** Sports that use sport_events table (eventId) rather than fixtures (fixtureId) */
 const SPORT_EVENT_SPORTS = new Set(['basketball', 'rugby', 'mma', 'volleyball', 'hockey', 'american_football', 'tennis']);
@@ -245,6 +246,9 @@ export class AccumulatorsService {
       rawPlacement === 'subscription' ? 'subscription' : 'marketplace';
 
     if (placementNorm === 'subscription') {
+      if (!isSubscriptionsEnabled()) {
+        throw new BadRequestException('VIP subscriptions are temporarily disabled. Publish to the marketplace instead.');
+      }
       if (dto.isMarketplace) {
         throw new BadRequestException('Subscription-only picks cannot be listed on the marketplace.');
       }

@@ -15,6 +15,7 @@ import { MobileAccountSheet } from '@/components/ios/MobileAccountSheet';
 import { GlobalSearchSheet } from '@/components/GlobalSearchSheet';
 import { NotificationBellMenu } from '@/components/notifications/NotificationBellMenu';
 import { hapticLight } from '@/lib/haptic';
+import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import {
   IconSearch,
   IconTrophy,
@@ -462,12 +463,14 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       )}
                       <CompactNavLink href="/create-pick" icon={<IconTarget />} label={t('nav.create_pick')} onClick={closeAll} />
                       <CompactNavLink href="/acca-generator" icon={<IconChart />} label={t('nav.acca_generator')} onClick={closeAll} />
-                      <CompactNavLink
-                        href="/dashboard/subscription-packages"
-                        icon={<IconPackage />}
-                        label={t('tipster.subscription_packages')}
-                        onClick={closeAll}
-                      />
+                      {isSubscriptionsEnabled() ? (
+                        <CompactNavLink
+                          href="/dashboard/subscription-packages"
+                          icon={<IconPackage />}
+                          label={t('tipster.subscription_packages')}
+                          onClick={closeAll}
+                        />
+                      ) : null}
                     </div>
 
                     <div className="mx-2 mb-2 mt-1 p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 text-white">
@@ -505,12 +508,14 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                         label={t('nav.picks_marketplace')}
                         onClick={closeAll}
                       />
-                      <CompactNavLink
-                        href="/subscriptions/marketplace"
-                        icon={<IconDiamond />}
-                        label={t('nav.subscription_marketplace')}
-                        onClick={closeAll}
-                      />
+                      {isSubscriptionsEnabled() ? (
+                        <CompactNavLink
+                          href="/subscriptions/marketplace"
+                          icon={<IconDiamond />}
+                          label={t('nav.subscription_marketplace')}
+                          onClick={closeAll}
+                        />
+                      ) : null}
                       <CompactNavLink href="/live-scores" icon={<IconLive />} label={t('nav.live_scores')} onClick={closeAll} />
                       <CompactNavLink
                         href="/coupons/archive"
@@ -531,7 +536,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               </div>
 
               {/* Subscriptions → VIP marketplace (auth-only in header; public page) */}
-              {isSignedIn && (
+              {isSignedIn && isSubscriptionsEnabled() && (
                 <NavBtn href="/subscriptions/marketplace" label={t('nav.subscriptions')} />
               )}
 
@@ -702,7 +707,9 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                           {[
                             { href: '/my-picks',      icon: <IconPicks />, label: t('nav.my_picks'),          desc: t('dashboard.my_picks_desc') },
                             { href: '/my-purchases',  icon: <IconBag />, label: t('my_purchases.title'),      desc: t('my_purchases.tagline') },
-                            { href: '/subscriptions', icon: <IconStar />, label: t('dashboard.card_subscriptions'),     desc: t('dashboard.card_subscriptions_desc') },
+                            ...(isSubscriptionsEnabled()
+                              ? [{ href: '/subscriptions', icon: <IconStar />, label: t('dashboard.card_subscriptions'),     desc: t('dashboard.card_subscriptions_desc') }]
+                              : []),
                             { href: '/notifications', icon: <IconBell />, label: t('nav.notifications'),     desc: unreadCount > 0 ? t('dashboard.card_notifications_unread', { n: String(unreadCount) }) : t('notifications.caught_up'), badge: unreadCount > 0 ? String(unreadCount) : undefined, badgeColor: 'bg-red-100 text-red-600' },
                           ].map(item => (
                             <MegaLink key={item.href} href={item.href} icon={item.icon} label={item.label} desc={item.desc} badge={item.badge} badgeColor={item.badgeColor} onClick={closeAll} />

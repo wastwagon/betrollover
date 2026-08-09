@@ -87,6 +87,7 @@ services:
       ODDS_API_KEY: ${ODDS_API_KEY:-}
       TENNIS_ODDS_API_KEY: ${TENNIS_ODDS_API_KEY:-}  # legacy fallback
       ENABLED_SPORTS: ${ENABLED_SPORTS:-football,basketball,rugby,mma,volleyball,hockey,american_football,tennis}
+      SUBSCRIPTIONS_ENABLED: ${SUBSCRIPTIONS_ENABLED:-false}
       PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY:-}
       PAYSTACK_PUBLIC_KEY: ${PAYSTACK_PUBLIC_KEY:-}
       PAYSTACK_WEBHOOK_SECRET: ${PAYSTACK_WEBHOOK_SECRET:-}
@@ -126,6 +127,7 @@ services:
         NEXT_PUBLIC_APPLE_CLIENT_ID: ${NEXT_PUBLIC_APPLE_CLIENT_ID:-}
         NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
         NEXT_PUBLIC_TELEGRAM_ADS_HANDLE: ${NEXT_PUBLIC_TELEGRAM_ADS_HANDLE:-}
+        NEXT_PUBLIC_SUBSCRIPTIONS_ENABLED: ${NEXT_PUBLIC_SUBSCRIPTIONS_ENABLED:-false}
         # Optional: raise if web build OOMs on a large builder (e.g. 2048). Lower only if host is tight.
         BUILD_NODE_MAX_OLD_SPACE_SIZE: ${BUILD_NODE_MAX_OLD_SPACE_SIZE:-1536}
     container_name: betrollover-web
@@ -140,6 +142,8 @@ services:
       NEXT_PUBLIC_APPLE_CLIENT_ID: ${NEXT_PUBLIC_APPLE_CLIENT_ID:-}
       NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
       NEXT_PUBLIC_TELEGRAM_ADS_HANDLE: ${NEXT_PUBLIC_TELEGRAM_ADS_HANDLE:-}
+      NEXT_PUBLIC_SUBSCRIPTIONS_ENABLED: ${NEXT_PUBLIC_SUBSCRIPTIONS_ENABLED:-false}
+      SUBSCRIPTIONS_ENABLED: ${SUBSCRIPTIONS_ENABLED:-false}
       # Web container calls API over internal Docker network (no need to add BACKEND_URL in Coolify)
       BACKEND_URL: http://api:3001
       # Optional: "1" = disable GTM + GA in the browser; restart only (server env, not NEXT_PUBLIC)

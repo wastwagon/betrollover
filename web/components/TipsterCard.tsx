@@ -8,6 +8,7 @@ import { useT } from '@/context/LanguageContext';
 import { FollowersCountButton } from '@/components/TipsterFollowersModal';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { TipsterTrustStrip } from '@/components/TipsterTrustStrip';
+import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
 export interface TipsterCardData {
   id: number;
@@ -226,7 +227,7 @@ export function TipsterCard({
         ) : null}
 
         <div className="mt-auto flex flex-col gap-2">
-          {tipster.vip_package_id != null && tipster.vip_package_id > 0 && (
+          {isSubscriptionsEnabled() && tipster.vip_package_id != null && tipster.vip_package_id > 0 && (
             <Link
               href={`/subscriptions/checkout?packageId=${tipster.vip_package_id}`}
               className="touch-target w-full text-center px-3 py-2.5 rounded-xl font-semibold text-sm bg-[var(--accent-light)] text-[var(--text)] border border-[var(--separator)] hover:opacity-90 transition-opacity"

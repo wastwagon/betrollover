@@ -19,6 +19,7 @@ import { useLanguage, useT } from '@/context/LanguageContext';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { IconShield } from '@/components/ios/icons';
 import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
+import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
 /* ─── Types ─────────────────────────────────────────────────── */
 interface PickItem {
@@ -228,7 +229,7 @@ export default function MyPurchasesPage() {
             </p>
           )}
 
-          {!loading && vipSubscriptions.length > 0 && (
+          {!loading && isSubscriptionsEnabled() && vipSubscriptions.length > 0 && (
             <section
               className="mb-6 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-5 shadow-sm min-w-0 max-w-full"
               aria-label={t('my_purchases.vip_heading')}
@@ -370,7 +371,7 @@ export default function MyPurchasesPage() {
             />
           )}
 
-          {!loading && purchases.length === 0 && vipSubscriptions.length === 0 && (
+          {!loading && purchases.length === 0 && (!isSubscriptionsEnabled() || vipSubscriptions.length === 0) && (
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)]">
               <EmptyState
                 title={t('my_purchases.no_purchases')}
@@ -379,12 +380,14 @@ export default function MyPurchasesPage() {
                 actionHref="/marketplace"
               />
               <div className="pb-8 px-4 sm:px-8 -mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2">
-                <Link
-                  href="/subscriptions/marketplace"
-                  className="inline-flex justify-center items-center px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
-                >
-                  {t('my_purchases.explore_vip_marketplace')}
-                </Link>
+                {isSubscriptionsEnabled() ? (
+                  <Link
+                    href="/subscriptions/marketplace"
+                    className="inline-flex justify-center items-center px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                  >
+                    {t('my_purchases.explore_vip_marketplace')}
+                  </Link>
+                ) : null}
                 <Link
                   href="/guides/evaluate-tipsters"
                   className="inline-flex justify-center items-center px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
@@ -395,7 +398,7 @@ export default function MyPurchasesPage() {
             </div>
           )}
 
-          {!loading && purchases.length === 0 && vipSubscriptions.length > 0 && (
+          {!loading && isSubscriptionsEnabled() && purchases.length === 0 && vipSubscriptions.length > 0 && (
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] mb-6">
               <EmptyState
                 title={t('my_purchases.no_pick_purchases')}

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { AdSlot } from './AdSlot';
 import { useT } from '@/context/LanguageContext';
 import { TELEGRAM_ADS_HANDLE, TELEGRAM_ADS_URL } from '@/lib/site-config';
+import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
 const footerLinkClass =
   'hover:text-[var(--primary)] transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2';
@@ -39,11 +40,13 @@ export function AppFooter() {
                   {t('nav.marketplace')}
                 </Link>
               </li>
-              <li>
-                <Link href="/subscriptions/marketplace" className={footerLinkClass}>
-                  {t('nav.subscription_marketplace')}
-                </Link>
-              </li>
+              {isSubscriptionsEnabled() ? (
+                <li>
+                  <Link href="/subscriptions/marketplace" className={footerLinkClass}>
+                    {t('nav.subscription_marketplace')}
+                  </Link>
+                </li>
+              ) : null}
               <li>
                 <Link href="/league-tables" className={footerLinkClass}>
                   {t('nav.league_tables')}

@@ -1,8 +1,19 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards, ParseIntPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { SubscriptionsService, CreatePackageDto } from './subscriptions.service';
+import { isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
 
 @Controller('subscriptions')
 export class SubscriptionsController {
@@ -17,9 +28,16 @@ export class SubscriptionsController {
     };
   }
 
+  private assertSubscriptionsEnabled() {
+    if (!isSubscriptionsEnabled()) {
+      throw new ForbiddenException('VIP subscriptions are temporarily disabled.');
+    }
+  }
+
   @Post('packages')
   @UseGuards(JwtAuthGuard)
   createPackage(@CurrentUser() user: User, @Body() dto: CreatePackageDto) {
+    this.assertSubscriptionsEnabled();
     return this.subscriptionsService.createPackage(user.id, dto);
   }
 
@@ -29,6 +47,9 @@ export class SubscriptionsController {
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
+    if (!isSubscriptionsEnabled()) {
+      return this.withPageAliases({ items: [], total: 0, hasMore: false });
+    }
     const l = limit ? parseInt(limit, 10) : undefined;
     const o = offset ? parseInt(offset, 10) : undefined;
     const data = await this.subscriptionsService.getMarketplacePackages({
@@ -40,6 +61,7 @@ export class SubscriptionsController {
 
   @Get('packages')
   getPackages(@Query('tipsterId') tipsterId?: string) {
+    if (!isSubscriptionsEnabled()) return [];
     const id = tipsterId ? parseInt(tipsterId, 10) : null;
     if (!id || isNaN(id)) return [];
     return this.subscriptionsService.getPackagesByTipster(id);
@@ -47,22 +69,26 @@ export class SubscriptionsController {
 
   @Get('packages/tipster/:tipsterId')
   getPackagesByTipsterId(@Param('tipsterId', ParseIntPipe) tipsterId: number) {
+    if (!isSubscriptionsEnabled()) return [];
     return this.subscriptionsService.getPackagesByTipster(tipsterId);
   }
 
   @Get('packages/by-username/:username')
   getPackagesByUsername(@Param('username') username: string) {
+    if (!isSubscriptionsEnabled()) return [];
     return this.subscriptionsService.getPackagesByTipsterUsername(username);
   }
 
   @Get('packages/package/:id')
   getPackage(@Param('id', ParseIntPipe) id: number) {
+    this.assertSubscriptionsEnabled();
     return this.subscriptionsService.getPackage(id);
   }
 
   @Post('subscribe')
   @UseGuards(JwtAuthGuard)
   subscribe(@CurrentUser() user: User, @Body() body: { packageId: number }) {
+    this.assertSubscriptionsEnabled();
     return this.subscriptionsService.subscribe(user.id, body.packageId);
   }
 

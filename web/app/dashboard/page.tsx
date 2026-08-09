@@ -23,6 +23,7 @@ import { IconStar } from '@/components/ios/icons';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
+import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
 interface FollowedTipster {
   id: number;
@@ -668,18 +669,20 @@ function DashboardContent() {
                   <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_my_picks_desc')}</span>
                 </div>
               </Link>
-              <Link
-                href="/dashboard/subscription-packages"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
-              >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  📦
-                </span>
-                <div className="min-w-0">
-                  <span className="font-semibold text-[var(--text)] block">{t('tipster.subscription_packages')}</span>
-                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_subscription_desc')}</span>
-                </div>
-              </Link>
+              {isSubscriptionsEnabled() ? (
+                <Link
+                  href="/dashboard/subscription-packages"
+                  className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                >
+                  <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                    📦
+                  </span>
+                  <div className="min-w-0">
+                    <span className="font-semibold text-[var(--text)] block">{t('tipster.subscription_packages')}</span>
+                    <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_subscription_desc')}</span>
+                  </div>
+                </Link>
+              ) : null}
               <Link
                 href="/marketplace"
                 className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
@@ -803,30 +806,34 @@ function DashboardContent() {
                   <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_community_desc')}</span>
                 </div>
               </Link>
-              <Link
-                href="/subscriptions"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
-              >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  ⭐
-                </span>
-                <div className="min-w-0">
-                  <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_subscriptions')}</span>
-                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_subscriptions_desc')}</span>
-                </div>
-              </Link>
-              <Link
-                href="/subscriptions/marketplace"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
-              >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  💎
-                </span>
-                <div className="min-w-0">
-                  <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_vip_marketplace')}</span>
-                  <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_vip_marketplace_desc')}</span>
-                </div>
-              </Link>
+              {isSubscriptionsEnabled() ? (
+                <>
+                  <Link
+                    href="/subscriptions"
+                    className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                  >
+                    <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                      ⭐
+                    </span>
+                    <div className="min-w-0">
+                      <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_subscriptions')}</span>
+                      <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_subscriptions_desc')}</span>
+                    </div>
+                  </Link>
+                  <Link
+                    href="/subscriptions/marketplace"
+                    className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                  >
+                    <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                      💎
+                    </span>
+                    <div className="min-w-0">
+                      <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_vip_marketplace')}</span>
+                      <span className="text-sm text-[var(--text-muted)]">{t('dashboard.card_vip_marketplace_desc')}</span>
+                    </div>
+                  </Link>
+                </>
+              ) : null}
               <Link
                 href="/leaderboard"
                 className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
@@ -936,7 +943,7 @@ function DashboardContent() {
           )}
 
           {/* VIP subscription picks */}
-          {vipFeedPicks.length > 0 && (
+          {isSubscriptionsEnabled() && vipFeedPicks.length > 0 && (
             <section className="mb-6 sm:mb-8">
               <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-between sm:gap-2 mb-2 sm:mb-3 px-0.5 min-w-0">
                 <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">

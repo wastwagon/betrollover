@@ -26,6 +26,7 @@ import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-ca
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 import { useCurrency } from '@/context/CurrencyContext';
+import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
 interface Pick {
   id?: number;
@@ -721,7 +722,7 @@ export default function TipsterProfilePage() {
           linkLabel={t('home.how_it_works')}
         />
 
-        {subscriptionPackages.length > 0 && (
+        {isSubscriptionsEnabled() && subscriptionPackages.length > 0 && (
           <section className="section-ux-gutter mb-10">
             <h2 className="text-lg font-semibold text-[var(--text)] mb-4">{t('tipster.subscription_packages')}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

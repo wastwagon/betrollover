@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
 import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 import { hapticLight } from '@/lib/haptic';
+import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
 type NavItemId = 'home' | 'marketplace' | 'tipsters' | 'create' | 'subscribe';
 
@@ -57,7 +58,7 @@ function SubscribeIcon({ active }: { active?: boolean }) {
 }
 
 function buildNavItems(_signedIn: boolean): NavItem[] {
-  return [
+  const items: NavItem[] = [
     {
       id: 'home',
       href: '/',
@@ -67,8 +68,16 @@ function buildNavItems(_signedIn: boolean): NavItem[] {
     { id: 'marketplace', href: '/marketplace', labelKey: 'nav.bottom_picks', primary: false },
     { id: 'tipsters', href: '/tipsters', labelKey: 'nav.tipsters', primary: false },
     { id: 'create', href: '/create-pick', labelKey: 'nav.pick_tab', primary: true },
-    { id: 'subscribe', href: '/subscriptions/marketplace', labelKey: 'nav.bottom_subscribe', primary: false },
   ];
+  if (isSubscriptionsEnabled()) {
+    items.push({
+      id: 'subscribe',
+      href: '/subscriptions/marketplace',
+      labelKey: 'nav.bottom_subscribe',
+      primary: false,
+    });
+  }
+  return items;
 }
 
 const ICONS: Record<NavItemId, (p: { active?: boolean }) => JSX.Element> = {

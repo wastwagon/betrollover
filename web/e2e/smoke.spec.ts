@@ -36,9 +36,10 @@ test.describe('Smoke tests', () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test('subscriptions redirects guests to marketplace', async ({ page }) => {
+  test('subscriptions routes redirect when feature is disabled', async ({ page }) => {
     await page.goto('/subscriptions');
-    await expect(page).toHaveURL(/\/subscriptions\/marketplace/);
+    // VIP subscriptions are off by default (NEXT_PUBLIC_SUBSCRIPTIONS_ENABLED=false).
+    await expect(page).toHaveURL(/\/marketplace/);
   });
 
   test('discover page loads with sport filters', async ({ page }) => {
@@ -58,9 +59,9 @@ test.describe('Smoke tests', () => {
     await expect(page).toHaveTitle(/BetRollover/i);
   });
 
-  test('VIP subscriptions marketplace loads for guests', async ({ page }) => {
+  test('VIP subscriptions marketplace redirects when disabled', async ({ page }) => {
     await page.goto('/subscriptions/marketplace');
-    await expect(page).toHaveURL(/\/subscriptions\/marketplace/);
+    await expect(page).toHaveURL(/\/marketplace/);
   });
 
   test('marketplace loads for guests', async ({ page }) => {
