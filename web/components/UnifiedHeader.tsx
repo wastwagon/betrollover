@@ -12,7 +12,9 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { trackEvent } from '@/lib/analytics';
 import { usePendingWithdrawalCount } from '@/hooks/usePendingWithdrawalCount';
 import { MobileAccountSheet } from '@/components/ios/MobileAccountSheet';
+import { GlobalSearchSheet } from '@/components/GlobalSearchSheet';
 import { NotificationBellMenu } from '@/components/notifications/NotificationBellMenu';
+import { hapticLight } from '@/lib/haptic';
 import {
   IconSearch,
   IconTrophy,
@@ -220,6 +222,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
   const pendingWithdrawalCount = usePendingWithdrawalCount();
   const [openMenu,         setOpenMenu]         = useState<MenuKey>(null);
   const [mobileOpen,       setMobileOpen]       = useState(false);
+  const [searchOpen,       setSearchOpen]       = useState(false);
   const [mounted,           setMounted]          = useState(false);
 
   const hoverTimeout  = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -569,6 +572,19 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               )}
             </nav>
 
+            {/* Desktop search (guests + signed-in) */}
+            <button
+              type="button"
+              aria-label={t('common.search')}
+              onClick={() => {
+                hapticLight();
+                setSearchOpen(true);
+              }}
+              className="hidden lg:inline-flex touch-target items-center justify-center p-2.5 rounded-xl text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors border border-[var(--border)] bg-[var(--card)]"
+            >
+              <IconSearch />
+            </button>
+
             {/* ── Right side (auth utils) ── */}
             {isSignedIn && (
               <div className="hidden lg:flex items-center gap-2">
@@ -708,8 +724,21 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               </div>
             )}
 
-            {/* Mobile: Account only (no hamburger) — primary nav is bottom bar + in-page smart buttons */}
+            {/* Mobile: search + account — primary nav is bottom bar */}
             <div className="lg:hidden flex items-center justify-end gap-1 sm:gap-2 min-w-0 shrink ml-1">
+              <button
+                type="button"
+                aria-label={t('common.search')}
+                onClick={() => {
+                  hapticLight();
+                  setSearchOpen(true);
+                }}
+                className="touch-target p-2.5 rounded-xl text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors border border-[var(--border)] bg-[var(--card)]"
+              >
+                <span className="inline-flex w-6 h-6 items-center justify-center text-[var(--primary)]">
+                  <IconSearch />
+                </span>
+              </button>
               {isSignedIn ? (
                 <>
                   <button
@@ -797,6 +826,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
           </nav>
         </div>
       </header>
+      {mounted ? <GlobalSearchSheet open={searchOpen} onClose={() => setSearchOpen(false)} /> : null}
     </>
   );
 }

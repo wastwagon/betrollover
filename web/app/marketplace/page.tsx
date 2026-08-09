@@ -538,74 +538,119 @@ export default function MarketplacePage() {
             </Link>
           </div>
 
-          {/* Sport tabs — scrollable on mobile */}
-          <div className="mb-4 w-full min-w-0 overflow-hidden">
-          <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
-            {([
-              { key: '', label: t('marketplace.filter_all_sports') },
-              { key: 'football', label: t('nav.football') },
-              { key: 'basketball', label: t('nav.basketball') },
-              { key: 'rugby', label: 'Rugby' },
-              { key: 'mma', label: 'MMA' },
-              { key: 'volleyball', label: 'Volleyball' },
-              { key: 'hockey', label: 'Hockey' },
-              { key: 'american_football', label: 'Amer. Football' },
-              { key: 'tennis', label: 'Tennis' },
-              { key: 'multi', label: 'Multi-Sport' },
-            ] as { key: string; label: string }[]).map(({ key, label }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setSportFilter(key)}
-                className={`flex-shrink-0 px-4 py-2 rounded-full font-medium text-sm transition-colors ${
-                  sportFilter === key
-                    ? 'bg-[var(--primary)] text-white shadow-md'
-                    : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          </div>
+          {sportFilter ? (
+            <div className="mb-4 rounded-2xl border border-[var(--separator)] bg-[var(--card)] px-4 py-3.5">
+              <p className="text-sm font-semibold text-[var(--text)]">
+                {t('marketplace.sport_hub_title', {
+                  sport:
+                    (
+                      {
+                        football: t('nav.football'),
+                        basketball: t('nav.basketball'),
+                        rugby: 'Rugby',
+                        mma: 'MMA',
+                        volleyball: 'Volleyball',
+                        hockey: 'Hockey',
+                        american_football: 'Amer. Football',
+                        tennis: 'Tennis',
+                        multi: 'Multi-Sport',
+                      } as Record<string, string>
+                    )[sportFilter] || sportFilter,
+                })}
+              </p>
+              <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed">
+                {t('marketplace.sport_hub_body', {
+                  sport:
+                    (
+                      {
+                        football: t('nav.football'),
+                        basketball: t('nav.basketball'),
+                        rugby: 'Rugby',
+                        mma: 'MMA',
+                        volleyball: 'Volleyball',
+                        hockey: 'Hockey',
+                        american_football: 'Amer. Football',
+                        tennis: 'Tennis',
+                        multi: 'Multi-Sport',
+                      } as Record<string, string>
+                    )[sportFilter] || sportFilter,
+                })}
+              </p>
+            </div>
+          ) : null}
 
-          {!loading && (
-            <MarketplaceFilterBar
-              priceFilter={priceFilter}
-              onPriceFilterChange={setPriceFilter}
-              sortBy={sortBy}
-              onSortByChange={setSortBy}
-              tipsterSearch={tipsterSearch}
-              onTipsterSearchChange={setTipsterSearch}
-              debouncedTipster={debouncedTipster}
-              showFollowingSort={followedTipsterUsernames.size > 0}
-              hasActiveFilters={priceFilter !== 'all' || sortBy !== 'newest' || !!debouncedTipster}
-              onClear={() => {
-                setPriceFilter('all');
-                setSortBy('newest');
-                setTipsterSearch('');
-              }}
-              labels={{
-                filterPrice: t('marketplace.filter_price'),
-                sortBy: t('marketplace.sort_by'),
-                all: t('common.all'),
-                free: t('marketplace.filter_free_only'),
-                paid: t('marketplace.filter_paid_only'),
-                sold: t('marketplace.filter_sold_only'),
-                sortNewest: t('marketplace.sort_newest_first'),
-                sortFollowing: t('marketplace.sort_following_only'),
-                sortPriceAsc: t('marketplace.sort_price_asc'),
-                sortPriceDesc: t('marketplace.sort_price_desc'),
-                sortRank: t('marketplace.sort_tipster_rank'),
-                tipsterSearch: t('marketplace.tipster_search_label'),
-                tipsterPlaceholder: t('marketplace.tipster_search_placeholder'),
-                tipsterSearching: t('marketplace.tipster_search_loading'),
-                moreFilters: t('marketplace.sort_by'),
-                clearFilters: t('marketplace.clear_filters'),
-                done: t('common.close'),
-              }}
-            />
-          )}
+          {/* Sticky discovery chrome — sports + filters stay visible while scrolling */}
+          <div className="sticky z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 py-2 mb-4 bg-[var(--bg)]/95 backdrop-blur-md border-b border-[var(--separator)] top-[calc(env(safe-area-inset-top,0px)+2.75rem+3.5rem)] md:top-[calc(2.75rem+4rem)] lg:top-16">
+            <div className="w-full min-w-0 overflow-hidden mb-2">
+              <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
+                {(
+                  [
+                    { key: '', label: t('marketplace.filter_all_sports') },
+                    { key: 'football', label: t('nav.football') },
+                    { key: 'basketball', label: t('nav.basketball') },
+                    { key: 'rugby', label: 'Rugby' },
+                    { key: 'mma', label: 'MMA' },
+                    { key: 'volleyball', label: 'Volleyball' },
+                    { key: 'hockey', label: 'Hockey' },
+                    { key: 'american_football', label: 'Amer. Football' },
+                    { key: 'tennis', label: 'Tennis' },
+                    { key: 'multi', label: 'Multi-Sport' },
+                  ] as { key: string; label: string }[]
+                ).map(({ key, label }) => (
+                  <button
+                    key={key || 'all'}
+                    type="button"
+                    onClick={() => setSportFilter(key)}
+                    className={`flex-shrink-0 touch-target px-4 py-2 rounded-full font-medium text-sm transition-colors ${
+                      sportFilter === key
+                        ? 'bg-[var(--primary)] text-white shadow-md'
+                        : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {!loading && (
+              <MarketplaceFilterBar
+                priceFilter={priceFilter}
+                onPriceFilterChange={setPriceFilter}
+                sortBy={sortBy}
+                onSortByChange={setSortBy}
+                tipsterSearch={tipsterSearch}
+                onTipsterSearchChange={setTipsterSearch}
+                debouncedTipster={debouncedTipster}
+                showFollowingSort={followedTipsterUsernames.size > 0}
+                hasActiveFilters={priceFilter !== 'all' || sortBy !== 'newest' || !!debouncedTipster}
+                onClear={() => {
+                  setPriceFilter('all');
+                  setSortBy('newest');
+                  setTipsterSearch('');
+                }}
+                labels={{
+                  filterPrice: t('marketplace.filter_price'),
+                  sortBy: t('marketplace.sort_by'),
+                  all: t('common.all'),
+                  free: t('marketplace.filter_free_only'),
+                  paid: t('marketplace.filter_paid_only'),
+                  sold: t('marketplace.filter_sold_only'),
+                  sortNewest: t('marketplace.sort_newest_first'),
+                  sortFollowing: t('marketplace.sort_following_only'),
+                  sortPriceAsc: t('marketplace.sort_price_asc'),
+                  sortPriceDesc: t('marketplace.sort_price_desc'),
+                  sortRank: t('marketplace.sort_tipster_rank'),
+                  tipsterSearch: t('marketplace.tipster_search_label'),
+                  tipsterPlaceholder: t('marketplace.tipster_search_placeholder'),
+                  tipsterSearching: t('marketplace.tipster_search_loading'),
+                  moreFilters: t('marketplace.sort_by'),
+                  clearFilters: t('marketplace.clear_filters'),
+                  done: t('common.close'),
+                }}
+              />
+            )}
+          </div>
 
           {loading && (
             <LoadingSkeleton

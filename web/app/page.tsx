@@ -16,6 +16,7 @@ import { HomeHero } from '@/components/HomeHero';
 import { HomeJoinCtaCard } from '@/components/HomeJoinCtaCard';
 import { HomePopularTipsters } from '@/components/HomePopularTipsters';
 import { HomePullToRefresh } from '@/components/HomePullToRefresh';
+import { HomeMarketingCollapse } from '@/components/HomeMarketingCollapse';
 import { FeaturedPicks } from '@/components/FeaturedPicks';
 import { HomeFreeTipOfTheDay } from '@/components/HomeFreeTipOfTheDay';
 import { HomeQuickMarketplaceSections } from '@/components/HomeQuickMarketplaceSections';
@@ -75,8 +76,9 @@ export default async function HomePage() {
         </div>
         <HomeQuickMarketplaceSections initialMarketItems={homeData.marketplaceItems} initialLeaderboard={homeData.topTipsters} />
 
-        {/* How It Works — after marketplace teasers so action content appears first */}
-        <section className="py-10 sm:py-14 md:py-20 px-4 sm:px-6 lg:px-8 border-t border-[var(--border)] w-full min-w-0 max-w-full overflow-x-hidden">
+        <HomeMarketingCollapse summary={`${t('home.how_it_works')} · ${t('home.features_title')}`}>
+        {/* How It Works — collapsed by default so tipsters/picks stay first */}
+        <section className="py-6 sm:py-10 md:py-14 px-4 sm:px-6 lg:px-8 w-full min-w-0 max-w-full overflow-x-hidden">
           <div className="section-ux-cap-4xl w-full min-w-0">
             <div className="text-center mb-8 sm:mb-12 px-1">
               <span className="inline-block px-3 py-1.5 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-3">{t('home.how_it_works')}</span>
@@ -186,7 +188,7 @@ export default async function HomePage() {
         </section>
 
         {/* Platform Features — Bento Grid */}
-        <section className="py-14 md:py-20 border-t border-[var(--border)] w-full min-w-0 max-w-full overflow-x-hidden">
+        <section className="py-8 md:py-14 border-t border-[var(--border)] w-full min-w-0 max-w-full overflow-x-hidden">
           <div className="section-ux-gutter-wide w-full min-w-0">
 
             {/* Section header */}
@@ -312,6 +314,7 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
+        </HomeMarketingCollapse>
         </HomePullToRefresh>
       </main>
 

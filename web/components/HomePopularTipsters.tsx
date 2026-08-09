@@ -27,9 +27,12 @@ function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: numb
     total_wins: totalWins,
     total_losses: totalLosses,
     leaderboard_rank: rank,
-    follower_count: 0,
+    follower_count: (entry.follower_count as number | undefined) ?? 0,
     is_following: false,
     is_ai: !!(entry.is_ai as boolean | undefined),
+    avg_rating: (entry.avg_rating as number | null | undefined) ?? null,
+    review_count: (entry.review_count as number | null | undefined) ?? null,
+    avg_odds: (entry.avg_odds as number | null | undefined) ?? null,
   };
 }
 

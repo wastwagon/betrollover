@@ -21,9 +21,11 @@ import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { NavBar } from '@/components/ios/NavBar';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
+import { TipsterTrustStrip, type TipsterReviewSnippet } from '@/components/TipsterTrustStrip';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface Pick {
   id?: number;
@@ -159,6 +161,8 @@ export default function TipsterProfilePage() {
   const [isAuthed, setIsAuthed] = useState(false);
   const [viewerIsAdmin, setViewerIsAdmin] = useState(false);
   const [reviewSummary, setReviewSummary] = useState<{ avg: number; total: number } | null>(null);
+  const [reviewItems, setReviewItems] = useState<TipsterReviewSnippet[]>([]);
+  const { format } = useCurrency();
   const [performancePeriod, setPerformancePeriod] = useState<TipsterPerformancePeriod>('all');
   /** Applied calendar range (coupon posted date); takes precedence over preset `performance` in the API. */
   const [postedRange, setPostedRange] = useState<{ from: string; to: string } | null>(null);
@@ -201,11 +205,14 @@ export default function TipsterProfilePage() {
           fetch(`${getApiUrl()}/reviews/tipster/${p.tipster.id}?limit=5`)
             .then((r) => (r.ok ? r.json() : null))
             .then((d) => {
-              if (!cancelled && d) setReviewSummary({ avg: d.avg, total: d.total });
+              if (cancelled || !d) return;
+              setReviewSummary({ avg: d.avg, total: d.total });
+              setReviewItems(Array.isArray(d.items) ? d.items : []);
             })
             .catch(() => {});
         } else {
           setReviewSummary(null);
+          setReviewItems([]);
         }
       })
       .catch(() => {
@@ -341,7 +348,7 @@ export default function TipsterProfilePage() {
     const coupon = profile?.marketplace_coupons?.find((c) => c.id === id);
     if (!coupon) return;
     if (coupon.price > 0 && (walletBalance === null || walletBalance < coupon.price)) {
-      showError(new Error(`Insufficient funds.`));
+      router.push(`/wallet?continue=${encodeURIComponent(`/tipsters/${username}`)}`);
       return;
     }
     setPurchasing(id);
@@ -691,20 +698,16 @@ export default function TipsterProfilePage() {
                   </div>
                 )}
               </div>
-              {/* Buyer rating stars */}
-              {reviewSummary && reviewSummary.total > 0 && (
-                <div className="flex items-center gap-1.5 mt-2">
-                  <span className="flex">
-                    {[1,2,3,4,5].map((s) => (
-                      <span key={s} className={`text-base ${s <= Math.round(reviewSummary.avg) ? 'text-amber-400' : 'text-gray-300'}`}>★</span>
-                    ))}
-                  </span>
-                  <span className="text-sm font-semibold text-amber-500">{reviewSummary.avg}</span>
-                  <span className="text-xs text-[var(--text-muted)]">({reviewSummary.total} {reviewSummary.total !== 1 ? t('tipster.reviews') : t('tipster.review')})</span>
-                </div>
-              )}
+              <TipsterTrustStrip
+                className="mt-3"
+                settledCount={(tipster.total_wins ?? 0) + (tipster.total_losses ?? 0)}
+                avgOdds={tipster.avg_odds}
+                avgRating={reviewSummary?.avg}
+                reviewCount={reviewSummary?.total}
+                reviews={reviewItems}
+              />
               {/* Platform fee transparency note */}
-              <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
+              <p className="text-[10px] text-[var(--text-muted)] mt-2 opacity-70">
                 🏛 {t('tipster.commission_note_full')} <Link href="/resources" className="underline hover:text-[var(--primary)]">{t('tipster.learn_more')}</Link>
               </p>
             </div>
@@ -734,7 +737,15 @@ export default function TipsterProfilePage() {
                     className="rounded-xl p-5 border border-emerald-200/60 dark:border-emerald-700/40 bg-gradient-to-br from-emerald-50/80 to-teal-50/60 dark:from-emerald-900/20 dark:to-teal-900/20 shadow-sm"
                   >
                     <h3 className="font-semibold text-[var(--text)] mb-1">{pkg.name}</h3>
-                    <p className="text-lg font-semibold text-[var(--primary)] mb-2">GHS {Number(pkg.price).toFixed(2)}<span className="text-sm font-normal text-[var(--text-muted)]">/{pkg.durationDays}d</span></p>
+                    <p className="text-lg font-semibold text-[var(--primary)] mb-2">
+                      {format(Number(pkg.price), { showOriginal: true }).primary}
+                      <span className="text-sm font-normal text-[var(--text-muted)]">/{pkg.durationDays}d</span>
+                      {format(Number(pkg.price), { showOriginal: true }).original ? (
+                        <span className="block text-xs font-normal text-[var(--text-muted)] mt-0.5">
+                          {format(Number(pkg.price), { showOriginal: true }).original}
+                        </span>
+                      ) : null}
+                    </p>
                     <div className="mb-3 rounded-lg border border-emerald-200/60 dark:border-emerald-700/40 bg-white/70 dark:bg-gray-900/30 px-3 py-2">
                       <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2 min-w-0">
                         <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] min-w-0">

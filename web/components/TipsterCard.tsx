@@ -7,6 +7,7 @@ import { getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { FollowersCountButton } from '@/components/TipsterFollowersModal';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
+import { TipsterTrustStrip } from '@/components/TipsterTrustStrip';
 
 export interface TipsterCardData {
   id: number;
@@ -27,6 +28,9 @@ export interface TipsterCardData {
   vip_package_id?: number | null;
   /** Platform-operated AI tipster (from API `is_ai`). */
   is_ai?: boolean;
+  avg_rating?: number | null;
+  review_count?: number | null;
+  avg_odds?: number | null;
 }
 
 interface TipsterCardProps {
@@ -43,7 +47,8 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
   const t = useT();
   const [avatarError, setAvatarError] = useState(false);
   const showAvatar = tipster.avatar_url && !avatarError;
-  const hasSettledPicks = ((tipster.total_wins ?? 0) + (tipster.total_losses ?? 0)) > 0;
+  const settledCount = (tipster.total_wins ?? 0) + (tipster.total_losses ?? 0);
+  const hasSettledPicks = settledCount > 0;
   const roiDisplay = hasSettledPicks ? `${Number(tipster.roi).toFixed(1)}%` : '—';
   const winRateDisplay = hasSettledPicks ? `${Number(tipster.win_rate).toFixed(0)}%` : '—';
   const roiPositive = tipster.roi > 0;
@@ -133,6 +138,15 @@ export function TipsterCard({ tipster, onFollow, followLoading = false, classNam
             </dd>
           </div>
         </dl>
+
+        <TipsterTrustStrip
+          className="mb-3"
+          compact
+          settledCount={settledCount}
+          avgOdds={tipster.avg_odds}
+          avgRating={tipster.avg_rating}
+          reviewCount={tipster.review_count}
+        />
 
         {tipster.bio ? (
           <p className="text-xs text-[var(--text-muted)] line-clamp-2 mb-3">{tipster.bio}</p>

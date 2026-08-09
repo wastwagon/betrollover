@@ -43,10 +43,13 @@ function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: numb
     total_wins: totalWins,
     total_losses: totalLosses,
     leaderboard_rank: rank,
-    follower_count: 0,
+    follower_count: (entry.follower_count as number | undefined) ?? 0,
     is_following: false,
     vip_package_id: (entry.vip_package_id as number | null | undefined) ?? null,
     is_ai: !!(entry.is_ai as boolean | undefined),
+    avg_rating: (entry.avg_rating as number | null | undefined) ?? null,
+    review_count: (entry.review_count as number | null | undefined) ?? null,
+    avg_odds: (entry.avg_odds as number | null | undefined) ?? null,
   };
 }
 
@@ -56,7 +59,10 @@ export default function TipstersPage() {
   const t = useT();
   const [tipsters, setTipsters] = useState<TipsterCardData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return new URLSearchParams(window.location.search).get('search') || '';
+  });
   const [period, setPeriod] = useState<Period>('all_time');
   const [sportFilter, setSportFilter] = useState<SportFilter>('all');
   const [sortBy, setSortBy] = useState<'roi' | 'win_rate' | 'total_profit' | 'follower_count'>('roi');

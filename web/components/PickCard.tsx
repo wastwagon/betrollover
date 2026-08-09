@@ -167,6 +167,7 @@ export function PickCard({
 }: PickCardProps) {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showUnveilModal, setShowUnveilModal] = useState(false);
+  const [showPurchaseConfirm, setShowPurchaseConfirm] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const t = useT();
   const { format, currency } = useCurrency();
@@ -211,6 +212,16 @@ export function PickCard({
   const statusColor = displayStatus ? statusColors[displayStatus] || 'bg-slate-100 text-slate-600' : '';
 
   const handlePurchase = () => {
+    if (price > 0) {
+      setShowPurchaseConfirm(true);
+      return;
+    }
+    onPurchase();
+  };
+
+  const confirmPurchase = () => {
+    setShowPurchaseConfirm(false);
+    setShowDetailsModal(false);
     onPurchase();
   };
 
@@ -515,6 +526,47 @@ export function PickCard({
           </div>
         </div>
       </article>
+
+      <BottomSheet
+        open={showPurchaseConfirm}
+        onClose={() => setShowPurchaseConfirm(false)}
+        title={t('pick_card.confirm_purchase_title')}
+        doneLabel={t('common.cancel')}
+        maxHeightClass="max-h-[min(70dvh,480px)]"
+      >
+        <div className="p-4 sm:p-5 space-y-4">
+          <p className="text-sm text-[var(--text)] leading-relaxed">{t('pick_card.confirm_purchase_body')}</p>
+          <div className="rounded-xl border border-emerald-200/70 dark:border-emerald-800/45 bg-emerald-50/50 dark:bg-emerald-900/15 px-4 py-3">
+            <p className="text-xs font-bold text-emerald-900 dark:text-emerald-200 mb-1">
+              {t('pick_detail.escrow_badge_title')}
+            </p>
+            <p className="text-xs text-emerald-800/95 dark:text-emerald-300/95 leading-relaxed">
+              {t('pick_card.funds_escrow_note')}
+            </p>
+            {priceDisplay?.original ? (
+              <p className="text-[11px] text-emerald-800/80 dark:text-emerald-300/80 mt-1.5 tabular-nums">
+                {priceDisplay.primary} · {priceDisplay.original}
+              </p>
+            ) : (
+              <p className="text-[11px] text-emerald-800/80 dark:text-emerald-300/80 mt-1.5 tabular-nums">
+                {priceDisplay?.primary ?? `GHS ${Number(price).toFixed(2)}`}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={confirmPurchase}
+            disabled={purchasing}
+            className="touch-target w-full min-h-[48px] rounded-xl bg-[var(--primary)] hover:bg-[var(--primary-hover)] px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            {purchasing
+              ? t('pick_card.processing')
+              : t('pick_card.confirm_purchase_cta', {
+                  price: priceDisplay?.primary ?? `GHS ${Number(price).toFixed(2)}`,
+                })}
+          </button>
+        </div>
+      </BottomSheet>
 
       <BottomSheet
         open={showDetailsModal}
