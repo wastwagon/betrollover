@@ -182,3 +182,60 @@ export async function fetchAllResourceItemsForSitemap(
   }
   return out;
 }
+
+/** Public marketplace coupon fields used for `/coupons/[id]` metadata (free pending + settled). */
+export type PublicCouponMeta = {
+  id: number;
+  title?: string | null;
+  totalOdds?: number | string | null;
+  price?: number | string | null;
+  result?: string | null;
+  tipster?: {
+    displayName?: string | null;
+    username?: string | null;
+  } | null;
+};
+
+export async function fetchPublicCouponMeta(
+  id: number,
+  options?: { revalidate?: number },
+): Promise<PublicCouponMeta | null> {
+  if (!Number.isFinite(id) || id < 1) return null;
+  try {
+    const res = await fetch(`${API()}/accumulators/${id}/public`, {
+      next: { revalidate: options?.revalidate ?? 120 },
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as PublicCouponMeta;
+    return data?.id ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+export function couponMetaTitle(coupon: PublicCouponMeta): string {
+  const tipster =
+    coupon.tipster?.displayName?.trim() ||
+    coupon.tipster?.username?.trim() ||
+    'Tipster';
+  const title = (coupon.title || '').trim() || 'Football pick';
+  return `${title} — ${tipster}`;
+}
+
+export function couponMetaDescription(coupon: PublicCouponMeta): string {
+  const tipster =
+    coupon.tipster?.displayName?.trim() ||
+    coupon.tipster?.username?.trim() ||
+    'a verified tipster';
+  const oddsRaw = coupon.totalOdds != null ? Number(coupon.totalOdds) : NaN;
+  const odds = Number.isFinite(oddsRaw) ? oddsRaw.toFixed(2) : null;
+  const priceRaw = coupon.price != null ? Number(coupon.price) : NaN;
+  const priceLabel = Number.isFinite(priceRaw) && priceRaw > 0 ? 'Premium pick' : 'Free pick';
+  const result = (coupon.result || 'pending').toLowerCase();
+  const resultLabel =
+    result === 'won' ? 'Won' : result === 'lost' ? 'Lost' : result === 'void' ? 'Void' : 'Pending';
+  const oddsPart = odds ? ` Combined odds ${odds}.` : '';
+  return truncateMetaDescription(
+    `${priceLabel} by ${tipster} on BetRollover.${oddsPart} Result: ${resultLabel}. Escrow-protected marketplace — 18+.`,
+  );
+}

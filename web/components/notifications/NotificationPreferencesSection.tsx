@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { useT } from '@/context/LanguageContext';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 type PrefGroup = {
   group: string;
@@ -28,6 +29,14 @@ export function NotificationPreferencesSection() {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(false);
   const [groups, setGroups] = useState<PrefGroup[]>([]);
+  const {
+    supported: pushSupported,
+    permission: pushPermission,
+    registered: pushRegistered,
+    loading: pushLoading,
+    error: pushError,
+    requestAndRegister,
+  } = usePushNotifications();
 
   const load = useCallback(async () => {
     const token = localStorage.getItem('token');
@@ -56,12 +65,22 @@ export function NotificationPreferencesSection() {
     setGroups((prev) => prev.map((g) => (g.group === group ? { ...g, ...patch } : g)));
   };
 
+  const onMasterPushChange = (checked: boolean) => {
+    setPushNotifications(checked);
+    if (checked && pushSupported && !pushRegistered && pushPermission !== 'denied') {
+      void requestAndRegister();
+    }
+  };
+
   const save = async () => {
     const token = localStorage.getItem('token');
     if (!token) return;
     setSaving(true);
     setMsg('');
     try {
+      if (pushNotifications && pushSupported && !pushRegistered && pushPermission !== 'denied') {
+        await requestAndRegister();
+      }
       const r = await fetch(`${getApiUrl()}/notifications/preferences`, {
         method: 'PATCH',
         headers: {
@@ -122,7 +141,7 @@ export function NotificationPreferencesSection() {
         <input
           type="checkbox"
           checked={pushNotifications}
-          onChange={(e) => setPushNotifications(e.target.checked)}
+          onChange={(e) => onMasterPushChange(e.target.checked)}
           className="mt-0.5 h-4 w-4 rounded border-[var(--border)] text-[var(--primary)]"
         />
         <span>
@@ -130,6 +149,31 @@ export function NotificationPreferencesSection() {
           <span className="text-xs text-[var(--text-muted)]">{t('notifications.master_push_desc')}</span>
         </span>
       </label>
+
+      {pushNotifications ? (
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)]/50 px-4 py-3 space-y-2">
+          <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+            {t('notifications.push_device_title')}
+          </p>
+          {!pushSupported ? (
+            <p className="text-xs text-[var(--text-muted)]">{t('notifications.push_not_supported')}</p>
+          ) : pushPermission === 'denied' ? (
+            <p className="text-xs text-amber-800">{t('notifications.push_permission_blocked')}</p>
+          ) : pushRegistered ? (
+            <p className="text-xs text-[var(--primary)]">{t('notifications.push_device_ready')}</p>
+          ) : (
+            <button
+              type="button"
+              onClick={() => void requestAndRegister()}
+              disabled={pushLoading}
+              className="text-sm font-semibold text-[var(--primary)] disabled:opacity-50"
+            >
+              {pushLoading ? t('notifications.push_device_enabling') : t('notifications.push_device_enable')}
+            </button>
+          )}
+          {pushError ? <p className="text-xs text-red-600">{pushError}</p> : null}
+        </div>
+      ) : null}
 
       <div className="border-t border-[var(--separator)] pt-4 space-y-4">
         {groups.map((g) => (

@@ -1,15 +1,13 @@
 'use client';
 
-import { useLayoutEffect, useState, useEffect, useCallback } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
-import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 import { hapticLight } from '@/lib/haptic';
-import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
-type NavItemId = 'home' | 'marketplace' | 'tipsters' | 'create' | 'subscribe';
+type NavItemId = 'home' | 'marketplace' | 'tipsters' | 'create' | 'acca';
 
 interface NavItem {
   id: NavItemId;
@@ -48,36 +46,26 @@ function CreateIcon({ active }: { active?: boolean }) {
     </svg>
   );
 }
-/** VIP / subscription hub — aligns with desktop “Subscribe” */
-function SubscribeIcon({ active }: { active?: boolean }) {
+function AccaIcon({ active }: { active?: boolean }) {
   return (
     <svg className="w-6 h-6 shrink-0" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={active ? 0 : 1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+      />
     </svg>
   );
 }
 
-function buildNavItems(_signedIn: boolean): NavItem[] {
-  const items: NavItem[] = [
-    {
-      id: 'home',
-      href: '/',
-      labelKey: 'header.home',
-      primary: false,
-    },
-    { id: 'marketplace', href: '/marketplace', labelKey: 'nav.bottom_picks', primary: false },
-    { id: 'tipsters', href: '/tipsters', labelKey: 'nav.tipsters', primary: false },
+function buildNavItems(): NavItem[] {
+  return [
+    { id: 'home', href: '/', labelKey: 'header.home' },
+    { id: 'marketplace', href: '/marketplace', labelKey: 'nav.bottom_picks' },
+    { id: 'tipsters', href: '/tipsters', labelKey: 'nav.tipsters' },
     { id: 'create', href: '/create-pick', labelKey: 'nav.pick_tab', primary: true },
+    { id: 'acca', href: '/acca-generator', labelKey: 'nav.acca_generator_short' },
   ];
-  if (isSubscriptionsEnabled()) {
-    items.push({
-      id: 'subscribe',
-      href: '/subscriptions/marketplace',
-      labelKey: 'nav.bottom_subscribe',
-      primary: false,
-    });
-  }
-  return items;
 }
 
 const ICONS: Record<NavItemId, (p: { active?: boolean }) => JSX.Element> = {
@@ -85,7 +73,7 @@ const ICONS: Record<NavItemId, (p: { active?: boolean }) => JSX.Element> = {
   marketplace: ShopIcon,
   tipsters: TipstersIcon,
   create: CreateIcon,
-  subscribe: SubscribeIcon,
+  acca: AccaIcon,
 };
 
 /** Admin only — auth pages keep bottom nav so tablets can reach Home/Marketplace without the desktop mega-header. */
@@ -104,32 +92,14 @@ export function MobileBottomNav() {
   const pathname = usePathname();
   const { t } = useLanguage();
   const [mounted, setMounted] = useState(false);
-  const [signedIn, setSignedIn] = useState(false);
-
-  const syncAuth = useCallback(() => {
-    setSignedIn(typeof window !== 'undefined' && !!localStorage.getItem('token'));
-  }, []);
 
   useLayoutEffect(() => {
     setMounted(true);
-    syncAuth();
-  }, [syncAuth]);
-
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === 'token' || e.key === null) syncAuth();
-    };
-    window.addEventListener('storage', onStorage);
-    window.addEventListener(AUTH_STORAGE_SYNC, syncAuth);
-    return () => {
-      window.removeEventListener('storage', onStorage);
-      window.removeEventListener(AUTH_STORAGE_SYNC, syncAuth);
-    };
-  }, [syncAuth]);
+  }, []);
 
   if (!mounted || shouldHideNav(pathname)) return null;
 
-  const navItems = buildNavItems(signedIn);
+  const navItems = buildNavItems();
 
   const nav = (
     <nav
@@ -157,7 +127,7 @@ export function MobileBottomNav() {
                   <span className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/20">
                     <Icon active />
                   </span>
-                  <span className={`text-[9px] sm:text-[10px] font-semibold truncate w-full text-center leading-tight ${active ? 'text-white' : ''}`}>
+                  <span className={`text-[10px] sm:text-[11px] font-semibold truncate w-full text-center leading-tight ${active ? 'text-white' : ''}`}>
                     {t(item.labelKey)}
                   </span>
                 </Link>
@@ -175,7 +145,7 @@ export function MobileBottomNav() {
                 <span className="relative inline-flex">
                   <Icon active={active} />
                 </span>
-                <span className={`text-[9px] sm:text-[10px] font-medium truncate w-full text-center leading-tight ${active ? 'font-semibold' : ''}`}>
+                <span className={`text-[10px] sm:text-[11px] font-medium truncate w-full text-center leading-tight ${active ? 'font-semibold' : ''}`}>
                   {t(item.labelKey)}
                 </span>
               </Link>

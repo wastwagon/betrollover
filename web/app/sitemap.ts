@@ -20,9 +20,13 @@ const LOCALISED_PAGES: Array<{
   { path: '/marketplace',            changeFrequency: 'daily',   priority: 0.9  },
   { path: '/tipsters',               changeFrequency: 'daily',   priority: 0.9  },
   { path: '/leaderboard',            changeFrequency: 'daily',   priority: 0.8  },
+  { path: '/acca-generator',         changeFrequency: 'weekly',  priority: 0.85 },
+  { path: '/live-scores',            changeFrequency: 'hourly',  priority: 0.8  },
+  { path: '/league-tables',          changeFrequency: 'daily',   priority: 0.75 },
   { path: '/discover',               changeFrequency: 'daily',   priority: 0.85 },
   { path: '/news',                   changeFrequency: 'daily',   priority: 0.8  },
   { path: '/resources',              changeFrequency: 'weekly',  priority: 0.7  },
+  { path: '/guides',                 changeFrequency: 'weekly',  priority: 0.65 },
   { path: '/community',              changeFrequency: 'daily',   priority: 0.7  },
   { path: '/coupons/archive',        changeFrequency: 'daily',   priority: 0.7  },
   { path: '/about',                  changeFrequency: 'monthly', priority: 0.6  },
@@ -44,7 +48,6 @@ const EN_ONLY_PAGES: Array<{
 }> = [
   { path: '/login',             changeFrequency: 'monthly', priority: 0.5 },
   { path: '/register',          changeFrequency: 'monthly', priority: 0.5 },
-  { path: '/earnings',          changeFrequency: 'weekly',  priority: 0.6 },
   ...(isSubscriptionsEnabled()
     ? [{ path: '/subscriptions', changeFrequency: 'weekly' as const, priority: 0.5 }]
     : []),

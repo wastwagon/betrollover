@@ -1,7 +1,7 @@
 {
-  "name": "BetRollover — Multi-Sport Tipster Marketplace",
+  "name": "BetRollover — Football Tipster Marketplace",
   "short_name": "BetRollover",
-  "description": "Verified tips for Football, Basketball, Rugby & more. Escrow protection on every pick.",
+  "description": "Football tipster marketplace with escrow-protected picks, live scores, and Acca Generator. Ghana-based, 18+.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f2f2f7",
@@ -27,15 +27,22 @@
     {
       "name": "Marketplace",
       "short_name": "Picks",
-      "description": "Browse verified tipster picks",
+      "description": "Browse tipster football picks",
       "url": "/marketplace",
       "icons": [{ "src": "/BetRollover-logo.png", "sizes": "512x512", "type": "image/png" }]
     },
     {
-      "name": "My Dashboard",
-      "short_name": "Dashboard",
-      "description": "Your tipster dashboard",
-      "url": "/dashboard",
+      "name": "Acca Generator",
+      "short_name": "Acca",
+      "description": "Build a same-day football accumulator",
+      "url": "/acca-generator",
+      "icons": [{ "src": "/BetRollover-logo.png", "sizes": "512x512", "type": "image/png" }]
+    },
+    {
+      "name": "Create Pick",
+      "short_name": "Create",
+      "description": "Build and publish a football pick",
+      "url": "/create-pick",
       "icons": [{ "src": "/BetRollover-logo.png", "sizes": "512x512", "type": "image/png" }]
     },
     {

@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { NavBar } from '@/components/ios/NavBar';
+import { AccaGeneratorLanding } from '@/components/AccaGeneratorLanding';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 
@@ -330,9 +330,9 @@ function MarketMultiSelect({
 }
 
 export default function AccaGeneratorPage() {
-  const router = useRouter();
   const [config, setConfig] = useState<Config | null>(null);
   const [loading, setLoading] = useState(true);
+  const [guest, setGuest] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -351,9 +351,11 @@ export default function AccaGeneratorPage() {
   const loadConfig = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      router.push('/login?redirect=/acca-generator');
+      setGuest(true);
+      setLoading(false);
       return;
     }
+    setGuest(false);
     setLoading(true);
     setError(null);
     try {
@@ -362,7 +364,8 @@ export default function AccaGeneratorPage() {
         cache: 'no-store',
       });
       if (res.status === 401) {
-        router.push('/login?redirect=/acca-generator');
+        setGuest(true);
+        setLoading(false);
         return;
       }
       if (!res.ok) {
@@ -382,7 +385,7 @@ export default function AccaGeneratorPage() {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     void loadConfig();
@@ -576,6 +579,10 @@ export default function AccaGeneratorPage() {
       setPublishing(false);
     }
   };
+
+  if (guest) {
+    return <AccaGeneratorLanding />;
+  }
 
   if (loading) {
     return (
