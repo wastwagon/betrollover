@@ -6,8 +6,8 @@ The app ships **`public/favicon.svg`** plus marketing PNGs used by the UI and so
 |------|---------|
 | `BetRollover-logo.png` | 512×512 app / PWA icon, Apple touch icon, JSON-LD `Organization.logo` |
 | `og-image.png` | 1200×630 Open Graph / X `summary_large_image` |
-| `images/marketing/hero-cinematic.avif` | Home hero (preferred; small file, photoreal sports art) |
-| `images/marketing/hero-cinematic.webp` | Home hero fallback for browsers without AVIF |
+| `images/marketing/hero-stadium-day.avif` | Home hero (preferred; daytime stadium) |
+| `images/marketing/hero-stadium-day.webp` | Home hero fallback for browsers without AVIF |
 | `images/marketing/marketplace-strip.png` | Marketplace banner strip + optional empty state |
 
 ### File size budget (what to aim for)
@@ -16,7 +16,7 @@ The app ships **`public/favicon.svg`** plus marketing PNGs used by the UI and so
 |-------|----------------|-------------|
 | `marketplace-strip.png` | Short strip (`h-28`–`md:h-40` ≈ 112–160px tall) | **~200 KB** or less; a wide panoramic (e.g. 1600×320–400) beats a tall 16:9 |
 
-**Home hero** uses **`hero-cinematic.avif`** + **`hero-cinematic.webp`** (`HomeHero`, `<picture>`). Regenerate from a master asset with `sharp` (or similar) so each file stays **~35–80 KB** at **~1376×768**.
+**Home hero** uses **`hero-stadium-day.avif`** + **`hero-stadium-day.webp`** (`HomeHero`, `<picture>`).
 
 Replace files under `public/images/marketing/` when you export new art; **commit** optimized AVIF/WebP so deploys stay fast.
 

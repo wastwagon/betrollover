@@ -97,9 +97,9 @@ export function HomeHero({
       >
         <div className="absolute inset-0">
           <picture>
-            <source srcSet="/images/marketing/hero-cinematic.avif" type="image/avif" />
+            <source srcSet="/images/marketing/hero-stadium-day.avif" type="image/avif" />
             <Image
-              src="/images/marketing/hero-cinematic.webp"
+              src="/images/marketing/hero-stadium-day.webp"
               alt=""
               fill
               priority

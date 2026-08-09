@@ -4,7 +4,7 @@
 
 | Area | What you use today |
 |------|-------------------|
-| **Home hero** | `hero-cinematic.avif` / `.webp` — photoreal multi-sport art, **~40–55 KB** combined transfer with `<picture>`. |
+| **Home hero** | `hero-stadium-day.avif` / `.webp` — daytime football stadium, full-bleed `<picture>`. |
 | **Home “how it works”** | **Inline SVG** components (`HomeStepArtwork`) — sharp at any size, no HTTP requests. |
 | **Marketplace / tipsters / picks** | `next/image` on **avatars, team badges, pick visuals**, news covers, discover cards. |
 | **Ads** | `next/image` with **`unoptimized`** (good: avoids optimizer quirks on random upload formats). |
