@@ -65,19 +65,19 @@ export function TipsterCard({
 
   return (
     <article
-      className={`overflow-hidden flex flex-col w-full min-w-0 max-w-full transition-transform duration-300 ease-out ${
+      className={`overflow-hidden flex flex-col w-full min-w-0 max-w-full transition-all duration-200 ease-out ${
         premium
-          ? 'rounded-2xl border border-emerald-900/8 bg-[var(--card)] shadow-[0_1px_0_rgba(15,23,42,0.04),0_12px_28px_-16px_rgba(15,23,42,0.28)] hover:-translate-y-0.5'
+          ? 'rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-md hover:shadow-lg hover:-translate-y-px'
           : 'rounded-[var(--radius-ios-group)] bg-[var(--card)] border border-[var(--separator)]'
       } ${className}`}
     >
-      <div className={`flex flex-col flex-1 min-w-0 ${premium ? 'p-3.5 sm:p-4' : 'p-4'}`}>
-        <div className={`flex items-start gap-2.5 min-w-0 ${premium ? 'mb-2.5' : 'mb-3 gap-3'}`}>
+      <div className={`flex flex-col flex-1 min-w-0 ${premium ? 'p-3' : 'p-4'}`}>
+        <div className={`flex items-start min-w-0 ${premium ? 'mb-2 gap-2' : 'mb-3 gap-3'}`}>
           <Link href={`/tipsters/${tipster.username}`} className="shrink-0 touch-target">
             <div
               className={`rounded-full overflow-hidden bg-[var(--fill-secondary)] border ${
                 premium
-                  ? 'h-10 w-10 sm:h-11 sm:w-11 border-emerald-900/10 ring-2 ring-emerald-500/10'
+                  ? 'h-7 w-7 border-[var(--border)]'
                   : 'w-11 h-11 border-[var(--separator)]'
               }`}
             >
@@ -103,20 +103,24 @@ export function TipsterCard({
               <span className="flex items-center gap-2 min-w-0">
                 <h3
                   className={`font-semibold text-[var(--text)] truncate min-w-0 ${
-                    premium ? 'text-[13px] sm:text-[15px] tracking-tight' : 'text-[15px]'
+                    premium ? 'text-xs tracking-tight' : 'text-[15px]'
                   }`}
                 >
                   {tipster.display_name}
                 </h3>
-                {tipster.is_ai ? <AiTipsterBadge /> : null}
+                {tipster.is_ai ? <AiTipsterBadge className={premium ? '!text-[9px] !px-1.5 !py-px' : undefined} /> : null}
               </span>
             </Link>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5 text-xs text-[var(--text-muted)]">
+            <div
+              className={`flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 ${
+                premium ? 'text-[9px] text-[var(--text-muted)]' : 'text-xs text-[var(--text-muted)]'
+              }`}
+            >
               {tipster.leaderboard_rank != null && (
                 <span
                   className={
                     premium
-                      ? 'inline-flex items-center rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300'
+                      ? 'font-semibold text-emerald-700 dark:text-emerald-400'
                       : undefined
                   }
                 >
@@ -135,74 +139,86 @@ export function TipsterCard({
           </div>
         </div>
 
-        {/* Hero metric — Tipstrr-style primary number */}
-        <div
-          className={`text-center ${
-            premium
-              ? 'mb-2.5 rounded-xl bg-gradient-to-b from-emerald-500/[0.07] to-transparent px-2 py-3'
-              : 'border-t border-[var(--separator)] pt-3 mb-3'
-          }`}
-        >
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)] mb-0.5">
-            {t('tipster.roi')}
-          </p>
-          <p
-            className={`font-bold tracking-tight tabular-nums leading-none ${
-              premium ? 'text-[1.65rem] sm:text-[1.85rem]' : 'text-[28px]'
-            } ${
-              roiPositive
-                ? 'text-[var(--primary)]'
-                : roiNegative
-                  ? 'text-[var(--destructive)]'
-                  : 'text-[var(--text)]'
-            }`}
-          >
-            {roiDisplay}
-          </p>
-        </div>
-
-        <dl
-          className={`grid grid-cols-2 mb-3 ${
-            premium
-              ? 'gap-2'
-              : 'gap-px rounded-lg overflow-hidden border border-[var(--separator)] bg-[var(--separator)]'
-          }`}
-        >
-          <div
-            className={
-              premium
-                ? 'rounded-xl bg-[var(--fill-secondary)]/80 px-2.5 py-2 text-center'
-                : 'bg-[var(--card)] px-3 py-2.5 text-center'
-            }
-          >
-            <dt className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)]">
-              {t('tipster.win_rate')}
-            </dt>
-            <dd className="text-sm font-bold text-[var(--text)] tabular-nums mt-0.5">{winRateDisplay}</dd>
+        {/* Metric row — compact on premium (pick-card density) */}
+        {premium ? (
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-[var(--primary)]/20 bg-[var(--primary)]/5 px-2 py-1.5">
+            <div className="min-w-0">
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                {t('tipster.roi')}
+              </p>
+              <p
+                className={`text-sm font-bold tabular-nums leading-none mt-0.5 ${
+                  roiPositive
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : roiNegative
+                      ? 'text-[var(--destructive)]'
+                      : 'text-[var(--text)]'
+                }`}
+              >
+                {roiDisplay}
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2 text-right">
+              <div>
+                <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                  {t('tipster.win_rate')}
+                </p>
+                <p className="text-xs font-bold text-[var(--text)] tabular-nums mt-0.5">{winRateDisplay}</p>
+              </div>
+              <div>
+                <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                  {t('tipster.total_picks')}
+                </p>
+                <p className="text-xs font-bold text-[var(--text)] tabular-nums mt-0.5">
+                  {tipster.total_predictions ?? 0}
+                </p>
+              </div>
+            </div>
           </div>
-          <div
-            className={
-              premium
-                ? 'rounded-xl bg-[var(--fill-secondary)]/80 px-2.5 py-2 text-center'
-                : 'bg-[var(--card)] px-3 py-2.5 text-center'
-            }
-          >
-            <dt className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)]">
-              {t('tipster.total_picks')}
-            </dt>
-            <dd className="text-sm font-bold text-[var(--text)] tabular-nums mt-0.5">
-              {tipster.total_predictions ?? 0}
-            </dd>
-          </div>
-        </dl>
+        ) : (
+          <>
+            <div className="border-t border-[var(--separator)] pt-3 mb-3 text-center">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)] mb-0.5">
+                {t('tipster.roi')}
+              </p>
+              <p
+                className={`text-[28px] font-bold tracking-tight tabular-nums leading-none ${
+                  roiPositive
+                    ? 'text-[var(--primary)]'
+                    : roiNegative
+                      ? 'text-[var(--destructive)]'
+                      : 'text-[var(--text)]'
+                }`}
+              >
+                {roiDisplay}
+              </p>
+            </div>
+            <dl className="grid grid-cols-2 gap-px rounded-lg overflow-hidden border border-[var(--separator)] bg-[var(--separator)] mb-3">
+              <div className="bg-[var(--card)] px-3 py-2.5 text-center">
+                <dt className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)]">
+                  {t('tipster.win_rate')}
+                </dt>
+                <dd className="text-sm font-bold text-[var(--text)] tabular-nums mt-0.5">{winRateDisplay}</dd>
+              </div>
+              <div className="bg-[var(--card)] px-3 py-2.5 text-center">
+                <dt className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)]">
+                  {t('tipster.total_picks')}
+                </dt>
+                <dd className="text-sm font-bold text-[var(--text)] tabular-nums mt-0.5">
+                  {tipster.total_predictions ?? 0}
+                </dd>
+              </div>
+            </dl>
+          </>
+        )}
 
         <TipsterTrustStrip
-          className="mb-3"
+          className={premium ? 'mb-0' : 'mb-3'}
           compact
           settledCount={settledCount}
-          avgOdds={tipster.avg_odds}
-          avgRating={tipster.avg_rating}
-          reviewCount={tipster.review_count}
+          avgOdds={premium ? null : tipster.avg_odds}
+          avgRating={premium ? null : tipster.avg_rating}
+          reviewCount={premium ? null : tipster.review_count}
         />
 
         {tipster.bio ? (
