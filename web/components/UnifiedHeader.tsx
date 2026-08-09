@@ -461,6 +461,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                         <CompactNavLink href="/register" icon={<IconRocket />} label={t('nav.register')} onClick={closeAll} />
                       )}
                       <CompactNavLink href="/create-pick" icon={<IconTarget />} label={t('nav.create_pick')} onClick={closeAll} />
+                      <CompactNavLink href="/acca-generator" icon={<IconChart />} label={t('nav.acca_generator')} onClick={closeAll} />
                       <CompactNavLink
                         href="/dashboard/subscription-packages"
                         icon={<IconPackage />}
@@ -537,26 +538,39 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               {/* Divider */}
               <div className="w-px h-6 bg-slate-200 mx-1.5" />
 
-              {/* Create Coupon CTA */}
+              {/* Create Pick + Acca Generator CTAs */}
               {isSignedIn && (
-                <Link
-                  href="/create-pick"
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${
-                    isActive(pathname, '/create-pick')
-                      ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-500/30'
-                      : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-500 hover:to-teal-500 shadow-md hover:shadow-lg hover:scale-[1.02]'
-                  }`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                  </svg>
-                  {t('nav.create_pick')}
-                  {slipCount !== undefined && slipCount > 0 && (
-                    <span className="min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold bg-white/25 text-white rounded-full">
-                      {slipCount > 9 ? '9+' : slipCount}
-                    </span>
-                  )}
-                </Link>
+                <div className="flex items-center gap-1.5">
+                  <Link
+                    href="/create-pick"
+                    title={t('nav.create_pick')}
+                    aria-label={t('nav.create_pick')}
+                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-sm transition-all ${
+                      isActive(pathname, '/create-pick')
+                        ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-500/30'
+                        : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-500 hover:to-teal-500 shadow-md hover:shadow-lg hover:scale-[1.02]'
+                    }`}
+                  >
+                    {t('nav.create_pick_short')}
+                    {slipCount !== undefined && slipCount > 0 && (
+                      <span className="min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold bg-white/25 text-white rounded-full">
+                        {slipCount > 9 ? '9+' : slipCount}
+                      </span>
+                    )}
+                  </Link>
+                  <Link
+                    href="/acca-generator"
+                    title={t('nav.acca_generator')}
+                    aria-label={t('nav.acca_generator')}
+                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-sm transition-all border ${
+                      isActive(pathname, '/acca-generator')
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-slate-500/20'
+                        : 'bg-white text-slate-800 border-slate-200 hover:border-emerald-400 hover:text-emerald-800 hover:bg-emerald-50/60 shadow-sm'
+                    }`}
+                  >
+                    {t('nav.acca_generator_short')}
+                  </Link>
+                </div>
               )}
 
               {/* Guest CTAs */}
@@ -773,6 +787,8 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                         wallet: t('nav.wallet'),
                         earnings: t('nav.earnings'),
                         myPicks: t('nav.my_picks'),
+                        createPick: t('nav.create_pick'),
+                        accaGenerator: t('nav.acca_generator'),
                         myPurchases: t('my_purchases.title'),
                         subscriptions: t('dashboard.card_subscriptions'),
                         notifications: t('nav.notifications'),
@@ -805,6 +821,8 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
             aria-label={t('nav.browse')}
           >
             {[
+              { href: '/create-pick', label: t('nav.create_pick_short') },
+              { href: '/acca-generator', label: t('nav.acca_generator_short') },
               { href: '/live-scores', label: t('nav.live_scores_short') },
               { href: '/league-tables', label: t('nav.league_tables_short') },
               { href: '/leaderboard', label: t('nav.leaderboard') },

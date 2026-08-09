@@ -57,6 +57,9 @@ const en = {
   'nav.invite': 'Invite & Earn',
   'nav.support': 'Support',
   'nav.create_pick': 'Create Pick',
+  'nav.create_pick_short': '+Picks',
+  'nav.acca_generator': 'Acca Generator',
+  'nav.acca_generator_short': '+Generate',
   'nav.pick_tab': 'Pick',
 
   // ── Auth ─────────────────────────────────────────────────────────────────

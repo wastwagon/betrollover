@@ -39,6 +39,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { SupportModule } from './modules/support/support.module';
 import { ReferralsModule } from './modules/referrals/referrals.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { AccaGeneratorModule } from './modules/acca-generator/acca-generator.module';
 
 @Module({
   imports: [
@@ -99,6 +100,7 @@ import { ChatModule } from './modules/chat/chat.module';
     SupportModule,
     ReferralsModule,
     ChatModule,
+    AccaGeneratorModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: HttpExceptionFilter },

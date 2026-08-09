@@ -529,10 +529,82 @@ export class AdminService {
       aiMarketplaceCouponPrice: Math.round(Number(apiSettings?.aiMarketplaceCouponPrice ?? 5.0) * 100) / 100,
       platformCommissionRate: clampPlatformCommissionPercent(apiSettings?.platformCommissionRate),
       streamAlertThresholds: this.mapStreamAlertThresholds(apiSettings),
+      accaGenerator: this.mapAccaGeneratorSettings(apiSettings),
       currency: 'GHS',
       country: 'Ghana',
       appName: 'BetRollover',
     };
+  }
+
+  private mapAccaGeneratorSettings(row: ApiSettings | null): {
+    enabled: boolean;
+    minLegs: number;
+    maxLegs: number;
+    dailyGenerations: number;
+  } {
+    const minLegs = Math.min(20, Math.max(1, Math.floor(Number(row?.accaGeneratorMinLegs ?? 2))));
+    let maxLegs = Math.min(20, Math.max(1, Math.floor(Number(row?.accaGeneratorMaxLegs ?? 8))));
+    if (maxLegs < minLegs) maxLegs = minLegs;
+    return {
+      enabled: row?.accaGeneratorEnabled !== false,
+      minLegs,
+      maxLegs,
+      dailyGenerations: Math.max(0, Math.floor(Number(row?.accaGeneratorDailyGenerations ?? 10))),
+    };
+  }
+
+  async updateAccaGeneratorSettings(body: {
+    enabled?: boolean;
+    minLegs?: number;
+    maxLegs?: number;
+    dailyGenerations?: number;
+  }): Promise<{
+    enabled: boolean;
+    minLegs: number;
+    maxLegs: number;
+    dailyGenerations: number;
+  }> {
+    let apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
+    if (!apiSettings) {
+      apiSettings = this.apiSettingsRepo.create({ id: 1 });
+    }
+
+    if (body.enabled !== undefined) {
+      apiSettings.accaGeneratorEnabled = !!body.enabled;
+    }
+
+    const current = this.mapAccaGeneratorSettings(apiSettings);
+    const minLegs =
+      body.minLegs !== undefined
+        ? Math.floor(Number(body.minLegs))
+        : current.minLegs;
+    const maxLegs =
+      body.maxLegs !== undefined
+        ? Math.floor(Number(body.maxLegs))
+        : current.maxLegs;
+    const dailyGenerations =
+      body.dailyGenerations !== undefined
+        ? Math.floor(Number(body.dailyGenerations))
+        : current.dailyGenerations;
+
+    if (!Number.isFinite(minLegs) || minLegs < 1 || minLegs > 20) {
+      throw new BadRequestException('minLegs must be between 1 and 20');
+    }
+    if (!Number.isFinite(maxLegs) || maxLegs < 1 || maxLegs > 20) {
+      throw new BadRequestException('maxLegs must be between 1 and 20');
+    }
+    if (maxLegs < minLegs) {
+      throw new BadRequestException('maxLegs must be greater than or equal to minLegs');
+    }
+    if (!Number.isFinite(dailyGenerations) || dailyGenerations < 0 || dailyGenerations > 500) {
+      throw new BadRequestException('dailyGenerations must be between 0 and 500 (0 = unlimited)');
+    }
+
+    apiSettings.accaGeneratorMinLegs = minLegs;
+    apiSettings.accaGeneratorMaxLegs = maxLegs;
+    apiSettings.accaGeneratorDailyGenerations = dailyGenerations;
+    await this.apiSettingsRepo.save(apiSettings);
+    return this.mapAccaGeneratorSettings(apiSettings);
   }
 
   private mapStreamAlertThresholds(row: ApiSettings | null): {

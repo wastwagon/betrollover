@@ -15,6 +15,8 @@ import {
   IconStar,
   IconBell,
   IconLogout,
+  IconTarget,
+  IconChart,
 } from './icons';
 
 export interface MobileAccountSheetProps {
@@ -36,6 +38,8 @@ export interface MobileAccountSheetProps {
     wallet: string;
     earnings: string;
     myPicks: string;
+    createPick: string;
+    accaGenerator: string;
     myPurchases: string;
     subscriptions: string;
     notifications: string;
@@ -83,6 +87,8 @@ export function MobileAccountSheet({
       badgeClassName: 'bg-amber-500',
     },
     { href: '/earnings', icon: <IconEarnings />, label: labels.earnings },
+    { href: '/create-pick', icon: <IconTarget />, label: labels.createPick },
+    { href: '/acca-generator', icon: <IconChart />, label: labels.accaGenerator },
     { href: '/my-picks', icon: <IconPicks />, label: labels.myPicks },
     { href: '/my-purchases', icon: <IconBag />, label: labels.myPurchases },
     { href: '/subscriptions', icon: <IconStar />, label: labels.subscriptions },

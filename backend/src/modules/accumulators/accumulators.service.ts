@@ -79,6 +79,8 @@ export interface CreateAccumulatorDto {
     sport?: string;
     matchDescription: string;
     prediction: string;
+    /** Canonical settlement key when known (e.g. Acca Generator / AI sync). */
+    outcomeKey?: string | null;
     odds: number;
     matchDate?: string;
   }[];
@@ -371,6 +373,10 @@ export class AccumulatorsService {
         }
       }
 
+      const outcomeKey =
+        typeof s.outcomeKey === 'string' && s.outcomeKey.trim()
+          ? s.outcomeKey.trim().toLowerCase().slice(0, 40)
+          : null;
       const pick = this.pickRepo.create({
         accumulatorId: ticket.id,
         fixtureId: fixtureId || null,
@@ -378,6 +384,7 @@ export class AccumulatorsService {
         sport: pickSport,
         matchDescription: s.matchDescription,
         prediction: s.prediction,
+        outcomeKey,
         odds: s.odds,
         matchDate: s.matchDate ? new Date(s.matchDate) : null,
       });

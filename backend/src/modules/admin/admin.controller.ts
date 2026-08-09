@@ -711,6 +711,24 @@ export class AdminController {
     return this.adminService.updateAiMaxCouponsPerDay(body.aiMaxCouponsPerDay);
   }
 
+  @Patch('settings/acca-generator')
+  async updateAccaGeneratorSettings(
+    @CurrentUser() user: User,
+    @Body()
+    body: {
+      enabled?: boolean;
+      minLegs?: number;
+      maxLegs?: number;
+      dailyGenerations?: number;
+    },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    if (!body || typeof body !== 'object') {
+      throw new BadRequestException('Request body is required');
+    }
+    return this.adminService.updateAccaGeneratorSettings(body);
+  }
+
   @Patch('settings/ai-marketplace-coupon-price')
   async updateAiMarketplaceCouponPrice(
     @CurrentUser() user: User,

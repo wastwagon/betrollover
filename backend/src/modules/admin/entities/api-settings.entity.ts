@@ -82,6 +82,20 @@ export class ApiSettings {
   @Column({ type: 'int', name: 'stream_critical_stale_seconds', default: 180 })
   streamCriticalStaleSeconds: number = 180;
 
+  /** Acca Generator: feature toggle (admins can still generate when false). */
+  @Column({ type: 'boolean', name: 'acca_generator_enabled', default: true })
+  accaGeneratorEnabled: boolean = true;
+
+  @Column({ type: 'int', name: 'acca_generator_min_legs', default: 2 })
+  accaGeneratorMinLegs: number = 2;
+
+  @Column({ type: 'int', name: 'acca_generator_max_legs', default: 8 })
+  accaGeneratorMaxLegs: number = 8;
+
+  /** Max Acca Generator runs per free user per UTC day; 0 = unlimited. */
+  @Column({ type: 'int', name: 'acca_generator_daily_generations', default: 10 })
+  accaGeneratorDailyGenerations: number = 10;
+
   @CreateDateColumn()
   createdAt: Date;
 

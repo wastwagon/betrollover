@@ -30,6 +30,12 @@ interface Settings {
     warnStaleSeconds: number;
     criticalStaleSeconds: number;
   };
+  accaGenerator?: {
+    enabled: boolean;
+    minLegs: number;
+    maxLegs: number;
+    dailyGenerations: number;
+  };
   currency: string;
   country: string;
   appName: string;
@@ -77,6 +83,11 @@ export default function AdminSettingsPage() {
   const [savingCouponLimit, setSavingCouponLimit] = useState(false);
   const [aiMaxCouponsPerDay, setAiMaxCouponsPerDay] = useState<number>(2);
   const [savingAiMaxCoupons, setSavingAiMaxCoupons] = useState(false);
+  const [accaEnabled, setAccaEnabled] = useState(true);
+  const [accaMinLegs, setAccaMinLegs] = useState(2);
+  const [accaMaxLegs, setAccaMaxLegs] = useState(8);
+  const [accaDailyGenerations, setAccaDailyGenerations] = useState(10);
+  const [savingAccaGenerator, setSavingAccaGenerator] = useState(false);
   const [commissionRate, setCommissionRate] = useState<number>(30.0);
   const [savingCommission, setSavingCommission] = useState(false);
   const [migrationStatus, setMigrationStatus] = useState<{ applied: { filename: string; appliedAt: string }[]; pending: string[] } | null>(null);
@@ -121,6 +132,12 @@ export default function AdminSettingsPage() {
         if (data?.aiMarketplaceCouponPrice !== undefined) setAiMarketplaceCouponPrice(data.aiMarketplaceCouponPrice);
         if (data?.maxCouponsPerDay !== undefined) setMaxCouponsPerDay(data.maxCouponsPerDay);
         if (data?.aiMaxCouponsPerDay !== undefined) setAiMaxCouponsPerDay(data.aiMaxCouponsPerDay);
+        if (data?.accaGenerator) {
+          setAccaEnabled(data.accaGenerator.enabled !== false);
+          setAccaMinLegs(data.accaGenerator.minLegs ?? 2);
+          setAccaMaxLegs(data.accaGenerator.maxLegs ?? 8);
+          setAccaDailyGenerations(data.accaGenerator.dailyGenerations ?? 10);
+        }
         if (data?.platformCommissionRate !== undefined) setCommissionRate(data.platformCommissionRate);
         return data;
       })
@@ -1547,6 +1564,104 @@ export default function AdminSettingsPage() {
                     className="w-full px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
                   >
                     {savingCouponLimit ? 'Saving...' : 'Save daily limit'}
+                  </button>
+                </div>
+
+                {/* Acca Generator limits */}
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-100 dark:from-emerald-900/20 dark:to-teal-800/20 rounded-2xl shadow-lg border-2 border-emerald-200 dark:border-emerald-800 p-4 sm:p-6 hover:shadow-xl transition-all sm:col-span-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Acca Generator</h3>
+                    <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">/acca-generator</span>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Controls the user Acca Generator tool (separate from AI tipsters). Limit legs and daily generations so free accounts cannot spam the API.
+                    Use <strong>0</strong> daily generations for unlimited.
+                  </p>
+                  <label className="flex items-center gap-2 mb-4 text-sm text-gray-800 dark:text-gray-200">
+                    <input
+                      type="checkbox"
+                      checked={accaEnabled}
+                      onChange={(e) => setAccaEnabled(e.target.checked)}
+                      className="rounded border-gray-300"
+                    />
+                    Feature enabled
+                  </label>
+                  <div className="grid gap-3 sm:grid-cols-3 mb-4">
+                    <label className="text-sm">
+                      <span className="block mb-1 text-gray-600 dark:text-gray-400">Min legs</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={20}
+                        value={accaMinLegs}
+                        onChange={(e) => setAccaMinLegs(Math.min(20, Math.max(1, parseInt(e.target.value, 10) || 1)))}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      />
+                    </label>
+                    <label className="text-sm">
+                      <span className="block mb-1 text-gray-600 dark:text-gray-400">Max legs</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={20}
+                        value={accaMaxLegs}
+                        onChange={(e) => setAccaMaxLegs(Math.min(20, Math.max(1, parseInt(e.target.value, 10) || 1)))}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      />
+                    </label>
+                    <label className="text-sm">
+                      <span className="block mb-1 text-gray-600 dark:text-gray-400">Generations / UTC day</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={500}
+                        value={accaDailyGenerations}
+                        onChange={(e) => setAccaDailyGenerations(Math.min(500, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      />
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const token = localStorage.getItem('token');
+                      if (!token) return;
+                      setSavingAccaGenerator(true);
+                      try {
+                        const res = await fetch(`${getApiUrl()}/admin/settings/acca-generator`, {
+                          method: 'PATCH',
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({
+                            enabled: accaEnabled,
+                            minLegs: accaMinLegs,
+                            maxLegs: accaMaxLegs,
+                            dailyGenerations: accaDailyGenerations,
+                          }),
+                        });
+                        if (res.ok) {
+                          const data = await res.json();
+                          setAccaEnabled(data.enabled !== false);
+                          setAccaMinLegs(data.minLegs);
+                          setAccaMaxLegs(data.maxLegs);
+                          setAccaDailyGenerations(data.dailyGenerations);
+                          alert('Acca Generator settings updated');
+                        } else {
+                          const error = await res.json().catch(() => ({}));
+                          alert(getApiErrorMessage(error, 'Failed to update Acca Generator settings'));
+                        }
+                      } catch (e: unknown) {
+                        alert(e instanceof Error ? e.message : 'Failed to update Acca Generator settings');
+                      } finally {
+                        setSavingAccaGenerator(false);
+                      }
+                    }}
+                    disabled={savingAccaGenerator}
+                    className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
+                  >
+                    {savingAccaGenerator ? 'Saving...' : 'Save Acca Generator settings'}
                   </button>
                 </div>
 

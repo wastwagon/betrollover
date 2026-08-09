@@ -14,6 +14,7 @@ const mainNavItems = [
     label: 'Picks',
     children: [
       { href: '/create-pick', label: 'Create Pick' },
+      { href: '/acca-generator', label: 'Acca Generator' },
       { href: '/my-picks', label: 'My Picks' },
     ],
   },

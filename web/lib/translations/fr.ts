@@ -54,6 +54,9 @@ const fr: Record<string, string> = {
   'nav.invite': 'Inviter & Gagner',
   'nav.support': 'Assistance',
   'nav.create_pick': 'Créer un pronostic',
+  'nav.create_pick_short': '+Picks',
+  'nav.acca_generator': 'Générateur d\'acca',
+  'nav.acca_generator_short': '+Generate',
   'nav.pick_tab': 'Pronostic',
 
   // ── Auth ─────────────────────────────────────────────────────────────────
