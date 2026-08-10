@@ -31,4 +31,21 @@ export class SyncLockService {
     );
     return Array.isArray(rows) && rows.length > 0;
   }
+
+  /** True when sync_type is actively running (non-stale). */
+  async isRunning(syncType: string): Promise<boolean> {
+    const staleBefore = new Date(Date.now() - 60 * 60 * 1000);
+    const rows = await this.dataSource.query(
+      `
+      SELECT 1
+      FROM sync_status
+      WHERE sync_type = $1
+        AND status = 'running'
+        AND updated_at >= $2
+      LIMIT 1
+      `,
+      [syncType, staleBefore],
+    );
+    return Array.isArray(rows) && rows.length > 0;
+  }
 }

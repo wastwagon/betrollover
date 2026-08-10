@@ -2,6 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Between, Repository } from 'typeorm';
 import { safeJson } from '../../common/fetch-json.util';
+import {
+  API_SPORTS_RETRY_MAX_ATTEMPTS,
+  fetchApiSportsJsonWithRetry,
+} from '../../common/fetch-with-429-retry.util';
 import { Fixture } from './entities/fixture.entity';
 import { League } from './entities/league.entity';
 import { EnabledLeague } from './entities/enabled-league.entity';
@@ -13,10 +17,15 @@ import { getSportApiBaseUrl } from '../../config/sports.config';
 import { normalizeFixtureElapsed } from './fixture-status-elapsed.util';
 import { extractHalftimeScores } from './fixture-halftime.util';
 import {
+  API_ODDS_CALL_DELAY_MS,
   getSyncDates,
   MAX_LEAGUE_BACKFILL_PER_RUN,
   SYNC_LOOKAHEAD_DAYS,
 } from '../../config/api-limits.config';
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 /** Extract team names from API response - handles various response structures */
 function extractTeamNames(item: any): { home: string; away: string } {
@@ -123,8 +132,30 @@ export class FootballSyncService {
 
     while (page <= totalPages && safety < FootballSyncService.MAX_FIXTURE_PAGES_PER_DATE) {
       safety++;
-      const res = await fetch(`${base}&page=${page}`, { headers });
-      const data = await safeJson<any>(res);
+      if (safety > 1) {
+        await sleep(API_ODDS_CALL_DELAY_MS);
+      }
+
+      const { ok, status, data, rateLimited } = await fetchApiSportsJsonWithRetry<any>(
+        `${base}&page=${page}`,
+        headers,
+        {
+          onRetry: ({ attempt, waitMs, reason }) => {
+            this.logger.debug(
+              `odds date=${date} page=${page}: ${reason}, waiting ${waitMs}ms before retry ${attempt + 1}/${API_SPORTS_RETRY_MAX_ATTEMPTS}`,
+            );
+          },
+        },
+      );
+
+      if (!ok || rateLimited) {
+        this.logger.warn(
+          `Odds API error for ${date} page ${page}: HTTP ${status}` +
+            (rateLimited ? ` after ${API_SPORTS_RETRY_MAX_ATTEMPTS} attempts` : ''),
+        );
+        break;
+      }
+
       if (data?.errors && Object.keys(data.errors).length > 0) {
         this.logger.warn(`Odds API error for ${date} page ${page}: ${JSON.stringify(data.errors)}`);
         break;
@@ -299,48 +330,34 @@ export class FootballSyncService {
 
     const now = new Date();
     const sevenDaysLater = new Date(now.getTime() + SYNC_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
-    const withoutOdds = await this.fixtureRepo
-      .createQueryBuilder('f')
-      .leftJoin('f.odds', 'o')
-      .where("f.status IN ('NS', 'TBD')")
-      .andWhere('f.match_date >= :now', { now })
-      .andWhere('f.match_date <= :end', { end: sevenDaysLater })
-      .andWhere('o.id IS NULL')
-      .orderBy('f.match_date', 'ASC')
-      .getMany();
 
+    // Prefer /odds?date= (paginated) over N× /odds?fixture= — avoids RPM burn on empty responses.
     let oddsCount = 0;
     const acquiredOdds = await this.syncLockService.tryStartSync('odds');
     if (!acquiredOdds) {
       this.logger.warn(
-        'Odds sync lock held elsewhere; skipping per-fixture + odds-by-date steps this run (scheduled odds job will catch up)',
+        'Odds sync lock held elsewhere; skipping odds-by-date + no-odds cleanup this run (scheduled odds job will catch up)',
       );
     } else {
-      if (withoutOdds.length > 0) {
-        const result = await this.oddsSyncService.syncOddsForFixtures(withoutOdds.map((x) => x.id));
-        oddsCount = result.synced;
-      }
-
-      // Coverage booster: pull odds by date (paginated) and upsert any remaining odds-backed fixtures.
       const oddsFirst = await this.oddsSyncService.syncOddsFirst(dates);
       if (oddsFirst.fixtures > 0) {
         this.logger.log(
-          `Odds-by-date booster synced ${oddsFirst.fixtures} fixture(s) and ${oddsFirst.odds} odd row(s), skipped ${oddsFirst.skipped}`,
+          `Odds-by-date synced ${oddsFirst.fixtures} fixture(s) and ${oddsFirst.odds} odd row(s), skipped ${oddsFirst.skipped}`,
         );
       }
-      oddsCount += oddsFirst.fixtures;
+      oddsCount = oddsFirst.fixtures;
+
+      // Cleanup only under the odds lock so we never delete rows another odds writer still needs.
+      if (this.shouldCleanupNoOddsFixtures()) {
+        const removed = await this.deleteUpcomingFixturesWithoutOdds({ underOddsLock: true });
+        if (removed > 0) this.logger.log(`Cleaned up ${removed} upcoming fixture(s) without odds`);
+      } else {
+        this.logger.debug('Skipped no-odds fixture cleanup (CLEANUP_NO_ODDS_FIXTURES is not enabled)');
+      }
     }
 
     // Backfill: fix fixtures with "Home vs Away" by fetching details from API
     await this.backfillHomeAwayTeamNames(headers, now, sevenDaysLater);
-
-    // Don't bloat DB: remove upcoming fixtures that still have no odds (not referenced by picks)
-    if (this.shouldCleanupNoOddsFixtures()) {
-      const removed = await this.deleteUpcomingFixturesWithoutOdds();
-      if (removed > 0) this.logger.log(`Cleaned up ${removed} upcoming fixture(s) without odds`);
-    } else {
-      this.logger.debug('Skipped no-odds fixture cleanup (CLEANUP_NO_ODDS_FIXTURES is not enabled)');
-    }
 
     return { fixtures: fixturesCount, odds: oddsCount };
   }
@@ -348,25 +365,38 @@ export class FootballSyncService {
   /**
    * Delete upcoming fixtures that have no odds and are not referenced by any accumulator pick.
    * Keeps the database lean (no fixtures without odds).
+   *
+   * Pass `{ underOddsLock: true }` when the caller already holds the odds sync lock.
+   * Otherwise cleanup is skipped while odds sync is running (avoids FK races).
    */
-  async deleteUpcomingFixturesWithoutOdds(): Promise<number> {
+  async deleteUpcomingFixturesWithoutOdds(opts?: { underOddsLock?: boolean }): Promise<number> {
     if (!this.shouldCleanupNoOddsFixtures()) return 0;
+    if (!opts?.underOddsLock && (await this.syncLockService.isRunning('odds'))) {
+      this.logger.debug('Skipping no-odds fixture cleanup (odds sync is running)');
+      return 0;
+    }
+
     const now = new Date();
     const sevenDaysLater = new Date(now.getTime() + SYNC_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
-    const toDelete = await this.fixtureRepo
-      .createQueryBuilder('f')
-      .leftJoin('f.odds', 'o')
-      .where("f.status IN ('NS', 'TBD')")
-      .andWhere('f.match_date >= :now', { now })
-      .andWhere('f.match_date <= :end', { end: sevenDaysLater })
-      .andWhere('o.id IS NULL')
-      .andWhere('f.id NOT IN (SELECT fixture_id FROM accumulator_picks WHERE fixture_id IS NOT NULL)')
-      .select('f.id')
-      .getMany();
-    if (toDelete.length === 0) return 0;
-    const ids = toDelete.map((f) => f.id);
-    await this.fixtureRepo.delete(ids);
-    return ids.length;
+
+    // Single-statement delete: re-check no-odds + no picks at delete time (closes select-then-delete TOCTOU).
+    const deleted: Array<{ id: number }> = await this.fixtureRepo.manager.query(
+      `
+      DELETE FROM fixtures f
+      WHERE f.status IN ('NS', 'TBD')
+        AND f.match_date >= $1
+        AND f.match_date <= $2
+        AND NOT EXISTS (
+          SELECT 1 FROM fixture_odds o WHERE o.fixture_id = f.id
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM accumulator_picks p WHERE p.fixture_id = f.id
+        )
+      RETURNING f.id
+      `,
+      [now, sevenDaysLater],
+    );
+    return Array.isArray(deleted) ? deleted.length : 0;
   }
 
   /**

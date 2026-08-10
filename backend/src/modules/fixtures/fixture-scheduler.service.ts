@@ -12,7 +12,7 @@ import { Repository, DataSource } from 'typeorm';
 import { Fixture } from './entities/fixture.entity';
 import { FixtureArchive } from './entities/fixture-archive.entity';
 import { SyncStatus } from './entities/sync-status.entity';
-import { SYNC_LOOKAHEAD_DAYS } from '../../config/api-limits.config';
+import { getSyncDates } from '../../config/api-limits.config';
 import { SyncLockService } from './sync-lock.service';
 
 const PREDICTION_TIME_ZONE =
@@ -236,9 +236,8 @@ export class FixtureSchedulerService implements OnModuleInit {
   }
 
   /**
-   * Sync odds for upcoming fixtures (runs every 2 hours)
-   * Pre-loads odds for fixtures up to lookahead window that are missing odds OR stale.
-   * Prioritizes soonest matches. Uses Tier 1/2 market filter (BTTS, Correct Score, HT/FT).
+   * Sync odds for upcoming fixtures (runs every 2 hours).
+   * Uses /odds?date= (paginated) — avoids burning RPM on per-fixture empty responses.
    */
   @Cron('0 */2 * * *') // Every 2 hours
   async handleOddsSync() {
@@ -249,48 +248,18 @@ export class FixtureSchedulerService implements OnModuleInit {
     }
     this.logger.debug('Running scheduled odds sync for upcoming fixtures...');
     try {
-      const now = new Date();
-      const lookaheadEnd = new Date(now.getTime() + SYNC_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
-      const refreshBefore = new Date(now.getTime() - 6 * 60 * 60 * 1000);
-
-      // Refresh fixtures with no odds rows OR stale odds snapshot.
-      const due = await this.fixtureRepo
-        .createQueryBuilder('f')
-        .leftJoin('f.odds', 'o')
-        .where("f.status IN ('NS', 'TBD')")
-        .andWhere('f.match_date >= :now', { now })
-        .andWhere('f.match_date <= :lookaheadEnd', { lookaheadEnd })
-        .select('f.id', 'id')
-        .addSelect('MAX(o.synced_at)', 'lastSyncedAt')
-        .groupBy('f.id')
-        .addGroupBy('f.match_date')
-        .having('COUNT(o.id) = 0 OR MAX(o.synced_at) < :refreshBefore', { refreshBefore })
-        .orderBy('f.match_date', 'ASC')
-        .getRawMany<{ id: string; lastSyncedAt: string | null }>();
-
-      const dueMissing = due.filter((r) => !r.lastSyncedAt).length;
-      const dueStale = due.length - dueMissing;
-      this.logger.debug(
-        `Odds sync due fixtures: total=${due.length}, missing=${dueMissing}, stale=${dueStale}`,
+      const dates = getSyncDates();
+      const result = await this.oddsSyncService.syncOddsFirst(dates);
+      this.logger.log(
+        `Odds sync completed: ${result.fixtures} fixtures, ${result.odds} odds rows, ${result.skipped} skipped`,
       );
-
-      if (due.length > 0) {
-        const fixtureIds = due.map((r) => Number(r.id)).filter((id) => Number.isFinite(id));
-        const result = await this.oddsSyncService.syncOddsForFixtures(fixtureIds);
-        this.logger.log(
-          `Odds sync completed: ${result.synced} fixtures synced (${fixtureIds.length} due; missing=${dueMissing}, stale=${dueStale}), ${result.errors} errors`
-        );
-        await this.updateSyncStatus('odds', 'success', result.synced, null, undefined, {
-          missing: dueMissing,
-          stale: dueStale,
-        });
-      } else {
-        await this.updateSyncStatus('odds', 'success', 0, null, undefined, {
-          missing: dueMissing,
-          stale: dueStale,
-        });
-      }
-      const removed = await this.footballSyncService.deleteUpcomingFixturesWithoutOdds();
+      await this.updateSyncStatus('odds', 'success', result.fixtures, null, undefined, {
+        missing: 0,
+        stale: 0,
+      });
+      const removed = await this.footballSyncService.deleteUpcomingFixturesWithoutOdds({
+        underOddsLock: true,
+      });
       if (removed > 0) this.logger.log(`Cleaned up ${removed} upcoming fixture(s) without odds`);
     } catch (error: any) {
       this.logger.error('Error in scheduled odds sync', error);
@@ -300,7 +269,7 @@ export class FixtureSchedulerService implements OnModuleInit {
 
   /**
    * Daily force refresh of odds (default 19:45 in PREDICTION_TIME_ZONE; before prediction run)
-   * Re-syncs upcoming fixtures to apply latest Tier 1/2 market filter.
+   * Re-syncs upcoming fixtures via /odds?date= to apply latest Tier 1/2 market filter.
    */
   @Cron(ODDS_FORCE_REFRESH_CRON, { timeZone: PREDICTION_TIME_ZONE })
   async handleOddsForceRefresh() {
@@ -312,39 +281,26 @@ export class FixtureSchedulerService implements OnModuleInit {
     }
     this.logger.log('Running daily odds force refresh (BTTS, Correct Score, etc.)...');
     try {
-      const now = new Date();
-      const lookaheadEnd = new Date(now.getTime() + SYNC_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
-
-      const allFixtures = await this.fixtureRepo
-        .createQueryBuilder('f')
-        .where("f.status IN ('NS', 'TBD')")
-        .andWhere('f.match_date >= :now', { now })
-        .andWhere('f.match_date <= :lookaheadEnd', { lookaheadEnd })
-        .orderBy('f.match_date', 'ASC')
-        .getMany();
-
-      const fixtureIds = allFixtures.map(f => f.id);
-
-      let synced = 0;
-      if (fixtureIds.length > 0) {
-        const result = await this.oddsSyncService.syncOddsForFixtures(fixtureIds);
-        synced = result.synced;
-        this.logger.log(
-          `Odds force refresh completed: ${result.synced} fixtures updated, ${result.errors} errors`
-        );
-      }
-      const removed = await this.footballSyncService.deleteUpcomingFixturesWithoutOdds();
+      const dates = getSyncDates();
+      const result = await this.oddsSyncService.syncOddsFirst(dates);
+      const synced = result.fixtures;
+      this.logger.log(
+        `Odds force refresh completed: ${result.fixtures} fixtures, ${result.odds} odds rows, ${result.skipped} skipped`,
+      );
+      const removed = await this.footballSyncService.deleteUpcomingFixturesWithoutOdds({
+        underOddsLock: true,
+      });
       if (removed > 0) this.logger.log(`Cleaned up ${removed} upcoming fixture(s) without odds`);
       await this.updateSyncStatus('odds', 'success', synced, null, undefined, {
         missing: 0,
-        stale: fixtureIds.length,
+        stale: synced,
       });
       await this.syncStatusRepo.upsert(
         {
           syncType: 'odds_refresh',
           status: 'success',
           lastSyncAt: new Date(),
-          lastSyncCount: fixtureIds.length,
+          lastSyncCount: synced,
           lastError: null,
         },
         ['syncType'],

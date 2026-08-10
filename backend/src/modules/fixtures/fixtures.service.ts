@@ -388,8 +388,8 @@ export class FixturesService {
   }
 
   /** Remove upcoming fixtures that have no odds (and are not in any coupon). Keeps DB lean. */
-  async deleteUpcomingFixturesWithoutOdds(): Promise<number> {
-    return this.syncService.deleteUpcomingFixturesWithoutOdds();
+  async deleteUpcomingFixturesWithoutOdds(opts?: { underOddsLock?: boolean }): Promise<number> {
+    return this.syncService.deleteUpcomingFixturesWithoutOdds(opts);
   }
 
   async backfillHomeAwayTeamNames(): Promise<{ fixed: number }> {

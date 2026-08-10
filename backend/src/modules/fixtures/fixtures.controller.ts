@@ -23,7 +23,7 @@ import { FixtureUpdateService } from './fixture-update.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SyncStatus } from './entities/sync-status.entity';
-import { SYNC_LOOKAHEAD_DAYS } from '../../config/api-limits.config';
+import { getSyncDates } from '../../config/api-limits.config';
 import { SyncLockService } from './sync-lock.service';
 
 @Controller('fixtures')
@@ -396,7 +396,7 @@ export class FixturesController {
   @Post('sync/odds')
   @UseGuards(JwtAuthGuard, AdminGuard)
   async syncOddsManual(
-    @Query('force') force?: string,
+    @Query('force') _force?: string,
     @Query('limit') _limitParam?: string,
   ) {
     if (!(await this.syncLockService.tryStartSync('odds'))) {
@@ -404,65 +404,14 @@ export class FixturesController {
     }
 
     try {
-      const now = new Date();
-      const lookaheadEnd = new Date(now.getTime() + SYNC_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
-      const forceRefresh = force === 'true' || force === '1';
-      const refreshBefore = new Date(now.getTime() - 6 * 60 * 60 * 1000);
-
-      let fixtureIds: number[];
-      let dueMissing = 0;
-      let dueStale = 0;
-
-      if (forceRefresh) {
-        const allFixtures = await this.fixturesService.fixtureRepo
-          .createQueryBuilder('f')
-          .where("f.status IN ('NS', 'TBD')")
-          .andWhere('f.match_date >= :now', { now })
-          .andWhere('f.match_date <= :lookaheadEnd', { lookaheadEnd })
-          .orderBy('f.match_date', 'ASC')
-          .getMany();
-        fixtureIds = allFixtures.map(f => f.id);
-        dueStale = fixtureIds.length;
-      } else {
-        const due = await this.fixturesService.fixtureRepo
-          .createQueryBuilder('f')
-          .leftJoin('f.odds', 'o')
-          .where("f.status IN ('NS', 'TBD')")
-          .andWhere('f.match_date >= :now', { now })
-          .andWhere('f.match_date <= :lookaheadEnd', { lookaheadEnd })
-          .select('f.id', 'id')
-          .addSelect('MAX(o.synced_at)', 'lastSyncedAt')
-          .groupBy('f.id')
-          .addGroupBy('f.match_date')
-          .having('COUNT(o.id) = 0 OR MAX(o.synced_at) < :refreshBefore', { refreshBefore })
-          .orderBy('f.match_date', 'ASC')
-          .getRawMany<{ id: string; lastSyncedAt: string | null }>();
-        fixtureIds = due.map((r) => Number(r.id)).filter((id) => Number.isFinite(id));
-        dueMissing = due.filter((r) => !r.lastSyncedAt).length;
-        dueStale = due.length - dueMissing;
-      }
-      
-      if (fixtureIds.length === 0) {
-        // No fixtures need odds sync
-        await this.syncStatusRepo.upsert(
-          {
-            syncType: 'odds',
-            status: 'success',
-            lastSyncAt: new Date(),
-            lastSyncCount: 0,
-            lastSyncDueMissing: dueMissing,
-            lastSyncDueStale: dueStale,
-            lastError: null,
-          },
-          ['syncType'],
-        );
-        return { synced: 0, errors: 0 };
-      }
-      
-      const result = await this.oddsSyncService.syncOddsForFixtures(fixtureIds);
+      // Bulk path: /odds?date= (paginated). Per-fixture remains on POST :id/odds only.
+      const dates = getSyncDates();
+      const oddsFirst = await this.oddsSyncService.syncOddsFirst(dates);
 
       // Don't bloat DB: remove upcoming fixtures that still have no odds
-      const removed = await this.fixturesService.deleteUpcomingFixturesWithoutOdds();
+      const removed = await this.fixturesService.deleteUpcomingFixturesWithoutOdds({
+        underOddsLock: true,
+      });
       if (removed > 0) this.logger.log(`Cleaned up ${removed} upcoming fixture(s) without odds`);
 
       // Update status to success
@@ -471,15 +420,21 @@ export class FixturesController {
           syncType: 'odds',
           status: 'success',
           lastSyncAt: new Date(),
-          lastSyncCount: result.synced,
-          lastSyncDueMissing: dueMissing,
-          lastSyncDueStale: dueStale,
+          lastSyncCount: oddsFirst.fixtures,
+          lastSyncDueMissing: 0,
+          lastSyncDueStale: 0,
           lastError: null,
         },
         ['syncType'],
       );
 
-      return result;
+      return {
+        synced: oddsFirst.fixtures,
+        errors: 0,
+        noOdds: 0,
+        odds: oddsFirst.odds,
+        skipped: oddsFirst.skipped,
+      };
     } catch (error: any) {
       await this.syncStatusRepo.upsert(
         {
