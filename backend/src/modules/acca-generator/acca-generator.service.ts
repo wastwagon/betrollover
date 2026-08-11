@@ -15,6 +15,7 @@ import { outcomeKeyFromOddsLine } from '../fixtures/odds-outcome-keys';
 import { AccumulatorsService, CreateAccumulatorDto } from '../accumulators/accumulators.service';
 import { User } from '../users/entities/user.entity';
 import { AccaGeneratorRun } from './entities/acca-generator-run.entity';
+import { ACCA_GENERATOR_LEGS_MAX, ACCA_GENERATOR_LEGS_MIN } from './acca-generator.constants';
 import {
   ACCA_GENERATOR_DEFAULTS,
   ACCA_GENERATOR_MARKET_KEYS,
@@ -301,8 +302,14 @@ export class AccaGeneratorService {
 
   private async loadLimits() {
     const row = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
-    const minLegs = Math.min(20, Math.max(1, Math.floor(Number(row?.accaGeneratorMinLegs ?? 2))));
-    let maxLegs = Math.min(20, Math.max(1, Math.floor(Number(row?.accaGeneratorMaxLegs ?? 8))));
+    const minLegs = Math.min(
+      ACCA_GENERATOR_LEGS_MAX,
+      Math.max(ACCA_GENERATOR_LEGS_MIN, Math.floor(Number(row?.accaGeneratorMinLegs ?? 2))),
+    );
+    let maxLegs = Math.min(
+      ACCA_GENERATOR_LEGS_MAX,
+      Math.max(ACCA_GENERATOR_LEGS_MIN, Math.floor(Number(row?.accaGeneratorMaxLegs ?? 8))),
+    );
     if (maxLegs < minLegs) maxLegs = minLegs;
     return {
       enabled: row?.accaGeneratorEnabled !== false,

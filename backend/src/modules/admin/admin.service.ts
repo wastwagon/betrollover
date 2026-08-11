@@ -36,6 +36,10 @@ import { AuditService } from '../audit/audit.service';
 import { clampPlatformCommissionPercent, splitGrossForTipsterPayout } from '../../common/platform-commission';
 import { SubscriptionEscrow } from '../subscriptions/entities/subscription-escrow.entity';
 import { AccumulatorsService } from '../accumulators/accumulators.service';
+import {
+  ACCA_GENERATOR_LEGS_MAX,
+  ACCA_GENERATOR_LEGS_MIN,
+} from '../acca-generator/acca-generator.constants';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -552,8 +556,14 @@ export class AdminService {
     maxLegs: number;
     dailyGenerations: number;
   } {
-    const minLegs = Math.min(20, Math.max(1, Math.floor(Number(row?.accaGeneratorMinLegs ?? 2))));
-    let maxLegs = Math.min(20, Math.max(1, Math.floor(Number(row?.accaGeneratorMaxLegs ?? 8))));
+    const minLegs = Math.min(
+      ACCA_GENERATOR_LEGS_MAX,
+      Math.max(ACCA_GENERATOR_LEGS_MIN, Math.floor(Number(row?.accaGeneratorMinLegs ?? 2))),
+    );
+    let maxLegs = Math.min(
+      ACCA_GENERATOR_LEGS_MAX,
+      Math.max(ACCA_GENERATOR_LEGS_MIN, Math.floor(Number(row?.accaGeneratorMaxLegs ?? 8))),
+    );
     if (maxLegs < minLegs) maxLegs = minLegs;
     return {
       enabled: row?.accaGeneratorEnabled !== false,
@@ -597,11 +607,23 @@ export class AdminService {
         ? Math.floor(Number(body.dailyGenerations))
         : current.dailyGenerations;
 
-    if (!Number.isFinite(minLegs) || minLegs < 1 || minLegs > 20) {
-      throw new BadRequestException('minLegs must be between 1 and 20');
+    if (
+      !Number.isFinite(minLegs) ||
+      minLegs < ACCA_GENERATOR_LEGS_MIN ||
+      minLegs > ACCA_GENERATOR_LEGS_MAX
+    ) {
+      throw new BadRequestException(
+        `minLegs must be between ${ACCA_GENERATOR_LEGS_MIN} and ${ACCA_GENERATOR_LEGS_MAX}`,
+      );
     }
-    if (!Number.isFinite(maxLegs) || maxLegs < 1 || maxLegs > 20) {
-      throw new BadRequestException('maxLegs must be between 1 and 20');
+    if (
+      !Number.isFinite(maxLegs) ||
+      maxLegs < ACCA_GENERATOR_LEGS_MIN ||
+      maxLegs > ACCA_GENERATOR_LEGS_MAX
+    ) {
+      throw new BadRequestException(
+        `maxLegs must be between ${ACCA_GENERATOR_LEGS_MIN} and ${ACCA_GENERATOR_LEGS_MAX}`,
+      );
     }
     if (maxLegs < minLegs) {
       throw new BadRequestException('maxLegs must be greater than or equal to minLegs');

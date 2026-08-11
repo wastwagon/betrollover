@@ -1575,6 +1575,7 @@ export default function AdminSettingsPage() {
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                     Controls the user Acca Generator tool (separate from AI tipsters). Limit legs and daily generations so free accounts cannot spam the API.
+                    Max legs can go up to <strong>100</strong> for heavy match-day analysis, then set it back lower for normal users.
                     Use <strong>0</strong> daily generations for unlimited.
                   </p>
                   <label className="flex items-center gap-2 mb-4 text-sm text-gray-800 dark:text-gray-200">
@@ -1592,9 +1593,9 @@ export default function AdminSettingsPage() {
                       <input
                         type="number"
                         min={1}
-                        max={20}
+                        max={100}
                         value={accaMinLegs}
-                        onChange={(e) => setAccaMinLegs(Math.min(20, Math.max(1, parseInt(e.target.value, 10) || 1)))}
+                        onChange={(e) => setAccaMinLegs(Math.min(100, Math.max(1, parseInt(e.target.value, 10) || 1)))}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       />
                     </label>
@@ -1603,9 +1604,9 @@ export default function AdminSettingsPage() {
                       <input
                         type="number"
                         min={1}
-                        max={20}
+                        max={100}
                         value={accaMaxLegs}
-                        onChange={(e) => setAccaMaxLegs(Math.min(20, Math.max(1, parseInt(e.target.value, 10) || 1)))}
+                        onChange={(e) => setAccaMaxLegs(Math.min(100, Math.max(1, parseInt(e.target.value, 10) || 1)))}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       />
                     </label>
