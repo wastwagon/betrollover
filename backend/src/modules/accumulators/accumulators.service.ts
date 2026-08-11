@@ -40,6 +40,10 @@ import { clampPlatformCommissionPercent } from '../../common/platform-commission
 import { couponUserFacingRef } from '../../common/coupon-public-label';
 import { isAllowedAfricanBookmakerKey } from '@betrollover/shared-types';
 import { isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
+import { ACCA_GENERATOR_LEGS_MAX } from '../acca-generator/acca-generator.constants';
+
+/** Keep pick create aligned with Acca Generator max legs (admin can still lower Acca range). */
+const MAX_SELECTIONS_PER_PICK = ACCA_GENERATOR_LEGS_MAX;
 
 /** Sports that use sport_events table (eventId) rather than fixtures (fixtureId) */
 const SPORT_EVENT_SPORTS = new Set(['basketball', 'rugby', 'mma', 'volleyball', 'hockey', 'american_football', 'tennis']);
@@ -179,8 +183,10 @@ export class AccumulatorsService {
     if (dto.selections.length === 0) {
       throw new BadRequestException('At least one selection is required');
     }
-    if (dto.selections.length > 20) {
-      throw new BadRequestException('Maximum 20 selections allowed per pick');
+    if (dto.selections.length > MAX_SELECTIONS_PER_PICK) {
+      throw new BadRequestException(
+        `Maximum ${MAX_SELECTIONS_PER_PICK} selections allowed per pick`,
+      );
     }
 
     // Validate price
