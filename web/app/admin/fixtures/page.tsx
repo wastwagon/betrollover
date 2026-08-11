@@ -67,6 +67,7 @@ interface SyncStatusRow {
   lastSyncLeagues?: number | null;
   lastSyncDueMissing?: number | null;
   lastSyncDueStale?: number | null;
+  lastError?: string | null;
 }
 
 interface LiveStreamMetrics {
@@ -553,6 +554,66 @@ export default function AdminFixturesPage() {
     }
   };
 
+  /** Poll sync_status until fixture sync leaves `running` (sync may outlive the HTTP response). */
+  const waitForFixtureSync = async (token: string) => {
+    const maxMs = 15 * 60 * 1000;
+    const started = Date.now();
+    let sawRunning = false;
+
+    while (Date.now() - started < maxMs) {
+      await new Promise((r) => setTimeout(r, 3000));
+      try {
+        const res = await fetch(`${getApiUrl()}/fixtures/sync/status`, {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store',
+        });
+        if (!res.ok) continue;
+        const statuses = await res.json().catch(() => []);
+        const rows: SyncStatusRow[] = Array.isArray(statuses) ? statuses : [];
+        const fixturesStatus = rows.find((s) => s.syncType === 'fixtures') ?? null;
+        if (!fixturesStatus) continue;
+
+        if (fixturesStatus.status === 'running') {
+          sawRunning = true;
+          continue;
+        }
+
+        if (fixturesStatus.status === 'success') {
+          setSyncResult({
+            fixtures: fixturesStatus.lastSyncCount ?? 0,
+            leagues: fixturesStatus.lastSyncLeagues ?? 0,
+          });
+          if ((fixturesStatus.lastSyncCount ?? 0) === 0) {
+            setError('Sync completed but 0 fixtures found. Check API key (Admin → Settings) and enabled leagues.');
+          } else {
+            setError(null);
+          }
+          load();
+          loadSyncStatus();
+          return;
+        }
+
+        if (fixturesStatus.status === 'error') {
+          setError(fixturesStatus.lastError || 'Sync failed on the server. Check API logs.');
+          loadSyncStatus();
+          return;
+        }
+
+        // idle / unknown after we observed running → treat as finished
+        if (sawRunning) {
+          load();
+          loadSyncStatus();
+          return;
+        }
+      } catch {
+        // keep polling through transient network blips
+      }
+    }
+
+    setError('Sync is still running or taking longer than expected. Wait a few minutes, then refresh this page.');
+    loadSyncStatus();
+  };
+
   const sync = async () => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -565,21 +626,21 @@ export default function AdminFixturesPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json().catch(() => ({}));
-      if (res.ok) {
-        const d = data as { fixtures?: number; leagues?: number } | null;
-        setSyncResult(d ? { fixtures: d.fixtures ?? 0, leagues: d.leagues ?? 0 } : null);
-        if (d?.fixtures === 0 && d?.leagues === 0) {
-          setError('Sync completed but 0 fixtures found. Check API key (Admin → Settings) and enabled leagues.');
-        } else {
+
+      // 202 = background start; 409 = already running — both should poll status.
+      if (res.status === 202 || res.status === 409 || res.ok) {
+        if (res.status === 409) {
           setError(null);
         }
-        load();
-        loadSyncStatus();
-      } else {
-        setError(getApiErrorMessage(data, 'Sync failed. Add API_SPORTS_KEY in Admin → Settings or backend .env'));
+        await waitForFixtureSync(token);
+        return;
       }
+
+      setError(getApiErrorMessage(data, 'Sync failed. Add API_SPORTS_KEY in Admin → Settings or backend .env'));
     } catch {
-      setError('Sync failed');
+      // Proxy/browser timeout used to show a false "Sync failed" while the API kept working.
+      setError(null);
+      await waitForFixtureSync(token);
     } finally {
       setSyncing(false);
     }
@@ -952,7 +1013,7 @@ export default function AdminFixturesPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Syncing...
+                  Syncing in background…
                 </span>
               ) : '⚽ Sync Fixtures'}
             </button>

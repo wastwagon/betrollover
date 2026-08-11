@@ -10,6 +10,7 @@ import {
   Sse,
   MessageEvent,
   ConflictException,
+  HttpCode,
 } from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { Observable, defer, from, interval, of } from 'rxjs';
@@ -342,19 +343,32 @@ export class FixturesController {
     return this.fixturesService.backfillHomeAwayTeamNames();
   }
 
+  /**
+   * Start fixture+odds sync in the background and return immediately.
+   * Long syncs were timing out at the proxy/browser and surfacing as fake CORS / "Sync failed".
+   */
   @Post('sync')
+  @HttpCode(202)
   @UseGuards(JwtAuthGuard, AdminGuard)
   async sync() {
-    // Update status to running
-    await this.syncStatusRepo.upsert(
-      { syncType: 'fixtures', status: 'running' },
-      ['syncType'],
-    );
+    if (!(await this.syncLockService.tryStartSync('fixtures'))) {
+      throw new ConflictException(
+        'Fixture sync is already running. Wait for it to finish, then refresh the list.',
+      );
+    }
 
+    void this.runFixtureSyncJob();
+
+    return {
+      started: true,
+      message: 'Fixture sync started in the background. This can take several minutes.',
+    };
+  }
+
+  private async runFixtureSyncJob(): Promise<void> {
     try {
       const result = await this.fixturesService.runSync();
-      
-      // Update status to success
+
       await this.syncStatusRepo.upsert(
         {
           syncType: 'fixtures',
@@ -367,7 +381,6 @@ export class FixturesController {
         ['syncType'],
       );
 
-      // Odds-first sync: fixtures already include odds. Update odds status.
       await this.syncStatusRepo.upsert(
         {
           syncType: 'odds',
@@ -379,17 +392,20 @@ export class FixturesController {
         ['syncType'],
       );
 
-      return result;
+      this.logger.log(
+        `Background fixture sync finished: ${result.fixtures} fixtures, ${result.odds ?? 0} odds rows touched`,
+      );
     } catch (error: any) {
+      const message = error?.message || String(error);
+      this.logger.error(`Background fixture sync failed: ${message}`);
       await this.syncStatusRepo.upsert(
         {
           syncType: 'fixtures',
           status: 'error',
-          lastError: error.message,
+          lastError: message,
         },
         ['syncType'],
       );
-      throw error;
     }
   }
 
