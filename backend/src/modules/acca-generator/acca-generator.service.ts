@@ -525,6 +525,8 @@ export class AccaGeneratorService {
       .andWhere('f.matchDate <= :endOfDay', { endOfDay })
       // Lead buffer: marketplace delists as soon as any leg kickoff passes.
       .andWhere('f.matchDate >= :minKickoff', { minKickoff })
+      // Odds-first sync can leave API-Sports placeholders until /fixtures backfill runs.
+      .andWhere("NOT (f.homeTeamName = 'Home' AND f.awayTeamName = 'Away')")
       .orderBy('f.matchDate', 'ASC')
       .take(400)
       .getMany();

@@ -16,6 +16,7 @@ import { SyncLockService } from './sync-lock.service';
 import { getSportApiBaseUrl } from '../../config/sports.config';
 import { normalizeFixtureElapsed } from './fixture-status-elapsed.util';
 import { extractHalftimeScores } from './fixture-halftime.util';
+import { extractTeamNames, isPlaceholderTeamNames } from './fixture-team-names.util';
 import {
   API_ODDS_CALL_DELAY_MS,
   getSyncDates,
@@ -25,24 +26,6 @@ import {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/** Extract team names from API response - handles various response structures */
-function extractTeamNames(item: any): { home: string; away: string } {
-  const home =
-    item?.teams?.home?.name ??
-    item?.teams?.home?.team?.name ??
-    item?.fixture?.teams?.home?.name ??
-    '';
-  const away =
-    item?.teams?.away?.name ??
-    item?.teams?.away?.team?.name ??
-    item?.fixture?.teams?.away?.name ??
-    '';
-  return {
-    home: (typeof home === 'string' && home.trim()) ? home.trim() : 'Home',
-    away: (typeof away === 'string' && away.trim()) ? away.trim() : 'Away',
-  };
 }
 
 /** Extract team logo URLs from API response (nullable - no break if missing) */
@@ -297,10 +280,32 @@ export class FootballSyncService {
             const rec = await this.leagueRepo.findOne({ where: { apiId: league.id }, select: ['id'] });
             leagueDbId = rec?.id ?? null;
           }
-          const { home: homeName, away: awayName } = extractTeamNames(f);
-          const { home: homeLogo, away: awayLogo } = extractTeamLogos(f);
-          const { home: homeCc, away: awayCc } = extractCountryCodes(f);
+          let { home: homeName, away: awayName } = extractTeamNames(f);
+          let { home: homeLogo, away: awayLogo } = extractTeamLogos(f);
+          let { home: homeCc, away: awayCc } = extractCountryCodes(f);
           const ht = extractHalftimeScores(f);
+          // Never clobber real names with Home/Away fallbacks on re-sync.
+          if (isPlaceholderTeamNames(homeName, awayName)) {
+            const existing = await this.fixtureRepo.findOne({
+              where: { apiId: fix.id },
+              select: [
+                'homeTeamName',
+                'awayTeamName',
+                'homeTeamLogo',
+                'awayTeamLogo',
+                'homeCountryCode',
+                'awayCountryCode',
+              ],
+            });
+            if (existing && !isPlaceholderTeamNames(existing.homeTeamName, existing.awayTeamName)) {
+              homeName = existing.homeTeamName;
+              awayName = existing.awayTeamName;
+              homeLogo = existing.homeTeamLogo ?? homeLogo;
+              awayLogo = existing.awayTeamLogo ?? awayLogo;
+              homeCc = existing.homeCountryCode ?? homeCc;
+              awayCc = existing.awayCountryCode ?? awayCc;
+            }
+          }
           await this.fixtureRepo.upsert(
             {
               apiId: fix.id,
@@ -631,15 +636,25 @@ export class FootballSyncService {
     let fixed = 0;
     for (const chunk of chunks) {
       try {
-        const res = await fetch(`${getSportApiBaseUrl('football')}/fixtures?id=${chunk.join(',')}`, { headers });
-        if (!res.ok) continue;
+        // API-Sports batch endpoint: ids=ID1-ID2-... (max 20), not id=comma-list.
+        const res = await fetch(
+          `${getSportApiBaseUrl('football')}/fixtures?ids=${chunk.join('-')}`,
+          { headers },
+        );
+        if (!res.ok) {
+          this.logger.warn(`Backfill fixtures batch failed: HTTP ${res.status}`);
+          continue;
+        }
         const data = await safeJson<any>(res);
         const items = data?.response || [];
+        if (items.length === 0) {
+          this.logger.warn(`Backfill: empty response for ${chunk.length} id(s)`);
+        }
         for (const item of items) {
           const { home, away } = extractTeamNames(item);
           const { home: homeLogo, away: awayLogo } = extractTeamLogos(item);
           const { home: homeCc, away: awayCc } = extractCountryCodes(item);
-          if (home === 'Home' && away === 'Away') continue;
+          if (isPlaceholderTeamNames(home, away)) continue;
           const apiId = item.fixture?.id;
           if (!apiId) continue;
           await this.fixtureRepo.update(
@@ -648,8 +663,8 @@ export class FootballSyncService {
           );
           fixed++;
         }
-      } catch {
-        // ignore
+      } catch (err) {
+        this.logger.warn(`Backfill batch error: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
     if (fixed > 0) {

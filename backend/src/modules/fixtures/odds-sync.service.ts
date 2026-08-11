@@ -14,6 +14,7 @@ import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { getSportApiBaseUrl } from '../../config/sports.config';
 import { normalizeFixtureElapsed } from './fixture-status-elapsed.util';
 import { extractHalftimeScores } from './fixture-halftime.util';
+import { extractTeamNames, isPlaceholderTeamNames } from './fixture-team-names.util';
 import {
   API_ODDS_CALL_DELAY_MS,
   MAX_FOOTBALL_ODDS_FIXTURES,
@@ -120,6 +121,21 @@ export class OddsSyncService {
   ): Promise<{ fixtureDbId: number; rowCount: number } | null> {
     try {
       return await this.oddsRepo.manager.transaction(async (em) => {
+        // /odds?date= often omits teams — keep any previously backfilled names.
+        if (isPlaceholderTeamNames(fixturePayload.homeTeamName, fixturePayload.awayTeamName)) {
+          const existing = await em.findOne(Fixture, {
+            where: { apiId: fixturePayload.apiId },
+            select: ['homeTeamName', 'awayTeamName', 'homeTeamLogo', 'awayTeamLogo', 'homeCountryCode', 'awayCountryCode'],
+          });
+          if (existing && !isPlaceholderTeamNames(existing.homeTeamName, existing.awayTeamName)) {
+            fixturePayload.homeTeamName = existing.homeTeamName;
+            fixturePayload.awayTeamName = existing.awayTeamName;
+            fixturePayload.homeTeamLogo = existing.homeTeamLogo;
+            fixturePayload.awayTeamLogo = existing.awayTeamLogo;
+            fixturePayload.homeCountryCode = existing.homeCountryCode;
+            fixturePayload.awayCountryCode = existing.awayCountryCode;
+          }
+        }
         await em.upsert(Fixture, fixturePayload, ['apiId']);
         const locked = await em
           .createQueryBuilder(Fixture, 'f')
@@ -413,10 +429,8 @@ export class OddsSyncService {
             });
             leagueDbId = leagueRecord?.id ?? null;
 
-            const home = item.teams?.home?.name ?? item.teams?.home?.team?.name ?? '';
-            const away = item.teams?.away?.name ?? item.teams?.away?.team?.name ?? '';
-            const homeName = (typeof home === 'string' && home.trim()) ? home.trim() : 'Home';
-            const awayName = (typeof away === 'string' && away.trim()) ? away.trim() : 'Away';
+            // /odds?date= usually has no teams — upsertFixtureWithOdds preserves backfilled names.
+            const { home: homeName, away: awayName } = extractTeamNames(item);
             const ht = extractHalftimeScores(item);
 
             const persisted = await this.upsertFixtureWithOdds(
