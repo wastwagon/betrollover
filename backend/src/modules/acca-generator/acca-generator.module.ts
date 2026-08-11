@@ -8,10 +8,18 @@ import { User } from '../users/entities/user.entity';
 import { AccaGeneratorController } from './acca-generator.controller';
 import { AccaGeneratorService } from './acca-generator.service';
 import { AccaGeneratorRun } from './entities/acca-generator-run.entity';
+import { AccaGeneratorEvent } from './entities/acca-generator-event.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([AccaGeneratorRun, ApiSettings, Fixture, FixtureOdd, User]),
+    TypeOrmModule.forFeature([
+      AccaGeneratorRun,
+      AccaGeneratorEvent,
+      ApiSettings,
+      Fixture,
+      FixtureOdd,
+      User,
+    ]),
     AccumulatorsModule,
   ],
   controllers: [AccaGeneratorController],

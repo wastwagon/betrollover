@@ -479,6 +479,7 @@ function DashboardContent() {
                     { href: '/admin/sports',          icon: '🌍', label: 'Multi-Sport Sync' },
                     { href: '/admin/analytics',       icon: '📈', label: 'Analytics' },
                     { href: '/admin/analytics?tab=sports', icon: '🌍', label: 'Sports Analytics' },
+                    { href: '/admin/analytics?tab=acca', icon: '🎯', label: 'Acca Gen Analytics' },
                     { href: '/admin/ai-predictions',  icon: '🤖', label: 'AI Predictions' },
                     { href: '/admin/news',            icon: '📰', label: 'News' },
                     { href: '/admin/content',         icon: '📄', label: 'Content Pages' },

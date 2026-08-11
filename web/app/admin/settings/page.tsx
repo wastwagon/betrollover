@@ -1571,7 +1571,15 @@ export default function AdminSettingsPage() {
                 <div className="bg-gradient-to-br from-emerald-50 to-teal-100 dark:from-emerald-900/20 dark:to-teal-800/20 rounded-2xl shadow-lg border-2 border-emerald-200 dark:border-emerald-800 p-4 sm:p-6 hover:shadow-xl transition-all sm:col-span-2">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">Acca Generator</h3>
-                    <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">/acca-generator</span>
+                    <div className="flex items-center gap-3">
+                      <a
+                        href="/admin/analytics?tab=acca"
+                        className="text-sm font-medium text-emerald-700 dark:text-emerald-300 hover:underline"
+                      >
+                        Usage analytics →
+                      </a>
+                      <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">/acca-generator</span>
+                    </div>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                     Controls the user Acca Generator tool (separate from AI tipsters). Limit legs and daily generations so free accounts cannot spam the API.

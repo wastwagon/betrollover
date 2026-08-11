@@ -14,6 +14,7 @@ import { Notification } from '../notifications/entities/notification.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { Prediction } from '../predictions/entities/prediction.entity';
 import { AnalyticsDaily } from './entities/analytics-daily.entity';
+import { AccaGeneratorRun } from '../acca-generator/entities/acca-generator-run.entity';
 
 @Injectable()
 export class AnalyticsService {
@@ -44,6 +45,8 @@ export class AnalyticsService {
     private predictionRepo: Repository<Prediction>,
     @InjectRepository(AnalyticsDaily)
     private analyticsDailyRepo: Repository<AnalyticsDaily>,
+    @InjectRepository(AccaGeneratorRun)
+    private accaRunRepo: Repository<AccaGeneratorRun>,
   ) {}
 
   /** Fire-and-forget: increment errors count for today. Call from exception filter on 5xx. */
@@ -1296,6 +1299,445 @@ export class AnalyticsService {
           count: parseInt(r.count, 10),
         })),
       },
+    };
+  }
+
+  /**
+   * Acca Generator product analytics for monetization decisions:
+   * adoption, retention, funnel, quota pressure, published quality.
+   */
+  async getAccaGeneratorUsage(days = 30) {
+    const windowDays = Math.min(365, Math.max(1, Math.floor(Number(days) || 30)));
+    const start = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
+    const db = this.accaRunRepo.manager;
+
+    // Prefer stored risk_level when migration 099 is applied; odd_max fallback always works.
+    const riskExpr = `CASE
+      WHEN r.odd_max <= 1.45 THEN 'sure'
+      WHEN r.odd_max <= 1.80 THEN 'safe'
+      WHEN r.odd_max <= 2.50 THEN 'medium'
+      ELSE 'high'
+    END`;
+    let riskSelectExpr = riskExpr;
+    try {
+      const col = await db.query(`
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'acca_generator_runs' AND column_name = 'risk_level'
+        LIMIT 1
+      `);
+      if (Array.isArray(col) && col.length > 0) {
+        riskSelectExpr = `COALESCE(NULLIF(TRIM(r.risk_level), ''), ${riskExpr})`;
+      }
+    } catch {
+      /* keep odd_max inference */
+    }
+
+    const pct = (num: number, den: number) =>
+      den > 0 ? Math.round((num / den) * 1000) / 10 : 0;
+
+    const eventsTableReady = await db
+      .query(`
+        SELECT 1 FROM information_schema.tables
+        WHERE table_name = 'acca_generator_events'
+        LIMIT 1
+      `)
+      .then((rows: unknown[]) => Array.isArray(rows) && rows.length > 0)
+      .catch(() => false);
+
+    const [
+      allTime,
+      period,
+      daily,
+      byRisk,
+      topUsers,
+      recent,
+      retentionRows,
+      engagementRows,
+      funnelRows,
+      signalRows,
+      qualityRows,
+      segmentRows,
+    ] = await Promise.all([
+      db.query(`
+        SELECT
+          COUNT(*)::int AS generations,
+          COUNT(DISTINCT r.user_id)::int AS unique_users,
+          COUNT(*) FILTER (WHERE r.published_ticket_id IS NOT NULL)::int AS published,
+          COUNT(DISTINCT r.user_id) FILTER (WHERE u.role IS DISTINCT FROM 'admin')::int AS unique_non_admin_users,
+          COUNT(*) FILTER (WHERE u.role IS DISTINCT FROM 'admin')::int AS non_admin_generations
+        FROM acca_generator_runs r
+        LEFT JOIN users u ON u.id = r.user_id
+      `),
+      db.query(
+        `
+        SELECT
+          COUNT(*)::int AS generations,
+          COUNT(DISTINCT r.user_id)::int AS unique_users,
+          COUNT(*) FILTER (WHERE r.published_ticket_id IS NOT NULL)::int AS published,
+          COUNT(DISTINCT r.user_id) FILTER (WHERE u.role IS DISTINCT FROM 'admin')::int AS unique_non_admin_users,
+          COUNT(*) FILTER (WHERE u.role IS DISTINCT FROM 'admin')::int AS non_admin_generations,
+          ROUND(AVG(r.legs_returned)::numeric, 2) AS avg_legs,
+          ROUND(AVG(r.combined_odds)::numeric, 3) AS avg_combined_odds
+        FROM acca_generator_runs r
+        LEFT JOIN users u ON u.id = r.user_id
+        WHERE r.created_at >= $1
+        `,
+        [start],
+      ),
+      db.query(
+        `
+        SELECT
+          TO_CHAR(r.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS date,
+          COUNT(*)::int AS generations,
+          COUNT(DISTINCT r.user_id)::int AS unique_users,
+          COUNT(*) FILTER (WHERE r.published_ticket_id IS NOT NULL)::int AS published
+        FROM acca_generator_runs r
+        WHERE r.created_at >= $1
+        GROUP BY 1
+        ORDER BY 1 ASC
+        `,
+        [start],
+      ),
+      db.query(
+        `
+        SELECT
+          ${riskSelectExpr} AS risk_level,
+          COUNT(*)::int AS generations,
+          COUNT(DISTINCT r.user_id)::int AS unique_users
+        FROM acca_generator_runs r
+        WHERE r.created_at >= $1
+        GROUP BY 1
+        ORDER BY generations DESC
+        `,
+        [start],
+      ),
+      db.query(
+        `
+        SELECT
+          r.user_id AS "userId",
+          COALESCE(u.username, u.email, 'user-' || r.user_id::text) AS username,
+          COALESCE(u.display_name, u.username, '') AS "displayName",
+          u.role AS role,
+          COUNT(*)::int AS generations,
+          COUNT(*) FILTER (WHERE r.published_ticket_id IS NOT NULL)::int AS published,
+          MAX(r.created_at) AS "lastUsedAt"
+        FROM acca_generator_runs r
+        LEFT JOIN users u ON u.id = r.user_id
+        WHERE r.created_at >= $1
+        GROUP BY r.user_id, u.username, u.email, u.display_name, u.role
+        ORDER BY generations DESC
+        LIMIT 25
+        `,
+        [start],
+      ),
+      db.query(
+        `
+        SELECT
+          r.id,
+          r.user_id AS "userId",
+          COALESCE(u.username, u.email, 'user-' || r.user_id::text) AS username,
+          ${riskSelectExpr} AS "riskLevel",
+          r.legs_returned AS legs,
+          r.combined_odds AS "combinedOdds",
+          r.published_ticket_id AS "publishedTicketId",
+          r.created_at AS "createdAt"
+        FROM acca_generator_runs r
+        LEFT JOIN users u ON u.id = r.user_id
+        ORDER BY r.created_at DESC
+        LIMIT 20
+        `,
+      ),
+      // Retention: first-time non-admin users in period (eligible windows for D1/D7)
+      db.query(
+        `
+        WITH first_gen AS (
+          SELECT r.user_id, MIN(r.created_at) AS first_at
+          FROM acca_generator_runs r
+          INNER JOIN users u ON u.id = r.user_id AND u.role IS DISTINCT FROM 'admin'
+          GROUP BY r.user_id
+        ),
+        cohort AS (
+          SELECT * FROM first_gen
+          WHERE first_at >= $1
+        )
+        SELECT
+          COUNT(*)::int AS new_users,
+          COUNT(*) FILTER (
+            WHERE first_at <= NOW() - INTERVAL '1 day'
+              AND EXISTS (
+                SELECT 1 FROM acca_generator_runs r2
+                WHERE r2.user_id = cohort.user_id
+                  AND r2.created_at > cohort.first_at
+                  AND r2.created_at <= cohort.first_at + INTERVAL '1 day'
+              )
+          )::int AS returned_d1,
+          COUNT(*) FILTER (WHERE first_at <= NOW() - INTERVAL '1 day')::int AS eligible_d1,
+          COUNT(*) FILTER (
+            WHERE first_at <= NOW() - INTERVAL '7 days'
+              AND EXISTS (
+                SELECT 1 FROM acca_generator_runs r2
+                WHERE r2.user_id = cohort.user_id
+                  AND r2.created_at > cohort.first_at
+                  AND r2.created_at <= cohort.first_at + INTERVAL '7 days'
+              )
+          )::int AS returned_d7,
+          COUNT(*) FILTER (WHERE first_at <= NOW() - INTERVAL '7 days')::int AS eligible_d7
+        FROM cohort
+        `,
+        [start],
+      ),
+      // One-and-done vs power users among period users (non-admin)
+      db.query(
+        `
+        WITH period_users AS (
+          SELECT r.user_id, COUNT(*)::int AS gens_period
+          FROM acca_generator_runs r
+          INNER JOIN users u ON u.id = r.user_id AND u.role IS DISTINCT FROM 'admin'
+          WHERE r.created_at >= $1
+          GROUP BY r.user_id
+        ),
+        lifetime AS (
+          SELECT r.user_id, COUNT(*)::int AS gens_all
+          FROM acca_generator_runs r
+          INNER JOIN period_users pu ON pu.user_id = r.user_id
+          GROUP BY r.user_id
+        )
+        SELECT
+          COUNT(*)::int AS active_users,
+          COUNT(*) FILTER (WHERE l.gens_all = 1)::int AS one_and_done,
+          COUNT(*) FILTER (WHERE p.gens_period >= 5)::int AS power_users,
+          COUNT(*) FILTER (WHERE p.gens_period BETWEEN 2 AND 4)::int AS returning_light
+        FROM period_users p
+        JOIN lifetime l ON l.user_id = p.user_id
+        `,
+        [start],
+      ),
+      // Funnel: opens → generate → publish → marketplace views/purchases
+      db.query(
+        `
+        SELECT
+          ${
+            eventsTableReady
+              ? `(
+            SELECT COUNT(*)::int FROM acca_generator_events e
+            WHERE e.event_type = 'tool_open' AND e.created_at >= $1
+          )`
+              : '0'
+          } AS tool_opens,
+          ${
+            eventsTableReady
+              ? `(
+            SELECT COUNT(DISTINCT e.user_id)::int FROM acca_generator_events e
+            WHERE e.event_type = 'tool_open' AND e.created_at >= $1 AND e.user_id IS NOT NULL
+          )`
+              : '0'
+          } AS tool_open_users,
+          (
+            SELECT COUNT(*)::int FROM acca_generator_runs r WHERE r.created_at >= $1
+          ) AS generations,
+          (
+            SELECT COUNT(*)::int FROM acca_generator_runs r
+            WHERE r.created_at >= $1 AND r.published_ticket_id IS NOT NULL
+          ) AS published,
+          (
+            SELECT COALESCE(SUM(pm.view_count), 0)::int
+            FROM acca_generator_runs r
+            JOIN pick_marketplace pm ON pm.accumulator_id = r.published_ticket_id
+            WHERE r.created_at >= $1 AND r.published_ticket_id IS NOT NULL
+          ) AS marketplace_views,
+          (
+            SELECT COUNT(*)::int
+            FROM acca_generator_runs r
+            JOIN user_purchased_picks upp ON upp.accumulator_id = r.published_ticket_id
+            WHERE r.created_at >= $1 AND r.published_ticket_id IS NOT NULL
+          ) AS marketplace_purchases
+        `,
+        [start],
+      ),
+      // Monetization pressure signals
+      eventsTableReady
+        ? db.query(
+            `
+            SELECT
+              COUNT(*) FILTER (WHERE e.event_type = 'quota_hit')::int AS quota_hits,
+              COUNT(DISTINCT e.user_id) FILTER (
+                WHERE e.event_type = 'quota_hit' AND e.user_id IS NOT NULL
+              )::int AS unique_quota_users,
+              COUNT(*) FILTER (WHERE e.event_type = 'empty_pool')::int AS empty_pool_hits,
+              COUNT(DISTINCT e.user_id) FILTER (
+                WHERE e.event_type = 'empty_pool' AND e.user_id IS NOT NULL
+              )::int AS unique_empty_pool_users
+            FROM acca_generator_events e
+            WHERE e.created_at >= $1
+            `,
+            [start],
+          )
+        : Promise.resolve([
+            {
+              quota_hits: 0,
+              unique_quota_users: 0,
+              empty_pool_hits: 0,
+              unique_empty_pool_users: 0,
+            },
+          ]),
+      // Quality of published Acca slips (settled only)
+      db.query(
+        `
+        SELECT
+          COUNT(*) FILTER (WHERE LOWER(t.result) IN ('won', 'lost'))::int AS settled,
+          COUNT(*) FILTER (WHERE LOWER(t.result) = 'won')::int AS won,
+          COUNT(*) FILTER (WHERE LOWER(t.result) = 'lost')::int AS lost,
+          COUNT(*) FILTER (WHERE LOWER(t.result) = 'pending')::int AS pending,
+          ROUND(AVG(r.combined_odds) FILTER (
+            WHERE r.published_ticket_id IS NOT NULL
+          )::numeric, 3) AS avg_published_odds
+        FROM acca_generator_runs r
+        LEFT JOIN accumulator_tickets t ON t.id = r.published_ticket_id
+        WHERE r.created_at >= $1 AND r.published_ticket_id IS NOT NULL
+        `,
+        [start],
+      ),
+      // Who uses it: tipster role vs other non-admin
+      db.query(
+        `
+        SELECT
+          CASE
+            WHEN u.role = 'tipster' THEN 'tipster'
+            WHEN u.role = 'admin' THEN 'admin'
+            ELSE 'user'
+          END AS segment,
+          COUNT(DISTINCT r.user_id)::int AS unique_users,
+          COUNT(*)::int AS generations
+        FROM acca_generator_runs r
+        LEFT JOIN users u ON u.id = r.user_id
+        WHERE r.created_at >= $1
+        GROUP BY 1
+        ORDER BY generations DESC
+        `,
+        [start],
+      ),
+    ]);
+
+    const at = allTime[0] || {};
+    const pr = period[0] || {};
+    const ret = retentionRows[0] || {};
+    const eng = engagementRows[0] || {};
+    const fun = funnelRows[0] || {};
+    const sig = signalRows[0] || {};
+    const qual = qualityRows[0] || {};
+
+    const periodGens = Number(pr.generations || 0);
+    const periodUsers = Number(pr.unique_users || 0);
+    const published = Number(pr.published || fun.published || 0);
+    const toolOpens = Number(fun.tool_opens || 0);
+    const settled = Number(qual.settled || 0);
+    const won = Number(qual.won || 0);
+    const eligibleD1 = Number(ret.eligible_d1 || 0);
+    const eligibleD7 = Number(ret.eligible_d7 || 0);
+    const returnedD1 = Number(ret.returned_d1 || 0);
+    const returnedD7 = Number(ret.returned_d7 || 0);
+    const activeNonAdmin = Number(eng.active_users || 0);
+
+    return {
+      days: windowDays,
+      since: start.toISOString(),
+      allTime: {
+        generations: Number(at.generations || 0),
+        uniqueUsers: Number(at.unique_users || 0),
+        uniqueNonAdminUsers: Number(at.unique_non_admin_users || 0),
+        nonAdminGenerations: Number(at.non_admin_generations || 0),
+        published: Number(at.published || 0),
+      },
+      period: {
+        generations: periodGens,
+        uniqueUsers: periodUsers,
+        uniqueNonAdminUsers: Number(pr.unique_non_admin_users || 0),
+        nonAdminGenerations: Number(pr.non_admin_generations || 0),
+        published,
+        avgLegs: pr.avg_legs != null ? Number(pr.avg_legs) : null,
+        avgCombinedOdds: pr.avg_combined_odds != null ? Number(pr.avg_combined_odds) : null,
+        generationsPerUser:
+          periodUsers > 0 ? Math.round((periodGens / periodUsers) * 10) / 10 : 0,
+        publishRate: pct(published, periodGens),
+      },
+      retention: {
+        newUsers: Number(ret.new_users || 0),
+        returnedD1,
+        eligibleD1,
+        d1Rate: pct(returnedD1, eligibleD1),
+        returnedD7,
+        eligibleD7,
+        d7Rate: pct(returnedD7, eligibleD7),
+        oneAndDone: Number(eng.one_and_done || 0),
+        powerUsers: Number(eng.power_users || 0),
+        returningLight: Number(eng.returning_light || 0),
+        activeNonAdminUsers: activeNonAdmin,
+        oneAndDoneRate: pct(Number(eng.one_and_done || 0), activeNonAdmin),
+        powerUserRate: pct(Number(eng.power_users || 0), activeNonAdmin),
+      },
+      funnel: {
+        toolOpens,
+        toolOpenUsers: Number(fun.tool_open_users || 0),
+        generations: Number(fun.generations || periodGens),
+        published,
+        marketplaceViews: Number(fun.marketplace_views || 0),
+        marketplacePurchases: Number(fun.marketplace_purchases || 0),
+        openToGenerateRate: pct(Number(fun.generations || 0), toolOpens),
+        generateToPublishRate: pct(published, Number(fun.generations || 0)),
+        publishToPurchaseRate: pct(Number(fun.marketplace_purchases || 0), published),
+      },
+      monetizationSignals: {
+        quotaHits: Number(sig.quota_hits || 0),
+        uniqueQuotaUsers: Number(sig.unique_quota_users || 0),
+        emptyPoolHits: Number(sig.empty_pool_hits || 0),
+        uniqueEmptyPoolUsers: Number(sig.unique_empty_pool_users || 0),
+        /** Strongest free-tier pay signal: share of active non-admins who hit the daily cap */
+        quotaHitUserRate: pct(Number(sig.unique_quota_users || 0), activeNonAdmin),
+      },
+      quality: {
+        publishedSettled: settled,
+        won,
+        lost: Number(qual.lost || 0),
+        pending: Number(qual.pending || 0),
+        winRate: pct(won, settled),
+        avgPublishedOdds:
+          qual.avg_published_odds != null ? Number(qual.avg_published_odds) : null,
+      },
+      segments: (segmentRows as Array<Record<string, unknown>>).map((r) => ({
+        segment: String(r.segment || 'user'),
+        uniqueUsers: Number(r.unique_users || 0),
+        generations: Number(r.generations || 0),
+      })),
+      daily: (daily as Array<Record<string, unknown>>).map((r) => ({
+        date: String(r.date),
+        generations: Number(r.generations || 0),
+        uniqueUsers: Number(r.unique_users || 0),
+        published: Number(r.published || 0),
+      })),
+      byRisk: (byRisk as Array<Record<string, unknown>>).map((r) => ({
+        riskLevel: String(r.risk_level || 'unknown'),
+        generations: Number(r.generations || 0),
+        uniqueUsers: Number(r.unique_users || 0),
+      })),
+      topUsers: (topUsers as Array<Record<string, unknown>>).map((r) => ({
+        userId: Number(r.userId),
+        username: String(r.username || ''),
+        displayName: String(r.displayName || ''),
+        role: String(r.role || 'user'),
+        generations: Number(r.generations || 0),
+        published: Number(r.published || 0),
+        lastUsedAt: r.lastUsedAt ? new Date(String(r.lastUsedAt)).toISOString() : null,
+      })),
+      recent: (recent as Array<Record<string, unknown>>).map((r) => ({
+        id: Number(r.id),
+        userId: Number(r.userId),
+        username: String(r.username || ''),
+        riskLevel: String(r.riskLevel || 'unknown'),
+        legs: Number(r.legs || 0),
+        combinedOdds: r.combinedOdds != null ? Number(r.combinedOdds) : null,
+        publishedTicketId: r.publishedTicketId != null ? Number(r.publishedTicketId) : null,
+        createdAt: r.createdAt ? new Date(String(r.createdAt)).toISOString() : null,
+      })),
     };
   }
 }

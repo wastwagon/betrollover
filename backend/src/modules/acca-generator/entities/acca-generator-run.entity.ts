@@ -29,6 +29,10 @@ export class AccaGeneratorRun {
   @Column({ type: 'jsonb', default: [] })
   markets: string[];
 
+  /** sure | safe | medium | high */
+  @Column({ type: 'varchar', length: 16, nullable: true })
+  riskLevel: string | null = null;
+
   @Column({ type: 'decimal', precision: 8, scale: 3 })
   oddMin: number;
 

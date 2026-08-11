@@ -15,7 +15,10 @@ import { outcomeKeyFromOddsLine } from '../fixtures/odds-outcome-keys';
 import { AccumulatorsService, CreateAccumulatorDto } from '../accumulators/accumulators.service';
 import { User } from '../users/entities/user.entity';
 import { AccaGeneratorRun } from './entities/acca-generator-run.entity';
+import { AccaGeneratorEvent } from './entities/acca-generator-event.entity';
 import { ACCA_GENERATOR_LEGS_MAX, ACCA_GENERATOR_LEGS_MIN } from './acca-generator.constants';
+
+const ACCA_EVENT_TYPES = new Set(['tool_open', 'quota_hit', 'empty_pool']);
 import {
   ACCA_GENERATOR_DEFAULTS,
   ACCA_GENERATOR_MARKET_KEYS,
@@ -63,10 +66,44 @@ export class AccaGeneratorService {
     private readonly oddsRepo: Repository<FixtureOdd>,
     @InjectRepository(AccaGeneratorRun)
     private readonly runRepo: Repository<AccaGeneratorRun>,
+    @InjectRepository(AccaGeneratorEvent)
+    private readonly eventRepo: Repository<AccaGeneratorEvent>,
     @InjectRepository(User)
     private readonly usersRepo: Repository<User>,
     private readonly accumulatorsService: AccumulatorsService,
   ) {}
+
+  /** Product analytics: tool_open (client), quota_hit / empty_pool (server). */
+  async trackEvent(
+    userId: number,
+    eventType: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<{ ok: true }> {
+    const type = String(eventType || '').trim().toLowerCase();
+    if (!ACCA_EVENT_TYPES.has(type)) {
+      throw new BadRequestException('Unsupported Acca Generator event type');
+    }
+    await this.recordEvent(userId, type, metadata);
+    return { ok: true };
+  }
+
+  private async recordEvent(
+    userId: number | null,
+    eventType: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<void> {
+    try {
+      await this.eventRepo.save(
+        this.eventRepo.create({
+          userId,
+          eventType,
+          metadata: metadata && typeof metadata === 'object' ? metadata : {},
+        }),
+      );
+    } catch {
+      /* analytics must never break generate / publish */
+    }
+  }
 
   async getPublicConfig(userId: number) {
     const limits = await this.loadLimits();
@@ -171,6 +208,12 @@ export class AccaGeneratorService {
     });
 
     if (candidates.length < legs) {
+      await this.recordEvent(userId, 'empty_pool', {
+        riskLevel: risk.key,
+        legsRequested: legs,
+        candidates: candidates.length,
+        markets,
+      });
       throw new BadRequestException(
         `Not enough ${risk.label.toLowerCase()}-risk selections today (${candidates.length}) for ${legs} legs. Try another risk level, relax markets, or try later.`,
       );
@@ -185,6 +228,7 @@ export class AccaGeneratorService {
         legsRequested: legs,
         legsReturned: selected.length,
         markets,
+        riskLevel: risk.key,
         oddMin,
         oddMax,
         combinedOdds,
@@ -388,6 +432,10 @@ export class AccaGeneratorService {
     if (await this.isExemptFromGenerationQuota(userId)) return;
     const used = await this.countGenerationsUtcToday(userId);
     if (used >= limits.dailyGenerations) {
+      await this.recordEvent(userId, 'quota_hit', {
+        usedToday: used,
+        maxPerDay: limits.dailyGenerations,
+      });
       throw new ForbiddenException(
         `Daily Acca Generator limit reached (${limits.dailyGenerations} per UTC day). Try again after midnight UTC.`,
       );

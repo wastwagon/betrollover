@@ -1382,6 +1382,16 @@ export class AdminController {
     return this.analyticsService.getVisitorStats(days ? parseInt(days, 10) : 7);
   }
 
+  /** Acca Generator adoption: unique users + generations over a period (pre-monetization signal). */
+  @Get('analytics/acca-generator')
+  async getAccaGeneratorUsage(
+    @CurrentUser() user: User,
+    @Query('days') days?: string,
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.analyticsService.getAccaGeneratorUsage(days ? parseInt(days, 10) : 30);
+  }
+
   @Get('analytics/sport-breakdown')
   async getSportBreakdown(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');

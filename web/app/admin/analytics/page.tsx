@@ -226,8 +226,94 @@ export default function AdminAnalyticsPage() {
   const [commissionRevenue, setCommissionRevenue] = useState<CommissionRevenue | null>(null);
   const [walletAnalytics, setWalletAnalytics] = useState<WalletAnalytics | null>(null);
   const [chatStats, setChatStats] = useState<{ totalMessages: number; todayMessages: number; flaggedMessages: number; activeBans: number; roomBreakdown: { name: string; icon: string; count: number }[] } | null>(null);
+  const [accaUsage, setAccaUsage] = useState<{
+    days: number;
+    allTime: {
+      generations: number;
+      uniqueUsers: number;
+      uniqueNonAdminUsers: number;
+      nonAdminGenerations: number;
+      published: number;
+    };
+    period: {
+      generations: number;
+      uniqueUsers: number;
+      uniqueNonAdminUsers: number;
+      nonAdminGenerations: number;
+      published: number;
+      avgLegs: number | null;
+      avgCombinedOdds: number | null;
+      generationsPerUser: number;
+      publishRate: number;
+    };
+    retention?: {
+      newUsers: number;
+      returnedD1: number;
+      eligibleD1: number;
+      d1Rate: number;
+      returnedD7: number;
+      eligibleD7: number;
+      d7Rate: number;
+      oneAndDone: number;
+      powerUsers: number;
+      returningLight: number;
+      activeNonAdminUsers: number;
+      oneAndDoneRate: number;
+      powerUserRate: number;
+    };
+    funnel?: {
+      toolOpens: number;
+      toolOpenUsers: number;
+      generations: number;
+      published: number;
+      marketplaceViews: number;
+      marketplacePurchases: number;
+      openToGenerateRate: number;
+      generateToPublishRate: number;
+      publishToPurchaseRate: number;
+    };
+    monetizationSignals?: {
+      quotaHits: number;
+      uniqueQuotaUsers: number;
+      emptyPoolHits: number;
+      uniqueEmptyPoolUsers: number;
+      quotaHitUserRate: number;
+    };
+    quality?: {
+      publishedSettled: number;
+      won: number;
+      lost: number;
+      pending: number;
+      winRate: number;
+      avgPublishedOdds: number | null;
+    };
+    segments?: { segment: string; uniqueUsers: number; generations: number }[];
+    daily: { date: string; generations: number; uniqueUsers: number; published: number }[];
+    byRisk: { riskLevel: string; generations: number; uniqueUsers: number }[];
+    topUsers: {
+      userId: number;
+      username: string;
+      displayName: string;
+      role: string;
+      generations: number;
+      published: number;
+      lastUsedAt: string | null;
+    }[];
+    recent: {
+      id: number;
+      userId: number;
+      username: string;
+      riskLevel: string;
+      legs: number;
+      combinedOdds: number | null;
+      publishedTicketId: number | null;
+      createdAt: string | null;
+    }[];
+  } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'revenue' | 'users' | 'picks' | 'engagement' | 'visitors' | 'ai' | 'sports' | 'wallet'>('overview');
+  const [activeTab, setActiveTab] = useState<
+    'overview' | 'revenue' | 'users' | 'picks' | 'engagement' | 'visitors' | 'ai' | 'sports' | 'wallet' | 'acca'
+  >('overview');
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d'>('30d');
 
   useEffect(() => {
@@ -235,6 +321,7 @@ export default function AdminAnalyticsPage() {
     if (tab === 'ai') setActiveTab('ai');
     if (tab === 'visitors') setActiveTab('visitors');
     if (tab === 'sports') setActiveTab('sports');
+    if (tab === 'acca') setActiveTab('acca');
   }, [searchParams]);
 
   useEffect(() => {
@@ -304,8 +391,11 @@ export default function AdminAnalyticsPage() {
       fetch(`${getApiUrl()}/admin/analytics/wallet?startDate=${startDate}&endDate=${endDate}`, { headers })
         .then((r) => (r.ok ? r.json() : null))
         .catch(() => null),
+      fetch(`${getApiUrl()}/admin/analytics/acca-generator?days=${days}`, { headers })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch((e) => { console.error('Acca generator analytics error:', e); return null; }),
     ])
-      .then(([ts, f, ub, rev, pp, eng, rt, ai, coh, ret, vis, sb, rt2, ttbs, commRev, wallet]) => {
+      .then(([ts, f, ub, rev, pp, eng, rt, ai, coh, ret, vis, sb, rt2, ttbs, commRev, wallet, acca]) => {
         setTimeSeries(ts);
         setFunnel(f);
         setUserBehavior(ub);
@@ -328,6 +418,7 @@ export default function AdminAnalyticsPage() {
         setTopTipstersBySport(Array.isArray(ttbs) ? ttbs : []);
         setCommissionRevenue(commRev ?? null);
         setWalletAnalytics(wallet ?? null);
+        setAccaUsage(acca ?? null);
 
         // Fetch chat stats separately (non-blocking)
         fetch(`${getApiUrl()}/chat/admin/flagged?page=1`, { headers })
@@ -558,7 +649,7 @@ export default function AdminAnalyticsPage() {
 
         {/* Tabs */}
         <div className="flex gap-3 mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
-          {(['overview', 'wallet', 'sports', 'revenue', 'users', 'picks', 'engagement', 'visitors', 'ai'] as const).map((tab) => (
+          {(['overview', 'wallet', 'sports', 'revenue', 'users', 'picks', 'engagement', 'visitors', 'ai', 'acca'] as const).map((tab) => (
             <button type="button"
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -568,7 +659,13 @@ export default function AdminAnalyticsPage() {
                   : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
-              {tab === 'sports' ? '🌍 Sports' : tab === 'wallet' ? '💰 Wallet' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'sports'
+                ? '🌍 Sports'
+                : tab === 'wallet'
+                  ? '💰 Wallet'
+                  : tab === 'acca'
+                    ? '🎯 Acca Gen'
+                    : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
         </div>
@@ -1624,6 +1721,348 @@ export default function AdminAnalyticsPage() {
                 </>
               )}
             </div>
+            )}
+          </div>
+        )}
+
+        {/* Acca Generator adoption — pre-monetization signal */}
+        {activeTab === 'acca' && (
+          <div className="space-y-6">
+            <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 sm:p-5">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Acca Generator — monetization analytics</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Adoption, retention (D1/D7), funnel (open → generate → publish → purchase), quota-hit pressure, and published slip quality.
+                Use the date range above for period metrics. Strongest paywall signal: non-admins hitting the daily generation cap.
+              </p>
+            </div>
+
+            {!accaUsage ? (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8 text-center text-gray-500">
+                No Acca Generator analytics loaded yet (endpoint unavailable or empty).
+              </div>
+            ) : (
+              <>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">All time</p>
+                  <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">Unique users</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{accaUsage.allTime.uniqueUsers}</p>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">Non-admin users</p>
+                      <p className="text-2xl font-bold text-emerald-600 mt-1">{accaUsage.allTime.uniqueNonAdminUsers}</p>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">Generations</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{accaUsage.allTime.generations}</p>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">Non-admin gens</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{accaUsage.allTime.nonAdminGenerations}</p>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">Published</p>
+                      <p className="text-2xl font-bold text-indigo-600 mt-1">{accaUsage.allTime.published}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">
+                    Last {accaUsage.days} days
+                  </p>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">Unique users</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{accaUsage.period.uniqueUsers}</p>
+                      <p className="text-xs text-gray-500 mt-1">{accaUsage.period.uniqueNonAdminUsers} non-admin</p>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">Generations</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{accaUsage.period.generations}</p>
+                      <p className="text-xs text-gray-500 mt-1">{accaUsage.period.generationsPerUser} per user</p>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">Published</p>
+                      <p className="text-2xl font-bold text-indigo-600 mt-1">{accaUsage.period.published}</p>
+                      <p className="text-xs text-gray-500 mt-1">{accaUsage.period.publishRate}% publish rate</p>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">Avg slip</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                        {accaUsage.period.avgLegs != null ? `${accaUsage.period.avgLegs} legs` : '—'}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {accaUsage.period.avgCombinedOdds != null
+                          ? `@ ${accaUsage.period.avgCombinedOdds}`
+                          : 'combined odds n/a'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {accaUsage.retention && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Retention (non-admin)</p>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+                        <p className="text-xs text-gray-500 uppercase tracking-wider">D1 return</p>
+                        <p className="text-2xl font-bold text-emerald-600 mt-1">{accaUsage.retention.d1Rate}%</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {accaUsage.retention.returnedD1}/{accaUsage.retention.eligibleD1} eligible new users
+                        </p>
+                      </div>
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+                        <p className="text-xs text-gray-500 uppercase tracking-wider">D7 return</p>
+                        <p className="text-2xl font-bold text-emerald-600 mt-1">{accaUsage.retention.d7Rate}%</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {accaUsage.retention.returnedD7}/{accaUsage.retention.eligibleD7} eligible new users
+                        </p>
+                      </div>
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+                        <p className="text-xs text-gray-500 uppercase tracking-wider">One-and-done</p>
+                        <p className="text-2xl font-bold text-amber-600 mt-1">{accaUsage.retention.oneAndDoneRate}%</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {accaUsage.retention.oneAndDone} of {accaUsage.retention.activeNonAdminUsers} active
+                        </p>
+                      </div>
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+                        <p className="text-xs text-gray-500 uppercase tracking-wider">Power users (5+ gens)</p>
+                        <p className="text-2xl font-bold text-indigo-600 mt-1">{accaUsage.retention.powerUsers}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {accaUsage.retention.powerUserRate}% · {accaUsage.retention.returningLight} light returners
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {accaUsage.funnel && (
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Funnel</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                      Open → generate → publish → marketplace purchase (period)
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                      <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+                        <p className="text-xs text-gray-500">Tool opens</p>
+                        <p className="text-xl font-bold text-gray-900 dark:text-white">{accaUsage.funnel.toolOpens}</p>
+                        <p className="text-xs text-gray-500">{accaUsage.funnel.toolOpenUsers} users</p>
+                      </div>
+                      <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+                        <p className="text-xs text-gray-500">Generations</p>
+                        <p className="text-xl font-bold text-gray-900 dark:text-white">{accaUsage.funnel.generations}</p>
+                        <p className="text-xs text-emerald-600">{accaUsage.funnel.openToGenerateRate}% of opens</p>
+                      </div>
+                      <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+                        <p className="text-xs text-gray-500">Published</p>
+                        <p className="text-xl font-bold text-indigo-600">{accaUsage.funnel.published}</p>
+                        <p className="text-xs text-emerald-600">{accaUsage.funnel.generateToPublishRate}% of gens</p>
+                      </div>
+                      <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+                        <p className="text-xs text-gray-500">Purchases of Acca pubs</p>
+                        <p className="text-xl font-bold text-gray-900 dark:text-white">{accaUsage.funnel.marketplacePurchases}</p>
+                        <p className="text-xs text-gray-500">
+                          {accaUsage.funnel.marketplaceViews} views · {accaUsage.funnel.publishToPurchaseRate}% buy rate
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {accaUsage.monetizationSignals && (
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-amber-200 dark:border-amber-800 p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Monetization signals</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                        Quota hits = users wanting more than the free daily cap
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 p-3">
+                          <p className="text-xs text-amber-800 dark:text-amber-200 uppercase tracking-wider">Quota hits</p>
+                          <p className="text-2xl font-bold text-amber-700 dark:text-amber-300 mt-1">
+                            {accaUsage.monetizationSignals.quotaHits}
+                          </p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                            {accaUsage.monetizationSignals.uniqueQuotaUsers} users ·{' '}
+                            {accaUsage.monetizationSignals.quotaHitUserRate}% of active
+                          </p>
+                        </div>
+                        <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+                          <p className="text-xs text-gray-500 uppercase tracking-wider">Empty pool</p>
+                          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                            {accaUsage.monetizationSignals.emptyPoolHits}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {accaUsage.monetizationSignals.uniqueEmptyPoolUsers} users (not enough fixtures)
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {accaUsage.quality && (
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Published quality</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                        Settled marketplace slips that came from Acca Generator
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+                          <p className="text-xs text-gray-500 uppercase tracking-wider">Win rate</p>
+                          <p className="text-2xl font-bold text-emerald-600 mt-1">{accaUsage.quality.winRate}%</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {accaUsage.quality.won}W / {accaUsage.quality.lost}L · {accaUsage.quality.pending} pending
+                          </p>
+                        </div>
+                        <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+                          <p className="text-xs text-gray-500 uppercase tracking-wider">Avg published odds</p>
+                          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                            {accaUsage.quality.avgPublishedOdds != null
+                              ? accaUsage.quality.avgPublishedOdds.toFixed(2)
+                              : '—'}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">{accaUsage.quality.publishedSettled} settled pubs</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {accaUsage.segments && accaUsage.segments.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Who uses it</h3>
+                    <div className="flex flex-wrap gap-3">
+                      {accaUsage.segments.map((s) => (
+                        <div
+                          key={s.segment}
+                          className="rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2"
+                        >
+                          <span className="font-semibold capitalize text-gray-900 dark:text-white">{s.segment}</span>
+                          <span className="text-sm text-gray-500 ml-2">
+                            {s.uniqueUsers} users · {s.generations} gens
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Daily generations</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Generates + unique users per UTC day</p>
+                    {accaUsage.daily.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">No generations in this period</p>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={240}>
+                        <ComposedChart data={accaUsage.daily}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                          <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                          <YAxis yAxisId="left" tick={{ fontSize: 11 }} allowDecimals={false} />
+                          <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} allowDecimals={false} />
+                          <Tooltip />
+                          <Legend />
+                          <Bar yAxisId="left" dataKey="generations" name="Generations" fill="#10b981" radius={[4, 4, 0, 0]} />
+                          <Line yAxisId="right" type="monotone" dataKey="uniqueUsers" name="Unique users" stroke="#3b82f6" strokeWidth={2} dot={false} />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
+
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">By risk band</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Sure / Safe / Medium / High usage in period</p>
+                    {accaUsage.byRisk.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">No risk data yet</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {accaUsage.byRisk.map((r) => (
+                          <div key={r.riskLevel} className="flex items-center justify-between rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3">
+                            <div>
+                              <p className="font-semibold text-gray-900 dark:text-white capitalize">{r.riskLevel}</p>
+                              <p className="text-xs text-gray-500">{r.uniqueUsers} unique users</p>
+                            </div>
+                            <p className="text-xl font-bold tabular-nums text-emerald-600">{r.generations}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 overflow-x-auto">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Top users</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Most generations in the selected period</p>
+                    {accaUsage.topUsers.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">No users yet</p>
+                    ) : (
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-200 dark:border-gray-700">
+                            <th className="text-left py-2 px-2 font-semibold text-gray-600 dark:text-gray-400">User</th>
+                            <th className="text-right py-2 px-2 font-semibold text-gray-600 dark:text-gray-400">Gens</th>
+                            <th className="text-right py-2 px-2 font-semibold text-gray-600 dark:text-gray-400">Published</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {accaUsage.topUsers.map((u) => (
+                            <tr key={u.userId} className="border-b border-gray-100 dark:border-gray-700/50">
+                              <td className="py-2 px-2">
+                                <span className="font-medium text-gray-900 dark:text-white">@{u.username}</span>
+                                {u.role === 'admin' ? (
+                                  <span className="ml-2 text-[10px] uppercase tracking-wide text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">admin</span>
+                                ) : null}
+                              </td>
+                              <td className="py-2 px-2 text-right tabular-nums font-semibold">{u.generations}</td>
+                              <td className="py-2 px-2 text-right tabular-nums text-indigo-600">{u.published}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 overflow-x-auto">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Recent generates</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Latest 20 runs (all time)</p>
+                    {accaUsage.recent.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">No runs yet</p>
+                    ) : (
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-200 dark:border-gray-700">
+                            <th className="text-left py-2 px-2 font-semibold text-gray-600 dark:text-gray-400">When</th>
+                            <th className="text-left py-2 px-2 font-semibold text-gray-600 dark:text-gray-400">User</th>
+                            <th className="text-left py-2 px-2 font-semibold text-gray-600 dark:text-gray-400">Risk</th>
+                            <th className="text-right py-2 px-2 font-semibold text-gray-600 dark:text-gray-400">Odds</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {accaUsage.recent.map((r) => (
+                            <tr key={r.id} className="border-b border-gray-100 dark:border-gray-700/50">
+                              <td className="py-2 px-2 text-xs text-gray-500 whitespace-nowrap">
+                                {r.createdAt ? new Date(r.createdAt).toLocaleString() : '—'}
+                              </td>
+                              <td className="py-2 px-2 font-medium text-gray-900 dark:text-white">@{r.username}</td>
+                              <td className="py-2 px-2 capitalize text-gray-700 dark:text-gray-300">{r.riskLevel}</td>
+                              <td className="py-2 px-2 text-right tabular-nums">
+                                {r.combinedOdds != null ? r.combinedOdds.toFixed(2) : '—'}
+                                <span className="text-gray-400 text-xs ml-1">· {r.legs}L</span>
+                                {r.publishedTicketId ? (
+                                  <span className="ml-1 text-[10px] text-indigo-600">pub</span>
+                                ) : null}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                </div>
+              </>
             )}
           </div>
         )}

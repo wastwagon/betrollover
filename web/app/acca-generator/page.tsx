@@ -398,6 +398,23 @@ export default function AccaGeneratorPage() {
       setLegs(Math.min(data.maxLegs, Math.max(data.minLegs, data.defaults?.legs ?? 4)));
       const rl = data.defaults?.riskLevel;
       setRiskLevel(isAccaRiskKey(rl) ? rl : 'safe');
+      // Once per browser session — feeds Acca Gen funnel analytics
+      try {
+        if (!sessionStorage.getItem('br_acca_tool_open')) {
+          sessionStorage.setItem('br_acca_tool_open', '1');
+          void fetch(`${getApiUrl()}/acca-generator/track`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ eventType: 'tool_open' }),
+            keepalive: true,
+          }).catch(() => {});
+        }
+      } catch {
+        /* private mode */
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load config');
     } finally {

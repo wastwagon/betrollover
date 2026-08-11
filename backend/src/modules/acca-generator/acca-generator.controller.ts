@@ -43,4 +43,14 @@ export class AccaGeneratorController {
   ) {
     return this.accaGeneratorService.publish(user.id, body);
   }
+
+  /** Product analytics (tool_open). Quota/empty_pool are recorded server-side. */
+  @Post('track')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  track(
+    @CurrentUser() user: User,
+    @Body() body: { eventType?: string; metadata?: Record<string, unknown> },
+  ) {
+    return this.accaGeneratorService.trackEvent(user.id, body?.eventType || '', body?.metadata);
+  }
 }

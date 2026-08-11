@@ -55,6 +55,8 @@ import { SyncStatus } from '../fixtures/entities/sync-status.entity';
 import { AuditModule } from '../audit/audit.module';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { SubscriptionEscrow } from '../subscriptions/entities/subscription-escrow.entity';
+import { AccaGeneratorRun } from '../acca-generator/entities/acca-generator-run.entity';
+import { AccaGeneratorEvent } from '../acca-generator/entities/acca-generator-event.entity';
 
 @Module({
   imports: [
@@ -85,6 +87,8 @@ import { SubscriptionEscrow } from '../subscriptions/entities/subscription-escro
       VisitorSession,
       AnalyticsDaily,
       AnalyticsEvent,
+      AccaGeneratorRun,
+      AccaGeneratorEvent,
     ]),
     AuthModule,
     AccumulatorsModule,
