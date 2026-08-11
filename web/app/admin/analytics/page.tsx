@@ -464,7 +464,10 @@ export default function AdminAnalyticsPage() {
             <XAxis dataKey="date" tick={{ fontSize: 10 }} />
             <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
             <Tooltip
-              formatter={(v: number | undefined) => [v != null ? v.toLocaleString() : '—', valueLabel]}
+              formatter={(v) => {
+                const n = typeof v === 'number' ? v : Number(v);
+                return [Number.isFinite(n) ? n.toLocaleString() : '—', valueLabel];
+              }}
               labelFormatter={(l) => `Date: ${l}`}
             />
             <Bar dataKey="value" fill={fill} radius={[4, 4, 0, 0]} />
@@ -861,10 +864,18 @@ export default function AdminAnalyticsPage() {
                     <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                     <YAxis tick={{ fontSize: 10 }} />
                     <Tooltip
-                      formatter={(v: number | undefined, name: string | undefined) => [
-                        name === 'ghs' ? `GHS ${(v ?? 0).toFixed(2)}` : (v ?? 0),
-                        name === 'ghs' ? 'Amount (GHS)' : 'Count',
-                      ]}
+                      formatter={(v, name) => {
+                        const n = typeof v === 'number' ? v : Number(v);
+                        const key = String(name ?? '');
+                        return [
+                          key === 'ghs'
+                            ? `GHS ${(Number.isFinite(n) ? n : 0).toFixed(2)}`
+                            : Number.isFinite(n)
+                              ? n
+                              : 0,
+                          key === 'ghs' ? 'Amount (GHS)' : 'Count',
+                        ];
+                      }}
                     />
                     <Bar dataKey="ghs" fill="#10b981" name="ghs" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="count" fill="#6366f1" name="count" radius={[4, 4, 0, 0]} />
