@@ -48,7 +48,7 @@ export type AccaGeneratorSelection = {
 export type GenerateAccaDto = {
   markets: string[];
   legs: number;
-  /** safe | medium | high — sets per-leg odd band server-side. */
+  /** sure | safe | medium | high — sets per-leg odd band server-side. */
   riskLevel?: AccaRiskLevel | string;
 };
 
@@ -212,7 +212,7 @@ export class AccaGeneratorService {
     }
     const key = String(dto.riskLevel).toLowerCase();
     if (!ACCA_RISK_PROFILES.some((p) => p.key === key)) {
-      throw new BadRequestException('riskLevel must be safe, medium, or high');
+      throw new BadRequestException('riskLevel must be sure, safe, medium, or high');
     }
     return resolveRiskProfile(key);
   }

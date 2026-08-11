@@ -30,7 +30,7 @@ export const ACCA_GENERATOR_MARKET_KEYS = new Set(ACCA_GENERATOR_MARKETS.map((m)
 
 export const DEFAULT_ACCA_MARKETS = ['over25', 'btts', 'double_chance', 'match_winner'] as const;
 
-export type AccaRiskLevel = 'safe' | 'medium' | 'high';
+export type AccaRiskLevel = 'sure' | 'safe' | 'medium' | 'high';
 
 export type AccaRiskProfile = {
   key: AccaRiskLevel;
@@ -45,10 +45,20 @@ export type AccaRiskProfile = {
 };
 
 /**
- * Risk bands (per leg). Chosen so Safe ≠ ultra-short DC @ 1.30 spam,
- * Medium looks like typical acca legs, High allows longer shots.
+ * Risk bands (per leg).
+ * Sure = ultra-short favorites (often DC / O1.5) for maxi-style small combines.
+ * Safe / Medium / High keep their prior bands so existing user behaviour is unchanged.
  */
 export const ACCA_RISK_PROFILES: readonly AccaRiskProfile[] = [
+  {
+    key: 'sure',
+    label: 'Sure',
+    description:
+      'Shortest per-leg prices — often favorites / DC / totals. Higher hit-rate per leg; still not guaranteed.',
+    oddMin: 1.2,
+    oddMax: 1.4,
+    targetOdd: 1.28,
+  },
   {
     key: 'safe',
     label: 'Safe',
@@ -86,7 +96,10 @@ export const ACCA_GENERATOR_DEFAULTS = {
 
 export function resolveRiskProfile(riskLevel?: string | null): AccaRiskProfile {
   const key = String(riskLevel || DEFAULT_ACCA_RISK).toLowerCase() as AccaRiskLevel;
-  return ACCA_RISK_PROFILES.find((p) => p.key === key) ?? ACCA_RISK_PROFILES[1];
+  return (
+    ACCA_RISK_PROFILES.find((p) => p.key === key) ??
+    ACCA_RISK_PROFILES.find((p) => p.key === DEFAULT_ACCA_RISK)!
+  );
 }
 
 export function outcomeKeysForMarkets(marketKeys: string[]): Set<string> {

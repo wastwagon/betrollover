@@ -19,8 +19,10 @@ type Quota = {
   resetsAtUtc: string;
 };
 
+type AccaRiskKey = 'sure' | 'safe' | 'medium' | 'high';
+
 type RiskProfile = {
-  key: 'safe' | 'medium' | 'high';
+  key: AccaRiskKey;
   label: string;
   description: string;
   oddMin: number;
@@ -60,7 +62,7 @@ type Config = {
   riskProfiles?: RiskProfile[];
   markets: MarketOption[];
   defaults: {
-    riskLevel?: 'safe' | 'medium' | 'high';
+    riskLevel?: AccaRiskKey;
     legs: number;
     markets: string[];
   };
@@ -95,6 +97,15 @@ type GenerateResult = {
 /** Offline fallback — keep in sync with backend ACCA_RISK_PROFILES. */
 const FALLBACK_RISK_PROFILES: RiskProfile[] = [
   {
+    key: 'sure',
+    label: 'Sure',
+    description:
+      'Shortest per-leg prices — often favorites / DC / totals. Higher hit-rate per leg; still not guaranteed.',
+    oddMin: 1.2,
+    oddMax: 1.4,
+    targetOdd: 1.28,
+  },
+  {
     key: 'safe',
     label: 'Safe',
     description: 'Shorter per-leg prices — steadier singles, still multiplies with more fixtures.',
@@ -120,6 +131,12 @@ const FALLBACK_RISK_PROFILES: RiskProfile[] = [
   },
 ];
 
+const ACCA_RISK_KEYS: AccaRiskKey[] = ['sure', 'safe', 'medium', 'high'];
+
+function isAccaRiskKey(v: string | undefined | null): v is AccaRiskKey {
+  return !!v && (ACCA_RISK_KEYS as string[]).includes(v);
+}
+
 function formatOdds(n: number): string {
   if (!Number.isFinite(n)) return '—';
   if (n >= 100) return n.toFixed(0);
@@ -138,11 +155,12 @@ function estimateCombinedBand(profile: RiskProfile, fixtureCount: number) {
 }
 
 function overallExposureLabel(
-  riskKey: 'safe' | 'medium' | 'high',
+  riskKey: AccaRiskKey,
   fixtureCount: number,
 ): { label: string; detail: string } {
-  const score =
-    (riskKey === 'safe' ? 1 : riskKey === 'medium' ? 2 : 3) + Math.max(0, fixtureCount - 2) * 0.55;
+  const bandScore =
+    riskKey === 'sure' ? 0.35 : riskKey === 'safe' ? 1 : riskKey === 'medium' ? 2 : 3;
+  const score = bandScore + Math.max(0, fixtureCount - 2) * 0.55;
   if (score <= 2.2) {
     return {
       label: 'Lower overall exposure',
@@ -340,7 +358,7 @@ export default function AccaGeneratorPage() {
 
   const [selectedMarkets, setSelectedMarkets] = useState<string[]>([]);
   const [legs, setLegs] = useState(4);
-  const [riskLevel, setRiskLevel] = useState<'safe' | 'medium' | 'high'>('medium');
+  const [riskLevel, setRiskLevel] = useState<AccaRiskKey>('medium');
   const [availability, setAvailability] = useState<Availability | null>(null);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [result, setResult] = useState<GenerateResult | null>(null);
@@ -379,7 +397,7 @@ export default function AccaGeneratorPage() {
       setSelectedMarkets(preferred);
       setLegs(Math.min(data.maxLegs, Math.max(data.minLegs, data.defaults?.legs ?? 4)));
       const rl = data.defaults?.riskLevel;
-      setRiskLevel(rl === 'safe' || rl === 'high' || rl === 'medium' ? rl : 'medium');
+      setRiskLevel(isAccaRiskKey(rl) ? rl : 'medium');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load config');
     } finally {
@@ -391,7 +409,7 @@ export default function AccaGeneratorPage() {
     void loadConfig();
   }, [loadConfig]);
 
-  const loadAvailability = useCallback(async (risk: 'safe' | 'medium' | 'high', markets: string[]) => {
+  const loadAvailability = useCallback(async (risk: AccaRiskKey, markets: string[]) => {
     const token = localStorage.getItem('token');
     if (!token) return;
     setAvailabilityLoading(true);
@@ -685,7 +703,7 @@ export default function AccaGeneratorPage() {
             Sets the <span className="font-medium text-slate-600">per-leg</span> odd band only.
             Overall slip risk also rises with how many fixtures you select in step 3.
           </p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {riskProfiles.map((p) => {
               const on = riskLevel === p.key;
               return (
@@ -772,7 +790,7 @@ export default function AccaGeneratorPage() {
             </span>
           </label>
           <p className="mt-2 max-w-xl text-xs text-slate-500">
-            More fixtures = higher overall risk, even on a Safe band — every leg must win for the acca
+            More fixtures = higher overall risk, even on Sure/Safe — every leg must win for the acca
             to land.
           </p>
           {combinedBand && (

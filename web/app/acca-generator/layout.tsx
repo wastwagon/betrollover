@@ -4,7 +4,7 @@ import { FaqJsonLd } from '@/components/FaqJsonLd';
 
 const TITLE = 'Football Acca Generator | Same-Day Accumulator Builder';
 const DESCRIPTION =
-  'Build same-day football accumulators from synced odds. Choose Safe, Medium, or High risk bands, pick available markets, generate a slip, and publish a free marketplace pick. Educational tool — 18+.';
+  'Build same-day football accumulators from synced odds. Choose Sure, Safe, Medium, or High risk bands, pick available markets, generate a slip, and publish a free marketplace pick. Educational tool — 18+.';
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -40,7 +40,7 @@ const ACCA_FAQS = [
   {
     question: 'What is the BetRollover Acca Generator?',
     answer:
-      'It is a same-day football accumulator builder that picks legs from synced odds within Safe, Medium, or High risk bands. You can generate a sample slip and optionally publish it as a free marketplace pick.',
+      'It is a same-day football accumulator builder that picks legs from synced odds within Sure, Safe, Medium, or High risk bands. You can generate a sample slip and optionally publish it as a free marketplace pick.',
   },
   {
     question: 'Do I need an account to use Acca Generator?',

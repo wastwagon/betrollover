@@ -40,7 +40,7 @@ export function AccaGeneratorLanding() {
             <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm space-y-4">
               <h2 className="text-base font-semibold text-[var(--text)]">How it works</h2>
               <ol className="list-decimal list-inside space-y-2 text-sm text-[var(--text-muted)]">
-                <li>Choose Safe, Medium, or High (per-leg odd band).</li>
+                <li>Choose Sure, Safe, Medium, or High (per-leg odd band).</li>
                 <li>Select markets that have odds in that band today.</li>
                 <li>Set how many fixtures — more legs means higher overall exposure.</li>
                 <li>Generate a slip, then bet it your way or publish it free on BetRollover.</li>
