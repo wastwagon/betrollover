@@ -85,7 +85,8 @@ export const ACCA_RISK_PROFILES: readonly AccaRiskProfile[] = [
   },
 ] as const;
 
-export const DEFAULT_ACCA_RISK: AccaRiskLevel = 'medium';
+/** Default to Safe (not Sure): short-ish prices without implying a must-win first impression. */
+export const DEFAULT_ACCA_RISK: AccaRiskLevel = 'safe';
 
 /** Best-practice defaults for first-time UI. */
 export const ACCA_GENERATOR_DEFAULTS = {

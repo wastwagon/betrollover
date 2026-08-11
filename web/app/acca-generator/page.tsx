@@ -358,7 +358,7 @@ export default function AccaGeneratorPage() {
 
   const [selectedMarkets, setSelectedMarkets] = useState<string[]>([]);
   const [legs, setLegs] = useState(4);
-  const [riskLevel, setRiskLevel] = useState<AccaRiskKey>('medium');
+  const [riskLevel, setRiskLevel] = useState<AccaRiskKey>('safe');
   const [availability, setAvailability] = useState<Availability | null>(null);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [result, setResult] = useState<GenerateResult | null>(null);
@@ -397,7 +397,7 @@ export default function AccaGeneratorPage() {
       setSelectedMarkets(preferred);
       setLegs(Math.min(data.maxLegs, Math.max(data.minLegs, data.defaults?.legs ?? 4)));
       const rl = data.defaults?.riskLevel;
-      setRiskLevel(isAccaRiskKey(rl) ? rl : 'medium');
+      setRiskLevel(isAccaRiskKey(rl) ? rl : 'safe');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load config');
     } finally {
