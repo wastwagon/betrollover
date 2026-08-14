@@ -366,7 +366,9 @@ export class FixtureSchedulerService implements OnModuleInit {
 
   /**
    * Daily archive: move fixtures older than 90 days into fixtures_archive.
-   * Only archives fixtures not referenced by any accumulator_pick (tipster history preserved).
+   * Skips fixtures still referenced by tipster history:
+   * - accumulator_picks (marketplace / Acca Desk)
+   * - prediction_fixtures (classic AI predictions; FK is ON DELETE RESTRICT)
    * fixture_odds are deleted automatically (CASCADE). Runs at 2 AM.
    */
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
@@ -376,7 +378,7 @@ export class FixtureSchedulerService implements OnModuleInit {
       this.logger.debug('Fixture archive already running, skipping');
       return;
     }
-    this.logger.log('Running scheduled fixture archive (90+ days old, not referenced by picks)...');
+    this.logger.log('Running scheduled fixture archive (90+ days old, not referenced by picks/predictions)...');
     try {
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - 90);
@@ -385,7 +387,11 @@ export class FixtureSchedulerService implements OnModuleInit {
         .createQueryBuilder('f')
         .where('f.match_date < :cutoff', { cutoff })
         .andWhere(
-          'f.id NOT IN (SELECT fixture_id FROM accumulator_picks WHERE fixture_id IS NOT NULL)',
+          `f.id NOT IN (
+            SELECT fixture_id FROM accumulator_picks WHERE fixture_id IS NOT NULL
+            UNION
+            SELECT fixture_id FROM prediction_fixtures WHERE fixture_id IS NOT NULL
+          )`,
         )
         .take(500)
         .getMany();
