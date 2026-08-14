@@ -545,7 +545,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               )}
 
               {/* Divider */}
-              <div className="w-px h-6 bg-slate-200 mx-1.5" />
+              <div className="w-px h-6 bg-[var(--separator)] mx-1.5" />
 
               {/* Create Pick + Acca Generator CTAs */}
               {isSignedIn && (
@@ -554,10 +554,10 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                     href="/create-pick"
                     title={t('nav.create_pick')}
                     aria-label={t('nav.create_pick')}
-                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-sm transition-all ${
+                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-[var(--radius)] font-semibold text-sm transition-colors ${
                       isActive(pathname, '/create-pick')
-                        ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-500/30'
-                        : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-500 hover:to-teal-500 shadow-md hover:shadow-lg hover:scale-[1.02]'
+                        ? 'bg-[var(--primary-hover)] text-white'
+                        : 'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]'
                     }`}
                   >
                     {t('nav.create_pick_short')}
@@ -571,10 +571,10 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                     href="/acca-generator"
                     title={t('nav.acca_generator')}
                     aria-label={t('nav.acca_generator')}
-                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-sm transition-all border ${
+                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-[var(--radius)] font-semibold text-sm transition-colors border ${
                       isActive(pathname, '/acca-generator')
-                        ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-slate-500/20'
-                        : 'bg-white text-slate-800 border-slate-200 hover:border-emerald-400 hover:text-emerald-800 hover:bg-emerald-50/60 shadow-sm'
+                        ? 'bg-[var(--text)] text-[var(--card)] border-[var(--text)]'
+                        : 'bg-[var(--card)] text-[var(--text)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
                     }`}
                   >
                     {t('nav.acca_generator_short')}
@@ -585,10 +585,10 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               {/* Guest CTAs */}
               {!isSignedIn && (
                 <>
-                  <Link href="/login" className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-emerald-700 transition-colors">
+                  <Link href="/login" className="px-4 py-2 text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors">
                     {t('nav.login')}
                   </Link>
-                  <Link href="/register" className="px-5 py-2 rounded-xl text-sm font-bold bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-500 hover:to-teal-500 shadow-md hover:shadow-lg transition-all">
+                  <Link href="/register" className="px-5 py-2 rounded-[var(--radius)] text-sm font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors">
                     {t('nav.register')}
                   </Link>
                 </>
@@ -829,7 +829,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
           {/* Tablet only: secondary browse chips (phones use bottom tab bar). */}
           <nav
-            className="hidden md:flex lg:hidden border-t border-slate-100/90 flex-nowrap justify-start gap-2 overflow-x-auto overscroll-x-contain scrollbar-hide py-2 -mx-6 px-4 snap-x snap-mandatory"
+            className="hidden md:flex lg:hidden border-t border-[var(--separator)] flex-nowrap justify-start gap-2 overflow-x-auto overscroll-x-contain scrollbar-hide py-2 -mx-6 px-4 snap-x snap-mandatory"
             aria-label={t('nav.browse')}
           >
             {[
@@ -844,10 +844,10 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               <Link
                 key={q.href}
                 href={q.href}
-                className={`shrink-0 snap-start inline-flex items-center min-h-[40px] px-3 rounded-full text-[11px] font-bold border transition-colors touch-manipulation ${
+                className={`shrink-0 snap-start inline-flex items-center min-h-[40px] px-3 rounded-full text-[11px] font-semibold border transition-colors touch-manipulation ${
                   isActive(pathname, q.href)
-                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                    : 'bg-slate-50 text-slate-700 border-slate-200/80 hover:border-emerald-300 hover:text-emerald-800'
+                    ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
+                    : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
                 }`}
               >
                 {q.label}

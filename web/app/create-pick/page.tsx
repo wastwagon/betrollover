@@ -848,8 +848,12 @@ export default function CreatePickPage() {
           <div className="mb-4">
             <AdSlot zoneSlug="create-pick-full" fullWidth className="w-full" />
           </div>
-          {/* Sport tabs — football-only when FOOTBALL_ONLY_DISCOVERY is on. */}
-          <div className="mb-4 w-full min-w-0 overflow-hidden">
+          {/* 1 · Sport */}
+          <section className="mb-6 w-full min-w-0" aria-labelledby="create-pick-sport-heading">
+            <p id="create-pick-sport-heading" className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)] mb-2 px-0.5">
+              1 · Sport
+            </p>
+          <div className="w-full min-w-0 overflow-hidden">
             <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide touch-pan-x [-webkit-overflow-scrolling:touch]">
             {(
               isFootballOnlyDiscovery()
@@ -883,6 +887,7 @@ export default function CreatePickPage() {
             ))}
             </div>
           </div>
+          </section>
           {selections.length > 0 && (
             <div className="flex justify-end mb-3">
               <button
@@ -899,8 +904,11 @@ export default function CreatePickPage() {
 
           {/* Two-column layout: Fixtures on left, Slip widget on right */}
           <div className="flex flex-col lg:flex-row gap-4 pb-6 min-w-0 w-full max-w-full">
-          {/* Left Column: Fixtures */}
+          {/* 2 · Select fixtures */}
           <div className="flex-1 min-w-0">
+            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)] mb-3 px-0.5">
+              2 · Select
+            </p>
             <div className="space-y-4">
             {/* Team Search */}
             <div className="mb-4 min-w-0">
@@ -1319,8 +1327,11 @@ export default function CreatePickPage() {
           </div>
           </div>
 
-          {/* Right Column: Fixed Slip Widget (desktop only) */}
+          {/* 3 · Slip / publish */}
           <div className="hidden lg:block lg:w-96 lg:shrink-0 min-w-0">
+            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)] mb-3 px-0.5">
+              3 · Publish
+            </p>
             <div className="lg:sticky lg:top-4 min-w-0">
               <div className="rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] shadow-card p-5 space-y-4 min-w-0">
                 {/* Header */}

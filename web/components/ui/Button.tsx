@@ -36,6 +36,29 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   trailing?: ReactNode;
 };
 
+/** Shared class string for Next.js `<Link>` CTAs that should match `Button`. */
+export function buttonClassName({
+  variant = 'primary',
+  size = 'md',
+  fullWidth,
+  className = '',
+}: {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  fullWidth?: boolean;
+  className?: string;
+} = {}) {
+  return [
+    'inline-flex items-center justify-center gap-2 font-semibold transition-colors duration-200 active:scale-[0.99] touch-manipulation',
+    variantClass[variant],
+    sizeClass[size],
+    fullWidth ? 'w-full' : '',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {

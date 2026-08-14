@@ -17,6 +17,7 @@ import { BookingCodeCopyBlock } from '@/components/BookingCodeCopyBlock';
 import { BottomSheet } from '@/components/ios/BottomSheet';
 import { PickSocialBar, type PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { Button, buttonClassName } from '@/components/ui/Button';
 
 interface Pick {
   id?: number;
@@ -258,18 +259,16 @@ export function PickCard({
         {/* Compact Follow button - top right corner */}
         {tipster && onFollow && (
           <div className="absolute top-1.5 right-1.5 z-10">
-            <button
+            <Button
               type="button"
+              size="sm"
+              variant={isFollowing ? 'secondary' : 'primary'}
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onFollow(); }}
               disabled={followLoading || isFollowing}
-              className={`px-2 py-0.5 rounded-md text-[10px] font-semibold transition-colors ${
-                isFollowing
-                  ? 'bg-[var(--border)] text-[var(--text-muted)] cursor-default'
-                  : 'bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white'
-              } ${followLoading ? 'opacity-70' : ''}`}
+              className={`px-2 py-0.5 min-h-0 rounded-md text-[10px] ${followLoading ? 'opacity-70' : ''} ${isFollowing ? 'cursor-default' : ''}`}
             >
               {followLoading ? '…' : isFollowing ? t('pick_card.following') : t('pick_card.follow')}
-            </button>
+            </Button>
           </div>
         )}
         <div className="p-3 flex flex-col flex-1">
@@ -308,14 +307,14 @@ export function PickCard({
                     <span className="text-[9px] text-[var(--text-muted)]">
                       {tipster ? `${tipster.totalPicks}p` : `${totalPicks}p`}
                     </span>
-                    <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                    <span className="text-[9px] font-bold text-[var(--success)]">
                       {tipster?.winRate != null ? `${Number(tipster.winRate).toFixed(1)}%` : '—'}
                     </span>
                     {tipster?.roi != null && (
                       <span
                         className={`text-[9px] font-bold ${
                           Number(tipster.roi) > 0
-                            ? 'text-emerald-600 dark:text-emerald-400'
+                            ? 'text-[var(--success)]'
                             : Number(tipster.roi) < 0
                               ? 'text-rose-600 dark:text-rose-400'
                               : 'text-[var(--text-muted)]'
@@ -558,23 +557,26 @@ export function PickCard({
             {showAccessCTA ? (
               <Link
                 href={detailsHref ?? `/coupons/${id}`}
-                className="block w-full px-3 py-2 rounded-lg font-semibold bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-xs text-center transition-all duration-200"
+                className={buttonClassName({ variant: 'primary', size: 'sm', fullWidth: true, className: 'text-xs' })}
               >
                 {t('pick_card.view_details')}
               </Link>
             ) : canPurchase ? (
-              <button
+              <Button
                 type="button"
+                variant="accent"
+                size="sm"
+                fullWidth
                 onClick={handlePurchase}
                 disabled={purchasing}
-                className="w-full px-3 py-2 rounded-lg font-semibold bg-[var(--accent)] hover:bg-amber-600 text-white text-xs disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="text-xs"
               >
                 {purchasing ? t('pick_card.processing') : t('pick_card.purchase')}
-              </button>
+              </Button>
             ) : (
               <Link
                 href="/wallet"
-                className="block w-full px-3 py-1.5 rounded-lg font-semibold bg-amber-500 hover:bg-amber-600 text-white text-xs text-center transition-colors"
+                className={buttonClassName({ variant: 'accent', size: 'sm', fullWidth: true, className: 'text-xs py-1.5 min-h-0' })}
               >
                 {t('pick_card.top_up_wallet')}
               </Link>
@@ -609,18 +611,20 @@ export function PickCard({
               </p>
             )}
           </div>
-          <button
+          <Button
             type="button"
+            variant="primary"
+            fullWidth
             onClick={confirmPurchase}
             disabled={purchasing}
-            className="touch-target w-full min-h-[48px] rounded-xl bg-[var(--primary)] hover:bg-[var(--primary-hover)] px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+            className="touch-target min-h-[48px] rounded-xl"
           >
             {purchasing
               ? t('pick_card.processing')
               : t('pick_card.confirm_purchase_cta', {
                   price: priceDisplay?.primary ?? `GHS ${Number(price).toFixed(2)}`,
                 })}
-          </button>
+          </Button>
         </div>
       </BottomSheet>
 
@@ -648,7 +652,7 @@ export function PickCard({
                         <span className="text-sm text-[var(--text-muted)]">
                           {t('pick_card.picks_count', { n: String(tipster.totalPicks) })}
                         </span>
-                        <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                        <span className="text-sm font-medium text-[var(--success)]">
                           {t('pick_card.win_rate', { rate: (tipster?.winRate != null ? Number(tipster.winRate).toFixed(1) : '—') })}
                         </span>
                         <span className="text-sm text-[var(--text-muted)]">
@@ -680,7 +684,7 @@ export function PickCard({
                   <span className="text-sm text-[var(--text-muted)]">
                     {t('pick_card.picks_odds', { n: String(totalPicks), odds: Number(totalOdds).toFixed(2) })}
                   </span>
-                  <span className={`text-lg font-bold ${price === 0 ? 'text-emerald-600' : 'text-[var(--primary)]'}`}>
+                  <span className={`text-lg font-bold ${price === 0 ? 'text-[var(--success)]' : 'text-[var(--primary)]'}`}>
                     {price === 0 ? t('status.free') : (priceDisplay?.primary ?? `GHS ${Number(price).toFixed(2)}`)}
                   </span>
                 </div>
@@ -747,21 +751,23 @@ export function PickCard({
               {!isPurchased && !isFree && !picksRevealed && (
                 <div className="mt-6 pt-6 border-t border-[var(--border)]">
                   {canPurchase ? (
-                    <button
+                    <Button
                       type="button"
+                      variant="primary"
+                      fullWidth
                       onClick={() => {
                         setShowDetailsModal(false);
                         handlePurchase();
                       }}
                       disabled={purchasing}
-                      className="w-full px-6 py-3 rounded-lg font-semibold bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-6 py-3"
                     >
                       {purchasing ? t('pick_card.processing') : t('pick_card.purchase_for', { price: priceDisplay?.primary ?? `GHS ${Number(price).toFixed(2)}` })}
-                    </button>
+                    </Button>
                   ) : (
                     <Link
                       href="/wallet"
-                      className="block w-full px-6 py-3 rounded-lg font-semibold bg-amber-500 hover:bg-amber-600 text-white text-center transition-colors"
+                      className={buttonClassName({ variant: 'accent', fullWidth: true, className: 'px-6 py-3' })}
                     >
                       {t('pick_card.top_up_wallet_to_purchase')}
                     </Link>
@@ -822,7 +828,7 @@ export function PickCard({
                   <span className="text-sm text-[var(--text-muted)]">
                     {t('pick_card.picks_odds', { n: String(totalPicks), odds: Number(totalOdds).toFixed(2) })}
                   </span>
-                  <span className={`text-lg font-bold ${price === 0 ? 'text-emerald-600' : 'text-[var(--primary)]'}`}>
+                  <span className={`text-lg font-bold ${price === 0 ? 'text-[var(--success)]' : 'text-[var(--primary)]'}`}>
                     {price === 0 ? t('status.free') : (priceDisplay?.primary ?? `GHS ${Number(price).toFixed(2)}`)}
                   </span>
                 </div>
@@ -894,20 +900,21 @@ export function PickCard({
               <div className="flex gap-3">
                 <Link
                   href="/my-purchases"
-                  className="flex-1 px-6 py-3 rounded-lg font-semibold bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-center transition-colors"
+                  className={buttonClassName({ variant: 'primary', className: 'flex-1 px-6 py-3' })}
                 >
                   {t('pick_card.view_in_my_purchases')}
                 </Link>
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => {
                     setShowUnveilModal(false);
                     if (onUnveilClose) onUnveilClose();
                   }}
-                  className="px-6 py-3 rounded-xl font-semibold bg-[var(--fill-secondary)] text-[var(--text)] hover:opacity-90 transition-opacity"
+                  className="px-6 py-3 rounded-xl"
                 >
                   {t('pick_card.close')}
-                </button>
+                </Button>
               </div>
             </div>
       </BottomSheet>

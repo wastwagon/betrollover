@@ -47,7 +47,7 @@ function Dropdown({ open, onClose, triggerRef, children }: {
   const panel = (
     <div
       ref={panelRef}
-      className="fixed min-w-[140px] py-1 bg-slate-800 border border-slate-600 rounded-lg shadow-xl z-[200] animate-fade-in"
+      className="fixed min-w-[140px] py-1 bg-[var(--card-elevated)] border border-[var(--border)] rounded-[var(--radius-sm)] shadow-card z-[200] animate-fade-in"
       style={{ top: position.top, left: position.left }}
       role="listbox"
     >
@@ -77,7 +77,7 @@ function TopBarSwitchers() {
   };
 
   const btnCls =
-    'flex items-center gap-1 px-2 py-1 rounded-md text-white/90 hover:bg-emerald-800/55 transition-colors text-xs font-medium';
+    'flex items-center gap-1 px-2 py-1 rounded-md text-white/90 hover:bg-white/15 transition-colors text-xs font-medium';
 
   return (
     <>
@@ -112,15 +112,15 @@ function TopBarSwitchers() {
               aria-selected={c.code === currency.code}
               className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
                 c.code === currency.code
-                  ? 'bg-slate-700 text-emerald-400'
-                  : 'text-slate-200 hover:bg-slate-700/80'
+                  ? 'bg-[var(--primary-light)] text-[var(--primary)]'
+                  : 'text-[var(--text)] hover:bg-[var(--fill-secondary)]'
               }`}
             >
               <span className="text-base">{c.flag}</span>
               <span>{c.code}</span>
             </button>
           ))}
-          <p className="px-3 py-2 mt-1 border-t border-slate-600 text-[10px] text-slate-400">For reference only. All transactions in GHS.</p>
+          <p className="px-3 py-2 mt-1 border-t border-[var(--separator)] text-[10px] text-[var(--text-tertiary)]">For reference only. All transactions in GHS.</p>
         </Dropdown>
       </div>
 
@@ -153,8 +153,8 @@ function TopBarSwitchers() {
               aria-selected={l.code === language.code}
               className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
                 l.code === language.code
-                  ? 'bg-slate-700 text-emerald-400'
-                  : 'text-slate-200 hover:bg-slate-700/80'
+                  ? 'bg-[var(--primary-light)] text-[var(--primary)]'
+                  : 'text-[var(--text)] hover:bg-[var(--fill-secondary)]'
               }`}
             >
               <span className="text-base">{l.flag}</span>
@@ -203,19 +203,19 @@ export function TopBar() {
 
   return (
     <>
-      <div className="z-[60] w-full min-w-0 max-w-full bg-[var(--primary)] text-white/95 text-xs sm:text-sm border-b border-emerald-900/25 dark:border-white/10 overflow-x-hidden safe-area-inset-top max-md:fixed max-md:top-0 max-md:left-0 max-md:right-0 md:relative">
+      <div className="z-[60] w-full min-w-0 max-w-full bg-[var(--primary)] text-white/95 text-xs sm:text-sm border-b border-black/10 dark:border-white/10 overflow-x-hidden safe-area-inset-top max-md:fixed max-md:top-0 max-md:left-0 max-md:right-0 md:relative">
         <div className="flex items-center justify-between min-h-9 h-auto sm:h-9 py-1 sm:py-0 px-3 sm:px-4 gap-2 min-w-0 max-w-full">
           {/* Compact on mobile app chrome: hide marquee, keep a11y text + switchers */}
           <div className="flex-1 min-w-0 overflow-hidden max-md:hidden">
             {reduceMotion ? (
               <div className="overflow-x-auto overflow-y-hidden [-webkit-overflow-scrolling:touch] pb-0.5">
-                <p className="whitespace-nowrap pr-4 text-emerald-50/95 leading-snug">{disclaimerText}</p>
+                <p className="whitespace-nowrap pr-4 text-white/95 leading-snug">{disclaimerText}</p>
               </div>
             ) : (
               <>
                 <p className="sr-only">{disclaimerText}</p>
                 <div className="overflow-hidden" aria-hidden="true">
-                  <div className="animate-marquee whitespace-nowrap inline-flex will-change-transform text-emerald-50/95">
+                  <div className="animate-marquee whitespace-nowrap inline-flex will-change-transform text-white/95">
                     <span className="inline-block shrink-0 px-6">{disclaimerText}</span>
                     <span className="inline-block shrink-0 px-6">{disclaimerText}</span>
                   </div>

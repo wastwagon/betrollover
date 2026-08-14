@@ -26,6 +26,7 @@ import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_DEFAULT_TITLE, getAlternate
 import { fetchSellingThresholds } from '@/lib/selling-thresholds';
 import { fetchHomePublicData } from '@/lib/home-public-data';
 import { getLocale, buildT } from '@/lib/i18n';
+import { buttonClassName } from '@/components/ui/Button';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -132,7 +133,7 @@ export default async function HomePage() {
                 </div>
                 <Link
                   href="/discover"
-                  className="inline-flex items-center justify-center px-4 py-3 sm:py-2.5 rounded-[var(--radius)] bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors w-full sm:w-auto min-h-[44px] sm:min-h-0 shrink-0"
+                  className={buttonClassName({ size: 'md', className: 'w-full sm:w-auto shrink-0' })}
                 >
                   {t('home.explore_cta_btn')}
                 </Link>
@@ -251,7 +252,7 @@ export default async function HomePage() {
                 </div>
                 <Link
                   href="/marketplace"
-                  className="inline-flex justify-center px-5 py-2.5 rounded-[var(--radius)] bg-[var(--primary)] text-white font-semibold text-sm shrink-0 w-full sm:w-auto min-h-[44px] items-center hover:bg-[var(--primary-hover)] transition-colors"
+                  className={buttonClassName({ size: 'md', className: 'w-full sm:w-auto shrink-0' })}
                 >
                   {t('home.feature_marketplace_btn')}
                 </Link>

@@ -10,6 +10,7 @@ import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { VerifiedTipsterBadge } from '@/components/VerifiedTipsterBadge';
 import { TipsterTrustStrip } from '@/components/TipsterTrustStrip';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import { Button } from '@/components/ui/Button';
 
 export interface TipsterCardData {
   id: number;
@@ -132,7 +133,7 @@ export function TipsterCard({
                 <span
                   className={
                     premium
-                      ? 'font-semibold text-emerald-700 dark:text-emerald-400'
+                      ? 'font-semibold text-[var(--success)]'
                       : undefined
                   }
                 >
@@ -161,7 +162,7 @@ export function TipsterCard({
               <p
                 className={`text-sm font-bold tabular-nums leading-none mt-0.5 ${
                   roiPositive
-                    ? 'text-emerald-600 dark:text-emerald-400'
+                    ? 'text-[var(--success)]'
                     : roiNegative
                       ? 'text-[var(--destructive)]'
                       : 'text-[var(--text)]'
@@ -264,21 +265,19 @@ export function TipsterCard({
             </Link>
           )}
           {onFollow && (
-            <button
+            <Button
               type="button"
+              variant={tipster.is_following ? 'secondary' : 'primary'}
+              fullWidth
               onClick={(e) => {
                 e.preventDefault();
                 onFollow();
               }}
               disabled={followLoading}
-              className={`touch-target w-full px-3 py-2.5 rounded-xl font-semibold text-sm transition-colors disabled:opacity-70 ${
-                tipster.is_following
-                  ? 'bg-[var(--fill-secondary)] text-[var(--text-muted)]'
-                  : 'bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white'
-              }`}
+              className="touch-target"
             >
               {followLoading ? '...' : tipster.is_following ? t('tipster.following') : t('tipster.follow')}
-            </button>
+            </Button>
           )}
         </div>
       </div>

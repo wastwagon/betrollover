@@ -29,6 +29,7 @@ import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 import { useCurrency } from '@/context/CurrencyContext';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import { FollowPushNudge } from '@/components/FollowPushNudge';
+import { Button } from '@/components/ui/Button';
 
 interface Pick {
   id?: number;
@@ -538,18 +539,16 @@ export default function TipsterProfilePage() {
                   </div>
                 )}
               </div>
-              <button
+              <Button
                 type="button"
                 onClick={handleFollow}
                 disabled={followLoading}
-                className={`w-full sm:w-auto px-4 py-2 rounded-[var(--radius)] text-sm font-semibold transition-colors whitespace-nowrap min-h-[44px] ${
-                  is_following
-                    ? 'bg-[var(--fill-secondary)] text-[var(--text-muted)] hover:text-[var(--text)]'
-                    : 'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]'
-                }`}
+                variant={is_following ? 'secondary' : 'primary'}
+                size="sm"
+                className="w-full sm:w-auto"
               >
                 {followLoading ? '...' : is_following ? t('tipster.following') : t('tipster.follow')}
-              </button>
+              </Button>
             </div>
               <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 min-w-0">
@@ -634,7 +633,7 @@ export default function TipsterProfilePage() {
                     />
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    <button
+                    <Button
                       type="button"
                       onClick={() => {
                         if (!dateFromDraft || !dateToDraft) {
@@ -654,21 +653,22 @@ export default function TipsterProfilePage() {
                         }
                         setPostedRange({ from: dateFromDraft, to: dateToDraft });
                       }}
-                      className="px-4 py-2 rounded-[var(--radius)] text-sm font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
+                      size="sm"
                     >
                       {t('tipster.posted_date_apply')}
-                    </button>
+                    </Button>
                     {postedRange ? (
-                      <button
+                      <Button
                         type="button"
                         onClick={() => {
                           setPostedRange(null);
                           setPerformancePeriod('all');
                         }}
-                        className="px-4 py-2 rounded-[var(--radius)] text-sm font-medium border border-[var(--border)] text-[var(--text)] hover:bg-[var(--fill-secondary)]"
+                        variant="secondary"
+                        size="sm"
                       >
                         {t('tipster.posted_date_clear')}
-                      </button>
+                      </Button>
                     ) : null}
                   </div>
                 </div>
@@ -793,14 +793,14 @@ export default function TipsterProfilePage() {
                       <span className="inline-flex px-3 py-1.5 rounded-[var(--radius)] bg-[var(--primary-light)] text-[var(--primary)] text-sm font-medium">{t('tipster.subscribed')}</span>
                     ) : (
                       <>
-                        <button
+                        <Button
                           type="button"
                           onClick={() => handleSubscribe(pkg.id)}
                           disabled={subscribeLoading === pkg.id}
-                          className="w-full py-2.5 px-4 rounded-lg font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          fullWidth
                         >
                           {subscribeLoading === pkg.id ? '...' : t('tipster.subscribe')}
-                        </button>
+                        </Button>
                         {needsTopUp && (
                           <p className="mt-2 text-xs text-[var(--text-muted)]">
                             {t('tipster.insufficient_balance')}

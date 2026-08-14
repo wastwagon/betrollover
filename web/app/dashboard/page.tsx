@@ -584,7 +584,7 @@ function DashboardContent() {
           {/* Referral CTA — invite friends & earn */}
           <Link
             href="/invite"
-            className="mb-6 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/50 dark:to-teal-950/50 hover:shadow-md transition-shadow"
+            className="mb-6 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] transition-colors hover:border-[var(--primary)]/35"
           >
             <div className="flex items-start gap-4 min-w-0 flex-1">
               <span className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0 text-emerald-600 dark:text-emerald-400">
@@ -637,10 +637,10 @@ function DashboardContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <Link
                 href="/dashboard"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] hover:border-[var(--primary)]/35 transition-colors"
               >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  🏠
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0">
+                  Hub
                 </span>
                 <div className="min-w-0">
                   <span className="font-semibold text-[var(--text)] block">{t('dashboard.title')}</span>
@@ -649,10 +649,10 @@ function DashboardContent() {
               </Link>
               <Link
                 href="/create-pick"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-700 text-white hover:from-teal-700 hover:to-teal-800 transition-all duration-200 shadow-lg shadow-teal-500/25 hover:shadow-teal-500/30"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-[var(--radius)] bg-[var(--primary)] text-white transition-colors"
               >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  ➕
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white/15 flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0">
+                  New
                 </span>
                 <div className="min-w-0">
                   <span className="font-semibold block text-white">{t('dashboard.create_pick')}</span>
@@ -661,10 +661,10 @@ function DashboardContent() {
               </Link>
               <Link
                 href="/my-picks"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] hover:border-[var(--primary)]/35 transition-colors"
               >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  🎯
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0">
+                  Picks
                 </span>
                 <div className="min-w-0">
                   <span className="font-semibold text-[var(--text)] block">{t('dashboard.my_picks')}</span>
@@ -674,10 +674,10 @@ function DashboardContent() {
               {isSubscriptionsEnabled() ? (
                 <Link
                   href="/dashboard/subscription-packages"
-                  className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                  className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] hover:border-[var(--primary)]/35 transition-colors"
                 >
-                  <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                    📦
+                  <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0">
+                    Pack
                   </span>
                   <div className="min-w-0">
                     <span className="font-semibold text-[var(--text)] block">{t('tipster.subscription_packages')}</span>
@@ -687,10 +687,10 @@ function DashboardContent() {
               ) : null}
               <Link
                 href="/marketplace"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] hover:border-[var(--primary)]/35 transition-colors"
               >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  🛒
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0">
+                  Market
                 </span>
                 <div className="min-w-0">
                   <span className="font-semibold text-[var(--text)] block">{t('dashboard.marketplace')}</span>
@@ -699,10 +699,10 @@ function DashboardContent() {
               </Link>
               <Link
                 href="/my-purchases"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] hover:border-[var(--primary)]/35 transition-colors"
               >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  📥
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0">
+                  Buy
                 </span>
                 <div className="min-w-0">
                   <span className="font-semibold text-[var(--text)] block">{t('nav.purchases')}</span>
@@ -713,10 +713,10 @@ function DashboardContent() {
               </Link>
               <Link
                 href="/profile"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] hover:border-[var(--primary)]/35 transition-colors"
               >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  👤
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0">
+                  Me
                 </span>
                 <div className="min-w-0">
                   <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_profile')}</span>
@@ -725,10 +725,10 @@ function DashboardContent() {
               </Link>
               <Link
                 href="/wallet"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] hover:border-[var(--primary)]/35 transition-colors"
               >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  💰
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0">
+                  Wallet
                 </span>
                 <div className="min-w-0">
                   <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_wallet')}</span>
@@ -737,10 +737,10 @@ function DashboardContent() {
               </Link>
               <Link
                 href="/earnings"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] hover:border-[var(--primary)]/35 transition-colors"
               >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  📈
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0">
+                  Earn
                 </span>
                 <div className="min-w-0">
                   <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_earnings')}</span>
@@ -749,10 +749,10 @@ function DashboardContent() {
               </Link>
               <Link
                 href="/wallet#withdraw"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] hover:border-[var(--primary)]/35 transition-colors"
               >
-                <span className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  💸
+                <span className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0">
+                  Out
                   {pendingWithdrawalCount > 0 && (
                     <span className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-[var(--card)]">
                       {pendingWithdrawalCount > 9 ? '9+' : pendingWithdrawalCount}
@@ -774,10 +774,10 @@ function DashboardContent() {
               </Link>
               <Link
                 href="/invite"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] hover:border-[var(--primary)]/35 transition-colors"
               >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  🎁
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0">
+                  Invite
                 </span>
                 <div className="min-w-0">
                   <span className="font-semibold text-[var(--text)] block">{t('dashboard.invite')}</span>
@@ -786,10 +786,10 @@ function DashboardContent() {
               </Link>
               <Link
                 href="/support"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] hover:border-[var(--primary)]/35 transition-colors"
               >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  🎫
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0">
+                  Help
                 </span>
                 <div className="min-w-0">
                   <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_support')}</span>
@@ -798,10 +798,10 @@ function DashboardContent() {
               </Link>
               <Link
                 href="/community"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] hover:border-[var(--primary)]/35 transition-colors"
               >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[var(--primary-light)] text-[var(--primary)] flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  💬
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0">
+                  Chat
                 </span>
                 <div className="min-w-0">
                   <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_community')}</span>
@@ -812,10 +812,10 @@ function DashboardContent() {
                 <>
                   <Link
                     href="/subscriptions"
-                    className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                    className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] hover:border-[var(--primary)]/35 transition-colors"
                   >
-                    <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                      ⭐
+                    <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0">
+                      Sub
                     </span>
                     <div className="min-w-0">
                       <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_subscriptions')}</span>
@@ -824,10 +824,10 @@ function DashboardContent() {
                   </Link>
                   <Link
                     href="/subscriptions/marketplace"
-                    className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                    className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] hover:border-[var(--primary)]/35 transition-colors"
                   >
-                    <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                      💎
+                    <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0">
+                      VIP
                     </span>
                     <div className="min-w-0">
                       <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_vip_marketplace')}</span>
@@ -838,10 +838,10 @@ function DashboardContent() {
               ) : null}
               <Link
                 href="/leaderboard"
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] hover:border-[var(--primary)]/35 transition-colors"
               >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  🏆
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0">
+                  Rank
                 </span>
                 <div className="min-w-0">
                   <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_leaderboard')}</span>
@@ -850,10 +850,10 @@ function DashboardContent() {
               </Link>
               <Link
                 href="/notifications"
-                className="group relative flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                className="group relative flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] hover:border-[var(--primary)]/35 transition-colors"
               >
-                <span className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  🔔
+                <span className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0">
+                  Alert
                   {unreadNotifications > 0 && (
                     <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
                       {unreadNotifications > 9 ? '9+' : unreadNotifications}
@@ -869,10 +869,10 @@ function DashboardContent() {
               </Link>
               <Link
                 href={user?.username ? `/tipsters/${user.username}` : '/tipsters'}
-                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
+                className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] hover:border-[var(--primary)]/35 transition-colors"
               >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
-                  🌟
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0">
+                  Tip
                 </span>
                 <div className="min-w-0">
                   <span className="font-semibold text-[var(--text)] block">{t('dashboard.card_my_profile')}</span>
@@ -1010,7 +1010,7 @@ function DashboardContent() {
           {/* Feed from Followed Tipsters / Following */}
           <section className="mb-6 sm:mb-8">
               <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">{t('dashboard.followed_tipsters')}</h2>
-              <div className="glass-card rounded-2xl sm:rounded-3xl overflow-hidden border border-[var(--border)]/60">
+              <div className="rounded-[var(--radius)] overflow-hidden border border-[var(--separator)] bg-[var(--card)]">
                 <div className="p-4 sm:p-6">
                   {following.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-4">
@@ -1237,7 +1237,7 @@ function DashboardContent() {
 
           {/* Recent Purchases — glass card */}
           <section className="mb-6 sm:mb-8">
-            <div className="glass-card rounded-2xl sm:rounded-3xl overflow-hidden">
+            <div className="rounded-[var(--radius)] overflow-hidden border border-[var(--separator)] bg-[var(--card)]">
               <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-[var(--border)]/80 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:flex-wrap min-w-0 sm:gap-3">
                 <h2 className="font-semibold text-[var(--text)] text-base sm:text-lg">{t('dashboard.recent_purchases')}</h2>
                 {purchases.length > 0 && (
@@ -1358,7 +1358,7 @@ function StatCard({
   };
   const iconLabel = (icon ?? (title.trim().charAt(0) || '?')).slice(0, 2).toUpperCase();
   const baseCard = glass
-    ? `glass-card rounded-2xl p-4 sm:p-5 border border-[var(--border)] hover:shadow-md transition-all duration-200 min-w-0 ${variantStyles[variant]}`
+    ? `rounded-[var(--radius)] p-4 sm:p-5 border border-[var(--separator)] bg-[var(--card)] transition-colors hover:border-[var(--primary)]/35 min-w-0 ${variantStyles[variant]}`
     : `rounded-2xl border border-[var(--border)] p-5 bg-[var(--card)] hover:shadow-md transition-all duration-200 min-w-0 ${variantStyles[variant]}`;
   const content = (
     <div className={baseCard}>

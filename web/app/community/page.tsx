@@ -294,7 +294,7 @@ function CommunityPageInner() {
               onClick={() => router.push(`/community?room=${room.slug}`)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
                 activeSlug === room.slug
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-[var(--primary)] text-white'
                   : 'text-gray-300 hover:bg-gray-800'
               }`}
             >
@@ -361,10 +361,10 @@ function CommunityPageInner() {
 
           {/* Pinned message */}
           {pinnedMsg && (
-            <div className="px-4 py-2 bg-indigo-950 border-b border-indigo-800 flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-2">
-              <span className="text-indigo-400 text-sm shrink-0">📌</span>
-              <p className="text-sm text-indigo-200 flex-1 min-w-0 break-words">{pinnedMsg.content}</p>
-              <span className="text-xs text-indigo-400 shrink-0 sm:ml-auto">{pinnedMsg.user.username}</span>
+            <div className="px-4 py-2 bg-[var(--primary-light)] border-b border-[var(--primary)]/25 flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-2">
+              <span className="text-[var(--primary)] text-sm shrink-0"></span>
+              <p className="text-sm text-[var(--text)] flex-1 min-w-0 break-words">{pinnedMsg.content}</p>
+              <span className="text-xs text-[var(--text-muted)] shrink-0 sm:ml-auto">{pinnedMsg.user.username}</span>
             </div>
           )}
 
@@ -373,7 +373,7 @@ function CommunityPageInner() {
             {loading ? (
               <div className="flex items-center justify-center h-full text-gray-500">
                 <div className="text-center">
-                  <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                  <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                   <p className="text-sm">{t('community.loading_messages')}</p>
                 </div>
               </div>
@@ -411,7 +411,7 @@ function CommunityPageInner() {
                             onClick={() => handleReact(msg.id, emoji)}
                             className={`text-sm px-2 py-0.5 rounded-full border transition-colors ${
                               count > 0
-                                ? 'border-indigo-500 bg-indigo-950 text-white'
+                                ? 'border-[var(--primary)] bg-[var(--primary-light)] text-[var(--text)]'
                                 : 'border-gray-700 text-gray-500 hover:border-gray-500'
                             }`}
                           >
@@ -471,13 +471,13 @@ function CommunityPageInner() {
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                   placeholder={t('community.send_placeholder', { room: activeRoom?.name || '' })}
                   maxLength={500}
-                  className="flex-1 min-w-0 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="flex-1 min-w-0 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                 />
                 <button
                   type="button"
                   onClick={handleSend}
                   disabled={sending || !input.trim()}
-                  className="w-full sm:w-auto shrink-0 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  className="w-full sm:w-auto shrink-0 bg-[var(--primary)] hover:bg-[var(--primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
                   {sending ? t('community.sending') : t('community.send')}
                 </button>
@@ -485,11 +485,11 @@ function CommunityPageInner() {
             ) : (
               <div className="text-center py-2">
                 <span className="text-gray-400 text-sm">
-                  <Link href="/login" className="text-indigo-400 hover:underline font-medium">
+                  <Link href="/login" className="text-[var(--primary)] hover:underline font-medium">
                     {t('auth.login')}
                   </Link>{' '}
                   {t('common.or')}{' '}
-                  <Link href="/register" className="text-indigo-400 hover:underline font-medium">
+                  <Link href="/register" className="text-[var(--primary)] hover:underline font-medium">
                     {t('auth.register')}
                   </Link>{' '}
                   {t('community.to_participate_suffix')}

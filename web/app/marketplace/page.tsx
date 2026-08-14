@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
+import { buttonClassName } from '@/components/ui/Button';
 import { AdSlot } from '@/components/AdSlot';
 import { PickCard } from '@/components/PickCard';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
@@ -637,13 +638,13 @@ export default function MarketplacePage() {
             <div className="hidden sm:flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto self-stretch sm:self-auto shrink-0 min-w-0">
               <Link
                 href="/coupons/archive"
-                className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
+                className={buttonClassName({ variant: 'secondary', size: 'sm', className: 'w-full sm:w-auto' })}
               >
                 {t('header.settled_archive')}
               </Link>
               <Link
                 href="/leaderboard"
-                className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
+                className={buttonClassName({ variant: 'secondary', size: 'sm', className: 'w-full sm:w-auto' })}
               >
                 {t('nav.leaderboard')}
               </Link>
