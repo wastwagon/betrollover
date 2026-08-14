@@ -1253,6 +1253,10 @@ export class AccumulatorsService {
         { now },
       );
 
+    if (isClassicAiHiddenFromPublic()) {
+      qb.andWhere(classicAiMarketplaceTicketExcludeRawSql('t'));
+    }
+
     if (options?.priceFilter === 'free' || options?.freeOnly) {
       qb.andWhere('pm.price = 0');
     }
@@ -1347,6 +1351,16 @@ export class AccumulatorsService {
         JOIN fixtures f2 ON f2.id = ap2.fixture_id
         WHERE ap2.accumulator_id = pm.accumulator_id AND f2.match_date <= :now
       )
+      ${
+        isClassicAiHiddenFromPublic()
+          ? `AND NOT EXISTS (
+        SELECT 1 FROM tipsters classic_ai_tip
+        WHERE classic_ai_tip.user_id = t.user_id
+          AND classic_ai_tip.is_ai = true
+          AND COALESCE(NULLIF(TRIM(classic_ai_tip.tipster_type), ''), 'ai') = 'ai'
+      )`
+          : ''
+      }
     `;
 
     // Use EXISTS (not JOIN + DISTINCT): Postgres rejects DISTINCT t.id ORDER BY t.created_at
@@ -1738,16 +1752,18 @@ export class AccumulatorsService {
       return first;
     };
 
-    // 1. Try TheGambler first (curated daily tip)
-    const gambler = await this.usersRepo.findOne({
-      where: { username: 'TheGambler', role: UserRole.TIPSTER },
-      select: ['id'],
-    });
-    if (gambler) {
-      const tip = await findBestFreeTip([gambler.id]);
-      if (tip) {
-        await this.mergeBookingCodeCopyCountsForTicketsPlain([tip as Record<string, unknown> & { id: number }]);
-        return tip;
+    // 1. Try TheGambler first (curated daily tip) — skip while classic 1-fixture AI are hidden.
+    if (!isClassicAiHiddenFromPublic()) {
+      const gambler = await this.usersRepo.findOne({
+        where: { username: 'TheGambler', role: UserRole.TIPSTER },
+        select: ['id'],
+      });
+      if (gambler) {
+        const tip = await findBestFreeTip([gambler.id]);
+        if (tip) {
+          await this.mergeBookingCodeCopyCountsForTicketsPlain([tip as Record<string, unknown> & { id: number }]);
+          return tip;
+        }
       }
     }
 
@@ -1759,7 +1775,20 @@ export class AccumulatorsService {
     });
     if (!allTipsters.length) return null;
 
-    const tip = await findBestFreeTip(allTipsters.map((u) => u.id));
+    let candidateIds = allTipsters.map((u) => u.id);
+    if (isClassicAiHiddenFromPublic() && candidateIds.length > 0) {
+      const tipsterRows = await this.tipsterRepo.find({
+        where: { userId: In(candidateIds) },
+        select: ['userId', 'isAi', 'tipsterType'],
+      });
+      const classicOwnerIds = new Set(
+        tipsterRows.filter((row) => isClassicAiTipsterRow(row)).map((row) => row.userId!),
+      );
+      candidateIds = candidateIds.filter((id) => !classicOwnerIds.has(id));
+    }
+    if (!candidateIds.length) return null;
+
+    const tip = await findBestFreeTip(candidateIds);
     if (tip) {
       await this.mergeBookingCodeCopyCountsForTicketsPlain([tip as Record<string, unknown> & { id: number }]);
     }
@@ -1970,7 +1999,7 @@ export class AccumulatorsService {
     const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
 
     const now = new Date();
-    const validTickets = enrichedTickets.filter((ticket: any) => {
+    let validTickets = enrichedTickets.filter((ticket: any) => {
       if (!ticket.picks || ticket.picks.length === 0) return false;
       const hasStartedFixture = ticket.picks.some((pick: any) => {
         if (!pick.matchDate) return false;
@@ -1978,6 +2007,22 @@ export class AccumulatorsService {
       });
       return !hasStartedFixture;
     });
+
+    if (isClassicAiHiddenFromPublic() && validTickets.length > 0) {
+      const ownerIds = [...new Set(validTickets.map((t) => t.userId).filter(Boolean))];
+      if (ownerIds.length > 0) {
+        const tipsterRows = await this.tipsterRepo.find({
+          where: { userId: In(ownerIds) },
+          select: ['userId', 'isAi', 'tipsterType'],
+        });
+        const classicOwnerIds = new Set(
+          tipsterRows.filter((row) => isClassicAiTipsterRow(row)).map((row) => row.userId!),
+        );
+        if (classicOwnerIds.size > 0) {
+          validTickets = validTickets.filter((t) => !classicOwnerIds.has(t.userId));
+        }
+      }
+    }
 
     const featured = await this.enrichWithTipsterMetadata(validTickets, rows, viewerUserId);
     await this.mergeBookingCodeCopyCountsForTicketsPlain(
