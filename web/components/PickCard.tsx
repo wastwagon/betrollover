@@ -11,6 +11,8 @@ import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { tipsterRankBadgeClass, tipsterRankBadgeContent } from '@/lib/tipster-rank-ui';
 import { formatFootballOutcomeLabel, LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
+import { VerifiedTipsterBadge } from '@/components/VerifiedTipsterBadge';
+import { KickoffUrgencyLine } from '@/components/KickoffUrgencyLine';
 import { BookingCodeCopyBlock } from '@/components/BookingCodeCopyBlock';
 import { BottomSheet } from '@/components/ios/BottomSheet';
 import { PickSocialBar, type PickSocialCounts } from '@/components/pick-social/PickSocialBar';
@@ -46,6 +48,9 @@ interface Tipster {
   /** Platform AI tipster (from API `isAi`; some payloads use `is_ai`). */
   isAi?: boolean;
   is_ai?: boolean;
+  /** Verified account (from API `isVerified` / `is_verified`). */
+  isVerified?: boolean;
+  is_verified?: boolean;
   winRate: number;
   roi?: number;
   totalPicks: number;
@@ -58,6 +63,11 @@ interface Tipster {
 function tipsterShowsAiBadge(t: Tipster | null | undefined): boolean {
   if (!t) return false;
   return t.isAi === true || t.is_ai === true;
+}
+
+function tipsterShowsVerifiedBadge(t: Tipster | null | undefined): boolean {
+  if (!t || tipsterShowsAiBadge(t)) return false;
+  return t.isVerified === true || t.is_verified === true;
 }
 
 const SPORT_META: Record<string, { icon: string; label: string; color: string }> = {
@@ -101,6 +111,9 @@ interface PickCardProps {
   viewOnly?: boolean;
   /** When set with viewOnly, View Details links to this URL instead of opening modal. */
   detailsHref?: string;
+  /** Collapse revealed legs to a few rows with expand (OddsJam-style stay-in-feed). */
+  expandableLegs?: boolean;
+  collapsedLegCount?: number;
   walletBalance?: number | null;
   onPurchase: () => void;
   purchasing?: boolean;
@@ -140,6 +153,8 @@ export function PickCard({
   canPurchase = true,
   viewOnly = false,
   detailsHref,
+  expandableLegs = false,
+  collapsedLegCount = 2,
   walletBalance,
   onPurchase,
   purchasing = false,
@@ -167,6 +182,7 @@ export function PickCard({
 }: PickCardProps) {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showUnveilModal, setShowUnveilModal] = useState(false);
+  const [legsExpanded, setLegsExpanded] = useState(false);
   const [showPurchaseConfirm, setShowPurchaseConfirm] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const t = useT();
@@ -284,6 +300,9 @@ export function PickCard({
                       {tipster?.displayName || t('pick_card.tipster')}
                     </p>
                     {tipsterShowsAiBadge(tipster) ? <AiTipsterBadge className="!text-[9px] !px-1.5 !py-px" /> : null}
+                    {tipsterShowsVerifiedBadge(tipster) ? (
+                      <VerifiedTipsterBadge className="!text-[9px] !px-1.5 !py-px" />
+                    ) : null}
                   </div>
                   <div className="flex items-center gap-1.5 mt-0">
                     <span className="text-[9px] text-[var(--text-muted)]">
@@ -360,6 +379,7 @@ export function PickCard({
                 {t('pick_card.picks_odds', { n: String(totalPicks), odds: Number(totalOdds).toFixed(2) })}
               </span>
             </div>
+            <KickoffUrgencyLine picks={picks} compact className="mt-1" />
             <div className="flex flex-wrap items-center gap-1.5 mt-1">
               {purchaseActivityLabel && (
                 <span
@@ -418,7 +438,7 @@ export function PickCard({
           {showFullDetails && picks.length > 0 && (
             <div className="mb-2 flex-1">
               <ul className="space-y-1">
-                {picks.slice(0, 3).map((p, i) => {
+                {(expandableLegs && !legsExpanded ? picks.slice(0, collapsedLegCount) : picks.slice(0, expandableLegs ? picks.length : 3)).map((p, i) => {
                   const matchDate = p.matchDate ? new Date(p.matchDate) : null;
                   const pickSettled = ['won', 'lost'].includes(p.result || '');
                   const isStarted = matchDate ? matchDate <= new Date() : false;
@@ -477,11 +497,23 @@ export function PickCard({
                     </li>
                   );
                 })}
-                {picks.length > 3 && (
+                {expandableLegs && picks.length > collapsedLegCount ? (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => setLegsExpanded((v) => !v)}
+                      className="touch-target text-[10px] font-semibold text-[var(--primary)] hover:underline py-0.5"
+                    >
+                      {legsExpanded
+                        ? t('pick_card.collapse_legs')
+                        : t('pick_card.expand_legs', { n: String(picks.length - collapsedLegCount) })}
+                    </button>
+                  </li>
+                ) : !expandableLegs && picks.length > 3 ? (
                   <li className="text-[9px] text-[var(--text-muted)] italic">
                     {t('pick_card.more_picks', { n: String(picks.length - 3) })}
                   </li>
-                )}
+                ) : null}
               </ul>
             </div>
           )}
@@ -598,6 +630,7 @@ export function PickCard({
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-medium text-base text-[var(--text)]">{tipster.displayName}</p>
                         {tipsterShowsAiBadge(tipster) ? <AiTipsterBadge /> : null}
+                        {tipsterShowsVerifiedBadge(tipster) ? <VerifiedTipsterBadge /> : null}
                       </div>
                       <div className="flex items-center gap-4 mt-1">
                         <span className="text-sm text-[var(--text-muted)]">
@@ -760,6 +793,7 @@ export function PickCard({
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold text-[var(--text)]">{tipster.displayName}</p>
                           {tipsterShowsAiBadge(tipster) ? <AiTipsterBadge /> : null}
+                        {tipsterShowsVerifiedBadge(tipster) ? <VerifiedTipsterBadge /> : null}
                         </div>
                         <p className="text-xs text-[var(--text-muted)]">
                           {t('pick_card.win_rate', { rate: (tipster?.winRate != null ? Number(tipster.winRate).toFixed(1) : '—') })} • {t('pick_card.picks_count', { n: String(tipster.totalPicks) })}

@@ -7,6 +7,7 @@ import { getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { FollowersCountButton } from '@/components/TipsterFollowersModal';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
+import { VerifiedTipsterBadge } from '@/components/VerifiedTipsterBadge';
 import { TipsterTrustStrip } from '@/components/TipsterTrustStrip';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
@@ -29,6 +30,7 @@ export interface TipsterCardData {
   vip_package_id?: number | null;
   /** Platform-operated AI tipster (from API `is_ai`). */
   is_ai?: boolean;
+  is_verified?: boolean;
   avg_rating?: number | null;
   review_count?: number | null;
   avg_odds?: number | null;
@@ -41,6 +43,9 @@ interface TipsterCardProps {
   className?: string;
   /** Home discovery cards — denser, elevated surface. */
   variant?: 'default' | 'premium';
+  compareSelected?: boolean;
+  onCompareToggle?: () => void;
+  compareDisabled?: boolean;
 }
 
 /**
@@ -52,6 +57,9 @@ export function TipsterCard({
   followLoading = false,
   className = '',
   variant = 'default',
+  compareSelected = false,
+  onCompareToggle,
+  compareDisabled = false,
 }: TipsterCardProps) {
   const t = useT();
   const [avatarError, setAvatarError] = useState(false);
@@ -110,6 +118,9 @@ export function TipsterCard({
                   {tipster.display_name}
                 </h3>
                 {tipster.is_ai ? <AiTipsterBadge className={premium ? '!text-[9px] !px-1.5 !py-px' : undefined} /> : null}
+                {!tipster.is_ai && tipster.is_verified ? (
+                  <VerifiedTipsterBadge className={premium ? '!text-[9px] !px-1.5 !py-px' : undefined} />
+                ) : null}
               </span>
             </Link>
             <div
@@ -227,6 +238,23 @@ export function TipsterCard({
         ) : null}
 
         <div className="mt-auto flex flex-col gap-2">
+          {onCompareToggle && !premium ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                onCompareToggle();
+              }}
+              disabled={compareDisabled && !compareSelected}
+              className={`touch-target w-full px-3 py-2 rounded-xl text-xs font-semibold border transition-colors disabled:opacity-50 ${
+                compareSelected
+                  ? 'border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]'
+                  : 'border-[var(--separator)] text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
+              }`}
+            >
+              {compareSelected ? t('tipster.compare_selected') : t('tipster.compare_add')}
+            </button>
+          ) : null}
           {isSubscriptionsEnabled() && tipster.vip_package_id != null && tipster.vip_package_id > 0 && (
             <Link
               href={`/subscriptions/checkout?packageId=${tipster.vip_package_id}`}

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { TipsterCard, type TipsterCardData } from '@/components/TipsterCard';
+import { TipsterCompareBar } from '@/components/TipsterCompareBar';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
@@ -49,6 +50,7 @@ function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: numb
     is_following: false,
     vip_package_id: (entry.vip_package_id as number | null | undefined) ?? null,
     is_ai: !!(entry.is_ai as boolean | undefined),
+    is_verified: !!(entry.is_verified as boolean | undefined),
     avg_rating: (entry.avg_rating as number | null | undefined) ?? null,
     review_count: (entry.review_count as number | null | undefined) ?? null,
     avg_odds: (entry.avg_odds as number | null | undefined) ?? null,
@@ -70,6 +72,7 @@ export default function TipstersPage() {
   const [sortBy, setSortBy] = useState<'roi' | 'win_rate' | 'total_profit' | 'follower_count'>('roi');
   const [followLoading, setFollowLoading] = useState<number | null>(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [compareIds, setCompareIds] = useState<number[]>([]);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
 
   useEffect(() => {
@@ -309,18 +312,32 @@ export default function TipstersPage() {
           />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 min-w-0">
-            {tipsters.map((t) => (
+            {tipsters.map((tip) => (
               <TipsterCard
-                key={t.id}
-                tipster={t}
-                onFollow={() => handleFollow(t)}
-                followLoading={followLoading === t.id}
+                key={tip.id}
+                tipster={tip}
+                onFollow={() => handleFollow(tip)}
+                followLoading={followLoading === tip.id}
+                compareSelected={compareIds.includes(tip.id)}
+                compareDisabled={compareIds.length >= 3}
+                onCompareToggle={() => {
+                  setCompareIds((prev) => {
+                    if (prev.includes(tip.id)) return prev.filter((id) => id !== tip.id);
+                    if (prev.length >= 3) return prev;
+                    return [...prev, tip.id];
+                  });
+                }}
               />
             ))}
           </div>
         )}
         </PullToRefresh>
       </main>
+      <TipsterCompareBar
+        selected={tipsters.filter((tip) => compareIds.includes(tip.id))}
+        onClear={() => setCompareIds([])}
+        onRemove={(id) => setCompareIds((prev) => prev.filter((x) => x !== id))}
+      />
     </div>
   );
 }

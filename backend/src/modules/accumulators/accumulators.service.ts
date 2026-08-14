@@ -1646,7 +1646,7 @@ export class AccumulatorsService {
     // Get tipster display names and avatars
     const tipsters = await this.usersRepo.find({
       where: { id: In(tipsterIds) },
-      select: ['id', 'displayName', 'username', 'avatar'],
+      select: ['id', 'displayName', 'username', 'avatar', 'isVerified'],
     });
     const tipsterMap = new Map(tipsters.map(t => [t.id, t]));
 
@@ -1705,6 +1705,7 @@ export class AccumulatorsService {
           username: tipster.username,
           avatarUrl: tipster.avatar,
           isAi: isAiByUserId.get(ticket.userId) ?? false,
+          isVerified: !!tipster.isVerified,
           winRate: Math.round(stats.winRate * 10) / 10,
           roi: Math.round(stats.roi * 10) / 10,
           totalPicks: stats.totalPicks,

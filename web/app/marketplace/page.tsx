@@ -31,6 +31,10 @@ import {
 } from '@/lib/football-only-discovery';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import { FollowPushNudge } from '@/components/FollowPushNudge';
+import { readDiscoveryDeskPref } from '@/components/DiscoveryPrefsNudge';
+import { MarketplaceSavedFiltersBar } from '@/components/MarketplaceSavedFiltersBar';
+import { MarketplaceBookingCodesShelf } from '@/components/MarketplaceBookingCodesShelf';
+import type { MarketplaceSavedFilter } from '@/lib/marketplace-saved-filters';
 
 const API_URL = getApiUrl();
 
@@ -42,7 +46,7 @@ const VALID_SPORT_KEYS = new Set<string>(
 );
 
 type PriceFilter = 'all' | 'free' | 'paid' | 'sold';
-type SortBy = 'newest' | 'price-low' | 'price-high' | 'tipster-rank' | 'following-only';
+type SortBy = 'newest' | 'price-low' | 'price-high' | 'tipster-rank' | 'following-only' | 'relevance';
 type DeskFilter = 'all' | 'acca_desk' | 'community';
 
 /** Acca Desk usernames are `Acca{Risk}{Market}` (see acca-desk-tipsters.config). */
@@ -73,6 +77,8 @@ interface Tipster {
   lostPicks: number;
   rank: number | null;
   avatarUrl?: string | null;
+  isAi?: boolean;
+  isVerified?: boolean;
 }
 
 interface Accumulator {
@@ -138,9 +144,11 @@ export default function MarketplacePage() {
   const [followPushTrigger, setFollowPushTrigger] = useState(0);
   const [followPushName, setFollowPushName] = useState<string | null>(null);
   const [autoPurchaseHandled, setAutoPurchaseHandled] = useState(false);
+  const discoveryPrefApplied = useRef(false);
+  const relevanceDefaultApplied = useRef(false);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
 
-  // Sync sport + tipster search from URL (shareable links, back/forward)
+  // Sync sport + tipster search + desk + sort from URL (shareable links, back/forward)
   useEffect(() => {
     const sport = searchParams.get('sport');
     if (footballOnly) {
@@ -155,6 +163,26 @@ export default function MarketplacePage() {
     const pf = searchParams.get('priceFilter');
     if (pf === 'free' || pf === 'paid' || pf === 'sold') setPriceFilter(pf);
     else if (pf === 'all') setPriceFilter('all');
+    const desk = searchParams.get('desk');
+    if (desk === 'acca_desk' || desk === 'community' || desk === 'all') {
+      setDeskFilter(desk);
+      discoveryPrefApplied.current = true;
+    } else if (!discoveryPrefApplied.current) {
+      const pref = readDiscoveryDeskPref();
+      if (pref) setDeskFilter(pref);
+      discoveryPrefApplied.current = true;
+    }
+    const sort = searchParams.get('sort');
+    if (
+      sort === 'newest' ||
+      sort === 'price-low' ||
+      sort === 'price-high' ||
+      sort === 'tipster-rank' ||
+      sort === 'following-only' ||
+      sort === 'relevance'
+    ) {
+      setSortBy(sort);
+    }
   }, [searchParams, footballOnly]);
 
   // Keep URL in sync with filters (debounced tipster avoids history spam while typing)
@@ -164,11 +192,14 @@ export default function MarketplacePage() {
     if (sportFilter) p.set('sport', sportFilter);
     if (debouncedTipster) p.set('tipster', debouncedTipster);
     if (priceFilter !== 'all') p.set('priceFilter', priceFilter);
+    if (deskFilter !== 'all') p.set('desk', deskFilter);
+    // Always persist sort (incl. newest) so auto “For you” can’t overwrite an explicit newest choice.
+    p.set('sort', sortBy);
     const qs = p.toString();
     const next = qs ? `/marketplace?${qs}` : '/marketplace';
     const cur = `${window.location.pathname}${window.location.search}`;
     if (cur !== next) router.replace(next, { scroll: false });
-  }, [sportFilter, debouncedTipster, priceFilter, router]);
+  }, [sportFilter, debouncedTipster, priceFilter, deskFilter, sortBy, router]);
 
   const handleFollow = async (username: string) => {
     const token = localStorage.getItem('token');
@@ -239,6 +270,20 @@ export default function MarketplacePage() {
       list.sort((a, b) => b.price - a.price);
     } else if (sortBy === 'tipster-rank') {
       list.sort((a, b) => (a.tipster?.rank ?? 999) - (b.tipster?.rank ?? 999));
+    } else if (sortBy === 'relevance') {
+      const score = (p: Accumulator) => {
+        let s = 0;
+        if (p.tipster?.username && followedTipsterUsernames.has(p.tipster.username)) s += 100;
+        if (p.price === 0) s += 25;
+        const rank = p.tipster?.rank ?? 999;
+        s += Math.max(0, 40 - Math.min(rank, 40));
+        s += Math.min(20, Number(p.purchaseCount) || 0);
+        const ageH = (Date.now() - new Date(p.createdAt || 0).getTime()) / 3_600_000;
+        s += Math.max(0, 15 - ageH);
+        if (isAccaDeskTipster(p.tipster)) s += 5;
+        return s;
+      };
+      list.sort((a, b) => score(b) - score(a));
     }
     return list;
   }, [picks, sortBy, followedTipsterUsernames, footballOnly, deskFilter]);
@@ -252,6 +297,38 @@ export default function MarketplacePage() {
     if (deskFilter !== 'all' || accaDeskShelfPicks.length === 0) return filteredAndSortedPicks;
     return filteredAndSortedPicks.filter((p) => !isAccaDeskTipster(p.tipster));
   }, [filteredAndSortedPicks, deskFilter, accaDeskShelfPicks]);
+
+  const bookingCodeShelfItems = useMemo(() => {
+    return filteredAndSortedPicks
+      .filter(
+        (p) =>
+          !!p.bookmakerKey &&
+          !!p.bookingCode &&
+          (p.price === 0 || p.picksRevealed === true || purchasedIds.has(p.id)),
+      )
+      .slice(0, 8)
+      .map((p) => ({
+        id: p.id,
+        title: p.title,
+        bookmakerKey: p.bookmakerKey as string,
+        bookingCode: p.bookingCode as string,
+        bookingCodeCopyCount: p.bookingCodeCopyCount ?? 0,
+        tipsterName: p.tipster?.displayName ?? null,
+      }));
+  }, [filteredAndSortedPicks, purchasedIds]);
+
+  // Once following is known, prefer "For you" only when URL has no explicit sort yet.
+  useEffect(() => {
+    if (relevanceDefaultApplied.current) return;
+    if (followedTipsterUsernames.size === 0) return;
+    const sortParam = searchParams.get('sort');
+    if (sortParam) {
+      relevanceDefaultApplied.current = true;
+      return;
+    }
+    setSortBy('relevance');
+    relevanceDefaultApplied.current = true;
+  }, [followedTipsterUsernames, searchParams]);
 
   const tipsterParam = useMemo(
     () => (debouncedTipster ? `&tipsterSearch=${encodeURIComponent(debouncedTipster)}` : ''),
@@ -528,6 +605,7 @@ export default function MarketplacePage() {
         bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}
         isPurchased={isPurchased}
         canPurchase={canPurchase}
+        expandableLegs
         walletBalance={walletBalance}
         onPurchase={() => purchase(a.id)}
         purchasing={purchasing === a.id}
@@ -681,6 +759,31 @@ export default function MarketplacePage() {
             </p>
 
             {!loading && (
+              <>
+              <MarketplaceSavedFiltersBar
+                hasActiveFilters={
+                  priceFilter !== 'all' ||
+                  sortBy !== 'newest' ||
+                  !!debouncedTipster ||
+                  deskFilter !== 'all' ||
+                  (!footballOnly && !!sportFilter)
+                }
+                current={{
+                  desk: deskFilter,
+                  priceFilter,
+                  sortBy,
+                  tipsterSearch: debouncedTipster,
+                  sport: footballOnly ? FOOTBALL_SPORT_KEY : sportFilter,
+                }}
+                onApply={(f: MarketplaceSavedFilter) => {
+                  setDeskFilter(f.desk);
+                  setPriceFilter(f.priceFilter);
+                  setSortBy(f.sortBy);
+                  setTipsterSearch(f.tipsterSearch);
+                  setDebouncedTipster(f.tipsterSearch);
+                  if (!footballOnly) setSportFilter(f.sport);
+                }}
+              />
               <MarketplaceFilterBar
                 priceFilter={priceFilter}
                 onPriceFilterChange={setPriceFilter}
@@ -711,6 +814,7 @@ export default function MarketplacePage() {
                   paid: t('marketplace.filter_paid_only'),
                   sold: t('marketplace.filter_sold_only'),
                   sortNewest: t('marketplace.sort_newest_first'),
+                  sortRelevance: t('marketplace.sort_relevance'),
                   sortFollowing: t('marketplace.sort_following_only'),
                   sortPriceAsc: t('marketplace.sort_price_asc'),
                   sortPriceDesc: t('marketplace.sort_price_desc'),
@@ -723,6 +827,7 @@ export default function MarketplacePage() {
                   done: t('common.close'),
                 }}
               />
+              </>
             )}
           </div>
 
@@ -801,6 +906,7 @@ export default function MarketplacePage() {
                   </div>
                 </section>
               ) : null}
+              <MarketplaceBookingCodesShelf items={bookingCodeShelfItems} />
               {mainGridPicks.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-8 min-w-0">
                   {mainGridPicks.map((a) => renderMarketplacePickCard(a))}

@@ -31,6 +31,7 @@ function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: numb
     follower_count: (entry.follower_count as number | undefined) ?? 0,
     is_following: false,
     is_ai: !!(entry.is_ai as boolean | undefined),
+    is_verified: !!(entry.is_verified as boolean | undefined),
     avg_rating: (entry.avg_rating as number | null | undefined) ?? null,
     review_count: (entry.review_count as number | null | undefined) ?? null,
     avg_odds: (entry.avg_odds as number | null | undefined) ?? null,

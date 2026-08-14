@@ -230,12 +230,14 @@ export class TipstersApiService {
     });
     const humanIdsForStatus = [...new Set(tipstersRaw.map((t) => t.userId).filter((id): id is number => id != null))];
     let activeHumanIds = new Set<number>();
+    let verifiedHumanIds = new Set<number>();
     if (humanIdsForStatus.length > 0) {
       const activeRows = await this.usersRepo.find({
         where: { id: In(humanIdsForStatus), status: UserStatus.ACTIVE },
-        select: ['id'],
+        select: ['id', 'isVerified'],
       });
       activeHumanIds = new Set(activeRows.map((r) => r.id));
+      verifiedHumanIds = new Set(activeRows.filter((r) => r.isVerified).map((r) => r.id));
     }
     const hideClassicAi = isClassicAiHiddenFromPublic();
     const tipsters = tipstersRaw.filter((t) => {
@@ -258,6 +260,7 @@ export class TipstersApiService {
         display_name: t.displayName,
         avatar_url: t.avatarUrl,
         is_ai: !!t.isAi,
+        is_verified: !!t.isAi || (t.userId != null && verifiedHumanIds.has(t.userId)),
         roi,
         win_rate: winRate,
         total_predictions: totalPredictions,
@@ -701,6 +704,14 @@ export class TipstersApiService {
     const humanUserIds = tipsters.filter((t) => t.userId != null).map((t) => t.userId!);
     const vipPackageMap = await this.loadActiveVipPackageIdsByUserIds(humanUserIds);
     const ticketStatsMap = await this.computeStatsFromTickets(humanUserIds, options.sport);
+    let verifiedHumanIds = new Set<number>();
+    if (humanUserIds.length > 0) {
+      const verifiedRows = await this.usersRepo.find({
+        where: { id: In(humanUserIds), isVerified: true },
+        select: ['id'],
+      });
+      verifiedHumanIds = new Set(verifiedRows.map((r) => r.id));
+    }
 
     const aiTipsterIds = tipsters.filter((t) => t.isAi).map((t) => t.id);
     let predictionCountByTipsterId = new Map<number, number>();
@@ -761,6 +772,7 @@ export class TipstersApiService {
         avatar_url: t.avatarUrl,
         bio: t.bio,
         is_ai: t.isAi,
+        is_verified: !!t.isAi || (t.userId != null && verifiedHumanIds.has(t.userId)),
         total_predictions: totalPredictions,
         total_wins: totalWins,
         total_losses: totalLosses,
@@ -829,14 +841,16 @@ export class TipstersApiService {
       return null;
     }
 
+    let ownerVerified = false;
     if (tipster.userId != null) {
       const owner = await this.usersRepo.findOne({
         where: { id: tipster.userId },
-        select: ['id', 'status'],
+        select: ['id', 'status', 'isVerified'],
       });
       if (!owner || owner.status !== UserStatus.ACTIVE) {
         return null;
       }
+      ownerVerified = !!owner.isVerified;
     }
 
     const marketplaceCoupons = await this.getMarketplaceCouponsForTipster(username, window, viewerUserId);
@@ -885,6 +899,7 @@ export class TipstersApiService {
         avatar_url: tipster.avatarUrl,
         bio: tipster.bio,
         is_ai: tipster.isAi,
+        is_verified: tipster.isAi ? true : ownerVerified,
         tipster_type: tipster.tipsterType,
         personality_profile: tipster.personalityProfile,
         total_predictions: totalPredictions,
@@ -1253,15 +1268,25 @@ export class TipstersApiService {
       ...new Set(sorted.map((r) => idToUserId.get(r.id)).filter((id): id is number => id != null)),
     ];
     const periodVipMap = await this.loadActiveVipPackageIdsByUserIds(periodVipUids);
+    let periodVerified = new Set<number>();
+    if (periodVipUids.length > 0) {
+      const verifiedRows = await this.usersRepo.find({
+        where: { id: In(periodVipUids), isVerified: true },
+        select: ['id'],
+      });
+      periodVerified = new Set(verifiedRows.map((r) => r.id));
+    }
 
     return sorted.map((r, i) => {
       const uid = idToUserId.get(r.id) ?? null;
+      const isAi = idToIsAi.get(r.id) ?? false;
       return {
         id: r.id,
         username: r.username,
         display_name: r.display_name,
         avatar_url: r.avatar_url,
-        is_ai: idToIsAi.get(r.id) ?? false,
+        is_ai: isAi,
+        is_verified: isAi || (uid != null && periodVerified.has(uid)),
         roi: r.roi,
         win_rate: r.win_rate,
         total_predictions: r.total_predictions,
@@ -1327,8 +1352,17 @@ export class TipstersApiService {
         winRate: number;
         rank: number | null;
         isAi: boolean;
+        isVerified: boolean;
       }
     >();
+    let verifiedUserIds = new Set<number>();
+    if (followedUserIds.length > 0) {
+      const verifiedRows = await this.usersRepo.find({
+        where: { id: In(followedUserIds), isVerified: true },
+        select: ['id'],
+      });
+      verifiedUserIds = new Set(verifiedRows.map((r) => r.id));
+    }
     for (const t of visibleTipsters) {
       if (t.userId) {
         userMap.set(t.userId, {
@@ -1338,6 +1372,7 @@ export class TipstersApiService {
           winRate: Number(t.winRate),
           rank: allTimeRankMap.get(t.id) ?? null,
           isAi: !!t.isAi,
+          isVerified: !!t.isAi || verifiedUserIds.has(t.userId),
         });
       }
     }
@@ -1383,6 +1418,7 @@ export class TipstersApiService {
                 username: tipsterUser.username,
                 avatarUrl: tipsterUser.avatarUrl,
                 isAi: tipsterUser.isAi,
+                isVerified: tipsterUser.isVerified,
                 winRate,
                 totalPicks,
                 wonPicks,

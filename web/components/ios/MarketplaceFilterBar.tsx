@@ -10,7 +10,8 @@ export type MarketplaceSortBy =
   | 'price-low'
   | 'price-high'
   | 'tipster-rank'
-  | 'following-only';
+  | 'following-only'
+  | 'relevance';
 
 export interface MarketplaceFilterBarProps {
   priceFilter: MarketplacePriceFilter;
@@ -29,6 +30,7 @@ export interface MarketplaceFilterBarProps {
     paid: string;
     sold: string;
     sortNewest: string;
+    sortRelevance: string;
     sortFollowing: string;
     sortPriceAsc: string;
     sortPriceDesc: string;
@@ -60,6 +62,7 @@ export function MarketplaceFilterBar({
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const sortOptions: { value: MarketplaceSortBy; label: string }[] = [
+    { value: 'relevance', label: labels.sortRelevance },
     { value: 'newest', label: labels.sortNewest },
     ...(showFollowingSort ? [{ value: 'following-only' as const, label: labels.sortFollowing }] : []),
     { value: 'price-low', label: labels.sortPriceAsc },

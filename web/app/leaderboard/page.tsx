@@ -14,6 +14,7 @@ import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/sit
 import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 import { tipsterRankMedal } from '@/lib/tipster-rank-ui';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
+import { VerifiedTipsterBadge } from '@/components/VerifiedTipsterBadge';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import {
   LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING,
@@ -43,6 +44,7 @@ interface LeaderboardEntry {
   avg_rating?: number | null;
   review_count?: number | null;
   is_ai?: boolean;
+  is_verified?: boolean;
   /** Active VIP package id from API when tipster sells a subscription plan. */
   vip_package_id?: number | null;
 }
@@ -146,6 +148,7 @@ export default function LeaderboardPage() {
           total_predictions: (e.total_predictions ?? e.monthly_predictions ?? 0) as number,
           total_wins: (e.total_wins ?? e.monthly_wins ?? 0) as number,
           is_ai: !!(e.is_ai as boolean | undefined),
+          is_verified: !!(e.is_verified as boolean | undefined),
           avg_rating: (e.avg_rating as number | null | undefined) ?? null,
           review_count: (e.review_count as number | null | undefined) ?? null,
           vip_package_id: (e.vip_package_id as number | null | undefined) ?? null,
@@ -375,6 +378,7 @@ export default function LeaderboardPage() {
                       <p className="font-semibold text-[var(--text)] group-hover:text-[var(--primary)] transition-colors flex flex-wrap items-center gap-2 min-w-0">
                         <span className="truncate min-w-0 max-w-full">{entry.display_name}</span>
                         {entry.is_ai ? <AiTipsterBadge /> : null}
+                        {!entry.is_ai && entry.is_verified ? <VerifiedTipsterBadge /> : null}
                         {earlySample ? (
                           <span
                             className="inline-flex items-center rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 dark:text-amber-300"

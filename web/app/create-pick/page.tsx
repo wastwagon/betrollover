@@ -21,6 +21,9 @@ import { SuccessToast } from '@/components/SuccessToast';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { fetchSellingThresholds, type SellingThresholds } from '@/lib/selling-thresholds';
+import { TipsterSellUnlockChecklist } from '@/components/TipsterSellUnlockChecklist';
+import { SellerPayoutSplitCallout } from '@/components/SellerPayoutSplitCallout';
+import { CreatePickListingPreview } from '@/components/CreatePickListingPreview';
 import {
   fetchDailyCouponQuota,
   formatQuotaResetUtc,
@@ -806,6 +809,9 @@ export default function CreatePickPage() {
               tagline={t('create_pick.tagline')}
             />
           </div>
+          <div className="mb-4">
+            <TipsterSellUnlockChecklist compact />
+          </div>
           {dailyQuota && (
             <div
               className={`mb-4 rounded-xl border px-4 py-3 text-sm ${
@@ -1399,6 +1405,13 @@ export default function CreatePickPage() {
                       </div>
                     </div>
 
+                    <CreatePickListingPreview
+                      title={title}
+                      selections={selections}
+                      totalOdds={totalOdds}
+                      price={Number(price) || 0}
+                    />
+
                     {/* Pick Details Form */}
                     <div className="space-y-3 pt-2 border-t border-[var(--border)]">
                       <div>
@@ -1496,6 +1509,7 @@ export default function CreatePickPage() {
                         {Number(price) > 0 && sellTh && myTipStats && !paidSaleAllowed && (
                           <p className="text-[11px] text-amber-800 dark:text-amber-200 mt-1.5 leading-snug">{t('create_pick.paid_price_blocked_hint')}</p>
                         )}
+                        <SellerPayoutSplitCallout priceGhs={Number(price) || 0} compact className="mt-2" />
                       </div>
                       {isSubscriptionsEnabled() ? (
                       <div>
@@ -1668,6 +1682,12 @@ export default function CreatePickPage() {
                 <span className="text-xl font-bold text-[var(--primary)] tabular-nums shrink-0">{totalOdds.toFixed(2)}</span>
               </div>
             </div>
+            <CreatePickListingPreview
+              title={title}
+              selections={selections}
+              totalOdds={totalOdds}
+              price={Number(price) || 0}
+            />
             <div className="space-y-3 pt-2 border-t border-[var(--separator)]">
               <div>
                 <label className="block text-sm font-medium text-[var(--text)] mb-1">{t('create_pick.title_label')} <span className="text-red-500">*</span></label>
@@ -1760,6 +1780,7 @@ export default function CreatePickPage() {
                 {Number(price) > 0 && sellTh && myTipStats && !paidSaleAllowed && (
                   <p className="text-xs text-amber-800 dark:text-amber-200 mt-2 leading-snug">{t('create_pick.paid_price_blocked_hint')}</p>
                 )}
+                <SellerPayoutSplitCallout priceGhs={Number(price) || 0} className="mt-2" />
               </div>
               {isSubscriptionsEnabled() ? (
               <>

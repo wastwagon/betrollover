@@ -16,6 +16,8 @@ type TipsterTrustStripProps = {
   avgRating?: number | null;
   reviewCount?: number | null;
   reviews?: TipsterReviewSnippet[];
+  /** Optional 1–5 star counts for histogram (keys 1..5). */
+  ratingHistogram?: Partial<Record<1 | 2 | 3 | 4 | 5, number>> | null;
   compact?: boolean;
   className?: string;
 };
@@ -40,6 +42,7 @@ export function TipsterTrustStrip({
   avgRating,
   reviewCount,
   reviews = [],
+  ratingHistogram = null,
   compact = false,
   className = '',
 }: TipsterTrustStripProps) {
@@ -48,6 +51,11 @@ export function TipsterTrustStrip({
   const snippets = reviews.filter((r) => r.comment?.trim()).slice(0, compact ? 1 : 3);
   const earlySample =
     settledCount > 0 && settledCount < LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING;
+
+  const histTotal =
+    ratingHistogram != null
+      ? [1, 2, 3, 4, 5].reduce((s, star) => s + (ratingHistogram[star as 1 | 2 | 3 | 4 | 5] ?? 0), 0)
+      : 0;
 
   if (settledCount <= 0 && !hasRating && snippets.length === 0 && !(avgOdds && avgOdds > 0)) {
     return null;
@@ -99,6 +107,27 @@ export function TipsterTrustStrip({
             n: String(LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING),
           })}
         </p>
+      ) : null}
+
+      {!compact && histTotal > 0 ? (
+        <div className="mt-3 space-y-1" aria-label={t('tipster.rating_histogram')}>
+          {([5, 4, 3, 2, 1] as const).map((star) => {
+            const count = ratingHistogram?.[star] ?? 0;
+            const pct = histTotal > 0 ? (count / histTotal) * 100 : 0;
+            return (
+              <div key={star} className="flex items-center gap-2 text-[11px]">
+                <span className="w-6 tabular-nums text-[var(--text-muted)] shrink-0">{star}★</span>
+                <div className="flex-1 h-1.5 rounded-full bg-[var(--fill-secondary)] overflow-hidden min-w-0">
+                  <div
+                    className="h-full rounded-full bg-amber-400/90"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className="w-6 text-right tabular-nums text-[var(--text-muted)] shrink-0">{count}</span>
+              </div>
+            );
+          })}
+        </div>
       ) : null}
 
       {!compact && snippets.length > 0 ? (

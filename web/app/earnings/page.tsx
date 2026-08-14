@@ -254,6 +254,26 @@ export default function EarningsPage() {
           <AdSlot zoneSlug="earnings-full" fullWidth className="w-full max-w-3xl" />
         </div>
 
+        {/* ── Fee explainer (always visible for tipsters) ── */}
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-5 py-4 mb-6 min-w-0">
+          <p className="text-sm font-semibold text-[var(--text)]">{t('earnings.fee_how_title')}</p>
+          <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed">{t('earnings.fee_how_body')}</p>
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-center text-xs">
+            <div className="rounded-xl bg-[var(--fill-secondary)]/60 border border-[var(--separator)] px-3 py-2">
+              <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('seller_payout.buyer_pays')}</p>
+              <p className="font-bold text-[var(--text)]">{t('earnings.fee_how_100')}</p>
+            </div>
+            <div className="rounded-xl bg-emerald-50/80 dark:bg-emerald-900/20 border border-emerald-200/60 dark:border-emerald-800/40 px-3 py-2">
+              <p className="text-[10px] uppercase text-emerald-700 dark:text-emerald-300">{t('seller_payout.you_get')}</p>
+              <p className="font-bold text-emerald-700 dark:text-emerald-300">70%</p>
+            </div>
+            <div className="rounded-xl bg-amber-50/80 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-800/40 px-3 py-2">
+              <p className="text-[10px] uppercase text-amber-700 dark:text-amber-300">{t('seller_payout.platform')}</p>
+              <p className="font-bold text-amber-700 dark:text-amber-300">30%</p>
+            </div>
+          </div>
+        </div>
+
         {/* ── Summary cards ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 min-w-0">
           <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm min-w-0">

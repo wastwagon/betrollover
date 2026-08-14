@@ -18,6 +18,7 @@ import { PersonJsonLd } from '@/components/PersonJsonLd';
 import { useT } from '@/context/LanguageContext';
 import { FollowersCountButton } from '@/components/TipsterFollowersModal';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
+import { VerifiedTipsterBadge } from '@/components/VerifiedTipsterBadge';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { NavBar } from '@/components/ios/NavBar';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
@@ -121,6 +122,7 @@ interface TipsterProfile {
     bio: string | null;
     /** Platform AI tipster */
     is_ai?: boolean;
+    is_verified?: boolean;
     total_predictions: number;
     total_wins: number;
     total_losses: number;
@@ -165,6 +167,7 @@ export default function TipsterProfilePage() {
   const [viewerIsAdmin, setViewerIsAdmin] = useState(false);
   const [reviewSummary, setReviewSummary] = useState<{ avg: number; total: number } | null>(null);
   const [reviewItems, setReviewItems] = useState<TipsterReviewSnippet[]>([]);
+  const [ratingHistogram, setRatingHistogram] = useState<Partial<Record<1 | 2 | 3 | 4 | 5, number>> | null>(null);
   const { format } = useCurrency();
   const [performancePeriod, setPerformancePeriod] = useState<TipsterPerformancePeriod>('all');
   /** Applied calendar range (coupon posted date); takes precedence over preset `performance` in the API. */
@@ -205,17 +208,25 @@ export default function TipsterProfilePage() {
           allTimeTipsterForLdRef.current = p.tipster;
         }
         if (p?.tipster?.id) {
-          fetch(`${getApiUrl()}/reviews/tipster/${p.tipster.id}?limit=5`)
+          fetch(`${getApiUrl()}/reviews/tipster/${p.tipster.id}?limit=100`)
             .then((r) => (r.ok ? r.json() : null))
             .then((d) => {
               if (cancelled || !d) return;
               setReviewSummary({ avg: d.avg, total: d.total });
-              setReviewItems(Array.isArray(d.items) ? d.items : []);
+              const items = Array.isArray(d.items) ? d.items : [];
+              setReviewItems(items);
+              const hist: Partial<Record<1 | 2 | 3 | 4 | 5, number>> = {};
+              for (const item of items) {
+                const star = Math.round(Number(item.rating)) as 1 | 2 | 3 | 4 | 5;
+                if (star >= 1 && star <= 5) hist[star] = (hist[star] ?? 0) + 1;
+              }
+              setRatingHistogram(Object.keys(hist).length > 0 ? hist : null);
             })
             .catch(() => {});
         } else {
           setReviewSummary(null);
           setReviewItems([]);
+          setRatingHistogram(null);
         }
       })
       .catch(() => {
@@ -544,6 +555,7 @@ export default function TipsterProfilePage() {
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 min-w-0">
                 <h1 className="text-lg sm:text-xl font-semibold text-[var(--text)] min-w-0 break-words">{tipster.display_name}</h1>
                 {tipster.is_ai ? <AiTipsterBadge /> : null}
+                {!tipster.is_ai && tipster.is_verified ? <VerifiedTipsterBadge /> : null}
                 <span className="text-sm font-medium text-[var(--text-muted)] shrink-0">@{tipster.username}</span>
                 {tipster.leaderboard_rank != null && (
                   <span
@@ -709,6 +721,7 @@ export default function TipsterProfilePage() {
                 avgRating={reviewSummary?.avg}
                 reviewCount={reviewSummary?.total}
                 reviews={reviewItems}
+                ratingHistogram={ratingHistogram}
               />
               {/* Platform fee transparency note */}
               <p className="text-[10px] text-[var(--text-muted)] mt-2 opacity-70">

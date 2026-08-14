@@ -14,6 +14,8 @@ import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { useLanguage, useT, type SupportedLanguage } from '@/context/LanguageContext';
 import { formatTipsterRankHash } from '@/lib/tipster-rank-ui';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
+import { VerifiedTipsterBadge } from '@/components/VerifiedTipsterBadge';
+import { KickoffUrgencyLine } from '@/components/KickoffUrgencyLine';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { EscrowPurchaseTimeline } from '@/components/EscrowPurchaseTimeline';
 import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
@@ -58,6 +60,7 @@ interface Tipster {
   username: string;
   avatarUrl?: string | null;
   isAi?: boolean;
+  isVerified?: boolean;
   winRate: number;
   totalPicks: number;
   wonPicks: number;
@@ -1062,6 +1065,7 @@ export default function CouponDetailPage() {
                       <p className="text-sm font-semibold text-[var(--text)] flex flex-wrap items-center gap-2 min-w-0">
                         <span className="truncate min-w-0">{coupon.tipster.displayName}</span>
                         {coupon.tipster.isAi ? <AiTipsterBadge /> : null}
+                        {!coupon.tipster.isAi && coupon.tipster.isVerified ? <VerifiedTipsterBadge /> : null}
                       </p>
                       <p className="text-xs text-[var(--text-muted)]">@{coupon.tipster.username}</p>
                     </div>
@@ -1143,6 +1147,7 @@ export default function CouponDetailPage() {
               {Number(coupon.price) > 0 ? (
                 <p className="text-[10px] text-[var(--text-muted)] truncate">{t('pick_detail.fee_refund_line')}</p>
               ) : null}
+              <KickoffUrgencyLine picks={coupon.picks} compact />
             </div>
             {!isAuthed ? (
               <Link

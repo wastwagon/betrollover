@@ -16,6 +16,7 @@ import { NavBar } from '@/components/ios/NavBar';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { TipsterSellUnlockChecklist } from '@/components/TipsterSellUnlockChecklist';
 
 import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 
@@ -162,6 +163,10 @@ export default function MyPicksPage() {
                 </a>
               }
             />
+          </div>
+
+          <div className="mb-4">
+            <TipsterSellUnlockChecklist />
           </div>
 
           <div className="mb-4">
