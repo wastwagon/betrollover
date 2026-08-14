@@ -580,12 +580,15 @@ export class AccaGeneratorService {
     oddMin: number;
     oddMax: number;
     targetOdd: number;
+    excludeFixtureIds?: Set<number>;
   }): Promise<AccaGeneratorSelection[]> {
     const pool = await this.loadTodayOddsInBand(opts.oddMin, opts.oddMax);
     const halfSpan = Math.max((opts.oddMax - opts.oddMin) / 2, 0.05);
     const bestByFixture = new Map<number, AccaGeneratorSelection>();
+    const exclude = opts.excludeFixtureIds;
 
     for (const row of pool) {
+      if (exclude?.has(row.fixtureId)) continue;
       if (!opts.allowedOutcomes.has(row.outcomeKey)) continue;
 
       const probability = Math.min(0.95, Math.max(0.05, 1 / row.odds));
@@ -615,6 +618,99 @@ export class AccaGeneratorService {
     }
 
     return [...bestByFixture.values()].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+  }
+
+  /**
+   * Acca Desk / automation: same picker as public generate, but no user quota or feature-flag gate.
+   * Callers enforce exclusivity via excludeFixtureIds.
+   */
+  async generateForDesk(opts: {
+    userId: number;
+    markets: string[];
+    legs: number;
+    riskLevel: string;
+    excludeFixtureIds?: Iterable<number>;
+  }) {
+    const markets = this.normalizeMarkets(opts.markets);
+    const risk = this.resolveRiskFromDto({ markets, legs: opts.legs, riskLevel: opts.riskLevel });
+    const legs = Math.floor(Number(opts.legs));
+    if (!Number.isFinite(legs) || legs < ACCA_GENERATOR_LEGS_MIN || legs > ACCA_GENERATOR_LEGS_MAX) {
+      throw new BadRequestException(`legs must be between ${ACCA_GENERATOR_LEGS_MIN} and ${ACCA_GENERATOR_LEGS_MAX}`);
+    }
+
+    const excludeFixtureIds = new Set(
+      [...(opts.excludeFixtureIds || [])].filter((id) => Number.isFinite(id) && id > 0),
+    );
+    const allowedOutcomes = outcomeKeysForMarkets(markets);
+    const candidates = await this.buildCandidates({
+      allowedOutcomes,
+      oddMin: risk.oddMin,
+      oddMax: risk.oddMax,
+      targetOdd: risk.targetOdd,
+      excludeFixtureIds,
+    });
+
+    if (candidates.length < legs) {
+      await this.recordEvent(opts.userId, 'empty_pool', {
+        source: 'acca_desk',
+        riskLevel: risk.key,
+        legsRequested: legs,
+        candidates: candidates.length,
+        markets,
+        excluded: excludeFixtureIds.size,
+      });
+      return {
+        ok: false as const,
+        reason: 'empty_pool' as const,
+        candidates: candidates.length,
+        riskLevel: risk.key,
+        markets,
+      };
+    }
+
+    const selected = this.pickGreedyLegs(candidates, legs);
+    if (selected.length < legs) {
+      await this.recordEvent(opts.userId, 'empty_pool', {
+        source: 'acca_desk',
+        riskLevel: risk.key,
+        legsRequested: legs,
+        legsBuilt: selected.length,
+        markets,
+      });
+      return {
+        ok: false as const,
+        reason: 'empty_pool' as const,
+        candidates: candidates.length,
+        riskLevel: risk.key,
+        markets,
+      };
+    }
+
+    const combinedOdds = Math.round(selected.reduce((a, s) => a * s.odds, 1) * 1000) / 1000;
+    const run = await this.runRepo.save(
+      this.runRepo.create({
+        userId: opts.userId,
+        legsRequested: legs,
+        legsReturned: selected.length,
+        markets,
+        riskLevel: risk.key,
+        oddMin: risk.oddMin,
+        oddMax: risk.oddMax,
+        combinedOdds,
+        selections: selected as unknown as Record<string, unknown>[],
+      }),
+    );
+
+    return {
+      ok: true as const,
+      generationId: run.id,
+      legs: selected.map(({ score: _s, ...leg }) => leg),
+      combinedOdds,
+      markets,
+      riskLevel: risk.key,
+      oddMin: risk.oddMin,
+      oddMax: risk.oddMax,
+    };
   }
 
   /**

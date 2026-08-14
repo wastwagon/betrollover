@@ -25,6 +25,7 @@ import { SyncHealthService } from './sync-health.service';
 import { SportEvent } from '../sport-events/entities/sport-event.entity';
 import { PredictionEngineService } from '../predictions/prediction-engine.service';
 import { PredictionsModule } from '../predictions/predictions.module';
+import { AccaGeneratorModule } from '../acca-generator/acca-generator.module';
 import { AccumulatorsModule } from '../accumulators/accumulators.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ContentModule } from '../content/content.module';
@@ -101,6 +102,7 @@ import { AccaGeneratorEvent } from '../acca-generator/entities/acca-generator-ev
     WalletModule,
     UsersModule,
     PredictionsModule,
+    AccaGeneratorModule,
     BasketballModule,
     RugbyModule,
     MmaModule,

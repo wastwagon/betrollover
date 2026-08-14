@@ -153,6 +153,8 @@ export class TipstersSetupService {
     const retired = await this.tipsterRepo.find({ where: { isAi: true } });
     let deactivated = 0;
     for (const tipster of retired) {
+      // Acca Desk bots are isAi but tipsterType=acca_desk — never retire them here.
+      if (tipster.tipsterType && tipster.tipsterType !== 'ai') continue;
       if (activeUsernames.has(tipster.username)) continue;
       if (!tipster.isActive) continue;
       await this.tipsterRepo.update(tipster.id, { isActive: false });

@@ -12,6 +12,8 @@ import { PredictionEngineService } from '../predictions/prediction-engine.servic
 import { PredictionMarketplaceSyncService } from '../predictions/prediction-marketplace-sync.service';
 import { ResultTrackerService } from '../predictions/result-tracker.service';
 import { TipstersSetupService } from '../predictions/tipsters-setup.service';
+import { AccaDeskSetupService } from '../acca-generator/acca-desk-setup.service';
+import { AccaDeskPublisherService } from '../acca-generator/acca-desk-publisher.service';
 import { NewsArticle, NewsCategory, normalizeNewsSport } from '../news/entities/news-article.entity';
 import { NewsService } from '../news/news.service';
 import { TransfersSyncService } from '../news/transfers-sync.service';
@@ -48,6 +50,8 @@ export class AdminController {
     private readonly predictionMarketplaceSync: PredictionMarketplaceSyncService,
     private readonly resultTracker: ResultTrackerService,
     private readonly tipstersSetup: TipstersSetupService,
+    private readonly accaDeskSetup: AccaDeskSetupService,
+    private readonly accaDeskPublisher: AccaDeskPublisherService,
     private readonly newsService: NewsService,
     private readonly transfersSyncService: TransfersSyncService,
     private readonly injuriesSyncService: InjuriesSyncService,
@@ -200,6 +204,25 @@ export class AdminController {
   async initializeAiTipsters(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.tipstersSetup.initializeAiTipsters();
+  }
+
+  @Post('setup/acca-desk-tipsters')
+  async initializeAccaDeskTipsters(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.accaDeskSetup.initializeAccaDeskTipsters();
+  }
+
+  /** Manual Acca Desk daily publish (same job as 00:30 Accra cron). Idempotent per tipster/day. */
+  @Post('acca-desk/run-daily')
+  async runAccaDeskDaily(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.accaDeskPublisher.runDaily({ ensureSetup: true });
+  }
+
+  @Get('acca-desk/overview')
+  async getAccaDeskOverview(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.accaDeskPublisher.getOverview();
   }
 
   @Get('ai-tipsters/subscription-packages')

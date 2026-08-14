@@ -12,6 +12,7 @@ const menuItems = [
   { href: '/dashboard', icon: '📊', label: 'Dashboard' },
   { href: '/admin/analytics', icon: '📈', label: 'Analytics' },
   { href: '/admin/ai-predictions', icon: '🤖', label: 'AI Predictions' },
+  { href: '/admin/acca-desk', icon: '🎯', label: 'Acca Desk' },
   ...(isSubscriptionsEnabled()
     ? [
         { href: '/admin/ai-tipster-packages', icon: '📦', label: 'AI Packages' },

@@ -481,6 +481,7 @@ function DashboardContent() {
                     { href: '/admin/analytics?tab=sports', icon: '🌍', label: 'Sports Analytics' },
                     { href: '/admin/analytics?tab=acca', icon: '🎯', label: 'Acca Gen Analytics' },
                     { href: '/admin/ai-predictions',  icon: '🤖', label: 'AI Predictions' },
+                    { href: '/admin/acca-desk',       icon: '🎯', label: 'Acca Desk' },
                     { href: '/admin/news',            icon: '📰', label: 'News' },
                     { href: '/admin/content',         icon: '📄', label: 'Content Pages' },
                     { href: '/admin/resources',       icon: '📚', label: 'Resources' },
