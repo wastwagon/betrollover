@@ -16,6 +16,7 @@ import { GlobalSearchSheet } from '@/components/GlobalSearchSheet';
 import { NotificationBellMenu } from '@/components/notifications/NotificationBellMenu';
 import { hapticLight } from '@/lib/haptic';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import { buttonClassName } from '@/components/ui/Button';
 import {
   IconSearch,
   IconTrophy,
@@ -477,12 +478,12 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       ) : null}
                     </div>
 
-                    <div className="mx-2 mb-2 mt-1 p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 text-white">
-                      <p className="text-xs font-bold mb-1">
+                    <div className="mx-2 mb-2 mt-1 p-3 rounded-lg border border-[var(--separator)] bg-[var(--card)]">
+                      <p className="text-xs font-bold mb-1 text-[var(--text)]">
                         <IconShield className="w-4 h-4 inline-block mr-1 -mt-0.5" />
                         {t('home.feature_escrow_title')}
                       </p>
-                      <p className="text-[11px] text-slate-300 leading-relaxed">{t('header.escrow_box')}</p>
+                      <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">{t('header.escrow_box')}</p>
                     </div>
                 </DesktopMenuPortal>
               </div>
@@ -554,11 +555,10 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                     href="/create-pick"
                     title={t('nav.create_pick')}
                     aria-label={t('nav.create_pick')}
-                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-[var(--radius)] font-semibold text-sm transition-colors ${
-                      isActive(pathname, '/create-pick')
-                        ? 'bg-[var(--primary-hover)] text-white'
-                        : 'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]'
-                    }`}
+                    className={buttonClassName({
+                      size: 'sm',
+                      className: `gap-1.5 ${isActive(pathname, '/create-pick') ? 'bg-[var(--primary-hover)]' : ''}`,
+                    })}
                   >
                     {t('nav.create_pick_short')}
                     {slipCount !== undefined && slipCount > 0 && (
@@ -588,7 +588,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                   <Link href="/login" className="px-4 py-2 text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors">
                     {t('nav.login')}
                   </Link>
-                  <Link href="/register" className="px-5 py-2 rounded-[var(--radius)] text-sm font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors">
+                  <Link href="/register" className={buttonClassName({ size: 'sm' })}>
                     {t('nav.register')}
                   </Link>
                 </>
@@ -720,18 +720,18 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                           ))}
                         </div>
                         {/* Col 3 — Sign out panel */}
-                        <div className="w-44 bg-gradient-to-br from-slate-50 to-slate-100/80 py-5 px-4 flex flex-col justify-between border-l border-slate-100">
+                        <div className="w-44 bg-[var(--fill-secondary)] py-5 px-4 flex flex-col justify-between border-l border-[var(--separator)]">
                           <div>
                             {balance !== null && (
-                              <div className="mb-3 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200/60">
-                                <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-600">Balance</p>
-                                <p className="text-sm font-bold text-emerald-800">{format(balance).primary}</p>
+                              <div className="mb-3 px-3 py-2 rounded-xl bg-[var(--card)] border border-[var(--separator)]">
+                                <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)]">Balance</p>
+                                <p className="text-sm font-bold text-[var(--text)]">{format(balance).primary}</p>
                                 {currency.code !== 'GHS' && (
-                                  <p className="text-[10px] text-emerald-600/80 mt-0.5">GHS {Number(balance ?? 0).toFixed(2)}</p>
+                                  <p className="text-[10px] text-[var(--text-muted)] mt-0.5">GHS {Number(balance ?? 0).toFixed(2)}</p>
                                 )}
                               </div>
                             )}
-                            <p className="text-[11px] text-slate-500 leading-relaxed">{t('profile.tagline')}</p>
+                            <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">{t('profile.tagline')}</p>
                           </div>
                           <button
                             type="button"
@@ -817,7 +817,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                   </Link>
                   <Link
                     href="/register"
-                    className="shrink-0 whitespace-nowrap px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[var(--primary)] text-white hover:opacity-90 transition-opacity"
+                    className={buttonClassName({ size: 'sm', className: 'shrink-0 whitespace-nowrap' })}
                   >
                     <span className="sm:hidden">{t('nav.register_short')}</span>
                     <span className="hidden sm:inline">{t('nav.register')}</span>

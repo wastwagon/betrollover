@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { buttonClassName } from '@/components/ui/Button';
 
 interface Settings {
   apiSportsConfigured: boolean;
@@ -565,7 +566,7 @@ export default function AdminSettingsPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
@@ -609,8 +610,8 @@ export default function AdminSettingsPage() {
             }`}>
               <div className={`p-4 sm:p-8 ${
                 settings.apiSportsConfigured 
-                  ? 'bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20' 
-                  : 'bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20'
+                  ? 'bg-[var(--primary-light)]' 
+                  : 'bg-amber-50/70 dark:bg-amber-950/20'
               }`}>
                 <div className="flex items-start justify-between mb-6 min-w-0">
                   <div className="flex items-start gap-4 min-w-0 flex-1">
@@ -659,7 +660,7 @@ export default function AdminSettingsPage() {
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
                         placeholder="Enter your API-Sports API key"
-                        className="w-full px-4 py-3 pr-12 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                        className="w-full px-4 py-3 pr-12 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
                       />
                       <button
                         type="button"
@@ -748,7 +749,7 @@ export default function AdminSettingsPage() {
                     <button type="button"
                       onClick={testConnection}
                       disabled={testing || !apiKey.trim()}
-                      className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+                      className={buttonClassName({ className: 'flex-1' })}
                     >
                       {testing ? (
                         <>
@@ -790,7 +791,7 @@ export default function AdminSettingsPage() {
 
             {/* SendGrid / Email Test */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-emerald-200 dark:border-emerald-800 overflow-hidden">
-              <div className="p-4 sm:p-8 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20">
+              <div className="p-4 sm:p-8 bg-[var(--primary-light)]">
                 <div className="flex items-start gap-4 mb-6">
                   <div className="p-3 rounded-xl bg-emerald-500 text-white">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -893,8 +894,8 @@ export default function AdminSettingsPage() {
             }`}>
               <div className={`p-4 sm:p-8 ${
                 paystackConfigured
-                  ? 'bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20'
-                  : 'bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20'
+                  ? 'bg-[var(--primary-light)]'
+                  : 'bg-amber-50/70 dark:bg-amber-950/20'
               }`}>
                 <div className="flex items-start gap-4 mb-6">
                   <div className={`p-3 rounded-xl ${paystackConfigured ? 'bg-emerald-500' : 'bg-amber-500'} text-white`}>
@@ -1012,7 +1013,7 @@ export default function AdminSettingsPage() {
 
             {/* Database migrations – auto-run on deploy; admin can run or mark applied */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-slate-200 dark:border-slate-700 overflow-hidden">
-              <div className="p-4 sm:p-8 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900/20 dark:to-slate-800/20">
+              <div className="p-4 sm:p-8 bg-[var(--fill-secondary)]">
                 <div className="flex items-start justify-between mb-6 min-w-0">
                   <div className="flex items-start gap-4 min-w-0 flex-1">
                     <div className="p-3 rounded-xl bg-slate-600 text-white shrink-0">
@@ -1093,7 +1094,7 @@ export default function AdminSettingsPage() {
             {/* Sync Status & Manual Sync */}
             {settings.apiSportsConfigured && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-blue-200 dark:border-blue-800 overflow-hidden">
-                <div className="p-4 sm:p-8 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
+                <div className="p-4 sm:p-8 bg-[var(--fill-secondary)]">
                   <div className="flex items-start justify-between mb-6 min-w-0">
                     <div className="flex items-start gap-4 min-w-0 flex-1">
                       <div className="p-3 rounded-xl bg-blue-500 text-white shrink-0">
@@ -1168,7 +1169,7 @@ export default function AdminSettingsPage() {
                     <button type="button"
                       onClick={syncFixtures}
                       disabled={syncingFixtures || !settings.apiSportsConfigured}
-                      className="flex-1 px-6 py-3 bg-[var(--primary)] hover:bg-[var(--primary-hover)] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+                      className={buttonClassName({ className: 'flex-1' })}
                     >
                       {syncingFixtures ? (
                         <>
@@ -1187,7 +1188,7 @@ export default function AdminSettingsPage() {
                     <button type="button"
                       onClick={syncOdds}
                       disabled={syncingOdds || !settings.apiSportsConfigured}
-                      className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+                      className={buttonClassName({ className: 'flex-1' })}
                     >
                       {syncingOdds ? (
                         <>
@@ -1206,7 +1207,7 @@ export default function AdminSettingsPage() {
                     <button type="button"
                       onClick={syncArchive}
                       disabled={syncingArchive}
-                      className="flex-1 px-6 py-3 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+                      className={buttonClassName({ className: 'flex-1' })}
                     >
                       {syncingArchive ? (
                         <>
@@ -1273,11 +1274,8 @@ export default function AdminSettingsPage() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {/* Minimum ROI Card */}
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-2xl shadow-lg border-2 border-blue-200 dark:border-blue-800 p-4 sm:p-6 hover:shadow-xl transition-all">
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Minimum ROI</h3>
-                    <span className="text-2xl">📊</span>
-                  </div>
+                <div className="rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] shadow-sm p-4 sm:p-6">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Minimum ROI</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                     Human tipsters need this ROI% to list paid picks. AI tipsters use the same bar for automatic paid
                     listings when <strong>AI pick price</strong> is greater than zero.
@@ -1290,7 +1288,7 @@ export default function AdminSettingsPage() {
                       step="0.1"
                       value={minimumROI}
                       onChange={(e) => setMinimumROI(parseFloat(e.target.value) || 0)}
-                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                     />
                     <span className="text-gray-600 dark:text-gray-400 font-medium">%</span>
                   </div>
@@ -1332,18 +1330,15 @@ export default function AdminSettingsPage() {
                       }
                     }}
                     disabled={savingROI}
-                    className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
+                    className={buttonClassName({ fullWidth: true })}
                   >
                     {savingROI ? 'Saving...' : 'Save Minimum ROI'}
                   </button>
                 </div>
 
                 {/* Minimum win rate (paid marketplace) */}
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 rounded-2xl shadow-lg border-2 border-emerald-200 dark:border-emerald-800 p-4 sm:p-6 hover:shadow-xl transition-all">
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Minimum win rate</h3>
-                    <span className="text-2xl">🎯</span>
-                  </div>
+                <div className="rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] shadow-sm p-4 sm:p-6">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Minimum win rate</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                     Human tipsters need this settled win rate for paid marketplace picks. AI tipsters use the same
                     thresholds for auto-priced picks. If either metric is below the minimum, only free listings apply
@@ -1404,11 +1399,8 @@ export default function AdminSettingsPage() {
                 </div>
 
                 {/* AI marketplace pick price */}
-                <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 rounded-2xl shadow-lg border-2 border-indigo-200 dark:border-indigo-800 p-4 sm:p-6 hover:shadow-xl transition-all">
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">AI pick price</h3>
-                    <span className="text-2xl">🤖</span>
-                  </div>
+                <div className="bg-[var(--card)] rounded-2xl shadow-sm border border-[var(--border)] p-4 sm:p-6 transition-colors">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">AI pick price</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                     When an AI tipster’s <strong>ROI</strong> and <strong>win rate</strong> (on their profile / leaderboard)
                     meet the minimum ROI and minimum win rate above, new prediction syncs list at this price on the
@@ -1426,7 +1418,7 @@ export default function AdminSettingsPage() {
                       onChange={(e) =>
                         setAiMarketplaceCouponPrice(Math.min(10000, Math.max(0, parseFloat(e.target.value) || 0)))
                       }
-                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                     />
                   </div>
                   <button type="button"
@@ -1467,18 +1459,15 @@ export default function AdminSettingsPage() {
                       }
                     }}
                     disabled={savingAiCouponPrice}
-                    className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
+                    className={buttonClassName({ fullWidth: true })}
                   >
                     {savingAiCouponPrice ? 'Saving...' : 'Save AI pick price'}
                   </button>
                 </div>
 
                 {/* AI tipsters: daily pick cap */}
-                <div className="bg-gradient-to-br from-cyan-50 to-teal-100 dark:from-cyan-900/20 dark:to-teal-800/20 rounded-2xl shadow-lg border-2 border-cyan-200 dark:border-cyan-800 p-4 sm:p-6 hover:shadow-xl transition-all">
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">AI tipsters — picks per day</h3>
-                    <span className="text-2xl">🤖</span>
-                  </div>
+                <div className="rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] shadow-sm p-4 sm:p-6">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">AI tipsters — picks per day</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                     Maximum <strong>marketplace picks each AI tipster</strong> can publish per <strong>UTC calendar day</strong>{' '}
                     (scheduled run defaults to <strong>8:00 PM Africa/Accra</strong>; admins can also run manual generation in{' '}
@@ -1551,11 +1540,8 @@ export default function AdminSettingsPage() {
                 </div>
 
                 {/* Max picks per UTC day (anti-spam) */}
-                <div className="bg-[var(--card)] rounded-2xl shadow-sm border border-[var(--border)] p-4 sm:p-6 hover:shadow-xl transition-all">
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Human tipsters — picks per day</h3>
-                    <span className="text-2xl">📅</span>
-                  </div>
+                <div className="bg-[var(--card)] rounded-2xl shadow-sm border border-[var(--border)] p-4 sm:p-6 transition-colors">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Human tipsters — picks per day</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                     Maximum picks a <strong>human</strong> tipster can create per UTC day. Use <strong>0</strong> for unlimited.
                     AI tipsters use the separate <strong>AI tipsters — picks per day</strong> setting above.
@@ -1608,14 +1594,14 @@ export default function AdminSettingsPage() {
                       }
                     }}
                     disabled={savingCouponLimit}
-                    className="w-full px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
+                    className={buttonClassName({ fullWidth: true })}
                   >
                     {savingCouponLimit ? 'Saving...' : 'Save daily limit'}
                   </button>
                 </div>
 
                 {/* Acca Generator limits */}
-                <div className="bg-gradient-to-br from-emerald-50 to-teal-100 dark:from-emerald-900/20 dark:to-teal-800/20 rounded-2xl shadow-lg border-2 border-emerald-200 dark:border-emerald-800 p-4 sm:p-6 hover:shadow-xl transition-all sm:col-span-2">
+                <div className="rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] shadow-sm p-4 sm:p-6 sm:col-span-2">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">Acca Generator</h3>
                     <div className="flex items-center gap-3">
@@ -1722,11 +1708,8 @@ export default function AdminSettingsPage() {
                 </div>
 
                 {/* Platform Commission Rate Card */}
-                <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-2xl shadow-lg border-2 border-amber-200 dark:border-amber-800 p-4 sm:p-6 hover:shadow-xl transition-all">
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Platform Commission</h3>
-                    <span className="text-2xl">💰</span>
-                  </div>
+                <div className="rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] shadow-sm p-4 sm:p-6">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Platform Commission</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                     % deducted from tipster payouts when a winning pick is settled via escrow.
                   </p>
@@ -1788,7 +1771,7 @@ export default function AdminSettingsPage() {
                 </div>
 
                 {/* Currency Card */}
-                <div className="bg-[var(--card)] rounded-2xl shadow-sm border border-[var(--border)] p-4 sm:p-6 hover:shadow-xl transition-all">
+                <div className="bg-[var(--card)] rounded-2xl shadow-sm border border-[var(--border)] p-4 sm:p-6 transition-colors">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="p-3 bg-[var(--primary)] rounded-xl text-white">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1804,7 +1787,7 @@ export default function AdminSettingsPage() {
                 </div>
 
                 {/* Country Card */}
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 rounded-2xl shadow-lg border-2 border-emerald-200 dark:border-emerald-800 p-4 sm:p-6 hover:shadow-xl transition-all">
+                <div className="rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] shadow-sm p-4 sm:p-6">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="p-3 bg-emerald-500 rounded-xl text-white">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1820,7 +1803,7 @@ export default function AdminSettingsPage() {
                 </div>
 
                 {/* App Name Card */}
-                <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-2xl shadow-lg border-2 border-red-200 dark:border-red-800 p-4 sm:p-6 hover:shadow-xl transition-all">
+                <div className="rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] shadow-sm p-4 sm:p-6">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="p-3 bg-red-500 rounded-xl text-white">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1838,7 +1821,7 @@ export default function AdminSettingsPage() {
             </div>
 
             {/* Information Banner */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl border-2 border-blue-200 dark:border-blue-800 p-4 sm:p-6">
+            <div className="bg-[var(--card)] rounded-2xl border border-[var(--border)] p-4 sm:p-6">
               <div className="flex items-start gap-4">
                 <div className="p-2 bg-blue-500 rounded-lg text-white flex-shrink-0">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

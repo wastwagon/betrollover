@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { Button, buttonClassName } from '@/components/ui/Button';
 
 interface SportEvent {
   id: number;
@@ -366,7 +367,7 @@ export default function AdminSportsPage() {
             <button type="button"
               onClick={() => triggerSync(selectedSport)}
               disabled={syncing === selectedSport}
-              className="px-4 py-1.5 rounded-lg bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] disabled:opacity-50 transition-colors"
+              className={buttonClassName({ size: 'sm' })}
             >
               {syncing === selectedSport ? 'Syncing…' : `⚡ Sync ${selectedDef?.label ?? ''}`}
             </button>
@@ -435,7 +436,7 @@ export default function AdminSportsPage() {
                 <button type="button"
                   onClick={() => triggerSync(selectedSport)}
                   disabled={syncing === selectedSport}
-                  className="px-5 py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] disabled:opacity-50 transition-colors"
+                  className={buttonClassName({ size: 'sm' })}
                 >
                   {syncing === selectedSport ? 'Syncing…' : `⚡ Sync Now`}
                 </button>
@@ -553,7 +554,7 @@ export default function AdminSportsPage() {
                     type="button"
                     onClick={submitSettle}
                     disabled={settleSubmitting}
-                    className="px-4 py-2 rounded-lg bg-[var(--primary)] text-white font-medium hover:bg-[var(--primary-hover)] disabled:opacity-50"
+                    className={buttonClassName({ size: 'sm' })}
                   >
                     {settleSubmitting ? 'Settling…' : 'Settle'}
                   </button>

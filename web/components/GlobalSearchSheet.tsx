@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { BottomSheet } from '@/components/ios/BottomSheet';
 import { useT } from '@/context/LanguageContext';
 import { hapticLight } from '@/lib/haptic';
+import { Button } from '@/components/ui/Button';
 
 type GlobalSearchSheetProps = {
   open: boolean;
@@ -55,24 +56,25 @@ export function GlobalSearchSheet({ open, onClose }: GlobalSearchSheetProps) {
         </label>
 
         <div className="grid grid-cols-1 gap-2">
-          <button
+          <Button
             type="button"
             disabled={!trimmed}
             onClick={() => go(`/tipsters?search=${encodeURIComponent(trimmed)}`)}
-            className="touch-target w-full rounded-xl bg-[var(--primary)] px-4 py-3 text-sm font-semibold text-white disabled:opacity-40"
+            fullWidth
           >
             {t('nav.tipsters')}
             {trimmed ? `: “${trimmed}”` : ''}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="secondary"
             disabled={!trimmed}
             onClick={() => go(`/marketplace?tipster=${encodeURIComponent(trimmed)}`)}
-            className="touch-target w-full rounded-xl border border-[var(--separator)] bg-[var(--card)] px-4 py-3 text-sm font-semibold text-[var(--text)] disabled:opacity-40"
+            fullWidth
           >
             {t('nav.picks')}
             {trimmed ? `: “${trimmed}”` : ''}
-          </button>
+          </Button>
           <button
             type="button"
             onClick={() => go('/leaderboard')}

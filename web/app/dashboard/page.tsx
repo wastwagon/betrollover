@@ -23,6 +23,7 @@ import { IconStar } from '@/components/ios/icons';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
+import { buttonClassName } from '@/components/ui/Button';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
 interface FollowedTipster {
@@ -885,33 +886,28 @@ function DashboardContent() {
           {/* Multi-Sport Live Banner — hidden while public discovery is football-only */}
           {!isFootballOnlyDiscovery() ? (
           <section className="mb-6 sm:mb-8">
-            <div className="rounded-2xl sm:rounded-3xl overflow-hidden bg-gradient-to-br from-slate-800 via-teal-900/80 to-slate-800 border border-teal-500/30 shadow-lg">
+            <div className="rounded-[var(--radius)] overflow-hidden border border-[var(--separator)] bg-[var(--card)]">
               <div className="p-5 sm:p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
                   <div className="flex items-start gap-4 min-w-0 flex-1">
-                    <div className="shrink-0 w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-2xl">
-                      🌍
+                    <div className="shrink-0 w-12 h-12 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs font-semibold">
+                      Live
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-bold text-white text-base sm:text-lg">{t('dashboard.multisport_title')}</h3>
+                        <h3 className="font-display font-semibold text-[var(--text)] text-base sm:text-lg">{t('dashboard.multisport_title')}</h3>
                       </div>
-                      <p className="text-sm text-slate-300 leading-relaxed">
+                      <p className="text-sm text-[var(--text-muted)] leading-relaxed">
                         {t('dashboard.multisport_desc')}
                       </p>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2 sm:shrink-0 min-w-0">
-                    {[
-                      { icon: '⚽', label: 'Football' },
-                      { icon: '🏀', label: 'Basketball' },
-                      { icon: '🎾', label: 'Tennis' },
-                    ].map(({ icon, label }) => (
+                    {['Football', 'Basketball', 'Tennis'].map((label) => (
                       <div
                         key={label}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border bg-emerald-500/20 border-emerald-400/40 text-emerald-300"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-[var(--border)] bg-[var(--fill-secondary)] text-[var(--text)]"
                       >
-                        <span>{icon}</span>
                         <span>{label}</span>
                       </div>
                     ))}
@@ -1291,7 +1287,7 @@ function DashboardContent() {
                     <p className="text-[var(--text-muted)] mb-4 sm:mb-6">{t('my_purchases.no_purchases')}</p>
                     <Link
                       href="/marketplace"
-                      className="inline-flex items-center justify-center min-h-[44px] px-5 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors"
+                      className={buttonClassName()}
                     >
                       {t('my_purchases.browse_marketplace')}
                     </Link>
@@ -1345,21 +1341,21 @@ function StatCard({
 }) {
   const display = displayValue ?? (format === 'currency' ? value.toFixed(2) : value.toString());
   const variantStyles = {
-    teal: 'border-l-4 border-l-teal-500',
-    emerald: 'border-l-4 border-l-emerald-500',
-    amber: 'border-l-4 border-l-amber-500',
-    slate: 'border-l-4 border-l-slate-400',
+    teal: 'border-l-4 border-l-[var(--primary)]',
+    emerald: 'border-l-4 border-l-[var(--primary)]',
+    amber: 'border-l-4 border-l-[var(--accent)]',
+    slate: 'border-l-4 border-l-[var(--separator)]',
   };
   const iconBg = {
     teal: 'bg-[var(--fill-secondary)] text-[var(--primary)]',
-    emerald: 'bg-[var(--fill-secondary)] text-emerald-600',
-    amber: 'bg-[var(--fill-secondary)] text-amber-600',
+    emerald: 'bg-[var(--fill-secondary)] text-[var(--primary)]',
+    amber: 'bg-[var(--fill-secondary)] text-[var(--accent)]',
     slate: 'bg-[var(--fill-secondary)] text-[var(--text-muted)]',
   };
   const iconLabel = (icon ?? (title.trim().charAt(0) || '?')).slice(0, 2).toUpperCase();
   const baseCard = glass
     ? `rounded-[var(--radius)] p-4 sm:p-5 border border-[var(--separator)] bg-[var(--card)] transition-colors hover:border-[var(--primary)]/35 min-w-0 ${variantStyles[variant]}`
-    : `rounded-2xl border border-[var(--border)] p-5 bg-[var(--card)] hover:shadow-md transition-all duration-200 min-w-0 ${variantStyles[variant]}`;
+    : `rounded-[var(--radius)] border border-[var(--separator)] p-5 bg-[var(--card)] transition-colors hover:border-[var(--primary)]/35 min-w-0 ${variantStyles[variant]}`;
   const content = (
     <div className={baseCard}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3 min-w-0">

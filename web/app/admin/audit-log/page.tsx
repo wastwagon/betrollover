@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
+import { Button, buttonClassName } from '@/components/ui/Button';
 
 const API_URL = getApiUrl();
 
@@ -86,7 +87,7 @@ export default function AdminAuditLogPage() {
             <button
               type="button"
               onClick={load}
-              className="w-full sm:w-auto px-4 py-2 rounded-lg bg-[var(--primary)] text-white text-sm font-medium hover:opacity-90"
+              className={buttonClassName({ size: 'sm', className: 'w-full sm:w-auto' })}
             >
               Refresh
             </button>

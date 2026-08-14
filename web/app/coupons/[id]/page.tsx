@@ -27,6 +27,7 @@ import { PickSocialBar } from '@/components/pick-social/PickSocialBar';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import { Button, buttonClassName } from '@/components/ui/Button';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Pick {
@@ -263,10 +264,9 @@ function ReviewsSection({ couponId, isPurchased, isSettled }: { couponId: number
             className="mt-3 w-full min-w-0 px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-sm text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] resize-none"
           />
           {err && <p className="text-red-500 text-xs mt-1">{err}</p>}
-          <button type="button" onClick={submit} disabled={submitting}
-            className="mt-3 px-5 py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] disabled:opacity-50 transition-colors">
+          <Button type="button" onClick={submit} disabled={submitting} className="mt-3">
             {submitting ? t('pick_detail.submitting_review') : t('pick_detail.submit_review')}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -474,7 +474,7 @@ export default function CouponDetailPage() {
           <IconPicks className="w-14 h-14 mx-auto mb-4 text-[var(--text-muted)] opacity-50" aria-hidden />
           <h1 className="text-lg font-semibold text-[var(--text)] mb-3">{t('pick_detail.not_found_title')}</h1>
           <p className="text-[var(--text-muted)] mb-6">{t('pick_detail.not_found_desc')}</p>
-          <Link href="/marketplace" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] transition-colors">
+          <Link href="/marketplace" className={buttonClassName()}>
             {t('pick_detail.browse_picks_cta')}
           </Link>
         </main>
@@ -901,13 +901,13 @@ export default function CouponDetailPage() {
                       </p>
                       <Link
                         href={`/register?redirect=/marketplace`}
-                        className="block w-full py-3 rounded-xl bg-[var(--primary)] text-white font-bold text-sm text-center hover:bg-[var(--primary-hover)] transition-colors"
+                        className={buttonClassName({ fullWidth: true })}
                       >
                         {t('pick_detail.create_account')}
                       </Link>
                       <Link
                         href="/marketplace"
-                        className="block w-full py-2.5 rounded-xl border border-[var(--border)] text-[var(--text)] font-semibold text-sm text-center hover:bg-[var(--bg)] transition-colors"
+                        className={buttonClassName({ variant: 'secondary', fullWidth: true })}
                       >
                         {t('pick_detail.browse_marketplace')}
                       </Link>
@@ -970,18 +970,18 @@ export default function CouponDetailPage() {
                       {purchaseError && (
                         <p className="text-xs text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded-lg border border-red-200">{purchaseError}</p>
                       )}
-                      <button
+                      <Button
                         type="button"
                         onClick={handlePurchase}
                         disabled={!canPurchase || purchasing}
-                        className="w-full py-3 rounded-xl bg-[var(--primary)] text-white font-bold text-sm hover:bg-[var(--primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        fullWidth
                       >
                         {purchasing
                           ? t('pick_card.processing')
                           : coupon.price === 0
                             ? t('pick_detail.get_free_pick')
                             : t('marketplace.purchase_btn', { price: `GHS ${Number(coupon.price).toFixed(2)}` })}
-                      </button>
+                      </Button>
                       {Number(coupon.price) > 0 ? (
                         <p className="text-[11px] text-center text-emerald-800/90 dark:text-emerald-300/90 leading-snug">
                           {t('pick_detail.fee_refund_line')}
@@ -1098,13 +1098,14 @@ export default function CouponDetailPage() {
               )}
 
               {/* Share */}
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={handleShare}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-semibold text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                fullWidth
               >
                 {copied ? t('pick_detail.link_copied') : t('pick_detail.share_pick')}
-              </button>
+              </Button>
 
               {/* Disclaimer */}
               <div className="rounded-xl bg-[var(--card)] border border-[var(--border)] p-3">
@@ -1152,23 +1153,24 @@ export default function CouponDetailPage() {
             {!isAuthed ? (
               <Link
                 href={`/login?redirect=/coupons/${id}`}
-                className="shrink-0 px-4 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-bold"
+                className={buttonClassName({ size: 'sm', className: 'shrink-0' })}
               >
                 {t('nav.login')}
               </Link>
             ) : canPurchase ? (
-              <button
+              <Button
                 type="button"
                 onClick={handlePurchase}
                 disabled={purchasing}
-                className="shrink-0 px-4 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-bold disabled:opacity-60"
+                size="sm"
+                className="shrink-0"
               >
                 {purchasing
                   ? t('pick_card.processing')
                   : coupon.price === 0
                     ? t('pick_detail.get_free_pick')
                     : t('pick_card.purchase')}
-              </button>
+              </Button>
             ) : (
               <Link
                 href="/wallet"

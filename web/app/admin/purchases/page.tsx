@@ -68,7 +68,7 @@ export default function AdminPurchasesPage() {
   const pageSubtotalGross = purchases.reduce((sum, p) => sum + Number(p.purchasePrice), 0);
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
@@ -94,7 +94,7 @@ export default function AdminPurchasesPage() {
               setUserIdFilter(e.target.value);
               setPage(1);
             }}
-            className="w-full sm:flex-1 sm:min-w-[160px] px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full sm:flex-1 sm:min-w-[160px] px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
           />
           <input
             type="number"
@@ -104,13 +104,13 @@ export default function AdminPurchasesPage() {
               setAccumulatorIdFilter(e.target.value);
               setPage(1);
             }}
-            className="w-full sm:flex-1 sm:min-w-[180px] px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full sm:flex-1 sm:min-w-[180px] px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
           />
         </div>
 
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <div className="w-10 h-10 rounded-full border-4 border-red-500 border-t-transparent animate-spin" />
+            <div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" />
           </div>
         )}
 
@@ -118,21 +118,20 @@ export default function AdminPurchasesPage() {
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             {purchases.length === 0 ? (
               <div className="p-12 text-center">
-                <div className="text-6xl mb-4">🛍️</div>
                 <p className="text-gray-600 dark:text-gray-400 text-lg">No purchases found</p>
               </div>
             ) : (
               <>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gradient-to-r from-red-600 to-red-700">
+                    <thead className="bg-gray-50 dark:bg-gray-800">
                       <tr>
-                        <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">ID</th>
-                        <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider min-w-[10rem]">Buyer</th>
-                        <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider min-w-[10rem]">Tipster</th>
-                        <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Pick</th>
-                        <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Price</th>
-                        <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Date</th>
+                        <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
+                        <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[10rem]">Buyer</th>
+                        <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[10rem]">Tipster</th>
+                        <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pick</th>
+                        <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Price</th>
+                        <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">

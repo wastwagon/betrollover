@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useT } from '@/context/LanguageContext';
 import { bookmakerLabelForKey } from '@betrollover/shared-types';
 import { getApiUrl } from '@/lib/site-config';
+import { Button } from '@/components/ui/Button';
 
 export function BookingCodeCopyBlock({
   couponId,
@@ -132,15 +133,14 @@ export function BookingCodeCopyBlock({
               </div>
             ) : null}
           </div>
-          <button
+          <Button
             type="button"
             onClick={handleCopy}
-            className={`shrink-0 font-semibold rounded-md bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors ${
-              dense ? 'text-[10px] px-2 py-0.5' : 'text-xs px-2.5 py-1'
-            }`}
+            size="sm"
+            className={`shrink-0 ${dense ? '!min-h-0 !px-2 !py-0.5 !text-[10px]' : '!min-h-0 !text-xs'}`}
           >
             {copied ? t('pick_card.booking_code_copied') : t('pick_card.copy_booking_code')}
-          </button>
+          </Button>
         </div>
       </div>
       <p

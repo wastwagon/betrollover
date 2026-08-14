@@ -9,6 +9,7 @@ import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { useDebounce } from '@/hooks/useDebounce';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
+import { buttonClassName } from '@/components/ui/Button';
 
 interface Row {
   id: number;
@@ -360,21 +361,21 @@ export default function LiveScoresPage() {
         <div className="flex flex-wrap items-center gap-2 mb-6">
           <Link
             href="/marketplace"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            className={buttonClassName({ variant: 'secondary', size: 'sm' })}
           >
-            <span aria-hidden>🛒</span> {t('nav.marketplace')}
+            {t('nav.marketplace')}
           </Link>
           <Link
             href="/leaderboard"
-            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
+            className={buttonClassName({ variant: 'secondary', size: 'sm', className: 'w-full sm:w-auto' })}
           >
-            <span aria-hidden>🏆</span> {t('nav.leaderboard')}
+            {t('nav.leaderboard')}
           </Link>
           <Link
             href="/create-pick"
-            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--primary)]/50 bg-[var(--primary)]/10 text-sm font-medium text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors w-full sm:w-auto"
+            className={buttonClassName({ variant: 'secondary', size: 'sm', className: 'w-full sm:w-auto' })}
           >
-            <span aria-hidden>🎯</span> {t('nav.create_pick')}
+            {t('nav.create_pick')}
           </Link>
         </div>
 

@@ -11,6 +11,7 @@ import { AppFooter } from '@/components/AppFooter';
 import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { buttonClassName } from '@/components/ui/Button';
 import { getApiUrl } from '@/lib/site-config';
 import {
   CONTENT_SPORT_KEYS,
@@ -157,14 +158,13 @@ function NewsContent() {
               </div>
             ) : articles.length === 0 ? (
               <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-12 text-center">
-                <p className="text-4xl mb-3">📰</p>
-                <p className="font-semibold text-[var(--text)] mb-1">{t('news.no_articles')}</p>
+                <p className="font-display text-lg font-semibold text-[var(--text)] mb-1">{t('news.no_articles')}</p>
                 <p className="text-[var(--text-muted)] text-sm max-w-md mx-auto mb-4">
                   {activeSport ? t('news.no_articles_filtered') : t('news.no_articles_default')}
                 </p>
                 <Link
                   href={activeSport ? `/marketplace?sport=${activeSport}` : '/marketplace'}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors"
+                  className={buttonClassName({ size: 'sm', className: 'inline-flex' })}
                 >
                   {activeSport
                     ? t('news.browse_sport_picks', { sport: getContentSportLabel(t, activeSport) })
@@ -182,14 +182,14 @@ function NewsContent() {
                     <Link
                       key={article.id}
                       href={`/news/${article.slug}`}
-                      className="flex flex-col sm:flex-row gap-4 p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--primary)]/30 hover:shadow-md transition-all group"
+                      className="flex flex-col sm:flex-row gap-4 p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--primary)]/30 transition-colors group"
                     >
                       {article.imageUrl && (
                         <div className="sm:w-44 h-32 sm:h-auto flex-shrink-0 rounded-xl overflow-hidden bg-slate-100">
                           <Image
                             src={article.imageUrl} alt={article.title}
                             width={176} height={120}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-cover"
                             unoptimized
                           />
                         </div>
@@ -226,20 +226,20 @@ function NewsContent() {
             <div className="lg:sticky lg:top-24 space-y-4">
               <AdSlot zoneSlug="news-sidebar" />
               <div className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
-                <h3 className="text-sm font-semibold text-[var(--text)] mb-3">📚 {t('news.sidebar_guides_title')}</h3>
+                <h3 className="text-sm font-semibold text-[var(--text)] mb-3">{t('news.sidebar_guides_title')}</h3>
                 <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-3">
                   {t('news.sidebar_guides_desc')}
                 </p>
-                <Link href="/resources" className="block w-full text-center px-4 py-2 rounded-xl bg-[var(--primary-light)] text-[var(--primary)] text-sm font-semibold hover:bg-[var(--primary)] hover:text-white transition-colors">
+                <Link href="/resources" className={buttonClassName({ variant: 'secondary', size: 'sm', fullWidth: true })}>
                   {t('news.sidebar_browse_guides')}
                 </Link>
               </div>
               <div className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
-                <h3 className="text-sm font-semibold text-[var(--text)] mb-3">🎯 {t('news.sidebar_top_tipsters')}</h3>
+                <h3 className="text-sm font-semibold text-[var(--text)] mb-3">{t('news.sidebar_top_tipsters')}</h3>
                 <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-3">
                   {t('news.sidebar_top_tipsters_desc')}
                 </p>
-                <Link href="/tipsters" className="block w-full text-center px-4 py-2 rounded-xl bg-[var(--primary-light)] text-[var(--primary)] text-sm font-semibold hover:bg-[var(--primary)] hover:text-white transition-colors">
+                <Link href="/tipsters" className={buttonClassName({ variant: 'secondary', size: 'sm', fullWidth: true })}>
                   {t('news.sidebar_browse_tipsters')}
                 </Link>
               </div>

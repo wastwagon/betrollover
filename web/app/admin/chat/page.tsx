@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
+import { Button, buttonClassName } from '@/components/ui/Button';
 
 function api(path: string) {
   return `${getApiUrl()}/chat${path.startsWith('/') ? path : `/${path}`}`;
@@ -179,10 +180,10 @@ export default function AdminChatPage() {
     showToast('Room updated');
   };
 
-  const TABS: { id: Tab; label: string; icon: string }[] = [
-    { id: 'flagged', label: 'Flagged Messages', icon: '🚩' },
-    { id: 'bans', label: 'Active Bans', icon: '🔨' },
-    { id: 'rooms', label: 'Room Management', icon: '🏠' },
+  const TABS: { id: Tab; label: string }[] = [
+    { id: 'flagged', label: 'Flagged Messages' },
+    { id: 'bans', label: 'Active Bans' },
+    { id: 'rooms', label: 'Room Management' },
   ];
 
   return (
@@ -210,11 +211,11 @@ export default function AdminChatPage() {
               onClick={() => setTab(t.id)}
               className={`flex-1 min-w-[min(100%,9rem)] sm:flex-none px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors text-center ${
                 tab === t.id
-                  ? 'border-indigo-500 text-indigo-400'
+                  ? 'border-[var(--primary)] text-[var(--primary)]'
                   : 'border-transparent text-gray-400 hover:text-white'
               }`}
             >
-              {t.icon} {t.label}
+              {t.label}
             </button>
           ))}
         </div>
@@ -228,7 +229,6 @@ export default function AdminChatPage() {
           <div className="space-y-3">
             {flagged.length === 0 ? (
               <div className="text-center py-12 bg-gray-900 rounded-xl">
-                <p className="text-4xl mb-2">✅</p>
                 <p className="text-gray-400">No flagged messages — community is clean!</p>
               </div>
             ) : (
@@ -283,14 +283,13 @@ export default function AdminChatPage() {
               <button
                 type="button"
                 onClick={() => setBanModal({ userId: 0, username: '' })}
-                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-lg text-center"
+                className={buttonClassName({ size: 'sm', className: 'w-full sm:w-auto' })}
               >
                 + Issue Ban
               </button>
             </div>
             {bans.length === 0 ? (
               <div className="text-center py-12 bg-gray-900 rounded-xl">
-                <p className="text-4xl mb-2">🕊️</p>
                 <p className="text-gray-400">No active bans</p>
               </div>
             ) : (
@@ -323,7 +322,7 @@ export default function AdminChatPage() {
                         <td className="py-3">
                           <button type="button"
                             onClick={() => liftBan(ban.user_id, ban.username)}
-                            className="text-indigo-400 hover:text-indigo-300 text-xs underline"
+                            className="text-[var(--primary)] hover:opacity-80 text-xs underline"
                           >
                             Lift ban
                           </button>
@@ -397,10 +396,10 @@ export default function AdminChatPage() {
                     key={t}
                     onClick={() => setBanType(t)}
                     className={`flex-1 py-2 rounded-lg text-sm font-medium border ${
-                      banType === t ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-gray-700 text-gray-400'
+                      banType === t ? 'bg-[var(--primary)] border-[var(--primary)] text-white' : 'border-gray-700 text-gray-400'
                     }`}
                   >
-                    {t === 'mute' ? '🔇 Mute' : '🔨 Ban'}
+                    {t === 'mute' ? 'Mute' : 'Ban'}
                   </button>
                 ))}
               </div>
@@ -492,7 +491,7 @@ export default function AdminChatPage() {
             <div className="flex gap-3">
               <button type="button"
                 onClick={saveRoom}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-medium text-sm"
+                className={buttonClassName({ className: 'flex-1' })}
               >
                 Save Changes
               </button>

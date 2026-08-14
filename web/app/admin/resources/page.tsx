@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 
 import { getApiUrl } from '@/lib/site-config';
+import { buttonClassName } from '@/components/ui/Button';
 
 interface ResourceCategory {
   id: number;
@@ -35,7 +36,7 @@ export default function AdminResourcesPage() {
   }, [router]);
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:justify-between sm:items-start">
@@ -45,7 +46,7 @@ export default function AdminResourcesPage() {
           </div>
           <Link
             href="/admin/resources/categories/create"
-            className="w-full sm:w-auto text-center px-4 py-2 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)]"
+            className={buttonClassName({ className: 'w-full sm:w-auto' })}
           >
             + Create Category
           </Link>

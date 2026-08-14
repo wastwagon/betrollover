@@ -5,6 +5,7 @@ import { LeagueInsightsPanel } from '@/components/LeagueInsightsPanel';
 import type { Fixture, FixtureOdd } from '../types';
 import { groupOddsByMarket, MARKET_ORDER, filterCorrectScoreOdds } from '../odds-utils';
 import { formatMarketValue, formatFixtureDateTime } from '../utils/format';
+import { Button } from '@/components/ui/Button';
 
 interface FootballFixtureCardProps {
   fixture: Fixture;
@@ -66,26 +67,30 @@ export function FootballFixtureCard({
             </div>
           </div>
           {!hasOdds && !fixture.oddsError && (
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
+              className="shrink-0"
               onClick={(e) => {
                 e.stopPropagation();
                 onLoadOdds(fixture);
               }}
               disabled={isLoadingOdds}
-              className="shrink-0 px-3 py-1.5 text-sm font-medium rounded-lg bg-[var(--primary-light)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white transition-colors disabled:opacity-50"
             >
               {isLoadingOdds ? 'Loading...' : 'Load Odds'}
-            </button>
+            </Button>
           )}
           {hasOdds && !fixture.oddsError && (
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
+              className="shrink-0"
               onClick={toggleCollapsed}
-              className="shrink-0 px-3 py-1.5 text-sm font-medium rounded-lg bg-[var(--primary-light)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white transition-colors"
             >
               {isCollapsed ? 'Show Odds' : 'Hide Odds'}
-            </button>
+            </Button>
           )}
           {fixture.oddsError && (
             <div className="min-w-0 max-w-full sm:max-w-xs px-3 py-1.5 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg break-words">

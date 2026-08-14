@@ -11,6 +11,7 @@ import { LeagueInsightsPanel } from '@/components/LeagueInsightsPanel';
 import { AdSlot } from '@/components/AdSlot';
 import { getApiUrl } from '@/lib/site-config';
 import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
+import { buttonClassName } from '@/components/ui/Button';
 
 type LeagueRow = { apiId: number; name: string; country: string | null; season: number | null };
 
@@ -143,7 +144,7 @@ export default function LeagueTablesPage() {
           <div className="mb-4 space-y-3">
             <Link
               href="/login?redirect=/league-tables"
-              className="sm:hidden flex items-center justify-center w-full min-h-[48px] rounded-xl bg-[var(--primary)] text-white font-bold text-sm shadow-md active:scale-[0.99] touch-manipulation"
+              className={buttonClassName({ fullWidth: true, className: 'sm:hidden' })}
             >
               {t('league_stats.sign_in_cta')}
             </Link>

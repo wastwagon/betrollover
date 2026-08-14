@@ -479,17 +479,17 @@ export default function AdminAnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
+      <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <AdminSidebar />
         <main className="admin-main-sibling section-ux-admin-main min-w-0 flex items-center justify-center">
-          <div className="w-10 h-10 rounded-full border-4 border-red-500 border-t-transparent animate-spin" />
+          <div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" />
         </main>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -500,7 +500,7 @@ export default function AdminAnalyticsPage() {
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d')}
-            className="w-full sm:w-auto shrink-0 px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full sm:w-auto shrink-0 px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
           >
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>
@@ -627,7 +627,7 @@ export default function AdminAnalyticsPage() {
         {/* Community Chat Stats */}
         {chatStats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-indigo-600 rounded-2xl p-5 text-white">
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-5 text-gray-900 dark:text-white">
               <p className="text-xs font-semibold opacity-90 uppercase tracking-wider mb-1">Messages Today</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{chatStats.todayMessages}</p>
               <p className="text-xs opacity-80 mt-1">Across all rooms</p>
@@ -644,8 +644,8 @@ export default function AdminAnalyticsPage() {
             </div>
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-5 flex flex-col justify-between">
               <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Chat Rooms</p>
-              <p className="text-2xl font-bold text-indigo-600">{chatStats.roomBreakdown.length}</p>
-              <Link href="/admin/chat" className="text-xs text-indigo-600 hover:underline mt-auto">Manage chat →</Link>
+              <p className="text-2xl font-bold text-[var(--primary)]">{chatStats.roomBreakdown.length}</p>
+              <Link href="/admin/chat" className="text-xs text-[var(--primary)] hover:underline mt-auto">Manage chat →</Link>
             </div>
           </div>
         )}
@@ -816,7 +816,7 @@ export default function AdminAnalyticsPage() {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl p-5 text-white shadow-lg">
+              <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-5 text-gray-900 dark:text-white">
                 <p className="text-xs font-semibold opacity-90 uppercase tracking-wider mb-1">Deposits (completed)</p>
                 <p className="text-2xl font-bold">GHS {walletAnalytics.deposits.completedGhs.toFixed(2)}</p>
                 <p className="text-xs opacity-80 mt-1">{walletAnalytics.deposits.completedCount} payments</p>
@@ -929,7 +929,7 @@ export default function AdminAnalyticsPage() {
           <div className="space-y-6">
             {/* Commission revenue summary */}
             {commissionRevenue && (
-              <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/10 border border-amber-200 dark:border-amber-800/40 rounded-2xl p-4 sm:p-6">
+              <div className="rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] p-4 sm:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-4">
                   <div className="min-w-0">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -1061,7 +1061,7 @@ export default function AdminAnalyticsPage() {
           <div className="space-y-6">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="w-10 h-10 rounded-full border-4 border-red-500 border-t-transparent animate-spin" />
+                <div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" />
               </div>
             ) : userBehavior ? (
               <>
@@ -1111,7 +1111,6 @@ export default function AdminAnalyticsPage() {
                     </div>
                   ) : (
                     <div className="p-12 text-center">
-                      <div className="text-6xl mb-4">👥</div>
                       <p className="text-gray-600 dark:text-gray-400 text-lg">No user purchase data available</p>
                     </div>
                   )}
@@ -1119,7 +1118,6 @@ export default function AdminAnalyticsPage() {
               </>
             ) : (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
-                <div className="text-6xl mb-4">👥</div>
                 <p className="text-gray-600 dark:text-gray-400 text-lg mb-2">Unable to load user analytics</p>
                 <p className="text-sm text-gray-500 dark:text-gray-500">Please try refreshing the page</p>
               </div>
@@ -1132,7 +1130,6 @@ export default function AdminAnalyticsPage() {
           <div className="space-y-6">
             {!pickPerformance ? (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
-                <div className="text-6xl mb-4">📊</div>
                 <p className="text-gray-600 dark:text-gray-400 text-lg">Unable to load pick performance data</p>
               </div>
             ) : (
@@ -1370,7 +1367,6 @@ export default function AdminAnalyticsPage() {
 
             {!aiMetrics ? (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
-                <div className="text-6xl mb-4">🤖</div>
                 <p className="text-gray-600 dark:text-gray-400 text-lg mb-2">Unable to load AI dashboard metrics</p>
                 <p className="text-sm text-gray-500 dark:text-gray-500">Please try refreshing the page</p>
               </div>
@@ -1458,7 +1454,6 @@ export default function AdminAnalyticsPage() {
           <div className="space-y-8">
             {sportBreakdown.length === 0 ? (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
-                <div className="text-5xl mb-4">🌍</div>
                 <p className="text-gray-500 text-lg">No sport data yet — create picks across different sports to see breakdown here.</p>
               </div>
             ) : (
@@ -1694,7 +1689,6 @@ export default function AdminAnalyticsPage() {
           <div className="space-y-6">
             {!engagement ? (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
-                <div className="text-6xl mb-4">🔔</div>
                 <p className="text-gray-600 dark:text-gray-400 text-lg">Unable to load engagement data</p>
               </div>
             ) : (
@@ -1774,7 +1768,7 @@ export default function AdminAnalyticsPage() {
                     </div>
                     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
                       <p className="text-xs text-gray-500 uppercase tracking-wider">Published</p>
-                      <p className="text-2xl font-bold text-indigo-600 mt-1">{accaUsage.allTime.published}</p>
+                      <p className="text-2xl font-bold text-[var(--primary)] mt-1">{accaUsage.allTime.published}</p>
                     </div>
                   </div>
                 </div>
@@ -1796,7 +1790,7 @@ export default function AdminAnalyticsPage() {
                     </div>
                     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
                       <p className="text-xs text-gray-500 uppercase tracking-wider">Published</p>
-                      <p className="text-2xl font-bold text-indigo-600 mt-1">{accaUsage.period.published}</p>
+                      <p className="text-2xl font-bold text-[var(--primary)] mt-1">{accaUsage.period.published}</p>
                       <p className="text-xs text-gray-500 mt-1">{accaUsage.period.publishRate}% publish rate</p>
                     </div>
                     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
@@ -1840,7 +1834,7 @@ export default function AdminAnalyticsPage() {
                       </div>
                       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
                         <p className="text-xs text-gray-500 uppercase tracking-wider">Power users (5+ gens)</p>
-                        <p className="text-2xl font-bold text-indigo-600 mt-1">{accaUsage.retention.powerUsers}</p>
+                        <p className="text-2xl font-bold text-[var(--primary)] mt-1">{accaUsage.retention.powerUsers}</p>
                         <p className="text-xs text-gray-500 mt-1">
                           {accaUsage.retention.powerUserRate}% · {accaUsage.retention.returningLight} light returners
                         </p>
@@ -1868,7 +1862,7 @@ export default function AdminAnalyticsPage() {
                       </div>
                       <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3">
                         <p className="text-xs text-gray-500">Published</p>
-                        <p className="text-xl font-bold text-indigo-600">{accaUsage.funnel.published}</p>
+                        <p className="text-xl font-bold text-[var(--primary)]">{accaUsage.funnel.published}</p>
                         <p className="text-xs text-emerald-600">{accaUsage.funnel.generateToPublishRate}% of gens</p>
                       </div>
                       <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3">
@@ -2028,7 +2022,7 @@ export default function AdminAnalyticsPage() {
                                 ) : null}
                               </td>
                               <td className="py-2 px-2 text-right tabular-nums font-semibold">{u.generations}</td>
-                              <td className="py-2 px-2 text-right tabular-nums text-indigo-600">{u.published}</td>
+                              <td className="py-2 px-2 text-right tabular-nums text-[var(--primary)]">{u.published}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -2063,7 +2057,7 @@ export default function AdminAnalyticsPage() {
                                 {r.combinedOdds != null ? r.combinedOdds.toFixed(2) : '—'}
                                 <span className="text-gray-400 text-xs ml-1">· {r.legs}L</span>
                                 {r.publishedTicketId ? (
-                                  <span className="ml-1 text-[10px] text-indigo-600">pub</span>
+                                  <span className="ml-1 text-[10px] text-[var(--primary)]">pub</span>
                                 ) : null}
                               </td>
                             </tr>

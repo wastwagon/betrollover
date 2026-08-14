@@ -22,6 +22,7 @@ import {
 } from '@betrollover/shared-types';
 import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import { Button, buttonClassName } from '@/components/ui/Button';
 
 type Period = 'all_time' | 'monthly' | 'weekly';
 type SportFilter = 'all' | 'football' | 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football';
@@ -188,15 +189,15 @@ export default function LeaderboardPage() {
         <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 mb-6 min-w-0 max-w-full">
           <Link
             href="/tipsters"
-            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
+            className={buttonClassName({ variant: 'secondary', size: 'sm', className: 'w-full sm:w-auto' })}
           >
-            <span aria-hidden>👤</span> {t('nav.tipsters')}
+            {t('nav.tipsters')}
           </Link>
           <Link
             href="/create-pick"
-            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--primary)]/50 bg-[var(--primary)]/10 text-sm font-medium text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors w-full sm:w-auto"
+            className={buttonClassName({ variant: 'secondary', size: 'sm', className: 'w-full sm:w-auto' })}
           >
-            <span aria-hidden>🎯</span> {t('nav.create_pick')}
+            {t('nav.create_pick')}
           </Link>
         </div>
 
@@ -283,20 +284,19 @@ export default function LeaderboardPage() {
           <LoadingSkeleton count={10} variant="list" />
         ) : entries.length === 0 ? (
           <div className="text-center py-16 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
-            <p className="text-4xl mb-3">🏆</p>
-            <p className="text-[var(--text)] font-semibold">{t('common.no_results')}</p>
+            <p className="font-display text-[var(--text)] font-semibold">{t('common.no_results')}</p>
             <p className="text-[var(--text-muted)] text-sm mt-1 max-w-md mx-auto">
               {loggedIn ? t('leaderboard.empty_logged_sub') : t('home.join_subtitle')}
             </p>
             {loggedIn ? (
               <Link
                 href="/tipsters"
-                className="mt-4 inline-block px-6 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold text-sm hover:bg-[var(--primary-hover)] transition-colors"
+                className={buttonClassName({ className: 'mt-4' })}
               >
                 {t('leaderboard.empty_logged_cta')} →
               </Link>
             ) : (
-              <Link href="/register" className="mt-4 inline-block px-6 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold text-sm hover:bg-[var(--primary-hover)] transition-colors">
+              <Link href="/register" className={buttonClassName({ className: 'mt-4' })}>
                 {t('nav.register')} →
               </Link>
             )}
@@ -346,9 +346,9 @@ export default function LeaderboardPage() {
               return (
                 <div
                   key={entry.id}
-                  className={`flex flex-col rounded-2xl border transition-all hover:border-[var(--primary)]/30 hover:shadow-sm min-w-0 w-full max-w-full overflow-x-hidden ${
+                  className={`flex flex-col rounded-2xl border transition-colors hover:border-[var(--primary)]/30 min-w-0 w-full max-w-full overflow-x-hidden ${
                     rank <= 3
-                      ? 'bg-gradient-to-r from-amber-50/60 to-white border-amber-200/60'
+                      ? 'bg-[var(--card)] border-[var(--accent)]/35'
                       : 'bg-[var(--card)] border-[var(--border)]'
                   }`}
                 >
@@ -464,17 +464,18 @@ export default function LeaderboardPage() {
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/tipsters/${entry.username}`}
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary-light)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white transition-colors"
+                        className={buttonClassName({ size: 'sm', variant: 'secondary', className: 'bg-[var(--primary-light)] text-[var(--primary)] border-transparent hover:bg-[var(--primary)] hover:text-white' })}
                       >
                         {t('common.view')}
                       </Link>
-                      <button
+                      <Button
                         type="button"
+                        variant="secondary"
+                        size="sm"
                         onClick={() => handleFollow(entry.username)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
                       >
                         {t('tipster.follow')}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -500,17 +501,18 @@ export default function LeaderboardPage() {
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/tipsters/${entry.username}`}
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary-light)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white transition-colors"
+                        className={buttonClassName({ size: 'sm', variant: 'secondary', className: 'bg-[var(--primary-light)] text-[var(--primary)] border-transparent hover:bg-[var(--primary)] hover:text-white' })}
                       >
                         {t('common.view')}
                       </Link>
-                      <button
+                      <Button
                         type="button"
+                        variant="secondary"
+                        size="sm"
                         onClick={() => handleFollow(entry.username)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
                       >
                         {t('tipster.follow')}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>

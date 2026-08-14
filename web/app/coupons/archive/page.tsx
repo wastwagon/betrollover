@@ -15,6 +15,7 @@ import { NavBar } from '@/components/ios/NavBar';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { Button } from '@/components/ui/Button';
 
 interface Pick {
   id?: number;
@@ -381,14 +382,15 @@ export default function CouponsArchivePage() {
                   className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--text)]"
                 />
               </label>
-              <button
+              <Button
                 type="button"
                 onClick={applyCustomRange}
                 disabled={!draftFrom || !draftTo || draftFrom > draftTo}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-[var(--primary)] text-white disabled:opacity-50 disabled:cursor-not-allowed sm:mb-0"
+                size="sm"
+                className="sm:mb-0"
               >
                 {t('picks.archive.apply_range')}
-              </button>
+              </Button>
             </div>
           )}
           <p className="text-xs text-[var(--text-muted)] leading-relaxed max-w-3xl">{t('picks.archive.range_hint')}</p>

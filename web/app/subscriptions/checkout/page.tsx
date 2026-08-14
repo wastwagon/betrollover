@@ -12,6 +12,7 @@ import { getApiErrorMessage } from '@/lib/api-error-message';
 import { useT } from '@/context/LanguageContext';
 import { NavBar } from '@/components/ios/NavBar';
 import { hapticSuccess } from '@/lib/haptic';
+import { Button } from '@/components/ui/Button';
 
 interface PackageInfo {
   id: number;
@@ -163,7 +164,7 @@ function CheckoutContent() {
         )}
 
         {pkg && (
-          <div className="glass-card rounded-2xl p-6 border border-[var(--border)] space-y-4 min-w-0">
+          <div className="rounded-[var(--radius)] p-6 border border-[var(--separator)] bg-[var(--card)] space-y-4 min-w-0">
             <div className="min-w-0">
               <h2 className="text-lg font-semibold text-[var(--text)] break-words">{pkg.name}</h2>
               <p className="text-2xl font-bold text-[var(--primary)] mt-2 tabular-nums">
@@ -189,14 +190,14 @@ function CheckoutContent() {
                 {t('subscriptions.checkout_auto_processing')}
               </p>
             )}
-            <button
+            <Button
               type="button"
               onClick={() => void pay()}
               disabled={paying || !canPay}
-              className="w-full py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
+              fullWidth
             >
               {paying ? t('subscriptions.checkout_processing') : t('subscriptions.checkout_pay_cta')}
-            </button>
+            </Button>
           </div>
         )}
       </div>

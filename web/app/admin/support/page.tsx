@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { buttonClassName } from '@/components/ui/Button';
 
 interface Ticket {
   id: number;
@@ -125,7 +126,6 @@ export default function AdminSupportPage() {
               [1,2,3].map((i) => <div key={i} className="h-24 rounded-2xl bg-gray-200 dark:bg-gray-700 animate-pulse" />)
             ) : tickets.length === 0 ? (
               <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-8 text-center">
-                <p className="text-3xl mb-2">📭</p>
                 <p className="text-gray-500">No {statusFilter.replace('_',' ')} tickets</p>
               </div>
             ) : tickets.map((t) => (
@@ -164,7 +164,7 @@ export default function AdminSupportPage() {
                 <label className="block text-xs text-gray-400 uppercase tracking-wider mb-1">Your Response</label>
                 <textarea rows={4} value={response} onChange={(e) => setResponse(e.target.value)}
                   placeholder="Type your response to the user…"
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] resize-none"
                 />
               </div>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -175,14 +175,13 @@ export default function AdminSupportPage() {
                   <option value="closed">Closed</option>
                 </select>
                 <button type="button" onClick={resolve} disabled={saving || !response.trim()}
-                  className="w-full sm:flex-1 py-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white text-sm font-semibold transition-colors">
+                  className={buttonClassName({ className: 'w-full sm:flex-1' })}>
                   {saving ? 'Sending…' : 'Send & Update'}
                 </button>
               </div>
             </div>
           ) : (
             <div className="bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 p-10 text-center self-start">
-              <p className="text-3xl mb-2">👈</p>
               <p className="text-gray-400 text-sm">Select a ticket to respond</p>
             </div>
           )}

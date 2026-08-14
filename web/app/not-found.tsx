@@ -13,12 +13,12 @@ export default async function NotFound() {
   const t = buildT(locale);
 
   const QUICK_LINKS = [
-    { href: '/marketplace', icon: '🛒', labelKey: 'error.quick_marketplace', descKey: 'error.quick_marketplace_desc' },
-    { href: '/tipsters', icon: '👥', labelKey: 'error.quick_tipsters', descKey: 'error.quick_tipsters_desc' },
-    { href: '/leaderboard', icon: '🏆', labelKey: 'error.quick_leaderboard', descKey: 'error.quick_leaderboard_desc' },
-    { href: '/news', icon: '📰', labelKey: 'error.quick_news', descKey: 'error.quick_news_desc' },
-    { href: '/discover', icon: '🔍', labelKey: 'error.quick_discover', descKey: 'error.quick_discover_desc' },
-    { href: '/create-pick', icon: '✏️', labelKey: 'error.quick_create', descKey: 'error.quick_create_desc' },
+    { href: '/marketplace', labelKey: 'error.quick_marketplace', descKey: 'error.quick_marketplace_desc' },
+    { href: '/tipsters', labelKey: 'error.quick_tipsters', descKey: 'error.quick_tipsters_desc' },
+    { href: '/leaderboard', labelKey: 'error.quick_leaderboard', descKey: 'error.quick_leaderboard_desc' },
+    { href: '/news', labelKey: 'error.quick_news', descKey: 'error.quick_news_desc' },
+    { href: '/discover', labelKey: 'error.quick_discover', descKey: 'error.quick_discover_desc' },
+    { href: '/create-pick', labelKey: 'error.quick_create', descKey: 'error.quick_create_desc' },
   ];
 
   return (
@@ -27,11 +27,8 @@ export default async function NotFound() {
 
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-16 w-full min-w-0">
         <div className="relative mb-6 select-none">
-          <span className="text-[9rem] font-black text-[var(--border)] leading-none tracking-tighter">
+          <span className="font-display text-[7rem] sm:text-[9rem] font-black text-[var(--border)] leading-none tracking-tighter">
             404
-          </span>
-          <span className="absolute inset-0 flex items-center justify-center text-5xl">
-            ⚽
           </span>
         </div>
 
@@ -43,13 +40,12 @@ export default async function NotFound() {
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 w-full max-w-lg mb-10 min-w-0">
-          {QUICK_LINKS.map(({ href, icon, labelKey, descKey }) => (
+          {QUICK_LINKS.map(({ href, labelKey, descKey }) => (
             <Link
               key={href}
               href={href}
-              className="flex flex-col items-center gap-1.5 p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--primary)] hover:shadow-md transition-all text-center group"
+              className="flex flex-col items-center gap-1.5 p-4 rounded-[var(--radius)] bg-[var(--card)] border border-[var(--separator)] hover:border-[var(--primary)] transition-colors text-center"
             >
-              <span className="text-2xl group-hover:scale-110 transition-transform">{icon}</span>
               <span className="text-sm font-semibold text-[var(--text)]">{t(labelKey)}</span>
               <span className="text-[11px] text-[var(--text-muted)]">{t(descKey)}</span>
             </Link>
@@ -58,7 +54,7 @@ export default async function NotFound() {
 
         <Link
           href="/"
-          className="px-8 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors text-sm"
+          className="inline-flex items-center justify-center gap-2 font-semibold transition-colors duration-200 touch-manipulation bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-sm px-4 py-2.5 text-sm rounded-[var(--radius)] min-h-[44px]"
         >
           {t('error.back_home')}
         </Link>

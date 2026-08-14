@@ -8,6 +8,7 @@ import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
+import { Button, buttonClassName } from '@/components/ui/Button';
 
 const API_URL = getApiUrl();
 
@@ -207,7 +208,7 @@ export default function AdminUsersPage() {
   const totalPages = Math.ceil(total / 20);
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
@@ -216,7 +217,7 @@ export default function AdminUsersPage() {
         </div>
 
         {tipsterRequests.length > 0 && (
-          <div className="mb-6 p-6 rounded-2xl bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-l-4 border-red-500 shadow-lg">
+          <div className="mb-6 p-6 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] shadow-sm">
             <h2 className="font-semibold text-gray-900 dark:text-white mb-4 text-lg flex items-center gap-2">
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-500 text-white text-sm font-bold">
                 {tipsterRequests.length}
@@ -234,14 +235,14 @@ export default function AdminUsersPage() {
                     <button type="button"
                       onClick={() => approveTipster(r.userId)}
                       disabled={updating === r.userId}
-                      className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 text-white text-sm font-medium hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 transition-all shadow-md hover:shadow-lg"
+                      className={buttonClassName({ size: 'sm' })}
                     >
                       Approve
                     </button>
                     <button type="button"
                       onClick={() => rejectTipster(r.userId)}
                       disabled={updating === r.userId}
-                      className="px-4 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 text-white text-sm font-medium hover:from-amber-700 hover:to-amber-800 disabled:opacity-50 transition-all shadow-md hover:shadow-lg"
+                      className="px-4 py-2 rounded-lg bg-[var(--accent)] text-white text-sm font-medium hover:brightness-95 disabled:opacity-50 transition-colors"
                     >
                       Reject
                     </button>
@@ -273,12 +274,12 @@ export default function AdminUsersPage() {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             onKeyDown={(e) => e.key === 'Enter' && load()}
-            className="w-full min-w-0 sm:flex-1 sm:max-w-md px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-transparent shadow-sm"
+            className="w-full min-w-0 sm:flex-1 sm:max-w-md px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent shadow-sm"
           />
           <select
             value={roleFilter}
             onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
-            className="w-full sm:w-auto min-w-0 px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent shadow-sm"
+            className="w-full sm:w-auto min-w-0 px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent shadow-sm"
           >
             <option value="">All roles</option>
             <option value="user">User</option>
@@ -305,7 +306,7 @@ export default function AdminUsersPage() {
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
+                <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">User</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Role</th>
@@ -369,7 +370,7 @@ export default function AdminUsersPage() {
                           value={u.role}
                           onChange={(e) => updateUser(u.id, { role: e.target.value })}
                           disabled={updating === u.id || u.role === 'admin'}
-                          className="text-sm rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent disabled:opacity-50"
+                          className="text-sm rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent disabled:opacity-50"
                         >
                           <option value="user">User</option>
                           <option value="tipster">Tipster</option>

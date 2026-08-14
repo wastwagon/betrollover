@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
+import { Button, buttonClassName } from '@/components/ui/Button';
 
 interface Wallet {
   id: number;
@@ -106,7 +107,7 @@ export default function AdminWalletPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
@@ -119,7 +120,7 @@ export default function AdminWalletPage() {
             onClick={() => setTab('wallets')}
             className={`flex-1 min-w-[140px] sm:flex-none px-6 py-3 rounded-xl font-semibold transition-all ${
               tab === 'wallets' 
-                ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg' 
+                ? 'bg-[var(--primary)] text-white shadow-sm' 
                 : 'bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
@@ -129,7 +130,7 @@ export default function AdminWalletPage() {
             onClick={() => setTab('transactions')}
             className={`flex-1 min-w-[140px] sm:flex-none px-6 py-3 rounded-xl font-semibold transition-all ${
               tab === 'transactions' 
-                ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg' 
+                ? 'bg-[var(--primary)] text-white shadow-sm' 
                 : 'bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
@@ -139,7 +140,7 @@ export default function AdminWalletPage() {
 
         {tab === 'wallets' && (
           <>
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-xl p-4 sm:p-6 mb-6 text-white">
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-4 sm:p-6 text-gray-900 dark:text-white mb-6">
               <p className="text-sm opacity-90 mb-1">Total Platform Balance</p>
               <p className="text-3xl font-bold">GHS {totalBalance.toFixed(2)}</p>
             </div>
@@ -155,7 +156,7 @@ export default function AdminWalletPage() {
                       step="0.01"
                       value={adjustAmount}
                       onChange={(e) => setAdjustAmount(e.target.value)}
-                      className="w-full px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                      className="w-full px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                       placeholder="e.g., 100 or -50"
                     />
                   </div>
@@ -165,14 +166,14 @@ export default function AdminWalletPage() {
                       type="text"
                       value={adjustReason}
                       onChange={(e) => setAdjustReason(e.target.value)}
-                      className="w-full px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                      className="w-full px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                       placeholder="e.g., Manual adjustment, Refund, etc."
                     />
                   </div>
                   <div className="flex gap-3">
                     <button type="button"
                       onClick={() => adjustBalance(adjustingWallet)}
-                      className="px-6 py-2 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold hover:from-red-700 hover:to-red-800 transition-all shadow-lg"
+                      className={buttonClassName()}
                     >
                       Apply Adjustment
                     </button>
@@ -195,18 +196,17 @@ export default function AdminWalletPage() {
               <div className="bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] overflow-hidden">
                 {wallets.length === 0 ? (
                   <div className="p-12 text-center">
-                    <div className="text-6xl mb-4">💰</div>
                     <p className="text-gray-600 dark:text-gray-400 text-lg">No wallets found</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-[var(--border)]">
-                    <thead className="bg-gradient-to-r from-red-600 to-red-700">
+                    <thead className="bg-gray-50 dark:bg-gray-800">
                       <tr>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">User</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Balance</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Balance</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -232,7 +232,7 @@ export default function AdminWalletPage() {
                             <div className="flex gap-2">
                               <button type="button"
                                 onClick={() => setAdjustingWallet(w.userId)}
-                                className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
+                                className={buttonClassName({ size: 'sm' })}
                               >
                                 Adjust
                               </button>
@@ -263,27 +263,26 @@ export default function AdminWalletPage() {
           <>
             {loading && (
               <div className="flex items-center justify-center py-12">
-                <div className="w-10 h-10 rounded-full border-4 border-red-500 border-t-transparent animate-spin" />
+                <div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" />
               </div>
             )}
             {!loading && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
                 {transactions.length === 0 ? (
                   <div className="p-12 text-center">
-                    <div className="text-6xl mb-4">💸</div>
                     <p className="text-gray-600 dark:text-gray-400 text-lg">No transactions found</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gradient-to-r from-red-600 to-red-700">
+                    <thead className="bg-gray-50 dark:bg-gray-800">
                       <tr>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">User ID</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Type</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Amount</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Description</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Date</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">User ID</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">

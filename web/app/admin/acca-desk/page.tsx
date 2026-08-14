@@ -8,6 +8,7 @@ import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
+import { Button, buttonClassName } from '@/components/ui/Button';
 
 type RosterRow = {
   username: string;
@@ -203,7 +204,7 @@ export default function AdminAccaDeskPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
@@ -382,19 +383,19 @@ export default function AdminAccaDeskPage() {
                           {!r.setup ? 'Not setup' : r.isActive ? 'Active' : 'Inactive'}
                         </span>
                         {r.userId != null && (
-                          <button
+                          <Button
                             type="button"
+                            size="sm"
                             onClick={() => impersonateUser(r.userId!)}
                             disabled={impersonating === r.userId}
-                            className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white"
                           >
                             {impersonating === r.userId ? '…' : 'Impersonate'}
-                          </button>
+                          </Button>
                         )}
                         {r.username && (
                           <Link
                             href={`/tipsters/${encodeURIComponent(r.username)}`}
-                            className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-500 text-gray-700 dark:text-gray-200"
+                            className={buttonClassName({ size: 'sm', variant: 'secondary' })}
                           >
                             Profile
                           </Link>

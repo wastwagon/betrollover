@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { Button, buttonClassName } from '@/components/ui/Button';
 
 interface DbFixture {
   id: number;
@@ -677,7 +678,7 @@ export default function AdminFixturesPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
@@ -777,7 +778,7 @@ export default function AdminFixturesPage() {
                 type="button"
                 onClick={enableAllLeaguesFromApi}
                 disabled={enablingLeagues || syncing}
-                className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-indigo-600 to-indigo-700 text-white hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 transition-all shadow-md"
+                className={buttonClassName()}
               >
                 {enablingLeagues ? (
                   <span className="flex items-center gap-2">
@@ -947,7 +948,7 @@ export default function AdminFixturesPage() {
                   type="button"
                   onClick={() => saveStreamThresholdsToServer(streamThresholds)}
                   disabled={savingStreamThresholds}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                  className={buttonClassName({ size: 'sm' })}
                 >
                   {savingStreamThresholds ? 'Saving…' : 'Save thresholds'}
                 </button>
@@ -1005,7 +1006,7 @@ export default function AdminFixturesPage() {
             <button type="button"
               onClick={sync}
               disabled={syncing || fetchingResults || settling || reconciling}
-              className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 disabled:opacity-50 transition-all shadow-md"
+              className="px-5 py-2.5 rounded-xl font-semibold bg-[var(--destructive)] text-white hover:opacity-90 disabled:opacity-50 transition-colors"
             >
               {syncing ? (
                 <span className="flex items-center gap-2">
@@ -1020,7 +1021,7 @@ export default function AdminFixturesPage() {
             <button type="button"
               onClick={() => syncOdds(false)}
               disabled={syncing || fetchingResults || settling || reconciling}
-              className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 transition-all shadow-md"
+              className={buttonClassName()}
             >
               Sync Odds (new only)
             </button>
@@ -1028,7 +1029,7 @@ export default function AdminFixturesPage() {
               onClick={() => syncOdds(true)}
               disabled={syncing || fetchingResults || settling || reconciling}
               title="Re-fetch odds for all upcoming fixtures (which markets are stored depends on DB market_config: BTTS, DNB, first-half, handicaps, etc.)"
-              className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-emerald-600 to-emerald-700 text-white hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 transition-all shadow-md"
+              className={buttonClassName()}
             >
               Force Refresh Odds
             </button>
@@ -1036,7 +1037,7 @@ export default function AdminFixturesPage() {
               onClick={() => syncOdds(true)}
               disabled={syncing || fetchingResults || settling || reconciling}
               title="Re-fetch odds for all upcoming fixtures in the configured 72-hour window."
-              className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-cyan-600 to-cyan-700 text-white hover:from-cyan-700 hover:to-cyan-800 disabled:opacity-50 transition-all shadow-md"
+              className={buttonClassName()}
             >
               Sync odds (backfill all)
             </button>
@@ -1051,7 +1052,7 @@ export default function AdminFixturesPage() {
               onClick={fetchResults}
               disabled={syncing || fetchingResults || settling || reconciling}
               title="Fetch scores for finished matches from API-Sports (same as the cron, but manual)"
-              className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 disabled:opacity-50 transition-all shadow-md"
+              className="px-5 py-2.5 rounded-xl font-semibold bg-[var(--accent)] text-white hover:brightness-95 disabled:opacity-50 transition-colors"
             >
               {fetchingResults && !settling ? (
                 <span className="flex items-center gap-2">
@@ -1067,7 +1068,7 @@ export default function AdminFixturesPage() {
               onClick={fetchResultsAndSettle}
               disabled={syncing || fetchingResults || settling || reconciling}
               title="Fetch results from API-Sports, then immediately settle pending picks. Use when matches have finished but picks are still pending."
-              className="px-5 py-2.5 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-50 transition-all shadow-md"
+              className={buttonClassName()}
             >
               {fetchingResults || settling ? (
                 <span className="flex items-center gap-2">
@@ -1084,7 +1085,7 @@ export default function AdminFixturesPage() {
               onClick={reconcileSettledPicks}
               disabled={syncing || fetchingResults || settling || reconciling}
               title="After scores are corrected in the DB, re-grade settled picks and fix escrow if the pick should have won instead of lost (or vice versa). Does not fetch from the API."
-              className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-rose-600 to-rose-700 text-white hover:from-rose-700 hover:to-rose-800 disabled:opacity-50 transition-all shadow-md"
+              className="px-5 py-2.5 rounded-xl font-semibold bg-[var(--destructive)] text-white hover:opacity-90 disabled:opacity-50 transition-colors"
             >
               {reconciling ? (
                 <span className="flex items-center gap-2">
@@ -1211,7 +1212,7 @@ export default function AdminFixturesPage() {
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
+                <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Match</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">League</th>

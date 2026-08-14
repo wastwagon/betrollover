@@ -7,6 +7,7 @@ import { useT } from '@/context/LanguageContext';
 import { getApiUrl, PLAY_STORE_URL } from '@/lib/site-config';
 import { trackEvent } from '@/lib/analytics';
 import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
+import { Button } from '@/components/ui/Button';
 
 const STORAGE_KEY = 'br_rate_app_prompt_v1';
 const SNOOZE_MS = 1000 * 60 * 60 * 24 * 21; // 21 days
@@ -146,27 +147,21 @@ export function RateAppPrompt() {
       <div className="px-4 pb-5 pt-1 space-y-4">
         <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('growth.rate_body')}</p>
         <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={rate}
-            className="touch-target w-full rounded-xl bg-[var(--primary)] px-4 py-3 text-sm font-bold text-white hover:opacity-90 transition-opacity"
-          >
+          <Button type="button" onClick={rate} fullWidth>
             {t('growth.rate_cta')}
-          </button>
-          <button
-            type="button"
-            onClick={snooze}
-            className="touch-target w-full rounded-xl border border-[var(--border)] px-4 py-3 text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
-          >
+          </Button>
+          <Button type="button" variant="secondary" onClick={snooze} fullWidth>
             {t('growth.rate_later')}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
             onClick={neverAsk}
-            className="touch-target w-full px-4 py-2 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+            fullWidth
+            className="text-xs"
           >
             {t('growth.rate_never')}
-          </button>
+          </Button>
         </div>
       </div>
     </BottomSheet>

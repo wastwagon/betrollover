@@ -9,6 +9,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import type { HomePublicStats } from '@/lib/home-public-data';
 import { HomeNativeMatchRail } from '@/components/HomeNativeMatchRail';
 import type { TodayMatchRow } from '@/lib/home-today-matches';
+import { buttonClassName } from '@/components/ui/Button';
 
 const defaultStats: HomePublicStats = {
   verifiedTipsters: 0,
@@ -153,7 +154,7 @@ export function HomeHero({
           >
             <Link
               href="/marketplace"
-              className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--radius)] bg-[var(--primary)] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[var(--primary-hover)] sm:flex-none sm:min-w-[10.5rem]"
+              className={buttonClassName({ className: 'flex-1 sm:flex-none sm:min-w-[10.5rem] min-h-[48px]' })}
             >
               {t('home.hero_cta_primary')}
             </Link>

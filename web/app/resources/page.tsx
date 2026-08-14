@@ -9,6 +9,7 @@ import { AdSlot } from '@/components/AdSlot';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
+import { buttonClassName } from '@/components/ui/Button';
 import {
   CONTENT_SPORT_KEYS,
   SPORT_ICONS,
@@ -70,12 +71,11 @@ const SKILL_OVERVIEW_LEVELS = ['beginner', 'intermediate', 'advanced'] as const;
 
 const SKILL_OVERVIEW: {
   level: (typeof SKILL_OVERVIEW_LEVELS)[number];
-  icon: string;
   title: string;
 }[] = [
-  { level: 'beginner', icon: '🌱', title: 'Beginner' },
-  { level: 'intermediate', icon: '📈', title: 'Intermediate' },
-  { level: 'advanced', icon: '🧠', title: 'Advanced' },
+  { level: 'beginner', title: 'Beginner' },
+  { level: 'intermediate', title: 'Intermediate' },
+  { level: 'advanced', title: 'Advanced' },
 ];
 
 const SKILL_OVERVIEW_DESC_KEYS: Record<(typeof SKILL_OVERVIEW_LEVELS)[number], string> = {
@@ -147,7 +147,6 @@ export default function ResourcesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           {SKILL_OVERVIEW.map(card => (
             <div key={card.level} className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--primary)]/30 transition-colors">
-              <p className="text-3xl mb-2">{card.icon}</p>
               <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase mb-2 ${LEVEL_COLORS[card.level]}`}>
                 {LEVEL_LABELS[card.level]}
               </span>
@@ -212,16 +211,15 @@ export default function ResourcesPage() {
               </div>
             ) : visibleCategories.length === 0 ? (
               <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-12 text-center">
-                <p className="text-4xl mb-3">📚</p>
-                <p className="font-semibold text-[var(--text)] mb-1">{t('resources.empty_guides_title')}</p>
+                <p className="font-display text-lg font-semibold text-[var(--text)] mb-1">{t('resources.empty_guides_title')}</p>
                 <p className="text-[var(--text-muted)] text-sm max-w-md mx-auto mb-5">
                   {t('resources.empty_guides_body')}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Link href="/marketplace" className="px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors">
+                  <Link href="/marketplace" className={buttonClassName({ size: 'sm' })}>
                     {t('resources.cta_browse_marketplace')}
                   </Link>
-                  <Link href="/news" className="px-5 py-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:border-[var(--primary)] transition-colors">
+                  <Link href="/news" className={buttonClassName({ variant: 'secondary', size: 'sm' })}>
                     {t('resources.cta_read_news')}
                   </Link>
                 </div>
@@ -281,20 +279,20 @@ export default function ResourcesPage() {
             <div className="lg:sticky lg:top-24 space-y-4">
               <AdSlot zoneSlug="guides-sidebar" />
               <div className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
-                <h3 className="text-sm font-bold text-[var(--text)] mb-3">📰 Sports News</h3>
+                <h3 className="text-sm font-bold text-[var(--text)] mb-3">Sports News</h3>
                 <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-3">
                   Stay up to date with transfers, injury reports, and team news across all sports.
                 </p>
-                <Link href="/news" className="block w-full text-center px-4 py-2 rounded-xl bg-[var(--primary-light)] text-[var(--primary)] text-sm font-semibold hover:bg-[var(--primary)] hover:text-white transition-colors">
+                <Link href="/news" className={buttonClassName({ variant: 'secondary', size: 'sm', fullWidth: true })}>
                   Read News →
                 </Link>
               </div>
               <div className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
-                <h3 className="text-sm font-bold text-[var(--text)] mb-3">🏆 Leaderboard</h3>
+                <h3 className="text-sm font-bold text-[var(--text)] mb-3">Leaderboard</h3>
                 <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-3">
                   See which tipsters rank highest in win rate, ROI, and consistency across all sports.
                 </p>
-                <Link href="/leaderboard" className="block w-full text-center px-4 py-2 rounded-xl bg-[var(--primary-light)] text-[var(--primary)] text-sm font-semibold hover:bg-[var(--primary)] hover:text-white transition-colors">
+                <Link href="/leaderboard" className={buttonClassName({ variant: 'secondary', size: 'sm', fullWidth: true })}>
                   View Leaderboard →
                 </Link>
               </div>

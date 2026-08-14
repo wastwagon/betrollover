@@ -7,6 +7,7 @@ import { useT } from '@/context/LanguageContext';
 import { AppShell } from '@/components/AppShell';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { Button, buttonClassName } from '@/components/ui/Button';
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -76,7 +77,7 @@ function VerifyEmailContent() {
             ) : null}
             <Link
               href="/dashboard"
-              className="inline-block px-8 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
+              className={buttonClassName({ className: 'inline-block' })}
             >
               {t('auth.go_dashboard')}
             </Link>
@@ -90,18 +91,18 @@ function VerifyEmailContent() {
             <p className="text-[var(--text-muted)] mb-8 min-w-0 break-words">
               {result ? getApiErrorMessage(result, t('auth.invalid_token')) : t('auth.invalid_token')}
             </p>
-            <button
+            <Button
               type="button"
               onClick={handleResend}
               disabled={resendLoading}
-              className="mb-4 px-6 py-2 rounded-lg font-medium bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-50"
+              className="mb-4"
             >
               {resendLoading ? t('auth.sending') : t('auth.resend_verification')}
-            </button>
+            </Button>
             <br />
             <Link
               href="/login"
-              className="inline-block px-8 py-3 rounded-xl font-semibold border border-[var(--border)] text-[var(--text)] hover:bg-[var(--card)]"
+              className={buttonClassName({ variant: 'secondary', className: 'inline-block' })}
             >
               {t('auth.back_to_login')}
             </Link>
@@ -112,14 +113,13 @@ function VerifyEmailContent() {
             <p className="text-[var(--text-muted)] mb-6 min-w-0 break-words">
               {t('auth.verify_check_inbox')}
             </p>
-            <button
+            <Button
               type="button"
               onClick={handleResend}
               disabled={resendLoading}
-              className="px-8 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-50"
             >
               {resendLoading ? t('auth.sending') : t('auth.resend_verification')}
-            </button>
+            </Button>
             {resendMessage && <p className="mt-4 text-sm text-[var(--text-muted)]">{resendMessage}</p>}
             <p className="mt-6">
               <Link href="/login" className="text-sm text-[var(--primary)] hover:underline">

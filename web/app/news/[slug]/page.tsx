@@ -11,6 +11,7 @@ import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
 import { ArticleJsonLd } from '@/components/ArticleJsonLd';
 import { IconBook } from '@/components/ios/icons';
+import { buttonClassName } from '@/components/ui/Button';
 
 interface NewsArticle {
   id: number;
@@ -124,7 +125,7 @@ export default function NewsArticlePage() {
           <IconBook className="w-14 h-14 mx-auto mb-4 text-[var(--text-muted)] opacity-50" aria-hidden />
           <h1 className="text-lg font-semibold text-[var(--text)] mb-3">{t('news.article_not_found')}</h1>
           <p className="text-[var(--text-muted)] mb-6">{t('news.article_not_found_desc')}</p>
-          <Link href="/news" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] transition-colors">
+          <Link href="/news" className={buttonClassName({ className: 'inline-flex' })}>
             {t('news.back_to_news')}
           </Link>
         </main>
@@ -261,7 +262,7 @@ export default function NewsArticlePage() {
                               <Image
                                 src={rel.imageUrl} alt={rel.title}
                                 width={56} height={56}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                className="w-full h-full object-cover"
                                 unoptimized
                               />
                             </div>
@@ -297,17 +298,17 @@ export default function NewsArticlePage() {
               )}
 
               {/* Tipster CTA */}
-              <div className="rounded-2xl bg-gradient-to-br from-teal-600 to-emerald-700 p-5 text-white">
-                <p className="text-xs font-semibold uppercase tracking-wider opacity-80 mb-1">{t('news.sidebar_tipster_title')}</p>
-                <h3 className="font-bold text-base mb-2">
+              <div className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">{t('news.sidebar_tipster_title')}</p>
+                <h3 className="font-display font-semibold text-base mb-2 text-[var(--text)]">
                   {t('news.sidebar_tipster_sub', { sport: sportLabel || t('common.all') })}
                 </h3>
-                <p className="text-xs opacity-80 leading-relaxed mb-4">
+                <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-4">
                   {t('news.sidebar_top_tipsters_desc')}
                 </p>
                 <Link
                   href={article.sport ? `/marketplace?sport=${article.sport}` : '/marketplace'}
-                  className="block text-center px-4 py-2 rounded-xl bg-white text-teal-700 text-sm font-bold hover:bg-teal-50 transition-colors"
+                  className={buttonClassName({ size: 'sm', fullWidth: true })}
                 >
                   {t('news.sidebar_tipster_btn', { sport: sportLabel || '' })}
                 </Link>
@@ -315,7 +316,7 @@ export default function NewsArticlePage() {
 
               {/* Discover CTA */}
               <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-4">
-                <h3 className="text-sm font-bold text-[var(--text)] mb-2">📚 {t('news.sidebar_discover_title')}</h3>
+                <h3 className="text-sm font-bold text-[var(--text)] mb-2">{t('news.sidebar_discover_title')}</h3>
                 <p className="text-xs text-[var(--text-muted)] mb-3 leading-relaxed">
                   {t('news.sidebar_discover_desc')}
                 </p>

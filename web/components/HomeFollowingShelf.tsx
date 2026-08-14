@@ -8,6 +8,7 @@ import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-ca
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { useT } from '@/context/LanguageContext';
 import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
+import { buttonClassName } from '@/components/ui/Button';
 
 type FeedItem = {
   id: number;
@@ -110,7 +111,7 @@ export function HomeFollowingShelf() {
             </div>
             <Link
               href="/tipsters"
-              className="shrink-0 inline-flex items-center justify-center rounded-xl bg-[var(--primary)] px-4 py-2.5 text-sm font-semibold text-white"
+              className={buttonClassName({ size: 'sm', className: 'shrink-0' })}
             >
               {t('home.following_shelf_find_tipsters')}
             </Link>

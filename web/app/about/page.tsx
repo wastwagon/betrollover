@@ -76,18 +76,18 @@ export default async function AboutPage() {
               <p>{t('about.africa_desc')}</p>
             </section>
 
-            <div className="mt-10 p-5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/40">
-              <p className="font-semibold text-[var(--text)] mb-2">{t('about.ready_cta')}</p>
+            <div className="mt-10 p-5 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)]">
+              <p className="font-display font-semibold text-[var(--text)] mb-3">{t('about.ready_cta')}</p>
               <div className="flex flex-col sm:flex-row flex-wrap gap-3">
                 <Link
                   href="/marketplace"
-                  className="inline-flex justify-center px-4 py-2 rounded-lg bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors w-full sm:w-auto"
+                  className="inline-flex items-center justify-center gap-2 font-semibold transition-colors duration-200 touch-manipulation bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-sm px-4 py-2.5 text-sm rounded-[var(--radius)] min-h-[44px] w-full sm:w-auto"
                 >
                   {t('home.view_marketplace')}
                 </Link>
                 <Link
                   href="/register"
-                  className="inline-flex justify-center px-4 py-2 rounded-lg border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
+                  className="inline-flex items-center justify-center gap-2 font-semibold transition-colors duration-200 touch-manipulation bg-[var(--card)] text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)] px-4 py-2.5 text-sm rounded-[var(--radius)] min-h-[44px] w-full sm:w-auto"
                 >
                   {t('auth.register')}
                 </Link>

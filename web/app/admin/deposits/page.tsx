@@ -70,7 +70,7 @@ export default function AdminDepositsPage() {
   const totalAmount = deposits.reduce((sum, d) => sum + Number(d.amount), 0);
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
@@ -83,7 +83,7 @@ export default function AdminDepositsPage() {
             <p className="text-sm opacity-90 mb-1">Total Deposits</p>
             <p className="text-3xl font-bold">{deposits.length}</p>
           </div>
-          <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-2xl shadow-xl p-4 sm:p-6 text-white">
+          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-4 sm:p-6 text-gray-900 dark:text-white">
             <p className="text-sm opacity-90 mb-1">Pending</p>
             <p className="text-3xl font-bold">{pendingCount}</p>
           </div>
@@ -102,7 +102,7 @@ export default function AdminDepositsPage() {
               setUserIdFilter(e.target.value);
               setPage(1);
             }}
-            className="w-full sm:flex-1 sm:min-w-[160px] px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full sm:flex-1 sm:min-w-[160px] px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
           />
           <select
             value={statusFilter}
@@ -110,7 +110,7 @@ export default function AdminDepositsPage() {
               setStatusFilter(e.target.value);
               setPage(1);
             }}
-            className="w-full sm:w-auto px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full sm:w-auto px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
           >
             <option value="">All Statuses</option>
             <option value="pending">Pending</option>
@@ -122,7 +122,7 @@ export default function AdminDepositsPage() {
 
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <div className="w-10 h-10 rounded-full border-4 border-red-500 border-t-transparent animate-spin" />
+            <div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" />
           </div>
         )}
 
@@ -130,24 +130,23 @@ export default function AdminDepositsPage() {
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             {deposits.length === 0 ? (
               <div className="p-12 text-center">
-                <div className="text-6xl mb-4">💳</div>
                 <p className="text-gray-600 dark:text-gray-400 text-lg">No deposits found</p>
               </div>
             ) : (
               <>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gradient-to-r from-red-600 to-red-700">
+                    <thead className="bg-gray-50 dark:bg-gray-800">
                       <tr>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">ID</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider min-w-[12rem]">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[12rem]">
                           User / tipster
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Amount</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Reference</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Date</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Reference</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">

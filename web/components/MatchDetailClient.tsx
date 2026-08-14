@@ -15,6 +15,7 @@ import { useT } from '@/context/LanguageContext';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { isFixtureLive } from '@/lib/home-today-matches';
 import type { PublicFixtureDetail } from '@/lib/match-detail';
+import { buttonClassName } from '@/components/ui/Button';
 
 const LIVE_REFRESH_MS = 30_000;
 
@@ -228,7 +229,7 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
             <div className="flex flex-wrap gap-2">
               <Link
                 href="/marketplace?sport=football"
-                className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)]"
+                className={buttonClassName({ size: 'sm' })}
               >
                 {t('match.browse_picks')}
               </Link>
@@ -262,7 +263,7 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
               <p className="text-sm text-[var(--text-muted)] mb-4">{t('match.no_picks_yet')}</p>
               <Link
                 href="/marketplace?sport=football"
-                className="inline-flex items-center justify-center min-h-[44px] px-5 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold"
+                className={buttonClassName({ size: 'sm' })}
               >
                 {t('match.browse_picks')}
               </Link>

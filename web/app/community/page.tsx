@@ -10,6 +10,7 @@ import { AdSlot } from '@/components/AdSlot';
 import { useT } from '@/context/LanguageContext';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { Button } from '@/components/ui/Button';
 const ALLOWED_REACTIONS = ['👍', '❤️', '😂', '🔥'];
 const POLL_INTERVAL = 3000; // 3 s normal, slows to 8 s if idle
 
@@ -473,14 +474,15 @@ function CommunityPageInner() {
                   maxLength={500}
                   className="flex-1 min-w-0 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                 />
-                <button
+                <Button
                   type="button"
                   onClick={handleSend}
                   disabled={sending || !input.trim()}
-                  className="w-full sm:w-auto shrink-0 bg-[var(--primary)] hover:bg-[var(--primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  size="sm"
+                  className="w-full sm:w-auto shrink-0"
                 >
                   {sending ? t('community.sending') : t('community.send')}
-                </button>
+                </Button>
               </div>
             ) : (
               <div className="text-center py-2">

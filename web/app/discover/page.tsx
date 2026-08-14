@@ -389,7 +389,6 @@ function GuidesTab({ sport }: { sport: ContentSport }) {
       <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-12 text-center">
         {sportMeta ? (
           <>
-            <div className="text-5xl mb-4">{sportMeta.icon}</div>
             <h3 className="text-base font-semibold text-[var(--text)] mb-2">
               {t('discover.no_guides_for_sport', { sport: getContentSportLabel(t, sport) })}
             </h3>

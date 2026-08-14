@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl, getAdImageUrl } from '@/lib/site-config';
+import { buttonClassName } from '@/components/ui/Button';
 
 interface AdZone {
   id: number;
@@ -123,7 +124,7 @@ export default function AdminAdsEditPage() {
 
   if (loading || !campaign) {
     return (
-      <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
+      <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <AdminSidebar />
         <main className="admin-main-sibling section-ux-admin-main min-w-0">
           <div className="py-12 text-center text-gray-600">Loading...</div>
@@ -133,7 +134,7 @@ export default function AdminAdsEditPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <Link href="/admin/ads" className="text-sm text-[var(--primary)] hover:underline mb-6 inline-block">
@@ -258,7 +259,7 @@ export default function AdminAdsEditPage() {
             <button
               type="submit"
               disabled={saving}
-              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] disabled:opacity-50 text-center"
+              className={buttonClassName({ className: 'w-full sm:w-auto' })}
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </button>

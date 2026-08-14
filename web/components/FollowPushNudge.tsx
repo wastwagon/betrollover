@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useT } from '@/context/LanguageContext';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { BottomSheet } from '@/components/ios/BottomSheet';
+import { Button } from '@/components/ui/Button';
 
 const STORAGE_KEY = 'br_follow_push_nudge_v1';
 const SNOOZE_MS = 1000 * 60 * 60 * 24 * 14;
@@ -87,31 +88,34 @@ export function FollowPushNudge({ triggerToken, tipsterName }: FollowPushNudgePr
         </p>
         {error ? <p className="text-xs text-red-600">{error}</p> : null}
         <div className="flex flex-col gap-2">
-          <button
+          <Button
             type="button"
             onClick={() => void enable()}
             disabled={loading}
-            className="touch-target w-full rounded-xl bg-[var(--primary)] px-4 py-3 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60 transition-opacity"
+            fullWidth
           >
             {loading ? t('common.loading') : t('follow_push.enable')}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="secondary"
             onClick={closeSnooze}
-            className="touch-target w-full rounded-xl border border-[var(--border)] px-4 py-3 text-sm font-semibold text-[var(--text-muted)]"
+            fullWidth
           >
             {t('follow_push.later')}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => {
               writeDone('never');
               setOpen(false);
             }}
-            className="touch-target w-full px-4 py-2 text-xs font-medium text-[var(--text-muted)]"
+            fullWidth
+            className="text-xs"
           >
             {t('follow_push.never')}
-          </button>
+          </Button>
         </div>
       </div>
     </BottomSheet>

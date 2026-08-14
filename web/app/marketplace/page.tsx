@@ -7,7 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
-import { buttonClassName } from '@/components/ui/Button';
+import { Button, buttonClassName } from '@/components/ui/Button';
 import { AdSlot } from '@/components/AdSlot';
 import { PickCard } from '@/components/PickCard';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
@@ -921,14 +921,14 @@ export default function MarketplacePage() {
           )}
           {!loading && hasMore && (
             <div className="flex justify-center py-6 px-1">
-              <button
+              <Button
                 type="button"
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="w-full max-w-md sm:w-auto px-6 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-70 transition-colors"
+                className="w-full max-w-md sm:w-auto"
               >
                 {loadingMore ? t('common.loading') : t('marketplace.load_more_count', { shown: String(picks.length), total: String(total) })}
-              </button>
+              </Button>
             </div>
           )}
 

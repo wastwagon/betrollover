@@ -24,7 +24,7 @@ import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { NavBar } from '@/components/ios/NavBar';
 import { GroupedListSection } from '@/components/ios/GroupedList';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonClassName } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
 interface Transaction {
@@ -498,7 +498,7 @@ function WalletContent() {
                         setDepositCallbackState(null);
                         router.push(next);
                       }}
-                      className="px-3 py-1.5 rounded-lg bg-[var(--primary)] text-white text-xs font-semibold hover:bg-[var(--primary-hover)] transition-colors"
+                      className={buttonClassName({ size: 'sm' })}
                     >
                       {t('wallet.deposit_return_to_checkout')}
                     </button>
@@ -670,21 +670,24 @@ function WalletContent() {
                         )}
                         {payoutError && <p className="text-sm text-red-500">{payoutError}</p>}
                         <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
-                          <button
+                          <Button
                             type="button"
                             onClick={handleAddPayoutMethod}
                             disabled={payoutLoading}
-                            className="w-full sm:w-auto px-4 py-2 rounded-lg bg-[var(--primary)] text-white disabled:opacity-50"
+                            size="sm"
+                            className="w-full sm:w-auto"
                           >
                             {payoutLoading ? t('wallet.saving') : t('wallet.save')}
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
+                            variant="secondary"
                             onClick={() => setShowPayoutForm(false)}
-                            className="w-full sm:w-auto px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--text)]"
+                            size="sm"
+                            className="w-full sm:w-auto"
                           >
                             {t('wallet.cancel')}
-                          </button>
+                          </Button>
                         </div>
                   </div>
                 ) : payoutMethods.length === 0 ? (

@@ -47,14 +47,6 @@ function RegisterForm() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)] relative w-full min-w-0 max-w-full overflow-x-hidden">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.4] dark:opacity-[0.2]"
-        aria-hidden
-        style={{
-          background:
-            'radial-gradient(ellipse 80% 50% at 50% -20%, rgb(16 185 129 / 0.12), transparent 55%)',
-        }}
-      />
       <UnifiedHeader />
       <main className="section-ux-register-main w-full min-w-0 max-w-full pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <div className="relative w-full max-w-[440px] min-w-0 mx-auto px-4 sm:px-0">

@@ -7,6 +7,7 @@ import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-ca
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
+import { buttonClassName } from '@/components/ui/Button';
 
 interface Pick {
   id?: number;
@@ -111,7 +112,7 @@ export function FeaturedPicks({
         <div className="text-center mt-6">
           <Link
             href="/marketplace"
-            className="inline-block px-6 py-2.5 rounded-xl font-semibold text-sm bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors"
+            className={buttonClassName({ className: 'inline-block' })}
           >
             Browse Marketplace
           </Link>

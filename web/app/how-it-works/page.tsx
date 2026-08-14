@@ -132,18 +132,18 @@ export default async function HowItWorksPage() {
               </ul>
             </section>
 
-            <div className="mt-8 sm:mt-10 p-4 sm:p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 ring-1 ring-emerald-500/10 min-w-0">
-              <p className="font-semibold text-[var(--text)] mb-3 sm:mb-4 text-sm sm:text-base">Ready to get started?</p>
+            <div className="mt-8 sm:mt-10 p-4 sm:p-6 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] min-w-0">
+              <p className="font-display font-semibold text-[var(--text)] mb-3 sm:mb-4 text-sm sm:text-base">Ready to get started?</p>
               <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 min-w-0">
                 <Link
                   href="/marketplace"
-                  className="inline-flex items-center justify-center min-h-[44px] px-5 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors w-full sm:w-auto"
+                  className="inline-flex items-center justify-center gap-2 font-semibold transition-colors duration-200 touch-manipulation bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-sm px-4 py-2.5 text-sm rounded-[var(--radius)] min-h-[44px] w-full sm:w-auto"
                 >
                   Browse Marketplace
                 </Link>
                 <Link
                   href="/register"
-                  className="inline-flex items-center justify-center min-h-[44px] px-5 rounded-xl border-2 border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto bg-[var(--card)]/50"
+                  className="inline-flex items-center justify-center gap-2 font-semibold transition-colors duration-200 touch-manipulation bg-[var(--card)] text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)] px-4 py-2.5 text-sm rounded-[var(--radius)] min-h-[44px] w-full sm:w-auto"
                 >
                   Create Account
                 </Link>

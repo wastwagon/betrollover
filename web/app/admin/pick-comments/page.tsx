@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
+import { Button, buttonClassName } from '@/components/ui/Button';
 
 function getToken() {
   if (typeof window === 'undefined') return null;
@@ -95,7 +96,7 @@ export default function AdminPickCommentsPage() {
           <button
             type="button"
             onClick={() => void load()}
-            className="px-4 py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold"
+            className={buttonClassName({ size: 'sm' })}
           >
             Refresh
           </button>

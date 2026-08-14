@@ -10,6 +10,7 @@ import { AdSlot } from '@/components/AdSlot';
 import { useT } from '@/context/LanguageContext';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { Button } from '@/components/ui/Button';
 
 interface Ticket {
   id: number;
@@ -179,14 +180,14 @@ function SupportContent() {
                 </div>
               ) : null}
               {error && <p className="text-sm text-red-500">{error}</p>}
-              <button
+              <Button
                 type="button"
                 onClick={submit}
                 disabled={submitting}
-                className="w-full py-3 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] disabled:opacity-50 transition-colors"
+                fullWidth
               >
                 {submitting ? t('support.submitting') : t('support.submit')}
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -197,8 +198,7 @@ function SupportContent() {
           </div>
         ) : tickets.length === 0 ? (
           <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-10 text-center">
-            <p className="text-4xl mb-3">📬</p>
-            <p className="font-semibold text-[var(--text)]">{t('support.no_tickets_yet')}</p>
+            <p className="font-display font-semibold text-[var(--text)]">{t('support.no_tickets_yet')}</p>
             <p className="text-sm text-[var(--text-muted)] mt-1">{t('support.open_ticket_above')}</p>
           </div>
         ) : (

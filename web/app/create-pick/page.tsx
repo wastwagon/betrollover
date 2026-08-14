@@ -848,8 +848,30 @@ export default function CreatePickPage() {
           <div className="mb-4">
             <AdSlot zoneSlug="create-pick-full" fullWidth className="w-full" />
           </div>
+          <nav
+            className="sticky z-20 mb-5 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] p-1"
+            style={{ top: 'var(--br-chrome-below-header)' }}
+            aria-label="Create pick steps"
+          >
+            <ol className="grid grid-cols-3 gap-1">
+              {[
+                { href: '#create-pick-sport', label: '1 · Sport' },
+                { href: '#create-pick-select', label: '2 · Select' },
+                { href: '#create-pick-publish', label: '3 · Publish' },
+              ].map((step) => (
+                <li key={step.href}>
+                  <a
+                    href={step.href}
+                    className="flex items-center justify-center min-h-[40px] rounded-[var(--radius-sm)] text-[11px] sm:text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--fill-secondary)] hover:text-[var(--text)]"
+                  >
+                    {step.label}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </nav>
           {/* 1 · Sport */}
-          <section className="mb-6 w-full min-w-0" aria-labelledby="create-pick-sport-heading">
+          <section id="create-pick-sport" className="mb-6 w-full min-w-0 scroll-mt-[calc(var(--br-chrome-below-header)+3.5rem)]" aria-labelledby="create-pick-sport-heading">
             <p id="create-pick-sport-heading" className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)] mb-2 px-0.5">
               1 · Sport
             </p>
@@ -890,22 +912,23 @@ export default function CreatePickPage() {
           </section>
           {selections.length > 0 && (
             <div className="flex justify-end mb-3">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => setSlipSheetOpen(true)}
-                className="lg:hidden flex items-center gap-2 px-4 py-2.5 rounded-[var(--radius)] bg-[var(--primary-light)] text-[var(--primary)] text-sm font-semibold hover:brightness-95 active:scale-[0.98] transition-all touch-manipulation min-h-[44px]"
+                className="lg:hidden"
                 aria-label="View slip"
               >
                 <span>{selections.length} {selections.length !== 1 ? t('create_pick.selections') : t('create_pick.selection')}</span>
                 <span className="text-[var(--primary)] font-bold ml-0.5">@ {totalOdds.toFixed(2)}</span>
-              </button>
+              </Button>
             </div>
           )}
 
           {/* Two-column layout: Fixtures on left, Slip widget on right */}
           <div className="flex flex-col lg:flex-row gap-4 pb-6 min-w-0 w-full max-w-full">
           {/* 2 · Select fixtures */}
-          <div className="flex-1 min-w-0">
+          <div id="create-pick-select" className="flex-1 min-w-0 scroll-mt-[calc(var(--br-chrome-below-header)+3.5rem)]">
             <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)] mb-3 px-0.5">
               2 · Select
             </p>
@@ -1074,56 +1097,56 @@ export default function CreatePickPage() {
             {sport === 'basketball' && loadingBasketball && <SportLoadingSpinner label={t('create_pick.loading_basketball_games')} />}
             {sport === 'basketball' && !loadingBasketball && availableBasketballEvents.length === 0 && (
               basketballEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState emoji="🏀" label={t('create_pick.empty_basketball_no_odds_title')} hint={t('create_pick.empty_basketball_no_odds_hint')} />
-                : <SportEmptyState emoji="🏀" label={t('create_pick.empty_filtered_games')} hint={t('create_pick.empty_filtered_hint')} />
+                ? <SportEmptyState label={t('create_pick.empty_basketball_no_odds_title')} hint={t('create_pick.empty_basketball_no_odds_hint')} />
+                : <SportEmptyState label={t('create_pick.empty_filtered_games')} hint={t('create_pick.empty_filtered_hint')} />
             )}
 
             {/* Rugby */}
             {sport === 'rugby' && loadingRugby && <SportLoadingSpinner label={t('create_pick.loading_rugby_matches')} />}
             {sport === 'rugby' && !loadingRugby && availableRugbyEvents.length === 0 && (
               rugbyEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState emoji="🏉" label={t('create_pick.empty_rugby_no_odds_title')} hint={t('create_pick.empty_rugby_no_odds_hint')} />
-                : <SportEmptyState emoji="🏉" label={t('create_pick.empty_filtered_matches')} hint={t('create_pick.empty_filtered_hint')} />
+                ? <SportEmptyState label={t('create_pick.empty_rugby_no_odds_title')} hint={t('create_pick.empty_rugby_no_odds_hint')} />
+                : <SportEmptyState label={t('create_pick.empty_filtered_matches')} hint={t('create_pick.empty_filtered_hint')} />
             )}
 
             {/* MMA */}
             {sport === 'mma' && loadingMma && <SportLoadingSpinner label={t('create_pick.loading_mma_fights')} />}
             {sport === 'mma' && !loadingMma && availableMmaEvents.length === 0 && (
               mmaEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState emoji="🥊" label={t('create_pick.empty_mma_no_odds_title')} hint={t('create_pick.empty_mma_no_odds_hint')} />
-                : <SportEmptyState emoji="🥊" label={t('create_pick.empty_filtered_fights')} hint={t('create_pick.empty_filtered_hint')} />
+                ? <SportEmptyState label={t('create_pick.empty_mma_no_odds_title')} hint={t('create_pick.empty_mma_no_odds_hint')} />
+                : <SportEmptyState label={t('create_pick.empty_filtered_fights')} hint={t('create_pick.empty_filtered_hint')} />
             )}
 
             {/* Volleyball */}
             {sport === 'volleyball' && loadingVolleyball && <SportLoadingSpinner label={t('create_pick.loading_volleyball_matches')} />}
             {sport === 'volleyball' && !loadingVolleyball && availableVolleyballEvents.length === 0 && (
               volleyballEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState emoji="🏐" label={t('create_pick.empty_volleyball_no_odds_title')} hint={t('create_pick.empty_volleyball_no_odds_hint')} />
-                : <SportEmptyState emoji="🏐" label={t('create_pick.empty_filtered_matches')} hint={t('create_pick.empty_filtered_hint')} />
+                ? <SportEmptyState label={t('create_pick.empty_volleyball_no_odds_title')} hint={t('create_pick.empty_volleyball_no_odds_hint')} />
+                : <SportEmptyState label={t('create_pick.empty_filtered_matches')} hint={t('create_pick.empty_filtered_hint')} />
             )}
 
             {/* Hockey */}
             {sport === 'hockey' && loadingHockey && <SportLoadingSpinner label={t('create_pick.loading_hockey_games')} />}
             {sport === 'hockey' && !loadingHockey && availableHockeyEvents.length === 0 && (
               hockeyEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState emoji="🏒" label={t('create_pick.empty_hockey_no_odds_title')} hint={t('create_pick.empty_hockey_no_odds_hint')} />
-                : <SportEmptyState emoji="🏒" label={t('create_pick.empty_filtered_games')} hint={t('create_pick.empty_filtered_hint')} />
+                ? <SportEmptyState label={t('create_pick.empty_hockey_no_odds_title')} hint={t('create_pick.empty_hockey_no_odds_hint')} />
+                : <SportEmptyState label={t('create_pick.empty_filtered_games')} hint={t('create_pick.empty_filtered_hint')} />
             )}
 
             {/* American Football */}
             {sport === 'american_football' && loadingAmericanFootball && <SportLoadingSpinner label={t('create_pick.loading_american_football_games')} />}
             {sport === 'american_football' && !loadingAmericanFootball && availableAmericanFootballEvents.length === 0 && (
               americanFootballEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState emoji="🏈" label={t('create_pick.empty_american_football_no_odds_title')} hint={t('create_pick.empty_american_football_no_odds_hint')} />
-                : <SportEmptyState emoji="🏈" label={t('create_pick.empty_filtered_games')} hint={t('create_pick.empty_filtered_hint')} />
+                ? <SportEmptyState label={t('create_pick.empty_american_football_no_odds_title')} hint={t('create_pick.empty_american_football_no_odds_hint')} />
+                : <SportEmptyState label={t('create_pick.empty_filtered_games')} hint={t('create_pick.empty_filtered_hint')} />
             )}
 
             {/* Tennis */}
             {sport === 'tennis' && loadingTennis && <SportLoadingSpinner label={t('create_pick.loading_tennis_matches')} />}
             {sport === 'tennis' && !loadingTennis && availableTennisEvents.length === 0 && (
               tennisEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState emoji="🎾" label={t('create_pick.empty_tennis_no_odds_title')} hint={t('create_pick.empty_tennis_no_odds_hint')} />
-                : <SportEmptyState emoji="🎾" label={t('create_pick.empty_filtered_matches')} hint={t('create_pick.empty_filtered_hint')} />
+                ? <SportEmptyState label={t('create_pick.empty_tennis_no_odds_title')} hint={t('create_pick.empty_tennis_no_odds_hint')} />
+                : <SportEmptyState label={t('create_pick.empty_filtered_matches')} hint={t('create_pick.empty_filtered_hint')} />
             )}
             {fixtureError && (
               <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
@@ -1328,7 +1351,7 @@ export default function CreatePickPage() {
           </div>
 
           {/* 3 · Slip / publish */}
-          <div className="hidden lg:block lg:w-96 lg:shrink-0 min-w-0">
+          <div id="create-pick-publish" className="hidden lg:block lg:w-96 lg:shrink-0 min-w-0 scroll-mt-[calc(var(--br-chrome-below-header)+3.5rem)]">
             <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)] mb-3 px-0.5">
               3 · Publish
             </p>
@@ -1600,13 +1623,13 @@ export default function CreatePickPage() {
           className="lg:hidden fixed left-0 right-0 z-40 px-4 min-w-0 max-w-full pointer-events-none"
           style={{ bottom: 'calc(3.5rem + env(safe-area-inset-bottom, 0px) + 0.5rem)' }}
         >
-          <button
+          <Button
             type="button"
             onClick={() => {
               hapticLight();
               setSlipSheetOpen(true);
             }}
-            className={`pointer-events-auto w-full min-w-0 max-w-full flex items-center justify-between gap-2 sm:gap-3 px-4 sm:px-5 py-3.5 rounded-[var(--radius)] bg-[var(--primary)] text-white shadow-card active:scale-[0.99] transition-transform touch-manipulation touch-target ${
+            className={`pointer-events-auto w-full min-w-0 max-w-full justify-between ${
               createPickDisabled && selections.length > 0 ? 'opacity-85' : ''
             }`}
             aria-label="Open pick slip to review and create"
@@ -1628,7 +1651,7 @@ export default function CreatePickPage() {
               </div>
             </div>
             <span className="font-bold text-sm sm:text-base shrink-0 whitespace-nowrap">Review & Create</span>
-          </button>
+          </Button>
         </div>
       )}
 

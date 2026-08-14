@@ -597,7 +597,7 @@ export default function AdminSubscriptionsPage() {
             </div>
           </div>
 
-          <div className="rounded-xl bg-gradient-to-br from-slate-50 to-emerald-50/40 dark:from-slate-800/50 dark:to-emerald-900/20 border border-[var(--border)] p-3 mb-3">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 mb-3">
             <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">
               {t('subscriptions.performance_heading')}
             </p>
@@ -722,7 +722,7 @@ export default function AdminSubscriptionsPage() {
               </div>
             </div>
 
-            <div className="rounded-xl bg-gradient-to-br from-slate-50 to-emerald-50/40 dark:from-slate-800/50 dark:to-emerald-900/20 border border-[var(--border)] p-3 mb-3">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 mb-3">
               <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Subscriber (VIP)</p>
               <p className="text-sm font-medium text-[var(--text)]">
                 {row.subscriber.displayName}{' '}
@@ -731,7 +731,7 @@ export default function AdminSubscriptionsPage() {
               <p className="text-xs text-[var(--text-muted)] mt-1">Paid GHS {row.amountPaid.toFixed(2)}</p>
             </div>
 
-            <div className="rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50/40 dark:from-blue-900/20 dark:to-cyan-900/10 border border-[var(--border)] p-3 mb-3">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 mb-3">
               <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">
                 Escrow breakdown
               </p>
@@ -885,7 +885,7 @@ export default function AdminSubscriptionsPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main max-w-[1600px] mx-auto w-full min-w-0">
         <div className="mb-6">

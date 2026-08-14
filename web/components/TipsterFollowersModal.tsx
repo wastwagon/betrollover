@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { useT } from '@/context/LanguageContext';
+import { Button } from '@/components/ui/Button';
 
 export interface TipsterFollowerRow {
   user_id: number;
@@ -238,23 +239,21 @@ export function TipsterFollowersModal({
                     </div>
                   </div>
                   {row.tipster_username && !row.is_self && (
-                    <button
+                    <Button
                       type="button"
                       disabled={actionUserId === row.user_id}
                       onClick={() => toggleFollow(row)}
                       aria-label={row.you_follow_them ? t('tipster.unfollow') : t('tipster.follow')}
-                      className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
-                        row.you_follow_them
-                          ? 'bg-[var(--border)] text-[var(--text)] hover:bg-red-500/15 hover:text-red-600 dark:hover:text-red-400 border border-[var(--border)]'
-                          : 'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]'
-                      }`}
+                      size="sm"
+                      variant={row.you_follow_them ? 'secondary' : 'primary'}
+                      className="shrink-0 whitespace-nowrap"
                     >
                       {actionUserId === row.user_id
                         ? '…'
                         : row.you_follow_them
                           ? t('tipster.unfollow')
                           : t('tipster.follow')}
-                    </button>
+                    </Button>
                   )}
                 </li>
               ))}

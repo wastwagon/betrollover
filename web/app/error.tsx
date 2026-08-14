@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { Button, buttonClassName } from '@/components/ui/Button';
 
 export default function Error({
   error,
@@ -23,16 +24,12 @@ export default function Error({
           We hit an error loading this page. You can try again or go back home.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <button
-            type="button"
-            onClick={reset}
-            className="px-5 py-2.5 rounded-xl font-semibold bg-[var(--primary)] text-white hover:opacity-90 transition-opacity"
-          >
+          <Button type="button" onClick={reset}>
             Try again
-          </button>
+          </Button>
           <Link
             href="/"
-            className="px-5 py-2.5 rounded-xl font-semibold border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-warm)] transition-colors"
+            className={buttonClassName({ variant: 'secondary' })}
           >
             Go home
           </Link>

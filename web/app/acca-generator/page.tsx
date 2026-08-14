@@ -6,6 +6,7 @@ import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { NavBar } from '@/components/ios/NavBar';
 import { AccaGeneratorLanding } from '@/components/AccaGeneratorLanding';
+import { Button } from '@/components/ui/Button';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 
@@ -237,10 +238,10 @@ function MarketMultiSelect({
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className={`flex w-full items-center justify-between gap-3 rounded-xl border bg-gradient-to-b from-white to-slate-50 px-3.5 py-3 text-left shadow-sm transition ${
+        className={`flex w-full items-center justify-between gap-3 rounded-xl border bg-[var(--card)] px-3.5 py-3 text-left transition ${
           open
-            ? 'border-emerald-500 ring-2 ring-emerald-500/20'
-            : 'border-slate-200 hover:border-slate-300'
+            ? 'border-[var(--primary)] ring-2 ring-[var(--primary)]/20'
+            : 'border-[var(--border)] hover:border-[var(--primary)]/40'
         }`}
       >
         <span className="min-w-0">
@@ -831,14 +832,14 @@ export default function AccaGeneratorPage() {
           )}
         </div>
 
-        <button
+        <Button
           type="button"
           disabled={generating || !canGenerate}
           onClick={() => void onGenerate()}
-          className="w-full rounded-xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-800 disabled:bg-slate-300 disabled:cursor-not-allowed"
+          fullWidth
         >
           {generating ? 'Generating…' : 'Generate accumulator'}
-        </button>
+        </Button>
         {!canGenerate && generatorAllowed && !availabilityLoading && (
           <p className="text-center text-xs text-slate-500">
             {selectedMarkets.length === 0
@@ -919,14 +920,14 @@ export default function AccaGeneratorPage() {
             />
           </label>
 
-          <button
+          <Button
             type="button"
             disabled={publishing}
             onClick={() => void onPublish()}
-            className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:bg-slate-300"
+            fullWidth
           >
             {publishing ? 'Publishing…' : 'Publish as free pick'}
-          </button>
+          </Button>
           <p className="text-xs text-[var(--text-muted)] text-center">
             Publishes under your account at price 0. Marketplace only shows picks while every leg is still upcoming
             (we require ~45 minutes to kickoff). Free picks remain informational — not a sure bet. Subject to your

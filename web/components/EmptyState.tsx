@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { IconPicks } from '@/components/ios/icons';
+import { Button, buttonClassName } from '@/components/ui/Button';
 
 export function EmptyState({
   title,
@@ -25,7 +26,7 @@ export function EmptyState({
   imageSrc?: string;
   imageAlt?: string;
 }) {
-  const className = 'inline-flex w-full max-w-xs sm:w-auto sm:max-w-none items-center justify-center px-6 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 shrink-0';
+  const ctaClass = buttonClassName({ className: 'w-full max-w-xs sm:w-auto sm:max-w-none shrink-0' });
   const hasAction = actionLabel && (onActionClick || actionHref);
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 sm:px-8 text-center w-full min-w-0 max-w-full">
@@ -45,11 +46,11 @@ export function EmptyState({
       <h3 className="text-xl font-semibold text-[var(--text)] mb-3 min-w-0 max-w-full break-words px-1">{title}</h3>
       <p className="text-[var(--text-muted)] max-w-full sm:max-w-md mb-10 leading-relaxed min-w-0 break-words px-1">{description}</p>
       {hasAction && onActionClick ? (
-        <button type="button" onClick={onActionClick} className={className}>
+        <Button type="button" onClick={onActionClick} className="w-full max-w-xs sm:w-auto sm:max-w-none shrink-0">
           {actionLabel}
-        </button>
+        </Button>
       ) : hasAction && actionHref ? (
-        <Link href={actionHref} className={className}>
+        <Link href={actionHref} className={ctaClass}>
           {actionLabel}
         </Link>
       ) : null}

@@ -346,7 +346,7 @@ export default function AdminWithdrawalsPage() {
   const totalAmountOnPage = withdrawals.reduce((s, w) => s + Number(w.amount), 0);
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
 
@@ -365,12 +365,12 @@ export default function AdminWithdrawalsPage() {
             <p className="text-3xl font-bold">{totalCount}</p>
             <p className="text-xs opacity-70 mt-1">all time</p>
           </div>
-          <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-2xl shadow-xl p-4 sm:p-6 text-white">
+          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-4 sm:p-6 text-gray-900 dark:text-white">
             <p className="text-sm opacity-90 mb-1">Awaiting action (this page)</p>
             <p className="text-3xl font-bold">{awaitingActionCount}</p>
             <p className="text-xs opacity-70 mt-1">pending or processing</p>
           </div>
-          <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-2xl shadow-xl p-4 sm:p-6 text-white">
+          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-4 sm:p-6 text-gray-900 dark:text-white">
             <p className="text-sm opacity-90 mb-1">Amount (this page)</p>
             <p className="text-3xl font-bold">GHS {totalAmountOnPage.toFixed(2)}</p>
             <p className="text-xs opacity-70 mt-1">across {withdrawals.length} requests</p>
@@ -384,12 +384,12 @@ export default function AdminWithdrawalsPage() {
             placeholder="Filter by User ID"
             value={userIdFilter}
             onChange={(e) => { setUserIdFilter(e.target.value); setPage(1); }}
-            className="w-full sm:flex-1 sm:min-w-[160px] px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full sm:flex-1 sm:min-w-[160px] px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
           />
           <select
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-            className="w-full sm:w-auto px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full sm:w-auto px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
           >
             <option value="">All Statuses</option>
             <option value="pending">Pending</option>
@@ -403,7 +403,7 @@ export default function AdminWithdrawalsPage() {
 
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <div className="w-10 h-10 rounded-full border-4 border-red-500 border-t-transparent animate-spin" />
+            <div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" />
           </div>
         )}
 
@@ -411,17 +411,16 @@ export default function AdminWithdrawalsPage() {
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             {withdrawals.length === 0 ? (
               <div className="p-12 text-center">
-                <div className="text-6xl mb-4">💸</div>
                 <p className="text-gray-600 dark:text-gray-400 text-lg">No withdrawals found</p>
               </div>
             ) : (
               <>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gradient-to-r from-red-600 to-red-700">
+                    <thead className="bg-gray-50 dark:bg-gray-800">
                       <tr>
                         {['ID', 'User', 'Amount', 'Payout Details', 'Status', 'Date', 'Actions'].map((h) => (
-                          <th key={h} className="px-5 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">{h}</th>
+                          <th key={h} className="px-5 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{h}</th>
                         ))}
                       </tr>
                     </thead>
@@ -560,7 +559,7 @@ export default function AdminWithdrawalsPage() {
                                     onChange={(e) =>
                                       setAction(w.id, { type: 'rejecting', reason: e.target.value })
                                     }
-                                    className="w-full px-2 py-1 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-red-500"
+                                    className="w-full px-2 py-1 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
                                   />
                                   <div className="flex gap-2">
                                     <button

@@ -13,6 +13,7 @@ import { getApiErrorMessage } from '@/lib/api-error-message';
 import { useT } from '@/context/LanguageContext';
 import { NavBar } from '@/components/ios/NavBar';
 import { fetchSellingThresholds, SELLING_THRESHOLDS_FALLBACK, type SellingThresholds } from '@/lib/selling-thresholds';
+import { Button } from '@/components/ui/Button';
 
 interface SubscriptionPackage {
   id: number;
@@ -150,7 +151,7 @@ export default function SubscriptionPackagesPage() {
         )}
 
         {packages.length === 0 && (
-        <form onSubmit={handleCreate} className="glass-card rounded-2xl p-6 mb-8 border border-[var(--border)] max-w-xl w-full min-w-0">
+        <form onSubmit={handleCreate} className="rounded-[var(--radius)] p-6 mb-8 border border-[var(--separator)] bg-[var(--card)] max-w-xl w-full min-w-0">
           <h3 className="font-semibold text-[var(--text)] mb-4">New package</h3>
           <div className="space-y-4">
             <div>
@@ -220,13 +221,9 @@ export default function SubscriptionPackagesPage() {
                 aria-required="true"
               />
             </div>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-50"
-            >
+            <Button type="submit" disabled={submitting} fullWidth>
               {submitting ? 'Creating...' : 'Create package'}
-            </button>
+            </Button>
           </div>
         </form>
         )}

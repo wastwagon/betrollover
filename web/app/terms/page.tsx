@@ -63,7 +63,7 @@ export default async function TermsPage() {
             </section>
 
             <section
-              className="rounded-2xl border border-emerald-500/15 dark:border-emerald-700/30 bg-gradient-to-br from-emerald-500/[0.07] via-[var(--card)] to-[var(--card)] dark:from-emerald-950/25 dark:via-[var(--card)] p-5 sm:p-6 md:p-7 shadow-sm ring-1 ring-black/[0.04] dark:ring-white/[0.06] -mx-1 sm:mx-0"
+              className="rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] p-5 sm:p-6 md:p-7 -mx-1 sm:mx-0"
               aria-labelledby="terms-fee-heading"
             >
               <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">

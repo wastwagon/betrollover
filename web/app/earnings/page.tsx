@@ -11,6 +11,7 @@ import { AdSlot } from '@/components/AdSlot';
 import { getApiUrl } from '@/lib/site-config';
 import { NavBar } from '@/components/ios/NavBar';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
+import { buttonClassName } from '@/components/ui/Button';
 
 // Load chart lazily — avoids SSR issues with recharts
 const AreaChart    = dynamic(() => import('recharts').then(m => m.AreaChart), { ssr: false });
@@ -366,7 +367,6 @@ export default function EarningsPage() {
 
             {topRevenuePicks.length === 0 ? (
               <div className="p-8 text-center">
-                <p className="text-3xl mb-2">🎫</p>
                 <p className="text-sm text-[var(--text-muted)]">{t('earnings.no_paid_sold')}</p>
                 <Link href="/create-pick" className="text-xs text-[var(--primary)] hover:underline mt-1 inline-block">{t('earnings.create_pick_link')}</Link>
               </div>
@@ -461,7 +461,7 @@ export default function EarningsPage() {
             <div className="mt-5 flex flex-col sm:flex-row gap-2">
               <Link
                 href="/create-pick"
-                className="w-full sm:flex-1 text-center py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors"
+                className={buttonClassName({ fullWidth: true, className: 'sm:flex-1 sm:w-auto' })}
               >
                 {t('earnings.new_pick')}
               </Link>
@@ -504,7 +504,6 @@ export default function EarningsPage() {
 
           {filteredTx.length === 0 ? (
             <div className="p-10 text-center">
-              <p className="text-3xl mb-2">📋</p>
               <p className="text-sm text-[var(--text-muted)]">{txFilter === 'all' ? t('earnings.no_tx_all') : t('earnings.no_tx', { type: txFilter })}</p>
             </div>
           ) : (

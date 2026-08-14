@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { Button, buttonClassName } from '@/components/ui/Button';
 
 interface SmtpSettings {
   host: string;
@@ -127,7 +128,7 @@ export default function AdminEmailPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
@@ -145,7 +146,7 @@ export default function AdminEmailPage() {
         )}
         {!loading && (
           <div className="max-w-3xl space-y-6">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-l-4 border-blue-500 rounded-2xl p-6 shadow-lg">
+            <div className="bg-[var(--card)] border-l-4 border-[var(--primary)] rounded-2xl p-6 shadow-sm border border-[var(--border)]">
               <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -184,7 +185,7 @@ export default function AdminEmailPage() {
                     type="text"
                     value={form.host}
                     onChange={(e) => setForm((f) => ({ ...f, host: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
                   />
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">smtp.sendgrid.net for SendGrid</p>
                 </div>
@@ -194,7 +195,7 @@ export default function AdminEmailPage() {
                     type="number"
                     value={form.port}
                     onChange={(e) => setForm((f) => ({ ...f, port: parseInt(e.target.value, 10) || 465 }))}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
                   />
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">587 for TLS, 465 for SSL</p>
                 </div>
@@ -204,7 +205,7 @@ export default function AdminEmailPage() {
                     type="text"
                     value={form.username}
                     onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
                   />
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">For SendGrid use: apikey</p>
                 </div>
@@ -215,7 +216,7 @@ export default function AdminEmailPage() {
                     value={form.password}
                     onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
                     placeholder={settings?.password === '********' ? 'Leave blank to keep current' : ''}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
                   />
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Your SendGrid API Key (starts with SG.)</p>
                 </div>
@@ -224,7 +225,7 @@ export default function AdminEmailPage() {
                   <select
                     value={form.encryption}
                     onChange={(e) => setForm((f) => ({ ...f, encryption: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
                   >
                     <option value="SSL">SSL (port 465)</option>
                     <option value="TLS">TLS (port 587)</option>
@@ -237,7 +238,7 @@ export default function AdminEmailPage() {
                     value={form.adminNotificationEmail}
                     onChange={(e) => setForm((f) => ({ ...f, adminNotificationEmail: e.target.value }))}
                     placeholder="ops@yourcompany.com"
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
                   />
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     Receives platform alerts (withdrawal requests, support tickets, etc.) in addition to every account with the admin role. Leave blank to use only admin accounts. You can also set <code className="text-[11px] bg-gray-100 dark:bg-gray-700 px-1 rounded">ADMIN_NOTIFICATION_EMAIL</code> on the server (comma-separated).
@@ -267,7 +268,7 @@ export default function AdminEmailPage() {
                 <button type="button"
                   onClick={sendTest}
                   disabled={testing}
-                  className="w-full sm:w-auto shrink-0 px-6 py-3 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] disabled:opacity-50 transition-colors shadow-sm"
+                  className={buttonClassName({ className: 'w-full sm:w-auto shrink-0' })}
                 >
                   {testing ? 'Sending...' : 'Send Test Email'}
                 </button>

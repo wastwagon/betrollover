@@ -189,7 +189,7 @@ export function HomeFreeTipOfTheDay({
   const sportMeta = SPORT_META[sportKey] ?? SPORT_META['football'];
 
   return (
-    <section className="py-12 md:py-16 border-t border-[var(--border)] bg-gradient-to-br from-amber-50/50 dark:from-amber-950/20 to-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
+    <section className="py-12 md:py-16 border-t border-[var(--border)] bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <div className="section-ux-gutter-wide w-full min-w-0">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
           <div className="min-w-0">

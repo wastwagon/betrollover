@@ -14,6 +14,7 @@ import {
   maxCommentIdInTree,
   mergePollComments,
 } from '@/lib/pick-comment-tree';
+import { Button } from '@/components/ui/Button';
 
 export interface PickCommentItem {
   id: number;
@@ -480,14 +481,15 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
             }
             disabled={posting}
           />
-          <button
+          <Button
             type="button"
             onClick={() => void handlePost()}
             disabled={posting || !text.trim()}
-            className="self-end px-4 py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold disabled:opacity-50 shrink-0"
+            size="sm"
+            className="self-end shrink-0"
           >
             {posting ? '…' : replyTo ? t('pick_social.post_reply') : t('pick_social.post_comment')}
-          </button>
+          </Button>
         </div>
         <p className="text-[10px] text-[var(--text-muted)] mt-1.5">{t('pick_social.mention_hint')}</p>
       </div>

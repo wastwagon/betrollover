@@ -21,6 +21,7 @@ import { IconPackage, IconTarget, IconTrophy } from '@/components/ios/icons';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { filterDiscoverySports, isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import { buttonClassName } from '@/components/ui/Button';
 
 type Period = 'all_time' | 'monthly' | 'weekly';
 type SportFilter = 'all' | 'football' | 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football';
@@ -196,20 +197,20 @@ export default function TipstersPage() {
         <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 mb-6 min-w-0 max-w-full">
           <Link
             href="/leaderboard"
-            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
+            className={buttonClassName({ variant: 'secondary', size: 'sm', className: 'w-full sm:w-auto' })}
           >
             <IconTrophy className="w-4 h-4 shrink-0" aria-hidden /> {t('nav.leaderboard')}
           </Link>
           <Link
             href="/create-pick"
-            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--primary)]/50 bg-[var(--primary)]/10 text-sm font-medium text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors w-full sm:w-auto"
+            className={buttonClassName({ variant: 'secondary', size: 'sm', className: 'w-full sm:w-auto' })}
           >
             <IconTarget className="w-4 h-4 shrink-0" aria-hidden /> {t('nav.create_pick')}
           </Link>
           {isSignedIn && isSubscriptionsEnabled() && (
             <Link
               href="/dashboard/subscription-packages"
-              className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
+              className={buttonClassName({ variant: 'secondary', size: 'sm', className: 'w-full sm:w-auto' })}
             >
               <IconPackage className="w-4 h-4 shrink-0" aria-hidden /> {t('tipster.subscription_packages')}
             </Link>

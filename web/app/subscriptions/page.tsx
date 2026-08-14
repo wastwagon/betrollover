@@ -12,6 +12,7 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getApiUrl } from '@/lib/site-config';
 import { useLanguage, useT } from '@/context/LanguageContext';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
+import { buttonClassName } from '@/components/ui/Button';
 
 interface Subscription {
   id: number;
@@ -137,8 +138,8 @@ function SubscriptionsContent() {
         )}
 
         {activeSubs.length === 0 ? (
-          <div className="glass-card rounded-2xl p-8 text-center border border-[var(--border)] min-w-0 max-w-full">
-            <p className="text-[var(--text)] font-medium mb-2">{t('subscriptions.page_empty_title')}</p>
+          <div className="rounded-[var(--radius)] p-8 text-center border border-[var(--separator)] bg-[var(--card)] min-w-0 max-w-full">
+            <p className="font-display text-[var(--text)] font-semibold mb-2">{t('subscriptions.page_empty_title')}</p>
             <p className="text-sm text-[var(--text-muted)] mb-3">{t('subscriptions.page_empty_sub')}</p>
             <p className="text-sm text-[var(--text-muted)] mb-6 max-w-[28rem] mx-auto leading-relaxed">
               {t('subscriptions.page_empty_hint')}
@@ -146,13 +147,13 @@ function SubscriptionsContent() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center items-center min-w-0 max-w-full">
               <Link
                 href="/subscriptions/marketplace"
-                className="inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
+                className={buttonClassName()}
               >
                 {t('subscriptions.empty_cta_vip_marketplace')}
               </Link>
               <Link
                 href="/tipsters"
-                className="inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-warm)]"
+                className={buttonClassName({ variant: 'secondary' })}
               >
                 {t('subscriptions.empty_cta_tipsters')}
               </Link>

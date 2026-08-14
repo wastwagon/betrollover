@@ -81,7 +81,7 @@ export default function AdminContentPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
@@ -105,7 +105,7 @@ export default function AdminContentPage() {
               return (
                 <div
                   key={slug}
-                  className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 shadow-lg hover:shadow-xl transition-shadow"
+                  className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 shadow-sm transition-shadow"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-6">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white capitalize">{slug}</h2>

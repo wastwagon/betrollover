@@ -15,6 +15,7 @@ import { fetchSellingThresholds, type SellingThresholds, SELLING_THRESHOLDS_FALL
 import { useT } from '@/context/LanguageContext';
 import { NavBar } from '@/components/ios/NavBar';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
+import { buttonClassName } from '@/components/ui/Button';
 
 interface MarketplaceItem {
   package: {
@@ -304,7 +305,7 @@ export default function SubscriptionMarketplacePage() {
                       ) : (
                         <Link
                           href={`/subscriptions/checkout?packageId=${pkg.id}`}
-                          className="mt-3 w-full inline-flex items-center justify-center py-2.5 rounded-xl font-semibold text-sm bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors"
+                          className={buttonClassName({ className: 'mt-3', fullWidth: true })}
                         >
                           {t('subscriptions.subscribe_cta')}
                         </Link>

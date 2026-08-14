@@ -213,7 +213,7 @@ export default function AdminAiTipsterPackagesPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
@@ -333,7 +333,7 @@ export default function AdminAiTipsterPackagesPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search tipster by username or display name"
-              className="w-full max-w-md px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="w-full max-w-md px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
             />
             <select
               value={sortBy}
@@ -342,7 +342,7 @@ export default function AdminAiTipsterPackagesPage() {
                   e.target.value as 'name_asc' | 'name_desc' | 'on_first' | 'off_first' | 'missing_first',
                 )
               }
-              className="px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
             >
               <option value="name_asc">Sort: Name A-Z</option>
               <option value="name_desc">Sort: Name Z-A</option>
@@ -355,20 +355,20 @@ export default function AdminAiTipsterPackagesPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="w-10 h-10 rounded-full border-4 border-red-500 border-t-transparent animate-spin" />
+            <div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" />
           </div>
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gradient-to-r from-red-600 to-red-700">
+                <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Tipster</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Package Name</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Price</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Duration</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Publish</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tipster</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Package Name</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Price</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Duration</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Publish</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
