@@ -705,7 +705,35 @@ const en = {
     'Free picks are shared for information only — there is no purchase to refund.',
   'pick_detail.escrow_paid_note':
     'If this pick loses, your purchase price is automatically refunded. No claims needed.',
+  'pick_detail.fee_refund_line': 'Escrow held · full pick price refunded to wallet if it loses',
+  'pick_detail.sticky_top_up': 'Top up wallet',
   'pick_detail.share_pick': '🔗 Share pick',
+
+  // ── Escrow purchase timeline ─────────────────────────────────────────────
+  'escrow_timeline.title': 'Escrow status',
+  'escrow_timeline.step_purchased': 'Purchased',
+  'escrow_timeline.step_unlocked': 'Unlocked',
+  'escrow_timeline.step_held': 'Held',
+  'escrow_timeline.step_settling': 'Settling',
+  'escrow_timeline.step_released': 'Paid out',
+  'escrow_timeline.step_refunded': 'Refunded',
+  'escrow_timeline.step_settled': 'Settled',
+  'escrow_timeline.caption_purchased': 'Purchase complete.',
+  'escrow_timeline.caption_held': 'Your payment is held in escrow until every leg settles.',
+  'escrow_timeline.caption_settling': 'Waiting for match results.',
+  'escrow_timeline.caption_released': 'Pick won — tipster paid from escrow.',
+  'escrow_timeline.caption_refunded': 'Pick lost or void — amount returned to your',
+  'escrow_timeline.caption_settled_free': 'This free pick has settled.',
+
+  // ── Follow → push nudge ──────────────────────────────────────────────────
+  'follow_push.title': 'Get new tip alerts',
+  'follow_push.body':
+    'Enable notifications to hear when tipsters you follow publish a new pick.',
+  'follow_push.body_named':
+    'Enable notifications to hear when {name} publishes a new pick.',
+  'follow_push.enable': 'Enable alerts',
+  'follow_push.later': 'Maybe later',
+  'follow_push.never': "Don't ask again",
   'pick_detail.link_copied': '✓ Link copied!',
   'pick_detail.sidebar_disclaimer':
     'Picks are for informational purposes only. BetRollover and its tipsters accept no liability for losses incurred from acting on these picks. Refunds cover pick purchase price only.',

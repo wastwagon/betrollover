@@ -860,10 +860,23 @@ export class AccumulatorsService {
     });
     const withTipster = await this.enrichWithTipsterMetadata(enrichedTickets, rows, userId);
     const ticketMap = new Map(withTipster.map((t) => [t.id, t]));
-    const out = purchased.map((p) => ({
-      ...p,
-      pick: ticketMap.get(p.accumulatorId),
-    }));
+
+    const escrowRows = await this.escrowRepo.find({
+      where: { userId, pickId: In(accIds) },
+      select: ['pickId', 'status', 'amount', 'updatedAt'],
+    });
+    const escrowByPick = new Map(escrowRows.map((e) => [e.pickId, e]));
+
+    const out = purchased.map((p) => {
+      const esc = escrowByPick.get(p.accumulatorId);
+      return {
+        ...p,
+        pick: ticketMap.get(p.accumulatorId),
+        escrowStatus: esc?.status ?? null,
+        escrowAmount: esc != null ? Number(esc.amount) : null,
+        escrowUpdatedAt: esc?.updatedAt ?? null,
+      };
+    });
     const pickPayloads = out
       .map((o) => o.pick)
       .filter((x): x is NonNullable<typeof x> => !!x) as Record<string, unknown>[];

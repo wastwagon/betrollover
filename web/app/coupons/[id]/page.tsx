@@ -15,6 +15,7 @@ import { useLanguage, useT, type SupportedLanguage } from '@/context/LanguageCon
 import { formatTipsterRankHash } from '@/lib/tipster-rank-ui';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
+import { EscrowPurchaseTimeline } from '@/components/EscrowPurchaseTimeline';
 import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
 import { BookingCodeCopyBlock } from '@/components/BookingCodeCopyBlock';
 import { NavBar } from '@/components/ios/NavBar';
@@ -312,6 +313,8 @@ export default function CouponDetailPage() {
   const [purchasing, setPurchasing] = useState(false);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
+  const [purchasedAt, setPurchasedAt] = useState<string | null>(null);
+  const [escrowStatus, setEscrowStatus] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState(false);
   const [copied, setCopied] = useState(false);
   /** false = browsing as guest (public coupon); true = logged in */
@@ -357,8 +360,18 @@ export default function CouponDetailPage() {
       if (couponData) { try { (await import('@/lib/analytics')).trackEvent('coupon_viewed', { couponId: id }); } catch { /* noop */ } }
       if (walletData) setWalletBalance(Number(walletData.balance));
       if (Array.isArray(purchased)) {
-        const ids = new Set(purchased.map((p: { accumulatorId?: number }) => p.accumulatorId));
-        setIsPurchased(ids.has(id));
+        const row = purchased.find(
+          (p: { accumulatorId?: number }) => p.accumulatorId === id,
+        ) as
+          | {
+              accumulatorId?: number;
+              purchasedAt?: string;
+              escrowStatus?: string | null;
+            }
+          | undefined;
+        setIsPurchased(!!row);
+        if (row?.purchasedAt) setPurchasedAt(row.purchasedAt);
+        if (row?.escrowStatus) setEscrowStatus(row.escrowStatus);
       }
     }).catch(() => setCoupon(null)).finally(() => setLoading(false));
   }, [id, router]);
@@ -419,6 +432,8 @@ export default function CouponDetailPage() {
         hapticSuccess();
         setIsPurchased(true);
         setPurchaseSuccess(true);
+        setPurchasedAt(new Date().toISOString());
+        if (coupon && Number(coupon.price) > 0) setEscrowStatus('held');
         try {
           const purchasedCoupon = await res.json();
           if (purchasedCoupon && typeof purchasedCoupon === 'object' && Array.isArray(purchasedCoupon.picks)) {
@@ -611,6 +626,16 @@ export default function CouponDetailPage() {
                 </div>
               </div>
             )}
+
+            {isPurchased ? (
+              <EscrowPurchaseTimeline
+                className="mb-6"
+                result={coupon.result}
+                escrowStatus={escrowStatus}
+                isPaid={Number(coupon.price) > 0}
+                purchasedAt={purchasedAt}
+              />
+            ) : null}
 
             {/* Settlement result banner */}
             {isSettled && (
@@ -891,7 +916,7 @@ export default function CouponDetailPage() {
                       </Link>
                     </div>
                   ) : isPurchased ? (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700/40">
                         <span className="text-emerald-600 text-lg">✓</span>
                         <div>
@@ -899,6 +924,13 @@ export default function CouponDetailPage() {
                           <p className="text-xs text-emerald-700 dark:text-emerald-400">{t('pick_detail.purchased_revealed_note')}</p>
                         </div>
                       </div>
+                      <EscrowPurchaseTimeline
+                        compact
+                        result={coupon.result}
+                        escrowStatus={escrowStatus}
+                        isPaid={Number(coupon.price) > 0}
+                        purchasedAt={purchasedAt}
+                      />
                       <Link
                         href="/my-purchases"
                         className="block text-center text-sm text-[var(--primary)] hover:underline"
@@ -947,6 +979,11 @@ export default function CouponDetailPage() {
                             ? t('pick_detail.get_free_pick')
                             : t('marketplace.purchase_btn', { price: `GHS ${Number(coupon.price).toFixed(2)}` })}
                       </button>
+                      {Number(coupon.price) > 0 ? (
+                        <p className="text-[11px] text-center text-emerald-800/90 dark:text-emerald-300/90 leading-snug">
+                          {t('pick_detail.fee_refund_line')}
+                        </p>
+                      ) : null}
                       {!canPurchase && !isPurchased && coupon.price > 0 && walletBalance !== null && walletBalance < coupon.price && (
                         <Link
                           href="/wallet"
@@ -1089,6 +1126,56 @@ export default function CouponDetailPage() {
         <ReviewsSection couponId={coupon.id} isPurchased={isPurchased} isSettled={isSettled} />
 
       </main>
+
+      {/* Mobile sticky buy — mirrors create-pick slip bar above tab nav */}
+      {!isPurchased &&
+      !hasNonPurchaseAccess &&
+      !( !isAuthed && isSettled) ? (
+        <div
+          className="lg:hidden fixed inset-x-0 z-40 border-t border-[var(--separator)] bg-[var(--card)]/95 backdrop-blur-md px-3 pt-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]"
+          style={{ bottom: 'calc(3.5rem + env(safe-area-inset-bottom, 0px))' }}
+        >
+          <div className="flex items-center gap-2 max-w-lg mx-auto min-w-0">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-[var(--primary)] tabular-nums truncate">
+                {coupon.price === 0 ? t('common.free') : `GHS ${Number(coupon.price).toFixed(2)}`}
+              </p>
+              {Number(coupon.price) > 0 ? (
+                <p className="text-[10px] text-[var(--text-muted)] truncate">{t('pick_detail.fee_refund_line')}</p>
+              ) : null}
+            </div>
+            {!isAuthed ? (
+              <Link
+                href={`/login?redirect=/coupons/${id}`}
+                className="shrink-0 px-4 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-bold"
+              >
+                {t('nav.login')}
+              </Link>
+            ) : canPurchase ? (
+              <button
+                type="button"
+                onClick={handlePurchase}
+                disabled={purchasing}
+                className="shrink-0 px-4 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-bold disabled:opacity-60"
+              >
+                {purchasing
+                  ? t('pick_card.processing')
+                  : coupon.price === 0
+                    ? t('pick_detail.get_free_pick')
+                    : t('pick_card.purchase')}
+              </button>
+            ) : (
+              <Link
+                href="/wallet"
+                className="shrink-0 px-4 py-2.5 rounded-xl border border-amber-400/50 bg-amber-500/10 text-amber-800 dark:text-amber-200 text-sm font-bold"
+              >
+                {t('pick_detail.sticky_top_up')}
+              </Link>
+            )}
+          </div>
+        </div>
+      ) : null}
+
       <AppFooter />
     </div>
   );

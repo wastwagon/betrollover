@@ -30,6 +30,7 @@ import {
   isFootballOnlyDiscovery,
 } from '@/lib/football-only-discovery';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import { FollowPushNudge } from '@/components/FollowPushNudge';
 
 const API_URL = getApiUrl();
 
@@ -134,6 +135,8 @@ export default function MarketplacePage() {
   }, [tipsterSearch]);
   const [followedTipsterUsernames, setFollowedTipsterUsernames] = useState<Set<string>>(new Set());
   const [followLoading, setFollowLoading] = useState<string | null>(null);
+  const [followPushTrigger, setFollowPushTrigger] = useState(0);
+  const [followPushName, setFollowPushName] = useState<string | null>(null);
   const [autoPurchaseHandled, setAutoPurchaseHandled] = useState(false);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
 
@@ -188,6 +191,10 @@ export default function MarketplacePage() {
       });
       if (res.ok) {
         showSuccess(isFollowing ? t('tipster.toast_unfollowed') : t('tipster.toast_following'));
+        if (!isFollowing) {
+          setFollowPushName(username);
+          setFollowPushTrigger((n) => n + 1);
+        }
       } else {
         setFollowedTipsterUsernames((prev) => {
           const next = new Set(prev);
@@ -885,6 +892,7 @@ export default function MarketplacePage() {
         </div>
         </PullToRefresh>
       </div>
+      <FollowPushNudge triggerToken={followPushTrigger} tipsterName={followPushName} />
     </DashboardShell>
   );
 }

@@ -700,7 +700,34 @@ const fr: Record<string, string> = {
     'Les pronostics gratuits sont partagés à titre informatif — aucun achat à rembourser.',
   'pick_detail.escrow_paid_note':
     'Si ce pronostic perd, le prix d’achat est remboursé automatiquement. Aucune démarche requise.',
+  'pick_detail.fee_refund_line':
+    'Escrow · prix du pronostic remboursé sur le portefeuille en cas de perte',
+  'pick_detail.sticky_top_up': 'Recharger le portefeuille',
   'pick_detail.share_pick': '🔗 Partager le pronostic',
+
+  'escrow_timeline.title': 'Statut escrow',
+  'escrow_timeline.step_purchased': 'Acheté',
+  'escrow_timeline.step_unlocked': 'Débloqué',
+  'escrow_timeline.step_held': 'En réserve',
+  'escrow_timeline.step_settling': 'Règlement',
+  'escrow_timeline.step_released': 'Versé',
+  'escrow_timeline.step_refunded': 'Remboursé',
+  'escrow_timeline.step_settled': 'Réglé',
+  'escrow_timeline.caption_purchased': 'Achat terminé.',
+  'escrow_timeline.caption_held': 'Votre paiement est en escrow jusqu’au règlement de chaque sélection.',
+  'escrow_timeline.caption_settling': 'En attente des résultats.',
+  'escrow_timeline.caption_released': 'Pronostic gagné — tipster payé depuis l’escrow.',
+  'escrow_timeline.caption_refunded': 'Pronostic perdu ou annulé — montant rendu à votre',
+  'escrow_timeline.caption_settled_free': 'Ce pronostic gratuit est réglé.',
+
+  'follow_push.title': 'Alertes nouveaux tips',
+  'follow_push.body':
+    'Activez les notifications pour savoir quand les tipsters que vous suivez publient un nouveau pronostic.',
+  'follow_push.body_named':
+    'Activez les notifications pour savoir quand {name} publie un nouveau pronostic.',
+  'follow_push.enable': 'Activer les alertes',
+  'follow_push.later': 'Plus tard',
+  'follow_push.never': 'Ne plus demander',
   'pick_detail.link_copied': '✓ Lien copié !',
   'pick_detail.sidebar_disclaimer':
     'Les pronostics sont fournis à titre informatif uniquement. BetRollover et ses tipsters déclinent toute responsabilité en cas de pertes liées à leur utilisation. Les remboursements portent uniquement sur le prix d’achat du pronostic.',

@@ -27,6 +27,7 @@ import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 import { useCurrency } from '@/context/CurrencyContext';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import { FollowPushNudge } from '@/components/FollowPushNudge';
 
 interface Pick {
   id?: number;
@@ -149,6 +150,7 @@ export default function TipsterProfilePage() {
   const [profile, setProfile] = useState<TipsterProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
+  const [followPushTrigger, setFollowPushTrigger] = useState(0);
   const [avatarError, setAvatarError] = useState(false);
   const [purchasedIds, setPurchasedIds] = useState<Set<number>>(new Set());
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
@@ -334,6 +336,7 @@ export default function TipsterProfilePage() {
         try { (await import('@/lib/analytics')).trackEvent(isFollowing ? 'unfollowed_tipster' : 'followed_tipster', { username }, token); } catch { /* noop */ }
         setProfile({ ...profile, is_following: !isFollowing });
         showSuccess(isFollowing ? t('tipster.toast_unfollowed') : t('tipster.toast_following'));
+        if (!isFollowing) setFollowPushTrigger((n) => n + 1);
       }
     } finally {
       setFollowLoading(false);
@@ -969,6 +972,10 @@ export default function TipsterProfilePage() {
         </div>
         </PullToRefresh>
       </main>
+      <FollowPushNudge
+        triggerToken={followPushTrigger}
+        tipsterName={tipster.display_name || tipster.username}
+      />
     </div>
   );
 }

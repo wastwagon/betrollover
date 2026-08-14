@@ -12,6 +12,7 @@ import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
+import { EscrowPurchaseTimeline } from '@/components/EscrowPurchaseTimeline';
 import { useErrorToast } from '@/hooks/useErrorToast';
 import { ErrorToast } from '@/components/ErrorToast';
 import { getApiUrl } from '@/lib/site-config';
@@ -60,6 +61,8 @@ interface Purchase {
   accumulatorId: number;
   purchasePrice: number;
   purchasedAt: string;
+  escrowStatus?: string | null;
+  escrowAmount?: number | null;
   pick?: {
     id: number;
     title: string;
@@ -435,58 +438,66 @@ export default function MyPurchasesPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-6 min-w-0 max-w-full">
               {filtered.map((p) =>
                 p.pick ? (
-                  <PickCard
-                    key={p.id}
-                    id={p.pick.id}
-                    title={p.pick.title}
-                    totalPicks={p.pick.totalPicks}
-                    totalOdds={p.pick.totalOdds}
-                    price={p.purchasePrice}
-                    status={p.pick.status}
-                    result={p.pick.result}
-                    sport={p.pick.sport}
-                    picks={p.pick.picks || []}
-                    tipster={p.pick.tipster ?? null}
-                    purchaseCount={p.pick.purchaseCount}
-                    avgRating={p.pick.avgRating ?? null}
-                    reviewCount={p.pick.reviewCount ?? null}
-                    createdAt={p.pick.createdAt}
-                    bookmakerKey={p.pick.bookmakerKey}
-                    bookingCode={p.pick.bookingCode}
-                    bookingCodeCopyCount={p.pick.bookingCodeCopyCount ?? 0}
-                    isPurchased
-                    detailsHref={`/coupons/${p.pick.id}`}
-                    onPurchase={() => {}}
-                    onView={() => {
-                      const tok = localStorage.getItem('token');
-                      if (!tok) return;
-                      fetch(`${getApiUrl()}/accumulators/${p.pick!.id}/view`, {
-                        method: 'POST',
-                        headers: { Authorization: `Bearer ${tok}` },
-                      }).catch(() => {});
-                    }}
-                    purchasing={false}
-                    {...getPickCardSocialProps(p.pick, {
-                      onCountsChange: (id, counts) => {
-                        setPurchases((prev) =>
-                          prev.map((row) =>
-                            row.pick?.id === id
-                              ? {
-                                  ...row,
-                                  pick: {
-                                    ...row.pick!,
-                                    reactionCount: counts.reactionCount,
-                                    hasReacted: counts.hasReacted,
-                                    commentCount: counts.commentCount,
-                                  },
-                                }
-                              : row,
-                          ),
-                        );
-                      },
-                      loginRedirectPath: currentLoginRedirectPath('/my-purchases'),
-                    })}
-                  />
+                  <div key={p.id} className="flex flex-col gap-2 min-w-0">
+                    <PickCard
+                      id={p.pick.id}
+                      title={p.pick.title}
+                      totalPicks={p.pick.totalPicks}
+                      totalOdds={p.pick.totalOdds}
+                      price={p.purchasePrice}
+                      status={p.pick.status}
+                      result={p.pick.result}
+                      sport={p.pick.sport}
+                      picks={p.pick.picks || []}
+                      tipster={p.pick.tipster ?? null}
+                      purchaseCount={p.pick.purchaseCount}
+                      avgRating={p.pick.avgRating ?? null}
+                      reviewCount={p.pick.reviewCount ?? null}
+                      createdAt={p.pick.createdAt}
+                      bookmakerKey={p.pick.bookmakerKey}
+                      bookingCode={p.pick.bookingCode}
+                      bookingCodeCopyCount={p.pick.bookingCodeCopyCount ?? 0}
+                      isPurchased
+                      detailsHref={`/coupons/${p.pick.id}`}
+                      onPurchase={() => {}}
+                      onView={() => {
+                        const tok = localStorage.getItem('token');
+                        if (!tok) return;
+                        fetch(`${getApiUrl()}/accumulators/${p.pick!.id}/view`, {
+                          method: 'POST',
+                          headers: { Authorization: `Bearer ${tok}` },
+                        }).catch(() => {});
+                      }}
+                      purchasing={false}
+                      {...getPickCardSocialProps(p.pick, {
+                        onCountsChange: (id, counts) => {
+                          setPurchases((prev) =>
+                            prev.map((row) =>
+                              row.pick?.id === id
+                                ? {
+                                    ...row,
+                                    pick: {
+                                      ...row.pick!,
+                                      reactionCount: counts.reactionCount,
+                                      hasReacted: counts.hasReacted,
+                                      commentCount: counts.commentCount,
+                                    },
+                                  }
+                                : row,
+                            ),
+                          );
+                        },
+                        loginRedirectPath: currentLoginRedirectPath('/my-purchases'),
+                      })}
+                    />
+                    <EscrowPurchaseTimeline
+                      compact
+                      result={p.pick.result}
+                      escrowStatus={p.escrowStatus}
+                      isPaid={Number(p.purchasePrice) > 0}
+                      purchasedAt={p.purchasedAt}
+                    />
+                  </div>
                 ) : null,
               )}
             </div>
