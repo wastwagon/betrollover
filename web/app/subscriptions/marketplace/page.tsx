@@ -180,7 +180,7 @@ export default function SubscriptionMarketplacePage() {
               return (
       <article
         key={pkg.id}
-        className="rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-sm overflow-hidden flex flex-col w-full min-w-0 max-w-full hover:shadow-md hover:-translate-y-px transition-[box-shadow,transform] duration-200 ease-out"
+        className="rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-sm overflow-hidden flex flex-col w-full min-w-0 max-w-full hover:shadow-md transition-shadow duration-200 ease-out"
       >
                   <div className="p-4 sm:p-5 flex flex-col flex-1 min-w-0">
                     <div className="flex items-start gap-3 mb-3 min-w-0">

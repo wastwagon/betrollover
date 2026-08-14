@@ -1067,7 +1067,7 @@ export default function AdminFixturesPage() {
               onClick={fetchResultsAndSettle}
               disabled={syncing || fetchingResults || settling || reconciling}
               title="Fetch results from API-Sports, then immediately settle pending picks. Use when matches have finished but picks are still pending."
-              className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-violet-600 to-violet-700 text-white hover:from-violet-700 hover:to-violet-800 disabled:opacity-50 transition-all shadow-md"
+              className="px-5 py-2.5 rounded-xl font-semibold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-50 transition-all shadow-md"
             >
               {fetchingResults || settling ? (
                 <span className="flex items-center gap-2">
@@ -1125,7 +1125,7 @@ export default function AdminFixturesPage() {
           </div>
         )}
         {resultMsg && !error && (
-          <div className="mb-6 bg-violet-50 dark:bg-violet-900/20 border-l-4 border-violet-500 rounded-lg p-4 text-violet-800 dark:text-violet-200 shadow-md">
+          <div className="mb-6 bg-[var(--primary-light)] border-l-4 border-[var(--primary)] rounded-lg p-4 text-[var(--text)] shadow-sm">
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />

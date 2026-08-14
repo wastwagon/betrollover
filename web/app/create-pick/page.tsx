@@ -24,6 +24,7 @@ import { fetchSellingThresholds, type SellingThresholds } from '@/lib/selling-th
 import { TipsterSellUnlockChecklist } from '@/components/TipsterSellUnlockChecklist';
 import { SellerPayoutSplitCallout } from '@/components/SellerPayoutSplitCallout';
 import { CreatePickListingPreview } from '@/components/CreatePickListingPreview';
+import { Button } from '@/components/ui/Button';
 import {
   fetchDailyCouponQuota,
   formatQuotaResetUtc,
@@ -873,7 +874,7 @@ export default function CreatePickPage() {
                 onClick={() => setSport(key)}
                 className={`shrink-0 px-4 py-2 rounded-full font-medium text-sm transition-colors ${
                   sport === key
-                    ? 'bg-[var(--primary)] text-white shadow-md'
+                    ? 'bg-[var(--primary)] text-white'
                     : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
                 }`}
               >
@@ -887,10 +888,9 @@ export default function CreatePickPage() {
               <button
                 type="button"
                 onClick={() => setSlipSheetOpen(true)}
-                className="lg:hidden flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--primary-light)] text-[var(--primary)] text-sm font-semibold shadow-sm hover:bg-teal-100 active:scale-[0.98] transition-all touch-manipulation min-h-[44px]"
+                className="lg:hidden flex items-center gap-2 px-4 py-2.5 rounded-[var(--radius)] bg-[var(--primary-light)] text-[var(--primary)] text-sm font-semibold hover:brightness-95 active:scale-[0.98] transition-all touch-manipulation min-h-[44px]"
                 aria-label="View slip"
               >
-                <span className="text-base">📝</span>
                 <span>{selections.length} {selections.length !== 1 ? t('create_pick.selections') : t('create_pick.selection')}</span>
                 <span className="text-[var(--primary)] font-bold ml-0.5">@ {totalOdds.toFixed(2)}</span>
               </button>
@@ -1322,12 +1322,11 @@ export default function CreatePickPage() {
           {/* Right Column: Fixed Slip Widget (desktop only) */}
           <div className="hidden lg:block lg:w-96 lg:shrink-0 min-w-0">
             <div className="lg:sticky lg:top-4 min-w-0">
-              <div className="bg-gradient-to-br from-[var(--primary)]/10 via-[var(--primary)]/5 to-transparent rounded-card shadow-card border-2 border-[var(--primary)]/30 p-5 space-y-4 min-w-0">
+              <div className="rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] shadow-card p-5 space-y-4 min-w-0">
                 {/* Header */}
                 <div className="flex items-center justify-between gap-2 mb-4 min-w-0">
-                  <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2 min-w-0 flex-1 truncate">
-                    <span className="text-2xl shrink-0">📝</span>
-                    <span className="truncate">{t('create_pick.pick_slip')}</span>
+                  <h2 className="font-display text-lg font-semibold text-[var(--text)] min-w-0 flex-1 truncate">
+                    {t('create_pick.pick_slip')}
                   </h2>
                   {selections.length > 0 && (
                     <span className="shrink-0 px-2.5 py-1 bg-[var(--primary)] text-white rounded-full text-xs font-semibold">
@@ -1339,11 +1338,10 @@ export default function CreatePickPage() {
                 {/* Selections List */}
                 {selections.length === 0 ? (
                   <div className="text-center py-8">
-                    <div className="text-4xl mb-3 opacity-50">🎯</div>
                     <p className="text-sm text-[var(--text-muted)]">
                       {t('create_pick.slip_empty')}
                     </p>
-                    <p className="text-xs text-[var(--text-muted)] mt-1">
+                    <p className="text-xs text-[var(--text-tertiary)] mt-1">
                       {t('create_pick.tap_to_add')}
                     </p>
                   </div>
@@ -1351,20 +1349,14 @@ export default function CreatePickPage() {
                   <>
                     <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
                       {selections.map((s, i) => {
-                        const SLIP_SPORT_ICONS: Record<string, string> = {
-                          football: '⚽', basketball: '🏀', rugby: '🏉', mma: '🥊',
-                          volleyball: '🏐', hockey: '🏒', american_football: '🏈', tennis: '🎾',
-                        };
-                        const sportIcon = SLIP_SPORT_ICONS[s.sport ?? 'football'] ?? '🎯';
                         return (
                           <div
                             key={i}
-                            className="bg-[var(--card)] rounded-lg p-3 border border-[var(--border)] hover:border-[var(--primary)]/50 transition-colors"
+                            className="bg-[var(--bg)] rounded-[var(--radius-sm)] p-3 border border-[var(--separator)] hover:border-[var(--primary)]/40 transition-colors"
                           >
                             <div className="flex items-start justify-between gap-2 min-w-0">
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-1.5 mb-0.5 min-w-0">
-                                  <span className="text-xs shrink-0">{sportIcon}</span>
                                   <p className="text-xs font-semibold text-[var(--text)] truncate min-w-0">
                                     {s.matchDescription}
                                   </p>
@@ -1571,15 +1563,16 @@ export default function CreatePickPage() {
                       {createPickDisabled && selections.length > 0 && !submitting && (
                         <p className="text-[10px] text-[var(--text-muted)] leading-snug">{t('create_pick.desktop_create_hint')}</p>
                       )}
-                      <button
+                      <Button
                         type="button"
                         onClick={submit}
                         disabled={createPickDisabled}
-                        className="w-full py-3 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white hover:shadow-lg hover:shadow-[var(--primary)]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                        fullWidth
+                        size="lg"
+                        leading={submitting ? <LoadingSpinner size="sm" /> : undefined}
                       >
-                        {submitting && <LoadingSpinner size="sm" />}
                         {submitting ? t('create_pick.creating') : t('create_pick.create_btn')}
-                      </button>
+                      </Button>
                     </div>
                   </>
                 )}
@@ -1602,14 +1595,14 @@ export default function CreatePickPage() {
               hapticLight();
               setSlipSheetOpen(true);
             }}
-            className={`pointer-events-auto w-full min-w-0 max-w-full flex items-center justify-between gap-2 sm:gap-3 px-4 sm:px-5 py-3.5 rounded-2xl bg-[var(--primary)] text-white shadow-lg shadow-teal-500/25 active:scale-[0.99] transition-transform touch-manipulation touch-target ${
+            className={`pointer-events-auto w-full min-w-0 max-w-full flex items-center justify-between gap-2 sm:gap-3 px-4 sm:px-5 py-3.5 rounded-[var(--radius)] bg-[var(--primary)] text-white shadow-card active:scale-[0.99] transition-transform touch-manipulation touch-target ${
               createPickDisabled && selections.length > 0 ? 'opacity-85' : ''
             }`}
             aria-label="Open pick slip to review and create"
           >
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-              <span className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg shrink-0" aria-hidden>
-                📝
+              <span className="w-10 h-10 rounded-[var(--radius-sm)] bg-white/20 flex items-center justify-center text-sm font-bold tabular-nums shrink-0" aria-hidden>
+                {selections.length}
               </span>
               <div className="text-left min-w-0">
                 <p className="font-semibold text-sm truncate">
@@ -1640,20 +1633,14 @@ export default function CreatePickPage() {
           <div className="p-4 sm:p-5 space-y-4">
             <div className="space-y-2 max-h-[180px] overflow-y-auto">
               {selections.map((s, i) => {
-                const SHEET_SPORT_ICONS: Record<string, string> = {
-                  football: '⚽', basketball: '🏀', rugby: '🏉', mma: '🥊',
-                  volleyball: '🏐', hockey: '🏒', american_football: '🏈', tennis: '🎾',
-                };
-                const sheetSportIcon = SHEET_SPORT_ICONS[s.sport ?? 'football'] ?? '🎯';
                 return (
                   <div
                     key={i}
-                    className="bg-[var(--fill-secondary)] rounded-xl p-4 border border-[var(--separator)]"
+                    className="bg-[var(--fill-secondary)] rounded-[var(--radius)] p-4 border border-[var(--separator)]"
                   >
                     <div className="flex items-start justify-between gap-3 min-w-0">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 mb-0.5 min-w-0">
-                          <span className="text-sm shrink-0">{sheetSportIcon}</span>
                           <p className="text-sm font-semibold text-[var(--text)] truncate min-w-0">{s.matchDescription}</p>
                         </div>
                         <p className="text-xs text-[var(--text-muted)] mt-1 break-words">
@@ -1844,15 +1831,16 @@ export default function CreatePickPage() {
               {createPickDisabled && selections.length > 0 && !submitting && (
                 <p className="text-xs text-[var(--text-muted)] leading-snug">{t('create_pick.desktop_create_hint')}</p>
               )}
-              <button
+              <Button
                 type="button"
                 onClick={() => submit()}
                 disabled={createPickDisabled}
-                className="w-full py-4 rounded-xl font-bold text-base bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white shadow-lg shadow-teal-500/25 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] transition-all flex items-center justify-center gap-2 touch-manipulation min-h-[52px]"
+                fullWidth
+                size="lg"
+                leading={submitting ? <LoadingSpinner size="sm" /> : undefined}
               >
-                {submitting && <LoadingSpinner size="sm" />}
                 {submitting ? t('create_pick.creating') : t('create_pick.create_btn')}
-              </button>
+              </Button>
             </div>
           </div>
         </BottomSheet>

@@ -11,6 +11,8 @@ import { ApiErrorBanner } from '@/components/ApiErrorBanner';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { getApiUrl } from '@/lib/site-config';
 import { consumeOAuthSessionToken, setAuthToken } from '@/lib/auth-token-storage';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 /** Relative in-app path only; blocks protocol-relative and off-site redirects. */
 function safePostLoginPath(redirectParam: string | null): string {
@@ -99,29 +101,25 @@ function LoginForm() {
       <UnifiedHeader />
       <main className="section-ux-auth-main w-full min-w-0 max-w-full pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <div className="w-full max-w-md min-w-0 mx-auto px-4 sm:px-0">
-          <div className="bg-[var(--card)] rounded-2xl shadow-sm border border-[var(--border)] p-5 sm:p-8 md:p-10 min-w-0 max-w-full">
+          <div className="bg-[var(--card)] rounded-2xl shadow-sm border border-[var(--separator)] p-5 sm:p-8 md:p-10 min-w-0 max-w-full">
             <div className="text-center mb-6 sm:mb-8">
-              <h1 className="text-2xl font-bold tracking-tight text-[var(--text)] mb-2 sm:sr-only">{t('auth.login')}</h1>
+              <h1 className="font-display text-2xl font-bold tracking-tight text-[var(--text)] mb-2 sm:sr-only">{t('auth.login')}</h1>
               <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('auth.sign_in_desc')}</p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-5 min-w-0">
-              <div className="min-w-0">
-                <label htmlFor="email" className="block text-sm font-medium text-[var(--text)] mb-1.5">
-                  {t('auth.email')}
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  disabled={loading}
-                  className="w-full min-w-0 min-h-[48px] px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200 disabled:opacity-50"
-                  placeholder="you@example.com"
-                />
-              </div>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                label={t('auth.email')}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                disabled={loading}
+                className="min-h-[48px] px-4 py-3 text-base"
+                placeholder="you@example.com"
+              />
               <div className="min-w-0">
                 <label htmlFor="password" className="block text-sm font-medium text-[var(--text)] mb-1.5">
                   {t('auth.password')}
@@ -136,7 +134,7 @@ function LoginForm() {
                     required
                     autoComplete="current-password"
                     disabled={loading}
-                    className="w-full min-w-0 min-h-[48px] px-4 py-3 pr-12 text-base rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200 disabled:opacity-50"
+                    className="w-full min-w-0 min-h-[48px] px-4 py-3 pr-12 text-base rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-offset-1 focus:ring-offset-[var(--bg)] transition-colors disabled:opacity-50"
                   />
                   <button
                     type="button"
@@ -173,7 +171,7 @@ function LoginForm() {
               )}
               <div className="relative my-4">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-[var(--border)]" />
+                  <div className="w-full border-t border-[var(--separator)]" />
                 </div>
                 <div className="relative flex justify-center text-sm">
                   <span className="px-3 bg-[var(--card)] text-[var(--text-muted)]">{t('auth.or_continue_with')}</span>
@@ -181,20 +179,11 @@ function LoginForm() {
               </div>
               <GoogleSignInButton variant="signin" redirect={oauthRedirect} className="mb-4" disabled={loading} />
               <AppleSignInButton variant="signin" className="mb-4" disabled={loading} />
-              <button
-                type="submit"
-                disabled={loading}
-                className="touch-target w-full min-h-[52px] py-3.5 rounded-xl font-semibold bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white shadow-lg shadow-[var(--primary)]/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    {t('auth.signing_in')}
-                  </>
-                ) : (
-                  t('auth.login')
-                )}
-              </button>
+              <Button type="submit" fullWidth size="lg" disabled={loading} leading={loading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : undefined}>
+                {loading ? t('auth.signing_in') : t('auth.login')}
+              </Button>
             </form>
             <p className="text-center text-sm text-[var(--text-muted)] mt-6">
               {t('auth.no_account')}{' '}

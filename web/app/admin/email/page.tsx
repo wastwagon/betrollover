@@ -246,7 +246,7 @@ export default function AdminEmailPage() {
                 <button type="button"
                   onClick={save}
                   disabled={saving}
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold hover:from-red-700 hover:to-red-800 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none text-center"
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[var(--destructive)] text-white font-semibold hover:opacity-90 disabled:opacity-50 transition-colors shadow-sm text-center"
                 >
                   {saving ? 'Saving...' : 'Save Settings'}
                 </button>
@@ -267,7 +267,7 @@ export default function AdminEmailPage() {
                 <button type="button"
                   onClick={sendTest}
                   disabled={testing}
-                  className="w-full sm:w-auto shrink-0 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-semibold hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none"
+                  className="w-full sm:w-auto shrink-0 px-6 py-3 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] disabled:opacity-50 transition-colors shadow-sm"
                 >
                   {testing ? 'Sending...' : 'Send Test Email'}
                 </button>

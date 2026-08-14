@@ -360,7 +360,7 @@ export default function AdminWithdrawalsPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl shadow-xl p-4 sm:p-6 text-white">
+          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-4 sm:p-6 text-gray-900 dark:text-white">
             <p className="text-sm opacity-90 mb-1">Total Requests</p>
             <p className="text-3xl font-bold">{totalCount}</p>
             <p className="text-xs opacity-70 mt-1">all time</p>

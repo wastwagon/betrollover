@@ -38,7 +38,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   transfer_rumour:     'bg-amber-100 text-amber-700',
   confirmed_transfer:  'bg-emerald-100 text-emerald-700',
   injury:              'bg-red-100 text-red-700',
-  gossip:              'bg-purple-100 text-purple-700',
+  gossip:              'bg-[var(--accent-light)] text-[var(--accent)]',
 };
 
 const CATEGORY_KEYS: NewsCategory[] = ['all', 'news', 'transfer_rumour', 'confirmed_transfer', 'injury', 'gossip'];

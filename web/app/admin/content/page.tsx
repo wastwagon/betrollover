@@ -112,7 +112,7 @@ export default function AdminContentPage() {
                     {!isEditing ? (
                       <button type="button"
                         onClick={() => page && startEdit(page)}
-                        className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white text-sm font-semibold hover:from-red-700 hover:to-red-800 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                        className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[var(--destructive)] text-white text-sm font-semibold hover:opacity-90 transition-colors shadow-sm"
                       >
                         Edit
                       </button>
@@ -127,7 +127,7 @@ export default function AdminContentPage() {
                         <button type="button"
                           onClick={save}
                           disabled={saving}
-                          className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white text-sm font-semibold hover:from-red-700 hover:to-red-800 disabled:opacity-50 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none"
+                          className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[var(--destructive)] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-colors shadow-sm"
                         >
                           {saving ? 'Saving...' : 'Save'}
                         </button>

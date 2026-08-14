@@ -76,7 +76,7 @@ export function TipsterCard({
     <article
       className={`overflow-hidden flex flex-col w-full min-w-0 max-w-full transition-all duration-200 ease-out ${
         premium
-          ? 'rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-md hover:shadow-lg hover:-translate-y-px'
+          ? 'rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-md hover:shadow-lg'
           : 'rounded-[var(--radius-ios-group)] bg-[var(--card)] border border-[var(--separator)]'
       } ${className}`}
     >

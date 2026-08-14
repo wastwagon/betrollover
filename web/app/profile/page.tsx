@@ -15,6 +15,7 @@ import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 import { NavBar } from '@/components/ios/NavBar';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { NotificationPreferencesSection } from '@/components/notifications/NotificationPreferencesSection';
+import { Button } from '@/components/ui/Button';
 
 interface Profile {
   id: number;
@@ -392,13 +393,9 @@ export default function ProfilePage() {
                 <span className="text-xs text-[var(--text-muted)]">{t('profile.marketing_consent')}</span>
               </label>
               {msg && <p className="text-sm text-[var(--primary)]">{msg}</p>}
-              <button
-                type="submit"
-                disabled={saving}
-                className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white hover:shadow-lg hover:shadow-[var(--primary)]/30 disabled:opacity-50 transition-all"
-              >
+              <Button type="submit" size="md" disabled={saving}>
                 {saving ? t('profile.saving') : t('profile.save_profile')}
-              </button>
+              </Button>
                 </div>
               </div>
             </form>
@@ -440,13 +437,9 @@ export default function ProfilePage() {
                 />
               </div>
               {pwMsg && <p className={`text-sm ${pwMsg.startsWith(t('profile.password_updated')) ? 'text-green-600' : 'text-red-600'}`}>{pwMsg}</p>}
-              <button
-                type="submit"
-                disabled={pwSaving}
-                className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white hover:shadow-lg hover:shadow-[var(--primary)]/30 disabled:opacity-50 transition-all duration-200"
-              >
+              <Button type="submit" size="md" disabled={pwSaving}>
                 {pwSaving ? t('profile.updating') : t('profile.change_password')}
-              </button>
+              </Button>
             </div>
           </form>
 

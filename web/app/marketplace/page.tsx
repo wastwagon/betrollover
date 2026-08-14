@@ -637,15 +637,15 @@ export default function MarketplacePage() {
             <div className="hidden sm:flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto self-stretch sm:self-auto shrink-0 min-w-0">
               <Link
                 href="/coupons/archive"
-                className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
+                className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
               >
-                <span aria-hidden>📦</span> {t('header.settled_archive')}
+                {t('header.settled_archive')}
               </Link>
               <Link
                 href="/leaderboard"
-                className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
+                className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
               >
-                <span aria-hidden>🏆</span> {t('nav.leaderboard')}
+                {t('nav.leaderboard')}
               </Link>
             </div>
           </div>
@@ -691,42 +691,8 @@ export default function MarketplacePage() {
             </div>
           ) : null}
 
-          {/* Sticky discovery chrome — sports + filters stay visible while scrolling */}
+          {/* Sticky discovery chrome — one compact rail so picks stay the visual hero */}
           <div className="sticky-below-chrome -mx-4 px-4 sm:-mx-6 sm:px-6 py-2 mb-4 bg-[var(--bg)]/95 backdrop-blur-md border-b border-[var(--separator)]">
-            {!footballOnly ? (
-            <div className="w-full min-w-0 overflow-hidden mb-2">
-              <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
-                {(
-                  [
-                    { key: '', label: t('marketplace.filter_all_sports') },
-                    { key: 'football', label: t('nav.football') },
-                    { key: 'basketball', label: t('nav.basketball') },
-                    { key: 'rugby', label: 'Rugby' },
-                    { key: 'mma', label: 'MMA' },
-                    { key: 'volleyball', label: 'Volleyball' },
-                    { key: 'hockey', label: 'Hockey' },
-                    { key: 'american_football', label: 'Amer. Football' },
-                    { key: 'tennis', label: 'Tennis' },
-                    { key: 'multi', label: 'Multi-Sport' },
-                  ] as { key: string; label: string }[]
-                ).map(({ key, label }) => (
-                  <button
-                    key={key || 'all'}
-                    type="button"
-                    onClick={() => setSportFilter(key)}
-                    className={`flex-shrink-0 touch-target px-4 py-2 rounded-full font-medium text-sm transition-colors ${
-                      sportFilter === key
-                        ? 'bg-[var(--primary)] text-white shadow-md'
-                        : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            ) : null}
-
             <div
               className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 mb-2 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]"
               role="group"
@@ -745,16 +711,45 @@ export default function MarketplacePage() {
                   onClick={() => setDeskFilter(key)}
                   className={`flex-shrink-0 touch-target px-3.5 py-1.5 rounded-full font-medium text-sm transition-colors ${
                     deskFilter === key
-                      ? 'bg-[var(--primary)] text-white shadow-md'
+                      ? 'bg-[var(--primary)] text-white'
                       : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
                   }`}
                 >
                   {label}
                 </button>
               ))}
+              {!footballOnly
+                ? (
+                    [
+                      { key: '', label: t('marketplace.filter_all_sports') },
+                      { key: 'football', label: t('nav.football') },
+                      { key: 'basketball', label: t('nav.basketball') },
+                      { key: 'rugby', label: 'Rugby' },
+                      { key: 'mma', label: 'MMA' },
+                      { key: 'volleyball', label: 'Volleyball' },
+                      { key: 'hockey', label: 'Hockey' },
+                      { key: 'american_football', label: 'Amer. Football' },
+                      { key: 'tennis', label: 'Tennis' },
+                      { key: 'multi', label: 'Multi-Sport' },
+                    ] as { key: string; label: string }[]
+                  ).map(({ key, label }) => (
+                    <button
+                      key={`sport-${key || 'all'}`}
+                      type="button"
+                      onClick={() => setSportFilter(key)}
+                      className={`flex-shrink-0 touch-target px-3.5 py-1.5 rounded-full font-medium text-sm transition-colors ${
+                        sportFilter === key
+                          ? 'bg-[var(--text)] text-[var(--card)]'
+                          : 'bg-[var(--fill-secondary)] text-[var(--text-muted)] hover:text-[var(--text)]'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))
+                : null}
             </div>
 
-            <p className="mb-2 px-0.5 text-[11px] sm:text-xs font-medium text-emerald-800/90 dark:text-emerald-300/90">
+            <p className="mb-2 px-0.5 text-[11px] sm:text-xs text-[var(--text-tertiary)] leading-snug">
               {t('marketplace.escrow_note')}
             </p>
 

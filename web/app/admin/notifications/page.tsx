@@ -206,7 +206,7 @@ export default function AdminNotificationsPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex flex-col gap-1">
-                              <span className="px-2 py-1 rounded text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 w-fit">
+                              <span className="px-2 py-1 rounded text-xs bg-[var(--primary-light)] text-[var(--primary)] w-fit">
                                 {n.metadata?.audience || 'n/a'}
                               </span>
                               <span className="px-2 py-1 rounded text-xs bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200 w-fit">

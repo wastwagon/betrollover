@@ -135,7 +135,7 @@ export function HomeHero({
             }`}
           >
             <h1 className="sr-only">{t('home.hero_title')}</h1>
-            <p className="mb-3 inline-flex max-w-full items-center rounded-full border border-emerald-300/40 bg-emerald-950/75 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-50 shadow-[0_4px_20px_-6px_rgba(0,0,0,0.55)] backdrop-blur-md sm:px-3.5 sm:text-[11px]">
+            <p className="mb-3 inline-flex max-w-full items-center rounded-full border border-white/25 bg-black/35 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/95 backdrop-blur-md sm:px-3.5 sm:text-[11px]">
               <span className="truncate">{t('home.hero_badge')}</span>
             </p>
             <p
@@ -153,7 +153,7 @@ export function HomeHero({
           >
             <Link
               href="/marketplace"
-              className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(16,185,129,0.55)] transition-colors hover:bg-emerald-400 sm:flex-none sm:min-w-[10.5rem]"
+              className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--radius)] bg-[var(--primary)] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[var(--primary-hover)] sm:flex-none sm:min-w-[10.5rem]"
             >
               {t('home.hero_cta_primary')}
             </Link>

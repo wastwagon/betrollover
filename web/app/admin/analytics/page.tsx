@@ -547,50 +547,50 @@ export default function AdminAnalyticsPage() {
         {/* Real-time Stats */}
         {realTime && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white">
-              <p className="text-sm opacity-90 mb-1">New members (24h)</p>
-              <p className="text-3xl font-bold">{realTime.users.last24h}</p>
-              <p className="text-xs opacity-75 mt-2">{realTime.users.last7d} this week</p>
-              <p className="text-[10px] opacity-70 mt-2 leading-snug">User + tipster roles; excludes admins.</p>
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 text-gray-900 dark:text-white">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">New members (24h)</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{realTime.users.last24h}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{realTime.users.last7d} this week</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-2 leading-snug">User + tipster roles; excludes admins.</p>
             </div>
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl p-6 text-white">
-              <p className="text-sm opacity-90 mb-1">Picks (24h)</p>
-              <p className="text-3xl font-bold">{realTime.picks.last24h}</p>
-              <p className="text-xs opacity-75 mt-2">{realTime.picks.last7d} this week</p>
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 text-gray-900 dark:text-white">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Picks (24h)</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{realTime.picks.last24h}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{realTime.picks.last7d} this week</p>
             </div>
-            <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-xl p-6 text-white">
-              <p className="text-sm opacity-90 mb-1">Purchases — all (24h)</p>
-              <p className="text-3xl font-bold">{realTime.purchases.last24h}</p>
-              <p className="text-xs opacity-75 mt-2">{realTime.purchases.last7d} this week</p>
-              <p className="text-[10px] opacity-70 mt-2 leading-snug">Every successful checkout (any channel).</p>
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 text-gray-900 dark:text-white">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Purchases — all (24h)</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{realTime.purchases.last24h}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{realTime.purchases.last7d} this week</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-2 leading-snug">Every successful checkout (any channel).</p>
             </div>
-            <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl p-6 text-white">
-              <p className="text-sm opacity-90 mb-1">Gross revenue — all (24h)</p>
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 text-gray-900 dark:text-white">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Gross revenue — all (24h)</p>
               <p className="text-3xl font-bold">GHS {(realTime.revenue.last24h ?? 0).toFixed(2)}</p>
-              <p className="text-xs opacity-75 mt-2">GHS {(realTime.revenue.last7d ?? 0).toFixed(2)} this week</p>
-              <p className="text-[10px] opacity-70 mt-2 leading-snug">Sum of purchase prices (all paths). Not net tipster pay or platform fee.</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">GHS {(realTime.revenue.last7d ?? 0).toFixed(2)} this week</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-2 leading-snug">Sum of purchase prices (all paths). Not net tipster pay or platform fee.</p>
             </div>
-            <div className="bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl shadow-xl p-6 text-white">
-              <p className="text-sm opacity-90 mb-1">Marketplace purchases (24h)</p>
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 text-gray-900 dark:text-white">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Marketplace purchases (24h)</p>
               <p className="text-3xl font-bold">
                 {realTime.marketplace == null ? '—' : realTime.marketplace.purchases.last24h}
               </p>
-              <p className="text-xs opacity-75 mt-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 {realTime.marketplace != null ? `${realTime.marketplace.purchases.last7d} this week` : '—'}
               </p>
-              <p className="text-[10px] opacity-70 mt-2 leading-snug">Joined to pick_marketplace — same scope as public homepage.</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-2 leading-snug">Joined to pick_marketplace — same scope as public homepage.</p>
             </div>
-            <div className="bg-gradient-to-br from-amber-600 to-rose-600 rounded-2xl shadow-xl p-6 text-white">
-              <p className="text-sm opacity-90 mb-1">Marketplace revenue (24h)</p>
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 text-gray-900 dark:text-white">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Marketplace revenue (24h)</p>
               <p className="text-3xl font-bold">
                 {realTime.marketplace != null ? `GHS ${realTime.marketplace.revenue.last24h.toFixed(2)}` : '—'}
               </p>
-              <p className="text-xs opacity-75 mt-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 {realTime.marketplace != null
                   ? `GHS ${realTime.marketplace.revenue.last7d.toFixed(2)} this week`
                   : '—'}
               </p>
-              <p className="text-[10px] opacity-70 mt-2 leading-snug">Gross spend on marketplace-listed picks only.</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-2 leading-snug">Gross spend on marketplace-listed picks only.</p>
             </div>
           </div>
         )}
@@ -598,7 +598,7 @@ export default function AdminAnalyticsPage() {
         {/* Platform Commission Revenue strip */}
         {commissionRevenue && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="md:col-span-1 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-2xl shadow-xl p-5 text-white">
+            <div className="md:col-span-1 rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 shadow-sm p-5 text-amber-950 dark:text-amber-100">
               <p className="text-xs font-semibold opacity-90 uppercase tracking-wider mb-1">Commission (All Time)</p>
               <p className="text-2xl font-bold">GHS {commissionRevenue.allTime.toFixed(2)}</p>
               <p className="text-xs opacity-80 mt-1">Pick wins only — wallet rows with reference commission-pick-*</p>
@@ -629,7 +629,7 @@ export default function AdminAnalyticsPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-indigo-600 rounded-2xl p-5 text-white">
               <p className="text-xs font-semibold opacity-90 uppercase tracking-wider mb-1">Messages Today</p>
-              <p className="text-3xl font-bold">{chatStats.todayMessages}</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{chatStats.todayMessages}</p>
               <p className="text-xs opacity-80 mt-1">Across all rooms</p>
             </div>
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-5">
@@ -999,17 +999,17 @@ export default function AdminAnalyticsPage() {
             )}
 
             {revenue && <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-xl p-6 text-white">
-                <p className="text-sm opacity-90 mb-1">Pick sales revenue</p>
+              <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 text-gray-900 dark:text-white">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Pick sales revenue</p>
                 <p className="text-3xl font-bold">GHS {(revenue.totalRevenue ?? 0).toFixed(2)}</p>
               </div>
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white">
-                <p className="text-sm opacity-90 mb-1">Average Order Value</p>
+              <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 text-gray-900 dark:text-white">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Average Order Value</p>
                 <p className="text-3xl font-bold">GHS {(revenue.avgOrderValue ?? 0).toFixed(2)}</p>
               </div>
-              <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl p-6 text-white">
-                <p className="text-sm opacity-90 mb-1">Revenue Trend</p>
-                <p className="text-3xl font-bold">{revenue.revenueTrend.length} days</p>
+              <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 text-gray-900 dark:text-white">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Revenue Trend</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">{revenue.revenueTrend.length} days</p>
               </div>
             </div>}
 

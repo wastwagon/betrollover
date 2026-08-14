@@ -77,7 +77,7 @@ const SPORT_META: Record<string, { icon: string; label: string; color: string }>
   mma:               { icon: '🥊', label: 'MMA',               color: 'bg-red-100 text-red-800 border-red-200' },
   volleyball:        { icon: '🏐', label: 'Volleyball',        color: 'bg-blue-100 text-blue-800 border-blue-200' },
   hockey:            { icon: '🏒', label: 'Hockey',            color: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
-  american_football: { icon: '🏈', label: 'Amer. Football',   color: 'bg-purple-100 text-purple-800 border-purple-200' },
+  american_football: { icon: '🏈', label: 'Amer. Football',   color: 'bg-[var(--primary-light)] text-[var(--primary)] border-[var(--primary)]/25' },
   tennis:            { icon: '🎾', label: 'Tennis',            color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
   'multi-sport':     { icon: '🌍', label: 'Multi-Sport',       color: 'bg-teal-100 text-teal-800 border-teal-200' },
   multi:             { icon: '🌍', label: 'Multi-Sport',       color: 'bg-teal-100 text-teal-800 border-teal-200' },
@@ -253,7 +253,7 @@ export function PickCard({
   return (
     <>
       <article
-        className={`card-gradient rounded-xl shadow-md overflow-hidden hover:shadow-lg hover:shadow-[var(--primary)]/5 hover:-translate-y-px transition-all duration-200 flex flex-col relative border border-[var(--border)] ${className}`}
+        className={`card-gradient rounded-[var(--radius)] shadow-card overflow-hidden hover:border-[var(--primary)]/30 transition-colors duration-200 flex flex-col relative border border-[var(--border)] ${className}`}
       >
         {/* Compact Follow button - top right corner */}
         {tipster && onFollow && (
@@ -385,7 +385,7 @@ export function PickCard({
                 <span
                   className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-[10px] font-bold border shadow-sm ${
                     isFree
-                      ? 'bg-violet-50 text-violet-900 border-violet-200 dark:bg-violet-950/50 dark:text-violet-100 dark:border-violet-700/60'
+                      ? 'bg-[var(--accent-light)] text-[var(--accent)] border-[var(--accent)]/30'
                       : 'bg-amber-50 text-amber-950 border-amber-300 dark:bg-amber-950/40 dark:text-amber-100 dark:border-amber-700/60'
                   }`}
                   title={isFree ? t('pick_card.badge_free_unlocks_hint') : t('pick_card.badge_purchases_hint')}
@@ -522,7 +522,19 @@ export function PickCard({
           {!showFullDetails && (
             <div className="mb-2 flex-1 flex items-center justify-center bg-[var(--fill-secondary)] rounded-md py-2 px-2">
               <div className="text-center">
-                <span className="text-lg mb-0.5 block">🔒</span>
+                <svg
+                  className="mx-auto mb-0.5 h-4 w-4 text-[var(--text-muted)]"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <rect x="5" y="11" width="14" height="10" rx="2" />
+                  <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                </svg>
                 <p className="text-[10px] text-[var(--text-muted)]">{t('pick_card.purchase_to_view')}</p>
               </div>
             </div>

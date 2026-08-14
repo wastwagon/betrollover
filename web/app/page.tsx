@@ -80,51 +80,51 @@ export default async function HomePage() {
 
         <HomeMarketingCollapse summary={`${t('home.how_it_works')} · ${t('home.features_title')}`}>
         {/* How It Works — collapsed by default so tipsters/picks stay first */}
-        <section className="py-6 sm:py-10 md:py-14 px-4 sm:px-6 lg:px-8 w-full min-w-0 max-w-full overflow-x-hidden">
+        <section className="py-6 sm:py-10 md:py-14 px-4 sm:px-6 lg:px-8 w-full min-w-0">
           <div className="section-ux-cap-4xl w-full min-w-0">
             <div className="text-center mb-8 sm:mb-12 px-1">
-              <span className="inline-block px-3 py-1.5 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-3">{t('home.how_it_works')}</span>
-              <h2 className="text-base font-semibold text-[var(--text)] mb-3 sm:text-lg md:text-xl leading-snug">{t('home.how_it_works_sub')}</h2>
+              <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-[var(--primary)] mb-3">{t('home.how_it_works')}</p>
+              <h2 className="font-display text-display-sm sm:text-display-md text-[var(--text)] mb-3 leading-snug">{t('home.how_it_works_sub')}</h2>
               <p className="text-[var(--text-muted)] text-sm sm:text-base max-w-xl mx-auto leading-relaxed">{t('home.escrow_note')}</p>
-              <p className="text-xs sm:text-sm font-semibold text-[var(--primary)] uppercase tracking-wide mt-4 mb-1" aria-hidden="true">{t('home.for_buyers')}</p>
+              <p className="text-xs sm:text-sm font-semibold text-[var(--text-tertiary)] uppercase tracking-wide mt-4 mb-1" aria-hidden="true">{t('home.for_buyers')}</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-6 min-w-0">
-              <div className="flex flex-col items-center text-center rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 backdrop-blur-sm p-5 sm:p-6 shadow-sm min-w-0">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 min-w-0">
+              <div className="flex flex-col items-center text-center min-w-0">
                 <div className="flex flex-col items-center gap-2 mb-3 w-full">
-                  <ArtworkBuyerBrowse className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                  <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-sm font-bold text-emerald-700 dark:text-emerald-300">1</span>
+                  <ArtworkBuyerBrowse className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-[var(--primary)]" />
+                  <span className="text-[11px] font-bold text-[var(--text-tertiary)] tracking-widest">01</span>
                 </div>
-                <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('home.step1_title')}</h3>
+                <h3 className="font-display text-base font-semibold text-[var(--text)] mb-2">{t('home.step1_title')}</h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('home.step1_desc')}</p>
               </div>
-              <div className="flex flex-col items-center text-center rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 backdrop-blur-sm p-5 sm:p-6 shadow-sm min-w-0">
+              <div className="flex flex-col items-center text-center min-w-0">
                 <div className="flex flex-col items-center gap-2 mb-3 w-full">
-                  <ArtworkBuyerSecure className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-blue-600 dark:text-blue-400" />
-                  <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-blue-500/15 border border-blue-500/30 text-sm font-bold text-blue-700 dark:text-blue-300">2</span>
+                  <ArtworkBuyerSecure className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-[var(--primary)]" />
+                  <span className="text-[11px] font-bold text-[var(--text-tertiary)] tracking-widest">02</span>
                 </div>
-                <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('home.step2_title')}</h3>
+                <h3 className="font-display text-base font-semibold text-[var(--text)] mb-2">{t('home.step2_title')}</h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('home.step2_desc')}</p>
               </div>
-              <div className="flex flex-col items-center text-center rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 backdrop-blur-sm p-5 sm:p-6 shadow-sm min-w-0">
+              <div className="flex flex-col items-center text-center min-w-0">
                 <div className="flex flex-col items-center gap-2 mb-3 w-full">
-                  <ArtworkBuyerOutcome className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-amber-600 dark:text-amber-500" />
-                  <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-amber-500/15 border border-amber-500/30 text-sm font-bold text-amber-800 dark:text-amber-300">3</span>
+                  <ArtworkBuyerOutcome className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-[var(--accent)]" />
+                  <span className="text-[11px] font-bold text-[var(--text-tertiary)] tracking-widest">03</span>
                 </div>
-                <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('home.step3_title')}</h3>
+                <h3 className="font-display text-base font-semibold text-[var(--text)] mb-2">{t('home.step3_title')}</h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('home.step3_desc')}</p>
               </div>
             </div>
-            <div className="mt-8 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 min-w-0">
-              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-emerald-50/40 dark:from-slate-800/50 dark:to-emerald-900/20 border border-[var(--border)] flex items-start sm:items-center gap-3 sm:gap-4 min-h-0 min-w-0">
-                <ArtworkNewsGuides className="h-11 w-11 sm:h-12 sm:w-12 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <div className="mt-10 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 gap-6 min-w-0 border-t border-[var(--separator)] pt-8">
+              <div className="flex items-start gap-3 sm:gap-4 min-w-0">
+                <ArtworkNewsGuides className="h-11 w-11 sm:h-12 sm:w-12 shrink-0 text-[var(--primary)]" />
                 <div className="min-w-0">
                   <h3 className="text-sm font-semibold text-[var(--text)] mb-0.5">{t('home.news_guides_title')}</h3>
                   <p className="text-xs text-[var(--text-muted)] leading-relaxed">{t('home.news_guides_desc')}</p>
                 </div>
               </div>
-              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-blue-50/40 dark:from-slate-800/50 dark:to-blue-900/20 border border-[var(--border)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
                 <div className="flex items-start gap-3 min-w-0 flex-1">
-                  <ArtworkExplore className="h-11 w-11 sm:h-12 sm:w-12 shrink-0 text-blue-600 dark:text-blue-400" />
+                  <ArtworkExplore className="h-11 w-11 sm:h-12 sm:w-12 shrink-0 text-[var(--accent)]" />
                   <div className="min-w-0">
                     <h3 className="text-sm font-semibold text-[var(--text)] mb-0.5">{t('home.explore_cta_title')}</h3>
                     <p className="text-xs text-[var(--text-muted)] leading-relaxed">{t('home.explore_cta_desc')}</p>
@@ -132,48 +132,48 @@ export default async function HomePage() {
                 </div>
                 <Link
                   href="/discover"
-                  className="inline-flex items-center justify-center px-4 py-3 sm:py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-all shadow-md w-full sm:w-auto min-h-[44px] sm:min-h-0 shrink-0"
+                  className="inline-flex items-center justify-center px-4 py-3 sm:py-2.5 rounded-[var(--radius)] bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors w-full sm:w-auto min-h-[44px] sm:min-h-0 shrink-0"
                 >
                   {t('home.explore_cta_btn')}
                 </Link>
               </div>
             </div>
-            <div className="mt-10 sm:mt-14 pt-10 sm:pt-12 border-t border-[var(--border)]">
+            <div className="mt-10 sm:mt-14 pt-10 sm:pt-12 border-t border-[var(--separator)]">
               <div className="text-center mb-8 sm:mb-10 px-1">
-                <p className="text-xs sm:text-sm font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide mb-2" aria-hidden="true">{t('home.for_sellers')}</p>
-                <span className="inline-block px-3 py-1.5 rounded-full bg-violet-500/15 text-violet-600 dark:text-violet-300 text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-3">
+                <p className="text-xs sm:text-sm font-semibold text-[var(--accent)] uppercase tracking-wide mb-2" aria-hidden="true">{t('home.for_sellers')}</p>
+                <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-[var(--primary)] mb-3">
                   {t('home.tipster_flow_badge')}
-                </span>
-                <h2 className="text-base font-semibold text-[var(--text)] mb-3 sm:text-lg md:text-xl leading-snug">
+                </p>
+                <h2 className="font-display text-display-sm sm:text-display-md text-[var(--text)] mb-3 leading-snug">
                   {t('home.tipster_flow_title', sellVars)}
                 </h2>
                 <p className="text-[var(--text-muted)] text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
                   {t('home.tipster_flow_sub', sellVars)}
                 </p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 min-w-0">
-                <div className="flex flex-col items-center text-center rounded-2xl border border-violet-500/15 dark:border-violet-800/30 bg-gradient-to-b from-violet-500/[0.06] to-[var(--card)]/80 p-5 sm:p-6 shadow-sm min-w-0">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 min-w-0">
+                <div className="flex flex-col items-center text-center min-w-0">
                   <div className="flex flex-col items-center gap-2 mb-3 w-full">
-                    <ArtworkSellerAccount className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-violet-600 dark:text-violet-400" />
-                    <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-violet-500/15 border border-violet-500/30 text-sm font-bold text-violet-700 dark:text-violet-300">1</span>
+                    <ArtworkSellerAccount className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-[var(--primary)]" />
+                    <span className="text-[11px] font-bold text-[var(--text-tertiary)] tracking-widest">01</span>
                   </div>
-                  <h3 className="text-sm sm:text-base font-semibold text-[var(--text)] mb-2">{t('home.tipster_step1_title')}</h3>
+                  <h3 className="font-display text-sm sm:text-base font-semibold text-[var(--text)] mb-2">{t('home.tipster_step1_title')}</h3>
                   <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">{t('home.tipster_step1_desc')}</p>
                 </div>
-                <div className="flex flex-col items-center text-center rounded-2xl border border-teal-500/15 dark:border-teal-800/30 bg-gradient-to-b from-teal-500/[0.06] to-[var(--card)]/80 p-5 sm:p-6 shadow-sm min-w-0">
+                <div className="flex flex-col items-center text-center min-w-0">
                   <div className="flex flex-col items-center gap-2 mb-3 w-full">
-                    <ArtworkSellerRoi className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-teal-600 dark:text-teal-400" />
-                    <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-teal-500/15 border border-teal-500/30 text-sm font-bold text-teal-700 dark:text-teal-300">2</span>
+                    <ArtworkSellerRoi className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-[var(--accent)]" />
+                    <span className="text-[11px] font-bold text-[var(--text-tertiary)] tracking-widest">02</span>
                   </div>
-                  <h3 className="text-sm sm:text-base font-semibold text-[var(--text)] mb-2">{t('home.tipster_step2_title', sellVars)}</h3>
+                  <h3 className="font-display text-sm sm:text-base font-semibold text-[var(--text)] mb-2">{t('home.tipster_step2_title', sellVars)}</h3>
                   <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">{t('home.tipster_step2_desc', sellVars)}</p>
                 </div>
-                <div className="flex flex-col items-center text-center rounded-2xl border border-emerald-500/15 dark:border-emerald-800/30 bg-gradient-to-b from-emerald-500/[0.06] to-[var(--card)]/80 p-5 sm:p-6 shadow-sm min-w-0">
+                <div className="flex flex-col items-center text-center min-w-0">
                   <div className="flex flex-col items-center gap-2 mb-3 w-full">
-                    <ArtworkSellerPayout className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                    <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-sm font-bold text-emerald-700 dark:text-emerald-300">3</span>
+                    <ArtworkSellerPayout className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-[var(--primary)]" />
+                    <span className="text-[11px] font-bold text-[var(--text-tertiary)] tracking-widest">03</span>
                   </div>
-                  <h3 className="text-sm sm:text-base font-semibold text-[var(--text)] mb-2">{t('home.tipster_step3_title')}</h3>
+                  <h3 className="font-display text-sm sm:text-base font-semibold text-[var(--text)] mb-2">{t('home.tipster_step3_title')}</h3>
                   <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">{t('home.tipster_step3_desc')}</p>
                 </div>
               </div>
@@ -189,58 +189,41 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Platform Features — Bento Grid */}
-        <section className="py-8 md:py-14 border-t border-[var(--border)] w-full min-w-0 max-w-full overflow-x-hidden">
+        {/* Platform Features — editorial list, not emoji bento */}
+        <section className="py-8 md:py-14 border-t border-[var(--separator)] w-full min-w-0">
           <div className="section-ux-gutter-wide w-full min-w-0">
-
-            {/* Section header */}
             <div className="text-center mb-10">
-              <span className="inline-block px-3 py-1 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-xs font-semibold uppercase tracking-wide mb-3">{t('home.features_badge')}</span>
-              <h2 className="text-lg md:text-xl font-semibold text-[var(--text)] mb-3">{t('home.features_title')}</h2>
+              <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-[var(--primary)] mb-3">{t('home.features_badge')}</p>
+              <h2 className="font-display text-display-sm md:text-display-md text-[var(--text)] mb-3">{t('home.features_title')}</h2>
               <p className="text-[var(--text-muted)] text-base max-w-xl mx-auto">{t('home.features_sub')}</p>
             </div>
 
-            {/* Bento Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 min-w-0">
-
-              {/* Large Card — Escrow Protection */}
-              <div className="md:col-span-2 lg:row-span-2 p-6 md:p-8 rounded-2xl bg-gradient-to-br from-[var(--primary)]/10 via-[var(--primary)]/5 to-transparent border border-[var(--border)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group min-w-0">
-                <div className="flex flex-col h-full">
-                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-hover)] flex items-center justify-center text-2xl mb-5 shadow-lg group-hover:scale-110 transition-transform">
-                    🔒
-                  </div>
-                  <h3 className="text-lg md:text-xl font-semibold text-[var(--text)] mb-3">
-                    {t('home.feature_escrow_title')}
-                  </h3>
-                  <p className="text-base text-[var(--text-muted)] mb-4 leading-relaxed">
-                    {t('home.feature_escrow_desc')}
-                  </p>
-                  <ul className="space-y-2 mb-5">
-                    {([
-                      t('home.feature_escrow_bullet1'),
-                      t('home.feature_escrow_bullet2'),
-                      t('home.feature_escrow_bullet3'),
-                    ]).map((item) => (
-                      <li key={item} className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
-                        <span className="w-4 h-4 rounded-full bg-[var(--primary)]/20 text-[var(--primary)] flex items-center justify-center text-[10px] font-bold flex-shrink-0">✓</span>
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 p-3 rounded-lg mt-auto">
-                    <p className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
-                      <strong>Disclaimer:</strong> {t('home.feature_escrow_disclaimer')}
-                    </p>
-                  </div>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8 min-w-0 max-w-4xl mx-auto">
+              <div className="min-w-0 border-t border-[var(--separator)] pt-5">
+                <h3 className="font-display text-base font-semibold text-[var(--text)] mb-2">
+                  {t('home.feature_escrow_title')}
+                </h3>
+                <p className="text-sm text-[var(--text-muted)] mb-3 leading-relaxed">
+                  {t('home.feature_escrow_desc')}
+                </p>
+                <ul className="space-y-1.5 mb-3">
+                  {([
+                    t('home.feature_escrow_bullet1'),
+                    t('home.feature_escrow_bullet2'),
+                    t('home.feature_escrow_bullet3'),
+                  ]).map((item) => (
+                    <li key={item} className="text-sm text-[var(--text-muted)] pl-3 border-l-2 border-[var(--primary)]/40">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-xs text-[var(--text-tertiary)] leading-relaxed">
+                  {t('home.feature_escrow_disclaimer')}
+                </p>
               </div>
 
-              {/* Card — Verified Tipster Profiles */}
-              <div className="p-5 md:p-6 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 min-w-0">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-xl mb-4 shadow-md">
-                  ✓
-                </div>
-                <h3 className="text-base font-bold text-[var(--text)] mb-2">
+              <div className="min-w-0 border-t border-[var(--separator)] pt-5">
+                <h3 className="font-display text-base font-semibold text-[var(--text)] mb-2">
                   {t('home.feature_verified_title')}
                 </h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">
@@ -248,12 +231,8 @@ export default async function HomePage() {
                 </p>
               </div>
 
-              {/* Card — Automatic Refunds */}
-              <div className="p-5 md:p-6 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 min-w-0">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-xl mb-4 shadow-md">
-                  ↩️
-                </div>
-                <h3 className="text-base font-bold text-[var(--text)] mb-2">
+              <div className="min-w-0 border-t border-[var(--separator)] pt-5">
+                <h3 className="font-display text-base font-semibold text-[var(--text)] mb-2">
                   {t('home.feature_refunds_title')}
                 </h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">
@@ -261,35 +240,25 @@ export default async function HomePage() {
                 </p>
               </div>
 
-              {/* Wide Card — Marketplace CTA */}
-              <div className="md:col-span-2 p-5 md:p-6 rounded-2xl bg-gradient-to-br from-[var(--bg-warm)] to-[var(--card)] border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group min-w-0">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 min-w-0">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-lg">🌍</span>
-                      <h3 className="text-base font-semibold text-[var(--text)]">
-                        {t('home.feature_marketplace_title')}
-                      </h3>
-                    </div>
-                    <p className="text-sm text-[var(--text-muted)]">
-                      {t('home.feature_marketplace_desc')}
-                    </p>
-                  </div>
-                  <Link
-                    href="/marketplace"
-                    className="inline-flex justify-center px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-hover)] transition-all shadow-md hover:shadow-lg sm:whitespace-nowrap group-hover:scale-105 text-sm shrink-0 w-full sm:w-auto min-h-[44px] sm:min-h-0 items-center"
-                  >
-                    {t('home.feature_marketplace_btn')}
-                  </Link>
+              <div className="min-w-0 border-t border-[var(--separator)] pt-5 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-display text-base font-semibold text-[var(--text)] mb-2">
+                    {t('home.feature_marketplace_title')}
+                  </h3>
+                  <p className="text-sm text-[var(--text-muted)]">
+                    {t('home.feature_marketplace_desc')}
+                  </p>
                 </div>
+                <Link
+                  href="/marketplace"
+                  className="inline-flex justify-center px-5 py-2.5 rounded-[var(--radius)] bg-[var(--primary)] text-white font-semibold text-sm shrink-0 w-full sm:w-auto min-h-[44px] items-center hover:bg-[var(--primary-hover)] transition-colors"
+                >
+                  {t('home.feature_marketplace_btn')}
+                </Link>
               </div>
 
-              {/* Card — Live Performance Stats */}
-              <div className="p-5 md:p-6 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 min-w-0">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-xl mb-4 shadow-md">
-                  📊
-                </div>
-                <h3 className="text-base font-semibold text-[var(--text)] mb-2">
+              <div className="min-w-0 border-t border-[var(--separator)] pt-5">
+                <h3 className="font-display text-base font-semibold text-[var(--text)] mb-2">
                   {t('home.feature_stats_title')}
                 </h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">
@@ -297,22 +266,18 @@ export default async function HomePage() {
                 </p>
               </div>
 
-              {/* Card — Join / dashboard (guest vs signed-in) */}
-              <HomeJoinCtaCard />
-
-              {/* Card — Leaderboard & Rankings */}
-              <div className="p-5 md:p-6 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 min-w-0">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-xl mb-4 shadow-md">
-                  🏆
-                </div>
-                <h3 className="text-base font-bold text-[var(--text)] mb-2">
+              <div className="min-w-0 border-t border-[var(--separator)] pt-5">
+                <h3 className="font-display text-base font-semibold text-[var(--text)] mb-2">
                   {t('home.feature_leaderboard_title')}
                 </h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">
                   {t('home.feature_leaderboard_desc')}
                 </p>
               </div>
+            </div>
 
+            <div className="mt-10 max-w-md mx-auto">
+              <HomeJoinCtaCard />
             </div>
           </div>
         </section>

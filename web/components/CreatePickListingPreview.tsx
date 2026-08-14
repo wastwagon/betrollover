@@ -47,7 +47,7 @@ export function CreatePickListingPreview({
         </p>
         <span
           className={`shrink-0 text-xs font-bold tabular-nums ${
-            isFree ? 'text-violet-700 dark:text-violet-300' : 'text-[var(--primary)]'
+            isFree ? 'text-[var(--accent)]' : 'text-[var(--primary)]'
           }`}
         >
           {isFree ? t('marketplace.filter_free_only') : `GHS ${Number(price).toFixed(2)}`}

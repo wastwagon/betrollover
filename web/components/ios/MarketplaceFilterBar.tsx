@@ -71,7 +71,7 @@ export function MarketplaceFilterBar({
   ];
 
   return (
-    <div className="mb-4 min-w-0 max-w-full space-y-3">
+    <div className="mb-3 min-w-0 max-w-full space-y-2">
       <SegmentedControl
         aria-label={labels.filterPrice}
         className="w-full max-w-lg"

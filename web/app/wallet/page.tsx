@@ -24,6 +24,8 @@ import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { NavBar } from '@/components/ios/NavBar';
 import { GroupedListSection } from '@/components/ios/GroupedList';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 interface Transaction {
   id: number;
@@ -438,7 +440,7 @@ function WalletContent() {
                 </p>
               )}
               <div className="mt-3 space-y-2">
-                <input
+                <Input
                   type="number"
                   min={1}
                   max={10000}
@@ -446,17 +448,17 @@ function WalletContent() {
                   placeholder={t('wallet.amount_placeholder')}
                   value={depositAmount}
                   onChange={(e) => setDepositAmount(e.target.value)}
-                  className="w-full min-w-0 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] placeholder:text-[var(--text-muted)] focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] transition-all"
+                  error={depositError || undefined}
                 />
-                {depositError && <p className="text-sm text-red-500">{depositError}</p>}
-                <button
+                <Button
                   type="button"
                   onClick={handleDeposit}
                   disabled={depositLoading}
-                  className="w-full px-4 py-3 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white hover:shadow-lg hover:shadow-[var(--primary)]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  fullWidth
+                  size="lg"
                 >
                   {depositLoading ? t('wallet.redirecting') : t('wallet.deposit')}
-                </button>
+                </Button>
               </div>
             </div>
 

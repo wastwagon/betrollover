@@ -79,7 +79,7 @@ export default function AdminDepositsPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl shadow-xl p-4 sm:p-6 text-white">
+          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-4 sm:p-6 text-gray-900 dark:text-white">
             <p className="text-sm opacity-90 mb-1">Total Deposits</p>
             <p className="text-3xl font-bold">{deposits.length}</p>
           </div>
@@ -87,7 +87,7 @@ export default function AdminDepositsPage() {
             <p className="text-sm opacity-90 mb-1">Pending</p>
             <p className="text-3xl font-bold">{pendingCount}</p>
           </div>
-          <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-xl p-4 sm:p-6 text-white">
+          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-4 sm:p-6 text-gray-900 dark:text-white">
             <p className="text-sm opacity-90 mb-1">Total Amount</p>
             <p className="text-3xl font-bold">GHS {totalAmount.toFixed(2)}</p>
           </div>

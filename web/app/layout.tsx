@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
-import { DM_Sans } from 'next/font/google';
+import { Bricolage_Grotesque, DM_Sans } from 'next/font/google';
 import { QueryProvider } from '@/components/QueryProvider';
 import { SlipCartProvider } from '@/context/SlipCartContext';
 import { CurrencyProvider } from '@/context/CurrencyContext';
@@ -35,8 +35,14 @@ const dmSans = DM_Sans({
   weight: ['400', '500', '600', '700'],
 });
 
-// Ensure we only pass a string to className (avoids "Objects are not valid as React child" during hydration)
-const fontClassName = typeof dmSans?.variable === 'string' ? dmSans.variable : '';
+const displayFont = Bricolage_Grotesque({
+  subsets: ['latin'],
+  variable: '--font-display',
+  weight: ['500', '600', '700'],
+});
+
+// Ensure we only pass strings to className (avoids "Objects are not valid as React child" during hydration)
+const fontClassName = [dmSans?.variable, displayFont?.variable].filter((v): v is string => typeof v === 'string').join(' ');
 
 const googleSiteVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim();
 

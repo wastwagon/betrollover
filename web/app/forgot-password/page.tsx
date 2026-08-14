@@ -7,6 +7,8 @@ import { useT } from '@/context/LanguageContext';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 function ForgotPasswordForm() {
     const searchParams = useSearchParams();
@@ -94,9 +96,9 @@ function ForgotPasswordForm() {
             <UnifiedHeader />
             <main className="section-ux-auth-main w-full min-w-0 max-w-full">
                 <div className="w-full max-w-md min-w-0 mx-auto px-4 sm:px-0">
-                    <div className="bg-[var(--card)] rounded-2xl shadow-sm border border-[var(--border)] p-6 sm:p-8 md:p-10 min-w-0 max-w-full">
+                    <div className="bg-[var(--card)] rounded-2xl shadow-sm border border-[var(--separator)] p-6 sm:p-8 md:p-10 min-w-0 max-w-full">
                         <div className="text-center mb-8">
-                            <h1 className="text-xl font-semibold text-[var(--text)]">
+                            <h1 className="font-display text-xl font-semibold text-[var(--text)]">
                                 {step === 'request' ? t('auth.forgot_title') : t('auth.forgot_reset_title')}
                             </h1>
                             <p className="mt-2 text-[var(--text-muted)]">
@@ -118,77 +120,53 @@ function ForgotPasswordForm() {
 
                         {step === 'request' ? (
                             <form onSubmit={handleRequestOtp} className="space-y-5 min-w-0">
-                                <div className="min-w-0">
-                                    <label htmlFor="email" className="block text-sm font-medium text-[var(--text)] mb-1.5">
-                                        {t('auth.email_label')}
-                                    </label>
-                                    <input
-                                        id="email"
-                                        type="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        required
-                                        className="w-full min-w-0 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200"
-                                        placeholder="you@example.com"
-                                    />
-                                </div>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="w-full py-3.5 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-[var(--primary)]/25 hover:shadow-xl hover:shadow-[var(--primary)]/30 transition-all duration-300 disabled:opacity-50"
-                                >
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    label={t('auth.email_label')}
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                    className="px-4 py-3"
+                                    placeholder="you@example.com"
+                                />
+                                <Button type="submit" fullWidth size="lg" disabled={loading}>
                                     {loading ? t('auth.sending') : t('auth.send_reset_code')}
-                                </button>
+                                </Button>
                             </form>
                         ) : (
                             <form onSubmit={handleResetPassword} className="space-y-5 min-w-0">
-                                <div className="min-w-0">
-                                    <label htmlFor="code" className="block text-sm font-medium text-[var(--text)] mb-1.5">
-                                        {t('auth.reset_code')}
-                                    </label>
-                                    <input
-                                        id="code"
-                                        type="text"
-                                        value={code}
-                                        onChange={(e) => setCode(e.target.value)}
-                                        required
-                                        className="w-full min-w-0 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200"
-                                        placeholder="123456"
-                                    />
-                                </div>
-                                <div className="min-w-0">
-                                    <label htmlFor="newPassword" className="block text-sm font-medium text-[var(--text)] mb-1.5">
-                                        {t('auth.new_password')}
-                                    </label>
-                                    <input
-                                        id="newPassword"
-                                        type="password"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                        required
-                                        className="w-full min-w-0 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200"
-                                    />
-                                </div>
-                                <div className="min-w-0">
-                                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-[var(--text)] mb-1.5">
-                                        {t('auth.confirm_password_label')}
-                                    </label>
-                                    <input
-                                        id="confirmPassword"
-                                        type="password"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        required
-                                        className="w-full min-w-0 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all duration-200"
-                                    />
-                                </div>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="w-full py-3.5 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white shadow-lg shadow-[var(--primary)]/25 hover:shadow-xl hover:shadow-[var(--primary)]/30 transition-all duration-300 disabled:opacity-50"
-                                >
+                                <Input
+                                    id="code"
+                                    type="text"
+                                    label={t('auth.reset_code')}
+                                    value={code}
+                                    onChange={(e) => setCode(e.target.value)}
+                                    required
+                                    className="px-4 py-3"
+                                    placeholder="123456"
+                                />
+                                <Input
+                                    id="newPassword"
+                                    type="password"
+                                    label={t('auth.new_password')}
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    required
+                                    className="px-4 py-3"
+                                />
+                                <Input
+                                    id="confirmPassword"
+                                    type="password"
+                                    label={t('auth.confirm_password_label')}
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    required
+                                    className="px-4 py-3"
+                                />
+                                <Button type="submit" fullWidth size="lg" disabled={loading}>
                                     {loading ? t('auth.resetting') : t('auth.reset_password_btn')}
-                                </button>
+                                </Button>
                                 <button
                                     type="button"
                                     onClick={() => setStep('request')}

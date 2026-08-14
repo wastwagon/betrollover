@@ -193,7 +193,7 @@ export function PredictionCard({ prediction, onCopyBet, className = '', linkToDe
     </div>
   );
 
-  const articleClass = `card-gradient rounded-2xl shadow-lg overflow-hidden hover:shadow-xl hover:shadow-[var(--primary)]/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col cursor-pointer ${className}`;
+  const articleClass = `card-gradient rounded-2xl shadow-lg overflow-hidden hover:shadow-xl hover:shadow-[var(--primary)]/10 transition-all duration-300 flex flex-col cursor-pointer ${className}`;
 
   return (
     <article

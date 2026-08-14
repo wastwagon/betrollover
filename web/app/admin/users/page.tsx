@@ -287,7 +287,7 @@ export default function AdminUsersPage() {
           </select>
           <button type="button"
             onClick={load}
-            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold hover:from-red-700 hover:to-red-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[var(--destructive)] text-white font-semibold hover:opacity-90 transition-colors shadow-sm"
           >
             Search
           </button>

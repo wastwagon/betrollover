@@ -800,7 +800,7 @@ function DashboardContent() {
                 href="/community"
                 className="group flex items-center gap-4 p-4 sm:p-5 md:p-6 min-h-[72px] sm:min-h-0 rounded-2xl glass-card hover:shadow-lg border-[var(--border)] transition-all duration-200"
               >
-                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+                <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[var(--primary-light)] text-[var(--primary)] flex items-center justify-center text-xl sm:text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
                   💬
                 </span>
                 <div className="min-w-0">
@@ -1160,13 +1160,7 @@ function DashboardContent() {
                 const canSellPaid =
                   tipsterStats.roi >= minimumROI && tipsterStats.winRate >= minimumWinRate;
                 return (
-              <div
-                className={`rounded-2xl sm:rounded-3xl overflow-hidden transition-all duration-300 shadow-lg ${
-                  canSellPaid
-                    ? 'bg-gradient-to-br from-emerald-50 via-white to-teal-50/80 border border-emerald-200/90 shadow-emerald-200/20'
-                    : 'bg-gradient-to-br from-amber-50 via-white to-orange-50/60 border border-amber-200/90 shadow-amber-200/20'
-                }`}
-              >
+              <div className="rounded-2xl sm:rounded-3xl overflow-hidden transition-all duration-300 shadow-sm bg-[var(--card)] border border-[var(--border)]">
                 <div className="p-5 sm:p-6 md:p-8">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 md:gap-6 min-w-0">
                     <div className="flex items-start gap-4 sm:gap-5 flex-1 min-w-0">

@@ -133,7 +133,7 @@ function AiHumanBadge({ isAi }: { isAi: boolean }) {
     <span
       className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
         isAi
-          ? 'bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-200'
+          ? 'bg-[var(--primary-light)] text-[var(--primary)]'
           : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
       }`}
     >
@@ -558,7 +558,7 @@ export default function AdminSubscriptionsPage() {
 
     return (
       <div key={pkg.id} className="relative">
-        <article className="card-gradient rounded-2xl border border-[var(--border)] shadow-lg overflow-hidden flex flex-col hover:shadow-xl hover:-translate-y-px transition-[box-shadow,transform] duration-200 ease-out">
+        <article className="card-gradient rounded-2xl border border-[var(--border)] shadow-lg overflow-hidden flex flex-col hover:border-[var(--primary)]/35 transition-colors duration-200">
           <button
             type="button"
             onClick={() => handleDeleteCatalogPackage(row)}
@@ -681,7 +681,7 @@ export default function AdminSubscriptionsPage() {
     return (
       <div id={`sub-card-${row.id}`} key={row.id} className="relative">
         <article
-          className={`card-gradient rounded-2xl border shadow-lg overflow-hidden flex flex-col hover:shadow-xl hover:-translate-y-px transition-[box-shadow,transform] duration-200 ease-out ${
+          className={`card-gradient rounded-2xl border shadow-lg overflow-hidden flex flex-col hover:border-[var(--primary)]/35 transition-colors duration-200 ${
             isReviewed ? 'border-emerald-300/80 dark:border-emerald-700 opacity-90' : 'border-[var(--border)]'
           }`}
         >
@@ -1137,7 +1137,7 @@ export default function AdminSubscriptionsPage() {
                   </span>
                 )}
                 {tipsterKind !== 'all' && (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-200 text-xs font-medium">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-xs font-medium">
                     Type: {tipsterKind}
                   </span>
                 )}

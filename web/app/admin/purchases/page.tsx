@@ -76,7 +76,7 @@ export default function AdminPurchasesPage() {
           <p className="text-gray-600 dark:text-gray-400">View all pick purchases across the platform.</p>
         </div>
 
-        <div className="mb-6 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-xl p-4 sm:p-6 text-white">
+        <div className="mb-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-4 sm:p-6 text-gray-900 dark:text-white">
           <p className="text-sm opacity-90 mb-1">Gross subtotal (this page)</p>
           <p className="text-3xl font-bold">GHS {pageSubtotalGross.toFixed(2)}</p>
           <p className="text-xs opacity-85 mt-2 leading-snug max-w-xl">

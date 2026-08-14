@@ -101,7 +101,7 @@ const SPORT_META: Record<string, { icon: string; labelKey: string; color: string
   MMA: { icon: '🥊', labelKey: 'nav.mma', color: 'bg-red-100 text-red-800 border-red-200' },
   Volleyball: { icon: '🏐', labelKey: 'nav.volleyball', color: 'bg-blue-100 text-blue-800 border-blue-200' },
   Hockey: { icon: '🏒', labelKey: 'nav.hockey', color: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
-  'American Football': { icon: '🏈', labelKey: 'nav.american_football', color: 'bg-purple-100 text-purple-800 border-purple-200' },
+  'American Football': { icon: '🏈', labelKey: 'nav.american_football', color: 'bg-[var(--primary-light)] text-[var(--primary)] border-[var(--primary)]/25' },
   Tennis: { icon: '🎾', labelKey: 'nav.tennis', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
   'Multi-Sport': { icon: '🌍', labelKey: 'pick_detail.sport_multi', color: 'bg-teal-100 text-teal-800 border-teal-200' },
 };
@@ -593,7 +593,7 @@ export default function CouponDetailPage() {
                   <span
                     className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border shadow-sm ${
                       Number(coupon.price) <= 0
-                        ? 'bg-violet-50 text-violet-900 border-violet-200 dark:bg-violet-950/50 dark:text-violet-100 dark:border-violet-700/60'
+                        ? 'bg-[var(--accent-light)] text-[var(--accent)] border-[var(--accent)]/30'
                         : 'bg-amber-50 text-amber-950 border-amber-300 dark:bg-amber-950/40 dark:text-amber-100 dark:border-amber-700/60'
                     }`}
                     title={

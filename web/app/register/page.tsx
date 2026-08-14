@@ -58,9 +58,9 @@ function RegisterForm() {
       <UnifiedHeader />
       <main className="section-ux-register-main w-full min-w-0 max-w-full pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <div className="relative w-full max-w-[440px] min-w-0 mx-auto px-4 sm:px-0">
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-5 py-8 sm:px-10 sm:py-11 min-w-0 max-w-full shadow-sm">
+          <div className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] px-5 py-8 sm:px-10 sm:py-11 min-w-0 max-w-full shadow-sm">
               <div className="text-center mb-8 sm:mb-9">
-                <h1 className="text-2xl font-bold tracking-tight text-[var(--text)] mb-2 sm:sr-only">
+                <h1 className="font-display text-2xl font-bold tracking-tight text-[var(--text)] mb-2 sm:sr-only">
                   {t('auth.register_cta')}
                 </h1>
                 <p className="text-sm sm:text-base font-medium text-[var(--text-muted)] leading-relaxed">
@@ -87,7 +87,7 @@ function RegisterForm() {
                 </p>
               )}
 
-            <p className="text-center text-sm text-[var(--text-muted)] mt-9 pt-7 border-t border-slate-100 dark:border-slate-700/80">
+            <p className="text-center text-sm text-[var(--text-muted)] mt-9 pt-7 border-t border-[var(--separator)]">
               {t('auth.already_have_account')}{' '}
               <Link href="/login" className="text-[var(--primary)] font-semibold hover:underline underline-offset-2">
                 {t('auth.login')}

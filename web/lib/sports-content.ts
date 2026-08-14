@@ -47,7 +47,7 @@ export const SPORT_META: Record<
   mma: { icon: '🥊', label: 'MMA', color: 'text-red-400' },
   volleyball: { icon: '🏐', label: 'Volleyball', color: 'text-blue-400' },
   hockey: { icon: '🏒', label: 'Hockey', color: 'text-cyan-400' },
-  american_football: { icon: '🏈', label: 'Amer. Football', color: 'text-purple-400' },
+  american_football: { icon: '🏈', label: 'Amer. Football', color: 'text-[var(--primary)]' },
   tennis: { icon: '🎾', label: 'Tennis', color: 'text-yellow-400' },
 };
 

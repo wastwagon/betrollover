@@ -96,9 +96,9 @@ export default async function HowItWorksPage() {
               </ol>
             </section>
 
-            <section className="rounded-2xl border border-violet-500/15 dark:border-violet-800/25 bg-gradient-to-br from-violet-500/[0.05] to-[var(--card)]/60 p-4 sm:p-6 md:p-7 min-w-0">
+            <section className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-4 sm:p-6 md:p-7 min-w-0">
               <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-3 sm:mb-4 capitalize text-[var(--text)]">{t('how_it_works.tipsters_h2')}</h2>
-              <ol className="list-decimal pl-4 sm:pl-6 space-y-3 sm:space-y-4 marker:text-violet-600 dark:marker:text-violet-400 marker:font-semibold">
+              <ol className="list-decimal pl-4 sm:pl-6 space-y-3 sm:space-y-4 marker:text-[var(--accent)] marker:font-semibold">
                 {tipsterSteps.map((item) => (
                   <li key={item.slice(0, 48)}>
                     <ListItem text={item} />

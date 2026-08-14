@@ -1168,7 +1168,7 @@ export default function AdminSettingsPage() {
                     <button type="button"
                       onClick={syncFixtures}
                       disabled={syncingFixtures || !settings.apiSportsConfigured}
-                      className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+                      className="flex-1 px-6 py-3 bg-[var(--primary)] hover:bg-[var(--primary-hover)] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
                     >
                       {syncingFixtures ? (
                         <>
@@ -1551,7 +1551,7 @@ export default function AdminSettingsPage() {
                 </div>
 
                 {/* Max picks per UTC day (anti-spam) */}
-                <div className="bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-900/20 dark:to-violet-800/20 rounded-2xl shadow-lg border-2 border-violet-200 dark:border-violet-800 p-4 sm:p-6 hover:shadow-xl transition-all">
+                <div className="bg-[var(--card)] rounded-2xl shadow-sm border border-[var(--border)] p-4 sm:p-6 hover:shadow-xl transition-all">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">Human tipsters — picks per day</h3>
                     <span className="text-2xl">📅</span>
@@ -1568,7 +1568,7 @@ export default function AdminSettingsPage() {
                       step="1"
                       value={maxCouponsPerDay}
                       onChange={(e) => setMaxCouponsPerDay(Math.min(500, Math.max(0, parseInt(e.target.value, 10) || 0)))}
-                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                     />
                     <span className="text-gray-600 dark:text-gray-400 font-medium whitespace-nowrap">/ day</span>
                   </div>
@@ -1608,7 +1608,7 @@ export default function AdminSettingsPage() {
                       }
                     }}
                     disabled={savingCouponLimit}
-                    className="w-full px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
+                    className="w-full px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
                   >
                     {savingCouponLimit ? 'Saving...' : 'Save daily limit'}
                   </button>
@@ -1788,9 +1788,9 @@ export default function AdminSettingsPage() {
                 </div>
 
                 {/* Currency Card */}
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-2xl shadow-lg border-2 border-purple-200 dark:border-purple-800 p-4 sm:p-6 hover:shadow-xl transition-all">
+                <div className="bg-[var(--card)] rounded-2xl shadow-sm border border-[var(--border)] p-4 sm:p-6 hover:shadow-xl transition-all">
                   <div className="flex items-center gap-4 mb-4">
-                    <div className="p-3 bg-purple-500 rounded-xl text-white">
+                    <div className="p-3 bg-[var(--primary)] rounded-xl text-white">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>

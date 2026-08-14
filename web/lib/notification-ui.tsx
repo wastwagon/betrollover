@@ -44,8 +44,8 @@ const WALLET: NotificationVisual = {
 
 const ACCOUNT: NotificationVisual = {
   Icon: IconShield,
-  colorClass: 'text-violet-600',
-  bgClass: 'bg-violet-500/10',
+  colorClass: 'text-[var(--primary)]',
+  bgClass: 'bg-[var(--primary-light)]',
 };
 
 const ACHIEVEMENT: NotificationVisual = {

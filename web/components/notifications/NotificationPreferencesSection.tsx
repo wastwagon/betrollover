@@ -5,6 +5,7 @@ import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { useT } from '@/context/LanguageContext';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { Button } from '@/components/ui/Button';
 
 type PrefGroup = {
   group: string;
@@ -217,14 +218,9 @@ export function NotificationPreferencesSection() {
       </div>
 
       {msg ? <p className="text-sm text-[var(--primary)]">{msg}</p> : null}
-      <button
-        type="button"
-        onClick={() => void save()}
-        disabled={saving}
-        className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] text-white disabled:opacity-50"
-      >
+      <Button type="button" onClick={() => void save()} disabled={saving} size="md">
         {saving ? t('notifications.prefs_saving') : t('notifications.prefs_save')}
-      </button>
+      </Button>
     </div>
   );
 }
