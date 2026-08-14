@@ -26,7 +26,7 @@ import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_DEFAULT_TITLE, getAlternate
 import { fetchSellingThresholds } from '@/lib/selling-thresholds';
 import { fetchHomePublicData } from '@/lib/home-public-data';
 import { getLocale, buildT } from '@/lib/i18n';
-import { buttonClassName } from '@/components/ui/Button';
+import { buttonClassName } from '@/components/ui/button-styles';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
