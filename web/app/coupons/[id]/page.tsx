@@ -877,7 +877,7 @@ export default function CouponDetailPage() {
 
           {/* ── Sidebar ── */}
           <aside className="w-full min-w-0 max-w-full lg:w-72 shrink-0">
-            <div className="sticky top-24 space-y-4">
+            <div className="lg:sticky lg:top-24 space-y-4">
               <AdSlot zoneSlug="coupon-detail-sidebar" />
 
               {/* Purchase / receipt card — guests on settled picks see sign-up CTA instead */}

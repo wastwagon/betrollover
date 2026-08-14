@@ -213,7 +213,7 @@ function DiscoverContent() {
             )}
           </div>
           <aside className="lg:w-72 flex-shrink-0">
-            <div className="sticky top-24">
+            <div className="lg:sticky lg:top-24">
               <AdSlot zoneSlug={activeTab === 'news' ? 'news-sidebar' : 'resource-sidebar'} />
             </div>
           </aside>

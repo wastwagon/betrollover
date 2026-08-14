@@ -624,7 +624,7 @@ export default function MarketplacePage() {
     <DashboardShell>
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
-      <div className="min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden bg-[var(--bg)]">
+      <div className="min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full bg-[var(--bg)]">
         <PullToRefresh onRefresh={() => fetchMarketplaceRef.current()} disabled={loading}>
         <div className="section-ux-dashboard-shell">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-0 min-w-0">
@@ -692,7 +692,7 @@ export default function MarketplacePage() {
           ) : null}
 
           {/* Sticky discovery chrome — sports + filters stay visible while scrolling */}
-          <div className="sticky z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 py-2 mb-4 bg-[var(--bg)]/95 backdrop-blur-md border-b border-[var(--separator)] top-[calc(env(safe-area-inset-top,0px)+2.75rem+4.5rem)] md:top-[7rem] lg:top-[4.5rem]">
+          <div className="sticky-below-chrome -mx-4 px-4 sm:-mx-6 sm:px-6 py-2 mb-4 bg-[var(--bg)]/95 backdrop-blur-md border-b border-[var(--separator)]">
             {!footballOnly ? (
             <div className="w-full min-w-0 overflow-hidden mb-2">
               <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">

@@ -113,7 +113,7 @@ export default function NotificationsPage() {
 
   return (
     <DashboardShell>
-      <div className="min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden bg-[var(--bg)]">
+      <div className="min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full bg-[var(--bg)]">
         <PullToRefresh onRefresh={loadNotifications} disabled={loading}>
           <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6 min-w-0">

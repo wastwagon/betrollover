@@ -116,7 +116,7 @@ export function NotificationPreferencesSection() {
   }
 
   return (
-    <div id="notification-preferences" className="ios-grouped-section p-5 min-w-0 space-y-4 scroll-mt-24">
+    <div id="notification-preferences" className="ios-grouped-section p-5 min-w-0 space-y-4 scroll-mt-[calc(var(--br-chrome-below-header)+1rem)]">
       <div>
         <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
           {t('notifications.prefs_title')}

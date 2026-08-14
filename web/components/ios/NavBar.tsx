@@ -20,7 +20,7 @@ export function NavBar({
   backLabel = 'Back',
   right,
   className = '',
-  sticky = true,
+  sticky = false,
 }: NavBarProps) {
   const router = useRouter();
 
@@ -45,7 +45,11 @@ export function NavBar({
 
   return (
     <header
-      className={`${sticky ? 'sticky top-0 z-40' : ''} ios-chrome border-b w-full min-w-0 ${className}`}
+      className={`${
+        sticky
+          ? 'sticky z-40 top-[var(--br-chrome-below-header)]'
+          : ''
+      } ios-chrome border-b w-full min-w-0 ${className}`}
     >
       <div className="flex items-center justify-between gap-2 min-h-[44px] px-3 sm:px-4 max-w-6xl mx-auto">
         <div className="min-w-[4.5rem] flex items-center">{backControl}</div>

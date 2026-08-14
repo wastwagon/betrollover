@@ -3,7 +3,7 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 export default function TipsterProfileLoading() {
   return (
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
-      <div className="sticky top-0 z-50 h-16 bg-[var(--card)] border-b border-[var(--border)]" />
+      <div className="h-[4.5rem] bg-[var(--card)] border-b border-[var(--border)]" />
 
       <div className="section-ux-page pb-24 w-full min-w-0">
         {/* Profile header card */}

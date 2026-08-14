@@ -237,7 +237,7 @@ export default function NewsArticlePage() {
 
           {/* ── Sidebar ── */}
           <aside className="w-full lg:w-72 flex-shrink-0 min-w-0">
-            <div className="sticky top-24 space-y-4">
+            <div className="lg:sticky lg:top-24 space-y-4">
 
               <AdSlot zoneSlug="news-article-sidebar" />
 

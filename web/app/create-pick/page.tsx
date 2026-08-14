@@ -792,7 +792,7 @@ export default function CreatePickPage() {
     <DashboardShell slipCount={selections.length}>
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
-      <div className="min-h-[calc(100vh-8rem)] bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
+      <div className="min-h-[calc(100vh-8rem)] bg-[var(--bg)] w-full min-w-0 max-w-full">
         <div className="section-ux-dashboard-shell min-w-0 max-w-full">
           <div className="lg:hidden -mx-1 mb-3">
             <NavBar

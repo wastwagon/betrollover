@@ -500,7 +500,7 @@ function CommunityPageInner() {
           </div>
           {/* Right ad column - desktop only */}
           <aside className="w-72 shrink-0 hidden lg:block">
-            <div className="sticky top-24">
+            <div className="lg:sticky lg:top-24">
               <AdSlot zoneSlug="community-chat-right" className="min-h-[250px]" />
             </div>
           </aside>

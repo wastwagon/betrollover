@@ -398,12 +398,16 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
       <header
         ref={headerRef}
-        className={`sticky z-50 w-full min-w-0 max-w-full ios-chrome border-b shadow-sm ${
-          hideTopBar ? 'top-0' : 'max-md:top-[calc(env(safe-area-inset-top,0px)+2.75rem)] md:top-0'
+        className={`z-50 w-full min-w-0 max-w-full ios-chrome border-b shadow-sm ${
+          hideTopBar
+            ? 'sticky top-0'
+            : // Mobile: fixed below TopBar (overflow ancestors used to break sticky + top offset).
+              // Desktop: sticky under in-flow TopBar.
+              'max-md:fixed max-md:left-0 max-md:right-0 max-md:top-[var(--br-topbar-h)] md:sticky md:top-0'
         }`}
       >
         <div className="section-ux-gutter-wide min-w-0 max-w-full">
-          <div className="flex items-center justify-between h-[4.5rem] min-w-0 gap-1.5 sm:gap-2">
+          <div className="flex items-center justify-between h-[var(--br-header-h)] min-w-0 gap-1.5 sm:gap-2">
 
             {/* ── Logo ── */}
             <Link href="/" className="flex items-center gap-2 sm:gap-2.5 min-w-0 shrink-0 group" aria-label="BetRollover home">
@@ -852,6 +856,10 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
           </nav>
         </div>
       </header>
+      {/* Keeps page titles clear of the fixed mobile header (matches h-[4.5rem] row). */}
+      {!hideTopBar ? (
+        <div className="md:hidden w-full shrink-0 h-[var(--br-header-h)] pointer-events-none" aria-hidden />
+      ) : null}
       {mounted ? <GlobalSearchSheet open={searchOpen} onClose={() => setSearchOpen(false)} /> : null}
     </>
   );

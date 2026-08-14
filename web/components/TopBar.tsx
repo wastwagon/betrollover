@@ -199,7 +199,7 @@ export function TopBar() {
   ].join(' • ');
 
   /** Matches bar height: safe-area + min row (min-h-9 + py-1). Keeps layout when bar is fixed on mobile. */
-  const mobileSpacerStyle = { height: 'calc(env(safe-area-inset-top, 0px) + 2.75rem)' } as const;
+  const mobileSpacerStyle = { height: 'var(--br-topbar-h)' } as const;
 
   return (
     <>

@@ -275,7 +275,7 @@ export default function ProfilePage() {
 
   return (
     <DashboardShell>
-      <div className="min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden bg-[var(--bg)]">
+      <div className="min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full bg-[var(--bg)]">
         <PullToRefresh onRefresh={() => loadProfile({ soft: true })} disabled={loading}>
         <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full">
           <div className="lg:hidden -mx-1 mb-3">

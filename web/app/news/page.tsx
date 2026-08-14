@@ -223,7 +223,7 @@ function NewsContent() {
 
           {/* Sidebar */}
           <aside className="lg:w-72 flex-shrink-0 min-w-0 w-full">
-            <div className="sticky top-24 space-y-4">
+            <div className="lg:sticky lg:top-24 space-y-4">
               <AdSlot zoneSlug="news-sidebar" />
               <div className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
                 <h3 className="text-sm font-semibold text-[var(--text)] mb-3">📚 {t('news.sidebar_guides_title')}</h3>

@@ -117,7 +117,7 @@ export default function SubscriptionMarketplacePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full">
       <UnifiedHeader />
       <main className="section-ux-page w-full min-w-0">
         <PullToRefresh onRefresh={loadMarketplace} disabled={loading}>

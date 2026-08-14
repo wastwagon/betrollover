@@ -55,6 +55,23 @@
   --glass-bg: rgba(255, 255, 255, 0.82);
   --glass-border: rgba(0, 0, 0, 0.06);
   --chrome-bg: rgba(255, 255, 255, 0.92);
+
+  /**
+   * App chrome heights — keep TopBar / UnifiedHeader / sticky filters / toasts aligned.
+   * Mobile: TopBar is fixed (safe-area + 2.75rem). Desktop: TopBar is in-flow (0 fixed offset).
+   */
+  --br-topbar-h: 0px;
+  --br-header-h: 4.5rem;
+  --br-chrome-below-header: 4.5rem;
+  --br-toast-top: 5rem;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --br-topbar-h: calc(env(safe-area-inset-top, 0px) + 2.75rem);
+    --br-chrome-below-header: calc(env(safe-area-inset-top, 0px) + 2.75rem + 4.5rem);
+    --br-toast-top: calc(env(safe-area-inset-top, 0px) + 2.75rem + 4.5rem + 0.5rem);
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -208,14 +225,21 @@ body {
     @apply max-w-6xl mx-auto px-4;
   }
 
-  /** DashboardShell primary scroll column */
+  /** DashboardShell primary scroll column — no overflow-x here so sticky filters work */
   .section-ux-dashboard-shell {
-    @apply w-full min-w-0 max-w-full overflow-x-hidden px-4 sm:px-5 md:px-6 lg:px-8 py-5 md:py-6 pb-24;
+    @apply w-full min-w-0 max-w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 md:py-6 pb-24;
   }
 
   /** Dashboard home — slightly taller vertical rhythm */
   .section-ux-dashboard-shell-spacious {
-    @apply w-full min-w-0 max-w-full overflow-x-hidden px-4 sm:px-5 md:px-6 lg:px-8 py-5 sm:py-6 md:py-8 pb-24;
+    @apply w-full min-w-0 max-w-full px-4 sm:px-5 md:px-6 lg:px-8 py-5 sm:py-6 md:py-8 pb-24;
+  }
+
+  /** Sticky under fixed TopBar + UnifiedHeader (mobile) / sticky header (desktop) */
+  .sticky-below-chrome {
+    position: sticky;
+    top: var(--br-chrome-below-header);
+    z-index: 30;
   }
 
   /** Verify-email / narrow auth message column */

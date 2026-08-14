@@ -343,7 +343,7 @@ function DashboardContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] relative overflow-x-hidden w-full min-w-0 max-w-full">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] relative w-full min-w-0 max-w-full">
         <div className="flex flex-col items-center gap-4 animate-fade-in">
           <div className="w-12 h-12 rounded-full border-2 border-[var(--primary)] border-t-transparent animate-spin" />
           <p className="text-[var(--text-muted)] font-medium">{t('dashboard.loading')}</p>
@@ -358,7 +358,7 @@ function DashboardContent() {
 
   if (isAdmin) {
     return (
-      <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
+      <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full">
         <AdminSidebar />
         <main className="admin-main-sibling section-ux-admin-shell min-w-0">
           <div className="px-4 pb-8 pt-4 md:p-6 max-w-[1600px] mx-auto w-full min-w-0">
@@ -1315,7 +1315,7 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[var(--bg)] flex items-center justify-center w-full min-w-0 max-w-full overflow-x-hidden"><div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" /></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[var(--bg)] flex items-center justify-center w-full min-w-0 max-w-full"><div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" /></div>}>
       <DashboardContent />
     </Suspense>
   );

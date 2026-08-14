@@ -372,7 +372,7 @@ function WalletContent() {
 
   return (
     <DashboardShell>
-      <div className="min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full overflow-x-hidden bg-[var(--bg)]">
+      <div className="min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full bg-[var(--bg)]">
         <PullToRefresh onRefresh={() => { loadData(); }} disabled={loading}>
         <div className="section-ux-dashboard-shell min-w-0 max-w-full">
           <div className="lg:hidden -mx-1 mb-3">
@@ -512,7 +512,7 @@ function WalletContent() {
             )}
 
             {canWithdraw && (
-              <div id="withdraw" className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm scroll-mt-24 min-w-0">
+              <div id="withdraw" className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm scroll-mt-[calc(var(--br-chrome-below-header)+1rem)] min-w-0">
                 <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{withdrawSectionTitle}</h2>
 
                 {/* Pending withdrawal warning */}

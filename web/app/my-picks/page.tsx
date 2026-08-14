@@ -138,7 +138,7 @@ export default function MyPicksPage() {
   return (
     <DashboardShell>
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
-      <div className="min-h-[calc(100vh-8rem)] bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
+      <div className="min-h-[calc(100vh-8rem)] bg-[var(--bg)] w-full min-w-0 max-w-full">
         <PullToRefresh onRefresh={loadPicks} disabled={loading}>
         <div className="section-ux-dashboard-shell min-w-0 max-w-full">
           <div className="lg:hidden -mx-1 mb-3">

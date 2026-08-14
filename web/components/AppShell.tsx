@@ -13,7 +13,7 @@ export function AppShell({
   slipCount?: number;
 }) {
   return (
-    <div className="min-h-screen flex flex-col relative w-full min-w-0 max-w-full overflow-x-hidden bg-[var(--bg)]">
+    <div className="min-h-screen flex flex-col relative w-full min-w-0 max-w-full bg-[var(--bg)]">
       <UnifiedHeader slipCount={slipCount} />
       <main className="flex-1 relative min-w-0 w-full">{children}</main>
       <AppFooter />

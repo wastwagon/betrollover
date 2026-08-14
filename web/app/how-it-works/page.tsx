@@ -117,7 +117,7 @@ export default async function HowItWorksPage() {
               <p className="m-0 text-[var(--text-muted)] leading-relaxed">{t('how_it_works.verification_p', sellVars)}</p>
             </section>
 
-            <section id="faq" className="scroll-mt-24 min-w-0">
+            <section id="faq" className="scroll-mt-[calc(var(--br-chrome-below-header)+1rem)] min-w-0">
               <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-4 sm:mb-5">{t('how_it_works.faq_title')}</h2>
               <ul className="space-y-3 sm:space-y-4 list-none pl-0">
                 {faqs.map((faq, i) => (

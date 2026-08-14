@@ -220,7 +220,7 @@ export default function EarningsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
+      <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full">
         <UnifiedHeader />
         <main className="section-ux-page space-y-6 w-full min-w-0 max-w-full">
           {[1,2,3].map(i => <div key={i} className="h-32 rounded-2xl skeleton bg-[var(--card)]" />)}
@@ -230,7 +230,7 @@ export default function EarningsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full">
       <UnifiedHeader />
       <main className="section-ux-page w-full min-w-0 max-w-full">
         <PullToRefresh onRefresh={loadEarnings} disabled={loading}>

@@ -108,7 +108,7 @@ function SubscriptionsContent() {
   if (subsLoading) {
     return (
       <DashboardShell>
-        <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full overflow-x-hidden">
+        <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full">
           <LoadingSkeleton
             count={4}
             variant="cards"
@@ -124,7 +124,7 @@ function SubscriptionsContent() {
   return (
     <DashboardShell>
       <PullToRefresh onRefresh={loadSubscriptions} disabled={subsLoading || feedLoading}>
-      <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full overflow-x-hidden">
+      <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full">
         <PageHeader
           label={t('subscriptions.page_label')}
           title={t('subscriptions.page_title')}
@@ -269,7 +269,7 @@ export default function SubscriptionsPage() {
     <Suspense
       fallback={
         <DashboardShell>
-          <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full overflow-x-hidden">
+          <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full">
             <LoadingSkeleton
               count={4}
               variant="cards"
