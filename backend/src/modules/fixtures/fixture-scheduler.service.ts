@@ -374,11 +374,19 @@ export class FixtureSchedulerService implements OnModuleInit {
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async handleFixtureArchive() {
     if (!this.isSchedulingEnabled()) return;
+    await this.runFixtureArchive();
+  }
+
+  /**
+   * Archive job body (cron + admin manual). Acquires the `archive` sync lock.
+   * @returns archived count, or null if another archive run holds the lock
+   */
+  async runFixtureArchive(): Promise<{ archived: number } | null> {
     if (!(await this.syncLockService.tryStartSync('archive'))) {
       this.logger.debug('Fixture archive already running, skipping');
-      return;
+      return null;
     }
-    this.logger.log('Running scheduled fixture archive (90+ days old, not referenced by picks/predictions)...');
+    this.logger.log('Running fixture archive (90+ days old, not referenced by picks/predictions)...');
     try {
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - 90);
@@ -399,7 +407,7 @@ export class FixtureSchedulerService implements OnModuleInit {
       if (toArchive.length === 0) {
         await this.updateSyncStatus('archive', 'success', 0);
         this.logger.debug('No fixtures to archive');
-        return;
+        return { archived: 0 };
       }
 
       const ids = toArchive.map((f) => f.id);
@@ -427,9 +435,11 @@ export class FixtureSchedulerService implements OnModuleInit {
 
       this.logger.log(`Archived ${ids.length} fixtures (match_date < ${cutoff.toISOString().split('T')[0]})`);
       await this.updateSyncStatus('archive', 'success', ids.length);
+      return { archived: ids.length };
     } catch (error: any) {
       this.logger.error('Error in fixture archive', error);
       await this.updateSyncStatus('archive', 'error', 0, error.message);
+      throw error;
     }
   }
 

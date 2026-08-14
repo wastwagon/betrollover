@@ -26,6 +26,7 @@ import { Repository } from 'typeorm';
 import { SyncStatus } from './entities/sync-status.entity';
 import { getSyncDates } from '../../config/api-limits.config';
 import { SyncLockService } from './sync-lock.service';
+import { FixtureSchedulerService } from './fixture-scheduler.service';
 
 @Controller('fixtures')
 export class FixturesController {
@@ -42,6 +43,7 @@ export class FixturesController {
     private readonly leagueInsightsService: LeagueInsightsService,
     private readonly oddsSyncService: OddsSyncService,
     private readonly fixtureUpdateService: FixtureUpdateService,
+    private readonly fixtureSchedulerService: FixtureSchedulerService,
     @InjectRepository(SyncStatus)
     private syncStatusRepo: Repository<SyncStatus>,
     private syncLockService: SyncLockService,
@@ -407,6 +409,23 @@ export class FixturesController {
         ['syncType'],
       );
     }
+  }
+
+  @Post('sync/archive')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async syncArchiveManual() {
+    const result = await this.fixtureSchedulerService.runFixtureArchive();
+    if (result == null) {
+      throw new ConflictException('Fixture archive is already running. Try again shortly.');
+    }
+    return {
+      success: true,
+      archived: result.archived,
+      message:
+        result.archived > 0
+          ? `Archived ${result.archived} old fixture(s).`
+          : 'No fixtures eligible to archive (already clean or still referenced by picks/predictions).',
+    };
   }
 
   @Post('sync/odds')

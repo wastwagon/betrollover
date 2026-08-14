@@ -73,6 +73,7 @@ export default function AdminSettingsPage() {
   const [syncStatuses, setSyncStatuses] = useState<SyncStatus[]>([]);
   const [syncingFixtures, setSyncingFixtures] = useState(false);
   const [syncingOdds, setSyncingOdds] = useState(false);
+  const [syncingArchive, setSyncingArchive] = useState(false);
   const [minimumROI, setMinimumROI] = useState<number>(20.0);
   const [savingROI, setSavingROI] = useState(false);
   const [minimumWinRate, setMinimumWinRate] = useState<number>(30.0);
@@ -368,6 +369,33 @@ export default function AdminSettingsPage() {
       setTestResult({ success: false, message: e.message || 'Failed to sync odds' });
     } finally {
       setSyncingOdds(false);
+    }
+  };
+
+  const syncArchive = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    setSyncingArchive(true);
+    try {
+      const res = await fetch(`${getApiUrl()}/fixtures/sync/archive`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      await loadSyncStatus();
+      if (res.ok) {
+        setTestResult({
+          success: true,
+          message: data.message || `Archive finished (${data.archived ?? 0} fixtures).`,
+        });
+      } else {
+        setTestResult({ success: false, message: getApiErrorMessage(data, 'Failed to run archive') });
+      }
+    } catch (e: any) {
+      setTestResult({ success: false, message: e.message || 'Failed to run archive' });
+    } finally {
+      setSyncingArchive(false);
     }
   };
 
@@ -1172,6 +1200,25 @@ export default function AdminSettingsPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                           </svg>
                           Sync Odds Now
+                        </>
+                      )}
+                    </button>
+                    <button type="button"
+                      onClick={syncArchive}
+                      disabled={syncingArchive}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+                    >
+                      {syncingArchive ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Archiving...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                          </svg>
+                          Run Archive Now
                         </>
                       )}
                     </button>
