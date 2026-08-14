@@ -1006,7 +1006,7 @@ export default function AdminFixturesPage() {
             <button type="button"
               onClick={sync}
               disabled={syncing || fetchingResults || settling || reconciling}
-              className="px-5 py-2.5 rounded-xl font-semibold bg-[var(--destructive)] text-white hover:opacity-90 disabled:opacity-50 transition-colors"
+              className={buttonClassName()}
             >
               {syncing ? (
                 <span className="flex items-center gap-2">
@@ -1085,7 +1085,7 @@ export default function AdminFixturesPage() {
               onClick={reconcileSettledPicks}
               disabled={syncing || fetchingResults || settling || reconciling}
               title="After scores are corrected in the DB, re-grade settled picks and fix escrow if the pick should have won instead of lost (or vice versa). Does not fetch from the API."
-              className="px-5 py-2.5 rounded-xl font-semibold bg-[var(--destructive)] text-white hover:opacity-90 disabled:opacity-50 transition-colors"
+              className={buttonClassName()}
             >
               {reconciling ? (
                 <span className="flex items-center gap-2">
@@ -1186,7 +1186,7 @@ export default function AdminFixturesPage() {
           </div>
         )}
         {!loading && fixtures.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
               <span className="text-sm text-gray-600 dark:text-gray-400 text-center sm:text-left order-1">
                 Page {page} of {totalPages}

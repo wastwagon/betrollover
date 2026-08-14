@@ -1203,13 +1203,13 @@ function DashboardContent() {
                         <>
                           <Link
                             href="/create-pick"
-                            className="flex-1 sm:flex-none min-h-[44px] inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors text-center"
+                            className={buttonClassName({ className: 'flex-1 sm:flex-none' })}
                           >
                             {t('dashboard.create_paid_pick')}
                           </Link>
                           <Link
                             href="/marketplace"
-                            className="flex-1 sm:flex-none min-h-[44px] inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold bg-white text-emerald-700 border-2 border-emerald-600 hover:bg-emerald-50 transition-colors text-center"
+                            className={buttonClassName({ variant: 'secondary', className: 'flex-1 sm:flex-none' })}
                           >
                             {t('dashboard.marketplace')}
                           </Link>

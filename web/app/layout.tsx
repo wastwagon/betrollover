@@ -96,6 +96,12 @@ export const metadata: Metadata = {
     },
   },
   category: 'sports',
+  appleWebApp: {
+    capable: true,
+    title: SITE_NAME,
+    /** Content draws under the status bar; TopBar already pads `safe-area-inset-top`. */
+    statusBarStyle: 'black-translucent',
+  },
   ...(googleSiteVerification ? { verification: { google: googleSiteVerification } } : {}),
 };
 
@@ -104,10 +110,10 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  /** Brand primary — aligns with --primary / in-app status chrome. */
+  /** Brand primary — status bar / PWA chrome must match TopBar (`--primary`), not a darker leftover. */
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#10b981' },
-    { media: '(prefers-color-scheme: dark)', color: '#000000' },
+    { media: '(prefers-color-scheme: dark)', color: '#34d399' },
   ],
   viewportFit: 'cover',
 };

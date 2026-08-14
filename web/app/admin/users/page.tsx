@@ -288,7 +288,7 @@ export default function AdminUsersPage() {
           </select>
           <button type="button"
             onClick={load}
-            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[var(--destructive)] text-white font-semibold hover:opacity-90 transition-colors shadow-sm"
+            className={buttonClassName({ className: 'w-full sm:w-auto' })}
           >
             Search
           </button>
@@ -303,7 +303,7 @@ export default function AdminUsersPage() {
           </div>
         )}
         {!loading && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-800">

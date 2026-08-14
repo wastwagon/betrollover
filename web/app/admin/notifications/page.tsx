@@ -168,7 +168,7 @@ export default function AdminNotificationsPage() {
         )}
 
         {!loading && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             {notifications.length === 0 ? (
               <div className="p-12 text-center">
                 <p className="text-gray-600 dark:text-gray-400 text-lg">No notifications found</p>
@@ -220,7 +220,7 @@ export default function AdminNotificationsPage() {
                             <button
                               type="button"
                               onClick={() => deleteNotification(n.id)}
-                              className="px-3 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-colors"
+                              className="px-3 py-1 rounded-lg bg-[var(--destructive)] hover:opacity-90 text-white text-sm font-medium transition-colors"
                             >
                               Delete
                             </button>

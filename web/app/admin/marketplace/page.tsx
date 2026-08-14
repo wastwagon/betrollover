@@ -10,6 +10,7 @@ import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { buttonClassName } from '@/components/ui/Button';
 
 interface Pick {
   id?: number;
@@ -349,7 +350,7 @@ export default function AdminMarketplacePage() {
               type="button"
               onClick={handleBulkDelete}
               disabled={selectedIds.length === 0 || bulkDeleting}
-              className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 rounded-lg bg-[var(--destructive)] hover:opacity-90 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {bulkDeleting ? 'Deleting…' : `Delete selected (${selectedIds.length})`}
             </button>
@@ -364,7 +365,7 @@ export default function AdminMarketplacePage() {
             </button>
             <button type="button"
               onClick={loadDiagnostic}
-              className="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 text-white text-sm font-medium"
+              className={buttonClassName({ variant: 'secondary', size: 'sm' })}
             >
               Run diagnostic
             </button>
@@ -448,7 +449,7 @@ export default function AdminMarketplacePage() {
                 <button type="button"
                   onClick={() => handleDeleteCoupon(a.id, a.title)}
                   disabled={deletingId === a.id || bulkDeleting}
-                  className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium disabled:opacity-50 z-10 shadow"
+                  className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-[var(--destructive)] hover:opacity-90 text-white text-xs font-medium disabled:opacity-50 z-10 shadow"
                   title="Delete pick (refunds pending purchases, recalculates tipster stats)"
                 >
                   {deletingId === a.id ? 'Deleting…' : 'Delete'}

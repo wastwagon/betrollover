@@ -113,7 +113,7 @@ export default function AdminSupportPage() {
         <div className="flex gap-2 mb-5 flex-wrap">
           {['open','in_progress','resolved','closed'].map((s) => (
             <button type="button" key={s} onClick={() => setStatusFilter(s)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors capitalize ${statusFilter === s ? 'bg-red-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-red-400'}`}>
+              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors capitalize ${statusFilter === s ? 'bg-[var(--primary)] text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-[var(--primary)]'}`}>
               {s.replace('_',' ')} {stats && s in stats ? `(${stats[s as keyof Stats]})` : ''}
             </button>
           ))}

@@ -348,10 +348,10 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
     const isOpen = menuKey ? openMenu === menuKey : false;
     const triggerId = menuKey ? `main-nav-${menuKey}-trigger` : undefined;
     const panelId = menuKey ? `main-nav-${menuKey}-panel` : undefined;
-    const cls = `flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-150 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/70 focus-visible:ring-offset-2 ${
+    const cls = `flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-150 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/50 focus-visible:ring-offset-2 ${
       active || isOpen
-        ? 'text-emerald-800 bg-emerald-50 border border-emerald-300/80'
-        : 'text-slate-700 hover:text-emerald-800 hover:bg-emerald-50/80 border border-transparent'
+        ? 'text-[var(--primary)] bg-[var(--primary-light)] border border-[var(--primary)]/25'
+        : 'text-[var(--text)] hover:text-[var(--primary)] hover:bg-[var(--primary-light)] border border-transparent'
     }`;
 
     if (href && !menuKey) {
@@ -399,7 +399,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
       <header
         ref={headerRef}
-        className={`z-50 w-full min-w-0 max-w-full ios-chrome border-b shadow-sm ${
+        className={`z-50 w-full min-w-0 max-w-full ios-chrome border-b ${
           hideTopBar
             ? 'sticky top-0'
             : // Mobile: fixed below TopBar (overflow ancestors used to break sticky + top offset).
@@ -418,7 +418,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                 className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl shadow-md group-hover:shadow-lg transition-shadow object-contain shrink-0"
                 priority
               />
-              <span className="hidden sm:block font-bold text-base text-slate-800 group-hover:text-emerald-700 transition-colors">
+              <span className="hidden sm:block font-bold text-base text-[var(--text)] group-hover:text-[var(--primary)] transition-colors">
                 BetRollover
               </span>
             </Link>
@@ -603,7 +603,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                 hapticLight();
                 setSearchOpen(true);
               }}
-              className="hidden lg:inline-flex touch-target items-center justify-center p-2.5 rounded-xl text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors border border-[var(--border)] bg-[var(--card)]"
+              className="hidden lg:inline-flex touch-target items-center justify-center p-2.5 rounded-xl text-[var(--text-muted)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] transition-colors border border-[var(--border)] bg-[var(--card)]"
             >
               <IconSearch />
             </button>
@@ -615,7 +615,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                 {balance !== null && (
                   <Link
                     href="/wallet"
-                    className="relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 transition-all"
+                    className="relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold text-[var(--primary)] bg-[var(--primary-light)] hover:opacity-90 border border-[var(--primary)]/20 transition-all"
                     aria-label={`Wallet balance: ${format(balance).primary}${pendingWithdrawalCount > 0 ? `, ${pendingWithdrawalCount} withdrawal(s) in progress` : ''}`}
                   >
                     {pendingWithdrawalCount > 0 && (
@@ -647,10 +647,10 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                     aria-haspopup="true"
                     aria-controls="main-nav-account-panel"
                     aria-label="My account"
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/70 focus-visible:ring-offset-2 ${
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/50 focus-visible:ring-offset-2 ${
                       openMenu === 'account'
-                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-300/80'
-                        : 'text-slate-700 hover:text-emerald-800 hover:bg-emerald-50/80 border border-transparent'
+                        ? 'bg-[var(--primary-light)] text-[var(--primary)] border border-[var(--primary)]/25'
+                        : 'text-[var(--text)] hover:text-[var(--primary)] hover:bg-[var(--primary-light)] border border-transparent'
                     }`}
                     onMouseEnter={() => openAfterDelay('account')}
                     onMouseLeave={closeAfterDelay}
@@ -758,7 +758,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                   hapticLight();
                   setSearchOpen(true);
                 }}
-                className="touch-target p-2.5 rounded-xl text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors border border-[var(--border)] bg-[var(--card)]"
+                className="touch-target p-2.5 rounded-xl text-[var(--text-muted)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] transition-colors border border-[var(--border)] bg-[var(--card)]"
               >
                 <span className="inline-flex w-6 h-6 items-center justify-center text-[var(--primary)]">
                   <IconSearch />
@@ -772,7 +772,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                     aria-expanded={mobileOpen}
                     aria-haspopup="true"
                     onClick={() => setMobileOpen(o => !o)}
-                    className="p-2.5 rounded-xl text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors border border-[var(--border)] bg-[var(--card)]"
+                    className="p-2.5 rounded-xl text-[var(--text-muted)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] transition-colors border border-[var(--border)] bg-[var(--card)]"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />

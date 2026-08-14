@@ -135,7 +135,7 @@ export function HomeFollowingShelf() {
           </div>
           <Link
             href="/marketplace?sort=following-only"
-            className="touch-target inline-flex items-center rounded-full border border-emerald-600/20 bg-emerald-500/10 px-3.5 py-2 text-sm font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-500/15 transition-colors shrink-0 w-fit"
+            className="touch-target inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--card)] px-3.5 py-2 text-sm font-semibold text-[var(--primary)] hover:border-[var(--primary)] transition-colors shrink-0 w-fit"
           >
             {t('home.following_shelf_see_all')} →
           </Link>

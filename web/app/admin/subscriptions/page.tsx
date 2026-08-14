@@ -8,6 +8,7 @@ import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { useT } from '@/context/LanguageContext';
+import { buttonClassName } from '@/components/ui/Button';
 
 type TabId = 'catalog' | 'purchases';
 
@@ -563,7 +564,7 @@ export default function AdminSubscriptionsPage() {
             type="button"
             onClick={() => handleDeleteCatalogPackage(row)}
             disabled={deletingPackageId === pkg.id}
-            className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium disabled:opacity-50 z-10 shadow"
+            className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-[var(--destructive)] hover:opacity-90 text-white text-xs font-medium disabled:opacity-50 z-10 shadow"
             title="Remove package from VIP marketplace"
           >
             {deletingPackageId === pkg.id ? 'Removing…' : 'Delete'}
@@ -689,7 +690,7 @@ export default function AdminSubscriptionsPage() {
             type="button"
             onClick={() => handleDelete(row)}
             disabled={deletingId === row.id}
-            className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium disabled:opacity-50 z-10 shadow"
+            className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-[var(--destructive)] hover:opacity-90 text-white text-xs font-medium disabled:opacity-50 z-10 shadow"
             title="Delete subscription (refund held escrow)"
           >
             {deletingId === row.id ? 'Deleting…' : 'Delete'}
@@ -850,7 +851,7 @@ export default function AdminSubscriptionsPage() {
             {tip?.username && (
               <Link
                 href={`/tipsters/${encodeURIComponent(tip.username)}`}
-                className="mt-3 w-full text-center py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold"
+                className={buttonClassName({ size: 'sm', fullWidth: true, className: 'mt-3' })}
               >
                 View tipster profile
               </Link>
@@ -1025,7 +1026,7 @@ export default function AdminSubscriptionsPage() {
                   type="button"
                   onClick={() => void handleRevokeAllForSubscriber()}
                   disabled={revokingAllForSubscriber}
-                  className="inline-flex items-center rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed text-white text-sm font-semibold px-3 py-2"
+                  className="inline-flex items-center rounded-lg bg-[var(--destructive)] hover:opacity-90 disabled:bg-red-300 disabled:cursor-not-allowed text-white text-sm font-semibold px-3 py-2"
                 >
                   {revokingAllForSubscriber ? 'Revoking…' : 'Revoke all for this user'}
                 </button>
@@ -1060,7 +1061,7 @@ export default function AdminSubscriptionsPage() {
                 type="button"
                 onClick={handleExportCsv}
                 disabled={loading || filteredRows.length === 0}
-                className="ml-auto inline-flex items-center rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 disabled:cursor-not-allowed text-white text-sm font-semibold px-3 py-2"
+                className={buttonClassName({ size: 'sm', className: 'ml-auto' })}
               >
                 Export CSV
               </button>

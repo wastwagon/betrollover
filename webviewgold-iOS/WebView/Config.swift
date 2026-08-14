@@ -157,7 +157,7 @@ var imagenotfound = "Image not found." //Set the title label of the "Image not f
 // BetRollover brand (matches web themeColor #10b981 / Android colorPrimary)
 var statusBarBackgroundColor = #colorLiteral(red: 0.06274509803921569, green: 0.7254901960784313, blue: 0.5058823529411764, alpha: 1)
 
-var darkModeStatusBarBackgroundColor = #colorLiteral(red: 0.06274509803921569, green: 0.7254901960784313, blue: 0.5058823529411764, alpha: 1)
+var darkModeStatusBarBackgroundColor = #colorLiteral(red: 0.20392156862745098, green: 0.8274509803921568, blue: 0.6, alpha: 1)
 
 var statusBarTextColor = "white" //Light icons on emerald bar; requires iOS 13 or higher
 
@@ -169,9 +169,9 @@ var bottombar = true //Set to "true" to enable the bottombar to prevent the home
 
 var iPadBottombar = true //Set to "true" to ALSO enable the bottombar on iPads (which have bigger screens, so the home bar may not overlap content due to a different layout, hence the bottombar may not be needed)
 
-var bottombarBackgroundColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1) //Define a custom bottom bar background color
+var bottombarBackgroundColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1) // Matches web --card light
 
-var darkmodeBottombarBackgroundColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1) //Define a custom bottom bar background color while user is using iOS Dark Mode; requires iOS 13 or higher
+var darkmodeBottombarBackgroundColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1) // Matches web --bg dark (#000)
 
 //QR Code Scanner Configuration
 

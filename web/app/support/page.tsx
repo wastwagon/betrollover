@@ -105,16 +105,17 @@ function SupportContent() {
           title={t('support.title')}
           tagline={t('support.raise_prompt')}
           action={
-            <button
+            <Button
               type="button"
+              variant={showForm ? 'secondary' : 'primary'}
+              className="w-full sm:w-auto"
               onClick={() => {
                 setShowForm(!showForm);
                 setSuccess(false);
               }}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white text-teal-800 text-sm font-semibold hover:bg-teal-50 transition-colors shadow-sm"
             >
               {showForm ? t('support.cancel') : t('support.new_ticket_btn')}
-            </button>
+            </Button>
           }
         />
 

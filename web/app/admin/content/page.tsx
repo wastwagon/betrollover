@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 
 import { getApiUrl } from '@/lib/site-config';
+import { buttonClassName } from '@/components/ui/Button';
 
 interface ContentPage {
   id: number;
@@ -112,7 +113,7 @@ export default function AdminContentPage() {
                     {!isEditing ? (
                       <button type="button"
                         onClick={() => page && startEdit(page)}
-                        className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[var(--destructive)] text-white text-sm font-semibold hover:opacity-90 transition-colors shadow-sm"
+                        className={buttonClassName({ size: 'sm', className: 'w-full sm:w-auto' })}
                       >
                         Edit
                       </button>
@@ -120,14 +121,14 @@ export default function AdminContentPage() {
                       <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                         <button type="button"
                           onClick={cancelEdit}
-                          className="w-full sm:w-auto px-5 py-2.5 rounded-xl border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                          className={buttonClassName({ variant: 'secondary', size: 'sm', className: 'w-full sm:w-auto' })}
                         >
                           Cancel
                         </button>
                         <button type="button"
                           onClick={save}
                           disabled={saving}
-                          className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[var(--destructive)] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-colors shadow-sm"
+                          className={buttonClassName({ size: 'sm', className: 'w-full sm:w-auto' })}
                         >
                           {saving ? 'Saving...' : 'Save'}
                         </button>

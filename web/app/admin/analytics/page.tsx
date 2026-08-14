@@ -679,22 +679,22 @@ export default function AdminAnalyticsPage() {
             {/* Time Series Charts - with numeric axes and tooltips */}
             {timeSeries && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">User Growth</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">New registrations per day</p>
                   <SimpleChart data={timeSeries.users} color="blue" valueLabel="Users" />
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Pick Creation</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Picks created per day</p>
                   <SimpleChart data={timeSeries.picks} color="purple" valueLabel="Picks" />
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Purchases</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Purchases per day</p>
                   <SimpleChart data={timeSeries.purchases} color="green" valueLabel="Purchases" />
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Revenue</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">GHS per day</p>
                   <SimpleChart data={timeSeries.revenue.map((r) => ({ ...r, value: Math.round(r.value * 100) / 100 }))} color="orange" valueLabel="GHS" />
@@ -704,7 +704,7 @@ export default function AdminAnalyticsPage() {
 
             {/* Visitor Traffic Chart - from self-hosted tracking */}
             {visitorStats?.dailyVisitors && visitorStats.dailyVisitors.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Daily Visitors</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Unique sessions per day (from page tracking beacon)</p>
                 <SimpleChart
@@ -717,7 +717,7 @@ export default function AdminAnalyticsPage() {
 
             {/* Traffic Sources */}
             {visitorStats?.trafficSources && visitorStats.trafficSources.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Traffic Sources</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Where visitors come from (last {dateRange})</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -759,7 +759,7 @@ export default function AdminAnalyticsPage() {
 
             {/* Conversion Funnel - user-centric, % = conversion from previous step */}
             {funnel && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Conversion Funnel</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Unique users at each stage. % = conversion from previous step.</p>
                 <div className="space-y-4">
@@ -847,7 +847,7 @@ export default function AdminAnalyticsPage() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Withdrawal volume by status (requested in period)</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Amount (GHS) and count for each status where the request was created in the selected range.</p>
               <div style={{ height: 280 }}>
@@ -885,7 +885,7 @@ export default function AdminAnalyticsPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Deposits (GHS / day)</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Completed deposits by day</p>
                 <SimpleChart
@@ -895,7 +895,7 @@ export default function AdminAnalyticsPage() {
                   height={220}
                 />
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Withdrawal requests (GHS / day)</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">New requests by created date (any status)</p>
                 <SimpleChart
@@ -905,7 +905,7 @@ export default function AdminAnalyticsPage() {
                   height={220}
                 />
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 lg:col-span-2">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 lg:col-span-2">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Completed withdrawals (GHS / day)</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">By completion date (when status became completed)</p>
                 <SimpleChart
@@ -1015,13 +1015,13 @@ export default function AdminAnalyticsPage() {
 
             {revenue && (
               <>
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Pick sales revenue trend</h3>
                   <SimpleChart data={revenue.revenueTrend.map((r) => ({ date: r.date, value: r.revenue }))} color="green" />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Selling Picks</h3>
                     <div className="space-y-3">
                       {revenue.topSellingPicks.slice(0, 5).map((pick, i) => (
@@ -1036,7 +1036,7 @@ export default function AdminAnalyticsPage() {
                     </div>
                   </div>
 
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Revenue by Tipster</h3>
                     <div className="space-y-3">
                       {revenue.revenueByTipster.slice(0, 5).map((tipster, i) => (
@@ -1066,25 +1066,25 @@ export default function AdminAnalyticsPage() {
             ) : userBehavior ? (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Active Users</p>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white">{userBehavior.activeUsers ?? 0}</p>
                   </div>
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">New Users</p>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white">{userBehavior.newUsers ?? 0}</p>
                   </div>
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Returning Users</p>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white">{userBehavior.returningUsers ?? 0}</p>
                   </div>
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Avg Purchases/User</p>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white">{(userBehavior.avgPurchasesPerUser ?? 0).toFixed(1)}</p>
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Top Users by Purchases</h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 leading-snug">
                     Spent on wins = user dashboard “Total spent” (lost/void refunded). Gross = sum of all purchase prices.
@@ -1117,7 +1117,7 @@ export default function AdminAnalyticsPage() {
                 </div>
               </>
             ) : (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
                 <p className="text-gray-600 dark:text-gray-400 text-lg mb-2">Unable to load user analytics</p>
                 <p className="text-sm text-gray-500 dark:text-gray-500">Please try refreshing the page</p>
               </div>
@@ -1129,31 +1129,31 @@ export default function AdminAnalyticsPage() {
         {activeTab === 'picks' && (
           <div className="space-y-6">
             {!pickPerformance ? (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
                 <p className="text-gray-600 dark:text-gray-400 text-lg">Unable to load pick performance data</p>
               </div>
             ) : (
             <>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Picks</p>
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">{pickPerformance.totalPicks}</p>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Win Rate</p>
                 <p className="text-3xl font-bold text-green-600 dark:text-green-400">{(pickPerformance.winRate ?? 0).toFixed(1)}%</p>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Won Picks</p>
                 <p className="text-3xl font-bold text-green-600 dark:text-green-400">{pickPerformance.wonPicks}</p>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Avg Odds</p>
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">{(pickPerformance.avgOdds ?? 0).toFixed(2)}</p>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Performing Tipsters</h3>
               <div className="space-y-3">
                 {pickPerformance.topPerformers.map((performer, i) => (
@@ -1204,7 +1204,7 @@ export default function AdminAnalyticsPage() {
 
                 {/* Traffic Sources */}
                 {visitorStats.trafficSources && visitorStats.trafficSources.length > 0 && (
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Traffic Sources (Last {dateRange})</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Where visitors come from: direct, organic search, social, referral</p>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
@@ -1222,7 +1222,7 @@ export default function AdminAnalyticsPage() {
                 {/* Conversion by source + session duration + device + country */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {visitorStats.conversionBySource && visitorStats.conversionBySource.length > 0 && (
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Conversion by Source</h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Logged-in sessions by traffic source</p>
                       <div className="space-y-2">
@@ -1237,7 +1237,7 @@ export default function AdminAnalyticsPage() {
                   )}
                   <div className="space-y-6">
                     {visitorStats.avgSessionDurationSec != null && visitorStats.avgSessionDurationSec > 0 && (
-                      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Avg Session Duration</h3>
                         <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                           {Math.floor(visitorStats.avgSessionDurationSec / 60)}m {Math.round(visitorStats.avgSessionDurationSec % 60)}s
@@ -1246,7 +1246,7 @@ export default function AdminAnalyticsPage() {
                       </div>
                     )}
                     {visitorStats.deviceBreakdown && visitorStats.deviceBreakdown.length > 0 && (
-                      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Device Breakdown</h3>
                         <div className="flex flex-wrap gap-3">
                           {visitorStats.deviceBreakdown.map((d) => (
@@ -1258,7 +1258,7 @@ export default function AdminAnalyticsPage() {
                       </div>
                     )}
                     {visitorStats.byCountry && visitorStats.byCountry.length > 0 && (
-                      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Countries</h3>
                         <div className="space-y-6 max-h-48 overflow-y-auto">
                           {visitorStats.byCountry.slice(0, 10).map((c) => (
@@ -1274,7 +1274,7 @@ export default function AdminAnalyticsPage() {
                 </div>
 
                 {/* Individual Page Performance */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Page Performance</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Views per page (last {dateRange})</p>
                   {visitorStats.topPages && visitorStats.topPages.length > 0 ? (
@@ -1309,7 +1309,7 @@ export default function AdminAnalyticsPage() {
 
                 {/* Daily visitor chart */}
                 {visitorStats.dailyVisitors && visitorStats.dailyVisitors.length > 0 && (
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Daily Visitors Trend</h3>
                     <SimpleChart
                       data={visitorStats.dailyVisitors.map((d) => ({ date: d.date, value: d.uniqueSessions }))}
@@ -1328,7 +1328,7 @@ export default function AdminAnalyticsPage() {
             )}
 
             {retention && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Retention</h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
@@ -1352,7 +1352,7 @@ export default function AdminAnalyticsPage() {
             )}
 
             {cohorts && cohorts.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Signup Cohorts (by Week)</h3>
                 <SimpleChart data={cohorts.map((c) => ({ date: c.week, value: c.signups }))} color="blue" height={180} />
               </div>
@@ -1366,14 +1366,14 @@ export default function AdminAnalyticsPage() {
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">AI Tipsters Dashboard</h2>
 
             {!aiMetrics ? (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
                 <p className="text-gray-600 dark:text-gray-400 text-lg mb-2">Unable to load AI dashboard metrics</p>
                 <p className="text-sm text-gray-500 dark:text-gray-500">Please try refreshing the page</p>
               </div>
             ) : (
               <>
             {/* System Health */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">System Health</h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
@@ -1400,7 +1400,7 @@ export default function AdminAnalyticsPage() {
             </div>
 
             {/* Tipster Performance */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Tipster Performance</h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
@@ -1423,7 +1423,7 @@ export default function AdminAnalyticsPage() {
             </div>
 
             {/* Platform Engagement */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Platform Engagement</h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
@@ -1453,7 +1453,7 @@ export default function AdminAnalyticsPage() {
         {activeTab === 'sports' && (
           <div className="space-y-8">
             {sportBreakdown.length === 0 ? (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
                 <p className="text-gray-500 text-lg">No sport data yet — create picks across different sports to see breakdown here.</p>
               </div>
             ) : (
@@ -1476,7 +1476,7 @@ export default function AdminAnalyticsPage() {
                 </div>
 
                 {/* Picks by sport — horizontal bar chart */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Picks by Sport</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Total, won, and lost picks per sport</p>
                   <ResponsiveContainer width="100%" height={280}>
@@ -1499,7 +1499,7 @@ export default function AdminAnalyticsPage() {
                 {/* Win rate & Revenue — side by side */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Win rate by sport */}
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Win Rate by Sport</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">% of settled picks that won</p>
                     <ResponsiveContainer width="100%" height={220}>
@@ -1518,7 +1518,7 @@ export default function AdminAnalyticsPage() {
                   </div>
 
                   {/* Revenue by sport — pie */}
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Revenue by Sport</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">From paid pick purchases</p>
                     {sportBreakdown.every((s) => s.revenue === 0) ? (
@@ -1551,7 +1551,7 @@ export default function AdminAnalyticsPage() {
 
                 {/* Revenue trend (30d line chart) */}
                 {revenueTrend.length > 0 && (
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Revenue Trend</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
                       Green / amber = GHS (left axis). Purple / violet = purchase counts (right axis).
@@ -1632,7 +1632,7 @@ export default function AdminAnalyticsPage() {
 
                 {/* Top tipsters by sport — table */}
                 {topTipstersBySport.length > 0 && (
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Top Tipsters by Sport</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Ranked by win rate (settled picks only)</p>
                     <div className="overflow-x-auto">
@@ -1688,37 +1688,37 @@ export default function AdminAnalyticsPage() {
         {activeTab === 'engagement' && (
           <div className="space-y-6">
             {!engagement ? (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
                 <p className="text-gray-600 dark:text-gray-400 text-lg">Unable to load engagement data</p>
               </div>
             ) : (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Notification Read Rate</p>
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">{(engagement.readRate ?? 0).toFixed(1)}%</p>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Active Tipsters</p>
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">{engagement.activeTipsters}</p>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Avg Picks/Tipster</p>
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">{(engagement.avgPicksPerTipster ?? 0).toFixed(1)}</p>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Notifications</p>
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">{engagement.totalNotifications}</p>
               </div>
               {(engagement.totalReactions != null || engagement.totalViews != null) && (
                 <>
                   {engagement.totalReactions != null && (
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Reactions (Likes)</p>
                       <p className="text-3xl font-bold text-gray-900 dark:text-white">{engagement.totalReactions}</p>
                     </div>
                   )}
                   {engagement.totalViews != null && (
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Pick Views</p>
                       <p className="text-3xl font-bold text-gray-900 dark:text-white">{engagement.totalViews}</p>
                     </div>
@@ -1844,7 +1844,7 @@ export default function AdminAnalyticsPage() {
                 )}
 
                 {accaUsage.funnel && (
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Funnel</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                       Open → generate → publish → marketplace purchase (period)
@@ -1878,7 +1878,7 @@ export default function AdminAnalyticsPage() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {accaUsage.monetizationSignals && (
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-amber-200 dark:border-amber-800 p-6">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-amber-200 dark:border-amber-800 p-6">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Monetization signals</h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                         Quota hits = users wanting more than the free daily cap
@@ -1908,7 +1908,7 @@ export default function AdminAnalyticsPage() {
                   )}
 
                   {accaUsage.quality && (
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Published quality</h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                         Settled marketplace slips that came from Acca Generator
@@ -1955,7 +1955,7 @@ export default function AdminAnalyticsPage() {
                 )}
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Daily generations</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Generates + unique users per UTC day</p>
                     {accaUsage.daily.length === 0 ? (
@@ -1976,7 +1976,7 @@ export default function AdminAnalyticsPage() {
                     )}
                   </div>
 
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">By risk band</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Sure / Safe / Medium / High usage in period</p>
                     {accaUsage.byRisk.length === 0 ? (
@@ -1998,7 +1998,7 @@ export default function AdminAnalyticsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 overflow-x-auto">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 overflow-x-auto">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Top users</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Most generations in the selected period</p>
                     {accaUsage.topUsers.length === 0 ? (
@@ -2030,7 +2030,7 @@ export default function AdminAnalyticsPage() {
                     )}
                   </div>
 
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 overflow-x-auto">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 overflow-x-auto">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Recent generates</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Latest 20 runs (all time)</p>
                     {accaUsage.recent.length === 0 ? (

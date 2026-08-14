@@ -603,7 +603,7 @@ export default function AdminSettingsPage() {
         {!loading && settings && (
           <div className="space-y-8 max-w-6xl">
             {/* API Configuration Card */}
-            <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 overflow-hidden transition-all hover:shadow-2xl ${
+            <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm border-2 overflow-hidden transition-all ${
               settings.apiSportsConfigured 
                 ? 'border-emerald-200 dark:border-emerald-800' 
                 : 'border-amber-200 dark:border-amber-800'
@@ -768,7 +768,7 @@ export default function AdminSettingsPage() {
                     <button type="button"
                       onClick={saveApiKey}
                       disabled={saving || !apiKey.trim()}
-                      className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+                      className={buttonClassName({ className: 'flex-1' })}
                     >
                       {saving ? (
                         <>
@@ -790,7 +790,7 @@ export default function AdminSettingsPage() {
             </div>
 
             {/* SendGrid / Email Test */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-emerald-200 dark:border-emerald-800 overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border-2 border-emerald-200 dark:border-emerald-800 overflow-hidden">
               <div className="p-4 sm:p-8 bg-[var(--primary-light)]">
                 <div className="flex items-start gap-4 mb-6">
                   <div className="p-3 rounded-xl bg-emerald-500 text-white">
@@ -838,7 +838,7 @@ export default function AdminSettingsPage() {
                       type="button"
                       onClick={saveAdminNotificationEmail}
                       disabled={savingAdminNotificationEmail}
-                      className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors"
+                      className={buttonClassName({ size: 'sm' })}
                     >
                       {savingAdminNotificationEmail ? 'Saving…' : 'Save notification inbox'}
                     </button>
@@ -866,7 +866,7 @@ export default function AdminSettingsPage() {
                   <button type="button"
                     onClick={sendTestEmail}
                     disabled={testEmailLoading || !testEmailTo.trim()}
-                    className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center gap-2"
+                    className={buttonClassName()}
                   >
                     {testEmailLoading ? (
                       <>
@@ -887,7 +887,7 @@ export default function AdminSettingsPage() {
             </div>
 
             {/* Paystack Payment Gateway */}
-            <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 overflow-hidden ${
+            <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm border-2 overflow-hidden ${
               paystackConfigured
                 ? 'border-emerald-200 dark:border-emerald-800'
                 : 'border-amber-200 dark:border-amber-800'
@@ -991,7 +991,7 @@ export default function AdminSettingsPage() {
                       }
                     }}
                     disabled={paystackSaving}
-                    className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center gap-2"
+                    className={buttonClassName()}
                   >
                     {paystackSaving ? (
                       <>
@@ -1012,7 +1012,7 @@ export default function AdminSettingsPage() {
             </div>
 
             {/* Database migrations – auto-run on deploy; admin can run or mark applied */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border-2 border-slate-200 dark:border-slate-700 overflow-hidden">
               <div className="p-4 sm:p-8 bg-[var(--fill-secondary)]">
                 <div className="flex items-start justify-between mb-6 min-w-0">
                   <div className="flex items-start gap-4 min-w-0 flex-1">
@@ -1060,7 +1060,7 @@ export default function AdminSettingsPage() {
                       <button type="button"
                         onClick={runMigrations}
                         disabled={runningMigrations || (migrationStatus.pending.length === 0)}
-                        className="px-5 py-2.5 bg-slate-600 hover:bg-slate-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center gap-2"
+                        className={buttonClassName()}
                       >
                         {runningMigrations ? (
                           <>
@@ -1074,7 +1074,7 @@ export default function AdminSettingsPage() {
                       <button type="button"
                         onClick={markAllMigrationsApplied}
                         disabled={markAllAppliedLoading}
-                        className="px-5 py-2.5 bg-slate-500 hover:bg-slate-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all"
+                        className={buttonClassName({ variant: 'secondary' })}
                       >
                         {markAllAppliedLoading ? '...' : 'Mark all as applied'}
                       </button>
@@ -1093,7 +1093,7 @@ export default function AdminSettingsPage() {
 
             {/* Sync Status & Manual Sync */}
             {settings.apiSportsConfigured && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-blue-200 dark:border-blue-800 overflow-hidden">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border-2 border-blue-200 dark:border-blue-800 overflow-hidden">
                 <div className="p-4 sm:p-8 bg-[var(--fill-secondary)]">
                   <div className="flex items-start justify-between mb-6 min-w-0">
                     <div className="flex items-start gap-4 min-w-0 flex-1">
@@ -1392,7 +1392,7 @@ export default function AdminSettingsPage() {
                       }
                     }}
                     disabled={savingWinRate}
-                    className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
+                    className={buttonClassName({ fullWidth: true })}
                   >
                     {savingWinRate ? 'Saving...' : 'Save minimum win rate'}
                   </button>
@@ -1701,7 +1701,7 @@ export default function AdminSettingsPage() {
                       }
                     }}
                     disabled={savingAccaGenerator}
-                    className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
+                    className={buttonClassName({ fullWidth: true })}
                   >
                     {savingAccaGenerator ? 'Saving...' : 'Save Acca Generator settings'}
                   </button>

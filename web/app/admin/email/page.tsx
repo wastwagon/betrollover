@@ -176,7 +176,7 @@ export default function AdminEmailPage() {
               </a>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-8">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-8">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">SMTP Settings</h3>
               <div className="space-y-5">
                 <div>
@@ -247,14 +247,14 @@ export default function AdminEmailPage() {
                 <button type="button"
                   onClick={save}
                   disabled={saving}
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[var(--destructive)] text-white font-semibold hover:opacity-90 disabled:opacity-50 transition-colors shadow-sm text-center"
+                  className={buttonClassName({ className: 'w-full sm:w-auto' })}
                 >
                   {saving ? 'Saving...' : 'Save Settings'}
                 </button>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-l-4 border-l-emerald-500 border border-gray-200 dark:border-gray-700 p-4 sm:p-8">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border-l-4 border-l-emerald-500 border border-gray-200 dark:border-gray-700 p-4 sm:p-8">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Test Email Configuration</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Send a test email to verify your SMTP configuration.</p>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-stretch">

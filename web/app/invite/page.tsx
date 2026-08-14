@@ -10,7 +10,7 @@ import { useT } from '@/context/LanguageContext';
 import { getApiUrl } from '@/lib/site-config';
 import { NavBar } from '@/components/ios/NavBar';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonClassName } from '@/components/ui/Button';
 
 interface Conversion {
   id: number;
@@ -154,9 +154,9 @@ export default function InvitePage() {
                   href={whatsappHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-60"
+                  className={buttonClassName({ size: 'sm' })}
                 >
-                  <span aria-hidden>🟢</span> {t('invite.share_whatsapp')}
+                  {t('invite.share_whatsapp')}
                 </a>
                 <a
                   href={telegramHref}

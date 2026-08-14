@@ -115,7 +115,7 @@ export default function AdminPurchasesPage() {
         )}
 
         {!loading && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             {purchases.length === 0 ? (
               <div className="p-12 text-center">
                 <p className="text-gray-600 dark:text-gray-400 text-lg">No purchases found</p>

@@ -198,7 +198,7 @@ export default function AdminChatPage() {
 
         {/* Toast */}
         {toast && (
-          <div className="fixed top-4 right-4 z-50 bg-emerald-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
+          <div className="fixed top-4 right-4 z-50 bg-[var(--primary)] text-white px-4 py-2 rounded-lg shadow-lg text-sm">
             {toast}
           </div>
         )}
@@ -257,7 +257,7 @@ export default function AdminChatPage() {
                       <button
                         type="button"
                         onClick={() => deleteMessage(msg.id)}
-                        className="flex-1 sm:flex-none bg-red-700 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg"
+                        className="flex-1 sm:flex-none bg-[var(--destructive)] hover:opacity-90 text-white text-xs px-3 py-1.5 rounded-lg"
                       >
                         Delete
                       </button>
@@ -435,7 +435,7 @@ export default function AdminChatPage() {
             <div className="flex gap-3">
               <button type="button"
                 onClick={submitBan}
-                className="flex-1 bg-red-700 hover:bg-red-600 text-white py-2 rounded-lg font-medium text-sm"
+                className="flex-1 bg-[var(--destructive)] hover:opacity-90 text-white py-2 rounded-lg font-medium text-sm"
               >
                 Confirm {banType === 'mute' ? 'Mute' : 'Ban'}
               </button>

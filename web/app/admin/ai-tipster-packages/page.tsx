@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { Button, buttonClassName } from '@/components/ui/Button';
 
 type PackageStatus = 'active' | 'inactive';
 
@@ -231,27 +232,34 @@ export default function AdminAiTipsterPackagesPage() {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto shrink-0">
-            <button type="button"
+            <Button
+              type="button"
               onClick={() => bulkSetStatus('active')}
               disabled={bulkUpdating}
-              className="w-full sm:w-auto px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium transition-colors text-center"
+              size="sm"
+              className="w-full sm:w-auto"
             >
               {bulkUpdating ? 'Applying...' : 'Turn All ON'}
-            </button>
-            <button type="button"
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
               onClick={() => bulkSetStatus('inactive')}
               disabled={bulkUpdating}
-              className="w-full sm:w-auto px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-800 disabled:opacity-60 text-white text-sm font-medium transition-colors text-center"
+              size="sm"
+              className="w-full sm:w-auto"
             >
               {bulkUpdating ? 'Applying...' : 'Turn All OFF'}
-            </button>
-            <button type="button"
+            </Button>
+            <Button
+              type="button"
               onClick={runAiSetup}
               disabled={seeding}
-              className="w-full sm:w-auto px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-medium transition-colors text-center"
+              size="sm"
+              className="w-full sm:w-auto"
             >
               {seeding ? 'Initializing...' : 'Initialize / Repair AI Packages'}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -358,7 +366,7 @@ export default function AdminAiTipsterPackagesPage() {
             <div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" />
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-800">
@@ -448,7 +456,7 @@ export default function AdminAiTipsterPackagesPage() {
                           <button type="button"
                             onClick={() => savePackage(row.package!)}
                             disabled={savingId === row.package.id}
-                            className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-medium transition-colors"
+                            className={buttonClassName({ size: 'sm' })}
                           >
                             {savingId === row.package.id ? 'Saving...' : 'Save'}
                           </button>

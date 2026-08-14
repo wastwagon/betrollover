@@ -146,7 +146,7 @@ export default function AdminWalletPage() {
             </div>
 
             {adjustingWallet !== null && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Adjust Wallet Balance</h3>
                 <div className="space-y-4">
                   <div>
@@ -238,11 +238,11 @@ export default function AdminWalletPage() {
                               </button>
                               <button type="button"
                                 onClick={() => freezeWallet(w.userId, w.status !== 'frozen')}
-                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                                className={
                                   w.status === 'frozen'
-                                    ? 'bg-green-600 hover:bg-green-700 text-white'
-                                    : 'bg-red-600 hover:bg-red-700 text-white'
-                                }`}
+                                    ? buttonClassName({ size: 'sm' })
+                                    : buttonClassName({ variant: 'destructive', size: 'sm' })
+                                }
                               >
                                 {w.status === 'frozen' ? 'Unfreeze' : 'Freeze'}
                               </button>
@@ -267,7 +267,7 @@ export default function AdminWalletPage() {
               </div>
             )}
             {!loading && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 {transactions.length === 0 ? (
                   <div className="p-12 text-center">
                     <p className="text-gray-600 dark:text-gray-400 text-lg">No transactions found</p>

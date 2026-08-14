@@ -7,6 +7,7 @@ import { AdminSidebar } from '@/components/AdminSidebar';
 
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { Button } from '@/components/ui/Button';
 
 interface GenerationLog {
   id: number;
@@ -171,11 +172,11 @@ export default function AdminAiPredictionsPage() {
 
         {/* Generate Button */}
         <div className="mb-8">
-          <button
+          <Button
             type="button"
             onClick={handleGenerate}
             disabled={generating}
-            className="w-full sm:w-auto justify-center px-6 py-3 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors flex items-center gap-2"
+            className="w-full sm:w-auto"
           >
             {generating ? (
               <>
@@ -183,12 +184,9 @@ export default function AdminAiPredictionsPage() {
                 Generating...
               </>
             ) : (
-              <>
-                <span>🤖</span>
-                Generate Predictions
-              </>
+              'Generate Predictions'
             )}
-          </button>
+          </Button>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             Runs automatically at 8:00 PM (Africa/Accra) with a 2:00 AM catch-up. You can also run it manually here.
             Check sync status in Settings.
@@ -197,11 +195,11 @@ export default function AdminAiPredictionsPage() {
 
         {/* Sync to Marketplace */}
         <div className="mb-8">
-          <button
+          <Button
             type="button"
             onClick={handleSyncToMarketplace}
             disabled={syncing}
-            className="w-full sm:w-auto justify-center px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors flex items-center gap-2"
+            className="w-full sm:w-auto"
           >
             {syncing ? (
               <>
@@ -209,12 +207,9 @@ export default function AdminAiPredictionsPage() {
                 Syncing...
               </>
             ) : (
-              <>
-                <span>📤</span>
-                Sync Predictions to Marketplace
-              </>
+              'Sync Predictions to Marketplace'
             )}
-          </button>
+          </Button>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             Sync predictions to the marketplace. AI picks are <strong>free</strong> unless the tipster meets minimum ROI
             and win rate in Admin → Settings; then they list at your configured <strong>AI pick price</strong> (GHS),
@@ -229,7 +224,7 @@ export default function AdminAiPredictionsPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Latest Predictions */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Latest Predictions</h2>
               {todayPredictions.length === 0 ? (
                 <p className="text-gray-500 dark:text-gray-400 py-4">
@@ -264,7 +259,7 @@ export default function AdminAiPredictionsPage() {
             </div>
 
             {/* Generation Logs */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Generation Logs</h2>
               {logs.length === 0 ? (
                 <p className="text-gray-500 dark:text-gray-400 py-4">No generation logs yet.</p>

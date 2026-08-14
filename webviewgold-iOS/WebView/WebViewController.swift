@@ -1085,7 +1085,7 @@ class WebViewController: UIViewController, OSSubscriptionObserver, GADBannerView
         // Create top navigation bar view
         let navBar = UIView()
         navBar.translatesAutoresizingMaskIntoConstraints = false
-        navBar.backgroundColor = UIColor(red: 4 / 255.0, green: 120 / 255.0, blue: 87 / 255.0, alpha: 1.0) // #047857
+        navBar.backgroundColor = UIColor(red: 16 / 255.0, green: 185 / 255.0, blue: 129 / 255.0, alpha: 1.0) // #10b981 — match TopBar / statusBarBackgroundColor
         containerView.addSubview(navBar)
         
         // Title Label

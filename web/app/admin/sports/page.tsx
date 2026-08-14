@@ -340,7 +340,7 @@ export default function AdminSportsPage() {
             <button type="button"
               onClick={syncAllSports}
               disabled={syncingAll || syncing !== null}
-              className="px-4 py-1.5 rounded-lg bg-emerald-700 text-white text-sm font-semibold hover:bg-emerald-800 disabled:opacity-50 transition-colors"
+              className={buttonClassName({ size: 'sm' })}
               title="Sync all 7 non-football sports in sequence"
             >
               {syncingAll ? '⏳ Syncing All…' : '⚡ Sync All Sports'}
@@ -375,7 +375,7 @@ export default function AdminSportsPage() {
               onClick={() => triggerSync('results')}
               disabled={syncing === 'results' || syncingAll}
               title="Fetch completed scores from The Odds API and settle pending picks"
-              className="px-4 py-1.5 rounded-lg bg-slate-700 text-white text-sm font-semibold hover:bg-slate-800 disabled:opacity-50 transition-colors"
+              className={buttonClassName({ size: 'sm' })}
             >
               {syncing === 'results' ? 'Fetching…' : '✓ Sync Results & Settle'}
             </button>
@@ -500,7 +500,7 @@ export default function AdminSportsPage() {
           {settleModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={closeSettleModal}>
               <div
-                className="bg-[var(--card)] rounded-2xl border border-[var(--border)] shadow-xl max-w-md w-full p-5"
+                className="bg-[var(--card)] rounded-2xl border border-[var(--border)] shadow-lg max-w-md w-full p-5"
                 onClick={(e) => e.stopPropagation()}
               >
                 <h3 className="font-semibold text-[var(--text)] mb-1">Settle event manually</h3>

@@ -746,14 +746,14 @@ function WalletContent() {
                       )}
                     </div>
                     {withdrawError && <p className="text-sm text-red-500">{withdrawError}</p>}
-                    <button
+                    <Button
                       type="button"
+                      fullWidth
                       onClick={handleWithdraw}
                       disabled={withdrawLoading || !!pendingWithdrawal}
-                      className="w-full px-4 py-2 rounded-lg bg-emerald-600 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {withdrawLoading ? t('wallet.processing') : pendingWithdrawal ? t('wallet.withdrawal_pending') : t('wallet.request_withdrawal')}
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>

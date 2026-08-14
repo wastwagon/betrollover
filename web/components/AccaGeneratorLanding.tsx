@@ -3,6 +3,11 @@ import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { NavBar } from '@/components/ios/NavBar';
 
+const ctaPrimary =
+  'inline-flex min-h-[48px] items-center justify-center gap-2 font-semibold transition-colors duration-200 touch-manipulation bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-sm px-5 py-3 text-sm rounded-[var(--radius)]';
+const ctaSecondary =
+  'inline-flex min-h-[48px] items-center justify-center gap-2 font-semibold transition-colors duration-200 touch-manipulation bg-[var(--card)] text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)] px-5 py-3 text-sm rounded-[var(--radius)]';
+
 /**
  * Public, indexable teaser when the visitor is not signed in.
  * The interactive generator stays behind login.
@@ -48,26 +53,26 @@ export function AccaGeneratorLanding() {
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Link
                   href="/login?redirect=/acca-generator"
-                  className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-emerald-700 px-5 text-sm font-semibold text-white hover:bg-emerald-800"
+                  className={ctaPrimary}
                 >
                   Sign in to generate
                 </Link>
                 <Link
                   href="/register?redirect=/acca-generator"
-                  className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-800 hover:border-emerald-400"
+                  className={ctaSecondary}
                 >
                   Create free account
                 </Link>
               </div>
               <p className="text-center text-xs text-[var(--text-muted)]">
                 Already browsing picks?{' '}
-                <Link href="/marketplace" className="font-medium text-emerald-700 underline underline-offset-2">
+                <Link href="/marketplace" className="font-medium text-[var(--primary)] underline underline-offset-2">
                   Open marketplace
                 </Link>
                 {' · '}
                 <Link
                   href="/responsible-gambling"
-                  className="font-medium text-emerald-700 underline underline-offset-2"
+                  className="font-medium text-[var(--primary)] underline underline-offset-2"
                 >
                   Responsible gambling
                 </Link>

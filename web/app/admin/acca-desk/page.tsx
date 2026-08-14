@@ -232,7 +232,7 @@ export default function AdminAccaDeskPage() {
             type="button"
             onClick={handleSetup}
             disabled={settingUp || running}
-            className="px-6 py-3 bg-slate-700 hover:bg-slate-800 disabled:opacity-50 text-white font-semibold rounded-xl transition-colors flex items-center gap-2"
+            className={buttonClassName({ variant: 'secondary' })}
           >
             {settingUp ? (
               <>
@@ -247,7 +247,7 @@ export default function AdminAccaDeskPage() {
             type="button"
             onClick={handleRunDaily}
             disabled={running || settingUp}
-            className="px-6 py-3 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold rounded-xl transition-colors flex items-center gap-2"
+            className={buttonClassName()}
           >
             {running ? (
               <>
@@ -311,7 +311,7 @@ export default function AdminAccaDeskPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Today&apos;s Acca Desk picks</h2>
                 {overview.todayTickets.length === 0 ? (
                   <p className="text-gray-500 dark:text-gray-400 py-4">
@@ -348,7 +348,7 @@ export default function AdminAccaDeskPage() {
                 )}
               </div>
 
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Roster (15)</h2>
                 <div className="space-y-2 max-h-[32rem] overflow-y-auto">
                   {overview.roster.map((r) => (
@@ -408,7 +408,7 @@ export default function AdminAccaDeskPage() {
             </div>
 
             {lastRun && lastRun.details?.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 mb-8">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Last run details</h2>
                 <div className="space-y-2 max-h-64 overflow-y-auto text-sm">
                   {lastRun.details.map((d) => (
