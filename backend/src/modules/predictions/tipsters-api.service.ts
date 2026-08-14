@@ -17,6 +17,13 @@ import {
 } from '@betrollover/shared-types';
 import { AccumulatorsService } from '../accumulators/accumulators.service';
 import { isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
+import {
+  CLASSIC_AI_TIPSTER_TYPE,
+  classicAiPublicExcludeRawSql,
+  classicAiPublicExcludeSql,
+  isClassicAiHiddenFromPublic,
+  isClassicAiTipsterRow,
+} from '../../common/classic-ai-public-visibility.util';
 
 const SORT_COLUMNS: Record<string, string> = {
   roi: 'roi',
@@ -184,6 +191,7 @@ export class TipstersApiService {
         | 'totalProfit'
         | 'leaderboardRank'
         | 'isAi'
+        | 'tipsterType'
       >
     >;
     sorted: Array<{
@@ -217,6 +225,7 @@ export class TipstersApiService {
         'totalProfit',
         'leaderboardRank',
         'isAi',
+        'tipsterType',
       ],
     });
     const humanIdsForStatus = [...new Set(tipstersRaw.map((t) => t.userId).filter((id): id is number => id != null))];
@@ -228,9 +237,11 @@ export class TipstersApiService {
       });
       activeHumanIds = new Set(activeRows.map((r) => r.id));
     }
-    const tipsters = tipstersRaw.filter(
-      (t) => t.isAi || (t.userId != null && activeHumanIds.has(t.userId)),
-    );
+    const hideClassicAi = isClassicAiHiddenFromPublic();
+    const tipsters = tipstersRaw.filter((t) => {
+      if (hideClassicAi && isClassicAiTipsterRow(t)) return false;
+      return t.isAi || (t.userId != null && activeHumanIds.has(t.userId));
+    });
     const humanUserIds = tipsters.filter((t) => t.userId != null).map((t) => t.userId!);
     const ticketStatsMap = await this.computeStatsFromTickets(humanUserIds, sport);
 
@@ -643,7 +654,11 @@ export class TipstersApiService {
       // Human tipsters only if linked user account is active (suspended / inactive hidden from public)
       .andWhere('(t.isAi = true OR (t.userId IS NOT NULL AND u.status = :userActive))', {
         userActive: UserStatus.ACTIVE,
-      })
+      });
+    if (isClassicAiHiddenFromPublic()) {
+      qb.andWhere(classicAiPublicExcludeSql('t'), { classicAiTipsterType: CLASSIC_AI_TIPSTER_TYPE });
+    }
+    qb
       .select([
         't.id',
         't.username',
@@ -785,7 +800,7 @@ export class TipstersApiService {
 
   /** Public: active tipster usernames for sitemap generation (no stats payload). */
   async listActiveTipsterUsernames(): Promise<{ usernames: string[] }> {
-    const rows = await this.tipsterRepo
+    const qb = this.tipsterRepo
       .createQueryBuilder('t')
       .leftJoin(User, 'u', 'u.id = t.userId')
       .select('t.username', 'username')
@@ -793,9 +808,11 @@ export class TipstersApiService {
       .andWhere('(t.isAi = true OR t.userId IS NOT NULL)')
       .andWhere('(t.isAi = true OR (t.userId IS NOT NULL AND u.status = :userActive))', {
         userActive: UserStatus.ACTIVE,
-      })
-      .orderBy('t.username', 'ASC')
-      .getRawMany<{ username: string }>();
+      });
+    if (isClassicAiHiddenFromPublic()) {
+      qb.andWhere(classicAiPublicExcludeSql('t'), { classicAiTipsterType: CLASSIC_AI_TIPSTER_TYPE });
+    }
+    const rows = await qb.orderBy('t.username', 'ASC').getRawMany<{ username: string }>();
     return { usernames: rows.map((r) => r.username) };
   }
 
@@ -808,6 +825,9 @@ export class TipstersApiService {
       where: { username },
     });
     if (!tipster) return null;
+    if (isClassicAiHiddenFromPublic() && isClassicAiTipsterRow(tipster)) {
+      return null;
+    }
 
     if (tipster.userId != null) {
       const owner = await this.usersRepo.findOne({
@@ -1110,6 +1130,10 @@ export class TipstersApiService {
       ? `AND LOWER(at.sport) = LOWER('${options.sport.charAt(0).toUpperCase() + options.sport.slice(1).replace('_', ' ')}')`
       : '';
 
+    const classicAiHideClause = isClassicAiHiddenFromPublic()
+      ? `AND ${classicAiPublicExcludeRawSql('t')}`
+      : '';
+
     const [aiRows, humanRows] = await Promise.all([
       this.tipsterRepo.query(
         `SELECT t.id, t.username, t.display_name, t.avatar_url,
@@ -1123,6 +1147,7 @@ export class TipstersApiService {
            t.is_ai = true
            OR EXISTS (SELECT 1 FROM users u WHERE u.id = t.user_id AND u.status = 'active')
          )
+         ${classicAiHideClause}
          GROUP BY t.id, t.username, t.display_name, t.avatar_url`,
         [],
       ),
@@ -1136,6 +1161,7 @@ export class TipstersApiService {
          INNER JOIN accumulator_tickets at ON at.user_id = t.user_id
            AND at.result IN ('won', 'lost') AND ${dateFilter} ${sportDisplayFilter}
          WHERE t.is_active = true AND t.user_id IS NOT NULL
+         ${classicAiHideClause}
          GROUP BY t.id, t.username, t.display_name, t.avatar_url`,
         [],
       ),
@@ -1261,9 +1287,13 @@ export class TipstersApiService {
 
     const tipsters = await this.tipsterRepo.find({
       where: { id: In(tipsterIds) },
-      select: ['id', 'userId', 'username', 'displayName', 'avatarUrl', 'winRate', 'isAi', 'roi'],
+      select: ['id', 'userId', 'username', 'displayName', 'avatarUrl', 'winRate', 'isAi', 'roi', 'tipsterType'],
     });
-    const followedUserIds = tipsters.filter((t) => t.userId != null).map((t) => t.userId!);
+    const hideClassicAi = isClassicAiHiddenFromPublic();
+    const visibleTipsters = hideClassicAi
+      ? tipsters.filter((t) => !isClassicAiTipsterRow(t))
+      : tipsters;
+    const followedUserIds = visibleTipsters.filter((t) => t.userId != null).map((t) => t.userId!);
     if (followedUserIds.length === 0) return [];
 
     const allTimeRankMap = await this.getAllTimeLeaderboardRankMap();
@@ -1299,7 +1329,7 @@ export class TipstersApiService {
         isAi: boolean;
       }
     >();
-    for (const t of tipsters) {
+    for (const t of visibleTipsters) {
       if (t.userId) {
         userMap.set(t.userId, {
           displayName: t.displayName,

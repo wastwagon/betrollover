@@ -23,6 +23,11 @@ import { TipsterService } from '../tipster/tipster.service';
 import { TipstersApiService } from '../predictions/tipsters-api.service';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { clampPlatformCommissionPercent } from '../../common/platform-commission';
+import {
+  CLASSIC_AI_TIPSTER_TYPE,
+  classicAiPublicExcludeSql,
+  isClassicAiHiddenFromPublic,
+} from '../../common/classic-ai-public-visibility.util';
 
 const DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_MIN = 20;
 const DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_ENABLED = true;
@@ -183,8 +188,12 @@ export class SubscriptionsService {
     const baseQb = this.packageRepo
       .createQueryBuilder('p')
       .innerJoin(User, 'u', 'u.id = p.tipsterUserId')
+      .innerJoin(Tipster, 't', 't.userId = p.tipsterUserId')
       .where('p.status = :pkgStatus', { pkgStatus: 'active' })
       .andWhere('u.status = :userStatus', { userStatus: UserStatus.ACTIVE });
+    if (isClassicAiHiddenFromPublic()) {
+      baseQb.andWhere(classicAiPublicExcludeSql('t'), { classicAiTipsterType: CLASSIC_AI_TIPSTER_TYPE });
+    }
 
     const total = await baseQb.clone().getCount();
     const pkgs = await baseQb

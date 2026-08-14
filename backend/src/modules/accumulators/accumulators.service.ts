@@ -41,6 +41,10 @@ import { couponUserFacingRef } from '../../common/coupon-public-label';
 import { isAllowedAfricanBookmakerKey } from '@betrollover/shared-types';
 import { isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
 import { ACCA_GENERATOR_LEGS_MAX } from '../acca-generator/acca-generator.constants';
+import {
+  classicAiMarketplaceTicketExcludeRawSql,
+  isClassicAiHiddenFromPublic,
+} from '../../common/classic-ai-public-visibility.util';
 
 /** Keep pick create aligned with Acca Generator max legs (admin can still lower Acca range). */
 const MAX_SELECTIONS_PER_PICK = ACCA_GENERATOR_LEGS_MAX;
@@ -1001,6 +1005,10 @@ export class AccumulatorsService {
           )`,
           { now },
         );
+
+      if (isClassicAiHiddenFromPublic()) {
+        qb.andWhere(classicAiMarketplaceTicketExcludeRawSql('t'));
+      }
 
       if (options?.priceFilter === 'free') qb.andWhere('pm.price = 0');
       if (options?.priceFilter === 'paid') qb.andWhere('pm.price > 0');

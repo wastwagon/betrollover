@@ -4,6 +4,10 @@ import { In, Repository } from 'typeorm';
 import { TipsterFollow } from './entities/tipster-follow.entity';
 import { Tipster } from './entities/tipster.entity';
 import { NotificationsService } from '../notifications/notifications.service';
+import {
+  isClassicAiHiddenFromPublic,
+  isClassicAiTipsterRow,
+} from '../../common/classic-ai-public-visibility.util';
 
 @Injectable()
 export class TipsterFollowService {
@@ -18,6 +22,9 @@ export class TipsterFollowService {
   async follow(userId: number, username: string): Promise<{ success: boolean }> {
     const tipster = await this.tipsterRepo.findOne({ where: { username } });
     if (!tipster) throw new NotFoundException('Tipster not found');
+    if (isClassicAiHiddenFromPublic() && isClassicAiTipsterRow(tipster)) {
+      throw new NotFoundException('Tipster not found');
+    }
 
     const existing = await this.followRepo.findOne({
       where: { userId, tipsterId: tipster.id },
