@@ -22,11 +22,12 @@ export function isClassicAiTipsterRow(row: {
 }
 
 /**
- * TypeORM QB fragment on tipsters alias (entity props isAi / tipsterType).
+ * TypeORM QB fragment on tipsters alias.
+ * Uses snake_case DB columns so nested SQL functions stay valid under SnakeNamingStrategy.
  * Keeps humans and non-classic AI (e.g. Acca Desk); hides classic 1-fixture AI.
  */
 export function classicAiPublicExcludeSql(tipsterAlias = 't'): string {
-  return `(${tipsterAlias}.isAi = false OR COALESCE(NULLIF(TRIM(${tipsterAlias}.tipsterType), ''), 'ai') <> :classicAiTipsterType)`;
+  return `(${tipsterAlias}.is_ai = false OR COALESCE(NULLIF(TRIM(${tipsterAlias}.tipster_type), ''), 'ai') <> :classicAiTipsterType)`;
 }
 
 /**

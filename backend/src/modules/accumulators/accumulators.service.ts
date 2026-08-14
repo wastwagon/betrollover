@@ -44,6 +44,7 @@ import { ACCA_GENERATOR_LEGS_MAX } from '../acca-generator/acca-generator.consta
 import {
   classicAiMarketplaceTicketExcludeRawSql,
   isClassicAiHiddenFromPublic,
+  isClassicAiTipsterRow,
 } from '../../common/classic-ai-public-visibility.util';
 
 /** Keep pick create aligned with Acca Generator max legs (admin can still lower Acca range). */
@@ -1174,6 +1175,24 @@ export class AccumulatorsService {
         });
         return !hasStartedFixture;
       });
+    }
+
+    // Hide classic 1-fixture AI from marketplace for everyone except explicit admin includeAll.
+    // (Admin filter mode previously skipped the optimized SQL path and leaked these listings.)
+    if (isClassicAiHiddenFromPublic() && !includeAllListings) {
+      const ownerIds = [...new Set(validTickets.map((t) => t.userId).filter(Boolean))];
+      if (ownerIds.length > 0) {
+        const tipsterRows = await this.tipsterRepo.find({
+          where: { userId: In(ownerIds) },
+          select: ['userId', 'isAi', 'tipsterType'],
+        });
+        const classicOwnerIds = new Set(
+          tipsterRows.filter((row) => isClassicAiTipsterRow(row)).map((row) => row.userId!),
+        );
+        if (classicOwnerIds.size > 0) {
+          validTickets = validTickets.filter((t) => !classicOwnerIds.has(t.userId));
+        }
+      }
     }
 
     const total = validTickets.length;
