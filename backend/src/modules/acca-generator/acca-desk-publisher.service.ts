@@ -4,11 +4,18 @@ import { In, Repository } from 'typeorm';
 import {
   ACCA_DESK_DAILY_CRON,
   ACCA_DESK_LEGS,
+  ACCA_DESK_MAX_PER_DAY,
+  ACCA_DESK_TIME_SLOTS,
   ACCA_DESK_TIPSTERS,
   ACCA_DESK_TIPSTER_TYPE,
   isAccaDeskEnabled,
   type AccaDeskTipsterConfig,
 } from '../../config/acca-desk-tipsters.config';
+import {
+  slotForKickoff,
+  type AccaDeskSlotKey,
+  type AccaDeskTimeSlot,
+} from '../../config/acca-desk-slots';
 import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
 import { AccumulatorPick } from '../accumulators/entities/accumulator-pick.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
@@ -27,6 +34,7 @@ export type AccaDeskRunResult = {
     username: string;
     status: 'published' | 'skipped_already' | 'empty_pool' | 'no_user' | 'error';
     ticketId?: number;
+    slotKey?: AccaDeskSlotKey;
     message?: string;
   }[];
 };
@@ -141,6 +149,8 @@ export class AccaDeskPublisherService {
       cron: ACCA_DESK_DAILY_CRON,
       timezone: process.env.PREDICTION_TIMEZONE || 'Africa/Accra',
       legs: ACCA_DESK_LEGS,
+      maxPerDay: ACCA_DESK_MAX_PER_DAY,
+      timeSlots: ACCA_DESK_TIME_SLOTS.map((s) => s.key),
       rosterSize: ACCA_DESK_TIPSTERS.length,
       setupCount: roster.filter((r) => r.setup).length,
       activeCount: roster.filter((r) => r.setup && r.isActive).length,
@@ -159,8 +169,8 @@ export class AccaDeskPublisherService {
   }
 
   /**
-   * Daily Acca Desk pass: one 2-leg free coupon per active bot (idempotent per UTC day).
-   * Fixture exclusivity across Acca Desk bots only (fixed roster order).
+   * Daily Acca Desk pass: up to 3 time-slotted 2-leg coupons per bot (idempotent per UTC day + slot).
+   * All slots generated in this 00:30 run. Fixture exclusivity across Acca Desk bots only.
    */
   async runDaily(opts?: { ensureSetup?: boolean }): Promise<AccaDeskRunResult> {
     if (!isAccaDeskEnabled()) {
@@ -181,6 +191,7 @@ export class AccaDeskPublisherService {
     }
 
     const usedFixtureIds = new Set<number>();
+    await this.seedUsedFixturesFromToday(usedFixtureIds);
     const result: AccaDeskRunResult = {
       enabled: true,
       published: 0,
@@ -191,20 +202,29 @@ export class AccaDeskPublisherService {
       details: [],
     };
 
+    const postedSlotsByUser = new Map<number, Set<AccaDeskSlotKey>>();
+
     for (const config of ACCA_DESK_TIPSTERS) {
-      try {
-        const outcome = await this.publishOne(config, usedFixtureIds);
-        result.details.push(outcome.detail);
-        if (outcome.detail.status === 'published') result.published++;
-        else if (outcome.detail.status === 'skipped_already') result.skippedAlreadyPosted++;
-        else if (outcome.detail.status === 'empty_pool') result.skippedEmptyPool++;
-        else if (outcome.detail.status === 'no_user') result.skippedNoUser++;
-        else result.errors++;
-      } catch (err: any) {
-        result.errors++;
-        const message = err?.message || String(err);
-        this.logger.error(`Acca Desk ${config.username} failed: ${message}`);
-        result.details.push({ username: config.username, status: 'error', message });
+      for (const slot of ACCA_DESK_TIME_SLOTS) {
+        try {
+          const outcome = await this.publishOne(config, slot, usedFixtureIds, postedSlotsByUser);
+          result.details.push(outcome.detail);
+          if (outcome.detail.status === 'published') result.published++;
+          else if (outcome.detail.status === 'skipped_already') result.skippedAlreadyPosted++;
+          else if (outcome.detail.status === 'empty_pool') result.skippedEmptyPool++;
+          else if (outcome.detail.status === 'no_user') result.skippedNoUser++;
+          else result.errors++;
+        } catch (err: any) {
+          result.errors++;
+          const message = err?.message || String(err);
+          this.logger.error(`Acca Desk ${config.username} ${slot.key} failed: ${message}`);
+          result.details.push({
+            username: config.username,
+            status: 'error',
+            slotKey: slot.key,
+            message,
+          });
+        }
       }
     }
 
@@ -216,18 +236,27 @@ export class AccaDeskPublisherService {
 
   private async publishOne(
     config: AccaDeskTipsterConfig,
+    slot: AccaDeskTimeSlot,
     usedFixtureIds: Set<number>,
+    postedSlotsByUser: Map<number, Set<AccaDeskSlotKey>>,
   ): Promise<{ detail: AccaDeskRunResult['details'][number] }> {
     const tipster = await this.tipsterRepo.findOne({
       where: { username: config.username, tipsterType: ACCA_DESK_TIPSTER_TYPE },
     });
     if (!tipster?.userId || !tipster.isActive) {
-      return { detail: { username: config.username, status: 'no_user' } };
+      return { detail: { username: config.username, status: 'no_user', slotKey: slot.key } };
     }
 
-    const already = await this.countCouponsCreatedUtcToday(tipster.userId);
-    if (already >= 1) {
-      return { detail: { username: config.username, status: 'skipped_already' } };
+    const posted = await this.postedSlotsToday(tipster.userId, postedSlotsByUser);
+    if (posted.has(slot.key)) {
+      return {
+        detail: { username: config.username, status: 'skipped_already', slotKey: slot.key },
+      };
+    }
+    if (posted.size >= ACCA_DESK_MAX_PER_DAY) {
+      return {
+        detail: { username: config.username, status: 'skipped_already', slotKey: slot.key },
+      };
     }
 
     const generated = await this.accaGenerator.generateForDesk({
@@ -236,6 +265,7 @@ export class AccaDeskPublisherService {
       legs: ACCA_DESK_LEGS,
       riskLevel: config.riskLevel,
       excludeFixtureIds: usedFixtureIds,
+      slotKey: slot.key,
     });
 
     if (!generated.ok) {
@@ -243,15 +273,15 @@ export class AccaDeskPublisherService {
         detail: {
           username: config.username,
           status: 'empty_pool',
+          slotKey: slot.key,
           message: `candidates=${generated.candidates}`,
         },
       };
     }
 
-    const riskLabel = config.riskLevel.charAt(0).toUpperCase() + config.riskLevel.slice(1);
-    const title = `${config.display_name} · 2-fold @ ${generated.combinedOdds}`.slice(0, 255);
+    const title = `${config.display_name} · ${slot.label} · 2-fold @ ${generated.combinedOdds}`.slice(0, 255);
     const description = (
-      `${config.bio} Generated by Acca Desk (${config.strategy_id}) using Acca Generator odd bands. ` +
+      `${config.bio} Slot: ${slot.label}. Generated by Acca Desk (${config.strategy_id}) using Acca Generator odd bands. ` +
       `Free pick — educational/informational only.`
     ).slice(0, 2000);
 
@@ -264,6 +294,7 @@ export class AccaDeskPublisherService {
     for (const leg of generated.legs) {
       if (leg.fixtureId) usedFixtureIds.add(leg.fixtureId);
     }
+    posted.add(slot.key);
 
     const ticketId = Number(
       (published as { publishedTicketId?: number })?.publishedTicketId ??
@@ -271,16 +302,21 @@ export class AccaDeskPublisherService {
     );
 
     this.logger.log(
-      `Acca Desk published ${config.username} (${riskLabel}) ticket=#${ticketId} odds=${generated.combinedOdds}`,
+      `Acca Desk published ${config.username} ${slot.key} ticket=#${ticketId} odds=${generated.combinedOdds}`,
     );
 
     return {
       detail: {
         username: config.username,
         status: 'published',
+        slotKey: slot.key,
         ticketId: Number.isFinite(ticketId) ? ticketId : undefined,
       },
     };
+  }
+
+  private predictionTimeZone(): string {
+    return process.env.PREDICTION_TIMEZONE || 'Africa/Accra';
   }
 
   private utcDayBounds(): { start: Date; end: Date } {
@@ -291,13 +327,71 @@ export class AccaDeskPublisherService {
     return { start, end };
   }
 
-  private async countCouponsCreatedUtcToday(userId: number): Promise<number> {
+  private async seedUsedFixturesFromToday(usedFixtureIds: Set<number>): Promise<void> {
+    const tipsters = await this.tipsterRepo.find({ where: { tipsterType: ACCA_DESK_TIPSTER_TYPE } });
+    const userIds = tipsters.map((t) => t.userId).filter((id): id is number => id != null);
+    if (!userIds.length) return;
     const { start, end } = this.utcDayBounds();
-    return this.ticketRepo
+    const tickets = await this.ticketRepo
       .createQueryBuilder('t')
+      .select(['t.id'])
+      .where('t.userId IN (:...userIds)', { userIds })
+      .andWhere('t.createdAt >= :start', { start })
+      .andWhere('t.createdAt < :end', { end })
+      .getMany();
+    if (!tickets.length) return;
+    const picks = await this.pickRepo.find({
+      where: { accumulatorId: In(tickets.map((t) => t.id)) },
+      select: ['fixtureId'],
+    });
+    for (const p of picks) {
+      if (p.fixtureId) usedFixtureIds.add(p.fixtureId);
+    }
+  }
+
+  private async postedSlotsToday(
+    userId: number,
+    cache: Map<number, Set<AccaDeskSlotKey>>,
+  ): Promise<Set<AccaDeskSlotKey>> {
+    const cached = cache.get(userId);
+    if (cached) return cached;
+
+    const { start, end } = this.utcDayBounds();
+    const tickets = await this.ticketRepo
+      .createQueryBuilder('t')
+      .select(['t.id', 't.title'])
       .where('t.userId = :userId', { userId })
       .andWhere('t.createdAt >= :start', { start })
       .andWhere('t.createdAt < :end', { end })
-      .getCount();
+      .getMany();
+
+    const slots = new Set<AccaDeskSlotKey>();
+    if (!tickets.length) {
+      cache.set(userId, slots);
+      return slots;
+    }
+
+    const picks = await this.pickRepo.find({
+      where: { accumulatorId: In(tickets.map((t) => t.id)) },
+      select: ['accumulatorId', 'matchDate'],
+    });
+    const earliestByTicket = new Map<number, Date>();
+    for (const p of picks) {
+      if (!p.matchDate) continue;
+      const prev = earliestByTicket.get(p.accumulatorId);
+      if (!prev || p.matchDate < prev) earliestByTicket.set(p.accumulatorId, p.matchDate);
+    }
+
+    const tz = this.predictionTimeZone();
+    for (const t of tickets) {
+      const kickoff = earliestByTicket.get(t.id);
+      const fromKickoff = kickoff ? slotForKickoff(kickoff, tz)?.key : null;
+      const fromTitle = ACCA_DESK_TIME_SLOTS.find((s) => t.title?.includes(`· ${s.label} ·`))?.key;
+      const key = fromKickoff || fromTitle;
+      if (key) slots.add(key);
+    }
+
+    cache.set(userId, slots);
+    return slots;
   }
 }

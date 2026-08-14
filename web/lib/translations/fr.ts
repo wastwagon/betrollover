@@ -413,7 +413,7 @@ const fr: Record<string, string> = {
   'marketplace.filter_acca_desk': 'Acca Desk',
   'marketplace.filter_community': 'Communauté',
   'marketplace.acca_desk_shelf_title': 'Acca Desk',
-  'marketplace.acca_desk_shelf_sub': 'Accas automatisées à 2 sélections des tipsters du desk',
+  'marketplace.acca_desk_shelf_sub': 'Accas automatisées à 2 sélections — matin, après-midi et soir',
   'marketplace.acca_desk_see_all': 'Voir tout Acca Desk',
   'marketplace.booking_codes_shelf_title': 'Codes bookmaker prêts à copier',
   'marketplace.booking_codes_shelf_sub': 'Free et picks déverrouillés avec code bookmaker',

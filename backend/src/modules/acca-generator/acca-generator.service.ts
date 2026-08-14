@@ -17,6 +17,12 @@ import { User } from '../users/entities/user.entity';
 import { AccaGeneratorRun } from './entities/acca-generator-run.entity';
 import { AccaGeneratorEvent } from './entities/acca-generator-event.entity';
 import { ACCA_GENERATOR_LEGS_MAX, ACCA_GENERATOR_LEGS_MIN } from './acca-generator.constants';
+import {
+  ACCA_DESK_MAX_KICKOFF_GAP_MS,
+  pickTimeClusteredPair,
+  slotForKickoff,
+  type AccaDeskSlotKey,
+} from '../../config/acca-desk-slots';
 
 const ACCA_EVENT_TYPES = new Set(['tool_open', 'quota_hit', 'empty_pool']);
 import {
@@ -460,9 +466,13 @@ export class AccaGeneratorService {
    */
   private static readonly MIN_KICKOFF_LEAD_MS = 45 * 60 * 1000;
 
+  private predictionTimeZone(): string {
+    return process.env.PREDICTION_TIMEZONE || 'Africa/Accra';
+  }
+
   /** Same calendar day as AI tipsters (PREDICTION_TIMEZONE, default Africa/Accra = UTC). */
   private todayBounds(): { startOfDay: Date; endOfDay: Date; dateStr: string } {
-    const tz = process.env.PREDICTION_TIMEZONE || 'Africa/Accra';
+    const tz = this.predictionTimeZone();
     let dateStr: string;
     try {
       dateStr = new Intl.DateTimeFormat('en-CA', {
@@ -630,6 +640,8 @@ export class AccaGeneratorService {
     legs: number;
     riskLevel: string;
     excludeFixtureIds?: Iterable<number>;
+    /** Restrict pool to one Acca Desk kick-off window. */
+    slotKey?: AccaDeskSlotKey;
   }) {
     const markets = this.normalizeMarkets(opts.markets);
     const risk = this.resolveRiskFromDto({ markets, legs: opts.legs, riskLevel: opts.riskLevel });
@@ -642,13 +654,18 @@ export class AccaGeneratorService {
       [...(opts.excludeFixtureIds || [])].filter((id) => Number.isFinite(id) && id > 0),
     );
     const allowedOutcomes = outcomeKeysForMarkets(markets);
-    const candidates = await this.buildCandidates({
+    let candidates = await this.buildCandidates({
       allowedOutcomes,
       oddMin: risk.oddMin,
       oddMax: risk.oddMax,
       targetOdd: risk.targetOdd,
       excludeFixtureIds,
     });
+
+    const tz = this.predictionTimeZone();
+    if (opts.slotKey) {
+      candidates = candidates.filter((c) => slotForKickoff(c.matchDate, tz)?.key === opts.slotKey);
+    }
 
     if (candidates.length < legs) {
       await this.recordEvent(opts.userId, 'empty_pool', {
@@ -658,6 +675,7 @@ export class AccaGeneratorService {
         candidates: candidates.length,
         markets,
         excluded: excludeFixtureIds.size,
+        slotKey: opts.slotKey ?? null,
       });
       return {
         ok: false as const,
@@ -668,7 +686,10 @@ export class AccaGeneratorService {
       };
     }
 
-    const selected = this.pickGreedyLegs(candidates, legs);
+    const selected =
+      legs === 2
+        ? pickTimeClusteredPair(candidates, ACCA_DESK_MAX_KICKOFF_GAP_MS, outcomeFamily)
+        : this.pickGreedyLegs(candidates, legs);
     if (selected.length < legs) {
       await this.recordEvent(opts.userId, 'empty_pool', {
         source: 'acca_desk',
@@ -676,6 +697,7 @@ export class AccaGeneratorService {
         legsRequested: legs,
         legsBuilt: selected.length,
         markets,
+        slotKey: opts.slotKey ?? null,
       });
       return {
         ok: false as const,

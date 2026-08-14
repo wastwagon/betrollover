@@ -416,7 +416,7 @@ const en = {
   'marketplace.filter_acca_desk': 'Acca Desk',
   'marketplace.filter_community': 'Community',
   'marketplace.acca_desk_shelf_title': 'Acca Desk',
-  'marketplace.acca_desk_shelf_sub': 'Automated 2-leg accas from the desk tipsters',
+  'marketplace.acca_desk_shelf_sub': 'Automated 2-leg accas from the desk — early, afternoon, and evening',
   'marketplace.acca_desk_see_all': 'See all Acca Desk',
   'marketplace.booking_codes_shelf_title': 'Booking codes ready to copy',
   'marketplace.booking_codes_shelf_sub': 'Revealed free and unlocked picks with bookmaker codes',

@@ -41,6 +41,8 @@ type Overview = {
   cron: string;
   timezone: string;
   legs: number;
+  maxPerDay?: number;
+  timeSlots?: string[];
   rosterSize: number;
   setupCount: number;
   activeCount: number;
@@ -62,7 +64,7 @@ type RunResult = {
   skippedEmptyPool: number;
   skippedNoUser: number;
   errors: number;
-  details: { username: string; status: string; ticketId?: number; message?: string }[];
+  details: { username: string; status: string; ticketId?: number; slotKey?: string; message?: string }[];
 };
 
 function formatWhen(dateStr?: string | null): string {
@@ -210,8 +212,9 @@ export default function AdminAccaDeskPage() {
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Acca Desk</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            15 Acca Generator tipsters (Sure / Safe / Medium × 1X2, DC, BTTS, O2.5, Mix). Each posts one free 2-fold daily.
-            Cron: {overview?.cron || '30 0 * * *'} ({overview?.timezone || 'Africa/Accra'}).
+            15 Acca Generator tipsters (Sure / Safe / Medium × 1X2, DC, BTTS, O2.5, Mix). Each posts up to 3
+            free 2-folds daily (early / afternoon / evening), clustered by kick-off. All generated at cron{' '}
+            {overview?.cron || '30 0 * * *'} ({overview?.timezone || 'Africa/Accra'}).
           </p>
         </div>
 
@@ -411,9 +414,12 @@ export default function AdminAccaDeskPage() {
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Last run details</h2>
                 <div className="space-y-2 max-h-64 overflow-y-auto text-sm">
-                  {lastRun.details.map((d) => (
-                    <div key={d.username} className="flex justify-between gap-3 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <span className="font-medium text-gray-900 dark:text-white">@{d.username}</span>
+                  {lastRun.details.map((d, i) => (
+                    <div key={`${d.username}-${d.slotKey || i}`} className="flex justify-between gap-3 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        @{d.username}
+                        {d.slotKey ? ` · ${d.slotKey}` : ''}
+                      </span>
                       <span className="text-gray-600 dark:text-gray-300">
                         {d.status}
                         {d.ticketId ? ` #${d.ticketId}` : ''}
