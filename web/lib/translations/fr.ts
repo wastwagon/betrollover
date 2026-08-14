@@ -34,7 +34,7 @@ const fr: Record<string, string> = {
   'nav.subscription_marketplace': 'Abonnements VIP',
   'nav.league_tables': 'Classements',
   /** Libellés courts — barre d’onglets mobile */
-  'nav.bottom_picks': 'Pronostics',
+  'nav.bottom_picks': 'Marché',
   'nav.bottom_purchases': 'Achats',
   'nav.bottom_account': 'Compte',
   'nav.bottom_subscribe': 'S’abonner',
@@ -56,8 +56,8 @@ const fr: Record<string, string> = {
   'nav.create_pick': 'Créer un pronostic',
   'nav.create_pick_short': '+Picks',
   'nav.acca_generator': 'Générateur d\'acca',
-  'nav.acca_generator_short': '+Générer',
-  'nav.pick_tab': 'Pronostic',
+  'nav.acca_generator_short': 'Acca',
+  'nav.pick_tab': 'Créer',
 
   // ── Auth ─────────────────────────────────────────────────────────────────
   'auth.login': 'Se Connecter',
@@ -372,6 +372,12 @@ const fr: Record<string, string> = {
   'marketplace.sort_following_only': 'Abonnements Uniquement',
   'marketplace.sort_tipster_rank': 'Classement Tipster',
   'marketplace.clear_filters': 'Effacer les filtres',
+  'marketplace.filter_source': 'Source',
+  'marketplace.filter_acca_desk': 'Acca Desk',
+  'marketplace.filter_community': 'Communauté',
+  'marketplace.acca_desk_shelf_title': 'Acca Desk',
+  'marketplace.acca_desk_shelf_sub': 'Accas automatisées à 2 sélections des tipsters du desk',
+  'marketplace.acca_desk_see_all': 'Voir tout Acca Desk',
   'marketplace.load_more_count': 'Voir plus ({shown} sur {total})',
   'marketplace.sort_latest': 'Plus Récent',
   'marketplace.sort_oldest': 'Plus Ancien',
@@ -392,6 +398,21 @@ const fr: Record<string, string> = {
   'marketplace.trust_callout_body':
     'Lorsque vous achetez un pronostic payant, les fonds restent en escrow jusqu\'au règlement de toutes les sélections. Si le pronostic perd, le montant payé est remboursé automatiquement sur votre portefeuille.',
   'marketplace.login_to_buy': 'Connectez-vous pour acheter',
+
+  // ── Croissance / distribution ─────────────────────────────────────────────
+  'growth.strip_title': 'Alertes, appli et preuve escrow',
+  'growth.strip_sub':
+    'Suivez Acca Desk sur Telegram, installez l\'appli Android, ou lisez comment fonctionnent les remboursements escrow.',
+  'growth.telegram_cta': 'Telegram @{handle}',
+  'growth.play_cta': 'Applis Android',
+  'growth.app_store_cta': 'Applis iOS',
+  'growth.escrow_case_cta': 'Comment marche l\'escrow',
+  'growth.rate_title': 'Vous aimez BetRollover ?',
+  'growth.rate_body':
+    'Vous avez un achat réglé — un gain ou un remboursement escrow. Une note sur le Play Store aide d\'autres acheteurs à nous trouver.',
+  'growth.rate_cta': 'Noter sur Google Play',
+  'growth.rate_later': 'Plus tard',
+  'growth.rate_never': 'Ne plus demander',
 
   // ── League tables & top scorers (dedicated page) ─────────────────────────
   'league_stats.breadcrumb': 'Stats',
@@ -872,6 +893,8 @@ const fr: Record<string, string> = {
   'tipster.archive': 'Archives',
   'tipster.available': '{n} disponibles',
   'tipster.settled': '{n} réglés',
+  'tipster.early_sample': 'Petit échantillon',
+  'tipster.early_sample_hint': 'Moins de {n} pronostics réglés — ROI provisoire',
   'tipster.all_sports': 'Tous les Sports',
   'tipster.no_active_picks_sport': 'Aucun pronostic {sport} actif.',
   'tipster.no_active_predictions': 'Aucun pronostic actif.',

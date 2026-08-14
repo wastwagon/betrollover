@@ -45,6 +45,16 @@ export function getGaMeasurementId(): string | null {
 export const TELEGRAM_ADS_HANDLE = process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE || 'betrollovertips';
 export const TELEGRAM_ADS_URL = `https://t.me/${TELEGRAM_ADS_HANDLE}`;
 
+/** Google Play listing (OceanCyber Android app). Override with NEXT_PUBLIC_PLAY_STORE_URL. */
+export const ANDROID_PACKAGE_NAME =
+  process.env.NEXT_PUBLIC_ANDROID_PACKAGE_NAME?.trim() || 'com.betrollover.app';
+export const PLAY_STORE_URL =
+  process.env.NEXT_PUBLIC_PLAY_STORE_URL?.trim() ||
+  `https://play.google.com/store/apps/details?id=${ANDROID_PACKAGE_NAME}`;
+
+/** Optional App Store URL when the iOS listing is live. Empty = hide App Store CTA. */
+export const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL?.trim() || '';
+
 const SITE_DESCRIPTION_FOOTBALL =
   'Football predictions & escrow-protected picks for a global match audience. Ghana-based tipster marketplace trusted across Africa — Nigeria, Kenya, South Africa & beyond. Verified tipsters, win rate & ROI. Refunded if tips lose. GHS & multi-currency.';
 

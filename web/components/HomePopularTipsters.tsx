@@ -5,6 +5,16 @@ import Link from 'next/link';
 import { TipsterCard, type TipsterCardData } from '@/components/TipsterCard';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
+import { LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
+
+function hasPrimarySample(entry: Record<string, unknown>): boolean {
+  const wins = Number(entry.total_wins ?? entry.monthly_wins ?? 0) || 0;
+  const losses =
+    entry.total_losses != null
+      ? Number(entry.total_losses) || 0
+      : Math.max(0, (Number(entry.total_predictions ?? entry.monthly_predictions ?? 0) || 0) - wins);
+  return wins + losses >= LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING;
+}
 
 function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: number): TipsterCardData {
   const rank = (entry.rank ?? entry.leaderboard_rank ?? index + 1) as number;
@@ -42,15 +52,19 @@ export function HomePopularTipsters({
   initialLeaderboard?: Record<string, unknown>[];
 }) {
   const t = useT();
-  const seeded = initialLeaderboard.map((e, i) => mapLeaderboardToTipsterCard(e, i));
+  const seeded = initialLeaderboard
+    .filter(hasPrimarySample)
+    .map((e, i) => mapLeaderboardToTipsterCard(e, i));
   const [tipsters, setTipsters] = useState<TipsterCardData[]>(seeded);
   const [loading, setLoading] = useState(seeded.length === 0);
 
   useEffect(() => {
-    fetch(getApiUrl() + '/leaderboard?period=all_time&limit=8')
+    fetch(getApiUrl() + '/leaderboard?period=all_time&limit=24')
       .then((r) => (r.ok ? r.json() : { leaderboard: [] }))
       .then((data) => {
-        const entries = (data.leaderboard || []) as Record<string, unknown>[];
+        const entries = ((data.leaderboard || []) as Record<string, unknown>[])
+          .filter(hasPrimarySample)
+          .slice(0, 8);
         setTipsters(entries.map((e, i) => mapLeaderboardToTipsterCard(e, i)));
       })
       .catch(() => setTipsters([]))

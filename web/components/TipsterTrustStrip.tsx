@@ -1,5 +1,6 @@
 'use client';
 
+import { LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
 import { useT } from '@/context/LanguageContext';
 
 export type TipsterReviewSnippet = {
@@ -45,6 +46,8 @@ export function TipsterTrustStrip({
   const t = useT();
   const hasRating = avgRating != null && (reviewCount ?? 0) > 0;
   const snippets = reviews.filter((r) => r.comment?.trim()).slice(0, compact ? 1 : 3);
+  const earlySample =
+    settledCount > 0 && settledCount < LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING;
 
   if (settledCount <= 0 && !hasRating && snippets.length === 0 && !(avgOdds && avgOdds > 0)) {
     return null;
@@ -62,6 +65,16 @@ export function TipsterTrustStrip({
             {t('tipster.stats_update')}
           </span>
         )}
+        {earlySample ? (
+          <span
+            className="inline-flex items-center rounded-md bg-amber-500/15 px-2 py-1 font-semibold text-amber-800 dark:text-amber-300"
+            title={t('tipster.early_sample_hint', {
+              n: String(LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING),
+            })}
+          >
+            {t('tipster.early_sample')}
+          </span>
+        ) : null}
         {avgOdds != null && avgOdds > 0 ? (
           <span className="text-[var(--text-muted)] tabular-nums">
             {t('tipster.avg_odds')} {Number(avgOdds).toFixed(2)}
@@ -79,6 +92,14 @@ export function TipsterTrustStrip({
           </span>
         ) : null}
       </div>
+
+      {!compact && earlySample ? (
+        <p className="mt-1.5 text-[11px] text-amber-800/90 dark:text-amber-300/90 leading-snug">
+          {t('tipster.early_sample_hint', {
+            n: String(LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING),
+          })}
+        </p>
+      ) : null}
 
       {!compact && snippets.length > 0 ? (
         <ul className="mt-3 space-y-2">

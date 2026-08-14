@@ -54,6 +54,14 @@ function leadingRoiFromLeaderboard(data: unknown): number | null {
   return top.roi;
 }
 
+/** Home modules should not lead with low-sample tipsters (secondary leaderboard band). */
+function primaryRankedTipsters(entries: Record<string, unknown>[]): Record<string, unknown>[] {
+  return entries.filter((e) => {
+    const settled = (Number(e.total_wins) || 0) + (Number(e.total_losses) || 0);
+    return settled >= LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING;
+  });
+}
+
 /** Server-safe fetch for homepage trust metrics and teasers. */
 export async function fetchHomePublicData(options?: { revalidate?: number }): Promise<HomePublicData> {
   const api = getApiUrl();
@@ -92,7 +100,9 @@ export async function fetchHomePublicData(options?: { revalidate?: number }): Pr
     const freeTipJson = freeTipRes.ok ? await freeTipRes.json() : null;
     const headlineJson = headlineRes.ok ? await headlineRes.json() : null;
 
-    const topTipsters = Array.isArray(lbJson?.leaderboard) ? lbJson.leaderboard : [];
+    const topTipsters = primaryRankedTipsters(
+      Array.isArray(lbJson?.leaderboard) ? lbJson.leaderboard : [],
+    );
     let marketplaceItems = Array.isArray(marketJson?.items) ? marketJson.items : [];
     let featuredPicks = Array.isArray(featuredJson) ? featuredJson : [];
     let freeTip: Record<string, unknown> | null =

@@ -9,7 +9,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { useT } from '@/context/LanguageContext';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { tipsterRankBadgeClass, tipsterRankBadgeContent } from '@/lib/tipster-rank-ui';
-import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
+import { formatFootballOutcomeLabel, LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { BookingCodeCopyBlock } from '@/components/BookingCodeCopyBlock';
 import { BottomSheet } from '@/components/ios/BottomSheet';
@@ -310,6 +310,18 @@ export function PickCard({
                         {tipster.wonPicks}W / {tipster.lostPicks}L
                       </span>
                     )}
+                    {tipster &&
+                      tipster.wonPicks + tipster.lostPicks > 0 &&
+                      tipster.wonPicks + tipster.lostPicks < LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING && (
+                      <span
+                        className="text-[9px] font-semibold text-amber-700 dark:text-amber-300"
+                        title={t('tipster.early_sample_hint', {
+                          n: String(LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING),
+                        })}
+                      >
+                        {t('tipster.early_sample')}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex-shrink-0 flex items-center gap-1">
@@ -597,6 +609,17 @@ export function PickCard({
                         <span className="text-sm text-[var(--text-muted)]">
                           {tipster.wonPicks}W / {tipster.lostPicks}L
                         </span>
+                        {tipster.wonPicks + tipster.lostPicks > 0 &&
+                          tipster.wonPicks + tipster.lostPicks < LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING && (
+                          <span
+                            className="text-sm font-semibold text-amber-700 dark:text-amber-300"
+                            title={t('tipster.early_sample_hint', {
+                              n: String(LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING),
+                            })}
+                          >
+                            {t('tipster.early_sample')}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

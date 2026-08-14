@@ -807,13 +807,13 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                 <>
                   <Link
                     href="/login"
-                    className="shrink-0 whitespace-nowrap px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                    className="shrink-0 whitespace-nowrap px-1.5 py-2 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors"
                   >
                     {t('nav.login')}
                   </Link>
                   <Link
                     href="/register"
-                    className="shrink-0 whitespace-nowrap px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold bg-[var(--primary)] text-white hover:opacity-90 transition-opacity"
+                    className="shrink-0 whitespace-nowrap px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[var(--primary)] text-white hover:opacity-90 transition-opacity"
                   >
                     {t('nav.register')}
                   </Link>

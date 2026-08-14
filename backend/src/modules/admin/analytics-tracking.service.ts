@@ -21,6 +21,11 @@ export const ANALYTICS_EVENT_TYPES = [
   'language_change',
   'currency_change',
   'account_menu_open',
+  'telegram_cta_clicked',
+  'install_cta_clicked',
+  'rate_app_shown',
+  'rate_app_clicked',
+  'rate_app_dismissed',
 ] as const;
 
 @Injectable()

@@ -39,7 +39,12 @@ export type AnalyticsEventType =
   | 'registration_completed'
   | 'language_change'
   | 'currency_change'
-  | 'account_menu_open';
+  | 'account_menu_open'
+  | 'telegram_cta_clicked'
+  | 'install_cta_clicked'
+  | 'rate_app_shown'
+  | 'rate_app_clicked'
+  | 'rate_app_dismissed';
 
 /**
  * Track a custom event. Sends to /api/analytics/track-event.

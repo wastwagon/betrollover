@@ -36,6 +36,7 @@ interface LeaderboardEntry {
   roi: number;
   total_predictions: number;
   total_wins: number;
+  total_losses?: number;
   monthly_predictions?: number;
   monthly_wins?: number;
   monthly_roi?: number;
@@ -315,6 +316,17 @@ export default function LeaderboardPage() {
               const winRate = Number(entry.win_rate) || 0;
               const rank = entry.rank ?? entry.leaderboard_rank ?? idx + 1;
               const roi = entry.roi ?? 0;
+              const settledCount =
+                (Number(entry.total_wins) || 0) +
+                (entry.total_losses != null
+                  ? Number(entry.total_losses) || 0
+                  : Math.max(0, (Number(entry.total_predictions) || 0) - (Number(entry.total_wins) || 0)));
+              const earlySample =
+                settledCount > 0 &&
+                settledCount <
+                  (period === 'weekly'
+                    ? LEADERBOARD_MIN_SETTLED_WEEKLY
+                    : LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING);
               const avatarSrc = getAvatarUrl(entry.avatar_url, 48);
               const hasVipPackage =
                 isSubscriptionsEnabled() && entry.vip_package_id != null && entry.vip_package_id > 0;
@@ -363,6 +375,20 @@ export default function LeaderboardPage() {
                       <p className="font-semibold text-[var(--text)] group-hover:text-[var(--primary)] transition-colors flex flex-wrap items-center gap-2 min-w-0">
                         <span className="truncate min-w-0 max-w-full">{entry.display_name}</span>
                         {entry.is_ai ? <AiTipsterBadge /> : null}
+                        {earlySample ? (
+                          <span
+                            className="inline-flex items-center rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 dark:text-amber-300"
+                            title={t('tipster.early_sample_hint', {
+                              n: String(
+                                period === 'weekly'
+                                  ? LEADERBOARD_MIN_SETTLED_WEEKLY
+                                  : LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING,
+                              ),
+                            })}
+                          >
+                            {t('tipster.early_sample')}
+                          </span>
+                        ) : null}
                       </p>
                       <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                         <p className="text-xs text-[var(--text-muted)] truncate min-w-0">@{entry.username}</p>

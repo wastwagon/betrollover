@@ -36,7 +36,7 @@ const en = {
   'nav.subscription_marketplace': 'VIP subscriptions',
   'nav.league_tables': 'League tables',
   /** Bottom nav — short labels (mobile tab bar; avoids truncation) */
-  'nav.bottom_picks': 'Picks',
+  'nav.bottom_picks': 'Market',
   /** Dashboard mobile tab bar — short label */
   'nav.bottom_purchases': 'Purchases',
   'nav.bottom_account': 'Account',
@@ -59,8 +59,8 @@ const en = {
   'nav.create_pick': 'Create Pick',
   'nav.create_pick_short': '+Picks',
   'nav.acca_generator': 'Acca Generator',
-  'nav.acca_generator_short': '+Generate',
-  'nav.pick_tab': 'Pick',
+  'nav.acca_generator_short': 'Acca',
+  'nav.pick_tab': 'Create',
 
   // ── Auth ─────────────────────────────────────────────────────────────────
   'auth.login': 'Sign In',
@@ -375,6 +375,12 @@ const en = {
   'marketplace.sort_following_only': 'Following only',
   'marketplace.sort_tipster_rank': 'Tipster rank',
   'marketplace.clear_filters': 'Clear filters',
+  'marketplace.filter_source': 'Source',
+  'marketplace.filter_acca_desk': 'Acca Desk',
+  'marketplace.filter_community': 'Community',
+  'marketplace.acca_desk_shelf_title': 'Acca Desk',
+  'marketplace.acca_desk_shelf_sub': 'Automated 2-leg accas from the desk tipsters',
+  'marketplace.acca_desk_see_all': 'See all Acca Desk',
   'marketplace.load_more_count': 'Load more ({shown} of {total})',
   'marketplace.sort_latest': 'Latest',
   'marketplace.sort_oldest': 'Oldest',
@@ -395,6 +401,20 @@ const en = {
   'marketplace.trust_callout_body':
     'When you buy a paid pick, funds stay in escrow until every selection settles. If the pick loses, the purchase amount is refunded to your wallet automatically.',
   'marketplace.login_to_buy': 'Sign in to purchase',
+
+  // ── Growth / distribution ────────────────────────────────────────────────
+  'growth.strip_title': 'Tips, app & escrow proof',
+  'growth.strip_sub': 'Follow Acca Desk alerts on Telegram, install the Android app, or read how escrow refunds work.',
+  'growth.telegram_cta': 'Telegram @{handle}',
+  'growth.play_cta': 'Get Android app',
+  'growth.app_store_cta': 'Get iOS app',
+  'growth.escrow_case_cta': 'How escrow refunds work',
+  'growth.rate_title': 'Enjoying BetRollover?',
+  'growth.rate_body':
+    'You have a settled purchase — a win or an escrow refund. A quick Play Store rating helps more tip buyers find us.',
+  'growth.rate_cta': 'Rate on Google Play',
+  'growth.rate_later': 'Maybe later',
+  'growth.rate_never': 'Don\'t ask again',
 
   // ── League tables & top scorers (dedicated page) ─────────────────────────
   'league_stats.breadcrumb': 'Stats',
@@ -877,6 +897,8 @@ const en = {
   'tipster.archive': 'Archive',
   'tipster.available': '{n} available',
   'tipster.settled': '{n} settled',
+  'tipster.early_sample': 'Early sample',
+  'tipster.early_sample_hint': 'Under {n} settled picks — treat ROI as provisional',
   'tipster.all_sports': 'All Sports',
   'tipster.no_active_picks_sport': 'No active {sport} picks.',
   'tipster.no_active_predictions': 'No active predictions.',

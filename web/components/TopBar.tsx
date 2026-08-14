@@ -224,11 +224,11 @@ export function TopBar() {
             )}
           </div>
           <p className="md:hidden sr-only">{disclaimerText}</p>
-          <p className="md:hidden text-[11px] font-medium text-white/90 truncate flex-1 min-w-0">
-            {t('topbar.disclaimer_1')}
-          </p>
+          <span className="md:hidden shrink-0 rounded-md bg-white/15 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-white/95">
+            18+
+          </span>
 
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 ml-auto">
             <TopBarSwitchers />
           </div>
         </div>

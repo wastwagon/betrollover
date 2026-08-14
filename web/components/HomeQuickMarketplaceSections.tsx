@@ -7,6 +7,7 @@ import { getApiUrl } from '@/lib/site-config';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { useT } from '@/context/LanguageContext';
+import { LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
 
 interface Pick {
   id?: number;
@@ -56,18 +57,17 @@ function parseMarketplacePayload(data: unknown): MarketplaceCardItem[] {
 
 function leaderboardUsernameSet(data: unknown): Set<string> {
   const raw = (data as { leaderboard?: unknown[] })?.leaderboard;
-  if (!Array.isArray(raw)) {
-    const entries = Array.isArray(data) ? data : [];
-    const names = new Set<string>();
-    for (const row of entries) {
-      const u = (row as { username?: string })?.username?.trim().toLowerCase();
-      if (u) names.add(u);
-    }
-    return names;
-  }
+  const entries = Array.isArray(raw) ? raw : Array.isArray(data) ? data : [];
   const names = new Set<string>();
-  for (const row of raw) {
-    const u = (row as { username?: string })?.username?.trim().toLowerCase();
+  for (const row of entries) {
+    const e = row as Record<string, unknown>;
+    const wins = Number(e.total_wins ?? e.monthly_wins ?? 0) || 0;
+    const losses =
+      e.total_losses != null
+        ? Number(e.total_losses) || 0
+        : Math.max(0, (Number(e.total_predictions ?? e.monthly_predictions ?? 0) || 0) - wins);
+    if (wins + losses < LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING) continue;
+    const u = (e.username as string | undefined)?.trim().toLowerCase();
     if (u) names.add(u);
   }
   return names;

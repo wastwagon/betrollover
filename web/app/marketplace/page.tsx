@@ -16,6 +16,7 @@ import { formatError } from '@/utils/errorMessages';
 import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
+import { GrowthDistributionStrip } from '@/components/GrowthDistributionStrip';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { MarketplaceFilterBar } from '@/components/ios/MarketplaceFilterBar';
 import { getApiUrl } from '@/lib/site-config';
@@ -41,6 +42,12 @@ const VALID_SPORT_KEYS = new Set<string>(
 
 type PriceFilter = 'all' | 'free' | 'paid' | 'sold';
 type SortBy = 'newest' | 'price-low' | 'price-high' | 'tipster-rank' | 'following-only';
+type DeskFilter = 'all' | 'acca_desk' | 'community';
+
+/** Acca Desk usernames are `Acca{Risk}{Market}` (see acca-desk-tipsters.config). */
+function isAccaDeskTipster(tipster?: { username?: string } | null): boolean {
+  return !!tipster?.username?.startsWith('Acca');
+}
 
 interface Pick {
   id: number;
@@ -116,6 +123,7 @@ export default function MarketplacePage() {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
   const [sortBy, setSortBy] = useState<SortBy>('newest');
+  const [deskFilter, setDeskFilter] = useState<DeskFilter>('all');
   const footballOnly = isFootballOnlyDiscovery();
   const [sportFilter, setSportFilter] = useState<string>(footballOnly ? FOOTBALL_SPORT_KEY : '');
   const [tipsterSearch, setTipsterSearch] = useState('');
@@ -208,6 +216,11 @@ export default function MarketplacePage() {
     if (footballOnly) {
       list = list.filter((p) => isDiscoverySportAllowed(p.sport));
     }
+    if (deskFilter === 'acca_desk') {
+      list = list.filter((p) => isAccaDeskTipster(p.tipster));
+    } else if (deskFilter === 'community') {
+      list = list.filter((p) => !isAccaDeskTipster(p.tipster));
+    }
     if (sortBy === 'following-only' && followedTipsterUsernames.size > 0) {
       list = list.filter((p) => p.tipster?.username && followedTipsterUsernames.has(p.tipster.username));
     }
@@ -221,7 +234,17 @@ export default function MarketplacePage() {
       list.sort((a, b) => (a.tipster?.rank ?? 999) - (b.tipster?.rank ?? 999));
     }
     return list;
-  }, [picks, sortBy, followedTipsterUsernames, footballOnly]);
+  }, [picks, sortBy, followedTipsterUsernames, footballOnly, deskFilter]);
+
+  const accaDeskShelfPicks = useMemo(() => {
+    if (deskFilter !== 'all') return [];
+    return filteredAndSortedPicks.filter((p) => isAccaDeskTipster(p.tipster)).slice(0, 8);
+  }, [filteredAndSortedPicks, deskFilter]);
+
+  const mainGridPicks = useMemo(() => {
+    if (deskFilter !== 'all' || accaDeskShelfPicks.length === 0) return filteredAndSortedPicks;
+    return filteredAndSortedPicks.filter((p) => !isAccaDeskTipster(p.tipster));
+  }, [filteredAndSortedPicks, deskFilter, accaDeskShelfPicks]);
 
   const tipsterParam = useMemo(
     () => (debouncedTipster ? `&tipsterSearch=${encodeURIComponent(debouncedTipster)}` : ''),
@@ -468,6 +491,50 @@ export default function MarketplacePage() {
     void purchase(id);
   }, [autoPurchaseHandled, searchParams, loading, purchasing, picks, walletBalance, purchase]);
 
+  const renderMarketplacePickCard = (a: Accumulator) => {
+    const isPurchased = purchasedIds.has(a.id);
+    const canPurchase = a.price === 0 || (walletBalance !== null && walletBalance >= a.price);
+
+    return (
+      <PickCard
+        key={a.id}
+        id={a.id}
+        title={a.title}
+        totalPicks={a.totalPicks}
+        totalOdds={a.totalOdds}
+        price={a.price}
+        purchaseCount={a.purchaseCount}
+        {...getPickCardSocialProps(a, {
+          onCountsChange: (id, counts) =>
+            setPicks((prev) => mergeSocialCountsIntoList(prev, id, counts)),
+          loginRedirectPath: currentLoginRedirectPath('/marketplace'),
+        })}
+        avgRating={a.avgRating}
+        reviewCount={a.reviewCount}
+        status={a.status}
+        result={a.result}
+        picks={a.picks || []}
+        tipster={a.tipster}
+        picksRevealed={a.picksRevealed === true}
+        bookmakerKey={a.bookmakerKey}
+        bookingCode={a.bookingCode}
+        bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}
+        isPurchased={isPurchased}
+        canPurchase={canPurchase}
+        walletBalance={walletBalance}
+        onPurchase={() => purchase(a.id)}
+        purchasing={purchasing === a.id}
+        showUnveil={unveilCouponId === a.id}
+        onUnveilClose={() => setUnveilCouponId(null)}
+        onView={() => recordView(a.id)}
+        createdAt={a.createdAt}
+        isFollowing={a.tipster?.username ? followedTipsterUsernames.has(a.tipster.username) : false}
+        onFollow={a.tipster?.username ? () => handleFollow(a.tipster!.username) : undefined}
+        followLoading={a.tipster?.username ? followLoading === a.tipster.username : false}
+      />
+    );
+  };
+
   return (
     <DashboardShell>
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
@@ -482,7 +549,7 @@ export default function MarketplacePage() {
               tagline={t('marketplace.subtitle')}
             />
             {/* Contextual smart buttons — no hamburger needed */}
-            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto self-stretch sm:self-auto shrink-0 min-w-0">
+            <div className="hidden sm:flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto self-stretch sm:self-auto shrink-0 min-w-0">
               <Link
                 href="/coupons/archive"
                 className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
@@ -496,67 +563,6 @@ export default function MarketplacePage() {
                 <span aria-hidden>🏆</span> {t('nav.leaderboard')}
               </Link>
             </div>
-          </div>
-
-          {/* Full-width ad */}
-          <div className="mb-4">
-            <AdSlot zoneSlug="marketplace-full" fullWidth className="w-full" />
-          </div>
-
-          <div className="relative mb-4 rounded-2xl overflow-hidden border border-[var(--border)] h-28 sm:h-36 md:h-40 bg-[var(--card)]">
-            <Image
-              src="/images/marketing/marketplace-strip.png"
-              alt=""
-              fill
-              fetchPriority="low"
-              className="object-cover object-center"
-              sizes="(max-width: 1280px) 100vw, 1280px"
-            />
-            <div
-              className="absolute inset-0 bg-gradient-to-r from-[var(--bg)]/85 via-[var(--bg)]/20 to-transparent pointer-events-none"
-              aria-hidden
-            />
-          </div>
-
-          <EscrowTrustCallout
-            className="mb-4"
-            title={t('marketplace.trust_callout_title')}
-            body={t('marketplace.trust_callout_body')}
-            linkLabel={t('home.how_it_works')}
-          />
-          <div className="mb-4 flex flex-wrap justify-center gap-2 sm:gap-3 text-sm max-w-3xl mx-auto px-1">
-            <Link
-              href="/tipsters"
-              className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
-            >
-              {t('nav.tipsters')}
-            </Link>
-            <Link
-              href="/how-it-works#faq"
-              className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
-            >
-              {t('home.how_it_works')}
-            </Link>
-            <Link
-              href="/guides/escrow-refunds"
-              className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
-            >
-              {t('subscriptions.marketplace_link_escrow')}
-            </Link>
-            <Link
-              href="/guides/evaluate-tipsters"
-              className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
-            >
-              {t('subscriptions.marketplace_link_eval')}
-            </Link>
-            {isSubscriptionsEnabled() ? (
-              <Link
-                href="/subscriptions/marketplace"
-                className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
-              >
-                {t('nav.subscription_marketplace')}
-              </Link>
-            ) : null}
           </div>
 
           {!footballOnly && sportFilter ? (
@@ -636,6 +642,37 @@ export default function MarketplacePage() {
             </div>
             ) : null}
 
+            <div
+              className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 mb-2 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]"
+              role="group"
+              aria-label={t('marketplace.filter_source')}
+            >
+              {(
+                [
+                  { key: 'all' as const, label: t('common.all') },
+                  { key: 'acca_desk' as const, label: t('marketplace.filter_acca_desk') },
+                  { key: 'community' as const, label: t('marketplace.filter_community') },
+                ]
+              ).map(({ key, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setDeskFilter(key)}
+                  className={`flex-shrink-0 touch-target px-3.5 py-1.5 rounded-full font-medium text-sm transition-colors ${
+                    deskFilter === key
+                      ? 'bg-[var(--primary)] text-white shadow-md'
+                      : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <p className="mb-2 px-0.5 text-[11px] sm:text-xs font-medium text-emerald-800/90 dark:text-emerald-300/90">
+              {t('marketplace.escrow_note')}
+            </p>
+
             {!loading && (
               <MarketplaceFilterBar
                 priceFilter={priceFilter}
@@ -646,11 +683,17 @@ export default function MarketplacePage() {
                 onTipsterSearchChange={setTipsterSearch}
                 debouncedTipster={debouncedTipster}
                 showFollowingSort={followedTipsterUsernames.size > 0}
-                hasActiveFilters={priceFilter !== 'all' || sortBy !== 'newest' || !!debouncedTipster}
+                hasActiveFilters={
+                  priceFilter !== 'all' ||
+                  sortBy !== 'newest' ||
+                  !!debouncedTipster ||
+                  deskFilter !== 'all'
+                }
                 onClear={() => {
                   setPriceFilter('all');
                   setSortBy('newest');
                   setTipsterSearch('');
+                  setDeskFilter('all');
                 }}
                 labels={{
                   filterPrice: t('marketplace.filter_price'),
@@ -714,56 +757,47 @@ export default function MarketplacePage() {
                   setPriceFilter('all');
                   setSortBy('newest');
                   setTipsterSearch('');
+                  setDeskFilter('all');
                 }}
               />
             </div>
           )}
           {!loading && filteredAndSortedPicks.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-8 min-w-0">
-              {filteredAndSortedPicks.map((a) => {
-                const isPurchased = purchasedIds.has(a.id);
-                const canPurchase = a.price === 0 || (walletBalance !== null && walletBalance >= a.price);
-
-                return (
-                  <PickCard
-                    key={a.id}
-                    id={a.id}
-                    title={a.title}
-                    totalPicks={a.totalPicks}
-                    totalOdds={a.totalOdds}
-                    price={a.price}
-                    purchaseCount={a.purchaseCount}
-                    {...getPickCardSocialProps(a, {
-                      onCountsChange: (id, counts) =>
-                        setPicks((prev) => mergeSocialCountsIntoList(prev, id, counts)),
-                      loginRedirectPath: currentLoginRedirectPath('/marketplace'),
-                    })}
-                    avgRating={a.avgRating}
-                    reviewCount={a.reviewCount}
-                    status={a.status}
-                    result={a.result}
-                    picks={a.picks || []}
-                    tipster={a.tipster}
-                    picksRevealed={a.picksRevealed === true}
-                    bookmakerKey={a.bookmakerKey}
-                    bookingCode={a.bookingCode}
-                    bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}
-                    isPurchased={isPurchased}
-                    canPurchase={canPurchase}
-                    walletBalance={walletBalance}
-                    onPurchase={() => purchase(a.id)}
-                    purchasing={purchasing === a.id}
-                    showUnveil={unveilCouponId === a.id}
-                    onUnveilClose={() => setUnveilCouponId(null)}
-                    onView={() => recordView(a.id)}
-                    createdAt={a.createdAt}
-                    isFollowing={a.tipster?.username ? followedTipsterUsernames.has(a.tipster.username) : false}
-                    onFollow={a.tipster?.username ? () => handleFollow(a.tipster!.username) : undefined}
-                    followLoading={a.tipster?.username ? followLoading === a.tipster.username : false}
-                  />
-                );
-              })}
-            </div>
+            <>
+              {accaDeskShelfPicks.length > 0 ? (
+                <section className="mb-6 min-w-0" aria-labelledby="acca-desk-shelf-heading">
+                  <div className="flex items-end justify-between gap-3 mb-3 px-0.5">
+                    <div className="min-w-0">
+                      <h2 id="acca-desk-shelf-heading" className="text-base font-bold text-[var(--text)]">
+                        {t('marketplace.acca_desk_shelf_title')}
+                      </h2>
+                      <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                        {t('marketplace.acca_desk_shelf_sub')}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setDeskFilter('acca_desk')}
+                      className="shrink-0 text-xs font-semibold text-[var(--primary)] hover:underline underline-offset-2"
+                    >
+                      {t('marketplace.acca_desk_see_all')}
+                    </button>
+                  </div>
+                  <div className="flex gap-3 overflow-x-auto overscroll-x-contain pb-2 scrollbar-hide -mx-1 px-1 touch-pan-x sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 sm:overflow-visible sm:pb-0">
+                    {accaDeskShelfPicks.map((a) => (
+                      <div key={a.id} className="w-[min(85vw,320px)] shrink-0 sm:w-auto sm:min-w-0">
+                        {renderMarketplacePickCard(a)}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+              {mainGridPicks.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-8 min-w-0">
+                  {mainGridPicks.map((a) => renderMarketplacePickCard(a))}
+                </div>
+              ) : null}
+            </>
           )}
           {!loading && hasMore && (
             <div className="flex justify-center py-6 px-1">
@@ -777,6 +811,66 @@ export default function MarketplacePage() {
               </button>
             </div>
           )}
+
+          {/* Demoted below inventory — escrow, guides, growth, marketing, ads */}
+          <EscrowTrustCallout
+            className="mb-4 mt-2"
+            title={t('marketplace.trust_callout_title')}
+            body={t('marketplace.trust_callout_body')}
+            linkLabel={t('home.how_it_works')}
+          />
+          <GrowthDistributionStrip compact className="mb-4" />
+          <div className="mb-4 flex flex-wrap justify-center gap-2 sm:gap-3 text-sm max-w-3xl mx-auto px-1">
+            <Link
+              href="/tipsters"
+              className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            >
+              {t('nav.tipsters')}
+            </Link>
+            <Link
+              href="/how-it-works#faq"
+              className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            >
+              {t('home.how_it_works')}
+            </Link>
+            <Link
+              href="/guides/escrow-refunds"
+              className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            >
+              {t('subscriptions.marketplace_link_escrow')}
+            </Link>
+            <Link
+              href="/guides/evaluate-tipsters"
+              className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            >
+              {t('subscriptions.marketplace_link_eval')}
+            </Link>
+            {isSubscriptionsEnabled() ? (
+              <Link
+                href="/subscriptions/marketplace"
+                className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+              >
+                {t('nav.subscription_marketplace')}
+              </Link>
+            ) : null}
+          </div>
+          <div className="relative mb-4 hidden sm:block rounded-2xl overflow-hidden border border-[var(--border)] h-28 sm:h-36 md:h-40 bg-[var(--card)]">
+            <Image
+              src="/images/marketing/marketplace-strip.png"
+              alt=""
+              fill
+              fetchPriority="low"
+              className="object-cover object-center"
+              sizes="(max-width: 1280px) 100vw, 1280px"
+            />
+            <div
+              className="absolute inset-0 bg-gradient-to-r from-[var(--bg)]/85 via-[var(--bg)]/20 to-transparent pointer-events-none"
+              aria-hidden
+            />
+          </div>
+          <div className="mb-4">
+            <AdSlot zoneSlug="marketplace-full" fullWidth className="w-full" />
+          </div>
         </div>
         </PullToRefresh>
       </div>
