@@ -225,7 +225,7 @@ export function TopBar() {
           </div>
           <p className="md:hidden sr-only">{disclaimerText}</p>
           <span className="md:hidden shrink-0 rounded-md bg-white/15 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-white/95">
-            18+
+            {t('topbar.disclaimer_5')}
           </span>
 
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 ml-auto">

@@ -5,16 +5,7 @@ import Link from 'next/link';
 import { TipsterCard, type TipsterCardData } from '@/components/TipsterCard';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
-import { LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
-
-function hasPrimarySample(entry: Record<string, unknown>): boolean {
-  const wins = Number(entry.total_wins ?? entry.monthly_wins ?? 0) || 0;
-  const losses =
-    entry.total_losses != null
-      ? Number(entry.total_losses) || 0
-      : Math.max(0, (Number(entry.total_predictions ?? entry.monthly_predictions ?? 0) || 0) - wins);
-  return wins + losses >= LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING;
-}
+import { hasPrimaryLeaderboardSample } from '@/lib/leaderboard-sample';
 
 function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: number): TipsterCardData {
   const rank = (entry.rank ?? entry.leaderboard_rank ?? index + 1) as number;
@@ -53,7 +44,7 @@ export function HomePopularTipsters({
 }) {
   const t = useT();
   const seeded = initialLeaderboard
-    .filter(hasPrimarySample)
+    .filter(hasPrimaryLeaderboardSample)
     .map((e, i) => mapLeaderboardToTipsterCard(e, i));
   const [tipsters, setTipsters] = useState<TipsterCardData[]>(seeded);
   const [loading, setLoading] = useState(seeded.length === 0);
@@ -63,7 +54,7 @@ export function HomePopularTipsters({
       .then((r) => (r.ok ? r.json() : { leaderboard: [] }))
       .then((data) => {
         const entries = ((data.leaderboard || []) as Record<string, unknown>[])
-          .filter(hasPrimarySample)
+          .filter(hasPrimaryLeaderboardSample)
           .slice(0, 8);
         setTipsters(entries.map((e, i) => mapLeaderboardToTipsterCard(e, i)));
       })

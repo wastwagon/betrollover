@@ -246,7 +246,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
     }
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     syncAuth();
   }, [pathname, syncAuth]);
 
@@ -424,7 +424,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               {/* Home */}
               <NavBtn href="/" label={t('header.home')} />
 
-              <NavBtn href="/marketplace" label={t('nav.picks')} />
+              <NavBtn href="/marketplace" label={t('nav.marketplace')} />
 
               {/* Tipsters ▾ */}
               <div className="relative">
@@ -815,7 +815,8 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                     href="/register"
                     className="shrink-0 whitespace-nowrap px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[var(--primary)] text-white hover:opacity-90 transition-opacity"
                   >
-                    {t('nav.register')}
+                    <span className="sm:hidden">{t('nav.register_short')}</span>
+                    <span className="hidden sm:inline">{t('nav.register')}</span>
                   </Link>
                 </>
               )}

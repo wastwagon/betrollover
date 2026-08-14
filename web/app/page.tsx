@@ -20,7 +20,6 @@ import { HomeMarketingCollapse } from '@/components/HomeMarketingCollapse';
 import { FeaturedPicks } from '@/components/FeaturedPicks';
 import { HomeFreeTipOfTheDay } from '@/components/HomeFreeTipOfTheDay';
 import { HomeQuickMarketplaceSections } from '@/components/HomeQuickMarketplaceSections';
-import { GrowthDistributionStrip } from '@/components/GrowthDistributionStrip';
 import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_DEFAULT_TITLE, getAlternates } from '@/lib/site-config';
 import { fetchSellingThresholds } from '@/lib/selling-thresholds';
@@ -76,10 +75,6 @@ export default async function HomePage() {
           <AdSlot zoneSlug="between-sections" fullWidth className="w-full" />
         </div>
         <HomeQuickMarketplaceSections initialMarketItems={homeData.marketplaceItems} initialLeaderboard={homeData.topTipsters} />
-
-        <div className="section-ux-rail-4xl w-full min-w-0 py-6 sm:py-8 px-4 sm:px-6">
-          <GrowthDistributionStrip />
-        </div>
 
         <HomeMarketingCollapse summary={`${t('home.how_it_works')} · ${t('home.features_title')}`}>
         {/* How It Works — collapsed by default so tipsters/picks stay first */}

@@ -7,7 +7,7 @@ import { getApiUrl } from '@/lib/site-config';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { useT } from '@/context/LanguageContext';
-import { LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
+import { hasPrimaryLeaderboardSample } from '@/lib/leaderboard-sample';
 
 interface Pick {
   id?: number;
@@ -61,12 +61,7 @@ function leaderboardUsernameSet(data: unknown): Set<string> {
   const names = new Set<string>();
   for (const row of entries) {
     const e = row as Record<string, unknown>;
-    const wins = Number(e.total_wins ?? e.monthly_wins ?? 0) || 0;
-    const losses =
-      e.total_losses != null
-        ? Number(e.total_losses) || 0
-        : Math.max(0, (Number(e.total_predictions ?? e.monthly_predictions ?? 0) || 0) - wins);
-    if (wins + losses < LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING) continue;
+    if (!hasPrimaryLeaderboardSample(e)) continue;
     const u = (e.username as string | undefined)?.trim().toLowerCase();
     if (u) names.add(u);
   }

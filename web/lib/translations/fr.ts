@@ -19,6 +19,7 @@ const fr: Record<string, string> = {
   'nav.volleyball': 'Volleyball',
   'nav.american_football': 'Football Américain',
   'nav.tipsters': 'Tipsters',
+  'nav.tipsters_short': 'Tips',
   'nav.top_tipsters': 'Meilleurs Tipsters',
   'nav.leaderboard': 'Classement',
   'nav.discover': 'Découvrir',
@@ -45,6 +46,7 @@ const fr: Record<string, string> = {
   'nav.subscriptions': 'Abonnements',
   'nav.login': 'Se Connecter',
   'nav.register': 'Commencer Gratuitement',
+  'nav.register_short': 'S’inscrire',
   'nav.logout': 'Se Déconnecter',
   'nav.wallet': 'Portefeuille',
   'nav.my_picks': 'Mes Sélections',
@@ -378,6 +380,9 @@ const fr: Record<string, string> = {
   'marketplace.acca_desk_shelf_title': 'Acca Desk',
   'marketplace.acca_desk_shelf_sub': 'Accas automatisées à 2 sélections des tipsters du desk',
   'marketplace.acca_desk_see_all': 'Voir tout Acca Desk',
+  'marketplace.community_empty_title': 'Aucun pronostic communauté pour le moment',
+  'marketplace.community_empty_sub':
+    'Acca Desk est disponible ci-dessus — voyez tout le desk ou revenez pour les tipsters humains.',
   'marketplace.load_more_count': 'Voir plus ({shown} sur {total})',
   'marketplace.sort_latest': 'Plus Récent',
   'marketplace.sort_oldest': 'Plus Ancien',
@@ -1359,6 +1364,9 @@ const fr: Record<string, string> = {
   // ── SEO metadata (titles & descriptions for layout files) ────────────────
   'seo.marketplace_title': 'Pronostics Football | Picks Protégés par Escrow',
   'seo.marketplace_desc': 'Achetez des pronostics football gratuits et premium de tipsters vérifiés. Picks protégés par escrow — remboursés en cas de perte. Taux de victoire & ROI transparents. Basée au Ghana, forte en Afrique et mondiale.',
+  'seo.marketplace_title_multisport': 'Marché multi-sports | Pronostics gratuits et premium',
+  'seo.marketplace_desc_multisport':
+    'Parcourez des pronostics de tipsters vérifiés sur tous les sports majeurs — football, basketball, tennis, MMA, rugby et plus. Comparez taux de victoire et ROI. Pronostics gratuits et premium ; remboursés en cas de perte.',
   'seo.tipsters_title': 'Tipsters Football Vérifiés | Pronostics, ROI & Réussite',
   'seo.tipsters_desc': 'Suivez des tipsters football vérifiés classés par taux de victoire et ROI. Pronostics protégés par escrow pour un public mondial — fort au Ghana, Nigeria, Kenya, Afrique du Sud et au-delà.',
   'seo.leaderboard_title': 'Classement Pronostics Football | Meilleurs Tipsters par ROI',

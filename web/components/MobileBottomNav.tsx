@@ -62,7 +62,7 @@ function buildNavItems(): NavItem[] {
   return [
     { id: 'home', href: '/', labelKey: 'header.home' },
     { id: 'marketplace', href: '/marketplace', labelKey: 'nav.bottom_picks' },
-    { id: 'tipsters', href: '/tipsters', labelKey: 'nav.tipsters' },
+    { id: 'tipsters', href: '/tipsters', labelKey: 'nav.tipsters_short' },
     { id: 'create', href: '/create-pick', labelKey: 'nav.pick_tab', primary: true },
     { id: 'acca', href: '/acca-generator', labelKey: 'nav.acca_generator_short' },
   ];

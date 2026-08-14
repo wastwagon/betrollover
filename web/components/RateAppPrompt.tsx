@@ -9,23 +9,41 @@ import { trackEvent } from '@/lib/analytics';
 import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 
 const STORAGE_KEY = 'br_rate_app_prompt_v1';
+const SNOOZE_MS = 1000 * 60 * 60 * 24 * 21; // 21 days
 const HIDE_PATH_PREFIXES = ['/admin', '/login', '/register', '/fr/admin', '/fr/login', '/fr/register'];
 
-type PromptState = 'pending' | 'never' | 'done';
+type StoredPrompt =
+  | { status: 'pending' }
+  | { status: 'never' }
+  | { status: 'done' }
+  | { status: 'snoozed'; until: number };
 
-function readState(): PromptState {
+function readStored(): StoredPrompt {
   try {
-    const v = localStorage.getItem(STORAGE_KEY);
-    if (v === 'never' || v === 'done') return v;
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { status: 'pending' };
+    if (raw === 'never') return { status: 'never' };
+    if (raw === 'done') return { status: 'done' };
+    if (raw === 'pending') return { status: 'pending' };
+    const parsed = JSON.parse(raw) as StoredPrompt;
+    if (parsed?.status === 'snoozed' && typeof parsed.until === 'number') {
+      if (Date.now() >= parsed.until) return { status: 'pending' };
+      return parsed;
+    }
+    if (parsed?.status === 'never' || parsed?.status === 'done' || parsed?.status === 'pending') {
+      return parsed;
+    }
   } catch {
     /* ignore */
   }
-  return 'pending';
+  return { status: 'pending' };
 }
 
-function writeState(v: PromptState) {
+function writeStored(v: StoredPrompt) {
   try {
-    localStorage.setItem(STORAGE_KEY, v);
+    if (v.status === 'pending') localStorage.removeItem(STORAGE_KEY);
+    else if (v.status === 'never' || v.status === 'done') localStorage.setItem(STORAGE_KEY, v.status);
+    else localStorage.setItem(STORAGE_KEY, JSON.stringify(v));
   } catch {
     /* ignore */
   }
@@ -37,7 +55,7 @@ function shouldHide(pathname: string): boolean {
 
 /**
  * Ask for a Play Store rating after the user has experienced a settled purchase
- * (win or escrow refund / loss) — once per browser unless dismissed forever.
+ * (win or escrow refund / loss). "Maybe later" snoozes; "Don't ask again" is permanent.
  */
 export function RateAppPrompt() {
   const t = useT();
@@ -47,7 +65,7 @@ export function RateAppPrompt() {
 
   useEffect(() => {
     if (shouldHide(pathname)) return;
-    if (readState() !== 'pending') return;
+    if (readStored().status !== 'pending') return;
 
     let cancelled = false;
     const run = async () => {
@@ -82,7 +100,7 @@ export function RateAppPrompt() {
   }, [pathname]);
 
   useEffect(() => {
-    if (!eligible || shouldHide(pathname) || readState() !== 'pending') return;
+    if (!eligible || shouldHide(pathname) || readStored().status !== 'pending') return;
     const timer = window.setTimeout(() => {
       setOpen(true);
       const token = localStorage.getItem('token') || undefined;
@@ -93,26 +111,36 @@ export function RateAppPrompt() {
 
   if (shouldHide(pathname)) return null;
 
-  const dismiss = (forever: boolean) => {
+  const closeSheet = () => setOpen(false);
+
+  const snooze = () => {
     const token = localStorage.getItem('token') || undefined;
-    writeState(forever ? 'never' : 'done');
-    trackEvent('rate_app_dismissed', { forever }, token);
-    setOpen(false);
+    writeStored({ status: 'snoozed', until: Date.now() + SNOOZE_MS });
+    trackEvent('rate_app_dismissed', { forever: false, snoozed: true }, token);
+    closeSheet();
+  };
+
+  const neverAsk = () => {
+    const token = localStorage.getItem('token') || undefined;
+    writeStored({ status: 'never' });
+    trackEvent('rate_app_dismissed', { forever: true }, token);
+    closeSheet();
   };
 
   const rate = () => {
     const token = localStorage.getItem('token') || undefined;
-    writeState('done');
+    writeStored({ status: 'done' });
     trackEvent('rate_app_clicked', { store: 'play' }, token);
-    setOpen(false);
+    closeSheet();
     window.open(PLAY_STORE_URL, '_blank', 'noopener,noreferrer');
   };
 
   return (
     <BottomSheet
       open={open}
-      onClose={() => dismiss(false)}
+      onClose={snooze}
       title={t('growth.rate_title')}
+      doneLabel={t('common.close')}
       maxHeightClass="max-h-[min(70dvh,420px)]"
     >
       <div className="px-4 pb-5 pt-1 space-y-4">
@@ -127,14 +155,14 @@ export function RateAppPrompt() {
           </button>
           <button
             type="button"
-            onClick={() => dismiss(false)}
+            onClick={snooze}
             className="touch-target w-full rounded-xl border border-[var(--border)] px-4 py-3 text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
           >
             {t('growth.rate_later')}
           </button>
           <button
             type="button"
-            onClick={() => dismiss(true)}
+            onClick={neverAsk}
             className="touch-target w-full px-4 py-2 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
           >
             {t('growth.rate_never')}

@@ -607,7 +607,7 @@ export default function MarketplacePage() {
           ) : null}
 
           {/* Sticky discovery chrome — sports + filters stay visible while scrolling */}
-          <div className="sticky z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 py-2 mb-4 bg-[var(--bg)]/95 backdrop-blur-md border-b border-[var(--separator)] top-[calc(env(safe-area-inset-top,0px)+2.75rem+3.5rem)] md:top-[calc(2.75rem+4rem)] lg:top-16">
+          <div className="sticky z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 py-2 mb-4 bg-[var(--bg)]/95 backdrop-blur-md border-b border-[var(--separator)] top-[calc(env(safe-area-inset-top,0px)+2.75rem+4.5rem)] md:top-[7rem] lg:top-[4.5rem]">
             {!footballOnly ? (
             <div className="w-full min-w-0 overflow-hidden mb-2">
               <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
@@ -693,6 +693,7 @@ export default function MarketplacePage() {
                   setPriceFilter('all');
                   setSortBy('newest');
                   setTipsterSearch('');
+                  setDebouncedTipster('');
                   setDeskFilter('all');
                 }}
                 labels={{
@@ -757,6 +758,7 @@ export default function MarketplacePage() {
                   setPriceFilter('all');
                   setSortBy('newest');
                   setTipsterSearch('');
+                  setDebouncedTipster('');
                   setDeskFilter('all');
                 }}
               />
@@ -795,6 +797,15 @@ export default function MarketplacePage() {
               {mainGridPicks.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-8 min-w-0">
                   {mainGridPicks.map((a) => renderMarketplacePickCard(a))}
+                </div>
+              ) : accaDeskShelfPicks.length > 0 ? (
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 mb-8">
+                  <EmptyState
+                    title={t('marketplace.community_empty_title')}
+                    description={t('marketplace.community_empty_sub')}
+                    actionLabel={t('marketplace.acca_desk_see_all')}
+                    onActionClick={() => setDeskFilter('acca_desk')}
+                  />
                 </div>
               ) : null}
             </>

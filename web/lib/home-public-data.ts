@@ -1,5 +1,5 @@
 import { getApiUrl } from '@/lib/site-config';
-import { LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
+import { hasPrimaryLeaderboardSample } from '@/lib/leaderboard-sample';
 import {
   FOOTBALL_SPORT_KEY,
   isDiscoverySportAllowed,
@@ -45,10 +45,8 @@ function parseStats(data: unknown): HomePublicStats | null {
 function leadingRoiFromLeaderboard(data: unknown): number | null {
   const entries = (data as { leaderboard?: unknown[] })?.leaderboard;
   if (!Array.isArray(entries)) return null;
-  const settled = (e: Record<string, unknown>) =>
-    (Number(e.total_wins) || 0) + (Number(e.total_losses) || 0);
-  const top = entries.find(
-    (e) => settled(e as Record<string, unknown>) >= LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING,
+  const top = entries.find((e) =>
+    hasPrimaryLeaderboardSample(e as Record<string, unknown>),
   ) as Record<string, unknown> | undefined;
   if (!top || typeof top.roi !== 'number') return null;
   return top.roi;
@@ -56,10 +54,7 @@ function leadingRoiFromLeaderboard(data: unknown): number | null {
 
 /** Home modules should not lead with low-sample tipsters (secondary leaderboard band). */
 function primaryRankedTipsters(entries: Record<string, unknown>[]): Record<string, unknown>[] {
-  return entries.filter((e) => {
-    const settled = (Number(e.total_wins) || 0) + (Number(e.total_losses) || 0);
-    return settled >= LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING;
-  });
+  return entries.filter((e) => hasPrimaryLeaderboardSample(e));
 }
 
 /** Server-safe fetch for homepage trust metrics and teasers. */
