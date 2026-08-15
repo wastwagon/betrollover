@@ -9,7 +9,6 @@ import { TopBar } from '@/components/TopBar';
 import { SkipToMainContent } from '@/components/SkipToMainContent';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { RateAppPrompt } from '@/components/RateAppPrompt';
-import { DiscoveryPrefsNudge } from '@/components/DiscoveryPrefsNudge';
 import { AnalyticsBeacon } from '@/components/AnalyticsBeacon';
 import { GoogleTagManagerNoScript } from '@/components/GoogleTagManagerNoScript';
 import { ThirdPartyTags } from '@/components/ThirdPartyTags';
@@ -153,7 +152,6 @@ export default async function RootLayout({
                 </div>
                 <MobileBottomNav />
                 <RateAppPrompt />
-                <DiscoveryPrefsNudge />
               </SlipCartProvider>
             </CurrencyProvider>
           </LanguageProvider>

@@ -32,7 +32,6 @@ import {
 } from '@/lib/football-only-discovery';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import { FollowPushNudge } from '@/components/FollowPushNudge';
-import { readDiscoveryDeskPref } from '@/components/DiscoveryPrefsNudge';
 import { MarketplaceSavedFiltersBar } from '@/components/MarketplaceSavedFiltersBar';
 import { MarketplaceBookingCodesShelf } from '@/components/MarketplaceBookingCodesShelf';
 import type { MarketplaceSavedFilter } from '@/lib/marketplace-saved-filters';
@@ -48,12 +47,6 @@ const VALID_SPORT_KEYS = new Set<string>(
 
 type PriceFilter = 'all' | 'free' | 'paid' | 'sold';
 type SortBy = 'newest' | 'price-low' | 'price-high' | 'tipster-rank' | 'following-only' | 'relevance';
-type DeskFilter = 'all' | 'acca_desk' | 'community';
-
-/** Acca Desk usernames are `Acca{Risk}{Market}` (see acca-desk-tipsters.config). */
-function isAccaDeskTipster(tipster?: { username?: string } | null): boolean {
-  return !!tipster?.username?.startsWith('Acca');
-}
 
 interface Pick {
   id: number;
@@ -131,7 +124,6 @@ export default function MarketplacePage() {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
   const [sortBy, setSortBy] = useState<SortBy>('newest');
-  const [deskFilter, setDeskFilter] = useState<DeskFilter>('all');
   const footballOnly = isFootballOnlyDiscovery();
   const [sportFilter, setSportFilter] = useState<string>(footballOnly ? FOOTBALL_SPORT_KEY : '');
   const [tipsterSearch, setTipsterSearch] = useState('');
@@ -145,7 +137,6 @@ export default function MarketplacePage() {
   const [followPushTrigger, setFollowPushTrigger] = useState(0);
   const [followPushName, setFollowPushName] = useState<string | null>(null);
   const [autoPurchaseHandled, setAutoPurchaseHandled] = useState(false);
-  const discoveryPrefApplied = useRef(false);
   const relevanceDefaultApplied = useRef(false);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
 
@@ -164,15 +155,6 @@ export default function MarketplacePage() {
     const pf = searchParams.get('priceFilter');
     if (pf === 'free' || pf === 'paid' || pf === 'sold') setPriceFilter(pf);
     else if (pf === 'all') setPriceFilter('all');
-    const desk = searchParams.get('desk');
-    if (desk === 'acca_desk' || desk === 'community' || desk === 'all') {
-      setDeskFilter(desk);
-      discoveryPrefApplied.current = true;
-    } else if (!discoveryPrefApplied.current) {
-      const pref = readDiscoveryDeskPref();
-      if (pref) setDeskFilter(pref);
-      discoveryPrefApplied.current = true;
-    }
     const sort = searchParams.get('sort');
     if (
       sort === 'newest' ||
@@ -193,14 +175,13 @@ export default function MarketplacePage() {
     if (sportFilter) p.set('sport', sportFilter);
     if (debouncedTipster) p.set('tipster', debouncedTipster);
     if (priceFilter !== 'all') p.set('priceFilter', priceFilter);
-    if (deskFilter !== 'all') p.set('desk', deskFilter);
     // Always persist sort (incl. newest) so auto “For you” can’t overwrite an explicit newest choice.
     p.set('sort', sortBy);
     const qs = p.toString();
     const next = qs ? `/marketplace?${qs}` : '/marketplace';
     const cur = `${window.location.pathname}${window.location.search}`;
     if (cur !== next) router.replace(next, { scroll: false });
-  }, [sportFilter, debouncedTipster, priceFilter, deskFilter, sortBy, router]);
+  }, [sportFilter, debouncedTipster, priceFilter, sortBy, router]);
 
   const handleFollow = async (username: string) => {
     const token = localStorage.getItem('token');
@@ -255,11 +236,6 @@ export default function MarketplacePage() {
     if (footballOnly) {
       list = list.filter((p) => isDiscoverySportAllowed(p.sport));
     }
-    if (deskFilter === 'acca_desk') {
-      list = list.filter((p) => isAccaDeskTipster(p.tipster));
-    } else if (deskFilter === 'community') {
-      list = list.filter((p) => !isAccaDeskTipster(p.tipster));
-    }
     if (sortBy === 'following-only' && followedTipsterUsernames.size > 0) {
       list = list.filter((p) => p.tipster?.username && followedTipsterUsernames.has(p.tipster.username));
     }
@@ -281,23 +257,12 @@ export default function MarketplacePage() {
         s += Math.min(20, Number(p.purchaseCount) || 0);
         const ageH = (Date.now() - new Date(p.createdAt || 0).getTime()) / 3_600_000;
         s += Math.max(0, 15 - ageH);
-        if (isAccaDeskTipster(p.tipster)) s += 5;
         return s;
       };
       list.sort((a, b) => score(b) - score(a));
     }
     return list;
-  }, [picks, sortBy, followedTipsterUsernames, footballOnly, deskFilter]);
-
-  const accaDeskShelfPicks = useMemo(() => {
-    if (deskFilter !== 'all') return [];
-    return filteredAndSortedPicks.filter((p) => isAccaDeskTipster(p.tipster)).slice(0, 8);
-  }, [filteredAndSortedPicks, deskFilter]);
-
-  const mainGridPicks = useMemo(() => {
-    if (deskFilter !== 'all' || accaDeskShelfPicks.length === 0) return filteredAndSortedPicks;
-    return filteredAndSortedPicks.filter((p) => !isAccaDeskTipster(p.tipster));
-  }, [filteredAndSortedPicks, deskFilter, accaDeskShelfPicks]);
+  }, [picks, sortBy, followedTipsterUsernames, footballOnly]);
 
   const bookingCodeShelfItems = useMemo(() => {
     return filteredAndSortedPicks
@@ -694,33 +659,13 @@ export default function MarketplacePage() {
 
           {/* Sticky discovery chrome — one compact rail so picks stay the visual hero */}
           <div className="sticky-below-chrome -mx-4 px-4 sm:-mx-6 sm:px-6 py-2 mb-4 bg-[var(--bg)]/95 backdrop-blur-md border-b border-[var(--separator)]">
+            {!footballOnly ? (
             <div
               className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 mb-2 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]"
               role="group"
-              aria-label={t('marketplace.filter_source')}
+              aria-label={t('marketplace.filter_all_sports')}
             >
               {(
-                [
-                  { key: 'all' as const, label: t('common.all') },
-                  { key: 'acca_desk' as const, label: t('marketplace.filter_acca_desk') },
-                  { key: 'community' as const, label: t('marketplace.filter_community') },
-                ]
-              ).map(({ key, label }) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setDeskFilter(key)}
-                  className={`flex-shrink-0 touch-target px-3.5 py-1.5 rounded-full font-medium text-sm transition-colors ${
-                    deskFilter === key
-                      ? 'bg-[var(--primary)] text-white'
-                      : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-              {!footballOnly
-                ? (
                     [
                       { key: '', label: t('marketplace.filter_all_sports') },
                       { key: 'football', label: t('nav.football') },
@@ -746,9 +691,9 @@ export default function MarketplacePage() {
                     >
                       {label}
                     </button>
-                  ))
-                : null}
+                  ))}
             </div>
+            ) : null}
 
             <p className="mb-2 px-0.5 text-[11px] sm:text-xs text-[var(--text-tertiary)] leading-snug">
               {t('marketplace.escrow_note')}
@@ -761,18 +706,16 @@ export default function MarketplacePage() {
                   priceFilter !== 'all' ||
                   sortBy !== 'newest' ||
                   !!debouncedTipster ||
-                  deskFilter !== 'all' ||
                   (!footballOnly && !!sportFilter)
                 }
                 current={{
-                  desk: deskFilter,
+                  desk: 'all',
                   priceFilter,
                   sortBy,
                   tipsterSearch: debouncedTipster,
                   sport: footballOnly ? FOOTBALL_SPORT_KEY : sportFilter,
                 }}
                 onApply={(f: MarketplaceSavedFilter) => {
-                  setDeskFilter(f.desk);
                   setPriceFilter(f.priceFilter);
                   setSortBy(f.sortBy);
                   setTipsterSearch(f.tipsterSearch);
@@ -792,15 +735,13 @@ export default function MarketplacePage() {
                 hasActiveFilters={
                   priceFilter !== 'all' ||
                   sortBy !== 'newest' ||
-                  !!debouncedTipster ||
-                  deskFilter !== 'all'
+                  !!debouncedTipster
                 }
                 onClear={() => {
                   setPriceFilter('all');
                   setSortBy('newest');
                   setTipsterSearch('');
                   setDebouncedTipster('');
-                  setDeskFilter('all');
                 }}
                 labels={{
                   filterPrice: t('marketplace.filter_price'),
@@ -867,47 +808,16 @@ export default function MarketplacePage() {
                   setSortBy('newest');
                   setTipsterSearch('');
                   setDebouncedTipster('');
-                  setDeskFilter('all');
                 }}
               />
             </div>
           )}
           {!loading && filteredAndSortedPicks.length > 0 && (
             <>
-              {accaDeskShelfPicks.length > 0 ? (
-                <section className="mb-6 min-w-0" aria-labelledby="acca-desk-shelf-heading">
-                  <div className="mb-3 px-0.5">
-                    <h2 id="acca-desk-shelf-heading" className="text-base font-bold text-[var(--text)]">
-                      {t('marketplace.acca_desk_shelf_title')}
-                    </h2>
-                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                      {t('marketplace.acca_desk_shelf_sub')}
-                    </p>
-                  </div>
-                  <div className="flex gap-3 overflow-x-auto overscroll-x-contain pb-2 scrollbar-hide -mx-1 px-1 touch-pan-x sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 sm:overflow-visible sm:pb-0">
-                    {accaDeskShelfPicks.map((a) => (
-                      <div key={a.id} className="w-[min(85vw,320px)] shrink-0 sm:w-auto sm:min-w-0">
-                        {renderMarketplacePickCard(a)}
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              ) : null}
               <MarketplaceBookingCodesShelf items={bookingCodeShelfItems} />
-              {mainGridPicks.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-8 min-w-0">
-                  {mainGridPicks.map((a) => renderMarketplacePickCard(a))}
-                </div>
-              ) : accaDeskShelfPicks.length > 0 ? (
-                <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 mb-8">
-                  <EmptyState
-                    title={t('marketplace.community_empty_title')}
-                    description={t('marketplace.community_empty_sub')}
-                    actionLabel={t('marketplace.acca_desk_see_all')}
-                    onActionClick={() => setDeskFilter('acca_desk')}
-                  />
-                </div>
-              ) : null}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-8 min-w-0">
+                {filteredAndSortedPicks.map((a) => renderMarketplacePickCard(a))}
+              </div>
             </>
           )}
           {!loading && hasMore && (

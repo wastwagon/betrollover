@@ -360,14 +360,6 @@ const en = {
   'home.following_shelf_empty_follows': 'Follow tipsters to see their latest marketplace picks here.',
   'home.following_shelf_find_tipsters': 'Find tipsters',
 
-  // ── Discovery prefs ──────────────────────────────────────────────────────
-  'discovery_prefs.title': 'What do you want to browse first?',
-  'discovery_prefs.body': 'We’ll open the marketplace on your preferred source. Change anytime with the filters.',
-  'discovery_prefs.hint_acca': 'Automated 2-leg accas from the desk',
-  'discovery_prefs.hint_community': 'Human tipsters only',
-  'discovery_prefs.hint_all': 'Acca Desk and community together',
-  'discovery_prefs.skip': 'Keep showing everything',
-
   // ── Seller unlock checklist ──────────────────────────────────────────────
   'seller_checklist.title_ready': 'You’re cleared for paid picks',
   'seller_checklist.title_build': 'Path to paid marketplace picks',
@@ -412,16 +404,8 @@ const en = {
   'marketplace.saved_filters_save': 'Save filters',
   'marketplace.saved_filters_prompt': 'Name this filter set',
   'marketplace.saved_filters_delete': 'Delete saved filter',
-  'marketplace.filter_source': 'Source',
-  'marketplace.filter_acca_desk': 'Acca Desk',
-  'marketplace.filter_community': 'Community',
-  'marketplace.acca_desk_shelf_title': 'Acca Desk',
-  'marketplace.acca_desk_shelf_sub': 'Automated 2-leg accas from the desk — early, afternoon, and evening',
-  'marketplace.acca_desk_see_all': 'See all Acca Desk',
   'marketplace.booking_codes_shelf_title': 'Booking codes ready to copy',
   'marketplace.booking_codes_shelf_sub': 'Revealed free and unlocked picks with bookmaker codes',
-  'marketplace.community_empty_title': 'No community picks right now',
-  'marketplace.community_empty_sub': 'Acca Desk is live above — browse the full desk or check back for human tipsters.',
   'marketplace.load_more_count': 'Load more ({shown} of {total})',
   'marketplace.sort_latest': 'Latest',
   'marketplace.sort_oldest': 'Oldest',
@@ -445,7 +429,7 @@ const en = {
 
   // ── Growth / distribution ────────────────────────────────────────────────
   'growth.strip_title': 'Tips, app & escrow proof',
-  'growth.strip_sub': 'Follow Acca Desk alerts on Telegram, install the Android app, or read how escrow refunds work.',
+  'growth.strip_sub': 'Follow pick alerts on Telegram, install the Android app, or read how escrow refunds work.',
   'growth.telegram_cta': 'Telegram @{handle}',
   'growth.play_cta': 'Get Android app',
   'growth.app_store_cta': 'Get iOS app',

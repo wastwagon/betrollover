@@ -6,6 +6,7 @@ export type MarketplaceSavedFilter = {
   id: string;
   name: string;
   createdAt: number;
+  /** Kept for old saved-filter JSON; marketplace no longer splits Acca Desk vs community. */
   desk: 'all' | 'acca_desk' | 'community';
   priceFilter: 'all' | 'free' | 'paid' | 'sold';
   sortBy: 'newest' | 'price-low' | 'price-high' | 'tipster-rank' | 'following-only' | 'relevance';

@@ -357,14 +357,6 @@ const fr: Record<string, string> = {
   'home.following_shelf_empty_follows': 'Suivez des tipsters pour voir leurs derniers pronostics ici.',
   'home.following_shelf_find_tipsters': 'Trouver des tipsters',
 
-  // ── Discovery prefs ──────────────────────────────────────────────────────
-  'discovery_prefs.title': 'Que voulez-vous parcourir en premier ?',
-  'discovery_prefs.body': 'Nous ouvrirons le marché sur votre source préférée. Modifiable à tout moment via les filtres.',
-  'discovery_prefs.hint_acca': 'Accas automatiques à 2 sélections du desk',
-  'discovery_prefs.hint_community': 'Tipsters humains uniquement',
-  'discovery_prefs.hint_all': 'Acca Desk et communauté ensemble',
-  'discovery_prefs.skip': 'Tout afficher',
-
   // ── Seller unlock checklist ──────────────────────────────────────────────
   'seller_checklist.title_ready': 'Pronostics payants débloqués',
   'seller_checklist.title_build': 'Chemin vers les pronostics payants',
@@ -409,17 +401,8 @@ const fr: Record<string, string> = {
   'marketplace.saved_filters_save': 'Enregistrer les filtres',
   'marketplace.saved_filters_prompt': 'Nommer cet ensemble de filtres',
   'marketplace.saved_filters_delete': 'Supprimer le filtre enregistré',
-  'marketplace.filter_source': 'Source',
-  'marketplace.filter_acca_desk': 'Acca Desk',
-  'marketplace.filter_community': 'Communauté',
-  'marketplace.acca_desk_shelf_title': 'Acca Desk',
-  'marketplace.acca_desk_shelf_sub': 'Accas automatisées à 2 sélections — matin, après-midi et soir',
-  'marketplace.acca_desk_see_all': 'Voir tout Acca Desk',
   'marketplace.booking_codes_shelf_title': 'Codes bookmaker prêts à copier',
   'marketplace.booking_codes_shelf_sub': 'Free et picks déverrouillés avec code bookmaker',
-  'marketplace.community_empty_title': 'Aucun pronostic communauté pour le moment',
-  'marketplace.community_empty_sub':
-    'Acca Desk est disponible ci-dessus — voyez tout le desk ou revenez pour les tipsters humains.',
   'marketplace.load_more_count': 'Voir plus ({shown} sur {total})',
   'marketplace.sort_latest': 'Plus Récent',
   'marketplace.sort_oldest': 'Plus Ancien',
@@ -444,7 +427,7 @@ const fr: Record<string, string> = {
   // ── Croissance / distribution ─────────────────────────────────────────────
   'growth.strip_title': 'Alertes, appli et preuve escrow',
   'growth.strip_sub':
-    'Suivez Acca Desk sur Telegram, installez l\'appli Android, ou lisez comment fonctionnent les remboursements escrow.',
+    'Suivez les alertes sur Telegram, installez l\'appli Android, ou lisez comment fonctionnent les remboursements escrow.',
   'growth.telegram_cta': 'Telegram @{handle}',
   'growth.play_cta': 'Applis Android',
   'growth.app_store_cta': 'Applis iOS',
