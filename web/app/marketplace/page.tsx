@@ -876,22 +876,13 @@ export default function MarketplacePage() {
             <>
               {accaDeskShelfPicks.length > 0 ? (
                 <section className="mb-6 min-w-0" aria-labelledby="acca-desk-shelf-heading">
-                  <div className="flex items-end justify-between gap-3 mb-3 px-0.5">
-                    <div className="min-w-0">
-                      <h2 id="acca-desk-shelf-heading" className="text-base font-bold text-[var(--text)]">
-                        {t('marketplace.acca_desk_shelf_title')}
-                      </h2>
-                      <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                        {t('marketplace.acca_desk_shelf_sub')}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setDeskFilter('acca_desk')}
-                      className="shrink-0 text-xs font-semibold text-[var(--primary)] hover:underline underline-offset-2"
-                    >
-                      {t('marketplace.acca_desk_see_all')}
-                    </button>
+                  <div className="mb-3 px-0.5">
+                    <h2 id="acca-desk-shelf-heading" className="text-base font-bold text-[var(--text)]">
+                      {t('marketplace.acca_desk_shelf_title')}
+                    </h2>
+                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                      {t('marketplace.acca_desk_shelf_sub')}
+                    </p>
                   </div>
                   <div className="flex gap-3 overflow-x-auto overscroll-x-contain pb-2 scrollbar-hide -mx-1 px-1 touch-pan-x sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 sm:overflow-visible sm:pb-0">
                     {accaDeskShelfPicks.map((a) => (
