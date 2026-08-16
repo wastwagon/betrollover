@@ -22,7 +22,7 @@ export class AccumulatorTicket {
   @Column({ default: 1 })
   totalPicks: number;
 
-  @Column('decimal', { precision: 10, scale: 3 })
+  @Column('decimal')
   totalOdds: number;
 
   @Column('decimal', { precision: 8, scale: 2, default: 0 })

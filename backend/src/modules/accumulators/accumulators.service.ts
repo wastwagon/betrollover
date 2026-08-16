@@ -43,6 +43,7 @@ import { isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
 import { ACCA_GENERATOR_LEGS_MAX } from '../acca-generator/acca-generator.constants';
 import {
   classicAiMarketplaceTicketExcludeRawSql,
+  classicAiPublicExcludeRawSql,
   isClassicAiHiddenFromPublic,
   isClassicAiTipsterRow,
 } from '../../common/classic-ai-public-visibility.util';
@@ -316,7 +317,10 @@ export class AccumulatorsService {
       ? 'Multi-Sport'
       : (SPORT_DISPLAY_NAMES[couponSport] ?? 'Football');
 
-    const totalOdds = dto.selections.reduce((a, s) => a * s.odds, 1);
+    const totalOdds = dto.selections.reduce((a, s) => {
+      const o = Number(s.odds);
+      return a * (Number.isFinite(o) && o > 0 ? o : 1);
+    }, 1);
     // Auto-approve ALL picks (both free and paid) — they become immediately available on marketplace
     const ticket = this.ticketRepo.create({
       userId,
@@ -324,7 +328,7 @@ export class AccumulatorsService {
       description: dto.description || 'N/A',
       sport: sportDisplay,
       totalPicks: dto.selections.length,
-      totalOdds: Math.round(totalOdds * 1000) / 1000,
+      totalOdds: totalOdds < 1e9 ? Math.round(totalOdds * 1000) / 1000 : totalOdds,
       price: price,
       status: 'active',
       result: 'pending',
@@ -824,6 +828,16 @@ export class AccumulatorsService {
       relations: ['picks'],
     });
     if (!ticket) return null;
+
+    if (isClassicAiHiddenFromPublic() && !opts?.viewerIsAdmin && ticket.userId !== viewerUserId) {
+      const ownerTipster = await this.tipsterRepo.findOne({
+        where: { userId: ticket.userId },
+        select: ['isAi', 'tipsterType'],
+      });
+      if (ownerTipster && isClassicAiTipsterRow(ownerTipster)) {
+        return null;
+      }
+    }
     const [enriched] = await this.enrichPicksWithFixtureScores([ticket]);
 
     // Include tipster metadata and marketplace row so the detail page has full context
@@ -1456,9 +1470,19 @@ export class AccumulatorsService {
   async getByIdPublic(id: number, viewerUserId?: number) {
     const ticket = await this.ticketRepo.findOne({
       where: { id },
-      select: ['id', 'isMarketplace', 'result', 'status', 'price'],
+      select: ['id', 'userId', 'isMarketplace', 'result', 'status', 'price'],
     });
     if (!ticket?.isMarketplace) return null;
+
+    if (isClassicAiHiddenFromPublic() && ticket.userId) {
+      const ownerTipster = await this.tipsterRepo.findOne({
+        where: { userId: ticket.userId },
+        select: ['isAi', 'tipsterType'],
+      });
+      if (ownerTipster && isClassicAiTipsterRow(ownerTipster)) {
+        return null;
+      }
+    }
 
     const row = await this.marketplaceRepo.findOne({
       where: { accumulatorId: id },
@@ -1875,6 +1899,9 @@ export class AccumulatorsService {
    * active listing + coupon active/pending + no fixture started. Matches getMarketplace filter.
    */
   async getLiveMarketplaceCount(): Promise<number> {
+    const hideClassic = isClassicAiHiddenFromPublic()
+      ? `AND ${classicAiMarketplaceTicketExcludeRawSql('t')}`
+      : '';
     const validSubQuery = `
       SELECT pm.accumulator_id FROM pick_marketplace pm
       INNER JOIN accumulator_tickets t ON t.id = pm.accumulator_id AND t.status = 'active' AND t.result = 'pending'
@@ -1884,6 +1911,7 @@ export class AccumulatorsService {
         JOIN fixtures f ON f.id = ap.fixture_id
         WHERE ap.accumulator_id = pm.accumulator_id AND f.match_date <= NOW()
       )
+      ${hideClassic}
     `;
     const result = await this.dataSource
       .createQueryBuilder()
@@ -1932,14 +1960,17 @@ export class AccumulatorsService {
 
   /** Settled marketplace coupons only (won + lost) for a public win rate that matches the marketplace. */
   async getMarketplaceSettledWinLoss(): Promise<{ won: number; lost: number }> {
+    const hideClassic = isClassicAiHiddenFromPublic()
+      ? `AND ${classicAiMarketplaceTicketExcludeRawSql('t')}`
+      : '';
     const rows = await this.dataSource.query(
       `SELECT
          (SELECT COUNT(DISTINCT t.id)::int FROM accumulator_tickets t
           INNER JOIN pick_marketplace pm ON pm.accumulator_id = t.id
-          WHERE t.result = 'won') AS won,
+          WHERE t.result = 'won' ${hideClassic}) AS won,
          (SELECT COUNT(DISTINCT t.id)::int FROM accumulator_tickets t
           INNER JOIN pick_marketplace pm ON pm.accumulator_id = t.id
-          WHERE t.result = 'lost') AS lost`,
+          WHERE t.result = 'lost' ${hideClassic}) AS lost`,
     );
     const row = rows[0] ?? {};
     return { won: Number(row.won ?? 0), lost: Number(row.lost ?? 0) };
@@ -1957,7 +1988,13 @@ export class AccumulatorsService {
       { won: wonMarketplace, lost: lostMarketplace },
     ] = await Promise.all([
       this.apiSettingsRepo.findOne({ where: { id: 1 } }),
-      this.tipsterRepo.count({ where: { isActive: true } }),
+      isClassicAiHiddenFromPublic()
+        ? this.tipsterRepo
+            .createQueryBuilder('t')
+            .where('t.isActive = :active', { active: true })
+            .andWhere(classicAiPublicExcludeRawSql('t'))
+            .getCount()
+        : this.tipsterRepo.count({ where: { isActive: true } }),
       this.getLiveMarketplaceCount(),
       this.getMarketplacePurchaseCount(),
       this.getTotalNetTipsterPayouts(),
@@ -1982,8 +2019,8 @@ export class AccumulatorsService {
       statsScope: 'marketplace' as const,
       platformCommissionPercent,
       metricNotes: {
-        verifiedTipsters: 'tipsters.is_active = true (includes listed AI tipsters)',
-        totalPicks: 'Marketplace picks settled won+lost (matches /accumulators/archive total)',
+        verifiedTipsters: 'Active public tipsters (classic 1-fixture AI excluded while hidden)',
+        totalPicks: 'Marketplace picks settled won+lost excluding hidden classic AI (matches /accumulators/archive)',
         activePicks: 'Live buyable listings (active + pending result + no started fixture)',
         successfulPurchases: 'user_purchased_picks joined to pick_marketplace',
         winRate: 'Marketplace-listed picks: won / (won + lost)',
@@ -2103,6 +2140,9 @@ export class AccumulatorsService {
       .addSelect('COALESCE(AVG(t.totalOdds), 0)', 'avgOdds')
       .where('t.result IN (:...r)', { r: ['won', 'lost'] })
       .andWhere('EXISTS (SELECT 1 FROM pick_marketplace pm WHERE pm.accumulator_id = t.id)');
+    if (isClassicAiHiddenFromPublic()) {
+      statsQb.andWhere(classicAiMarketplaceTicketExcludeRawSql('t'));
+    }
     if (fromUtc) {
       statsQb.andWhere('t.updatedAt >= :fromUtc', { fromUtc });
     }
@@ -2142,6 +2182,9 @@ export class AccumulatorsService {
       .leftJoinAndSelect('t.picks', 'picks')
       .where('t.result IN (:...r)', { r: ['won', 'lost'] })
       .andWhere('EXISTS (SELECT 1 FROM pick_marketplace pm WHERE pm.accumulator_id = t.id)');
+    if (isClassicAiHiddenFromPublic()) {
+      listQb.andWhere(classicAiMarketplaceTicketExcludeRawSql('t'));
+    }
     if (fromUtc) {
       listQb.andWhere('t.updatedAt >= :fromUtc', { fromUtc });
     }

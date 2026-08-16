@@ -140,6 +140,7 @@ function isAccaRiskKey(v: string | undefined | null): v is AccaRiskKey {
 
 function formatOdds(n: number): string {
   if (!Number.isFinite(n)) return '—';
+  if (n >= 1e6) return n.toExponential(2);
   if (n >= 100) return n.toFixed(0);
   if (n >= 10) return n.toFixed(1);
   return n.toFixed(2);
@@ -574,7 +575,7 @@ export default function AccaGeneratorPage() {
       if (!res.ok) throw new Error(getApiErrorMessage(body, 'Generation failed'));
       const data = body as GenerateResult;
       setResult(data);
-      setTitle(`Acca ${data.legs.length}-fold @ ${data.combinedOdds.toFixed(2)}`);
+      setTitle(`Acca ${data.legs.length}-fold @ ${formatOdds(Number(data.combinedOdds))}`);
       if (config) setConfig({ ...config, quota: data.quota });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Generation failed');
@@ -866,7 +867,7 @@ export default function AccaGeneratorPage() {
             <div>
               <h2 className="text-sm font-semibold text-slate-900">Suggested slip</h2>
               <p className="text-xs text-slate-500 mt-1">
-                Combined odds <strong className="text-slate-800">{Number(result.combinedOdds).toFixed(2)}</strong>
+                Combined odds <strong className="text-slate-800">{formatOdds(Number(result.combinedOdds))}</strong>
                 {' · '}
                 {result.legs.length} legs
                 {result.riskLevel ? ` · ${result.riskLevel} risk` : ''}

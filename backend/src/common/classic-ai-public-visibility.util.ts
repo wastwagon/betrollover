@@ -1,6 +1,6 @@
 /**
  * Classic 1-fixture AI tipsters (tipsterType=ai) can keep generating in the background
- * while staying hidden from public browse / leaderboard / marketplace.
+ * while staying hidden from public browse / leaderboard / marketplace / settled archive.
  * Acca Desk (tipsterType=acca_desk) and humans stay visible.
  *
  * Toggle: HIDE_CLASSIC_AI_TIPSTERS_FROM_PUBLIC=false to show them again.

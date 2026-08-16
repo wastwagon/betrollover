@@ -39,7 +39,7 @@ export class AccaGeneratorRun {
   @Column({ type: 'decimal', precision: 8, scale: 3 })
   oddMax: number;
 
-  @Column({ type: 'decimal', precision: 12, scale: 3, nullable: true })
+  @Column({ type: 'decimal', nullable: true })
   combinedOdds: number | null = null;
 
   @Column({ type: 'jsonb', default: [] })

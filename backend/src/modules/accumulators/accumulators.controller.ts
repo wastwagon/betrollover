@@ -219,10 +219,12 @@ export class AccumulatorsController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  getById(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
-    return this.accumulatorsService.getById(id, user.id, {
+  async getById(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
+    const coupon = await this.accumulatorsService.getById(id, user.id, {
       viewerIsAdmin: user.role === UserRole.ADMIN,
     });
+    if (!coupon) throw new NotFoundException('Pick not found');
+    return coupon;
   }
 
   @Post(':id/purchase')

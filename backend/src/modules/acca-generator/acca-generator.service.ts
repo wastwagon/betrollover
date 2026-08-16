@@ -37,6 +37,14 @@ import {
   type AccaRiskProfile,
 } from './acca-generator.markets';
 
+/** Product of leg odds. Round short slips; keep full magnitude for long analysis slips. */
+function productOdds(odds: number[]): number {
+  const product = odds.reduce((acc, o) => acc * (Number.isFinite(o) && o > 0 ? o : 1), 1);
+  if (!Number.isFinite(product) || product <= 0) return 1;
+  if (product < 1e9) return Math.round(product * 1000) / 1000;
+  return product;
+}
+
 export type AccaGeneratorSelection = {
   fixtureId: number;
   apiFixtureId: number;
@@ -226,7 +234,7 @@ export class AccaGeneratorService {
     }
 
     const selected = this.pickGreedyLegs(candidates, legs);
-    const combinedOdds = Math.round(selected.reduce((a, s) => a * s.odds, 1) * 1000) / 1000;
+    const combinedOdds = productOdds(selected.map((s) => s.odds));
 
     const run = await this.runRepo.save(
       this.runRepo.create({
@@ -538,7 +546,7 @@ export class AccaGeneratorService {
       // Odds-first sync can leave API-Sports placeholders until /fixtures backfill runs.
       .andWhere("NOT (f.homeTeamName = 'Home' AND f.awayTeamName = 'Away')")
       .orderBy('f.matchDate', 'ASC')
-      .take(400)
+      .take(800)
       .getMany();
 
     if (!fixtures.length) return [];
@@ -708,7 +716,7 @@ export class AccaGeneratorService {
       };
     }
 
-    const combinedOdds = Math.round(selected.reduce((a, s) => a * s.odds, 1) * 1000) / 1000;
+    const combinedOdds = productOdds(selected.map((s) => s.odds));
     const run = await this.runRepo.save(
       this.runRepo.create({
         userId: opts.userId,
