@@ -126,6 +126,7 @@ export class AccaGeneratorService {
       enabled: limits.enabled,
       minLegs: limits.minLegs,
       maxLegs: limits.maxLegs,
+      legsCeiling: ACCA_GENERATOR_LEGS_MAX,
       dailyGenerations: limits.dailyGenerations,
       /** Same calendar day only — denser markets, avoids thin future days. */
       sameDayOnly: true,

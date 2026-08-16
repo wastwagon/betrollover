@@ -7,6 +7,7 @@ import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { buttonClassName } from '@/components/ui/Button';
+import { ACCA_GENERATOR_LEGS_MAX, ACCA_GENERATOR_LEGS_MIN } from '@betrollover/shared-types';
 
 interface Settings {
   apiSportsConfigured: boolean;
@@ -36,6 +37,7 @@ interface Settings {
     minLegs: number;
     maxLegs: number;
     dailyGenerations: number;
+    legsCeiling?: number;
   };
   currency: string;
   country: string;
@@ -89,6 +91,7 @@ export default function AdminSettingsPage() {
   const [accaMinLegs, setAccaMinLegs] = useState(2);
   const [accaMaxLegs, setAccaMaxLegs] = useState(8);
   const [accaDailyGenerations, setAccaDailyGenerations] = useState(10);
+  const [accaLegsCeiling, setAccaLegsCeiling] = useState(ACCA_GENERATOR_LEGS_MAX);
   const [savingAccaGenerator, setSavingAccaGenerator] = useState(false);
   const [commissionRate, setCommissionRate] = useState<number>(30.0);
   const [savingCommission, setSavingCommission] = useState(false);
@@ -139,6 +142,7 @@ export default function AdminSettingsPage() {
           setAccaMinLegs(data.accaGenerator.minLegs ?? 2);
           setAccaMaxLegs(data.accaGenerator.maxLegs ?? 8);
           setAccaDailyGenerations(data.accaGenerator.dailyGenerations ?? 10);
+          setAccaLegsCeiling(data.accaGenerator.legsCeiling ?? ACCA_GENERATOR_LEGS_MAX);
         }
         if (data?.platformCommissionRate !== undefined) setCommissionRate(data.platformCommissionRate);
         return data;
@@ -1615,8 +1619,8 @@ export default function AdminSettingsPage() {
                     </div>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Controls the user Acca Generator tool (separate from AI tipsters). Limit legs and daily generations so free accounts cannot spam the API.
-                    Max legs can go up to <strong>200</strong> for heavy match-day analysis, then set it back lower for normal users.
+                    Controls the user Acca Generator tool (separate from AI tipsters). These values are saved here — not via .env.
+                    Max legs can go up to <strong>{accaLegsCeiling}</strong> for heavy match-day analysis, then set it back lower for normal users.
                     Use <strong>0</strong> daily generations for unlimited.
                   </p>
                   <label className="flex items-center gap-2 mb-4 text-sm text-gray-800 dark:text-gray-200">
@@ -1633,10 +1637,17 @@ export default function AdminSettingsPage() {
                       <span className="block mb-1 text-gray-600 dark:text-gray-400">Min legs</span>
                       <input
                         type="number"
-                        min={1}
-                        max={200}
+                        min={ACCA_GENERATOR_LEGS_MIN}
+                        max={accaLegsCeiling}
                         value={accaMinLegs}
-                        onChange={(e) => setAccaMinLegs(Math.min(200, Math.max(1, parseInt(e.target.value, 10) || 1)))}
+                        onChange={(e) =>
+                          setAccaMinLegs(
+                            Math.min(
+                              accaLegsCeiling,
+                              Math.max(ACCA_GENERATOR_LEGS_MIN, parseInt(e.target.value, 10) || ACCA_GENERATOR_LEGS_MIN),
+                            ),
+                          )
+                        }
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       />
                     </label>
@@ -1644,10 +1655,17 @@ export default function AdminSettingsPage() {
                       <span className="block mb-1 text-gray-600 dark:text-gray-400">Max legs</span>
                       <input
                         type="number"
-                        min={1}
-                        max={200}
+                        min={ACCA_GENERATOR_LEGS_MIN}
+                        max={accaLegsCeiling}
                         value={accaMaxLegs}
-                        onChange={(e) => setAccaMaxLegs(Math.min(200, Math.max(1, parseInt(e.target.value, 10) || 1)))}
+                        onChange={(e) =>
+                          setAccaMaxLegs(
+                            Math.min(
+                              accaLegsCeiling,
+                              Math.max(ACCA_GENERATOR_LEGS_MIN, parseInt(e.target.value, 10) || ACCA_GENERATOR_LEGS_MIN),
+                            ),
+                          )
+                        }
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       />
                     </label>
@@ -1689,6 +1707,7 @@ export default function AdminSettingsPage() {
                           setAccaMinLegs(data.minLegs);
                           setAccaMaxLegs(data.maxLegs);
                           setAccaDailyGenerations(data.dailyGenerations);
+                          if (typeof data.legsCeiling === 'number') setAccaLegsCeiling(data.legsCeiling);
                           alert('Acca Generator settings updated');
                         } else {
                           const error = await res.json().catch(() => ({}));
@@ -1831,9 +1850,8 @@ export default function AdminSettingsPage() {
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-2">About Platform Settings</h3>
                   <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                    These settings are configured at the application level and are read-only in the admin panel. 
-                    To modify platform configuration, update the environment variables in your backend <code className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs font-mono">.env</code> file 
-                    and restart the application services.
+                    Currency, country, and app name come from backend environment configuration and are not edited here.
+                    Acca Generator, commission, AI limits, and similar cards on this page are saved with their own buttons.
                   </p>
                 </div>
               </div>

@@ -555,6 +555,7 @@ export class AdminService {
     minLegs: number;
     maxLegs: number;
     dailyGenerations: number;
+    legsCeiling: number;
   } {
     const minLegs = Math.min(
       ACCA_GENERATOR_LEGS_MAX,
@@ -570,6 +571,7 @@ export class AdminService {
       minLegs,
       maxLegs,
       dailyGenerations: Math.max(0, Math.floor(Number(row?.accaGeneratorDailyGenerations ?? 10))),
+      legsCeiling: ACCA_GENERATOR_LEGS_MAX,
     };
   }
 
@@ -583,6 +585,7 @@ export class AdminService {
     minLegs: number;
     maxLegs: number;
     dailyGenerations: number;
+    legsCeiling: number;
   }> {
     let apiSettings = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
     if (!apiSettings) {
