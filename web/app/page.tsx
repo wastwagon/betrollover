@@ -72,7 +72,7 @@ export default async function HomePage() {
         <HomeFollowingShelf />
         <FeaturedPicks initialFeatured={homeData.featuredPicks} />
         <section id="free-tip-of-the-day" className="w-full min-w-0">
-          <HomeFreeTipOfTheDay initialFreeTip={homeData.freeTip} initialMarketItems={homeData.marketplaceItems} />
+          <HomeFreeTipOfTheDay initialFreeTips={homeData.freeTips} />
         </section>
         <div className="section-ux-rail-4xl w-full min-w-0">
           <AdSlot zoneSlug="between-sections" fullWidth className="w-full" />

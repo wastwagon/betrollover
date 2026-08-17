@@ -152,8 +152,14 @@ export class AccumulatorsController {
 
   @Get('free-tip-of-the-day')
   @UseGuards(OptionalJwtGuard)
-  getFreeTipOfTheDay(@CurrentUser() user?: User | null) {
-    return this.accumulatorsService.getFreeTipOfTheDay(user?.id);
+  getFreeTipsOfTheDay(
+    @Query('limit') limit?: string,
+    @Query('sport') sport?: string,
+    @CurrentUser() user?: User | null,
+  ) {
+    const parsed = limit != null ? parseInt(limit, 10) : 4;
+    const limitVal = Math.min(Math.max(Number.isFinite(parsed) ? parsed : 4, 1), 8);
+    return this.accumulatorsService.getFreeTipsOfTheDay(user?.id, limitVal, sport || undefined);
   }
 
   @Post('social-summary/batch')

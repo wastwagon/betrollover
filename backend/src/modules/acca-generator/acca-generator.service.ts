@@ -6,7 +6,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Repository } from 'typeorm';
+import { Between, In, IsNull, Repository } from 'typeorm';
 import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { Fixture } from '../fixtures/entities/fixture.entity';
@@ -23,8 +23,6 @@ import {
   slotForKickoff,
   type AccaDeskSlotKey,
 } from '../../config/acca-desk-slots';
-
-const ACCA_EVENT_TYPES = new Set(['tool_open', 'quota_hit', 'empty_pool']);
 import {
   ACCA_GENERATOR_DEFAULTS,
   ACCA_GENERATOR_MARKET_KEYS,
@@ -36,6 +34,9 @@ import {
   type AccaRiskLevel,
   type AccaRiskProfile,
 } from './acca-generator.markets';
+import { pickGreedyLegs, rotateAwayFromRecentRuns } from './acca-generator-pick.util';
+
+const ACCA_EVENT_TYPES = new Set(['tool_open', 'quota_hit', 'empty_pool']);
 
 /** Product of leg odds. Round short slips; keep full magnitude for long analysis slips. */
 function productOdds(odds: number[]): number {
@@ -234,7 +235,9 @@ export class AccaGeneratorService {
       );
     }
 
-    const selected = this.pickGreedyLegs(candidates, legs);
+    const recentStacks = await this.recentRunFixtureStacks(userId);
+    const rotated = rotateAwayFromRecentRuns(candidates, recentStacks, legs);
+    const selected = pickGreedyLegs(rotated, legs, { vary: true });
     const combinedOdds = productOdds(selected.map((s) => s.odds));
 
     const run = await this.runRepo.save(
@@ -639,9 +642,29 @@ export class AccaGeneratorService {
     return [...bestByFixture.values()].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
   }
 
+  /** Today's generations for this user, newest first, as fixture-id stacks. */
+  private async recentRunFixtureStacks(userId: number): Promise<number[][]> {
+    const { start, end } = this.utcDayBounds();
+    const runs = await this.runRepo.find({
+      where: { userId, createdAt: Between(start, end) },
+      order: { createdAt: 'DESC' },
+      take: 20,
+    });
+    return runs
+      .map((run) => {
+        const ids: number[] = [];
+        for (const row of run.selections || []) {
+          const id = Number((row as { fixtureId?: number }).fixtureId);
+          if (Number.isFinite(id) && id > 0) ids.push(id);
+        }
+        return ids;
+      })
+      .filter((stack) => stack.length > 0);
+  }
+
   /**
-   * Acca Desk / automation: same picker as public generate, but no user quota or feature-flag gate.
-   * Callers enforce exclusivity via excludeFixtureIds.
+   * Acca Desk / automation: same candidate pool as public generate, without user quota
+   * or the public rotate/vary picker. Callers enforce exclusivity via excludeFixtureIds.
    */
   async generateForDesk(opts: {
     userId: number;
@@ -698,7 +721,7 @@ export class AccaGeneratorService {
     const selected =
       legs === 2
         ? pickTimeClusteredPair(candidates, ACCA_DESK_MAX_KICKOFF_GAP_MS, outcomeFamily)
-        : this.pickGreedyLegs(candidates, legs);
+        : pickGreedyLegs(candidates, legs);
     if (selected.length < legs) {
       await this.recordEvent(opts.userId, 'empty_pool', {
         source: 'acca_desk',
@@ -742,42 +765,5 @@ export class AccaGeneratorService {
       oddMin: risk.oddMin,
       oddMax: risk.oddMax,
     };
-  }
-
-  /**
-   * Greedy N-leg builder with market-family diversity (avoid 4× Double Chance @ same price).
-   */
-  private pickGreedyLegs(candidates: AccaGeneratorSelection[], legs: number): AccaGeneratorSelection[] {
-    const usedFixtures = new Set<number>();
-    const familyCounts = new Map<string, number>();
-    const selected: AccaGeneratorSelection[] = [];
-    const remaining = [...candidates];
-
-    while (selected.length < legs && remaining.length) {
-      let bestIdx = -1;
-      let bestAdj = -Infinity;
-
-      for (let i = 0; i < remaining.length; i++) {
-        const c = remaining[i];
-        if (usedFixtures.has(c.fixtureId)) continue;
-        const family = outcomeFamily(c.outcomeKey);
-        const used = familyCounts.get(family) ?? 0;
-        const adj = (c.score ?? 0) - used * 0.12;
-        if (adj > bestAdj) {
-          bestAdj = adj;
-          bestIdx = i;
-        }
-      }
-
-      if (bestIdx < 0) break;
-      const pick = remaining.splice(bestIdx, 1)[0];
-      usedFixtures.add(pick.fixtureId);
-      const family = outcomeFamily(pick.outcomeKey);
-      familyCounts.set(family, (familyCounts.get(family) ?? 0) + 1);
-      selected.push(pick);
-    }
-
-    selected.sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
-    return selected;
   }
 }

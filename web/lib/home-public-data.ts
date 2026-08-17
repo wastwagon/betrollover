@@ -5,6 +5,7 @@ import {
   isDiscoverySportAllowed,
   isFootballOnlyDiscovery,
 } from '@/lib/football-only-discovery';
+import { freeTipOfTheDayQuery, parseFreeTipItems } from '@/lib/free-tip-of-the-day';
 import {
   parseHeadlineMatchesPayload,
   type TodayMatchRow,
@@ -25,7 +26,7 @@ export interface HomePublicData {
   topTipsters: Record<string, unknown>[];
   marketplaceItems: Record<string, unknown>[];
   featuredPicks: Record<string, unknown>[];
-  freeTip: Record<string, unknown> | null;
+  freeTips: Record<string, unknown>[];
   todayMatches: TodayMatchRow[];
 }
 
@@ -69,7 +70,7 @@ export async function fetchHomePublicData(options?: { revalidate?: number }): Pr
     topTipsters: [],
     marketplaceItems: [],
     featuredPicks: [],
-    freeTip: null,
+    freeTips: [],
     todayMatches: [],
   };
 
@@ -84,7 +85,7 @@ export async function fetchHomePublicData(options?: { revalidate?: number }): Pr
       fetch(`${api}/leaderboard?period=all_time&limit=24`, init),
       fetch(`${api}/accumulators/marketplace/public?${marketQs}`, init),
       fetch(`${api}/accumulators/featured`, init),
-      fetch(`${api}/accumulators/free-tip-of-the-day`, init),
+      fetch(`${api}/accumulators/free-tip-of-the-day?${freeTipOfTheDayQuery()}`, init),
       fetch(`${api}/fixtures/platform/headline-matches?limit=8`, init),
     ]);
 
@@ -100,8 +101,7 @@ export async function fetchHomePublicData(options?: { revalidate?: number }): Pr
     );
     let marketplaceItems = Array.isArray(marketJson?.items) ? marketJson.items : [];
     let featuredPicks = Array.isArray(featuredJson) ? featuredJson : [];
-    let freeTip: Record<string, unknown> | null =
-      freeTipJson && typeof freeTipJson === 'object' ? (freeTipJson as Record<string, unknown>) : null;
+    let freeTips = parseFreeTipItems(freeTipJson);
     const todayMatches = parseHeadlineMatchesPayload(headlineJson);
 
     if (footballOnly) {
@@ -113,9 +113,7 @@ export async function fetchHomePublicData(options?: { revalidate?: number }): Pr
       featuredPicks = featuredPicks.filter((item: unknown) =>
         isDiscoverySportAllowed(sportOf(item)),
       );
-      if (freeTip && !isDiscoverySportAllowed(freeTip.sport as string | undefined)) {
-        freeTip = null;
-      }
+      freeTips = freeTips.filter((item) => isDiscoverySportAllowed(item.sport as string | undefined));
     }
 
     return {
@@ -124,7 +122,7 @@ export async function fetchHomePublicData(options?: { revalidate?: number }): Pr
       topTipsters,
       marketplaceItems,
       featuredPicks,
-      freeTip,
+      freeTips,
       todayMatches,
     };
   } catch {

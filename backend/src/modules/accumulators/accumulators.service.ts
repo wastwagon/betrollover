@@ -38,7 +38,7 @@ import { ReferralsService } from '../referrals/referrals.service';
 import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity';
 import { clampPlatformCommissionPercent } from '../../common/platform-commission';
 import { couponUserFacingRef } from '../../common/coupon-public-label';
-import { isAllowedAfricanBookmakerKey } from '@betrollover/shared-types';
+import { isAllowedAfricanBookmakerKey, LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
 import { isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
 import { ACCA_GENERATOR_LEGS_MAX } from '../acca-generator/acca-generator.constants';
 import {
@@ -64,7 +64,12 @@ const SPORT_DISPLAY_NAMES: Record<string, string> = {
   tennis: 'Tennis',
   football: 'Football',
   multi: 'Multi-Sport',
+  'multi-sport': 'Multi-Sport',
 };
+
+function ticketSportFilterValue(sport: string): string {
+  return SPORT_DISPLAY_NAMES[sport.toLowerCase()] ?? sport;
+}
 
 export interface CreateAccumulatorDto {
   title: string;
@@ -901,22 +906,9 @@ export class AccumulatorsService {
   }
 
   async getMyAccumulators(userId: number, sport?: string) {
-    const SPORT_DISPLAY_MAP: Record<string, string> = {
-      football:          'Football',
-      basketball:        'Basketball',
-      rugby:             'Rugby',
-      mma:               'MMA',
-      volleyball:        'Volleyball',
-      hockey:            'Hockey',
-      american_football: 'American Football',
-      tennis:            'Tennis',
-      multi:             'Multi-Sport',
-      'multi-sport':     'Multi-Sport',
-    };
     const where: any = { userId };
     if (sport) {
-      const s = sport.toLowerCase();
-      where.sport = SPORT_DISPLAY_MAP[s] ?? sport;
+      where.sport = ticketSportFilterValue(sport);
     }
     const tickets = await this.ticketRepo.find({
       where,
@@ -1059,20 +1051,7 @@ export class AccumulatorsService {
       }
 
       if (options?.sport) {
-        const SPORT_DISPLAY_MAP: Record<string, string> = {
-          football: 'Football',
-          basketball: 'Basketball',
-          rugby: 'Rugby',
-          mma: 'MMA',
-          volleyball: 'Volleyball',
-          hockey: 'Hockey',
-          american_football: 'American Football',
-          tennis: 'Tennis',
-          multi: 'Multi-Sport',
-          'multi-sport': 'Multi-Sport',
-        };
-        const s = options.sport.toLowerCase();
-        qb.andWhere('t.sport = :sport', { sport: SPORT_DISPLAY_MAP[s] ?? options.sport });
+        qb.andWhere('t.sport = :sport', { sport: ticketSportFilterValue(options.sport) });
       }
 
       const totalRow = await qb.clone().select('COUNT(DISTINCT t.id)', 'cnt').getRawOne<{ cnt: string }>();
@@ -1154,20 +1133,7 @@ export class AccumulatorsService {
       this.applyTipsterFilterToTicketWhere(ticketWhere, ids);
     }
     if (options?.sport) {
-      const SPORT_DISPLAY_MAP: Record<string, string> = {
-        football:          'Football',
-        basketball:        'Basketball',
-        rugby:             'Rugby',
-        mma:               'MMA',
-        volleyball:        'Volleyball',
-        hockey:            'Hockey',
-        american_football: 'American Football',
-        tennis:            'Tennis',
-        multi:             'Multi-Sport',
-        'multi-sport':     'Multi-Sport',
-      };
-      const s = options.sport.toLowerCase();
-      ticketWhere.sport = SPORT_DISPLAY_MAP[s] ?? options.sport;
+      ticketWhere.sport = ticketSportFilterValue(options.sport);
     }
     const tickets = await this.ticketRepo.find({
       where: ticketWhere,
@@ -1294,20 +1260,7 @@ export class AccumulatorsService {
       qb.andWhere('pm.purchase_count > 0');
     }
     if (options?.sport) {
-      const SPORT_DISPLAY_MAP: Record<string, string> = {
-        football: 'Football',
-        basketball: 'Basketball',
-        rugby: 'Rugby',
-        mma: 'MMA',
-        volleyball: 'Volleyball',
-        hockey: 'Hockey',
-        american_football: 'American Football',
-        tennis: 'Tennis',
-        multi: 'Multi-Sport',
-        'multi-sport': 'Multi-Sport',
-      };
-      const s = options.sport.toLowerCase();
-      qb.andWhere('t.sport = :sport', { sport: SPORT_DISPLAY_MAP[s] ?? options.sport });
+      qb.andWhere('t.sport = :sport', { sport: ticketSportFilterValue(options.sport) });
     }
     if (options?.tipsterSearch) {
       const ids = await this.resolveUserIdsByTipsterSearch(options.tipsterSearch);
@@ -1742,95 +1695,110 @@ export class AccumulatorsService {
   }
 
   /**
-   * Free Tip of the Day — returns the best free coupon for today across all sports.
-   * Priority: TheGambler first, then any other tipster with a free active marketplace pick.
-   * Picks are valid only if all matches are still in the future.
+   * Homepage “Free Tip of the Day”: active free marketplace coupons that have not kicked off,
+   * from tipsters with positive ROI, ranked by hit rate then ROI. One coupon per tipster.
    */
-  async getFreeTipOfTheDay(viewerUserId?: number) {
+  async getFreeTipsOfTheDay(
+    viewerUserId?: number,
+    limit = 4,
+    sport?: string,
+  ): Promise<{ items: Record<string, unknown>[] }> {
+    const take = Math.min(Math.max(limit, 1), 8);
     const now = new Date();
-
-    // Helper: find the best free active pending tip for a given set of user IDs
-    const findBestFreeTip = async (userIds: number[]) => {
-      if (!userIds.length) return null;
-
-      const tickets = await this.ticketRepo.find({
-        where: {
-          userId: In(userIds),
-          status: 'active',
-          result: 'pending',
-          isMarketplace: true,
-          price: 0,
-        },
-        relations: ['picks'],
-        order: { createdAt: 'DESC' },
-        take: 20,
-      });
-      if (!tickets.length) return null;
-
-      const accIds = tickets.map((t) => t.id);
-      const rows = await this.marketplaceRepo.find({
-        where: { accumulatorId: In(accIds), status: 'active' },
-        select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount'],
-      });
-
-      const enriched = await this.enrichPicksWithFixtureScores(tickets);
-      const valid = enriched.filter((t: any) => {
-        if (!t.picks?.length) return false;
-        // All matches must be in the future
-        return !t.picks.some((p: any) => p.matchDate && new Date(p.matchDate) <= now);
-      });
-      const validWithListing = valid.filter((t) => rows.some((r) => r.accumulatorId === t.id));
-      if (!validWithListing.length) return null;
-
-      const ticket = validWithListing[0];
-      const row = rows.find((r) => r.accumulatorId === ticket.id);
-      const items = await this.enrichWithTipsterMetadata([ticket], row ? [row] : [], viewerUserId);
-      const first = items[0] as { tipster?: { isAi?: boolean; roi?: number } } | undefined;
-      if (!first) return null;
-      return first;
-    };
-
-    // 1. Try TheGambler first (curated daily tip) — skip while classic 1-fixture AI are hidden.
-    if (!isClassicAiHiddenFromPublic()) {
-      const gambler = await this.usersRepo.findOne({
-        where: { username: 'TheGambler', role: UserRole.TIPSTER },
-        select: ['id'],
-      });
-      if (gambler) {
-        const tip = await findBestFreeTip([gambler.id]);
-        if (tip) {
-          await this.mergeBookingCodeCopyCountsForTicketsPlain([tip as Record<string, unknown> & { id: number }]);
-          return tip;
-        }
+    const primaryIds = await this.queryRankedFreeHomepageTicketIds(
+      now,
+      LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING,
+      take,
+      sport,
+    );
+    let ticketIds = primaryIds;
+    if (ticketIds.length < take) {
+      const fillIds = await this.queryRankedFreeHomepageTicketIds(now, 1, take, sport);
+      const seen = new Set(ticketIds);
+      for (const id of fillIds) {
+        if (seen.has(id)) continue;
+        ticketIds.push(id);
+        seen.add(id);
+        if (ticketIds.length >= take) break;
       }
     }
+    if (!ticketIds.length) return { items: [] };
 
-    // 2. Fall back to any tipster's free pick — pick highest purchase count for today (users and tipsters same privileges)
-    const allTipsters = await this.usersRepo.find({
-      where: [{ role: UserRole.TIPSTER }, { role: UserRole.USER }],
-      select: ['id'],
-      take: 100,
+    const tickets = await this.ticketRepo.find({
+      where: { id: In(ticketIds) },
+      relations: ['picks'],
     });
-    if (!allTipsters.length) return null;
+    const byId = new Map(tickets.map((t) => [t.id, t]));
+    const ordered = ticketIds.map((id) => byId.get(id)).filter((t): t is AccumulatorTicket => !!t);
+    if (!ordered.length) return { items: [] };
 
-    let candidateIds = allTipsters.map((u) => u.id);
-    if (isClassicAiHiddenFromPublic() && candidateIds.length > 0) {
-      const tipsterRows = await this.tipsterRepo.find({
-        where: { userId: In(candidateIds) },
-        select: ['userId', 'isAi', 'tipsterType'],
-      });
-      const classicOwnerIds = new Set(
-        tipsterRows.filter((row) => isClassicAiTipsterRow(row)).map((row) => row.userId!),
+    const rows = await this.marketplaceRepo.find({
+      where: { accumulatorId: In(ordered.map((t) => t.id)), status: 'active' },
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount'],
+    });
+    const enriched = await this.enrichPicksWithFixtureScores(ordered);
+    const items = await this.enrichWithTipsterMetadata(enriched, rows, viewerUserId);
+    await this.mergeBookingCodeCopyCountsForTicketsPlain(
+      items as Array<Record<string, unknown> & { id: number }>,
+    );
+    return { items: items as Record<string, unknown>[] };
+  }
+
+  private async queryRankedFreeHomepageTicketIds(
+    now: Date,
+    minSettled: number,
+    limit: number,
+    sport?: string,
+  ): Promise<number[]> {
+    const qb = this.ticketRepo
+      .createQueryBuilder('t')
+      .innerJoin(PickMarketplace, 'pm', "pm.accumulator_id = t.id AND pm.status = 'active' AND pm.price = 0")
+      .innerJoin(Tipster, 'ts', 'ts.user_id = t.user_id')
+      .where("t.status = 'active'")
+      .andWhere("t.result = 'pending'")
+      .andWhere('t.is_marketplace = true')
+      .andWhere('ts.roi > 0')
+      .andWhere('(ts.total_wins + ts.total_losses) >= :minSettled', { minSettled })
+      .andWhere(
+        `NOT EXISTS (
+          SELECT 1 FROM accumulator_picks ap
+          WHERE ap.accumulator_id = t.id
+            AND ap.match_date IS NOT NULL
+            AND ap.match_date <= :now
+        )`,
+        { now },
       );
-      candidateIds = candidateIds.filter((id) => !classicOwnerIds.has(id));
-    }
-    if (!candidateIds.length) return null;
 
-    const tip = await findBestFreeTip(candidateIds);
-    if (tip) {
-      await this.mergeBookingCodeCopyCountsForTicketsPlain([tip as Record<string, unknown> & { id: number }]);
+    if (sport) {
+      qb.andWhere('t.sport = :sport', { sport: ticketSportFilterValue(sport) });
     }
-    return tip ?? null;
+
+    if (isClassicAiHiddenFromPublic()) {
+      qb.andWhere(classicAiPublicExcludeRawSql('ts'));
+    }
+
+    const rows = await qb
+      .select('t.id', 'id')
+      .addSelect('t.user_id', 'userId')
+      .addSelect('(ts.total_wins + ts.total_losses)', 'settledCount')
+      .orderBy('ts.win_rate', 'DESC')
+      .addOrderBy('ts.roi', 'DESC')
+      .addOrderBy('settledCount', 'DESC')
+      .addOrderBy('t.created_at', 'DESC')
+      .limit(Math.max(limit * 40, 80))
+      .getRawMany<{ id: string | number; userId: string | number }>();
+
+    const seenUsers = new Set<number>();
+    const ids: number[] = [];
+    for (const row of rows) {
+      const userId = Number(row.userId);
+      const id = Number(row.id);
+      if (!userId || !id || seenUsers.has(userId)) continue;
+      seenUsers.add(userId);
+      ids.push(id);
+      if (ids.length >= limit) break;
+    }
+    return ids;
   }
 
   /** Popular upcoming events: fixtures with most picks in coupons that are on marketplace and not started. Only fixtures that have odds. Aligned with marketplace. */
