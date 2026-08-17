@@ -1780,10 +1780,10 @@ export class AccumulatorsService {
     const rows = await qb
       .select('t.id', 'id')
       .addSelect('t.user_id', 'userId')
-      .addSelect('(ts.total_wins + ts.total_losses)', 'settledCount')
+      .addSelect('(ts.total_wins + ts.total_losses)', 'settled_count')
       .orderBy('ts.win_rate', 'DESC')
       .addOrderBy('ts.roi', 'DESC')
-      .addOrderBy('settledCount', 'DESC')
+      .addOrderBy('settled_count', 'DESC')
       .addOrderBy('t.created_at', 'DESC')
       .limit(Math.max(limit * 40, 80))
       .getRawMany<{ id: string | number; userId: string | number }>();
