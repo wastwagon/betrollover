@@ -8,7 +8,7 @@ export function freeTipOfTheDayQuery(limit = FREE_TIP_OF_THE_DAY_LIMIT): string 
   return params.toString();
 }
 
-export function parseFreeTipItems<T extends { id: unknown } = Record<string, unknown>>(
+export function parseFreeTipItems<T extends { id: unknown } = Record<string, unknown> & { id: unknown }>(
   data: unknown,
 ): T[] {
   if (!data || typeof data !== 'object') return [];
