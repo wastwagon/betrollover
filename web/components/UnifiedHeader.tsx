@@ -522,6 +522,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                         />
                       ) : null}
                       <CompactNavLink href="/live-scores" icon={<IconLive />} label={t('nav.live_scores')} onClick={closeAll} />
+                      <CompactNavLink href="/rollover" icon={<IconChart />} label={t('nav.rollover')} onClick={closeAll} />
                       <CompactNavLink
                         href="/coupons/archive"
                         icon={<IconArchive />}
@@ -835,6 +836,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
             {[
               { href: '/create-pick', label: t('nav.create_pick_short') },
               { href: '/acca-generator', label: t('nav.acca_generator_short') },
+              { href: '/rollover', label: t('nav.rollover_short') },
               { href: '/live-scores', label: t('nav.live_scores_short') },
               { href: '/league-tables', label: t('nav.league_tables_short') },
               { href: '/leaderboard', label: t('nav.leaderboard') },

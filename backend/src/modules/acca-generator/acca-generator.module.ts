@@ -18,12 +18,18 @@ import { AccaGeneratorEvent } from './entities/acca-generator-event.entity';
 import { AccaDeskSetupService } from './acca-desk-setup.service';
 import { AccaDeskPublisherService } from './acca-desk-publisher.service';
 import { AccaDeskSchedulerService } from './acca-desk-scheduler.service';
+import { RolloverRun } from './entities/rollover-run.entity';
+import { RolloverDay } from './entities/rollover-day.entity';
+import { RolloverDeskService } from './rollover-desk.service';
+import { RolloverDeskController } from './rollover-desk.controller';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       AccaGeneratorRun,
       AccaGeneratorEvent,
+      RolloverRun,
+      RolloverDay,
       ApiSettings,
       Fixture,
       FixtureOdd,
@@ -37,13 +43,14 @@ import { AccaDeskSchedulerService } from './acca-desk-scheduler.service';
     NotificationsModule,
     forwardRef(() => FixturesModule),
   ],
-  controllers: [AccaGeneratorController],
+  controllers: [AccaGeneratorController, RolloverDeskController],
   providers: [
     AccaGeneratorService,
     AccaDeskSetupService,
     AccaDeskPublisherService,
     AccaDeskSchedulerService,
+    RolloverDeskService,
   ],
-  exports: [AccaGeneratorService, AccaDeskSetupService, AccaDeskPublisherService],
+  exports: [AccaGeneratorService, AccaDeskSetupService, AccaDeskPublisherService, RolloverDeskService],
 })
 export class AccaGeneratorModule {}

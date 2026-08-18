@@ -70,6 +70,10 @@ export function AccaGeneratorLanding() {
                   Open marketplace
                 </Link>
                 {' · '}
+                <Link href="/rollover" className="font-medium text-[var(--primary)] underline underline-offset-2">
+                  30-day rollover
+                </Link>
+                {' · '}
                 <Link
                   href="/responsible-gambling"
                   className="font-medium text-[var(--primary)] underline underline-offset-2"

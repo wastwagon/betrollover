@@ -55,6 +55,42 @@ type Overview = {
   } | null;
   roster: RosterRow[];
   todayTickets: TodayTicket[];
+  rollover?: {
+    calendarDate: string;
+    ownerUsername: string;
+    oddsMin?: number;
+    oddsMax?: number;
+    targetOdds?: number;
+    run: {
+      id: number;
+      status: string;
+      currentDay: number;
+      startedAt: string;
+      completedAt?: string | null;
+      brokenAt?: string | null;
+    } | null;
+    pendingDay: {
+      dayNumber: number;
+      calendarDate: string;
+      ticketId: number | null;
+      status: string;
+      combinedOdds: number | null;
+    } | null;
+    postedSlots?: Record<'early' | 'afternoon' | 'evening', boolean>;
+    candidates?: {
+      id: number;
+      title: string;
+      slotKey: 'early' | 'afternoon' | 'evening' | null;
+      totalOdds: number;
+      totalPicks: number;
+      result: string;
+      qualifying: boolean;
+      attached: boolean;
+      canAttach: boolean;
+    }[];
+    canAttachBest?: boolean;
+    blockReason?: string | null;
+  };
 };
 
 type RunResult = {
@@ -90,6 +126,7 @@ export default function AdminAccaDeskPage() {
   const [running, setRunning] = useState(false);
   const [lastRun, setLastRun] = useState<RunResult | null>(null);
   const [impersonating, setImpersonating] = useState<number | null>(null);
+  const [rolloverBusy, setRolloverBusy] = useState<string | null>(null);
 
   const impersonateUser = async (userId: number) => {
     const token = localStorage.getItem('token');
@@ -205,6 +242,50 @@ export default function AdminAccaDeskPage() {
     }
   };
 
+  const rolloverAction = async (path: string, body?: Record<string, unknown>, busy = path) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setRolloverBusy(busy);
+    setMessage(null);
+    try {
+      const res = await fetch(`${getApiUrl()}/admin/${path}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: body ? JSON.stringify(body) : '{}',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMessage({ type: 'error', text: getApiErrorMessage(data, 'Rollover action failed') });
+        return;
+      }
+      if (path === 'rollover/publish') {
+        const r = data as RunResult;
+        setLastRun(r);
+        setMessage({
+          type: r.errors > 0 ? 'error' : 'success',
+          text: `AccaSureO15: published ${r.published} · already ${r.skippedAlreadyPosted} · empty pool ${r.skippedEmptyPool} · errors ${r.errors}`,
+        });
+      } else if (path === 'rollover/attach') {
+        const day = (data as { dayNumber?: number }).dayNumber;
+        const ticketId = (data as { ticketId?: number }).ticketId;
+        const replaced = (data as { replaced?: boolean }).replaced;
+        setMessage({
+          type: 'success',
+          text: replaced
+            ? `Switched today’s plan day ${day} to coupon #${ticketId}. Same cut rules as cron.`
+            : `Attached coupon #${ticketId} as day ${day}.`,
+        });
+      } else {
+        setMessage({ type: 'success', text: 'Rollover settlement synced from existing tickets.' });
+      }
+      await loadData();
+    } catch (e) {
+      setMessage({ type: 'error', text: (e as Error).message || 'Rollover action failed' });
+    } finally {
+      setRolloverBusy(null);
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
@@ -313,6 +394,149 @@ export default function AdminAccaDeskPage() {
                 <p className="text-sm text-gray-500">No Acca Desk sync status yet (run daily or wait for cron).</p>
               )}
             </div>
+
+            {overview.rollover ? (
+              <div className="mb-8 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 shadow-sm">
+                <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
+                  <div>
+                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">30-day rollover (AccaSureO15)</h2>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                      {overview.rollover.run
+                        ? `${overview.rollover.run.status} · day ${overview.rollover.run.currentDay}/30 · started ${formatWhen(overview.rollover.run.startedAt)}`
+                        : 'No run yet. Publish a Sure · Over 1.5 slot in range, then attach it as Day 1.'}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Qualifying combined odds {Number(overview.rollover.oddsMin ?? 1.5).toFixed(2)}–
+                      {Number(overview.rollover.oddsMax ?? 1.75).toFixed(2)}. Auto prefers earliest slot;
+                      if early is empty or out of range, generate afternoon/evening and attach that coupon.
+                      Same won / lost / void cut as cron.
+                    </p>
+                  </div>
+                  <Link href="/rollover" className="text-sm font-medium text-teal-700 dark:text-teal-300 hover:underline">
+                    Open public board
+                  </Link>
+                </div>
+
+                {overview.rollover.pendingDay ? (
+                  <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
+                    Pending day {overview.rollover.pendingDay.dayNumber}
+                    {overview.rollover.pendingDay.ticketId ? (
+                      <>
+                        {' · '}
+                        <Link
+                          href={`/coupons/${overview.rollover.pendingDay.ticketId}`}
+                          className="text-teal-700 dark:text-teal-300 hover:underline"
+                        >
+                          coupon #{overview.rollover.pendingDay.ticketId}
+                        </Link>
+                      </>
+                    ) : (
+                      ' · waiting for a qualifying coupon'
+                    )}
+                    {overview.rollover.pendingDay.combinedOdds != null
+                      ? ` · ${overview.rollover.pendingDay.combinedOdds.toFixed(2)}`
+                      : ''}
+                    {overview.rollover.blockReason === 'awaiting_settlement'
+                      ? ' · wait for this coupon to settle before attaching today'
+                      : ''}
+                  </p>
+                ) : null}
+
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={!!rolloverBusy}
+                    onClick={() => rolloverAction('rollover/sync', undefined, 'sync')}
+                  >
+                    {rolloverBusy === 'sync' ? 'Syncing…' : 'Sync settlement'}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={!!rolloverBusy}
+                    onClick={() => rolloverAction('rollover/publish', {}, 'publish')}
+                  >
+                    {rolloverBusy === 'publish' ? 'Publishing…' : 'Publish remaining AccaSureO15 slots'}
+                  </Button>
+                  {(['early', 'afternoon', 'evening'] as const).map((slot) => {
+                    const posted = overview.rollover?.postedSlots?.[slot];
+                    return (
+                      <Button
+                        key={slot}
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        disabled={!!rolloverBusy || posted}
+                        onClick={() => rolloverAction('rollover/publish', { slotKey: slot }, `publish-${slot}`)}
+                      >
+                        {rolloverBusy === `publish-${slot}`
+                          ? 'Publishing…'
+                          : posted
+                            ? `${slot} posted`
+                            : `Generate ${slot}`}
+                      </Button>
+                    );
+                  })}
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!!rolloverBusy || !overview.rollover.canAttachBest}
+                    onClick={() => rolloverAction('rollover/attach', {}, 'attach-best')}
+                  >
+                    {rolloverBusy === 'attach-best' ? 'Attaching…' : 'Attach best qualifying'}
+                  </Button>
+                </div>
+
+                {(overview.rollover.candidates?.length ?? 0) === 0 ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    No AccaSureO15 coupons today. Generate a slot (afternoon/evening if early failed), then attach.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {overview.rollover.candidates!.map((c) => (
+                      <div
+                        key={c.id}
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-700"
+                      >
+                        <div className="min-w-0">
+                          <p className="font-medium text-gray-900 dark:text-white truncate">{c.title}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {c.slotKey ?? 'slot?'} · {c.totalOdds.toFixed(2)} · {c.totalPicks}-fold · {c.result}
+                            {c.attached ? ' · on board' : ''}
+                            {c.qualifying ? ' · qualifies' : ' · out of range'}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link
+                            href={`/coupons/${c.id}`}
+                            className={buttonClassName({ size: 'sm', variant: 'secondary' })}
+                          >
+                            View
+                          </Link>
+                          {c.canAttach && overview.rollover?.blockReason !== 'awaiting_settlement' ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              disabled={!!rolloverBusy}
+                              onClick={() => rolloverAction('rollover/attach', { ticketId: c.id }, `attach-${c.id}`)}
+                            >
+                              {rolloverBusy === `attach-${c.id}`
+                                ? 'Attaching…'
+                                : overview.rollover?.pendingDay?.ticketId
+                                  ? 'Switch to this'
+                                  : 'Attach as today'}
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : null}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">

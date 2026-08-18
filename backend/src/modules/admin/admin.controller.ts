@@ -14,6 +14,7 @@ import { ResultTrackerService } from '../predictions/result-tracker.service';
 import { TipstersSetupService } from '../predictions/tipsters-setup.service';
 import { AccaDeskSetupService } from '../acca-generator/acca-desk-setup.service';
 import { AccaDeskPublisherService } from '../acca-generator/acca-desk-publisher.service';
+import { RolloverDeskService } from '../acca-generator/rollover-desk.service';
 import { NewsArticle, NewsCategory, normalizeNewsSport } from '../news/entities/news-article.entity';
 import { NewsService } from '../news/news.service';
 import { TransfersSyncService } from '../news/transfers-sync.service';
@@ -53,6 +54,7 @@ export class AdminController {
     private readonly tipstersSetup: TipstersSetupService,
     private readonly accaDeskSetup: AccaDeskSetupService,
     private readonly accaDeskPublisher: AccaDeskPublisherService,
+    private readonly rolloverDesk: RolloverDeskService,
     private readonly newsService: NewsService,
     private readonly transfersSyncService: TransfersSyncService,
     private readonly injuriesSyncService: InjuriesSyncService,
@@ -225,6 +227,47 @@ export class AdminController {
   async getAccaDeskOverview(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.accaDeskPublisher.getOverview();
+  }
+
+  @Get('rollover')
+  async getRolloverAdmin(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.rolloverDesk.getAdminState();
+  }
+
+  @Post('rollover/sync')
+  async syncRolloverAdmin(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.rolloverDesk.syncNow();
+  }
+
+  /** Publish AccaSureO15 only. Body `{ slotKey?: 'early' | 'afternoon' | 'evening' }`. */
+  @Post('rollover/publish')
+  async publishRolloverOwner(
+    @CurrentUser() user: User,
+    @Body() body?: { slotKey?: string },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const raw = body?.slotKey?.trim().toLowerCase();
+    const slotKey = raw === 'early' || raw === 'afternoon' || raw === 'evening' ? raw : undefined;
+    if (raw && !slotKey) {
+      throw new BadRequestException('slotKey must be early, afternoon, or evening');
+    }
+    return this.accaDeskPublisher.publishRolloverOwner({ slotKey, ensureSetup: true });
+  }
+
+  /** Attach earliest qualifying AccaSureO15 coupon, or `{ ticketId }` for a specific slot. */
+  @Post('rollover/attach')
+  async attachRolloverAdmin(
+    @CurrentUser() user: User,
+    @Body() body?: { ticketId?: number },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const ticketId = body?.ticketId != null ? Number(body.ticketId) : undefined;
+    if (ticketId != null && (!Number.isInteger(ticketId) || ticketId <= 0)) {
+      throw new BadRequestException('ticketId must be a positive integer');
+    }
+    return this.rolloverDesk.adminAttach({ ticketId });
   }
 
   @Get('ai-tipsters/subscription-packages')

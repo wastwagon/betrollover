@@ -21,6 +21,7 @@ const LOCALISED_PAGES: Array<{
   { path: '/tipsters',               changeFrequency: 'daily',   priority: 0.9  },
   { path: '/leaderboard',            changeFrequency: 'daily',   priority: 0.8  },
   { path: '/acca-generator',         changeFrequency: 'weekly',  priority: 0.85 },
+  { path: '/rollover',               changeFrequency: 'daily',   priority: 0.8  },
   { path: '/live-scores',            changeFrequency: 'hourly',  priority: 0.8  },
   { path: '/league-tables',          changeFrequency: 'daily',   priority: 0.75 },
   { path: '/discover',               changeFrequency: 'daily',   priority: 0.85 },

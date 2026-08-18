@@ -22,7 +22,9 @@ import { Tipster } from '../predictions/entities/tipster.entity';
 import { SyncStatus } from '../fixtures/entities/sync-status.entity';
 import { AccaGeneratorService } from './acca-generator.service';
 import { AccaDeskSetupService } from './acca-desk-setup.service';
+import { RolloverDeskService } from './rollover-desk.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { ROLLOVER_OWNER_USERNAME } from '../../config/rollover-desk.config';
 import type { AccaDeskShort } from '../email/acca-desk-shorts.config';
 
 export type AccaDeskRunResult = {
@@ -48,6 +50,7 @@ export class AccaDeskPublisherService {
   constructor(
     private readonly accaGenerator: AccaGeneratorService,
     private readonly setup: AccaDeskSetupService,
+    private readonly rollover: RolloverDeskService,
     private readonly notifications: NotificationsService,
     @InjectRepository(Tipster)
     private readonly tipsterRepo: Repository<Tipster>,
@@ -146,6 +149,7 @@ export class AccaDeskPublisherService {
     }
 
     const sync = await this.syncStatusRepo.findOne({ where: { syncType: 'acca_desk' } });
+    const rollover = await this.rollover.getAdminState();
 
     return {
       enabled: isAccaDeskEnabled(),
@@ -168,6 +172,7 @@ export class AccaDeskPublisherService {
         : null,
       roster,
       todayTickets,
+      rollover,
     };
   }
 
@@ -244,6 +249,89 @@ export class AccaDeskPublisherService {
         this.logger.warn(`Acca Desk follower shorts email failed: ${message}`);
       }
     }
+    try {
+      await this.rollover.attachToday();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Rollover attach after Acca Desk publish failed: ${message}`);
+    }
+    return result;
+  }
+
+  /**
+   * Publish AccaSureO15 only (rollover owner). Optional slot; otherwise remaining unposted slots.
+   * Does not attach — admin picks the qualifying coupon next.
+   */
+  async publishRolloverOwner(opts?: { slotKey?: AccaDeskSlotKey; ensureSetup?: boolean }): Promise<AccaDeskRunResult> {
+    if (!isAccaDeskEnabled()) {
+      return {
+        enabled: false,
+        published: 0,
+        skippedAlreadyPosted: 0,
+        skippedEmptyPool: 0,
+        skippedNoUser: 0,
+        errors: 0,
+        details: [],
+      };
+    }
+    if (opts?.ensureSetup !== false) {
+      await this.setup.initializeAccaDeskTipsters();
+    }
+
+    const config = ACCA_DESK_TIPSTERS.find((c) => c.username === ROLLOVER_OWNER_USERNAME);
+    if (!config) {
+      return {
+        enabled: true,
+        published: 0,
+        skippedAlreadyPosted: 0,
+        skippedEmptyPool: 0,
+        skippedNoUser: 1,
+        errors: 0,
+        details: [{ username: ROLLOVER_OWNER_USERNAME, status: 'no_user' }],
+      };
+    }
+
+    const slots = opts?.slotKey
+      ? ACCA_DESK_TIME_SLOTS.filter((s) => s.key === opts.slotKey)
+      : ACCA_DESK_TIME_SLOTS;
+    const usedFixtureIds = new Set<number>();
+    await this.seedUsedFixturesFromToday(usedFixtureIds);
+    const postedSlotsByUser = new Map<number, Set<AccaDeskSlotKey>>();
+    const result: AccaDeskRunResult = {
+      enabled: true,
+      published: 0,
+      skippedAlreadyPosted: 0,
+      skippedEmptyPool: 0,
+      skippedNoUser: 0,
+      errors: 0,
+      details: [],
+    };
+
+    for (const slot of slots) {
+      try {
+        const outcome = await this.publishOne(config, slot, usedFixtureIds, postedSlotsByUser);
+        result.details.push(outcome.detail);
+        if (outcome.detail.status === 'published') result.published++;
+        else if (outcome.detail.status === 'skipped_already') result.skippedAlreadyPosted++;
+        else if (outcome.detail.status === 'empty_pool') result.skippedEmptyPool++;
+        else if (outcome.detail.status === 'no_user') result.skippedNoUser++;
+        else result.errors++;
+      } catch (err: unknown) {
+        result.errors++;
+        const message = err instanceof Error ? err.message : String(err);
+        this.logger.error(`Rollover publish ${config.username} ${slot.key} failed: ${message}`);
+        result.details.push({
+          username: config.username,
+          status: 'error',
+          slotKey: slot.key,
+          message,
+        });
+      }
+    }
+
+    this.logger.log(
+      `Rollover AccaSureO15 publish: published=${result.published} already=${result.skippedAlreadyPosted} empty=${result.skippedEmptyPool} errors=${result.errors}`,
+    );
     return result;
   }
 

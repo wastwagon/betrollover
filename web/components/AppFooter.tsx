@@ -67,6 +67,11 @@ export function AppFooter() {
                   {t('nav.leaderboard')}
                 </Link>
               </li>
+              <li>
+                <Link href="/rollover" className={footerLinkClass}>
+                  {t('nav.rollover')}
+                </Link>
+              </li>
             </ul>
           </div>
           <div>
