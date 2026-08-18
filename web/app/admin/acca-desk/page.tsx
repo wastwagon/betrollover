@@ -61,15 +61,41 @@ type Overview = {
     oddsMin?: number;
     oddsMax?: number;
     targetOdds?: number;
+    campaignStakeGhs?: number;
+    defaultCampaignStakeGhs?: number;
+    canAttachNextDay?: boolean;
+    nextDayNumber?: number;
+    archive?: {
+      bestWonDays: number;
+      bestCampaignStakeGhs: number | null;
+      bestExampleReturnGhs: number | null;
+      campaignsCompleted: number;
+      campaignsCut: number;
+      campaignsReset: number;
+      lastEnded?: {
+        status: string;
+        wonDays: number;
+        endedDay?: number;
+        endedAt: string | null;
+      } | null;
+    };
     run: {
       id: number;
       status: string;
       currentDay: number;
+      campaignStakeGhs?: number;
       startedAt: string;
       completedAt?: string | null;
       brokenAt?: string | null;
     } | null;
     pendingDay: {
+      dayNumber: number;
+      calendarDate: string;
+      ticketId: number | null;
+      status: string;
+      combinedOdds: number | null;
+    } | null;
+    lastDay?: {
       dayNumber: number;
       calendarDate: string;
       ticketId: number | null;
@@ -127,6 +153,7 @@ export default function AdminAccaDeskPage() {
   const [lastRun, setLastRun] = useState<RunResult | null>(null);
   const [impersonating, setImpersonating] = useState<number | null>(null);
   const [rolloverBusy, setRolloverBusy] = useState<string | null>(null);
+  const [stakeDraft, setStakeDraft] = useState('20');
 
   const impersonateUser = async (userId: number) => {
     const token = localStorage.getItem('token');
@@ -181,6 +208,11 @@ export default function AdminAccaDeskPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    const stake = overview?.rollover?.campaignStakeGhs ?? overview?.rollover?.defaultCampaignStakeGhs;
+    if (stake != null) setStakeDraft(String(stake));
+  }, [overview?.rollover?.campaignStakeGhs, overview?.rollover?.defaultCampaignStakeGhs]);
 
   const handleSetup = async () => {
     const token = localStorage.getItem('token');
@@ -274,6 +306,16 @@ export default function AdminAccaDeskPage() {
           text: replaced
             ? `Switched today’s plan day ${day} to coupon #${ticketId}. Same cut rules as cron.`
             : `Attached coupon #${ticketId} as day ${day}.`,
+        });
+      } else if (path === 'rollover/settings') {
+        setMessage({
+          type: 'success',
+          text: `Campaign example stake saved: GHS ${stakeDraft}. New cycles use this amount. Table examples updated.`,
+        });
+      } else if (path === 'rollover/reset') {
+        setMessage({
+          type: 'success',
+          text: 'Rollover table reset. A new campaign starts at Day 1. Previous runs stay in records.',
         });
       } else {
         setMessage({ type: 'success', text: 'Rollover settlement synced from existing tickets.' });
@@ -407,14 +449,73 @@ export default function AdminAccaDeskPage() {
                     </p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                       Qualifying combined odds {Number(overview.rollover.oddsMin ?? 1.5).toFixed(2)}–
-                      {Number(overview.rollover.oddsMax ?? 1.75).toFixed(2)}. Auto prefers earliest slot;
-                      if early is empty or out of range, generate afternoon/evening and attach that coupon.
-                      Same won / lost / void cut as cron.
+                      {Number(overview.rollover.oddsMax ?? 1.75).toFixed(2)}. Auto attaches at most one coupon per
+                      calendar day. If Day 1 is live or already won and evening is still to play, use{' '}
+                      <span className="font-medium text-gray-700 dark:text-gray-200">Attach as Day 2</span>
+                      — do not Switch, that would replace Day 1. A loss auto-resets the public table; records stay above it.
                     </p>
                   </div>
                   <Link href="/rollover" className="text-sm font-medium text-teal-700 dark:text-teal-300 hover:underline">
                     Open public board
                   </Link>
+                </div>
+
+                {overview.rollover.archive ? (
+                  <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
+                    Records: best run Day {overview.rollover.archive.bestWonDays || '—'}
+                    {overview.rollover.archive.bestExampleReturnGhs != null
+                      ? ` · example GHS ${Math.round(Number(overview.rollover.archive.bestCampaignStakeGhs ?? 0))} → ${overview.rollover.archive.bestExampleReturnGhs}`
+                      : ''}
+                    {' · '}
+                    {overview.rollover.archive.campaignsCompleted} finished · {overview.rollover.archive.campaignsCut} cut
+                    {overview.rollover.archive.campaignsReset
+                      ? ` · ${overview.rollover.archive.campaignsReset} reset`
+                      : ''}
+                  </p>
+                ) : null}
+
+                <div className="mb-4 flex flex-col sm:flex-row sm:items-end gap-3">
+                  <label className="block text-sm text-gray-700 dark:text-gray-200">
+                    Campaign example stake (GHS)
+                    <input
+                      type="number"
+                      min={1}
+                      max={100000}
+                      step="1"
+                      value={stakeDraft}
+                      onChange={(e) => setStakeDraft(e.target.value)}
+                      className="mt-1 block w-40 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
+                    />
+                  </label>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={!!rolloverBusy}
+                    onClick={() =>
+                      rolloverAction('rollover/settings', { campaignStakeGhs: Number(stakeDraft) }, 'stake')
+                    }
+                  >
+                    {rolloverBusy === 'stake' ? 'Saving…' : 'Save campaign amount'}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={!!rolloverBusy}
+                    onClick={() => {
+                      if (
+                        !window.confirm(
+                          'Reset the public 30-day table? This ends the current campaign at Day 1 of a new cycle. Records are kept.',
+                        )
+                      ) {
+                        return;
+                      }
+                      rolloverAction('rollover/reset', {}, 'reset');
+                    }}
+                  >
+                    {rolloverBusy === 'reset' ? 'Resetting…' : 'Reset table'}
+                  </Button>
                 </div>
 
                 {overview.rollover.pendingDay ? (
@@ -438,6 +539,12 @@ export default function AdminAccaDeskPage() {
                       : ''}
                     {overview.rollover.blockReason === 'awaiting_settlement'
                       ? ' · wait for this coupon to settle before attaching today'
+                      : ''}
+                    {overview.rollover.lastDay &&
+                    overview.rollover.lastDay.dayNumber !== overview.rollover.pendingDay.dayNumber
+                      ? ` · Day ${overview.rollover.lastDay.dayNumber} also live${
+                          overview.rollover.lastDay.ticketId ? ` (coupon #${overview.rollover.lastDay.ticketId})` : ''
+                        }`
                       : ''}
                   </p>
                 ) : null}
@@ -488,6 +595,18 @@ export default function AdminAccaDeskPage() {
                   >
                     {rolloverBusy === 'attach-best' ? 'Attaching…' : 'Attach best qualifying'}
                   </Button>
+                  {overview.rollover.canAttachNextDay ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={!!rolloverBusy}
+                      onClick={() => rolloverAction('rollover/attach', { asNextDay: true }, 'attach-next')}
+                    >
+                      {rolloverBusy === 'attach-next'
+                        ? 'Attaching…'
+                        : `Attach next slot as Day ${overview.rollover.nextDayNumber ?? 2}`}
+                    </Button>
+                  ) : null}
                 </div>
 
                 {(overview.rollover.candidates?.length ?? 0) === 0 ? (
@@ -516,18 +635,52 @@ export default function AdminAccaDeskPage() {
                           >
                             View
                           </Link>
-                          {c.canAttach && overview.rollover?.blockReason !== 'awaiting_settlement' ? (
+                          {c.canAttach && overview.rollover?.canAttachNextDay ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              disabled={!!rolloverBusy}
+                              onClick={() =>
+                                rolloverAction(
+                                  'rollover/attach',
+                                  { ticketId: c.id, asNextDay: true },
+                                  `attach-next-${c.id}`,
+                                )
+                              }
+                            >
+                              {rolloverBusy === `attach-next-${c.id}`
+                                ? 'Attaching…'
+                                : `Attach as Day ${overview.rollover?.nextDayNumber ?? 2}`}
+                            </Button>
+                          ) : null}
+                          {c.canAttach &&
+                          overview.rollover?.pendingDay?.ticketId &&
+                          overview.rollover.blockReason !== 'awaiting_settlement' &&
+                          (overview.rollover.lastDay?.dayNumber ?? overview.rollover.pendingDay.dayNumber) ===
+                            overview.rollover.pendingDay.dayNumber ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="secondary"
+                              disabled={!!rolloverBusy}
+                              onClick={() => rolloverAction('rollover/attach', { ticketId: c.id }, `attach-${c.id}`)}
+                            >
+                              {rolloverBusy === `attach-${c.id}`
+                                ? 'Attaching…'
+                                : `Switch day ${overview.rollover.pendingDay.dayNumber} to this`}
+                            </Button>
+                          ) : null}
+                          {c.canAttach &&
+                          !overview.rollover?.pendingDay?.ticketId &&
+                          !overview.rollover?.canAttachNextDay &&
+                          overview.rollover?.blockReason !== 'awaiting_settlement' ? (
                             <Button
                               type="button"
                               size="sm"
                               disabled={!!rolloverBusy}
                               onClick={() => rolloverAction('rollover/attach', { ticketId: c.id }, `attach-${c.id}`)}
                             >
-                              {rolloverBusy === `attach-${c.id}`
-                                ? 'Attaching…'
-                                : overview.rollover?.pendingDay?.ticketId
-                                  ? 'Switch to this'
-                                  : 'Attach as today'}
+                              {rolloverBusy === `attach-${c.id}` ? 'Attaching…' : 'Attach as today'}
                             </Button>
                           ) : null}
                         </div>

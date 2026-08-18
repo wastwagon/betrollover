@@ -65,10 +65,25 @@ type Board = {
   oddsMax: number;
   exampleStakeStartGhs: number;
   calendarDate: string;
+  archive?: {
+    bestWonDays: number;
+    bestCampaignStakeGhs: number | null;
+    bestExampleReturnGhs: number | null;
+    campaignsCompleted: number;
+    campaignsCut: number;
+    campaignsReset: number;
+    lastEnded?: {
+      status: string;
+      wonDays: number;
+      endedDay?: number;
+      endedAt: string | null;
+    } | null;
+  };
   run: {
     id: number;
     status: string;
     currentDay: number;
+    campaignStakeGhs?: number;
     startedAt: string;
   } | null;
   today: {
@@ -160,6 +175,17 @@ export function RolloverBoard() {
         : null;
 
   const todayMoney = board.days.find((d) => d.dayNumber === board.today.dayNumber);
+  const archive = board.archive;
+  const bestLine =
+    archive && archive.bestWonDays > 0
+      ? archive.bestExampleReturnGhs != null && archive.bestCampaignStakeGhs != null
+        ? t('rollover.best_run_example', {
+            day: String(archive.bestWonDays),
+            stake: String(Math.round(archive.bestCampaignStakeGhs)),
+            ret: String(archive.bestExampleReturnGhs),
+          })
+        : t('rollover.best_run', { day: String(archive.bestWonDays) })
+      : t('rollover.best_run_none');
 
   return (
     <div className="space-y-6">
@@ -168,6 +194,7 @@ export function RolloverBoard() {
         <p className="mt-1">
           {t('rollover.owner', { name: board.ownerDisplayName })} · {board.oddsMin.toFixed(2)}–{board.oddsMax.toFixed(2)} @ ~{board.targetOdds.toFixed(2)}
         </p>
+        <p className="mt-1">{t('rollover.campaign_stake', { stake: String(Math.round(board.exampleStakeStartGhs)) })}</p>
       </div>
 
       <section className="space-y-3">
@@ -219,7 +246,41 @@ export function RolloverBoard() {
 
       <section>
         <h2 className="text-base font-semibold text-[var(--text)] mb-3">{t('rollover.plan_title')}</h2>
-
+        <div className="mb-3 rounded-xl border border-[var(--border)] bg-[var(--fill-secondary)]/60 px-4 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
+            {t('rollover.records')}
+          </p>
+          <p className="mt-1 text-sm font-semibold text-[var(--text)]">{bestLine}</p>
+          {archive ? (
+            <>
+              <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+                {archive.campaignsReset > 0
+                  ? t('rollover.campaigns_with_reset', {
+                      completed: String(archive.campaignsCompleted),
+                      cut: String(archive.campaignsCut),
+                      reset: String(archive.campaignsReset),
+                    })
+                  : t('rollover.campaigns', {
+                      completed: String(archive.campaignsCompleted),
+                      cut: String(archive.campaignsCut),
+                    })}
+              </p>
+              {archive.lastEnded?.status === 'broken' ? (
+                <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+                  {t('rollover.last_cut', { day: String(archive.lastEnded.endedDay || archive.lastEnded.wonDays || 1) })}
+                </p>
+              ) : archive.lastEnded?.status === 'reset' ? (
+                <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+                  {t('rollover.last_reset', { day: String(archive.lastEnded.endedDay || archive.lastEnded.wonDays || 1) })}
+                </p>
+              ) : archive.lastEnded?.status === 'completed' ? (
+                <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+                  {t('rollover.last_finished', { total: String(board.planDays) })}
+                </p>
+              ) : null}
+            </>
+          ) : null}
+        </div>
         <ul className="md:hidden divide-y divide-[var(--separator)] rounded-xl border border-[var(--border)] bg-[var(--card)] overflow-hidden">
           {board.days.map((day) => {
             const inner = (

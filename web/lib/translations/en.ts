@@ -1976,7 +1976,7 @@ const en = {
 
   'rollover.label': 'Acca Desk',
   'rollover.title': '30-Day Rollover',
-  'rollover.tagline': 'One public Sure · Over 1.5 two-fold per day. Educational — not a payout.',
+  'rollover.tagline': 'One public Sure · Over 1.5 two-fold per plan day. Educational — not a payout.',
   'rollover.today': "Today's coupon",
   'rollover.plan_title': '30-day board',
   'rollover.no_coupon': 'No qualifying 1.50–1.75 coupon today. The run holds on day {day}.',
@@ -1999,10 +1999,20 @@ const en = {
   'rollover.disclaimer_label': 'Educational & informational · 18+',
   'rollover.disclaimer': 'This is a free public board from Acca Desk Sure · Over 1.5. Paying for a pick elsewhere buys information, not a bet. We do not pay odds or credit wallets when this sequence “wins”. Gamble responsibly. 18+ only.',
   'rollover.run_day': 'Day {day} of {total}',
-  'rollover.run_completed': 'This run finished. A new run starts with the next qualifying coupon.',
-  'rollover.run_broken': 'The sequence reset after a losing coupon. The next qualifying coupon is Day 1.',
+  'rollover.run_completed': 'This campaign finished. A new 30-day table has started.',
+  'rollover.run_broken': 'This campaign was cut. A new 30-day table has started at Day 1.',
   'rollover.owner': 'Published by {name}',
   'rollover.load_error': 'The rollover board could not be loaded. Try again shortly.',
+  'rollover.records': 'Records',
+  'rollover.best_run': 'Best run: Day {day} won',
+  'rollover.best_run_example': 'Best run: Day {day} · example GHS {stake} → {ret}',
+  'rollover.best_run_none': 'No archive yet — this table is the live campaign.',
+  'rollover.campaigns': '{completed} finished · {cut} cut',
+  'rollover.campaigns_with_reset': '{completed} finished · {cut} cut · {reset} reset',
+  'rollover.campaign_stake': 'Example campaign stake: GHS {stake}',
+  'rollover.last_cut': 'Last campaign was cut at Day {day}. This table is a new cycle.',
+  'rollover.last_reset': 'Last campaign was reset at Day {day}. This table is a new cycle.',
+  'rollover.last_finished': 'Last campaign finished all {total} days. This table is a new cycle.',
 };
 
 export default en;

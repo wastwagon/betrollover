@@ -63,6 +63,15 @@ describe('rollover-desk.util', () => {
     expect(picked?.id).toBe(2);
   });
 
+  it('can prefer the latest qualifying slot for same-day Day 2', () => {
+    const picked = selectQualifyingRolloverTicket(
+      [ticket(1, 1.52, 'Early'), ticket(2, 1.64, 'Afternoon'), ticket(3, 1.66, 'Evening')],
+      new Set([2]),
+      { preferLatestSlot: true },
+    );
+    expect(picked?.id).toBe(3);
+  });
+
   it('ignores settled tickets and excluded ids', () => {
     const picked = selectQualifyingRolloverTicket(
       [ticket(1, 1.6, 'Early', { result: 'void' }), ticket(2, 1.62, 'Afternoon')],
@@ -78,5 +87,14 @@ describe('rollover-desk.util', () => {
     expect(exampleMoneyForDay(7).stakeGhs).not.toBeNull();
     expect(exampleMoneyForDay(8).stakeGhs).toBeNull();
     expect(exampleMoneyForDay(30).returnGhs).toBeNull();
+  });
+
+  it('scales example cash from a custom campaign stake', () => {
+    expect(exampleStakeGhs(1, 100)).toBe(100);
+    expect(exampleReturnGhs(1, 100)).toBeCloseTo(160);
+    expect(exampleMoneyForDay(1, 7, 100).stakeGhs).toBe(100);
+    expect(exampleMoneyForDay(1, 7, 100).returnGhs).toBe(160);
+    expect(exampleMoneyForDay(2, 7, 100).stakeGhs).toBe(160);
+    expect(exampleMoneyForDay(2, 7, 100).returnGhs).toBe(256);
   });
 });

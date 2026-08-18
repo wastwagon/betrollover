@@ -1,6 +1,7 @@
 /**
  * Public 30-day educational rollover — Acca Desk Sure · Over 1.5 only.
- * One 2-fold per calendar day (Africa/Accra). Not a bookmaker payout.
+ * One 2-fold per plan day. Cron attaches at most one coupon per Accra calendar day;
+ * admin may attach a later slot as the next plan day on the same date. Not a payout.
  */
 
 import { ACCA_DESK_TIME_SLOTS, type AccaDeskSlotKey } from './acca-desk-slots';
@@ -19,5 +20,5 @@ export const ROLLOVER_TIMEZONE = process.env.PREDICTION_TIMEZONE || 'Africa/Accr
 
 export const ROLLOVER_SLOT_ORDER: AccaDeskSlotKey[] = ACCA_DESK_TIME_SLOTS.map((s) => s.key);
 
-export type RolloverRunStatus = 'active' | 'completed' | 'broken';
+export type RolloverRunStatus = 'active' | 'completed' | 'broken' | 'reset';
 export type RolloverDayStatus = 'pending' | 'won' | 'lost' | 'void' | 'skipped';

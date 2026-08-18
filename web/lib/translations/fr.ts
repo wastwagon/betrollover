@@ -1981,7 +1981,7 @@ const fr: Record<string, string> = {
 
   'rollover.label': 'Acca Desk',
   'rollover.title': 'Relance 30 jours',
-  'rollover.tagline': 'Un double Sure · Plus de 1,5 but public par jour. Éducatif — pas un paiement.',
+  'rollover.tagline': 'Un double Sure · Plus de 1,5 but public par jour de série. Éducatif — pas un paiement.',
   'rollover.today': 'Coupon du jour',
   'rollover.plan_title': 'Tableau 30 jours',
   'rollover.no_coupon': 'Aucun coupon 1,50–1,75 aujourd’hui. La série reste au jour {day}.',
@@ -2004,10 +2004,20 @@ const fr: Record<string, string> = {
   'rollover.disclaimer_label': 'Éducatif et informatif · 18+',
   'rollover.disclaimer': 'Tableau public gratuit d’Acca Desk Sure · Plus de 1,5 but. Acheter un pick ailleurs achète une information, pas un pari. Nous ne versons pas les cotes et ne créditons pas les portefeuilles si cette série « gagne ». Jouez de manière responsable. 18+ uniquement.',
   'rollover.run_day': 'Jour {day} sur {total}',
-  'rollover.run_completed': 'Cette série est terminée. Une nouvelle série commence avec le prochain coupon admissible.',
-  'rollover.run_broken': 'La série a redémarré après un coupon perdu. Le prochain coupon admissible est le jour 1.',
+  'rollover.run_completed': 'Cette série est terminée. Un nouveau tableau 30 jours a commencé.',
+  'rollover.run_broken': 'Cette série a été coupée. Un nouveau tableau 30 jours a commencé au jour 1.',
   'rollover.owner': 'Publié par {name}',
   'rollover.load_error': 'Impossible de charger le tableau de relance. Réessayez dans un instant.',
+  'rollover.records': 'Records',
+  'rollover.best_run': 'Meilleure série : jour {day} gagné',
+  'rollover.best_run_example': 'Meilleure série : jour {day} · exemple GHS {stake} → {ret}',
+  'rollover.best_run_none': 'Pas encore d’archive — ce tableau est la série en cours.',
+  'rollover.campaigns': '{completed} terminées · {cut} coupées',
+  'rollover.campaigns_with_reset': '{completed} terminées · {cut} coupées · {reset} réinitialisées',
+  'rollover.campaign_stake': 'Mise d’exemple de la campagne : GHS {stake}',
+  'rollover.last_cut': 'La dernière série a été coupée au jour {day}. Ce tableau est un nouveau cycle.',
+  'rollover.last_reset': 'La dernière série a été réinitialisée au jour {day}. Ce tableau est un nouveau cycle.',
+  'rollover.last_finished': 'La dernière série a terminé les {total} jours. Ce tableau est un nouveau cycle.',
 };
 
 export default fr;

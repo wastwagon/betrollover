@@ -43,10 +43,12 @@ export function isQualifyingRolloverOdds(odds: number): boolean {
   return Number.isFinite(odds) && odds >= ROLLOVER_ODDS_MIN && odds <= ROLLOVER_ODDS_MAX;
 }
 
-/** Earliest Acca Desk slot in range; ties break toward 1.60. */
+/** Earliest Acca Desk slot in range; ties break toward 1.60.
+ * `preferLatestSlot` picks evening over afternoon (admin same-day Day 2). */
 export function selectQualifyingRolloverTicket<T extends RolloverTicketLike>(
   tickets: T[],
   excludeTicketIds: Set<number> = new Set(),
+  opts?: { preferLatestSlot?: boolean },
 ): T | null {
   const eligible = tickets.filter((t) => {
     if (excludeTicketIds.has(t.id)) return false;
@@ -59,7 +61,7 @@ export function selectQualifyingRolloverTicket<T extends RolloverTicketLike>(
   eligible.sort((a, b) => {
     const ra = SLOT_RANK[slotKeyFromTitle(a.title) ?? 'evening'] ?? 9;
     const rb = SLOT_RANK[slotKeyFromTitle(b.title) ?? 'evening'] ?? 9;
-    if (ra !== rb) return ra - rb;
+    if (ra !== rb) return opts?.preferLatestSlot ? rb - ra : ra - rb;
     const da = Math.abs(Number(a.totalOdds) - ROLLOVER_TARGET_ODDS);
     const db = Math.abs(Number(b.totalOdds) - ROLLOVER_TARGET_ODDS);
     return da - db;
@@ -87,12 +89,14 @@ export function exampleReturnGhs(
 export function exampleMoneyForDay(
   dayNumber: number,
   maxDay = ROLLOVER_EXAMPLE_MAX_MONEY_DAY,
+  start = ROLLOVER_EXAMPLE_STAKE_GHS,
+  odds = ROLLOVER_TARGET_ODDS,
 ): { stakeGhs: number | null; returnGhs: number | null } {
   if (dayNumber < 1 || dayNumber > maxDay) {
     return { stakeGhs: null, returnGhs: null };
   }
   return {
-    stakeGhs: Math.round(exampleStakeGhs(dayNumber)),
-    returnGhs: Math.round(exampleReturnGhs(dayNumber)),
+    stakeGhs: Math.round(exampleStakeGhs(dayNumber, start, odds)),
+    returnGhs: Math.round(exampleReturnGhs(dayNumber, start, odds)),
   };
 }

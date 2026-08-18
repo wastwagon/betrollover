@@ -256,18 +256,38 @@ export class AdminController {
     return this.accaDeskPublisher.publishRolloverOwner({ slotKey, ensureSetup: true });
   }
 
-  /** Attach earliest qualifying AccaSureO15 coupon, or `{ ticketId }` for a specific slot. */
+  /** Attach earliest qualifying AccaSureO15 coupon, or `{ ticketId }` for a specific slot.
+   * `{ asNextDay: true }` attaches a later slot as the next plan day on the same calendar date. */
   @Post('rollover/attach')
   async attachRolloverAdmin(
     @CurrentUser() user: User,
-    @Body() body?: { ticketId?: number },
+    @Body() body?: { ticketId?: number; asNextDay?: boolean },
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     const ticketId = body?.ticketId != null ? Number(body.ticketId) : undefined;
     if (ticketId != null && (!Number.isInteger(ticketId) || ticketId <= 0)) {
       throw new BadRequestException('ticketId must be a positive integer');
     }
-    return this.rolloverDesk.adminAttach({ ticketId });
+    return this.rolloverDesk.adminAttach({ ticketId, asNextDay: !!body?.asNextDay });
+  }
+
+  @Post('rollover/settings')
+  async updateRolloverSettings(
+    @CurrentUser() user: User,
+    @Body() body?: { campaignStakeGhs?: number },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const campaignStakeGhs = Number(body?.campaignStakeGhs);
+    if (!Number.isFinite(campaignStakeGhs)) {
+      throw new BadRequestException('campaignStakeGhs is required');
+    }
+    return this.rolloverDesk.updateCampaignStake(campaignStakeGhs);
+  }
+
+  @Post('rollover/reset')
+  async resetRolloverAdmin(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.rolloverDesk.resetCampaign();
   }
 
   @Get('ai-tipsters/subscription-packages')

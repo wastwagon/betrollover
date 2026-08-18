@@ -20,6 +20,7 @@ import { AccaDeskPublisherService } from './acca-desk-publisher.service';
 import { AccaDeskSchedulerService } from './acca-desk-scheduler.service';
 import { RolloverRun } from './entities/rollover-run.entity';
 import { RolloverDay } from './entities/rollover-day.entity';
+import { RolloverSettings } from './entities/rollover-settings.entity';
 import { RolloverDeskService } from './rollover-desk.service';
 import { RolloverDeskController } from './rollover-desk.controller';
 
@@ -30,6 +31,7 @@ import { RolloverDeskController } from './rollover-desk.controller';
       AccaGeneratorEvent,
       RolloverRun,
       RolloverDay,
+      RolloverSettings,
       ApiSettings,
       Fixture,
       FixtureOdd,
