@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { BottomSheet } from '@/components/ios/BottomSheet';
 import { useT } from '@/context/LanguageContext';
-import { getApiUrl, PLAY_STORE_URL } from '@/lib/site-config';
+import { APP_STORE_URL, getApiUrl } from '@/lib/site-config';
 import { trackEvent } from '@/lib/analytics';
 import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 import { Button } from '@/components/ui/Button';
+import { isIosClient } from '@/lib/webview-context';
 
 const STORAGE_KEY = 'br_rate_app_prompt_v1';
 const SNOOZE_MS = 1000 * 60 * 60 * 24 * 21; // 21 days
@@ -18,6 +19,8 @@ type StoredPrompt =
   | { status: 'never' }
   | { status: 'done' }
   | { status: 'snoozed'; until: number };
+
+type RateStore = 'ios';
 
 function readStored(): StoredPrompt {
   try {
@@ -54,15 +57,25 @@ function shouldHide(pathname: string): boolean {
   return HIDE_PATH_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
+function resolveRateStore(): RateStore | null {
+  if (isIosClient() && APP_STORE_URL) return 'ios';
+  return null;
+}
+
 /**
- * Ask for a Play Store rating after the user has experienced a settled purchase
- * (win or escrow refund / loss). "Maybe later" snoozes; "Don't ask again" is permanent.
+ * Ask for a store rating after the user has experienced a settled purchase
+ * (win or escrow refund / loss). iOS never links to Google Play (App Store 2.3.10).
  */
 export function RateAppPrompt() {
   const t = useT();
   const pathname = usePathname() || '/';
   const [open, setOpen] = useState(false);
   const [eligible, setEligible] = useState(false);
+  const [rateStore, setRateStore] = useState<RateStore | null>(null);
+
+  useEffect(() => {
+    setRateStore(resolveRateStore());
+  }, []);
 
   useEffect(() => {
     if (shouldHide(pathname)) return;
@@ -101,16 +114,16 @@ export function RateAppPrompt() {
   }, [pathname]);
 
   useEffect(() => {
-    if (!eligible || shouldHide(pathname) || readStored().status !== 'pending') return;
+    if (!eligible || !rateStore || shouldHide(pathname) || readStored().status !== 'pending') return;
     const timer = window.setTimeout(() => {
       setOpen(true);
       const token = localStorage.getItem('token') || undefined;
-      trackEvent('rate_app_shown', { path: pathname }, token);
+      trackEvent('rate_app_shown', { path: pathname, store: rateStore }, token);
     }, 1800);
     return () => window.clearTimeout(timer);
-  }, [eligible, pathname]);
+  }, [eligible, pathname, rateStore]);
 
-  if (shouldHide(pathname)) return null;
+  if (shouldHide(pathname) || !rateStore) return null;
 
   const closeSheet = () => setOpen(false);
 
@@ -131,9 +144,9 @@ export function RateAppPrompt() {
   const rate = () => {
     const token = localStorage.getItem('token') || undefined;
     writeStored({ status: 'done' });
-    trackEvent('rate_app_clicked', { store: 'play' }, token);
+    trackEvent('rate_app_clicked', { store: rateStore }, token);
     closeSheet();
-    window.open(PLAY_STORE_URL, '_blank', 'noopener,noreferrer');
+    if (APP_STORE_URL) window.open(APP_STORE_URL, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -148,7 +161,7 @@ export function RateAppPrompt() {
         <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('growth.rate_body')}</p>
         <div className="flex flex-col gap-2">
           <Button type="button" onClick={rate} fullWidth>
-            {t('growth.rate_cta')}
+            {t('growth.rate_cta_ios')}
           </Button>
           <Button type="button" variant="secondary" onClick={snooze} fullWidth>
             {t('growth.rate_later')}

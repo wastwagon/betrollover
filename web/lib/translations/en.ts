@@ -426,16 +426,17 @@ const en = {
   'marketplace.login_to_buy': 'Sign in to purchase',
 
   // ── Growth / distribution ────────────────────────────────────────────────
-  'growth.strip_title': 'Tips, app & escrow proof',
-  'growth.strip_sub': 'Follow pick alerts on Telegram, install the Android app, or read how escrow refunds work.',
+  'growth.strip_title': 'Tips, alerts & escrow proof',
+  'growth.strip_sub': 'Follow pick alerts on Telegram, or read how escrow refunds work.',
   'growth.telegram_cta': 'Telegram @{handle}',
-  'growth.play_cta': 'Get Android app',
-  'growth.app_store_cta': 'Get iOS app',
+  'growth.play_cta': 'Get the app',
+  'growth.app_store_cta': 'Get the app',
   'growth.escrow_case_cta': 'How escrow refunds work',
   'growth.rate_title': 'Enjoying BetRollover?',
   'growth.rate_body':
-    'You have a settled purchase — a win or an escrow refund. A quick Play Store rating helps more tip buyers find us.',
-  'growth.rate_cta': 'Rate on Google Play',
+    'You have a settled purchase — a win or an escrow refund. A quick rating helps more tip buyers find us.',
+  'growth.rate_cta': 'Rate the app',
+  'growth.rate_cta_ios': 'Rate on the App Store',
   'growth.rate_later': 'Maybe later',
   'growth.rate_never': 'Don\'t ask again',
 
@@ -1776,7 +1777,7 @@ const en = {
   'auth.sign_in_with_google': 'Sign in with Google',
   'auth.sign_up_with_google': 'Sign up with Google',
   'auth.google_webview_hint':
-    'Google sign-in opens on Google\'s secure page, then returns you here. If you see Access blocked (403), WebViewGold must open accounts.google.com in the system browser or in-app Safari/Chrome view—see WebViewGold → External links.',
+    'Google sign-in opens on Google\'s secure page, then returns you here.',
   'auth.sign_in_with_apple': 'Sign in with Apple',
   'auth.sign_up_with_apple': 'Sign up with Apple',
   'auth.or_continue_with': 'or continue with',

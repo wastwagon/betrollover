@@ -423,17 +423,18 @@ const fr: Record<string, string> = {
   'marketplace.login_to_buy': 'Connectez-vous pour acheter',
 
   // ── Croissance / distribution ─────────────────────────────────────────────
-  'growth.strip_title': 'Alertes, appli et preuve escrow',
+  'growth.strip_title': 'Alertes et preuve escrow',
   'growth.strip_sub':
-    'Suivez les alertes sur Telegram, installez l\'appli Android, ou lisez comment fonctionnent les remboursements escrow.',
+    'Suivez les alertes sur Telegram, ou lisez comment fonctionnent les remboursements escrow.',
   'growth.telegram_cta': 'Telegram @{handle}',
-  'growth.play_cta': 'Applis Android',
-  'growth.app_store_cta': 'Applis iOS',
+  'growth.play_cta': 'Télécharger l\'appli',
+  'growth.app_store_cta': 'Télécharger l\'appli',
   'growth.escrow_case_cta': 'Comment marche l\'escrow',
   'growth.rate_title': 'Vous aimez BetRollover ?',
   'growth.rate_body':
-    'Vous avez un achat réglé — un gain ou un remboursement escrow. Une note sur le Play Store aide d\'autres acheteurs à nous trouver.',
-  'growth.rate_cta': 'Noter sur Google Play',
+    'Vous avez un achat réglé — un gain ou un remboursement escrow. Une note aide d\'autres acheteurs à nous trouver.',
+  'growth.rate_cta': 'Noter l\'appli',
+  'growth.rate_cta_ios': 'Noter sur l\'App Store',
   'growth.rate_later': 'Plus tard',
   'growth.rate_never': 'Ne plus demander',
 
@@ -1781,7 +1782,7 @@ const fr: Record<string, string> = {
   'auth.sign_in_with_google': 'Se connecter avec Google',
   'auth.sign_up_with_google': 'S\'inscrire avec Google',
   'auth.google_webview_hint':
-    "La connexion Google s'ouvre sur la page sécurisée de Google, puis vous ramène ici. Si vous voyez Accès refusé (403), WebViewGold doit ouvrir accounts.google.com dans le navigateur système ou la vue Safari/Chrome intégrée — voir WebViewGold → Liens externes.",
+    "La connexion Google s'ouvre sur la page sécurisée de Google, puis vous ramène ici.",
   'auth.sign_in_with_apple': 'Se connecter avec Apple',
   'auth.sign_up_with_apple': 'S\'inscrire avec Apple',
   'auth.or_continue_with': 'ou continuer avec',

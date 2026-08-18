@@ -11,6 +11,27 @@ export function isLikelyEmbeddedWebView(): boolean {
   return false;
 }
 
+/** iPhone / iPod, iPad, or iPadOS 13+ (desktop UA + touch). */
+export function isIosClient(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  if (/iPad|iPhone|iPod/i.test(ua)) return true;
+  return navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1;
+}
+
+export function isAndroidClient(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return /Android/i.test(navigator.userAgent || '');
+}
+
+/** Hide App Store install CTAs inside Android clients and native wrappers. */
+export function shouldShowAppStoreCta(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  if (isAndroidClient()) return false;
+  if (isLikelyEmbeddedWebView()) return false;
+  return true;
+}
+
 /** Phones / tablets — wrapper apps (WebViewGold, etc.) almost always identify as mobile. */
 export function isLikelyMobileClient(): boolean {
   if (typeof navigator === 'undefined') return false;

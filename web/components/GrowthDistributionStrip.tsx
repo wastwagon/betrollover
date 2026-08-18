@@ -1,14 +1,15 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useT } from '@/context/LanguageContext';
 import {
   APP_STORE_URL,
-  PLAY_STORE_URL,
   TELEGRAM_ADS_HANDLE,
   TELEGRAM_ADS_URL,
 } from '@/lib/site-config';
 import { trackEvent } from '@/lib/analytics';
+import { shouldShowAppStoreCta } from '@/lib/webview-context';
 
 type GrowthDistributionStripProps = {
   className?: string;
@@ -17,10 +18,16 @@ type GrowthDistributionStripProps = {
 };
 
 /**
- * P2 distribution: Telegram tips channel + install CTAs + escrow education deep link.
+ * Telegram alerts + optional App Store CTA + escrow education.
+ * No Play Store / Android download links (App Store 2.3.10).
  */
 export function GrowthDistributionStrip({ className = '', compact = false }: GrowthDistributionStripProps) {
   const t = useT();
+  const [showAppStore, setShowAppStore] = useState(false);
+
+  useEffect(() => {
+    setShowAppStore(Boolean(APP_STORE_URL) && shouldShowAppStoreCta());
+  }, []);
 
   const token = () =>
     typeof window !== 'undefined' ? localStorage.getItem('token') || undefined : undefined;
@@ -45,16 +52,7 @@ export function GrowthDistributionStrip({ className = '', compact = false }: Gro
             <span aria-hidden>✈</span>
             {t('growth.telegram_cta', { handle: TELEGRAM_ADS_HANDLE })}
           </a>
-          <a
-            href={PLAY_STORE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => trackEvent('install_cta_clicked', { source: 'growth_strip', store: 'play' }, token())}
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3.5 py-2 text-xs font-semibold text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
-          >
-            {t('growth.play_cta')}
-          </a>
-          {APP_STORE_URL ? (
+          {showAppStore && APP_STORE_URL ? (
             <a
               href={APP_STORE_URL}
               target="_blank"
