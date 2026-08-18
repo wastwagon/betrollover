@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserWallet } from './entities/user-wallet.entity';
 import { WalletTransaction } from './entities/wallet-transaction.entity';
@@ -15,9 +15,9 @@ import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
-    UsersModule,
+    forwardRef(() => UsersModule),
     NotificationsModule,
-    EmailModule,
+    forwardRef(() => EmailModule),
     TypeOrmModule.forFeature([
       UserWallet,
       WalletTransaction,

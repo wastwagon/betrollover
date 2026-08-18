@@ -8,7 +8,6 @@ import { UserPurchasedPick } from '../accumulators/entities/user-purchased-pick.
 import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
 import { PickMarketplace } from '../accumulators/entities/pick-marketplace.entity';
 import { UsersModule } from '../users/users.module';
-import { AccumulatorsModule } from '../accumulators/accumulators.module';
 import { TipsterFollow } from '../predictions/entities/tipster-follow.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { MarketingCampaignService } from './marketing-campaign.service';
@@ -27,7 +26,6 @@ import { MarketingCampaignScheduler } from './marketing-campaign.scheduler';
       Tipster,
     ]),
     forwardRef(() => UsersModule),
-    forwardRef(() => AccumulatorsModule),
   ],
   providers: [EmailService, MarketingCampaignService, MarketingCampaignScheduler],
   exports: [EmailService, MarketingCampaignService],

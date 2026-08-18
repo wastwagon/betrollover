@@ -147,12 +147,15 @@ export class AccumulatorsService {
     private tipsterRepo: Repository<Tipster>,
     @InjectRepository(WalletTransaction)
     private walletTxRepo: Repository<WalletTransaction>,
+    @Inject(forwardRef(() => WalletService))
     private walletService: WalletService,
+    @Inject(forwardRef(() => NotificationsService))
     private notificationsService: NotificationsService,
     @Inject(forwardRef(() => EmailService))
     private emailService: EmailService,
     private footballService: FootballService,
     private tipsterService: TipsterService,
+    @Inject(forwardRef(() => UsersService))
     private usersService: UsersService,
     private subscriptionsService: SubscriptionsService,
     private referralsService: ReferralsService,

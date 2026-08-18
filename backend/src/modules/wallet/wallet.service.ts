@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -28,8 +28,10 @@ export class WalletService {
     @InjectRepository(WithdrawalRequest)
     private readonly withdrawalRepo: Repository<WithdrawalRequest>,
     private readonly paystackService: PaystackService,
+    @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
     private readonly notificationsService: NotificationsService,
+    @Inject(forwardRef(() => EmailService))
     private readonly emailService: EmailService,
     private readonly config: ConfigService,
   ) { }

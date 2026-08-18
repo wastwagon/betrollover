@@ -28,7 +28,7 @@ import { Tipster } from '../predictions/entities/tipster.entity';
 import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity';
 @Module({
   imports: [
-    UsersModule,
+    forwardRef(() => UsersModule),
     TypeOrmModule.forFeature([
       AccumulatorTicket,
       AccumulatorBookingCodeCopy,
@@ -45,8 +45,8 @@ import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity'
       Tipster,
       WalletTransaction,
     ]),
-    WalletModule,
-    NotificationsModule,
+    forwardRef(() => WalletModule),
+    forwardRef(() => NotificationsModule),
     forwardRef(() => EmailModule),
     FootballModule,
     TipsterModule,

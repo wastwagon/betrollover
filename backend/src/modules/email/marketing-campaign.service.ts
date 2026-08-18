@@ -1,4 +1,5 @@
-import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { User, UserStatus } from '../users/entities/user.entity';
@@ -72,8 +73,7 @@ export class MarketingCampaignService {
 
   constructor(
     private readonly emailService: EmailService,
-    @Inject(forwardRef(() => AccumulatorsService))
-    private readonly accumulators: AccumulatorsService,
+    private readonly moduleRef: ModuleRef,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     @InjectRepository(MarketingSend)
@@ -83,6 +83,11 @@ export class MarketingCampaignService {
     @InjectRepository(TipsterFollow)
     private readonly followRepo: Repository<TipsterFollow>,
   ) {}
+
+  /** Resolve after bootstrap so EmailModule does not import AccumulatorsModule (circular). */
+  private accumulators(): AccumulatorsService {
+    return this.moduleRef.get(AccumulatorsService, { strict: false });
+  }
 
   isEnabled(): boolean {
     const raw = (process.env.MARKETING_EMAIL_ENABLED || 'true').toLowerCase().trim();
@@ -228,7 +233,7 @@ export class MarketingCampaignService {
 
     if (!eligible.length) return result;
 
-    const { items } = await this.accumulators.getFreeTipsOfTheDay(undefined, 4, 'football');
+    const { items } = await this.accumulators().getFreeTipsOfTheDay(undefined, 4, 'football');
     const tips = this.parseDigestTips(items);
     if (!tips.length) {
       this.logger.log('Free-tip digest skipped — no ranked free football slips');

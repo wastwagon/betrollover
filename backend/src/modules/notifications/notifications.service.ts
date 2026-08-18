@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException, Optional, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification } from './entities/notification.entity';
@@ -45,6 +45,7 @@ export class NotificationsService {
     private tipsterRepo: Repository<Tipster>,
     @InjectRepository(AccumulatorTicket)
     private ticketRepo: Repository<AccumulatorTicket>,
+    @Inject(forwardRef(() => EmailService))
     private emailService: EmailService,
     @Optional() private pushService?: PushService,
   ) {}
