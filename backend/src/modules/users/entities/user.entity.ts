@@ -90,6 +90,9 @@ export class User {
   @Column({ default: false })
   marketingConsent: boolean;
 
+  @Column({ type: 'timestamp', nullable: true })
+  marketingConsentAt: Date | null = null;
+
   @Column('text', { nullable: true })
   bio: string | null = null;
 

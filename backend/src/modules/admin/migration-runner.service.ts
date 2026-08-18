@@ -150,6 +150,30 @@ export class MigrationRunnerService {
       await this.dataSource.query(
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS marketing_consent BOOLEAN NOT NULL DEFAULT FALSE`,
       );
+      await this.dataSource.query(
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS marketing_consent_at TIMESTAMP NULL`,
+      );
+      await this.dataSource.query(`
+        UPDATE users
+        SET marketing_consent_at = created_at
+        WHERE marketing_consent = TRUE
+          AND marketing_consent_at IS NULL
+      `);
+      await this.dataSource.query(`
+        CREATE TABLE IF NOT EXISTS marketing_sends (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          campaign_key VARCHAR(64) NOT NULL,
+          sent_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          UNIQUE (user_id, campaign_key)
+        )
+      `);
+      await this.dataSource.query(
+        `CREATE INDEX IF NOT EXISTS idx_marketing_sends_user_sent ON marketing_sends (user_id, sent_at)`,
+      );
+      await this.dataSource.query(
+        `CREATE INDEX IF NOT EXISTS idx_marketing_sends_campaign ON marketing_sends (campaign_key)`,
+      );
     } catch (err: any) {
       this.logger.warn(`ensureMarketingConsentColumn failed (non-fatal): ${err?.message || err}`);
     }

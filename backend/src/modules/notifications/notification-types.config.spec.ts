@@ -21,8 +21,10 @@ describe('notification-types.config', () => {
       ).toBe('Purchase confirmed · Weekend banker · #42');
     });
 
-    it('should return fallback for unknown type', () => {
-      expect(getEmailSubject('unknown', 'Default Title')).toBe('Default Title');
+    it('should use the short live-pick subject', () => {
+      expect(
+        getEmailSubject('pick_published', 'Pick Published', { pickId: '7', pickTitle: 'Sure O1.5' }),
+      ).toBe('Your pick is live · Sure O1.5 · #7');
     });
 
     it('should include pick ref in pick_comment email subject', () => {

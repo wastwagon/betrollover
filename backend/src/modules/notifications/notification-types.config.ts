@@ -22,7 +22,7 @@ export const NOTIFICATION_TYPES = {
     icon: 'check',
     defaultSubject: 'Pick Published',
     emailSubject: (ctx: Record<string, string>) =>
-      emailSubjectWithPickRef('Your pick is now live on the marketplace', ctx),
+      emailSubjectWithPickRef('Your pick is live', ctx),
     ctaText: 'View Marketplace',
     category: 'marketplace',
   },
@@ -46,7 +46,7 @@ export const NOTIFICATION_TYPES = {
   roi_below_minimum: {
     icon: 'alert',
     defaultSubject: 'ROI Below Minimum',
-    emailSubject: () => 'Your ROI has fallen below the minimum. Post free picks to improve.',
+    emailSubject: () => 'ROI below minimum — post free picks to rebuild',
     ctaText: 'Create Free Pick',
     category: 'account',
   },
@@ -113,14 +113,14 @@ export const NOTIFICATION_TYPES = {
   leaderboard_rank_up: {
     icon: 'trophy',
     defaultSubject: 'Leaderboard Rank Up',
-    emailSubject: (ctx: Record<string, string>) => `You're now rank #${ctx.rank || '?'} on the leaderboard!`,
+    emailSubject: (ctx: Record<string, string>) => `Leaderboard: you’re now #${ctx.rank || '?'}`,
     ctaText: 'View Leaderboard',
     category: 'achievement',
   },
   tipster_approved: {
     icon: 'check',
     defaultSubject: 'Tipster Approved',
-    emailSubject: () => 'Your tipster account is active — create picks and track your ROI',
+    emailSubject: () => 'You’re approved as a tipster',
     ctaText: 'Create Pick',
     category: 'account',
   },
@@ -243,4 +243,19 @@ export function getCategoryColor(type: string): string {
   const config = getNotificationTypeConfig(type);
   const cat = config?.category || 'system';
   return CATEGORY_COLORS[cat] || CATEGORY_COLORS.system;
+}
+
+const CATEGORY_EYEBROWS: Record<string, string> = {
+  marketplace: 'Marketplace',
+  wallet: 'Wallet',
+  account: 'Account',
+  social: 'Community',
+  achievement: 'Leaderboard',
+  system: 'BetRollover',
+};
+
+export function getCategoryEyebrow(type: string): string {
+  const config = getNotificationTypeConfig(type);
+  const cat = config?.category || 'system';
+  return CATEGORY_EYEBROWS[cat] || CATEGORY_EYEBROWS.system;
 }

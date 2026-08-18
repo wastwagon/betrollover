@@ -22,6 +22,8 @@ import { Tipster } from '../predictions/entities/tipster.entity';
 import { SyncStatus } from '../fixtures/entities/sync-status.entity';
 import { AccaGeneratorService } from './acca-generator.service';
 import { AccaDeskSetupService } from './acca-desk-setup.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import type { AccaDeskShort } from '../email/acca-desk-shorts.config';
 
 export type AccaDeskRunResult = {
   enabled: boolean;
@@ -46,6 +48,7 @@ export class AccaDeskPublisherService {
   constructor(
     private readonly accaGenerator: AccaGeneratorService,
     private readonly setup: AccaDeskSetupService,
+    private readonly notifications: NotificationsService,
     @InjectRepository(Tipster)
     private readonly tipsterRepo: Repository<Tipster>,
     @InjectRepository(AccumulatorTicket)
@@ -203,12 +206,14 @@ export class AccaDeskPublisherService {
     };
 
     const postedSlotsByUser = new Map<number, Set<AccaDeskSlotKey>>();
+    const shorts: AccaDeskShort[] = [];
 
     for (const config of ACCA_DESK_TIPSTERS) {
       for (const slot of ACCA_DESK_TIME_SLOTS) {
         try {
           const outcome = await this.publishOne(config, slot, usedFixtureIds, postedSlotsByUser);
           result.details.push(outcome.detail);
+          if (outcome.short) shorts.push(outcome.short);
           if (outcome.detail.status === 'published') result.published++;
           else if (outcome.detail.status === 'skipped_already') result.skippedAlreadyPosted++;
           else if (outcome.detail.status === 'empty_pool') result.skippedEmptyPool++;
@@ -231,6 +236,14 @@ export class AccaDeskPublisherService {
     this.logger.log(
       `Acca Desk daily: published=${result.published} already=${result.skippedAlreadyPosted} empty=${result.skippedEmptyPool} errors=${result.errors}`,
     );
+    if (shorts.length) {
+      try {
+        await this.notifications.notifyFollowersOfAccaDeskShorts(shorts);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        this.logger.warn(`Acca Desk follower shorts email failed: ${message}`);
+      }
+    }
     return result;
   }
 
@@ -239,7 +252,7 @@ export class AccaDeskPublisherService {
     slot: AccaDeskTimeSlot,
     usedFixtureIds: Set<number>,
     postedSlotsByUser: Map<number, Set<AccaDeskSlotKey>>,
-  ): Promise<{ detail: AccaDeskRunResult['details'][number] }> {
+  ): Promise<{ detail: AccaDeskRunResult['details'][number]; short?: AccaDeskShort }> {
     const tipster = await this.tipsterRepo.findOne({
       where: { username: config.username, tipsterType: ACCA_DESK_TIPSTER_TYPE },
     });
@@ -308,6 +321,23 @@ export class AccaDeskPublisherService {
       `Acca Desk published ${config.username} ${slot.key} ticket=#${ticketId} odds=${generated.combinedOdds}`,
     );
 
+    const short: AccaDeskShort | undefined =
+      Number.isFinite(ticketId) && ticketId > 0
+        ? {
+            ticketId,
+            tipsterUserId: tipster.userId,
+            tipsterDisplayName: config.display_name,
+            title,
+            totalOdds: Number(generated.combinedOdds),
+            totalPicks: generated.legs.length,
+            legs: generated.legs.map((leg) => ({
+              matchDescription: leg.matchDescription,
+              prediction: leg.prediction,
+              odds: Number(leg.odds),
+            })),
+          }
+        : undefined;
+
     return {
       detail: {
         username: config.username,
@@ -315,6 +345,7 @@ export class AccaDeskPublisherService {
         slotKey: slot.key,
         ticketId: Number.isFinite(ticketId) ? ticketId : undefined,
       },
+      short,
     };
   }
 

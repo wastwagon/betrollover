@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, Inject, Optional, forwardRef } from '@nestjs/common';
 import { sanitizeShortText, sanitizeText } from '../../common/sanitize.util';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -8,6 +8,7 @@ import * as path from 'path';
 import { User, UserRole, UserStatus } from './entities/user.entity';
 import { TipsterRequest } from './entities/tipster-request.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
+import { MarketingCampaignService } from '../email/marketing-campaign.service';
 
 @Injectable()
 export class UsersService {
@@ -18,6 +19,9 @@ export class UsersService {
     private tipsterRequestRepo: Repository<TipsterRequest>,
     @InjectRepository(Tipster)
     private tipsterRepo: Repository<Tipster>,
+    @Optional()
+    @Inject(forwardRef(() => MarketingCampaignService))
+    private readonly marketingCampaigns?: MarketingCampaignService,
   ) {}
 
   async getAdminEmails(): Promise<string[]> {
@@ -160,8 +164,11 @@ export class UsersService {
       countryCode: data.countryCode ?? 'GHA',
       flagEmoji: data.flagEmoji ?? '🇬🇭',
       marketingConsent: data.marketingConsent === true,
+      marketingConsentAt: data.marketingConsent === true ? new Date() : null,
     });
-    return this.usersRepository.save(user);
+    const saved = await this.usersRepository.save(user);
+    this.queueWelcomeIfConsented(saved);
+    return saved;
   }
 
   /** Create user from Google OAuth (no password). Username derived from email or sub. */
@@ -292,6 +299,7 @@ export class UsersService {
   ): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) throw new BadRequestException('Account not found.');
+    let consentJustEnabled = false;
     if (data.displayName !== undefined) user.displayName = sanitizeShortText(data.displayName, 100) || user.displayName;
     if (data.phone !== undefined) user.phone = data.phone;
     if (data.bio !== undefined) {
@@ -308,7 +316,12 @@ export class UsersService {
       await this.syncAvatarToTipster(id, user.avatar);
     }
     if (data.marketingConsent !== undefined) {
-      user.marketingConsent = data.marketingConsent === true;
+      const next = data.marketingConsent === true;
+      if (next && !user.marketingConsent) {
+        user.marketingConsentAt = new Date();
+        consentJustEnabled = true;
+      }
+      user.marketingConsent = next;
     }
     if (data.emailNotifications !== undefined) {
       user.emailNotifications = data.emailNotifications === true;
@@ -317,7 +330,13 @@ export class UsersService {
       user.pushNotifications = data.pushNotifications === true;
     }
     await this.usersRepository.save(user);
+    if (consentJustEnabled) this.queueWelcomeIfConsented(user);
     return this.findById(id) as Promise<User>;
+  }
+
+  private queueWelcomeIfConsented(user: Pick<User, 'id' | 'marketingConsent'>): void {
+    if (!user.marketingConsent || !this.marketingCampaigns) return;
+    void this.marketingCampaigns.sendDueWelcomeForUser(user.id).catch(() => undefined);
   }
 
   async uploadAvatar(userId: number, file: Express.Multer.File): Promise<User> {

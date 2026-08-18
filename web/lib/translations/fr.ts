@@ -990,7 +990,7 @@ const fr: Record<string, string> = {
   'profile.contact_email': 'Email de contact (pour l\'admin)',
   'profile.contact_email_placeholder': 'ex. votre@email.com',
   'profile.contact_email_hint': 'Optionnel. Utilisé pour vous contacter (ex. si vous vous êtes connecté avec Apple en masquant votre email).',
-  'profile.marketing_consent': 'Envoyez-moi occasionnellement des mises à jour produit et offres promotionnelles (optionnel).',
+  'profile.marketing_consent': 'Envoyez-moi une courte série de bienvenue et des mises à jour produit occasionnelles (optionnel, 18+).',
   'profile.optional': 'Optionnel',
   'profile.save_profile': 'Enregistrer le profil',
   'profile.saving': 'Enregistrement...',

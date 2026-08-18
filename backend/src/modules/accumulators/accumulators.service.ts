@@ -41,6 +41,7 @@ import { couponUserFacingRef } from '../../common/coupon-public-label';
 import { isAllowedAfricanBookmakerKey, LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
 import { isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
 import { ACCA_GENERATOR_LEGS_MAX } from '../acca-generator/acca-generator.constants';
+import { ACCA_DESK_TIPSTER_TYPE } from '../../config/acca-desk-tipsters.config';
 import {
   classicAiMarketplaceTicketExcludeRawSql,
   classicAiPublicExcludeRawSql,
@@ -148,6 +149,7 @@ export class AccumulatorsService {
     private walletTxRepo: Repository<WalletTransaction>,
     private walletService: WalletService,
     private notificationsService: NotificationsService,
+    @Inject(forwardRef(() => EmailService))
     private emailService: EmailService,
     private footballService: FootballService,
     private tipsterService: TipsterService,
@@ -458,8 +460,12 @@ export class AccumulatorsService {
         },
       }).catch(() => { });
 
-      const tipster = await this.tipsterRepo.findOne({ where: { userId }, select: ['id', 'displayName'] });
+      const tipster = await this.tipsterRepo.findOne({
+        where: { userId },
+        select: ['id', 'displayName', 'tipsterType'],
+      });
       if (tipster) {
+        const isAccaDesk = tipster.tipsterType === ACCA_DESK_TIPSTER_TYPE;
         await this.notificationsService.notifyFollowersOfNewCoupon({
           tipsterId: tipster.id,
           tipsterUserId: userId,
@@ -467,8 +473,9 @@ export class AccumulatorsService {
           couponTitle: dto.title,
           price,
           accumulatorId: ticket.id,
+          skipEmail: isAccaDesk,
           couponCard:
-            price === 0
+            !isAccaDesk && price === 0
               ? {
                   totalOdds: Number(ticket.totalOdds),
                   isSubscription: false,

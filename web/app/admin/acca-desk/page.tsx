@@ -212,10 +212,10 @@ export default function AdminAccaDeskPage() {
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Acca Desk</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Acca Desk tipsters including specialised Over 1.5 and Over 2.5 at Sure / Safe / Medium / High, plus
-            Sure / Safe / Medium × 1X2, DC, BTTS, Mix. Each posts up to 3 free 2-folds daily (early / afternoon /
-            evening), clustered by kick-off. All generated at cron{' '}
-            {overview?.cron || '30 0 * * *'} ({overview?.timezone || 'Africa/Accra'}).
+            Automated. Each Acca Desk tipster posts up to 3 free 2-folds daily (early / afternoon / evening).
+            Roster setup and publish run at cron {overview?.cron || '30 0 * * *'} ({overview?.timezone || 'Africa/Accra'}),
+            then catch-up at 06:00 and 08:45 if pools were empty. Followers get one batched email after each publish
+            that created new slips. Buttons below are fallback only.
           </p>
         </div>
 
@@ -244,7 +244,7 @@ export default function AdminAccaDeskPage() {
                 Setting up…
               </>
             ) : (
-              <>Setup Acca Desk tipsters</>
+              <>Re-sync roster (fallback)</>
             )}
           </button>
           <button
@@ -259,7 +259,7 @@ export default function AdminAccaDeskPage() {
                 Publishing…
               </>
             ) : (
-              <>Run daily publish</>
+              <>Publish now (fallback)</>
             )}
           </button>
           <button

@@ -47,7 +47,7 @@ import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity'
     ]),
     WalletModule,
     NotificationsModule,
-    EmailModule,
+    forwardRef(() => EmailModule),
     FootballModule,
     TipsterModule,
     forwardRef(() => SubscriptionsModule),

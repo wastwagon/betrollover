@@ -15,6 +15,11 @@ import { Tipster } from '../predictions/entities/tipster.entity';
 import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
 import { EmailService } from '../email/email.service';
 import { PushService } from '../push/push.service';
+import {
+  ACCA_DESK_SHORTS_EMAIL_MAX,
+  groupAccaDeskShortsByFollower,
+  type AccaDeskShort,
+} from '../email/acca-desk-shorts.config';
 
 const PUSH_NOTIFICATION_TYPES = new Set([
   'subscription', 'subscription_refund', 'subscription_payout',
@@ -329,6 +334,8 @@ export class NotificationsService {
       }>;
       isSubscription?: boolean;
     };
+    /** Acca Desk batches follower email after the daily publish run. */
+    skipEmail?: boolean;
   }): Promise<void> {
     // Resolve followers by tipster profile owner (user id). Matches how follows are stored (tipster_id → tipsters.id)
     // and avoids silent misses if tipsterId ever diverged from the creator's profile row.
@@ -375,12 +382,12 @@ export class NotificationsService {
         message,
         link,
         icon: 'bell',
-        sendEmail: !params.couponCard,
-        alwaysSendEmail: !params.couponCard,
+        sendEmail: !params.skipEmail && !params.couponCard,
+        alwaysSendEmail: !params.skipEmail && !params.couponCard,
         metadata: baseMetadata,
       }).catch((err) => this.logger.warn(`notifyFollowersOfNewCoupon: user ${followerId} ${err}`));
 
-      if (params.couponCard) {
+      if (params.couponCard && !params.skipEmail) {
         const user = await this.userRepo.findOne({
           where: { id: followerId },
           select: ['email'],
@@ -417,6 +424,64 @@ export class NotificationsService {
         }
       }
     }
+  }
+
+  /**
+   * One email per follower after Acca Desk's daily publish, listing 2-folds from bots they follow.
+   * In-app alerts still fire per coupon; this replaces the per-coupon email flood.
+   */
+  async notifyFollowersOfAccaDeskShorts(shorts: AccaDeskShort[]): Promise<{ sent: number; skipped: number }> {
+    const published = shorts.filter((s) => Number.isFinite(s.ticketId) && s.ticketId > 0);
+    if (!published.length) return { sent: 0, skipped: 0 };
+
+    const tipsterUserIds = [...new Set(published.map((s) => s.tipsterUserId).filter((id) => id > 0))];
+    if (!tipsterUserIds.length) return { sent: 0, skipped: 0 };
+
+    const followRows = await this.tipsterFollowRepo
+      .createQueryBuilder('f')
+      .innerJoin('f.tipster', 't')
+      .where('t.userId IN (:...uids)', { uids: tipsterUserIds })
+      .select('f.userId', 'userId')
+      .addSelect('t.userId', 'tipsterUserId')
+      .getRawMany<{ userId: number | string; tipsterUserId: number | string }>();
+
+    const grouped = groupAccaDeskShortsByFollower(
+      published,
+      followRows.map((r) => ({
+        userId: Number((r as { userId?: unknown; user_id?: unknown }).userId ?? (r as { user_id?: unknown }).user_id),
+        tipsterUserId: Number(
+          (r as { tipsterUserId?: unknown; tipster_user_id?: unknown }).tipsterUserId ??
+            (r as { tipster_user_id?: unknown }).tipster_user_id,
+        ),
+      })),
+    );
+
+    let sent = 0;
+    let skipped = 0;
+    for (const [followerId, list] of grouped) {
+      const channels = await this.resolveDeliveryChannels(followerId, 'new_pick_from_followed');
+      const user = await this.userRepo.findOne({
+        where: { id: followerId },
+        select: ['email', 'emailNotifications'],
+      });
+      if (!channels.email || !user?.email || !user.emailNotifications) {
+        skipped++;
+        continue;
+      }
+      const slice = list.slice(0, ACCA_DESK_SHORTS_EMAIL_MAX).map((s) => ({
+        ticketId: s.ticketId,
+        title: s.title,
+        tipsterName: s.tipsterDisplayName,
+        totalOdds: s.totalOdds,
+        legs: s.legs,
+      }));
+      const result = await this.emailService.sendAccaDeskShortsEmail(user.email, slice);
+      if (result.sent) sent++;
+      else skipped++;
+    }
+
+    this.logger.log(`Acca Desk shorts email: sent=${sent} skipped=${skipped} followers=${grouped.size}`);
+    return { sent, skipped };
   }
 
   /**

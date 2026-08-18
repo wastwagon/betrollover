@@ -995,7 +995,7 @@ const en = {
   'profile.contact_email': 'Contact email (for admin)',
   'profile.contact_email_placeholder': 'e.g. your@email.com',
   'profile.contact_email_hint': 'Optional. Used so we can reach you (e.g. if you signed in with Apple and hid your email).',
-  'profile.marketing_consent': 'Email me occasional product updates and promotional offers (optional).',
+  'profile.marketing_consent': 'Email me a short welcome series and occasional product updates (optional, 18+).',
   'profile.optional': 'Optional',
   'profile.save_profile': 'Save Profile',
   'profile.saving': 'Saving...',

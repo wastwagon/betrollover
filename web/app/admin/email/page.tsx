@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
-import { Button, buttonClassName } from '@/components/ui/Button';
+import { buttonClassName } from '@/components/ui/Button';
 
 interface SmtpSettings {
   host: string;
@@ -36,6 +36,8 @@ export default function AdminEmailPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [runningWelcome, setRunningWelcome] = useState(false);
+  const [runningDaily, setRunningDaily] = useState(false);
   const [msg, setMsg] = useState('');
 
   const load = () => {
@@ -124,6 +126,56 @@ export default function AdminEmailPage() {
       }
     } finally {
       setTesting(false);
+    }
+  };
+
+  const runWelcome = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setRunningWelcome(true);
+    setMsg('');
+    try {
+      const res = await fetch(`${getApiUrl()}/admin/marketing/run-welcome`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setMsg(
+          `Welcome series: ${data.sent ?? 0} sent, ${data.skipped ?? 0} skipped, ${data.errors ?? 0} errors.`,
+        );
+      } else {
+        setMsg(getApiErrorMessage(data, 'Welcome series failed.'));
+      }
+    } finally {
+      setRunningWelcome(false);
+    }
+  };
+
+  const runDaily = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setRunningDaily(true);
+    setMsg('');
+    try {
+      const res = await fetch(`${getApiUrl()}/admin/marketing/run-daily`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        const welcome = data.welcome || {};
+        const recap = data.recap || {};
+        const digest = data.digest || {};
+        const quiet = data.quiet || {};
+        setMsg(
+          `Marketing: welcome ${welcome.sent ?? 0} sent; recap ${recap.sent ?? 0} sent; digest ${digest.sent ?? 0} sent; quiet ${quiet.sent ?? 0} sent.`,
+        );
+      } else {
+        setMsg(getApiErrorMessage(data, 'Daily marketing failed.'));
+      }
+    } finally {
+      setRunningDaily(false);
     }
   };
 
@@ -280,9 +332,37 @@ export default function AdminEmailPage() {
               </div>
             </div>
 
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-8">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Daily marketing (welcome, recap, digest, quiet)</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Automated. Opt-in users only (Profile). One email per Accra day. 09:00 Africa/Accra plus 09:20 / 12:00 / 18:00
+                catch-ups if the API was restarting. Welcome D0 also sends as soon as someone opts in.
+                Order: welcome D0/D1/D3, Monday recap, Free Tip digest (active in last 7 days), then quiet 7/14d.
+                Buttons below are fallback only. 18+ informational — not betting advice.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={runDaily}
+                  disabled={runningDaily || runningWelcome}
+                  className={buttonClassName({ className: 'w-full sm:w-auto' })}
+                >
+                  {runningDaily ? 'Running…' : 'Run today’s marketing (fallback)'}
+                </button>
+                <button
+                  type="button"
+                  onClick={runWelcome}
+                  disabled={runningWelcome || runningDaily}
+                  className={buttonClassName({ variant: 'secondary', className: 'w-full sm:w-auto' })}
+                >
+                  {runningWelcome ? 'Running…' : 'Welcome series only'}
+                </button>
+              </div>
+            </div>
+
             {msg && (
               <div className={`p-4 rounded-xl ${
-                msg.includes('success') 
+                msg.includes('success') || msg.startsWith('Welcome series') || msg.startsWith('Marketing:') || msg.startsWith('Settings saved') 
                   ? 'bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-500 text-emerald-800 dark:text-emerald-200' 
                   : 'bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 text-amber-800 dark:text-amber-200'
               }`}>

@@ -1,10 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as nodemailer from 'nodemailer';
 import { SmtpSettings } from './entities/smtp-settings.entity';
 import { UsersService } from '../users/users.service';
-import { getEmailSubject, getCtaText, getCategoryColor } from '../notifications/notification-types.config';
+import {
+  getEmailSubject,
+  getCtaText,
+  getCategoryEyebrow,
+} from '../notifications/notification-types.config';
 import {
   ADMIN_NOTIFICATION_TEMPLATES,
   AdminNotificationType,
@@ -25,7 +29,6 @@ const BR = {
   ink: '#0f172a',
   muted: '#64748b',
   line: '#e2e8f0',
-  adminInk: '#0c1224',
 } as const;
 
 @Injectable()
@@ -35,6 +38,7 @@ export class EmailService {
   constructor(
     @InjectRepository(SmtpSettings)
     private smtpRepo: Repository<SmtpSettings>,
+    @Inject(forwardRef(() => UsersService))
     private usersService: UsersService,
   ) { }
 
@@ -54,16 +58,25 @@ export class EmailService {
   private getLogoUrl(): string {
     const custom = process.env.EMAIL_LOGO_URL?.trim();
     if (custom) return custom;
-    const appUrl = (process.env.APP_URL || 'https://betrollover.com').replace(/\/$/, '');
-    return `${appUrl}/BetRollover-logo.png`;
+    return `${this.appOrigin()}/BetRollover-logo.png`;
+  }
+
+  private appOrigin(): string {
+    return (process.env.APP_URL || 'https://betrollover.com').replace(/\/$/, '');
+  }
+
+  private prefsUrl(): string {
+    return `${this.appOrigin()}/profile#notification-preferences`;
   }
 
   /**
-   * Shared premium shell: gradient backdrop, gold hairline, elevated card.
+   * Shared 2026 shell: dark canvas, gold hairline, one card, legal footer.
    */
   private premiumDocument(innerRows: string, footerExtra?: string): string {
-    const foot = footerExtra
-      ? `<p style="font-size:11px;color:#64748b;margin:20px 0 0;text-align:center;line-height:1.5;">${footerExtra}</p>`
+    const prefs = this.escapeHtmlAttr(this.prefsUrl());
+    const year = new Date().getUTCFullYear();
+    const extra = footerExtra
+      ? `<p style="font-size:11px;color:#94a3b8;margin:10px 0 0;text-align:center;line-height:1.5;">${footerExtra}</p>`
       : '';
     return `<!DOCTYPE html>
 <html lang="en">
@@ -71,19 +84,24 @@ export class EmailService {
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="color-scheme" content="light dark"/>
+  <title>BetRollover</title>
 </head>
-<body style="margin:0;padding:0;${BR.outerBg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="padding:40px 16px;">
+<body style="margin:0;padding:0;${BR.outerBg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="padding:36px 12px;">
     <tr>
       <td align="center">
-        <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:520px;background:${BR.cardBg};border-radius:20px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);border:1px solid ${BR.goldSoft};">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:520px;background:${BR.cardBg};border-radius:24px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.45);border:1px solid ${BR.goldSoft};">
           <tr>
-            <td style="height:5px;background:linear-gradient(90deg,#8b6914,#e8d48b,#c9a227,#e8d48b,#8b6914);"></td>
+            <td style="height:4px;background:linear-gradient(90deg,#8b6914,#e8d48b,#c9a227,#e8d48b,#8b6914);"></td>
           </tr>
           ${innerRows}
         </table>
-        <p style="font-size:11px;color:#64748b;margin:24px 0 0;text-align:center;letter-spacing:0.06em;text-transform:uppercase;">BetRollover</p>
-        ${foot}
+        <p style="font-size:11px;color:#94a3b8;margin:22px 8px 0;text-align:center;line-height:1.7;">
+          18+ · Informational only — not betting advice.<br/>
+          <a href="${prefs}" style="color:#c9a227;text-decoration:none;">Notification settings</a>
+          &nbsp;·&nbsp;© ${year} BetRollover
+        </p>
+        ${extra}
       </td>
     </tr>
   </table>
@@ -94,20 +112,40 @@ export class EmailService {
   private brandHeader(eyebrow: string, title: string, subtitle?: string): string {
     const logoSrc = this.escapeHtmlAttr(this.getLogoUrl());
     const sub = subtitle
-      ? `<p style="font-size:15px;color:${BR.muted};margin:12px 0 0;line-height:1.5;">${subtitle}</p>`
+      ? `<p style="font-size:15px;color:${BR.muted};margin:12px 0 0;line-height:1.55;">${subtitle}</p>`
       : '';
     return `<tr>
-  <td style="padding:28px 36px 0;text-align:center;">
-    <img src="${logoSrc}" alt="BetRollover" width="132" style="max-width:160px;width:132px;height:auto;display:block;margin:0 auto;border:0;outline:none;" />
+  <td style="padding:28px 32px 0;text-align:center;">
+    <img src="${logoSrc}" alt="BetRollover" width="128" style="max-width:148px;width:128px;height:auto;display:block;margin:0 auto;border:0;outline:none;" />
   </td>
 </tr>
 <tr>
-  <td style="padding:16px 36px 8px;text-align:center;">
-    <div style="font-size:11px;font-weight:700;letter-spacing:0.28em;color:${BR.gold};text-transform:uppercase;">${eyebrow}</div>
-    <h1 style="font-size:22px;font-weight:700;color:${BR.ink};margin:14px 0 0;letter-spacing:-0.02em;">${title}</h1>
+  <td style="padding:18px 32px 8px;text-align:center;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.22em;color:${BR.gold};text-transform:uppercase;">${eyebrow}</div>
+    <h1 style="font-size:22px;font-weight:700;color:${BR.ink};margin:12px 0 0;letter-spacing:-0.03em;line-height:1.25;">${title}</h1>
     ${sub}
   </td>
 </tr>`;
+  }
+
+  private ctaButton(href: string, label: string): string {
+    return `<div style="text-align:center;margin:8px 0 4px;">
+  <a href="${this.escapeHtmlAttr(href)}" style="display:inline-block;background:linear-gradient(180deg,#e8d48b,#c9a227);color:#0c1224;padding:14px 28px;text-decoration:none;border-radius:999px;font-weight:700;font-size:14px;letter-spacing:0.01em;">${this.escapeEmailText(label)}</a>
+</div>`;
+  }
+
+  private bodyCell(innerHtml: string): string {
+    return `<tr><td style="padding:8px 32px 32px;">${innerHtml}</td></tr>`;
+  }
+
+  private copyP(html: string): string {
+    return `<p style="font-size:15px;line-height:1.65;color:#334155;margin:0 0 20px;">${html}</p>`;
+  }
+
+  private insetCard(innerHtml: string): string {
+    return `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f8fafc;border-radius:16px;border:1px solid ${BR.line};margin:0 0 20px;">
+  <tr><td style="padding:18px 20px;">${innerHtml}</td></tr>
+</table>`;
   }
 
   private async getFromWithSettings(): Promise<string> {
@@ -143,6 +181,11 @@ export class EmailService {
   }
 
   async send(options: { to: string; subject: string; text: string; html?: string }) {
+    const to = (options.to || '').trim().toLowerCase();
+    if (!to || to.endsWith('@betrollover.internal')) {
+      return { sent: false, error: 'Skipped internal or empty recipient' };
+    }
+
     const apiKey = (process.env.RESEND_API_KEY || '').trim();
     if (apiKey) {
       return this.sendViaResend(options, apiKey);
@@ -157,6 +200,167 @@ export class EmailService {
     }
 
     return this.sendViaSmtp(options, transporter);
+  }
+
+  async sendCampaignEmail(data: {
+    to: string;
+    subject: string;
+    eyebrow: string;
+    title: string;
+    body: string;
+    ctaLabel: string;
+    ctaPath: string;
+    extraHtml?: string;
+    extraText?: string;
+  }): Promise<{ sent: boolean; error?: string }> {
+    const ctaUrl = `${this.appOrigin()}${data.ctaPath.startsWith('/') ? data.ctaPath : `/${data.ctaPath}`}`;
+    const inner = `${this.brandHeader(this.escapeEmailText(data.eyebrow), this.escapeEmailText(data.title))}
+${this.bodyCell(`${this.copyP(this.escapeEmailText(data.body))}${data.extraHtml || ''}${this.ctaButton(ctaUrl, data.ctaLabel)}`)}`;
+    const html = this.premiumDocument(
+      inner,
+      'Optional updates. Turn these off anytime in Profile → product emails.',
+    );
+    const extra = data.extraText ? `\n\n${data.extraText}` : '';
+    const text = `${data.title}\n\n${data.body}${extra}\n\n${ctaUrl}\n\n18+ Informational only.\n— BetRollover`;
+    return this.send({ to: data.to, subject: data.subject, text, html });
+  }
+
+  async sendFreeTipDigestEmail(
+    to: string,
+    tips: Array<{ id: number; title: string; tipsterName: string; totalOdds: number; totalPicks: number }>,
+  ): Promise<{ sent: boolean; error?: string }> {
+    const slice = tips.slice(0, 4);
+    const cards = slice
+      .map((tip) => {
+        const title = this.escapeEmailText(tip.title || `Pick #${tip.id}`);
+        const name = this.escapeEmailText(tip.tipsterName || 'Tipster');
+        const odds = Number(tip.totalOdds || 0).toFixed(2);
+        const legs = Number(tip.totalPicks || 0);
+        return this.insetCard(
+          `<p style="margin:0;font-size:15px;font-weight:700;color:${BR.ink};">${title}</p>
+           <p style="margin:6px 0 0;font-size:13px;color:${BR.muted};">${name} · ${legs} legs · ${odds} combined</p>`,
+        );
+      })
+      .join('');
+    const extraText = slice
+      .map((tip) => {
+        const odds = Number(tip.totalOdds || 0).toFixed(2);
+        return `- ${tip.title || `Pick #${tip.id}`} (${tip.tipsterName || 'Tipster'}) · ${odds}`;
+      })
+      .join('\n');
+    return this.sendCampaignEmail({
+      to,
+      subject: 'Today’s free tips',
+      eyebrow: 'Free Tip of the Day',
+      title: 'Ranked free slips, still to kick off',
+      body: 'These are live free marketplace picks from tipsters with a positive record. Informational only — 18+. You pick your own legs; we don’t stake for you.',
+      ctaLabel: 'View on the homepage',
+      ctaPath: '/#free-tip-of-the-day',
+      extraHtml: cards,
+      extraText,
+    });
+  }
+
+  async sendWeeklyRecapEmail(
+    to: string,
+    slips: Array<{
+      id: number;
+      title: string;
+      result: 'won' | 'lost';
+      tipsterName: string;
+      totalOdds: number;
+      totalPicks: number;
+    }>,
+    summary: { won: number; lost: number },
+  ): Promise<{ sent: boolean; error?: string }> {
+    const slice = slips.slice(0, 5);
+    const tally = `${summary.won} won · ${summary.lost} lost`;
+    const summaryCard = this.insetCard(
+      `<p style="margin:0;font-size:15px;font-weight:700;color:${BR.ink};">${this.escapeEmailText(tally)}</p>
+       <p style="margin:6px 0 0;font-size:13px;color:${BR.muted};">Past settled results on BetRollover — not a forecast.</p>`,
+    );
+    const cards = slice
+      .map((slip) => {
+        const title = this.escapeEmailText(slip.title || `Pick #${slip.id}`);
+        const name = this.escapeEmailText(slip.tipsterName || 'Tipster');
+        const result = slip.result === 'won' ? 'Won' : 'Lost';
+        const resultColor = slip.result === 'won' ? BR.gold : BR.muted;
+        const odds = Number(slip.totalOdds || 0).toFixed(2);
+        return this.insetCard(
+          `<p style="margin:0;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:${resultColor};">${result}</p>
+           <p style="margin:8px 0 0;font-size:15px;font-weight:700;color:${BR.ink};">${title}</p>
+           <p style="margin:6px 0 0;font-size:13px;color:${BR.muted};">${name} · ${Number(slip.totalPicks || 0)} legs · ${odds} combined</p>`,
+        );
+      })
+      .join('');
+    const extraText = [`${tally} (past results, not a forecast)`, ...slice.map((s) => `- ${s.result === 'won' ? 'Won' : 'Lost'}: ${s.title} (${s.tipsterName})`)].join('\n');
+    return this.sendCampaignEmail({
+      to,
+      subject: 'Your week on BetRollover',
+      eyebrow: 'Weekly recap',
+      title: 'Settled results, last 7 days',
+      body: 'Slips you bought or follow that settled this week. Informational only — 18+. Past results are not a forecast; we don’t stake for you.',
+      ctaLabel: 'Open the archive',
+      ctaPath: '/coupons/archive',
+      extraHtml: `${summaryCard}${cards}`,
+      extraText,
+    });
+  }
+
+  async sendAccaDeskShortsEmail(
+    to: string,
+    shorts: Array<{
+      ticketId: number;
+      title: string;
+      tipsterName: string;
+      totalOdds: number;
+      legs: Array<{ matchDescription: string; prediction: string; odds: number }>;
+    }>,
+  ): Promise<{ sent: boolean; error?: string }> {
+    const slice = shorts.slice(0, 12);
+    const cards = slice
+      .map((slip) => {
+        const title = this.escapeEmailText(slip.title || `Pick #${slip.ticketId}`);
+        const name = this.escapeEmailText(slip.tipsterName || 'Acca Desk');
+        const odds = Number(slip.totalOdds || 0).toFixed(2);
+        const legs = (slip.legs || [])
+          .slice(0, 2)
+          .map((leg) => {
+            const match = this.escapeEmailText(leg.matchDescription || 'Match');
+            const pick = this.escapeEmailText(leg.prediction || '');
+            const legOdds = Number(leg.odds || 0).toFixed(2);
+            return `<p style="margin:4px 0 0;font-size:13px;color:${BR.muted};">${match} · ${pick} @ ${legOdds}</p>`;
+          })
+          .join('');
+        return this.insetCard(
+          `<p style="margin:0;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:${BR.gold};">${name}</p>
+           <p style="margin:8px 0 0;font-size:15px;font-weight:700;color:${BR.ink};">${title}</p>
+           <p style="margin:6px 0 0;font-size:13px;color:${BR.muted};">2-fold · ${odds} combined</p>
+           ${legs}`,
+        );
+      })
+      .join('');
+    const extraText = slice
+      .map((slip) => {
+        const odds = Number(slip.totalOdds || 0).toFixed(2);
+        const legs = (slip.legs || [])
+          .slice(0, 2)
+          .map((leg) => `  ${leg.matchDescription} · ${leg.prediction}`)
+          .join('\n');
+        return `- ${slip.tipsterName}: ${slip.title} @ ${odds}\n${legs}`;
+      })
+      .join('\n');
+    return this.sendCampaignEmail({
+      to,
+      subject: 'Today’s Acca Desk shorts',
+      eyebrow: 'Acca Desk',
+      title: 'Two-fold shorts from tipsters you follow',
+      body: 'Acca Desk posts early / afternoon / evening 2-folds. Informational only — 18+. Educational odd bands, not a guarantee. You pick your own legs; we don’t stake for you.',
+      ctaLabel: 'Browse marketplace',
+      ctaPath: '/marketplace',
+      extraHtml: cards,
+      extraText,
+    });
   }
 
   private async sendViaResend(
@@ -244,124 +448,98 @@ export class EmailService {
    * Premium purchase receipt (transactional). Sent on every successful marketplace purchase.
    */
   async sendPurchaseConfirmation(to: string, amount: number, pickId: number, pickTitle?: string | null) {
-    const appUrl = process.env.APP_URL || 'http://localhost:6002';
+    const ctaUrl = `${this.appOrigin()}/coupons/${pickId}`;
     const ref = couponUserFacingRef(pickId, pickTitle);
     const safeRef = this.escapeEmailText(ref);
-    const ctaPath = `/coupons/${pickId}`;
-    const ctaUrl = `${appUrl}${ctaPath}`;
     const amountLabel = amount > 0 ? `GHS ${amount.toFixed(2)}` : 'Free pick';
     const subject = `Receipt · ${this.escapeEmailText(couponEmailHeadline(pickId, pickTitle))}`;
-
-    const inner = `${this.brandHeader('Purchase confirmed', 'You\'re in', 'Your pick is secured. Funds stay in escrow until the result is settled.')}
-<tr>
-  <td style="padding:8px 36px 28px;">
-    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f1f5f9;border-radius:14px;border:1px solid ${BR.line};">
-      <tr>
-        <td style="padding:20px 22px;">
-          <p style="margin:0 0 8px;font-size:12px;font-weight:600;color:${BR.muted};text-transform:uppercase;letter-spacing:0.06em;">Reference</p>
-          <p style="margin:0;font-size:17px;font-weight:600;color:${BR.ink};line-height:1.4;">${safeRef}</p>
-          <p style="margin:16px 0 0;font-size:12px;font-weight:600;color:${BR.muted};text-transform:uppercase;letter-spacing:0.06em;">Amount</p>
-          <p style="margin:6px 0 0;font-size:24px;font-weight:700;color:${BR.ink};letter-spacing:-0.02em;">${amountLabel}</p>
-          ${amount > 0 ? `<p style="margin:14px 0 0;font-size:13px;color:${BR.muted};line-height:1.55;">Your wallet was debited; the tipster is paid after settlement minus platform fees where applicable.</p>` : ''}
-        </td>
-      </tr>
-    </table>
-    <div style="text-align:center;margin-top:26px;">
-      <a href="${ctaUrl}" style="display:inline-block;background:linear-gradient(180deg,#d4af37,#b8941f);color:#0c1224;padding:14px 32px;text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(201,162,39,0.35);">View pick</a>
-    </div>
-  </td>
-</tr>`;
-
-    const html = this.premiumDocument(inner);
-    const text = `Purchase confirmed\n\n${ref}\nAmount: ${amountLabel}\nFunds remain in escrow until settlement.\n\nOpen: ${ctaUrl}\n\n— BetRollover`;
-    return this.send({ to, subject, text, html });
+    const inner = `${this.brandHeader('Receipt', 'Purchase confirmed', 'Your pick is secured. Funds stay in escrow until settlement.')}
+${this.bodyCell(`
+  ${this.insetCard(`
+    <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:${BR.muted};text-transform:uppercase;letter-spacing:0.08em;">Pick</p>
+    <p style="margin:0;font-size:16px;font-weight:600;color:${BR.ink};line-height:1.4;">${safeRef}</p>
+    <p style="margin:16px 0 6px;font-size:11px;font-weight:700;color:${BR.muted};text-transform:uppercase;letter-spacing:0.08em;">Amount</p>
+    <p style="margin:0;font-size:26px;font-weight:700;color:${BR.ink};letter-spacing:-0.03em;">${amountLabel}</p>
+    ${amount > 0 ? `<p style="margin:14px 0 0;font-size:13px;color:${BR.muted};line-height:1.55;">Wallet debited now. The tipster is paid after the result, minus platform fees where applicable.</p>` : ''}
+  `)}
+  ${this.ctaButton(ctaUrl, 'View pick')}
+`)}`;
+    const text = `Purchase confirmed\n\n${ref}\nAmount: ${amountLabel}\nFunds remain in escrow until settlement.\n\nOpen: ${ctaUrl}\n\n18+ Informational only.\n— BetRollover`;
+    return this.send({ to, subject, text, html: this.premiumDocument(inner) });
   }
 
   async sendPickApproved(to: string, _pickTitleUnused?: string) {
-    const inner = `${this.brandHeader('Marketplace', 'Pick live', 'Your pick is on the marketplace.')}
-<tr><td style="padding:8px 36px 36px;text-align:center;">
-  <p style="font-size:15px;color:${BR.muted};line-height:1.6;margin:0;">You’ll receive settlement and payout emails when results are in.</p>
-</td></tr>`;
+    const ctaUrl = `${this.appOrigin()}/marketplace`;
+    const inner = `${this.brandHeader('Marketplace', 'Your pick is live', 'It’s listed for buyers. You’ll get settlement mail when results are in.')}
+${this.bodyCell(`${this.copyP('Share your profile so followers can find the slip.')}${this.ctaButton(ctaUrl, 'Open marketplace')}`)}`;
     return this.send({
       to,
-      subject: 'Pick approved',
-      text: 'Your pick has been approved and is now live.',
+      subject: 'Your pick is live',
+      text: `Your pick is live on the marketplace.\n${ctaUrl}\n\n18+ Informational only.\n— BetRollover`,
       html: this.premiumDocument(inner),
     });
   }
 
   async sendPickRejected(to: string, _pickTitleUnused?: string) {
-    const inner = `${this.brandHeader('Marketplace', 'Pick not published', 'We couldn’t list this pick.')}
-<tr><td style="padding:8px 36px 36px;text-align:center;">
-  <p style="font-size:15px;color:${BR.muted};line-height:1.6;margin:0;">Contact support if you need more detail.</p>
-</td></tr>`;
+    const ctaUrl = `${this.appOrigin()}/support`;
+    const inner = `${this.brandHeader('Marketplace', 'Pick not published', 'This slip did not meet listing rules.')}
+${this.bodyCell(`${this.copyP('Check your picks, then try again. Support can explain if something looks wrong.')}${this.ctaButton(ctaUrl, 'Contact support')}`)}`;
     return this.send({
       to,
-      subject: 'Pick not approved',
-      text: 'Your pick was not approved.',
+      subject: 'Pick not published',
+      text: `Your pick was not published. Contact support if you need detail.\n${ctaUrl}\n\n— BetRollover`,
       html: this.premiumDocument(inner),
     });
   }
 
   async sendTipsterApproved(to: string) {
-    const inner = `${this.brandHeader('Tipster', 'Account active', 'You can create picks. Paid listings require meeting the platform minimum ROI.')}
-<tr><td style="padding:8px 36px 36px;text-align:center;">
-  <p style="font-size:15px;color:${BR.muted};line-height:1.6;margin:0;">Post free picks to build your record if you’re below the threshold.</p>
-</td></tr>`;
+    const ctaUrl = `${this.appOrigin()}/create-pick`;
+    const inner = `${this.brandHeader('Tipster', 'You’re approved', 'Create picks and track ROI. Paid listings need the platform minimum ROI.')}
+${this.bodyCell(`${this.copyP('Start with free slips if you’re still building a record.')}${this.ctaButton(ctaUrl, 'Create a pick')}`)}`;
     return this.send({
       to,
-      subject: 'Your tipster account is active',
-      text: 'Your tipster account is active. You can create picks. Paid picks require meeting the platform minimum ROI.',
+      subject: 'You’re approved as a tipster',
+      text: `Your tipster account is active. Create picks at ${ctaUrl}\nPaid picks require the platform minimum ROI.\n\n18+ Informational only.\n— BetRollover`,
       html: this.premiumDocument(inner),
     });
   }
 
   async sendTipsterRejected(to: string) {
-    const inner = `${this.brandHeader('Tipster', 'Status update', 'We could not enable tipster selling on your account at this time.')}
-<tr><td style="padding:8px 36px 36px;text-align:center;">
-  <p style="font-size:15px;color:${BR.muted};line-height:1.6;margin:0;">Eligibility follows platform rules and ROI requirements. Reply via support if you have questions.</p>
-</td></tr>`;
+    const ctaUrl = `${this.appOrigin()}/support`;
+    const inner = `${this.brandHeader('Tipster', 'Selling not enabled', 'We could not turn on tipster selling on this account right now.')}
+${this.bodyCell(`${this.copyP('Eligibility follows platform rules and ROI. Support can walk you through next steps.')}${this.ctaButton(ctaUrl, 'Contact support')}`)}`;
     return this.send({
       to,
       subject: 'Tipster status update',
-      text: 'We could not enable tipster selling on your account. Contact support for details.',
+      text: `Tipster selling is not enabled on your account. ${ctaUrl}\n\n— BetRollover`,
       html: this.premiumDocument(inner),
     });
   }
 
   async sendPasswordResetOtp(to: string, code: string) {
     const expiryMinutes = 10;
-    const appUrl = process.env.APP_URL || 'http://localhost:6002';
-    const resetUrl = `${appUrl}/forgot-password?email=${encodeURIComponent(to)}&code=${code}`;
-    const inner = `${this.brandHeader('Security', 'Reset your password', 'Use the code or the secure link below.')}
-<tr>
-  <td style="padding:8px 36px 28px;text-align:center;">
-    <p style="font-size:34px;font-weight:800;letter-spacing:0.3em;color:${BR.ink};margin:8px 0 20px;">${this.escapeEmailText(code)}</p>
-    <a href="${resetUrl}" style="display:inline-block;background:linear-gradient(180deg,#d4af37,#b8941f);color:#0c1224;padding:14px 28px;text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;">Open reset page</a>
-    <p style="font-size:13px;color:${BR.muted};margin:20px 0 0;">Valid for ${expiryMinutes} minutes. If you didn’t request this, ignore this email.</p>
-  </td>
-</tr>`;
+    const resetUrl = `${this.appOrigin()}/forgot-password?email=${encodeURIComponent(to)}&code=${code}`;
+    const inner = `${this.brandHeader('Security', 'Reset your password', 'Use the code or open the secure link. Ignore this if you didn’t ask for a reset.')}
+${this.bodyCell(`
+  <p style="font-size:32px;font-weight:800;letter-spacing:0.28em;color:${BR.ink};margin:4px 0 22px;text-align:center;">${this.escapeEmailText(code)}</p>
+  ${this.ctaButton(resetUrl, 'Open reset page')}
+  <p style="font-size:13px;color:${BR.muted};margin:18px 0 0;text-align:center;">Valid for ${expiryMinutes} minutes.</p>
+`)}`;
     return this.send({
       to,
-      subject: 'BetRollover password reset code',
-      text: `Your password reset code is: ${code}\n\nReset link: ${resetUrl}\n\nValid for ${expiryMinutes} minutes.\n\n— BetRollover`,
+      subject: 'Reset your BetRollover password',
+      text: `Your password reset code is: ${code}\n\nReset link: ${resetUrl}\nValid for ${expiryMinutes} minutes.\n\n— BetRollover`,
       html: this.premiumDocument(inner),
     });
   }
 
   async sendVerificationEmail(to: string, verifyUrl: string, displayName?: string) {
     const name = this.escapeEmailText(displayName || 'there');
-    const inner = `${this.brandHeader('Account', 'Confirm your email', `Hi ${name}, one tap to unlock wallet and picks.`)}
-<tr>
-  <td style="padding:8px 36px 36px;text-align:center;">
-    <a href="${verifyUrl}" style="display:inline-block;background:linear-gradient(180deg,#d4af37,#b8941f);color:#0c1224;padding:14px 32px;text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;">Verify email</a>
-    <p style="font-size:12px;color:${BR.muted};margin:22px 0 0;word-break:break-all;">${this.escapeEmailText(verifyUrl)}</p>
-    <p style="font-size:12px;color:${BR.muted};margin:16px 0 0;">Link expires in 24 hours.</p>
-  </td>
-</tr>`;
+    const inner = `${this.brandHeader('Account', 'Confirm your email', `Hi ${name} — one tap to finish setup.`)}
+${this.bodyCell(`${this.copyP('This unlocks wallet, picks, and notifications.')}${this.ctaButton(verifyUrl, 'Verify email')}<p style="font-size:12px;color:${BR.muted};margin:18px 0 0;word-break:break-all;text-align:center;">${this.escapeEmailText(verifyUrl)}</p><p style="font-size:12px;color:${BR.muted};margin:10px 0 0;text-align:center;">Link expires in 24 hours.</p>`)}`;
     return this.send({
       to,
-      subject: 'Verify your BetRollover email',
+      subject: 'Confirm your BetRollover email',
       text: `Hi ${displayName || 'there'},\n\nVerify your email:\n${verifyUrl}\n\nExpires in 24 hours.\n\n— BetRollover`,
       html: this.premiumDocument(inner),
     });
@@ -369,19 +547,21 @@ export class EmailService {
 
   async sendSettlement(to: string, pickId: number, won: boolean, pickTitle?: string | null) {
     const ref = couponUserFacingRef(pickId, pickTitle);
-    const safe = this.escapeEmailText(ref);
-    const inner = `${this.brandHeader('Settlement', won ? 'Pick won' : 'Pick settled', safe)}
-<tr><td style="padding:8px 36px 36px;text-align:center;">
-  <p style="font-size:15px;color:${BR.muted};line-height:1.6;margin:0;">${won ? 'Nice hit — check your wallet for any refunds or winnings.' : 'Refund processing depends on the result — see your purchases.'}</p>
-</td></tr>`;
+    const ctaUrl = `${this.appOrigin()}/my-purchases`;
+    const inner = `${this.brandHeader(
+      'Settlement',
+      won ? 'This pick won' : 'This pick settled',
+      this.escapeEmailText(ref),
+    )}
+${this.bodyCell(`${this.copyP(won ? 'Check purchases for the result card. Wallet updates follow platform settlement rules.' : 'See purchases for the result. Refunds, if any, follow the coupon rules.')}${this.ctaButton(ctaUrl, 'View purchases')}`)}`;
     return this.send({
       to,
       subject: won
-        ? `Pick won · ${this.escapeEmailText(couponEmailHeadline(pickId, pickTitle))}`
-        : `Pick settled · ${this.escapeEmailText(couponEmailHeadline(pickId, pickTitle))}`,
+        ? `Won · ${this.escapeEmailText(couponEmailHeadline(pickId, pickTitle))}`
+        : `Settled · ${this.escapeEmailText(couponEmailHeadline(pickId, pickTitle))}`,
       text: won
-        ? `Your purchased pick (${ref}) won!`
-        : `Your purchased pick (${ref}) settled. Check your wallet for refunds if applicable.`,
+        ? `Your purchased pick (${ref}) won.\n${ctaUrl}\n\n18+ Informational only.\n— BetRollover`
+        : `Your purchased pick (${ref}) settled. ${ctaUrl}\n\n18+ Informational only.\n— BetRollover`,
       html: this.premiumDocument(inner),
     });
   }
@@ -396,79 +576,51 @@ export class EmailService {
     link?: string | null;
     metadata?: Record<string, string>;
   }) {
-    const appUrl = process.env.APP_URL || 'http://localhost:6002';
-    const ctaUrl = data.link ? (data.link.startsWith('http') ? data.link : `${appUrl}${data.link}`) : appUrl;
+    const ctaUrl = data.link
+      ? data.link.startsWith('http')
+        ? data.link
+        : `${this.appOrigin()}${data.link}`
+      : this.appOrigin();
     const subject = getEmailSubject(data.type, data.title, data.metadata);
     const ctaText = getCtaText(data.type);
-    const accentColor = getCategoryColor(data.type);
-    const logoSrc = this.escapeHtmlAttr(this.getLogoUrl());
-    const safeMessage = (data.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
-    const safeTitle = this.escapeEmailText(data.title);
+    const eyebrow = getCategoryEyebrow(data.type);
+    const safeMessage = this.escapeEmailText(data.message || '').replace(/\n/g, '<br>');
+    const headline = this.escapeEmailText(subject);
     const tipsterFormLine = data.metadata?.tipsterForm
-      ? `<p style="font-size:13px;color:${BR.muted};margin:0 0 16px;padding:10px 12px;background:#f8fafc;border:1px solid ${BR.line};border-radius:10px;">${this.escapeEmailText(
-          data.metadata.tipsterForm,
-        )}</p>`
-      : '';
-    const tipsterFormTrustNote = data.metadata?.tipsterForm
-      ? `<p style="font-size:11px;color:${BR.muted};margin:0 0 14px;">Stats source: settled pick results on BetRollover. Performance can change as new picks settle.</p>`
+      ? this.insetCard(
+          `<p style="margin:0;font-size:13px;color:${BR.muted};">${this.escapeEmailText(data.metadata.tipsterForm)}</p>
+           <p style="margin:8px 0 0;font-size:11px;color:${BR.muted};">Stats from settled picks on BetRollover. Form can change.</p>`,
+        )
       : '';
     const isPickSocial = data.type.startsWith('pick_comment');
     const actorName = data.metadata?.actorName?.trim();
     const pickLabel = data.metadata?.pickLabel?.trim() || data.metadata?.pickTitle?.trim();
     const socialContextLine =
       isPickSocial && actorName
-        ? `<p style="font-size:13px;color:${BR.muted};margin:0 0 14px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;"><strong style="color:${BR.ink};">${this.escapeEmailText(actorName)}</strong>${pickLabel ? ` · ${this.escapeEmailText(pickLabel)}` : ''}</p>`
+        ? this.insetCard(
+            `<p style="margin:0;font-size:14px;color:${BR.ink};"><strong>${this.escapeEmailText(actorName)}</strong>${
+              pickLabel ? ` · ${this.escapeEmailText(pickLabel)}` : ''
+            }</p>`,
+          )
         : '';
-    const ctaGradient =
-      accentColor === '#10b981'
-        ? 'linear-gradient(180deg,#10b981,#059669)'
-        : `linear-gradient(180deg,${accentColor},${accentColor})`;
-    const ctaShadow =
-      accentColor === '#10b981' ? '0 4px 14px rgba(5,150,105,0.25)' : '0 4px 14px rgba(15,23,42,0.12)';
-    const safeCtaUrl = this.escapeHtmlAttr(ctaUrl);
 
-    const inner = `<tr>
-  <td style="height:4px;background:${accentColor};"></td>
-</tr>
-<tr>
-  <td style="padding:24px 32px 0;text-align:center;">
-    <img src="${logoSrc}" alt="BetRollover" width="140" style="max-width:168px;width:140px;height:auto;display:block;margin:0 auto;border:0;outline:none;" />
-  </td>
-</tr>
-<tr>
-  <td style="padding:16px 32px 8px;text-align:center;">
-    <h1 style="font-size:20px;font-weight:700;color:${BR.ink};margin:0;letter-spacing:-0.02em;">${safeTitle}</h1>
-  </td>
-</tr>
-<tr>
-  <td style="padding:8px 32px 28px;">
-    ${tipsterFormLine}
-    ${tipsterFormTrustNote}
-    ${socialContextLine}
-    <p style="font-size:16px;line-height:1.65;color:#334155;margin:0 0 22px;">${safeMessage}</p>
-    ${data.link ? `
-    <div style="text-align:center;">
-      <a href="${safeCtaUrl}" style="display:inline-block;background:${ctaGradient};color:#fff;padding:13px 26px;text-decoration:none;border-radius:12px;font-weight:600;font-size:15px;box-shadow:${ctaShadow};">${ctaText}</a>
-    </div>` : ''}
-  </td>
-</tr>
-<tr>
-  <td style="padding:18px 28px 28px;border-top:1px solid ${BR.line};">
-    <p style="font-size:12px;color:#94a3b8;margin:0;">— BetRollover</p>
-    <p style="font-size:11px;color:#cbd5e1;margin:8px 0 0 0;">Manage email preferences in your account settings.</p>
-  </td>
-</tr>`;
+    const inner = `${this.brandHeader(eyebrow, headline)}
+${this.bodyCell(`
+  ${tipsterFormLine}
+  ${socialContextLine}
+  ${this.copyP(safeMessage)}
+  ${data.link ? this.ctaButton(ctaUrl, ctaText) : ''}
+`)}`;
 
     const footNote =
       data.metadata?.followerAlert === '1'
-        ? 'You received this because you follow this tipster.'
-        : 'You received this because email notifications are enabled for your account.';
-    const html = this.premiumDocument(inner, footNote);
+        ? 'You get this because you follow this tipster.'
+        : undefined;
     return this.send({
       to,
       subject,
-      text: data.message,
-      html,
+      text: `${subject}\n\n${data.message}\n${data.link ? `\n${ctaUrl}` : ''}\n\n18+ Informational only.\n— BetRollover`,
+      html: this.premiumDocument(inner, footNote),
     });
   }
 
@@ -496,27 +648,21 @@ export class EmailService {
       isSubscription?: boolean;
     },
   ) {
-    const appUrl = process.env.APP_URL || 'http://localhost:6002';
-    const ctaUrl = data.link.startsWith('http') ? data.link : `${appUrl}${data.link}`;
+    const ctaUrl = data.link.startsWith('http') ? data.link : `${this.appOrigin()}${data.link}`;
     const tipsterName = this.escapeEmailText(data.tipsterName || 'Tipster');
     const couponHeadline = this.escapeEmailText(couponEmailHeadline(data.accumulatorId, data.couponTitle));
     const priceLabel = Number(data.price) > 0 ? `GHS ${Number(data.price).toFixed(2)}` : 'Free';
-    const totalOddsLabel = Number(data.totalOdds || 0).toFixed(3);
+    const totalOddsLabel = Number(data.totalOdds || 0).toFixed(2);
     const accessLabel = data.isSubscription ? 'Subscribers only' : 'Public marketplace';
     const asOfLabel = data.tipsterFormAsOf
       ? new Date(data.tipsterFormAsOf).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })
       : null;
     const tipsterFormLine = data.tipsterForm
-      ? `<div style="margin:12px 0 14px;padding:10px 12px;background:#f8fafc;border:1px solid ${BR.line};border-radius:10px;">
-          <p style="margin:0;font-size:13px;color:${BR.muted};">${this.escapeEmailText(data.tipsterForm)}</p>
-          ${
-            asOfLabel
-              ? `<p style="margin:6px 0 0;font-size:11px;color:${BR.muted};">As of: ${this.escapeEmailText(asOfLabel)}</p>`
-              : ''
-          }
-          <p style="margin:6px 0 0;font-size:11px;color:${BR.muted};">Stats source: settled pick results on BetRollover.</p>
-          <p style="margin:4px 0 0;font-size:11px;color:${BR.muted};">Performance can change as new picks settle.</p>
-        </div>`
+      ? this.insetCard(
+          `<p style="margin:0;font-size:13px;color:${BR.muted};">${this.escapeEmailText(data.tipsterForm)}</p>
+          ${asOfLabel ? `<p style="margin:6px 0 0;font-size:11px;color:${BR.muted};">As of ${this.escapeEmailText(asOfLabel)}</p>` : ''}
+          <p style="margin:6px 0 0;font-size:11px;color:${BR.muted};">Settled results on BetRollover. Form can change.</p>`,
+        )
       : '';
 
     const legsHtml = (data.legs || [])
@@ -524,48 +670,36 @@ export class EmailService {
       .map((leg, idx) => {
         const match = this.escapeEmailText(leg.matchDescription || 'Match');
         const prediction = this.escapeEmailText(leg.prediction || 'Prediction');
-        const odds = Number(leg.odds || 0).toFixed(3);
+        const odds = Number(leg.odds || 0).toFixed(2);
         const kickoff = leg.matchDate
           ? new Date(leg.matchDate).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })
           : null;
         return `<tr>
-  <td style="padding:14px 16px;border-top:1px solid ${BR.line};">
-    <p style="margin:0;font-size:13px;font-weight:700;color:${BR.ink};">Leg ${idx + 1}: ${match}</p>
-    <p style="margin:6px 0 0;font-size:13px;color:#334155;">${prediction} · <strong>@ ${odds}</strong></p>
-    ${kickoff ? `<p style="margin:6px 0 0;font-size:12px;color:${BR.muted};">Kickoff: ${this.escapeEmailText(kickoff)}</p>` : ''}
+  <td style="padding:12px 0;${idx === 0 ? '' : `border-top:1px solid ${BR.line};`}">
+    <p style="margin:0;font-size:13px;font-weight:700;color:${BR.ink};">${idx + 1}. ${match}</p>
+    <p style="margin:5px 0 0;font-size:13px;color:#334155;">${prediction} · <strong>@ ${odds}</strong></p>
+    ${kickoff ? `<p style="margin:5px 0 0;font-size:12px;color:${BR.muted};">${this.escapeEmailText(kickoff)}</p>` : ''}
   </td>
 </tr>`;
       })
       .join('');
 
-    const inner = `${this.brandHeader(
-      'New pick alert',
-      couponHeadline,
-      `${tipsterName} just published a new pick.${tipsterFormLine ? ' ' : ''}`,
-    )}
-<tr>
-  <td style="padding:8px 36px 26px;">
-    ${tipsterFormLine}
-    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f1f5f9;border-radius:14px;border:1px solid ${BR.line};overflow:hidden;">
-      <tr>
-        <td style="padding:16px;">
-          <p style="margin:0;font-size:12px;color:${BR.muted};text-transform:uppercase;letter-spacing:0.06em;">Access</p>
-          <p style="margin:6px 0 0;font-size:15px;font-weight:700;color:${BR.ink};">${this.escapeEmailText(accessLabel)}</p>
-          <p style="margin:14px 0 0;font-size:12px;color:${BR.muted};text-transform:uppercase;letter-spacing:0.06em;">Price</p>
-          <p style="margin:6px 0 0;font-size:18px;font-weight:700;color:${BR.ink};">${this.escapeEmailText(priceLabel)}</p>
-          <p style="margin:14px 0 0;font-size:12px;color:${BR.muted};text-transform:uppercase;letter-spacing:0.06em;">Total Odds</p>
-          <p style="margin:6px 0 0;font-size:22px;font-weight:800;color:${BR.ink};letter-spacing:-0.02em;">${this.escapeEmailText(totalOddsLabel)}</p>
-        </td>
-      </tr>
-      ${legsHtml || `<tr><td style="padding:14px 16px;border-top:1px solid ${BR.line};font-size:13px;color:${BR.muted};">No leg details available.</td></tr>`}
+    const inner = `${this.brandHeader('New pick', couponHeadline, `${tipsterName} just posted.`)}
+${this.bodyCell(`
+  ${tipsterFormLine}
+  ${this.insetCard(`
+    <p style="margin:0;font-size:11px;font-weight:700;color:${BR.muted};text-transform:uppercase;letter-spacing:0.08em;">Access</p>
+    <p style="margin:6px 0 0;font-size:15px;font-weight:700;color:${BR.ink};">${this.escapeEmailText(accessLabel)}</p>
+    <p style="margin:14px 0 0;font-size:11px;font-weight:700;color:${BR.muted};text-transform:uppercase;letter-spacing:0.08em;">Price · Combined odds</p>
+    <p style="margin:6px 0 0;font-size:20px;font-weight:700;color:${BR.ink};letter-spacing:-0.03em;">${this.escapeEmailText(priceLabel)} · ${this.escapeEmailText(totalOddsLabel)}</p>
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-top:8px;">
+      ${legsHtml || `<tr><td style="padding:12px 0;font-size:13px;color:${BR.muted};">No legs listed.</td></tr>`}
     </table>
-    <div style="text-align:center;margin-top:24px;">
-      <a href="${this.escapeHtmlAttr(ctaUrl)}" style="display:inline-block;background:linear-gradient(180deg,#d4af37,#b8941f);color:#0c1224;padding:14px 30px;text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(201,162,39,0.35);">Open pick</a>
-    </div>
-  </td>
-</tr>`;
+  `)}
+  ${this.ctaButton(ctaUrl, 'Open pick')}
+`)}`;
 
-    const html = this.premiumDocument(inner, 'You received this because pick email alerts are enabled for your account.');
+    const html = this.premiumDocument(inner, 'You get this because pick alerts are on for your account.');
     const textLegs = (data.legs || [])
       .slice(0, 20)
       .map(
@@ -621,7 +755,6 @@ export class EmailService {
     let message: string;
     let link: string;
     let ctaText: string;
-    let accentColor: string;
 
     if ('type' in data && data.type in ADMIN_NOTIFICATION_TEMPLATES) {
       const tpl = ADMIN_NOTIFICATION_TEMPLATES[data.type as AdminNotificationType];
@@ -630,52 +763,23 @@ export class EmailService {
       message = tpl.message(ctx as never);
       link = tpl.link;
       ctaText = tpl.ctaText;
-      accentColor = tpl.accentColor;
     } else if ('subject' in data && 'message' in data) {
       subject = data.subject;
       message = data.message;
       link = data.link || '/admin';
       ctaText = 'View in Admin';
-      accentColor = '#64748b';
     } else {
       return { sent: 0 };
     }
 
-    const appUrl = process.env.APP_URL || 'http://localhost:6002';
-    const ctaUrl = link.startsWith('http') ? link : `${appUrl}${link}`;
-    const safeMessage = (message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+    const ctaUrl = link.startsWith('http') ? link : `${this.appOrigin()}${link}`;
+    const safeMessage = this.escapeEmailText(message || '').replace(/\n/g, '<br>');
     const safeSubject = this.escapeEmailText(subject);
 
-    const logoSrc = this.escapeHtmlAttr(this.getLogoUrl());
-    const inner = `<tr>
-  <td style="height:4px;background:${accentColor};"></td>
-</tr>
-<tr>
-  <td style="padding:20px 32px 0;text-align:center;">
-    <img src="${logoSrc}" alt="BetRollover" width="120" style="max-width:140px;width:120px;height:auto;display:block;margin:0 auto;border:0;outline:none;" />
-  </td>
-</tr>
-<tr>
-  <td style="padding:12px 32px 8px;text-align:center;">
-    <div style="font-size:11px;font-weight:700;letter-spacing:0.22em;color:${accentColor};text-transform:uppercase;">Admin</div>
-    <h1 style="font-size:18px;font-weight:700;color:${BR.adminInk};margin:12px 0 0;">${safeSubject}</h1>
-  </td>
-</tr>
-<tr>
-  <td style="padding:8px 32px 24px;">
-    <p style="font-size:15px;line-height:1.65;color:#334155;margin:0 0 20px;">${safeMessage}</p>
-    <div style="text-align:center;">
-      <a href="${ctaUrl}" style="display:inline-block;background:${accentColor};color:#fff;padding:13px 26px;text-decoration:none;border-radius:12px;font-weight:600;font-size:14px;">${ctaText}</a>
-    </div>
-  </td>
-</tr>
-<tr>
-  <td style="padding:16px 28px 26px;border-top:1px solid ${BR.line};">
-    <p style="font-size:11px;color:#94a3b8;margin:0;">BetRollover system message · not forwarded to users</p>
-  </td>
-</tr>`;
+    const inner = `${this.brandHeader('Admin', safeSubject)}
+${this.bodyCell(`${this.copyP(safeMessage)}${this.ctaButton(ctaUrl, ctaText)}`)}`;
 
-    const html = this.premiumDocument(inner);
+    const html = this.premiumDocument(inner, 'System message — not sent to users.');
 
     let sent = 0;
     for (const to of recipients) {

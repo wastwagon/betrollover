@@ -34,6 +34,7 @@ import { AccumulatorsService } from '../accumulators/accumulators.service';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { MarketingCampaignService } from '../email/marketing-campaign.service';
 import { UpdateApiSportsKeyDto, TestApiSportsConnectionDto } from './dto/api-sports.dto';
 
 @Controller('admin')
@@ -69,6 +70,7 @@ export class AdminController {
     private readonly adsService: AdsService,
     private readonly accumulatorsService: AccumulatorsService,
     private readonly subscriptionsService: SubscriptionsService,
+    private readonly marketingCampaigns: MarketingCampaignService,
     private readonly dataSource: DataSource,
   ) { }
 
@@ -852,6 +854,18 @@ export class AdminController {
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.adminService.updateSmtpSettings(body);
+  }
+
+  @Post('marketing/run-welcome')
+  async runWelcomeSeries(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.marketingCampaigns.runWelcomeSeries();
+  }
+
+  @Post('marketing/run-daily')
+  async runDailyPromos(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.marketingCampaigns.runDailyPromos();
   }
 
   @Get('settings/paystack')
