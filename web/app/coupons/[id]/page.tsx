@@ -62,6 +62,7 @@ interface Tipster {
   avatarUrl?: string | null;
   isAi?: boolean;
   isVerified?: boolean;
+  tipsterType?: string | null;
   winRate: number;
   totalPicks: number;
   wonPicks: number;
@@ -1064,7 +1065,7 @@ export default function CouponDetailPage() {
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-[var(--text)] flex flex-wrap items-center gap-2 min-w-0">
                         <span className="truncate min-w-0">{coupon.tipster.displayName}</span>
-                        {coupon.tipster.isAi ? <AiTipsterBadge /> : null}
+                        {coupon.tipster.isAi ? <AiTipsterBadge tipsterType={coupon.tipster.tipsterType} /> : null}
                         {!coupon.tipster.isAi && coupon.tipster.isVerified ? <VerifiedTipsterBadge /> : null}
                       </p>
                       <p className="text-xs text-[var(--text-muted)]">@{coupon.tipster.username}</p>

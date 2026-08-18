@@ -19,6 +19,8 @@ import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import {
   LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING,
   LEADERBOARD_MIN_SETTLED_WEEKLY,
+  TIPSTER_ACTIVE_WITHIN_DAYS,
+  TIPSTER_FORM_POST_CAP,
 } from '@betrollover/shared-types';
 import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
@@ -46,6 +48,8 @@ interface LeaderboardEntry {
   review_count?: number | null;
   is_ai?: boolean;
   is_verified?: boolean;
+  tipster_type?: string | null;
+  form_points?: number;
   /** Active VIP package id from API when tipster sells a subscription plan. */
   vip_package_id?: number | null;
 }
@@ -121,20 +125,18 @@ export default function LeaderboardPage() {
       .finally(() => setMeResolved(true));
   }, []);
 
-  const fetchLeaderboard = useCallback((p: Period, s: SportFilter) => {
-    setLoading(true);
+  const fetchLeaderboard = useCallback((p: Period, s: SportFilter, silent = false) => {
+    if (!silent) setLoading(true);
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
-    // Always use /leaderboard so the # column is position in this list (rank 1,2,3…),
-    // matching "Top Performing Tipsters" on the home page. /tipsters returns leaderboard_rank
-    // from DB (global) while sorting by live ROI — numbers then disagree with row order.
+    // Same list as homepage Top Performing: GET /leaderboard rank is form order among active posters.
     const params = new URLSearchParams({ limit: '50' });
     if (p !== 'all_time') params.set('period', p);
     if (s !== 'all') params.set('sport', s);
     const endpoint = `${getApiUrl()}/leaderboard?${params}`;
 
-    fetch(endpoint, { headers })
+    fetch(endpoint, { headers, cache: 'no-store' })
       .then(r => r.ok ? r.json() : { leaderboard: [], tipsters: [] })
       .then(data => {
         const raw: Record<string, unknown>[] = data.leaderboard ?? data.tipsters ?? data ?? [];
@@ -148,8 +150,11 @@ export default function LeaderboardPage() {
           roi: (e.roi as number) ?? 0,
           total_predictions: (e.total_predictions ?? e.monthly_predictions ?? 0) as number,
           total_wins: (e.total_wins ?? e.monthly_wins ?? 0) as number,
+          total_losses: typeof e.total_losses === 'number' ? e.total_losses : undefined,
           is_ai: !!(e.is_ai as boolean | undefined),
           is_verified: !!(e.is_verified as boolean | undefined),
+          tipster_type: (e.tipster_type as string | null | undefined) ?? null,
+          form_points: typeof e.form_points === 'number' ? e.form_points : undefined,
           avg_rating: (e.avg_rating as number | null | undefined) ?? null,
           review_count: (e.review_count as number | null | undefined) ?? null,
           vip_package_id: (e.vip_package_id as number | null | undefined) ?? null,
@@ -160,6 +165,14 @@ export default function LeaderboardPage() {
   }, []);
 
   useEffect(() => { fetchLeaderboard(period, sport); }, [period, sport, fetchLeaderboard]);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') fetchLeaderboard(period, sport, true);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [period, sport, fetchLeaderboard]);
 
   const handleFollow = async (username: string) => {
     const token = localStorage.getItem('token');
@@ -270,6 +283,8 @@ export default function LeaderboardPage() {
             {period === 'all_time'
               ? t('leaderboard.rank_notice_all_time', {
                   n: String(LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING),
+                  days: String(TIPSTER_ACTIVE_WITHIN_DAYS),
+                  cap: String(TIPSTER_FORM_POST_CAP),
                 })
               : period === 'weekly'
                 ? t('leaderboard.rank_notice_weekly', { n: String(LEADERBOARD_MIN_SETTLED_WEEKLY) })
@@ -304,9 +319,10 @@ export default function LeaderboardPage() {
         ) : (
           <div className="space-y-2 min-w-0">
             {/* Desktop table header */}
-            <div className="hidden md:grid grid-cols-[3rem_1fr_8rem_8rem_8rem_10rem] gap-4 px-4 py-2 text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] min-w-0">
+            <div className="hidden md:grid grid-cols-[3rem_1fr_5rem_8rem_8rem_8rem_10rem] gap-4 px-4 py-2 text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] min-w-0">
               <span>#</span>
               <span>{t('nav.tipsters')}</span>
+              <span className="text-center" title={t('leaderboard.form_hint', { days: String(TIPSTER_ACTIVE_WITHIN_DAYS), cap: String(TIPSTER_FORM_POST_CAP) })}>{t('leaderboard.form_col')}</span>
               <span className="text-center">{t('tipster.win_rate')}</span>
               <span className="text-center">{t('tipster.roi')}</span>
               <span className="text-center">{t('tipster.total_picks')}</span>
@@ -353,7 +369,7 @@ export default function LeaderboardPage() {
                   }`}
                 >
                 <div
-                  className={`flex md:grid md:grid-cols-[3rem_1fr_8rem_8rem_8rem_10rem] items-center gap-3 md:gap-4 px-4 py-3.5 min-w-0 w-full max-w-full overflow-x-hidden`}
+                  className={`flex md:grid md:grid-cols-[3rem_1fr_5rem_8rem_8rem_8rem_10rem] items-center gap-3 md:gap-4 px-4 py-3.5 min-w-0 w-full max-w-full overflow-x-hidden`}
                 >
                   <div className="shrink-0"><RankBadge rank={rank} /></div>
 
@@ -377,7 +393,7 @@ export default function LeaderboardPage() {
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-[var(--text)] group-hover:text-[var(--primary)] transition-colors flex flex-wrap items-center gap-2 min-w-0">
                         <span className="truncate min-w-0 max-w-full">{entry.display_name}</span>
-                        {entry.is_ai ? <AiTipsterBadge /> : null}
+                        {entry.is_ai ? <AiTipsterBadge tipsterType={entry.tipster_type} /> : null}
                         {!entry.is_ai && entry.is_verified ? <VerifiedTipsterBadge /> : null}
                         {earlySample ? (
                           <span
@@ -411,24 +427,33 @@ export default function LeaderboardPage() {
 
                   {/* Stats */}
                   <div className="hidden md:flex flex-col items-center">
+                    <span className="text-sm font-bold text-[var(--text)]">
+                      {period === 'all_time' && entry.form_points != null ? entry.form_points : '—'}
+                    </span>
+                    <span className="text-[10px] text-[var(--text-muted)]">{t('leaderboard.form_col')}</span>
+                  </div>
+                  <div className="hidden md:flex flex-col items-center">
                     <span className={`text-sm font-bold ${winRate >= 60 ? 'text-emerald-600' : winRate >= 40 ? 'text-amber-600' : 'text-[var(--text)]'}`}>
                       {winRate.toFixed(1)}%
                     </span>
-                    <span className="text-[10px] text-[var(--text-muted)]">win rate</span>
+                    <span className="text-[10px] text-[var(--text-muted)]">{t('tipster.win_rate')}</span>
                   </div>
                   <div className="hidden md:flex flex-col items-center">
                     <span className={`text-sm font-bold ${roi > 0 ? 'text-emerald-600' : roi < 0 ? 'text-red-500' : 'text-[var(--text)]'}`}>
                       {roi > 0 ? '+' : ''}{roi.toFixed(1)}%
                     </span>
-                    <span className="text-[10px] text-[var(--text-muted)]">ROI</span>
+                    <span className="text-[10px] text-[var(--text-muted)]">{t('tipster.roi')}</span>
                   </div>
                   <div className="hidden md:flex flex-col items-center">
                     <span className="text-sm font-bold text-[var(--text)]">{entry.total_predictions}</span>
-                    <span className="text-[10px] text-[var(--text-muted)]">picks</span>
+                    <span className="text-[10px] text-[var(--text-muted)]">{t('tipster.total_picks')}</span>
                   </div>
 
                   {/* Mobile stats */}
                   <div className="md:hidden flex items-center gap-2 sm:gap-3 ml-auto shrink-0">
+                    {period === 'all_time' && entry.form_points != null ? (
+                      <span className="text-xs font-bold text-[var(--text)]">{entry.form_points} {t('leaderboard.form_col')}</span>
+                    ) : null}
                     <span className={`text-xs font-bold ${winRate >= 60 ? 'text-emerald-600' : 'text-[var(--text)]'}`}>
                       {winRate.toFixed(1)}% WR
                     </span>

@@ -52,9 +52,11 @@ function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: numb
     vip_package_id: (entry.vip_package_id as number | null | undefined) ?? null,
     is_ai: !!(entry.is_ai as boolean | undefined),
     is_verified: !!(entry.is_verified as boolean | undefined),
+    tipster_type: (entry.tipster_type as string | null | undefined) ?? null,
     avg_rating: (entry.avg_rating as number | null | undefined) ?? null,
     review_count: (entry.review_count as number | null | undefined) ?? null,
     avg_odds: (entry.avg_odds as number | null | undefined) ?? null,
+    form_points: typeof entry.form_points === 'number' ? entry.form_points : null,
   };
 }
 
@@ -102,7 +104,7 @@ export default function TipstersPage() {
       if (p === 'monthly' || p === 'weekly') {
         const params = new URLSearchParams({ period: p, limit: '50' });
         if (s && s !== 'all') params.set('sport', s);
-        fetch(`${getApiUrl()}/leaderboard?${params}`, { headers })
+        fetch(`${getApiUrl()}/leaderboard?${params}`, { headers, cache: 'no-store' })
           .then((r) => (r.ok ? r.json() : { leaderboard: [] }))
           .then((data) => {
             const entries = (data.leaderboard || []) as Record<string, unknown>[];
@@ -114,7 +116,7 @@ export default function TipstersPage() {
         const params = new URLSearchParams({ limit: '50', sort_by: sort || sortBy, order: 'desc' });
         if (searchTerm?.trim()) params.set('search', searchTerm.trim());
         if (s && s !== 'all') params.set('sport', s);
-        fetch(`${getApiUrl()}/tipsters?${params}`, { headers })
+        fetch(`${getApiUrl()}/tipsters?${params}`, { headers, cache: 'no-store' })
           .then((r) => (r.ok ? r.json() : { tipsters: [] }))
           .then((data) => setTipsters(data.tipsters || []))
           .catch(() => setTipsters([]))

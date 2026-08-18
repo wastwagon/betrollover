@@ -35,6 +35,7 @@ interface MarketplaceItem {
     avatarUrl: string | null;
     /** Present when API returns it (human vs AI badge). */
     isAi?: boolean;
+    tipsterType?: string | null;
     bio: string | null;
     profileRoi: number | null;
     profileWinRate: number | null;
@@ -208,7 +209,7 @@ export default function SubscriptionMarketplacePage() {
                           <Link href={tip ? `/tipsters/${tip.username}` : '#'} className="font-semibold text-[var(--text)] truncate block">
                             {tip?.displayName ?? 'Tipster'}
                           </Link>
-                          {tip?.isAi === true ? <AiTipsterBadge /> : null}
+                          {tip?.isAi === true ? <AiTipsterBadge tipsterType={tip.tipsterType} /> : null}
                         </div>
                         {tip?.username && (
                           <p className="text-xs text-[var(--text-muted)]">@{tip.username}</p>

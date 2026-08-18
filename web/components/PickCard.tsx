@@ -52,6 +52,9 @@ interface Tipster {
   /** Verified account (from API `isVerified` / `is_verified`). */
   isVerified?: boolean;
   is_verified?: boolean;
+  /** `acca_desk` vs classic `ai`. */
+  tipsterType?: string | null;
+  tipster_type?: string | null;
   winRate: number;
   roi?: number;
   totalPicks: number;
@@ -298,7 +301,12 @@ export function PickCard({
                     <p className="font-medium text-xs text-[var(--text)] truncate min-w-0" title={tipster ? `${t('pick_card.tipster')}: ${tipster.displayName}` : t('pick_card.tipster')}>
                       {tipster?.displayName || t('pick_card.tipster')}
                     </p>
-                    {tipsterShowsAiBadge(tipster) ? <AiTipsterBadge className="!text-[9px] !px-1.5 !py-px" /> : null}
+                    {tipsterShowsAiBadge(tipster) ? (
+                      <AiTipsterBadge
+                        className="!text-[9px] !px-1.5 !py-px"
+                        tipsterType={tipster?.tipsterType ?? tipster?.tipster_type}
+                      />
+                    ) : null}
                     {tipsterShowsVerifiedBadge(tipster) ? (
                       <VerifiedTipsterBadge className="!text-[9px] !px-1.5 !py-px" />
                     ) : null}
@@ -645,7 +653,9 @@ export function PickCard({
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-medium text-base text-[var(--text)]">{tipster.displayName}</p>
-                        {tipsterShowsAiBadge(tipster) ? <AiTipsterBadge /> : null}
+                        {tipsterShowsAiBadge(tipster) ? (
+                          <AiTipsterBadge tipsterType={tipster?.tipsterType ?? tipster?.tipster_type} />
+                        ) : null}
                         {tipsterShowsVerifiedBadge(tipster) ? <VerifiedTipsterBadge /> : null}
                       </div>
                       <div className="flex items-center gap-4 mt-1">
@@ -810,7 +820,9 @@ export function PickCard({
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold text-[var(--text)]">{tipster.displayName}</p>
-                          {tipsterShowsAiBadge(tipster) ? <AiTipsterBadge /> : null}
+                          {tipsterShowsAiBadge(tipster) ? (
+                            <AiTipsterBadge tipsterType={tipster?.tipsterType ?? tipster?.tipster_type} />
+                          ) : null}
                         {tipsterShowsVerifiedBadge(tipster) ? <VerifiedTipsterBadge /> : null}
                         </div>
                         <p className="text-xs text-[var(--text-muted)]">

@@ -48,7 +48,7 @@ export default async function HomePage() {
   const t = buildT(locale);
   const [th, homeData] = await Promise.all([
     fetchSellingThresholds({ revalidate: 300 }),
-    fetchHomePublicData({ revalidate: 60 }),
+    fetchHomePublicData({ revalidate: 30 }),
   ]);
   const sellVars = { minRoi: String(th.minimumROI), minWr: String(th.minimumWinRate) };
 

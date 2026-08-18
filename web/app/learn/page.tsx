@@ -110,7 +110,7 @@ export default async function LearnPage() {
                 <li><strong>Price vs value</strong> — Free picks let you try a tipster; paid picks often reflect confidence or demand. Compare what you pay to the tipster&apos;s ROI and your own budget.</li>
               </ul>
               <p className="mt-4">
-                Browse the <Link href="/leaderboard" className="text-[var(--primary)] hover:underline">leaderboard</Link> to see top performers by ROI and win rate, and the <Link href="/marketplace" className="text-[var(--primary)] hover:underline">marketplace</Link> to compare live listings.
+                Browse the <Link href="/leaderboard" className="text-[var(--primary)] hover:underline">leaderboard</Link> to see who is still posting and ranked by form (results + recent activity), and the <Link href="/marketplace" className="text-[var(--primary)] hover:underline">marketplace</Link> to compare live listings.
               </p>
             </section>
 

@@ -208,7 +208,7 @@ export class SubscriptionsService {
     const tipsterUserIds = [...new Set(pkgs.map((p) => p.tipsterUserId))];
     const tipsters = await this.tipsterRepo.find({
       where: { userId: In(tipsterUserIds) },
-      select: ['id', 'userId', 'username', 'displayName', 'avatarUrl', 'bio', 'isAi'],
+      select: ['id', 'userId', 'username', 'displayName', 'avatarUrl', 'bio', 'isAi', 'tipsterType'],
     });
     const userIdToTipster = new Map<number, Tipster>();
     for (const t of tipsters) {
@@ -258,6 +258,7 @@ export class SubscriptionsService {
               avatarUrl: t.avatarUrl,
               bio: t.bio,
               isAi: !!t.isAi,
+              tipsterType: t.tipsterType ?? null,
               profileRoi: ts != null ? Number(ts.roi) : null,
               profileWinRate: ts != null ? Number(ts.winRate) : null,
               totalPredictions: ts?.total ?? 0,

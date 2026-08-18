@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
@@ -12,6 +12,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { TipsterService } from '../tipster/tipster.service';
 import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
+import { ResultTrackerService } from './result-tracker.service';
 
 @Injectable()
 export class PredictionMarketplaceSyncService {
@@ -35,6 +36,8 @@ export class PredictionMarketplaceSyncService {
     private tipstersSetup: TipstersSetupService,
     private notificationsService: NotificationsService,
     private tipsterService: TipsterService,
+    @Inject(forwardRef(() => ResultTrackerService))
+    private resultTrackerService: ResultTrackerService,
   ) {}
 
   /** Same minimum ROI / win rate as human paid picks; optional GHS price for qualifying AI tipsters. */
@@ -206,6 +209,7 @@ export class PredictionMarketplaceSyncService {
     }
 
     this.logger.log(`Synced prediction ${prediction.id} to marketplace as accumulator ${ticket.id}`);
+    this.resultTrackerService.scheduleLeaderboardRefresh('ai-marketplace-sync');
     return { accumulatorId: ticket.id };
   }
 

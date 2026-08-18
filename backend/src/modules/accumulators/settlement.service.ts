@@ -13,6 +13,7 @@ import { determinePickResult } from './settlement-logic';
 import { clampPlatformCommissionPercent, splitGrossForTipsterPayout } from '../../common/platform-commission';
 import { couponUserFacingRef } from '../../common/coupon-public-label';
 import { TipstersApiService } from '../predictions/tipsters-api.service';
+import { ResultTrackerService } from '../predictions/result-tracker.service';
 
 /** Market types and selection formats we support for settlement. See determinePickResult. */
 export const SETTLEMENT_SUPPORTED_MARKETS = [
@@ -52,6 +53,8 @@ export class SettlementService {
     private readonly dataSource: DataSource,
     @Inject(forwardRef(() => TipstersApiService))
     private readonly tipstersApiService: TipstersApiService,
+    @Inject(forwardRef(() => ResultTrackerService))
+    private readonly resultTrackerService: ResultTrackerService,
   ) { }
 
   /** Argument to `determinePickResult`: canonical `outcomeKey` when set (AI marketplace sync), else `prediction` text. */
@@ -537,6 +540,7 @@ export class SettlementService {
 
     if (statsSyncUserIds.size > 0) {
       await this.persistTipsterStatsForUserIds(statsSyncUserIds);
+      this.resultTrackerService.scheduleLeaderboardRefresh('marketplace-settlement', { immediate: true });
     }
 
     if (picksUpdated > 0 || ticketsSettled > 0) {

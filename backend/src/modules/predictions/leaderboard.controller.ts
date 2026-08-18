@@ -8,7 +8,7 @@ import {
   leaderboardHttpCacheKey,
 } from './leaderboard-cache.util';
 
-const LEADERBOARD_CACHE_TTL = 300; // 5 minutes
+const LEADERBOARD_CACHE_TTL = 30; // seconds; settlement/post bump cache generation so the next GET is live
 
 @Controller('leaderboard')
 export class LeaderboardController {

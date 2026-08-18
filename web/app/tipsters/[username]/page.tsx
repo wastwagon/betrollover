@@ -28,6 +28,7 @@ import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 import { useCurrency } from '@/context/CurrencyContext';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import { TIPSTER_ACTIVE_WITHIN_DAYS, TIPSTER_FORM_POST_CAP } from '@betrollover/shared-types';
 import { FollowPushNudge } from '@/components/FollowPushNudge';
 import { Button } from '@/components/ui/Button';
 
@@ -124,6 +125,7 @@ interface TipsterProfile {
     /** Platform AI tipster */
     is_ai?: boolean;
     is_verified?: boolean;
+    tipster_type?: string | null;
     total_predictions: number;
     total_wins: number;
     total_losses: number;
@@ -132,6 +134,7 @@ interface TipsterProfile {
     current_streak: number;
     best_streak?: number | null;
     leaderboard_rank: number | null;
+    form_points?: number | null;
     follower_count?: number;
     total_profit?: number;
     avg_odds?: number;
@@ -553,15 +556,26 @@ export default function TipsterProfilePage() {
               <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 min-w-0">
                 <h1 className="font-display text-display-sm sm:text-display-md text-[var(--text)] min-w-0 break-words">{tipster.display_name}</h1>
-                {tipster.is_ai ? <AiTipsterBadge /> : null}
+                {tipster.is_ai ? <AiTipsterBadge tipsterType={tipster.tipster_type} /> : null}
                 {!tipster.is_ai && tipster.is_verified ? <VerifiedTipsterBadge /> : null}
                 <span className="text-sm font-medium text-[var(--text-muted)] shrink-0">@{tipster.username}</span>
                 {tipster.leaderboard_rank != null && (
                   <span
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[var(--accent-light)] text-[var(--accent)]"
-                    title={t('tipster.leaderboard_rank_title')}
+                    title={t('tipster.leaderboard_rank_title', { days: String(TIPSTER_ACTIVE_WITHIN_DAYS) })}
                   >
                     {t('tipster.rank_prefix')}{tipster.leaderboard_rank}
+                  </span>
+                )}
+                {tipster.form_points != null && (
+                  <span
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[var(--primary)]/10 text-[var(--primary)]"
+                    title={t('leaderboard.form_hint', {
+                      days: String(TIPSTER_ACTIVE_WITHIN_DAYS),
+                      cap: String(TIPSTER_FORM_POST_CAP),
+                    })}
+                  >
+                    {t('leaderboard.form_col')} {tipster.form_points}
                   </span>
                 )}
                 <FollowersCountButton

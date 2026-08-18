@@ -6,6 +6,7 @@ import { TipsterCard, type TipsterCardData } from '@/components/TipsterCard';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { hasPrimaryLeaderboardSample } from '@/lib/leaderboard-sample';
+import { TIPSTER_ACTIVE_WITHIN_DAYS } from '@betrollover/shared-types';
 
 function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: number): TipsterCardData {
   const rank = (entry.rank ?? entry.leaderboard_rank ?? index + 1) as number;
@@ -32,9 +33,11 @@ function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: numb
     is_following: false,
     is_ai: !!(entry.is_ai as boolean | undefined),
     is_verified: !!(entry.is_verified as boolean | undefined),
+    tipster_type: (entry.tipster_type as string | null | undefined) ?? null,
     avg_rating: (entry.avg_rating as number | null | undefined) ?? null,
     review_count: (entry.review_count as number | null | undefined) ?? null,
     avg_odds: (entry.avg_odds as number | null | undefined) ?? null,
+    form_points: typeof entry.form_points === 'number' ? entry.form_points : null,
   };
 }
 
@@ -51,16 +54,27 @@ export function HomePopularTipsters({
   const [loading, setLoading] = useState(seeded.length === 0);
 
   useEffect(() => {
-    fetch(getApiUrl() + '/leaderboard?period=all_time&limit=24')
-      .then((r) => (r.ok ? r.json() : { leaderboard: [] }))
-      .then((data) => {
-        const entries = ((data.leaderboard || []) as Record<string, unknown>[])
-          .filter(hasPrimaryLeaderboardSample)
-          .slice(0, 8);
-        setTipsters(entries.map((e, i) => mapLeaderboardToTipsterCard(e, i)));
-      })
-      .catch(() => setTipsters([]))
-      .finally(() => setLoading(false));
+    const load = (showSpinner: boolean) => {
+      if (showSpinner) setLoading(true);
+      fetch(getApiUrl() + '/leaderboard?period=all_time&limit=24', { cache: 'no-store' })
+        .then((r) => (r.ok ? r.json() : { leaderboard: [] }))
+        .then((data) => {
+          const entries = ((data.leaderboard || []) as Record<string, unknown>[])
+            .filter(hasPrimaryLeaderboardSample)
+            .slice(0, 8);
+          setTipsters(entries.map((e, i) => mapLeaderboardToTipsterCard(e, i)));
+        })
+        .catch(() => {
+          if (showSpinner) setTipsters([]);
+        })
+        .finally(() => setLoading(false));
+    };
+    load(seeded.length === 0);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') load(false);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
   }, []);
 
   return (
@@ -78,12 +92,15 @@ export function HomePopularTipsters({
             <h2 className="text-xl font-bold text-[var(--text)] sm:text-2xl md:text-[28px] tracking-tight min-w-0">
               {t('home.featured_tipsters')}
             </h2>
+            <p className="text-sm text-[var(--text-muted)] mt-1 max-w-xl">
+              {t('home.featured_tipsters_sub', { days: String(TIPSTER_ACTIVE_WITHIN_DAYS) })}
+            </p>
           </div>
           <Link
-            href="/tipsters"
+            href="/leaderboard"
             className="touch-target inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--card)] px-3.5 py-2 text-sm font-semibold text-[var(--primary)] hover:border-[var(--primary)] transition-colors shrink-0 w-fit"
           >
-            {t('home.see_tipsters')} →
+            {t('nav.leaderboard')} →
           </Link>
         </div>
         {loading ? (

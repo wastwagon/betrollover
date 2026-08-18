@@ -34,6 +34,7 @@ import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { TipstersApiService } from '../predictions/tipsters-api.service';
+import { ResultTrackerService } from '../predictions/result-tracker.service';
 import { ReferralsService } from '../referrals/referrals.service';
 import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity';
 import { clampPlatformCommissionPercent } from '../../common/platform-commission';
@@ -162,6 +163,8 @@ export class AccumulatorsService {
     private dataSource: DataSource,
     @Inject(forwardRef(() => TipstersApiService))
     private tipstersApiService: TipstersApiService,
+    @Inject(forwardRef(() => ResultTrackerService))
+    private resultTrackerService: ResultTrackerService,
   ) { }
 
   async create(userId: number, dto: CreateAccumulatorDto) {
@@ -492,6 +495,7 @@ export class AccumulatorsService {
               : undefined,
         });
       }
+      this.resultTrackerService.scheduleLeaderboardRefresh('marketplace-post');
     } else if (placementNorm === 'subscription' && (dto.subscriptionPackageIds?.length ?? 0) > 0) {
       // Subscription-only: add coupon to packages (no marketplace listing)
       await this.subscriptionsService.addCouponToPackages(ticket.id, dto.subscriptionPackageIds!, userId);
@@ -1641,11 +1645,14 @@ export class AccumulatorsService {
       tipsterIds.length > 0
         ? await this.tipsterRepo.find({
             where: { userId: In(tipsterIds) },
-            select: ['userId', 'isAi'],
+            select: ['userId', 'isAi', 'tipsterType'],
           })
         : [];
     const isAiByUserId = new Map<number, boolean>(
       tipsterRowsForAi.filter((row) => row.userId != null).map((row) => [row.userId!, !!row.isAi]),
+    );
+    const tipsterTypeByUserId = new Map<number, string | null>(
+      tipsterRowsForAi.filter((row) => row.userId != null).map((row) => [row.userId!, row.tipsterType ?? null]),
     );
 
     // Create price & purchase count maps
@@ -1692,6 +1699,7 @@ export class AccumulatorsService {
           username: tipster.username,
           avatarUrl: tipster.avatar,
           isAi: isAiByUserId.get(ticket.userId) ?? false,
+          tipsterType: tipsterTypeByUserId.get(ticket.userId) ?? null,
           isVerified: !!tipster.isVerified,
           winRate: Math.round(stats.winRate * 10) / 10,
           roi: Math.round(stats.roi * 10) / 10,
@@ -1715,23 +1723,12 @@ export class AccumulatorsService {
   ): Promise<{ items: Record<string, unknown>[] }> {
     const take = Math.min(Math.max(limit, 1), 8);
     const now = new Date();
-    const primaryIds = await this.queryRankedFreeHomepageTicketIds(
+    const ticketIds = await this.queryRankedFreeHomepageTicketIds(
       now,
       LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING,
       take,
       sport,
     );
-    let ticketIds = primaryIds;
-    if (ticketIds.length < take) {
-      const fillIds = await this.queryRankedFreeHomepageTicketIds(now, 1, take, sport);
-      const seen = new Set(ticketIds);
-      for (const id of fillIds) {
-        if (seen.has(id)) continue;
-        ticketIds.push(id);
-        seen.add(id);
-        if (ticketIds.length >= take) break;
-      }
-    }
     if (!ticketIds.length) return { items: [] };
 
     const tickets = await this.ticketRepo.find({

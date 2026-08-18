@@ -14,6 +14,10 @@ import { TipsterSubscriptionPackage } from '../subscriptions/entities/tipster-su
 import {
   LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING,
   LEADERBOARD_MIN_SETTLED_WEEKLY,
+  TIPSTER_ACTIVE_WITHIN_DAYS,
+  computeTipsterFormPoints,
+  daysSinceTimestamp,
+  isTipsterActivePoster,
 } from '@betrollover/shared-types';
 import { AccumulatorsService } from '../accumulators/accumulators.service';
 import { isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
@@ -119,6 +123,15 @@ function compareLeaderboardRows(
   return (b.win_rate ?? 0) - (a.win_rate ?? 0);
 }
 
+function compareFormThenRoi(
+  a: { form_points?: number; roi: number; total_profit?: number; profit?: number; win_rate: number },
+  b: { form_points?: number; roi: number; total_profit?: number; profit?: number; win_rate: number },
+): number {
+  const pts = (b.form_points ?? 0) - (a.form_points ?? 0);
+  if (pts !== 0) return pts;
+  return compareLeaderboardRows(a, b);
+}
+
 /** Browse / leaderboard ordering: measurable performance first; never rank empty profiles above tipsters with settled picks. */
 function tipsterListingActivityTier(row: { total_wins?: number; total_losses?: number; total_predictions?: number }): number {
   const settled = (row.total_wins ?? 0) + (row.total_losses ?? 0) > 0;
@@ -171,8 +184,42 @@ export class TipstersApiService {
   }
 
   /**
-   * All-time leaderboard rows sorted by live ROI (ticket-backed stats for humans).
-   * Same ordering as GET /leaderboard?period=all_time — do not use tipsters.leaderboardRank for user-facing rank.
+   * Marketplace posts in the rolling activity window (any sport). Used as an “still posting” gate.
+   * postsInWindow is distinct Accra calendar days with at least one marketplace ticket.
+   */
+  private async loadMarketplaceActivityByUserIds(
+    userIds: number[],
+    since: Date,
+  ): Promise<Map<number, { lastPostedAt: Date; postsInWindow: number }>> {
+    const out = new Map<number, { lastPostedAt: Date; postsInWindow: number }>();
+    if (userIds.length === 0) return out;
+    const rows = await this.ticketRepo
+      .createQueryBuilder('t')
+      .select('t.user_id', 'userId')
+      .addSelect('MAX(t.created_at)', 'lastPostedAt')
+      .addSelect(
+        "COUNT(DISTINCT ((t.created_at AT TIME ZONE 'Africa/Accra')::date))",
+        'postsInWindow',
+      )
+      .where('t.user_id IN (:...ids)', { ids: [...new Set(userIds)] })
+      .andWhere('t.is_marketplace = true')
+      .andWhere('t.created_at >= :since', { since })
+      .groupBy('t.user_id')
+      .getRawMany<{ userId: string | number; lastPostedAt: Date | string; postsInWindow: string | number }>();
+    for (const row of rows) {
+      const uid = Number(row.userId);
+      if (!uid) continue;
+      out.set(uid, {
+        lastPostedAt: new Date(row.lastPostedAt),
+        postsInWindow: Number(row.postsInWindow) || 0,
+      });
+    }
+    return out;
+  }
+
+  /**
+   * All-time leaderboard rows for tipsters who posted a marketplace pick in the activity window.
+   * Sorted by form points (results + capped recent posting days), then ROI. Same list as homepage Top Performing.
    */
   private async computeAllTimeLeaderboardSortedEntries(sport?: string): Promise<{
     tipsters: Array<
@@ -200,6 +247,7 @@ export class TipstersApiService {
       display_name: string;
       avatar_url: string | null;
       is_ai: boolean;
+      tipster_type: string | null;
       roi: number;
       win_rate: number;
       total_predictions: number;
@@ -207,6 +255,9 @@ export class TipstersApiService {
       total_losses: number;
       total_profit: number;
       leaderboard_rank: number | null;
+      form_points: number;
+      posts_in_window: number;
+      last_posted_at: string | null;
     }>;
   }> {
     const tipstersRaw = await this.tipsterRepo.find({
@@ -246,6 +297,9 @@ export class TipstersApiService {
     });
     const humanUserIds = tipsters.filter((t) => t.userId != null).map((t) => t.userId!);
     const ticketStatsMap = await this.computeStatsFromTickets(humanUserIds, sport);
+    const since = new Date(Date.now() - TIPSTER_ACTIVE_WITHIN_DAYS * 86_400_000);
+    const activityByUser = await this.loadMarketplaceActivityByUserIds(humanUserIds, since);
+    const now = new Date();
 
     const entries = tipsters.map((t) => {
       const ticketStats = t.userId != null ? ticketStatsMap.get(t.userId) : null;
@@ -254,12 +308,22 @@ export class TipstersApiService {
       const totalLosses = ticketStats ? ticketStats.lost : t.totalLosses;
       const winRate = ticketStats ? ticketStats.winRate : Number(t.winRate);
       const roi = ticketStats ? ticketStats.roi : Number(t.roi);
+      const activity = t.userId != null ? activityByUser.get(t.userId) : undefined;
+      const daysSince = daysSinceTimestamp(activity?.lastPostedAt ?? null, now);
+      const postsInWindow = activity?.postsInWindow ?? 0;
+      const form_points = computeTipsterFormPoints({
+        winRate,
+        roi,
+        postsInWindow,
+        daysSinceLastPost: daysSince,
+      });
       return {
         id: t.id,
         username: t.username,
         display_name: t.displayName,
         avatar_url: t.avatarUrl,
         is_ai: !!t.isAi,
+        tipster_type: t.tipsterType ?? null,
         is_verified: !!t.isAi || (t.userId != null && verifiedHumanIds.has(t.userId)),
         roi,
         win_rate: winRate,
@@ -268,14 +332,18 @@ export class TipstersApiService {
         total_losses: totalLosses,
         total_profit: Number(t.totalProfit),
         leaderboard_rank: t.leaderboardRank,
+        form_points,
+        posts_in_window: postsInWindow,
+        last_posted_at: activity?.lastPostedAt ? activity.lastPostedAt.toISOString() : null,
+        _active: isTipsterActivePoster(daysSince),
       };
     });
 
-    const withSettled = entries.filter((e) => settledPickCount(e) > 0);
+    const active = entries.filter((e) => e._active && settledPickCount(e) > 0);
     const minPrimary = LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING;
-    const primary = withSettled.filter((e) => settledPickCount(e) >= minPrimary).sort(compareLeaderboardRows);
-    const secondary = withSettled.filter((e) => settledPickCount(e) < minPrimary).sort(compareLeaderboardRows);
-    const sorted = [...primary, ...secondary];
+    const primary = active.filter((e) => settledPickCount(e) >= minPrimary).sort(compareFormThenRoi);
+    const secondary = active.filter((e) => settledPickCount(e) < minPrimary).sort(compareFormThenRoi);
+    const sorted = [...primary, ...secondary].map(({ _active: _drop, ...row }) => row);
 
     return { tipsters, sorted };
   }
@@ -291,11 +359,12 @@ export class TipstersApiService {
 
   /**
    * Single pass over all-time sorted leaderboard: tipster entity id and user id → rank (1-based).
-   * Same ordering as GET /leaderboard?period=all_time (ROI). Unlisted tipsters are omitted from both maps.
+   * Same ordering as GET /leaderboard?period=all_time (form points among active posters). Unlisted tipsters are omitted from both maps.
    */
   private async getAllTimeLeaderboardRankMaps(sport?: string): Promise<{
     byTipsterId: Map<number, number>;
     byUserId: Map<number, number>;
+    formByTipsterId: Map<number, number>;
   }> {
     const { sorted, tipsters } = await this.computeAllTimeLeaderboardSortedEntries(sport);
     const tipsterIdToUserId = new Map<number, number>();
@@ -304,14 +373,16 @@ export class TipstersApiService {
     }
     const byTipsterId = new Map<number, number>();
     const byUserId = new Map<number, number>();
+    const formByTipsterId = new Map<number, number>();
     for (let i = 0; i < sorted.length; i++) {
       const r = i + 1;
       const e = sorted[i];
       byTipsterId.set(e.id, r);
+      formByTipsterId.set(e.id, e.form_points);
       const uid = tipsterIdToUserId.get(e.id);
       if (uid != null) byUserId.set(uid, r);
     }
-    return { byTipsterId, byUserId };
+    return { byTipsterId, byUserId, formByTipsterId };
   }
 
   private async getAllTimeLeaderboardRankMap(sport?: string): Promise<Map<number, number>> {
@@ -669,6 +740,7 @@ export class TipstersApiService {
         't.avatarUrl',
         't.bio',
         't.isAi',
+        't.tipsterType',
         't.userId',
         't.totalPredictions',
         't.totalWins',
@@ -704,6 +776,9 @@ export class TipstersApiService {
     const humanUserIds = tipsters.filter((t) => t.userId != null).map((t) => t.userId!);
     const vipPackageMap = await this.loadActiveVipPackageIdsByUserIds(humanUserIds);
     const ticketStatsMap = await this.computeStatsFromTickets(humanUserIds, options.sport);
+    const since = new Date(Date.now() - TIPSTER_ACTIVE_WITHIN_DAYS * 86_400_000);
+    const activityByUser = await this.loadMarketplaceActivityByUserIds(humanUserIds, since);
+    const now = new Date();
     let verifiedHumanIds = new Set<number>();
     if (humanUserIds.length > 0) {
       const verifiedRows = await this.usersRepo.find({
@@ -764,6 +839,13 @@ export class TipstersApiService {
       const roi = ticketStats ? ticketStats.roi : Number(t.roi);
       const currentStreak = ticketStats ? ticketStats.currentStreak : (t.currentStreak ?? 0);
       const bestStreak = ticketStats ? ticketStats.bestStreak : (t.bestStreak ?? 0);
+      const activity = t.userId != null ? activityByUser.get(t.userId) : undefined;
+      const form_points = computeTipsterFormPoints({
+        winRate,
+        roi,
+        postsInWindow: activity?.postsInWindow ?? 0,
+        daysSinceLastPost: daysSinceTimestamp(activity?.lastPostedAt ?? null, now),
+      });
 
       return {
         id: t.id,
@@ -772,6 +854,7 @@ export class TipstersApiService {
         avatar_url: t.avatarUrl,
         bio: t.bio,
         is_ai: t.isAi,
+        tipster_type: t.tipsterType ?? null,
         is_verified: !!t.isAi || (t.userId != null && verifiedHumanIds.has(t.userId)),
         total_predictions: totalPredictions,
         total_wins: totalWins,
@@ -783,6 +866,7 @@ export class TipstersApiService {
         total_profit: Number(t.totalProfit),
         avg_odds: Number(t.avgOdds),
         leaderboard_rank: t.leaderboardRank,
+        form_points,
         follower_count: followerCountMap.get(t.id) ?? 0,
         is_following: followingSet.has(t.id),
         vip_package_id: t.userId != null ? vipPackageMap.get(t.userId) ?? null : null,
@@ -792,6 +876,9 @@ export class TipstersApiService {
     const sortCol = options.sortBy || 'roi';
     const asc = options.order === 'asc';
     mapped.sort((a, b) => {
+      const postingA = (a.form_points ?? 0) > 0 ? 0 : 1;
+      const postingB = (b.form_points ?? 0) > 0 ? 0 : 1;
+      if (postingA !== postingB) return postingA - postingB;
       const tierA = tipsterListingActivityTier(a);
       const tierB = tipsterListingActivityTier(b);
       if (tierA !== tierB) return tierA - tierB;
@@ -803,10 +890,10 @@ export class TipstersApiService {
     });
 
     const sliced = mapped.slice(0, options.limit);
-    let rankCounter = 0;
+    const standings = await this.getAllTimeLeaderboardRankMaps();
     return sliced.map((row) => ({
       ...row,
-      leaderboard_rank: tipsterListingActivityTier(row) === 0 ? ++rankCounter : null,
+      leaderboard_rank: standings.byTipsterId.get(row.id) ?? null,
     }));
   }
 
@@ -885,10 +972,13 @@ export class TipstersApiService {
     );
 
     const followerCount = await this.followRepo.count({ where: { tipsterId: tipster.id } });
-    const allTimeRankMap = await this.getAllTimeLeaderboardRankMap();
-    const liveLeaderboardRank = allTimeRankMap.get(tipster.id) ?? null;
+    const standings = await this.getAllTimeLeaderboardRankMaps();
+    const liveLeaderboardRank = standings.byTipsterId.get(tipster.id) ?? null;
+    const liveFormPoints = standings.formByTipsterId.get(tipster.id);
     const leaderboardRankForResponse =
       window.kind === 'settlement_period' && window.period === 'all' ? liveLeaderboardRank : null;
+    const formPointsForResponse =
+      window.kind === 'settlement_period' && window.period === 'all' ? (liveFormPoints ?? null) : null;
 
     return {
       tipster: {
@@ -912,6 +1002,7 @@ export class TipstersApiService {
         total_profit: Number(tipster.totalProfit),
         avg_odds: avgOddsLive,
         leaderboard_rank: leaderboardRankForResponse,
+        form_points: formPointsForResponse,
         follower_count: followerCount,
         last_prediction_date: tipster.lastPredictionDate,
         join_date: tipster.joinDate,
@@ -1219,11 +1310,12 @@ export class TipstersApiService {
       tipsterIds.length > 0
         ? await this.tipsterRepo.find({
             where: { id: In(tipsterIds) },
-            select: ['id', 'userId', 'isAi'],
+            select: ['id', 'userId', 'isAi', 'tipsterType'],
           })
         : [];
     const idToUserId = new Map(tipsterRows.map((t) => [t.id, t.userId]));
     const idToIsAi = new Map(tipsterRows.map((t) => [t.id, !!t.isAi]));
+    const idToType = new Map(tipsterRows.map((t) => [t.id, t.tipsterType ?? null]));
     const humanUserIds = [...new Set(tipsterRows.map((t) => t.userId).filter((id): id is number => id != null))];
     const periodTicketStats = await this.computeStatsFromTicketsInPeriod(humanUserIds, options.period, options.sport);
 
@@ -1286,6 +1378,7 @@ export class TipstersApiService {
         display_name: r.display_name,
         avatar_url: r.avatar_url,
         is_ai: isAi,
+        tipster_type: idToType.get(r.id) ?? null,
         is_verified: isAi || (uid != null && periodVerified.has(uid)),
         roi: r.roi,
         win_rate: r.win_rate,

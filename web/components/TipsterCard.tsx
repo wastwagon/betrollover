@@ -10,6 +10,7 @@ import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { VerifiedTipsterBadge } from '@/components/VerifiedTipsterBadge';
 import { TipsterTrustStrip } from '@/components/TipsterTrustStrip';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import { TIPSTER_ACTIVE_WITHIN_DAYS, TIPSTER_FORM_POST_CAP } from '@betrollover/shared-types';
 import { Button } from '@/components/ui/Button';
 
 export interface TipsterCardData {
@@ -32,9 +33,11 @@ export interface TipsterCardData {
   /** Platform-operated AI tipster (from API `is_ai`). */
   is_ai?: boolean;
   is_verified?: boolean;
+  tipster_type?: string | null;
   avg_rating?: number | null;
   review_count?: number | null;
   avg_odds?: number | null;
+  form_points?: number | null;
 }
 
 interface TipsterCardProps {
@@ -118,7 +121,12 @@ export function TipsterCard({
                 >
                   {tipster.display_name}
                 </h3>
-                {tipster.is_ai ? <AiTipsterBadge className={premium ? '!text-[9px] !px-1.5 !py-px' : undefined} /> : null}
+                {tipster.is_ai ? (
+                  <AiTipsterBadge
+                    className={premium ? '!text-[9px] !px-1.5 !py-px' : undefined}
+                    tipsterType={tipster.tipster_type}
+                  />
+                ) : null}
                 {!tipster.is_ai && tipster.is_verified ? (
                   <VerifiedTipsterBadge className={premium ? '!text-[9px] !px-1.5 !py-px' : undefined} />
                 ) : null}
@@ -172,6 +180,16 @@ export function TipsterCard({
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2 text-right">
+              {tipster.form_points != null ? (
+                <div title={t('leaderboard.form_hint', { days: String(TIPSTER_ACTIVE_WITHIN_DAYS), cap: String(TIPSTER_FORM_POST_CAP) })}>
+                  <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                    {t('leaderboard.form_col')}
+                  </p>
+                  <p className="text-xs font-bold text-[var(--text)] tabular-nums mt-0.5">
+                    {tipster.form_points > 0 ? tipster.form_points : '—'}
+                  </p>
+                </div>
+              ) : null}
               <div>
                 <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
                   {t('tipster.win_rate')}
@@ -206,14 +224,28 @@ export function TipsterCard({
                 {roiDisplay}
               </p>
             </div>
-            <dl className="grid grid-cols-2 gap-px rounded-lg overflow-hidden border border-[var(--separator)] bg-[var(--separator)] mb-3">
-              <div className="bg-[var(--card)] px-3 py-2.5 text-center">
+            <dl className="grid grid-cols-3 gap-px rounded-lg overflow-hidden border border-[var(--separator)] bg-[var(--separator)] mb-3">
+              <div className="bg-[var(--card)] px-2 py-2.5 text-center">
+                <dt
+                  className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)]"
+                  title={t('leaderboard.form_hint', {
+                    days: String(TIPSTER_ACTIVE_WITHIN_DAYS),
+                    cap: String(TIPSTER_FORM_POST_CAP),
+                  })}
+                >
+                  {t('leaderboard.form_col')}
+                </dt>
+                <dd className="text-sm font-bold text-[var(--text)] tabular-nums mt-0.5">
+                  {tipster.form_points != null && tipster.form_points > 0 ? tipster.form_points : '—'}
+                </dd>
+              </div>
+              <div className="bg-[var(--card)] px-2 py-2.5 text-center">
                 <dt className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)]">
                   {t('tipster.win_rate')}
                 </dt>
                 <dd className="text-sm font-bold text-[var(--text)] tabular-nums mt-0.5">{winRateDisplay}</dd>
               </div>
-              <div className="bg-[var(--card)] px-3 py-2.5 text-center">
+              <div className="bg-[var(--card)] px-2 py-2.5 text-center">
                 <dt className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)]">
                   {t('tipster.total_picks')}
                 </dt>

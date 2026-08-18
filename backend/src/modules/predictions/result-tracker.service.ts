@@ -19,10 +19,16 @@ import {
 } from './leaderboard-cache.util';
 
 const TOP_RANK_THRESHOLD = 10;
+/** Coalesce Acca Desk bursts into one persist pass. Settlement flushes immediately. */
+const LEADERBOARD_PERSIST_DEBOUNCE_MS = 2_000;
 
 @Injectable()
 export class ResultTrackerService {
   private readonly logger = new Logger(ResultTrackerService.name);
+  private leaderboardPersistTimer: ReturnType<typeof setTimeout> | null = null;
+  private leaderboardPersistInFlight: Promise<void> | null = null;
+  private leaderboardPersistQueued = false;
+  private leaderboardPersistQueuedImmediate = false;
 
   constructor(
     @InjectRepository(PredictionFixture)
@@ -140,7 +146,7 @@ export class ResultTrackerService {
     }
 
     if (tipstersUpdated > 0) {
-      await this.updateLeaderboardRankings();
+      this.scheduleLeaderboardRefresh('classic-ai-settlement', { immediate: true });
     }
 
     return { fixturesUpdated, predictionsSettled, tipstersUpdated };
@@ -223,9 +229,9 @@ export class ResultTrackerService {
   }
 
   /**
-   * Cron: update leaderboard every 6 hours at :30 (0:30, 6:30, 12:30, 18:30)
+   * Hourly catch-up: recency buckets move with the clock even if nobody posts or settles.
    */
-  @Cron('30 0,6,12,18 * * *')
+  @Cron('20 * * * *')
   async runScheduledLeaderboardUpdate(): Promise<void> {
     this.logger.log('Updating leaderboard rankings');
     try {
@@ -245,6 +251,62 @@ export class ResultTrackerService {
       await this.takePerformanceSnapshot();
     } catch (err: any) {
       this.logger.error('Daily snapshot failed', err?.stack || err);
+    }
+  }
+
+  /**
+   * Bind form points to live activity: drop HTTP cache so GET /leaderboard recomputes.
+   * Settlement passes `{ immediate: true }` so ranks persist as soon as results land.
+   * Posts debounce a couple of seconds so a desk burst is one persist pass.
+   */
+  scheduleLeaderboardRefresh(reason = 'event', opts?: { immediate?: boolean }): void {
+    void this.bumpLeaderboardHttpCacheGeneration().catch((err) => {
+      this.logger.warn(`Leaderboard cache bump failed (${reason}): ${err}`);
+    });
+    this.leaderboardPersistQueued = true;
+    if (opts?.immediate) this.leaderboardPersistQueuedImmediate = true;
+    if (opts?.immediate) {
+      if (this.leaderboardPersistTimer) {
+        clearTimeout(this.leaderboardPersistTimer);
+        this.leaderboardPersistTimer = null;
+      }
+      if (this.leaderboardPersistInFlight) return;
+      void this.flushLeaderboardPersist(reason);
+      return;
+    }
+    if (this.leaderboardPersistInFlight) return;
+    if (this.leaderboardPersistTimer) clearTimeout(this.leaderboardPersistTimer);
+    this.leaderboardPersistTimer = setTimeout(() => {
+      this.leaderboardPersistTimer = null;
+      void this.flushLeaderboardPersist(reason);
+    }, LEADERBOARD_PERSIST_DEBOUNCE_MS);
+  }
+
+  private async flushLeaderboardPersist(reason: string): Promise<void> {
+    if (this.leaderboardPersistInFlight) {
+      this.leaderboardPersistQueued = true;
+      return;
+    }
+    this.leaderboardPersistQueued = false;
+    this.leaderboardPersistQueuedImmediate = false;
+    this.logger.log(`Persisting leaderboard ranks (${reason})`);
+    this.leaderboardPersistInFlight = this.updateLeaderboardRankings()
+      .catch((err: unknown) => {
+        this.logger.error(
+          `Leaderboard persist failed (${reason})`,
+          err instanceof Error ? err.stack : String(err),
+        );
+      })
+      .then(() => undefined);
+    try {
+      await this.leaderboardPersistInFlight;
+    } finally {
+      this.leaderboardPersistInFlight = null;
+      if (this.leaderboardPersistQueued) {
+        const immediate = this.leaderboardPersistQueuedImmediate;
+        this.leaderboardPersistQueuedImmediate = false;
+        this.scheduleLeaderboardRefresh(`${reason}:queued`, { immediate });
+      }
     }
   }
 
