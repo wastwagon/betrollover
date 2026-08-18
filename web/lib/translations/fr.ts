@@ -332,7 +332,7 @@ const fr: Record<string, string> = {
   'home.stats_purchases': 'Achats',
   'home.stats_paid_out': 'Payouts nets (tipsters)',
   'home.stats_marketplace_win_rate': 'Taux de réussite (marketplace)',
-  'home.stats_hint_tipsters': 'Profils tipsters actifs (tipsters.is_active), y compris IA listés.',
+  'home.stats_hint_tipsters': 'Profils tipsters actifs (tipsters.is_active). Humains et Acca Desk inclus. L’IA 1 match classique est masquée des totaux publics.',
   'home.stats_hint_settled_picks': 'Pronostics marketplace avec résultat final (gagnés + perdus), comme le « Total réglés » de l’archive (tout le temps).',
   'home.stats_hint_marketplace_purchases': 'Achats liés à une annonce marketplace (même périmètre que les stats publiques).',
   'home.stats_hint_win_rate': 'Marketplace uniquement : gagnés ÷ (gagnés + perdus).',

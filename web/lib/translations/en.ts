@@ -335,7 +335,7 @@ const en = {
   'home.stats_purchases': 'Purchases',
   'home.stats_paid_out': 'Net Paid to Tipsters',
   'home.stats_marketplace_win_rate': 'Marketplace Win Rate',
-  'home.stats_hint_tipsters': 'Active tipster profiles (tipsters.is_active). Includes listed AI tipsters.',
+  'home.stats_hint_tipsters': 'Active tipster profiles (tipsters.is_active). Includes humans and Acca Desk. Classic 1-fixture AI is hidden from public totals.',
   'home.stats_hint_settled_picks': 'Marketplace picks with a final result (won + lost), same as the archive “Total settled” (all time).',
   'home.stats_hint_marketplace_purchases': 'Purchases linked to a marketplace listing (same scope as public “marketplace purchases”).',
   'home.stats_hint_win_rate': 'Marketplace picks only: won ÷ (won + lost).',
