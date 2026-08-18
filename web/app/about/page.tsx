@@ -3,25 +3,25 @@ import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import Link from 'next/link';
 import { getLocale, buildT } from '@/lib/i18n';
-import { SITE_URL, SITE_NAME, getAlternates } from '@/lib/site-config';
+import { seoAlternates } from '@/lib/site-config';
 import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 import { fetchSellingThresholds } from '@/lib/selling-thresholds';
 import type { Metadata } from 'next';
 
 const footballOnly = isFootballOnlyDiscovery();
 
-export const metadata: Metadata = {
-  title: footballOnly
-    ? `About ${SITE_NAME} | Football Predictions & Escrow-Protected Picks`
-    : `About ${SITE_NAME} | Ghana-based, Global Tipster Marketplace`,
-  description: footballOnly
-    ? `About ${SITE_NAME}: Ghana-based football predictions marketplace for Africa and a global match audience. Escrow-protected picks, verified tipsters, refund if tips lose.`
-    : `Learn about ${SITE_NAME} — Ghana-based, global audience. All major global sports: football, basketball, tennis, MMA, rugby and more. Escrow-protected picks, verified tipsters. Refund if tips lose. Worldwide coverage.`,
-  alternates: {
-    canonical: `${SITE_URL}/about`,
-    languages: getAlternates('/about'),
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: footballOnly
+      ? 'About | Football Predictions & Escrow-Protected Picks'
+      : 'About | Ghana-based, Global Tipster Marketplace',
+    description: footballOnly
+      ? 'About BetRollover: Ghana-based football predictions marketplace for Africa and a global match audience. Escrow-protected picks, verified tipsters, refund if tips lose.'
+      : 'Learn about BetRollover — Ghana-based, global audience. All major global sports: football, basketball, tennis, MMA, rugby and more. Escrow-protected picks, verified tipsters. Refund if tips lose. Worldwide coverage.',
+    alternates: seoAlternates('/about', locale),
+  };
+}
 
 export default async function AboutPage() {
   const locale = await getLocale();

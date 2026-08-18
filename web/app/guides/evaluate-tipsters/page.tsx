@@ -3,23 +3,24 @@ import Link from 'next/link';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { PageHeader } from '@/components/PageHeader';
-import { SITE_NAME, SITE_URL, getAlternates } from '@/lib/site-config';
+import { localizedUrl, seoAlternates } from '@/lib/site-config';
+import { getLocale } from '@/lib/i18n';
 
-export const metadata: Metadata = {
-  title: `Tipster Evaluation Guide | ${SITE_NAME}`,
-  description:
-    'Use this checklist to evaluate tipsters by settled ROI, win rate, and sample size before buying paid picks.',
-  alternates: {
-    canonical: `${SITE_URL}/guides/evaluate-tipsters`,
-    languages: getAlternates('/guides/evaluate-tipsters'),
-  },
-  openGraph: {
-    url: `${SITE_URL}/guides/evaluate-tipsters`,
-    title: `Tipster Evaluation Guide | ${SITE_NAME}`,
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: 'Tipster Evaluation Guide',
     description:
       'Use this checklist to evaluate tipsters by settled ROI, win rate, and sample size before buying paid picks.',
-  },
-};
+    alternates: seoAlternates('/guides/evaluate-tipsters', locale),
+    openGraph: {
+      url: localizedUrl('/guides/evaluate-tipsters', locale),
+      title: 'Tipster Evaluation Guide',
+      description:
+        'Use this checklist to evaluate tipsters by settled ROI, win rate, and sample size before buying paid picks.',
+    },
+  };
+}
 
 const CHECKLIST = [
   'Check settled sample size first (avoid over-trusting tiny streaks).',

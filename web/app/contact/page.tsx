@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
-import { SITE_NAME, SITE_URL, getAlternates } from '@/lib/site-config';
+import { SITE_NAME, seoAlternates } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
 import type { Metadata } from 'next';
 
@@ -10,9 +10,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   const t = buildT(locale);
   return {
-    title: `${t('contact.headline')} | ${SITE_NAME}`,
+    title: t('contact.headline'),
     description: t('contact.intro'),
-    alternates: { canonical: `${SITE_URL}/contact`, languages: getAlternates('/contact') },
+    alternates: seoAlternates('/contact', locale),
   };
 }
 

@@ -8,6 +8,9 @@ import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
+import { Badge } from '@/components/ui/Badge';
+import { Surface } from '@/components/ui/Surface';
+import { buttonClassName } from '@/components/ui/Button';
 
 type Coupon = {
   id: number;
@@ -97,33 +100,25 @@ type Board = {
   days: DaySlot[];
 };
 
-function statusClass(status: string) {
-  if (status === 'won') {
-    return 'text-emerald-800 bg-emerald-50 border-emerald-200/80 dark:text-emerald-200 dark:bg-emerald-950/50 dark:border-emerald-800/70';
-  }
-  if (status === 'lost') {
-    return 'text-red-700 bg-red-50 border-red-200/80 dark:text-red-300 dark:bg-red-950/50 dark:border-red-800/70';
-  }
-  if (status === 'pending') {
-    return 'text-white bg-[var(--primary)] border-[var(--primary)] shadow-[var(--shadow-glow)]';
-  }
-  if (status === 'void') {
-    return 'text-amber-800 bg-amber-50 border-amber-200/80 dark:text-amber-200 dark:bg-amber-950/50 dark:border-amber-800/70';
-  }
-  return '';
+function statusTone(status: string): 'primary' | 'success' | 'danger' | 'accent' | 'neutral' {
+  if (status === 'won') return 'success';
+  if (status === 'lost') return 'danger';
+  if (status === 'pending') return 'primary';
+  if (status === 'void') return 'accent';
+  return 'neutral';
 }
 
 function DayMark({ dayNumber, status, live }: { dayNumber: number; status: string; live: boolean }) {
   const lost = status === 'lost';
   return (
     <span
-      className={`flex h-8 w-8 items-center justify-center rounded-xl text-[13px] font-bold tabular-nums ${
+      className={`flex h-8 w-8 items-center justify-center rounded-lg text-[13px] font-semibold tabular-nums ${
         live
-          ? 'bg-[var(--primary)] text-white shadow-[var(--shadow-glow)]'
+          ? 'bg-[var(--primary)] text-white'
           : status === 'won'
-            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-200'
+            ? 'bg-[var(--primary-light)] text-[var(--primary-hover)]'
             : lost
-              ? 'bg-red-50 text-red-700 dark:bg-red-950/70 dark:text-red-300'
+              ? 'bg-[var(--fill-secondary)] text-[var(--destructive)]'
               : 'bg-[var(--fill-secondary)] text-[var(--text-muted)]'
       }`}
     >
@@ -143,12 +138,12 @@ function StatusCell({
     return <span className="inline-block h-1.5 w-3.5 rounded-full bg-[var(--separator)]" aria-hidden />;
   }
   return (
-    <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-1 rounded-full border ${statusClass(status)}`}>
+    <Badge tone={statusTone(status)} className="gap-1.5">
       {status === 'pending' ? (
-        <span className="h-1.5 w-1.5 rounded-full bg-white/90 motion-safe:animate-pulse" aria-hidden />
+        <span className="h-1.5 w-1.5 rounded-full bg-current motion-safe:animate-pulse" aria-hidden />
       ) : null}
       {label}
-    </span>
+    </Badge>
   );
 }
 
@@ -156,14 +151,39 @@ function dayHasStarted(status: string) {
   return status === 'pending' || status === 'won' || status === 'lost' || status === 'void';
 }
 
+function GhsFigure({
+  amount,
+  tone,
+  size = 'md',
+}: {
+  amount: string;
+  tone: 'in' | 'out';
+  size?: 'md' | 'lg';
+}) {
+  const figure =
+    size === 'lg'
+      ? 'font-display text-[1.85rem] sm:text-[2.15rem] font-semibold tracking-tight tabular-nums leading-none'
+      : 'tabular-nums font-semibold';
+  const ink = tone === 'out' ? 'text-[var(--primary)]' : 'text-[var(--text)]';
+  const unit = tone === 'out' ? 'text-[var(--primary)]/70' : 'text-[var(--text-tertiary)]';
+  return (
+    <span className={`${figure} ${ink}`}>
+      <span className={`mr-1 text-[11px] font-semibold ${unit}`}>GHS</span>
+      {amount}
+    </span>
+  );
+}
+
 function MoneyCell({
   amount,
   reached,
   later,
+  tone = 'out',
 }: {
   amount: number | null;
   reached: boolean;
   later?: string;
+  tone?: 'in' | 'out';
 }) {
   if (!reached) {
     return <span className="text-[var(--text-tertiary)]">·</span>;
@@ -171,12 +191,7 @@ function MoneyCell({
   if (amount == null) {
     return <span className="text-[var(--text-tertiary)] tabular-nums">{later || '·'}</span>;
   }
-  return (
-    <span className="tabular-nums font-semibold text-[var(--primary)]">
-      <span className="text-[11px] font-semibold text-emerald-700/70 dark:text-emerald-300/70">GHS</span>{' '}
-      {amount}
-    </span>
-  );
+  return <GhsFigure amount={String(amount)} tone={tone} />;
 }
 
 export function RolloverBoard() {
@@ -208,7 +223,7 @@ export function RolloverBoard() {
 
   if (error) {
     return (
-      <p className="text-sm text-[var(--text-muted)] rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-6">
+      <p className="text-sm text-[var(--text-muted)] rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] px-4 py-6">
         {t('rollover.load_error')}
       </p>
     );
@@ -216,9 +231,11 @@ export function RolloverBoard() {
 
   if (!board) {
     return (
-      <div className="animate-pulse space-y-3">
-        <div className="h-40 rounded-2xl bg-[var(--fill-secondary)]" />
-        <div className="h-64 rounded-2xl bg-[var(--fill-secondary)]" />
+      <div className="animate-pulse space-y-8">
+        <div className="h-24 rounded-[var(--radius)] bg-[var(--fill-secondary)]" />
+        <div className="h-40 rounded-[var(--radius)] bg-[var(--fill-secondary)]" />
+        <div className="h-16 rounded-[var(--radius)] bg-[var(--fill-secondary)]" />
+        <div className="h-72 rounded-[var(--radius)] bg-[var(--fill-secondary)]" />
       </div>
     );
   }
@@ -265,87 +282,49 @@ export function RolloverBoard() {
         : archive?.lastEnded?.status === 'completed'
           ? t('rollover.last_finished', { total: String(board.planDays) })
           : null;
-  const statTiles = [
-    {
-      key: 'best',
-      label: t('rollover.stat_best_run'),
-      value: archive && archive.bestWonDays > 0 ? String(archive.bestWonDays) : '—',
-      hint: archive && archive.bestWonDays > 0 ? t('rollover.day') : undefined,
-      money: false,
-      accent: false,
-    },
-    {
-      key: 'stake',
-      label: t('rollover.stat_best_stake'),
-      value:
-        archive?.bestCampaignStakeGhs != null
-          ? String(Math.round(archive.bestCampaignStakeGhs))
-          : '—',
-      hint: archive?.bestCampaignStakeGhs != null ? t('rollover.stat_best_run') : undefined,
-      money: true,
-      accent: true,
-    },
-    {
-      key: 'win',
-      label: t('rollover.stat_best_win'),
-      value: archive?.bestExampleReturnGhs != null ? String(archive.bestExampleReturnGhs) : '—',
-      hint:
-        archive?.bestCampaignStakeGhs != null && archive.bestExampleReturnGhs != null
-          ? t('rollover.stat_from_stake', { stake: String(Math.round(archive.bestCampaignStakeGhs)) })
-          : undefined,
-      money: true,
-      accent: true,
-    },
-    {
-      key: 'finished',
-      label: t('rollover.stat_finished'),
-      value: String(archive?.campaignsCompleted ?? 0),
-      money: false,
-      accent: false,
-    },
-    {
-      key: 'cut',
-      label: t('rollover.stat_cut'),
-      value: String(archive?.campaignsCut ?? 0),
-      money: false,
-      accent: false,
-    },
-    {
-      key: 'reset',
-      label: t('rollover.stat_reset'),
-      value: String(archive?.campaignsReset ?? 0),
-      money: false,
-      accent: false,
-    },
+
+  const bestRun = archive && archive.bestWonDays > 0 ? String(archive.bestWonDays) : '—';
+  const stakeAmount =
+    archive?.bestCampaignStakeGhs != null ? String(Math.round(archive.bestCampaignStakeGhs)) : null;
+  const winAmount = archive?.bestExampleReturnGhs != null ? String(archive.bestExampleReturnGhs) : null;
+  const outcomeCounts = [
+    { key: 'finished', label: t('rollover.stat_finished'), value: String(archive?.campaignsCompleted ?? 0) },
+    { key: 'cut', label: t('rollover.stat_cut'), value: String(archive?.campaignsCut ?? 0) },
+    { key: 'reset', label: t('rollover.stat_reset'), value: String(archive?.campaignsReset ?? 0) },
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-5 shadow-[var(--shadow)]">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-lg font-semibold tracking-tight text-[var(--text)]">{runNote}</p>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
-              {t('rollover.owner', { name: board.ownerDisplayName })} · {board.oddsMin.toFixed(2)}–{board.oddsMax.toFixed(2)} @ ~{board.targetOdds.toFixed(2)}
+    <div className="space-y-10">
+      <header className="space-y-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+              {t('rollover.owner', { name: board.ownerDisplayName })}
+            </p>
+            <h2 className="mt-2 font-display text-display-md sm:text-display-lg text-[var(--text)]">
+              {runNote}
+            </h2>
+            <p className="mt-2 text-sm text-[var(--text-muted)]">
+              {board.oddsMin.toFixed(2)}–{board.oddsMax.toFixed(2)} @ ~{board.targetOdds.toFixed(2)}
             </p>
           </div>
-          <span className="inline-flex items-center rounded-full border border-[var(--primary)]/20 bg-[var(--primary-light)] px-3 py-1 text-xs font-semibold text-emerald-800 dark:text-emerald-200">
+          <p className="text-sm tabular-nums text-[var(--text-muted)] sm:text-right">
             {t('rollover.campaign_stake', { stake: String(Math.round(board.exampleStakeStartGhs)) })}
-          </span>
+          </p>
         </div>
-        <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-[var(--fill-secondary)]">
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{
-              width: `${progress}%`,
-              background: 'var(--gradient-primary)',
-            }}
-          />
+        <div className="flex items-center gap-3">
+          <div className="h-0.5 flex-1 overflow-hidden bg-[var(--separator)]">
+            <div
+              className="h-full bg-[var(--primary)] transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <span className="text-[11px] tabular-nums text-[var(--text-tertiary)]">{progress}%</span>
         </div>
-      </div>
+      </header>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-[var(--text)]">{t('rollover.today')}</h2>
+        <h2 className="font-display text-display-sm text-[var(--text)]">{t('rollover.today')}</h2>
         {coupon ? (
           <PickCard
             id={coupon.id}
@@ -372,7 +351,7 @@ export function RolloverBoard() {
             })}
           />
         ) : (
-          <p className="text-sm text-[var(--text-muted)] rounded-xl border border-dashed border-[var(--border)] bg-[var(--card)] px-4 py-6">
+          <p className="text-sm text-[var(--text-muted)] rounded-[var(--radius)] border border-dashed border-[var(--separator)] px-4 py-8">
             {skipNote ?? t('rollover.no_coupon', { day: String(board.today.dayNumber) })}
           </p>
         )}
@@ -391,61 +370,87 @@ export function RolloverBoard() {
         ) : null}
       </section>
 
-      <section>
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+      <section className="space-y-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
           {t('rollover.records')}
         </p>
-        <div className="mb-4 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
-          {statTiles.map((tile) => (
-            <div
-              key={tile.key}
-              className={`relative overflow-hidden rounded-2xl border p-4 shadow-[var(--shadow)] ${
-                tile.accent
-                  ? 'border-[var(--primary)]/20 bg-gradient-to-br from-[var(--primary-light)]/80 to-[var(--card)]'
-                  : 'border-[var(--border)] bg-[var(--card)]'
-              }`}
-            >
-              <span
-                className="absolute inset-x-0 top-0 h-[3px]"
-                style={{ background: 'var(--gradient-primary)' }}
-                aria-hidden
-              />
-              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
-                {tile.label}
-              </p>
-              <p
-                className={`mt-2 text-[1.65rem] leading-none font-bold tabular-nums tracking-tight ${
-                  tile.accent && tile.value !== '—' ? 'text-[var(--primary)]' : 'text-[var(--text)]'
-                }`}
-              >
-                {tile.money && tile.value !== '—' ? (
-                  <>
-                    <span className="text-sm font-semibold text-emerald-700/70 dark:text-emerald-300/70 mr-1">GHS</span>
-                    {tile.value}
-                  </>
-                ) : (
-                  tile.value
-                )}
-              </p>
-              <p className="mt-1.5 min-h-[1.125rem] text-[11px] text-[var(--text-muted)] truncate">
-                {tile.hint ?? ''}
-              </p>
+
+        <div className="grid gap-8 lg:grid-cols-12 lg:items-end">
+          <div className="lg:col-span-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+              {t('rollover.stat_best_run')}
+            </p>
+            <p className="mt-1 font-display text-6xl sm:text-7xl font-semibold tracking-tighter tabular-nums leading-none text-[var(--text)]">
+              {bestRun}
+            </p>
+            {bestRun !== '—' ? (
+              <p className="mt-1.5 text-sm text-[var(--text-muted)]">{t('rollover.day')}</p>
+            ) : null}
+          </div>
+
+          <div className="lg:col-span-5">
+            <div className="flex divide-x divide-[var(--separator)] border-y border-[var(--separator)] py-5">
+              <div className="min-w-0 flex-1 pr-5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+                  {t('rollover.stake')}
+                </p>
+                <p className="mt-2">
+                  {stakeAmount ? (
+                    <GhsFigure amount={stakeAmount} tone="in" size="lg" />
+                  ) : (
+                    <span className="font-display text-[1.85rem] font-semibold text-[var(--text-tertiary)]">—</span>
+                  )}
+                </p>
+                <p className="mt-1.5 text-[12px] text-[var(--text-muted)]">{t('rollover.stat_stake_hint')}</p>
+              </div>
+              <div className="min-w-0 flex-1 pl-5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+                  {t('rollover.win')}
+                </p>
+                <p className="mt-2">
+                  {winAmount ? (
+                    <GhsFigure amount={winAmount} tone="out" size="lg" />
+                  ) : (
+                    <span className="font-display text-[1.85rem] font-semibold text-[var(--text-tertiary)]">—</span>
+                  )}
+                </p>
+                <p className="mt-1.5 text-[12px] text-[var(--text-muted)] truncate">
+                  {stakeAmount && winAmount
+                    ? t('rollover.stat_from_stake', { stake: stakeAmount })
+                    : ''}
+                </p>
+              </div>
             </div>
-          ))}
+          </div>
+
+          <div className="lg:col-span-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+              {t('rollover.stat_campaigns')}
+            </p>
+            <dl className="mt-3 grid grid-cols-3 gap-3">
+              {outcomeCounts.map((item) => (
+                <div key={item.key}>
+                  <dt className="text-[11px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">{item.label}</dt>
+                  <dd className="mt-1 font-display text-2xl font-semibold tabular-nums tracking-tight text-[var(--text)]">
+                    {item.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
         </div>
+
         {lastEndedNote ? (
-          <p className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--fill-secondary)]/40 px-4 py-2.5 text-xs text-[var(--text-muted)]">
-            {lastEndedNote}
-          </p>
+          <p className="text-xs text-[var(--text-muted)]">{lastEndedNote}</p>
         ) : null}
 
-        <ul className="md:hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow)] overflow-hidden">
+        <ul className="md:hidden overflow-hidden rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)]">
           {board.days.map((day, i) => {
             const inPlay = day.status === 'pending' && day.ticketId != null;
             const weekBreak = day.dayNumber === 8 || day.dayNumber === 15 || day.dayNumber === 22;
             const reached = dayHasStarted(day.status);
             const inner = (
-              <div className={`flex items-center gap-3 px-3.5 py-2.5 min-h-[52px] ${inPlay ? 'bg-[var(--primary-light)]/50' : ''}`}>
+              <div className={`flex items-center gap-3 px-3.5 py-2.5 min-h-[52px] ${inPlay ? 'bg-[var(--primary-light)]/40' : ''}`}>
                 <DayMark dayNumber={day.dayNumber} status={day.status} live={inPlay} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
@@ -458,11 +463,11 @@ export function RolloverBoard() {
                     <div className="mt-1 flex items-center gap-4 text-[11px]">
                       <span className="min-w-0 truncate">
                         <span className="mr-1 uppercase tracking-wide text-[var(--text-tertiary)]">{t('rollover.stake')}</span>
-                        <MoneyCell amount={day.exampleStakeGhs} reached={reached} />
+                        <MoneyCell amount={day.exampleStakeGhs} reached={reached} tone="in" />
                       </span>
                       <span className="min-w-0 truncate">
                         <span className="mr-1 uppercase tracking-wide text-[var(--text-tertiary)]">{t('rollover.win')}</span>
-                        <MoneyCell amount={day.exampleReturnGhs} reached={reached} later={laterOdds} />
+                        <MoneyCell amount={day.exampleReturnGhs} reached={reached} later={laterOdds} tone="out" />
                       </span>
                     </div>
                   ) : null}
@@ -486,17 +491,17 @@ export function RolloverBoard() {
           })}
         </ul>
 
-        <div className="hidden md:block overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow)]">
+        <Surface variant="flat" padding="none" className="hidden md:block overflow-hidden">
           <table className="w-full text-sm border-separate border-spacing-0">
             <caption className="sr-only">{t('rollover.plan_title')}</caption>
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-[0.12em] text-white">
-                <th className="px-5 py-3.5 font-bold" style={{ background: 'var(--gradient-primary)' }}>{t('rollover.day')}</th>
-                <th className="px-4 py-3.5 font-bold" style={{ background: 'var(--gradient-primary)' }}>{t('rollover.status')}</th>
-                <th className="px-4 py-3.5 font-bold" style={{ background: 'var(--gradient-primary)' }}>{t('rollover.odds')}</th>
-                <th className="px-4 py-3.5 font-bold" style={{ background: 'var(--gradient-primary)' }}>{t('rollover.stake')}</th>
-                <th className="px-4 py-3.5 font-bold" style={{ background: 'var(--gradient-primary)' }}>{t('rollover.win')}</th>
-                <th className="px-5 py-3.5 font-bold" style={{ background: 'var(--gradient-primary)' }}>{t('rollover.coupon')}</th>
+              <tr className="text-left text-[11px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                <th className="px-5 py-3 font-semibold border-b border-[var(--separator)]">{t('rollover.day')}</th>
+                <th className="px-4 py-3 font-semibold border-b border-[var(--separator)]">{t('rollover.status')}</th>
+                <th className="px-4 py-3 font-semibold border-b border-[var(--separator)]">{t('rollover.odds')}</th>
+                <th className="px-4 py-3 font-semibold border-b border-[var(--separator)]">{t('rollover.stake')}</th>
+                <th className="px-4 py-3 font-semibold border-b border-[var(--separator)]">{t('rollover.win')}</th>
+                <th className="px-5 py-3 font-semibold border-b border-[var(--separator)]">{t('rollover.coupon')}</th>
               </tr>
             </thead>
             <tbody>
@@ -507,16 +512,16 @@ export function RolloverBoard() {
                 const reached = dayHasStarted(day.status);
                 const weekBreak = day.dayNumber === 8 || day.dayNumber === 15 || day.dayNumber === 22;
                 const rowBg = inPlay
-                  ? 'bg-[var(--primary-light)]/45'
+                  ? 'bg-[var(--primary-light)]/40'
                   : won
-                    ? 'bg-emerald-50/30 hover:bg-emerald-50/55 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/35'
+                    ? 'bg-[var(--primary-light)]/15 hover:bg-[var(--primary-light)]/30'
                     : 'hover:bg-[var(--fill-secondary)]/40';
                 const hairline = `${day.dayNumber === board.planDays ? 'border-b-0' : weekBreak ? 'border-[var(--border)]' : 'border-[var(--separator)]'}`;
                 return (
                   <tr key={day.dayNumber} className={rowBg}>
                     <td className={`relative px-5 py-3 font-semibold tabular-nums border-b ${hairline}`}>
                       {featured ? (
-                        <span className="absolute inset-y-0 left-0 w-[3px] bg-[var(--primary)]" aria-hidden />
+                        <span className="absolute inset-y-0 left-0 w-[2px] bg-[var(--primary)]" aria-hidden />
                       ) : null}
                       <DayMark dayNumber={day.dayNumber} status={day.status} live={inPlay} />
                     </td>
@@ -525,22 +530,22 @@ export function RolloverBoard() {
                     </td>
                     <td
                       className={`px-4 py-3 tabular-nums border-b ${hairline} ${
-                        day.combinedOdds != null ? 'font-bold text-[var(--text)]' : 'text-[var(--text-tertiary)]'
+                        day.combinedOdds != null ? 'font-semibold text-[var(--text)]' : 'text-[var(--text-tertiary)]'
                       }`}
                     >
                       {day.combinedOdds != null ? Number(day.combinedOdds).toFixed(2) : '·'}
                     </td>
                     <td className={`px-4 py-3 border-b ${hairline}`}>
-                      <MoneyCell amount={day.exampleStakeGhs} reached={reached} />
+                      <MoneyCell amount={day.exampleStakeGhs} reached={reached} tone="in" />
                     </td>
                     <td className={`px-4 py-3 border-b ${hairline}`}>
-                      <MoneyCell amount={day.exampleReturnGhs} reached={reached} later={laterOdds} />
+                      <MoneyCell amount={day.exampleReturnGhs} reached={reached} later={laterOdds} tone="out" />
                     </td>
                     <td className={`px-5 py-3 border-b ${hairline}`}>
                       {day.ticketId ? (
                         <Link
                           href={`/coupons/${day.ticketId}`}
-                          className="inline-flex items-center rounded-full border border-[var(--primary)]/20 bg-[var(--primary-light)] px-2.5 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 dark:text-emerald-200 dark:hover:bg-emerald-950/80 transition-colors"
+                          className={buttonClassName({ variant: 'ghost', size: 'sm', className: 'min-h-[36px] px-2.5' })}
                         >
                           {t('rollover.view_coupon')}
                         </Link>
@@ -553,19 +558,16 @@ export function RolloverBoard() {
               })}
             </tbody>
           </table>
-        </div>
+        </Surface>
       </section>
 
-      <aside
-        className="rounded-xl border border-amber-200/90 bg-amber-50/90 px-4 py-3.5 text-sm text-amber-950 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100"
-        role="note"
-      >
-        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-amber-800/80 dark:text-amber-200/80">
+      <aside className="border-t border-[var(--separator)] pt-5 text-sm text-[var(--text-muted)]" role="note">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">
           {t('rollover.disclaimer_label')}
         </p>
-        <p className="mt-1.5 leading-relaxed">{t('rollover.disclaimer')}</p>
+        <p className="mt-2 leading-relaxed max-w-3xl">{t('rollover.disclaimer')}</p>
         <p className="mt-2">
-          <Link href="/responsible-gambling" className="font-medium underline underline-offset-2">
+          <Link href="/responsible-gambling" className="font-medium text-[var(--text)] underline underline-offset-2">
             {t('resp.headline')}
           </Link>
         </p>

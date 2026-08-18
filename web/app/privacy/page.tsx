@@ -1,20 +1,20 @@
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
-import { SITE_URL, SITE_NAME, getAlternates } from '@/lib/site-config';
+import { SITE_NAME, seoAlternates } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
 import type { Metadata } from 'next';
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
-  const title = locale === 'fr' ? `Politique de Confidentialité | ${SITE_NAME}` : `Privacy Policy | ${SITE_NAME}`;
+  const title = locale === 'fr' ? `Politique de Confidentialité` : `Privacy Policy`;
   const description = locale === 'fr'
     ? `Politique de Confidentialité de ${SITE_NAME} — comment nous collectons, utilisons et protégeons vos données personnelles sur notre marketplace éducative de tipsters.`
     : `${SITE_NAME} Privacy Policy — how we collect, use, and protect your personal data on our educational tipster marketplace.`;
   return {
     title,
     description,
-    alternates: { canonical: `${SITE_URL}/privacy`, languages: getAlternates('/privacy') },
+    alternates: seoAlternates('/privacy', locale),
   };
 }
 

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { SITE_URL, SITE_NAME, getAlternates } from '@/lib/site-config';
+import { SITE_NAME, localizedUrl, seoAlternates } from '@/lib/site-config';
 import { getLocale, serverT } from '@/lib/i18n';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -11,12 +11,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: {
-      canonical: `${SITE_URL}/register`,
-      languages: getAlternates('/register'),
-    },
+    alternates: seoAlternates('/register', locale),
     openGraph: {
-      url: `${SITE_URL}/register`,
+      url: localizedUrl('/register', locale),
       siteName: SITE_NAME,
       title,
       description,
@@ -28,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description,
       images: [{ url: '/og-image.png', alt: ogAlt }],
     },
-    robots: { index: true, follow: true },
+    robots: { index: false, follow: true },
   };
 }
 

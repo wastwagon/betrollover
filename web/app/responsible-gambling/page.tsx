@@ -1,7 +1,7 @@
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
-import { SITE_URL, SITE_NAME, getAlternates } from '@/lib/site-config';
+import { seoAlternates } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
 import type { Metadata } from 'next';
 
@@ -9,9 +9,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   const t = buildT(locale);
   return {
-    title: `${t('resp.headline')} | ${SITE_NAME}`,
+    title: t('resp.headline'),
     description: t('resp.commitment_desc'),
-    alternates: { canonical: `${SITE_URL}/responsible-gambling`, languages: getAlternates('/responsible-gambling') },
+    alternates: seoAlternates('/responsible-gambling', locale),
   };
 }
 

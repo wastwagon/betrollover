@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { SITE_NAME, SITE_URL, getAlternates } from '@/lib/site-config';
+import { localizedUrl, seoAlternates } from '@/lib/site-config';
+import { getLocale } from '@/lib/i18n';
 import {
   couponMetaDescription,
   couponMetaTitle,
@@ -17,18 +18,17 @@ export async function generateMetadata({
     return { title: 'Pick not found', robots: { index: false, follow: true } };
   }
 
+  const locale = await getLocale();
   const coupon = await fetchPublicCouponMeta(id, { revalidate: 120 });
-  const canonical = `${SITE_URL}/coupons/${id}`;
+  const path = `/coupons/${id}`;
+  const canonical = localizedUrl(path, locale);
 
   if (!coupon) {
     return {
-      title: `Football pick #${id} — ${SITE_NAME}`,
+      title: `Football pick #${id}`,
       description:
         'View this football tipster pick on BetRollover. Sign in if the slip is premium or not yet public.',
-      alternates: {
-        canonical,
-        languages: getAlternates(`/coupons/${id}`),
-      },
+      alternates: seoAlternates(path, locale),
       robots: { index: false, follow: true },
     };
   }
@@ -37,12 +37,9 @@ export async function generateMetadata({
   const description = couponMetaDescription(coupon);
 
   return {
-    title: `${title} — ${SITE_NAME}`,
+    title,
     description,
-    alternates: {
-      canonical,
-      languages: getAlternates(`/coupons/${id}`),
-    },
+    alternates: seoAlternates(path, locale),
     openGraph: {
       type: 'website',
       url: canonical,

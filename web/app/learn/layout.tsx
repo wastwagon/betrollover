@@ -1,39 +1,42 @@
 import type { Metadata } from 'next';
-import { SITE_URL, SITE_NAME, getAlternates } from '@/lib/site-config';
+import { SITE_URL, SITE_NAME, localizedUrl, seoAlternates } from '@/lib/site-config';
+import { getLocale } from '@/lib/i18n';
 
 export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
   return {
-    title: `Learn | Tipster Glossary, How to Evaluate Picks & Use the Marketplace | ${SITE_NAME}`,
+    title: 'Tipster Marketplace Glossary',
     description:
-      'Learn how tipster marketplaces work: escrow, ROI, win rate, and settlement. Glossary of key terms. How to evaluate tipsters and get the most from verified sports picks. Educational guide.',
-    alternates: {
-      canonical: `${SITE_URL}/learn`,
-      languages: getAlternates('/learn'),
-    },
+      'Definitions for escrow, ROI, win rate, and settlement on BetRollover. How-to pages live under Guides; match stories live under News.',
+    alternates: seoAlternates('/learn', locale),
     openGraph: {
-      url: `${SITE_URL}/learn`,
-      title: `Learn | Tipster Glossary & How to Use the Platform | ${SITE_NAME}`,
-      description: 'Glossary, how to evaluate tipsters, and how to use the marketplace. Escrow, ROI, win rate explained.',
+      url: localizedUrl('/learn', locale),
+      title: 'Tipster Marketplace Glossary',
+      description:
+        'Escrow, ROI, win rate, and settlement terms. Educational copy — not betting advice.',
     },
   };
 }
 
-const learnPageJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Article',
-  headline: 'Learn: Tipster Marketplace Glossary & How to Use the Platform',
-  description: 'Glossary of key terms (escrow, ROI, win rate, settlement), how to evaluate tipsters, and how to get the most from the marketplace. Educational guide for verified sports picks.',
-  url: `${SITE_URL}/learn`,
-  publisher: {
-    '@type': 'Organization',
-    name: SITE_NAME,
-    url: SITE_URL,
-    logo: { '@type': 'ImageObject', url: `${SITE_URL}/BetRollover-logo.png` },
-  },
-  mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE_URL}/learn` },
-};
+export default async function LearnLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale();
+  const pageUrl = localizedUrl('/learn', locale);
+  const learnPageJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: 'Tipster Marketplace Glossary',
+    description:
+      'Glossary of escrow, ROI, win rate, and settlement on the BetRollover marketplace.',
+    url: pageUrl,
+    publisher: {
+      '@type': 'Organization',
+      name: SITE_NAME,
+      url: SITE_URL,
+      logo: { '@type': 'ImageObject', url: `${SITE_URL.replace(/\/$/, '')}/BetRollover-logo.png` },
+    },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': pageUrl },
+  };
 
-export default function LearnLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <script

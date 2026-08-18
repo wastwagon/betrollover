@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { SITE_URL, getAlternates } from '@/lib/site-config';
+import { PersonJsonLd } from '@/components/PersonJsonLd';
+import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { getLocale, serverT } from '@/lib/i18n';
 import {
   fetchTipsterProfileForSeo,
@@ -29,16 +30,13 @@ export async function generateMetadata({
   const description = truncateMetaDescription(
     tip.bio?.trim() || `${statsLine} · ${tip.total_predictions} ${serverT('tipster.predictions', locale)}`,
   );
-  const canonical = `${SITE_URL}/tipsters/${encodeURIComponent(tip.username)}`;
+  const canonical = localizedUrl(`/tipsters/${encodeURIComponent(tip.username)}`, locale);
   const ogImage = tipsterOgImageUrl(tip.avatar_url);
 
   return {
     title,
     description,
-    alternates: {
-      canonical,
-      languages: getAlternates(`/tipsters/${tip.username}`),
-    },
+    alternates: seoAlternates(`/tipsters/${tip.username}`, locale),
     openGraph: {
       url: canonical,
       title,
@@ -54,6 +52,33 @@ export async function generateMetadata({
   };
 }
 
-export default function TipsterUsernameLayout({ children }: { children: React.ReactNode }) {
-  return children;
+export default async function TipsterUsernameLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ username: string }>;
+}) {
+  const { username } = await params;
+  const locale = await getLocale();
+  const profile = await fetchTipsterProfileForSeo(username);
+  const tip = profile?.tipster;
+
+  return (
+    <>
+      {tip && (
+        <PersonJsonLd
+          username={tip.username}
+          displayName={tip.display_name}
+          avatarUrl={tip.avatar_url}
+          bio={tip.bio}
+          winRate={tip.win_rate}
+          totalPredictions={tip.total_predictions}
+          url={localizedUrl(`/tipsters/${tip.username}`, locale)}
+          locale={locale}
+        />
+      )}
+      {children}
+    </>
+  );
 }

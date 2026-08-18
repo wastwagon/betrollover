@@ -1,30 +1,17 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useT } from '@/context/LanguageContext';
+import { notFound } from 'next/navigation';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
-import { ArticleJsonLd } from '@/components/ArticleJsonLd';
-import { IconBook } from '@/components/ios/icons';
 import { buttonClassName } from '@/components/ui/Button';
-
-interface NewsArticle {
-  id: number;
-  slug: string;
-  title: string;
-  excerpt: string | null;
-  content: string;
-  category: string;
-  sport?: string;
-  imageUrl: string | null;
-  sourceUrl: string | null;
-  publishedAt: string | null;
-}
+import { getLocale, buildT } from '@/lib/i18n';
+import {
+  fetchNewsArticleBySlug,
+  fetchRelatedNewsArticles,
+  type NewsArticlePublic,
+} from '@/lib/seo/public-content';
 
 const CATEGORY_COLORS: Record<string, string> = {
   news:                'bg-blue-100 text-blue-700',
@@ -40,7 +27,6 @@ const SPORT_ICONS: Record<string, string> = {
 };
 
 function getCategoryLabel(t: (k: string) => string, cat: string): string {
-  const key = `news.category_detail_${cat}` as const;
   const map: Record<string, string> = {
     news: 'news.category_detail_news',
     transfer_rumour: 'news.category_detail_transfer_rumour',
@@ -62,90 +48,24 @@ function formatDate(s: string | null) {
   });
 }
 
-function ArticleSkeleton() {
-  return (
-    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
-      <UnifiedHeader />
-      <main className="section-ux-page-wide w-full min-w-0">
-        <div className="flex flex-col lg:flex-row gap-8 min-w-0">
-          <div className="flex-1 min-w-0 space-y-4">
-            <div className="h-6 w-32 rounded-xl bg-[var(--card)] skeleton" />
-            <div className="h-8 w-3/4 rounded-xl bg-[var(--card)] skeleton" />
-            <div className="h-4 w-1/2 rounded-xl bg-[var(--card)] skeleton" />
-            <div className="h-56 rounded-2xl bg-[var(--card)] skeleton" />
-            {[1,2,3,4].map(i => <div key={i} className="h-4 rounded bg-[var(--card)] skeleton" />)}
-          </div>
-          <div className="w-full lg:w-72 flex-shrink-0 min-w-0 space-y-4">
-            <div className="h-[250px] rounded-xl bg-[var(--card)] skeleton" />
-            <div className="h-32 rounded-xl bg-[var(--card)] skeleton" />
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-}
+export default async function NewsArticlePage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const locale = await getLocale();
+  const t = buildT(locale);
+  const article = await fetchNewsArticleBySlug(slug, locale);
 
-export default function NewsArticlePage() {
-  const params = useParams();
-  const slug = params?.slug as string;
-  const t = useT();
+  if (!article) notFound();
 
-  const [article, setArticle] = useState<NewsArticle | null>(null);
-  const [related, setRelated] = useState<NewsArticle[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!slug) return;
-    fetch(`/api/news/${slug}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data: NewsArticle | null) => {
-        setArticle(data);
-        if (data) {
-          // Fetch related articles by same sport (excluding current)
-          const sportParam = data.sport ? `&sport=${data.sport}` : '';
-          fetch(`/api/news?limit=5${sportParam}`)
-            .then((r) => r.ok ? r.json() : [])
-            .then((list: NewsArticle[]) =>
-              setRelated(Array.isArray(list) ? list.filter((a) => a.slug !== slug).slice(0, 4) : [])
-            )
-            .catch(() => {});
-        }
-      })
-      .catch(() => setArticle(null))
-      .finally(() => setLoading(false));
-  }, [slug]);
-
-  if (loading) return <ArticleSkeleton />;
-
-  if (!article) {
-    return (
-      <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
-        <UnifiedHeader />
-        <main className="section-ux-empty w-full min-w-0 px-4 sm:px-0">
-          <IconBook className="w-14 h-14 mx-auto mb-4 text-[var(--text-muted)] opacity-50" aria-hidden />
-          <h1 className="text-lg font-semibold text-[var(--text)] mb-3">{t('news.article_not_found')}</h1>
-          <p className="text-[var(--text-muted)] mb-6">{t('news.article_not_found_desc')}</p>
-          <Link href="/news" className={buttonClassName({ className: 'inline-flex' })}>
-            {t('news.back_to_news')}
-          </Link>
-        </main>
-        <AppFooter />
-      </div>
-    );
-  }
-
+  const related = await fetchRelatedNewsArticles(locale, article.slug, article.sport);
   const sportLabel = article.sport ? getSportLabel(t, article.sport) : '';
-  const categoryLabel = getCategoryLabel(t, article.category);
+  const categoryLabel = getCategoryLabel(t, article.category || 'news');
 
   return (
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
-      <ArticleJsonLd
-        title={article.title}
-        excerpt={article.excerpt}
-        imageUrl={article.imageUrl}
-        publishedAt={article.publishedAt}
-        slug={article.slug}
-      />
       <UnifiedHeader />
       <main className="section-ux-page-wide w-full min-w-0">
         <PageHeader
@@ -178,10 +98,7 @@ export default function NewsArticlePage() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8 min-w-0">
-          {/* ── Article ── */}
           <article className="flex-1 min-w-0">
-
-            {/* Hero image */}
             {article.imageUrl && (
               <div className="relative w-full h-64 sm:h-80 mb-8 rounded-2xl overflow-hidden bg-[var(--card)]">
                 <Image
@@ -196,7 +113,6 @@ export default function NewsArticlePage() {
               </div>
             )}
 
-            {/* Body */}
             <div className="prose prose-slate max-w-none min-w-0 text-[var(--text)] text-[15px] leading-relaxed
               [&>p]:mb-5 [&>p]:text-[var(--text)] [&>h2]:text-xl [&>h2]:font-bold [&>h2]:mt-8 [&>h2]:mb-3
               [&>h3]:text-lg [&>h3]:font-semibold [&>h3]:mt-6 [&>h3]:mb-2
@@ -204,11 +120,10 @@ export default function NewsArticlePage() {
               [&>blockquote]:border-l-4 [&>blockquote]:border-[var(--primary)]/40 [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:text-[var(--text-muted)]"
             >
               {(article.content || '').trim()
-                ? article.content.split(/\n\n+/).map((p, i) => <p key={i}>{p}</p>)
+                ? (article.content || '').split(/\n\n+/).map((p, i) => <p key={i}>{p}</p>)
                 : <p className="text-[var(--text-muted)] italic">{t('news.full_content_unavailable')}</p>}
             </div>
 
-            {/* Source */}
             {article.sourceUrl && (
               <div className="mt-8 pt-6 border-t border-[var(--border)]">
                 <p className="text-sm text-[var(--text-muted)]">
@@ -225,7 +140,6 @@ export default function NewsArticlePage() {
               </div>
             )}
 
-            {/* Back link */}
             <div className="mt-8 pt-6 border-t border-[var(--border)]">
               <Link
                 href={article.sport ? `/news?sport=${article.sport}` : '/news'}
@@ -236,13 +150,10 @@ export default function NewsArticlePage() {
             </div>
           </article>
 
-          {/* ── Sidebar ── */}
           <aside className="w-full lg:w-72 flex-shrink-0 min-w-0">
             <div className="lg:sticky lg:top-24 space-y-4">
-
               <AdSlot zoneSlug="news-article-sidebar" />
 
-              {/* Related articles */}
               {related.length > 0 && (
                 <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-hidden">
                   <div className="px-4 py-3 border-b border-[var(--border)]">
@@ -252,38 +163,7 @@ export default function NewsArticlePage() {
                   </div>
                   <ul className="divide-y divide-[var(--border)]">
                     {related.map((rel) => (
-                      <li key={rel.id}>
-                        <Link
-                          href={`/news/${rel.slug}`}
-                          className="flex gap-3 p-3 hover:bg-[var(--bg)] transition-colors group"
-                        >
-                          {rel.imageUrl ? (
-                            <div className="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100">
-                              <Image
-                                src={rel.imageUrl} alt={rel.title}
-                                width={56} height={56}
-                                className="w-full h-full object-cover"
-                                unoptimized
-                              />
-                            </div>
-                          ) : (
-                            <div className="w-14 h-14 flex-shrink-0 rounded-lg bg-[var(--primary-light)] flex items-center justify-center text-xl">
-                              {article.sport ? SPORT_ICONS[article.sport] : '📰'}
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold uppercase mb-1 ${CATEGORY_COLORS[rel.category] ?? 'bg-slate-100 text-slate-600'}`}>
-                              {getCategoryLabel(t, rel.category)}
-                            </span>
-                            <p className="text-xs font-semibold text-[var(--text)] group-hover:text-[var(--primary)] transition-colors leading-snug line-clamp-2">
-                              {rel.title}
-                            </p>
-                            {rel.publishedAt && (
-                              <p className="text-[10px] text-[var(--text-muted)] mt-1">{formatDate(rel.publishedAt)}</p>
-                            )}
-                          </div>
-                        </Link>
-                      </li>
+                      <RelatedRow key={rel.slug} rel={rel} t={t} fallbackSport={article.sport} />
                     ))}
                   </ul>
                   <div className="px-4 py-3 border-t border-[var(--border)]">
@@ -297,7 +177,6 @@ export default function NewsArticlePage() {
                 </div>
               )}
 
-              {/* Tipster CTA */}
               <div className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-5">
                 <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">{t('news.sidebar_tipster_title')}</p>
                 <h3 className="font-display font-semibold text-base mb-2 text-[var(--text)]">
@@ -314,7 +193,6 @@ export default function NewsArticlePage() {
                 </Link>
               </div>
 
-              {/* Discover CTA */}
               <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-4">
                 <h3 className="text-sm font-bold text-[var(--text)] mb-2">{t('news.sidebar_discover_title')}</h3>
                 <p className="text-xs text-[var(--text-muted)] mb-3 leading-relaxed">
@@ -330,5 +208,50 @@ export default function NewsArticlePage() {
       </main>
       <AppFooter />
     </div>
+  );
+}
+
+function RelatedRow({
+  rel,
+  t,
+  fallbackSport,
+}: {
+  rel: NewsArticlePublic;
+  t: (k: string, vars?: Record<string, string>) => string;
+  fallbackSport?: string;
+}) {
+  return (
+    <li>
+      <Link
+        href={`/news/${rel.slug}`}
+        className="flex gap-3 p-3 hover:bg-[var(--bg)] transition-colors group"
+      >
+        {rel.imageUrl ? (
+          <div className="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100">
+            <Image
+              src={rel.imageUrl} alt={rel.title}
+              width={56} height={56}
+              className="w-full h-full object-cover"
+              unoptimized
+            />
+          </div>
+        ) : (
+          <div className="w-14 h-14 flex-shrink-0 rounded-lg bg-[var(--primary-light)] flex items-center justify-center text-xl">
+            {fallbackSport ? SPORT_ICONS[fallbackSport] : '📰'}
+          </div>
+        )}
+        <div className="min-w-0">
+          <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold uppercase mb-1 ${CATEGORY_COLORS[rel.category || ''] ?? 'bg-slate-100 text-slate-600'}`}>
+            {getCategoryLabel(t, rel.category || 'news')}
+          </span>
+          <p className="text-xs font-semibold text-[var(--text)] group-hover:text-[var(--primary)] transition-colors leading-snug line-clamp-2">
+            {rel.title}
+          </p>
+          {rel.publishedAt && (
+            <p className="text-[10px] text-[var(--text-muted)] mt-1">{formatDate(rel.publishedAt)}</p>
+          )}
+        </div>
+      </Link>
+    </li>
   );
 }

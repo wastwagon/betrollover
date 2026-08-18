@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -72,6 +72,28 @@ function activeSubscriptionPackageIds(subs: MySubscriptionRow[]): Set<number> {
   return ids;
 }
 
+function mapLeaderboardEntry(e: Record<string, unknown>, i: number): LeaderboardEntry {
+  return {
+    id: e.id as number,
+    username: e.username as string,
+    display_name: e.display_name as string,
+    avatar_url: (e.avatar_url as string | null) ?? null,
+    rank: (e.rank ?? e.leaderboard_rank ?? i + 1) as number,
+    win_rate: (e.win_rate as number) ?? 0,
+    roi: (e.roi as number) ?? 0,
+    total_predictions: (e.total_predictions ?? e.monthly_predictions ?? 0) as number,
+    total_wins: (e.total_wins ?? e.monthly_wins ?? 0) as number,
+    total_losses: typeof e.total_losses === 'number' ? e.total_losses : undefined,
+    is_ai: !!(e.is_ai as boolean | undefined),
+    is_verified: !!(e.is_verified as boolean | undefined),
+    tipster_type: (e.tipster_type as string | null | undefined) ?? null,
+    form_points: typeof e.form_points === 'number' ? e.form_points : undefined,
+    avg_rating: (e.avg_rating as number | null | undefined) ?? null,
+    review_count: (e.review_count as number | null | undefined) ?? null,
+    vip_package_id: (e.vip_package_id as number | null | undefined) ?? null,
+  };
+}
+
 function RankBadge({ rank }: { rank: number }) {
   const medal = tipsterRankMedal(rank);
   if (medal) return <span className="text-2xl">{medal}</span>;
@@ -82,12 +104,17 @@ function RankBadge({ rank }: { rank: number }) {
   );
 }
 
-export default function LeaderboardPage() {
+export default function LeaderboardPage({
+  initialEntries = [],
+}: {
+  initialEntries?: Record<string, unknown>[];
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const t = useT();
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [entries, setEntries] = useState<LeaderboardEntry[]>(() => initialEntries.map(mapLeaderboardEntry));
+  const [loading, setLoading] = useState(initialEntries.length === 0);
+  const skipNextLoadingRef = useRef(initialEntries.length > 0);
   const [period, setPeriod] = useState<Period>('all_time');
   const [sport, setSport] = useState<SportFilter>('all');
   const [loggedIn, setLoggedIn] = useState(false);
@@ -126,7 +153,9 @@ export default function LeaderboardPage() {
   }, []);
 
   const fetchLeaderboard = useCallback((p: Period, s: SportFilter, silent = false) => {
-    if (!silent) setLoading(true);
+    const skipLoading = silent || skipNextLoadingRef.current;
+    skipNextLoadingRef.current = false;
+    if (!skipLoading) setLoading(true);
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
@@ -140,25 +169,7 @@ export default function LeaderboardPage() {
       .then(r => r.ok ? r.json() : { leaderboard: [], tipsters: [] })
       .then(data => {
         const raw: Record<string, unknown>[] = data.leaderboard ?? data.tipsters ?? data ?? [];
-        setEntries(raw.map((e, i) => ({
-          id: e.id as number,
-          username: e.username as string,
-          display_name: e.display_name as string,
-          avatar_url: (e.avatar_url as string | null) ?? null,
-          rank: (e.rank ?? e.leaderboard_rank ?? i + 1) as number,
-          win_rate: (e.win_rate as number) ?? 0,
-          roi: (e.roi as number) ?? 0,
-          total_predictions: (e.total_predictions ?? e.monthly_predictions ?? 0) as number,
-          total_wins: (e.total_wins ?? e.monthly_wins ?? 0) as number,
-          total_losses: typeof e.total_losses === 'number' ? e.total_losses : undefined,
-          is_ai: !!(e.is_ai as boolean | undefined),
-          is_verified: !!(e.is_verified as boolean | undefined),
-          tipster_type: (e.tipster_type as string | null | undefined) ?? null,
-          form_points: typeof e.form_points === 'number' ? e.form_points : undefined,
-          avg_rating: (e.avg_rating as number | null | undefined) ?? null,
-          review_count: (e.review_count as number | null | undefined) ?? null,
-          vip_package_id: (e.vip_package_id as number | null | undefined) ?? null,
-        })));
+        setEntries(raw.map(mapLeaderboardEntry));
       })
       .catch(() => setEntries([]))
       .finally(() => setLoading(false));

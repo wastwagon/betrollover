@@ -4,23 +4,24 @@ import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { PageHeader } from '@/components/PageHeader';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
-import { SITE_NAME, SITE_URL, getAlternates } from '@/lib/site-config';
+import { localizedUrl, seoAlternates } from '@/lib/site-config';
+import { getLocale } from '@/lib/i18n';
 
-export const metadata: Metadata = {
-  title: `Escrow Refund Guide | ${SITE_NAME}`,
-  description:
-    'Learn how escrow works for paid picks on BetRollover, including settlement flow and automatic wallet refunds.',
-  alternates: {
-    canonical: `${SITE_URL}/guides/escrow-refunds`,
-    languages: getAlternates('/guides/escrow-refunds'),
-  },
-  openGraph: {
-    url: `${SITE_URL}/guides/escrow-refunds`,
-    title: `Escrow Refund Guide | ${SITE_NAME}`,
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: 'Escrow Refund Guide',
     description:
       'Learn how escrow works for paid picks on BetRollover, including settlement flow and automatic wallet refunds.',
-  },
-};
+    alternates: seoAlternates('/guides/escrow-refunds', locale),
+    openGraph: {
+      url: localizedUrl('/guides/escrow-refunds', locale),
+      title: 'Escrow Refund Guide',
+      description:
+        'Learn how escrow works for paid picks on BetRollover, including settlement flow and automatic wallet refunds.',
+    },
+  };
+}
 
 export default function EscrowRefundsGuidePage() {
   const faqs = [

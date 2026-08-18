@@ -90,11 +90,28 @@ function matchesSearch(row: Row, term: string): boolean {
   );
 }
 
-export default function LiveScoresPage() {
+export default function LiveScoresPage({
+  initialPayload = null,
+}: {
+  initialPayload?: Payload | {
+    live: Record<string, unknown>[];
+    upcoming: Record<string, unknown>[];
+    recent: Record<string, unknown>[];
+    generatedAt?: string;
+  } | null;
+}) {
   const t = useT();
-  const [data, setData] = useState<Payload | null>(null);
+  const [data, setData] = useState<Payload | null>(() => {
+    if (!initialPayload) return null;
+    return {
+      live: (initialPayload.live as Row[]) ?? [],
+      upcoming: (initialPayload.upcoming as Row[]) ?? [],
+      recent: (initialPayload.recent as Row[]) ?? [],
+      generatedAt: initialPayload.generatedAt || '',
+    };
+  });
   const [err, setErr] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(initialPayload == null);
   const pollingRef = useRef(false);
   const pollDelayRef = useRef(POLL_MS);
   const sseActiveRef = useRef(false);

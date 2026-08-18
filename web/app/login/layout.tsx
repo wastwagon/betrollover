@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { SITE_URL, SITE_NAME, getAlternates } from '@/lib/site-config';
+import { SITE_NAME, localizedUrl, seoAlternates } from '@/lib/site-config';
 import { getLocale, serverT } from '@/lib/i18n';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -9,12 +9,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: {
-      canonical: `${SITE_URL}/login`,
-      languages: getAlternates('/login'),
-    },
+    alternates: seoAlternates('/login', locale),
     openGraph: {
-      url: `${SITE_URL}/login`,
+      url: localizedUrl('/login', locale),
       siteName: SITE_NAME,
       title,
       description,
@@ -26,6 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description,
       images: [{ url: '/og-image.png', alt: `${SITE_NAME} — sign in` }],
     },
+    robots: { index: false, follow: true },
   };
 }
 

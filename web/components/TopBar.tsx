@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useLanguage, useT } from '@/context/LanguageContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { trackEvent } from '@/lib/analytics';
+import { stripLocalePrefix } from '@/lib/locale-path';
 function Dropdown({ open, onClose, triggerRef, children }: {
   open: boolean;
   onClose: () => void;
@@ -169,7 +170,7 @@ function TopBarSwitchers() {
 
 function isAdminRoute(pathname: string | null) {
   if (!pathname) return false;
-  return pathname.startsWith('/admin') || pathname.startsWith('/fr/admin');
+  return stripLocalePrefix(pathname).startsWith('/admin');
 }
 
 export function TopBar() {

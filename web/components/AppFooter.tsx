@@ -1,13 +1,24 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { AdSlot } from './AdSlot';
 import { useT } from '@/context/LanguageContext';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import { GrowthDistributionStrip } from '@/components/GrowthDistributionStrip';
+import { localizeHref } from '@/lib/locale-path';
 
 const footerLinkClass =
   'hover:text-[var(--primary)] transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2';
+
+function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
+  const pathname = usePathname();
+  return (
+    <Link href={localizeHref(href, pathname)} className={footerLinkClass}>
+      {children}
+    </Link>
+  );
+}
 
 export function AppFooter() {
   const t = useT();
@@ -21,14 +32,14 @@ export function AppFooter() {
             <h3 className="font-semibold mb-3 text-[var(--text)]">{t('footer.company')}</h3>
             <ul className="space-y-2 text-sm text-[var(--text-muted)]">
               <li>
-                <Link href="/support" className={footerLinkClass}>
+                <FooterLink href="/support">
                   {t('support.title')}
-                </Link>
+                </FooterLink>
               </li>
               <li>
-                <Link href="/tools/converter" className={footerLinkClass}>
+                <FooterLink href="/tools/converter">
                   {t('currency.selector_title')}
-                </Link>
+                </FooterLink>
               </li>
             </ul>
           </div>
@@ -36,41 +47,27 @@ export function AppFooter() {
             <h3 className="font-semibold mb-3 text-[var(--text)]">{t('footer.platform')}</h3>
             <ul className="space-y-2 text-sm text-[var(--text-muted)]">
               <li>
-                <Link href="/marketplace" className={footerLinkClass}>
-                  {t('nav.marketplace')}
-                </Link>
+                <FooterLink href="/marketplace">{t('nav.marketplace')}</FooterLink>
               </li>
               {isSubscriptionsEnabled() ? (
                 <li>
-                  <Link href="/subscriptions/marketplace" className={footerLinkClass}>
-                    {t('nav.subscription_marketplace')}
-                  </Link>
+                  <FooterLink href="/subscriptions/marketplace">{t('nav.subscription_marketplace')}</FooterLink>
                 </li>
               ) : null}
               <li>
-                <Link href="/league-tables" className={footerLinkClass}>
-                  {t('nav.league_tables')}
-                </Link>
+                <FooterLink href="/league-tables">{t('nav.league_tables')}</FooterLink>
               </li>
               <li>
-                <Link href="/coupons/archive" className={footerLinkClass}>
-                  {t('header.settled_archive')}
-                </Link>
+                <FooterLink href="/coupons/archive">{t('header.settled_archive')}</FooterLink>
               </li>
               <li>
-                <Link href="/tipsters" className={footerLinkClass}>
-                  {t('nav.top_tipsters')}
-                </Link>
+                <FooterLink href="/tipsters">{t('nav.top_tipsters')}</FooterLink>
               </li>
               <li>
-                <Link href="/leaderboard" className={footerLinkClass}>
-                  {t('nav.leaderboard')}
-                </Link>
+                <FooterLink href="/leaderboard">{t('nav.leaderboard')}</FooterLink>
               </li>
               <li>
-                <Link href="/rollover" className={footerLinkClass}>
-                  {t('nav.rollover')}
-                </Link>
+                <FooterLink href="/rollover">{t('nav.rollover')}</FooterLink>
               </li>
             </ul>
           </div>
@@ -81,44 +78,28 @@ export function AppFooter() {
             </p>
             <ul className="space-y-2 text-sm text-[var(--text-muted)]">
               <li>
-                <Link href="/discover" className={footerLinkClass}>
-                  {t('nav.discover')}
-                </Link>
+                <FooterLink href="/discover">{t('nav.discover')}</FooterLink>
               </li>
               <li>
-                <Link href="/learn" className={footerLinkClass}>
-                  {t('nav.learn')}
-                </Link>
+                <FooterLink href="/learn">{t('nav.learn')}</FooterLink>
               </li>
               <li>
-                <Link href="/news" className={footerLinkClass}>
-                  {t('nav.news')}
-                </Link>
+                <FooterLink href="/news">{t('nav.news')}</FooterLink>
               </li>
               <li>
-                <Link href="/resources" className={footerLinkClass}>
-                  {t('nav.guides')}
-                </Link>
+                <FooterLink href="/resources">{t('nav.guides')}</FooterLink>
               </li>
               <li>
-                <Link href="/guides" className={footerLinkClass}>
-                  {t('nav.short_guides')}
-                </Link>
+                <FooterLink href="/guides">{t('nav.short_guides')}</FooterLink>
               </li>
               <li>
-                <Link href="/community" className={footerLinkClass}>
-                  {t('community.title')}
-                </Link>
+                <FooterLink href="/community">{t('community.title')}</FooterLink>
               </li>
               <li>
-                <Link href="/about" className={footerLinkClass}>
-                  {t('nav.about')}
-                </Link>
+                <FooterLink href="/about">{t('nav.about')}</FooterLink>
               </li>
               <li>
-                <Link href="/contact" className={footerLinkClass}>
-                  {t('nav.contact')}
-                </Link>
+                <FooterLink href="/contact">{t('nav.contact')}</FooterLink>
               </li>
             </ul>
           </div>
@@ -126,9 +107,7 @@ export function AppFooter() {
             <h3 className="font-semibold mb-3 text-[var(--text)]">{t('header.section_platform_info')}</h3>
             <ul className="space-y-2 text-sm text-[var(--text-muted)] mb-5">
               <li>
-                <Link href="/how-it-works" className={footerLinkClass}>
-                  {t('home.how_it_works')}
-                </Link>
+                <FooterLink href="/how-it-works">{t('home.how_it_works')}</FooterLink>
               </li>
             </ul>
             <p className="text-xs text-[var(--text-muted)] border border-emerald-200/70 dark:border-emerald-800/60 rounded-lg p-3 bg-emerald-50/90 dark:bg-emerald-950/30">
@@ -140,19 +119,13 @@ export function AppFooter() {
             <h3 className="font-semibold mb-3 text-[var(--text)]">{t('footer.legal')}</h3>
             <ul className="space-y-2 text-sm text-[var(--text-muted)]">
               <li>
-                <Link href="/terms" className={footerLinkClass}>
-                  {t('auth.terms')}
-                </Link>
+                <FooterLink href="/terms">{t('auth.terms')}</FooterLink>
               </li>
               <li>
-                <Link href="/privacy" className={footerLinkClass}>
-                  {t('auth.privacy')}
-                </Link>
+                <FooterLink href="/privacy">{t('auth.privacy')}</FooterLink>
               </li>
               <li>
-                <Link href="/responsible-gambling" className={footerLinkClass}>
-                  {t('resp.headline')}
-                </Link>
+                <FooterLink href="/responsible-gambling">{t('resp.headline')}</FooterLink>
               </li>
             </ul>
           </div>

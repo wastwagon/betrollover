@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { TipsterCard, type TipsterCardData } from '@/components/TipsterCard';
@@ -60,12 +60,17 @@ function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: numb
   };
 }
 
-export default function TipstersPage() {
+export default function TipstersPage({
+  initialTipsters = [],
+}: {
+  initialTipsters?: TipsterCardData[] | Record<string, unknown>[];
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const t = useT();
-  const [tipsters, setTipsters] = useState<TipsterCardData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [tipsters, setTipsters] = useState<TipsterCardData[]>(() => (initialTipsters as TipsterCardData[]) ?? []);
+  const [loading, setLoading] = useState(initialTipsters.length === 0);
+  const skipNextLoadingRef = useRef(initialTipsters.length > 0);
   const [search, setSearch] = useState(() => {
     if (typeof window === 'undefined') return '';
     return new URLSearchParams(window.location.search).get('search') || '';
@@ -94,7 +99,8 @@ export default function TipstersPage() {
 
   const fetchTipsters = useCallback(
     (searchTerm?: string, sort?: string, periodVal?: Period, sport?: SportFilter) => {
-      setLoading(true);
+      if (skipNextLoadingRef.current) skipNextLoadingRef.current = false;
+      else setLoading(true);
       const token = localStorage.getItem('token');
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;

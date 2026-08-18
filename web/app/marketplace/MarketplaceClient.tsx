@@ -108,14 +108,22 @@ interface User {
   email: string;
 }
 
-export default function MarketplacePage() {
+export default function MarketplacePage({
+  initialPicks = [],
+  initialTotal = 0,
+  initialHasMore = false,
+}: {
+  initialPicks?: Accumulator[] | Record<string, unknown>[];
+  initialTotal?: number;
+  initialHasMore?: boolean;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useT();
-  const [picks, setPicks] = useState<Accumulator[]>([]);
-  const [total, setTotal] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [picks, setPicks] = useState<Accumulator[]>(() => (initialPicks as Accumulator[]) ?? []);
+  const [total, setTotal] = useState(initialTotal);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [loading, setLoading] = useState(initialPicks.length === 0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [purchasing, setPurchasing] = useState<number | null>(null);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);

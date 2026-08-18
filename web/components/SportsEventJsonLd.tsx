@@ -1,21 +1,52 @@
-import { SITE_URL } from '@/lib/site-config';
+import { SITE_URL, localizedUrl } from '@/lib/site-config';
 import type { PublicFixtureDetail } from '@/lib/match-detail';
 
-export function SportsEventJsonLd({ match }: { match: PublicFixtureDetail }) {
-  const url = `${SITE_URL}/matches/${match.id}`;
+function eventPlace(match: PublicFixtureDetail) {
+  const country = (match.country || '').trim();
+  const placeName = country || 'International';
+  return {
+    '@type': 'Place',
+    name: placeName,
+    ...(country
+      ? {
+          address: {
+            '@type': 'PostalAddress',
+            addressCountry: country,
+          },
+        }
+      : {}),
+  };
+}
+
+export function SportsEventJsonLd({
+  match,
+  url,
+}: {
+  match: PublicFixtureDetail;
+  url?: string;
+}) {
+  const pageUrl = url || localizedUrl(`/matches/${match.id}`);
   const payload = {
     '@context': 'https://schema.org',
     '@type': 'SportsEvent',
     name: `${match.homeTeamName} vs ${match.awayTeamName}`,
+    sport: 'Soccer',
     startDate: match.matchDate,
     eventStatus:
-      match.status === 'FT'
-        ? 'https://schema.org/EventScheduled'
-        : 'https://schema.org/EventScheduled',
-    location: {
-      '@type': 'Place',
-      name: match.leagueName || match.country || 'Football',
-    },
+      match.status === 'FT' || match.status === 'AET' || match.status === 'PEN'
+        ? 'https://schema.org/EventCompleted'
+        : match.status === 'PST' || match.status === 'CANC'
+          ? 'https://schema.org/EventCancelled'
+          : 'https://schema.org/EventScheduled',
+    location: eventPlace(match),
+    ...(match.leagueName
+      ? {
+          superEvent: {
+            '@type': 'SportsEvent',
+            name: match.leagueName,
+          },
+        }
+      : {}),
     homeTeam: {
       '@type': 'SportsTeam',
       name: match.homeTeamName,
@@ -24,7 +55,7 @@ export function SportsEventJsonLd({ match }: { match: PublicFixtureDetail }) {
       '@type': 'SportsTeam',
       name: match.awayTeamName,
     },
-    url,
+    url: pageUrl,
     organizer: {
       '@type': 'Organization',
       name: 'BetRollover',

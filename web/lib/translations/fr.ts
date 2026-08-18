@@ -1436,10 +1436,10 @@ const fr: Record<string, string> = {
   'seo.marketplace_title_multisport': 'Marché multi-sports | Pronostics gratuits et premium',
   'seo.marketplace_desc_multisport':
     'Parcourez des pronostics de tipsters vérifiés sur tous les sports majeurs — football, basketball, tennis, MMA, rugby et plus. Comparez taux de victoire et ROI. Pronostics gratuits et premium ; remboursés en cas de perte.',
-  'seo.tipsters_title': 'Tipsters Football Vérifiés | Pronostics, ROI & Réussite',
-  'seo.tipsters_desc': 'Suivez des tipsters football vérifiés classés par taux de victoire et ROI. Pronostics protégés par escrow pour un public mondial — fort au Ghana, Nigeria, Kenya, Afrique du Sud et au-delà.',
-  'seo.leaderboard_title': 'Classement Pronostics Football | Tipsters Actifs',
-  'seo.leaderboard_desc': 'Top tipsters football classés par forme récente — taux de victoire, ROI et activité de publication. Les comptes inactifs n’apparaissent pas. Ancré en Afrique, portée mondiale.',
+  'seo.tipsters_title': 'Annuaire des tipsters football | Chercher des analystes vérifiés',
+  'seo.tipsters_desc': 'Parcourez et suivez des tipsters football vérifiés. Filtrez par ROI, taux de réussite et sport. Pronostics sous escrow — basé au Ghana, audience mondiale.',
+  'seo.leaderboard_title': 'Classement de forme des tipsters | Actifs uniquement',
+  'seo.leaderboard_desc': 'Tipsters football actifs classés par points de forme récente, puis ROI. Les comptes inactifs n’apparaissent pas. Distinct de l’annuaire.',
   'leaderboard.empty_logged_sub':
     'Aucun tipster ne correspond à ce filtre pour le moment. Essayez une autre période ou un autre sport, ou parcourez tous les profils.',
   'leaderboard.empty_logged_cta': 'Voir tous les tipsters',
@@ -1453,12 +1453,12 @@ const fr: Record<string, string> = {
     'Ce mois-ci : seuls les tipsters avec au moins un pronostic arbitré publié dans le mois civil en cours apparaissent. Ceux avec au moins {n} pronostics arbitrés publiés ce mois-là sont classés en premier par ROI, puis profit, puis taux de réussite ; les autres sur le mois suivent en dessous, par ROI.',
   'leaderboard.rank_notice_weekly':
     'Cette semaine : seuls les tipsters avec au moins un pronostic arbitré publié dans la semaine civile en cours apparaissent. Ceux avec au moins {n} pronostics arbitrés publiés cette semaine-là sont classés en premier par ROI, puis profit, puis taux de réussite ; les autres sur la semaine suivent en dessous, par ROI.',
-  'seo.discover_title': 'Guides Pronostics Football & Actualités Matchs',
-  'seo.discover_desc': 'Actualités matchs, transferts, blessures et guides tipsters pour affûter vos pronostics football — pour l\'Afrique et un public mondial.',
+  'seo.discover_title': 'Hub Actualités et Guides Football',
+  'seo.discover_desc': 'Un hub pour l’actualité des matchs et les guides éducatifs. Pour les transferts et blessures du jour, voir Actualités ; pour l’escrow et l’évaluation des tipsters, voir Guides.',
   'seo.news_title': 'Actualités Matchs Football | Transferts, Blessures & Aperçus',
   'seo.news_desc': 'Dernières actualités football : transferts, blessures, aperçus et analyses des ligues mondiales — pour les fans en Afrique et dans le monde.',
-  'seo.resources_title': 'Guides Pronostics Football & Ressources Tipsters',
-  'seo.resources_desc': 'Apprenez les picks protégés par escrow, le ROI, le bankroll et comment évaluer les tipsters football. Guides pour l\'Afrique et un public mondial.',
+  'seo.resources_title': 'Bibliothèque de ressources tipsters',
+  'seo.resources_desc': 'Articles de fond sur le bankroll, le ROI et les bases du marketplace. Distinct de l’actualité quotidienne et des guides escrow.',
   'seo.picks_archive_title': 'Archive des Pronostics Football | Résultats passés',
   'seo.picks_archive_desc': 'Parcourez les pronostics football réglés et les résultats sous escrow. Consultez taux de victoire, ROI et issues des tipsters vérifiés.',
 
@@ -1505,7 +1505,7 @@ const fr: Record<string, string> = {
   'seo.register_desc':
     'Rejoignez BetRollover — pronostics football, picks protégés par escrow et portefeuille multi-devises. Basée au Ghana pour l\'Afrique et un public mondial.',
   'seo.register_og_alt': 'BetRollover — pronostics football & picks protégés par escrow',
-  'seo.login_title': 'Connexion | Pronostics Football BetRollover',
+  'seo.login_title': 'Connexion | Pronostics Football',
   'seo.login_desc':
     'Connectez-vous pour parcourir les pronostics football, acheter des picks protégés par escrow, gérer votre portefeuille et suivre les tipsters vérifiés.',
 
@@ -1989,7 +1989,6 @@ const fr: Record<string, string> = {
   'rollover.day': 'Jour',
   'rollover.status': 'Statut',
   'rollover.odds': 'Cote',
-  'rollover.example': 'Exemple',
   'rollover.stake': 'Mise',
   'rollover.win': 'Gain',
   'rollover.coupon': 'Coupon',
@@ -2013,12 +2012,11 @@ const fr: Record<string, string> = {
   'rollover.records': 'Records',
   'rollover.campaign_stake': 'Mise d’exemple de la campagne : GHS {stake}',
   'rollover.stat_best_run': 'Meilleure série',
-  'rollover.stat_best_example': 'Meilleur exemple',
-  'rollover.stat_best_stake': 'Mise',
-  'rollover.stat_best_win': 'Gain',
   'rollover.stat_finished': 'Terminées',
   'rollover.stat_cut': 'Coupées',
   'rollover.stat_reset': 'Réinit.',
+  'rollover.stat_stake_hint': 'Exemple de départ',
+  'rollover.stat_campaigns': 'Campagnes',
   'rollover.stat_from_stake': 'depuis GHS {stake}',
   'rollover.last_cut': 'La dernière série a été coupée au jour {day}. Ce tableau est un nouveau cycle.',
   'rollover.last_reset': 'La dernière série a été réinitialisée au jour {day}. Ce tableau est un nouveau cycle.',

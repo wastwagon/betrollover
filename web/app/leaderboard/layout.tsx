@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { SITE_URL, getAlternates } from '@/lib/site-config';
+import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { getLocale, serverT } from '@/lib/i18n';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -7,12 +7,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: serverT('seo.leaderboard_title', locale),
     description: serverT('seo.leaderboard_desc', locale),
-    alternates: {
-      canonical: `${SITE_URL}/leaderboard`,
-      languages: getAlternates('/leaderboard'),
-    },
+    alternates: seoAlternates('/leaderboard', locale),
     openGraph: {
-      url: `${SITE_URL}/leaderboard`,
+      url: localizedUrl('/leaderboard', locale),
       title: serverT('seo.leaderboard_title', locale),
       description: serverT('seo.leaderboard_desc', locale),
       images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'BetRollover Leaderboard' }],

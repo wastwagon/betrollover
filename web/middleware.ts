@@ -1,18 +1,15 @@
 /**
  * Locale-routing middleware (Next.js App Router)
  *
- * Responsibilities:
- *  1. Handle language-prefixed URLs:  /fr/marketplace → rewrites to /marketplace
- *     and stamps the x-locale request header so Server Components can read it.
- *  2. Detect locale for un-prefixed paths from (a) br_language cookie then
- *     (b) Accept-Language header, (c) falls back to 'en'.
- *  3. Always injects x-locale into the forwarded request so
- *     `headers().get('x-locale')` works in any Server Component.
+ * URL contract (hreflang / SEO):
+ *   https://betrollover.com/            → English (always)
+ *   https://betrollover.com/fr/         → French
+ *   https://betrollover.com/en/…        → 301 to unprefixed English
  *
- * URL contract (for hreflang / SEO):
- *   https://betrollover.com/            → English canonical
- *   https://betrollover.com/fr/         → French canonical
- *   https://betrollover.com/fr/marketplace → French marketplace
+ * Unprefixed paths never pick language from Accept-Language. Googlebot therefore
+ * always sees English on English URLs. Returning French users who click an
+ * in-app (same-origin) link are 302'd to /fr/… so footer/nav hrefs without a
+ * prefix stay in French.
  */
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
@@ -20,68 +17,84 @@ import type { NextRequest } from 'next/server';
 const SUPPORTED_LOCALES = ['en', 'fr'] as const;
 type Locale = (typeof SUPPORTED_LOCALES)[number];
 
-const DEFAULT_LOCALE: Locale = 'en';
 const LOCALE_COOKIE = 'br_language';
+const CRAWLER_UA =
+  /Googlebot|Google-InspectionTool|bingbot|BingPreview|DuckDuckBot|Baiduspider|Yandex(Bot|Images|Render)|facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|TelegramBot|WhatsApp|Applebot|SemrushBot|AhrefsBot|DotBot|MJ12bot|PetalBot/i;
 
 function isSupportedLocale(v: string): v is Locale {
   return (SUPPORTED_LOCALES as readonly string[]).includes(v);
 }
 
-function detectLocale(req: NextRequest): Locale {
-  // 1. Saved user preference (cookie)
-  const cookieVal = req.cookies.get(LOCALE_COOKIE)?.value ?? '';
-  if (isSupportedLocale(cookieVal)) return cookieVal;
+function isCrawler(req: NextRequest): boolean {
+  return CRAWLER_UA.test(req.headers.get('user-agent') || '');
+}
 
-  // 2. Browser negotiation (Accept-Language)
-  const accept = req.headers.get('accept-language') ?? '';
-  for (const part of accept.split(',')) {
-    const tag = part.trim().split(';')[0].split('-')[0].toLowerCase();
-    if (isSupportedLocale(tag)) return tag;
+function isSameOriginReferer(req: NextRequest): boolean {
+  const ref = req.headers.get('referer');
+  if (!ref) return false;
+  try {
+    return new URL(ref).origin === req.nextUrl.origin;
+  } catch {
+    return false;
   }
+}
 
-  return DEFAULT_LOCALE;
+function withLocaleHeader(req: NextRequest, locale: Locale, pathname: string) {
+  const url = req.nextUrl.clone();
+  url.pathname = pathname;
+  const reqHeaders = new Headers(req.headers);
+  reqHeaders.set('x-locale', locale);
+  const response = NextResponse.rewrite(url, { request: { headers: reqHeaders } });
+  response.cookies.set(LOCALE_COOKIE, locale, {
+    path: '/',
+    maxAge: 365 * 24 * 60 * 60,
+    sameSite: 'lax',
+  });
+  return response;
 }
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Skip: Next.js internals, static assets, API routes
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
-    /\.[\w]+$/.test(pathname)          // e.g. /favicon.ico, /robots.txt
+    /\.[\w]+$/.test(pathname)
   ) {
     return NextResponse.next();
   }
 
-  // ── Handle /fr/... or /en/... prefix ─────────────────────────────────────
-  const segments = pathname.split('/');          // ['', 'fr', 'marketplace', ...]
+  const segments = pathname.split('/');
   const firstSeg = segments[1] ?? '';
 
   if (isSupportedLocale(firstSeg)) {
-    const locale = firstSeg;
-    // Rewrite to strip the prefix so existing pages are found at their original paths
-    const newPath = '/' + segments.slice(2).join('/');
-    const url = req.nextUrl.clone();
-    url.pathname = newPath || '/';
+    const stripped = '/' + segments.slice(2).join('/');
+    const newPath = stripped === '/' ? '/' : stripped.replace(/\/$/, '') || '/';
 
-    const reqHeaders = new Headers(req.headers);
-    reqHeaders.set('x-locale', locale);
+    if (firstSeg === 'en') {
+      const url = req.nextUrl.clone();
+      url.pathname = newPath;
+      return NextResponse.redirect(url, 301);
+    }
 
-    const response = NextResponse.rewrite(url, { request: { headers: reqHeaders } });
-    response.cookies.set(LOCALE_COOKIE, locale, {
-      path: '/',
-      maxAge: 365 * 24 * 60 * 60,
-      sameSite: 'lax',
-    });
-    return response;
+    return withLocaleHeader(req, 'fr', newPath);
   }
 
-  // ── No prefix: detect locale and inject header ───────────────────────────
-  const locale = detectLocale(req);
-  const reqHeaders = new Headers(req.headers);
-  reqHeaders.set('x-locale', locale);
+  const cookieLocale = req.cookies.get(LOCALE_COOKIE)?.value ?? '';
+  const method = req.method.toUpperCase();
+  if (
+    (method === 'GET' || method === 'HEAD') &&
+    cookieLocale === 'fr' &&
+    !isCrawler(req) &&
+    isSameOriginReferer(req)
+  ) {
+    const url = req.nextUrl.clone();
+    url.pathname = pathname === '/' ? '/fr' : `/fr${pathname}`;
+    return NextResponse.redirect(url, 302);
+  }
 
+  const reqHeaders = new Headers(req.headers);
+  reqHeaders.set('x-locale', 'en');
   return NextResponse.next({ request: { headers: reqHeaders } });
 }
 

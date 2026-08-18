@@ -13,7 +13,7 @@ interface BreadcrumbJsonLdProps {
  * BreadcrumbList structured data for richer search results.
  */
 export function BreadcrumbJsonLd({ items }: BreadcrumbJsonLdProps) {
-  if (!items?.length) return null;
+  if (!items || items.length < 2) return null;
 
   const jsonLd = {
     '@context': 'https://schema.org',

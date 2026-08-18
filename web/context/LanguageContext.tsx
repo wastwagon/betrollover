@@ -1,8 +1,10 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import en, { TranslationKey } from '@/lib/translations/en';
 import fr from '@/lib/translations/fr';
+import { localeFromPathname } from '@/lib/locale-path';
 
 export type SupportedLanguage = 'en' | 'fr';
 
@@ -38,17 +40,6 @@ const LanguageContext = createContext<LanguageContextValue>({
   t: (key) => String(key),
 });
 
-/** Read the br_language cookie value on the client (document.cookie). */
-function readLangCookie(): SupportedLanguage | null {
-  try {
-    const match = document.cookie.match(/(?:^|;\s*)br_language=([^;]+)/);
-    const val = match?.[1] as SupportedLanguage | undefined;
-    return val && MESSAGES[val] ? val : null;
-  } catch {
-    return null;
-  }
-}
-
 /** Write the br_language cookie so the value is visible to middleware on next request. */
 function writeLangCookie(code: SupportedLanguage) {
   try {
@@ -62,24 +53,19 @@ export function LanguageProvider({
   initialLocale,
 }: {
   children: ReactNode;
-  /**
-   * Locale resolved server-side (from br_language cookie via next/headers).
-   * Passing this avoids the en→fr flash on first render for returning French visitors.
-   */
+  /** Locale from the URL prefix (`x-locale`), not the language cookie. */
   initialLocale?: SupportedLanguage;
 }) {
+  const pathname = usePathname();
   const [lang, setLangState] = useState<SupportedLanguage>(initialLocale ?? 'en');
 
-  // On mount, reconcile with client-side cookie (covers cases where SSR
-  // cookie was not available, e.g. the very first visit after a switch).
   useEffect(() => {
-    const cookieLang = readLangCookie();
-    if (cookieLang && cookieLang !== lang) {
-      setLangState(cookieLang);
+    const fromUrl = localeFromPathname(pathname || '/');
+    if (fromUrl !== lang) {
+      setLangState(fromUrl);
+      writeLangCookie(fromUrl);
     }
-    // Only run once on mount — we intentionally omit `lang` from deps.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [pathname, lang]);
 
   const setLang = useCallback((code: SupportedLanguage) => {
     setLangState(code);

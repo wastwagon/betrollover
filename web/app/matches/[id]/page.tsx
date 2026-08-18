@@ -8,7 +8,8 @@ import {
   matchMetaDescription,
   matchPageTitle,
 } from '@/lib/match-detail';
-import { SITE_URL, SITE_NAME, getAlternates } from '@/lib/site-config';
+import { localizedUrl, seoAlternates } from '@/lib/site-config';
+import { getLocale } from '@/lib/i18n';
 
 export async function generateMetadata({
   params,
@@ -28,15 +29,14 @@ export async function generateMetadata({
 
   const title = matchPageTitle(detail);
   const description = matchMetaDescription(detail);
-  const canonical = `${SITE_URL}/matches/${detail.id}`;
+  const locale = await getLocale();
+  const path = `/matches/${detail.id}`;
+  const canonical = localizedUrl(path, locale);
 
   return {
-    title: `${title} — ${SITE_NAME}`,
+    title,
     description,
-    alternates: {
-      canonical,
-      languages: getAlternates(`/matches/${detail.id}`),
-    },
+    alternates: seoAlternates(path, locale),
     openGraph: {
       type: 'website',
       url: canonical,
@@ -64,17 +64,20 @@ export default async function MatchDetailPage({
   if (!detail) notFound();
 
   const pageTitle = matchPageTitle(detail);
+  const locale = await getLocale();
+  const path = `/matches/${detail.id}`;
+  const pageUrl = localizedUrl(path, locale);
 
   return (
     <>
       <BreadcrumbJsonLd
         items={[
-          { name: 'Home', url: SITE_URL },
-          { name: 'Live scores', url: `${SITE_URL}/live-scores` },
-          { name: pageTitle, url: `${SITE_URL}/matches/${detail.id}` },
+          { name: 'Home', url: localizedUrl('/', locale) },
+          { name: 'Live scores', url: localizedUrl('/live-scores', locale) },
+          { name: pageTitle, url: pageUrl },
         ]}
       />
-      <SportsEventJsonLd match={detail} />
+      <SportsEventJsonLd match={detail} url={pageUrl} />
       <MatchDetailClient initial={detail} />
     </>
   );

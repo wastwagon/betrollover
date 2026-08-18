@@ -5,10 +5,15 @@ import { getServerBackendOrigin } from '@/lib/seo/server-backend';
 const API = () => `${getServerBackendOrigin()}/api/v1`;
 
 export type NewsArticlePublic = {
+  id?: number;
   slug: string;
   title: string;
   excerpt: string | null;
+  content?: string | null;
+  category?: string;
+  sport?: string;
   imageUrl: string | null;
+  sourceUrl?: string | null;
   publishedAt: string | null;
   language?: string;
 };
@@ -38,6 +43,24 @@ export async function fetchNewsArticleBySlug(
     return (await res.json()) as NewsArticlePublic;
   } catch {
     return null;
+  }
+}
+
+export async function fetchRelatedNewsArticles(
+  language: SupportedLanguage,
+  slug: string,
+  sport?: string | null,
+): Promise<NewsArticlePublic[]> {
+  const qs = new URLSearchParams({ limit: '6', language });
+  if (sport) qs.set('sport', sport);
+  try {
+    const res = await fetch(`${API()}/news?${qs}`, { next: { revalidate: 120 } });
+    if (!res.ok) return [];
+    const batch = (await res.json()) as NewsArticlePublic[];
+    if (!Array.isArray(batch)) return [];
+    return batch.filter((a) => a?.slug && a.slug !== slug).slice(0, 4);
+  } catch {
+    return [];
   }
 }
 
@@ -238,4 +261,95 @@ export function couponMetaDescription(coupon: PublicCouponMeta): string {
   return truncateMetaDescription(
     `${priceLabel} by ${tipster} on BetRollover.${oddsPart} Result: ${resultLabel}. Escrow-protected marketplace — 18+.`,
   );
+}
+
+function numericId(value: unknown): number | null {
+  const n = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function readPagedItems(data: unknown, offset: number, pageSize: number): { items: Record<string, unknown>[]; hasMore: boolean } {
+  if (Array.isArray(data)) {
+    return { items: data as Record<string, unknown>[], hasMore: data.length >= pageSize };
+  }
+  if (!data || typeof data !== 'object') return { items: [], hasMore: false };
+  const obj = data as Record<string, unknown>;
+  const items = Array.isArray(obj.items) ? (obj.items as Record<string, unknown>[]) : [];
+  const total = typeof obj.total === 'number' ? obj.total : typeof obj.total_count === 'number' ? obj.total_count : null;
+  let hasMore = items.length >= pageSize;
+  if ('hasMore' in obj || 'has_more' in obj) {
+    hasMore = obj.hasMore === true || obj.has_more === true;
+  } else if (total != null) {
+    hasMore = offset + items.length < total;
+  }
+  return { items, hasMore };
+}
+
+/** Settled archive + active marketplace coupon IDs for sitemap (fails soft). */
+export async function fetchCouponIdsForSitemap(max = 4000): Promise<Array<{ id: number; lastModified: string | null }>> {
+  const byId = new Map<number, string | null>();
+
+  const pull = async (path: string, pageSize: number) => {
+    for (let offset = 0; offset < max && byId.size < max; offset += pageSize) {
+      try {
+        const res = await fetch(`${API()}${path}&limit=${pageSize}&offset=${offset}`, {
+          next: { revalidate: 3600 },
+        });
+        if (!res.ok) break;
+        const { items, hasMore } = readPagedItems(await res.json(), offset, pageSize);
+        if (items.length === 0) break;
+        for (const row of items) {
+          const id = numericId(row.id);
+          if (!id || byId.has(id)) continue;
+          const updated =
+            (typeof row.updatedAt === 'string' && row.updatedAt) ||
+            (typeof row.createdAt === 'string' && row.createdAt) ||
+            null;
+          byId.set(id, updated);
+        }
+        if (!hasMore || items.length < pageSize) break;
+      } catch {
+        break;
+      }
+    }
+  };
+
+  await pull('/accumulators/archive?', 200);
+  await pull('/accumulators/marketplace/public?', 100);
+  return [...byId.entries()].map(([id, lastModified]) => ({ id, lastModified }));
+}
+
+/** Live, upcoming, and recent platform fixtures for sitemap. */
+export async function fetchMatchIdsForSitemap(): Promise<Array<{ id: number; lastModified: string | null }>> {
+  const byId = new Map<number, string | null>();
+  const ingest = (rows: unknown) => {
+    if (!Array.isArray(rows)) return;
+    for (const row of rows) {
+      if (!row || typeof row !== 'object') continue;
+      const obj = row as Record<string, unknown>;
+      const id = numericId(obj.id);
+      if (!id) continue;
+      const updated =
+        (typeof obj.syncedAt === 'string' && obj.syncedAt) ||
+        (typeof obj.matchDate === 'string' && obj.matchDate) ||
+        null;
+      if (!byId.has(id)) byId.set(id, updated);
+    }
+  };
+
+  try {
+    const res = await fetch(`${API()}/fixtures/platform/live-scores?archiveHours=168`, {
+      next: { revalidate: 900 },
+    });
+    if (res.ok) {
+      const payload = (await res.json()) as Record<string, unknown>;
+      ingest(payload.live);
+      ingest(payload.upcoming);
+      ingest(payload.recent);
+    }
+  } catch {
+    /* backend unavailable */
+  }
+
+  return [...byId.entries()].map(([id, lastModified]) => ({ id, lastModified }));
 }

@@ -7,10 +7,12 @@ interface ArticleJsonLdProps {
   publishedAt?: string | null;
   slug: string;
   author?: string;
+  /** Absolute canonical URL. Defaults to the English /news/{slug} page. */
+  url?: string;
 }
 
-export function ArticleJsonLd({ title, excerpt, imageUrl, publishedAt, slug, author }: ArticleJsonLdProps) {
-  const url = `${SITE_URL}/news/${slug}`;
+export function ArticleJsonLd({ title, excerpt, imageUrl, publishedAt, slug, author, url }: ArticleJsonLdProps) {
+  const pageUrl = url || `${SITE_URL}/news/${slug}`;
   const image = imageUrl?.startsWith('http') ? imageUrl : imageUrl ? `${SITE_URL}${imageUrl}` : `${SITE_URL}/og-image.png`;
 
   const jsonLd = {
@@ -29,8 +31,8 @@ export function ArticleJsonLd({ title, excerpt, imageUrl, publishedAt, slug, aut
       name: 'BetRollover',
       logo: { '@type': 'ImageObject', url: `${SITE_URL}/BetRollover-logo.png` },
     },
-    mainEntityOfPage: { '@type': 'WebPage', '@id': url },
-    url,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': pageUrl },
+    url: pageUrl,
   };
 
   return (

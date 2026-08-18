@@ -3,6 +3,8 @@ import { SITE_URL } from '@/lib/site-config';
 import {
   fetchAllNewsArticlesForSitemap,
   fetchAllResourceItemsForSitemap,
+  fetchCouponIdsForSitemap,
+  fetchMatchIdsForSitemap,
   fetchTipsterUsernamesForSitemap,
 } from '@/lib/seo/public-content';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
@@ -24,18 +26,18 @@ const LOCALISED_PAGES: Array<{
   { path: '/rollover',               changeFrequency: 'daily',   priority: 0.8  },
   { path: '/live-scores',            changeFrequency: 'hourly',  priority: 0.8  },
   { path: '/league-tables',          changeFrequency: 'daily',   priority: 0.75 },
-  { path: '/discover',               changeFrequency: 'daily',   priority: 0.85 },
   { path: '/news',                   changeFrequency: 'daily',   priority: 0.8  },
   { path: '/resources',              changeFrequency: 'weekly',  priority: 0.7  },
   { path: '/guides',                 changeFrequency: 'weekly',  priority: 0.65 },
-  { path: '/community',              changeFrequency: 'daily',   priority: 0.7  },
-  { path: '/coupons/archive',        changeFrequency: 'daily',   priority: 0.7  },
+  { path: '/guides/escrow-refunds',  changeFrequency: 'monthly', priority: 0.6  },
+  { path: '/guides/evaluate-tipsters', changeFrequency: 'monthly', priority: 0.6 },
   { path: '/about',                  changeFrequency: 'monthly', priority: 0.6  },
   { path: '/how-it-works',           changeFrequency: 'monthly', priority: 0.6  },
   { path: '/learn',                  changeFrequency: 'monthly', priority: 0.7  },
   { path: '/contact',                changeFrequency: 'monthly', priority: 0.6  },
   { path: '/support',                changeFrequency: 'weekly',  priority: 0.5  },
   { path: '/invite',                 changeFrequency: 'monthly', priority: 0.5  },
+  { path: '/coupons/archive',        changeFrequency: 'daily',   priority: 0.7  },
   { path: '/terms',                  changeFrequency: 'monthly', priority: 0.4  },
   { path: '/privacy',                changeFrequency: 'monthly', priority: 0.4  },
   { path: '/responsible-gambling',   changeFrequency: 'monthly', priority: 0.4  },
@@ -47,8 +49,6 @@ const EN_ONLY_PAGES: Array<{
   changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'];
   priority: number;
 }> = [
-  { path: '/login',             changeFrequency: 'monthly', priority: 0.5 },
-  { path: '/register',          changeFrequency: 'monthly', priority: 0.5 },
   ...(isSubscriptionsEnabled()
     ? [{ path: '/subscriptions', changeFrequency: 'weekly' as const, priority: 0.5 }]
     : []),
@@ -59,12 +59,14 @@ const EN_ONLY_PAGES: Array<{
 async function dynamicSitemapEntries(origin: string): Promise<MetadataRoute.Sitemap> {
   const out: MetadataRoute.Sitemap = [];
   try {
-    const [enNews, frNews, enResources, frResources, usernames] = await Promise.all([
+    const [enNews, frNews, enResources, frResources, usernames, coupons, matches] = await Promise.all([
       fetchAllNewsArticlesForSitemap('en'),
       fetchAllNewsArticlesForSitemap('fr'),
       fetchAllResourceItemsForSitemap('en'),
       fetchAllResourceItemsForSitemap('fr'),
       fetchTipsterUsernamesForSitemap(),
+      fetchCouponIdsForSitemap(),
+      fetchMatchIdsForSitemap(),
     ]);
 
     const seenEn = new Set<string>();
@@ -73,7 +75,7 @@ async function dynamicSitemapEntries(origin: string): Promise<MetadataRoute.Site
       seenEn.add(a.slug);
       out.push({
         url: `${origin}/news/${encodeURIComponent(a.slug)}`,
-        lastModified: a.publishedAt ? new Date(a.publishedAt) : new Date(),
+        lastModified: a.publishedAt ? new Date(a.publishedAt) : undefined,
         changeFrequency: 'weekly',
         priority: 0.65,
       });
@@ -85,7 +87,7 @@ async function dynamicSitemapEntries(origin: string): Promise<MetadataRoute.Site
       seenFr.add(a.slug);
       out.push({
         url: `${origin}/fr/news/${encodeURIComponent(a.slug)}`,
-        lastModified: a.publishedAt ? new Date(a.publishedAt) : new Date(),
+        lastModified: a.publishedAt ? new Date(a.publishedAt) : undefined,
         changeFrequency: 'weekly',
         priority: 0.6,
       });
@@ -98,7 +100,7 @@ async function dynamicSitemapEntries(origin: string): Promise<MetadataRoute.Site
       seenResEn.add(key);
       out.push({
         url: `${origin}/resources/${encodeURIComponent(r.categorySlug)}/${encodeURIComponent(r.itemSlug)}`,
-        lastModified: r.publishedAt ? new Date(r.publishedAt) : new Date(),
+        lastModified: r.publishedAt ? new Date(r.publishedAt) : undefined,
         changeFrequency: 'monthly',
         priority: 0.55,
       });
@@ -111,7 +113,7 @@ async function dynamicSitemapEntries(origin: string): Promise<MetadataRoute.Site
       seenResFr.add(key);
       out.push({
         url: `${origin}/fr/resources/${encodeURIComponent(r.categorySlug)}/${encodeURIComponent(r.itemSlug)}`,
-        lastModified: r.publishedAt ? new Date(r.publishedAt) : new Date(),
+        lastModified: r.publishedAt ? new Date(r.publishedAt) : undefined,
         changeFrequency: 'monthly',
         priority: 0.5,
       });
@@ -122,15 +124,45 @@ async function dynamicSitemapEntries(origin: string): Promise<MetadataRoute.Site
       const seg = encodeURIComponent(u);
       out.push({
         url: `${origin}/tipsters/${seg}`,
-        lastModified: new Date(),
         changeFrequency: 'daily',
         priority: 0.75,
       });
       out.push({
         url: `${origin}/fr/tipsters/${seg}`,
-        lastModified: new Date(),
         changeFrequency: 'daily',
         priority: 0.7,
+      });
+    }
+
+    for (const c of coupons) {
+      const lastModified = c.lastModified ? new Date(c.lastModified) : undefined;
+      out.push({
+        url: `${origin}/coupons/${c.id}`,
+        ...(lastModified && !Number.isNaN(lastModified.getTime()) ? { lastModified } : {}),
+        changeFrequency: 'daily',
+        priority: 0.65,
+      });
+      out.push({
+        url: `${origin}/fr/coupons/${c.id}`,
+        ...(lastModified && !Number.isNaN(lastModified.getTime()) ? { lastModified } : {}),
+        changeFrequency: 'daily',
+        priority: 0.6,
+      });
+    }
+
+    for (const m of matches) {
+      const lastModified = m.lastModified ? new Date(m.lastModified) : undefined;
+      out.push({
+        url: `${origin}/matches/${m.id}`,
+        ...(lastModified && !Number.isNaN(lastModified.getTime()) ? { lastModified } : {}),
+        changeFrequency: 'hourly',
+        priority: 0.7,
+      });
+      out.push({
+        url: `${origin}/fr/matches/${m.id}`,
+        ...(lastModified && !Number.isNaN(lastModified.getTime()) ? { lastModified } : {}),
+        changeFrequency: 'hourly',
+        priority: 0.65,
       });
     }
   } catch {
@@ -141,21 +173,18 @@ async function dynamicSitemapEntries(origin: string): Promise<MetadataRoute.Site
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = SITE_URL.replace(/\/$/, '');
-  const now = new Date();
 
   const localised: MetadataRoute.Sitemap = LOCALISED_PAGES.flatMap(({ path, changeFrequency, priority }) => {
     const enUrl  = path === '/' ? base : `${base}${path}`;
     const frUrl  = `${base}/fr${path === '/' ? '' : path}`;
     return [
-      { url: enUrl, lastModified: now, changeFrequency, priority },
-      // French version gets a slightly lower priority so the English canonical is preferred
-      { url: frUrl, lastModified: now, changeFrequency, priority: Math.max(priority - 0.05, 0.1) },
+      { url: enUrl, changeFrequency, priority },
+      { url: frUrl, changeFrequency, priority: Math.max(priority - 0.05, 0.1) },
     ];
   });
 
   const enOnly: MetadataRoute.Sitemap = EN_ONLY_PAGES.map(({ path, changeFrequency, priority }) => ({
     url: `${base}${path}`,
-    lastModified: now,
     changeFrequency,
     priority,
   }));

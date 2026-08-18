@@ -3,23 +3,24 @@ import Link from 'next/link';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { PageHeader } from '@/components/PageHeader';
-import { SITE_NAME, SITE_URL, getAlternates } from '@/lib/site-config';
+import { localizedUrl, seoAlternates } from '@/lib/site-config';
+import { getLocale } from '@/lib/i18n';
 
-export const metadata: Metadata = {
-  title: `Betting Education Guides | ${SITE_NAME}`,
-  description:
-    'Practical guides on escrow-protected picks, wallet flows, and evaluating tipster performance before you buy.',
-  alternates: {
-    canonical: `${SITE_URL}/guides`,
-    languages: getAlternates('/guides'),
-  },
-  openGraph: {
-    url: `${SITE_URL}/guides`,
-    title: `Betting Education Guides | ${SITE_NAME}`,
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: 'Escrow & Tipster Evaluation Guides',
     description:
-      'Practical guides on escrow-protected picks, wallet flows, and evaluating tipster performance before you buy.',
-  },
-};
+      'How-to pages: when escrow refunds fire, and how to read ROI and sample size before you buy a pick.',
+    alternates: seoAlternates('/guides', locale),
+    openGraph: {
+      url: localizedUrl('/guides', locale),
+      title: 'Escrow & Tipster Evaluation Guides',
+      description:
+        'How-to pages: when escrow refunds fire, and how to read ROI and sample size before you buy a pick.',
+    },
+  };
+}
 
 const GUIDES = [
   {

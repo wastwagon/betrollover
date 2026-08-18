@@ -1,20 +1,20 @@
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
-import { SITE_URL, SITE_NAME, getAlternates } from '@/lib/site-config';
+import { SITE_NAME, seoAlternates } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
 import type { Metadata } from 'next';
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
-  const title = locale === 'fr' ? `Conditions d'Utilisation | ${SITE_NAME}` : `Terms of Service | ${SITE_NAME}`;
+  const title = locale === 'fr' ? `Conditions d'Utilisation` : `Terms of Service`;
   const description = locale === 'fr'
     ? `Lisez les Conditions d'Utilisation de ${SITE_NAME} — les règles et l'accord utilisateur régissant l'utilisation de notre marketplace de tipsters éducative.`
     : `Read the ${SITE_NAME} Terms of Service — the rules, conditions, and user agreement governing use of our educational tipster marketplace.`;
   return {
     title,
     description,
-    alternates: { canonical: `${SITE_URL}/terms`, languages: getAlternates('/terms') },
+    alternates: seoAlternates('/terms', locale),
   };
 }
 

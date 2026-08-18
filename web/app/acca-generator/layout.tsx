@@ -1,40 +1,41 @@
 import type { Metadata } from 'next';
-import { SITE_URL, getAlternates } from '@/lib/site-config';
+import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
+import { getLocale } from '@/lib/i18n';
 
 const TITLE = 'Football Acca Generator | Same-Day Accumulator Builder';
 const DESCRIPTION =
   'Build same-day football accumulators from synced odds. Choose Sure, Safe, Medium, or High risk bands, pick available markets, generate a slip, and publish a free marketplace pick. Educational tool — 18+.';
 
-export const metadata: Metadata = {
-  title: TITLE,
-  description: DESCRIPTION,
-  keywords: [
-    'acca generator',
-    'football accumulator builder',
-    'same day acca',
-    'football tips Ghana',
-    'BetRollover acca',
-    'free football picks',
-  ],
-  alternates: {
-    canonical: `${SITE_URL}/acca-generator`,
-    languages: getAlternates('/acca-generator'),
-  },
-  openGraph: {
-    url: `${SITE_URL}/acca-generator`,
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
     title: TITLE,
     description: DESCRIPTION,
-    type: 'website',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'BetRollover Acca Generator' }],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: TITLE,
-    description: DESCRIPTION,
-  },
-  robots: { index: true, follow: true },
-};
+    keywords: [
+      'acca generator',
+      'football accumulator builder',
+      'same day acca',
+      'football tips Ghana',
+      'BetRollover acca',
+      'free football picks',
+    ],
+    alternates: seoAlternates('/acca-generator', locale),
+    openGraph: {
+      url: localizedUrl('/acca-generator', locale),
+      title: TITLE,
+      description: DESCRIPTION,
+      type: 'website',
+      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'BetRollover Acca Generator' }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: TITLE,
+      description: DESCRIPTION,
+    },
+    robots: { index: true, follow: true },
+  };
+}
 
 const ACCA_FAQS = [
   {

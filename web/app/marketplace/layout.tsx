@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { SITE_URL, getAlternates } from '@/lib/site-config';
+import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { getLocale, serverT } from '@/lib/i18n';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -7,12 +7,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: serverT('seo.marketplace_title', locale),
     description: serverT('seo.marketplace_desc', locale),
-    alternates: {
-      canonical: `${SITE_URL}/marketplace`,
-      languages: getAlternates('/marketplace'),
-    },
+    alternates: seoAlternates('/marketplace', locale),
     openGraph: {
-      url: `${SITE_URL}/marketplace`,
+      url: localizedUrl('/marketplace', locale),
       title: serverT('seo.marketplace_title', locale),
       description: serverT('seo.marketplace_desc', locale),
       images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'BetRollover Marketplace' }],

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -61,13 +61,18 @@ function getCategoryLabel(t: (k: string) => string, key: NewsCategory): string {
   return t(map[key] ?? key);
 }
 
-function NewsContent() {
+function NewsContent({
+  initialArticles = [],
+}: {
+  initialArticles?: NewsArticle[] | Record<string, unknown>[];
+}) {
   const { t, lang } = useLanguage();
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [articles, setArticles] = useState<NewsArticle[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [articles, setArticles] = useState<NewsArticle[]>(() => (initialArticles as NewsArticle[]) ?? []);
+  const [loading, setLoading] = useState(initialArticles.length === 0);
+  const skipNextLoadingRef = useRef(initialArticles.length > 0);
   const [activeCategory, setActiveCategory] = useState<NewsCategory>(
     (searchParams.get('category') as NewsCategory) ?? 'all'
   );
@@ -86,7 +91,8 @@ function NewsContent() {
   );
 
   useEffect(() => {
-    setLoading(true);
+    if (skipNextLoadingRef.current) skipNextLoadingRef.current = false;
+    else setLoading(true);
     const params = new URLSearchParams({ limit: '50', language: lang });
     if (activeCategory !== 'all') params.set('category', activeCategory);
     if (activeSport) params.set('sport', activeSport);
@@ -252,7 +258,11 @@ function NewsContent() {
   );
 }
 
-export default function NewsPage() {
+export default function NewsPage({
+  initialArticles = [],
+}: {
+  initialArticles?: NewsArticle[] | Record<string, unknown>[];
+}) {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
@@ -263,7 +273,7 @@ export default function NewsPage() {
         </main>
       </div>
     }>
-      <NewsContent />
+      <NewsContent initialArticles={initialArticles} />
     </Suspense>
   );
 }

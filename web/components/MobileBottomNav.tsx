@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
 import { hapticLight } from '@/lib/haptic';
+import { localizeHref, stripLocalePrefix } from '@/lib/locale-path';
 
 type NavItemId = 'home' | 'marketplace' | 'tipsters' | 'create' | 'acca';
 
@@ -80,12 +81,14 @@ const ICONS: Record<NavItemId, (p: { active?: boolean }) => JSX.Element> = {
 const HIDE_PATHS = ['/admin', '/login', '/register'];
 
 function isActive(pathname: string, href: string): boolean {
-  if (href === '/') return pathname === '/';
-  return pathname === href || pathname.startsWith(href + '/');
+  const path = stripLocalePrefix(pathname);
+  if (href === '/') return path === '/';
+  return path === href || path.startsWith(href + '/');
 }
 
 function shouldHideNav(pathname: string): boolean {
-  return HIDE_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'));
+  const path = stripLocalePrefix(pathname);
+  return HIDE_PATHS.some((p) => path === p || path.startsWith(p + '/'));
 }
 
 export function MobileBottomNav() {
@@ -120,7 +123,7 @@ export function MobileBottomNav() {
               return (
                 <Link
                   key={item.id}
-                  href={item.href}
+                  href={localizeHref(item.href, pathname)}
                   onClick={() => hapticLight()}
                   className={`${linkClass} ${active ? 'bg-[var(--primary)] text-white shadow-md' : 'bg-[var(--primary)]/12 text-[var(--primary)] hover:bg-[var(--primary)]/20'}`}
                 >
@@ -137,7 +140,7 @@ export function MobileBottomNav() {
             return (
               <Link
                 key={item.id}
-                href={item.href}
+                href={localizeHref(item.href, pathname)}
                 onClick={() => hapticLight()}
                 className={`${linkClass} relative ${active ? 'text-[var(--primary)] bg-[var(--primary)]/8' : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/30'}`}
               >

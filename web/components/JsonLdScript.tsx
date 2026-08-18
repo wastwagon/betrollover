@@ -1,4 +1,6 @@
-import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS, TELEGRAM_ADS_URL } from '@/lib/site-config';
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, TELEGRAM_ADS_URL, PLAY_STORE_URL, APP_STORE_URL } from '@/lib/site-config';
+
+const sameAs = [TELEGRAM_ADS_URL, PLAY_STORE_URL, APP_STORE_URL].filter(Boolean);
 
 const jsonLd = [
   {
@@ -17,7 +19,7 @@ const jsonLd = [
       { '@type': 'Country', name: 'United Kingdom' },
       { '@type': 'Country', name: 'United States' },
     ],
-    sameAs: [TELEGRAM_ADS_URL].filter(Boolean),
+    sameAs,
   },
   {
     '@context': 'https://schema.org',
@@ -26,14 +28,8 @@ const jsonLd = [
     url: SITE_URL,
     name: SITE_NAME,
     description: SITE_DESCRIPTION,
-    keywords: SITE_KEYWORDS.join(', '),
+    inLanguage: ['en', 'fr'],
     publisher: { '@id': `${SITE_URL}/#organization` },
-    inLanguage: ['en', 'en-GH', 'en-NG', 'en-ZA', 'en-KE', 'fr'],
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: { '@type': 'EntryPoint', urlTemplate: `${SITE_URL}/marketplace?q={search_term_string}` },
-      'query-input': 'required name=search_term_string',
-    },
   },
 ];
 

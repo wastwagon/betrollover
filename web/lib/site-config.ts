@@ -56,18 +56,21 @@ export const PLAY_STORE_URL =
 export const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL?.trim() || '';
 
 const SITE_DESCRIPTION_FOOTBALL =
-  'Football predictions & escrow-protected picks for a global match audience. Ghana-based tipster marketplace trusted across Africa — Nigeria, Kenya, South Africa & beyond. Verified tipsters, win rate & ROI. Refunded if tips lose. GHS & multi-currency.';
+  'Football predictions from verified tipsters. Escrow-protected picks, refunded if they lose. Ghana-based — trusted across Africa and worldwide.';
 
 const SITE_DESCRIPTION_MULTISPORT =
-  'Ghana-based tipster marketplace for a global audience. All major global sports — football, basketball, tennis, MMA, rugby, hockey and more. Verified tipsters, win rate & ROI, escrow-protected picks (refunded if tips lose). GHS & multi-currency. Worldwide coverage.';
+  'Verified tipster picks across football and more. Escrow-protected, refunded if tips lose. Ghana-based for Africa and a global audience.';
 
 export const SITE_DESCRIPTION = isFootballOnlyDiscovery()
   ? SITE_DESCRIPTION_FOOTBALL
   : SITE_DESCRIPTION_MULTISPORT;
 
-export const SITE_DEFAULT_TITLE = isFootballOnlyDiscovery()
-  ? `Football Predictions & Escrow-Protected Picks — ${SITE_NAME}`
-  : `Verified Sports Tips | Football, Basketball & More — ${SITE_NAME}`;
+/** Page title without the brand — root layout template appends `| BetRollover`. */
+export const SITE_TITLE_CORE = isFootballOnlyDiscovery()
+  ? 'Football Predictions & Escrow-Protected Picks'
+  : 'Verified Sports Tips | Football, Basketball & More';
+
+export const SITE_DEFAULT_TITLE = `${SITE_TITLE_CORE} — ${SITE_NAME}`;
 
 const SITE_KEYWORDS_FOOTBALL = [
   'football predictions',
@@ -139,11 +142,25 @@ export const SITE_KEYWORDS = isFootballOnlyDiscovery()
   ? SITE_KEYWORDS_FOOTBALL
   : SITE_KEYWORDS_MULTISPORT;
 
-/** English Africa locale codes for hreflang */
-export const AFRICA_LOCALE_CODES = ['en-GH', 'en-NG', 'en-ZA', 'en-KE', 'en', 'x-default'] as const;
+export type UrlLocale = 'en' | 'fr';
 
-/** French-speaking Africa locale codes for hreflang */
-export const FRANCOPHONE_LOCALE_CODES = ['fr-CI', 'fr-SN', 'fr-CM', 'fr-ML', 'fr-BF', 'fr'] as const;
+const origin = () => SITE_URL.replace(/\/$/, '');
+
+/** Absolute URL for a path in English (unprefixed) or French (`/fr/...`). */
+export function localizedUrl(path = '', locale: UrlLocale = 'en'): string {
+  const normalPath = path ? (path.startsWith('/') ? path : `/${path}`) : '/';
+  if (locale === 'fr') {
+    return `${origin()}/fr${normalPath === '/' ? '' : normalPath}`;
+  }
+  return normalPath === '/' ? origin() : `${origin()}${normalPath}`;
+}
+
+export function seoAlternates(path: string, locale: UrlLocale) {
+  return {
+    canonical: localizedUrl(path, locale),
+    languages: getAlternates(path),
+  };
+}
 
 /** Build avatar URL.
  *  - /avatars/*.png  → served from Next.js public directory (no proxy needed)
@@ -212,29 +229,14 @@ export function getApiOriginForPreconnect(): string | null {
  *
  * @example
  *   getAlternates('/marketplace')
- *   // → { 'en-GH': 'https://…/marketplace', 'fr-CI': 'https://…/fr/marketplace', … }
+ *   // → { en: 'https://…/marketplace', fr: 'https://…/fr/marketplace', 'x-default': 'https://…/marketplace' }
  */
 export function getAlternates(path = ''): Record<string, string> {
-  const normalPath = path ? (path.startsWith('/') ? path : `/${path}`) : '/';
-  const enBase = normalPath === '/' ? SITE_URL : `${SITE_URL}${normalPath}`;
-  const frBase = `${SITE_URL}/fr${normalPath === '/' ? '' : normalPath}`;
-
-  const entries: Record<string, string> = {};
-
-  // English (default + regional variants for hreflang)
-  for (const code of AFRICA_LOCALE_CODES) {
-    entries[code] = enBase;
-  }
-
-  // French (Francophone locales, global)
-  for (const code of FRANCOPHONE_LOCALE_CODES) {
-    entries[code] = frBase;
-  }
-
-  return entries;
-}
-
-/** @deprecated Use getAlternates() which includes French URLs. */
-export function getAfricaAlternates(path = ''): Record<string, string> {
-  return getAlternates(path);
+  const enBase = localizedUrl(path, 'en');
+  const frBase = localizedUrl(path, 'fr');
+  return {
+    en: enBase,
+    fr: frBase,
+    'x-default': enBase,
+  };
 }

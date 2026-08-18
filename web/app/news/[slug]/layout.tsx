@@ -1,11 +1,16 @@
 import type { Metadata } from 'next';
-import { SITE_URL, getAlternates } from '@/lib/site-config';
+import { ArticleJsonLd } from '@/components/ArticleJsonLd';
+import { getAlternates, localizedUrl } from '@/lib/site-config';
 import { getLocale } from '@/lib/i18n';
 import {
   fetchNewsArticleBySlug,
   newsOgImageUrl,
   truncateMetaDescription,
 } from '@/lib/seo/public-content';
+
+function newsCanonical(slug: string, articleLang: string) {
+  return localizedUrl(`/news/${slug}`, articleLang === 'fr' ? 'fr' : 'en');
+}
 
 export async function generateMetadata({
   params,
@@ -24,8 +29,7 @@ export async function generateMetadata({
   }
 
   const articleLang = (article.language ?? locale).toLowerCase().slice(0, 5);
-  const isFrContent = articleLang === 'fr';
-  const canonical = isFrContent ? `${SITE_URL}/fr/news/${slug}` : `${SITE_URL}/news/${slug}`;
+  const canonical = newsCanonical(slug, articleLang);
   const description = truncateMetaDescription(article.excerpt?.trim() || article.title);
   const ogImage = newsOgImageUrl(article.imageUrl);
 
@@ -53,6 +57,31 @@ export async function generateMetadata({
   };
 }
 
-export default function NewsArticleSlugLayout({ children }: { children: React.ReactNode }) {
-  return children;
+export default async function NewsArticleSlugLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const locale = await getLocale();
+  const article = await fetchNewsArticleBySlug(slug, locale);
+  const articleLang = (article?.language ?? locale).toLowerCase().slice(0, 5);
+
+  return (
+    <>
+      {article && (
+        <ArticleJsonLd
+          title={article.title}
+          excerpt={article.excerpt}
+          imageUrl={article.imageUrl}
+          publishedAt={article.publishedAt}
+          slug={article.slug}
+          url={newsCanonical(slug, articleLang)}
+        />
+      )}
+      {children}
+    </>
+  );
 }

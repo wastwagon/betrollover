@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation';
+import { permanentRedirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { SITE_NAME } from '@/lib/site-config';
 import { FOOTBALL_SPORT_KEY, isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
@@ -38,7 +38,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   if (isFootballOnlyDiscovery()) {
     return {
-      title: `Football Predictions & Escrow-Protected Picks | ${SITE_NAME}`,
+      title: `Football Predictions & Escrow-Protected Picks`,
       description: `Football predictions from verified tipsters. Escrow-protected picks for a global match audience — strong across Africa. Refunded if tips lose.`,
       robots: { index: false, follow: true },
     };
@@ -46,9 +46,9 @@ export async function generateMetadata({
   const { sport } = await params;
   const normalized = sport?.toLowerCase().trim() as (typeof VALID_SPORTS)[number];
   const label = SPORT_LABELS[normalized];
-  if (!label) return { title: `Marketplace | ${SITE_NAME}` };
+  if (!label) return { title: 'Marketplace' };
   return {
-    title: `${label} picks | ${SITE_NAME}`,
+    title: `${label} picks`,
     description: `Browse escrow-protected ${label.toLowerCase()} tips from verified tipsters on ${SITE_NAME}.`,
   };
 }
@@ -63,13 +63,13 @@ export default async function MarketplaceSportPage({
 
   if (isFootballOnlyDiscovery()) {
     if (normalized === FOOTBALL_SPORT_KEY) {
-      redirect(`/marketplace?sport=${FOOTBALL_SPORT_KEY}`);
+      permanentRedirect(`/marketplace?sport=${FOOTBALL_SPORT_KEY}`);
     }
-    redirect('/marketplace');
+    permanentRedirect('/marketplace');
   }
 
   if (normalized && (VALID_SPORTS as readonly string[]).includes(normalized)) {
-    redirect(`/marketplace?sport=${encodeURIComponent(normalized)}`);
+    permanentRedirect(`/marketplace?sport=${encodeURIComponent(normalized)}`);
   }
-  redirect('/marketplace');
+  permanentRedirect('/marketplace');
 }

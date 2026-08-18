@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
@@ -181,11 +181,16 @@ function parseArchiveResponse(data: unknown): { items: Coupon[]; summary: Archiv
 
 const ARCHIVE_POLL_MS = 45_000;
 
-export default function CouponsArchivePage() {
+export default function CouponsArchivePage({
+  initialCoupons = [],
+}: {
+  initialCoupons?: Coupon[] | Record<string, unknown>[];
+}) {
   const t = useT();
-  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [coupons, setCoupons] = useState<Coupon[]>(() => (initialCoupons as Coupon[]) ?? []);
   const [summary, setSummary] = useState<ArchiveSummary | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(initialCoupons.length === 0);
+  const skipNextLoadingRef = useRef(initialCoupons.length > 0);
   const [resultFilter, setResultFilter] = useState<'all' | 'won' | 'lost'>('all');
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [purchasedIds, setPurchasedIds] = useState<Set<number>>(new Set());
@@ -242,7 +247,8 @@ export default function CouponsArchivePage() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      setLoading(true);
+      if (skipNextLoadingRef.current) skipNextLoadingRef.current = false;
+      else setLoading(true);
       await loadArchive({ withWallet: true });
       if (!cancelled) setLoading(false);
     })();

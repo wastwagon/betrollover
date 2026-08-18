@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { SITE_URL, getAlternates } from '@/lib/site-config';
+import { seoAlternates, localizedUrl } from '@/lib/site-config';
 import { getLocale, serverT } from '@/lib/i18n';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -7,18 +7,15 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: serverT('seo.picks_archive_title', locale),
     description: serverT('seo.picks_archive_desc', locale),
-    alternates: {
-      canonical: `${SITE_URL}/coupons`,
-      languages: getAlternates('/coupons'),
-    },
+    alternates: seoAlternates('/coupons/archive', locale),
     openGraph: {
-      url: `${SITE_URL}/coupons`,
+      url: localizedUrl('/coupons/archive', locale),
       title: serverT('seo.picks_archive_title', locale),
       description: serverT('seo.picks_archive_desc', locale),
     },
   };
 }
 
-export default function CouponsLayout({ children }: { children: React.ReactNode }) {
+export default function CouponsArchiveLayout({ children }: { children: React.ReactNode }) {
   return children;
 }

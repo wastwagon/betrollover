@@ -15,6 +15,7 @@ import { MobileAccountSheet } from '@/components/ios/MobileAccountSheet';
 import { GlobalSearchSheet } from '@/components/GlobalSearchSheet';
 import { NotificationBellMenu } from '@/components/notifications/NotificationBellMenu';
 import { hapticLight } from '@/lib/haptic';
+import { localizeHref, stripLocalePrefix } from '@/lib/locale-path';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import { buttonClassName } from '@/components/ui/Button';
 import {
@@ -49,8 +50,9 @@ interface UnifiedHeaderProps { slipCount?: number }
 type MenuKey = 'browse' | 'tipsters' | 'account' | null;
 
 function isActive(pathname: string, href: string) {
-  if (href === '/') return pathname === '/';
-  return pathname === href || pathname.startsWith(href + '/');
+  const path = stripLocalePrefix(pathname);
+  if (href === '/') return path === '/';
+  return path === href || path.startsWith(href + '/');
 }
 
 /* ─── NavChevron ─────────────────────────────────────────── */
@@ -72,9 +74,10 @@ function MegaLink({
   href: string; icon: ReactNode; label: string; desc?: string;
   badge?: string; badgeColor?: string; onClick?: () => void;
 }) {
+  const pathname = usePathname();
   return (
     <Link
-      href={href}
+      href={localizeHref(href, pathname)}
       onClick={onClick}
       className="group flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-[var(--fill-secondary)] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/50"
     >
@@ -111,9 +114,10 @@ function CompactNavLink({
   label: string;
   onClick?: () => void;
 }) {
+  const pathname = usePathname();
   return (
     <Link
-      href={href}
+      href={localizeHref(href, pathname)}
       onClick={onClick}
       className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-[var(--text)] hover:bg-[var(--fill-secondary)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/50"
     >
@@ -213,7 +217,7 @@ function DesktopMenuPortal({
 export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
   const pathname = usePathname();
   /** TopBar is not rendered on admin routes — sticky offset must stay `top-0`. */
-  const hideTopBar = pathname.startsWith('/admin') || pathname.startsWith('/fr/admin');
+  const hideTopBar = stripLocalePrefix(pathname).startsWith('/admin');
   const router   = useRouter();
   const { t } = useLanguage();
   const { format, currency } = useCurrency();
@@ -356,7 +360,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
     if (href && !menuKey) {
       return (
-        <Link href={href} className={cls} aria-current={active ? 'page' : undefined}>
+        <Link href={localizeHref(href, pathname)} className={cls} aria-current={active ? 'page' : undefined}>
           {label}
         </Link>
       );
@@ -845,7 +849,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
             ].map((q) => (
               <Link
                 key={q.href}
-                href={q.href}
+                href={localizeHref(q.href, pathname)}
                 className={`shrink-0 snap-start inline-flex items-center min-h-[40px] px-3 rounded-full text-[11px] font-semibold border transition-colors touch-manipulation ${
                   isActive(pathname, q.href)
                     ? 'bg-[var(--primary)] text-white border-[var(--primary)]'

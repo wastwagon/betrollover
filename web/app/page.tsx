@@ -21,27 +21,26 @@ import { HomeMarketingCollapse } from '@/components/HomeMarketingCollapse';
 import { FeaturedPicks } from '@/components/FeaturedPicks';
 import { HomeFreeTipOfTheDay } from '@/components/HomeFreeTipOfTheDay';
 import { HomeQuickMarketplaceSections } from '@/components/HomeQuickMarketplaceSections';
-import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
-import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_DEFAULT_TITLE, getAlternates } from '@/lib/site-config';
+import { SITE_TITLE_CORE, SITE_DESCRIPTION, SITE_DEFAULT_TITLE, localizedUrl, seoAlternates } from '@/lib/site-config';
 import { fetchSellingThresholds } from '@/lib/selling-thresholds';
 import { fetchHomePublicData } from '@/lib/home-public-data';
 import { getLocale, buildT } from '@/lib/i18n';
 import { buttonClassName } from '@/components/ui/button-styles';
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: SITE_DEFAULT_TITLE,
-  description: SITE_DESCRIPTION,
-  alternates: {
-    canonical: SITE_URL,
-    languages: getAlternates('/'),
-  },
-  openGraph: {
-    url: SITE_URL,
-    title: SITE_DEFAULT_TITLE,
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: SITE_TITLE_CORE,
     description: SITE_DESCRIPTION,
-  },
-};
+    alternates: seoAlternates('/', locale),
+    openGraph: {
+      url: localizedUrl('/', locale),
+      title: SITE_DEFAULT_TITLE,
+      description: SITE_DESCRIPTION,
+    },
+  };
+}
 
 export default async function HomePage() {
   const locale = await getLocale();
@@ -54,7 +53,6 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
-      <BreadcrumbJsonLd items={[{ name: 'Home', url: SITE_URL }]} />
       <UnifiedHeader />
 
       <main className="bg-[var(--bg)] w-full min-w-0">

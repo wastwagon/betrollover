@@ -4,7 +4,7 @@ import { AppFooter } from '@/components/AppFooter';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
 import Link from 'next/link';
 import { getLocale, buildT } from '@/lib/i18n';
-import { SITE_URL, SITE_NAME, getAlternates } from '@/lib/site-config';
+import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { fetchSellingThresholds } from '@/lib/selling-thresholds';
 import type { Metadata } from 'next';
 
@@ -16,15 +16,12 @@ export async function generateMetadata(): Promise<Metadata> {
   const minWr = String(th.minimumWinRate);
   const description = t('how_it_works.meta_description', { minRoi, minWr });
   return {
-    title: `How It Works | ${SITE_NAME}`,
+    title: 'How It Works',
     description,
-    alternates: {
-      canonical: `${SITE_URL}/how-it-works`,
-      languages: getAlternates('/how-it-works'),
-    },
+    alternates: seoAlternates('/how-it-works', locale),
     openGraph: {
-      url: `${SITE_URL}/how-it-works`,
-      title: `How It Works | ${SITE_NAME}`,
+      url: localizedUrl('/how-it-works', locale),
+      title: 'How It Works',
       description,
     },
   };

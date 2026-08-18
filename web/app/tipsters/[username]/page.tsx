@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -14,7 +14,6 @@ import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
-import { PersonJsonLd } from '@/components/PersonJsonLd';
 import { useT } from '@/context/LanguageContext';
 import { FollowersCountButton } from '@/components/TipsterFollowersModal';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
@@ -178,8 +177,6 @@ export default function TipsterProfilePage() {
   const [postedRange, setPostedRange] = useState<{ from: string; to: string } | null>(null);
   const [dateFromDraft, setDateFromDraft] = useState('');
   const [dateToDraft, setDateToDraft] = useState('');
-  /** Snapshot of tipster row from last all-time fetch — keeps JSON-LD stable when viewing shorter periods. */
-  const allTimeTipsterForLdRef = useRef<TipsterProfile['tipster'] | null>(null);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
 
   const refetchProfile = useCallback(() => {
@@ -208,9 +205,6 @@ export default function TipsterProfilePage() {
       .then((p) => {
         if (cancelled) return;
         setProfile(p);
-        if (p?.tipster && !postedRange && performancePeriod === 'all') {
-          allTimeTipsterForLdRef.current = p.tipster;
-        }
         if (p?.tipster?.id) {
           fetch(`${getApiUrl()}/reviews/tipster/${p.tipster.id}?limit=100`)
             .then((r) => (r.ok ? r.json() : null))
@@ -491,14 +485,6 @@ export default function TipsterProfilePage() {
   const roiColor = tipster.roi > 0 ? 'text-[var(--success)]' : tipster.roi < 0 ? 'text-[var(--destructive)]' : 'text-[var(--text)]';
   return (
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full">
-      <PersonJsonLd
-        username={tipster.username}
-        displayName={tipster.display_name}
-        avatarUrl={tipster.avatar_url}
-        bio={tipster.bio}
-        winRate={(allTimeTipsterForLdRef.current ?? tipster).win_rate}
-        totalPredictions={(allTimeTipsterForLdRef.current ?? tipster).total_predictions}
-      />
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <UnifiedHeader />

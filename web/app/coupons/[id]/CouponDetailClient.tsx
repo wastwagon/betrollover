@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -303,15 +303,20 @@ function ReviewsSection({ couponId, isPurchased, isSettled }: { couponId: number
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
-export default function CouponDetailPage() {
+export default function CouponDetailPage({
+  initialCoupon = null,
+}: {
+  initialCoupon?: Coupon | Record<string, unknown> | null;
+}) {
   const params = useParams();
   const router = useRouter();
   const t = useT();
   const { lang } = useLanguage();
   const id = Number(params?.id);
 
-  const [coupon, setCoupon] = useState<Coupon | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [coupon, setCoupon] = useState<Coupon | null>(() => (initialCoupon as Coupon | null) ?? null);
+  const [loading, setLoading] = useState(initialCoupon == null);
+  const skipGuestFetchRef = useRef(initialCoupon != null);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [isPurchased, setIsPurchased] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
@@ -333,7 +338,11 @@ export default function CouponDetailPage() {
     const token = localStorage.getItem('token');
 
     if (!token) {
-      // Guest: public endpoint — pending free coupons, or any settled marketplace coupon
+      if (skipGuestFetchRef.current) {
+        skipGuestFetchRef.current = false;
+        setLoading(false);
+        return;
+      }
       fetch(`${getApiUrl()}/accumulators/${id}/public`)
         .then((r) => (r.ok ? r.json() : null))
         .then((couponData) => {

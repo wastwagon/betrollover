@@ -1,10 +1,9 @@
 import type { Metadata, Viewport } from 'next';
-import { cookies } from 'next/headers';
 import { Bricolage_Grotesque, DM_Sans } from 'next/font/google';
 import { QueryProvider } from '@/components/QueryProvider';
 import { SlipCartProvider } from '@/context/SlipCartContext';
 import { CurrencyProvider } from '@/context/CurrencyContext';
-import { LanguageProvider, type SupportedLanguage } from '@/context/LanguageContext';
+import { LanguageProvider } from '@/context/LanguageContext';
 import { TopBar } from '@/components/TopBar';
 import { SkipToMainContent } from '@/components/SkipToMainContent';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
@@ -14,19 +13,8 @@ import { GoogleTagManagerNoScript } from '@/components/GoogleTagManagerNoScript'
 import { ThirdPartyTags } from '@/components/ThirdPartyTags';
 import { JsonLdScript } from '@/components/JsonLdScript';
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_DEFAULT_TITLE } from '@/lib/site-config';
+import { getLocale } from '@/lib/i18n';
 import './globals.css';
-
-const SUPPORTED_LOCALES: SupportedLanguage[] = ['en', 'fr'];
-
-async function getInitialLocale(): Promise<SupportedLanguage> {
-  try {
-    const c = await cookies();
-    const val = c.get('br_language')?.value as SupportedLanguage | undefined;
-    return val && SUPPORTED_LOCALES.includes(val) ? val : 'en';
-  } catch {
-    return 'en';
-  }
-}
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -127,7 +115,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const locale = await getInitialLocale();
+  const locale = await getLocale();
   const offThirdParty = thirdPartyTagsDisabled();
 
   return (
