@@ -156,31 +156,25 @@ function dayHasStarted(status: string) {
   return status === 'pending' || status === 'won' || status === 'lost' || status === 'void';
 }
 
-function ExampleCell({
-  stake,
-  ret,
-  later,
-  live,
+function MoneyCell({
+  amount,
   reached,
+  later,
 }: {
-  stake: number | null;
-  ret: number | null;
-  later: string;
-  live: boolean;
+  amount: number | null;
   reached: boolean;
+  later?: string;
 }) {
   if (!reached) {
     return <span className="text-[var(--text-tertiary)]">·</span>;
   }
-  if (stake == null || ret == null) {
-    return <span className="text-[var(--text-tertiary)] tabular-nums">{later}</span>;
+  if (amount == null) {
+    return <span className="text-[var(--text-tertiary)] tabular-nums">{later || '·'}</span>;
   }
   return (
-    <span className={`tabular-nums ${live ? 'text-[var(--text)]' : 'text-[var(--text-muted)]'}`}>
-      <span className="text-[11px] text-[var(--text-tertiary)]">GHS</span>{' '}
-      <span>{stake}</span>
-      <span className="mx-1 text-[var(--text-tertiary)]">→</span>
-      <span className={`font-semibold ${live ? 'text-[var(--primary)]' : 'text-[var(--text)]'}`}>{ret}</span>
+    <span className="tabular-nums font-semibold text-[var(--primary)]">
+      <span className="text-[11px] font-semibold text-emerald-700/70 dark:text-emerald-300/70">GHS</span>{' '}
+      {amount}
     </span>
   );
 }
@@ -277,33 +271,51 @@ export function RolloverBoard() {
       label: t('rollover.stat_best_run'),
       value: archive && archive.bestWonDays > 0 ? String(archive.bestWonDays) : '—',
       hint: archive && archive.bestWonDays > 0 ? t('rollover.day') : undefined,
+      money: false,
+      accent: false,
     },
     {
-      key: 'peak',
-      label: t('rollover.stat_best_example'),
+      key: 'stake',
+      label: t('rollover.stat_best_stake'),
       value:
-        archive?.bestExampleReturnGhs != null
-          ? String(archive.bestExampleReturnGhs)
+        archive?.bestCampaignStakeGhs != null
+          ? String(Math.round(archive.bestCampaignStakeGhs))
           : '—',
+      hint: archive?.bestCampaignStakeGhs != null ? t('rollover.stat_best_run') : undefined,
+      money: true,
+      accent: true,
+    },
+    {
+      key: 'win',
+      label: t('rollover.stat_best_win'),
+      value: archive?.bestExampleReturnGhs != null ? String(archive.bestExampleReturnGhs) : '—',
       hint:
         archive?.bestCampaignStakeGhs != null && archive.bestExampleReturnGhs != null
           ? t('rollover.stat_from_stake', { stake: String(Math.round(archive.bestCampaignStakeGhs)) })
           : undefined,
+      money: true,
+      accent: true,
     },
     {
       key: 'finished',
       label: t('rollover.stat_finished'),
       value: String(archive?.campaignsCompleted ?? 0),
+      money: false,
+      accent: false,
     },
     {
       key: 'cut',
       label: t('rollover.stat_cut'),
       value: String(archive?.campaignsCut ?? 0),
+      money: false,
+      accent: false,
     },
     {
       key: 'reset',
       label: t('rollover.stat_reset'),
       value: String(archive?.campaignsReset ?? 0),
+      money: false,
+      accent: false,
     },
   ];
 
@@ -380,44 +392,52 @@ export function RolloverBoard() {
       </section>
 
       <section>
-        <h2 className="text-base font-semibold text-[var(--text)] mb-3">{t('rollover.plan_title')}</h2>
-        <div className="mb-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow)] overflow-hidden">
-          <div className="px-4 pt-3 pb-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
-              {t('rollover.records')}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-5 border-t border-[var(--separator)]">
-            {statTiles.map((tile, i) => (
-              <div
-                key={tile.key}
-                className={`px-4 py-3.5 ${i > 0 ? 'border-t sm:border-t-0 sm:border-l border-[var(--separator)]' : ''}`}
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+          {t('rollover.records')}
+        </p>
+        <div className="mb-4 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
+          {statTiles.map((tile) => (
+            <div
+              key={tile.key}
+              className={`relative overflow-hidden rounded-2xl border p-4 shadow-[var(--shadow)] ${
+                tile.accent
+                  ? 'border-[var(--primary)]/20 bg-gradient-to-br from-[var(--primary-light)]/80 to-[var(--card)]'
+                  : 'border-[var(--border)] bg-[var(--card)]'
+              }`}
+            >
+              <span
+                className="absolute inset-x-0 top-0 h-[3px]"
+                style={{ background: 'var(--gradient-primary)' }}
+                aria-hidden
+              />
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+                {tile.label}
+              </p>
+              <p
+                className={`mt-2 text-[1.65rem] leading-none font-bold tabular-nums tracking-tight ${
+                  tile.accent && tile.value !== '—' ? 'text-[var(--primary)]' : 'text-[var(--text)]'
+                }`}
               >
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
-                  {tile.label}
-                </p>
-                <p className="mt-1 text-[1.65rem] leading-none font-bold tabular-nums tracking-tight text-[var(--text)]">
-                  {tile.key === 'peak' && tile.value !== '—' ? (
-                    <>
-                      <span className="text-sm font-semibold text-[var(--text-tertiary)] mr-1">GHS</span>
-                      {tile.value}
-                    </>
-                  ) : (
-                    tile.value
-                  )}
-                </p>
-                {tile.hint ? (
-                  <p className="mt-1.5 text-[11px] text-[var(--text-muted)] truncate">{tile.hint}</p>
-                ) : null}
-              </div>
-            ))}
-          </div>
-          {lastEndedNote ? (
-            <p className="border-t border-[var(--separator)] px-4 py-2.5 text-xs text-[var(--text-muted)] bg-[var(--fill-secondary)]/35">
-              {lastEndedNote}
-            </p>
-          ) : null}
+                {tile.money && tile.value !== '—' ? (
+                  <>
+                    <span className="text-sm font-semibold text-emerald-700/70 dark:text-emerald-300/70 mr-1">GHS</span>
+                    {tile.value}
+                  </>
+                ) : (
+                  tile.value
+                )}
+              </p>
+              <p className="mt-1.5 min-h-[1.125rem] text-[11px] text-[var(--text-muted)] truncate">
+                {tile.hint ?? ''}
+              </p>
+            </div>
+          ))}
         </div>
+        {lastEndedNote ? (
+          <p className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--fill-secondary)]/40 px-4 py-2.5 text-xs text-[var(--text-muted)]">
+            {lastEndedNote}
+          </p>
+        ) : null}
 
         <ul className="md:hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow)] overflow-hidden">
           {board.days.map((day, i) => {
@@ -435,15 +455,16 @@ export function RolloverBoard() {
                     ) : null}
                   </div>
                   {reached ? (
-                    <p className="mt-0.5 text-[11px] truncate">
-                      <ExampleCell
-                        stake={day.exampleStakeGhs}
-                        ret={day.exampleReturnGhs}
-                        later={laterOdds}
-                        live={inPlay}
-                        reached={reached}
-                      />
-                    </p>
+                    <div className="mt-1 flex items-center gap-4 text-[11px]">
+                      <span className="min-w-0 truncate">
+                        <span className="mr-1 uppercase tracking-wide text-[var(--text-tertiary)]">{t('rollover.stake')}</span>
+                        <MoneyCell amount={day.exampleStakeGhs} reached={reached} />
+                      </span>
+                      <span className="min-w-0 truncate">
+                        <span className="mr-1 uppercase tracking-wide text-[var(--text-tertiary)]">{t('rollover.win')}</span>
+                        <MoneyCell amount={day.exampleReturnGhs} reached={reached} later={laterOdds} />
+                      </span>
+                    </div>
                   ) : null}
                 </div>
               </div>
@@ -469,12 +490,13 @@ export function RolloverBoard() {
           <table className="w-full text-sm border-separate border-spacing-0">
             <caption className="sr-only">{t('rollover.plan_title')}</caption>
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
-                <th className="px-5 py-3.5 font-semibold bg-[var(--fill-secondary)]/50 border-b border-[var(--separator)]">{t('rollover.day')}</th>
-                <th className="px-4 py-3.5 font-semibold bg-[var(--fill-secondary)]/50 border-b border-[var(--separator)]">{t('rollover.status')}</th>
-                <th className="px-4 py-3.5 font-semibold bg-[var(--fill-secondary)]/50 border-b border-[var(--separator)]">{t('rollover.odds')}</th>
-                <th className="px-4 py-3.5 font-semibold bg-[var(--fill-secondary)]/50 border-b border-[var(--separator)]">{t('rollover.example')}</th>
-                <th className="px-5 py-3.5 font-semibold bg-[var(--fill-secondary)]/50 border-b border-[var(--separator)]">{t('rollover.coupon')}</th>
+              <tr className="text-left text-[11px] uppercase tracking-[0.12em] text-white">
+                <th className="px-5 py-3.5 font-bold" style={{ background: 'var(--gradient-primary)' }}>{t('rollover.day')}</th>
+                <th className="px-4 py-3.5 font-bold" style={{ background: 'var(--gradient-primary)' }}>{t('rollover.status')}</th>
+                <th className="px-4 py-3.5 font-bold" style={{ background: 'var(--gradient-primary)' }}>{t('rollover.odds')}</th>
+                <th className="px-4 py-3.5 font-bold" style={{ background: 'var(--gradient-primary)' }}>{t('rollover.stake')}</th>
+                <th className="px-4 py-3.5 font-bold" style={{ background: 'var(--gradient-primary)' }}>{t('rollover.win')}</th>
+                <th className="px-5 py-3.5 font-bold" style={{ background: 'var(--gradient-primary)' }}>{t('rollover.coupon')}</th>
               </tr>
             </thead>
             <tbody>
@@ -503,19 +525,16 @@ export function RolloverBoard() {
                     </td>
                     <td
                       className={`px-4 py-3 tabular-nums border-b ${hairline} ${
-                        day.combinedOdds != null ? 'font-medium text-[var(--text)]' : 'text-[var(--text-tertiary)]'
+                        day.combinedOdds != null ? 'font-bold text-[var(--text)]' : 'text-[var(--text-tertiary)]'
                       }`}
                     >
                       {day.combinedOdds != null ? Number(day.combinedOdds).toFixed(2) : '·'}
                     </td>
                     <td className={`px-4 py-3 border-b ${hairline}`}>
-                      <ExampleCell
-                        stake={day.exampleStakeGhs}
-                        ret={day.exampleReturnGhs}
-                        later={laterOdds}
-                        live={inPlay}
-                        reached={reached}
-                      />
+                      <MoneyCell amount={day.exampleStakeGhs} reached={reached} />
+                    </td>
+                    <td className={`px-4 py-3 border-b ${hairline}`}>
+                      <MoneyCell amount={day.exampleReturnGhs} reached={reached} later={laterOdds} />
                     </td>
                     <td className={`px-5 py-3 border-b ${hairline}`}>
                       {day.ticketId ? (
