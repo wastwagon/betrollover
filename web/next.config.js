@@ -4,6 +4,8 @@ const lowMemBuild = process.env.NEXT_BUILD_LOW_MEMORY === '1';
 
 const nextConfig = {
   reactStrictMode: true,
+  // Smaller Coolify/Docker images: runner copies `.next/standalone` instead of all of node_modules.
+  output: 'standalone',
   ...(lowMemBuild && {
     experimental: {
       // Fewer parallel workers during static generation — avoids OOM on 2–4GB build hosts (Coolify/Docker)

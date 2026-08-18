@@ -2,7 +2,9 @@
 
 ## What’s going on
 
-The log often stops right after webpack compile. The next steps are **ESLint + TypeScript**, then **generating ~70 static pages** — that phase spikes memory. Exit **255** usually means the Node process was **killed (OOM)** or the **build hit a timeout**, not a code error.
+The log often stops right after webpack compile. The next steps are **ESLint + TypeScript**, then **generating static pages**, then **exporting/unpacking the web image**. Exit **255** usually means the process was **killed (OOM)** or the **build hit a timeout**, not a TypeScript error.
+
+If compile already succeeded (`✓ Compiled successfully`, `Generating static pages`) and then Coolify reports **exit 255** during `#47 exporting/unpacking` the web image, the image was too large (full `node_modules` copy). Production now uses Next.js **standalone** output so that unpack is much smaller.
 
 ## What we changed in the repo
 
