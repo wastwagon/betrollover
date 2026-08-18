@@ -462,7 +462,7 @@ export default function AdminSettingsPage() {
       try {
         data = await res.json();
       } catch {
-        setTestEmailResult({ success: false, message: `Request failed (${res.status}). Check that SENDGRID_API_KEY is set in .env.` });
+        setTestEmailResult({ success: false, message: `Request failed (${res.status}). Check that RESEND_API_KEY is set in Coolify.` });
         setTestEmailLoading(false);
         return;
       }
@@ -793,7 +793,7 @@ export default function AdminSettingsPage() {
               </div>
             </div>
 
-            {/* SendGrid / Email Test */}
+            {/* Resend / Email Test */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border-2 border-emerald-200 dark:border-emerald-800 overflow-hidden">
               <div className="p-4 sm:p-8 bg-[var(--primary-light)]">
                 <div className="flex items-start gap-4 mb-6">
@@ -803,9 +803,9 @@ export default function AdminSettingsPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Email (SendGrid)</h3>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Email (Resend)</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Test email delivery. Configure SENDGRID_API_KEY and SMTP_FROM in .env. Full SMTP and from-address settings are on{' '}
+                      Test email delivery. Production uses RESEND_API_KEY and SMTP_FROM in Coolify. Full SMTP fallback settings are on{' '}
                       <Link href="/admin/email" className="text-emerald-700 dark:text-emerald-300 font-medium underline underline-offset-2">
                         Admin → Email / SMTP
                       </Link>

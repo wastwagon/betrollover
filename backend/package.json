@@ -18,7 +18,7 @@
     "migrate:prod": "bash db-tunnel.sh",
     "migrate:generate:prod": "bash generate-migration-prod.sh",
     "generate-leagues": "ts-node --transpile-only -O '{\"module\":\"CommonJS\",\"moduleResolution\":\"node\"}' ../scripts/generate-leagues-migration.ts",
-    "test-email": "NODE_PATH=./node_modules node ../scripts/test-sendgrid.js"
+    "test-email": "NODE_PATH=./node_modules node ../scripts/test-resend.js"
   },
   "dependencies": {
     "@betrollover/shared-types": "file:../packages/shared-types",
@@ -33,7 +33,6 @@
     "@nestjs/swagger": "^7.4.0",
     "@nestjs/throttler": "^6.5.0",
     "@nestjs/typeorm": "^10.0.1",
-    "@sendgrid/mail": "^8.1.6",
     "@types/cache-manager": "^4.0.6",
     "bcrypt": "^5.1.1",
     "cache-manager": "^7.2.8",

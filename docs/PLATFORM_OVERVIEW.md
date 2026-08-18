@@ -8,7 +8,7 @@ Short reference for developers: main areas, env, and critical paths.
 
 - **Backend:** NestJS (Node), TypeORM, PostgreSQL. Global prefix `api/v1`; health and Paystack webhook unversioned.
 - **Frontend:** Next.js (App Router), React. Proxies API via `web/app/api/backend/[[...path]]` to `BACKEND_URL` / `NEXT_PUBLIC_API_URL`.
-- **Integrations:** Paystack (payments), API-Sports (fixtures/leagues), Odds API (tennis/settlement), SendGrid/SMTP (email), Google/Apple OAuth.
+- **Integrations:** Paystack (payments), API-Sports (fixtures/leagues), Odds API (tennis/settlement), Resend/SMTP (email), Google/Apple OAuth.
 
 ---
 

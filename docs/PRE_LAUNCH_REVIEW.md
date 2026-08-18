@@ -218,7 +218,7 @@ And build step: `npm run build`
 | `API_SPORTS_KEY` | Yes | For fixtures/predictions |
 | `PAYSTACK_SECRET_KEY` | Yes | `sk_live_*` for production |
 | `PAYSTACK_PUBLIC_KEY` | Yes | `pk_live_*` |
-| `SMTP_*` / SendGrid | If email | For transactional email |
+| `SMTP_*` / Resend | If email | For transactional email |
 
 ---
 

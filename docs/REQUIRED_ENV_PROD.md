@@ -33,7 +33,7 @@ Use this as the single checklist for production. The API **exits at startup** if
 |----------|-------------|
 | **CORS_ORIGINS** | Comma-separated extra origins (in addition to APP_URL). |
 | **PAYSTACK_SECRET_KEY** | Live key for Paystack. If not set, payments may be configured in Admin → Settings. |
-| **SENDGRID_API_KEY** or SMTP_* | Email (OTP, verification, password reset). Can use DB SMTP settings. |
+| **RESEND_API_KEY** or SMTP_* | Email (OTP, verification, password reset). Can use DB SMTP settings. |
 | **API_SPORTS_KEY** | Fixtures/leagues. Can be set in Admin → Settings. |
 | **ODDS_API_KEY** / **TENNIS_ODDS_API_KEY** | Odds/settlement. |
 | **GOOGLE_CLIENT_ID** / **APPLE_CLIENT_ID** | OAuth. Frontend needs **NEXT_PUBLIC_GOOGLE_CLIENT_ID** / **NEXT_PUBLIC_APPLE_CLIENT_ID**. |

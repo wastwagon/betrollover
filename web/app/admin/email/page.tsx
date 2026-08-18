@@ -23,9 +23,9 @@ export default function AdminEmailPage() {
   const router = useRouter();
   const [settings, setSettings] = useState<SmtpSettings | null>(null);
   const [form, setForm] = useState<SmtpSettings>({
-    host: 'smtp.sendgrid.net',
+    host: 'smtp.resend.com',
     port: 465,
-    username: 'apikey',
+    username: 'resend',
     password: '',
     encryption: 'SSL',
     fromEmail: 'noreply@betrollover.com',
@@ -47,9 +47,9 @@ export default function AdminEmailPage() {
         if (data) {
           setSettings(data);
           setForm({
-            host: data.host || 'smtp.sendgrid.net',
+            host: data.host || 'smtp.resend.com',
             port: data.port ?? 465,
-            username: data.username || 'apikey',
+            username: data.username || 'resend',
             password: data.password || '',
             encryption: data.encryption || 'SSL',
             fromEmail: data.fromEmail || 'noreply@betrollover.com',
@@ -133,7 +133,7 @@ export default function AdminEmailPage() {
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">SMTP Configuration</h1>
-          <p className="text-gray-600 dark:text-gray-400">Configure SendGrid or another SMTP provider for transactional emails.</p>
+          <p className="text-gray-600 dark:text-gray-400">Configure Resend SMTP for transactional emails (OTP, notifications).</p>
         </div>
 
         {loading && (
@@ -151,28 +151,33 @@ export default function AdminEmailPage() {
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                SendGrid SMTP Configuration
+                Resend SMTP
               </h3>
               <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-2 mb-4">
                 <li className="flex items-start gap-2">
                   <span className="font-semibold">SMTP Host:</span>
-                  <span>smtp.sendgrid.net</span>
+                  <span>smtp.resend.com</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="font-semibold">SMTP Port:</span>
-                  <span>587 (TLS) or 465 (SSL)</span>
+                  <span>465 (SSL) or 587 (TLS)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="font-semibold">SMTP Username:</span>
-                  <span>apikey (literally the word &quot;apikey&quot;)</span>
+                  <span>resend (literally the word &quot;resend&quot;)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="font-semibold">SMTP Password:</span>
-                  <span>Your SendGrid API Key (starts with SG.)</span>
+                  <span>Your Resend API key (starts with re_)</span>
                 </li>
               </ul>
-              <a href="https://app.sendgrid.com/settings/api_keys" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
-                Get your API key from SendGrid Dashboard →
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                Production: set <code className="text-[11px] bg-gray-100 dark:bg-gray-700 px-1 rounded">RESEND_API_KEY</code> and{' '}
+                <code className="text-[11px] bg-gray-100 dark:bg-gray-700 px-1 rounded">SMTP_FROM</code> on the API service in Coolify.
+                SMTP fields below are only needed if you send via SMTP instead of the Resend API.
+              </p>
+              <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
+                Get your API key from Resend →
               </a>
             </div>
 
@@ -187,7 +192,7 @@ export default function AdminEmailPage() {
                     onChange={(e) => setForm((f) => ({ ...f, host: e.target.value }))}
                     className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">smtp.sendgrid.net for SendGrid</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">smtp.resend.com for Resend</p>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">SMTP Port</label>
@@ -207,7 +212,7 @@ export default function AdminEmailPage() {
                     onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
                     className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">For SendGrid use: apikey</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">For Resend use: resend</p>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">SMTP Password (API Key)</label>
@@ -218,7 +223,7 @@ export default function AdminEmailPage() {
                     placeholder={settings?.password === '********' ? 'Leave blank to keep current' : ''}
                     className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Your SendGrid API Key (starts with SG.)</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Your Resend API key (starts with re_)</p>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Encryption</label>

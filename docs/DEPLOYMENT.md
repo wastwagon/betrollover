@@ -64,8 +64,8 @@ Both keys are required for full multi-sport functionality. The platform degrades
 
 | Variable | Required For |
 |----------|-------------|
-| `SENDGRID_API_KEY` | OTP registration emails, withdrawal notifications |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | Fallback SMTP if SendGrid not set |
+| `RESEND_API_KEY` | OTP registration emails, withdrawal notifications |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USERNAME` / `SMTP_PASSWORD` | Fallback SMTP if Resend API key not set |
 | `VAPID_PUBLIC_KEY` | Web push notifications |
 | `VAPID_PRIVATE_KEY` | Web push notifications |
 
@@ -255,7 +255,7 @@ bash scripts/export-db-for-vps.sh
 |---------|-------|-----|
 | CORS error in browser console | `APP_URL` / `CORS_ORIGINS` not set | Add env vars, redeploy API |
 | "Backend unavailable" on frontend | `NEXT_PUBLIC_API_URL` wrong | Verify URL points to live API |
-| OTP emails not sending | `SENDGRID_API_KEY` missing | Set key or configure SMTP fallback |
+| OTP emails not sending | `RESEND_API_KEY` missing | Set key or configure SMTP fallback |
 | No fixtures for non-football sports | `ODDS_API_KEY` missing | Set key, then Admin → Sports → Sync |
 | Settlement stuck on pending | Results not fetched | Admin → Fixtures → Fetch Football Results |
 | Push notifications not working | VAPID keys missing | Generate and set VAPID keys |

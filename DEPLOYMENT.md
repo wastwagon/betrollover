@@ -45,7 +45,7 @@ Set these in Coolify **before** the first deploy. Go to your resource → **Envi
 | `API_SPORTS_KEY` | [API-Football](https://www.api-football.com/) key for fixtures |
 | `PAYSTACK_SECRET_KEY` | Paystack secret key (or set in Admin Settings) |
 | `PAYSTACK_PUBLIC_KEY` | Paystack public key |
-| `SENDGRID_API_KEY` | SendGrid for emails |
+| `RESEND_API_KEY` | Resend for emails |
 | `SMTP_FROM` | From email (e.g. `noreply@betrollover.com`) |
 ---
 

@@ -46,7 +46,7 @@ Go to the resource → **Environment Variables**. Add these **before** the first
 | `API_SPORTS_KEY` | [API-Football](https://www.api-football.com/) key for fixtures/odds |
 | `PAYSTACK_SECRET_KEY` | Paystack secret (live) |
 | `PAYSTACK_PUBLIC_KEY` | Paystack public key (live) |
-| `SENDGRID_API_KEY` | SendGrid API key for emails |
+| `RESEND_API_KEY` | Resend API key for emails |
 | `SMTP_FROM` | e.g. `noreply@betrollover.com` |
 
 You do **not** need to set `BACKEND_URL` — it is set in `docker-compose.prod.yml` for the web service.

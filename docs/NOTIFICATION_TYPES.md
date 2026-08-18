@@ -1,6 +1,6 @@
 # BetRollover Notification Types
 
-All platform notifications use **SendGrid** for email delivery. In-app notifications are stored in the `notifications` table; emails are sent when `sendEmail: true` and the user has `emailNotifications` enabled.
+All platform notifications use **Resend** for email delivery. In-app notifications are stored in the `notifications` table; emails are sent when `sendEmail: true` and the user has `emailNotifications` enabled.
 
 ## Platform behavior
 

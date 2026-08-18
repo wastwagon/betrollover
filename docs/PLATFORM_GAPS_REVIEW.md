@@ -60,7 +60,7 @@ A structured review of gaps, risks, and improvement areas across the entire plat
 |-----|----------|--------|
 | **API-Sports rate limits** | Medium | Plan and limits configured in `api-limits.config`; ensure cron/sync jobs respect limits and handle 429/errors without leaving data half-updated. |
 | **Odds API / settlement** | Medium | Odds API used for tennis and settlement; timezone/date handling was fixed. Ensure all sports using it have clear “event finished” logic and retry/backfill for failed settlement. |
-| **Email delivery** | Low | SMTP/SendGrid used for OTP, verification, password reset, admin. No systematic tracking of bounces or failures; consider logging or alerting for critical sends. |
+| **Email delivery** | Low | SMTP/Resend used for OTP, verification, password reset, admin. No systematic tracking of bounces or failures; consider logging or alerting for critical sends. |
 | **Missing or partial i18n** | Low | Some UI strings may still be hardcoded; ensure critical user-facing flows (auth, wallet, support) use translation keys. |
 
 **Recommendations:** Add integration tests or scripts that simulate rate limits and settlement failures; document which jobs depend on which APIs and how to monitor them.

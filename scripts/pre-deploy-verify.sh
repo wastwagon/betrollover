@@ -55,7 +55,7 @@ check_warn API_SPORTS_KEY
 check_warn ODDS_API_KEY
 check_warn PAYSTACK_SECRET_KEY
 check_warn PAYSTACK_PUBLIC_KEY
-check_warn SENDGRID_API_KEY
+check_warn RESEND_API_KEY
 check_warn VAPID_PUBLIC_KEY
 check_warn VAPID_PRIVATE_KEY
 

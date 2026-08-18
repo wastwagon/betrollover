@@ -11,13 +11,13 @@ export class SmtpSettings {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 255, default: 'smtp.sendgrid.net' })
+  @Column({ length: 255, default: 'smtp.resend.com' })
   host: string;
 
   @Column({ default: 465 })
   port: number;
 
-  @Column({ length: 255, default: 'apikey' })
+  @Column({ length: 255, default: 'resend' })
   username: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })

@@ -20,7 +20,7 @@
 |----------|---------|
 | `PAYSTACK_SECRET_KEY` | Live payments (Ghana) |
 | `PAYSTACK_WEBHOOK_SECRET` | Paystack webhook signature verification |
-| `SENDGRID_API_KEY` | Email (verification, password reset) |
+| `RESEND_API_KEY` | Email (verification, password reset) |
 | `NEXT_PUBLIC_API_URL` | API base URL for web app |
 | `NEXT_PUBLIC_APP_URL` | App URL for web (SEO, redirects) |
 
@@ -63,5 +63,5 @@ All variables are optional. Defaults:
 - [ ] `APP_URL` set to your domain (e.g. `https://betrollover.com`)
 - [ ] `NEXT_PUBLIC_APP_URL` and `NEXT_PUBLIC_API_URL` set for web build
 - [ ] Paystack live keys if accepting payments
-- [ ] SendGrid API key if sending email
+- [ ] Resend API key if sending email
 - [ ] HTTPS enabled; reverse proxy configured

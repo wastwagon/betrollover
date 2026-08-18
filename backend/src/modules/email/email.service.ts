@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as nodemailer from 'nodemailer';
-import * as sgMail from '@sendgrid/mail';
 import { SmtpSettings } from './entities/smtp-settings.entity';
 import { UsersService } from '../users/users.service';
 import { getEmailSubject, getCtaText, getCategoryColor } from '../notifications/notification-types.config';
@@ -119,13 +118,14 @@ export class EmailService {
 
   private async getTransporter() {
     const settings = await this.smtpRepo.findOne({ where: { id: 1 } });
-    const password = process.env.SMTP_PASSWORD || process.env.SENDGRID_API_KEY || settings?.password;
+    const password =
+      process.env.SMTP_PASSWORD || settings?.password || process.env.RESEND_API_KEY;
     if (!password) return null;
 
-    const host = process.env.SMTP_HOST || settings?.host || 'smtp.sendgrid.net';
+    const host = process.env.SMTP_HOST || settings?.host || 'smtp.resend.com';
     const port = parseInt(process.env.SMTP_PORT || String(settings?.port || 465), 10);
     const secure = port === 465;
-    const user = process.env.SMTP_USERNAME || settings?.username || 'apikey';
+    const user = process.env.SMTP_USERNAME || settings?.username || 'resend';
 
     return nodemailer.createTransport({
       host,
@@ -143,29 +143,30 @@ export class EmailService {
   }
 
   async send(options: { to: string; subject: string; text: string; html?: string }) {
-    const apiKey = process.env.SENDGRID_API_KEY;
+    const apiKey = (process.env.RESEND_API_KEY || '').trim();
     if (apiKey) {
-      return this.sendViaSendGrid(options, apiKey);
+      return this.sendViaResend(options, apiKey);
     }
 
     const transporter = await this.getTransporter();
     if (!transporter) {
-      this.logger.error('CRITICAL: Email not configured. Set SENDGRID_API_KEY or SMTP settings. Registration OTP will fail.');
+      this.logger.error(
+        'CRITICAL: Email not configured. Set RESEND_API_KEY (or SMTP_HOST + SMTP_PASSWORD). Registration OTP will fail.',
+      );
       return { sent: false, error: 'Email configuration missing on server' };
     }
 
     return this.sendViaSmtp(options, transporter);
   }
 
-  private async sendViaSendGrid(
+  private async sendViaResend(
     options: { to: string; subject: string; text: string; html?: string },
     apiKey: string,
   ): Promise<{ sent: boolean; error?: string }> {
-    sgMail.setApiKey(apiKey);
     const from = await this.getFromWithSettings();
-    const msg = {
-      to: options.to,
+    const payload = {
       from,
+      to: [options.to],
       subject: options.subject,
       text: options.text,
       html: options.html || options.text.replace(/\n/g, '<br>'),
@@ -174,36 +175,40 @@ export class EmailService {
     let lastError: string | undefined;
     for (let attempt = 1; attempt <= this.SEND_RETRIES; attempt++) {
       try {
-        await sgMail.send(msg);
-        return { sent: true };
-      } catch (err: unknown) {
-        const body = (err as { response?: { body?: unknown } })?.response?.body ?? err;
-        this.logger.warn(`SendGrid attempt ${attempt}/${this.SEND_RETRIES} failed: ${JSON.stringify(body)}`);
-        const errObj = err as {
-          code?: number;
-          response?: { statusCode?: number; body?: { errors?: { message?: string }[] } };
+        const res = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+        const body = (await res.json().catch(() => ({}))) as {
           message?: string;
+          name?: string;
         };
-        lastError = String(
-          errObj?.response?.body?.errors?.[0]?.message ||
-            errObj?.message ||
-            (err instanceof Error ? err.message : err),
-        );
-        const status = errObj?.code ?? errObj?.response?.statusCode;
+        if (res.ok) return { sent: true };
+
+        lastError = String(body.message || body.name || `Resend HTTP ${res.status}`);
+        this.logger.warn(`Resend attempt ${attempt}/${this.SEND_RETRIES} failed: ${lastError}`);
         const nonRetryable =
-          status === 401 ||
-          status === 403 ||
-          /not authorized to send mail|unauthorized|forbidden/i.test(lastError);
+          res.status === 401 ||
+          res.status === 403 ||
+          res.status === 422 ||
+          /invalid api key|not authorized|unverified|validation/i.test(lastError);
         if (nonRetryable) {
           this.logger.error(
-            `SendGrid rejected send (non-retryable): ${lastError}. Check API key Mail Send permission and verified sender/domain for: ${from}`,
+            `Resend rejected send (non-retryable): ${lastError}. Verify domain and SMTP_FROM for: ${from}`,
           );
           return { sent: false, error: lastError };
         }
-        if (attempt < this.SEND_RETRIES) await this.sleep(this.RETRY_DELAY_MS * attempt);
+      } catch (err: unknown) {
+        lastError = err instanceof Error ? err.message : String(err);
+        this.logger.warn(`Resend attempt ${attempt}/${this.SEND_RETRIES} failed: ${lastError}`);
       }
+      if (attempt < this.SEND_RETRIES) await this.sleep(this.RETRY_DELAY_MS * attempt);
     }
-    this.logger.error(`SendGrid email failed after ${this.SEND_RETRIES} attempts`);
+    this.logger.error(`Resend email failed after ${this.SEND_RETRIES} attempts`);
     return { sent: false, error: lastError };
   }
 

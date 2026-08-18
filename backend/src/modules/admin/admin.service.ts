@@ -1242,9 +1242,9 @@ export class AdminService {
     let s = await this.smtpRepo.findOne({ where: { id: 1 } });
     if (!s) {
       s = this.smtpRepo.create({
-        host: 'smtp.sendgrid.net',
+        host: 'smtp.resend.com',
         port: 465,
-        username: 'apikey',
+        username: 'resend',
         encryption: 'SSL',
         fromEmail: 'noreply@betrollover.com',
         fromName: 'BetRollover',
@@ -1276,9 +1276,9 @@ export class AdminService {
     let s = await this.smtpRepo.findOne({ where: { id: 1 } });
     if (!s) {
       s = this.smtpRepo.create({
-        host: 'smtp.sendgrid.net',
+        host: 'smtp.resend.com',
         port: 465,
-        username: 'apikey',
+        username: 'resend',
         encryption: 'SSL',
         fromEmail: 'noreply@betrollover.com',
         fromName: 'BetRollover',

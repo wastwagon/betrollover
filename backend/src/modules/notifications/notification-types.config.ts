@@ -1,6 +1,6 @@
 /**
  * Comprehensive notification types for BetRollover platform.
- * Each type maps to in-app notification + optional email (via SendGrid).
+ * Each type maps to in-app notification + optional email (via Resend).
  * Professional email templates use category-based styling and contextual subjects.
  */
 import { couponPublicRef, truncateCouponTitleForSubject } from '../../common/coupon-public-label';

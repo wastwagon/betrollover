@@ -93,7 +93,7 @@ PROJECT_SLUG/
 - `REDIS_URL`
 - `JWT_SECRET`
 - `APP_URL` (e.g. `http://localhost:6002` for web)
-- Payment/email/external API keys as needed (e.g. Paystack, SendGrid, etc.)
+- Payment/email/external API keys as needed (e.g. Paystack, Resend, etc.)
 
 **Web (Next.js)**
 - `NEXT_PUBLIC_API_URL` (e.g. `http://localhost:6001` for local, or API domain in prod)

@@ -131,7 +131,7 @@ All 38 TypeORM entities map to init/migration-created tables. No orphan entities
 - [ ] Change admin password from `password` after first login
 - [ ] Configure `API_SPORTS_KEY` in Admin → API Settings or env
 - [ ] Configure Paystack keys (Admin or env)
-- [ ] Configure SendGrid for email (OTP, notifications)
+- [ ] Configure Resend for email (OTP, notifications)
 - [ ] For fresh DB: ensure postgres volume is empty so init runs
 - [ ] For existing DB: use Admin → Mark all as applied if migrated manually
 

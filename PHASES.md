@@ -1,6 +1,6 @@
 # BetRollover Implementation Phases
 
-> **Notifications**: All user notifications are delivered via email (SendGrid). In-app notifications exist for display only; email is the primary channel.
+> **Notifications**: All user notifications are delivered via email (Resend). In-app notifications exist for display only; email is the primary channel.
 
 ---
 
