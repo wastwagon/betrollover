@@ -19,13 +19,11 @@ import {
   truncateCouponTitleForSubject,
 } from '../../common/coupon-public-label';
 
-/** Premium transactional palette — dark surround, gold accent, crisp card */
+/** Transactional palette — white page, gold accent. Avoid non-white page bg: Gmail dark mode inverts it to navy. */
 const BR = {
-  outerBg:
-    'background:linear-gradient(165deg,#05070d 0%,#0c1224 42%,#080b14 100%);',
-  cardBg: '#fafbfc',
+  pageBg: '#ffffff',
+  cardBg: '#ffffff',
   gold: '#c9a227',
-  goldSoft: 'rgba(201,162,39,0.35)',
   ink: '#0f172a',
   muted: '#64748b',
   line: '#e2e8f0',
@@ -70,35 +68,41 @@ export class EmailService {
   }
 
   /**
-   * Shared 2026 shell: dark canvas, gold hairline, one card, legal footer.
+   * Shared shell: light page, gold hairline, white card, legal footer.
    */
   private premiumDocument(innerRows: string, footerExtra?: string): string {
     const prefs = this.escapeHtmlAttr(this.prefsUrl());
     const year = new Date().getUTCFullYear();
     const extra = footerExtra
-      ? `<p style="font-size:11px;color:#94a3b8;margin:10px 0 0;text-align:center;line-height:1.5;">${footerExtra}</p>`
+      ? `<p style="font-size:11px;color:${BR.muted};margin:10px 0 0;text-align:center;line-height:1.5;">${footerExtra}</p>`
       : '';
     return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="background-color:${BR.pageBg};">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="color-scheme" content="light dark"/>
+  <meta name="color-scheme" content="light only"/>
+  <meta name="supported-color-schemes" content="light"/>
   <title>BetRollover</title>
+  <style type="text/css">
+    :root { color-scheme: light only; }
+    html, body { background-color: ${BR.pageBg} !important; }
+    [data-ogsb] body, [data-ogsc] body { background-color: ${BR.pageBg} !important; }
+  </style>
 </head>
-<body style="margin:0;padding:0;${BR.outerBg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="padding:36px 12px;">
+<body class="body" style="margin:0;padding:0;background-color:${BR.pageBg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;" bgcolor="${BR.pageBg}">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" bgcolor="${BR.pageBg}" style="background-color:${BR.pageBg};padding:32px 12px;">
     <tr>
-      <td align="center">
-        <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:520px;background:${BR.cardBg};border-radius:24px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.45);border:1px solid ${BR.goldSoft};">
+      <td align="center" bgcolor="${BR.pageBg}" style="background-color:${BR.pageBg};">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation" bgcolor="${BR.cardBg}" style="max-width:520px;background-color:${BR.cardBg};border-radius:16px;overflow:hidden;border:1px solid ${BR.line};">
           <tr>
             <td style="height:4px;background:linear-gradient(90deg,#8b6914,#e8d48b,#c9a227,#e8d48b,#8b6914);"></td>
           </tr>
           ${innerRows}
         </table>
-        <p style="font-size:11px;color:#94a3b8;margin:22px 8px 0;text-align:center;line-height:1.7;">
+        <p style="font-size:11px;color:${BR.muted};margin:22px 8px 0;text-align:center;line-height:1.7;">
           18+ · Informational only — not betting advice.<br/>
-          <a href="${prefs}" style="color:#c9a227;text-decoration:none;">Notification settings</a>
+          <a href="${prefs}" style="color:${BR.gold};text-decoration:none;">Notification settings</a>
           &nbsp;·&nbsp;© ${year} BetRollover
         </p>
         ${extra}
