@@ -317,6 +317,11 @@ export default function AdminAccaDeskPage() {
           type: 'success',
           text: 'Rollover table reset. A new campaign starts at Day 1. Previous runs stay in records.',
         });
+      } else if (path === 'rollover/clear-stats') {
+        setMessage({
+          type: 'success',
+          text: 'Public records cleared. The live table is unchanged. New campaigns will rebuild stats.',
+        });
       } else {
         setMessage({ type: 'success', text: 'Rollover settlement synced from existing tickets.' });
       }
@@ -452,7 +457,8 @@ export default function AdminAccaDeskPage() {
                       {Number(overview.rollover.oddsMax ?? 1.75).toFixed(2)}. Auto attaches at most one coupon per
                       calendar day. If Day 1 is live or already won and evening is still to play, use{' '}
                       <span className="font-medium text-gray-700 dark:text-gray-200">Attach as Day 2</span>
-                      — do not Switch, that would replace Day 1. A loss auto-resets the public table; records stay above it.
+                      {' — '}do not Switch, that would replace Day 1. A loss auto-resets the public table.
+                      Use Clear stats to wipe the public records strip without touching the live board.
                     </p>
                   </div>
                   <Link href="/rollover" className="text-sm font-medium text-teal-700 dark:text-teal-300 hover:underline">
@@ -515,6 +521,24 @@ export default function AdminAccaDeskPage() {
                     }}
                   >
                     {rolloverBusy === 'reset' ? 'Resetting…' : 'Reset table'}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={!!rolloverBusy}
+                    onClick={() => {
+                      if (
+                        !window.confirm(
+                          'Clear public records (best run, finished, cut, reset)? The live 30-day table is not reset.',
+                        )
+                      ) {
+                        return;
+                      }
+                      rolloverAction('rollover/clear-stats', {}, 'clear-stats');
+                    }}
+                  >
+                    {rolloverBusy === 'clear-stats' ? 'Clearing…' : 'Clear stats'}
                   </Button>
                 </div>
 

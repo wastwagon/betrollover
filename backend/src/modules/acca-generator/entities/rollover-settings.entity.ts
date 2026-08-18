@@ -8,6 +8,10 @@ export class RolloverSettings {
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 20 })
   defaultCampaignStakeGhs: number;
 
+  /** Ended campaigns before this time are omitted from public records. */
+  @Column({ type: 'timestamptz', nullable: true })
+  statsClearedAt: Date | null = null;
+
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }

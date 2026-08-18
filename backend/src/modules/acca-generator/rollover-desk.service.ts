@@ -224,6 +224,25 @@ export class RolloverDeskService {
     return this.getAdminState();
   }
 
+  async clearArchiveStats() {
+    const now = new Date();
+    const existing = await this.settingsRepo.findOne({ where: { id: 1 } });
+    if (existing) {
+      existing.statsClearedAt = now;
+      await this.settingsRepo.save(existing);
+    } else {
+      await this.settingsRepo.save(
+        this.settingsRepo.create({
+          id: 1,
+          defaultCampaignStakeGhs: ROLLOVER_EXAMPLE_STAKE_GHS,
+          statsClearedAt: now,
+        }),
+      );
+    }
+    this.logger.log('Rollover public archive stats cleared');
+    return this.getAdminState();
+  }
+
   async syncNow() {
     await this.syncSettledDays();
     return this.getAdminState();
@@ -743,7 +762,10 @@ export class RolloverDeskService {
   }
 
   private async getArchiveStats() {
-    const runs = await this.runRepo.find({ order: { id: 'DESC' } });
+    const allRuns = await this.runRepo.find({ order: { id: 'DESC' } });
+    const settings = await this.settingsRepo.findOne({ where: { id: 1 } });
+    const cutoff = settings?.statsClearedAt ?? null;
+    const runs = allRuns.filter((run) => this.runVisibleInStats(run, cutoff));
     const empty = {
       bestWonDays: 0,
       bestCampaignStakeGhs: null as number | null,
@@ -803,6 +825,13 @@ export class RolloverDeskService {
           }
         : null,
     };
+  }
+
+  private runVisibleInStats(run: RolloverRun, cutoff: Date | null): boolean {
+    if (run.status === 'active') return true;
+    if (!cutoff) return true;
+    const ended = run.completedAt ?? run.brokenAt ?? run.resetAt ?? run.startedAt;
+    return new Date(ended).getTime() >= new Date(cutoff).getTime();
   }
 
   private async getDefaultCampaignStake(): Promise<number> {

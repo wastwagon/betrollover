@@ -290,6 +290,12 @@ export class AdminController {
     return this.rolloverDesk.resetCampaign();
   }
 
+  @Post('rollover/clear-stats')
+  async clearRolloverStatsAdmin(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.rolloverDesk.clearArchiveStats();
+  }
+
   @Get('ai-tipsters/subscription-packages')
   async getAiTipsterPackages(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');

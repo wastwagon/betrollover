@@ -98,11 +98,91 @@ type Board = {
 };
 
 function statusClass(status: string) {
-  if (status === 'won') return 'text-emerald-700 bg-emerald-50 border-emerald-200';
-  if (status === 'lost') return 'text-red-700 bg-red-50 border-red-200';
-  if (status === 'pending') return 'text-[var(--primary)] bg-[var(--primary-light)] border-[var(--primary)]/25';
-  if (status === 'void') return 'text-amber-800 bg-amber-50 border-amber-200';
-  return 'text-[var(--text-muted)] bg-[var(--fill-secondary)] border-[var(--border)]';
+  if (status === 'won') {
+    return 'text-emerald-800 bg-emerald-50 border-emerald-200/80 dark:text-emerald-200 dark:bg-emerald-950/50 dark:border-emerald-800/70';
+  }
+  if (status === 'lost') {
+    return 'text-red-700 bg-red-50 border-red-200/80 dark:text-red-300 dark:bg-red-950/50 dark:border-red-800/70';
+  }
+  if (status === 'pending') {
+    return 'text-white bg-[var(--primary)] border-[var(--primary)] shadow-[var(--shadow-glow)]';
+  }
+  if (status === 'void') {
+    return 'text-amber-800 bg-amber-50 border-amber-200/80 dark:text-amber-200 dark:bg-amber-950/50 dark:border-amber-800/70';
+  }
+  return '';
+}
+
+function DayMark({ dayNumber, status, live }: { dayNumber: number; status: string; live: boolean }) {
+  const lost = status === 'lost';
+  return (
+    <span
+      className={`flex h-8 w-8 items-center justify-center rounded-xl text-[13px] font-bold tabular-nums ${
+        live
+          ? 'bg-[var(--primary)] text-white shadow-[var(--shadow-glow)]'
+          : status === 'won'
+            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-200'
+            : lost
+              ? 'bg-red-50 text-red-700 dark:bg-red-950/70 dark:text-red-300'
+              : 'bg-[var(--fill-secondary)] text-[var(--text-muted)]'
+      }`}
+    >
+      {dayNumber}
+    </span>
+  );
+}
+
+function StatusCell({
+  status,
+  label,
+}: {
+  status: string;
+  label: string;
+}) {
+  if (status === 'empty' || status === 'skipped') {
+    return <span className="inline-block h-1.5 w-3.5 rounded-full bg-[var(--separator)]" aria-hidden />;
+  }
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-1 rounded-full border ${statusClass(status)}`}>
+      {status === 'pending' ? (
+        <span className="h-1.5 w-1.5 rounded-full bg-white/90 motion-safe:animate-pulse" aria-hidden />
+      ) : null}
+      {label}
+    </span>
+  );
+}
+
+function dayHasStarted(status: string) {
+  return status === 'pending' || status === 'won' || status === 'lost' || status === 'void';
+}
+
+function ExampleCell({
+  stake,
+  ret,
+  later,
+  live,
+  reached,
+}: {
+  stake: number | null;
+  ret: number | null;
+  later: string;
+  live: boolean;
+  reached: boolean;
+}) {
+  if (!reached) {
+    return <span className="text-[var(--text-tertiary)]">·</span>;
+  }
+  if (stake == null || ret == null) {
+    return <span className="text-[var(--text-tertiary)] tabular-nums">{later}</span>;
+  }
+  return (
+    <span className={`tabular-nums ${live ? 'text-[var(--text)]' : 'text-[var(--text-muted)]'}`}>
+      <span className="text-[11px] text-[var(--text-tertiary)]">GHS</span>{' '}
+      <span>{stake}</span>
+      <span className="mx-1 text-[var(--text-tertiary)]">→</span>
+      <span className={`font-semibold ${live ? 'text-[var(--primary)]' : 'text-[var(--text)]'}`}>{ret}</span>
+    </span>
+  );
 }
 
 export function RolloverBoard() {
@@ -150,7 +230,12 @@ export function RolloverBoard() {
   }
 
   const coupon = board.today.coupon;
-  const currentDay = board.run?.currentDay || board.today.dayNumber;
+  const filledDays = board.days.filter(
+    (d) => d.status === 'won' || (d.status === 'pending' && d.ticketId),
+  ).length;
+  const currentDay =
+    board.run?.currentDay && board.run.currentDay > 0 ? board.run.currentDay : board.today.dayNumber || 1;
+  const progress = Math.min(100, Math.round((filledDays / board.planDays) * 100));
   const statusKey = (status: string) => {
     if (status === 'pending') return 'rollover.status_pending';
     if (status === 'won') return 'rollover.status_won';
@@ -174,27 +259,77 @@ export function RolloverBoard() {
         ? t('rollover.no_coupon', { day: String(board.today.dayNumber) })
         : null;
 
-  const todayMoney = board.days.find((d) => d.dayNumber === board.today.dayNumber);
   const archive = board.archive;
-  const bestLine =
-    archive && archive.bestWonDays > 0
-      ? archive.bestExampleReturnGhs != null && archive.bestCampaignStakeGhs != null
-        ? t('rollover.best_run_example', {
-            day: String(archive.bestWonDays),
-            stake: String(Math.round(archive.bestCampaignStakeGhs)),
-            ret: String(archive.bestExampleReturnGhs),
-          })
-        : t('rollover.best_run', { day: String(archive.bestWonDays) })
-      : t('rollover.best_run_none');
+  const todayMoney = board.days.find((d) => d.dayNumber === board.today.dayNumber && dayHasStarted(d.status));
+
+  const laterOdds = t('rollover.example_later', { odds: board.targetOdds.toFixed(2) });
+  const lastEndedNote =
+    archive?.lastEnded?.status === 'broken'
+      ? t('rollover.last_cut', { day: String(archive.lastEnded.endedDay || archive.lastEnded.wonDays || 1) })
+      : archive?.lastEnded?.status === 'reset'
+        ? t('rollover.last_reset', { day: String(archive.lastEnded.endedDay || archive.lastEnded.wonDays || 1) })
+        : archive?.lastEnded?.status === 'completed'
+          ? t('rollover.last_finished', { total: String(board.planDays) })
+          : null;
+  const statTiles = [
+    {
+      key: 'best',
+      label: t('rollover.stat_best_run'),
+      value: archive && archive.bestWonDays > 0 ? String(archive.bestWonDays) : '—',
+      hint: archive && archive.bestWonDays > 0 ? t('rollover.day') : undefined,
+    },
+    {
+      key: 'peak',
+      label: t('rollover.stat_best_example'),
+      value:
+        archive?.bestExampleReturnGhs != null
+          ? String(archive.bestExampleReturnGhs)
+          : '—',
+      hint:
+        archive?.bestCampaignStakeGhs != null && archive.bestExampleReturnGhs != null
+          ? t('rollover.stat_from_stake', { stake: String(Math.round(archive.bestCampaignStakeGhs)) })
+          : undefined,
+    },
+    {
+      key: 'finished',
+      label: t('rollover.stat_finished'),
+      value: String(archive?.campaignsCompleted ?? 0),
+    },
+    {
+      key: 'cut',
+      label: t('rollover.stat_cut'),
+      value: String(archive?.campaignsCut ?? 0),
+    },
+    {
+      key: 'reset',
+      label: t('rollover.stat_reset'),
+      value: String(archive?.campaignsReset ?? 0),
+    },
+  ];
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-sm text-[var(--text-muted)]">
-        <p className="font-semibold text-[var(--text)]">{runNote}</p>
-        <p className="mt-1">
-          {t('rollover.owner', { name: board.ownerDisplayName })} · {board.oddsMin.toFixed(2)}–{board.oddsMax.toFixed(2)} @ ~{board.targetOdds.toFixed(2)}
-        </p>
-        <p className="mt-1">{t('rollover.campaign_stake', { stake: String(Math.round(board.exampleStakeStartGhs)) })}</p>
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-5 shadow-[var(--shadow)]">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-lg font-semibold tracking-tight text-[var(--text)]">{runNote}</p>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              {t('rollover.owner', { name: board.ownerDisplayName })} · {board.oddsMin.toFixed(2)}–{board.oddsMax.toFixed(2)} @ ~{board.targetOdds.toFixed(2)}
+            </p>
+          </div>
+          <span className="inline-flex items-center rounded-full border border-[var(--primary)]/20 bg-[var(--primary-light)] px-3 py-1 text-xs font-semibold text-emerald-800 dark:text-emerald-200">
+            {t('rollover.campaign_stake', { stake: String(Math.round(board.exampleStakeStartGhs)) })}
+          </span>
+        </div>
+        <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-[var(--fill-secondary)]">
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${progress}%`,
+              background: 'var(--gradient-primary)',
+            }}
+          />
+        </div>
       </div>
 
       <section className="space-y-3">
@@ -239,71 +374,87 @@ export function RolloverBoard() {
               odds: board.targetOdds.toFixed(2),
             })}
           </p>
-        ) : (
+        ) : todayMoney ? (
           <p className="text-xs text-[var(--text-muted)]">{t('rollover.example_later_hint', { odds: board.targetOdds.toFixed(2) })}</p>
-        )}
+        ) : null}
       </section>
 
       <section>
         <h2 className="text-base font-semibold text-[var(--text)] mb-3">{t('rollover.plan_title')}</h2>
-        <div className="mb-3 rounded-xl border border-[var(--border)] bg-[var(--fill-secondary)]/60 px-4 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
-            {t('rollover.records')}
-          </p>
-          <p className="mt-1 text-sm font-semibold text-[var(--text)]">{bestLine}</p>
-          {archive ? (
-            <>
-              <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-                {archive.campaignsReset > 0
-                  ? t('rollover.campaigns_with_reset', {
-                      completed: String(archive.campaignsCompleted),
-                      cut: String(archive.campaignsCut),
-                      reset: String(archive.campaignsReset),
-                    })
-                  : t('rollover.campaigns', {
-                      completed: String(archive.campaignsCompleted),
-                      cut: String(archive.campaignsCut),
-                    })}
-              </p>
-              {archive.lastEnded?.status === 'broken' ? (
-                <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-                  {t('rollover.last_cut', { day: String(archive.lastEnded.endedDay || archive.lastEnded.wonDays || 1) })}
+        <div className="mb-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow)] overflow-hidden">
+          <div className="px-4 pt-3 pb-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+              {t('rollover.records')}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-5 border-t border-[var(--separator)]">
+            {statTiles.map((tile, i) => (
+              <div
+                key={tile.key}
+                className={`px-4 py-3.5 ${i > 0 ? 'border-t sm:border-t-0 sm:border-l border-[var(--separator)]' : ''}`}
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+                  {tile.label}
                 </p>
-              ) : archive.lastEnded?.status === 'reset' ? (
-                <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-                  {t('rollover.last_reset', { day: String(archive.lastEnded.endedDay || archive.lastEnded.wonDays || 1) })}
+                <p className="mt-1 text-[1.65rem] leading-none font-bold tabular-nums tracking-tight text-[var(--text)]">
+                  {tile.key === 'peak' && tile.value !== '—' ? (
+                    <>
+                      <span className="text-sm font-semibold text-[var(--text-tertiary)] mr-1">GHS</span>
+                      {tile.value}
+                    </>
+                  ) : (
+                    tile.value
+                  )}
                 </p>
-              ) : archive.lastEnded?.status === 'completed' ? (
-                <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-                  {t('rollover.last_finished', { total: String(board.planDays) })}
-                </p>
-              ) : null}
-            </>
+                {tile.hint ? (
+                  <p className="mt-1.5 text-[11px] text-[var(--text-muted)] truncate">{tile.hint}</p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+          {lastEndedNote ? (
+            <p className="border-t border-[var(--separator)] px-4 py-2.5 text-xs text-[var(--text-muted)] bg-[var(--fill-secondary)]/35">
+              {lastEndedNote}
+            </p>
           ) : null}
         </div>
-        <ul className="md:hidden divide-y divide-[var(--separator)] rounded-xl border border-[var(--border)] bg-[var(--card)] overflow-hidden">
-          {board.days.map((day) => {
+
+        <ul className="md:hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow)] overflow-hidden">
+          {board.days.map((day, i) => {
+            const inPlay = day.status === 'pending' && day.ticketId != null;
+            const weekBreak = day.dayNumber === 8 || day.dayNumber === 15 || day.dayNumber === 22;
+            const reached = dayHasStarted(day.status);
             const inner = (
-              <div className="flex items-center justify-between gap-3 px-3 py-2.5 min-h-[44px]">
-                <span className="text-sm font-semibold tabular-nums text-[var(--text)]">
-                  {t('rollover.day')} {day.dayNumber}
-                </span>
-                <span className="flex items-center gap-2 min-w-0">
-                  {day.combinedOdds != null ? (
-                    <span className="text-xs tabular-nums text-[var(--text-muted)]">{Number(day.combinedOdds).toFixed(2)}</span>
+              <div className={`flex items-center gap-3 px-3.5 py-2.5 min-h-[52px] ${inPlay ? 'bg-[var(--primary-light)]/50' : ''}`}>
+                <DayMark dayNumber={day.dayNumber} status={day.status} live={inPlay} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <StatusCell status={day.status} label={t(statusKey(day.status))} />
+                    {day.combinedOdds != null ? (
+                      <span className="text-xs font-medium tabular-nums text-[var(--text)]">{Number(day.combinedOdds).toFixed(2)}</span>
+                    ) : null}
+                  </div>
+                  {reached ? (
+                    <p className="mt-0.5 text-[11px] truncate">
+                      <ExampleCell
+                        stake={day.exampleStakeGhs}
+                        ret={day.exampleReturnGhs}
+                        later={laterOdds}
+                        live={inPlay}
+                        reached={reached}
+                      />
+                    </p>
                   ) : null}
-                  <span className={`shrink-0 text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border ${statusClass(day.status)}`}>
-                    {t(statusKey(day.status))}
-                  </span>
-                </span>
+                </div>
               </div>
             );
-            const highlight = day.dayNumber === currentDay && day.status === 'pending';
-            const wrapClass = highlight ? 'bg-[var(--primary-light)]/40' : '';
             return (
-              <li key={day.dayNumber} className={wrapClass}>
+              <li
+                key={day.dayNumber}
+                className={weekBreak ? 'border-t-2 border-[var(--border)]' : i > 0 ? 'border-t border-[var(--separator)]' : ''}
+              >
                 {day.ticketId ? (
-                  <Link href={`/coupons/${day.ticketId}`} className="block hover:bg-[var(--fill-secondary)]">
+                  <Link href={`/coupons/${day.ticketId}`} className="block active:bg-[var(--fill-secondary)]">
                     {inner}
                   </Link>
                 ) : (
@@ -314,46 +465,68 @@ export function RolloverBoard() {
           })}
         </ul>
 
-        <div className="hidden md:block overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--card)]">
-          <table className="w-full text-sm">
+        <div className="hidden md:block overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow)]">
+          <table className="w-full text-sm border-separate border-spacing-0">
+            <caption className="sr-only">{t('rollover.plan_title')}</caption>
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wider text-[var(--text-tertiary)] border-b border-[var(--separator)]">
-                <th className="px-4 py-3 font-semibold">{t('rollover.day')}</th>
-                <th className="px-4 py-3 font-semibold">{t('rollover.status')}</th>
-                <th className="px-4 py-3 font-semibold">{t('rollover.odds')}</th>
-                <th className="px-4 py-3 font-semibold">{t('rollover.example')}</th>
-                <th className="px-4 py-3 font-semibold">{t('rollover.coupon')}</th>
+              <tr className="text-left text-[11px] uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+                <th className="px-5 py-3.5 font-semibold bg-[var(--fill-secondary)]/50 border-b border-[var(--separator)]">{t('rollover.day')}</th>
+                <th className="px-4 py-3.5 font-semibold bg-[var(--fill-secondary)]/50 border-b border-[var(--separator)]">{t('rollover.status')}</th>
+                <th className="px-4 py-3.5 font-semibold bg-[var(--fill-secondary)]/50 border-b border-[var(--separator)]">{t('rollover.odds')}</th>
+                <th className="px-4 py-3.5 font-semibold bg-[var(--fill-secondary)]/50 border-b border-[var(--separator)]">{t('rollover.example')}</th>
+                <th className="px-5 py-3.5 font-semibold bg-[var(--fill-secondary)]/50 border-b border-[var(--separator)]">{t('rollover.coupon')}</th>
               </tr>
             </thead>
             <tbody>
               {board.days.map((day) => {
-                const highlight = day.dayNumber === currentDay && day.status === 'pending';
+                const inPlay = day.status === 'pending' && day.ticketId != null;
+                const featured = inPlay && day.dayNumber === currentDay;
+                const won = day.status === 'won';
+                const reached = dayHasStarted(day.status);
+                const weekBreak = day.dayNumber === 8 || day.dayNumber === 15 || day.dayNumber === 22;
+                const rowBg = inPlay
+                  ? 'bg-[var(--primary-light)]/45'
+                  : won
+                    ? 'bg-emerald-50/30 hover:bg-emerald-50/55 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/35'
+                    : 'hover:bg-[var(--fill-secondary)]/40';
+                const hairline = `${day.dayNumber === board.planDays ? 'border-b-0' : weekBreak ? 'border-[var(--border)]' : 'border-[var(--separator)]'}`;
                 return (
-                  <tr
-                    key={day.dayNumber}
-                    className={`border-b border-[var(--separator)] last:border-0 ${highlight ? 'bg-[var(--primary-light)]/40' : ''}`}
-                  >
-                    <td className="px-4 py-2.5 font-semibold tabular-nums">{day.dayNumber}</td>
-                    <td className="px-4 py-2.5">
-                      <span className={`inline-flex text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border ${statusClass(day.status)}`}>
-                        {t(statusKey(day.status))}
-                      </span>
+                  <tr key={day.dayNumber} className={rowBg}>
+                    <td className={`relative px-5 py-3 font-semibold tabular-nums border-b ${hairline}`}>
+                      {featured ? (
+                        <span className="absolute inset-y-0 left-0 w-[3px] bg-[var(--primary)]" aria-hidden />
+                      ) : null}
+                      <DayMark dayNumber={day.dayNumber} status={day.status} live={inPlay} />
                     </td>
-                    <td className="px-4 py-2.5 tabular-nums text-[var(--text-muted)]">
-                      {day.combinedOdds != null ? Number(day.combinedOdds).toFixed(2) : '—'}
+                    <td className={`px-4 py-3 border-b ${hairline}`}>
+                      <StatusCell status={day.status} label={t(statusKey(day.status))} />
                     </td>
-                    <td className="px-4 py-2.5 tabular-nums text-[var(--text-muted)]">
-                      {day.exampleStakeGhs != null && day.exampleReturnGhs != null
-                        ? `GHS ${day.exampleStakeGhs} → ${day.exampleReturnGhs}`
-                        : t('rollover.example_later', { odds: board.targetOdds.toFixed(2) })}
+                    <td
+                      className={`px-4 py-3 tabular-nums border-b ${hairline} ${
+                        day.combinedOdds != null ? 'font-medium text-[var(--text)]' : 'text-[var(--text-tertiary)]'
+                      }`}
+                    >
+                      {day.combinedOdds != null ? Number(day.combinedOdds).toFixed(2) : '·'}
                     </td>
-                    <td className="px-4 py-2.5">
+                    <td className={`px-4 py-3 border-b ${hairline}`}>
+                      <ExampleCell
+                        stake={day.exampleStakeGhs}
+                        ret={day.exampleReturnGhs}
+                        later={laterOdds}
+                        live={inPlay}
+                        reached={reached}
+                      />
+                    </td>
+                    <td className={`px-5 py-3 border-b ${hairline}`}>
                       {day.ticketId ? (
-                        <Link href={`/coupons/${day.ticketId}`} className="font-medium text-[var(--primary)] hover:underline">
+                        <Link
+                          href={`/coupons/${day.ticketId}`}
+                          className="inline-flex items-center rounded-full border border-[var(--primary)]/20 bg-[var(--primary-light)] px-2.5 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 dark:text-emerald-200 dark:hover:bg-emerald-950/80 transition-colors"
+                        >
                           {t('rollover.view_coupon')}
                         </Link>
                       ) : (
-                        <span className="text-[var(--text-tertiary)]">—</span>
+                        <span className="text-[var(--text-tertiary)]">·</span>
                       )}
                     </td>
                   </tr>
@@ -365,10 +538,10 @@ export function RolloverBoard() {
       </section>
 
       <aside
-        className="rounded-xl border border-amber-200/90 bg-amber-50/90 px-4 py-3.5 text-sm text-amber-950"
+        className="rounded-xl border border-amber-200/90 bg-amber-50/90 px-4 py-3.5 text-sm text-amber-950 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100"
         role="note"
       >
-        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-amber-800/80">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-amber-800/80 dark:text-amber-200/80">
           {t('rollover.disclaimer_label')}
         </p>
         <p className="mt-1.5 leading-relaxed">{t('rollover.disclaimer')}</p>
