@@ -21,7 +21,7 @@ export class AccaDeskSetupService {
   ) {}
 
   /**
-   * Idempotent upsert of the 15 Acca Desk tipsters + linked tipster users.
+   * Idempotent upsert of Acca Desk tipsters + linked tipster users.
    * Does not touch classic AI tipsters (tipsterType=ai).
    */
   async initializeAccaDeskTipsters(): Promise<{ created: number; updated: number; total: number }> {

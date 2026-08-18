@@ -159,7 +159,7 @@ export default function AdminAccaDeskPage() {
       if (res.ok) {
         setMessage({
           type: 'success',
-          text: `Acca Desk tipsters ready: ${data.created ?? 0} created, ${data.updated ?? 0} updated (roster ${data.total ?? 15}).`,
+          text: `Acca Desk tipsters ready: ${data.created ?? 0} created, ${data.updated ?? 0} updated (roster ${data.total ?? 0}).`,
         });
         await loadData();
       } else {
@@ -212,8 +212,9 @@ export default function AdminAccaDeskPage() {
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Acca Desk</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            15 Acca Generator tipsters (Sure / Safe / Medium × 1X2, DC, BTTS, O2.5, Mix). Each posts up to 3
-            free 2-folds daily (early / afternoon / evening), clustered by kick-off. All generated at cron{' '}
+            Acca Desk tipsters including specialised Over 1.5 and Over 2.5 at Sure / Safe / Medium / High, plus
+            Sure / Safe / Medium × 1X2, DC, BTTS, Mix. Each posts up to 3 free 2-folds daily (early / afternoon /
+            evening), clustered by kick-off. All generated at cron{' '}
             {overview?.cron || '30 0 * * *'} ({overview?.timezone || 'Africa/Accra'}).
           </p>
         </div>
