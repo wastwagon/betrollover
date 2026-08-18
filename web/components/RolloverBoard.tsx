@@ -162,7 +162,7 @@ function GhsFigure({
 }) {
   const figure =
     size === 'lg'
-      ? 'font-display text-[1.85rem] sm:text-[2.15rem] font-semibold tracking-tight tabular-nums leading-none'
+      ? 'text-[1.65rem] font-bold tracking-tight tabular-nums leading-none'
       : 'tabular-nums font-semibold';
   const ink = tone === 'out' ? 'text-[var(--primary)]' : 'text-[var(--text)]';
   const unit = tone === 'out' ? 'text-[var(--primary)]/70' : 'text-[var(--text-tertiary)]';
@@ -294,17 +294,17 @@ export function RolloverBoard() {
   ];
 
   return (
-    <div className="space-y-10">
-      <header className="space-y-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="space-y-6">
+      <header className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
               {t('rollover.owner', { name: board.ownerDisplayName })}
             </p>
-            <h2 className="mt-2 font-display text-display-md sm:text-display-lg text-[var(--text)]">
+            <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text)]">
               {runNote}
             </h2>
-            <p className="mt-2 text-sm text-[var(--text-muted)]">
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
               {board.oddsMin.toFixed(2)}–{board.oddsMax.toFixed(2)} @ ~{board.targetOdds.toFixed(2)}
             </p>
           </div>
@@ -324,50 +324,52 @@ export function RolloverBoard() {
       </header>
 
       <section className="space-y-3">
-        <h2 className="font-display text-display-sm text-[var(--text)]">{t('rollover.today')}</h2>
-        {coupon ? (
-          <PickCard
-            id={coupon.id}
-            title={coupon.title}
-            totalPicks={coupon.totalPicks}
-            totalOdds={coupon.totalOdds}
-            price={coupon.price ?? 0}
-            sport={coupon.sport}
-            status={coupon.status}
-            result={coupon.result}
-            picks={coupon.picks || []}
-            tipster={coupon.tipster}
-            createdAt={coupon.createdAt}
-            bookmakerKey={coupon.bookmakerKey}
-            bookingCode={coupon.bookingCode}
-            bookingCodeCopyCount={coupon.bookingCodeCopyCount ?? 0}
-            purchaseCount={coupon.purchaseCount}
-            viewOnly
-            detailsHref={`/coupons/${coupon.id}`}
-            onPurchase={() => {}}
-            {...getPickCardSocialProps(coupon, {
-              onCountsChange: (_id, counts) => patchCoupon(counts),
-              loginRedirectPath: currentLoginRedirectPath('/rollover'),
-            })}
-          />
-        ) : (
-          <p className="text-sm text-[var(--text-muted)] rounded-[var(--radius)] border border-dashed border-[var(--separator)] px-4 py-8">
-            {skipNote ?? t('rollover.no_coupon', { day: String(board.today.dayNumber) })}
-          </p>
-        )}
-        {coupon && skipNote ? <p className="text-xs text-[var(--text-muted)]">{skipNote}</p> : null}
-        {todayMoney?.exampleStakeGhs != null && todayMoney.exampleReturnGhs != null ? (
-          <p className="text-xs text-[var(--text-muted)]">
-            {t('rollover.example_hint', {
-              stake: String(todayMoney.exampleStakeGhs),
-              ret: String(todayMoney.exampleReturnGhs),
-              day: String(board.today.dayNumber),
-              odds: board.targetOdds.toFixed(2),
-            })}
-          </p>
-        ) : todayMoney ? (
-          <p className="text-xs text-[var(--text-muted)]">{t('rollover.example_later_hint', { odds: board.targetOdds.toFixed(2) })}</p>
-        ) : null}
+        <h2 className="text-base font-semibold text-[var(--text)]">{t('rollover.today')}</h2>
+        <div className="w-full max-w-md">
+          {coupon ? (
+            <PickCard
+              id={coupon.id}
+              title={coupon.title}
+              totalPicks={coupon.totalPicks}
+              totalOdds={coupon.totalOdds}
+              price={coupon.price ?? 0}
+              sport={coupon.sport}
+              status={coupon.status}
+              result={coupon.result}
+              picks={coupon.picks || []}
+              tipster={coupon.tipster}
+              createdAt={coupon.createdAt}
+              bookmakerKey={coupon.bookmakerKey}
+              bookingCode={coupon.bookingCode}
+              bookingCodeCopyCount={coupon.bookingCodeCopyCount ?? 0}
+              purchaseCount={coupon.purchaseCount}
+              viewOnly
+              detailsHref={`/coupons/${coupon.id}`}
+              onPurchase={() => {}}
+              {...getPickCardSocialProps(coupon, {
+                onCountsChange: (_id, counts) => patchCoupon(counts),
+                loginRedirectPath: currentLoginRedirectPath('/rollover'),
+              })}
+            />
+          ) : (
+            <p className="text-sm text-[var(--text-muted)] rounded-[var(--radius)] border border-dashed border-[var(--separator)] px-4 py-8">
+              {skipNote ?? t('rollover.no_coupon', { day: String(board.today.dayNumber) })}
+            </p>
+          )}
+          {coupon && skipNote ? <p className="mt-3 text-xs text-[var(--text-muted)]">{skipNote}</p> : null}
+          {todayMoney?.exampleStakeGhs != null && todayMoney.exampleReturnGhs != null ? (
+            <p className="mt-3 text-xs text-[var(--text-muted)]">
+              {t('rollover.example_hint', {
+                stake: String(todayMoney.exampleStakeGhs),
+                ret: String(todayMoney.exampleReturnGhs),
+                day: String(board.today.dayNumber),
+                odds: board.targetOdds.toFixed(2),
+              })}
+            </p>
+          ) : todayMoney ? (
+            <p className="mt-3 text-xs text-[var(--text-muted)]">{t('rollover.example_later_hint', { odds: board.targetOdds.toFixed(2) })}</p>
+          ) : null}
+        </div>
       </section>
 
       <section className="space-y-6">
@@ -380,7 +382,7 @@ export function RolloverBoard() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
               {t('rollover.stat_best_run')}
             </p>
-            <p className="mt-1 font-display text-6xl sm:text-7xl font-semibold tracking-tighter tabular-nums leading-none text-[var(--text)]">
+            <p className="mt-1 text-[1.65rem] font-bold tabular-nums tracking-tight leading-none text-[var(--text)]">
               {bestRun}
             </p>
             {bestRun !== '—' ? (
@@ -398,7 +400,7 @@ export function RolloverBoard() {
                   {stakeAmount ? (
                     <GhsFigure amount={stakeAmount} tone="in" size="lg" />
                   ) : (
-                    <span className="font-display text-[1.85rem] font-semibold text-[var(--text-tertiary)]">—</span>
+                    <span className="text-[1.65rem] font-bold text-[var(--text-tertiary)]">—</span>
                   )}
                 </p>
                 <p className="mt-1.5 text-[12px] text-[var(--text-muted)]">{t('rollover.stat_stake_hint')}</p>
@@ -411,7 +413,7 @@ export function RolloverBoard() {
                   {winAmount ? (
                     <GhsFigure amount={winAmount} tone="out" size="lg" />
                   ) : (
-                    <span className="font-display text-[1.85rem] font-semibold text-[var(--text-tertiary)]">—</span>
+                    <span className="text-[1.65rem] font-bold text-[var(--text-tertiary)]">—</span>
                   )}
                 </p>
                 <p className="mt-1.5 text-[12px] text-[var(--text-muted)] truncate">
@@ -431,7 +433,7 @@ export function RolloverBoard() {
               {outcomeCounts.map((item) => (
                 <div key={item.key}>
                   <dt className="text-[11px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">{item.label}</dt>
-                  <dd className="mt-1 font-display text-2xl font-semibold tabular-nums tracking-tight text-[var(--text)]">
+                  <dd className="mt-1 text-[1.65rem] font-bold tabular-nums tracking-tight leading-none text-[var(--text)]">
                     {item.value}
                   </dd>
                 </div>

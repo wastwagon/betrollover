@@ -13,14 +13,14 @@ export default async function RolloverPage() {
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
       <main className="w-full min-w-0">
-        <div className="section-ux-page-wide w-full min-w-0">
-          <div className="lg:hidden -mx-1 mb-4">
+        <div className="section-ux-page w-full min-w-0">
+          <div className="lg:hidden -mx-1 mb-3">
             <NavBar title={t('nav.rollover')} backHref="/" backLabel={t('nav.home')} sticky={false} />
           </div>
-          <div className="hidden lg:block mb-8">
+          <div className="hidden lg:block">
             <PageHeader label={t('rollover.label')} title={t('rollover.title')} tagline={t('rollover.tagline')} />
           </div>
-          <p className="lg:hidden text-[15px] text-[var(--text-muted)] leading-snug mb-6">{t('rollover.tagline')}</p>
+          <p className="lg:hidden text-sm text-[var(--text-muted)] mb-4">{t('rollover.tagline')}</p>
           <RolloverBoard />
         </div>
       </main>
