@@ -90,8 +90,6 @@ function WalletContent() {
     provider: 'mtn_gh',
     accountNumber: '',
     bankName: '',
-    country: 'GH',
-    currency: 'GHS',
     walletAddress: '',
     cryptoCurrency: 'BTC',
   });
@@ -311,8 +309,8 @@ function WalletContent() {
           name: payoutForm.name,
           phone: payoutForm.phone,
           provider: payoutForm.provider,
-          country: payoutForm.country,
-          currency: payoutForm.currency,
+          country: 'GH',
+          currency: 'GHS',
         };
       } else {
         body = {
@@ -320,8 +318,8 @@ function WalletContent() {
           name: payoutForm.name,
           accountNumber: payoutForm.accountNumber,
           bankName: payoutForm.bankName,
-          country: payoutForm.country,
-          currency: payoutForm.currency,
+          country: 'GH',
+          currency: 'GHS',
         };
       }
       const res = await fetch(`${getApiUrl()}/wallet/payout-methods`, {
@@ -339,8 +337,6 @@ function WalletContent() {
         provider: 'mtn_gh',
         accountNumber: '',
         bankName: '',
-        country: 'GH',
-        currency: 'GHS',
         walletAddress: '',
         cryptoCurrency: 'BTC',
       });
@@ -556,80 +552,25 @@ function WalletContent() {
                         />
                         {payoutForm.type === 'mobile_money' && (
                           <>
-                            <select
-                              value={payoutForm.country}
-                              onChange={(e) => {
-                                const c = e.target.value;
-                                const cur: Record<string, string> = { GH: 'GHS', NG: 'NGN', KE: 'KES', ZA: 'ZAR', OTHER: 'USD' };
-                                setPayoutForm((p) => ({ ...p, country: c, currency: cur[c] || 'USD' }));
-                              }}
-                              className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
-                            >
-                              <option value="GH">Ghana</option>
-                              <option value="NG">Nigeria</option>
-                              <option value="KE">Kenya</option>
-                              <option value="ZA">South Africa</option>
-                              <option value="OTHER">Other</option>
-                            </select>
                             <input
                               placeholder="Phone (e.g. 0551234567)"
                               value={payoutForm.phone}
                               onChange={(e) => setPayoutForm((p) => ({ ...p, phone: e.target.value }))}
                               className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
                             />
-                            {payoutForm.country === 'GH' ? (
-                              <select
-                                value={payoutForm.provider}
-                                onChange={(e) => setPayoutForm((p) => ({ ...p, provider: e.target.value }))}
-                                className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
-                              >
-                                <option value="mtn_gh">MTN Mobile Money</option>
-                                <option value="vodafone_gh">Vodafone Cash</option>
-                                <option value="airteltigo_gh">AirtelTigo Money</option>
-                              </select>
-                            ) : (
-                              <select
-                                value={payoutForm.currency}
-                                onChange={(e) => setPayoutForm((p) => ({ ...p, currency: e.target.value }))}
-                                className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
-                              >
-                                <option value="GHS">GHS</option>
-                                <option value="NGN">NGN</option>
-                                <option value="KES">KES</option>
-                                <option value="ZAR">ZAR</option>
-                                <option value="USD">USD</option>
-                              </select>
-                            )}
+                            <select
+                              value={payoutForm.provider}
+                              onChange={(e) => setPayoutForm((p) => ({ ...p, provider: e.target.value }))}
+                              className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
+                            >
+                              <option value="mtn_gh">MTN Mobile Money</option>
+                              <option value="vodafone_gh">Vodafone Cash</option>
+                              <option value="airteltigo_gh">AirtelTigo Money</option>
+                            </select>
                           </>
                         )}
                         {payoutForm.type === 'bank' && (
                           <>
-                            <select
-                              value={payoutForm.country}
-                              onChange={(e) => {
-                                const c = e.target.value;
-                                const cur: Record<string, string> = { GH: 'GHS', NG: 'NGN', KE: 'KES', ZA: 'ZAR', OTHER: 'USD' };
-                                setPayoutForm((p) => ({ ...p, country: c, currency: cur[c] || 'USD' }));
-                              }}
-                              className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
-                            >
-                              <option value="GH">Ghana</option>
-                              <option value="NG">Nigeria</option>
-                              <option value="KE">Kenya</option>
-                              <option value="ZA">South Africa</option>
-                              <option value="OTHER">Other</option>
-                            </select>
-                            <select
-                              value={payoutForm.currency}
-                              onChange={(e) => setPayoutForm((p) => ({ ...p, currency: e.target.value }))}
-                              className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
-                            >
-                              <option value="GHS">GHS</option>
-                              <option value="NGN">NGN</option>
-                              <option value="KES">KES</option>
-                              <option value="ZAR">ZAR</option>
-                              <option value="USD">USD</option>
-                            </select>
                             <input
                               placeholder="Bank name"
                               value={payoutForm.bankName}
