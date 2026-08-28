@@ -1,4 +1,4 @@
-export const ACCA_DESK_SHORTS_EMAIL_MAX = 12;
+export const ACCA_DESK_SHORTS_EMAIL_MAX = 24;
 
 export type AccaDeskShortLeg = {
   matchDescription: string;

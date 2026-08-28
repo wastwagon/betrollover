@@ -4,8 +4,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
   ACCA_DESK_DAILY_CRON,
+  ACCA_DESK_EARLY_CRON,
+  isAccaDeskEarlyPublishEnabled,
   isAccaDeskEnabled,
 } from '../../config/acca-desk-tipsters.config';
+import { accraDateStr, addDateStrDays } from '../../config/acca-desk-slots';
 import { SyncStatus } from '../fixtures/entities/sync-status.entity';
 import { SyncLockService } from '../fixtures/sync-lock.service';
 import { AccaDeskPublisherService } from './acca-desk-publisher.service';
@@ -44,32 +47,53 @@ export class AccaDeskSchedulerService implements OnModuleInit {
     }, BOOT_CATCHUP_MS);
   }
 
-  /** 00:30 Africa/Accra — new calendar day after midnight fixture/odds sync. */
+  /** 20:00 Africa/Accra — publish tomorrow’s full desk day (~24h ahead). */
+  @Cron(ACCA_DESK_EARLY_CRON, { timeZone: PREDICTION_TIME_ZONE })
+  async handleEarlyTomorrow(): Promise<void> {
+    if (!isAccaDeskEarlyPublishEnabled()) {
+      this.logger.debug('Acca Desk early publish skipped (ACCA_DESK_EARLY_ENABLED=false)');
+      return;
+    }
+    const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
+    const tomorrow = addDateStrDays(today, 1);
+    await this.runLocked('20:00 early', tomorrow, 'acca_desk_early', false);
+  }
+
+  /** 00:30 Africa/Accra — catch-up for today’s desk day after midnight. */
   @Cron(ACCA_DESK_DAILY_CRON, { timeZone: PREDICTION_TIME_ZONE })
   async handleDaily(): Promise<void> {
-    await this.runLocked('00:30');
+    const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
+    await this.runLocked('00:30 catch-up', today, 'acca_desk', true);
   }
 
   /** Fixtures/odds often land after 00:30 — fill empty slots without waiting for an admin click. */
   @Cron('0 6 * * *', { timeZone: PREDICTION_TIME_ZONE })
   async handleMorningCatchup(): Promise<void> {
-    await this.runLocked('06:00 catch-up');
+    const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
+    await this.runLocked('06:00 catch-up', today, 'acca_desk', true);
   }
 
   /** Last fill before the 09:00 marketing digest. */
   @Cron('45 8 * * *', { timeZone: PREDICTION_TIME_ZONE })
   async handlePreDigestCatchup(): Promise<void> {
-    await this.runLocked('08:45 catch-up');
+    const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
+    await this.runLocked('08:45 catch-up', today, 'acca_desk', true);
   }
 
   private async catchUpIfDue(reason: string): Promise<void> {
     if (!isAccaDeskEnabled() || !isSchedulingEnabled()) return;
     const minutes = accraMinutesSinceMidnight(new Date(), PREDICTION_TIME_ZONE);
     if (minutes < DESK_WINDOW_MINUTE) return;
-    await this.runLocked(`${reason} catch-up`);
+    const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
+    await this.runLocked(`${reason} catch-up`, today, 'acca_desk', true);
   }
 
-  private async runLocked(label: string): Promise<void> {
+  private async runLocked(
+    label: string,
+    deskDayStr: string,
+    syncType: 'acca_desk' | 'acca_desk_early',
+    attachRollover: boolean,
+  ): Promise<void> {
     if (!isAccaDeskEnabled()) {
       this.logger.debug(`Acca Desk skipped (${label}, disabled)`);
       return;
@@ -79,14 +103,22 @@ export class AccaDeskSchedulerService implements OnModuleInit {
       return;
     }
 
+    // Share one lock so early + catch-up never overlap.
     if (!(await this.syncLock.tryStartSync('acca_desk'))) {
       this.logger.warn(`Acca Desk skipped (${label}) — already running`);
       return;
     }
 
     try {
-      this.logger.log(`Acca Desk starting (${label}, ${PREDICTION_TIME_ZONE})`);
-      const result = await this.publisher.runDaily({ ensureSetup: true });
+      this.logger.log(
+        `Acca Desk starting (${label}, deskDay=${deskDayStr}, ${PREDICTION_TIME_ZONE})`,
+      );
+      const result = await this.publisher.runDaily({
+        ensureSetup: true,
+        deskDayStr,
+        attachRollover,
+      });
+      // Always clear the shared `acca_desk` lock row.
       await this.syncStatusRepo.upsert(
         {
           syncType: 'acca_desk',
@@ -97,6 +129,18 @@ export class AccaDeskSchedulerService implements OnModuleInit {
         },
         ['syncType'],
       );
+      if (syncType === 'acca_desk_early') {
+        await this.syncStatusRepo.upsert(
+          {
+            syncType: 'acca_desk_early',
+            status: 'success',
+            lastSyncAt: new Date(),
+            lastSyncCount: result.published,
+            lastError: null,
+          },
+          ['syncType'],
+        );
+      }
       this.logger.log(
         `Acca Desk done (${label}): published=${result.published} empty=${result.skippedEmptyPool} errors=${result.errors}`,
       );
@@ -111,6 +155,16 @@ export class AccaDeskSchedulerService implements OnModuleInit {
         },
         ['syncType'],
       );
+      if (syncType === 'acca_desk_early') {
+        await this.syncStatusRepo.upsert(
+          {
+            syncType: 'acca_desk_early',
+            status: 'error',
+            lastError: message,
+          },
+          ['syncType'],
+        );
+      }
     }
   }
 }

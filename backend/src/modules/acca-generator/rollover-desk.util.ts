@@ -1,10 +1,11 @@
-import { ACCA_DESK_TIME_SLOTS, type AccaDeskSlotKey } from '../../config/acca-desk-slots';
+import { ACCA_DESK_TIME_SLOTS, accraDateStr, type AccaDeskSlotKey } from '../../config/acca-desk-slots';
 import {
   ROLLOVER_EXAMPLE_MAX_MONEY_DAY,
   ROLLOVER_EXAMPLE_STAKE_GHS,
   ROLLOVER_ODDS_MAX,
   ROLLOVER_ODDS_MIN,
   ROLLOVER_TARGET_ODDS,
+  ROLLOVER_TIMEZONE,
 } from '../../config/rollover-desk.config';
 
 export type RolloverTicketLike = {
@@ -19,16 +20,17 @@ const SLOT_RANK: Record<AccaDeskSlotKey, number> = {
   early: 0,
   afternoon: 1,
   evening: 2,
+  midnight: 3,
 };
 
+/** Accra (PREDICTION_TIMEZONE) calendar stamp — same as Acca Desk desk day. */
 export function utcDateStamp(now = new Date()): string {
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
-    .toISOString()
-    .slice(0, 10);
+  return accraDateStr(now, ROLLOVER_TIMEZONE);
 }
 
 export function utcDayBounds(now = new Date()): { start: Date; end: Date } {
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const stamp = utcDateStamp(now);
+  const start = new Date(`${stamp}T00:00:00.000Z`);
   const end = new Date(start);
   end.setUTCDate(end.getUTCDate() + 1);
   return { start, end };
@@ -44,7 +46,7 @@ export function isQualifyingRolloverOdds(odds: number): boolean {
 }
 
 /** Earliest Acca Desk slot in range; ties break toward 1.60.
- * `preferLatestSlot` picks evening over afternoon (admin same-day Day 2). */
+ * `preferLatestSlot` picks later slots (midnight over evening) for admin same-day Day 2. */
 export function selectQualifyingRolloverTicket<T extends RolloverTicketLike>(
   tickets: T[],
   excludeTicketIds: Set<number> = new Set(),

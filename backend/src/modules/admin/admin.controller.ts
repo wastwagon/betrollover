@@ -15,6 +15,7 @@ import { TipstersSetupService } from '../predictions/tipsters-setup.service';
 import { AccaDeskSetupService } from '../acca-generator/acca-desk-setup.service';
 import { AccaDeskPublisherService } from '../acca-generator/acca-desk-publisher.service';
 import { RolloverDeskService } from '../acca-generator/rollover-desk.service';
+import { resolveDeskDayArg } from '../../config/acca-desk-slots';
 import { NewsArticle, NewsCategory, normalizeNewsSport } from '../news/entities/news-article.entity';
 import { NewsService } from '../news/news.service';
 import { TransfersSyncService } from '../news/transfers-sync.service';
@@ -216,11 +217,26 @@ export class AdminController {
     return this.accaDeskSetup.initializeAccaDeskTipsters();
   }
 
-  /** Manual Acca Desk daily publish (same job as 00:30 Accra cron). Idempotent per tipster/day. */
+  /** Manual Acca Desk publish. Body `{ deskDay?: 'today' | 'tomorrow' | YYYY-MM-DD }`. */
   @Post('acca-desk/run-daily')
-  async runAccaDeskDaily(@CurrentUser() user: User) {
+  async runAccaDeskDaily(
+    @CurrentUser() user: User,
+    @Body() body?: { deskDay?: string },
+  ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
-    return this.accaDeskPublisher.runDaily({ ensureSetup: true });
+    const tz = process.env.PREDICTION_TIMEZONE || 'Africa/Accra';
+    let deskDayStr: string;
+    let today: string;
+    try {
+      ({ deskDayStr, today } = resolveDeskDayArg(body?.deskDay, tz));
+    } catch (err: unknown) {
+      throw new BadRequestException(err instanceof Error ? err.message : 'Invalid deskDay');
+    }
+    return this.accaDeskPublisher.runDaily({
+      ensureSetup: true,
+      deskDayStr,
+      attachRollover: deskDayStr === today,
+    });
   }
 
   @Get('acca-desk/overview')
@@ -241,19 +257,29 @@ export class AdminController {
     return this.rolloverDesk.syncNow();
   }
 
-  /** Publish AccaSureO15 only. Body `{ slotKey?: 'early' | 'afternoon' | 'evening' }`. */
+  /** Publish AccaSureO15 only. Body `{ slotKey?: 'early' | 'afternoon' | 'evening' | 'midnight', deskDay?: string }`. */
   @Post('rollover/publish')
   async publishRolloverOwner(
     @CurrentUser() user: User,
-    @Body() body?: { slotKey?: string },
+    @Body() body?: { slotKey?: string; deskDay?: string },
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     const raw = body?.slotKey?.trim().toLowerCase();
-    const slotKey = raw === 'early' || raw === 'afternoon' || raw === 'evening' ? raw : undefined;
+    const slotKey =
+      raw === 'early' || raw === 'afternoon' || raw === 'evening' || raw === 'midnight'
+        ? raw
+        : undefined;
     if (raw && !slotKey) {
-      throw new BadRequestException('slotKey must be early, afternoon, or evening');
+      throw new BadRequestException('slotKey must be early, afternoon, evening, or midnight');
     }
-    return this.accaDeskPublisher.publishRolloverOwner({ slotKey, ensureSetup: true });
+    const tz = process.env.PREDICTION_TIMEZONE || 'Africa/Accra';
+    let deskDayStr: string;
+    try {
+      ({ deskDayStr } = resolveDeskDayArg(body?.deskDay, tz));
+    } catch (err: unknown) {
+      throw new BadRequestException(err instanceof Error ? err.message : 'Invalid deskDay');
+    }
+    return this.accaDeskPublisher.publishRolloverOwner({ slotKey, deskDayStr, ensureSetup: true });
   }
 
   /** Attach earliest qualifying AccaSureO15 coupon, or `{ ticketId }` for a specific slot.

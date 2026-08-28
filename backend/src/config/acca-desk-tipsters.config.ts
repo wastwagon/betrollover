@@ -32,7 +32,7 @@ function desk(
   return {
     username: `Acca${riskLabel}${marketSlug}`,
     display_name: `${riskLabel} · ${marketLabel}`,
-    bio: `${riskLabel} Acca Desk · ${marketLabel} only · up to 3 daily 2-fold free picks (early / afternoon / evening), clustered by kick-off. Odd-band education — not guaranteed. 18+.`,
+    bio: `${riskLabel} Acca Desk · ${marketLabel} only · up to 4 daily 2-fold free picks (early / afternoon / evening / midnight), clustered by kick-off. Odd-band education — not guaranteed. 18+.`,
     avatar_url: `/avatars/acca_${risk}_${marketKey}.png`,
     strategy_id: `acca_desk_${risk}_${marketKey}`,
     riskLevel: risk,
@@ -76,10 +76,18 @@ export const ACCA_DESK_TIPSTER_TYPE = 'acca_desk';
 export const ACCA_DESK_LEGS = 2 as const;
 export { ACCA_DESK_MAX_PER_DAY, ACCA_DESK_TIME_SLOTS } from './acca-desk-slots';
 
-/** Cron: 00:30 Africa/Accra — after midnight fixture/odds sync window. */
+/** Cron: 00:30 Africa/Accra — catch-up for today’s desk day after midnight. */
 export const ACCA_DESK_DAILY_CRON = process.env.ACCA_DESK_DAILY_CRON || '30 0 * * *';
+
+/** Cron: 20:00 Africa/Accra — publish tomorrow’s full desk day (~24h ahead). */
+export const ACCA_DESK_EARLY_CRON = process.env.ACCA_DESK_EARLY_CRON || '0 20 * * *';
 
 export function isAccaDeskEnabled(): boolean {
   const raw = (process.env.ACCA_DESK_ENABLED || 'true').toLowerCase().trim();
+  return raw !== 'false' && raw !== '0' && raw !== 'no';
+}
+
+export function isAccaDeskEarlyPublishEnabled(): boolean {
+  const raw = (process.env.ACCA_DESK_EARLY_ENABLED || 'true').toLowerCase().trim();
   return raw !== 'false' && raw !== '0' && raw !== 'no';
 }

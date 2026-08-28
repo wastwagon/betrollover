@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { ACCA_DESK_TIME_SLOTS, type AccaDeskSlotKey } from '../../config/acca-desk-slots';
+import { ACCA_DESK_TIME_SLOTS, deskDayFromTitle, type AccaDeskSlotKey } from '../../config/acca-desk-slots';
 import {
   ROLLOVER_EXAMPLE_MAX_MONEY_DAY,
   ROLLOVER_EXAMPLE_STAKE_GHS,
@@ -606,9 +606,17 @@ export class RolloverDeskService {
     if (!owner?.userId || ticket.userId !== owner.userId) {
       throw new BadRequestException(`Coupon must belong to ${ROLLOVER_OWNER_USERNAME}.`);
     }
-    const { start, end } = utcDayBounds();
-    if (ticket.createdAt < start || ticket.createdAt >= end) {
-      throw new BadRequestException('Coupon must be from today’s Acca Desk publish.');
+    const todayStamp = utcDateStamp();
+    const desk = deskDayFromTitle(ticket.title);
+    if (desk) {
+      if (desk !== todayStamp) {
+        throw new BadRequestException('Coupon must be from today’s Acca Desk board.');
+      }
+    } else {
+      const { start, end } = utcDayBounds();
+      if (ticket.createdAt < start || ticket.createdAt >= end) {
+        throw new BadRequestException('Coupon must be from today’s Acca Desk publish.');
+      }
     }
     if (!ticket.isMarketplace || ticket.totalPicks !== 2) {
       throw new BadRequestException('Coupon must be a published 2-fold marketplace pick.');
@@ -631,14 +639,24 @@ export class RolloverDeskService {
     });
     if (!tipster?.userId) return [];
     const { start, end } = utcDayBounds();
-    return this.ticketRepo
+    // Look back one day of createdAt so 20:00 early-publish for "today" (created yesterday) still qualifies.
+    const createdFrom = new Date(start);
+    createdFrom.setUTCDate(createdFrom.getUTCDate() - 1);
+    const todayStamp = utcDateStamp();
+    const tickets = await this.ticketRepo
       .createQueryBuilder('t')
       .where('t.userId = :userId', { userId: tipster.userId })
-      .andWhere('t.createdAt >= :start', { start })
+      .andWhere('t.createdAt >= :createdFrom', { createdFrom })
       .andWhere('t.createdAt < :end', { end })
       .andWhere('t.isMarketplace = true')
       .orderBy('t.createdAt', 'ASC')
       .getMany();
+    // Prefer desk-day title stamp so tomorrow's early board never attaches to today's rollover.
+    return tickets.filter((t) => {
+      const desk = deskDayFromTitle(t.title);
+      if (desk) return desk === todayStamp;
+      return t.createdAt >= start && t.createdAt < end;
+    });
   }
 
   private async usedTicketIds(): Promise<Set<number>> {

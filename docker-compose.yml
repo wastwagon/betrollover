@@ -54,8 +54,8 @@ services:
   # NestJS API Backend
   api:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: betrollover-api
     restart: unless-stopped
     ports:
@@ -91,6 +91,8 @@ services:
       PREDICTION_DAILY_CRON: ${PREDICTION_DAILY_CRON:-0 20 * * *}
       ACCA_DESK_ENABLED: ${ACCA_DESK_ENABLED:-true}
       ACCA_DESK_DAILY_CRON: ${ACCA_DESK_DAILY_CRON:-30 0 * * *}
+      ACCA_DESK_EARLY_CRON: ${ACCA_DESK_EARLY_CRON:-0 20 * * *}
+      ACCA_DESK_EARLY_ENABLED: ${ACCA_DESK_EARLY_ENABLED:-true}
       HIDE_CLASSIC_AI_TIPSTERS_FROM_PUBLIC: ${HIDE_CLASSIC_AI_TIPSTERS_FROM_PUBLIC:-true}
       PREDICTION_CATCHUP_CRON: ${PREDICTION_CATCHUP_CRON:-0 2 * * *}
       PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY:-}

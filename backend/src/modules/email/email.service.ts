@@ -359,7 +359,7 @@ ${this.bodyCell(`${this.copyP(this.escapeEmailText(data.body))}${data.extraHtml 
       subject: 'Today’s Acca Desk shorts',
       eyebrow: 'Acca Desk',
       title: 'Two-fold shorts from tipsters you follow',
-      body: 'Acca Desk posts early / afternoon / evening 2-folds. Informational only — 18+. Educational odd bands, not a guarantee. You pick your own legs; we don’t stake for you.',
+      body: 'Acca Desk posts early / afternoon / evening / midnight 2-folds. Informational only — 18+. Educational odd bands, not a guarantee. You pick your own legs; we don’t stake for you.',
       ctaLabel: 'Browse marketplace',
       ctaPath: '/marketplace',
       extraHtml: cards,

@@ -19,6 +19,8 @@ import { AccaGeneratorEvent } from './entities/acca-generator-event.entity';
 import { ACCA_GENERATOR_LEGS_MAX, ACCA_GENERATOR_LEGS_MIN } from './acca-generator.constants';
 import {
   ACCA_DESK_MAX_KICKOFF_GAP_MS,
+  accraDateStr,
+  deskDayFixtureWindow,
   pickTimeClusteredPair,
   slotForKickoff,
   type AccaDeskSlotKey,
@@ -520,9 +522,10 @@ export class AccaGeneratorService {
     }
   }
 
-  private async loadTodayOddsInBand(
+  private async loadOddsInBand(
     oddMin: number,
     oddMax: number,
+    window?: { start: Date; endExclusive: Date },
   ): Promise<
     {
       fixtureId: number;
@@ -539,19 +542,24 @@ export class AccaGeneratorService {
   > {
     const minKickoff = this.minKickoffAt();
     const { startOfDay, endOfDay } = this.todayBounds();
+    const start = window?.start ?? startOfDay;
+    // Desk-day window is half-open [start, endExclusive); calendar-day path stays inclusive endOfDay.
+    const end = window?.endExclusive ?? endOfDay;
+    const endInclusive = !window;
 
-    const fixtures = await this.fixtureRepo
+    const fixturesQb = this.fixtureRepo
       .createQueryBuilder('f')
       .where('f.status IN (:...st)', { st: ['NS', 'TBD'] })
-      .andWhere('f.matchDate >= :startOfDay', { startOfDay })
-      .andWhere('f.matchDate <= :endOfDay', { endOfDay })
+      .andWhere('f.matchDate >= :start', { start })
+      .andWhere(endInclusive ? 'f.matchDate <= :end' : 'f.matchDate < :end', { end })
       // Lead buffer: marketplace delists as soon as any leg kickoff passes.
       .andWhere('f.matchDate >= :minKickoff', { minKickoff })
       // Odds-first sync can leave API-Sports placeholders until /fixtures backfill runs.
       .andWhere("NOT (f.homeTeamName = 'Home' AND f.awayTeamName = 'Away')")
       .orderBy('f.matchDate', 'ASC')
-      .take(800)
-      .getMany();
+      .take(800);
+
+    const fixtures = await fixturesQb.getMany();
 
     if (!fixtures.length) return [];
 
@@ -597,14 +605,26 @@ export class AccaGeneratorService {
     return rows;
   }
 
+  private async loadTodayOddsInBand(oddMin: number, oddMax: number) {
+    return this.loadOddsInBand(oddMin, oddMax);
+  }
+
   private async buildCandidates(opts: {
     allowedOutcomes: Set<string>;
     oddMin: number;
     oddMax: number;
     targetOdd: number;
     excludeFixtureIds?: Set<number>;
+    /** Acca Desk board date — uses [D 06:00, D+1 06:00) pool. */
+    deskDayStr?: string;
   }): Promise<AccaGeneratorSelection[]> {
-    const pool = await this.loadTodayOddsInBand(opts.oddMin, opts.oddMax);
+    const window = opts.deskDayStr
+      ? (() => {
+          const { start, end } = deskDayFixtureWindow(opts.deskDayStr!, this.predictionTimeZone());
+          return { start, endExclusive: end };
+        })()
+      : undefined;
+    const pool = await this.loadOddsInBand(opts.oddMin, opts.oddMax, window);
     const halfSpan = Math.max((opts.oddMax - opts.oddMin) / 2, 0.05);
     const bestByFixture = new Map<number, AccaGeneratorSelection>();
     const exclude = opts.excludeFixtureIds;
@@ -663,7 +683,7 @@ export class AccaGeneratorService {
   }
 
   /**
-   * Acca Desk / automation: same candidate pool as public generate, without user quota
+   * Acca Desk / automation: desk-day candidate pool, without user quota
    * or the public rotate/vary picker. Callers enforce exclusivity via excludeFixtureIds.
    */
   async generateForDesk(opts: {
@@ -674,6 +694,8 @@ export class AccaGeneratorService {
     excludeFixtureIds?: Iterable<number>;
     /** Restrict pool to one Acca Desk kick-off window. */
     slotKey?: AccaDeskSlotKey;
+    /** Accra desk day YYYY-MM-DD (default: today). */
+    deskDayStr?: string;
   }) {
     const markets = this.normalizeMarkets(opts.markets);
     const risk = this.resolveRiskFromDto({ markets, legs: opts.legs, riskLevel: opts.riskLevel });
@@ -681,6 +703,9 @@ export class AccaGeneratorService {
     if (!Number.isFinite(legs) || legs < ACCA_GENERATOR_LEGS_MIN || legs > ACCA_GENERATOR_LEGS_MAX) {
       throw new BadRequestException(`legs must be between ${ACCA_GENERATOR_LEGS_MIN} and ${ACCA_GENERATOR_LEGS_MAX}`);
     }
+
+    const tz = this.predictionTimeZone();
+    const deskDayStr = opts.deskDayStr || accraDateStr(new Date(), tz);
 
     const excludeFixtureIds = new Set(
       [...(opts.excludeFixtureIds || [])].filter((id) => Number.isFinite(id) && id > 0),
@@ -692,9 +717,9 @@ export class AccaGeneratorService {
       oddMax: risk.oddMax,
       targetOdd: risk.targetOdd,
       excludeFixtureIds,
+      deskDayStr,
     });
 
-    const tz = this.predictionTimeZone();
     if (opts.slotKey) {
       candidates = candidates.filter((c) => slotForKickoff(c.matchDate, tz)?.key === opts.slotKey);
     }
@@ -708,6 +733,7 @@ export class AccaGeneratorService {
         markets,
         excluded: excludeFixtureIds.size,
         slotKey: opts.slotKey ?? null,
+        deskDay: deskDayStr,
       });
       return {
         ok: false as const,
@@ -715,6 +741,7 @@ export class AccaGeneratorService {
         candidates: candidates.length,
         riskLevel: risk.key,
         markets,
+        deskDay: deskDayStr,
       };
     }
 
@@ -730,6 +757,7 @@ export class AccaGeneratorService {
         legsBuilt: selected.length,
         markets,
         slotKey: opts.slotKey ?? null,
+        deskDay: deskDayStr,
       });
       return {
         ok: false as const,
@@ -737,6 +765,7 @@ export class AccaGeneratorService {
         candidates: candidates.length,
         riskLevel: risk.key,
         markets,
+        deskDay: deskDayStr,
       };
     }
 
@@ -764,6 +793,7 @@ export class AccaGeneratorService {
       riskLevel: risk.key,
       oddMin: risk.oddMin,
       oddMax: risk.oddMax,
+      deskDay: deskDayStr,
     };
   }
 }

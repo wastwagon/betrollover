@@ -18,6 +18,7 @@ import { BottomSheet } from '@/components/ios/BottomSheet';
 import { PickSocialBar, type PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { Button, buttonClassName } from '@/components/ui/Button';
+import { accaDeskBoardBadge } from '@/lib/acca-desk-board-badge';
 
 interface Pick {
   id?: number;
@@ -230,6 +231,7 @@ export function PickCard({
   };
   const displayStatus = result && ['won', 'lost', 'void'].includes(result) ? result : status;
   const statusColor = displayStatus ? statusColors[displayStatus] || 'bg-slate-100 text-slate-600' : '';
+  const deskBoard = accaDeskBoardBadge(title, tipster?.tipsterType ?? tipster?.tipster_type);
 
   const handlePurchase = () => {
     if (price > 0) {
@@ -306,6 +308,22 @@ export function PickCard({
                         className="!text-[9px] !px-1.5 !py-px"
                         tipsterType={tipster?.tipsterType ?? tipster?.tipster_type}
                       />
+                    ) : null}
+                    {deskBoard ? (
+                      <span
+                        className={`flex-shrink-0 text-[9px] font-semibold px-1.5 py-px rounded ${
+                          deskBoard === 'tomorrow'
+                            ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200'
+                            : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
+                        }`}
+                        title={
+                          deskBoard === 'tomorrow'
+                            ? t('pick_card.desk_tomorrow_title')
+                            : t('pick_card.desk_today_title')
+                        }
+                      >
+                        {deskBoard === 'tomorrow' ? t('pick_card.desk_tomorrow') : t('pick_card.desk_today')}
+                      </span>
                     ) : null}
                     {tipsterShowsVerifiedBadge(tipster) ? (
                       <VerifiedTipsterBadge className="!text-[9px] !px-1.5 !py-px" />
@@ -656,6 +674,17 @@ export function PickCard({
                         {tipsterShowsAiBadge(tipster) ? (
                           <AiTipsterBadge tipsterType={tipster?.tipsterType ?? tipster?.tipster_type} />
                         ) : null}
+                        {deskBoard ? (
+                          <span
+                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                              deskBoard === 'tomorrow'
+                                ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200'
+                                : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
+                            }`}
+                          >
+                            {deskBoard === 'tomorrow' ? t('pick_card.desk_tomorrow') : t('pick_card.desk_today')}
+                          </span>
+                        ) : null}
                         {tipsterShowsVerifiedBadge(tipster) ? <VerifiedTipsterBadge /> : null}
                       </div>
                       <div className="flex items-center gap-4 mt-1">
@@ -823,7 +852,18 @@ export function PickCard({
                           {tipsterShowsAiBadge(tipster) ? (
                             <AiTipsterBadge tipsterType={tipster?.tipsterType ?? tipster?.tipster_type} />
                           ) : null}
-                        {tipsterShowsVerifiedBadge(tipster) ? <VerifiedTipsterBadge /> : null}
+                          {deskBoard ? (
+                            <span
+                              className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                                deskBoard === 'tomorrow'
+                                  ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200'
+                                  : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
+                              }`}
+                            >
+                              {deskBoard === 'tomorrow' ? t('pick_card.desk_tomorrow') : t('pick_card.desk_today')}
+                            </span>
+                          ) : null}
+                          {tipsterShowsVerifiedBadge(tipster) ? <VerifiedTipsterBadge /> : null}
                         </div>
                         <p className="text-xs text-[var(--text-muted)]">
                           {t('pick_card.win_rate', { rate: (tipster?.winRate != null ? Number(tipster.winRate).toFixed(1) : '—') })} • {t('pick_card.picks_count', { n: String(tipster.totalPicks) })}

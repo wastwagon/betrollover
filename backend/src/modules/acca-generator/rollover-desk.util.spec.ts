@@ -37,6 +37,9 @@ describe('rollover-desk.util', () => {
   it('parses live AccaSureO15 titles that omit the calendar-date suffix', () => {
     expect(slotKeyFromTitle('Sure · Over 1.5 Goals · Afternoon · 2-fold @ 1.638')).toBe('afternoon');
     expect(slotKeyFromTitle('Sure · Over 1.5 Goals · Evening · 2-fold @ 1.664')).toBe('evening');
+    expect(slotKeyFromTitle('Sure · Over 1.5 Goals · Midnight · 2-fold @ 1.638 · 2026-08-29')).toBe(
+      'midnight',
+    );
   });
 
   it('accepts combined odds in 1.50–1.75', () => {

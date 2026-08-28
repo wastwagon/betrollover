@@ -38,8 +38,12 @@ type TodayTicket = {
 
 type Overview = {
   enabled: boolean;
+  earlyEnabled?: boolean;
   cron: string;
+  earlyCron?: string;
   timezone: string;
+  todayDeskDay?: string;
+  tomorrowDeskDay?: string;
   legs: number;
   maxPerDay?: number;
   timeSlots?: string[];
@@ -47,7 +51,14 @@ type Overview = {
   setupCount: number;
   activeCount: number;
   todayPublished: number;
+  tomorrowPublished?: number;
   syncStatus: {
+    status: string;
+    lastSyncAt?: string | null;
+    lastSyncCount?: number | null;
+    lastError?: string | null;
+  } | null;
+  earlySyncStatus?: {
     status: string;
     lastSyncAt?: string | null;
     lastSyncCount?: number | null;
@@ -55,6 +66,7 @@ type Overview = {
   } | null;
   roster: RosterRow[];
   todayTickets: TodayTicket[];
+  tomorrowTickets?: TodayTicket[];
   rollover?: {
     calendarDate: string;
     ownerUsername: string;
@@ -102,11 +114,11 @@ type Overview = {
       status: string;
       combinedOdds: number | null;
     } | null;
-    postedSlots?: Record<'early' | 'afternoon' | 'evening', boolean>;
+    postedSlots?: Record<'early' | 'afternoon' | 'evening' | 'midnight', boolean>;
     candidates?: {
       id: number;
       title: string;
-      slotKey: 'early' | 'afternoon' | 'evening' | null;
+      slotKey: 'early' | 'afternoon' | 'evening' | 'midnight' | null;
       totalOdds: number;
       totalPicks: number;
       result: string;
@@ -121,6 +133,7 @@ type Overview = {
 
 type RunResult = {
   enabled: boolean;
+  deskDay?: string;
   published: number;
   skippedAlreadyPosted: number;
   skippedEmptyPool: number;
@@ -241,7 +254,7 @@ export default function AdminAccaDeskPage() {
     }
   };
 
-  const handleRunDaily = async () => {
+  const handleRunDaily = async (deskDay: 'today' | 'tomorrow' = 'today') => {
     const token = localStorage.getItem('token');
     if (!token) return;
     setRunning(true);
@@ -249,7 +262,8 @@ export default function AdminAccaDeskPage() {
     try {
       const res = await fetch(`${getApiUrl()}/admin/acca-desk/run-daily`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deskDay }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
@@ -260,7 +274,7 @@ export default function AdminAccaDeskPage() {
         } else {
           setMessage({
             type: r.errors > 0 ? 'error' : 'success',
-            text: `Published ${r.published} · already posted ${r.skippedAlreadyPosted} · empty pool ${r.skippedEmptyPool} · errors ${r.errors}`,
+            text: `Desk ${r.deskDay || deskDay}: published ${r.published} · already ${r.skippedAlreadyPosted} · empty ${r.skippedEmptyPool} · errors ${r.errors}`,
           });
         }
         await loadData();
@@ -340,10 +354,12 @@ export default function AdminAccaDeskPage() {
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Acca Desk</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Automated. Each Acca Desk tipster posts up to 3 free 2-folds daily (early / afternoon / evening).
-            Roster setup and publish run at cron {overview?.cron || '30 0 * * *'} ({overview?.timezone || 'Africa/Accra'}),
-            then catch-up at 06:00 and 08:45 if pools were empty. Followers get one batched email after each publish
-            that created new slips. Buttons below are fallback only.
+            Automated. Each Acca Desk tipster posts up to 4 free 2-folds per desk day
+            (early / afternoon / evening / midnight). Primary publish at{' '}
+            {overview?.earlyCron || '0 20 * * *'} ({overview?.timezone || 'Africa/Accra'}) for{' '}
+            <strong>tomorrow</strong>; catch-up at {overview?.cron || '30 0 * * *'}, 06:00 and 08:45 for{' '}
+            <strong>today</strong>. Cards show Today / Tomorrow badges. Followers get one batched email
+            after each publish that created new slips.
           </p>
         </div>
 
@@ -377,7 +393,7 @@ export default function AdminAccaDeskPage() {
           </button>
           <button
             type="button"
-            onClick={handleRunDaily}
+            onClick={() => handleRunDaily('today')}
             disabled={running || settingUp}
             className={buttonClassName()}
           >
@@ -387,8 +403,16 @@ export default function AdminAccaDeskPage() {
                 Publishing…
               </>
             ) : (
-              <>Publish now (fallback)</>
+              <>Publish today (catch-up)</>
             )}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleRunDaily('tomorrow')}
+            disabled={running || settingUp}
+            className={buttonClassName({ variant: 'secondary' })}
+          >
+            {running ? 'Publishing…' : 'Publish tomorrow (early)'}
           </button>
           <button
             type="button"
@@ -406,12 +430,17 @@ export default function AdminAccaDeskPage() {
           </div>
         ) : overview ? (
           <>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
               {[
                 { label: 'Enabled', value: overview.enabled ? 'Yes' : 'No' },
+                {
+                  label: 'Early (20:00)',
+                  value: overview.earlyEnabled === false ? 'Off' : 'On',
+                },
                 { label: 'Roster setup', value: `${overview.setupCount}/${overview.rosterSize}` },
                 { label: 'Active', value: String(overview.activeCount) },
                 { label: 'Today published', value: String(overview.todayPublished) },
+                { label: 'Tomorrow published', value: String(overview.tomorrowPublished ?? 0) },
               ].map((c) => (
                 <div
                   key={c.label}
@@ -423,10 +452,12 @@ export default function AdminAccaDeskPage() {
               ))}
             </div>
 
-            <div className="mb-8 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+            <div className="mb-8 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm space-y-3">
               <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Last cron / sync status</h2>
               {overview.syncStatus ? (
                 <p className="text-sm text-gray-600 dark:text-gray-300">
+                  <span className="font-medium">Catch-up (today)</span>
+                  {' · '}
                   <span className="font-medium">{overview.syncStatus.status}</span>
                   {' · '}
                   {formatWhen(overview.syncStatus.lastSyncAt)}
@@ -438,7 +469,26 @@ export default function AdminAccaDeskPage() {
                   )}
                 </p>
               ) : (
-                <p className="text-sm text-gray-500">No Acca Desk sync status yet (run daily or wait for cron).</p>
+                <p className="text-sm text-gray-500">No today catch-up sync status yet.</p>
+              )}
+              {overview.earlySyncStatus ? (
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  <span className="font-medium">Early (tomorrow)</span>
+                  {' · '}
+                  <span className="font-medium">{overview.earlySyncStatus.status}</span>
+                  {' · '}
+                  {formatWhen(overview.earlySyncStatus.lastSyncAt)}
+                  {overview.earlySyncStatus.lastSyncCount != null && (
+                    <> · published count {overview.earlySyncStatus.lastSyncCount}</>
+                  )}
+                  {overview.earlySyncStatus.lastError && (
+                    <span className="block mt-1 text-red-600 dark:text-red-400 text-xs">
+                      {overview.earlySyncStatus.lastError}
+                    </span>
+                  )}
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500">No early/tomorrow sync status yet (20:00 Accra or Publish tomorrow).</p>
               )}
             </div>
 
@@ -592,7 +642,7 @@ export default function AdminAccaDeskPage() {
                   >
                     {rolloverBusy === 'publish' ? 'Publishing…' : 'Publish remaining AccaSureO15 slots'}
                   </Button>
-                  {(['early', 'afternoon', 'evening'] as const).map((slot) => {
+                  {(['early', 'afternoon', 'evening', 'midnight'] as const).map((slot) => {
                     const posted = overview.rollover?.postedSlots?.[slot];
                     return (
                       <Button
@@ -717,10 +767,15 @@ export default function AdminAccaDeskPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Today&apos;s Acca Desk picks</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Today&apos;s Acca Desk picks
+                  {overview.todayDeskDay ? (
+                    <span className="ml-2 text-sm font-normal text-gray-500">({overview.todayDeskDay})</span>
+                  ) : null}
+                </h2>
                 {overview.todayTickets.length === 0 ? (
                   <p className="text-gray-500 dark:text-gray-400 py-4">
-                    No Acca Desk coupons today. Run daily publish after fixtures/odds are synced.
+                    No Acca Desk coupons for today&apos;s desk day. Run catch-up after fixtures/odds are synced.
                   </p>
                 ) : (
                   <div className="space-y-3 max-h-[32rem] overflow-y-auto">
@@ -735,25 +790,50 @@ export default function AdminAccaDeskPage() {
                             </p>
                           </div>
                           <span className="self-start px-2 py-0.5 text-xs font-medium rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
-                            Free · {t.status}
+                            Today · {t.status}
                           </span>
                         </div>
-                        {t.legs?.length > 0 && (
-                          <ul className="mt-2 space-y-1 text-xs text-gray-600 dark:text-gray-300">
-                            {t.legs.map((leg, i) => (
-                              <li key={`${t.id}-${i}`}>
-                                {leg.matchDescription} — {leg.prediction} @ {Number(leg.odds).toFixed(2)}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
                       </div>
                     ))}
                   </div>
                 )}
               </div>
-
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Tomorrow&apos;s Acca Desk picks
+                  {overview.tomorrowDeskDay ? (
+                    <span className="ml-2 text-sm font-normal text-gray-500">({overview.tomorrowDeskDay})</span>
+                  ) : null}
+                </h2>
+                {(overview.tomorrowTickets?.length ?? 0) === 0 ? (
+                  <p className="text-gray-500 dark:text-gray-400 py-4">
+                    No tomorrow board yet. Early cron posts at 20:00 Accra, or use &quot;Publish tomorrow&quot;.
+                  </p>
+                ) : (
+                  <div className="space-y-3 max-h-[32rem] overflow-y-auto">
+                    {(overview.tomorrowTickets || []).map((t) => (
+                      <div key={t.id} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 dark:text-white truncate">{t.title}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {t.displayName} · @{t.username} · {Number(t.totalOdds).toFixed(2)} odds ·{' '}
+                              {formatWhen(t.createdAt)}
+                            </p>
+                          </div>
+                          <span className="self-start px-2 py-0.5 text-xs font-medium rounded bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300">
+                            Tomorrow · {t.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 lg:col-span-2">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Roster ({overview.rosterSize})
                 </h2>
