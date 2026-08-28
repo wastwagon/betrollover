@@ -31,7 +31,6 @@ import {
   isFootballOnlyDiscovery,
 } from '@/lib/football-only-discovery';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
-import { FollowPushNudge } from '@/components/FollowPushNudge';
 import { MarketplaceSavedFiltersBar } from '@/components/MarketplaceSavedFiltersBar';
 import { MarketplaceBookingCodesShelf } from '@/components/MarketplaceBookingCodesShelf';
 import type { MarketplaceSavedFilter } from '@/lib/marketplace-saved-filters';
@@ -141,9 +140,6 @@ export default function MarketplacePage({
     return () => clearTimeout(id);
   }, [tipsterSearch]);
   const [followedTipsterUsernames, setFollowedTipsterUsernames] = useState<Set<string>>(new Set());
-  const [followLoading, setFollowLoading] = useState<string | null>(null);
-  const [followPushTrigger, setFollowPushTrigger] = useState(0);
-  const [followPushName, setFollowPushName] = useState<string | null>(null);
   const [autoPurchaseHandled, setAutoPurchaseHandled] = useState(false);
   const relevanceDefaultApplied = useRef(false);
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
@@ -190,54 +186,6 @@ export default function MarketplacePage({
     const cur = `${window.location.pathname}${window.location.search}`;
     if (cur !== next) router.replace(next, { scroll: false });
   }, [sportFilter, debouncedTipster, priceFilter, sortBy, router]);
-
-  const handleFollow = async (username: string) => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login?redirect=/marketplace');
-      return;
-    }
-    const isFollowing = followedTipsterUsernames.has(username);
-    setFollowLoading(username);
-    setFollowedTipsterUsernames((prev) => {
-      const next = new Set(prev);
-      if (isFollowing) next.delete(username);
-      else next.add(username);
-      return next;
-    });
-    try {
-      const res = await fetch(`${API_URL}/tipsters/${encodeURIComponent(username)}/follow`, {
-        method: isFollowing ? 'DELETE' : 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        showSuccess(isFollowing ? t('tipster.toast_unfollowed') : t('tipster.toast_following'));
-        if (!isFollowing) {
-          setFollowPushName(username);
-          setFollowPushTrigger((n) => n + 1);
-        }
-      } else {
-        setFollowedTipsterUsernames((prev) => {
-          const next = new Set(prev);
-          if (isFollowing) next.add(username);
-          else next.delete(username);
-          return next;
-        });
-        const err = await res.json().catch(() => ({}));
-        showError(new Error(getApiErrorMessage(err, 'Failed to update follow')));
-      }
-    } catch (e) {
-      setFollowedTipsterUsernames((prev) => {
-        const next = new Set(prev);
-        if (isFollowing) next.add(username);
-        else next.delete(username);
-        return next;
-      });
-      showError(e instanceof Error ? e : new Error('Failed to update follow'));
-    } finally {
-      setFollowLoading(null);
-    }
-  };
 
   const filteredAndSortedPicks = useMemo(() => {
     let list = [...picks]; // API already filters by sport when sportFilter is set
@@ -587,9 +535,6 @@ export default function MarketplacePage({
         onUnveilClose={() => setUnveilCouponId(null)}
         onView={() => recordView(a.id)}
         createdAt={a.createdAt}
-        isFollowing={a.tipster?.username ? followedTipsterUsernames.has(a.tipster.username) : false}
-        onFollow={a.tipster?.username ? () => handleFollow(a.tipster!.username) : undefined}
-        followLoading={a.tipster?.username ? followLoading === a.tipster.username : false}
       />
     );
   };
@@ -903,7 +848,6 @@ export default function MarketplacePage({
         </div>
         </PullToRefresh>
       </div>
-      <FollowPushNudge triggerToken={followPushTrigger} tipsterName={followPushName} />
     </DashboardShell>
   );
 }

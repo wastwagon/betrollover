@@ -126,10 +126,6 @@ interface PickCardProps {
   onUnveilClose?: () => void;
   className?: string;
   createdAt?: string;
-  /** Follow tipster - when set, shows compact follow button at top right */
-  isFollowing?: boolean;
-  onFollow?: () => void;
-  followLoading?: boolean;
   /** Buyer review summary for this pick */
   avgRating?: number | null;
   reviewCount?: number | null;
@@ -175,9 +171,6 @@ export function PickCard({
   onView,
   className = '',
   createdAt,
-  isFollowing = false,
-  onFollow,
-  followLoading = false,
   avgRating,
   reviewCount,
   picksRevealed = false,
@@ -261,55 +254,29 @@ export function PickCard({
       <article
         className={`card-gradient rounded-[var(--radius)] shadow-card overflow-hidden hover:border-[var(--primary)]/30 transition-colors duration-200 flex flex-col relative border border-[var(--border)] ${className}`}
       >
-        {/* Top-right: desk-day badge + follow — shared row so they never overlap */}
-        {(deskBoard || (tipster && onFollow)) && (
-          <div className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1.5">
-            {deskBoard ? (
-              <span
-                className={`flex-shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded ${
-                  deskBoard === 'tomorrow'
-                    ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200'
-                    : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
-                }`}
-                title={
-                  deskBoard === 'tomorrow'
-                    ? t('pick_card.desk_tomorrow_title')
-                    : t('pick_card.desk_today_title')
-                }
-              >
-                {deskBoard === 'tomorrow' ? t('pick_card.desk_tomorrow') : t('pick_card.desk_today')}
-              </span>
-            ) : null}
-            {tipster && onFollow ? (
-              <Button
-                type="button"
-                size="sm"
-                variant={isFollowing ? 'secondary' : 'primary'}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onFollow();
-                }}
-                disabled={followLoading || isFollowing}
-                className={`px-2 py-0.5 min-h-0 rounded-md text-[10px] ${followLoading ? 'opacity-70' : ''} ${isFollowing ? 'cursor-default' : ''}`}
-              >
-                {followLoading ? '…' : isFollowing ? t('pick_card.following') : t('pick_card.follow')}
-              </Button>
-            ) : null}
+        {/* Top-right: Acca Desk Today / Tomorrow only (follow lives on tipster cards) */}
+        {deskBoard ? (
+          <div className="absolute top-1.5 right-1.5 z-10">
+            <span
+              className={`flex-shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded ${
+                deskBoard === 'tomorrow'
+                  ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200'
+                  : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
+              }`}
+              title={
+                deskBoard === 'tomorrow'
+                  ? t('pick_card.desk_tomorrow_title')
+                  : t('pick_card.desk_today_title')
+              }
+            >
+              {deskBoard === 'tomorrow' ? t('pick_card.desk_tomorrow') : t('pick_card.desk_today')}
+            </span>
           </div>
-        )}
+        ) : null}
         <div className="p-3 flex flex-col flex-1">
           {/* Tipster Performance Header - compact */}
           {(tipster || title) && (
-            <div
-              className={`mb-2 pb-2 border-b border-[var(--border)]/80 ${
-                deskBoard && tipster && onFollow
-                  ? 'pr-[7.5rem]'
-                  : deskBoard || (tipster && onFollow)
-                    ? 'pr-16'
-                    : ''
-              }`}
-            >
+            <div className={`mb-2 pb-2 border-b border-[var(--border)]/80 ${deskBoard ? 'pr-16' : ''}`}>
               <div className="flex items-center gap-2">
                 {tipster?.avatarUrl && !avatarError ? (
                   <div className="flex-shrink-0 w-7 h-7 rounded-full overflow-hidden bg-[var(--border)] relative">
