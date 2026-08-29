@@ -435,6 +435,8 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
               <NavBtn href="/marketplace" label={t('nav.marketplace')} />
 
+              <NavBtn href="/rollover" label={t('nav.rollover_short')} />
+
               {/* Tipsters ▾ */}
               <div className="relative">
                 <NavBtn menuKey="tipsters" label={t("nav.tipsters")} />
@@ -526,7 +528,6 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                         />
                       ) : null}
                       <CompactNavLink href="/live-scores" icon={<IconLive />} label={t('nav.live_scores')} onClick={closeAll} />
-                      <CompactNavLink href="/rollover" icon={<IconChart />} label={t('nav.rollover')} onClick={closeAll} />
                       <CompactNavLink
                         href="/coupons/archive"
                         icon={<IconArchive />}
