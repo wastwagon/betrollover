@@ -475,6 +475,23 @@ body {
     color: var(--text);
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
   }
+
+  .ios-segmented-count {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1;
+    min-width: 1.125rem;
+    padding: 0.125rem 0.35rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--text-muted) 18%, transparent);
+    color: inherit;
+    opacity: 0.85;
+  }
+
+  .ios-segmented-btn[data-active="true"] .ios-segmented-count {
+    background: color-mix(in srgb, var(--primary) 22%, transparent);
+    opacity: 1;
+  }
 }
 
 /* Respect reduced motion preference */

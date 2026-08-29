@@ -226,16 +226,14 @@ export class AdminController {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     const tz = process.env.PREDICTION_TIMEZONE || 'Africa/Accra';
     let deskDayStr: string;
-    let today: string;
     try {
-      ({ deskDayStr, today } = resolveDeskDayArg(body?.deskDay, tz));
+      ({ deskDayStr } = resolveDeskDayArg(body?.deskDay, tz));
     } catch (err: unknown) {
       throw new BadRequestException(err instanceof Error ? err.message : 'Invalid deskDay');
     }
     return this.accaDeskPublisher.runDaily({
       ensureSetup: true,
       deskDayStr,
-      attachRollover: deskDayStr === today,
     });
   }
 
@@ -257,7 +255,7 @@ export class AdminController {
     return this.rolloverDesk.syncNow();
   }
 
-  /** Publish AccaSureO15 only. Body `{ slotKey?: 'early' | 'afternoon' | 'evening' | 'midnight', deskDay?: string }`. */
+  /** Publish AccaSure1X2 only (rollover owner). Body `{ slotKey?: 'early' | 'afternoon' | 'evening' | 'midnight', deskDay?: string }`. */
   @Post('rollover/publish')
   async publishRolloverOwner(
     @CurrentUser() user: User,
@@ -282,8 +280,9 @@ export class AdminController {
     return this.accaDeskPublisher.publishRolloverOwner({ slotKey, deskDayStr, ensureSetup: true });
   }
 
-  /** Attach earliest qualifying AccaSureO15 coupon, or `{ ticketId }` for a specific slot.
-   * `{ asNextDay: true }` attaches a later slot as the next plan day on the same calendar date. */
+  /** Attach a specific AccaSure1X2 `{ ticketId }`, or earliest eligible pending 2-fold.
+   * `{ asNextDay: true }` attaches a later slot as the next plan day on the same calendar date.
+   * Manual only — cron never attaches. */
   @Post('rollover/attach')
   async attachRolloverAdmin(
     @CurrentUser() user: User,

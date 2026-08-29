@@ -64,8 +64,6 @@ type Board = {
   ownerDisplayName: string;
   planDays: number;
   targetOdds: number;
-  oddsMin: number;
-  oddsMax: number;
   exampleStakeStartGhs: number;
   calendarDate: string;
   archive?: {
@@ -94,7 +92,8 @@ type Board = {
     status: string;
     ticketId: number | null;
     combinedOdds: number | null;
-    skipReason: 'no_qualifying' | 'awaiting_settlement' | null;
+    /** `no_qualifying` accepted briefly for older API responses. */
+    skipReason: 'no_coupon' | 'no_qualifying' | 'awaiting_settlement' | null;
     coupon: Coupon | null;
   };
   days: DaySlot[];
@@ -266,7 +265,7 @@ export function RolloverBoard() {
   const skipNote =
     board.today.skipReason === 'awaiting_settlement'
       ? t('rollover.waiting_settlement')
-      : board.today.skipReason === 'no_qualifying'
+      : board.today.skipReason === 'no_coupon' || board.today.skipReason === 'no_qualifying'
         ? t('rollover.no_coupon', { day: String(board.today.dayNumber) })
         : null;
 
@@ -305,7 +304,7 @@ export function RolloverBoard() {
               {runNote}
             </h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
-              {board.oddsMin.toFixed(2)}–{board.oddsMax.toFixed(2)} @ ~{board.targetOdds.toFixed(2)}
+              {t('rollover.example_later_hint', { odds: board.targetOdds.toFixed(2) })}
             </p>
           </div>
           <p className="text-sm tabular-nums text-[var(--text-muted)] sm:text-right">

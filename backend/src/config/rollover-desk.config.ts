@@ -1,24 +1,23 @@
 /**
- * Public 30-day educational rollover — Acca Desk Sure · Over 1.5 only.
- * One 2-fold per plan day. Cron attaches at most one coupon per Accra calendar day;
- * admin may attach a later slot as the next plan day on the same date. Not a payout.
+ * Public 30-day educational rollover — Acca Desk Sure · 1X2 (AccaSure1X2) only.
+ * One 2-fold per plan day. Admin attaches manually — no auto-attach, no odds gate.
+ * Acca Desk may still publish AccaSure1X2 to the marketplace; rollover pins are separate.
+ * Not a payout.
  */
 
 import { ACCA_DESK_TIME_SLOTS, type AccaDeskSlotKey } from './acca-desk-slots';
 
-/** Existing Acca Desk tipster: Sure · Over 1.5 Goals. Do not create a new account. */
-export const ROLLOVER_OWNER_USERNAME = 'AccaSureO15';
+/** Existing Acca Desk tipster: Sure · 1X2 (Match Winner). Do not create a new account. */
+export const ROLLOVER_OWNER_USERNAME = 'AccaSure1X2';
+
+export const ROLLOVER_OWNER_DISPLAY_FALLBACK = 'Sure · 1X2 (Match Winner)';
 
 export const ROLLOVER_PLAN_DAYS = 30;
-export const ROLLOVER_TARGET_ODDS = 1.6;
-export const ROLLOVER_ODDS_MIN = 1.5;
-export const ROLLOVER_ODDS_MAX = 1.75;
+/** Example-money multiplier only (not an attach rule). */
+export const ROLLOVER_TARGET_ODDS = 2.0;
 export const ROLLOVER_EXAMPLE_STAKE_GHS = 20;
-/** Later plan days would show billions at 1.60^n — hide cash figures after this day. */
+/** Later plan days would show huge cash at target^n — hide figures after this day. */
 export const ROLLOVER_EXAMPLE_MAX_MONEY_DAY = 7;
 export const ROLLOVER_TIMEZONE = process.env.PREDICTION_TIMEZONE || 'Africa/Accra';
 
 export const ROLLOVER_SLOT_ORDER: AccaDeskSlotKey[] = ACCA_DESK_TIME_SLOTS.map((s) => s.key);
-
-export type RolloverRunStatus = 'active' | 'completed' | 'broken' | 'reset';
-export type RolloverDayStatus = 'pending' | 'won' | 'lost' | 'void' | 'skipped';

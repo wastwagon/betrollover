@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { SegmentedControl } from './SegmentedControl';
 import { BottomSheet } from './BottomSheet';
 
-export type MarketplacePriceFilter = 'all' | 'free' | 'paid' | 'sold';
+export type MarketplacePriceFilter = 'all' | 'free' | 'paid';
+export type MarketplaceDayFilter = 'all' | 'today' | 'tomorrow';
 export type MarketplaceSortBy =
   | 'newest'
   | 'price-low'
@@ -13,22 +14,32 @@ export type MarketplaceSortBy =
   | 'following-only'
   | 'relevance';
 
+export type MarketplaceFilterCounts = {
+  day: { all: number; today: number; tomorrow: number };
+  price: { all: number; free: number; paid: number };
+};
+
 export interface MarketplaceFilterBarProps {
   priceFilter: MarketplacePriceFilter;
   onPriceFilterChange: (v: MarketplacePriceFilter) => void;
+  dayFilter: MarketplaceDayFilter;
+  onDayFilterChange: (v: MarketplaceDayFilter) => void;
   sortBy: MarketplaceSortBy;
   onSortByChange: (v: MarketplaceSortBy) => void;
   tipsterSearch: string;
   onTipsterSearchChange: (v: string) => void;
   debouncedTipster: string;
   showFollowingSort: boolean;
+  counts?: MarketplaceFilterCounts;
   labels: {
     filterPrice: string;
-    sortBy: string;
+    filterDay: string;
     all: string;
     free: string;
     paid: string;
-    sold: string;
+    dayToday: string;
+    dayTomorrow: string;
+    sortBy: string;
     sortNewest: string;
     sortRelevance: string;
     sortFollowing: string;
@@ -49,12 +60,15 @@ export interface MarketplaceFilterBarProps {
 export function MarketplaceFilterBar({
   priceFilter,
   onPriceFilterChange,
+  dayFilter,
+  onDayFilterChange,
   sortBy,
   onSortByChange,
   tipsterSearch,
   onTipsterSearchChange,
   debouncedTipster,
   showFollowingSort,
+  counts,
   labels,
   onClear,
   hasActiveFilters,
@@ -70,20 +84,46 @@ export function MarketplaceFilterBar({
     { value: 'tipster-rank', label: labels.sortRank },
   ];
 
+  const dayCounts = counts?.day;
+  const priceCounts = counts?.price;
+
   return (
-    <div className="mb-3 min-w-0 max-w-full space-y-2">
-      <SegmentedControl
-        aria-label={labels.filterPrice}
-        className="w-full max-w-lg"
-        options={[
-          { value: 'all' as const, label: labels.all },
-          { value: 'free' as const, label: labels.free },
-          { value: 'paid' as const, label: labels.paid },
-          { value: 'sold' as const, label: labels.sold },
-        ]}
-        value={priceFilter}
-        onChange={onPriceFilterChange}
-      />
+    <div className="mb-3 min-w-0 max-w-full space-y-2.5">
+      {/* Day is primary — Accra board / kickoff */}
+      <div className="space-y-1">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)] px-0.5">
+          {labels.filterDay}
+        </p>
+        <SegmentedControl
+          aria-label={labels.filterDay}
+          className="w-full max-w-lg"
+          options={[
+            { value: 'all' as const, label: labels.all, count: dayCounts?.all },
+            { value: 'today' as const, label: labels.dayToday, count: dayCounts?.today },
+            { value: 'tomorrow' as const, label: labels.dayTomorrow, count: dayCounts?.tomorrow },
+          ]}
+          value={dayFilter}
+          onChange={onDayFilterChange}
+        />
+      </div>
+
+      {/* Price secondary — Free / Paid */}
+      <div className="space-y-1">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)] px-0.5">
+          {labels.filterPrice}
+        </p>
+        <SegmentedControl
+          aria-label={labels.filterPrice}
+          className="w-full max-w-md"
+          options={[
+            { value: 'all' as const, label: labels.all, count: priceCounts?.all },
+            { value: 'free' as const, label: labels.free, count: priceCounts?.free },
+            { value: 'paid' as const, label: labels.paid, count: priceCounts?.paid },
+          ]}
+          value={priceFilter}
+          onChange={onPriceFilterChange}
+        />
+      </div>
 
       <div className="flex flex-wrap items-center gap-2 sm:hidden">
         <button
@@ -92,7 +132,7 @@ export function MarketplaceFilterBar({
           className="touch-target px-4 py-2 rounded-lg text-sm font-medium bg-[var(--card)] border border-[var(--separator)] text-[var(--text)]"
         >
           {labels.moreFilters}
-          {(sortBy !== 'newest' || debouncedTipster) && (
+          {(sortBy !== 'newest' || debouncedTipster || dayFilter !== 'all' || priceFilter !== 'all') && (
             <span className="ml-1.5 text-[var(--primary)]" aria-hidden>
               •
             </span>
@@ -142,6 +182,15 @@ export function MarketplaceFilterBar({
             ))}
           </select>
         </div>
+        {hasActiveFilters ? (
+          <button
+            type="button"
+            onClick={onClear}
+            className="touch-target px-3 py-2 text-sm font-medium text-[var(--primary)] shrink-0"
+          >
+            {labels.clearFilters}
+          </button>
+        ) : null}
       </div>
 
       <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title={labels.moreFilters} doneLabel={labels.done}>

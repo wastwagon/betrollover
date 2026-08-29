@@ -5,8 +5,7 @@ import { ACCA_DESK_TIME_SLOTS, deskDayFromTitle, type AccaDeskSlotKey } from '..
 import {
   ROLLOVER_EXAMPLE_MAX_MONEY_DAY,
   ROLLOVER_EXAMPLE_STAKE_GHS,
-  ROLLOVER_ODDS_MAX,
-  ROLLOVER_ODDS_MIN,
+  ROLLOVER_OWNER_DISPLAY_FALLBACK,
   ROLLOVER_OWNER_USERNAME,
   ROLLOVER_PLAN_DAYS,
   ROLLOVER_TARGET_ODDS,
@@ -20,8 +19,8 @@ import { RolloverRun } from './entities/rollover-run.entity';
 import { RolloverSettings } from './entities/rollover-settings.entity';
 import {
   exampleMoneyForDay,
-  isQualifyingRolloverOdds,
-  selectQualifyingRolloverTicket,
+  isEligibleRolloverTicket,
+  selectEligibleRolloverTicket,
   slotKeyFromTitle,
   utcDateStamp,
   utcDayBounds,
@@ -46,17 +45,20 @@ export class RolloverDeskService {
     private readonly accumulators: AccumulatorsService,
   ) {}
 
-  /** Serialize attach so cron + public GET cannot double-write a plan day. */
-  async attachToday(): Promise<void> {
-    this.attachChain = this.attachChain.then(() => this.attachTodayInner()).catch((err: unknown) => {
+  /**
+   * Settlement sync only (serialized). Coupons are never auto-attached —
+   * admin must pick AccaSure1X2 manually via adminAttach.
+   */
+  async syncBoard(): Promise<void> {
+    this.attachChain = this.attachChain.then(() => this.syncSettledDays()).catch((err: unknown) => {
       const message = err instanceof Error ? err.message : String(err);
-      this.logger.warn(`Rollover attach failed: ${message}`);
+      this.logger.warn(`Rollover settlement sync failed: ${message}`);
     });
     await this.attachChain;
   }
 
   async getBoard(viewerUserId?: number | null) {
-    await this.attachToday();
+    await this.syncBoard();
 
     const date = utcDateStamp();
     const run = await this.runRepo.findOne({ where: { status: 'active' }, order: { id: 'DESC' } });
@@ -83,13 +85,13 @@ export class RolloverDeskService {
     });
     const todayRow = todayRows[0] ?? (latestPending?.ticketId ? latestPending : null);
 
-    let skipReason: 'no_qualifying' | 'awaiting_settlement' | null = null;
+    let skipReason: 'no_coupon' | 'awaiting_settlement' | null = null;
     if (run?.status === 'active') {
       const oldestPending = pendingDays[0] ?? null;
       if (oldestPending?.ticketId && this.dateOnly(oldestPending.calendarDate) !== date && !todayRow?.ticketId) {
         skipReason = 'awaiting_settlement';
       } else if (!todayRow?.ticketId) {
-        skipReason = 'no_qualifying';
+        skipReason = 'no_coupon';
       }
     }
 
@@ -124,13 +126,11 @@ export class RolloverDeskService {
 
     return {
       ownerUsername: ROLLOVER_OWNER_USERNAME,
-      ownerDisplayName: owner?.displayName ?? 'Sure · Over 1.5 Goals',
+      ownerDisplayName: owner?.displayName ?? ROLLOVER_OWNER_DISPLAY_FALLBACK,
       ownerAvatarUrl: owner?.avatarUrl ?? null,
       timezone: ROLLOVER_TIMEZONE,
       planDays: ROLLOVER_PLAN_DAYS,
       targetOdds: ROLLOVER_TARGET_ODDS,
-      oddsMin: ROLLOVER_ODDS_MIN,
-      oddsMax: ROLLOVER_ODDS_MAX,
       exampleStakeStartGhs: campaignStakeGhs,
       exampleMaxMoneyDay: ROLLOVER_EXAMPLE_MAX_MONEY_DAY,
       calendarDate: date,
@@ -163,25 +163,18 @@ export class RolloverDeskService {
     };
   }
 
-  private async attachTodayInner(): Promise<void> {
-    await this.syncSettledDays();
-    const ticket = await this.pickTodayTicket();
-    if (!ticket) return;
-    await this.commitAttach(ticket, { replaceSameDay: false, strict: false });
-  }
-
   /**
-   * Admin: attach a specific AccaSureO15 coupon, or the earliest qualifying slot.
-   * Same won/lost/void cut as cron. Same-day pending can be switched (early → afternoon/evening).
-   * `asNextDay` attaches a later slot as the next plan day on the same calendar date
-   * (e.g. evening as Day 2 while afternoon Day 1 is still live or already won).
+   * Admin: attach a specific AccaSure1X2 coupon, or the earliest eligible pending 2-fold.
+   * Same won/lost/void cut as before. Same-day pending can be switched.
+   * `asNextDay` attaches a later slot as the next plan day on the same calendar date.
+   * Manual only — never called by cron.
    */
   async adminAttach(opts?: { ticketId?: number; asNextDay?: boolean }) {
     await this.syncSettledDays();
     const ticket = opts?.ticketId
-      ? await this.requireQualifyingTodayTicket(opts.ticketId)
+      ? await this.requireEligibleTodayTicket(opts.ticketId)
       : opts?.asNextDay
-        ? selectQualifyingRolloverTicket(
+        ? selectEligibleRolloverTicket(
             await this.listTodayOwnerTickets(),
             await this.usedTicketIds(),
             { preferLatestSlot: true },
@@ -189,7 +182,7 @@ export class RolloverDeskService {
         : await this.pickTodayTicket();
     if (!ticket) {
       throw new BadRequestException(
-        `No qualifying ${ROLLOVER_OWNER_USERNAME} coupon today (${ROLLOVER_ODDS_MIN.toFixed(2)}–${ROLLOVER_ODDS_MAX.toFixed(2)}, 2-fold, pending). Publish a later slot first.`,
+        `No eligible ${ROLLOVER_OWNER_USERNAME} pending 2-fold for today’s desk day. Publish AccaSure1X2 first, then attach the coupon you want.`,
       );
     }
     return this.commitAttach(ticket, {
@@ -260,7 +253,7 @@ export class RolloverDeskService {
       const odds = Number(t.totalOdds);
       const result = (t.result || 'pending').toLowerCase();
       const slotKey = slotKeyFromTitle(t.title);
-      const qualifying = t.totalPicks === 2 && result === 'pending' && isQualifyingRolloverOdds(odds);
+      const eligible = isEligibleRolloverTicket(t);
       const attached = pendingId === t.id || used.has(t.id);
       return {
         id: t.id,
@@ -269,9 +262,9 @@ export class RolloverDeskService {
         totalOdds: odds,
         totalPicks: t.totalPicks,
         result,
-        qualifying,
+        eligible,
         attached,
-        canAttach: qualifying && !attached,
+        canAttach: eligible && !attached,
       };
     });
     const postedSlots = Object.fromEntries(
@@ -290,16 +283,14 @@ export class RolloverDeskService {
       !!lastDay &&
       lastDay.dayNumber < ROLLOVER_PLAN_DAYS &&
       lastDay.calendarDate === date &&
-      candidates.some((c) => c.qualifying && !c.attached);
+      candidates.some((c) => c.eligible && !c.attached);
 
     return {
       ...snapshot,
-      oddsMin: ROLLOVER_ODDS_MIN,
-      oddsMax: ROLLOVER_ODDS_MAX,
       targetOdds: ROLLOVER_TARGET_ODDS,
       postedSlots,
       candidates,
-      canAttachBest: !blockReason && candidates.some((c) => c.qualifying && !c.attached) && !canAttachNextDay,
+      canAttachEarliest: !blockReason && candidates.some((c) => c.eligible && !c.attached) && !canAttachNextDay,
       canAttachNextDay,
       nextDayNumber: lastDay ? lastDay.dayNumber + 1 : 1,
       blockReason,
@@ -595,7 +586,7 @@ export class RolloverDeskService {
     };
   }
 
-  private async requireQualifyingTodayTicket(ticketId: number): Promise<AccumulatorTicket> {
+  private async requireEligibleTodayTicket(ticketId: number): Promise<AccumulatorTicket> {
     const ticket = await this.ticketRepo.findOne({ where: { id: ticketId } });
     if (!ticket) throw new BadRequestException(`Coupon #${ticketId} not found.`);
 
@@ -624,11 +615,6 @@ export class RolloverDeskService {
     if ((ticket.result || 'pending').toLowerCase() !== 'pending') {
       throw new BadRequestException('Coupon has already settled.');
     }
-    if (!isQualifyingRolloverOdds(Number(ticket.totalOdds))) {
-      throw new BadRequestException(
-        `Combined odds ${Number(ticket.totalOdds).toFixed(2)} are outside ${ROLLOVER_ODDS_MIN.toFixed(2)}–${ROLLOVER_ODDS_MAX.toFixed(2)}.`,
-      );
-    }
     return ticket;
   }
 
@@ -639,7 +625,7 @@ export class RolloverDeskService {
     });
     if (!tipster?.userId) return [];
     const { start, end } = utcDayBounds();
-    // Look back one day of createdAt so 20:00 early-publish for "today" (created yesterday) still qualifies.
+    // Look back one day of createdAt so 20:00 early-publish for "today" (created yesterday) still lists.
     const createdFrom = new Date(start);
     createdFrom.setUTCDate(createdFrom.getUTCDate() - 1);
     const todayStamp = utcDateStamp();
@@ -678,7 +664,7 @@ export class RolloverDeskService {
       if (!tipster?.userId) this.logger.warn(`Rollover owner ${ROLLOVER_OWNER_USERNAME} not found`);
       return null;
     }
-    return selectQualifyingRolloverTicket(tickets, await this.usedTicketIds());
+    return selectEligibleRolloverTicket(tickets, await this.usedTicketIds());
   }
 
   /** Read-only ops snapshot — does not attach a coupon. */

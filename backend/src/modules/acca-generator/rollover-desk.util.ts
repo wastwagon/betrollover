@@ -2,8 +2,6 @@ import { ACCA_DESK_TIME_SLOTS, accraDateStr, type AccaDeskSlotKey } from '../../
 import {
   ROLLOVER_EXAMPLE_MAX_MONEY_DAY,
   ROLLOVER_EXAMPLE_STAKE_GHS,
-  ROLLOVER_ODDS_MAX,
-  ROLLOVER_ODDS_MIN,
   ROLLOVER_TARGET_ODDS,
   ROLLOVER_TIMEZONE,
 } from '../../config/rollover-desk.config';
@@ -41,24 +39,21 @@ export function slotKeyFromTitle(title: string | null | undefined): AccaDeskSlot
   return ACCA_DESK_TIME_SLOTS.find((s) => title.includes(`· ${s.label} ·`))?.key ?? null;
 }
 
-export function isQualifyingRolloverOdds(odds: number): boolean {
-  return Number.isFinite(odds) && odds >= ROLLOVER_ODDS_MIN && odds <= ROLLOVER_ODDS_MAX;
+/** Pending marketplace 2-fold — only rule for manual rollover attach. */
+export function isEligibleRolloverTicket(t: RolloverTicketLike): boolean {
+  if (t.totalPicks !== 2) return false;
+  const result = (t.result || 'pending').toLowerCase();
+  return result === 'pending';
 }
 
-/** Earliest Acca Desk slot in range; ties break toward 1.60.
- * `preferLatestSlot` picks later slots (midnight over evening) for admin same-day Day 2. */
-export function selectQualifyingRolloverTicket<T extends RolloverTicketLike>(
+/** Earliest Acca Desk slot; ties break toward ROLLOVER_TARGET_ODDS (example money only).
+ * `preferLatestSlot` picks later slots for admin same-day Day N+1. */
+export function selectEligibleRolloverTicket<T extends RolloverTicketLike>(
   tickets: T[],
   excludeTicketIds: Set<number> = new Set(),
   opts?: { preferLatestSlot?: boolean },
 ): T | null {
-  const eligible = tickets.filter((t) => {
-    if (excludeTicketIds.has(t.id)) return false;
-    if (t.totalPicks !== 2) return false;
-    const result = (t.result || 'pending').toLowerCase();
-    if (result !== 'pending') return false;
-    return isQualifyingRolloverOdds(Number(t.totalOdds));
-  });
+  const eligible = tickets.filter((t) => !excludeTicketIds.has(t.id) && isEligibleRolloverTicket(t));
 
   eligible.sort((a, b) => {
     const ra = SLOT_RANK[slotKeyFromTitle(a.title) ?? 'evening'] ?? 9;

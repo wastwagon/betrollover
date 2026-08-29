@@ -195,12 +195,9 @@ export class AccaDeskPublisherService {
     ensureSetup?: boolean;
     /** Accra YYYY-MM-DD. Default: today. */
     deskDayStr?: string;
-    /** Attach rollover after publish (today boards only). */
-    attachRollover?: boolean;
   }): Promise<AccaDeskRunResult> {
     const tz = this.predictionTimeZone();
     const deskDayStr = opts?.deskDayStr || accraDateStr(new Date(), tz);
-    const attachRollover = opts?.attachRollover ?? deskDayStr === accraDateStr(new Date(), tz);
 
     if (!isAccaDeskEnabled()) {
       this.logger.warn('Acca Desk disabled (ACCA_DESK_ENABLED=false)');
@@ -269,20 +266,13 @@ export class AccaDeskPublisherService {
         this.logger.warn(`Acca Desk follower shorts email failed: ${message}`);
       }
     }
-    if (attachRollover) {
-      try {
-        await this.rollover.attachToday();
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
-        this.logger.warn(`Rollover attach after Acca Desk publish failed: ${message}`);
-      }
-    }
+    // Rollover is manual-only (admin attach AccaSure1X2). Never auto-attach after desk publish.
     return result;
   }
 
   /**
-   * Publish AccaSureO15 only (rollover owner). Optional slot; otherwise remaining unposted slots.
-   * Does not attach — admin picks the qualifying coupon next.
+   * Publish AccaSure1X2 only (rollover owner). Optional slot; otherwise remaining unposted slots.
+   * Does not attach — admin picks the coupon on the rollover board.
    */
   async publishRolloverOwner(opts?: {
     slotKey?: AccaDeskSlotKey;
@@ -359,7 +349,7 @@ export class AccaDeskPublisherService {
     }
 
     this.logger.log(
-      `Rollover AccaSureO15 publish deskDay=${deskDayStr}: published=${result.published} already=${result.skippedAlreadyPosted} empty=${result.skippedEmptyPool} errors=${result.errors}`,
+      `Rollover ${ROLLOVER_OWNER_USERNAME} publish deskDay=${deskDayStr}: published=${result.published} already=${result.skippedAlreadyPosted} empty=${result.skippedEmptyPool} errors=${result.errors}`,
     );
     return result;
   }

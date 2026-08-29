@@ -224,7 +224,7 @@ export function PickCard({
   };
   const displayStatus = result && ['won', 'lost', 'void'].includes(result) ? result : status;
   const statusColor = displayStatus ? statusColors[displayStatus] || 'bg-slate-100 text-slate-600' : '';
-  const deskBoard = accaDeskBoardBadge(title, tipster?.tipsterType ?? tipster?.tipster_type);
+  const deskBoard = accaDeskBoardBadge(title, tipster?.tipsterType ?? tipster?.tipster_type, picks);
 
   const handlePurchase = () => {
     if (price > 0) {

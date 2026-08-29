@@ -1,4 +1,4 @@
--- Public 30-day Acca Desk rollover (Sure · Over 1.5). One qualifying 2-fold per Accra calendar day.
+-- Public 30-day Acca Desk rollover (Sure · 1X2 / AccaSure1X2). One 2-fold per plan day (manual attach).
 
 CREATE TABLE IF NOT EXISTS rollover_runs (
   id SERIAL PRIMARY KEY,

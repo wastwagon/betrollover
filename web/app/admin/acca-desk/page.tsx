@@ -70,8 +70,6 @@ type Overview = {
   rollover?: {
     calendarDate: string;
     ownerUsername: string;
-    oddsMin?: number;
-    oddsMax?: number;
     targetOdds?: number;
     campaignStakeGhs?: number;
     defaultCampaignStakeGhs?: number;
@@ -122,11 +120,11 @@ type Overview = {
       totalOdds: number;
       totalPicks: number;
       result: string;
-      qualifying: boolean;
+      eligible: boolean;
       attached: boolean;
       canAttach: boolean;
     }[];
-    canAttachBest?: boolean;
+    canAttachEarliest?: boolean;
     blockReason?: string | null;
   };
 };
@@ -309,7 +307,7 @@ export default function AdminAccaDeskPage() {
         setLastRun(r);
         setMessage({
           type: r.errors > 0 ? 'error' : 'success',
-          text: `AccaSureO15: published ${r.published} · already ${r.skippedAlreadyPosted} · empty pool ${r.skippedEmptyPool} · errors ${r.errors}`,
+          text: `AccaSure1X2: published ${r.published} · already ${r.skippedAlreadyPosted} · empty pool ${r.skippedEmptyPool} · errors ${r.errors}`,
         });
       } else if (path === 'rollover/attach') {
         const day = (data as { dayNumber?: number }).dayNumber;
@@ -496,19 +494,21 @@ export default function AdminAccaDeskPage() {
               <div className="mb-8 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
                   <div>
-                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">30-day rollover (AccaSureO15)</h2>
+                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">30-day rollover (AccaSure1X2)</h2>
                     <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
                       {overview.rollover.run
                         ? `${overview.rollover.run.status} · day ${overview.rollover.run.currentDay}/30 · started ${formatWhen(overview.rollover.run.startedAt)}`
-                        : 'No run yet. Publish a Sure · Over 1.5 slot in range, then attach it as Day 1.'}
+                        : 'No run yet. Reset if needed, then manually attach an AccaSure1X2 coupon as Day 1.'}
                     </p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      Qualifying combined odds {Number(overview.rollover.oddsMin ?? 1.5).toFixed(2)}–
-                      {Number(overview.rollover.oddsMax ?? 1.75).toFixed(2)}. Auto attaches at most one coupon per
-                      calendar day. If Day 1 is live or already won and evening is still to play, use{' '}
+                      Manual attach only — no auto-posting and no odds gate. Pick any pending AccaSure1X2 2-fold
+                      below to put it live on{' '}
+                      <span className="font-medium text-gray-700 dark:text-gray-200">/rollover</span>. If Day 1 is
+                      live or already won and another slot is still to play, use{' '}
                       <span className="font-medium text-gray-700 dark:text-gray-200">Attach as Day 2</span>
-                      {' — '}do not Switch, that would replace Day 1. A loss auto-resets the public table.
-                      Use Clear stats to wipe the public records strip without touching the live board.
+                      {' — '}do not Switch, that would replace Day 1. A loss auto-resets the public table. Use Clear
+                      stats to wipe the public records strip without touching the live board. Example-money
+                      multiplier on the board is ×{Number(overview.rollover.targetOdds ?? 2).toFixed(2)} only.
                     </p>
                   </div>
                   <Link href="/rollover" className="text-sm font-medium text-teal-700 dark:text-teal-300 hover:underline">
@@ -606,7 +606,7 @@ export default function AdminAccaDeskPage() {
                         </Link>
                       </>
                     ) : (
-                      ' · waiting for a qualifying coupon'
+                      ' · waiting for you to attach a coupon'
                     )}
                     {overview.rollover.pendingDay.combinedOdds != null
                       ? ` · ${overview.rollover.pendingDay.combinedOdds.toFixed(2)}`
@@ -640,7 +640,7 @@ export default function AdminAccaDeskPage() {
                     disabled={!!rolloverBusy}
                     onClick={() => rolloverAction('rollover/publish', {}, 'publish')}
                   >
-                    {rolloverBusy === 'publish' ? 'Publishing…' : 'Publish remaining AccaSureO15 slots'}
+                    {rolloverBusy === 'publish' ? 'Publishing…' : 'Publish remaining AccaSure1X2 slots'}
                   </Button>
                   {(['early', 'afternoon', 'evening', 'midnight'] as const).map((slot) => {
                     const posted = overview.rollover?.postedSlots?.[slot];
@@ -664,10 +664,10 @@ export default function AdminAccaDeskPage() {
                   <Button
                     type="button"
                     size="sm"
-                    disabled={!!rolloverBusy || !overview.rollover.canAttachBest}
+                    disabled={!!rolloverBusy || !overview.rollover.canAttachEarliest}
                     onClick={() => rolloverAction('rollover/attach', {}, 'attach-best')}
                   >
-                    {rolloverBusy === 'attach-best' ? 'Attaching…' : 'Attach best qualifying'}
+                    {rolloverBusy === 'attach-best' ? 'Attaching…' : 'Attach earliest slot'}
                   </Button>
                   {overview.rollover.canAttachNextDay ? (
                     <Button
@@ -685,7 +685,8 @@ export default function AdminAccaDeskPage() {
 
                 {(overview.rollover.candidates?.length ?? 0) === 0 ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    No AccaSureO15 coupons today. Generate a slot (afternoon/evening if early failed), then attach.
+                    No AccaSure1X2 coupons for today’s desk day. Wait for Acca Desk to publish, or generate a slot
+                    above, then attach the one you want.
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -699,7 +700,7 @@ export default function AdminAccaDeskPage() {
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             {c.slotKey ?? 'slot?'} · {c.totalOdds.toFixed(2)} · {c.totalPicks}-fold · {c.result}
                             {c.attached ? ' · on board' : ''}
-                            {c.qualifying ? ' · qualifies' : ' · out of range'}
+                            {c.eligible ? ' · eligible' : ' · not eligible'}
                           </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">

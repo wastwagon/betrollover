@@ -8,6 +8,9 @@ export type MarketplaceSavedFilter = {
   createdAt: number;
   /** Kept for old saved-filter JSON; marketplace no longer splits Acca Desk vs community. */
   desk: 'all' | 'acca_desk' | 'community';
+  /** Accra board / kickoff day filter. Optional for older saved presets. */
+  dayFilter?: 'all' | 'today' | 'tomorrow';
+  /** `sold` kept for older saved presets; UI maps it to `paid`. */
   priceFilter: 'all' | 'free' | 'paid' | 'sold';
   sortBy: 'newest' | 'price-low' | 'price-high' | 'tipster-rank' | 'following-only' | 'relevance';
   tipsterSearch: string;

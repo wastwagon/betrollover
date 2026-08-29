@@ -20,6 +20,7 @@ import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { GrowthDistributionStrip } from '@/components/GrowthDistributionStrip';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { MarketplaceFilterBar } from '@/components/ios/MarketplaceFilterBar';
+import { matchesMarketplaceDayFilter, type MarketplaceDayFilter } from '@/lib/acca-desk-board-badge';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
@@ -44,7 +45,8 @@ const VALID_SPORT_KEYS = new Set<string>(
   filterDiscoverySports([...VALID_SPORT_KEYS_ALL]),
 );
 
-type PriceFilter = 'all' | 'free' | 'paid' | 'sold';
+type PriceFilter = 'all' | 'free' | 'paid';
+type DayFilter = MarketplaceDayFilter;
 type SortBy = 'newest' | 'price-low' | 'price-high' | 'tipster-rank' | 'following-only' | 'relevance';
 
 interface Pick {
@@ -72,6 +74,8 @@ interface Tipster {
   avatarUrl?: string | null;
   isAi?: boolean;
   isVerified?: boolean;
+  tipsterType?: string | null;
+  tipster_type?: string | null;
 }
 
 interface Accumulator {
@@ -130,6 +134,7 @@ export default function MarketplacePage({
   const [unveilCouponId, setUnveilCouponId] = useState<number | null>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
+  const [dayFilter, setDayFilter] = useState<DayFilter>('all');
   const [sortBy, setSortBy] = useState<SortBy>('newest');
   const footballOnly = isFootballOnlyDiscovery();
   const [sportFilter, setSportFilter] = useState<string>(footballOnly ? FOOTBALL_SPORT_KEY : '');
@@ -157,8 +162,12 @@ export default function MarketplacePage({
     setTipsterSearch(tip);
     setDebouncedTipster(tip);
     const pf = searchParams.get('priceFilter');
-    if (pf === 'free' || pf === 'paid' || pf === 'sold') setPriceFilter(pf);
+    if (pf === 'free' || pf === 'paid') setPriceFilter(pf);
+    else if (pf === 'sold') setPriceFilter('paid'); // legacy URL; Sold removed from UI
     else if (pf === 'all') setPriceFilter('all');
+    const day = searchParams.get('day');
+    if (day === 'today' || day === 'tomorrow') setDayFilter(day);
+    else if (day === 'all' || day == null) setDayFilter('all');
     const sort = searchParams.get('sort');
     if (
       sort === 'newest' ||
@@ -179,18 +188,28 @@ export default function MarketplacePage({
     if (sportFilter) p.set('sport', sportFilter);
     if (debouncedTipster) p.set('tipster', debouncedTipster);
     if (priceFilter !== 'all') p.set('priceFilter', priceFilter);
+    if (dayFilter !== 'all') p.set('day', dayFilter);
     // Always persist sort (incl. newest) so auto “For you” can’t overwrite an explicit newest choice.
     p.set('sort', sortBy);
     const qs = p.toString();
     const next = qs ? `/marketplace?${qs}` : '/marketplace';
     const cur = `${window.location.pathname}${window.location.search}`;
     if (cur !== next) router.replace(next, { scroll: false });
-  }, [sportFilter, debouncedTipster, priceFilter, sortBy, router]);
+  }, [sportFilter, debouncedTipster, priceFilter, dayFilter, sortBy, router]);
 
   const filteredAndSortedPicks = useMemo(() => {
     let list = [...picks]; // API already filters by sport when sportFilter is set
     if (footballOnly) {
       list = list.filter((p) => isDiscoverySportAllowed(p.sport));
+    }
+    if (dayFilter !== 'all') {
+      list = list.filter((p) =>
+        matchesMarketplaceDayFilter(dayFilter, {
+          title: p.title,
+          tipsterType: p.tipster?.tipsterType ?? p.tipster?.tipster_type,
+          picks: p.picks,
+        }),
+      );
     }
     if (sortBy === 'following-only' && followedTipsterUsernames.size > 0) {
       list = list.filter((p) => p.tipster?.username && followedTipsterUsernames.has(p.tipster.username));
@@ -218,7 +237,49 @@ export default function MarketplacePage({
       list.sort((a, b) => score(b) - score(a));
     }
     return list;
-  }, [picks, sortBy, followedTipsterUsernames, footballOnly]);
+  }, [picks, sortBy, followedTipsterUsernames, footballOnly, dayFilter]);
+
+  const filterCounts = useMemo(() => {
+    let base = [...picks];
+    if (footballOnly) {
+      base = base.filter((p) => isDiscoverySportAllowed(p.sport));
+    }
+    let today = 0;
+    let tomorrow = 0;
+    for (const p of base) {
+      const opts = {
+        title: p.title,
+        tipsterType: p.tipster?.tipsterType ?? p.tipster?.tipster_type,
+        picks: p.picks,
+      };
+      if (matchesMarketplaceDayFilter('today', opts)) today += 1;
+      if (matchesMarketplaceDayFilter('tomorrow', opts)) tomorrow += 1;
+    }
+    const dayScoped =
+      dayFilter === 'all'
+        ? base
+        : base.filter((p) =>
+            matchesMarketplaceDayFilter(dayFilter, {
+              title: p.title,
+              tipsterType: p.tipster?.tipsterType ?? p.tipster?.tipster_type,
+              picks: p.picks,
+            }),
+          );
+    let free = 0;
+    let paid = 0;
+    for (const p of dayScoped) {
+      if (Number(p.price) === 0) free += 1;
+      else paid += 1;
+    }
+    return {
+      day: { all: base.length, today, tomorrow },
+      // Price is also applied server-side — only show free/paid tallies when browsing All.
+      price:
+        priceFilter === 'all'
+          ? { all: dayScoped.length, free, paid }
+          : { all: dayScoped.length, free: priceFilter === 'free' ? dayScoped.length : 0, paid: priceFilter === 'paid' ? dayScoped.length : 0 },
+    };
+  }, [picks, footballOnly, dayFilter, priceFilter]);
 
   const bookingCodeShelfItems = useMemo(() => {
     return filteredAndSortedPicks
@@ -657,19 +718,22 @@ export default function MarketplacePage({
               <MarketplaceSavedFiltersBar
                 hasActiveFilters={
                   priceFilter !== 'all' ||
+                  dayFilter !== 'all' ||
                   sortBy !== 'newest' ||
                   !!debouncedTipster ||
                   (!footballOnly && !!sportFilter)
                 }
                 current={{
                   desk: 'all',
+                  dayFilter,
                   priceFilter,
                   sortBy,
                   tipsterSearch: debouncedTipster,
                   sport: footballOnly ? FOOTBALL_SPORT_KEY : sportFilter,
                 }}
                 onApply={(f: MarketplaceSavedFilter) => {
-                  setPriceFilter(f.priceFilter);
+                  setPriceFilter(f.priceFilter === 'sold' ? 'paid' : f.priceFilter);
+                  setDayFilter(f.dayFilter ?? 'all');
                   setSortBy(f.sortBy);
                   setTipsterSearch(f.tipsterSearch);
                   setDebouncedTipster(f.tipsterSearch);
@@ -679,30 +743,37 @@ export default function MarketplacePage({
               <MarketplaceFilterBar
                 priceFilter={priceFilter}
                 onPriceFilterChange={setPriceFilter}
+                dayFilter={dayFilter}
+                onDayFilterChange={setDayFilter}
                 sortBy={sortBy}
                 onSortByChange={setSortBy}
                 tipsterSearch={tipsterSearch}
                 onTipsterSearchChange={setTipsterSearch}
                 debouncedTipster={debouncedTipster}
                 showFollowingSort={followedTipsterUsernames.size > 0}
+                counts={filterCounts}
                 hasActiveFilters={
                   priceFilter !== 'all' ||
+                  dayFilter !== 'all' ||
                   sortBy !== 'newest' ||
                   !!debouncedTipster
                 }
                 onClear={() => {
                   setPriceFilter('all');
+                  setDayFilter('all');
                   setSortBy('newest');
                   setTipsterSearch('');
                   setDebouncedTipster('');
                 }}
                 labels={{
                   filterPrice: t('marketplace.filter_price'),
-                  sortBy: t('marketplace.sort_by'),
+                  filterDay: t('marketplace.filter_day'),
                   all: t('common.all'),
                   free: t('marketplace.filter_free_only'),
                   paid: t('marketplace.filter_paid_only'),
-                  sold: t('marketplace.filter_sold_only'),
+                  dayToday: t('marketplace.filter_today'),
+                  dayTomorrow: t('marketplace.filter_tomorrow'),
+                  sortBy: t('marketplace.sort_by'),
                   sortNewest: t('marketplace.sort_newest_first'),
                   sortRelevance: t('marketplace.sort_relevance'),
                   sortFollowing: t('marketplace.sort_following_only'),
@@ -758,6 +829,7 @@ export default function MarketplacePage({
                 actionLabel={t('common.clear')}
                 onActionClick={() => {
                   setPriceFilter('all');
+                  setDayFilter('all');
                   setSortBy('newest');
                   setTipsterSearch('');
                   setDebouncedTipster('');

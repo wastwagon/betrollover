@@ -56,28 +56,28 @@ export class AccaDeskSchedulerService implements OnModuleInit {
     }
     const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
     const tomorrow = addDateStrDays(today, 1);
-    await this.runLocked('20:00 early', tomorrow, 'acca_desk_early', false);
+    await this.runLocked('20:00 early', tomorrow, 'acca_desk_early');
   }
 
   /** 00:30 Africa/Accra — catch-up for today’s desk day after midnight. */
   @Cron(ACCA_DESK_DAILY_CRON, { timeZone: PREDICTION_TIME_ZONE })
   async handleDaily(): Promise<void> {
     const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
-    await this.runLocked('00:30 catch-up', today, 'acca_desk', true);
+    await this.runLocked('00:30 catch-up', today, 'acca_desk');
   }
 
   /** Fixtures/odds often land after 00:30 — fill empty slots without waiting for an admin click. */
   @Cron('0 6 * * *', { timeZone: PREDICTION_TIME_ZONE })
   async handleMorningCatchup(): Promise<void> {
     const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
-    await this.runLocked('06:00 catch-up', today, 'acca_desk', true);
+    await this.runLocked('06:00 catch-up', today, 'acca_desk');
   }
 
   /** Last fill before the 09:00 marketing digest. */
   @Cron('45 8 * * *', { timeZone: PREDICTION_TIME_ZONE })
   async handlePreDigestCatchup(): Promise<void> {
     const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
-    await this.runLocked('08:45 catch-up', today, 'acca_desk', true);
+    await this.runLocked('08:45 catch-up', today, 'acca_desk');
   }
 
   private async catchUpIfDue(reason: string): Promise<void> {
@@ -85,14 +85,13 @@ export class AccaDeskSchedulerService implements OnModuleInit {
     const minutes = accraMinutesSinceMidnight(new Date(), PREDICTION_TIME_ZONE);
     if (minutes < DESK_WINDOW_MINUTE) return;
     const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
-    await this.runLocked(`${reason} catch-up`, today, 'acca_desk', true);
+    await this.runLocked(`${reason} catch-up`, today, 'acca_desk');
   }
 
   private async runLocked(
     label: string,
     deskDayStr: string,
     syncType: 'acca_desk' | 'acca_desk_early',
-    attachRollover: boolean,
   ): Promise<void> {
     if (!isAccaDeskEnabled()) {
       this.logger.debug(`Acca Desk skipped (${label}, disabled)`);
@@ -116,7 +115,6 @@ export class AccaDeskSchedulerService implements OnModuleInit {
       const result = await this.publisher.runDaily({
         ensureSetup: true,
         deskDayStr,
-        attachRollover,
       });
       // Always clear the shared `acca_desk` lock row.
       await this.syncStatusRepo.upsert(
