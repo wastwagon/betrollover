@@ -287,6 +287,7 @@ export class RolloverDeskService {
 
     return {
       ...snapshot,
+      planDays: ROLLOVER_PLAN_DAYS,
       targetOdds: ROLLOVER_TARGET_ODDS,
       postedSlots,
       candidates,
@@ -533,7 +534,7 @@ export class RolloverDeskService {
       throw new BadRequestException('Attach Day 1 first, then use Attach as next day for a later slot.');
     }
     if (last.dayNumber >= ROLLOVER_PLAN_DAYS) {
-      throw new BadRequestException('This campaign already has all 30 days.');
+      throw new BadRequestException(`This campaign already has all ${ROLLOVER_PLAN_DAYS} days.`);
     }
     if (this.dateOnly(last.calendarDate) !== date) {
       throw new BadRequestException(

@@ -3,9 +3,9 @@ import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
 import { getLocale } from '@/lib/i18n';
 
-const TITLE = '30-Day Rollover';
+const TITLE = '15-Day Rollover';
 const DESCRIPTION =
-  'Follow the public Acca Desk Sure · 1X2 30-day run. One free 2-fold per plan day, chosen manually — education, not a bookmaker payout. 18+.';
+  'Follow the public Acca Desk Sure · 1X2 15-day run. One free 2-fold per plan day, chosen manually — education, not a bookmaker payout. 18+.';
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: DESCRIPTION,
     keywords: [
       'football rollover',
-      '30 day acca',
+      '15 day acca',
       '1X2 tips Ghana',
       'Acca Desk',
       'BetRollover rollover',
@@ -26,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: TITLE,
       description: DESCRIPTION,
       type: 'website',
-      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'BetRollover 30-Day Rollover' }],
+      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'BetRollover 15-Day Rollover' }],
     },
     twitter: {
       card: 'summary_large_image',
@@ -39,7 +39,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const FAQS = [
   {
-    question: 'What is the 30-day rollover?',
+    question: 'What is the 15-day rollover?',
     answer:
       'It is a public educational board. Each plan day an admin attaches one Acca Desk Sure · 1X2 (AccaSure1X2) two-fold from that tipster’s marketplace coupons. A win advances the day; a loss resets the table to a new campaign at Day 1. Admin may attach a later same-day slot as the next plan day. We do not pay odds or credit wallets for this board.',
   },

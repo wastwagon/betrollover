@@ -71,7 +71,7 @@ export function AccaGeneratorLanding() {
                 </Link>
                 {' · '}
                 <Link href="/rollover" className="font-medium text-[var(--primary)] underline underline-offset-2">
-                  30-day rollover
+                  15-day rollover
                 </Link>
                 {' · '}
                 <Link

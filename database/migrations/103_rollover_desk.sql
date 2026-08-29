@@ -1,4 +1,4 @@
--- Public 30-day Acca Desk rollover (Sure · 1X2 / AccaSure1X2). One 2-fold per plan day (manual attach).
+-- Public 15-day Acca Desk rollover (Sure · 1X2 / AccaSure1X2). One 2-fold per plan day (manual attach).
 
 CREATE TABLE IF NOT EXISTS rollover_runs (
   id SERIAL PRIMARY KEY,
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS rollover_runs (
   CONSTRAINT rollover_runs_status_chk CHECK (status IN ('active', 'completed', 'broken'))
 );
 
-COMMENT ON TABLE rollover_runs IS 'Public educational 30-day Acca Desk rollover. Not a bookmaker payout.';
+COMMENT ON TABLE rollover_runs IS 'Public educational 15-day Acca Desk rollover. Not a bookmaker payout.';
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_rollover_runs_one_active
   ON rollover_runs (status)

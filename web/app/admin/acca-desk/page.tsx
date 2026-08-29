@@ -70,6 +70,7 @@ type Overview = {
   rollover?: {
     calendarDate: string;
     ownerUsername: string;
+    planDays?: number;
     targetOdds?: number;
     campaignStakeGhs?: number;
     defaultCampaignStakeGhs?: number;
@@ -494,10 +495,10 @@ export default function AdminAccaDeskPage() {
               <div className="mb-8 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
                   <div>
-                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">30-day rollover (AccaSure1X2)</h2>
+                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">15-day rollover (AccaSure1X2)</h2>
                     <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
                       {overview.rollover.run
-                        ? `${overview.rollover.run.status} · day ${overview.rollover.run.currentDay}/30 · started ${formatWhen(overview.rollover.run.startedAt)}`
+                        ? `${overview.rollover.run.status} · day ${overview.rollover.run.currentDay}/${overview.rollover.planDays ?? 15} · started ${formatWhen(overview.rollover.run.startedAt)}`
                         : 'No run yet. Reset if needed, then manually attach an AccaSure1X2 coupon as Day 1.'}
                     </p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -562,7 +563,7 @@ export default function AdminAccaDeskPage() {
                     onClick={() => {
                       if (
                         !window.confirm(
-                          'Reset the public 30-day table? This ends the current campaign at Day 1 of a new cycle. Records are kept.',
+                          'Reset the public 15-day table? This ends the current campaign at Day 1 of a new cycle. Records are kept.',
                         )
                       ) {
                         return;
@@ -580,7 +581,7 @@ export default function AdminAccaDeskPage() {
                     onClick={() => {
                       if (
                         !window.confirm(
-                          'Clear public records (best run, finished, cut, reset)? The live 30-day table is not reset.',
+                          'Clear public records (best run, finished, cut, reset)? The live 15-day table is not reset.',
                         )
                       ) {
                         return;
