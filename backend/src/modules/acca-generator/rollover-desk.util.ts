@@ -72,7 +72,8 @@ export function exampleStakeGhs(
   start = ROLLOVER_EXAMPLE_STAKE_GHS,
   odds = ROLLOVER_TARGET_ODDS,
 ): number {
-  return start * Math.pow(odds, Math.max(0, dayNumber - 1));
+  return buildBoardMoneyLadder(Array(Math.max(0, dayNumber)).fill(null), start, odds)[dayNumber - 1]
+    ?.stakeGhs ?? start;
 }
 
 export function exampleReturnGhs(
@@ -80,7 +81,8 @@ export function exampleReturnGhs(
   start = ROLLOVER_EXAMPLE_STAKE_GHS,
   odds = ROLLOVER_TARGET_ODDS,
 ): number {
-  return start * Math.pow(odds, Math.max(0, dayNumber));
+  return buildBoardMoneyLadder(Array(Math.max(0, dayNumber)).fill(null), start, odds)[dayNumber - 1]
+    ?.returnGhs ?? start * odds;
 }
 
 export function exampleMoneyForDay(
@@ -92,8 +94,38 @@ export function exampleMoneyForDay(
   if (dayNumber < 1 || dayNumber > maxDay) {
     return { stakeGhs: null, returnGhs: null };
   }
-  return {
-    stakeGhs: Math.round(exampleStakeGhs(dayNumber, start, odds)),
-    returnGhs: Math.round(exampleReturnGhs(dayNumber, start, odds)),
-  };
+  const row = buildBoardMoneyLadder(Array(maxDay).fill(null), start, odds)[dayNumber - 1];
+  return { stakeGhs: row.stakeGhs, returnGhs: row.returnGhs };
+}
+
+/** Live coupon odds when set; otherwise educational target (1.6). */
+export function resolveDayOdds(
+  combinedOdds: number | null | undefined,
+  targetOdds = ROLLOVER_TARGET_ODDS,
+): number {
+  if (combinedOdds != null && Number.isFinite(Number(combinedOdds)) && Number(combinedOdds) > 0) {
+    return Number(combinedOdds);
+  }
+  return targetOdds;
+}
+
+/**
+ * Full plan ladder. Each open day uses ×targetOdds; an attached coupon's odds
+ * replace that dummy for the day. Stake day N = After win day N−1.
+ */
+export function buildBoardMoneyLadder(
+  dayOdds: Array<number | null | undefined>,
+  start = ROLLOVER_EXAMPLE_STAKE_GHS,
+  targetOdds = ROLLOVER_TARGET_ODDS,
+): Array<{ stakeGhs: number; returnGhs: number; odds: number }> {
+  const rows: Array<{ stakeGhs: number; returnGhs: number; odds: number }> = [];
+  let stake = start;
+  for (const raw of dayOdds) {
+    const odds = resolveDayOdds(raw, targetOdds);
+    const stakeGhs = Math.round(stake);
+    const returnGhs = Math.round(stakeGhs * odds);
+    rows.push({ stakeGhs, returnGhs, odds });
+    stake = returnGhs;
+  }
+  return rows;
 }

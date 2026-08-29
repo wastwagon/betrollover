@@ -65,6 +65,7 @@ type Board = {
   planDays: number;
   targetOdds: number;
   exampleStakeStartGhs: number;
+  exampleFinishGhs?: number | null;
   calendarDate: string;
   archive?: {
     bestWonDays: number;
@@ -150,7 +151,19 @@ function dayHasStarted(status: string) {
   return status === 'pending' || status === 'won' || status === 'lost' || status === 'void';
 }
 
-function GhsFigure({
+/** Live coupon odds when attached; otherwise educational target (1.6). */
+function displayOdds(day: DaySlot, targetOdds: number): { label: string; live: boolean } {
+  if (day.combinedOdds != null && Number.isFinite(Number(day.combinedOdds))) {
+    return { label: Number(day.combinedOdds).toFixed(2), live: true };
+  }
+  return { label: Number(targetOdds).toFixed(2), live: false };
+}
+
+function formatAmount(n: number): string {
+  return Math.round(n).toLocaleString('en-US');
+}
+
+function AmountFigure({
   amount,
   tone,
   size = 'md',
@@ -164,33 +177,31 @@ function GhsFigure({
       ? 'text-[1.65rem] font-bold tracking-tight tabular-nums leading-none'
       : 'tabular-nums font-semibold';
   const ink = tone === 'out' ? 'text-[var(--primary)]' : 'text-[var(--text)]';
-  const unit = tone === 'out' ? 'text-[var(--primary)]/70' : 'text-[var(--text-tertiary)]';
-  return (
-    <span className={`${figure} ${ink}`}>
-      <span className={`mr-1 text-[11px] font-semibold ${unit}`}>GHS</span>
-      {amount}
-    </span>
-  );
+  return <span className={`${figure} ${ink}`}>{amount}</span>;
 }
 
 function MoneyCell({
   amount,
-  reached,
-  later,
+  projected = false,
   tone = 'out',
 }: {
   amount: number | null;
-  reached: boolean;
-  later?: string;
+  /** Muted style for future days that are still empty on the board. */
+  projected?: boolean;
   tone?: 'in' | 'out';
 }) {
-  if (!reached) {
+  if (amount == null) {
     return <span className="text-[var(--text-tertiary)]">·</span>;
   }
-  if (amount == null) {
-    return <span className="text-[var(--text-tertiary)] tabular-nums">{later || '·'}</span>;
+  const formatted = formatAmount(amount);
+  if (projected) {
+    return (
+      <span className={`tabular-nums font-medium ${tone === 'out' ? 'text-[var(--primary)]/70' : 'text-[var(--text-muted)]'}`}>
+        {formatted}
+      </span>
+    );
   }
-  return <GhsFigure amount={String(amount)} tone={tone} />;
+  return <AmountFigure amount={formatted} tone={tone} />;
 }
 
 export function RolloverBoard() {
@@ -270,9 +281,12 @@ export function RolloverBoard() {
         : null;
 
   const archive = board.archive;
-  const todayMoney = board.days.find((d) => d.dayNumber === board.today.dayNumber && dayHasStarted(d.status));
+  const todayMoney = board.days.find((d) => d.dayNumber === board.today.dayNumber);
 
-  const laterOdds = t('rollover.example_later', { odds: board.targetOdds.toFixed(2) });
+  const finishTotal =
+    board.exampleFinishGhs != null
+      ? board.exampleFinishGhs
+      : board.days[board.days.length - 1]?.exampleReturnGhs ?? null;
   const lastEndedNote =
     archive?.lastEnded?.status === 'broken'
       ? t('rollover.last_cut', { day: String(archive.lastEnded.endedDay || archive.lastEnded.wonDays || 1) })
@@ -284,8 +298,9 @@ export function RolloverBoard() {
 
   const bestRun = archive && archive.bestWonDays > 0 ? String(archive.bestWonDays) : '—';
   const stakeAmount =
-    archive?.bestCampaignStakeGhs != null ? String(Math.round(archive.bestCampaignStakeGhs)) : null;
-  const winAmount = archive?.bestExampleReturnGhs != null ? String(archive.bestExampleReturnGhs) : null;
+    archive?.bestCampaignStakeGhs != null ? formatAmount(archive.bestCampaignStakeGhs) : null;
+  const winAmount =
+    archive?.bestExampleReturnGhs != null ? formatAmount(archive.bestExampleReturnGhs) : null;
   const outcomeCounts = [
     { key: 'finished', label: t('rollover.stat_finished'), value: String(archive?.campaignsCompleted ?? 0) },
     { key: 'cut', label: t('rollover.stat_cut'), value: String(archive?.campaignsCut ?? 0) },
@@ -304,11 +319,14 @@ export function RolloverBoard() {
               {runNote}
             </h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
-              {t('rollover.example_later_hint', { odds: board.targetOdds.toFixed(2) })}
+              {t('rollover.ladder_hint', {
+                stake: formatAmount(board.exampleStakeStartGhs),
+                odds: Number(board.targetOdds).toFixed(2),
+              })}
             </p>
           </div>
           <p className="text-sm tabular-nums text-[var(--text-muted)] sm:text-right">
-            {t('rollover.campaign_stake', { stake: String(Math.round(board.exampleStakeStartGhs)) })}
+            {t('rollover.campaign_stake', { stake: formatAmount(board.exampleStakeStartGhs) })}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -359,14 +377,12 @@ export function RolloverBoard() {
           {todayMoney?.exampleStakeGhs != null && todayMoney.exampleReturnGhs != null ? (
             <p className="mt-3 text-xs text-[var(--text-muted)]">
               {t('rollover.example_hint', {
-                stake: String(todayMoney.exampleStakeGhs),
-                ret: String(todayMoney.exampleReturnGhs),
+                stake: formatAmount(todayMoney.exampleStakeGhs),
+                ret: formatAmount(todayMoney.exampleReturnGhs),
                 day: String(board.today.dayNumber),
-                odds: board.targetOdds.toFixed(2),
+                odds: displayOdds(todayMoney, board.targetOdds).label,
               })}
             </p>
-          ) : todayMoney ? (
-            <p className="mt-3 text-xs text-[var(--text-muted)]">{t('rollover.example_later_hint', { odds: board.targetOdds.toFixed(2) })}</p>
           ) : null}
         </div>
       </section>
@@ -397,7 +413,7 @@ export function RolloverBoard() {
                 </p>
                 <p className="mt-2">
                   {stakeAmount ? (
-                    <GhsFigure amount={stakeAmount} tone="in" size="lg" />
+                    <AmountFigure amount={stakeAmount} tone="in" size="lg" />
                   ) : (
                     <span className="text-[1.65rem] font-bold text-[var(--text-tertiary)]">—</span>
                   )}
@@ -410,7 +426,7 @@ export function RolloverBoard() {
                 </p>
                 <p className="mt-2">
                   {winAmount ? (
-                    <GhsFigure amount={winAmount} tone="out" size="lg" />
+                    <AmountFigure amount={winAmount} tone="out" size="lg" />
                   ) : (
                     <span className="text-[1.65rem] font-bold text-[var(--text-tertiary)]">—</span>
                   )}
@@ -445,33 +461,55 @@ export function RolloverBoard() {
           <p className="text-xs text-[var(--text-muted)]">{lastEndedNote}</p>
         ) : null}
 
+        {finishTotal != null ? (
+          <div className="rounded-[var(--radius)] border border-[var(--primary)]/25 bg-[var(--primary-light)]/35 px-4 py-4 sm:px-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--primary)]">
+              {t('rollover.finish_label', { days: String(board.planDays) })}
+            </p>
+            <p className="mt-2">
+              <AmountFigure amount={formatAmount(finishTotal)} tone="out" size="lg" />
+            </p>
+            <p className="mt-2 text-xs text-[var(--text-muted)] leading-relaxed max-w-2xl">
+              {t('rollover.finish_body', {
+                stake: formatAmount(board.exampleStakeStartGhs),
+                odds: board.targetOdds.toFixed(2),
+                total: formatAmount(finishTotal),
+                days: String(board.planDays),
+              })}
+            </p>
+          </div>
+        ) : null}
+
         <ul className="md:hidden overflow-hidden rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)]">
           {board.days.map((day, i) => {
             const inPlay = day.status === 'pending' && day.ticketId != null;
-            const weekBreak = day.dayNumber === 8 || day.dayNumber === 15 || day.dayNumber === 22;
+            const weekBreak = day.dayNumber === 6;
             const reached = dayHasStarted(day.status);
+            const odds = displayOdds(day, board.targetOdds);
             const inner = (
               <div className={`flex items-center gap-3 px-3.5 py-2.5 min-h-[52px] ${inPlay ? 'bg-[var(--primary-light)]/40' : ''}`}>
                 <DayMark dayNumber={day.dayNumber} status={day.status} live={inPlay} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <StatusCell status={day.status} label={t(statusKey(day.status))} />
-                    {day.combinedOdds != null ? (
-                      <span className="text-xs font-medium tabular-nums text-[var(--text)]">{Number(day.combinedOdds).toFixed(2)}</span>
-                    ) : null}
+                    <span
+                      className={`text-xs tabular-nums ${
+                        odds.live ? 'font-medium text-[var(--text)]' : 'font-medium text-[var(--text-tertiary)]'
+                      }`}
+                    >
+                      {odds.label}
+                    </span>
                   </div>
-                  {reached ? (
-                    <div className="mt-1 flex items-center gap-4 text-[11px]">
-                      <span className="min-w-0 truncate">
-                        <span className="mr-1 uppercase tracking-wide text-[var(--text-tertiary)]">{t('rollover.stake')}</span>
-                        <MoneyCell amount={day.exampleStakeGhs} reached={reached} tone="in" />
-                      </span>
-                      <span className="min-w-0 truncate">
-                        <span className="mr-1 uppercase tracking-wide text-[var(--text-tertiary)]">{t('rollover.win')}</span>
-                        <MoneyCell amount={day.exampleReturnGhs} reached={reached} later={laterOdds} tone="out" />
-                      </span>
-                    </div>
-                  ) : null}
+                  <div className="mt-1 flex items-center gap-4 text-[11px]">
+                    <span className="min-w-0 truncate">
+                      <span className="mr-1 uppercase tracking-wide text-[var(--text-tertiary)]">{t('rollover.stake')}</span>
+                      <MoneyCell amount={day.exampleStakeGhs} projected={!reached} tone="in" />
+                    </span>
+                    <span className="min-w-0 truncate">
+                      <span className="mr-1 uppercase tracking-wide text-[var(--text-tertiary)]">{t('rollover.win')}</span>
+                      <MoneyCell amount={day.exampleReturnGhs} projected={!reached} tone="out" />
+                    </span>
+                  </div>
                 </div>
               </div>
             );
@@ -511,7 +549,8 @@ export function RolloverBoard() {
                 const featured = inPlay && day.dayNumber === currentDay;
                 const won = day.status === 'won';
                 const reached = dayHasStarted(day.status);
-                const weekBreak = day.dayNumber === 8 || day.dayNumber === 15 || day.dayNumber === 22;
+                const weekBreak = day.dayNumber === 6;
+                const odds = displayOdds(day, board.targetOdds);
                 const rowBg = inPlay
                   ? 'bg-[var(--primary-light)]/40'
                   : won
@@ -531,16 +570,16 @@ export function RolloverBoard() {
                     </td>
                     <td
                       className={`px-4 py-3 tabular-nums border-b ${hairline} ${
-                        day.combinedOdds != null ? 'font-semibold text-[var(--text)]' : 'text-[var(--text-tertiary)]'
+                        odds.live ? 'font-semibold text-[var(--text)]' : 'text-[var(--text-tertiary)]'
                       }`}
                     >
-                      {day.combinedOdds != null ? Number(day.combinedOdds).toFixed(2) : '·'}
+                      {odds.label}
                     </td>
                     <td className={`px-4 py-3 border-b ${hairline}`}>
-                      <MoneyCell amount={day.exampleStakeGhs} reached={reached} tone="in" />
+                      <MoneyCell amount={day.exampleStakeGhs} projected={!reached} tone="in" />
                     </td>
                     <td className={`px-4 py-3 border-b ${hairline}`}>
-                      <MoneyCell amount={day.exampleReturnGhs} reached={reached} later={laterOdds} tone="out" />
+                      <MoneyCell amount={day.exampleReturnGhs} projected={!reached} tone="out" />
                     </td>
                     <td className={`px-5 py-3 border-b ${hairline}`}>
                       {day.ticketId ? (

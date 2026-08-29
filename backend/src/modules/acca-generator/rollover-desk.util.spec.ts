@@ -1,4 +1,5 @@
 import {
+  buildBoardMoneyLadder,
   exampleMoneyForDay,
   exampleReturnGhs,
   exampleStakeGhs,
@@ -75,21 +76,41 @@ describe('rollover-desk.util', () => {
     expect(picked).toBeNull();
   });
 
-  it('hides example cash after day 7', () => {
-    expect(exampleStakeGhs(1)).toBe(20);
-    expect(exampleReturnGhs(1)).toBeCloseTo(40);
-    expect(exampleMoneyForDay(1).stakeGhs).toBe(20);
-    expect(exampleMoneyForDay(7).stakeGhs).not.toBeNull();
-    expect(exampleMoneyForDay(8).stakeGhs).toBeNull();
-    expect(exampleMoneyForDay(30).returnGhs).toBeNull();
+  it('shows example cash for the full 10-day plan from GHS 100 at ×1.6', () => {
+    expect(exampleStakeGhs(1)).toBe(100);
+    expect(exampleReturnGhs(1)).toBe(160);
+    expect(exampleMoneyForDay(1).stakeGhs).toBe(100);
+    expect(exampleMoneyForDay(1).returnGhs).toBe(160);
+    expect(exampleMoneyForDay(2).stakeGhs).toBe(160);
+    expect(exampleMoneyForDay(2).returnGhs).toBe(256);
+    expect(exampleMoneyForDay(4).stakeGhs).toBe(410);
+    expect(exampleMoneyForDay(4).returnGhs).toBe(656);
+    expect(exampleMoneyForDay(10).stakeGhs).toBe(6882);
+    expect(exampleMoneyForDay(10).returnGhs).toBe(11011);
+    expect(exampleMoneyForDay(11).stakeGhs).toBeNull();
   });
 
   it('scales example cash from a custom campaign stake', () => {
-    expect(exampleStakeGhs(1, 100)).toBe(100);
-    expect(exampleReturnGhs(1, 100)).toBeCloseTo(200);
-    expect(exampleMoneyForDay(1, 7, 100).stakeGhs).toBe(100);
-    expect(exampleMoneyForDay(1, 7, 100).returnGhs).toBe(200);
-    expect(exampleMoneyForDay(2, 7, 100).stakeGhs).toBe(200);
-    expect(exampleMoneyForDay(2, 7, 100).returnGhs).toBe(400);
+    expect(exampleStakeGhs(1, 50)).toBe(50);
+    expect(exampleReturnGhs(1, 50)).toBe(80);
+    expect(exampleMoneyForDay(1, 10, 50).stakeGhs).toBe(50);
+    expect(exampleMoneyForDay(1, 10, 50).returnGhs).toBe(80);
+    expect(exampleMoneyForDay(2, 10, 50).stakeGhs).toBe(80);
+    expect(exampleMoneyForDay(2, 10, 50).returnGhs).toBe(128);
+  });
+
+  it('replaces dummy 1.6 with live odds and chains stake from After win', () => {
+    const open = buildBoardMoneyLadder(Array(10).fill(null));
+    expect(open[0]).toMatchObject({ stakeGhs: 100, returnGhs: 160, odds: 1.6 });
+    expect(open[9].returnGhs).toBe(11011);
+
+    const live = buildBoardMoneyLadder([1.64, null, null]);
+    expect(live[0]).toMatchObject({ stakeGhs: 100, returnGhs: 164, odds: 1.64 });
+    expect(live[1]).toMatchObject({ stakeGhs: 164, returnGhs: 262, odds: 1.6 });
+    expect(live[2]).toMatchObject({ stakeGhs: 262, returnGhs: 419, odds: 1.6 });
+
+    const twoLive = buildBoardMoneyLadder([1.64, 1.8, null]);
+    expect(twoLive[1]).toMatchObject({ stakeGhs: 164, returnGhs: 295, odds: 1.8 });
+    expect(twoLive[2]).toMatchObject({ stakeGhs: 295, returnGhs: 472, odds: 1.6 });
   });
 });

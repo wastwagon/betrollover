@@ -24,4 +24,4 @@ VALUES (1, 20)
 ON CONFLICT (id) DO NOTHING;
 
 COMMENT ON TABLE rollover_settings IS 'Singleton: default example stake for new rollover campaigns.';
-COMMENT ON COLUMN rollover_runs.campaign_stake_ghs IS 'Example campaign stake (GHS) for this 15-day run. Not a real payout.';
+COMMENT ON COLUMN rollover_runs.campaign_stake_ghs IS 'Example campaign stake (GHS) for this 10-day run. Not a real payout.';

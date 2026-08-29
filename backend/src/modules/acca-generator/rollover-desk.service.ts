@@ -18,6 +18,7 @@ import { RolloverDay } from './entities/rollover-day.entity';
 import { RolloverRun } from './entities/rollover-run.entity';
 import { RolloverSettings } from './entities/rollover-settings.entity';
 import {
+  buildBoardMoneyLadder,
   exampleMoneyForDay,
   isEligibleRolloverTicket,
   selectEligibleRolloverTicket,
@@ -109,20 +110,27 @@ export class RolloverDeskService {
       }
     }
 
-    const slots = Array.from({ length: ROLLOVER_PLAN_DAYS }, (_, i) => {
+    const dayOdds = Array.from({ length: ROLLOVER_PLAN_DAYS }, (_, i) => {
+      const row = byNumber.get(i + 1);
+      return row?.combinedOdds != null ? Number(row.combinedOdds) : null;
+    });
+    const ladder = buildBoardMoneyLadder(dayOdds, campaignStakeGhs);
+    const slots = ladder.map((money, i) => {
       const dayNumber = i + 1;
       const row = byNumber.get(dayNumber);
-      const money = exampleMoneyForDay(dayNumber, ROLLOVER_EXAMPLE_MAX_MONEY_DAY, campaignStakeGhs);
+      const combinedOdds = row?.combinedOdds != null ? Number(row.combinedOdds) : null;
       return {
         dayNumber,
         calendarDate: row ? this.dateOnly(row.calendarDate) : null,
         ticketId: row?.ticketId ?? null,
         status: row?.status ?? 'empty',
-        combinedOdds: row?.combinedOdds != null ? Number(row.combinedOdds) : null,
+        combinedOdds,
         exampleStakeGhs: money.stakeGhs,
         exampleReturnGhs: money.returnGhs,
       };
     });
+
+    const finishMoney = ladder[ladder.length - 1];
 
     return {
       ownerUsername: ROLLOVER_OWNER_USERNAME,
@@ -133,6 +141,7 @@ export class RolloverDeskService {
       targetOdds: ROLLOVER_TARGET_ODDS,
       exampleStakeStartGhs: campaignStakeGhs,
       exampleMaxMoneyDay: ROLLOVER_EXAMPLE_MAX_MONEY_DAY,
+      exampleFinishGhs: finishMoney?.returnGhs ?? null,
       calendarDate: date,
       archive,
       run: run
