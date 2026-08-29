@@ -48,24 +48,26 @@ function badgeForDate(dateStr: string | null, today: string, tomorrow: string): 
 
 /**
  * Today / Tomorrow badge for Acca Desk cards.
- * Prefer desk-day stamp in the title; if that day has already rolled past Accra
- * (common for Midnight 23:00→05:59 spillover), fall back to earliest kickoff Accra date.
+ * Prefer earliest kickoff Accra date so overnight Midnight legs (e.g. 05:00 next
+ * calendar day) read as Tomorrow during the afternoon — matching user expectation
+ * and marketplace Today/Tomorrow filters. Fall back to the title desk-day stamp
+ * when picks have no kickoff times.
  */
 export function accaDeskBoardBadge(
   title: string | null | undefined,
   tipsterType?: string | null,
   picks?: Array<{ matchDate?: string | Date | null }> | null,
+  now: Date = new Date(),
 ): AccaDeskBoardBadge | null {
   if (!isAccaDeskCard(title, tipsterType)) return null;
 
-  const today = accraDateStr();
+  const today = accraDateStr(now);
   const tomorrow = addDateStrDays(today, 1);
 
-  const fromDesk = badgeForDate(deskDayFromAccaTitle(title), today, tomorrow);
-  if (fromDesk) return fromDesk;
+  const fromKick = badgeForDate(earliestKickoffAccraDate(picks), today, tomorrow);
+  if (fromKick) return fromKick;
 
-  // Yesterday’s Midnight board (and any lingering desk day) still kicking today/tomorrow.
-  return badgeForDate(earliestKickoffAccraDate(picks), today, tomorrow);
+  return badgeForDate(deskDayFromAccaTitle(title), today, tomorrow);
 }
 
 export type MarketplaceDayFilter = 'all' | 'today' | 'tomorrow';
@@ -86,7 +88,7 @@ export function earliestKickoffAccraDate(
 }
 
 /**
- * Marketplace day filter: Acca Desk board badge (desk day, else kickoff), else earliest kickoff.
+ * Marketplace day filter: Acca Desk board badge (kickoff, else desk day), else earliest kickoff.
  */
 export function matchesMarketplaceDayFilter(
   dayFilter: MarketplaceDayFilter,
@@ -95,13 +97,14 @@ export function matchesMarketplaceDayFilter(
     tipsterType?: string | null;
     picks?: Array<{ matchDate?: string | Date | null }> | null;
   },
+  now: Date = new Date(),
 ): boolean {
   if (dayFilter === 'all') return true;
-  const badge = accaDeskBoardBadge(opts.title, opts.tipsterType, opts.picks);
+  const badge = accaDeskBoardBadge(opts.title, opts.tipsterType, opts.picks, now);
   if (badge) return badge === dayFilter;
   const kick = earliestKickoffAccraDate(opts.picks);
   if (!kick) return false;
-  const today = accraDateStr();
+  const today = accraDateStr(now);
   if (dayFilter === 'today') return kick === today;
   return kick === addDateStrDays(today, 1);
 }

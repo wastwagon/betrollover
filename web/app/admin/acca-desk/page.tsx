@@ -357,7 +357,7 @@ export default function AdminAccaDeskPage() {
             (early / afternoon / evening / midnight). Primary publish at{' '}
             {overview?.earlyCron || '0 20 * * *'} ({overview?.timezone || 'Africa/Accra'}) for{' '}
             <strong>tomorrow</strong>; catch-up at {overview?.cron || '30 0 * * *'}, 06:00 and 08:45 for{' '}
-            <strong>today</strong>. Cards show Today / Tomorrow badges. Followers get one batched email
+            <strong>today</strong>. Cards badge Today / Tomorrow from the earliest Accra kickoff. Followers get one batched email
             after each publish that created new slips.
           </p>
         </div>
