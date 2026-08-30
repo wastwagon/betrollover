@@ -118,6 +118,7 @@ type Overview = {
       id: number;
       title: string;
       slotKey: 'early' | 'afternoon' | 'evening' | 'midnight' | null;
+      deskDay?: string | null;
       totalOdds: number;
       totalPicks: number;
       result: string;
@@ -502,8 +503,9 @@ export default function AdminAccaDeskPage() {
                         : 'No run yet. Reset if needed, then manually attach an AccaSure1X2 coupon as Day 1.'}
                     </p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      Manual attach only — no auto-posting and no odds gate. Pick any pending AccaSure1X2 2-fold
-                      below to put it live on{' '}
+                      Manual attach only — no auto-posting and no odds gate. List includes today’s Acca Desk board
+                      and tomorrow’s early publish (20:00). Pick any pending AccaSure1X2 2-fold below to put it live
+                      on{' '}
                       <span className="font-medium text-gray-700 dark:text-gray-200">/rollover</span>. If Day 1 is
                       live or already won and another slot is still to play, use{' '}
                       <span className="font-medium text-gray-700 dark:text-gray-200">Attach as Day 2</span>
@@ -686,8 +688,8 @@ export default function AdminAccaDeskPage() {
 
                 {(overview.rollover.candidates?.length ?? 0) === 0 ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    No AccaSure1X2 coupons for today’s desk day. Wait for Acca Desk to publish, or generate a slot
-                    above, then attach the one you want.
+                    No AccaSure1X2 coupons for today’s or tomorrow’s desk day. Wait for Acca Desk to publish (or the
+                    20:00 early run), or generate a slot above, then attach the one you want.
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -699,7 +701,13 @@ export default function AdminAccaDeskPage() {
                         <div className="min-w-0">
                           <p className="font-medium text-gray-900 dark:text-white truncate">{c.title}</p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {c.slotKey ?? 'slot?'} · {c.totalOdds.toFixed(2)} · {c.totalPicks}-fold · {c.result}
+                            {c.deskDay
+                              ? c.deskDay === overview.rollover?.calendarDate
+                                ? 'today'
+                                : 'tomorrow'
+                              : 'desk?'}
+                            {c.deskDay ? ` ${c.deskDay}` : ''} · {c.slotKey ?? 'slot?'} · {c.totalOdds.toFixed(2)} ·{' '}
+                            {c.totalPicks}-fold · {c.result}
                             {c.attached ? ' · on board' : ''}
                             {c.eligible ? ' · eligible' : ' · not eligible'}
                           </p>

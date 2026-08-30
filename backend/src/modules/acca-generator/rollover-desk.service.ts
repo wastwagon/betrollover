@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { ACCA_DESK_TIME_SLOTS, deskDayFromTitle, type AccaDeskSlotKey } from '../../config/acca-desk-slots';
+import { ACCA_DESK_TIME_SLOTS, addDateStrDays, deskDayFromTitle, type AccaDeskSlotKey } from '../../config/acca-desk-slots';
 import {
   ROLLOVER_EXAMPLE_MAX_MONEY_DAY,
   ROLLOVER_EXAMPLE_STAKE_GHS,
@@ -184,14 +184,14 @@ export class RolloverDeskService {
       ? await this.requireEligibleTodayTicket(opts.ticketId)
       : opts?.asNextDay
         ? selectEligibleRolloverTicket(
-            await this.listTodayOwnerTickets(),
+            await this.listAttachableOwnerTickets(),
             await this.usedTicketIds(),
             { preferLatestSlot: true },
           )
         : await this.pickTodayTicket();
     if (!ticket) {
       throw new BadRequestException(
-        `No eligible ${ROLLOVER_OWNER_USERNAME} pending 2-fold for today’s desk day. Publish AccaSure1X2 first, then attach the coupon you want.`,
+        `No eligible ${ROLLOVER_OWNER_USERNAME} pending 2-fold for today’s or tomorrow’s Acca Desk board. Publish AccaSure1X2 first, then attach the coupon you want.`,
       );
     }
     return this.commitAttach(ticket, {
@@ -253,21 +253,24 @@ export class RolloverDeskService {
   async getAdminState() {
     await this.syncSettledDays();
     const snapshot = await this.getSnapshot();
-    const tickets = await this.listTodayOwnerTickets();
+    const tickets = await this.listAttachableOwnerTickets();
     const used = await this.usedTicketIds();
     const pendingId = snapshot.pendingDay?.ticketId ?? null;
     const lastDay = snapshot.lastDay;
     const date = snapshot.calendarDate;
+    const tomorrowStamp = addDateStrDays(date, 1);
     const candidates = tickets.map((t) => {
       const odds = Number(t.totalOdds);
       const result = (t.result || 'pending').toLowerCase();
       const slotKey = slotKeyFromTitle(t.title);
+      const deskDay = deskDayFromTitle(t.title);
       const eligible = isEligibleRolloverTicket(t);
       const attached = pendingId === t.id || used.has(t.id);
       return {
         id: t.id,
         title: t.title,
         slotKey,
+        deskDay,
         totalOdds: odds,
         totalPicks: t.totalPicks,
         result,
@@ -276,8 +279,12 @@ export class RolloverDeskService {
         canAttach: eligible && !attached,
       };
     });
+    // Slot generate buttons are for today's board only — don't mark posted from tomorrow's early run.
     const postedSlots = Object.fromEntries(
-      ACCA_DESK_TIME_SLOTS.map((s) => [s.key, candidates.some((c) => c.slotKey === s.key)]),
+      ACCA_DESK_TIME_SLOTS.map((s) => [
+        s.key,
+        candidates.some((c) => c.slotKey === s.key && (c.deskDay == null || c.deskDay === date)),
+      ]),
     ) as Record<AccaDeskSlotKey, boolean>;
 
     let blockReason: string | null = null;
@@ -298,6 +305,7 @@ export class RolloverDeskService {
       ...snapshot,
       planDays: ROLLOVER_PLAN_DAYS,
       targetOdds: ROLLOVER_TARGET_ODDS,
+      tomorrowDeskDay: tomorrowStamp,
       postedSlots,
       candidates,
       canAttachEarliest: !blockReason && candidates.some((c) => c.eligible && !c.attached) && !canAttachNextDay,
@@ -608,15 +616,22 @@ export class RolloverDeskService {
       throw new BadRequestException(`Coupon must belong to ${ROLLOVER_OWNER_USERNAME}.`);
     }
     const todayStamp = utcDateStamp();
+    const tomorrowStamp = addDateStrDays(todayStamp, 1);
     const desk = deskDayFromTitle(ticket.title);
     if (desk) {
-      if (desk !== todayStamp) {
-        throw new BadRequestException('Coupon must be from today’s Acca Desk board.');
+      if (desk !== todayStamp && desk !== tomorrowStamp) {
+        throw new BadRequestException(
+          'Coupon must be from today’s or tomorrow’s Acca Desk board (after the 20:00 early publish).',
+        );
       }
     } else {
       const { start, end } = utcDayBounds();
-      if (ticket.createdAt < start || ticket.createdAt >= end) {
-        throw new BadRequestException('Coupon must be from today’s Acca Desk publish.');
+      const createdFrom = new Date(start);
+      createdFrom.setUTCDate(createdFrom.getUTCDate() - 1);
+      const createdTo = new Date(end);
+      createdTo.setUTCDate(createdTo.getUTCDate() + 1);
+      if (ticket.createdAt < createdFrom || ticket.createdAt >= createdTo) {
+        throw new BadRequestException('Coupon must be from a recent Acca Desk publish.');
       }
     }
     if (!ticket.isMarketplace || ticket.totalPicks !== 2) {
@@ -628,30 +643,42 @@ export class RolloverDeskService {
     return ticket;
   }
 
-  private async listTodayOwnerTickets(): Promise<AccumulatorTicket[]> {
+  /**
+   * AccaSure1X2 coupons for today’s desk day plus tomorrow’s (20:00 early board).
+   * After today’s slots settle, admin still needs tomorrow’s pending coupons to attach.
+   */
+  private async listAttachableOwnerTickets(): Promise<AccumulatorTicket[]> {
     const tipster = await this.tipsterRepo.findOne({
       where: { username: ROLLOVER_OWNER_USERNAME },
       select: ['userId', 'username'],
     });
     if (!tipster?.userId) return [];
     const { start, end } = utcDayBounds();
-    // Look back one day of createdAt so 20:00 early-publish for "today" (created yesterday) still lists.
     const createdFrom = new Date(start);
     createdFrom.setUTCDate(createdFrom.getUTCDate() - 1);
+    const createdTo = new Date(end);
+    createdTo.setUTCDate(createdTo.getUTCDate() + 1);
     const todayStamp = utcDateStamp();
+    const tomorrowStamp = addDateStrDays(todayStamp, 1);
     const tickets = await this.ticketRepo
       .createQueryBuilder('t')
       .where('t.userId = :userId', { userId: tipster.userId })
       .andWhere('t.createdAt >= :createdFrom', { createdFrom })
-      .andWhere('t.createdAt < :end', { end })
+      .andWhere('t.createdAt < :createdTo', { createdTo })
       .andWhere('t.isMarketplace = true')
       .orderBy('t.createdAt', 'ASC')
       .getMany();
-    // Prefer desk-day title stamp so tomorrow's early board never attaches to today's rollover.
-    return tickets.filter((t) => {
+    const filtered = tickets.filter((t) => {
       const desk = deskDayFromTitle(t.title);
-      if (desk) return desk === todayStamp;
-      return t.createdAt >= start && t.createdAt < end;
+      if (desk) return desk === todayStamp || desk === tomorrowStamp;
+      return t.createdAt >= start && t.createdAt < createdTo;
+    });
+    // Today’s board first, then tomorrow; within a day keep create order (slot order).
+    return filtered.sort((a, b) => {
+      const da = deskDayFromTitle(a.title) ?? todayStamp;
+      const db = deskDayFromTitle(b.title) ?? todayStamp;
+      if (da !== db) return da.localeCompare(db);
+      return a.createdAt.getTime() - b.createdAt.getTime();
     });
   }
 
@@ -665,7 +692,7 @@ export class RolloverDeskService {
   }
 
   private async pickTodayTicket(): Promise<AccumulatorTicket | null> {
-    const tickets = await this.listTodayOwnerTickets();
+    const tickets = await this.listAttachableOwnerTickets();
     if (!tickets.length) {
       const tipster = await this.tipsterRepo.findOne({
         where: { username: ROLLOVER_OWNER_USERNAME },
@@ -674,7 +701,14 @@ export class RolloverDeskService {
       if (!tipster?.userId) this.logger.warn(`Rollover owner ${ROLLOVER_OWNER_USERNAME} not found`);
       return null;
     }
-    return selectEligibleRolloverTicket(tickets, await this.usedTicketIds());
+    // Prefer today’s pending before tomorrow’s early board.
+    const todayStamp = utcDateStamp();
+    const used = await this.usedTicketIds();
+    const todayFirst = [
+      ...tickets.filter((t) => (deskDayFromTitle(t.title) ?? todayStamp) === todayStamp),
+      ...tickets.filter((t) => (deskDayFromTitle(t.title) ?? '') === addDateStrDays(todayStamp, 1)),
+    ];
+    return selectEligibleRolloverTicket(todayFirst, used);
   }
 
   /** Read-only ops snapshot — does not attach a coupon. */
