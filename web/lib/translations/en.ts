@@ -921,7 +921,7 @@ const en = {
   'kickoff.later': 'First kickoff {when}',
   'tipster.ai_badge_aria': 'AI tipster operated by the platform',
   'tipster.won_lost': 'Won / Lost',
-  'tipster.best_streak': 'Best Streak',
+  'tipster.best_streak': 'Best Win Streak',
   'tipster.worst_streak': 'Worst Lost Streak',
   'tipster.worst_streak_hint': 'Longest run of consecutive settled losses in the selected range.',
   'tipster.predictions': 'Predictions',

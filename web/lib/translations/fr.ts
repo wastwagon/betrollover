@@ -915,7 +915,7 @@ const fr: Record<string, string> = {
   'kickoff.later': 'Premier coup d’envoi {when}',
   'tipster.ai_badge_aria': 'Tipster IA géré par la plateforme',
   'tipster.won_lost': 'Gagnés / Perdus',
-  'tipster.best_streak': 'Meilleure Série',
+  'tipster.best_streak': 'Meilleure Série Gagnante',
   'tipster.worst_streak': 'Pire Série Perdante',
   'tipster.worst_streak_hint': 'Plus longue série de pertes consécutives réglées dans la période sélectionnée.',
   'tipster.predictions': 'Pronostics',
