@@ -132,6 +132,7 @@ interface TipsterProfile {
     roi: number;
     current_streak: number;
     best_streak?: number | null;
+    worst_streak?: number | null;
     leaderboard_rank: number | null;
     form_points?: number | null;
     follower_count?: number;
@@ -680,7 +681,7 @@ export default function TipsterProfilePage() {
                   <p className="text-[10px] text-[var(--text-muted)] mt-2 opacity-90">{t('tipster.performance_settled_hint')}</p>
                 ) : null}
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-px mb-4 min-w-0 rounded-[var(--radius)] overflow-hidden border border-[var(--separator)] bg-[var(--separator)]">
+              <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-px mb-4 min-w-0 rounded-[var(--radius)] overflow-hidden border border-[var(--separator)] bg-[var(--separator)]">
                 <div className="bg-[var(--card)] p-3">
                   <span className="text-[10px] uppercase tracking-wide text-[var(--text-tertiary)]">{t('tipster.roi')}</span>
                   <p className={`font-display font-semibold text-base ${roiColor}`} title={!hasSettledPicks && tipster.total_predictions ? t('tipster.stats_update') : undefined}>{roiDisplay}</p>
@@ -700,6 +701,20 @@ export default function TipsterProfilePage() {
                   <p className="font-display font-semibold text-base text-[var(--text)]">
                     {tipster.best_streak != null && tipster.best_streak > 0
                       ? `${tipster.best_streak}W`
+                      : '—'}
+                  </p>
+                </div>
+                <div className="bg-[var(--card)] p-3" title={t('tipster.worst_streak_hint')}>
+                  <span className="text-[10px] uppercase tracking-wide text-[var(--text-tertiary)]">{t('tipster.worst_streak')}</span>
+                  <p
+                    className={`font-display font-semibold text-base ${
+                      tipster.worst_streak != null && tipster.worst_streak > 0
+                        ? 'text-[var(--destructive)]'
+                        : 'text-[var(--text)]'
+                    }`}
+                  >
+                    {tipster.worst_streak != null && tipster.worst_streak > 0
+                      ? `${tipster.worst_streak}L`
                       : '—'}
                   </p>
                 </div>

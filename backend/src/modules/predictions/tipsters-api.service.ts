@@ -28,6 +28,7 @@ import {
   isClassicAiHiddenFromPublic,
   isClassicAiTipsterRow,
 } from '../../common/classic-ai-public-visibility.util';
+import { computeStreaksFromNewestFirst } from './tipster-streaks.util';
 
 const SORT_COLUMNS: Record<string, string> = {
   roi: 'roi',
@@ -399,7 +400,7 @@ export class TipstersApiService {
 
   /** Compute stats from accumulator_tickets for human tipsters (userId) - matches Marketplace logic */
   private async computeStatsFromTickets(userIds: number[], sport?: string): Promise<
-    Map<number, { total: number; won: number; lost: number; winRate: number; roi: number; currentStreak: number; bestStreak: number }>
+    Map<number, { total: number; won: number; lost: number; winRate: number; roi: number; currentStreak: number; bestStreak: number; worstStreak: number }>
   > {
     if (userIds.length === 0) return new Map();
     const qb = this.ticketRepo
@@ -422,7 +423,7 @@ export class TipstersApiService {
 
     const rows = await qb.getRawMany();
 
-    const statsMap = new Map<number, { total: number; won: number; lost: number; winRate: number; roi: number; currentStreak: number; bestStreak: number }>();
+    const statsMap = new Map<number, { total: number; won: number; lost: number; winRate: number; roi: number; currentStreak: number; bestStreak: number; worstStreak: number }>();
     for (const row of rows) {
       const userId = Number(row.userId);
       const total = Number(row.total) || 0;
@@ -436,8 +437,8 @@ export class TipstersApiService {
       const totalInvestment = settled;
       const totalReturns = won > 0 ? totalOddsWon : 0;
       const roi = totalInvestment > 0 ? ((totalReturns - totalInvestment) / totalInvestment) * 100 : 0;
-      const { currentStreak, bestStreak } = await this.computeStreakFromTickets(userId);
-      statsMap.set(userId, { total, won, lost, winRate, roi, currentStreak, bestStreak });
+      const { currentStreak, bestStreak, worstStreak } = await this.computeStreakFromTickets(userId);
+      statsMap.set(userId, { total, won, lost, winRate, roi, currentStreak, bestStreak, worstStreak });
     }
     return statsMap;
   }
@@ -569,47 +570,25 @@ export class TipstersApiService {
     return Math.round(Number(row?.avg ?? 0) * 100) / 100;
   }
 
-  private async computeStreakFromTickets(userId: number): Promise<{ currentStreak: number; bestStreak: number }> {
+  private async computeStreakFromTickets(
+    userId: number,
+  ): Promise<{ currentStreak: number; bestStreak: number; worstStreak: number }> {
     const tickets = await this.ticketRepo.find({
       where: { userId },
       select: ['result', 'createdAt'],
       order: { createdAt: 'DESC' },
       take: 100,
     });
-    const settled = tickets.filter((t) => t.result === 'won' || t.result === 'lost');
-    let currentStreak = 0;
-    let bestStreak = 0;
-    let run = 0;
-    for (const t of settled) {
-      const sign = t.result === 'won' ? 1 : -1;
-      if (run === 0 || (run > 0 && sign === 1) || (run < 0 && sign === -1)) {
-        run += sign;
-      } else {
-        run = sign;
-      }
-      if (run > 0) bestStreak = Math.max(bestStreak, run);
-      if (settled.indexOf(t) === 0) currentStreak = run;
-    }
-    return { currentStreak, bestStreak };
+    return computeStreaksFromNewestFirst(tickets);
   }
 
   /** Streak from rows already ordered newest settlement first (W/L only). */
-  private computeStreakFromOrderedResults(rows: { result: string }[]): { currentStreak: number; bestStreak: number } {
-    let currentStreak = 0;
-    let bestStreak = 0;
-    let run = 0;
-    for (let i = 0; i < rows.length; i++) {
-      const t = rows[i];
-      const sign = t.result === 'won' ? 1 : -1;
-      if (run === 0 || (run > 0 && sign === 1) || (run < 0 && sign === -1)) {
-        run += sign;
-      } else {
-        run = sign;
-      }
-      if (run > 0) bestStreak = Math.max(bestStreak, run);
-      if (i === 0) currentStreak = run;
-    }
-    return { currentStreak, bestStreak };
+  private computeStreakFromOrderedResults(rows: { result: string }[]): {
+    currentStreak: number;
+    bestStreak: number;
+    worstStreak: number;
+  } {
+    return computeStreaksFromNewestFirst(rows);
   }
 
   private applyTipsterProfilePeriodFilter(
@@ -662,6 +641,7 @@ export class TipstersApiService {
     roi: number;
     currentStreak: number;
     bestStreak: number;
+    worstStreak: number;
     avgOdds: number;
   }> {
     const qb = this.ticketRepo
@@ -705,9 +685,9 @@ export class TipstersApiService {
       .andWhere('t.result IN (:...wl)', { wl: ['won', 'lost'] });
     this.applyTipsterProfileWindowOnTicket(streakQb, window);
     const streakRows = await streakQb.orderBy('t.updatedAt', 'DESC').take(500).getMany();
-    const { currentStreak, bestStreak } = this.computeStreakFromOrderedResults(streakRows);
+    const { currentStreak, bestStreak, worstStreak } = this.computeStreakFromOrderedResults(streakRows);
 
-    return { total, won, lost, winRate, roi, currentStreak, bestStreak, avgOdds };
+    return { total, won, lost, winRate, roi, currentStreak, bestStreak, worstStreak, avgOdds };
   }
 
   async getTipsters(options: {
@@ -839,6 +819,7 @@ export class TipstersApiService {
       const roi = ticketStats ? ticketStats.roi : Number(t.roi);
       const currentStreak = ticketStats ? ticketStats.currentStreak : (t.currentStreak ?? 0);
       const bestStreak = ticketStats ? ticketStats.bestStreak : (t.bestStreak ?? 0);
+      const worstStreak = ticketStats ? ticketStats.worstStreak : 0;
       const activity = t.userId != null ? activityByUser.get(t.userId) : undefined;
       const form_points = computeTipsterFormPoints({
         winRate,
@@ -863,6 +844,7 @@ export class TipstersApiService {
         roi: roi,
         current_streak: currentStreak,
         best_streak: bestStreak,
+        worst_streak: worstStreak,
         total_profit: Number(t.totalProfit),
         avg_odds: Number(t.avgOdds),
         leaderboard_rank: t.leaderboardRank,
@@ -949,6 +931,7 @@ export class TipstersApiService {
     let roi = Number(tipster.roi);
     let currentStreak = tipster.currentStreak ?? 0;
     let bestStreak = tipster.bestStreak ?? 0;
+    let worstStreak = 0;
     let avgOddsLive = Number(tipster.avgOdds);
 
     if (tipster.userId != null) {
@@ -960,6 +943,7 @@ export class TipstersApiService {
       roi = mp.roi;
       currentStreak = mp.currentStreak;
       bestStreak = mp.bestStreak;
+      worstStreak = mp.worstStreak;
       avgOddsLive = mp.avgOdds;
     }
 
@@ -999,6 +983,7 @@ export class TipstersApiService {
         roi: roi,
         current_streak: currentStreak,
         best_streak: bestStreak,
+        worst_streak: worstStreak,
         total_profit: Number(tipster.totalProfit),
         avg_odds: avgOddsLive,
         leaderboard_rank: leaderboardRankForResponse,

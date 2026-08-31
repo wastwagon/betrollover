@@ -916,6 +916,8 @@ const fr: Record<string, string> = {
   'tipster.ai_badge_aria': 'Tipster IA géré par la plateforme',
   'tipster.won_lost': 'Gagnés / Perdus',
   'tipster.best_streak': 'Meilleure Série',
+  'tipster.worst_streak': 'Pire Série Perdante',
+  'tipster.worst_streak_hint': 'Plus longue série de pertes consécutives réglées dans la période sélectionnée.',
   'tipster.predictions': 'Pronostics',
   'tipster.avg_odds': 'Cote Moy.',
   'tipster.commission_note_full': 'Selon nos Conditions, 30 % de chaque vente de pronostic gagnant est retenu par la Plateforme ; 70 % sont crédités au tipster.',
