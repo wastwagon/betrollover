@@ -13,12 +13,14 @@ import { formatFootballOutcomeLabel, LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { VerifiedTipsterBadge } from '@/components/VerifiedTipsterBadge';
 import { KickoffUrgencyLine } from '@/components/KickoffUrgencyLine';
+import { FixtureLiveChip } from '@/components/FixtureLiveChip';
 import { BookingCodeCopyBlock } from '@/components/BookingCodeCopyBlock';
 import { BottomSheet } from '@/components/ios/BottomSheet';
 import { PickSocialBar, type PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { Button, buttonClassName } from '@/components/ui/Button';
 import { accaDeskBoardBadge } from '@/lib/acca-desk-board-badge';
+import { resultChipClass } from '@/lib/result-chip';
 
 interface Pick {
   id?: number;
@@ -214,16 +216,8 @@ export function PickCard({
           : t('pick_card.badge_purchases_other', { n: String(purchaseCount) })
       : null;
 
-  const statusColors: Record<string, string> = {
-    pending_approval: 'bg-amber-200 text-amber-900',
-    active: 'bg-emerald-200 text-emerald-900',
-    won: 'bg-emerald-200 text-emerald-900',
-    lost: 'bg-red-200 text-red-900',
-    cancelled: 'bg-slate-200 text-slate-700',
-    void: 'bg-slate-200 text-slate-700',
-  };
   const displayStatus = result && ['won', 'lost', 'void'].includes(result) ? result : status;
-  const statusColor = displayStatus ? statusColors[displayStatus] || 'bg-slate-100 text-slate-600' : '';
+  const statusColor = displayStatus ? resultChipClass(displayStatus) : '';
   const deskBoard = accaDeskBoardBadge(title, tipster?.tipsterType ?? tipster?.tipster_type, picks);
 
   const handlePurchase = () => {
@@ -260,8 +254,8 @@ export function PickCard({
             <span
               className={`flex-shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded ${
                 deskBoard === 'tomorrow'
-                  ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200'
-                  : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
+                  ? 'bg-[var(--accent-light)] text-[var(--accent)]'
+                  : 'bg-[var(--primary-light)] text-[var(--primary)]'
               }`}
               title={
                 deskBoard === 'tomorrow'
@@ -291,7 +285,7 @@ export function PickCard({
                     />
                   </div>
                 ) : (
-                  <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold ${tipster ? tipsterRankBadgeClass(tipster.rank) : 'bg-slate-200 text-slate-700'}`}>
+                  <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold ${tipster ? tipsterRankBadgeClass(tipster.rank) : 'bg-[var(--fill-secondary)] text-[var(--text-muted)]'}`}>
                     {tipster ? tipsterRankBadgeContent(tipster.rank) : '?'}
                   </div>
                 )}
@@ -323,7 +317,7 @@ export function PickCard({
                           Number(tipster.roi) > 0
                             ? 'text-[var(--success)]'
                             : Number(tipster.roi) < 0
-                              ? 'text-rose-600 dark:text-rose-400'
+                              ? 'text-[var(--destructive)]'
                               : 'text-[var(--text-muted)]'
                         }`}
                       >
@@ -339,7 +333,7 @@ export function PickCard({
                       tipster.wonPicks + tipster.lostPicks > 0 &&
                       tipster.wonPicks + tipster.lostPicks < LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING && (
                       <span
-                        className="text-[9px] font-semibold text-amber-700 dark:text-amber-300"
+                        className="text-[9px] font-semibold text-[var(--accent)]"
                         title={t('tipster.early_sample_hint', {
                           n: String(LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING),
                         })}
@@ -352,8 +346,8 @@ export function PickCard({
                 <div className="flex-shrink-0 flex items-center gap-1">
                   {avgRating != null && avgRating > 0 && (
                     <span className="flex items-center gap-0.5">
-                      <span className="text-amber-400 text-[10px]">★</span>
-                      <span className="text-[9px] font-semibold text-amber-600">{Number(avgRating).toFixed(1)}</span>
+                      <span className="text-[var(--accent)] text-[10px]">★</span>
+                      <span className="text-[9px] font-semibold text-[var(--accent)]">{Number(avgRating).toFixed(1)}</span>
                       {reviewCount != null && reviewCount > 0 && (
                         <span className="text-[9px] text-[var(--text-muted)]">({reviewCount})</span>
                       )}
@@ -389,10 +383,10 @@ export function PickCard({
             <div className="flex flex-wrap items-center gap-1.5 mt-1">
               {purchaseActivityLabel && (
                 <span
-                  className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-[10px] font-bold border shadow-sm ${
+                    className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-[10px] font-bold border ${
                     isFree
                       ? 'bg-[var(--accent-light)] text-[var(--accent)] border-[var(--accent)]/30'
-                      : 'bg-amber-50 text-amber-950 border-amber-300 dark:bg-amber-950/40 dark:text-amber-100 dark:border-amber-700/60'
+                      : 'bg-[var(--primary-light)] text-[var(--primary)] border-[var(--primary)]/25'
                   }`}
                   title={isFree ? t('pick_card.badge_free_unlocks_hint') : t('pick_card.badge_purchases_hint')}
                 >
@@ -471,19 +465,28 @@ export function PickCard({
                       </div>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {(matchDate || hasLiveScore) && (
-                          <span className={`text-[9px] ${isFinished ? 'text-emerald-600 dark:text-emerald-400' : isLive ? 'text-red-600 dark:text-red-400' : isStarted ? 'text-amber-600 dark:text-amber-400' : 'text-[var(--text-muted)]'}`}>
-                            {isFinished
-                              ? (hasLiveScore ? `🏁 FT ${p.homeScore}-${p.awayScore}` : '🏁 FT')
-                              : isLive
-                                ? (hasLiveScore
-                                    ? `🔴 ${formatLiveFixturePeriod(p.fixtureStatus, p.fixtureStatusElapsed)} ${p.homeScore}-${p.awayScore}`
-                                    : `🔴 ${formatLiveFixturePeriod(p.fixtureStatus, p.fixtureStatusElapsed)}`)
-                                : isStarted
-                                  ? '⏱ Started'
-                                  : matchDate
-                                    ? `⏰ ${new Date(matchDate).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
-                                    : null}
-                          </span>
+                          isFinished ? (
+                            <span className="text-[9px] font-semibold text-[var(--success)] tabular-nums">
+                              {hasLiveScore ? `FT ${p.homeScore}-${p.awayScore}` : 'FT'}
+                            </span>
+                          ) : isLive ? (
+                            <FixtureLiveChip
+                              label={
+                                hasLiveScore
+                                  ? `${formatLiveFixturePeriod(p.fixtureStatus, p.fixtureStatusElapsed)} ${p.homeScore}-${p.awayScore}`
+                                  : formatLiveFixturePeriod(p.fixtureStatus, p.fixtureStatusElapsed)
+                              }
+                              className="text-[9px] px-1.5 py-px"
+                            />
+                          ) : isStarted ? (
+                            <span className="text-[9px] font-medium text-[var(--accent)]">
+                              {t('kickoff.started_short')}
+                            </span>
+                          ) : matchDate ? (
+                            <span className="text-[9px] text-[var(--text-muted)] tabular-nums">
+                              {new Date(matchDate).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          ) : null
                         )}
                         {(hasLiveScore || (p.result || p.status)) && (
                           <div className="flex items-center gap-1">
@@ -493,7 +496,7 @@ export function PickCard({
                               </span>
                             )}
                             {(p.result || p.status) && (
-                              <span className={`text-[7px] font-bold uppercase px-1 rounded ${(p.result || p.status) === 'won' ? 'bg-emerald-100 text-emerald-700' : (p.result || p.status) === 'lost' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'}`}>
+                              <span className={`text-[7px] font-bold uppercase px-1 rounded ${resultChipClass(p.result || p.status)}`}>
                                 {p.result || p.status}
                               </span>
                             )}
@@ -601,19 +604,19 @@ export function PickCard({
       >
         <div className="p-4 sm:p-5 space-y-4">
           <p className="text-sm text-[var(--text)] leading-relaxed">{t('pick_card.confirm_purchase_body')}</p>
-          <div className="rounded-xl border border-emerald-200/70 dark:border-emerald-800/45 bg-emerald-50/50 dark:bg-emerald-900/15 px-4 py-3">
-            <p className="text-xs font-bold text-emerald-900 dark:text-emerald-200 mb-1">
+          <div className="rounded-xl border border-[var(--primary)]/25 bg-[var(--primary-light)] px-4 py-3">
+            <p className="text-xs font-bold text-[var(--primary)] mb-1">
               {t('pick_detail.escrow_badge_title')}
             </p>
-            <p className="text-xs text-emerald-800/95 dark:text-emerald-300/95 leading-relaxed">
+            <p className="text-xs text-[var(--text)] leading-relaxed">
               {t('pick_card.funds_escrow_note')}
             </p>
             {priceDisplay?.original ? (
-              <p className="text-[11px] text-emerald-800/80 dark:text-emerald-300/80 mt-1.5 tabular-nums">
+              <p className="text-[11px] text-[var(--text-muted)] mt-1.5 tabular-nums">
                 {priceDisplay.primary} · {priceDisplay.original}
               </p>
             ) : (
-              <p className="text-[11px] text-emerald-800/80 dark:text-emerald-300/80 mt-1.5 tabular-nums">
+              <p className="text-[11px] text-[var(--text-muted)] mt-1.5 tabular-nums">
                 {priceDisplay?.primary ?? `GHS ${Number(price).toFixed(2)}`}
               </p>
             )}
@@ -659,8 +662,8 @@ export function PickCard({
                           <span
                             className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
                               deskBoard === 'tomorrow'
-                                ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200'
-                                : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
+                                ? 'bg-[var(--accent-light)] text-[var(--accent)]'
+                                : 'bg-[var(--primary-light)] text-[var(--primary)]'
                             }`}
                           >
                             {deskBoard === 'tomorrow' ? t('pick_card.desk_tomorrow') : t('pick_card.desk_today')}
@@ -681,7 +684,7 @@ export function PickCard({
                         {tipster.wonPicks + tipster.lostPicks > 0 &&
                           tipster.wonPicks + tipster.lostPicks < LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING && (
                           <span
-                            className="text-sm font-semibold text-amber-700 dark:text-amber-300"
+                            className="text-sm font-semibold text-[var(--accent)]"
                             title={t('tipster.early_sample_hint', {
                               n: String(LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING),
                             })}
@@ -745,7 +748,7 @@ export function PickCard({
                                 </span>
                               )}
                               {pickResult && (
-                                <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${pickResult === 'won' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : pickResult === 'lost' ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-slate-100 text-slate-600'}`}>
+                                <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${resultChipClass(pickResult)}`}>
                                   {t(`status.${pickResult}`) || pickResult}
                                 </span>
                               )}
@@ -837,8 +840,8 @@ export function PickCard({
                             <span
                               className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
                                 deskBoard === 'tomorrow'
-                                  ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200'
-                                  : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
+                                  ? 'bg-[var(--accent-light)] text-[var(--accent)]'
+                                  : 'bg-[var(--primary-light)] text-[var(--primary)]'
                               }`}
                             >
                               {deskBoard === 'tomorrow' ? t('pick_card.desk_tomorrow') : t('pick_card.desk_today')}
@@ -892,7 +895,7 @@ export function PickCard({
                                   </span>
                                 )}
 {pickResult && (
-                                <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${pickResult === 'won' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-200' : pickResult === 'lost' ? 'bg-red-500/10 text-red-600 border border-red-200' : 'bg-slate-500/10 text-slate-600'}`}>
+                                <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${resultChipClass(pickResult)}`}>
                                   {t(`status.${pickResult}`) || pickResult}
                                 </span>
                               )}

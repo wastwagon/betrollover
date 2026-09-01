@@ -12,7 +12,8 @@ import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-ca
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
-import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
+import { formatLiveFixturePeriod, FIXTURE_NS_CHIP } from '@/lib/live-fixture-display';
+import { FixtureLiveChip } from '@/components/FixtureLiveChip';
 import { isFixtureLive } from '@/lib/home-today-matches';
 import type { PublicFixtureDetail } from '@/lib/match-detail';
 import { buttonClassName } from '@/components/ui/Button';
@@ -115,12 +116,12 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <p className="text-sm text-[var(--text-muted)]">{formatKickoff(match.matchDate)}</p>
               {live ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 border border-red-500/30 px-3 py-1 text-xs font-bold text-red-600 dark:text-red-300 tabular-nums">
-                  <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" aria-hidden />
-                  {formatLiveFixturePeriod(match.status, match.statusElapsed) || 'LIVE'}
-                </span>
+                <FixtureLiveChip
+                  label={formatLiveFixturePeriod(match.status, match.statusElapsed) || 'LIVE'}
+                  className="px-3 py-1 text-xs"
+                />
               ) : (
-                <span className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] px-2 py-1 rounded-full bg-[var(--bg)] border border-[var(--border)]">
+                <span className={`${FIXTURE_NS_CHIP} text-xs`}>
                   {match.status}
                 </span>
               )}

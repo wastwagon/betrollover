@@ -126,7 +126,7 @@ export function HomeFollowingShelf() {
       <div className="section-ux-gutter-wide w-full min-w-0">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between mb-4 sm:mb-5">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700/80 dark:text-emerald-400/90 mb-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--primary)] mb-1">
               {t('nav.tipsters')}
             </p>
             <h2 className="text-xl font-bold text-[var(--text)] sm:text-2xl tracking-tight">

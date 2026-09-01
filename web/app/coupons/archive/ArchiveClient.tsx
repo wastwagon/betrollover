@@ -11,11 +11,13 @@ import { EmptyState } from '@/components/EmptyState';
 import { PageHeader } from '@/components/PageHeader';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
-import { NavBar } from '@/components/ios/NavBar';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { SegmentedControl } from '@/components/ios/SegmentedControl';
+import { OUTCOME_CARD, OUTCOME_TEXT } from '@/lib/result-chip';
 
 interface Pick {
   id?: number;
@@ -321,29 +323,19 @@ export default function CouponsArchivePage({
           }}
           disabled={loading}
         >
-        <div className="lg:hidden -mx-4 sm:mx-0 mb-3">
-          <NavBar
-            title={t('picks.archive.page_title')}
-            backHref="/marketplace"
-            backLabel={t('nav.marketplace')}
-            sticky={false}
-          />
-        </div>
-        <div className="hidden lg:flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6 min-w-0">
-          <div className="min-w-0 flex-1 max-w-full">
-            <PageHeader
-              label={t('picks.archive.page_label')}
-              title={t('picks.archive.page_title')}
-              tagline={t('picks.archive.page_tagline')}
-            />
-          </div>
-          <Link
-            href="/marketplace"
-            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto self-stretch sm:self-auto shrink-0"
-          >
-            {t('picks.archive.back_marketplace')}
-          </Link>
-        </div>
+        <PageHeader
+          label={t('picks.archive.page_label')}
+          title={t('picks.archive.page_title')}
+          tagline={t('picks.archive.page_tagline')}
+          action={
+            <Link
+              href="/marketplace"
+              className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto self-stretch sm:self-auto shrink-0"
+            >
+              {t('picks.archive.back_marketplace')}
+            </Link>
+          }
+        />
 
         <div className="mb-6">
           <AdSlot zoneSlug="coupons-archive-full" fullWidth className="w-full max-w-3xl" />
@@ -370,24 +362,24 @@ export default function CouponsArchivePage({
           </div>
           {periodPreset === 'custom' && (
             <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-end gap-3 pt-1">
-              <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)] min-w-0">
-                <span>{t('picks.archive.custom_from')}</span>
-                <input
+              <div className="w-full sm:w-auto sm:min-w-[10rem] min-w-0">
+                <Input
+                  id="archive-date-from"
+                  label={t('picks.archive.custom_from')}
                   type="date"
                   value={draftFrom}
                   onChange={(e) => setDraftFrom(e.target.value)}
-                  className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--text)]"
                 />
-              </label>
-              <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)] min-w-0">
-                <span>{t('picks.archive.custom_to')}</span>
-                <input
+              </div>
+              <div className="w-full sm:w-auto sm:min-w-[10rem] min-w-0">
+                <Input
+                  id="archive-date-to"
+                  label={t('picks.archive.custom_to')}
                   type="date"
                   value={draftTo}
                   onChange={(e) => setDraftTo(e.target.value)}
-                  className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--text)]"
                 />
-              </label>
+              </div>
               <Button
                 type="button"
                 onClick={applyCustomRange}
@@ -409,13 +401,13 @@ export default function CouponsArchivePage({
               <p className="text-lg font-semibold text-[var(--text)]">{totalSettled}</p>
               <p className="text-xs text-[var(--text-muted)] mt-1">{t('picks.archive.total_settled')}</p>
             </div>
-            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center min-w-0">
-              <p className="text-lg font-semibold text-emerald-700">{wonCount}</p>
-              <p className="text-xs text-emerald-600 mt-1">{t('picks.archive.won')}</p>
+            <div className={`p-4 rounded-xl border text-center min-w-0 ${OUTCOME_CARD.positive}`}>
+              <p className={`text-lg font-semibold ${OUTCOME_TEXT.positive}`}>{wonCount}</p>
+              <p className={`text-xs mt-1 ${OUTCOME_TEXT.positive}`}>{t('picks.archive.won')}</p>
             </div>
-            <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-center min-w-0">
-              <p className="text-lg font-semibold text-red-700">{lostCount}</p>
-              <p className="text-xs text-red-600 mt-1">{t('picks.archive.lost')}</p>
+            <div className={`p-4 rounded-xl border text-center min-w-0 ${OUTCOME_CARD.negative}`}>
+              <p className={`text-lg font-semibold ${OUTCOME_TEXT.negative}`}>{lostCount}</p>
+              <p className={`text-xs mt-1 ${OUTCOME_TEXT.negative}`}>{t('picks.archive.lost')}</p>
             </div>
             <div className="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center min-w-0">
               <p className="text-lg font-semibold text-[var(--text)]">{winRate}%</p>
@@ -423,37 +415,37 @@ export default function CouponsArchivePage({
             </div>
             <div
               className={`p-4 rounded-xl border text-center min-w-0 ${
-                roiPositive ? 'bg-emerald-50 border-emerald-200' : combinedRoi < 0 ? 'bg-red-50 border-red-200' : 'bg-[var(--card)] border-[var(--border)]'
+                roiPositive ? OUTCOME_CARD.positive : combinedRoi < 0 ? OUTCOME_CARD.negative : OUTCOME_CARD.neutral
               }`}
               title={t('picks.archive.combined_roi_hint')}
             >
               <p
                 className={`text-lg font-semibold ${
-                  roiPositive ? 'text-emerald-700' : combinedRoi < 0 ? 'text-red-700' : 'text-[var(--text)]'
+                  roiPositive ? OUTCOME_TEXT.positive : combinedRoi < 0 ? OUTCOME_TEXT.negative : 'text-[var(--text)]'
                 }`}
               >
                 {combinedRoi > 0 ? '+' : ''}
                 {combinedRoi}%
               </p>
-              <p className={`text-xs mt-1 ${roiPositive ? 'text-emerald-600' : combinedRoi < 0 ? 'text-red-600' : 'text-[var(--text-muted)]'}`}>
+              <p className={`text-xs mt-1 ${roiPositive ? OUTCOME_TEXT.positive : combinedRoi < 0 ? OUTCOME_TEXT.negative : 'text-[var(--text-muted)]'}`}>
                 {t('picks.archive.combined_roi')}
               </p>
             </div>
             <div
               className={`p-4 rounded-xl border text-center min-w-0 ${
-                unitsPositive ? 'bg-emerald-50 border-emerald-200' : netUnits < 0 ? 'bg-red-50 border-red-200' : 'bg-[var(--card)] border-[var(--border)]'
+                unitsPositive ? OUTCOME_CARD.positive : netUnits < 0 ? OUTCOME_CARD.negative : OUTCOME_CARD.neutral
               }`}
               title={t('picks.archive.net_units_hint')}
             >
               <p
                 className={`text-lg font-semibold ${
-                  unitsPositive ? 'text-emerald-700' : netUnits < 0 ? 'text-red-700' : 'text-[var(--text)]'
+                  unitsPositive ? OUTCOME_TEXT.positive : netUnits < 0 ? OUTCOME_TEXT.negative : 'text-[var(--text)]'
                 }`}
               >
                 {netUnits > 0 ? '+' : ''}
                 {netUnits}
               </p>
-              <p className={`text-xs mt-1 ${unitsPositive ? 'text-emerald-600' : netUnits < 0 ? 'text-red-600' : 'text-[var(--text-muted)]'}`}>
+              <p className={`text-xs mt-1 ${unitsPositive ? OUTCOME_TEXT.positive : netUnits < 0 ? OUTCOME_TEXT.negative : 'text-[var(--text-muted)]'}`}>
                 {t('picks.archive.net_units')}
               </p>
             </div>
@@ -465,27 +457,18 @@ export default function CouponsArchivePage({
         )}
 
         {/* Result filter */}
-        <div className="mb-6 w-full min-w-0 overflow-hidden">
-          <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
-            {(['all', 'won', 'lost'] as const).map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setResultFilter(f)}
-                className={`shrink-0 px-4 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
-                  resultFilter === f
-                    ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                    : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text)]'
-                }`}
-              >
-                {f === 'all'
-                  ? t('picks.archive.filter_all')
-                  : f === 'won'
-                    ? t('picks.archive.filter_won')
-                    : t('picks.archive.filter_lost')}
-              </button>
-            ))}
-          </div>
+        <div className="mb-6 w-full min-w-0">
+          <SegmentedControl
+            aria-label={t('picks.archive.filter_all')}
+            className="max-w-none"
+            options={[
+              { value: 'all' as const, label: t('picks.archive.filter_all') },
+              { value: 'won' as const, label: t('picks.archive.filter_won') },
+              { value: 'lost' as const, label: t('picks.archive.filter_lost') },
+            ]}
+            value={resultFilter}
+            onChange={setResultFilter}
+          />
         </div>
 
         {loading ? (
@@ -507,7 +490,7 @@ export default function CouponsArchivePage({
                 : t('picks.archive.empty_default_desc')
             }
             actionLabel={t('picks.archive.browse_active_cta')}
-            actionHref="/coupons"
+            actionHref="/marketplace"
           />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-w-0">

@@ -8,6 +8,7 @@ import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-ca
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { useT } from '@/context/LanguageContext';
 import { hasPrimaryLeaderboardSample } from '@/lib/leaderboard-sample';
+import { isAccaDeskCard } from '@/lib/acca-desk-board-badge';
 
 interface Pick {
   id?: number;
@@ -27,6 +28,8 @@ interface Tipster {
   lostPicks: number;
   rank: number | null;
   avatarUrl?: string | null;
+  tipsterType?: string | null;
+  tipster_type?: string | null;
 }
 
 interface MarketplaceCardItem {
@@ -68,11 +71,16 @@ function leaderboardUsernameSet(data: unknown): Set<string> {
   return names;
 }
 
-/** Prefer picks from all-time leaderboard tipsters; fill with newest listings if needed. */
+function isIndependentTipsterCard(a: MarketplaceCardItem): boolean {
+  return !isAccaDeskCard(a.title, a.tipster?.tipsterType ?? a.tipster?.tipster_type);
+}
+
+/** Prefer leaderboard tipsters; fill with newest independent listings. Acca Desk stays on Market. */
 function pickEliteShowcase(all: MarketplaceCardItem[], eliteNames: Set<string>, max = 6): MarketplaceCardItem[] {
+  const people = all.filter(isIndependentTipsterCard);
   const seen = new Set<number>();
   const out: MarketplaceCardItem[] = [];
-  for (const a of all) {
+  for (const a of people) {
     const u = a.tipster?.username?.trim().toLowerCase();
     if (u && eliteNames.has(u) && !seen.has(a.id)) {
       seen.add(a.id);
@@ -80,7 +88,7 @@ function pickEliteShowcase(all: MarketplaceCardItem[], eliteNames: Set<string>, 
       if (out.length >= max) return out;
     }
   }
-  for (const a of all) {
+  for (const a of people) {
     if (!seen.has(a.id)) {
       seen.add(a.id);
       out.push(a);
@@ -187,7 +195,7 @@ export function HomeQuickMarketplaceSections({
       <section className="py-12 md:py-16 border-t border-[var(--border)] bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <div className="section-ux-gutter-wide w-full min-w-0">
           <div className="text-center mb-6 sm:mb-8 max-w-2xl mx-auto px-1">
-            <span className="inline-block px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-2">
+            <span className="inline-block px-3 py-1 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-2">
               {t('home.marketplace_active_badge')}
             </span>
             <h2 className="text-lg font-bold text-[var(--text)] sm:text-xl md:text-2xl">{t('home.marketplace_active_title')}</h2>

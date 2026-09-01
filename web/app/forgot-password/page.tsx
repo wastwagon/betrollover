@@ -4,13 +4,14 @@ import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useT } from '@/context/LanguageContext';
-import { UnifiedHeader } from '@/components/UnifiedHeader';
+import { AuthCard, AuthPageFallback, AuthShell } from '@/components/AuthShell';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
 function ForgotPasswordForm() {
+    const t = useT();
     const searchParams = useSearchParams();
     const [email, setEmail] = useState('');
     const [step, setStep] = useState<'request' | 'reset'>('request');
@@ -44,13 +45,13 @@ function ForgotPasswordForm() {
             });
             const data = await res.json();
             if (!res.ok) {
-                throw new Error(getApiErrorMessage(data, 'Failed to send reset code'));
+                throw new Error(getApiErrorMessage(data, t('auth.send_reset_failed')));
             }
 
-            setSuccess(getApiErrorMessage(data, 'If an account exists with that email, a reset code has been sent.'));
+            setSuccess(getApiErrorMessage(data, t('auth.reset_sent')));
             setStep('reset');
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Something went wrong');
+            setError(err instanceof Error ? err.message : t('auth.server_error'));
         } finally {
             setLoading(false);
         }
@@ -59,7 +60,7 @@ function ForgotPasswordForm() {
     const handleResetPassword = async (e: React.FormEvent) => {
         e.preventDefault();
         if (newPassword !== confirmPassword) {
-            setError('Passwords do not match');
+            setError(t('auth.passwords_mismatch'));
             return;
         }
 
@@ -74,29 +75,25 @@ function ForgotPasswordForm() {
             });
             const data = await res.json();
             if (!res.ok) {
-                throw new Error(getApiErrorMessage(data, 'Failed to reset password'));
+                throw new Error(getApiErrorMessage(data, t('auth.reset_failed')));
             }
 
-            setSuccess('Password reset successful! You can now sign in.');
+            setSuccess(t('auth.reset_success'));
             setStep('request'); // Reset to initial state or redirect
             setEmail('');
             setCode('');
             setNewPassword('');
             setConfirmPassword('');
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Something went wrong');
+            setError(err instanceof Error ? err.message : t('auth.server_error'));
         } finally {
             setLoading(false);
         }
     };
 
-    const t = useT();
     return (
-        <div className="min-h-screen bg-[var(--bg)] relative overflow-x-hidden w-full min-w-0 max-w-full">
-            <UnifiedHeader />
-            <main className="section-ux-auth-main w-full min-w-0 max-w-full">
-                <div className="w-full max-w-md min-w-0 mx-auto px-4 sm:px-0">
-                    <div className="bg-[var(--card)] rounded-2xl shadow-sm border border-[var(--separator)] p-6 sm:p-8 md:p-10 min-w-0 max-w-full">
+        <AuthShell>
+            <AuthCard>
                         <div className="text-center mb-8">
                             <h1 className="font-display text-xl font-semibold text-[var(--text)]">
                                 {step === 'request' ? t('auth.forgot_title') : t('auth.forgot_reset_title')}
@@ -107,13 +104,13 @@ function ForgotPasswordForm() {
                         </div>
 
                         {error && (
-                            <div className="mb-6 p-4 rounded-xl bg-red-50 text-red-600 text-sm font-medium border border-red-100 italic" role="alert" aria-live="polite">
+                            <div className="mb-6 p-4 rounded-xl bg-[var(--destructive)]/10 text-[var(--destructive)] text-sm font-medium border border-[var(--destructive)]/20" role="alert" aria-live="polite">
                                 {error}
                             </div>
                         )}
 
                         {success && (
-                            <div className="mb-6 p-4 rounded-xl bg-green-50 text-green-600 text-sm font-medium border border-green-100 italic" role="status" aria-live="polite">
+                            <div className="mb-6 p-4 rounded-xl bg-[var(--primary-light)] text-[var(--primary)] text-sm font-medium border border-[var(--primary)]/20" role="status" aria-live="polite">
                                 {success}
                             </div>
                         )}
@@ -183,16 +180,14 @@ function ForgotPasswordForm() {
                                 {t('auth.login')}
                             </Link>
                         </p>
-                    </div>
-                </div>
-            </main>
-        </div>
+            </AuthCard>
+        </AuthShell>
     );
 }
 
 export default function ForgotPasswordPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-[var(--bg)] flex items-center justify-center w-full min-w-0 max-w-full overflow-x-hidden"><div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" /></div>}>
+        <Suspense fallback={<AuthPageFallback />}>
             <ForgotPasswordForm />
         </Suspense>
     );

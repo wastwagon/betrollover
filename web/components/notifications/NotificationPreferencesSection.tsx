@@ -159,7 +159,7 @@ export function NotificationPreferencesSection() {
           {!pushSupported ? (
             <p className="text-xs text-[var(--text-muted)]">{t('notifications.push_not_supported')}</p>
           ) : pushPermission === 'denied' ? (
-            <p className="text-xs text-amber-800">{t('notifications.push_permission_blocked')}</p>
+            <p className="text-xs text-[var(--accent)]">{t('notifications.push_permission_blocked')}</p>
           ) : pushRegistered ? (
             <p className="text-xs text-[var(--primary)]">{t('notifications.push_device_ready')}</p>
           ) : (

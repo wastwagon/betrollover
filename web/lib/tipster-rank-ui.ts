@@ -13,12 +13,12 @@ export function tipsterRankMedal(rank: number): string | null {
 
 /** Circular badge Tailwind classes (PickCard-style). */
 export function tipsterRankBadgeClass(rank: number | null | undefined): string {
-  if (rank == null || rank < 1) return 'bg-slate-200 text-slate-700';
+  if (rank == null || rank < 1) return 'bg-[var(--fill-secondary)] text-[var(--text-muted)]';
   if (rank === 1) return 'bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-white shadow-md';
   if (rank === 2) return 'bg-gradient-to-r from-slate-300 via-slate-400 to-slate-500 text-white shadow-md';
   if (rank === 3) return 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-md';
   if (rank <= 10) return 'bg-gradient-to-r from-amber-200 to-yellow-300 text-amber-900';
-  return 'bg-slate-200 text-slate-800';
+  return 'bg-[var(--fill-secondary)] text-[var(--text-muted)]';
 }
 
 /** Inner label: medals, numeric rank, or em dash when unranked. */

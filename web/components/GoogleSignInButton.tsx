@@ -220,7 +220,7 @@ export function GoogleSignInButton({
           <a
             href={startHref}
             {...(openExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-            className="min-h-[44px] w-full flex items-center justify-center gap-2 rounded-xl border-2 border-[var(--border)] bg-white dark:bg-slate-900 text-[var(--text)] font-medium hover:bg-slate-50 dark:hover:bg-slate-800 focus:ring-2 focus:ring-[var(--primary)] focus:ring-offset-2 transition-colors"
+            className="min-h-[44px] w-full flex items-center justify-center gap-2 rounded-xl border-2 border-[var(--border)] bg-[var(--card)] text-[var(--text)] font-medium hover:bg-[var(--fill-secondary)] focus:ring-2 focus:ring-[var(--primary)] focus:ring-offset-2 transition-colors"
             style={{ opacity: disabled ? 0.7 : 1, pointerEvents: disabled ? 'none' : 'auto' }}
             aria-label={label}
           >

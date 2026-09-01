@@ -3,10 +3,10 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname, useRouter } from 'next/navigation';
-import { useLanguage, useT } from '@/context/LanguageContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { trackEvent } from '@/lib/analytics';
-import { stripLocalePrefix } from '@/lib/locale-path';
+
 function Dropdown({ open, onClose, triggerRef, children }: {
   open: boolean;
   onClose: () => void;
@@ -58,7 +58,7 @@ function Dropdown({ open, onClose, triggerRef, children }: {
   return createPortal(panel, document.body);
 }
 
-function TopBarSwitchers() {
+export function LocaleSwitchers({ tone = 'onPrimary' }: { tone?: 'onPrimary' | 'onSurface' }) {
   const pathname = usePathname();
   const router = useRouter();
   const { language, languages, setLang } = useLanguage();
@@ -78,7 +78,9 @@ function TopBarSwitchers() {
   };
 
   const btnCls =
-    'flex items-center gap-1 px-2 py-1 rounded-md text-white/90 hover:bg-white/15 transition-colors text-xs font-medium';
+    tone === 'onSurface'
+      ? 'flex items-center gap-1 px-2 py-1 rounded-md text-[var(--text-muted)] hover:bg-[var(--fill-secondary)] hover:text-[var(--text)] transition-colors text-xs font-medium border border-[var(--border)] bg-[var(--card)]'
+      : 'flex items-center gap-1 px-2 py-1 rounded-md text-white/90 hover:bg-white/15 transition-colors text-xs font-medium';
 
   return (
     <>
@@ -92,7 +94,7 @@ function TopBarSwitchers() {
           aria-haspopup="listbox"
           aria-expanded={currencyOpen}
         >
-          <span>{currency.flag}</span>
+          {tone === 'onPrimary' ? <span>{currency.flag}</span> : null}
           <span>{currency.code}</span>
           <svg className={`w-3 h-3 opacity-70 transition-transform ${currencyOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -135,7 +137,7 @@ function TopBarSwitchers() {
           aria-haspopup="listbox"
           aria-expanded={languageOpen}
         >
-          <span>{language.flag}</span>
+          {tone === 'onPrimary' ? <span>{language.flag}</span> : null}
           <span>{language.code.toUpperCase()}</span>
           <svg className={`w-3 h-3 opacity-70 transition-transform ${languageOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -164,77 +166,6 @@ function TopBarSwitchers() {
           ))}
         </Dropdown>
       </div>
-    </>
-  );
-}
-
-function isAdminRoute(pathname: string | null) {
-  if (!pathname) return false;
-  return stripLocalePrefix(pathname).startsWith('/admin');
-}
-
-export function TopBar() {
-  const pathname = usePathname();
-  const t = useT();
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduceMotion(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-
-  if (isAdminRoute(pathname)) {
-    return null;
-  }
-
-  const disclaimerText = [
-    t('topbar.disclaimer_1'),
-    t('topbar.disclaimer_2'),
-    t('topbar.disclaimer_3'),
-    t('topbar.disclaimer_4'),
-    t('topbar.disclaimer_5'),
-  ].join(' • ');
-
-  /** Matches bar height: safe-area + min row (min-h-9 + py-1). Keeps layout when bar is fixed on mobile. */
-  const mobileSpacerStyle = { height: 'var(--br-topbar-h)' } as const;
-
-  return (
-    <>
-      <div className="z-[60] w-full min-w-0 max-w-full bg-[var(--primary)] text-white/95 text-xs sm:text-sm border-b border-black/10 dark:border-white/10 overflow-x-hidden safe-area-inset-top max-md:fixed max-md:top-0 max-md:left-0 max-md:right-0 md:relative">
-        <div className="flex items-center justify-between min-h-9 h-auto sm:h-9 py-1 sm:py-0 px-3 sm:px-4 gap-2 min-w-0 max-w-full">
-          {/* Compact on mobile app chrome: hide marquee, keep a11y text + switchers */}
-          <div className="flex-1 min-w-0 overflow-hidden max-md:hidden">
-            {reduceMotion ? (
-              <div className="overflow-x-auto overflow-y-hidden [-webkit-overflow-scrolling:touch] pb-0.5">
-                <p className="whitespace-nowrap pr-4 text-white/95 leading-snug">{disclaimerText}</p>
-              </div>
-            ) : (
-              <>
-                <p className="sr-only">{disclaimerText}</p>
-                <div className="overflow-hidden" aria-hidden="true">
-                  <div className="animate-marquee whitespace-nowrap inline-flex will-change-transform text-white/95">
-                    <span className="inline-block shrink-0 px-6">{disclaimerText}</span>
-                    <span className="inline-block shrink-0 px-6">{disclaimerText}</span>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-          <p className="md:hidden sr-only">{disclaimerText}</p>
-          <span className="md:hidden shrink-0 rounded-md bg-white/15 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-white/95">
-            {t('topbar.disclaimer_5')}
-          </span>
-
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 ml-auto">
-            <TopBarSwitchers />
-          </div>
-        </div>
-      </div>
-      <div className="md:hidden w-full shrink-0 pointer-events-none" style={mobileSpacerStyle} aria-hidden />
     </>
   );
 }

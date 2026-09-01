@@ -6,12 +6,20 @@ import { User } from '../users/entities/user.entity';
 import { AccaGeneratorService, GenerateAccaDto } from './acca-generator.service';
 
 @Controller('acca-generator')
-@UseGuards(JwtAuthGuard, ThrottlerGuard)
+@UseGuards(ThrottlerGuard)
 @Throttle({ default: { limit: 30, ttl: 60000 } })
 export class AccaGeneratorController {
   constructor(private readonly accaGeneratorService: AccaGeneratorService) {}
 
+  /** Public flag so chrome can hide Acca when admin disabled the tool. */
+  @Get('status')
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  getStatus() {
+    return this.accaGeneratorService.getEnabledStatus();
+  }
+
   @Get('config')
+  @UseGuards(JwtAuthGuard)
   getConfig(@CurrentUser() user: User) {
     return this.accaGeneratorService.getPublicConfig(user.id);
   }
@@ -21,6 +29,7 @@ export class AccaGeneratorController {
    * Does not call API-Sports — reads synced fixture_odds.
    */
   @Get('availability')
+  @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   getAvailability(
     @Query('riskLevel') riskLevel?: string,
@@ -30,12 +39,14 @@ export class AccaGeneratorController {
   }
 
   @Post('generate')
+  @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   generate(@CurrentUser() user: User, @Body() body: GenerateAccaDto) {
     return this.accaGeneratorService.generate(user.id, body);
   }
 
   @Post('publish')
+  @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 15, ttl: 60000 } })
   publish(
     @CurrentUser() user: User,
@@ -46,6 +57,7 @@ export class AccaGeneratorController {
 
   /** Product analytics (tool_open). Quota/empty_pool are recorded server-side. */
   @Post('track')
+  @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   track(
     @CurrentUser() user: User,

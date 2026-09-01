@@ -34,6 +34,7 @@
   --success: #10b981;
   --success-light: #d1fae5;
   --destructive: #ff3b30;
+  --destructive-light: #fee2e2;
 
   /* Effects */
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
@@ -58,8 +59,9 @@
   --chrome-bg: rgba(255, 255, 255, 0.92);
 
   /**
-   * App chrome heights — keep TopBar / UnifiedHeader / sticky filters / toasts aligned.
-   * Mobile: TopBar is fixed (safe-area + 2.75rem). Desktop: TopBar is in-flow (0 fixed offset).
+   * App chrome heights — keep UnifiedHeader / sticky filters / toasts aligned.
+   * TopBar (disclaimer marquee) is desktop-only. Mobile header sits at the top
+   * with safe-area padding so GHS/EN live in the main header, not a second band.
    */
   --br-topbar-h: 0px;
   --br-header-h: 4.5rem;
@@ -69,9 +71,9 @@
 
 @media (max-width: 767px) {
   :root {
-    --br-topbar-h: calc(env(safe-area-inset-top, 0px) + 2.75rem);
-    --br-chrome-below-header: calc(env(safe-area-inset-top, 0px) + 2.75rem + 4.5rem);
-    --br-toast-top: calc(env(safe-area-inset-top, 0px) + 2.75rem + 4.5rem + 0.5rem);
+    --br-topbar-h: 0px;
+    --br-chrome-below-header: calc(env(safe-area-inset-top, 0px) + 4.5rem);
+    --br-toast-top: calc(env(safe-area-inset-top, 0px) + 4.5rem + 0.5rem);
   }
 }
 
@@ -101,6 +103,7 @@
     --success: #34d399;
     --success-light: rgba(52, 211, 153, 0.15);
     --destructive: #ff453a;
+    --destructive-light: rgba(255, 69, 58, 0.15);
 
     --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5);
@@ -305,9 +308,9 @@ body {
     @apply relative flex-1 flex max-w-7xl mx-auto w-full px-4 py-6 gap-4;
   }
 
-  /** Login / forgot-password card column */
+  /** Login / register / forgot / verify card column */
   .section-ux-auth-main {
-    @apply relative flex flex-col items-center justify-center px-6 py-20;
+    @apply relative flex flex-col items-center justify-center w-full min-h-[calc(100vh-64px)] px-5 sm:px-6 py-14 md:py-20;
   }
 
   /**
@@ -341,7 +344,7 @@ body {
     @apply flex-1 w-full min-w-0 overflow-x-auto md:ml-56;
   }
 
-  /** Register — single centered column */
+  /** Alias kept so leftover class names still layout the same as auth-main */
   .section-ux-register-main {
     @apply relative flex flex-col items-center justify-center w-full min-h-[calc(100vh-64px)] px-5 sm:px-6 py-14 md:py-20;
   }

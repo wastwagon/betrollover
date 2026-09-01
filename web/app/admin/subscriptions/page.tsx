@@ -9,6 +9,7 @@ import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/sit
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { useT } from '@/context/LanguageContext';
 import { buttonClassName } from '@/components/ui/Button';
+import { Input, fieldControlClassName } from '@/components/ui/Input';
 
 type TabId = 'catalog' | 'purchases';
 
@@ -960,9 +961,11 @@ export default function AdminSubscriptionsPage() {
             <div className="flex flex-wrap items-center gap-4 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 mb-4">
               <label className="text-sm font-medium text-amber-900 dark:text-amber-100">Status:</label>
               <select
+                id="admin-subs-status"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-amber-500"
+                className={fieldControlClassName(undefined, 'w-auto')}
+                aria-label="Status"
               >
                 <option value="all">All</option>
                 <option value="active">Active</option>
@@ -971,9 +974,11 @@ export default function AdminSubscriptionsPage() {
               </select>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-2">Tipster type:</label>
               <select
+                id="admin-subs-kind"
                 value={tipsterKind}
                 onChange={(e) => setTipsterKind(e.target.value)}
-                className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+                className={fieldControlClassName(undefined, 'w-auto')}
+                aria-label="Tipster type"
               >
                 <option value="all">All (human + AI)</option>
                 <option value="human">Human tipsters only</option>
@@ -981,9 +986,11 @@ export default function AdminSubscriptionsPage() {
               </select>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-2">Tipster:</label>
               <select
+                id="admin-subs-tipster"
                 value={tipsterUserId}
                 onChange={(e) => setTipsterUserId(e.target.value)}
-                className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 min-w-[200px]"
+                className={fieldControlClassName(undefined, 'w-auto min-w-[200px]')}
+                aria-label="Tipster"
               >
                 <option value="">All with a package</option>
                 {tipsters.map((t) => (
@@ -1003,15 +1010,18 @@ export default function AdminSubscriptionsPage() {
                 </button>
               )}
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-2">Subscriber user ID:</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                placeholder="e.g. 42"
-                value={subscriberUserIdFilter}
-                onChange={(e) => setSubscriberUserIdFilter(e.target.value.replace(/\D/g, ''))}
-                className="w-[120px] rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
-              />
+              <div className="w-[140px]">
+                <Input
+                  id="admin-subs-subscriber-id"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="e.g. 42"
+                  value={subscriberUserIdFilter}
+                  onChange={(e) => setSubscriberUserIdFilter(e.target.value.replace(/\D/g, ''))}
+                  aria-label="Subscriber user ID"
+                />
+              </div>
               {subscriberUserIdFilter && (
                 <button
                   type="button"
@@ -1031,20 +1041,24 @@ export default function AdminSubscriptionsPage() {
                   {revokingAllForSubscriber ? 'Revoking…' : 'Revoke all for this user'}
                 </button>
               )}
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-2">Created from:</label>
-              <input
-                type="date"
-                value={createdFrom}
-                onChange={(e) => setCreatedFrom(e.target.value)}
-                className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
-              />
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">to:</label>
-              <input
-                type="date"
-                value={createdTo}
-                onChange={(e) => setCreatedTo(e.target.value)}
-                className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
-              />
+              <div className="w-[10.5rem]">
+                <Input
+                  id="admin-subs-created-from"
+                  label="Created from"
+                  type="date"
+                  value={createdFrom}
+                  onChange={(e) => setCreatedFrom(e.target.value)}
+                />
+              </div>
+              <div className="w-[10.5rem]">
+                <Input
+                  id="admin-subs-created-to"
+                  label="to"
+                  type="date"
+                  value={createdTo}
+                  onChange={(e) => setCreatedTo(e.target.value)}
+                />
+              </div>
               {(createdFrom || createdTo) && (
                 <button
                   type="button"

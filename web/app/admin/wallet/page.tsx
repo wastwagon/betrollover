@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { Button, buttonClassName } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 interface Wallet {
   id: number;
@@ -149,27 +150,23 @@ export default function AdminWalletPage() {
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Adjust Wallet Balance</h3>
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amount (positive to add, negative to deduct)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={adjustAmount}
-                      onChange={(e) => setAdjustAmount(e.target.value)}
-                      className="w-full px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                      placeholder="e.g., 100 or -50"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reason</label>
-                    <input
-                      type="text"
-                      value={adjustReason}
-                      onChange={(e) => setAdjustReason(e.target.value)}
-                      className="w-full px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                      placeholder="e.g., Manual adjustment, Refund, etc."
-                    />
-                  </div>
+                  <Input
+                    id="wallet-adjust-amount"
+                    label="Amount (positive to add, negative to deduct)"
+                    type="number"
+                    step="0.01"
+                    value={adjustAmount}
+                    onChange={(e) => setAdjustAmount(e.target.value)}
+                    placeholder="e.g., 100 or -50"
+                  />
+                  <Input
+                    id="wallet-adjust-reason"
+                    label="Reason"
+                    type="text"
+                    value={adjustReason}
+                    onChange={(e) => setAdjustReason(e.target.value)}
+                    placeholder="e.g., Manual adjustment, Refund, etc."
+                  />
                   <div className="flex gap-3">
                     <button type="button"
                       onClick={() => adjustBalance(adjustingWallet)}

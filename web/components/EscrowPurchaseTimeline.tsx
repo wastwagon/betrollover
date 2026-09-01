@@ -106,17 +106,17 @@ export function EscrowPurchaseTimeline({
 
   return (
     <aside
-      className={`rounded-2xl border border-emerald-200/70 dark:border-emerald-800/45 bg-emerald-50/40 dark:bg-emerald-900/10 ${
+      className={`rounded-2xl border border-[var(--primary)]/25 bg-[var(--primary-light)] ${
         compact ? 'px-3 py-2.5' : 'px-4 py-3.5'
       } min-w-0 ${className}`}
       aria-label={t('escrow_timeline.title')}
     >
       <div className="flex items-start justify-between gap-2 mb-2.5">
-        <p className={`font-bold text-emerald-900 dark:text-emerald-200 ${compact ? 'text-[11px]' : 'text-xs'}`}>
+        <p className={`font-bold text-[var(--primary)] ${compact ? 'text-[11px]' : 'text-xs'}`}>
           {t('escrow_timeline.title')}
         </p>
         {purchasedAt ? (
-          <time className="text-[10px] text-emerald-800/70 dark:text-emerald-300/70 tabular-nums shrink-0">
+          <time className="text-[10px] text-[var(--text-muted)] tabular-nums shrink-0">
             {new Date(purchasedAt).toLocaleDateString()}
           </time>
         ) : null}
@@ -133,7 +133,7 @@ export function EscrowPurchaseTimeline({
               {!isLast ? (
                 <span
                   className={`absolute top-2 left-[50%] w-full h-0.5 ${
-                    idx < activeIdx ? 'bg-emerald-500' : 'bg-[var(--separator)]'
+                    idx < activeIdx ? 'bg-[var(--primary)]' : 'bg-[var(--separator)]'
                   }`}
                   aria-hidden
                 />
@@ -142,8 +142,8 @@ export function EscrowPurchaseTimeline({
                 className={`relative z-[1] flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold border ${
                   complete || current
                     ? finalAmber
-                      ? 'bg-amber-500 border-amber-500 text-white'
-                      : 'bg-emerald-600 border-emerald-600 text-white'
+                      ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                      : 'bg-[var(--primary)] border-[var(--primary)] text-white'
                     : 'bg-[var(--card)] border-[var(--separator)] text-[var(--text-muted)]'
                 }`}
               >
@@ -154,7 +154,7 @@ export function EscrowPurchaseTimeline({
                   compact ? 'text-[9px]' : 'text-[10px]'
                 } ${
                   current || complete
-                    ? 'font-semibold text-emerald-900 dark:text-emerald-200'
+                    ? 'font-semibold text-[var(--primary)]'
                     : 'text-[var(--text-muted)]'
                 }`}
               >
@@ -166,7 +166,7 @@ export function EscrowPurchaseTimeline({
       </ol>
 
       <p
-        className={`mt-2.5 text-emerald-800/90 dark:text-emerald-300/90 leading-snug ${
+        className={`mt-2.5 text-[var(--text)] leading-snug ${
           compact ? 'text-[10px]' : 'text-xs'
         }`}
       >

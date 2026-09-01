@@ -105,7 +105,7 @@ export function HomeFreeTipOfTheDay({
       <div className="section-ux-gutter-wide w-full min-w-0">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
           <div className="min-w-0">
-            <span className="inline-block px-3 py-1 rounded-full bg-amber-200 dark:bg-amber-800/50 text-amber-900 dark:text-amber-100 text-xs font-semibold mb-2">
+            <span className="inline-block px-3 py-1 rounded-full bg-[var(--accent)]/20 text-[var(--text)] text-xs font-semibold mb-2">
               {t('home.free_tip_badge_free')}
             </span>
             <h2 className="text-base font-semibold text-[var(--text)] sm:text-lg md:text-xl">{t('home.free_tip')}</h2>
@@ -113,7 +113,7 @@ export function HomeFreeTipOfTheDay({
           </div>
           <Link
             href="/marketplace"
-            className="text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline shrink-0 w-fit"
+            className="text-sm font-medium text-[var(--primary)] hover:underline shrink-0 w-fit"
           >
             {t('home.free_tip_browse_all')}
           </Link>

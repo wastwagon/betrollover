@@ -1,44 +1,76 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, type ComponentType } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import {
+  IconHome,
+  IconDashboard,
+  IconTrending,
+  IconTarget,
+  IconChart,
+  IconPackage,
+  IconStar,
+  IconUsers,
+  IconCart,
+  IconBag,
+  IconCreditCard,
+  IconEarnings,
+  IconChat,
+  IconClipboard,
+  IconShield,
+  IconWallet,
+  IconBell,
+  IconLive,
+  IconGlobe,
+  IconBook,
+  IconMegaphone,
+  IconMail,
+  IconSettings,
+  IconLogout,
+} from '@/components/ios/icons';
 
-const menuItems = [
-  { href: '/', icon: '🏠', label: 'Home' },
-  { href: '/dashboard', icon: '📊', label: 'Dashboard' },
-  { href: '/admin/analytics', icon: '📈', label: 'Analytics' },
-  { href: '/admin/ai-predictions', icon: '🤖', label: 'AI Predictions' },
-  { href: '/admin/acca-desk', icon: '🎯', label: 'Acca Desk' },
+type MenuItem = {
+  href: string;
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+};
+
+const menuItems: MenuItem[] = [
+  { href: '/', icon: IconHome, label: 'Home' },
+  { href: '/dashboard', icon: IconDashboard, label: 'Dashboard' },
+  { href: '/admin/analytics', icon: IconTrending, label: 'Analytics' },
+  { href: '/admin/ai-predictions', icon: IconTarget, label: 'AI Predictions' },
+  { href: '/admin/acca-desk', icon: IconChart, label: 'Acca Desk' },
   ...(isSubscriptionsEnabled()
     ? [
-        { href: '/admin/ai-tipster-packages', icon: '📦', label: 'AI Packages' },
-        { href: '/admin/subscriptions', icon: '⭐', label: 'VIP subscribers' },
+        { href: '/admin/ai-tipster-packages', icon: IconPackage, label: 'AI Packages' },
+        { href: '/admin/subscriptions', icon: IconStar, label: 'VIP subscribers' },
       ]
     : []),
-  { href: '/admin/users', icon: '👥', label: 'Users' },
-  { href: '/admin/marketplace', icon: '🛒', label: 'Marketplace' },
-  { href: '/admin/purchases', icon: '🛍️', label: 'Purchases' },
-  { href: '/admin/deposits', icon: '💳', label: 'Deposits' },
-  { href: '/admin/withdrawals', icon: '💸', label: 'Withdrawals' },
-  { href: '/admin/support',     icon: '🎫', label: 'Support' },
-  { href: '/admin/audit-log',   icon: '📋', label: 'Audit log' },
-  { href: '/admin/chat',        icon: '💬', label: 'Chat Moderation' },
-  { href: '/admin/pick-comments', icon: '🗨️', label: 'Pick Comments' },
-  { href: '/admin/escrow', icon: '🔒', label: 'Escrow' },
-  { href: '/admin/wallet', icon: '💰', label: 'Wallet' },
-  { href: '/admin/notifications', icon: '🔔', label: 'Notifications' },
-  { href: '/admin/fixtures', icon: '⚽', label: 'Fixtures' },
-  { href: '/admin/sports', icon: '🌍', label: 'Multi-Sport' },
-  { href: '/admin/content', icon: '📄', label: 'Content' },
-  { href: '/admin/news', icon: '📰', label: 'News' },
-  { href: '/admin/resources', icon: '📚', label: 'Resources' },
-  { href: '/admin/ads', icon: '📢', label: 'Ads' },
-  { href: '/admin/email', icon: '📧', label: 'Email' },
-  { href: '/admin/settings', icon: '⚙️', label: 'Settings' },
+  { href: '/admin/users', icon: IconUsers, label: 'Users' },
+  { href: '/admin/marketplace', icon: IconCart, label: 'Marketplace' },
+  { href: '/admin/purchases', icon: IconBag, label: 'Purchases' },
+  { href: '/admin/deposits', icon: IconCreditCard, label: 'Deposits' },
+  { href: '/admin/withdrawals', icon: IconEarnings, label: 'Withdrawals' },
+  { href: '/admin/support', icon: IconChat, label: 'Support' },
+  { href: '/admin/audit-log', icon: IconClipboard, label: 'Audit log' },
+  { href: '/admin/chat', icon: IconChat, label: 'Chat Moderation' },
+  { href: '/admin/pick-comments', icon: IconChat, label: 'Pick Comments' },
+  { href: '/admin/escrow', icon: IconShield, label: 'Escrow' },
+  { href: '/admin/wallet', icon: IconWallet, label: 'Wallet' },
+  { href: '/admin/notifications', icon: IconBell, label: 'Notifications' },
+  { href: '/admin/fixtures', icon: IconLive, label: 'Fixtures' },
+  { href: '/admin/sports', icon: IconGlobe, label: 'Multi-Sport' },
+  { href: '/admin/content', icon: IconBook, label: 'Content' },
+  { href: '/admin/news', icon: IconBook, label: 'News' },
+  { href: '/admin/resources', icon: IconBook, label: 'Resources' },
+  { href: '/admin/ads', icon: IconMegaphone, label: 'Ads' },
+  { href: '/admin/email', icon: IconMail, label: 'Email' },
+  { href: '/admin/settings', icon: IconSettings, label: 'Settings' },
 ];
 
 function SidebarContent({
@@ -88,7 +120,7 @@ function SidebarContent({
                 isActive ? 'bg-[var(--primary)] text-white' : 'text-[var(--text-muted)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)]'
               }`}
             >
-              <span className="shrink-0">{item.icon}</span>
+              <item.icon className="w-5 h-5" />
               <span className="text-sm font-medium min-w-0 truncate">{item.label}</span>
             </Link>
           );
@@ -109,7 +141,7 @@ function SidebarContent({
           }}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[var(--text-muted)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] transition-colors min-w-0"
         >
-          <span className="shrink-0">🚪</span>
+          <IconLogout className="w-5 h-5" />
           <span className="text-sm font-medium min-w-0 truncate">Sign Out</span>
         </Link>
       </div>

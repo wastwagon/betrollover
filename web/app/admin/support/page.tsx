@@ -6,6 +6,7 @@ import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { buttonClassName } from '@/components/ui/Button';
+import { Textarea, Field, fieldControlClassName } from '@/components/ui/Input';
 
 interface Ticket {
   id: number;
@@ -161,19 +162,28 @@ export default function AdminSupportPage() {
                 <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap bg-gray-50 dark:bg-gray-700 rounded-lg p-3">{selected.message}</p>
               </div>
               <div>
-                <label className="block text-xs text-gray-400 uppercase tracking-wider mb-1">Your Response</label>
-                <textarea rows={4} value={response} onChange={(e) => setResponse(e.target.value)}
+                <Textarea
+                  id="admin-support-response"
+                  label="Your Response"
+                  rows={4}
+                  value={response}
+                  onChange={(e) => setResponse(e.target.value)}
                   placeholder="Type your response to the user…"
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] resize-none"
                 />
               </div>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <select value={newStatus} onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full sm:flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white">
+                <Field label="Status" htmlFor="admin-support-status">
+                  <select
+                    id="admin-support-status"
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value)}
+                    className={fieldControlClassName()}
+                  >
                   <option value="in_progress">In Progress</option>
                   <option value="resolved">Resolved</option>
                   <option value="closed">Closed</option>
-                </select>
+                  </select>
+                </Field>
                 <button type="button" onClick={resolve} disabled={saving || !response.trim()}
                   className={buttonClassName({ className: 'w-full sm:flex-1' })}>
                   {saving ? 'Sending…' : 'Send & Update'}

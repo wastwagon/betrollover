@@ -103,8 +103,8 @@ export function TipsterSellUnlockChecklist({
     <aside
       className={`rounded-2xl border ${
         canSell
-          ? 'border-emerald-200/80 bg-emerald-50/50 dark:border-emerald-800/40 dark:bg-emerald-900/15'
-          : 'border-amber-200/80 bg-amber-50/40 dark:border-amber-800/40 dark:bg-amber-900/10'
+          ? 'border-[var(--primary)]/25 bg-[var(--primary-light)]'
+          : 'border-[var(--accent)]/40 bg-[var(--accent)]/10'
       } ${compact ? 'px-3 py-2.5' : 'px-4 py-3.5'} min-w-0 ${className}`}
     >
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
@@ -112,8 +112,8 @@ export function TipsterSellUnlockChecklist({
           <p
             className={`font-bold ${compact ? 'text-[11px]' : 'text-xs'} ${
               canSell
-                ? 'text-emerald-900 dark:text-emerald-200'
-                : 'text-amber-900 dark:text-amber-200'
+                ? 'text-[var(--primary)]'
+                : 'text-[var(--accent)]'
             }`}
           >
             {canSell ? t('seller_checklist.title_ready') : t('seller_checklist.title_build')}
@@ -125,7 +125,7 @@ export function TipsterSellUnlockChecklist({
         <Link
           href="/create-pick"
           className={`shrink-0 text-xs font-semibold ${
-            canSell ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-800 dark:text-amber-300'
+            canSell ? 'text-[var(--primary)]' : 'text-[var(--accent)]'
           } hover:underline`}
         >
           {canSell ? t('dashboard.create_paid_pick') : t('dashboard.create_free_pick')} →
@@ -137,7 +137,7 @@ export function TipsterSellUnlockChecklist({
             <span
               className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-bold ${
                 s.done
-                  ? 'bg-emerald-600 text-white'
+                  ? 'bg-[var(--primary)] text-white'
                   : 'bg-[var(--card)] border border-[var(--separator)] text-[var(--text-muted)]'
               }`}
               aria-hidden

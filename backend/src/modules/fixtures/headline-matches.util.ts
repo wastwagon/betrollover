@@ -75,11 +75,21 @@ export function pickHeadlineMatches(
     return true;
   });
 
-  return unique
-    .sort((a, b) => {
-      const diff = matchScore(b, now) - matchScore(a, now);
-      if (diff !== 0) return diff;
-      return new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime();
-    })
-    .slice(0, limit);
+  const ranked = unique.sort((a, b) => {
+    const diff = matchScore(b, now) - matchScore(a, now);
+    if (diff !== 0) return diff;
+    return new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime();
+  });
+  return takeHeadlineSlice(ranked, limit);
+}
+
+function takeHeadlineSlice<T extends { id: number; status: string; leagueName: string | null }>(
+  ranked: T[],
+  limit: number,
+): T[] {
+  const preferred = ranked.filter((m) => isFixtureLive(m.status) || leagueBoost(m.leagueName) > 0);
+  if (preferred.length >= limit) return preferred.slice(0, limit);
+  const preferredIds = new Set(preferred.map((m) => m.id));
+  const fill = ranked.filter((m) => !preferredIds.has(m.id));
+  return [...preferred, ...fill].slice(0, limit);
 }

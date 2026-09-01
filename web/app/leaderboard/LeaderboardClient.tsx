@@ -25,6 +25,7 @@ import {
 import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import { Button, buttonClassName } from '@/components/ui/Button';
+import { SegmentedControl } from '@/components/ios/SegmentedControl';
 
 type Period = 'all_time' | 'monthly' | 'weekly';
 type SportFilter = 'all' | 'football' | 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football';
@@ -98,7 +99,7 @@ function RankBadge({ rank }: { rank: number }) {
   const medal = tipsterRankMedal(rank);
   if (medal) return <span className="text-2xl">{medal}</span>;
   return (
-    <span className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 text-sm font-bold">
+    <span className="w-9 h-9 flex items-center justify-center rounded-full bg-[var(--fill-secondary)] text-[var(--text-muted)] text-sm font-bold">
       {rank}
     </span>
   );
@@ -226,27 +227,18 @@ export default function LeaderboardPage({
         </div>
 
         {/* Period tabs */}
-        <div className="mb-4 w-full min-w-0 overflow-hidden">
-        <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
-          {([
-            { key: 'all_time' as Period, icon: '🏆', labelKey: 'tipster.period_alltime' },
-            { key: 'monthly'  as Period, icon: '📅', labelKey: 'tipster.period_monthly' },
-            { key: 'weekly'   as Period, icon: '⚡', labelKey: 'tipster.period_weekly' },
-          ]).map(p => (
-            <button
-              key={p.key}
-              type="button"
-              onClick={() => setPeriod(p.key)}
-              className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                period === p.key
-                  ? 'bg-[var(--primary)] text-white shadow-md'
-                  : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
-              }`}
-            >
-              <span>{p.icon}</span>{t(p.labelKey)}
-            </button>
-          ))}
-        </div>
+        <div className="mb-4 w-full min-w-0">
+          <SegmentedControl
+            aria-label={t('tipster.period_alltime')}
+            className="max-w-none"
+            options={[
+              { value: 'all_time' as Period, label: t('tipster.period_alltime') },
+              { value: 'monthly' as Period, label: t('tipster.period_monthly') },
+              { value: 'weekly' as Period, label: t('tipster.period_weekly') },
+            ]}
+            value={period}
+            onChange={setPeriod}
+          />
         </div>
 
         {/* Full-width ad */}
@@ -366,7 +358,7 @@ export default function LeaderboardPage({
                 subscribedPackageIds.has(entry.vip_package_id as number);
 
               const joinVipClasses =
-                'inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-400/40 hover:bg-amber-500/25 transition-colors w-full md:w-auto md:min-w-[7.5rem]';
+                'inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--accent-light)] text-[var(--accent)] border border-[var(--accent)]/40 hover:opacity-90 transition-colors w-full md:w-auto md:min-w-[7.5rem]';
               const subscribedVipClasses =
                 'inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--text-muted)]/15 text-[var(--text-muted)] border border-[var(--border)] cursor-default w-full md:w-auto md:min-w-[7.5rem]';
 
@@ -396,7 +388,7 @@ export default function LeaderboardPage({
                           unoptimized={shouldUnoptimizeGoogleAvatar(avatarSrc)}
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full border-2 border-white shadow-sm bg-emerald-100 flex items-center justify-center text-sm font-bold text-emerald-700">
+                        <div className="w-10 h-10 rounded-full border-2 border-[var(--card)] bg-[var(--primary-light)] flex items-center justify-center text-sm font-bold text-[var(--primary)]">
                           {entry.display_name?.[0]?.toUpperCase() ?? '?'}
                         </div>
                       )}
@@ -408,7 +400,7 @@ export default function LeaderboardPage({
                         {!entry.is_ai && entry.is_verified ? <VerifiedTipsterBadge /> : null}
                         {earlySample ? (
                           <span
-                            className="inline-flex items-center rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 dark:text-amber-300"
+                            className="inline-flex items-center rounded-md bg-[var(--accent-light)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--accent)]"
                             title={t('tipster.early_sample_hint', {
                               n: String(
                                 period === 'weekly'
@@ -425,8 +417,8 @@ export default function LeaderboardPage({
                         <p className="text-xs text-[var(--text-muted)] truncate min-w-0">@{entry.username}</p>
                         {entry.avg_rating != null && entry.avg_rating > 0 && (
                           <span className="flex items-center gap-0.5 shrink-0">
-                            <span className="text-amber-400 text-[10px]">★</span>
-                            <span className="text-[10px] font-semibold text-amber-600">{Number(entry.avg_rating).toFixed(1)}</span>
+                            <span className="text-[var(--accent)] text-[10px]">★</span>
+                            <span className="text-[10px] font-semibold text-[var(--accent)]">{Number(entry.avg_rating).toFixed(1)}</span>
                             {entry.review_count != null && entry.review_count > 0 && (
                               <span className="text-[10px] text-[var(--text-muted)]">({entry.review_count})</span>
                             )}
@@ -444,13 +436,13 @@ export default function LeaderboardPage({
                     <span className="text-[10px] text-[var(--text-muted)]">{t('leaderboard.form_col')}</span>
                   </div>
                   <div className="hidden md:flex flex-col items-center">
-                    <span className={`text-sm font-bold ${winRate >= 60 ? 'text-emerald-600' : winRate >= 40 ? 'text-amber-600' : 'text-[var(--text)]'}`}>
+                    <span className={`text-sm font-bold ${winRate >= 60 ? 'text-[var(--success)]' : winRate >= 40 ? 'text-[var(--accent)]' : 'text-[var(--text)]'}`}>
                       {winRate.toFixed(1)}%
                     </span>
                     <span className="text-[10px] text-[var(--text-muted)]">{t('tipster.win_rate')}</span>
                   </div>
                   <div className="hidden md:flex flex-col items-center">
-                    <span className={`text-sm font-bold ${roi > 0 ? 'text-emerald-600' : roi < 0 ? 'text-red-500' : 'text-[var(--text)]'}`}>
+                    <span className={`text-sm font-bold ${roi > 0 ? 'text-[var(--success)]' : roi < 0 ? 'text-[var(--destructive)]' : 'text-[var(--text)]'}`}>
                       {roi > 0 ? '+' : ''}{roi.toFixed(1)}%
                     </span>
                     <span className="text-[10px] text-[var(--text-muted)]">{t('tipster.roi')}</span>
@@ -465,10 +457,10 @@ export default function LeaderboardPage({
                     {period === 'all_time' && entry.form_points != null ? (
                       <span className="text-xs font-bold text-[var(--text)]">{entry.form_points} {t('leaderboard.form_col')}</span>
                     ) : null}
-                    <span className={`text-xs font-bold ${winRate >= 60 ? 'text-emerald-600' : 'text-[var(--text)]'}`}>
+                    <span className={`text-xs font-bold ${winRate >= 60 ? 'text-[var(--success)]' : 'text-[var(--text)]'}`}>
                       {winRate.toFixed(1)}% WR
                     </span>
-                    <span className={`text-xs font-bold ${roi > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                    <span className={`text-xs font-bold ${roi > 0 ? 'text-[var(--success)]' : 'text-[var(--destructive)]'}`}>
                       {roi > 0 ? '+' : ''}{roi.toFixed(1)}% ROI
                     </span>
                   </div>
@@ -558,8 +550,8 @@ export default function LeaderboardPage({
         )}
 
         <div className="mt-8 text-center">
-          <Link href="/tipsters" className="text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline">
-            Browse all tipster profiles →
+          <Link href="/tipsters" className="text-sm font-medium text-[var(--primary)] hover:underline">
+            {t('tipster.browse_tipsters')}
           </Link>
         </div>
         </PullToRefresh>

@@ -3,73 +3,78 @@ import Link from 'next/link';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { PageHeader } from '@/components/PageHeader';
+import { DiscoverFamilyNav } from '@/components/DiscoverFamilyNav';
+import { EducationRelatedLinks } from '@/components/EducationRelatedLinks';
 import { localizedUrl, seoAlternates } from '@/lib/site-config';
-import { getLocale } from '@/lib/i18n';
+import { getLocale, buildT } from '@/lib/i18n';
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
+  const t = buildT(locale);
+  const title = t('guides.eval_meta_title');
+  const description = t('guides.eval_meta_desc');
   return {
-    title: 'Tipster Evaluation Guide',
-    description:
-      'Use this checklist to evaluate tipsters by settled ROI, win rate, and sample size before buying paid picks.',
+    title,
+    description,
     alternates: seoAlternates('/guides/evaluate-tipsters', locale),
     openGraph: {
       url: localizedUrl('/guides/evaluate-tipsters', locale),
-      title: 'Tipster Evaluation Guide',
-      description:
-        'Use this checklist to evaluate tipsters by settled ROI, win rate, and sample size before buying paid picks.',
+      title,
+      description,
     },
   };
 }
 
-const CHECKLIST = [
-  'Check settled sample size first (avoid over-trusting tiny streaks).',
-  'Compare ROI and win rate together; one metric alone can mislead.',
-  'Review recent settled history, not only all-time highlights.',
-  'Read pick-level archive outcomes to see volatility and drawdowns.',
-  'Prefer consistent process over one-off high-odds wins.',
-];
+export default async function EvaluateTipstersGuidePage() {
+  const locale = await getLocale();
+  const t = buildT(locale);
+  const checklist = [
+    t('guides.eval_c1'),
+    t('guides.eval_c2'),
+    t('guides.eval_c3'),
+    t('guides.eval_c4'),
+    t('guides.eval_c5'),
+  ];
 
-export default function EvaluateTipstersGuidePage() {
   return (
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
       <main className="section-ux-page-narrow w-full min-w-0">
         <PageHeader
-          label="Analysis"
-          title="How to evaluate tipsters before buying"
-          tagline="Use this practical checklist to reduce emotion-led purchases."
+          label={t('guides.eval_label')}
+          title={t('guides.eval_title')}
+          tagline={t('guides.eval_tagline')}
         />
+        <DiscoverFamilyNav current="guides" />
+        <EducationRelatedLinks current="evaluate" />
         <article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-7 text-[var(--text)]">
           <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-            You can inspect tipster stats directly on profile pages and marketplace cards. The goal is not to find a perfect tipster, but to
-            choose sellers with transparent, repeatable performance.
+            {t('guides.eval_intro')}
           </p>
 
-          <h2 className="text-lg font-semibold mt-6">Evaluation checklist</h2>
+          <h2 className="text-lg font-semibold mt-6">{t('guides.eval_checklist_h')}</h2>
           <ul className="list-disc pl-5 mt-3 space-y-2 text-sm text-[var(--text-muted)]">
-            {CHECKLIST.map((item) => (
+            {checklist.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
 
-          <h2 className="text-lg font-semibold mt-6">Where to verify</h2>
+          <h2 className="text-lg font-semibold mt-6">{t('guides.eval_verify_h')}</h2>
           <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            Start from{' '}
+            {t('guides.eval_verify_before')}{' '}
             <Link href="/tipsters" className="text-[var(--primary)] hover:underline">
-              Tipster profiles
+              {t('guides.eval_profiles')}
             </Link>{' '}
-            for win rate, ROI, streaks, and settled history. Then check{' '}
+            {t('guides.eval_verify_mid')}{' '}
             <Link href="/coupons/archive" className="text-[var(--primary)] hover:underline">
-              settled picks archive
+              {t('guides.eval_archive')}
             </Link>{' '}
-            to validate current form and risk profile.
+            {t('guides.eval_verify_after')}
           </p>
 
-          <h2 className="text-lg font-semibold mt-6">Risk discipline</h2>
+          <h2 className="text-lg font-semibold mt-6">{t('guides.eval_risk_h')}</h2>
           <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            Diversify instead of concentrating spend on one profile. Escrow protects purchase flows, but smart buyer behavior still matters for
-            long-term outcomes.
+            {t('guides.eval_risk_body')}
           </p>
         </article>
       </main>

@@ -13,7 +13,6 @@ import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/sit
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { fetchSellingThresholds, type SellingThresholds, SELLING_THRESHOLDS_FALLBACK } from '@/lib/selling-thresholds';
 import { useT } from '@/context/LanguageContext';
-import { NavBar } from '@/components/ios/NavBar';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { buttonClassName } from '@/components/ui/Button';
 
@@ -123,21 +122,11 @@ export default function SubscriptionMarketplacePage() {
       <UnifiedHeader />
       <main className="section-ux-page w-full min-w-0">
         <PullToRefresh onRefresh={loadMarketplace} disabled={loading}>
-        <div className="lg:hidden -mx-4 sm:mx-0 mb-3">
-          <NavBar
-            title={t('subscriptions.marketplace_title')}
-            backHref="/subscriptions"
-            backLabel={t('nav.subscriptions')}
-            sticky={false}
-          />
-        </div>
-        <div className="hidden lg:block">
-          <PageHeader
-            label={t('nav.subscription_marketplace')}
-            title={t('subscriptions.marketplace_title')}
-            tagline={t('subscriptions.marketplace_tagline')}
-          />
-        </div>
+        <PageHeader
+          label={t('nav.subscription_marketplace')}
+          title={t('subscriptions.marketplace_title')}
+          tagline={t('subscriptions.marketplace_tagline')}
+        />
         <EscrowTrustCallout
           className="mb-6"
           title={t('marketplace.trust_callout_title')}

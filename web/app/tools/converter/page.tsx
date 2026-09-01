@@ -101,13 +101,9 @@ export default function ConverterPage() {
         </div>
 
         {/* Disclaimer */}
-        <div className="mt-8 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
-          <p className="font-semibold mb-1">Reference Only</p>
-          <p>
-            Exchange rates are sourced from{' '}
-            <a href="https://open.er-api.com" target="_blank" rel="noopener noreferrer" className="underline">open.er-api.com</a>
-            {' '}and cached hourly. All payments and withdrawals on BetRollover are processed in Ghana Cedi (GHS).
-          </p>
+        <div className="mt-8 p-4 bg-[var(--accent-light)] border border-[var(--accent)]/30 rounded-xl text-sm text-[var(--text)]">
+          <p className="font-semibold mb-1">{t('tools.converter_reference_title')}</p>
+          <p>{t('tools.converter_reference_body')}</p>
         </div>
       </main>
 

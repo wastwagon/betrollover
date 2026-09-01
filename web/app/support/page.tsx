@@ -11,6 +11,7 @@ import { useT } from '@/context/LanguageContext';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { Button } from '@/components/ui/Button';
+import { Input, Textarea, fieldControlClassName } from '@/components/ui/Input';
 
 interface Ticket {
   id: number;
@@ -24,13 +25,10 @@ interface Ticket {
 }
 
 const STATUS_STYLE: Record<string, string> = {
-  open:        'bg-blue-100 text-blue-700',
-  in_progress: 'bg-amber-100 text-amber-700',
-  resolved:    'bg-emerald-100 text-emerald-700',
-  closed:      'bg-gray-100 text-gray-500',
-};
-const STATUS_ICON: Record<string, string> = {
-  open: '📬', in_progress: '🔄', resolved: '✅', closed: '📁',
+  open:        'bg-[var(--primary-light)] text-[var(--primary)]',
+  in_progress: 'bg-[var(--accent-light)] text-[var(--accent)]',
+  resolved:    'bg-[var(--success-light)] text-[var(--success)]',
+  closed:      'bg-[var(--fill-secondary)] text-[var(--text-muted)]',
 };
 
 const CATEGORY_KEYS = ['general', 'dispute', 'settlement', 'billing', 'other'] as const;
@@ -124,12 +122,9 @@ function SupportContent() {
         </div>
 
         {success && (
-          <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-5 py-4 mb-6 flex items-center gap-3">
-            <span className="text-2xl">✅</span>
-            <div>
-              <p className="font-semibold text-emerald-800 dark:text-emerald-300">{t('support.ticket_submitted')}</p>
-              <p className="text-sm text-emerald-700 dark:text-emerald-400">{t('support.respond_shortly')}</p>
-            </div>
+          <div className="rounded-2xl bg-[var(--success-light)] border border-[var(--success)]/25 px-5 py-4 mb-6">
+            <p className="font-semibold text-[var(--success)]">{t('support.ticket_submitted')}</p>
+            <p className="text-sm text-[var(--success)] opacity-90">{t('support.respond_shortly')}</p>
           </div>
         )}
 
@@ -137,50 +132,42 @@ function SupportContent() {
           <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-6 shadow-sm mb-8">
             <h2 className="text-sm font-semibold text-[var(--text)] mb-4">{t('support.new_support_ticket')}</h2>
             <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{t('support.category')}</label>
+              <div className="flex flex-col gap-1.5 min-w-0 w-full">
+                <label htmlFor="support-category" className="text-xs font-medium text-[var(--text-muted)]">{t('support.category')}</label>
                 <select
+                  id="support-category"
                   value={form.category}
                   onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                  className={fieldControlClassName()}
                 >
                   {CATEGORY_KEYS.map((k) => <option key={k} value={k}>{t(`support.cat_${k}`)}</option>)}
                 </select>
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{t('support.subject')}</label>
-                <input
-                  type="text"
-                  maxLength={255}
-                  placeholder={t('support.subject_placeholder')}
-                  value={form.subject}
-                  onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{t('support.message')}</label>
-                <textarea
-                  rows={4}
-                  placeholder={t('support.message_placeholder')}
-                  value={form.message}
-                  onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] resize-none"
-                />
-              </div>
+              <Input
+                label={t('support.subject')}
+                type="text"
+                maxLength={255}
+                placeholder={t('support.subject_placeholder')}
+                value={form.subject}
+                onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
+              />
+              <Textarea
+                label={t('support.message')}
+                rows={4}
+                placeholder={t('support.message_placeholder')}
+                value={form.message}
+                onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+              />
               {form.category === 'dispute' || form.category === 'settlement' ? (
-                <div>
-                  <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{t('support.related_pick_id')}</label>
-                  <input
-                    type="number"
-                    placeholder={t('support.related_placeholder')}
-                    value={form.relatedCouponId}
-                    onChange={(e) => setForm((f) => ({ ...f, relatedCouponId: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                  />
-                </div>
+                <Input
+                  label={t('support.related_pick_id')}
+                  type="number"
+                  placeholder={t('support.related_placeholder')}
+                  value={form.relatedCouponId}
+                  onChange={(e) => setForm((f) => ({ ...f, relatedCouponId: e.target.value }))}
+                />
               ) : null}
-              {error && <p className="text-sm text-red-500">{error}</p>}
+              {error && <p className="text-sm text-[var(--destructive)]">{error}</p>}
               <Button
                 type="button"
                 onClick={submit}
@@ -209,7 +196,7 @@ function SupportContent() {
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3 mb-2">
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-[var(--text)] truncate">
-                      {STATUS_ICON[ticket.status] ?? '📋'} {ticket.subject}
+                      {ticket.subject}
                     </p>
                     <p className="text-xs text-[var(--text-muted)] mt-0.5">
                       {t(`support.cat_${ticket.category}` as 'support.cat_general')}
@@ -219,13 +206,13 @@ function SupportContent() {
                       · {new Date(ticket.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
                     </p>
                   </div>
-                  <span className={`self-start sm:self-auto flex-shrink-0 text-xs px-2.5 py-1 rounded-full font-semibold capitalize ${STATUS_STYLE[ticket.status] ?? 'bg-gray-100 text-gray-500'}`}>
+                  <span className={`self-start sm:self-auto flex-shrink-0 text-xs px-2.5 py-1 rounded-full font-semibold capitalize ${STATUS_STYLE[ticket.status] ?? 'bg-[var(--fill-secondary)] text-[var(--text-muted)]'}`}>
                     {ticket.status.replace('_', ' ')}
                   </span>
                 </div>
                 {ticket.adminResponse && (
-                  <div className="mt-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200/60 dark:border-emerald-800/40 p-3">
-                    <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-1">{t('support.admin_response')}</p>
+                  <div className="mt-3 rounded-xl bg-[var(--primary-light)] border border-[var(--primary)]/20 p-3">
+                    <p className="text-xs font-semibold text-[var(--primary)] mb-1">{t('support.admin_response')}</p>
                     <p className="text-sm text-[var(--text)]">{ticket.adminResponse}</p>
                   </div>
                 )}

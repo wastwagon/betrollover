@@ -9,6 +9,7 @@ import {
   adminWithdrawalStatusBadgeClass,
   adminWithdrawalStatusLabel,
 } from '@/lib/withdrawal-status';
+import { Input, fieldControlClassName } from '@/components/ui/Input';
 
 interface PayoutMethod {
   type: string;
@@ -51,6 +52,11 @@ type ActionState = { type: 'none' } | { type: 'confirming_approve' } | { type: '
 /** Admin can complete, fail, or cancel while the request is still open (manual = pending; Paystack path = processing). */
 function canAdminActOnWithdrawal(status: string): boolean {
   return status === 'pending' || status === 'processing';
+}
+
+function payoutRailLabel(w: Withdrawal): 'Paystack' | 'Manual' {
+  if (w.paystackTransferCode || w.payoutMethod?.recipientCode?.startsWith('RCP_')) return 'Paystack';
+  return 'Manual';
 }
 
 function formatPayoutInfo(pm: PayoutMethod | null | undefined): string {
@@ -353,7 +359,7 @@ export default function AdminWithdrawalsPage() {
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Withdrawals Management</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Review and process withdrawal requests. <strong>Reject</strong> records a <strong>Rejected</strong> status (optional reason shown to the user).{' '}
+            Review and process withdrawal requests. Instant Paystack Mobile Money is off until you enable it in Admin → Settings (Registered Business required). Until then every payout is manual. <strong>Reject</strong> records a <strong>Rejected</strong> status (optional reason shown to the user).{' '}
             <strong>Cancel &amp; refund</strong> records <strong>Cancelled</strong> — use when stopping the payout without a formal rejection (e.g. duplicate request). Both refund the debited amount. Users get email and in-app updates.
           </p>
         </div>
@@ -379,17 +385,22 @@ export default function AdminWithdrawalsPage() {
 
         {/* Filters */}
         <div className="mb-6 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
-          <input
-            type="number"
-            placeholder="Filter by User ID"
-            value={userIdFilter}
-            onChange={(e) => { setUserIdFilter(e.target.value); setPage(1); }}
-            className="w-full sm:flex-1 sm:min-w-[160px] px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-          />
+          <div className="w-full sm:flex-1 sm:min-w-[160px]">
+            <Input
+              id="admin-withdrawals-user-id"
+              type="number"
+              placeholder="Filter by User ID"
+              value={userIdFilter}
+              onChange={(e) => { setUserIdFilter(e.target.value); setPage(1); }}
+              aria-label="Filter by User ID"
+            />
+          </div>
           <select
+            id="admin-withdrawals-status"
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-            className="w-full sm:w-auto px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+            className={fieldControlClassName(undefined, 'sm:w-auto')}
+            aria-label="Filter by status"
           >
             <option value="">All Statuses</option>
             <option value="pending">Pending</option>
@@ -468,6 +479,9 @@ export default function AdminWithdrawalsPage() {
                               <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${adminWithdrawalStatusBadgeClass(w.status)}`}>
                                 {adminWithdrawalStatusLabel(w.status)}
                               </span>
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mt-1">
+                                {payoutRailLabel(w)}
+                              </p>
                               {w.failureReason && (
                                 <p className="text-xs text-red-600 dark:text-red-400 mt-1 max-w-[min(100%,240px)] break-words leading-snug" title={w.failureReason}>
                                   {w.failureReason}
@@ -532,7 +546,11 @@ export default function AdminWithdrawalsPage() {
                                 </div>
                               ) : action.type === 'confirming_approve' ? (
                                 <div className="space-y-1.5">
-                                  <p className="text-xs font-semibold text-green-700 dark:text-green-400">Confirm payment was sent?</p>
+                                  <p className="text-xs font-semibold text-green-700 dark:text-green-400">
+                                    {payoutRailLabel(w) === 'Paystack' && w.status === 'processing'
+                                      ? 'Paystack may still be sending this. Only approve if you paid the user yourself or confirmed success in Paystack.'
+                                      : 'Confirm payment was sent?'}
+                                  </p>
                                   <div className="flex gap-2">
                                     <button
                                       type="button"
@@ -552,14 +570,15 @@ export default function AdminWithdrawalsPage() {
                                 </div>
                               ) : action.type === 'rejecting' ? (
                                 <div className="space-y-1.5">
-                                  <input
+                                  <Input
+                                    id={`admin-withdraw-reject-${w.id}`}
                                     autoFocus
                                     placeholder="Reason (optional)"
                                     value={action.reason}
                                     onChange={(e) =>
                                       setAction(w.id, { type: 'rejecting', reason: e.target.value })
                                     }
-                                    className="w-full px-2 py-1 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
+                                    aria-label="Rejection reason"
                                   />
                                   <div className="flex gap-2">
                                     <button

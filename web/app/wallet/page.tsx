@@ -22,10 +22,11 @@ import { PENDING_WITHDRAWALS_INVALIDATE } from '@/hooks/usePendingWithdrawalCoun
 import { SuccessToast } from '@/components/SuccessToast';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
-import { NavBar } from '@/components/ios/NavBar';
 import { GroupedListSection } from '@/components/ios/GroupedList';
+import { SegmentedControl } from '@/components/ios/SegmentedControl';
 import { Button, buttonClassName } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Input, Field, fieldControlClassName } from '@/components/ui/Input';
+import { OUTCOME_TEXT, RESULT_SURFACE } from '@/lib/result-chip';
 
 interface Transaction {
   id: number;
@@ -84,20 +85,19 @@ function WalletContent() {
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
   const [showPayoutForm, setShowPayoutForm] = useState(false);
   const [payoutForm, setPayoutForm] = useState({
-    type: 'mobile_money' as 'mobile_money' | 'bank' | 'crypto',
+    type: 'mobile_money' as 'mobile_money' | 'bank',
     name: '',
     phone: '',
-    provider: 'mtn_gh',
+    provider: 'MTN',
     accountNumber: '',
     bankName: '',
-    walletAddress: '',
-    cryptoCurrency: 'BTC',
   });
   const [payoutLoading, setPayoutLoading] = useState(false);
   const [payoutError, setPayoutError] = useState<string | null>(null);
   const [depositCallbackState, setDepositCallbackState] = useState<DepositCallbackState | null>(null);
   const [depositContinuePath, setDepositContinuePath] = useState<string | null>(null);
   const [handledDepositRef, setHandledDepositRef] = useState<string | null>(null);
+  const [walletTab, setWalletTab] = useState<'deposit' | 'withdraw'>('deposit');
   const continuePathFromQuery = searchParams.get('continue');
   const buildResumePath = useCallback((nextPath: string): string => {
     const isSubscriptionsCheckout = nextPath.startsWith('/subscriptions/checkout');
@@ -158,6 +158,12 @@ function WalletContent() {
     }
     loadData();
   }, [router, loadData]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#withdraw') {
+      setWalletTab('withdraw');
+    }
+  }, []);
 
   // Persist a post-top-up return path for seamless checkout continuation.
   useEffect(() => {
@@ -253,11 +259,7 @@ function WalletContent() {
       });
       const data = await res.json();
       if (!res.ok) {
-        let msg = getApiErrorMessage(data, 'Withdrawal failed');
-        if (msg.toLowerCase().includes('starter business') || msg.toLowerCase().includes('third party payout')) {
-          msg += ' Use "Change" to switch to Manual payout (admin processes withdrawals) or upgrade your Paystack account.';
-        }
-        throw new Error(msg);
+        throw new Error(getApiErrorMessage(data, 'Withdrawal failed'));
       }
       setWithdrawAmount('');
       const okMsg = getApiErrorMessage(data, t('wallet.withdrawal_request_success'));
@@ -284,44 +286,30 @@ function WalletContent() {
         setPayoutError(t('wallet.name_account_bank_required'));
         return;
       }
-    } else if (payoutForm.type === 'crypto') {
-      if (!payoutForm.walletAddress.trim()) {
-        setPayoutError(t('wallet.wallet_address_required'));
-        return;
-      }
     }
     setPayoutError(null);
     setPayoutLoading(true);
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      let body: Record<string, unknown>;
-      if (payoutForm.type === 'crypto') {
-        body = {
-          type: 'crypto',
-          name: payoutForm.name || `${payoutForm.cryptoCurrency} Wallet`,
-          walletAddress: payoutForm.walletAddress.trim(),
-          cryptoCurrency: payoutForm.cryptoCurrency,
-        };
-      } else if (payoutForm.type === 'mobile_money') {
-        body = {
-          type: 'mobile_money',
-          name: payoutForm.name,
-          phone: payoutForm.phone,
-          provider: payoutForm.provider,
-          country: 'GH',
-          currency: 'GHS',
-        };
-      } else {
-        body = {
-          type: 'bank',
-          name: payoutForm.name,
-          accountNumber: payoutForm.accountNumber,
-          bankName: payoutForm.bankName,
-          country: 'GH',
-          currency: 'GHS',
-        };
-      }
+      const body =
+        payoutForm.type === 'mobile_money'
+          ? {
+              type: 'mobile_money' as const,
+              name: payoutForm.name,
+              phone: payoutForm.phone,
+              provider: payoutForm.provider,
+              country: 'GH',
+              currency: 'GHS',
+            }
+          : {
+              type: 'bank' as const,
+              name: payoutForm.name,
+              accountNumber: payoutForm.accountNumber,
+              bankName: payoutForm.bankName,
+              country: 'GH',
+              currency: 'GHS',
+            };
       const res = await fetch(`${getApiUrl()}/wallet/payout-methods`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -334,11 +322,9 @@ function WalletContent() {
         type: 'mobile_money',
         name: '',
         phone: '',
-        provider: 'mtn_gh',
+        provider: 'MTN',
         accountNumber: '',
         bankName: '',
-        walletAddress: '',
-        cryptoCurrency: 'BTC',
       });
       loadData();
     } catch (e) {
@@ -349,7 +335,8 @@ function WalletContent() {
   };
 
   const canWithdraw =
-    user?.role === 'tipster' || user?.role === 'admin' || user?.role === 'user';
+    user && (user.role === 'tipster' || user.role === 'admin' || user.role === 'user');
+  const momoInstantPayout = balance?.paystackTransfersEnabled === true;
   const withdrawSectionTitle =
     user?.role === 'tipster' ? t('wallet.withdraw_earnings') : t('wallet.withdraw_funds');
   const pendingWithdrawal = withdrawals.find((w) => w.status === 'pending' || w.status === 'processing');
@@ -373,21 +360,11 @@ function WalletContent() {
       <div className="min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full bg-[var(--bg)]">
         <PullToRefresh onRefresh={() => { loadData(); }} disabled={loading}>
         <div className="section-ux-dashboard-shell min-w-0 max-w-full">
-          <div className="lg:hidden -mx-1 mb-3">
-            <NavBar
-              title={t('wallet.title')}
-              backHref="/dashboard"
-              backLabel={t('nav.dashboard')}
-              sticky={false}
-            />
-          </div>
-          <div className="hidden lg:block">
-            <PageHeader
-              label={t('wallet.title')}
-              title={t('wallet.title')}
-              tagline={t('wallet.tagline')}
-            />
-          </div>
+          <PageHeader
+            label={t('wallet.title')}
+            title={t('wallet.title')}
+            tagline={t('wallet.tagline')}
+          />
 
           <EscrowTrustCallout
             className="mb-4"
@@ -401,7 +378,7 @@ function WalletContent() {
           </div>
 
           {!loading && user && !user.emailVerifiedAt && (
-            <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 text-amber-700 dark:text-amber-400">
+            <div className="rounded-xl border border-[var(--accent)]/40 bg-[var(--accent-light)] p-4 text-[var(--text)]">
               <p className="font-medium">{t('wallet.verify_email')}</p>
               <Link href="/verify-email" className="mt-2 inline-block text-sm underline hover:no-underline">
                 {t('wallet.resend_verify')}
@@ -410,7 +387,7 @@ function WalletContent() {
           )}
 
           {!loading && loadError && (
-            <div className="rounded-xl border border-red-300/60 bg-red-50 dark:bg-red-950/25 p-4 text-red-700 dark:text-red-300">
+            <div className="rounded-xl border border-[var(--destructive)]/30 bg-[var(--destructive-light)] p-4 text-[var(--destructive)]">
               <p className="text-sm font-medium">{loadError}</p>
               <button
                 type="button"
@@ -435,6 +412,20 @@ function WalletContent() {
                   GHS {Number(balance?.balance ?? 0).toFixed(2)} · {t('wallet.for_reference_only')}
                 </p>
               )}
+              {canWithdraw ? (
+                <div className="mt-4">
+                  <SegmentedControl
+                    aria-label={t('wallet.money_board')}
+                    options={[
+                      { value: 'deposit' as const, label: t('wallet.tab_add') },
+                      { value: 'withdraw' as const, label: t('wallet.tab_cash_out') },
+                    ]}
+                    value={walletTab}
+                    onChange={setWalletTab}
+                  />
+                </div>
+              ) : null}
+              {(!canWithdraw || walletTab === 'deposit') && (
               <div className="mt-3 space-y-2">
                 <Input
                   type="number"
@@ -456,14 +447,15 @@ function WalletContent() {
                   {depositLoading ? t('wallet.redirecting') : t('wallet.deposit')}
                 </Button>
               </div>
+              )}
             </div>
 
-            {depositCallbackState && (
+            {depositCallbackState && walletTab === 'deposit' && (
               <div
                 className={`rounded-2xl border p-4 ${
                   depositCallbackState === 'success'
-                    ? 'border-emerald-300/70 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300'
-                    : 'border-amber-300/70 bg-amber-50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200'
+                    ? `${RESULT_SURFACE.won} text-[var(--success)]`
+                    : 'border-[var(--accent)]/30 bg-[var(--accent-light)] text-[var(--accent)]'
                 }`}
               >
                 <p className="text-sm font-medium">
@@ -509,14 +501,13 @@ function WalletContent() {
               </div>
             )}
 
-            {canWithdraw && (
+            {canWithdraw && walletTab === 'withdraw' && (
               <div id="withdraw" className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm scroll-mt-[calc(var(--br-chrome-below-header)+1rem)] min-w-0">
                 <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{withdrawSectionTitle}</h2>
 
                 {/* Pending withdrawal warning */}
                 {pendingWithdrawal && (
-                  <div className="mb-3 p-3 rounded-xl border border-amber-400/50 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 text-sm flex items-start gap-2">
-                    <span className="text-base">⏳</span>
+                  <div className="mb-3 p-3 rounded-xl border border-[var(--accent)]/40 bg-[var(--accent-light)] text-[var(--text)] text-sm flex items-start gap-2">
                     <div className="space-y-1">
                       <p>
                         <span className="font-semibold">{t('wallet.withdrawal_in_progress')}</span>
@@ -533,83 +524,68 @@ function WalletContent() {
                 )}
 
                 {showPayoutForm ? (
-                  <div className="space-y-2 p-4 rounded-lg border border-[var(--border)] bg-[var(--bg)]">
-                        <label className="block text-xs font-medium text-[var(--text-muted)]">Payout method</label>
-                        <select
-                          value={payoutForm.type}
-                          onChange={(e) => setPayoutForm((p) => ({ ...p, type: e.target.value as 'mobile_money' | 'bank' | 'crypto' }))}
-                          className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
-                        >
-                          <option value="mobile_money">Mobile Money</option>
-                          <option value="bank">Bank Account</option>
-                          <option value="crypto">Cryptocurrency</option>
-                        </select>
-                        <input
-                          placeholder="Account holder name"
+                  <div className="space-y-3 p-4 rounded-lg border border-[var(--border)] bg-[var(--bg)]">
+                        <Field label={t('wallet.payout_method')} htmlFor="wallet-payout-type">
+                          <select
+                            id="wallet-payout-type"
+                            value={payoutForm.type}
+                            onChange={(e) => setPayoutForm((p) => ({ ...p, type: e.target.value as 'mobile_money' | 'bank' }))}
+                            className={fieldControlClassName()}
+                          >
+                            <option value="mobile_money">{t('wallet.mobile_money')}</option>
+                            <option value="bank">{t('wallet.bank_account')}</option>
+                          </select>
+                        </Field>
+                        <p className="text-xs text-[var(--text-muted)] -mt-1">
+                          {payoutForm.type === 'mobile_money'
+                            ? t(momoInstantPayout ? 'wallet.payout_momo_hint' : 'wallet.payout_momo_hint_manual')
+                            : t('wallet.payout_bank_hint')}
+                        </p>
+                        <Input
+                          label={t('wallet.account_holder')}
+                          placeholder={t('wallet.account_holder')}
                           value={payoutForm.name}
                           onChange={(e) => setPayoutForm((p) => ({ ...p, name: e.target.value }))}
-                          className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
                         />
                         {payoutForm.type === 'mobile_money' && (
                           <>
-                            <input
-                              placeholder="Phone (e.g. 0551234567)"
+                            <Input
+                              type="tel"
+                              placeholder="0551234567"
                               value={payoutForm.phone}
                               onChange={(e) => setPayoutForm((p) => ({ ...p, phone: e.target.value }))}
-                              className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
+                              autoComplete="tel"
                             />
-                            <select
-                              value={payoutForm.provider}
-                              onChange={(e) => setPayoutForm((p) => ({ ...p, provider: e.target.value }))}
-                              className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
-                            >
-                              <option value="mtn_gh">MTN Mobile Money</option>
-                              <option value="vodafone_gh">Vodafone Cash</option>
-                              <option value="airteltigo_gh">AirtelTigo Money</option>
-                            </select>
+                            <Field htmlFor="wallet-payout-provider">
+                              <select
+                                id="wallet-payout-provider"
+                                value={payoutForm.provider}
+                                onChange={(e) => setPayoutForm((p) => ({ ...p, provider: e.target.value }))}
+                                className={fieldControlClassName()}
+                              >
+                                <option value="MTN">MTN Mobile Money</option>
+                                <option value="VOD">Telecel (Vodafone) Cash</option>
+                                <option value="ATL">AirtelTigo Money</option>
+                              </select>
+                            </Field>
                           </>
                         )}
                         {payoutForm.type === 'bank' && (
                           <>
-                            <input
+                            <Input
                               placeholder="Bank name"
                               value={payoutForm.bankName}
                               onChange={(e) => setPayoutForm((p) => ({ ...p, bankName: e.target.value }))}
-                              className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
                             />
-                            <input
+                            <Input
                               placeholder="Account number"
                               value={payoutForm.accountNumber}
                               onChange={(e) => setPayoutForm((p) => ({ ...p, accountNumber: e.target.value }))}
-                              className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
+                              inputMode="numeric"
                             />
                           </>
                         )}
-                        {payoutForm.type === 'crypto' && (
-                          <>
-                            <select
-                              value={payoutForm.cryptoCurrency}
-                              onChange={(e) => setPayoutForm((p) => ({ ...p, cryptoCurrency: e.target.value }))}
-                              className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
-                            >
-                              <option value="BTC">Bitcoin (BTC)</option>
-                              <option value="ETH">Ethereum (ETH)</option>
-                              <option value="USDT">Tether (USDT)</option>
-                              <option value="USDC">USD Coin (USDC)</option>
-                              <option value="BNB">BNB</option>
-                              <option value="LTC">Litecoin (LTC)</option>
-                              <option value="XRP">XRP</option>
-                              <option value="TRX">TRON (TRX)</option>
-                            </select>
-                            <input
-                              placeholder="Wallet address"
-                              value={payoutForm.walletAddress}
-                              onChange={(e) => setPayoutForm((p) => ({ ...p, walletAddress: e.target.value }))}
-                              className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] font-mono text-sm"
-                            />
-                          </>
-                        )}
-                        {payoutError && <p className="text-sm text-red-500">{payoutError}</p>}
+                        {payoutError && <p className="text-sm text-[var(--destructive)]">{payoutError}</p>}
                         <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                           <Button
                             type="button"
@@ -641,7 +617,7 @@ function WalletContent() {
                       {t('wallet.add_payout_method')}
                     </button>
                     <p className="text-xs text-[var(--text-muted)]">
-                      Mobile Money · Bank Account · Cryptocurrency (global)
+                      {t(momoInstantPayout ? 'wallet.payout_methods_available' : 'wallet.payout_methods_available_manual')}
                     </p>
                   </div>
                 ) : (
@@ -655,7 +631,6 @@ function WalletContent() {
                           <span className="ml-1 text-xs text-[var(--text-muted)]">
                             {payoutMethods[0].type === 'mobile_money' ? '· Mobile Money'
                               : payoutMethods[0].type === 'bank' ? '· Bank'
-                              : payoutMethods[0].type === 'crypto' ? '· Crypto'
                               : ''}
                           </span>
                         </p>
@@ -669,7 +644,8 @@ function WalletContent() {
                       </button>
                     </div>
                     <div className="relative min-w-0">
-                      <input
+                      <Input
+                        id="wallet-withdraw-amount"
                         type="number"
                         min={5}
                         max={5000}
@@ -678,7 +654,8 @@ function WalletContent() {
                         value={withdrawAmount}
                         onChange={(e) => setWithdrawAmount(e.target.value)}
                         disabled={!!pendingWithdrawal}
-                        className="w-full min-w-0 px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] disabled:opacity-50"
+                        className="pr-24"
+                        aria-label={t('wallet.amount')}
                       />
                       {balance && (
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] pointer-events-none">
@@ -686,7 +663,7 @@ function WalletContent() {
                         </span>
                       )}
                     </div>
-                    {withdrawError && <p className="text-sm text-red-500">{withdrawError}</p>}
+                    {withdrawError && <p className="text-sm text-[var(--destructive)]">{withdrawError}</p>}
                     <Button
                       type="button"
                       fullWidth
@@ -701,7 +678,7 @@ function WalletContent() {
             )}
 
             {/* Withdrawal history — anyone who can withdraw */}
-            {canWithdraw && withdrawals.length > 0 && (
+            {canWithdraw && walletTab === 'withdraw' && withdrawals.length > 0 && (
               <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm min-w-0">
                 <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('wallet.withdrawal_history')}</h2>
                 <ul className="space-y-2">
@@ -744,8 +721,8 @@ function WalletContent() {
                           <div
                             className={`rounded-xl border px-3 py-2 text-sm ${
                               w.status === 'rejected'
-                                ? 'border-orange-300/80 bg-orange-50 text-orange-950 dark:border-orange-800/60 dark:bg-orange-950/40 dark:text-orange-100'
-                                : 'border-red-300/80 bg-red-50 text-red-950 dark:border-red-900/50 dark:bg-red-950/35 dark:text-red-100'
+                                ? 'border-[var(--accent)]/40 bg-[var(--accent-light)] text-[var(--accent)]'
+                                : 'border-[var(--destructive)]/40 bg-[var(--destructive-light)] text-[var(--destructive)]'
                             }`}
                           >
                             {reasonTitle && (
@@ -778,7 +755,6 @@ function WalletContent() {
                     const isCommission = isRealCommission;
                     const isCredit = ['payout','deposit','refund','credit'].includes(tx.type) || isMisclassifiedCredit;
                     const displayType = isMisclassifiedCredit ? 'credit' : tx.type;
-                    const TX_ICON: Record<string, string> = { payout:'💰', commission:'🏛', refund:'↩', deposit:'⬆', withdrawal:'💸', purchase:'🛒', credit:'✨', adjustment:'⚙️' };
                     const TX_LABEL: Record<string, string> = { payout: t('wallet.net_payout'), commission: t('wallet.commission'), refund: t('wallet.refund'), deposit: t('wallet.deposit'), withdrawal: t('wallet.withdrawal'), purchase: t('wallet.purchase'), credit: t('wallet.credit'), adjustment: t('wallet.adjustment') };
                     const refundFromPick = displayType === 'refund' && (tx.reference?.startsWith('pick-') ?? false);
                     return (
@@ -786,7 +762,7 @@ function WalletContent() {
                         <div className="flex items-start gap-3 min-w-0 flex-1">
                           <span className="text-xs font-semibold w-8 text-center shrink-0 pt-0.5 text-[var(--primary)]">{displayType.slice(0, 3).toUpperCase()}</span>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm text-[var(--text)]">{TX_LABEL[displayType] ?? displayType}</p>
+                            <p className="font-medium text-sm text-[var(--text)]">{refundFromPick ? t('wallet.refund_pick') : (TX_LABEL[displayType] ?? displayType)}</p>
                             <p className="text-xs text-[var(--text-muted)] truncate">{tx.description || new Date(tx.createdAt).toLocaleDateString(locale, { day:'numeric', month:'short' })}</p>
                             {refundFromPick ? (
                               <Link href="/my-purchases" className="text-[10px] text-[var(--primary)] hover:underline">
@@ -796,7 +772,7 @@ function WalletContent() {
                           </div>
                         </div>
                         <div className="text-right shrink-0 sm:ml-auto pl-9 sm:pl-0 tabular-nums">
-                          <span className={`font-semibold text-sm tabular-nums block ${isCommission ? 'text-amber-600' : isCredit ? 'text-emerald-600' : 'text-red-500'}`}>
+                          <span className={`font-semibold text-sm tabular-nums block ${isCommission ? 'text-[var(--accent)]' : isCredit ? OUTCOME_TEXT.positive : OUTCOME_TEXT.negative}`}>
                             {isCommission ? '−' : isCredit ? '+' : '−'}{format(Math.abs(Number(tx.amount))).primary}
                           </span>
                           {currency.code !== 'GHS' && (

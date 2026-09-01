@@ -5,6 +5,7 @@ import { AppFooter } from '@/components/AppFooter';
 import { SITE_NAME, seoAlternates } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
 import type { Metadata } from 'next';
+import { IconMail, IconUsers, IconShield, IconClipboard } from '@/components/ios/icons';
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -22,32 +23,32 @@ export default async function ContactPage() {
 
   const CONTACTS = [
     {
-      icon: '📧',
+      icon: IconMail,
       label: t('contact.support_title'),
       value: 'support@betrollover.com',
       href: 'mailto:support@betrollover.com',
       desc: t('contact.support_desc'),
     },
     {
-      icon: '🤝',
+      icon: IconUsers,
       label: t('contact.partnerships_title'),
       value: 'partners@betrollover.com',
       href: 'mailto:partners@betrollover.com',
       desc: t('contact.partnerships_desc'),
     },
     {
-      icon: '🚨',
-      label: 'Report an Issue',
+      icon: IconShield,
+      label: t('contact.report_title'),
       value: 'abuse@betrollover.com',
       href: 'mailto:abuse@betrollover.com',
-      desc: locale === 'fr' ? 'Pronostics trompeurs, fraude ou abus de plateforme' : 'Misleading picks, fraud, or platform abuse',
+      desc: t('contact.report_desc'),
     },
     {
-      icon: '⚖️',
-      label: locale === 'fr' ? 'Juridique' : 'Legal',
+      icon: IconClipboard,
+      label: t('contact.legal_title'),
       value: 'legal@betrollover.com',
       href: 'mailto:legal@betrollover.com',
-      desc: locale === 'fr' ? 'Confidentialité, DMCA et conformité' : 'Privacy, DMCA, and compliance inquiries',
+      desc: t('contact.legal_desc'),
     },
   ];
 
@@ -62,13 +63,13 @@ export default async function ContactPage() {
           <div className="prose prose-slate max-w-none text-[var(--text)] space-y-8 leading-relaxed min-w-0">
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
-              {CONTACTS.map(({ icon, label, value, href, desc }) => (
+              {CONTACTS.map(({ icon: Icon, label, value, href, desc }) => (
                 <a
                   key={label}
                   href={href}
                   className="group flex flex-col gap-1 p-5 rounded-xl border border-[var(--border)] bg-[var(--card)] hover:border-[var(--primary)] transition-colors"
                 >
-                  <span className="text-2xl mb-1">{icon}</span>
+                  <Icon className="w-5 h-5 text-[var(--primary)] mb-1" />
                   <span className="text-xs font-bold uppercase tracking-wide text-[var(--text-muted)]">
                     {label}
                   </span>
@@ -93,30 +94,24 @@ export default async function ContactPage() {
 
             <section>
               <h2 className="text-xl font-semibold mb-3">
-                {locale === 'fr' ? 'Avant de Nous Écrire' : 'Before You Write'}
+                {t('contact.before_write')}
               </h2>
               <p className="text-sm text-[var(--text-muted)]">
-                {locale === 'fr'
-                  ? "De nombreuses questions courantes sont abordées dans nos guides. Consultez d'abord les "
-                  : 'Many common questions are answered in our guides. Check the '}
+                {t('contact.guides_lead')}{' '}
                 <Link href="/resources" className="text-[var(--primary)] hover:underline">
                   {t('nav.guides')}
                 </Link>{' '}
-                {locale === 'fr' ? 'ou la section ' : 'or '}
+                {t('contact.guides_or')}{' '}
                 <Link href="/discover" className="text-[var(--primary)] hover:underline">
                   {t('nav.discover')}
                 </Link>{' '}
-                {locale === 'fr'
-                  ? "— vous y trouverez peut-être une réponse plus rapide."
-                  : 'section first — you may find a faster answer there.'}
+                {t('contact.guides_trail')}
               </p>
             </section>
 
-            <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 text-sm text-amber-800 dark:text-amber-300">
-              <strong>{locale === 'fr' ? 'Remarque' : 'Note'}:</strong>{' '}
-              {locale === 'fr'
-                ? `${SITE_NAME} ne facilite pas les paris. Nous ne pouvons pas aider avec des questions concernant des bookmakers ou comptes de paris tiers.`
-                : `${SITE_NAME} does not facilitate betting or wagering. We cannot assist with queries about third-party bookmakers or betting accounts.`}
+            <div className="p-4 rounded-xl bg-[var(--accent-light)] border border-[var(--accent)]/30 text-sm text-[var(--text)]">
+              <strong>{t('contact.note_label')}:</strong>{' '}
+              {t('contact.note_body', { site: SITE_NAME })}
             </div>
 
           </div>

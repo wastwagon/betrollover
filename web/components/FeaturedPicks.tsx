@@ -114,7 +114,7 @@ export function FeaturedPicks({
             href="/marketplace"
             className={buttonClassName({ className: 'inline-block' })}
           >
-            Browse Marketplace
+            {t('learn.cta_marketplace')}
           </Link>
         </div>
       </div>

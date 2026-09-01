@@ -971,7 +971,7 @@ export class AdminController {
   @Patch('settings/paystack')
   async updatePaystackSettings(
     @CurrentUser() user: User,
-    @Body() body: { secretKey?: string; publicKey?: string; mode?: string },
+    @Body() body: { secretKey?: string; publicKey?: string; mode?: string; transfersEnabled?: boolean },
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.adminService.updatePaystackSettings(body);

@@ -10,7 +10,9 @@ import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
 import { getApiUrl } from '@/lib/site-config';
-import { IconBook } from '@/components/ios/icons';
+import { SegmentedControl } from '@/components/ios/SegmentedControl';
+import { DiscoverFamilyNav } from '@/components/DiscoverFamilyNav';
+import { IconBook, IconMegaphone, IconClipboard, IconShield, IconChat, IconUsers } from '@/components/ios/icons';
 import {
   CONTENT_SPORT_KEYS,
   SPORT_ICONS,
@@ -105,6 +107,7 @@ function DiscoverContent() {
           title={t('discover.title')}
           tagline={t('discover.subtitle')}
         />
+        <DiscoverFamilyNav current="hub" />
 
         {/* SEO-rich static content */}
         <section className="mb-8 rounded-2xl bg-[var(--card)] border border-[var(--border)] p-6 md:p-8 min-w-0">
@@ -113,19 +116,36 @@ function DiscoverContent() {
             {t('discover.hub_desc')}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 min-w-0">
-            <div className="p-4 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)]">
-              <h3 className="font-semibold text-[var(--text)] mb-2">📰 {t('discover.news_transfers')}</h3>
-              <p className="text-sm text-[var(--text-muted)]">{t('discover.news_transfers_desc')}</p>
-            </div>
-            <div className="p-4 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)]">
-              <h3 className="font-semibold text-[var(--text)] mb-2">📚 {t('discover.guides_resources')}</h3>
-              <p className="text-sm text-[var(--text-muted)]">{t('discover.guides_resources_desc')}</p>
-            </div>
+            <Link
+              href="/news"
+              className="p-4 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] hover:border-[var(--primary)]/50 transition-colors group"
+            >
+              <h3 className="font-semibold text-[var(--text)] mb-2 inline-flex items-center gap-2">
+                <IconMegaphone className="w-4 h-4 text-[var(--primary)]" />
+                {t('discover.news_transfers')}
+              </h3>
+              <p className="text-sm text-[var(--text-muted)] mb-2">{t('discover.news_transfers_desc')}</p>
+              <span className="text-sm font-medium text-[var(--primary)] group-hover:underline">{t('discover.news_link')}</span>
+            </Link>
+            <Link
+              href="/guides"
+              className="p-4 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] hover:border-[var(--primary)]/50 transition-colors group"
+            >
+              <h3 className="font-semibold text-[var(--text)] mb-2 inline-flex items-center gap-2">
+                <IconClipboard className="w-4 h-4 text-[var(--primary)]" />
+                {t('discover.howto_card_title')}
+              </h3>
+              <p className="text-sm text-[var(--text-muted)] mb-2">{t('discover.howto_card_desc')}</p>
+              <span className="text-sm font-medium text-[var(--primary)] group-hover:underline">{t('discover.guides_link')}</span>
+            </Link>
             <Link
               href="/learn"
               className="p-4 rounded-xl bg-[var(--primary)]/10 border border-[var(--primary)]/30 hover:border-[var(--primary)]/50 transition-colors group"
             >
-              <h3 className="font-semibold text-[var(--text)] mb-2">📖 {t('learn.card_title')}</h3>
+              <h3 className="font-semibold text-[var(--text)] mb-2 inline-flex items-center gap-2">
+                <IconBook className="w-4 h-4 text-[var(--primary)]" />
+                {t('learn.card_title')}
+              </h3>
               <p className="text-sm text-[var(--text-muted)] mb-2">{t('learn.card_desc')}</p>
               <span className="text-sm font-medium text-[var(--primary)] group-hover:underline">{t('learn.card_link')}</span>
             </Link>
@@ -133,24 +153,31 @@ function DiscoverContent() {
               href="/how-it-works#faq"
               className="p-4 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] hover:border-[var(--primary)]/50 transition-colors group"
             >
-              <h3 className="font-semibold text-[var(--text)] mb-2">❓ {t('discover.platform_howto_title')}</h3>
+              <h3 className="font-semibold text-[var(--text)] mb-2 inline-flex items-center gap-2">
+                <IconShield className="w-4 h-4 text-[var(--primary)]" />
+                {t('discover.platform_howto_title')}
+              </h3>
               <p className="text-sm text-[var(--text-muted)] mb-2">{t('discover.platform_howto_desc')}</p>
               <span className="text-sm font-medium text-[var(--primary)] group-hover:underline">{t('discover.platform_howto_link')}</span>
             </Link>
           </div>
 
-          {/* More — contextual links (no hamburger needed) */}
+          {/* More — routes that are not News/Guides tabs or footer legal */}
           <div className="mt-6 pt-6 border-t border-[var(--border)]">
             <h3 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('discover.more')}</h3>
             <div className="flex flex-wrap gap-2">
-              <Link href="/community" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">💬 {t('nav.community')}</Link>
-              <Link href="/news" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">📰 {t('nav.news')}</Link>
-              <Link href="/resources" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">📚 {t('nav.guides')}</Link>
-              <Link href="/about" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">ℹ️ {t('nav.about')}</Link>
-              <Link href="/contact" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">✉️ {t('nav.contact')}</Link>
-              <Link href="/responsible-gambling" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">🛡️ {t('resp.headline')}</Link>
-              <Link href="/terms" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">📋 {t('auth.terms')}</Link>
-              <Link href="/privacy" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">🔒 {t('auth.privacy')}</Link>
+              <Link href="/community" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">
+                <IconChat className="w-4 h-4" />
+                {t('nav.community')}
+              </Link>
+              <Link href="/about" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">
+                <IconUsers className="w-4 h-4" />
+                {t('nav.about')}
+              </Link>
+              <Link href="/responsible-gambling" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">
+                <IconShield className="w-4 h-4" />
+                {t('resp.headline')}
+              </Link>
             </div>
           </div>
         </section>
@@ -177,27 +204,17 @@ function DiscoverContent() {
         </div>
 
         {/* Tab switcher */}
-        <div className="mb-8 w-full min-w-0 overflow-hidden">
-          <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
-            {[
-              { id: 'news' as TabId, label: t('discover.tab_news'), icon: '📰' },
-              { id: 'guides' as TabId, label: t('discover.tab_guides'), icon: '📚' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setTab(tab.id)}
-                className={`shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-[var(--primary)] text-white shadow-md'
-                    : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--primary)]/50 hover:text-[var(--text)]'
-                }`}
-              >
-                <span>{tab.icon}</span>
-                {tab.label}
-              </button>
-            ))}
-          </div>
+        <div className="mb-8 w-full min-w-0">
+          <SegmentedControl
+            aria-label={t('discover.tab_news')}
+            className="w-full max-w-md"
+            options={[
+              { value: 'news' as TabId, label: t('discover.tab_news') },
+              { value: 'guides' as TabId, label: t('discover.tab_guides') },
+            ]}
+            value={activeTab}
+            onChange={setTab}
+          />
         </div>
 
         <div className="mb-6">
@@ -386,6 +403,13 @@ function GuidesTab({ sport }: { sport: ContentSport }) {
 
   if (visibleCategories.length === 0) {
     return (
+      <div className="space-y-6">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <p className="text-sm text-[var(--text-muted)] min-w-0">{t('discover.library_vs_howtos')}</p>
+          <Link href="/guides" className="text-sm font-semibold text-[var(--primary)] hover:underline shrink-0">
+            {t('discover.open_howtos')}
+          </Link>
+        </div>
       <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-12 text-center">
         {sportMeta ? (
           <>
@@ -414,11 +438,18 @@ function GuidesTab({ sport }: { sport: ContentSport }) {
           </>
         )}
       </div>
+      </div>
     );
   }
 
   return (
     <section className="space-y-10">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <p className="text-sm text-[var(--text-muted)] min-w-0">{t('discover.library_vs_howtos')}</p>
+        <Link href="/guides" className="text-sm font-semibold text-[var(--primary)] hover:underline shrink-0">
+          {t('discover.open_howtos')}
+        </Link>
+      </div>
       {sportMeta && (
         <div className="rounded-xl bg-[var(--primary-light)]/30 border border-[var(--primary)]/20 p-4 flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
           <span className="text-2xl shrink-0">{sportMeta.icon}</span>

@@ -16,7 +16,7 @@ interface NotificationBellMenuProps {
   /** Re-fetch when route changes (e.g. pathname). */
   refreshKey?: string;
   className?: string;
-  /** Desktop header uses slate styling; dashboard uses theme tokens. */
+  /** Desktop header and dashboard both use theme tokens. */
   variant?: 'marketing' | 'dashboard';
   onUnreadCountChange?: (count: number) => void;
 }
@@ -24,7 +24,6 @@ interface NotificationBellMenuProps {
 export function NotificationBellMenu({
   refreshKey,
   className = '',
-  variant = 'marketing',
   onUnreadCountChange,
 }: NotificationBellMenuProps) {
   const router = useRouter();
@@ -105,14 +104,10 @@ export function NotificationBellMenu({
   const unreadCount = items.filter((n) => !isNotificationRead(n)).length;
 
   const bellBtnClass =
-    variant === 'dashboard'
-      ? 'relative p-2.5 rounded-xl text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-warm)] transition-colors'
-      : 'relative p-2.5 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors';
+    'relative p-2.5 rounded-xl text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--fill-secondary)] transition-colors';
 
   const panelClass =
-    variant === 'dashboard'
-      ? 'absolute right-0 top-full mt-2 w-[min(100vw-2rem,22rem)] rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-xl shadow-black/10 z-[200] overflow-hidden'
-      : 'absolute right-0 top-full mt-2 w-[min(100vw-2rem,22rem)] rounded-2xl border border-slate-200 bg-white shadow-xl shadow-black/10 z-[200] overflow-hidden dark:border-slate-700 dark:bg-slate-900';
+    'absolute right-0 top-full mt-2 w-[min(100vw-2rem,22rem)] rounded-2xl border border-[var(--border)] bg-[var(--card)] z-[200] overflow-hidden';
 
   const navigate = (n: NotificationListItem) => {
     void markRead(n.id);
@@ -144,9 +139,7 @@ export function NotificationBellMenu({
         </svg>
         {unreadCount > 0 ? (
           <span
-            className={`absolute top-1.5 right-1.5 min-w-[16px] h-[16px] flex items-center justify-center text-[9px] font-bold text-white rounded-full ring-2 ${
-              variant === 'dashboard' ? 'bg-[var(--accent)] ring-white' : 'bg-red-500 ring-white'
-            }`}
+            className={`absolute top-1.5 right-1.5 min-w-[16px] h-[16px] flex items-center justify-center text-[9px] font-bold text-white rounded-full ring-2 ring-[var(--card)] bg-[var(--accent)]`}
           >
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
@@ -155,11 +148,7 @@ export function NotificationBellMenu({
 
       {open ? (
         <div className={panelClass} role="menu" aria-label={t('notifications.recent')}>
-          <div
-            className={`flex items-center justify-between px-4 py-3 border-b ${
-              variant === 'dashboard' ? 'border-[var(--separator)]' : 'border-slate-100 dark:border-slate-800'
-            }`}
-          >
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--separator)]">
             <p className="text-sm font-semibold text-[var(--text)]">{t('notifications.recent')}</p>
             {unreadCount > 0 ? (
               <span className="text-[10px] font-semibold text-[var(--primary)]">
@@ -208,11 +197,7 @@ export function NotificationBellMenu({
             </ul>
           )}
 
-          <div
-            className={`border-t px-4 py-2.5 ${
-              variant === 'dashboard' ? 'border-[var(--separator)]' : 'border-slate-100 dark:border-slate-800'
-            }`}
-          >
+          <div className="border-t border-[var(--separator)] px-4 py-2.5">
             <Link
               href="/notifications"
               onClick={() => setOpen(false)}

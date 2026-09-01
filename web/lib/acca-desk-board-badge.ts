@@ -35,7 +35,7 @@ export function looksLikeAccaDeskTitle(title: string | null | undefined): boolea
 
 export type AccaDeskBoardBadge = 'today' | 'tomorrow';
 
-function isAccaDeskCard(title: string | null | undefined, tipsterType?: string | null): boolean {
+export function isAccaDeskCard(title: string | null | undefined, tipsterType?: string | null): boolean {
   return isAccaDeskTipsterType(tipsterType) || looksLikeAccaDeskTitle(title);
 }
 

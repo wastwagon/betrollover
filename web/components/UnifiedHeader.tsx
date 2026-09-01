@@ -17,7 +17,9 @@ import { NotificationBellMenu } from '@/components/notifications/NotificationBel
 import { hapticLight } from '@/lib/haptic';
 import { localizeHref, stripLocalePrefix } from '@/lib/locale-path';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import { useAccaGeneratorEnabled } from '@/hooks/useAccaGeneratorEnabled';
 import { buttonClassName } from '@/components/ui/Button';
+import { LocaleSwitchers } from '@/components/TopBar';
 import {
   IconSearch,
   IconTrophy,
@@ -204,7 +206,7 @@ function DesktopMenuPortal({
         id={panelId}
         role="region"
         aria-labelledby={labelledBy}
-        className={`w-full ${maxHeightClass} overflow-y-auto overscroll-contain rounded-xl bg-white shadow-xl border border-slate-200/90 ring-1 ring-black/5`}
+        className={`w-full ${maxHeightClass} overflow-y-auto overscroll-contain rounded-xl bg-[var(--card)] border border-[var(--border)]`}
       >
         {children}
       </div>
@@ -218,6 +220,11 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
   const pathname = usePathname();
   /** TopBar is not rendered on admin routes — sticky offset must stay `top-0`. */
   const hideTopBar = stripLocalePrefix(pathname).startsWith('/admin');
+  const pathBare = stripLocalePrefix(pathname);
+  const isAuthPath = ['/login', '/register', '/forgot-password', '/verify-email'].some(
+    (p) => pathBare === p || pathBare.startsWith(`${p}/`),
+  );
+  const accaEnabled = useAccaGeneratorEnabled();
   const router   = useRouter();
   const { t } = useLanguage();
   const { format, currency } = useCurrency();
@@ -406,9 +413,9 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
         className={`z-50 w-full min-w-0 max-w-full ios-chrome border-b ${
           hideTopBar
             ? 'sticky top-0'
-            : // Mobile: fixed below TopBar (overflow ancestors used to break sticky + top offset).
+            : // Mobile: fixed at the top (TopBar is desktop-only). Safe-area pads the notch.
               // Desktop: sticky under in-flow TopBar.
-              'max-md:fixed max-md:left-0 max-md:right-0 max-md:top-[var(--br-topbar-h)] md:sticky md:top-0'
+              'max-md:fixed max-md:left-0 max-md:right-0 max-md:top-0 max-md:pt-[env(safe-area-inset-top,0px)] md:sticky md:top-0'
         }`}
       >
         <div className="section-ux-gutter-wide min-w-0 max-w-full">
@@ -428,6 +435,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
             </Link>
 
             {/* ── Desktop nav ── */}
+            {!isAuthPath ? (
             <nav className="hidden lg:flex items-center gap-0.5" aria-label="Main navigation">
 
               {/* Home */}
@@ -467,13 +475,15 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       <CompactNavLink href="/tipsters?sort=roi" icon={<IconChart />} label={t('tipster.best_roi')} onClick={closeAll} />
                     </div>
 
-                    <div className="py-1 px-1 border-t border-slate-100">
+                    <div className="py-1 px-1 border-t border-[var(--separator)]">
                       <SectionLabel>{t('header.section_become_tipster')}</SectionLabel>
                       {!isSignedIn && (
                         <CompactNavLink href="/register" icon={<IconRocket />} label={t('nav.register')} onClick={closeAll} />
                       )}
                       <CompactNavLink href="/create-pick" icon={<IconTarget />} label={t('nav.create_pick')} onClick={closeAll} />
-                      <CompactNavLink href="/acca-generator" icon={<IconChart />} label={t('nav.acca_generator')} onClick={closeAll} />
+                      {accaEnabled ? (
+                        <CompactNavLink href="/acca-generator" icon={<IconChart />} label={t('nav.acca_generator')} onClick={closeAll} />
+                      ) : null}
                       {isSubscriptionsEnabled() ? (
                         <CompactNavLink
                           href="/dashboard/subscription-packages"
@@ -536,7 +546,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       />
                     </div>
 
-                    <div className="py-1 px-1 border-t border-slate-100">
+                    <div className="py-1 px-1 border-t border-[var(--separator)]">
                       <SectionLabel>{t('header.section_platform')}</SectionLabel>
                       <CompactNavLink href="/leaderboard" icon={<IconTrophy />} label={t('nav.leaderboard')} onClick={closeAll} />
                       <CompactNavLink href="/league-tables" icon={<IconTable />} label={t('nav.league_tables')} onClick={closeAll} />
@@ -573,6 +583,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       </span>
                     )}
                   </Link>
+                  {accaEnabled ? (
                   <Link
                     href="/acca-generator"
                     title={t('nav.acca_generator')}
@@ -585,6 +596,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                   >
                     {t('nav.acca_generator_short')}
                   </Link>
+                  ) : null}
                 </div>
               )}
 
@@ -600,8 +612,10 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                 </>
               )}
             </nav>
+            ) : null}
 
             {/* Desktop search (guests + signed-in) */}
+            {!isAuthPath ? (
             <button
               type="button"
               aria-label={t('common.search')}
@@ -613,6 +627,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
             >
               <IconSearch />
             </button>
+            ) : null}
 
             {/* ── Right side (auth utils) ── */}
             {isSignedIn && (
@@ -625,7 +640,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                     aria-label={`Wallet balance: ${format(balance).primary}${pendingWithdrawalCount > 0 ? `, ${pendingWithdrawalCount} withdrawal(s) in progress` : ''}`}
                   >
                     {pendingWithdrawalCount > 0 && (
-                      <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] flex items-center justify-center text-[9px] font-bold bg-amber-500 text-white rounded-full ring-2 ring-white dark:ring-slate-900">
+                      <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] flex items-center justify-center text-[9px] font-bold bg-[var(--accent)] text-white rounded-full ring-2 ring-[var(--card)]">
                         {pendingWithdrawalCount > 9 ? '9+' : pendingWithdrawalCount}
                       </span>
                     )}
@@ -684,7 +699,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                   >
                       <div className="flex w-full min-w-0 max-w-[520px]">
                         {/* Col 1 — Profile & Activity */}
-                        <div className="w-64 border-r border-slate-100 py-4 px-2">
+                        <div className="w-64 border-r border-[var(--separator)] py-4 px-2">
                           <SectionLabel>{t('header.section_my_account')}</SectionLabel>
                           {[
                             { href: '/profile',       icon: <IconPerson />, label: t('profile.title'),       desc: t('profile.tagline') },
@@ -695,7 +710,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                               label: t('nav.wallet'),
                               desc: t('dashboard.wallet_desc'),
                               badge: pendingWithdrawalCount > 0 ? String(pendingWithdrawalCount) : undefined,
-                              badgeColor: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+                              badgeColor: 'bg-[var(--accent-light)] text-[var(--accent)]',
                             },
                             { href: '/earnings',      icon: <IconEarnings />, label: t('nav.earnings'),          desc: t('earnings.subtitle') },
                           ].map((item) => (
@@ -720,7 +735,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                             ...(isSubscriptionsEnabled()
                               ? [{ href: '/subscriptions', icon: <IconStar />, label: t('dashboard.card_subscriptions'),     desc: t('dashboard.card_subscriptions_desc') }]
                               : []),
-                            { href: '/notifications', icon: <IconBell />, label: t('nav.notifications'),     desc: unreadCount > 0 ? t('dashboard.card_notifications_unread', { n: String(unreadCount) }) : t('notifications.caught_up'), badge: unreadCount > 0 ? String(unreadCount) : undefined, badgeColor: 'bg-red-100 text-red-600' },
+                            { href: '/notifications', icon: <IconBell />, label: t('nav.notifications'),     desc: unreadCount > 0 ? t('dashboard.card_notifications_unread', { n: String(unreadCount) }) : t('notifications.caught_up'), badge: unreadCount > 0 ? String(unreadCount) : undefined, badgeColor: 'bg-[var(--destructive-light)] text-[var(--destructive)]' },
                           ].map(item => (
                             <MegaLink key={item.href} href={item.href} icon={item.icon} label={item.label} desc={item.desc} badge={item.badge} badgeColor={item.badgeColor} onClick={closeAll} />
                           ))}
@@ -730,7 +745,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                           <div>
                             {balance !== null && (
                               <div className="mb-3 px-3 py-2 rounded-xl bg-[var(--card)] border border-[var(--separator)]">
-                                <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)]">Balance</p>
+                                <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)]">{t('header.balance')}</p>
                                 <p className="text-sm font-bold text-[var(--text)]">{format(balance).primary}</p>
                                 {currency.code !== 'GHS' && (
                                   <p className="text-[10px] text-[var(--text-muted)] mt-0.5">GHS {Number(balance ?? 0).toFixed(2)}</p>
@@ -742,10 +757,9 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                           <button
                             type="button"
                             onClick={() => { signOut(); closeAll(); }}
-                            className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200/60 transition-colors"
+                            className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold text-[var(--destructive)] bg-[var(--destructive-light)] hover:opacity-90 border border-[var(--destructive)]/25 transition-colors"
                             aria-label="Sign out of your account"
                           >
-                            <span aria-hidden>🚪</span>
                             {t('auth.logout')}
                           </button>
                         </div>
@@ -755,8 +769,16 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               </div>
             )}
 
-            {/* Mobile: search + account — primary nav is bottom bar */}
-            <div className="lg:hidden flex items-center justify-end gap-1 sm:gap-2 min-w-0 shrink ml-1">
+            {/* GHS/EN and 18+ sit with search/account on the right. */}
+            <div className="flex items-center justify-end gap-1 sm:gap-2 min-w-0 shrink-0 max-lg:ml-auto lg:contents">
+            <div className="flex items-center gap-1">
+              <span className="hidden sm:inline-flex shrink-0 rounded-md border border-[var(--border)] bg-[var(--fill-secondary)] px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-[var(--text)]">
+                {t('topbar.disclaimer_5')}
+              </span>
+              <LocaleSwitchers tone="onSurface" />
+            </div>
+            {!isAuthPath ? (
+            <div className="lg:hidden flex items-center justify-end gap-1 sm:gap-2 min-w-0">
               <button
                 type="button"
                 aria-label={t('common.search')}
@@ -799,16 +821,14 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       onSignOut={signOut}
                       labels={{
                         dashboard: t('nav.dashboard'),
-                        leagueTables: t('nav.league_tables'),
                         profile: t('profile.title'),
                         wallet: t('nav.wallet'),
                         earnings: t('nav.earnings'),
                         myPicks: t('nav.my_picks'),
-                        createPick: t('nav.create_pick'),
-                        accaGenerator: t('nav.acca_generator'),
                         myPurchases: t('my_purchases.title'),
                         subscriptions: t('dashboard.card_subscriptions'),
                         notifications: t('nav.notifications'),
+                        invite: t('nav.invite'),
                       }}
                     />
                   )}
@@ -831,16 +851,19 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                 </>
               )}
             </div>
+            ) : null}
+            </div>
           </div>
 
           {/* Tablet only: secondary browse chips (phones use bottom tab bar). */}
+          {!isAuthPath ? (
           <nav
             className="hidden md:flex lg:hidden border-t border-[var(--separator)] flex-nowrap justify-start gap-2 overflow-x-auto overscroll-x-contain scrollbar-hide py-2 -mx-6 px-4 snap-x snap-mandatory"
             aria-label={t('nav.browse')}
           >
             {[
               { href: '/create-pick', label: t('nav.create_pick_short') },
-              { href: '/acca-generator', label: t('nav.acca_generator_short') },
+              ...(accaEnabled ? [{ href: '/acca-generator', label: t('nav.acca_generator_short') }] : []),
               { href: '/rollover', label: t('nav.rollover_short') },
               { href: '/live-scores', label: t('nav.live_scores_short') },
               { href: '/league-tables', label: t('nav.league_tables_short') },
@@ -851,7 +874,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               <Link
                 key={q.href}
                 href={localizeHref(q.href, pathname)}
-                className={`shrink-0 snap-start inline-flex items-center min-h-[40px] px-3 rounded-full text-[11px] font-semibold border transition-colors touch-manipulation ${
+                className={`shrink-0 snap-start inline-flex items-center min-h-[44px] px-3 rounded-full text-[11px] font-semibold border transition-colors touch-manipulation ${
                   isActive(pathname, q.href)
                     ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
                     : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
@@ -861,11 +884,12 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               </Link>
             ))}
           </nav>
+          ) : null}
         </div>
       </header>
-      {/* Keeps page titles clear of the fixed mobile header (matches h-[4.5rem] row). */}
+      {/* Keeps page titles clear of the fixed mobile header (safe-area + header row). */}
       {!hideTopBar ? (
-        <div className="md:hidden w-full shrink-0 h-[var(--br-header-h)] pointer-events-none" aria-hidden />
+        <div className="md:hidden w-full shrink-0 h-[var(--br-chrome-below-header)] pointer-events-none" aria-hidden />
       ) : null}
       {mounted ? <GlobalSearchSheet open={searchOpen} onClose={() => setSearchOpen(false)} /> : null}
     </>

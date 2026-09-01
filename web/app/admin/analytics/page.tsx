@@ -662,13 +662,7 @@ export default function AdminAnalyticsPage() {
                   : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
-              {tab === 'sports'
-                ? '🌍 Sports'
-                : tab === 'wallet'
-                  ? '💰 Wallet'
-                  : tab === 'acca'
-                    ? '🎯 Acca Gen'
-                    : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'acca' ? 'Acca Gen' : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
         </div>
@@ -932,8 +926,8 @@ export default function AdminAnalyticsPage() {
               <div className="rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] p-4 sm:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-4">
                   <div className="min-w-0">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                      🏛 Platform Commission Revenue
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                      Platform Commission Revenue
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
                       Automatically deducted from tipster payouts on winning pick settlements.

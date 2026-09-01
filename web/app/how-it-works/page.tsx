@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { getLocale, buildT } from '@/lib/i18n';
 import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { fetchSellingThresholds } from '@/lib/selling-thresholds';
+import { buttonClassName } from '@/components/ui/button-styles';
 import type { Metadata } from 'next';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -130,19 +131,31 @@ export default async function HowItWorksPage() {
             </section>
 
             <div className="mt-8 sm:mt-10 p-4 sm:p-6 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] min-w-0">
-              <p className="font-display font-semibold text-[var(--text)] mb-3 sm:mb-4 text-sm sm:text-base">Ready to get started?</p>
+              <p className="font-display font-semibold text-[var(--text)] mb-3 sm:mb-4 text-sm sm:text-base">{t('about.ready_cta')}</p>
               <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 min-w-0">
                 <Link
                   href="/marketplace"
-                  className="inline-flex items-center justify-center gap-2 font-semibold transition-colors duration-200 touch-manipulation bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-sm px-4 py-2.5 text-sm rounded-[var(--radius)] min-h-[44px] w-full sm:w-auto"
+                  className={buttonClassName({ className: 'w-full sm:w-auto' })}
                 >
-                  Browse Marketplace
+                  {t('learn.cta_marketplace')}
                 </Link>
                 <Link
                   href="/register"
-                  className="inline-flex items-center justify-center gap-2 font-semibold transition-colors duration-200 touch-manipulation bg-[var(--card)] text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)] px-4 py-2.5 text-sm rounded-[var(--radius)] min-h-[44px] w-full sm:w-auto"
+                  className={buttonClassName({ variant: 'secondary', className: 'w-full sm:w-auto' })}
                 >
-                  Create Account
+                  {t('auth.register')}
+                </Link>
+                <Link
+                  href="/guides/escrow-refunds"
+                  className={buttonClassName({ variant: 'secondary', className: 'w-full sm:w-auto' })}
+                >
+                  {t('how_it_works.guides_link')}
+                </Link>
+                <Link
+                  href="/learn"
+                  className={buttonClassName({ variant: 'secondary', className: 'w-full sm:w-auto' })}
+                >
+                  {t('how_it_works.learn_link')}
                 </Link>
               </div>
             </div>

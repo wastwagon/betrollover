@@ -1,84 +1,78 @@
+'use client';
+
 import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
-import { NavBar } from '@/components/ios/NavBar';
-
-const ctaPrimary =
-  'inline-flex min-h-[48px] items-center justify-center gap-2 font-semibold transition-colors duration-200 touch-manipulation bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-sm px-5 py-3 text-sm rounded-[var(--radius)]';
-const ctaSecondary =
-  'inline-flex min-h-[48px] items-center justify-center gap-2 font-semibold transition-colors duration-200 touch-manipulation bg-[var(--card)] text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)] px-5 py-3 text-sm rounded-[var(--radius)]';
+import { AccaFamilyNav } from '@/components/AccaFamilyNav';
+import { buttonClassName } from '@/components/ui/Button';
+import { useT } from '@/context/LanguageContext';
+import { useAccaGeneratorEnabled } from '@/hooks/useAccaGeneratorEnabled';
 
 /**
- * Public, indexable teaser when the visitor is not signed in.
+ * Public teaser when the visitor is not signed in.
  * The interactive generator stays behind login.
  */
 export function AccaGeneratorLanding() {
+  const t = useT();
+  const enabled = useAccaGeneratorEnabled();
+
   return (
     <DashboardShell>
       <div className="min-h-[calc(100vh-8rem)] bg-[var(--bg)] w-full min-w-0 max-w-full">
         <div className="section-ux-dashboard-shell min-w-0 max-w-full">
-          <div className="lg:hidden -mx-1 mb-3">
-            <NavBar title="Acca Generator" backHref="/" backLabel="Home" sticky={false} />
-          </div>
-          <div className="hidden lg:block">
-            <PageHeader
-              label="Tools"
-              title="Acca Generator"
-              tagline="Same-day football accumulators from synced odds — pick a risk band, markets, and fixture count, then generate a slip."
-            />
-          </div>
+          <PageHeader
+            label={t('acca.landing_label')}
+            title={enabled ? t('nav.acca_generator') : t('acca.disabled_title')}
+            tagline={enabled ? t('acca.landing_disclaimer') : t('acca.disabled_body')}
+          />
+          <AccaFamilyNav current="build" />
 
           <div className="mx-auto max-w-3xl space-y-6">
             <aside
-              className="rounded-xl border border-amber-200/90 bg-amber-50/90 px-4 py-3.5 text-sm text-amber-950"
+              className="rounded-xl border border-[var(--accent)]/30 bg-[var(--accent-light)] px-4 py-3.5 text-sm text-[var(--text)]"
               role="note"
             >
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-amber-800/80">
-                Educational &amp; informational · 18+
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--accent)]">
+                {t('acca.landing_disclaimer_kicker')}
               </p>
               <p className="mt-1.5 leading-relaxed">
-                Risk levels are odd bands for building sample accumulators — not sure bets. Sign in to
-                generate and optionally publish a free marketplace pick. Gamble responsibly.
+                {enabled ? t('acca.landing_disclaimer') : t('acca.disabled_body')}
               </p>
             </aside>
 
-            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm space-y-4">
-              <h2 className="text-base font-semibold text-[var(--text)]">How it works</h2>
-              <ol className="list-decimal list-inside space-y-2 text-sm text-[var(--text-muted)]">
-                <li>Choose Sure, Safe, Medium, or High (per-leg odd band).</li>
-                <li>Select markets that have odds in that band today.</li>
-                <li>Set how many fixtures — more legs means higher overall exposure.</li>
-                <li>Generate a slip, then bet it your way or publish it free on BetRollover.</li>
-              </ol>
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                <Link
-                  href="/login?redirect=/acca-generator"
-                  className={ctaPrimary}
-                >
-                  Sign in to generate
-                </Link>
-                <Link
-                  href="/register?redirect=/acca-generator"
-                  className={ctaSecondary}
-                >
-                  Create free account
-                </Link>
-              </div>
+            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 space-y-4">
+              {enabled ? (
+                <>
+                  <h2 className="text-base font-semibold text-[var(--text)]">{t('acca.landing_how')}</h2>
+                  <ol className="list-decimal list-inside space-y-2 text-sm text-[var(--text-muted)]">
+                    <li>{t('acca.landing_step1')}</li>
+                    <li>{t('acca.landing_step2')}</li>
+                    <li>{t('acca.landing_step3')}</li>
+                    <li>{t('acca.landing_step4')}</li>
+                  </ol>
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <Link href="/login?redirect=/acca-generator" className={buttonClassName({ size: 'lg', className: 'min-h-[48px]' })}>
+                      {t('acca.landing_sign_in')}
+                    </Link>
+                    <Link
+                      href="/register?redirect=/acca-generator"
+                      className={buttonClassName({ variant: 'secondary', size: 'lg', className: 'min-h-[48px]' })}
+                    >
+                      {t('acca.landing_create_account')}
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <h2 className="text-base font-semibold text-[var(--text)]">{t('acca.disabled_title')}</h2>
+              )}
               <p className="text-center text-xs text-[var(--text-muted)]">
-                Already browsing picks?{' '}
+                {t('acca.landing_already')}{' '}
                 <Link href="/marketplace" className="font-medium text-[var(--primary)] underline underline-offset-2">
-                  Open marketplace
+                  {t('nav.marketplace')}
                 </Link>
                 {' · '}
                 <Link href="/rollover" className="font-medium text-[var(--primary)] underline underline-offset-2">
-                  10-day rollover
-                </Link>
-                {' · '}
-                <Link
-                  href="/responsible-gambling"
-                  className="font-medium text-[var(--primary)] underline underline-offset-2"
-                >
-                  Responsible gambling
+                  {t('nav.rollover')}
                 </Link>
               </p>
             </section>

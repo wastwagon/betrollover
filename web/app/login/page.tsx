@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useT } from '@/context/LanguageContext';
-import { UnifiedHeader } from '@/components/UnifiedHeader';
+import { AuthCard, AuthPageFallback, AuthShell } from '@/components/AuthShell';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { AppleSignInButton } from '@/components/AppleSignInButton';
 import { ApiErrorBanner } from '@/components/ApiErrorBanner';
@@ -12,7 +12,7 @@ import { getApiErrorMessage } from '@/lib/api-error-message';
 import { getApiUrl } from '@/lib/site-config';
 import { consumeOAuthSessionToken, setAuthToken } from '@/lib/auth-token-storage';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Input, fieldControlClassName } from '@/components/ui/Input';
 
 /** Relative in-app path only; blocks protocol-relative and off-site redirects. */
 function safePostLoginPath(redirectParam: string | null): string {
@@ -20,6 +20,40 @@ function safePostLoginPath(redirectParam: string | null): string {
   const p = redirectParam.trim();
   if (!p.startsWith('/') || p.startsWith('//')) return '/dashboard';
   return p;
+}
+
+function OauthContinueBlock({
+  loading,
+  oauthRedirect,
+}: {
+  loading: boolean;
+  oauthRedirect?: string;
+}) {
+  const t = useT();
+  const [hasOauth, setHasOauth] = useState(false);
+
+  useEffect(() => {
+    const google = !!(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '').trim();
+    const apple = !!(process.env.NEXT_PUBLIC_APPLE_CLIENT_ID || process.env.APPLE_CLIENT_ID || '').trim();
+    setHasOauth(google || apple);
+  }, []);
+
+  if (!hasOauth) return null;
+
+  return (
+    <>
+      <div className="relative my-4">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-[var(--separator)]" />
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-3 bg-[var(--card)] text-[var(--text-muted)]">{t('auth.or_continue_with')}</span>
+        </div>
+      </div>
+      <GoogleSignInButton variant="signin" redirect={oauthRedirect} className="mb-4" disabled={loading} />
+      <AppleSignInButton variant="signin" className="mb-4" disabled={loading} />
+    </>
+  );
 }
 
 function LoginForm() {
@@ -97,11 +131,8 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] relative overflow-hidden w-full min-w-0 max-w-full">
-      <UnifiedHeader />
-      <main className="section-ux-auth-main w-full min-w-0 max-w-full pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-        <div className="w-full max-w-md min-w-0 mx-auto px-4 sm:px-0">
-          <div className="bg-[var(--card)] rounded-2xl shadow-sm border border-[var(--separator)] p-5 sm:p-8 md:p-10 min-w-0 max-w-full">
+    <AuthShell>
+      <AuthCard>
             <div className="text-center mb-6 sm:mb-8">
               <h1 className="font-display text-2xl font-bold tracking-tight text-[var(--text)] mb-2 sm:sr-only">{t('auth.login')}</h1>
               <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('auth.sign_in_desc')}</p>
@@ -134,7 +165,7 @@ function LoginForm() {
                     required
                     autoComplete="current-password"
                     disabled={loading}
-                    className="w-full min-w-0 min-h-[48px] px-4 py-3 pr-12 text-base rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-offset-1 focus:ring-offset-[var(--bg)] transition-colors disabled:opacity-50"
+                    className={fieldControlClassName(undefined, 'min-h-[48px] px-4 py-3 pr-12 text-base')}
                   />
                   <button
                     type="button"
@@ -169,16 +200,7 @@ function LoginForm() {
                   className="mb-2"
                 />
               )}
-              <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-[var(--separator)]" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-3 bg-[var(--card)] text-[var(--text-muted)]">{t('auth.or_continue_with')}</span>
-                </div>
-              </div>
-              <GoogleSignInButton variant="signin" redirect={oauthRedirect} className="mb-4" disabled={loading} />
-              <AppleSignInButton variant="signin" className="mb-4" disabled={loading} />
+              <OauthContinueBlock loading={loading} oauthRedirect={oauthRedirect} />
               <Button type="submit" fullWidth size="lg" disabled={loading} leading={loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : undefined}>
@@ -191,16 +213,14 @@ function LoginForm() {
                 {t('auth.register')}
               </Link>
             </p>
-          </div>
-        </div>
-      </main>
-    </div>
+      </AuthCard>
+    </AuthShell>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[var(--bg)] flex items-center justify-center w-full min-w-0 max-w-full overflow-x-hidden"><div className="w-10 h-10 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" /></div>}>
+    <Suspense fallback={<AuthPageFallback />}>
       <LoginForm />
     </Suspense>
   );

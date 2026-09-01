@@ -1303,7 +1303,7 @@ export class AdminService {
   async getPaystackSettings() {
     let s = await this.paystackSettingsRepo.findOne({ where: { id: 1 } });
     if (!s) {
-      s = this.paystackSettingsRepo.create({ mode: 'live' });
+      s = this.paystackSettingsRepo.create({ mode: 'live', transfersEnabled: false });
       await this.paystackSettingsRepo.save(s);
     }
     return {
@@ -1311,6 +1311,7 @@ export class AdminService {
       publicKey: s.publicKey ? '********' : '',
       mode: s.mode || 'live',
       configured: !!(s.secretKey?.trim() && s.secretKey.startsWith('sk_')),
+      transfersEnabled: s.transfersEnabled === true,
     };
   }
 
@@ -1318,10 +1319,11 @@ export class AdminService {
     secretKey?: string;
     publicKey?: string;
     mode?: string;
+    transfersEnabled?: boolean;
   }) {
     let s = await this.paystackSettingsRepo.findOne({ where: { id: 1 } });
     if (!s) {
-      s = this.paystackSettingsRepo.create({ mode: 'live' });
+      s = this.paystackSettingsRepo.create({ mode: 'live', transfersEnabled: false });
       await this.paystackSettingsRepo.save(s);
     }
     if (data.secretKey !== undefined && data.secretKey !== '' && data.secretKey !== '********') {
@@ -1331,6 +1333,7 @@ export class AdminService {
       s.publicKey = data.publicKey.trim();
     }
     if (data.mode !== undefined) s.mode = data.mode;
+    if (data.transfersEnabled !== undefined) s.transfersEnabled = data.transfersEnabled;
     await this.paystackSettingsRepo.save(s);
     return this.getPaystackSettings();
   }

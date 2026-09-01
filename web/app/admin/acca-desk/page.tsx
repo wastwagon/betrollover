@@ -9,6 +9,7 @@ import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 import { Button, buttonClassName } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 type RosterRow = {
   username: string;
@@ -534,18 +535,18 @@ export default function AdminAccaDeskPage() {
                 ) : null}
 
                 <div className="mb-4 flex flex-col sm:flex-row sm:items-end gap-3">
-                  <label className="block text-sm text-gray-700 dark:text-gray-200">
-                    Campaign example stake (GHS)
-                    <input
+                  <div className="w-full sm:w-40">
+                    <Input
+                      id="admin-acca-campaign-stake"
+                      label="Campaign example stake (GHS)"
                       type="number"
                       min={1}
                       max={100000}
                       step="1"
                       value={stakeDraft}
                       onChange={(e) => setStakeDraft(e.target.value)}
-                      className="mt-1 block w-40 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
                     />
-                  </label>
+                  </div>
                   <Button
                     type="button"
                     size="sm"

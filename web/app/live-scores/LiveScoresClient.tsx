@@ -8,8 +8,11 @@ import { AppFooter } from '@/components/AppFooter';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { useDebounce } from '@/hooks/useDebounce';
-import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
+import { formatLiveFixturePeriod, FIXTURE_FT_CHIP, FIXTURE_NS_CHIP } from '@/lib/live-fixture-display';
+import { FixtureLiveChip } from '@/components/FixtureLiveChip';
 import { buttonClassName } from '@/components/ui/Button';
+import { Input, fieldControlClassName } from '@/components/ui/Input';
+import { SegmentedControl } from '@/components/ios/SegmentedControl';
 
 interface Row {
   id: number;
@@ -119,6 +122,7 @@ export default function LiveScoresPage({
   const [teamSearch, setTeamSearch] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedLeague, setSelectedLeague] = useState('');
+  const [boardTab, setBoardTab] = useState<'live' | 'upcoming' | 'recent' | null>(null);
   const debouncedSearch = useDebounce(teamSearch, SEARCH_DEBOUNCE_MS);
 
   const normalizePayload = useCallback((raw: Payload | null): Payload | null => {
@@ -269,6 +273,9 @@ export default function LiveScoresPage({
   }, [data, selectedCountry, selectedLeague, debouncedSearch]);
 
   const visibleCount = filteredLive.length + filteredUpcoming.length + filteredRecent.length;
+  const resolvedBoard: 'live' | 'upcoming' | 'recent' =
+    boardTab ??
+    (filteredLive.length > 0 ? 'live' : filteredUpcoming.length > 0 ? 'upcoming' : 'recent');
 
   useEffect(() => {
     const controller = new AbortController();
@@ -412,10 +419,7 @@ export default function LiveScoresPage({
           <>
             <div className="mb-6 space-y-4">
               <div className="relative">
-                <label htmlFor="live-scores-search" className="sr-only">
-                  {t('live_scores.search_label')}
-                </label>
-                <input
+                <Input
                   id="live-scores-search"
                   type="search"
                   autoComplete="off"
@@ -423,7 +427,8 @@ export default function LiveScoresPage({
                   placeholder={t('live_scores.search_placeholder')}
                   value={teamSearch}
                   onChange={(e) => setTeamSearch(e.target.value)}
-                  className="w-full px-4 py-2.5 pl-10 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all"
+                  className="pl-10 pr-10"
+                  aria-label={t('live_scores.search_label')}
                 />
                 <svg
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] pointer-events-none"
@@ -473,7 +478,7 @@ export default function LiveScoresPage({
                           setSelectedCountry(e.target.value);
                           setSelectedLeague('');
                         }}
-                        className="w-full sm:w-auto min-w-0 sm:min-w-[140px] sm:max-w-[200px] px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                        className={fieldControlClassName(undefined, 'w-full sm:w-auto min-w-0 sm:min-w-[140px] sm:max-w-[200px]')}
                       >
                         <option value="">{t('live_scores.all_countries')}</option>
                         {countriesInData.map((country) => (
@@ -493,7 +498,7 @@ export default function LiveScoresPage({
                         id="live-scores-competition"
                         value={competitionOptions.some((l) => String(l.id) === selectedLeague) ? selectedLeague : ''}
                         onChange={(e) => setSelectedLeague(e.target.value)}
-                        className="w-full sm:w-auto min-w-0 sm:min-w-[180px] sm:max-w-[260px] px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                        className={fieldControlClassName(undefined, 'w-full sm:w-auto min-w-0 sm:min-w-[180px] sm:max-w-[260px]')}
                       >
                         <option value="">{t('live_scores.all_competitions')}</option>
                         {competitionOptions.map((l) => (
@@ -508,7 +513,7 @@ export default function LiveScoresPage({
                     <button
                       type="button"
                       onClick={clearFilters}
-                      className="w-full sm:w-auto px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                      className={buttonClassName({ variant: 'secondary', size: 'sm', className: 'w-full sm:w-auto' })}
                     >
                       {t('live_scores.clear_filters')}
                     </button>
@@ -520,16 +525,28 @@ export default function LiveScoresPage({
             {showNoMatchBanner && (
               <p
                 role="status"
-                className="mb-6 text-sm rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-100 px-4 py-3"
+                className="mb-6 text-sm rounded-xl border border-[var(--accent)]/30 bg-[var(--accent-light)] text-[var(--accent)] px-4 py-3"
               >
                 {t('live_scores.no_match_filters')}
               </p>
             )}
 
+            <div className="mb-6">
+              <SegmentedControl
+                aria-label={t('live_scores.board_label')}
+                options={[
+                  { value: 'live' as const, label: t('live_scores.tab_live'), count: filteredLive.length },
+                  { value: 'upcoming' as const, label: t('live_scores.tab_upcoming'), count: filteredUpcoming.length },
+                  { value: 'recent' as const, label: t('live_scores.tab_recent'), count: filteredRecent.length },
+                ]}
+                value={resolvedBoard}
+                onChange={setBoardTab}
+              />
+            </div>
+
+            {resolvedBoard === 'live' ? (
             <section className="mb-10">
-              <h2 className="text-lg font-semibold text-[var(--text)] mb-3 flex items-center gap-2">
-                <span aria-hidden>🔴</span> {t('live_scores.in_play')}
-              </h2>
+              <h2 className="sr-only">{t('live_scores.in_play')}</h2>
               {filteredLive.length === 0 ? (
                 <p className="text-sm text-[var(--text-muted)] rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-6">
                   {t('live_scores.empty_live')}
@@ -561,20 +578,21 @@ export default function LiveScoresPage({
                             </span>
                           )}
                         </div>
-                        <span className="text-xs font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-200 tabular-nums">
-                          {formatLiveFixturePeriod(row.status, row.statusElapsed)}
-                        </span>
+                        <FixtureLiveChip
+                          label={formatLiveFixturePeriod(row.status, row.statusElapsed)}
+                          className="px-2 py-1 text-xs"
+                        />
                       </div>
                     </li>
                   ))}
                 </ul>
               )}
             </section>
+            ) : null}
 
+            {resolvedBoard === 'upcoming' ? (
             <section className="mb-10">
-              <h2 className="text-lg font-semibold text-[var(--text)] mb-3 flex items-center gap-2">
-                <span aria-hidden>⏱️</span> {t('live_scores.not_started')}
-              </h2>
+              <h2 className="sr-only">{t('live_scores.not_started')}</h2>
               {filteredUpcoming.length === 0 ? (
                 <p className="text-sm text-[var(--text-muted)] rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-6">
                   {t('live_scores.empty_upcoming')}
@@ -597,7 +615,7 @@ export default function LiveScoresPage({
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <span className="text-sm text-[var(--text-muted)] tabular-nums">{t('live_scores.vs_score')}</span>
-                        <span className="text-xs font-bold uppercase px-2 py-1 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                        <span className={`${FIXTURE_NS_CHIP} text-xs`}>
                           {row.status}
                         </span>
                       </div>
@@ -606,11 +624,11 @@ export default function LiveScoresPage({
                 </ul>
               )}
             </section>
+            ) : null}
 
+            {resolvedBoard === 'recent' ? (
             <section>
-              <h2 className="text-lg font-semibold text-[var(--text)] mb-3 flex items-center gap-2">
-                <span aria-hidden>📦</span> {t('live_scores.recent')}
-              </h2>
+              <h2 className="sr-only">{t('live_scores.recent')}</h2>
               {filteredRecent.length === 0 ? (
                 <p className="text-sm text-[var(--text-muted)] rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-6">
                   {t('live_scores.empty_recent')}
@@ -642,7 +660,7 @@ export default function LiveScoresPage({
                             </span>
                           )}
                         </div>
-                        <span className="text-xs font-bold uppercase px-2 py-1 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                        <span className={`${FIXTURE_FT_CHIP} text-xs`}>
                           FT
                         </span>
                       </div>
@@ -651,6 +669,7 @@ export default function LiveScoresPage({
                 </ul>
               )}
             </section>
+            ) : null}
 
             <p className="text-xs text-[var(--text-muted)] mt-8">
               {t('live_scores.footer_hint')}

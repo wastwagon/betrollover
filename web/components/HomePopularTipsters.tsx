@@ -6,6 +6,7 @@ import { TipsterCard, type TipsterCardData } from '@/components/TipsterCard';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { hasPrimaryLeaderboardSample } from '@/lib/leaderboard-sample';
+import { isAccaDeskTipsterType } from '@/lib/tipster-kind';
 import { TIPSTER_ACTIVE_WITHIN_DAYS } from '@betrollover/shared-types';
 
 function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: number): TipsterCardData {
@@ -49,6 +50,7 @@ export function HomePopularTipsters({
   const t = useT();
   const seeded = initialLeaderboard
     .filter(hasPrimaryLeaderboardSample)
+    .filter((e) => !isAccaDeskTipsterType((e.tipster_type as string | null) ?? null))
     .map((e, i) => mapLeaderboardToTipsterCard(e, i));
   const [tipsters, setTipsters] = useState<TipsterCardData[]>(seeded);
   const [loading, setLoading] = useState(seeded.length === 0);
@@ -61,6 +63,7 @@ export function HomePopularTipsters({
         .then((data) => {
           const entries = ((data.leaderboard || []) as Record<string, unknown>[])
             .filter(hasPrimaryLeaderboardSample)
+            .filter((e) => !isAccaDeskTipsterType((e.tipster_type as string | null) ?? null))
             .slice(0, 8);
           setTipsters(entries.map((e, i) => mapLeaderboardToTipsterCard(e, i)));
         })
@@ -79,14 +82,10 @@ export function HomePopularTipsters({
 
   return (
     <section className="relative pt-6 pb-10 sm:py-12 md:py-16 w-full min-w-0 max-w-full overflow-x-hidden">
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(16,185,129,0.08),transparent_60%)]"
-        aria-hidden
-      />
       <div className="section-ux-gutter-wide relative w-full min-w-0">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between mb-5 sm:mb-7">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700/80 dark:text-emerald-400/90 mb-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--primary)] mb-1">
               {t('nav.tipsters')}
             </p>
             <h2 className="text-xl font-bold text-[var(--text)] sm:text-2xl md:text-[28px] tracking-tight min-w-0">

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { Button, buttonClassName } from '@/components/ui/Button';
+import { Input, Field, fieldControlClassName } from '@/components/ui/Input';
 
 function api(path: string) {
   return `${getApiUrl()}/chat${path.startsWith('/') ? path : `/${path}`}`;
@@ -242,10 +243,10 @@ export default function AdminChatPage() {
                           {msg.room_name}
                         </span>
                         <span className="text-xs text-red-400 bg-red-900/30 px-2 py-0.5 rounded">
-                          🚩 {msg.flagged_count} flags · {msg.report_count} reports
+                          {msg.flagged_count} flags · {msg.report_count} reports
                         </span>
                         {msg.chat_warnings > 0 && (
-                          <span className="text-xs text-amber-400">⚠️ {msg.chat_warnings} warnings</span>
+                          <span className="text-xs text-amber-400">{msg.chat_warnings} warnings</span>
                         )}
                       </div>
                       <p className="text-gray-200 text-sm bg-gray-800 rounded-lg px-3 py-2">{msg.content}</p>
@@ -378,11 +379,11 @@ export default function AdminChatPage() {
 
             {!banModal.username && (
               <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-1">Username or User ID</label>
-                <input
+                <Input
+                  id="admin-chat-ban-user"
+                  label="Username or User ID"
                   type="text"
                   placeholder="Enter username or ID"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
                   onChange={(e) => setBanModal({ ...banModal, username: e.target.value, userId: parseInt(e.target.value) || 0 })}
                 />
               </div>
@@ -406,29 +407,31 @@ export default function AdminChatPage() {
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-1">Duration</label>
-              <select
-                value={banDuration}
-                onChange={(e) => setBanDuration(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
-              >
+              <Field label="Duration" htmlFor="admin-chat-ban-duration">
+                <select
+                  id="admin-chat-ban-duration"
+                  value={banDuration}
+                  onChange={(e) => setBanDuration(e.target.value)}
+                  className={fieldControlClassName()}
+                >
                 <option value="30">30 minutes</option>
                 <option value="60">1 hour</option>
                 <option value="1440">24 hours</option>
                 <option value="10080">7 days</option>
                 <option value="43200">30 days</option>
                 {banType === 'ban' && <option value="permanent">Permanent</option>}
-              </select>
+                </select>
+              </Field>
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm text-gray-400 mb-1">Reason</label>
-              <input
+              <Input
+                id="admin-chat-ban-reason"
+                label="Reason"
                 type="text"
                 value={banReason}
                 onChange={(e) => setBanReason(e.target.value)}
                 placeholder="Reason for action..."
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
               />
             </div>
 
@@ -457,22 +460,22 @@ export default function AdminChatPage() {
             <h3 className="font-bold text-lg mb-4">Edit Room: {editRoom.icon} {editRoom.name}</h3>
 
             <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-1">Room Name</label>
-              <input
+              <Input
+                id="admin-chat-room-name"
+                label="Room Name"
                 type="text"
                 value={editRoom.name}
                 onChange={(e) => setEditRoom({ ...editRoom, name: e.target.value })}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
               />
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-1">Description</label>
-              <input
+              <Input
+                id="admin-chat-room-description"
+                label="Description"
                 type="text"
                 value={editRoom.description || ''}
                 onChange={(e) => setEditRoom({ ...editRoom, description: e.target.value })}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
               />
             </div>
 

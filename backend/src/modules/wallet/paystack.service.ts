@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaystackSettings } from './entities/paystack-settings.entity';
+import { normalizeGhanaMomoPhone, toPaystackMomoBankCode } from './ghana-momo';
 
 @Injectable()
 export class PaystackService {
@@ -24,6 +25,12 @@ export class PaystackService {
   async isConfigured(): Promise<boolean> {
     const key = await this.getSecretKey();
     return !!key && key.startsWith('sk_');
+  }
+
+  /** Instant MoMo payouts. Off by default — Starter Paystack accounts cannot send Transfers. */
+  async isTransfersEnabled(): Promise<boolean> {
+    const settings = await this.paystackSettingsRepo.findOne({ where: { id: 1 } });
+    return settings?.transfersEnabled === true;
   }
 
   generateReference(prefix = 'DEP'): string {
@@ -114,8 +121,16 @@ export class PaystackService {
       body.account_number = params.accountNumber;
       body.bank_code = params.bankCode;
     } else {
-      body.phone = params.phone;
-      body.provider = params.provider;
+      const bankCode = toPaystackMomoBankCode(params.bankCode || params.provider || '');
+      const accountNumber =
+        normalizeGhanaMomoPhone(params.accountNumber || params.phone || '') ||
+        (params.accountNumber || params.phone || '').replace(/\D/g, '');
+      if (!bankCode || !accountNumber) {
+        throw new BadRequestException('Valid Ghana Mobile Money number and network are required');
+      }
+      // Paystack MoMo recipients use account_number + bank_code (MTN | VOD | ATL), not phone/provider.
+      body.account_number = accountNumber;
+      body.bank_code = bankCode;
     }
 
     const res = await fetch(`${this.baseUrl}/transferrecipient`, {
@@ -132,6 +147,21 @@ export class PaystackService {
       throw new BadRequestException(data.message || 'Failed to create payout recipient');
     }
     return data.data;
+  }
+
+  async verifyTransfer(reference: string): Promise<{
+    status?: string;
+    transfer_code?: string;
+    reference?: string;
+    amount?: number;
+  } | null> {
+    if (!(await this.isConfigured())) return null;
+    const secretKey = await this.getSecretKey();
+    const res = await fetch(`${this.baseUrl}/transfer/verify/${encodeURIComponent(reference)}`, {
+      headers: { Authorization: `Bearer ${secretKey}` },
+    });
+    const data = await res.json();
+    return data.status ? data.data : null;
   }
 
   async initiateTransfer(params: {

@@ -1,90 +1,44 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useT } from '@/context/LanguageContext';
 import { DashboardShell } from '@/components/DashboardShell';
-import { NavBar } from '@/components/ios/NavBar';
 import { PageHeader } from '@/components/PageHeader';
-import { BottomSheet } from '@/components/ios/BottomSheet';
 import { hapticLight } from '@/lib/haptic';
 import { AdSlot } from '@/components/AdSlot';
-import { LoadingSkeleton } from '@/components/LoadingSkeleton';
-import { EmptyState } from '@/components/EmptyState';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/useToast';
 import { formatError } from '@/utils/errorMessages';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { ErrorToast } from '@/components/ErrorToast';
 import { SuccessToast } from '@/components/SuccessToast';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { fetchSellingThresholds, type SellingThresholds } from '@/lib/selling-thresholds';
 import { TipsterSellUnlockChecklist } from '@/components/TipsterSellUnlockChecklist';
-import { SellerPayoutSplitCallout } from '@/components/SellerPayoutSplitCallout';
-import { CreatePickListingPreview } from '@/components/CreatePickListingPreview';
 import { Button } from '@/components/ui/Button';
-import {
-  fetchDailyCouponQuota,
-  formatQuotaResetUtc,
-  type DailyCouponQuota,
-} from '@/lib/daily-coupon-quota';
+import { CreatePickLanding } from '@/components/CreatePickLanding';
+import { fetchDailyCouponQuota, type DailyCouponQuota } from '@/lib/daily-coupon-quota';
 import { useSlipCart } from '@/context/SlipCartContext';
-import type { Fixture, FixtureOdd, SportEventItem, CreatePickSport, FilterOptions } from './types';
-import { SportLoadingSpinner } from './components/SportLoadingSpinner';
-import { SportEmptyState } from './components/SportEmptyState';
-import { AFRICAN_BOOKMAKERS, formatFootballOutcomeLabel } from '@betrollover/shared-types';
+import type { Fixture, FixtureOdd, SportEventItem, CreatePickSport, FilterOptions, NonFootballSport } from './types';
 import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
-import { FootballFixtureCard } from './components/FootballFixtureCard';
-import { SportEventCard } from './components/SportEventCard';
-
-/** Market order per sport (non-football) */
-const SPORT_MARKET_ORDERS: Record<Exclude<CreatePickSport, 'football'>, string[]> = {
-  basketball: ['Match Winner', 'Over/Under', 'Home/Away', '3Way Result', 'Goals Over/Under'],
-  rugby: ['Match Winner', 'Over/Under', 'Home/Away', '3Way Result', 'Goals Over/Under'],
-  mma: ['Match Winner', 'Method of Victory', 'Home/Away'],
-  volleyball: ['Match Winner', 'Home/Away', '3Way Result'],
-  hockey: ['Match Winner', 'Over/Under', 'Home/Away', '3Way Result'],
-  american_football: ['Match Winner', 'Over/Under', 'Home/Away', '3Way Result'],
-  tennis: ['Match Winner', 'Over/Under', 'Set Betting', 'Games Over/Under'],
-};
-
-type CountKind = 'fixtures' | 'games' | 'matches' | 'fights';
-
-function availableCountLabel(
-  n: number,
-  kind: CountKind,
-  t: (key: string, vars?: Record<string, string>) => string,
-): string {
-  const keys: Record<CountKind, [string, string]> = {
-    fixtures: ['create_pick.available_fixtures_one', 'create_pick.available_fixtures_other'],
-    games: ['create_pick.available_games_one', 'create_pick.available_games_other'],
-    matches: ['create_pick.available_matches_one', 'create_pick.available_matches_other'],
-    fights: ['create_pick.available_fights_one', 'create_pick.available_fights_other'],
-  };
-  const [oneKey, otherKey] = keys[kind];
-  return n === 1 ? t(oneKey) : t(otherKey, { n: String(n) });
-}
-
-/** Bold the leading integer (e.g. count summaries: "12 fixtures…"). */
-function BoldLeadingCount({ text }: { text: string }) {
-  const m = text.match(/^(\d+)/);
-  if (!m) return <>{text}</>;
-  return (
-    <>
-      <strong>{m[1]}</strong>
-      {text.slice(m[0].length)}
-    </>
-  );
-}
+import { CreatePickSportChips } from './components/CreatePickSportChips';
+import { CreatePickStepsNav } from './components/CreatePickStepsNav';
+import { PickQuotaBanner } from '@/components/PickQuotaBanner';
+import { CreatePickSelectPanel } from './components/CreatePickSelectPanel';
+import { CreatePickSlipColumn } from './components/CreatePickSlipColumn';
+import { CreatePickMobileSlipSheet } from './components/CreatePickMobileSlipSheet';
 
 export default function CreatePickPage() {
   const router = useRouter();
   const t = useT();
   const { selections, addSelection: addToCart, removeSelection: removeFromCart, clearCart } = useSlipCart();
+  const [guest, setGuest] = useState<boolean | null>(null);
   const [sport, setSport] = useState<CreatePickSport>('football');
+  useEffect(() => {
+    setGuest(!localStorage.getItem('token'));
+  }, []);
   useEffect(() => {
     if (isFootballOnlyDiscovery() && sport !== 'football') setSport('football');
   }, [sport]);
@@ -471,7 +425,6 @@ export default function CreatePickPage() {
     if (sport !== 'football') return;
     const token = localStorage.getItem('token');
     if (!token) {
-      router.push('/login');
       return;
     }
     const headers = { Authorization: `Bearer ${token}` };
@@ -683,7 +636,7 @@ export default function CreatePickPage() {
     }
   };
 
-  const addSportEventSelection = (e: SportEventItem, odd: FixtureOdd, eventSport: 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football' | 'tennis') => {
+  const addSportEventSelection = (e: SportEventItem, odd: FixtureOdd, eventSport: NonFootballSport) => {
     const matchDesc = `${e.homeTeam} vs ${e.awayTeam}`;
     const pred = `${odd.marketName}: ${odd.marketValue}`;
     const added = addToCart({
@@ -705,6 +658,32 @@ export default function CreatePickPage() {
   };
 
   const totalOdds = selections.reduce((a, s) => a * s.odds, 1);
+
+  const retryFootballFixtures = () => {
+    setFixtureError(null);
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const headers = { Authorization: `Bearer ${token}` };
+    const params = new URLSearchParams();
+    params.append('days', '7');
+    if (selectedCountry) params.append('country', selectedCountry);
+    if (selectedLeague) params.append('league', selectedLeague);
+    if (debouncedTeamSearch.trim()) params.append('team', debouncedTeamSearch.trim());
+    setLoading(true);
+    fetch(`${getApiUrl()}/fixtures?${params.toString()}`, { headers })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setFixtures(data);
+          setFixtureError(null);
+        }
+      })
+      .catch((err) => {
+        setFixtureError(formatError(err));
+        showError(err);
+      })
+      .finally(() => setLoading(false));
+  };
 
   const submit = async () => {
     if (selections.length === 0) {
@@ -789,128 +768,62 @@ export default function CreatePickPage() {
     router.push('/my-picks');
   };
 
+  const publishFields = {
+    title,
+    bookmakerKey,
+    bookingCode,
+    price,
+    placement,
+    subscriptionPackageIds,
+    myPackages,
+    sellTh,
+    myTipStats,
+    paidSaleAllowed,
+    formError,
+    createPickDisabled,
+    submitting,
+    onTitle: setTitle,
+    onBookmaker: setBookmakerKey,
+    onBookingCode: setBookingCode,
+    onPrice: setPrice,
+    onPlacement: setPlacement,
+    onPackages: setSubscriptionPackageIds,
+    onClearError: () => setFormError(null),
+    onSubmit: submit,
+  };
+
+  if (guest === null) {
+    return (
+      <DashboardShell>
+        <div className="section-ux-dashboard-shell min-h-[40vh]" />
+      </DashboardShell>
+    );
+  }
+  if (guest) {
+    return <CreatePickLanding />;
+  }
+
   return (
     <DashboardShell slipCount={selections.length}>
       {toastError ? <ErrorToast error={toastError} onClose={clearError} /> : null}
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <div className="min-h-[calc(100vh-8rem)] bg-[var(--bg)] w-full min-w-0 max-w-full">
         <div className="section-ux-dashboard-shell min-w-0 max-w-full">
-          <div className="lg:hidden -mx-1 mb-3">
-            <NavBar
-              title={t('create_pick.title')}
-              backHref="/dashboard"
-              backLabel={t('nav.dashboard')}
-              sticky={false}
-            />
-          </div>
-          <div className="hidden lg:block">
-            <PageHeader
-              label={t('create_pick.title')}
-              title={t('create_pick.title')}
-              tagline={t('create_pick.tagline')}
-            />
-          </div>
+          <PageHeader
+            label={t('create_pick.title')}
+            title={t('create_pick.title')}
+            tagline={t('create_pick.tagline')}
+          />
           <div className="mb-4">
             <TipsterSellUnlockChecklist compact />
           </div>
-          {dailyQuota && (
-            <div
-              className={`mb-4 rounded-xl border px-4 py-3 text-sm ${
-                atDailyLimit
-                  ? 'border-red-200 bg-red-50/80 text-red-900 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-100'
-                  : 'border-cyan-200/80 bg-cyan-50/50 text-[var(--text)] dark:border-cyan-900/40 dark:bg-cyan-950/20'
-              }`}
-              role="status"
-            >
-              {dailyQuota.exempt ? (
-                <p className="font-medium">{t('pick_quota.exempt')}</p>
-              ) : dailyQuota.maxPerDay <= 0 ? (
-                <p className="font-medium">{t('pick_quota.unlimited_platform')}</p>
-              ) : atDailyLimit ? (
-                <p className="font-medium">
-                  {t('pick_quota.at_limit', {
-                    max: String(dailyQuota.maxPerDay),
-                    resetTime: formatQuotaResetUtc(dailyQuota.resetsAtUtc) || dailyQuota.resetsAtUtc,
-                  })}
-                </p>
-              ) : (
-                <p className="font-medium">
-                  {t('pick_quota.remaining', {
-                    remaining: String(dailyQuota.remaining ?? 0),
-                    max: String(dailyQuota.maxPerDay),
-                    used: String(dailyQuota.usedToday),
-                    resetTime: formatQuotaResetUtc(dailyQuota.resetsAtUtc) || dailyQuota.resetsAtUtc,
-                  })}
-                </p>
-              )}
-            </div>
-          )}
+          {dailyQuota ? <PickQuotaBanner dailyQuota={dailyQuota} atDailyLimit={atDailyLimit} /> : null}
           <div className="mb-4">
             <AdSlot zoneSlug="create-pick-full" fullWidth className="w-full" />
           </div>
-          <nav
-            className="sticky z-20 mb-5 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] p-1"
-            style={{ top: 'var(--br-chrome-below-header)' }}
-            aria-label="Create pick steps"
-          >
-            <ol className="grid grid-cols-3 gap-1">
-              {[
-                { href: '#create-pick-sport', label: '1 · Sport' },
-                { href: '#create-pick-select', label: '2 · Select' },
-                { href: '#create-pick-publish', label: '3 · Publish' },
-              ].map((step) => (
-                <li key={step.href}>
-                  <a
-                    href={step.href}
-                    className="flex items-center justify-center min-h-[40px] rounded-[var(--radius-sm)] text-[11px] sm:text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--fill-secondary)] hover:text-[var(--text)]"
-                  >
-                    {step.label}
-                  </a>
-                </li>
-              ))}
-            </ol>
-          </nav>
-          {/* 1 · Sport */}
-          <section id="create-pick-sport" className="mb-6 w-full min-w-0 scroll-mt-[calc(var(--br-chrome-below-header)+3.5rem)]" aria-labelledby="create-pick-sport-heading">
-            <p id="create-pick-sport-heading" className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)] mb-2 px-0.5">
-              1 · Sport
-            </p>
-          <div className="w-full min-w-0 overflow-hidden">
-            <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide touch-pan-x [-webkit-overflow-scrolling:touch]">
-            {(
-              isFootballOnlyDiscovery()
-                ? ([{ key: 'football' as const, label: t('create_pick.sport_football') }] as {
-                    key: typeof sport;
-                    label: string;
-                  }[])
-                : ([
-                    { key: 'football', label: t('create_pick.sport_football') },
-                    { key: 'basketball', label: t('create_pick.sport_basketball') },
-                    { key: 'rugby', label: t('create_pick.sport_rugby') },
-                    { key: 'mma', label: t('create_pick.sport_mma') },
-                    { key: 'volleyball', label: t('create_pick.sport_volleyball') },
-                    { key: 'hockey', label: t('create_pick.sport_hockey') },
-                    { key: 'american_football', label: t('create_pick.sport_american_football') },
-                    { key: 'tennis', label: t('create_pick.sport_tennis') },
-                  ] as { key: typeof sport; label: string }[])
-            ).map(({ key, label }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setSport(key)}
-                className={`shrink-0 px-4 py-2 rounded-full font-medium text-sm transition-colors ${
-                  sport === key
-                    ? 'bg-[var(--primary)] text-white'
-                    : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-            </div>
-          </div>
-          </section>
-          {selections.length > 0 && (
+          <CreatePickStepsNav />
+          <CreatePickSportChips sport={sport} onSport={setSport} />
+          {selections.length > 0 ? (
             <div className="flex justify-end mb-3">
               <Button
                 type="button"
@@ -923,702 +836,77 @@ export default function CreatePickPage() {
                 <span className="text-[var(--primary)] font-bold ml-0.5">@ {totalOdds.toFixed(2)}</span>
               </Button>
             </div>
-          )}
+          ) : null}
 
-          {/* Two-column layout: Fixtures on left, Slip widget on right */}
           <div className="flex flex-col lg:flex-row gap-4 pb-6 min-w-0 w-full max-w-full">
-          {/* 2 · Select fixtures */}
-          <div id="create-pick-select" className="flex-1 min-w-0 scroll-mt-[calc(var(--br-chrome-below-header)+3.5rem)]">
-            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)] mb-3 px-0.5">
-              2 · Select
-            </p>
-            <div className="space-y-4">
-            {/* Team Search */}
-            <div className="mb-4 min-w-0">
-              <div className="relative min-w-0">
-                <input
-                  type="text"
-                  placeholder={
-                    sport === 'football' ? t('create_pick.search_football') :
-                    sport === 'tennis' ? t('create_pick.search_tennis') :
-                    sport === 'mma' ? t('create_pick.search_mma') :
-                    t('create_pick.search_team')
-                  }
-                  value={teamSearch}
-                  onChange={(e) => setTeamSearch(e.target.value)}
-                  className="w-full min-w-0 px-4 py-2.5 pl-10 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all"
-                />
-                <svg
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--text-muted)]"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-                {teamSearch && (
-                  <button
-                    type="button"
-                    onClick={() => setTeamSearch('')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
-                    title={t('create_pick.clear_search_title')}
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Sport-specific filters / info */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 min-w-0 w-full">
-              <div className="flex flex-col gap-0.5 min-w-0">
-                <p className="text-[var(--text-muted)] text-sm">
-                  {sport === 'football' && t('create_pick.click_hint')}
-                  {sport !== 'football' && t('create_pick.click_hint_other')}
-                </p>
-                <p className="text-[var(--text)] text-sm font-medium">
-                  {sport === 'football' && (
-                    <BoldLeadingCount text={availableCountLabel(availableFixtures.length, 'fixtures', t)} />
-                  )}
-                  {sport === 'basketball' && (
-                    <BoldLeadingCount text={availableCountLabel(availableBasketballEvents.length, 'games', t)} />
-                  )}
-                  {sport === 'rugby' && (
-                    <BoldLeadingCount text={availableCountLabel(availableRugbyEvents.length, 'matches', t)} />
-                  )}
-                  {sport === 'mma' && (
-                    <BoldLeadingCount text={availableCountLabel(availableMmaEvents.length, 'fights', t)} />
-                  )}
-                  {sport === 'volleyball' && (
-                    <BoldLeadingCount text={availableCountLabel(availableVolleyballEvents.length, 'matches', t)} />
-                  )}
-                  {sport === 'hockey' && (
-                    <BoldLeadingCount text={availableCountLabel(availableHockeyEvents.length, 'games', t)} />
-                  )}
-                  {sport === 'american_football' && (
-                    <BoldLeadingCount text={availableCountLabel(availableAmericanFootballEvents.length, 'games', t)} />
-                  )}
-                  {sport === 'tennis' && (
-                    <BoldLeadingCount text={availableCountLabel(availableTennisEvents.length, 'matches', t)} />
-                  )}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 min-w-0 w-full">
-                {/* Football: Country + Competition filters (API-backed) */}
-                {sport === 'football' && (
-                  <>
-                    <div className="flex min-w-0 max-w-full flex-1 basis-full items-center gap-2 sm:basis-auto sm:flex-initial">
-                      <label className="shrink-0 text-sm font-medium text-[var(--text)] whitespace-nowrap">{t('create_pick.country')}</label>
-                      <select
-                        value={selectedCountry}
-                        onChange={(e) => {
-                          setSelectedCountry(e.target.value);
-                          setSelectedLeague('');
-                        }}
-                        className="min-w-0 flex-1 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all sm:min-w-[140px] sm:flex-initial"
-                      >
-                        <option value="">{t('create_pick.all_countries')}</option>
-                        {filterOptions.countries.map((country) => (
-                          <option key={country} value={country}>
-                            {country === 'World' ? t('live_scores.world_international') : country}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    {filterOptions.leagues.length > 0 && (
-                      <div className="flex min-w-0 max-w-full flex-1 basis-full items-center gap-2 sm:basis-auto sm:flex-initial">
-                        <label className="shrink-0 text-sm font-medium text-[var(--text)] whitespace-nowrap">{t('create_pick.competition')}</label>
-                        <select
-                          value={competitionOptions.some((l) => String(l.id) === selectedLeague) ? selectedLeague : ''}
-                          onChange={(e) => setSelectedLeague(e.target.value)}
-                          className="min-w-0 flex-1 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all sm:min-w-[200px] sm:flex-initial"
-                          title={selectedCountry ? (selectedCountry === 'World' ? t('create_pick.international_only') : t('create_pick.leagues_in', { country: selectedCountry })) : t('create_pick.filter_by_league')}
-                        >
-                          <option value="">{t('create_pick.all_competitions')}</option>
-                          {competitionOptions.map((l) => (
-                            <option key={l.id} value={String(l.id)}>
-                              {l.country ? `${l.name} (${l.country})` : l.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                    {(selectedCountry || selectedLeague || teamSearch) && (
-                      <button
-                        type="button"
-                        onClick={() => { setSelectedCountry(''); setSelectedLeague(''); setTeamSearch(''); }}
-                        title={t('create_pick.clear_all_filters_title')}
-                        className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                      >
-                        {t('create_pick.clear_filters')}
-                      </button>
-                    )}
-                  </>
-                )}
-
-                {/* Non-football: Competition/League filter (client-side from loaded events) */}
-                {sport !== 'football' && uniqueSportLeagues.length > 0 && (
-                  <div className="flex min-w-0 max-w-full flex-1 basis-full items-center gap-2 sm:basis-auto sm:flex-initial">
-                    <label className="shrink-0 text-sm font-medium text-[var(--text)] whitespace-nowrap">{t('create_pick.competition')}</label>
-                    <select
-                      value={sportLeague}
-                      onChange={(e) => setSportLeague(e.target.value)}
-                      className="min-w-0 flex-1 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all sm:min-w-[200px] sm:flex-initial"
-                    >
-                      <option value="">{t('create_pick.all_competitions')}</option>
-                      {uniqueSportLeagues.map((league) => (
-                        <option key={league} value={league}>{league}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-                {sport !== 'football' && (sportLeague || teamSearch) && (
-                  <button
-                    type="button"
-                    onClick={() => { setSportLeague(''); setTeamSearch(''); }}
-                    title={t('create_pick.clear_all_filters_title')}
-                    className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                  >
-                    {t('create_pick.clear_filters')}
-                  </button>
-                )}
-              </div>
-            </div>
-            {loading && sport === 'football' && <LoadingSkeleton count={4} />}
-
-            {/* Basketball */}
-            {sport === 'basketball' && loadingBasketball && <SportLoadingSpinner label={t('create_pick.loading_basketball_games')} />}
-            {sport === 'basketball' && !loadingBasketball && availableBasketballEvents.length === 0 && (
-              basketballEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState label={t('create_pick.empty_basketball_no_odds_title')} hint={t('create_pick.empty_basketball_no_odds_hint')} />
-                : <SportEmptyState label={t('create_pick.empty_filtered_games')} hint={t('create_pick.empty_filtered_hint')} />
-            )}
-
-            {/* Rugby */}
-            {sport === 'rugby' && loadingRugby && <SportLoadingSpinner label={t('create_pick.loading_rugby_matches')} />}
-            {sport === 'rugby' && !loadingRugby && availableRugbyEvents.length === 0 && (
-              rugbyEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState label={t('create_pick.empty_rugby_no_odds_title')} hint={t('create_pick.empty_rugby_no_odds_hint')} />
-                : <SportEmptyState label={t('create_pick.empty_filtered_matches')} hint={t('create_pick.empty_filtered_hint')} />
-            )}
-
-            {/* MMA */}
-            {sport === 'mma' && loadingMma && <SportLoadingSpinner label={t('create_pick.loading_mma_fights')} />}
-            {sport === 'mma' && !loadingMma && availableMmaEvents.length === 0 && (
-              mmaEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState label={t('create_pick.empty_mma_no_odds_title')} hint={t('create_pick.empty_mma_no_odds_hint')} />
-                : <SportEmptyState label={t('create_pick.empty_filtered_fights')} hint={t('create_pick.empty_filtered_hint')} />
-            )}
-
-            {/* Volleyball */}
-            {sport === 'volleyball' && loadingVolleyball && <SportLoadingSpinner label={t('create_pick.loading_volleyball_matches')} />}
-            {sport === 'volleyball' && !loadingVolleyball && availableVolleyballEvents.length === 0 && (
-              volleyballEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState label={t('create_pick.empty_volleyball_no_odds_title')} hint={t('create_pick.empty_volleyball_no_odds_hint')} />
-                : <SportEmptyState label={t('create_pick.empty_filtered_matches')} hint={t('create_pick.empty_filtered_hint')} />
-            )}
-
-            {/* Hockey */}
-            {sport === 'hockey' && loadingHockey && <SportLoadingSpinner label={t('create_pick.loading_hockey_games')} />}
-            {sport === 'hockey' && !loadingHockey && availableHockeyEvents.length === 0 && (
-              hockeyEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState label={t('create_pick.empty_hockey_no_odds_title')} hint={t('create_pick.empty_hockey_no_odds_hint')} />
-                : <SportEmptyState label={t('create_pick.empty_filtered_games')} hint={t('create_pick.empty_filtered_hint')} />
-            )}
-
-            {/* American Football */}
-            {sport === 'american_football' && loadingAmericanFootball && <SportLoadingSpinner label={t('create_pick.loading_american_football_games')} />}
-            {sport === 'american_football' && !loadingAmericanFootball && availableAmericanFootballEvents.length === 0 && (
-              americanFootballEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState label={t('create_pick.empty_american_football_no_odds_title')} hint={t('create_pick.empty_american_football_no_odds_hint')} />
-                : <SportEmptyState label={t('create_pick.empty_filtered_games')} hint={t('create_pick.empty_filtered_hint')} />
-            )}
-
-            {/* Tennis */}
-            {sport === 'tennis' && loadingTennis && <SportLoadingSpinner label={t('create_pick.loading_tennis_matches')} />}
-            {sport === 'tennis' && !loadingTennis && availableTennisEvents.length === 0 && (
-              tennisEvents.filter((e) => e.odds && e.odds.length > 0).length === 0
-                ? <SportEmptyState label={t('create_pick.empty_tennis_no_odds_title')} hint={t('create_pick.empty_tennis_no_odds_hint')} />
-                : <SportEmptyState label={t('create_pick.empty_filtered_matches')} hint={t('create_pick.empty_filtered_hint')} />
-            )}
-            {fixtureError && (
-              <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
-                <div className="flex items-start gap-3">
-                  <span className="text-xl flex-shrink-0">⚠️</span>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-red-900 dark:text-red-200 mb-1">{t('create_pick.fixture_load_error_title')}</h4>
-                    <p className="text-sm text-red-800 dark:text-red-300">{fixtureError}</p>
-                    <p className="text-xs text-red-700/90 dark:text-red-300/90 mt-2">{t('create_pick.fixture_load_error_hint')}</p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFixtureError(null);
-                        const token = localStorage.getItem('token');
-                        if (token) {
-                          const headers = { Authorization: `Bearer ${token}` };
-                          const params = new URLSearchParams();
-                          params.append('days', '7');
-                          if (selectedCountry) params.append('country', selectedCountry);
-                          if (selectedLeague) params.append('league', selectedLeague);
-                          if (debouncedTeamSearch.trim()) params.append('team', debouncedTeamSearch.trim());
-                          setLoading(true);
-                          fetch(`${getApiUrl()}/fixtures?${params.toString()}`, { headers })
-                            .then((r) => (r.ok ? r.json() : []))
-                            .then((data) => {
-                              if (Array.isArray(data)) {
-                                setFixtures(data);
-                                setFixtureError(null);
-                              }
-                            })
-                            .catch((err) => {
-                              setFixtureError(formatError(err));
-                              showError(err);
-                            })
-                            .finally(() => setLoading(false));
-                        }
-                      }}
-                      className="mt-2 text-sm font-medium text-red-700 dark:text-red-300 hover:text-red-900 dark:hover:text-red-100 underline"
-                    >
-                      {t('error.try_again')}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-            {!loading && !fixtureError && sport === 'football' && availableFixtures.length === 0 && fixtures.length === 0 && (
-              <div className="bg-[var(--card)] rounded-card border border-[var(--border)] p-6">
-                <EmptyState
-                  title={
-                    selectedCountry || selectedLeague || debouncedTeamSearch
-                      ? t('create_pick.no_fixtures_filtered')
-                      : t('create_pick.no_fixtures')
-                  }
-                  description={
-                    selectedCountry || selectedLeague || debouncedTeamSearch
-                      ? t('create_pick.fixtures_sync_filtered')
-                      : t('create_pick.fixtures_sync')
-                  }
-                  actionLabel={selectedCountry || selectedLeague || debouncedTeamSearch ? t('create_pick.clear_filters') : t('create_pick.go_dashboard')}
-                  actionHref="/dashboard"
-                  onActionClick={
-                    selectedCountry || selectedLeague || debouncedTeamSearch
-                      ? () => {
-                          setSelectedCountry('');
-                          setSelectedLeague('');
-                          setTeamSearch('');
-                        }
-                      : undefined
-                  }
-                />
-              </div>
-            )}
-            {!loading && !fixtureError && sport === 'football' && availableFixtures.length === 0 && fixtures.length > 0 && (
-              <div className="bg-[var(--card)] rounded-card border border-[var(--border)] p-6">
-                <EmptyState
-                  title="All fixtures have started"
-                  description="All shown fixtures have already started or are live. Check back tomorrow for new matches."
-                  actionLabel="Select Tomorrow"
-                  actionHref="#"
-                />
-              </div>
-            )}
-            {!loading && sport === 'football' && availableFixtures.length > 0 && (
-              <div className="space-y-4">
-                {availableFixtures.map((f) => (
-                  <FootballFixtureCard
-                    key={f.id}
-                    fixture={f}
-                    isLoadingOdds={loadingOdds.has(f.id)}
-                    isCollapsed={collapsedOdds.has(f.id)}
-                    showLeagueInsights={
-                      f.league?.apiId == null || firstFixtureIdPerLeagueApi.get(f.league.apiId) === f.id
-                    }
-                    onLoadOdds={loadFixtureOdds}
-                    onToggleCollapsed={(id) =>
-                      setCollapsedOdds((prev) => {
-                        const next = new Set(prev);
-                        if (next.has(id)) next.delete(id);
-                        else next.add(id);
-                        return next;
-                      })
-                    }
-                    onAddSelection={addFootballSelection}
-                  />
-                ))}
-              </div>
-            )}
-            {sport === 'basketball' && availableBasketballEvents.length > 0 && (
-              <div className="space-y-4">
-                {availableBasketballEvents.map((e) => (
-                  <SportEventCard
-                    key={e.id}
-                    event={e}
-                    marketOrder={SPORT_MARKET_ORDERS.basketball}
-                    sport="basketball"
-                    onAddSelection={addSportEventSelection}
-                  />
-                ))}
-              </div>
-            )}
-            {sport === 'rugby' && availableRugbyEvents.length > 0 && (
-              <div className="space-y-4">
-                {availableRugbyEvents.map((e) => (
-                  <SportEventCard
-                    key={e.id}
-                    event={e}
-                    marketOrder={SPORT_MARKET_ORDERS.rugby}
-                    sport="rugby"
-                    onAddSelection={addSportEventSelection}
-                  />
-                ))}
-              </div>
-            )}
-            {sport === 'mma' && availableMmaEvents.length > 0 && (
-              <div className="space-y-4">
-                {availableMmaEvents.map((e) => (
-                  <SportEventCard
-                    key={e.id}
-                    event={e}
-                    marketOrder={SPORT_MARKET_ORDERS.mma}
-                    sport="mma"
-                    onAddSelection={addSportEventSelection}
-                    leagueLabel="Event"
-                  />
-                ))}
-              </div>
-            )}
-            {sport === 'volleyball' && availableVolleyballEvents.length > 0 && (
-              <div className="space-y-4">
-                {availableVolleyballEvents.map((e) => (
-                  <SportEventCard
-                    key={e.id}
-                    event={e}
-                    marketOrder={SPORT_MARKET_ORDERS.volleyball}
-                    sport="volleyball"
-                    onAddSelection={addSportEventSelection}
-                  />
-                ))}
-              </div>
-            )}
-            {sport === 'hockey' && availableHockeyEvents.length > 0 && (
-              <div className="space-y-4">
-                {availableHockeyEvents.map((e) => (
-                  <SportEventCard
-                    key={e.id}
-                    event={e}
-                    marketOrder={SPORT_MARKET_ORDERS.hockey}
-                    sport="hockey"
-                    onAddSelection={addSportEventSelection}
-                  />
-                ))}
-              </div>
-            )}
-            {sport === 'american_football' && availableAmericanFootballEvents.length > 0 && (
-              <div className="space-y-4">
-                {availableAmericanFootballEvents.map((e) => (
-                  <SportEventCard
-                    key={e.id}
-                    event={e}
-                    marketOrder={SPORT_MARKET_ORDERS.american_football}
-                    sport="american_football"
-                    onAddSelection={addSportEventSelection}
-                  />
-                ))}
-              </div>
-            )}
-            {sport === 'tennis' && availableTennisEvents.length > 0 && (
-              <div className="space-y-4">
-                {availableTennisEvents.map((e) => (
-                  <SportEventCard
-                    key={e.id}
-                    event={e}
-                    marketOrder={SPORT_MARKET_ORDERS.tennis}
-                    sport="tennis"
-                    onAddSelection={addSportEventSelection}
-                    leagueLabel="Tournament"
-                  />
-                ))}
-              </div>
-            )}
+            <CreatePickSelectPanel
+              sport={sport}
+              teamSearch={teamSearch}
+              onTeamSearch={setTeamSearch}
+              searchApplied={debouncedTeamSearch}
+              selectedCountry={selectedCountry}
+              onCountry={(v) => {
+                setSelectedCountry(v);
+                setSelectedLeague('');
+              }}
+              selectedLeague={selectedLeague}
+              onLeague={setSelectedLeague}
+              sportLeague={sportLeague}
+              onSportLeague={setSportLeague}
+              onClearFootballFilters={() => {
+                setSelectedCountry('');
+                setSelectedLeague('');
+                setTeamSearch('');
+              }}
+              onClearSportFilters={() => {
+                setSportLeague('');
+                setTeamSearch('');
+              }}
+              countries={filterOptions.countries}
+              competitionOptions={competitionOptions}
+              uniqueSportLeagues={uniqueSportLeagues}
+              footballLoading={loading}
+              fixtureError={fixtureError}
+              onRetryFixtures={retryFootballFixtures}
+              availableFixtures={availableFixtures}
+              fixtures={fixtures}
+              firstFixtureIdPerLeagueApi={firstFixtureIdPerLeagueApi}
+              loadingOdds={loadingOdds}
+              collapsedOdds={collapsedOdds}
+              onLoadOdds={loadFixtureOdds}
+              onToggleCollapsed={(id) =>
+                setCollapsedOdds((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(id)) next.delete(id);
+                  else next.add(id);
+                  return next;
+                })
+              }
+              onAddFootball={addFootballSelection}
+              boards={{
+                basketball: { available: availableBasketballEvents, all: basketballEvents, loading: loadingBasketball },
+                rugby: { available: availableRugbyEvents, all: rugbyEvents, loading: loadingRugby },
+                mma: { available: availableMmaEvents, all: mmaEvents, loading: loadingMma },
+                volleyball: { available: availableVolleyballEvents, all: volleyballEvents, loading: loadingVolleyball },
+                hockey: { available: availableHockeyEvents, all: hockeyEvents, loading: loadingHockey },
+                american_football: { available: availableAmericanFootballEvents, all: americanFootballEvents, loading: loadingAmericanFootball },
+                tennis: { available: availableTennisEvents, all: tennisEvents, loading: loadingTennis },
+              }}
+              onAddSportEvent={addSportEventSelection}
+            />
+            <CreatePickSlipColumn
+              selections={selections}
+              totalOdds={totalOdds}
+              onRemove={removeSelection}
+              title={title}
+              price={price}
+              publish={publishFields}
+            />
           </div>
-          </div>
-
-          {/* 3 · Slip / publish */}
-          <div id="create-pick-publish" className="hidden lg:block lg:w-96 lg:shrink-0 min-w-0 scroll-mt-[calc(var(--br-chrome-below-header)+3.5rem)]">
-            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)] mb-3 px-0.5">
-              3 · Publish
-            </p>
-            <div className="lg:sticky lg:top-4 min-w-0">
-              <div className="rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] shadow-card p-5 space-y-4 min-w-0">
-                {/* Header */}
-                <div className="flex items-center justify-between gap-2 mb-4 min-w-0">
-                  <h2 className="font-display text-lg font-semibold text-[var(--text)] min-w-0 flex-1 truncate">
-                    {t('create_pick.pick_slip')}
-                  </h2>
-                  {selections.length > 0 && (
-                    <span className="shrink-0 px-2.5 py-1 bg-[var(--primary)] text-white rounded-full text-xs font-semibold">
-                      {selections.length}
-                    </span>
-                  )}
-                </div>
-
-                {/* Selections List */}
-                {selections.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-sm text-[var(--text-muted)]">
-                      {t('create_pick.slip_empty')}
-                    </p>
-                    <p className="text-xs text-[var(--text-tertiary)] mt-1">
-                      {t('create_pick.tap_to_add')}
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                      {selections.map((s, i) => {
-                        return (
-                          <div
-                            key={i}
-                            className="bg-[var(--bg)] rounded-[var(--radius-sm)] p-3 border border-[var(--separator)] hover:border-[var(--primary)]/40 transition-colors"
-                          >
-                            <div className="flex items-start justify-between gap-2 min-w-0">
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-1.5 mb-0.5 min-w-0">
-                                  <p className="text-xs font-semibold text-[var(--text)] truncate min-w-0">
-                                    {s.matchDescription}
-                                  </p>
-                                </div>
-                                <p className="text-xs text-[var(--text-muted)] mt-1 break-words">
-                                  {formatFootballOutcomeLabel(s.prediction)}
-                                </p>
-                                <p className="text-sm font-bold text-[var(--primary)] mt-1 tabular-nums">
-                                  @ {s.odds.toFixed(2)}
-                                </p>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => removeSelection(i)}
-                                className="shrink-0 text-red-500 hover:text-red-700 transition-colors p-1"
-                                title="Remove"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Total Odds */}
-                    <div className="bg-[var(--card)] rounded-lg p-4 border-2 border-[var(--primary)]/50">
-                      <div className="flex items-center justify-between gap-2 mb-2 min-w-0">
-                        <span className="text-sm font-medium text-[var(--text-muted)] min-w-0">{t('create_pick.total_odds')}</span>
-                        <span className="text-xl font-bold text-[var(--primary)] tabular-nums shrink-0">
-                          {totalOdds.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="text-xs text-[var(--text-muted)]">
-                        {selections.length} {selections.length !== 1 ? t('create_pick.selections') : t('create_pick.selection')}
-                      </div>
-                    </div>
-
-                    <CreatePickListingPreview
-                      title={title}
-                      selections={selections}
-                      totalOdds={totalOdds}
-                      price={Number(price) || 0}
-                    />
-
-                    {/* Pick Details Form */}
-                    <div className="space-y-3 pt-2 border-t border-[var(--border)]">
-                      <div>
-                        <label className="block text-xs font-medium text-[var(--text)] mb-1">
-                          {t('create_pick.title_label')} <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={title}
-                          onChange={(e) => {
-                            setTitle(e.target.value);
-                            setFormError(null);
-                          }}
-                          placeholder="e.g. Saturday Banker"
-                          className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-shadow"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-[var(--text)] mb-1">{t('create_pick.bookie_label')}</label>
-                        <select
-                          value={bookmakerKey}
-                          onChange={(e) => {
-                            setBookmakerKey(e.target.value);
-                            setFormError(null);
-                          }}
-                          className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border)] bg-[var(--card)]"
-                        >
-                          <option value="">{t('create_pick.bookie_none')}</option>
-                          {AFRICAN_BOOKMAKERS.map((b) => (
-                            <option key={b.key} value={b.key}>
-                              {b.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-[var(--text)] mb-1">{t('create_pick.booking_code_label')}</label>
-                        <input
-                          type="text"
-                          value={bookingCode}
-                          onChange={(e) => {
-                            setBookingCode(e.target.value);
-                            setFormError(null);
-                          }}
-                          placeholder={t('create_pick.booking_code_placeholder')}
-                          autoComplete="off"
-                          className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-shadow"
-                        />
-                        <p className="text-[10px] text-[var(--text-muted)] mt-1 leading-snug">{t('create_pick.booking_code_hint_short')}</p>
-                      </div>
-                      {sellTh &&
-                        (placement === 'marketplace' || (placement === 'subscription' && price > 0)) && (
-                        <div className="rounded-lg border border-amber-200/80 bg-amber-50/40 dark:bg-amber-950/25 px-3 py-2 space-y-1.5">
-                          <p className="text-[11px] font-semibold text-[var(--text)]">{t('create_pick.paid_marketplace_rules_title')}</p>
-                          <p className="text-[10px] text-[var(--text-muted)] leading-snug">
-                            {t('create_pick.paid_marketplace_rules_body', {
-                              minRoi: String(sellTh.minimumROI),
-                              minWr: String(sellTh.minimumWinRate),
-                            })}
-                          </p>
-                          {price > 0 && myTipStats && (
-                            <p
-                              className={`text-[10px] font-medium leading-snug ${
-                                myTipStats.roi >= sellTh.minimumROI && myTipStats.winRate >= sellTh.minimumWinRate
-                                  ? 'text-emerald-700 dark:text-emerald-300'
-                                  : 'text-amber-800 dark:text-amber-200'
-                              }`}
-                            >
-                              {t('create_pick.paid_marketplace_your_stats', {
-                                roi: myTipStats.roi.toFixed(2),
-                                wr: String(myTipStats.winRate),
-                              })}{' '}
-                              {myTipStats.roi >= sellTh.minimumROI && myTipStats.winRate >= sellTh.minimumWinRate
-                                ? t('create_pick.paid_marketplace_ready')
-                                : t('create_pick.paid_marketplace_not_ready')}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                      <div>
-                        <label className="block text-xs font-medium text-[var(--text)] mb-1">
-                          {t('create_pick.price_label')} <span className="text-[var(--text-muted)]">{t('create_pick.price_note')}</span>
-                        </label>
-                        <input
-                          type="number"
-                          min={0}
-                          value={price || ''}
-                          onChange={(e) => {
-                            setPrice(Number(e.target.value) || 0);
-                            setFormError(null);
-                          }}
-                          placeholder="0"
-                          className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-shadow"
-                        />
-                        {Number(price) > 0 && sellTh && myTipStats && !paidSaleAllowed && (
-                          <p className="text-[11px] text-amber-800 dark:text-amber-200 mt-1.5 leading-snug">{t('create_pick.paid_price_blocked_hint')}</p>
-                        )}
-                        <SellerPayoutSplitCallout priceGhs={Number(price) || 0} compact className="mt-2" />
-                      </div>
-                      {isSubscriptionsEnabled() ? (
-                      <div>
-                        <label className="block text-xs font-medium text-[var(--text)] mb-1">Placement</label>
-                        <select
-                          value={placement}
-                          onChange={(e) => {
-                            const v = e.target.value as 'marketplace' | 'subscription';
-                            setPlacement(v);
-                            setFormError(null);
-                            if (v === 'marketplace') setSubscriptionPackageIds([]);
-                          }}
-                          className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border)] bg-[var(--card)]"
-                        >
-                          <option value="marketplace">Marketplace only</option>
-                          <option value="subscription">VIP / subscription only</option>
-                        </select>
-                        {placement === 'subscription' && myPackages.length > 0 && (
-                          <div className="mt-2 space-y-1">
-                            <span className="text-xs text-[var(--text-muted)]">Add to packages:</span>
-                            {myPackages.map((p) => (
-                              <label key={p.id} className="flex items-center gap-2 cursor-pointer text-xs">
-                                <input
-                                  type="checkbox"
-                                  checked={subscriptionPackageIds.includes(p.id)}
-                                  onChange={(e) => {
-                                    setFormError(null);
-                                    if (e.target.checked) setSubscriptionPackageIds((prev) => [...prev, p.id]);
-                                    else setSubscriptionPackageIds((prev) => prev.filter((id) => id !== p.id));
-                                  }}
-                                  className="w-3.5 h-3.5 rounded border-[var(--border)]"
-                                />
-                                <span>{p.name}</span>
-                              </label>
-                            ))}
-                          </div>
-                        )}
-                        {placement === 'subscription' && myPackages.length === 0 && (
-                          <p className="text-xs text-[var(--text-muted)] mt-1">
-                            <Link href="/dashboard/subscription-packages" className="text-[var(--primary)] hover:underline">Create subscription packages</Link> first.
-                          </p>
-                        )}
-                        {sellTh && placement === 'subscription' && price === 0 && (
-                          <p className="text-[10px] text-[var(--text-muted)] mt-2 leading-snug">
-                            {t('create_pick.vip_same_bar', {
-                              minRoi: String(sellTh.minimumROI),
-                              minWr: String(sellTh.minimumWinRate),
-                            })}
-                          </p>
-                        )}
-                      </div>
-                      ) : null}
-                      {formError && (
-                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                          <p className="text-[11px] font-semibold text-red-900 dark:text-red-200 mb-1">{t('create_pick.publish_error_title')}</p>
-                          <p className="text-red-800 dark:text-red-200 text-xs">{formError}</p>
-                        </div>
-                      )}
-                      {createPickDisabled && selections.length > 0 && !submitting && (
-                        <p className="text-[10px] text-[var(--text-muted)] leading-snug">{t('create_pick.desktop_create_hint')}</p>
-                      )}
-                      <Button
-                        type="button"
-                        onClick={submit}
-                        disabled={createPickDisabled}
-                        fullWidth
-                        size="lg"
-                        leading={submitting ? <LoadingSpinner size="sm" /> : undefined}
-                      >
-                        {submitting ? t('create_pick.creating') : t('create_pick.create_btn')}
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
         </div>
       </div>
 
-      {/* Mobile: Sticky slip bar above tab bar — tap to open slip sheet */}
-      {selections.length > 0 && (
+      {selections.length > 0 ? (
         <div
           className="lg:hidden fixed left-0 right-0 z-40 px-4 min-w-0 max-w-full pointer-events-none"
           style={{ bottom: 'calc(3.5rem + env(safe-area-inset-bottom, 0px) + 0.5rem)' }}
@@ -1643,242 +931,28 @@ export default function CreatePickPage() {
                   {selections.length} selection{selections.length !== 1 ? 's' : ''}
                 </p>
                 <p className="text-xs text-white/85 tabular-nums">Total @ {totalOdds.toFixed(2)}</p>
-                {createPickDisabled && selections.length > 0 && (
+                {createPickDisabled && selections.length > 0 ? (
                   <p className="text-[10px] text-white/75 mt-0.5 max-w-full sm:max-w-[200px] leading-tight">
                     {t('create_pick.slip_bar_hint')}
                   </p>
-                )}
+                ) : null}
               </div>
             </div>
             <span className="font-bold text-sm sm:text-base shrink-0 whitespace-nowrap">Review & Create</span>
           </Button>
         </div>
-      )}
+      ) : null}
 
-      {/* Mobile: Slip sheet (theme card + drag-to-dismiss) */}
-      <div className="lg:hidden">
-        <BottomSheet
-          open={slipSheetOpen && selections.length > 0}
-          onClose={() => setSlipSheetOpen(false)}
-          title={t('create_pick.pick_slip')}
-          doneLabel={t('common.close')}
-          maxHeightClass="max-h-[min(92dvh,720px)]"
-        >
-          <div className="p-4 sm:p-5 space-y-4">
-            <div className="space-y-2 max-h-[180px] overflow-y-auto">
-              {selections.map((s, i) => {
-                return (
-                  <div
-                    key={i}
-                    className="bg-[var(--fill-secondary)] rounded-[var(--radius)] p-4 border border-[var(--separator)]"
-                  >
-                    <div className="flex items-start justify-between gap-3 min-w-0">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 mb-0.5 min-w-0">
-                          <p className="text-sm font-semibold text-[var(--text)] truncate min-w-0">{s.matchDescription}</p>
-                        </div>
-                        <p className="text-xs text-[var(--text-muted)] mt-1 break-words">
-                          {formatFootballOutcomeLabel(s.prediction)}
-                        </p>
-                        <p className="text-base font-bold text-[var(--primary)] mt-2 tabular-nums">@ {s.odds.toFixed(2)}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeSelection(i)}
-                        className="touch-target shrink-0 inline-flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
-                        aria-label="Remove selection"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="bg-[var(--primary-light)]/50 rounded-xl p-4 border border-[var(--primary)]/30 min-w-0">
-              <div className="flex items-center justify-between gap-2 min-w-0">
-                <span className="text-sm font-medium text-[var(--text-muted)] min-w-0">{t('create_pick.total_odds')}</span>
-                <span className="text-xl font-bold text-[var(--primary)] tabular-nums shrink-0">{totalOdds.toFixed(2)}</span>
-              </div>
-            </div>
-            <CreatePickListingPreview
-              title={title}
-              selections={selections}
-              totalOdds={totalOdds}
-              price={Number(price) || 0}
-            />
-            <div className="space-y-3 pt-2 border-t border-[var(--separator)]">
-              <div>
-                <label className="block text-sm font-medium text-[var(--text)] mb-1">{t('create_pick.title_label')} <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => {
-                    setTitle(e.target.value);
-                    setFormError(null);
-                  }}
-                  placeholder="e.g. Saturday Banker"
-                  className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[var(--text)] mb-1">{t('create_pick.bookie_label')}</label>
-                <select
-                  value={bookmakerKey}
-                  onChange={(e) => {
-                    setBookmakerKey(e.target.value);
-                    setFormError(null);
-                  }}
-                  className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)]"
-                >
-                  <option value="">{t('create_pick.bookie_none')}</option>
-                  {AFRICAN_BOOKMAKERS.map((b) => (
-                    <option key={b.key} value={b.key}>
-                      {b.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[var(--text)] mb-1">{t('create_pick.booking_code_label')}</label>
-                <input
-                  type="text"
-                  value={bookingCode}
-                  onChange={(e) => {
-                    setBookingCode(e.target.value);
-                    setFormError(null);
-                  }}
-                  placeholder={t('create_pick.booking_code_placeholder')}
-                  autoComplete="off"
-                  className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-                />
-                <p className="text-xs text-[var(--text-muted)] mt-1.5 leading-snug">{t('create_pick.booking_code_hint_short')}</p>
-              </div>
-              {sellTh &&
-                (placement === 'marketplace' || (placement === 'subscription' && price > 0)) && (
-                <div className="rounded-xl border border-amber-200/80 bg-amber-50/40 dark:bg-amber-950/25 px-3 py-2.5 space-y-1.5">
-                  <p className="text-xs font-semibold text-[var(--text)]">{t('create_pick.paid_marketplace_rules_title')}</p>
-                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                    {t('create_pick.paid_marketplace_rules_body', {
-                      minRoi: String(sellTh.minimumROI),
-                      minWr: String(sellTh.minimumWinRate),
-                    })}
-                  </p>
-                  {price > 0 && myTipStats && (
-                    <p
-                      className={`text-xs font-medium leading-relaxed ${
-                        myTipStats.roi >= sellTh.minimumROI && myTipStats.winRate >= sellTh.minimumWinRate
-                          ? 'text-emerald-700 dark:text-emerald-300'
-                          : 'text-amber-800 dark:text-amber-200'
-                      }`}
-                    >
-                      {t('create_pick.paid_marketplace_your_stats', {
-                        roi: myTipStats.roi.toFixed(2),
-                        wr: String(myTipStats.winRate),
-                      })}{' '}
-                      {myTipStats.roi >= sellTh.minimumROI && myTipStats.winRate >= sellTh.minimumWinRate
-                        ? t('create_pick.paid_marketplace_ready')
-                        : t('create_pick.paid_marketplace_not_ready')}
-                    </p>
-                  )}
-                </div>
-              )}
-              <div>
-                <label className="block text-sm font-medium text-[var(--text)] mb-1">{t('create_pick.price_label')} {t('create_pick.price_note')}</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={price || ''}
-                  onChange={(e) => {
-                    setPrice(Number(e.target.value) || 0);
-                    setFormError(null);
-                  }}
-                  placeholder="0"
-                  className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-                />
-                {Number(price) > 0 && sellTh && myTipStats && !paidSaleAllowed && (
-                  <p className="text-xs text-amber-800 dark:text-amber-200 mt-2 leading-snug">{t('create_pick.paid_price_blocked_hint')}</p>
-                )}
-                <SellerPayoutSplitCallout priceGhs={Number(price) || 0} className="mt-2" />
-              </div>
-              {isSubscriptionsEnabled() ? (
-              <>
-              <div>
-                <label className="block text-sm font-medium text-[var(--text)] mb-1">Placement</label>
-                <select
-                  value={placement}
-                  onChange={(e) => {
-                    const v = e.target.value as 'marketplace' | 'subscription';
-                    setPlacement(v);
-                    setFormError(null);
-                    if (v === 'marketplace') setSubscriptionPackageIds([]);
-                  }}
-                  className="w-full px-4 py-3 text-base rounded-xl border border-[var(--border)] bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-                >
-                  <option value="marketplace">Marketplace only</option>
-                  <option value="subscription">VIP / subscription only</option>
-                </select>
-              </div>
-              {placement === 'subscription' && myPackages.length > 0 && (
-                <div className="space-y-1">
-                  <span className="text-sm text-[var(--text-muted)]">Add to package:</span>
-                  {myPackages.map((p) => (
-                    <label key={p.id} className="flex items-center gap-2 cursor-pointer text-sm touch-target">
-                      <input
-                        type="checkbox"
-                        checked={subscriptionPackageIds.includes(p.id)}
-                        onChange={(e) => {
-                          setFormError(null);
-                          if (e.target.checked) setSubscriptionPackageIds((prev) => [...prev, p.id]);
-                          else setSubscriptionPackageIds((prev) => prev.filter((id) => id !== p.id));
-                        }}
-                        className="w-4 h-4 rounded border-[var(--border)]"
-                      />
-                      <span>{p.name}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
-              {placement === 'subscription' && myPackages.length === 0 && (
-                <p className="text-sm text-[var(--text-muted)]">
-                  <Link href="/dashboard/subscription-packages" className="text-[var(--primary)] hover:underline">Create a VIP package</Link> first.
-                </p>
-              )}
-              {sellTh && placement === 'subscription' && price === 0 && (
-                <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                  {t('create_pick.vip_same_bar', {
-                    minRoi: String(sellTh.minimumROI),
-                    minWr: String(sellTh.minimumWinRate),
-                  })}
-                </p>
-              )}
-              </>
-              ) : null}
-              {formError && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3">
-                  <p className="text-xs font-semibold text-red-900 dark:text-red-200 mb-1">{t('create_pick.publish_error_title')}</p>
-                  <p className="text-red-700 dark:text-red-300 text-sm">{formError}</p>
-                </div>
-              )}
-              {createPickDisabled && selections.length > 0 && !submitting && (
-                <p className="text-xs text-[var(--text-muted)] leading-snug">{t('create_pick.desktop_create_hint')}</p>
-              )}
-              <Button
-                type="button"
-                onClick={() => submit()}
-                disabled={createPickDisabled}
-                fullWidth
-                size="lg"
-                leading={submitting ? <LoadingSpinner size="sm" /> : undefined}
-              >
-                {submitting ? t('create_pick.creating') : t('create_pick.create_btn')}
-              </Button>
-            </div>
-          </div>
-        </BottomSheet>
-      </div>
+      <CreatePickMobileSlipSheet
+        open={slipSheetOpen}
+        onClose={() => setSlipSheetOpen(false)}
+        selections={selections}
+        totalOdds={totalOdds}
+        onRemove={removeSelection}
+        title={title}
+        price={price}
+        publish={publishFields}
+      />
     </DashboardShell>
   );
 }

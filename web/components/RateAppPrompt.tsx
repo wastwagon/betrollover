@@ -12,7 +12,7 @@ import { isIosClient } from '@/lib/webview-context';
 
 const STORAGE_KEY = 'br_rate_app_prompt_v1';
 const SNOOZE_MS = 1000 * 60 * 60 * 24 * 21; // 21 days
-const HIDE_PATH_PREFIXES = ['/admin', '/login', '/register', '/fr/admin', '/fr/login', '/fr/register'];
+const HIDE_PATH_PREFIXES = ['/admin', '/login', '/register', '/forgot-password', '/verify-email', '/fr/admin', '/fr/login', '/fr/register', '/fr/forgot-password', '/fr/verify-email'];
 
 type StoredPrompt =
   | { status: 'pending' }

@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, Inject, forwardRef, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager } from 'typeorm';
+import { Repository, EntityManager, In } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { UserWallet } from './entities/user-wallet.entity';
 import { WalletTransaction } from './entities/wallet-transaction.entity';
@@ -13,9 +13,17 @@ import { PaystackService } from './paystack.service';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { EmailService } from '../email/email.service';
+import {
+  isPaystackRecipientCode,
+  isPaystackTransfersUnavailableMessage,
+  normalizeGhanaMomoPhone,
+  toPaystackMomoBankCode,
+} from './ghana-momo';
 
 @Injectable()
 export class WalletService {
+  private readonly logger = new Logger(WalletService.name);
+
   constructor(
     @InjectRepository(UserWallet)
     private readonly walletRepo: Repository<UserWallet>,
@@ -87,11 +95,16 @@ export class WalletService {
     return wallet;
   }
 
-  async getBalance(userId: number): Promise<{ balance: number; currency: string }> {
+  async getBalance(userId: number): Promise<{
+    balance: number;
+    currency: string;
+    paystackTransfersEnabled: boolean;
+  }> {
     const wallet = await this.getOrCreateWallet(userId);
     return {
       balance: Number(wallet.balance),
       currency: wallet.currency,
+      paystackTransfersEnabled: await this.paystackService.isTransfersEnabled(),
     };
   }
 
@@ -306,6 +319,9 @@ export class WalletService {
     }
     const payload = JSON.parse(rawBody || '{}');
     const event = payload.event;
+    if (event === 'transfer.success' || event === 'transfer.failed' || event === 'transfer.reversed') {
+      return this.handlePaystackTransferWebhook(event, payload.data || {});
+    }
     if (event !== 'charge.success') {
       return { received: true };
     }
@@ -375,6 +391,98 @@ export class WalletService {
     return { received: true };
   }
 
+  private async handlePaystackTransferWebhook(
+    event: 'transfer.success' | 'transfer.failed' | 'transfer.reversed',
+    data: { reference?: string; transfer_code?: string; reason?: string; message?: string },
+  ) {
+    const reference = data?.reference;
+    const transferCode = data?.transfer_code || null;
+    if (!reference && !transferCode) return { received: true };
+
+    const openStatuses = ['pending', 'processing'] as const;
+    const findWhere = reference
+      ? { reference }
+      : { paystackTransferCode: transferCode as string };
+    const claimWhere = reference
+      ? { reference, status: In([...openStatuses]) }
+      : { paystackTransferCode: transferCode as string, status: In([...openStatuses]) };
+
+    if (event === 'transfer.success') {
+      if (reference) {
+        const verify = await this.paystackService.verifyTransfer(reference);
+        if (verify && verify.status && verify.status !== 'success') {
+          return { received: true };
+        }
+      }
+      const result = await this.withdrawalRepo.update(claimWhere, {
+        status: 'completed',
+        ...(transferCode ? { paystackTransferCode: transferCode } : {}),
+      });
+      if (result.affected !== 1) return { received: true };
+
+      const withdrawal = await this.withdrawalRepo.findOne({ where: findWhere });
+      if (!withdrawal) return { received: true };
+
+      await this.notificationsService.create({
+        userId: withdrawal.userId,
+        type: 'withdrawal_done',
+        title: 'Withdrawal Completed',
+        message: `Your withdrawal of ${withdrawal.currency || 'GHS'} ${Number(withdrawal.amount).toFixed(2)} has been sent to your Mobile Money number.`,
+        link: '/wallet',
+        icon: 'wallet',
+        sendEmail: true,
+        alwaysSendEmail: true,
+        metadata: { amount: Number(withdrawal.amount).toFixed(2) },
+      }).catch(() => { });
+
+      return { received: true };
+    }
+
+    const failureReason =
+      (typeof data?.reason === 'string' && data.reason) ||
+      (typeof data?.message === 'string' && data.message) ||
+      (event === 'transfer.reversed' ? 'Paystack reversed the transfer' : 'Paystack transfer failed');
+
+    const result = await this.withdrawalRepo.update(claimWhere, {
+      status: 'failed',
+      failureReason,
+      ...(transferCode ? { paystackTransferCode: transferCode } : {}),
+    });
+    if (result.affected !== 1) return { received: true };
+
+    const withdrawal = await this.withdrawalRepo.findOne({ where: findWhere });
+    if (!withdrawal) return { received: true };
+
+    const refundReference = withdrawal.reference || undefined;
+    const existingRefund = await this.txRepo.findOne({
+      where: { userId: withdrawal.userId, type: 'refund', reference: refundReference },
+      select: ['id'],
+    });
+    if (!existingRefund) {
+      await this.credit(
+        withdrawal.userId,
+        Number(withdrawal.amount),
+        'refund',
+        refundReference,
+        'Withdrawal failed - refund',
+      );
+    }
+
+    await this.notificationsService.create({
+      userId: withdrawal.userId,
+      type: 'withdrawal_failed',
+      title: 'Withdrawal Failed',
+      message: `Your withdrawal of ${withdrawal.currency || 'GHS'} ${Number(withdrawal.amount).toFixed(2)} failed. A refund has been credited to your wallet. Reason: ${failureReason}`,
+      link: '/wallet',
+      icon: 'alert',
+      sendEmail: true,
+      alwaysSendEmail: true,
+      metadata: { amount: Number(withdrawal.amount).toFixed(2), reason: failureReason },
+    }).catch(() => { });
+
+    return { received: true };
+  }
+
   async getPayoutMethods(userId: number): Promise<PayoutMethod[]> {
     return this.payoutRepo.find({
       where: { userId },
@@ -408,36 +516,29 @@ export class WalletService {
       throw new ForbiddenException('Only tipsters can add payout methods');
     }
 
-    const existing = await this.payoutRepo.findOne({ where: { userId: user.id } });
-    if (existing) {
-      await this.payoutRepo.remove(existing);
-    }
-
-    // Cryptocurrency: admin processes manually
     if (dto.type === 'crypto') {
-      if (!dto.walletAddress || !dto.cryptoCurrency) {
-        throw new BadRequestException('Wallet address and crypto currency required');
-      }
-      const manualDetails = JSON.stringify({
-        walletAddress: dto.walletAddress.trim(),
-        cryptoCurrency: dto.cryptoCurrency,
-      });
-      const accountMasked = `***${dto.walletAddress.slice(-8)}`;
-
-      return this.payoutRepo.save({
-        userId: user.id,
-        type: 'crypto',
-        recipientCode: `crypto_${Date.now()}`,
-        displayName: dto.name || `${dto.cryptoCurrency} Wallet`,
-        accountMasked,
-        country: null,
-        currency: dto.cryptoCurrency,
-        manualDetails,
-        bankCode: null,
-        provider: null,
-        isDefault: true,
-      });
+      throw new BadRequestException('Cryptocurrency payouts are not available. Use Mobile Money or a bank account.');
     }
+    if (dto.type === 'mobile_money') {
+      if (!dto.phone || !dto.provider) {
+        throw new BadRequestException('Phone and provider required for mobile money');
+      }
+      if (!toPaystackMomoBankCode(dto.provider)) {
+        throw new BadRequestException('Select MTN, Telecel (Vodafone), or AirtelTigo');
+      }
+      if (!normalizeGhanaMomoPhone(dto.phone)) {
+        throw new BadRequestException('Enter a valid Ghana Mobile Money number (e.g. 0551234567)');
+      }
+    }
+    if (dto.type === 'bank' && (!dto.accountNumber || !dto.bankName)) {
+      throw new BadRequestException('Account number and bank name required');
+    }
+
+    const existing = await this.payoutRepo.findOne({ where: { userId: user.id } });
+    const savePayout = async (row: Partial<PayoutMethod>) => {
+      if (existing) await this.payoutRepo.remove(existing);
+      return this.payoutRepo.save(row);
+    };
 
     // Manual: admin processes (legacy / other mobile money)
     if (dto.type === 'manual') {
@@ -464,7 +565,7 @@ export class WalletService {
           ? `***${(dto.phone || '').replace(/\D/g, '').slice(-4)}`
           : `***${(dto.accountNumber || '').slice(-4)}`;
 
-      return this.payoutRepo.save({
+      return savePayout({
         userId: user.id,
         type: 'manual',
         recipientCode: `manual_${Date.now()}`,
@@ -493,7 +594,7 @@ export class WalletService {
         bankCode: dto.bankCode || null,
       });
 
-      return this.payoutRepo.save({
+      return savePayout({
         userId: user.id,
         type: 'bank',
         recipientCode: `manual_${Date.now()}`,
@@ -508,57 +609,75 @@ export class WalletService {
       });
     }
 
-    // Mobile Money: Ghana via Paystack (if configured)
+    // Mobile Money: Ghana via Paystack Transfers (falls back to admin manual payout)
     if (dto.type === 'mobile_money') {
       if (!dto.phone || !dto.provider) {
         throw new BadRequestException('Phone and provider required for mobile money');
       }
+      const bankCode = toPaystackMomoBankCode(dto.provider);
+      if (!bankCode) {
+        throw new BadRequestException('Select MTN, Telecel (Vodafone), or AirtelTigo');
+      }
+      const phone = normalizeGhanaMomoPhone(dto.phone);
+      if (!phone) {
+        throw new BadRequestException('Enter a valid Ghana Mobile Money number (e.g. 0551234567)');
+      }
       const country = dto.country || 'GH';
       const currency = dto.currency || 'GHS';
       const isGhana = country === 'GH' || country === 'GHA';
+      const manualDetails = JSON.stringify({
+        manualMethod: 'mobile_money',
+        phone,
+        provider: bankCode,
+      });
+      const accountMasked = `***${phone.slice(-4)}`;
 
-      if (isGhana) {
+      if (
+        isGhana &&
+        (await this.paystackService.isTransfersEnabled()) &&
+        (await this.paystackService.isConfigured())
+      ) {
         try {
           const recipient = await this.paystackService.createTransferRecipient({
             type: 'mobile_money',
             name: dto.name,
             currency: 'GHS',
-            phone: dto.phone!.replace(/\D/g, ''),
-            provider: dto.provider!,
+            accountNumber: phone,
+            bankCode,
           });
-          return this.payoutRepo.save({
+          return savePayout({
             userId: user.id,
             type: 'mobile_money',
             recipientCode: recipient.recipient_code,
             displayName: dto.name,
-            accountMasked: `***${(dto.phone || '').replace(/\D/g, '').slice(-4)}`,
+            accountMasked,
             country,
             currency,
-            bankCode: null,
-            provider: dto.provider ?? null,
+            manualDetails,
+            bankCode,
+            provider: bankCode,
             isDefault: true,
           });
-        } catch {
-          // Paystack failed — fall back to manual
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : 'Failed to create payout recipient';
+          if (!isPaystackTransfersUnavailableMessage(msg)) {
+            throw e instanceof BadRequestException ? e : new BadRequestException(msg);
+          }
+          this.logger.warn(`Paystack MoMo recipient unavailable, saving as manual: ${msg}`);
         }
       }
 
-      const manualDetails = JSON.stringify({
-        manualMethod: 'mobile_money',
-        phone: dto.phone,
-        provider: dto.provider || null,
-      });
-      return this.payoutRepo.save({
+      return savePayout({
         userId: user.id,
         type: 'mobile_money',
         recipientCode: `manual_${Date.now()}`,
         displayName: dto.name,
-        accountMasked: `***${(dto.phone || '').replace(/\D/g, '').slice(-4)}`,
+        accountMasked,
         country,
         currency,
         manualDetails,
-        bankCode: null,
-        provider: dto.provider ?? null,
+        bankCode,
+        provider: bankCode,
         isDefault: true,
       });
     }
@@ -600,17 +719,17 @@ export class WalletService {
       `Withdrawal to ${payout.displayName}`,
     );
 
-    const isManualPayout =
-      payout.type === 'manual' ||
-      payout.type === 'crypto' ||
-      payout.recipientCode?.startsWith?.('manual_');
+    const usePaystackTransfer =
+      (await this.paystackService.isTransfersEnabled()) &&
+      payout.type === 'mobile_money' &&
+      isPaystackRecipientCode(payout.recipientCode);
 
     const withdrawal = await this.withdrawalRepo.save({
       userId: user.id,
       payoutMethodId: payout.id,
       amount,
       currency,
-      status: payout.type === 'manual' ? 'pending' : 'processing',
+      status: usePaystackTransfer ? 'processing' : 'pending',
       reference,
     });
 
@@ -620,67 +739,76 @@ export class WalletService {
         amount: amount.toFixed(2),
         displayName: user.displayName,
         email: user.email,
-        manual: isManualPayout,
+        manual: !usePaystackTransfer,
       },
     }).catch(() => { });
 
-    // Manual: admin will process (manual, crypto, or bank without Paystack)
-    if (isManualPayout) {
+    // Bank, crypto, and MoMo without a Paystack recipient: admin fulfills from wallet balance
+    if (!usePaystackTransfer) {
       return {
         withdrawal,
         message: 'Withdrawal request submitted. Admin will review and process manually. You will be notified when completed.',
       };
     }
 
-    // Paystack automatic transfer
     try {
       const transfer = await this.paystackService.initiateTransfer({
         amount,
         recipient: payout.recipientCode,
         reference,
-        reason: 'Tipster withdrawal',
+        reason: 'Withdrawal',
       });
 
-      withdrawal.paystackTransferCode = transfer.transfer_code;
-      withdrawal.status = transfer.status === 'success' ? 'completed' : 'processing';
-      await this.withdrawalRepo.save(withdrawal);
+      withdrawal.paystackTransferCode = transfer.transfer_code ?? null;
 
-      if (withdrawal.status === 'processing') {
-        return { withdrawal, message: 'Withdrawal initiated. Funds will arrive shortly.' };
+      if (transfer.status === 'success') {
+        withdrawal.status = 'completed';
+        await this.withdrawalRepo.save(withdrawal);
+        await this.notificationsService.create({
+          userId: user.id,
+          type: 'withdrawal_done',
+          title: 'Withdrawal Completed',
+          message: `Your withdrawal of ${currency} ${amount.toFixed(2)} has been sent to ${payout.displayName}. Funds should arrive shortly.`,
+          link: '/wallet',
+          icon: 'wallet',
+          sendEmail: true,
+          alwaysSendEmail: true,
+          metadata: { amount: amount.toFixed(2) },
+        }).catch(() => { });
+        return { withdrawal, message: 'Withdrawal completed.' };
       }
 
-      await this.notificationsService.create({
-        userId: user.id,
-        type: 'withdrawal_done',
-        title: 'Withdrawal Completed',
-        message: `Your withdrawal of ${currency} ${amount.toFixed(2)} has been sent to ${payout.displayName}. Funds should arrive shortly.`,
-        link: '/wallet',
-        icon: 'wallet',
-        sendEmail: true,
-        alwaysSendEmail: true,
-        metadata: { amount: amount.toFixed(2) },
-      }).catch(() => { });
+      if (transfer.status === 'otp') {
+        withdrawal.status = 'processing';
+        withdrawal.failureReason =
+          'Paystack is waiting for transfer OTP. Disable “Confirm transfers” in the Paystack Dashboard, or pay this request manually.';
+        await this.withdrawalRepo.save(withdrawal);
+        return {
+          withdrawal,
+          message: 'Withdrawal submitted. It will be completed shortly.',
+        };
+      }
 
-      return { withdrawal, message: 'Withdrawal completed.' };
-    } catch (e) {
-      withdrawal.status = 'failed';
-      withdrawal.failureReason = e instanceof Error ? e.message : 'Transfer failed';
+      withdrawal.status = 'processing';
       await this.withdrawalRepo.save(withdrawal);
-      await this.credit(user.id, amount, 'refund', reference, 'Withdrawal failed - refund');
-
-      await this.notificationsService.create({
-        userId: user.id,
-        type: 'withdrawal_failed',
-        title: 'Withdrawal Failed',
-        message: `Your withdrawal of ${currency} ${amount.toFixed(2)} failed. A refund has been credited to your wallet. Reason: ${withdrawal.failureReason}`,
-        link: '/wallet',
-        icon: 'alert',
-        sendEmail: true,
-        alwaysSendEmail: true,
-        metadata: { amount: amount.toFixed(2) },
-      }).catch(() => { });
-
-      throw new BadRequestException(withdrawal.failureReason);
+      return { withdrawal, message: 'Withdrawal initiated. Funds will arrive shortly.' };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Transfer failed';
+      if (withdrawal.paystackTransferCode) {
+        withdrawal.status = 'processing';
+        withdrawal.failureReason = msg;
+        await this.withdrawalRepo.save(withdrawal);
+        return { withdrawal, message: 'Withdrawal initiated. Funds will arrive shortly.' };
+      }
+      // Paystack did not accept the transfer — keep the debit and queue for admin manual payout
+      withdrawal.status = 'pending';
+      withdrawal.failureReason = msg;
+      await this.withdrawalRepo.save(withdrawal);
+      this.logger.warn(`Paystack transfer failed for ${reference}, queued for manual payout: ${msg}`);
+      return {
+        withdrawal,
+        message: 'Withdrawal request submitted. Admin will review and process it. You will be notified when completed.',
+      };
     }
   }
 

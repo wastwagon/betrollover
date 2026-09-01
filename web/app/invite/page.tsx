@@ -8,9 +8,10 @@ import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 import { useT } from '@/context/LanguageContext';
 import { getApiUrl } from '@/lib/site-config';
-import { NavBar } from '@/components/ios/NavBar';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { Button, buttonClassName } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { OUTCOME_TEXT } from '@/lib/result-chip';
 
 interface Conversion {
   id: number;
@@ -72,23 +73,13 @@ export default function InvitePage() {
 
   return (
     <DashboardShell>
-      <div className="section-ux-dashboard-shell max-w-2xl mx-auto w-full min-w-0 overflow-x-hidden px-4 sm:px-0">
+        <div className="section-ux-dashboard-shell max-w-2xl mx-auto w-full min-w-0 overflow-x-hidden px-4 sm:px-0">
         <PullToRefresh onRefresh={load} disabled={loading}>
-        <div className="lg:hidden -mx-1 mb-3">
-          <NavBar
-            title={t('invite.invite_earn')}
-            backHref="/dashboard"
-            backLabel={t('nav.dashboard')}
-            sticky={false}
-          />
-        </div>
-        <div className="hidden lg:block">
           <PageHeader
             label={t('invite.grow_together')}
             title={t('invite.invite_earn')}
             tagline={t('invite.invite_desc', { amount: stats?.rewardPerReferral?.toFixed(2) ?? '5.00' })}
           />
-        </div>
 
         <div className="mb-6">
           <AdSlot zoneSlug="invite-full" fullWidth className="w-full max-w-3xl" />
@@ -133,11 +124,14 @@ export default function InvitePage() {
             <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm min-w-0">
               <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">{t('invite.share_link')}</p>
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
-                <input
-                  readOnly
-                  value={shareUrl}
-                  className="flex-1 min-w-0 px-3 py-2 rounded-xl text-sm bg-[var(--bg)] border border-[var(--border)] text-[var(--text-muted)] truncate focus:outline-none"
-                />
+                <div className="flex-1 min-w-0">
+                  <Input
+                    readOnly
+                    value={shareUrl}
+                    aria-label={t('invite.share_link')}
+                    className="truncate text-[var(--text-muted)]"
+                  />
+                </div>
                 <CopyButton text={shareUrl} />
               </div>
             </div>
@@ -164,14 +158,14 @@ export default function InvitePage() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 text-white text-xs font-semibold hover:bg-sky-700 transition-colors disabled:opacity-60"
                 >
-                  <span aria-hidden>✈️</span> {t('invite.share_telegram')}
+                  {t('invite.share_telegram')}
                 </a>
               </div>
             </div>
 
             {/* How it works */}
-            <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800 p-5">
-              <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300 mb-3">{t('invite.how_it_works')}</p>
+            <div className="rounded-2xl bg-[var(--primary-light)] border border-[var(--primary)]/25 p-5">
+              <p className="text-sm font-semibold text-[var(--primary)] mb-3">{t('invite.how_it_works')}</p>
               <div className="space-y-2">
                 {[
                   ['1', t('invite.step1')],
@@ -180,8 +174,8 @@ export default function InvitePage() {
                   ['4', t('invite.step4')],
                 ].map(([step, text]) => (
                   <div key={step} className="flex items-start gap-3">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-200 dark:bg-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs font-bold flex items-center justify-center">{step}</span>
-                    <p className="text-sm text-emerald-700 dark:text-emerald-400">{text}</p>
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[var(--primary)] text-white text-xs font-bold flex items-center justify-center">{step}</span>
+                    <p className="text-sm text-[var(--text)]">{text}</p>
                   </div>
                 ))}
               </div>
@@ -203,7 +197,7 @@ export default function InvitePage() {
                           {c.firstPurchaseAt && ` · ${t('invite.purchased')} ${new Date(c.firstPurchaseAt).toLocaleDateString('en-GB', { day:'numeric', month:'short' })}`}
                         </p>
                       </div>
-                      <span className={`text-sm font-semibold ${c.rewardCredited ? 'text-emerald-600' : 'text-[var(--text-muted)]'}`}>
+                      <span className={`text-sm font-semibold ${c.rewardCredited ? OUTCOME_TEXT.positive : 'text-[var(--text-muted)]'}`}>
                         {c.rewardCredited ? `+GHS ${Number(c.rewardAmount).toFixed(2)}` : t('invite.pending')}
                       </span>
                     </div>

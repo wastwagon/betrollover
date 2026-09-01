@@ -4,42 +4,35 @@ import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { PageHeader } from '@/components/PageHeader';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
+import { DiscoverFamilyNav } from '@/components/DiscoverFamilyNav';
+import { EducationRelatedLinks } from '@/components/EducationRelatedLinks';
 import { localizedUrl, seoAlternates } from '@/lib/site-config';
-import { getLocale } from '@/lib/i18n';
+import { getLocale, buildT } from '@/lib/i18n';
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
+  const t = buildT(locale);
+  const title = t('guides.escrow_meta_title');
+  const description = t('guides.escrow_meta_desc');
   return {
-    title: 'Escrow Refund Guide',
-    description:
-      'Learn how escrow works for paid picks on BetRollover, including settlement flow and automatic wallet refunds.',
+    title,
+    description,
     alternates: seoAlternates('/guides/escrow-refunds', locale),
     openGraph: {
       url: localizedUrl('/guides/escrow-refunds', locale),
-      title: 'Escrow Refund Guide',
-      description:
-        'Learn how escrow works for paid picks on BetRollover, including settlement flow and automatic wallet refunds.',
+      title,
+      description,
     },
   };
 }
 
-export default function EscrowRefundsGuidePage() {
+export default async function EscrowRefundsGuidePage() {
+  const locale = await getLocale();
+  const t = buildT(locale);
   const faqs = [
-    {
-      question: 'When does money leave my wallet?',
-      answer:
-        'At purchase time, the pick price is deducted and held in escrow. It is not paid out to the tipster immediately.',
-    },
-    {
-      question: 'When does a refund happen?',
-      answer:
-        'If a paid pick settles as lost, the purchase amount is automatically refunded to your wallet. No support ticket is required.',
-    },
-    {
-      question: 'What is not covered by refunds?',
-      answer:
-        'Refunds apply to the pick purchase price only. They do not cover external wagering losses.',
-    },
+    { question: t('guides.escrow_faq_q1'), answer: t('guides.escrow_faq_a1') },
+    { question: t('guides.escrow_faq_q2'), answer: t('guides.escrow_faq_a2') },
+    { question: t('guides.escrow_faq_q3'), answer: t('guides.escrow_faq_a3') },
   ];
 
   return (
@@ -48,37 +41,39 @@ export default function EscrowRefundsGuidePage() {
       <UnifiedHeader />
       <main className="section-ux-page-narrow w-full min-w-0">
         <PageHeader
-          label="Escrow"
-          title="How escrow refunds work"
-          tagline="A clear step-by-step view of purchase, settlement, and automatic refunds."
+          label={t('guides.escrow_label')}
+          title={t('guides.escrow_title')}
+          tagline={t('guides.escrow_tagline')}
         />
+        <DiscoverFamilyNav current="guides" />
+        <EducationRelatedLinks current="escrow" />
         <article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-7 text-[var(--text)]">
-          <h2 className="text-lg font-semibold">1) Purchase and escrow hold</h2>
+          <h2 className="text-lg font-semibold">{t('guides.escrow_s1_title')}</h2>
           <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            When you buy a paid pick, funds are placed in escrow. This protects both buyer and tipster while matches are still in progress.
+            {t('guides.escrow_s1_body')}
           </p>
 
-          <h2 className="text-lg font-semibold mt-6">2) Settlement from official results</h2>
+          <h2 className="text-lg font-semibold mt-6">{t('guides.escrow_s2_title')}</h2>
           <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            Once all selections settle, the pick result is finalized. Winning picks release escrow to the tipster according to platform rules.
+            {t('guides.escrow_s2_body')}
           </p>
 
-          <h2 className="text-lg font-semibold mt-6">3) Automatic refund on losing paid picks</h2>
+          <h2 className="text-lg font-semibold mt-6">{t('guides.escrow_s3_title')}</h2>
           <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            If a paid pick loses, your purchase amount is credited back to wallet automatically. You can review every credit in{' '}
+            {t('guides.escrow_s3_body_before')}{' '}
             <Link href="/wallet" className="text-[var(--primary)] hover:underline">
-              Wallet
+              {t('nav.wallet')}
             </Link>{' '}
-            and past picks in{' '}
+            {t('guides.escrow_s3_body_and')}{' '}
             <Link href="/my-purchases" className="text-[var(--primary)] hover:underline">
-              My Purchases
+              {t('nav.purchases')}
             </Link>
             .
           </p>
 
-          <div className="mt-7 rounded-xl border border-emerald-300/50 bg-emerald-50/40 dark:bg-emerald-900/20 p-4">
-            <p className="text-xs text-emerald-900 dark:text-emerald-300 leading-relaxed">
-              Refunds cover pick purchase price only. BetRollover is educational and does not facilitate wagering.
+          <div className="mt-7 rounded-xl border border-[var(--primary)]/25 bg-[var(--primary-light)] p-4">
+            <p className="text-xs text-[var(--text)] leading-relaxed">
+              {t('guides.escrow_callout')}
             </p>
           </div>
         </article>

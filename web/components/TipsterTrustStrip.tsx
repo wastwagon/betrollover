@@ -27,7 +27,7 @@ function Stars({ avg }: { avg: number }) {
   return (
     <span className="flex" aria-hidden>
       {[1, 2, 3, 4, 5].map((s) => (
-        <span key={s} className={`text-sm ${s <= rounded ? 'text-amber-400' : 'text-[var(--separator)]'}`}>
+        <span key={s} className={`text-sm ${s <= rounded ? 'text-[var(--accent)]' : 'text-[var(--separator)]'}`}>
           ★
         </span>
       ))}
@@ -75,7 +75,7 @@ export function TipsterTrustStrip({
         )}
         {earlySample ? (
           <span
-            className="inline-flex items-center rounded-md bg-amber-500/15 px-2 py-1 font-semibold text-amber-800 dark:text-amber-300"
+            className="inline-flex items-center rounded-md bg-[var(--accent-light)] px-2 py-1 font-semibold text-[var(--accent)]"
             title={t('tipster.early_sample_hint', {
               n: String(LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING),
             })}
@@ -91,7 +91,7 @@ export function TipsterTrustStrip({
         {hasRating ? (
           <span className="inline-flex items-center gap-1.5 text-[var(--text)]">
             <Stars avg={avgRating!} />
-            <span className="font-semibold tabular-nums text-amber-600 dark:text-amber-400">
+            <span className="font-semibold tabular-nums text-[var(--accent)]">
               {Number(avgRating).toFixed(1)}
             </span>
             <span className="text-[var(--text-muted)]">
@@ -102,7 +102,7 @@ export function TipsterTrustStrip({
       </div>
 
       {!compact && earlySample ? (
-        <p className="mt-1.5 text-[11px] text-amber-800/90 dark:text-amber-300/90 leading-snug">
+        <p className="mt-1.5 text-[11px] text-[var(--accent)] leading-snug">
           {t('tipster.early_sample_hint', {
             n: String(LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING),
           })}
@@ -119,7 +119,7 @@ export function TipsterTrustStrip({
                 <span className="w-6 tabular-nums text-[var(--text-muted)] shrink-0">{star}★</span>
                 <div className="flex-1 h-1.5 rounded-full bg-[var(--fill-secondary)] overflow-hidden min-w-0">
                   <div
-                    className="h-full rounded-full bg-amber-400/90"
+                    className="h-full rounded-full bg-[var(--accent)]"
                     style={{ width: `${pct}%` }}
                   />
                 </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { formatError } from '@/utils/errorMessages';
 import { useT } from '@/context/LanguageContext';
+import { IconWarning } from '@/components/ios/icons';
 
 interface ErrorToastProps {
   error: unknown;
@@ -33,13 +34,13 @@ export function ErrorToast({ error, onClose, duration = 5000 }: ErrorToastProps)
       role="alert"
       aria-live="assertive"
     >
-      <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-lg shadow-lg p-4 flex items-start gap-3">
+      <div className="bg-[var(--destructive)]/10 border border-[var(--destructive)]/25 rounded-lg p-4 flex items-start gap-3">
         <div className="flex-shrink-0">
-          <span className="text-2xl">⚠️</span>
+          <IconWarning className="w-6 h-6 text-[var(--destructive)]" />
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-red-900 dark:text-red-200 mb-1">{t('toast.error_title')}</h4>
-          <p className="text-sm text-red-800 dark:text-red-300">{errorMessage}</p>
+          <h4 className="font-semibold text-[var(--destructive)] mb-1">{t('toast.error_title')}</h4>
+          <p className="text-sm text-[var(--text)]">{errorMessage}</p>
         </div>
         <button
           type="button"
@@ -47,7 +48,7 @@ export function ErrorToast({ error, onClose, duration = 5000 }: ErrorToastProps)
             setIsVisible(false);
             setTimeout(onClose, 300);
           }}
-          className="flex-shrink-0 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 transition-colors"
+          className="flex-shrink-0 text-[var(--destructive)] hover:text-[var(--text)] transition-colors"
           aria-label={t('toast.close_error')}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

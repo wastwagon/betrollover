@@ -5,6 +5,7 @@
 export interface BalanceResponse {
   balance: number;
   currency: string;
+  paystackTransfersEnabled?: boolean;
 }
 
 export interface IapProduct {

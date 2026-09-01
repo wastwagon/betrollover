@@ -10,6 +10,7 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { buttonClassName } from '@/components/ui/Button';
+import { IconBook, IconTarget, IconSettings } from '@/components/ios/icons';
 import {
   CONTENT_SPORT_KEYS,
   SPORT_ICONS,
@@ -38,15 +39,15 @@ interface ResourceCategory {
 }
 
 const LEVEL_COLORS: Record<string, string> = {
-  beginner:     'bg-emerald-100 text-emerald-700',
-  intermediate: 'bg-amber-100   text-amber-700',
-  advanced:     'bg-red-100     text-red-700',
+  beginner:     'bg-[var(--success-light)] text-[var(--success)]',
+  intermediate: 'bg-[var(--accent-light)] text-[var(--accent)]',
+  advanced:     'bg-[var(--destructive-light)] text-[var(--destructive)]',
 };
 
-const TYPE_ICONS: Record<string, string> = {
-  article:  '📄',
-  strategy: '♟️',
-  tool:     '🛠️',
+const TYPE_ICONS: Record<string, typeof IconBook> = {
+  article: IconBook,
+  strategy: IconTarget,
+  tool: IconSettings,
 };
 
 const LEVEL_LABELS: Record<string, string> = {
@@ -117,7 +118,7 @@ export default function ResourcesPage() {
         <p className="mb-6 text-sm text-[var(--text-muted)]">
           {t('resources.new_to_platform')}{' '}
           <Link href="/how-it-works#faq" className="font-medium text-[var(--primary)] hover:underline">
-            How it works &amp; FAQs
+            {t('resources.how_it_works_link')}
           </Link>
           {' · '}
           <Link href="/learn" className="font-medium text-[var(--primary)] hover:underline">
@@ -126,19 +127,19 @@ export default function ResourcesPage() {
         </p>
 
         <section className="mb-8 rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 p-4 sm:p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">Popular Guides</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">{t('resources.popular_guides')}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Link
               href="/guides/escrow-refunds"
               className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
             >
-              How escrow refunds work →
+              {t('resources.escrow_link')}
             </Link>
             <Link
               href="/guides/evaluate-tipsters"
               className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
             >
-              How to evaluate tipsters before buying →
+              {t('resources.eval_link')}
             </Link>
           </div>
         </section>
@@ -229,7 +230,7 @@ export default function ResourcesPage() {
                 {visibleCategories.map(cat => (
                   <section key={cat.id} className="rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-hidden">
                     <div className="px-4 sm:px-6 py-5 border-b border-[var(--border)] flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                      <span className={`inline-flex w-fit px-2.5 py-1 rounded-lg text-xs font-bold uppercase ${LEVEL_COLORS[cat.level] ?? 'bg-slate-100 text-slate-600'}`}>
+                      <span className={`inline-flex w-fit px-2.5 py-1 rounded-lg text-xs font-bold uppercase ${LEVEL_COLORS[cat.level] ?? 'bg-[var(--fill-secondary)] text-[var(--text-muted)]'}`}>
                         {LEVEL_LABELS[cat.level] ?? cat.level}
                       </span>
                       <h2 className="text-lg font-bold text-[var(--text)] min-w-0">{cat.name}</h2>
@@ -247,7 +248,10 @@ export default function ResourcesPage() {
                             href={`/resources/${cat.slug}/${item.slug}`}
                             className="flex items-start gap-3 p-4 rounded-xl border border-[var(--border)] hover:border-[var(--primary)]/40 hover:bg-[var(--primary-light)]/10 transition-all group"
                           >
-                            <span className="text-xl flex-shrink-0 mt-0.5">{TYPE_ICONS[item.type] ?? '📄'}</span>
+                            {(() => {
+                              const TypeIcon = TYPE_ICONS[item.type] ?? IconBook;
+                              return <TypeIcon className="w-5 h-5 text-[var(--text-muted)] flex-shrink-0 mt-0.5" />;
+                            })()}
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="text-[10px] font-bold uppercase text-[var(--primary)]">

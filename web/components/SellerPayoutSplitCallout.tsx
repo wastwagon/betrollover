@@ -30,12 +30,12 @@ export function SellerPayoutSplitCallout({
 
   return (
     <aside
-      className={`rounded-xl border border-emerald-200/80 bg-emerald-50/50 dark:border-emerald-800/40 dark:bg-emerald-900/15 ${
+      className={`rounded-xl border border-[var(--primary)]/25 bg-[var(--primary-light)] ${
         compact ? 'px-3 py-2' : 'px-3.5 py-3'
       } min-w-0 ${className}`}
       aria-live="polite"
     >
-      <p className={`font-semibold text-emerald-900 dark:text-emerald-200 ${compact ? 'text-[11px]' : 'text-xs'}`}>
+      <p className={`font-semibold text-[var(--primary)] ${compact ? 'text-[11px]' : 'text-xs'}`}>
         {t('seller_payout.title')}
       </p>
       <p className="text-[11px] text-[var(--text-muted)] mt-0.5 leading-snug">
@@ -46,13 +46,13 @@ export function SellerPayoutSplitCallout({
           <dt className="text-[9px] uppercase tracking-wide text-[var(--text-muted)]">{t('seller_payout.buyer_pays')}</dt>
           <dd className="text-xs font-bold text-[var(--text)] tabular-nums">GHS {price.toFixed(2)}</dd>
         </div>
-        <div className="rounded-lg bg-[var(--card)]/80 border border-emerald-200/70 dark:border-emerald-800/40 px-1.5 py-1.5">
-          <dt className="text-[9px] uppercase tracking-wide text-emerald-700 dark:text-emerald-300">{t('seller_payout.you_get')}</dt>
-          <dd className="text-xs font-bold text-emerald-700 dark:text-emerald-300 tabular-nums">GHS {tipsterNet.toFixed(2)}</dd>
+        <div className="rounded-lg bg-[var(--card)]/80 border border-[var(--primary)]/25 px-1.5 py-1.5">
+          <dt className="text-[9px] uppercase tracking-wide text-[var(--primary)]">{t('seller_payout.you_get')}</dt>
+          <dd className="text-xs font-bold text-[var(--primary)] tabular-nums">GHS {tipsterNet.toFixed(2)}</dd>
         </div>
-        <div className="rounded-lg bg-[var(--card)]/80 border border-amber-200/70 dark:border-amber-800/40 px-1.5 py-1.5">
-          <dt className="text-[9px] uppercase tracking-wide text-amber-700 dark:text-amber-300">{t('seller_payout.platform')}</dt>
-          <dd className="text-xs font-bold text-amber-700 dark:text-amber-300 tabular-nums">GHS {platformFee.toFixed(2)}</dd>
+        <div className="rounded-lg bg-[var(--card)]/80 border border-[var(--accent)]/40 px-1.5 py-1.5">
+          <dt className="text-[9px] uppercase tracking-wide text-[var(--accent)]">{t('seller_payout.platform')}</dt>
+          <dd className="text-xs font-bold text-[var(--text)] tabular-nums">GHS {platformFee.toFixed(2)}</dd>
         </div>
       </dl>
       <p className="mt-1.5 text-[10px] text-[var(--text-muted)] leading-snug">

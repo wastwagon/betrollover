@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
+import { FixtureLiveChip } from '@/components/FixtureLiveChip';
 import {
   countPicksForMatch,
   isFixtureLive,
@@ -123,10 +124,7 @@ export function HomeNativeMatchRail({
                     {m.leagueName ?? '—'}
                   </p>
                   {live ? (
-                    <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-red-500/10 px-1.5 py-px text-[9px] font-semibold text-red-500">
-                      <span className="h-1 w-1 rounded-full bg-red-500" aria-hidden />
-                      {livePeriod}
-                    </span>
+                    <FixtureLiveChip label={livePeriod} className="px-1.5 py-px text-[9px]" />
                   ) : null}
                 </div>
                 <p className="mt-0.5 truncate text-[11px] font-semibold tabular-nums text-[var(--text)]">

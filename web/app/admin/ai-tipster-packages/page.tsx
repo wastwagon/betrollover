@@ -7,6 +7,7 @@ import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { Button, buttonClassName } from '@/components/ui/Button';
+import { Input, fieldControlClassName } from '@/components/ui/Input';
 
 type PackageStatus = 'active' | 'inactive';
 
@@ -337,20 +338,26 @@ export default function AdminAiTipsterPackagesPage() {
 
         {!loading && (
           <div className="mb-6 flex flex-wrap gap-3">
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search tipster by username or display name"
-              className="w-full max-w-md px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-            />
+            <div className="w-full max-w-md">
+              <Input
+                id="admin-ai-packages-search"
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search tipster by username or display name"
+                aria-label="Search tipsters"
+              />
+            </div>
             <select
+              id="admin-ai-packages-sort"
               value={sortBy}
               onChange={(e) =>
                 setSortBy(
                   e.target.value as 'name_asc' | 'name_desc' | 'on_first' | 'off_first' | 'missing_first',
                 )
               }
-              className="px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+              className={fieldControlClassName(undefined, 'w-auto')}
+              aria-label="Sort packages"
             >
               <option value="name_asc">Sort: Name A-Z</option>
               <option value="name_desc">Sort: Name Z-A</option>
@@ -388,10 +395,11 @@ export default function AdminAiTipsterPackagesPage() {
                       </td>
                       <td className="px-6 py-4">
                         {row.package ? (
-                          <input
+                          <Input
+                            id={`admin-ai-pkg-name-${row.package.id}`}
                             value={row.package.name}
                             onChange={(e) => updateLocalPackage(row.package!.id, { name: e.target.value })}
-                            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white"
+                            aria-label="Package name"
                           />
                         ) : (
                           <span className="text-sm text-gray-500 dark:text-gray-400">No package</span>
@@ -399,36 +407,42 @@ export default function AdminAiTipsterPackagesPage() {
                       </td>
                       <td className="px-6 py-4">
                         {row.package ? (
-                          <input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            value={row.package.price}
-                            onChange={(e) =>
-                              updateLocalPackage(row.package!.id, {
-                                price: Number(e.target.value || 0),
-                              })
-                            }
-                            className="w-28 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white"
-                          />
+                          <div className="w-28">
+                            <Input
+                              id={`admin-ai-pkg-price-${row.package.id}`}
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              value={row.package.price}
+                              onChange={(e) =>
+                                updateLocalPackage(row.package!.id, {
+                                  price: Number(e.target.value || 0),
+                                })
+                              }
+                              aria-label="Package price"
+                            />
+                          </div>
                         ) : (
                           <span className="text-sm text-gray-500 dark:text-gray-400">-</span>
                         )}
                       </td>
                       <td className="px-6 py-4">
                         {row.package ? (
-                          <input
-                            type="number"
-                            min={1}
-                            max={365}
-                            value={row.package.durationDays}
-                            onChange={(e) =>
-                              updateLocalPackage(row.package!.id, {
-                                durationDays: Number(e.target.value || 30),
-                              })
-                            }
-                            className="w-24 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white"
-                          />
+                          <div className="w-24">
+                            <Input
+                              id={`admin-ai-pkg-duration-${row.package.id}`}
+                              type="number"
+                              min={1}
+                              max={365}
+                              value={row.package.durationDays}
+                              onChange={(e) =>
+                                updateLocalPackage(row.package!.id, {
+                                  durationDays: Number(e.target.value || 30),
+                                })
+                              }
+                              aria-label="Package duration days"
+                            />
+                          </div>
                         ) : (
                           <span className="text-sm text-gray-500 dark:text-gray-400">-</span>
                         )}
@@ -442,7 +456,8 @@ export default function AdminAiTipsterPackagesPage() {
                                 status: e.target.value as PackageStatus,
                               })
                             }
-                            className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white"
+                            className={fieldControlClassName()}
+                            aria-label="Package publish status"
                           >
                             <option value="active">ON</option>
                             <option value="inactive">OFF</option>

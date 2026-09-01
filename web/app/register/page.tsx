@@ -4,11 +4,31 @@ import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useT } from '@/context/LanguageContext';
-import { UnifiedHeader } from '@/components/UnifiedHeader';
+import { AuthCard, AuthPageFallback, AuthShell } from '@/components/AuthShell';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { AppleSignInButton } from '@/components/AppleSignInButton';
 import { consumeOAuthSessionToken } from '@/lib/auth-token-storage';
 import { trackRegistrationStartedOnce } from '@/lib/analytics';
+import { buttonClassName } from '@/components/ui/Button';
+
+function RegisterEmailFallback() {
+  const t = useT();
+  const [hasOauth, setHasOauth] = useState(true);
+
+  useEffect(() => {
+    const google = !!(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '').trim();
+    const apple = !!(process.env.NEXT_PUBLIC_APPLE_CLIENT_ID || process.env.APPLE_CLIENT_ID || '').trim();
+    setHasOauth(google || apple);
+  }, []);
+
+  if (hasOauth) return null;
+
+  return (
+    <Link href="/login" className={buttonClassName({ variant: 'secondary', fullWidth: true, className: 'mb-6' })}>
+      {t('auth.continue_with_email')}
+    </Link>
+  );
+}
 
 function RegisterForm() {
   const router = useRouter();
@@ -46,11 +66,8 @@ function RegisterForm() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] relative w-full min-w-0 max-w-full overflow-x-hidden">
-      <UnifiedHeader />
-      <main className="section-ux-register-main w-full min-w-0 max-w-full pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-        <div className="relative w-full max-w-[440px] min-w-0 mx-auto px-4 sm:px-0">
-          <div className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] px-5 py-8 sm:px-10 sm:py-11 min-w-0 max-w-full shadow-sm">
+    <AuthShell>
+      <AuthCard>
               <div className="text-center mb-8 sm:mb-9">
                 <h1 className="font-display text-2xl font-bold tracking-tight text-[var(--text)] mb-2 sm:sr-only">
                   {t('auth.register_cta')}
@@ -62,6 +79,7 @@ function RegisterForm() {
 
               <GoogleSignInButton variant="signup" className="mb-4" disabled={loading} />
               <AppleSignInButton variant="signup" className="mb-6" disabled={loading} />
+              <RegisterEmailFallback />
               <p className="text-xs text-[var(--text-muted)] leading-relaxed text-center mb-6">
                 {t('auth.terms_agree')}{' '}
                 <Link href="/terms" className="text-[var(--primary)] hover:underline">
@@ -85,20 +103,14 @@ function RegisterForm() {
                 {t('auth.login')}
               </Link>
             </p>
-          </div>
-        </div>
-      </main>
-    </div>
+      </AuthCard>
+    </AuthShell>
   );
 }
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center w-full min-w-0 max-w-full overflow-x-hidden">
-        <div className="w-8 h-8 rounded-full border-4 border-[var(--primary)] border-t-transparent animate-spin" />
-      </div>
-    }>
+    <Suspense fallback={<AuthPageFallback />}>
       <RegisterForm />
     </Suspense>
   );

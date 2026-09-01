@@ -34,12 +34,12 @@ export function adminWithdrawalStatusBadgeClass(status: string): string {
 /** User wallet list: compact pill */
 export function walletWithdrawalStatusBadgeClass(status: string): string {
   const map: Record<string, string> = {
-    completed: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
-    pending: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30',
-    processing: 'bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-500/30',
-    failed: 'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30',
-    rejected: 'bg-orange-500/15 text-orange-800 dark:text-orange-300 border-orange-500/30',
-    cancelled: 'bg-slate-500/15 text-slate-600 dark:text-slate-400 border-slate-500/30',
+    completed: 'bg-[var(--success-light)] text-[var(--success)] border-[var(--success)]/25',
+    pending: 'bg-[var(--accent-light)] text-[var(--accent)] border-[var(--accent)]/25',
+    processing: 'bg-[var(--primary-light)] text-[var(--primary)] border-[var(--primary)]/20',
+    failed: 'bg-[var(--destructive-light)] text-[var(--destructive)] border-[var(--destructive)]/25',
+    rejected: 'bg-[var(--accent-light)] text-[var(--accent)] border-[var(--accent)]/25',
+    cancelled: 'bg-[var(--fill-secondary)] text-[var(--text-muted)] border-[var(--separator)]',
   };
   return map[status] ?? 'bg-[var(--border)] text-[var(--text-muted)] border-[var(--border)]';
 }

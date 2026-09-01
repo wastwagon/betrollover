@@ -11,7 +11,7 @@ export function SegmentedControl<T extends string>({
   options,
   value,
   onChange,
-  className = '',
+  className = 'max-w-md',
   'aria-label': ariaLabel,
 }: {
   options: SegmentOption<T>[];
@@ -24,7 +24,7 @@ export function SegmentedControl<T extends string>({
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className={`ios-segmented w-full max-w-md ${className}`}
+      className={`ios-segmented w-full ${className}`}
     >
       {options.map((opt) => (
         <button

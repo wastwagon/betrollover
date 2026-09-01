@@ -9,9 +9,11 @@ import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 import { getApiUrl } from '@/lib/site-config';
-import { NavBar } from '@/components/ios/NavBar';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { buttonClassName } from '@/components/ui/Button';
+import { IconShield } from '@/components/ios/icons';
+import { RESULT_CHIP, OUTCOME_TEXT } from '@/lib/result-chip';
+import { SegmentedControl } from '@/components/ios/SegmentedControl';
 
 // Load chart lazily — avoids SSR issues with recharts
 const AreaChart    = dynamic(() => import('recharts').then(m => m.AreaChart), { ssr: false });
@@ -60,21 +62,21 @@ const TX_TYPE_KEYS: Record<string, string> = {
 };
 
 const TX_COLOR: Record<string, string> = {
-  payout:     'text-emerald-600',
-  commission: 'text-amber-600',
-  refund:     'text-amber-600',
-  deposit:    'text-blue-600',
-  withdrawal: 'text-red-500',
-  purchase:   'text-slate-500',
-  credit:     'text-teal-600',
-  adjustment: 'text-red-500',
+  payout:     OUTCOME_TEXT.positive,
+  commission: 'text-[var(--accent)]',
+  refund:     'text-[var(--accent)]',
+  deposit:    'text-[var(--primary)]',
+  withdrawal: OUTCOME_TEXT.negative,
+  purchase:   OUTCOME_TEXT.muted,
+  credit:     'text-[var(--primary)]',
+  adjustment: OUTCOME_TEXT.negative,
 };
 
 const RESULT_STYLE: Record<string, string> = {
-  won:     'bg-emerald-100 text-emerald-700',
-  lost:    'bg-red-100 text-red-700',
-  pending: 'bg-amber-50 text-amber-700',
-  void:    'bg-gray-100 text-gray-500',
+  won:     RESULT_CHIP.won,
+  lost:    RESULT_CHIP.lost,
+  pending: RESULT_CHIP.pending,
+  void:    RESULT_CHIP.void,
 };
 
 const SPORT_META: Record<string, { icon: string }> = {
@@ -235,21 +237,11 @@ export default function EarningsPage() {
       <UnifiedHeader />
       <main className="section-ux-page w-full min-w-0 max-w-full">
         <PullToRefresh onRefresh={loadEarnings} disabled={loading}>
-        <div className="lg:hidden -mx-4 sm:mx-0 mb-3">
-          <NavBar
-            title={t('earnings.title')}
-            backHref="/dashboard"
-            backLabel={t('nav.dashboard')}
-            sticky={false}
-          />
-        </div>
-        <div className="hidden lg:block">
-          <PageHeader
-            label={t('earnings.title')}
-            title={t('earnings.subtitle')}
-            tagline={t('earnings.track_desc_full')}
-          />
-        </div>
+        <PageHeader
+          label={t('earnings.title')}
+          title={t('earnings.subtitle')}
+          tagline={t('earnings.track_desc_full')}
+        />
 
         <div className="mb-6">
           <AdSlot zoneSlug="earnings-full" fullWidth className="w-full max-w-3xl" />
@@ -264,13 +256,13 @@ export default function EarningsPage() {
               <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('seller_payout.buyer_pays')}</p>
               <p className="font-bold text-[var(--text)]">{t('earnings.fee_how_100')}</p>
             </div>
-            <div className="rounded-xl bg-emerald-50/80 dark:bg-emerald-900/20 border border-emerald-200/60 dark:border-emerald-800/40 px-3 py-2">
-              <p className="text-[10px] uppercase text-emerald-700 dark:text-emerald-300">{t('seller_payout.you_get')}</p>
-              <p className="font-bold text-emerald-700 dark:text-emerald-300">70%</p>
+            <div className="rounded-xl bg-[var(--success-light)] border border-[var(--success)]/25 px-3 py-2">
+              <p className="text-[10px] uppercase text-[var(--success)]">{t('seller_payout.you_get')}</p>
+              <p className="font-bold text-[var(--success)]">70%</p>
             </div>
-            <div className="rounded-xl bg-amber-50/80 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-800/40 px-3 py-2">
-              <p className="text-[10px] uppercase text-amber-700 dark:text-amber-300">{t('seller_payout.platform')}</p>
-              <p className="font-bold text-amber-700 dark:text-amber-300">30%</p>
+            <div className="rounded-xl bg-[var(--accent-light)] border border-[var(--accent)]/25 px-3 py-2">
+              <p className="text-[10px] uppercase text-[var(--accent)]">{t('seller_payout.platform')}</p>
+              <p className="font-bold text-[var(--accent)]">30%</p>
             </div>
           </div>
         </div>
@@ -287,13 +279,13 @@ export default function EarningsPage() {
 
           <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm min-w-0">
             <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{t('earnings.net_earned')}</p>
-            <p className="text-lg font-semibold text-emerald-600">GHS {totalEarned.toFixed(2)}</p>
+            <p className="text-lg font-semibold text-[var(--success)]">GHS {totalEarned.toFixed(2)}</p>
             <p className="text-xs text-[var(--text-muted)] mt-1">{t('earnings.from_payouts', { n: String(transactions.filter(tx => tx.type === 'payout').length) })}</p>
           </div>
 
           <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm min-w-0">
             <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{t('earnings.platform_fee')}</p>
-            <p className="text-lg font-semibold text-amber-600">GHS {totalCommissionDeducted.toFixed(2)}</p>
+            <p className="text-lg font-semibold text-[var(--accent)]">GHS {totalCommissionDeducted.toFixed(2)}</p>
             <p className="text-xs text-[var(--text-muted)] mt-1">
               {totalGross > 0
                 ? t('earnings.gross_pct', { pct: ((totalCommissionDeducted / totalGross) * 100).toFixed(1), gross: totalGross.toFixed(2) })
@@ -305,26 +297,26 @@ export default function EarningsPage() {
             <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{t('earnings.withdrawn')}</p>
             <p className="text-lg font-semibold text-[var(--text)]">GHS {totalWithdrawn.toFixed(2)}</p>
             {pendingWithdrawal > 0 && (
-              <p className="text-xs text-amber-600 mt-1">⏳ GHS {pendingWithdrawal.toFixed(2)} {t('earnings.pending')}</p>
+              <p className="text-xs text-[var(--accent)] mt-1">GHS {pendingWithdrawal.toFixed(2)} {t('earnings.pending')}</p>
             )}
           </div>
         </div>
 
         {/* ── Payout breakdown banner (only shown when commission exists) ── */}
         {totalCommissionDeducted > 0 && (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 dark:bg-amber-900/10 dark:border-amber-800/40 px-5 py-3.5 mb-8 flex flex-wrap items-center gap-4 text-sm min-w-0">
-            <span className="text-amber-600 text-base shrink-0">🏛</span>
+          <div className="rounded-2xl border border-[var(--accent)]/30 bg-[var(--accent-light)] px-5 py-3.5 mb-8 flex flex-wrap items-center gap-4 text-sm min-w-0">
+            <IconShield className="w-5 h-5 text-[var(--accent)] shrink-0" />
             <div className="flex-1 min-w-0">
-              <span className="font-semibold text-amber-800 dark:text-amber-300">{t('earnings.gross_revenue')}: GHS {totalGross.toFixed(2)}</span>
-              <span className="text-amber-600 dark:text-amber-400 mx-2">−</span>
-              <span className="text-amber-700 dark:text-amber-400">{t('earnings.platform_fee_label')} GHS {totalCommissionDeducted.toFixed(2)}</span>
-              <span className="text-amber-600 dark:text-amber-400 mx-2">=</span>
-              <span className="font-semibold text-emerald-600">{t('earnings.net_payout')} GHS {totalEarned.toFixed(2)}</span>
+              <span className="font-semibold text-[var(--text)]">{t('earnings.gross_revenue')}: GHS {totalGross.toFixed(2)}</span>
+              <span className="text-[var(--text-muted)] mx-2">−</span>
+              <span className="text-[var(--text)]">{t('earnings.platform_fee_label')} GHS {totalCommissionDeducted.toFixed(2)}</span>
+              <span className="text-[var(--text-muted)] mx-2">=</span>
+              <span className="font-semibold text-[var(--success)]">{t('earnings.net_payout')} GHS {totalEarned.toFixed(2)}</span>
             </div>
             <button
               type="button"
               onClick={() => setTxFilter('commission')}
-              className="w-full sm:w-auto text-xs text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700 rounded-lg px-3 py-1 hover:bg-amber-100 dark:hover:bg-amber-800/30 transition-colors text-center"
+              className="w-full sm:w-auto text-xs text-[var(--accent)] border border-[var(--accent)]/40 rounded-lg px-3 py-1 hover:bg-[var(--card)] transition-colors text-center"
             >
               {t('earnings.view_fee_breakdown')}
             </button>
@@ -385,7 +377,7 @@ export default function EarningsPage() {
                           </p>
                         </div>
                         <div className="text-right shrink-0 tabular-nums">
-                          <p className="text-sm font-bold text-emerald-600">GHS {revenue.toFixed(2)}</p>
+                          <p className="text-sm font-bold text-[var(--success)]">GHS {revenue.toFixed(2)}</p>
                           <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${RESULT_STYLE[c.result ?? 'pending']}`}>
                             {c.result ? t(`earnings.result_${c.result}` as 'earnings.result_won') : t('earnings.result_pending')}
                           </span>
@@ -406,10 +398,10 @@ export default function EarningsPage() {
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="flex">
                     {[1,2,3,4,5].map(s => (
-                      <span key={s} className={`text-sm ${s <= Math.round(reviewSummary.avg) ? 'text-amber-400' : 'text-gray-300'}`}>★</span>
+                      <span key={s} className={`text-sm ${s <= Math.round(reviewSummary.avg) ? 'text-[var(--accent)]' : 'text-[var(--separator)]'}`}>★</span>
                     ))}
                   </span>
-                  <span className="text-sm font-bold text-amber-500">{reviewSummary.avg}</span>
+                  <span className="text-sm font-bold text-[var(--accent)]">{reviewSummary.avg}</span>
                   <span className="text-xs text-[var(--text-muted)]">({reviewSummary.total} {reviewSummary.total !== 1 ? t('earnings.reviews') : t('earnings.review')})</span>
                 </div>
               )}
@@ -419,10 +411,10 @@ export default function EarningsPage() {
               {[
                 { label: t('earnings.total_picks'), value: publishedPicks.length },
                 { label: t('earnings.active'), value: publishedPicks.filter(c => c.status === 'active' && c.result === 'pending').length },
-                { label: t('earnings.won'), value: publishedPicks.filter(c => c.result === 'won').length, color: 'text-emerald-600' },
-                { label: t('earnings.lost'), value: publishedPicks.filter(c => c.result === 'lost').length, color: 'text-red-500' },
+                { label: t('earnings.won'), value: publishedPicks.filter(c => c.result === 'won').length, color: OUTCOME_TEXT.positive },
+                { label: t('earnings.lost'), value: publishedPicks.filter(c => c.result === 'lost').length, color: OUTCOME_TEXT.negative },
                 { label: t('earnings.free'), value: publishedPicks.filter(c => Number(c.price) === 0).length },
-                { label: t('earnings.paid'), value: publishedPicks.filter(c => Number(c.price) > 0).length, color: 'text-amber-600' },
+                { label: t('earnings.paid'), value: publishedPicks.filter(c => Number(c.price) > 0).length, color: 'text-[var(--accent)]' },
               ].map(({ label, value, color }) => (
                 <div key={label} className="rounded-xl bg-[var(--bg)] border border-[var(--border)] p-3 text-center">
                   <p className={`text-xl font-bold ${color ?? 'text-[var(--text)]'}`}>{value}</p>
@@ -442,12 +434,12 @@ export default function EarningsPage() {
                     <div>
                       <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between mb-1 min-w-0">
                         <span className="text-xs text-[var(--text-muted)] min-w-0">{won}W / {settled.length - won}L</span>
-                        <span className="text-sm font-bold text-emerald-600 shrink-0 tabular-nums">{settled.length > 0 ? `${rate.toFixed(1)}%` : '—'}</span>
+                        <span className="text-sm font-bold text-[var(--success)] shrink-0 tabular-nums">{settled.length > 0 ? `${rate.toFixed(1)}%` : '—'}</span>
                       </div>
                       {settled.length > 0 && (
                         <div className="h-2 rounded-full bg-[var(--border)] overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-emerald-500 transition-all"
+                            className="h-full rounded-full bg-[var(--success)] transition-all"
                             style={{ width: `${Math.min(rate, 100)}%` }}
                           />
                         </div>
@@ -479,27 +471,18 @@ export default function EarningsPage() {
         <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-hidden shadow-sm min-w-0">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between px-5 py-4 border-b border-[var(--border)] min-w-0">
             <h2 className="text-sm font-semibold text-[var(--text)] min-w-0">{t('earnings.tx_history')}</h2>
-            <div className="flex flex-wrap gap-1.5">
-              {([
-                { key: 'all',        label: t('earnings.filter_all') },
-                { key: 'payout',     label: t('earnings.filter_payouts') },
-                { key: 'commission', label: t('earnings.filter_fees') },
-                { key: 'withdrawal', label: t('earnings.filter_withdrawals') },
-              ] as const).map(({ key, label }) => (
-                <button
-                  type="button"
-                  key={key}
-                  onClick={() => setTxFilter(key)}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
-                    txFilter === key
-                      ? 'bg-[var(--primary)] text-white'
-                      : 'bg-[var(--bg)] text-[var(--text-muted)] border border-[var(--border)] hover:text-[var(--text)]'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              aria-label={t('earnings.tx_history')}
+              className="max-w-none"
+              options={[
+                { value: 'all' as const, label: t('earnings.filter_all') },
+                { value: 'payout' as const, label: t('earnings.filter_payouts') },
+                { value: 'commission' as const, label: t('earnings.filter_fees') },
+                { value: 'withdrawal' as const, label: t('earnings.filter_withdrawals') },
+              ]}
+              value={txFilter}
+              onChange={setTxFilter}
+            />
           </div>
 
           {filteredTx.length === 0 ? (
@@ -528,7 +511,7 @@ export default function EarningsPage() {
                 const amtMag = Math.abs(rawAmt);
                 const amtSign = isPlatformFee ? '−' : rawAmt > 0 ? '+' : '−';
                 return (
-                  <li key={tx.id} className={`flex items-center gap-4 px-5 py-3.5 min-w-0 ${isPlatformFee ? 'bg-amber-50/40 dark:bg-amber-900/5' : ''}`}>
+                  <li key={tx.id} className={`flex items-center gap-4 px-5 py-3.5 min-w-0 ${isPlatformFee ? 'bg-[var(--accent-light)]' : ''}`}>
                     <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-[var(--fill-secondary)] border border-[var(--separator)]">
                       <span className={`text-xs font-bold uppercase ${colorClass}`}>
                         {(displayType.slice(0, 1) || '?')}
@@ -553,13 +536,13 @@ export default function EarningsPage() {
                       )}
                     </div>
                     <div className="text-right shrink-0 tabular-nums">
-                      <p className={`text-sm font-bold tabular-nums ${isCredit ? 'text-emerald-600' : isPlatformFee ? 'text-amber-600' : colorClass}`}>
+                      <p className={`text-sm font-bold tabular-nums ${isCredit ? OUTCOME_TEXT.positive : isPlatformFee ? 'text-[var(--accent)]' : colorClass}`}>
                         {amtSign}GHS {amtMag.toFixed(2)}
                       </p>
                       <p className={`text-[10px] capitalize mt-0.5 ${
-                        tx.status === 'completed' ? (isPlatformFee ? 'text-amber-600' : 'text-emerald-600')
-                          : tx.status === 'pending' || tx.status === 'processing' ? 'text-amber-600'
-                          : tx.status === 'failed' ? 'text-red-500'
+                        tx.status === 'completed' ? (isPlatformFee ? 'text-[var(--accent)]' : OUTCOME_TEXT.positive)
+                          : tx.status === 'pending' || tx.status === 'processing' ? 'text-[var(--accent)]'
+                          : tx.status === 'failed' ? OUTCOME_TEXT.negative
                           : 'text-[var(--text-muted)]'
                       }`}>
                         {isPlatformFee ? t('earnings.deducted') : tx.status}

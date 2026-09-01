@@ -12,6 +12,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { buttonClassName } from '@/components/ui/Button';
+import { fieldControlClassName } from '@/components/ui/Input';
+import { DiscoverFamilyNav } from '@/components/DiscoverFamilyNav';
 import { getApiUrl } from '@/lib/site-config';
 import {
   CONTENT_SPORT_KEYS,
@@ -35,10 +37,10 @@ interface NewsArticle {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  news:                'bg-blue-100 text-blue-700',
-  transfer_rumour:     'bg-amber-100 text-amber-700',
-  confirmed_transfer:  'bg-emerald-100 text-emerald-700',
-  injury:              'bg-red-100 text-red-700',
+  news:                'bg-[var(--fill-secondary)] text-[var(--text)]',
+  transfer_rumour:     'bg-[var(--accent-light)] text-[var(--accent)]',
+  confirmed_transfer:  'bg-[var(--success-light)] text-[var(--success)]',
+  injury:              'bg-[var(--destructive-light)] text-[var(--destructive)]',
   gossip:              'bg-[var(--accent-light)] text-[var(--accent)]',
 };
 
@@ -113,6 +115,7 @@ function NewsContent({
           title={t('news.page_title')}
           tagline={t('news.page_tagline')}
         />
+        <DiscoverFamilyNav current="news" />
 
         {/* Sport filter row */}
         <div className="mb-5 w-full min-w-0 overflow-hidden">
@@ -135,24 +138,26 @@ function NewsContent({
           </div>
         </div>
 
-        {/* Category sub-filter */}
-        <div className="mb-8 w-full min-w-0 overflow-hidden">
-        <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
-          {CATEGORY_KEYS.map(tabKey => (
-            <button
-              key={tabKey}
-              type="button"
-              onClick={() => { setActiveCategory(tabKey); pushUrl(tabKey, activeSport); }}
-              className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-                activeCategory === tabKey
-                  ? 'bg-[var(--primary)] text-white shadow-sm'
-                  : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
-              }`}
-            >
-              {getCategoryLabel(t, tabKey)}
-            </button>
-          ))}
-        </div>
+        <div className="mb-8 w-full min-w-0 max-w-md">
+          <label htmlFor="news-category" className="block text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">
+            {t('news.filter_by_category')}
+          </label>
+          <select
+            id="news-category"
+            value={activeCategory}
+            onChange={(e) => {
+              const next = e.target.value as NewsCategory;
+              setActiveCategory(next);
+              pushUrl(next, activeSport);
+            }}
+            className={fieldControlClassName()}
+          >
+            {CATEGORY_KEYS.map((tabKey) => (
+              <option key={tabKey} value={tabKey}>
+                {getCategoryLabel(t, tabKey)}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Main layout — articles + sidebar */}
@@ -191,7 +196,7 @@ function NewsContent({
                       className="flex flex-col sm:flex-row gap-4 p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--primary)]/30 transition-colors group"
                     >
                       {article.imageUrl && (
-                        <div className="sm:w-44 h-32 sm:h-auto flex-shrink-0 rounded-xl overflow-hidden bg-slate-100">
+                        <div className="sm:w-44 h-32 sm:h-auto flex-shrink-0 rounded-xl overflow-hidden bg-[var(--fill-secondary)]">
                           <Image
                             src={article.imageUrl} alt={article.title}
                             width={176} height={120}
@@ -202,7 +207,7 @@ function NewsContent({
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-2">
-                          <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${CATEGORY_COLORS[article.category] ?? 'bg-slate-100 text-slate-600'}`}>
+                          <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${CATEGORY_COLORS[article.category] ?? 'bg-[var(--fill-secondary)] text-[var(--text-muted)]'}`}>
                             {getCategoryLabel(t, article.category as NewsCategory)}
                           </span>
                           {article.sport && !activeSport && (

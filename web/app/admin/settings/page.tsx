@@ -7,6 +7,7 @@ import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { buttonClassName } from '@/components/ui/Button';
+import { Input, Field, fieldControlClassName } from '@/components/ui/Input';
 import { ACCA_GENERATOR_LEGS_MAX, ACCA_GENERATOR_LEGS_MIN } from '@betrollover/shared-types';
 
 interface Settings {
@@ -110,6 +111,7 @@ export default function AdminSettingsPage() {
   const [paystackPublicKey, setPaystackPublicKey] = useState('');
   const [paystackMode, setPaystackMode] = useState<'live' | 'test'>('live');
   const [paystackConfigured, setPaystackConfigured] = useState(false);
+  const [paystackTransfersEnabled, setPaystackTransfersEnabled] = useState(false);
   const [paystackSaving, setPaystackSaving] = useState(false);
   const [paystackSaveResult, setPaystackSaveResult] = useState<{ success: boolean; message: string } | null>(null);
 
@@ -223,6 +225,7 @@ export default function AdminSettingsPage() {
         setPaystackPublicKey(data.publicKey || '');
         setPaystackMode((data.mode || 'live') as 'live' | 'test');
         setPaystackConfigured(data.configured || false);
+        setPaystackTransfersEnabled(data.transfersEnabled === true);
       }
     } catch (e) {
       console.error('Failed to load Paystack settings:', e);
@@ -645,7 +648,7 @@ export default function AdminSettingsPage() {
                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200'
                             : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
                         }`}>
-                          {settings.apiSportsConfigured ? '✓ Active' : '⚠ Not Configured'}
+                          {settings.apiSportsConfigured ? 'Active' : 'Not configured'}
                         </span>
                       </div>
                     </div>
@@ -659,12 +662,13 @@ export default function AdminSettingsPage() {
                       API Key
                     </label>
                     <div className="relative">
-                      <input
+                      <Input
+                        id="admin-api-key"
                         type={showApiKey ? 'text' : 'password'}
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
                         placeholder="Enter your API-Sports API key"
-                        className="w-full px-4 py-3 pr-12 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
+                        className="pr-12"
                       />
                       <button
                         type="button"
@@ -815,21 +819,15 @@ export default function AdminSettingsPage() {
                 </div>
                 <div className="space-y-3">
                   <div className="rounded-xl border-2 border-emerald-200/80 dark:border-emerald-800/80 bg-white/80 dark:bg-gray-800/80 p-4 space-y-2">
-                    <label htmlFor="admin-notification-inbox" className="block text-sm font-semibold text-gray-800 dark:text-gray-200">
-                      Admin notification inbox
-                    </label>
-                    <input
+                    <Input
                       id="admin-notification-inbox"
+                      label="Admin notification inbox"
                       type="email"
                       value={adminNotificationEmail}
                       onChange={(e) => setAdminNotificationEmail(e.target.value)}
                       placeholder="ops@yourcompany.com"
-                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      hint="Receives system alerts (withdrawals, support tickets, etc.) in addition to every user with the admin role. Optional: set ADMIN_NOTIFICATION_EMAIL on the server (comma-separated)."
                     />
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      Receives system alerts (withdrawals, support tickets, etc.) in addition to every user with the admin role. Optional: set{' '}
-                      <code className="text-[11px] bg-gray-100 dark:bg-gray-700 px-1 rounded">ADMIN_NOTIFICATION_EMAIL</code> on the server (comma-separated).
-                    </p>
                     {adminNotificationEmailMsg && (
                       <p
                         role="status"
@@ -847,12 +845,13 @@ export default function AdminSettingsPage() {
                       {savingAdminNotificationEmail ? 'Saving…' : 'Save notification inbox'}
                     </button>
                   </div>
-                  <input
+                  <Input
+                    id="admin-test-email"
                     type="email"
+                    label="Send a test email"
                     value={testEmailTo}
                     onChange={(e) => setTestEmailTo(e.target.value)}
                     placeholder="Enter email to receive test"
-                    className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                   {testEmailResult && (
                     <div
@@ -910,52 +909,62 @@ export default function AdminSettingsPage() {
                   <div>
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Paystack Payment Gateway</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                      Configure Paystack API keys for wallet deposits and withdrawals (GHS, Mobile Money, cards).
+                      Configure Paystack API keys for wallet deposits. Instant Ghana Mobile Money payouts (Transfers) stay off until you enable them below — Paystack Starter businesses cannot send third-party payouts. After you are a Registered Business: enable Transfers, uncheck “Confirm transfers” (OTP), and subscribe the webhook to charge.success plus transfer.success, transfer.failed, and transfer.reversed.
                     </p>
                     <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${
                       paystackConfigured
                         ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200'
                         : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
                     }`}>
-                      {paystackConfigured ? '✓ Configured' : '⚠ Not Configured'}
+                      {paystackConfigured ? 'Configured' : 'Not configured'}
                     </span>
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mode</label>
+                  <Field label="Mode" htmlFor="paystack-mode">
                     <select
+                      id="paystack-mode"
                       value={paystackMode}
                       onChange={(e) => setPaystackMode(e.target.value as 'live' | 'test')}
-                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white"
+                      className={fieldControlClassName()}
                     >
                       <option value="live">Live</option>
                       <option value="test">Test</option>
                     </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Secret Key (sk_live_... or sk_test_...)</label>
-                    <input
-                      type="password"
-                      value={paystackSecretKey}
-                      onChange={(e) => setPaystackSecretKey(e.target.value)}
-                      placeholder="sk_live_xxxx or sk_test_xxxx"
-                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Public Key (pk_live_... or pk_test_...)</label>
-                    <input
-                      type="password"
-                      value={paystackPublicKey}
-                      onChange={(e) => setPaystackPublicKey(e.target.value)}
-                      placeholder="pk_live_xxxx or pk_test_xxxx"
-                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500"
-                    />
-                  </div>
+                  </Field>
+                  <Input
+                    id="paystack-secret"
+                    type="password"
+                    label="Secret Key (sk_live_... or sk_test_...)"
+                    value={paystackSecretKey}
+                    onChange={(e) => setPaystackSecretKey(e.target.value)}
+                    placeholder="sk_live_xxxx or sk_test_xxxx"
+                  />
+                  <Input
+                    id="paystack-public"
+                    type="password"
+                    label="Public Key (pk_live_... or pk_test_...)"
+                    value={paystackPublicKey}
+                    onChange={(e) => setPaystackPublicKey(e.target.value)}
+                    placeholder="pk_live_xxxx or pk_test_xxxx"
+                  />
                   <p className="text-xs text-gray-600 dark:text-gray-400">
                     Get keys from <a href="https://dashboard.paystack.com/#/settings/developers" target="_blank" rel="noopener noreferrer" className="text-red-600 dark:text-red-400 underline">Paystack Dashboard</a>. Leave blank to keep existing. .env PAYSTACK_SECRET_KEY is used as fallback if not set here.
                   </p>
+                  <label className="flex items-start gap-2 text-sm text-gray-800 dark:text-gray-200">
+                    <input
+                      type="checkbox"
+                      checked={paystackTransfersEnabled}
+                      onChange={(e) => setPaystackTransfersEnabled(e.target.checked)}
+                      className="mt-0.5 rounded border-gray-300"
+                    />
+                    <span>
+                      <span className="font-semibold">Enable instant Mobile Money payouts</span>
+                      <span className="block text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                        Uses Paystack Transfers. Leave off on a Starter account — withdrawals stay on the admin manual queue. Turn on only after Paystack has approved a Registered Business.
+                      </span>
+                    </span>
+                  </label>
                   {paystackSaveResult && (
                     <div className={`p-4 rounded-xl text-sm font-medium ${
                       paystackSaveResult.success
@@ -979,12 +988,14 @@ export default function AdminSettingsPage() {
                             secretKey: paystackSecretKey || undefined,
                             publicKey: paystackPublicKey || undefined,
                             mode: paystackMode,
+                            transfersEnabled: paystackTransfersEnabled,
                           }),
                         });
                         const data = await res.json().catch(() => ({}));
                         if (res.ok) {
                           setPaystackSaveResult({ success: true, message: 'Paystack settings saved.' });
                           setPaystackConfigured(data.configured || false);
+                          setPaystackTransfersEnabled(data.transfersEnabled === true);
                         } else {
                           setPaystackSaveResult({ success: false, message: getApiErrorMessage(data, 'Failed to save') });
                         }
@@ -1285,16 +1296,16 @@ export default function AdminSettingsPage() {
                     listings when <strong>AI pick price</strong> is greater than zero.
                   </p>
                   <div className="flex items-center gap-3 mb-4">
-                    <input
+                    <Input
+                      id="admin-min-roi"
                       type="number"
                       min="0"
                       max="1000"
                       step="0.1"
                       value={minimumROI}
                       onChange={(e) => setMinimumROI(parseFloat(e.target.value) || 0)}
-                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                     />
-                    <span className="text-gray-600 dark:text-gray-400 font-medium">%</span>
+                    <span className="text-gray-600 dark:text-gray-400 font-medium shrink-0">%</span>
                   </div>
                   <button type="button"
                     onClick={async () => {
@@ -1349,16 +1360,16 @@ export default function AdminSettingsPage() {
                     until both recover.
                   </p>
                   <div className="flex items-center gap-3 mb-4">
-                    <input
+                    <Input
+                      id="admin-min-winrate"
                       type="number"
                       min="0"
                       max="100"
                       step="1"
                       value={minimumWinRate}
                       onChange={(e) => setMinimumWinRate(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
-                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
-                    <span className="text-gray-600 dark:text-gray-400 font-medium">%</span>
+                    <span className="text-gray-600 dark:text-gray-400 font-medium shrink-0">%</span>
                   </div>
                   <button type="button"
                     onClick={async () => {
@@ -1413,7 +1424,8 @@ export default function AdminSettingsPage() {
                   </p>
                   <div className="flex items-center gap-3 mb-4">
                     <span className="text-gray-600 dark:text-gray-400 font-medium shrink-0">GHS</span>
-                    <input
+                    <Input
+                      id="admin-ai-price"
                       type="number"
                       min="0"
                       max="10000"
@@ -1422,7 +1434,6 @@ export default function AdminSettingsPage() {
                       onChange={(e) =>
                         setAiMarketplaceCouponPrice(Math.min(10000, Math.max(0, parseFloat(e.target.value) || 0)))
                       }
-                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                     />
                   </div>
                   <button type="button"
@@ -1487,7 +1498,8 @@ export default function AdminSettingsPage() {
                     <strong>min API confidence</strong>, odds band, leagues, and bet types (see config). Does not change human tipster limits.
                   </p>
                   <div className="flex items-center gap-3 mb-4">
-                    <input
+                    <Input
+                      id="admin-ai-max-day"
                       type="number"
                       min={1}
                       max={50}
@@ -1496,9 +1508,8 @@ export default function AdminSettingsPage() {
                       onChange={(e) =>
                         setAiMaxCouponsPerDay(Math.min(50, Math.max(1, parseInt(e.target.value, 10) || 1)))
                       }
-                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
                     />
-                    <span className="text-gray-600 dark:text-gray-400 font-medium whitespace-nowrap">/ tipster / day</span>
+                    <span className="text-gray-600 dark:text-gray-400 font-medium whitespace-nowrap shrink-0">/ tipster / day</span>
                   </div>
                   <button
                     type="button"
@@ -1551,16 +1562,16 @@ export default function AdminSettingsPage() {
                     AI tipsters use the separate <strong>AI tipsters — picks per day</strong> setting above.
                   </p>
                   <div className="flex items-center gap-3 mb-4">
-                    <input
+                    <Input
+                      id="admin-human-max-day"
                       type="number"
                       min="0"
                       max="500"
                       step="1"
                       value={maxCouponsPerDay}
                       onChange={(e) => setMaxCouponsPerDay(Math.min(500, Math.max(0, parseInt(e.target.value, 10) || 0)))}
-                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                     />
-                    <span className="text-gray-600 dark:text-gray-400 font-medium whitespace-nowrap">/ day</span>
+                    <span className="text-gray-600 dark:text-gray-400 font-medium whitespace-nowrap shrink-0">/ day</span>
                   </div>
                   <button type="button"
                     onClick={async () => {
@@ -1633,53 +1644,47 @@ export default function AdminSettingsPage() {
                     Feature enabled
                   </label>
                   <div className="grid gap-3 sm:grid-cols-3 mb-4">
-                    <label className="text-sm">
-                      <span className="block mb-1 text-gray-600 dark:text-gray-400">Min legs</span>
-                      <input
-                        type="number"
-                        min={ACCA_GENERATOR_LEGS_MIN}
-                        max={accaLegsCeiling}
-                        value={accaMinLegs}
-                        onChange={(e) =>
-                          setAccaMinLegs(
-                            Math.min(
-                              accaLegsCeiling,
-                              Math.max(ACCA_GENERATOR_LEGS_MIN, parseInt(e.target.value, 10) || ACCA_GENERATOR_LEGS_MIN),
-                            ),
-                          )
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      />
-                    </label>
-                    <label className="text-sm">
-                      <span className="block mb-1 text-gray-600 dark:text-gray-400">Max legs</span>
-                      <input
-                        type="number"
-                        min={ACCA_GENERATOR_LEGS_MIN}
-                        max={accaLegsCeiling}
-                        value={accaMaxLegs}
-                        onChange={(e) =>
-                          setAccaMaxLegs(
-                            Math.min(
-                              accaLegsCeiling,
-                              Math.max(ACCA_GENERATOR_LEGS_MIN, parseInt(e.target.value, 10) || ACCA_GENERATOR_LEGS_MIN),
-                            ),
-                          )
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      />
-                    </label>
-                    <label className="text-sm">
-                      <span className="block mb-1 text-gray-600 dark:text-gray-400">Generations / UTC day</span>
-                      <input
-                        type="number"
-                        min={0}
-                        max={500}
-                        value={accaDailyGenerations}
-                        onChange={(e) => setAccaDailyGenerations(Math.min(500, Math.max(0, parseInt(e.target.value, 10) || 0)))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      />
-                    </label>
+                    <Input
+                      id="acca-min-legs"
+                      label="Min legs"
+                      type="number"
+                      min={ACCA_GENERATOR_LEGS_MIN}
+                      max={accaLegsCeiling}
+                      value={accaMinLegs}
+                      onChange={(e) =>
+                        setAccaMinLegs(
+                          Math.min(
+                            accaLegsCeiling,
+                            Math.max(ACCA_GENERATOR_LEGS_MIN, parseInt(e.target.value, 10) || ACCA_GENERATOR_LEGS_MIN),
+                          ),
+                        )
+                      }
+                    />
+                    <Input
+                      id="acca-max-legs"
+                      label="Max legs"
+                      type="number"
+                      min={ACCA_GENERATOR_LEGS_MIN}
+                      max={accaLegsCeiling}
+                      value={accaMaxLegs}
+                      onChange={(e) =>
+                        setAccaMaxLegs(
+                          Math.min(
+                            accaLegsCeiling,
+                            Math.max(ACCA_GENERATOR_LEGS_MIN, parseInt(e.target.value, 10) || ACCA_GENERATOR_LEGS_MIN),
+                          ),
+                        )
+                      }
+                    />
+                    <Input
+                      id="acca-daily-gens"
+                      label="Generations / UTC day"
+                      type="number"
+                      min={0}
+                      max={500}
+                      value={accaDailyGenerations}
+                      onChange={(e) => setAccaDailyGenerations(Math.min(500, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                    />
                   </div>
                   <button
                     type="button"
@@ -1739,16 +1744,16 @@ export default function AdminSettingsPage() {
                     <p className="text-gray-600 dark:text-gray-400">Tipster receives: <span className="font-bold text-emerald-600">GHS {(100 - 100 * commissionRate / 100).toFixed(2)}</span></p>
                   </div>
                   <div className="flex items-center gap-3 mb-4">
-                    <input
+                    <Input
+                      id="admin-commission"
                       type="number"
                       min="0"
                       max="50"
                       step="0.5"
                       value={commissionRate}
                       onChange={(e) => setCommissionRate(Math.min(50, Math.max(0, parseFloat(e.target.value) || 0)))}
-                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
-                    <span className="text-gray-600 dark:text-gray-400 font-medium">%</span>
+                    <span className="text-gray-600 dark:text-gray-400 font-medium shrink-0">%</span>
                   </div>
                   <button type="button"
                     onClick={async () => {

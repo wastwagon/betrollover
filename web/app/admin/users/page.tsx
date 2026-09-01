@@ -9,6 +9,7 @@ import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/sit
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 import { Button, buttonClassName } from '@/components/ui/Button';
+import { Input, fieldControlClassName } from '@/components/ui/Input';
 
 const API_URL = getApiUrl();
 
@@ -268,18 +269,23 @@ export default function AdminUsersPage() {
         )}
 
         <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mb-6">
-          <input
-            type="text"
-            placeholder="Search by email, username..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            onKeyDown={(e) => e.key === 'Enter' && load()}
-            className="w-full min-w-0 sm:flex-1 sm:max-w-md px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent shadow-sm"
-          />
+          <div className="w-full min-w-0 sm:flex-1 sm:max-w-md">
+            <Input
+              id="admin-users-search"
+              type="text"
+              placeholder="Search by email, username..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              onKeyDown={(e) => e.key === 'Enter' && load()}
+              aria-label="Search users"
+            />
+          </div>
           <select
+            id="admin-users-role"
             value={roleFilter}
             onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
-            className="w-full sm:w-auto min-w-0 px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent shadow-sm"
+            className={fieldControlClassName(undefined, 'sm:w-auto')}
+            aria-label="Filter by role"
           >
             <option value="">All roles</option>
             <option value="user">User</option>

@@ -7,18 +7,13 @@ import type { Metadata } from 'next';
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
-  const title = locale === 'fr' ? `Conditions d'Utilisation` : `Terms of Service`;
-  const description = locale === 'fr'
-    ? `Lisez les Conditions d'Utilisation de ${SITE_NAME} — les règles et l'accord utilisateur régissant l'utilisation de notre marketplace de tipsters éducative.`
-    : `Read the ${SITE_NAME} Terms of Service — the rules, conditions, and user agreement governing use of our educational tipster marketplace.`;
+  const t = buildT(locale);
   return {
-    title,
-    description,
+    title: t('terms.title'),
+    description: t('terms.meta_desc', { site: SITE_NAME }),
     alternates: seoAlternates('/terms', locale),
   };
 }
-
-const EFFECTIVE_DATE = 'February 2025';
 
 export default async function TermsPage() {
   const locale = await getLocale();
@@ -33,7 +28,7 @@ export default async function TermsPage() {
           <PageHeader
             label={t('privacy.legal')}
             title={t('terms.title')}
-            tagline={`${t('privacy.effective')}: ${EFFECTIVE_DATE}`}
+            tagline={`${t('privacy.effective')}: ${t('privacy.effective_date')}`}
           />
           <article className="section-ux-prose min-w-0">
           <div className="prose prose-slate max-w-none min-w-0 text-[var(--text)] space-y-7 sm:space-y-9 leading-relaxed text-sm sm:text-[15px]">
@@ -66,7 +61,7 @@ export default async function TermsPage() {
               className="rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] p-5 sm:p-6 md:p-7 -mx-1 sm:mx-0"
               aria-labelledby="terms-fee-heading"
             >
-              <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">
+              <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[var(--primary)] mb-2">
                 {t('terms.tipster_fee_badge')}
               </p>
               <h2 id="terms-fee-heading" className="text-base sm:text-lg font-semibold mb-3 text-[var(--text)]">
@@ -76,10 +71,10 @@ export default async function TermsPage() {
                 {t('terms.tipster_fee_content')}
               </p>
               <div className="mt-5 flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-3">
-                <span className="inline-flex items-center justify-center rounded-xl bg-white/80 dark:bg-slate-800/80 border border-emerald-500/20 px-3 py-2.5 sm:py-2 text-xs sm:text-sm font-semibold text-emerald-800 dark:text-emerald-200 min-h-[44px] sm:min-h-0">
+                <span className="inline-flex items-center justify-center rounded-xl bg-[var(--success-light)] border border-[var(--success)]/25 px-3 py-2.5 sm:py-2 text-xs sm:text-sm font-semibold text-[var(--success)] min-h-[44px] sm:min-h-0">
                   {t('terms.fee_split_tipster')}
                 </span>
-                <span className="inline-flex items-center justify-center rounded-xl bg-slate-900/5 dark:bg-white/5 border border-[var(--border)] px-3 py-2.5 sm:py-2 text-xs sm:text-sm font-medium text-[var(--text-muted)] min-h-[44px] sm:min-h-0">
+                <span className="inline-flex items-center justify-center rounded-xl bg-[var(--fill-secondary)] border border-[var(--border)] px-3 py-2.5 sm:py-2 text-xs sm:text-sm font-medium text-[var(--text-muted)] min-h-[44px] sm:min-h-0">
                   {t('terms.fee_split_platform')}
                 </span>
               </div>
@@ -134,7 +129,7 @@ export default async function TermsPage() {
               <p>{t('terms.section11_content')}</p>
             </section>
 
-            <div className="p-4 sm:p-5 rounded-2xl bg-[var(--bg-warm,#f8fafc)] dark:bg-slate-900/40 border border-[var(--border)] text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">
+            <div className="p-4 sm:p-5 rounded-2xl bg-[var(--fill-secondary)] border border-[var(--border)] text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">
               {t('terms.questions')}{' '}
               <a href="mailto:legal@betrollover.com" className="text-[var(--primary)] hover:underline">
                 legal@betrollover.com

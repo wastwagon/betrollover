@@ -16,24 +16,15 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ResponsibleGamblingPage() {
-  const locale = await getLocale();
-  const t = buildT(locale);
+  const t = buildT(await getLocale());
 
-  const tips = locale === 'fr'
-    ? [
-        'Fixez un budget personnel avant d\'acheter un pronostic',
-        'Ne tentez jamais de récupérer des pertes en achetant plus de pronostics',
-        'Les pronostics des tipsters sont informatifs — ils ne garantissent aucun résultat',
-        "Ne prenez pas de décisions financières sous stress émotionnel ou influence",
-        "La prédiction sportive doit être traitée comme un divertissement, pas une source de revenus",
-      ]
-    : [
-        'Set a personal budget before purchasing any tipster pick',
-        'Never attempt to recover losses by purchasing more picks',
-        'Tipster picks are informational — they do not guarantee any outcome',
-        'Do not make financial decisions while under emotional stress or influence',
-        'Sports prediction should be treated as entertainment, not a source of income',
-      ];
+  const tips = [
+    t('resp.tip_1'),
+    t('resp.tip_2'),
+    t('resp.tip_3'),
+    t('resp.tip_4'),
+    t('resp.tip_5'),
+  ];
 
   return (
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
@@ -59,18 +50,14 @@ export default async function ResponsibleGamblingPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mt-8 mb-3">
-                {locale === 'fr' ? 'Utiliser Notre Plateforme de Façon Responsable' : 'Using Our Platform Responsibly'}
-              </h2>
+              <h2 className="text-xl font-semibold mt-8 mb-3">{t('resp.using_title')}</h2>
               <ul className="list-disc pl-6 space-y-2">
                 {tips.map((tip) => <li key={tip}>{tip}</li>)}
               </ul>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mt-8 mb-3">
-                {locale === 'fr' ? "Obtenir de l'Aide" : 'Get Help'}
-              </h2>
+              <h2 className="text-xl font-semibold mt-8 mb-3">{t('resp.help_title')}</h2>
               <p>{t('resp.help_desc')}</p>
               <ul className="list-none space-y-2 mt-3">
                 <li>

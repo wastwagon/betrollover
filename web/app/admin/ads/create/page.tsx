@@ -7,6 +7,7 @@ import { AdminSidebar } from '@/components/AdminSidebar';
 
 import { getApiUrl, getAdImageUrl } from '@/lib/site-config';
 import { buttonClassName } from '@/components/ui/Button';
+import { Input, Field, fieldControlClassName } from '@/components/ui/Input';
 
 interface AdZone {
   id: number;
@@ -103,12 +104,12 @@ export default function AdminAdsCreatePage() {
         </Link>
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6">Create Ad Campaign</h1>
         <form onSubmit={submit} className="max-w-2xl space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Zone *</label>
+          <Field label="Zone *" htmlFor="ad-zone">
             <select
+              id="ad-zone"
               value={form.zoneId}
               onChange={(e) => setForm((f) => ({ ...f, zoneId: parseInt(e.target.value, 10) }))}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+              className={fieldControlClassName()}
               required
             >
               <option value={0}>Select zone</option>
@@ -116,28 +117,25 @@ export default function AdminAdsCreatePage() {
                 <option key={z.id} value={z.id}>{z.name} ({z.slug}) - {z.width}×{z.height}</option>
               ))}
             </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Advertiser Name *</label>
-            <input
-              type="text"
-              value={form.advertiserName}
-              onChange={(e) => setForm((f) => ({ ...f, advertiserName: e.target.value }))}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image URL *</label>
-            <input
-              type="text"
-              value={form.imageUrl}
-              onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-              placeholder="https://example.com/ad.jpg or upload below"
-              required
-            />
-            <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          </Field>
+          <Input
+            id="ad-advertiser"
+            label="Advertiser Name *"
+            type="text"
+            value={form.advertiserName}
+            onChange={(e) => setForm((f) => ({ ...f, advertiserName: e.target.value }))}
+            required
+          />
+          <Input
+            id="ad-image"
+            label="Image URL *"
+            type="text"
+            value={form.imageUrl}
+            onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
+            placeholder="https://example.com/ad.jpg or upload below"
+            required
+          />
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
               <label className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 text-sm w-full sm:w-auto">
                 <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleImageUpload} disabled={uploading} />
                 {uploading ? 'Uploading...' : 'Or upload image'}
@@ -145,7 +143,7 @@ export default function AdminAdsCreatePage() {
               <span className="text-xs text-gray-500">JPEG, PNG, WebP, GIF (max 5MB)</span>
             </div>
             {form.imageUrl && (
-              <div className="mt-2 p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+              <div className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Preview:</p>
                 <div className="relative w-full max-w-[300px] aspect-[300/250] bg-gray-200 dark:bg-gray-800 rounded overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -160,77 +158,66 @@ export default function AdminAdsCreatePage() {
                 </div>
               </div>
             )}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Target URL *</label>
-            <input
-              type="url"
-              value={form.targetUrl}
-              onChange={(e) => setForm((f) => ({ ...f, targetUrl: e.target.value }))}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-              required
+          <Input
+            id="ad-target"
+            label="Target URL *"
+            type="url"
+            value={form.targetUrl}
+            onChange={(e) => setForm((f) => ({ ...f, targetUrl: e.target.value }))}
+            required
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              id="ad-cpc"
+              label="Cost per Click (CPC)"
+              type="number"
+              min={0}
+              step={0.01}
+              value={form.costPerClick}
+              onChange={(e) => setForm((f) => ({ ...f, costPerClick: parseFloat(e.target.value) || 0 }))}
+              placeholder="0.00"
+              hint="Amount charged per click (e.g. GHS)"
+            />
+            <Input
+              id="ad-cpm"
+              label="Cost per 1000 Impressions (CPM)"
+              type="number"
+              min={0}
+              step={0.01}
+              value={form.costPerMille}
+              onChange={(e) => setForm((f) => ({ ...f, costPerMille: parseFloat(e.target.value) || 0 }))}
+              placeholder="0.00"
+              hint="Amount per 1000 impressions"
             />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cost per Click (CPC)</label>
-              <input
-                type="number"
-                min={0}
-                step={0.01}
-                value={form.costPerClick}
-                onChange={(e) => setForm((f) => ({ ...f, costPerClick: parseFloat(e.target.value) || 0 }))}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-                placeholder="0.00"
-              />
-              <p className="text-xs text-gray-500 mt-0.5">Amount charged per click (e.g. GHS)</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cost per 1000 Impressions (CPM)</label>
-              <input
-                type="number"
-                min={0}
-                step={0.01}
-                value={form.costPerMille}
-                onChange={(e) => setForm((f) => ({ ...f, costPerMille: parseFloat(e.target.value) || 0 }))}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-                placeholder="0.00"
-              />
-              <p className="text-xs text-gray-500 mt-0.5">Amount per 1000 impressions</p>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+          <Field label="Status" htmlFor="ad-status">
             <select
+              id="ad-status"
               value={form.status}
               onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+              className={fieldControlClassName()}
             >
               <option value="draft">Draft (hidden from site)</option>
               <option value="active">Active (visible)</option>
             </select>
-          </div>
+          </Field>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date *</label>
-              <input
-                type="date"
-                value={form.startDate}
-                onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Date *</label>
-              <input
-                type="date"
-                value={form.endDate}
-                onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-                required
-              />
-            </div>
+            <Input
+              id="ad-start"
+              label="Start Date *"
+              type="date"
+              value={form.startDate}
+              onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
+              required
+            />
+            <Input
+              id="ad-end"
+              label="End Date *"
+              type="date"
+              value={form.endDate}
+              onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))}
+              required
+            />
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center pt-4">
             <button

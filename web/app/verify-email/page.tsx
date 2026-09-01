@@ -4,10 +4,11 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useT } from '@/context/LanguageContext';
-import { AppShell } from '@/components/AppShell';
+import { AuthCard, AuthPageFallback, AuthShell } from '@/components/AuthShell';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { Button, buttonClassName } from '@/components/ui/Button';
+import { IconShield, IconWarning } from '@/components/ios/icons';
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -27,7 +28,7 @@ function VerifyEmailContent() {
     fetch(`${getApiUrl()}/auth/verify-email?token=${encodeURIComponent(token)}`)
       .then((r) => r.json())
       .then((data: unknown) => setResult(data as { verified?: boolean; message?: unknown }))
-      .catch(() => setResult({ verified: false, message: 'Verification failed' }))
+      .catch(() => setResult({ verified: false, message: t('auth.verification_failed') }))
       .finally(() => setLoading(false));
   }, [token]);
 
@@ -59,8 +60,8 @@ function VerifyEmailContent() {
 
   const verifiedSubtitle = result?.verified ? getApiErrorMessage(result, '') : '';
   return (
-    <AppShell>
-      <div className="section-ux-auth-narrow w-full min-w-0 max-w-full px-4 sm:px-0 text-center">
+    <AuthShell>
+      <AuthCard className="text-center">
         {loading ? (
           <div className="animate-pulse min-w-0">
             <div className="w-16 h-16 rounded-full bg-[var(--primary)]/20 mx-auto mb-6" />
@@ -68,8 +69,8 @@ function VerifyEmailContent() {
           </div>
         ) : result?.verified ? (
           <>
-            <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-6 text-3xl">
-              ✓
+            <div className="w-16 h-16 rounded-full bg-[var(--primary-light)] flex items-center justify-center mx-auto mb-6 text-[var(--primary)]">
+              <IconShield className="w-8 h-8" />
             </div>
             <h1 className="text-xl font-semibold text-[var(--text)] mb-2 min-w-0 break-words">{t('auth.email_verified_title')}</h1>
             {verifiedSubtitle ? (
@@ -84,8 +85,8 @@ function VerifyEmailContent() {
           </>
         ) : token ? (
           <>
-            <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-6 text-3xl">
-              ✕
+            <div className="w-16 h-16 rounded-full bg-[var(--destructive)]/10 flex items-center justify-center mx-auto mb-6 text-[var(--destructive)]">
+              <IconWarning className="w-8 h-8" />
             </div>
             <h1 className="text-xl font-semibold text-[var(--text)] mb-2 min-w-0 break-words">{t('auth.verification_failed')}</h1>
             <p className="text-[var(--text-muted)] mb-8 min-w-0 break-words">
@@ -128,25 +129,14 @@ function VerifyEmailContent() {
             </p>
           </>
         )}
-      </div>
-    </AppShell>
+      </AuthCard>
+    </AuthShell>
   );
 }
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense
-      fallback={
-        <AppShell>
-          <div className="section-ux-auth-narrow w-full min-w-0 max-w-full px-4 sm:px-0">
-            <div className="animate-pulse">
-              <div className="w-16 h-16 rounded-full bg-[var(--primary)]/20 mx-auto mb-6" />
-              <p className="text-[var(--text-muted)]">Loading...</p>
-            </div>
-          </div>
-        </AppShell>
-      }
-    >
+    <Suspense fallback={<AuthPageFallback />}>
       <VerifyEmailContent />
     </Suspense>
   );

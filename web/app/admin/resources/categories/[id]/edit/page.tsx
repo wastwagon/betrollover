@@ -7,6 +7,7 @@ import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { buttonClassName } from '@/components/ui/Button';
+import { Input, Textarea, Field, fieldControlClassName } from '@/components/ui/Input';
 
 const LEVELS = ['beginner', 'intermediate', 'advanced'] as const;
 const LANGUAGES = ['en', 'fr'] as const;
@@ -120,72 +121,64 @@ export default function AdminResourceCategoryEditPage() {
         </Link>
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Edit Resource Category</h1>
         <form onSubmit={submit} className="max-w-2xl space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name *</label>
-            <input
-              type="text"
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              onBlur={generateSlug}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Slug *</label>
-            <input
-              type="text"
-              value={form.slug}
-              onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-              required
-            />
-          </div>
+          <Input
+            id="cat-name"
+            label="Name *"
+            type="text"
+            value={form.name}
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            onBlur={generateSlug}
+            required
+          />
+          <Input
+            id="cat-slug"
+            label="Slug *"
+            type="text"
+            value={form.slug}
+            onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
+            required
+          />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Level</label>
+            <Field label="Level" htmlFor="cat-level">
               <select
+                id="cat-level"
                 value={form.level}
                 onChange={(e) => setForm((f) => ({ ...f, level: e.target.value as (typeof LEVELS)[number] }))}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+                className={fieldControlClassName()}
               >
                 {LEVELS.map((l) => (
                   <option key={l} value={l}>{l.charAt(0).toUpperCase() + l.slice(1)}</option>
                 ))}
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Language</label>
+            </Field>
+            <Field label="Language" htmlFor="cat-language">
               <select
+                id="cat-language"
                 value={form.language}
                 onChange={(e) => setForm((f) => ({ ...f, language: e.target.value as (typeof LANGUAGES)[number] }))}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+                className={fieldControlClassName()}
               >
                 {LANGUAGES.map((l) => (
                   <option key={l} value={l}>{l === 'en' ? 'English' : 'Français'}</option>
                 ))}
               </select>
-            </div>
+            </Field>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              rows={2}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sort Order</label>
-            <input
-              type="number"
-              min={0}
-              value={form.sortOrder}
-              onChange={(e) => setForm((f) => ({ ...f, sortOrder: parseInt(e.target.value, 10) || 0 }))}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-            />
-          </div>
+          <Textarea
+            id="cat-description"
+            label="Description"
+            value={form.description}
+            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+            rows={2}
+          />
+          <Input
+            id="cat-sort"
+            label="Sort Order"
+            type="number"
+            min={0}
+            value={form.sortOrder}
+            onChange={(e) => setForm((f) => ({ ...f, sortOrder: parseInt(e.target.value, 10) || 0 }))}
+          />
           {error && <p className="text-red-600 text-sm">{error}</p>}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center pt-4">
             <button

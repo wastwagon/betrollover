@@ -4,11 +4,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
-import { NavBar } from '@/components/ios/NavBar';
+import { AccaFamilyNav } from '@/components/AccaFamilyNav';
 import { AccaGeneratorLanding } from '@/components/AccaGeneratorLanding';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { useT } from '@/context/LanguageContext';
+import type { TranslationKey } from '@/lib/translations/en';
 
 type MarketOption = { key: string; label: string; fixtureCount?: number };
 
@@ -134,6 +137,13 @@ const FALLBACK_RISK_PROFILES: RiskProfile[] = [
 
 const ACCA_RISK_KEYS: AccaRiskKey[] = ['sure', 'safe', 'medium', 'high'];
 
+const RISK_DESC_KEYS: Record<AccaRiskKey, TranslationKey> = {
+  sure: 'acca.risk_sure_desc',
+  safe: 'acca.risk_safe_desc',
+  medium: 'acca.risk_medium_desc',
+  high: 'acca.risk_high_desc',
+};
+
 function isAccaRiskKey(v: string | undefined | null): v is AccaRiskKey {
   return !!v && (ACCA_RISK_KEYS as string[]).includes(v);
 }
@@ -159,25 +169,26 @@ function estimateCombinedBand(profile: RiskProfile, fixtureCount: number) {
 function overallExposureLabel(
   riskKey: AccaRiskKey,
   fixtureCount: number,
+  t: (key: TranslationKey, vars?: Record<string, string>) => string,
 ): { label: string; detail: string } {
   const bandScore =
     riskKey === 'sure' ? 0.35 : riskKey === 'safe' ? 1 : riskKey === 'medium' ? 2 : 3;
   const score = bandScore + Math.max(0, fixtureCount - 2) * 0.55;
   if (score <= 2.2) {
     return {
-      label: 'Lower overall exposure',
-      detail: 'Fewer legs and shorter prices — still not a sure thing.',
+      label: t('acca.exposure_lower'),
+      detail: t('acca.exposure_lower_detail'),
     };
   }
   if (score <= 4) {
     return {
-      label: 'Moderate overall exposure',
-      detail: 'More fixtures means every leg must land; combined odds rise quickly.',
+      label: t('acca.exposure_moderate'),
+      detail: t('acca.exposure_moderate_detail'),
     };
   }
   return {
-    label: 'Higher overall exposure',
-    detail: 'Longer slips (or longer prices) are harder to hit — treat as entertainment, not advice.',
+    label: t('acca.exposure_higher'),
+    detail: t('acca.exposure_higher_detail'),
   };
 }
 
@@ -198,6 +209,7 @@ function MarketMultiSelect({
   value: string[];
   onChange: (next: string[]) => void;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -220,10 +232,10 @@ function MarketMultiSelect({
   const selectedLabels = options.filter((o) => value.includes(o.key)).map((o) => o.label);
   const summary =
     selectedLabels.length === 0
-      ? 'Select markets…'
+      ? t('acca.select_markets')
       : selectedLabels.length <= 2
         ? selectedLabels.join(', ')
-        : `${selectedLabels.length} markets selected`;
+        : t('acca.markets_selected', { n: String(selectedLabels.length) });
 
   const toggle = (key: string) => {
     onChange(value.includes(key) ? value.filter((k) => k !== key) : [...value, key]);
@@ -246,20 +258,20 @@ function MarketMultiSelect({
         }`}
       >
         <span className="min-w-0">
-          <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
-            Markets
+          <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
+            {t('acca.markets_label')}
           </span>
           <span
             className={`mt-0.5 block truncate text-sm font-medium ${
-              selectedLabels.length ? 'text-slate-900' : 'text-slate-400'
+              selectedLabels.length ? 'text-[var(--text)]' : 'text-[var(--text-muted)]'
             }`}
           >
             {summary}
           </span>
         </span>
         <span
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition ${
-            open ? 'rotate-180 text-emerald-700' : ''
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text-muted)] transition ${
+            open ? 'rotate-180 text-[var(--primary)]' : ''
           }`}
           aria-hidden
         >
@@ -277,26 +289,26 @@ function MarketMultiSelect({
         <div
           role="listbox"
           aria-multiselectable="true"
-          className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10"
+          className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]"
         >
-          <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/80 px-3 py-2">
-            <p className="text-[11px] font-medium text-slate-500">
-              {value.length} of {options.length} selected
+          <div className="flex items-center justify-between gap-2 border-b border-[var(--separator)] bg-[var(--fill-secondary)] px-3 py-2">
+            <p className="text-[11px] font-medium text-[var(--text-muted)]">
+              {t('acca.selected_of', { n: String(value.length), total: String(options.length) })}
             </p>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={selectAll}
-                className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800"
+                className="text-[11px] font-semibold text-[var(--primary)] hover:underline"
               >
-                Select all
+                {t('acca.select_all')}
               </button>
               <button
                 type="button"
                 onClick={clearAll}
-                className="text-[11px] font-semibold text-slate-500 hover:text-slate-700"
+                className="text-[11px] font-semibold text-[var(--text-muted)] hover:text-[var(--text)]"
               >
-                Clear
+                {t('common.clear')}
               </button>
             </div>
           </div>
@@ -311,14 +323,14 @@ function MarketMultiSelect({
                     aria-selected={on}
                     onClick={() => toggle(m.key)}
                     className={`flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition ${
-                      on ? 'bg-emerald-50/80 text-emerald-950' : 'text-slate-700 hover:bg-slate-50'
+                      on ? 'bg-[var(--primary-light)] text-[var(--primary)]' : 'text-[var(--text)] hover:bg-[var(--fill-secondary)]'
                     }`}
                   >
                     <span
                       className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${
                         on
-                          ? 'border-emerald-600 bg-emerald-600 text-white'
-                          : 'border-slate-300 bg-white'
+                          ? 'border-[var(--primary)] bg-[var(--primary)] text-white'
+                          : 'border-[var(--border)] bg-[var(--card)]'
                       }`}
                       aria-hidden
                     >
@@ -334,8 +346,11 @@ function MarketMultiSelect({
                     </span>
                     <span className="min-w-0 flex-1 font-medium">{m.label}</span>
                     {typeof m.fixtureCount === 'number' && (
-                      <span className="shrink-0 text-[11px] tabular-nums text-slate-400">
-                        {m.fixtureCount} fixture{m.fixtureCount === 1 ? '' : 's'}
+                      <span className="shrink-0 text-[11px] tabular-nums text-[var(--text-muted)]">
+                        {t(
+                          m.fixtureCount === 1 ? 'acca.fixture_count' : 'acca.fixture_count_plural',
+                          { n: String(m.fixtureCount) },
+                        )}
                       </span>
                     )}
                   </button>
@@ -350,6 +365,7 @@ function MarketMultiSelect({
 }
 
 export default function AccaGeneratorPage() {
+  const t = useT();
   const [config, setConfig] = useState<Config | null>(null);
   const [loading, setLoading] = useState(true);
   const [guest, setGuest] = useState(false);
@@ -390,7 +406,7 @@ export default function AccaGeneratorPage() {
       }
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(getApiErrorMessage(body, 'Failed to load Acca Generator'));
+        throw new Error(getApiErrorMessage(body, t('acca.load_failed')));
       }
       const data = (await res.json()) as Config;
       setConfig(data);
@@ -418,11 +434,11 @@ export default function AccaGeneratorPage() {
         /* private mode */
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load config');
+      setError(e instanceof Error ? e.message : t('acca.config_failed'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void loadConfig();
@@ -441,7 +457,7 @@ export default function AccaGeneratorPage() {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(getApiErrorMessage(body, 'Failed to check market availability'));
+        throw new Error(getApiErrorMessage(body, t('acca.availability_failed')));
       }
       const data = (await res.json()) as Availability;
       setAvailability(data);
@@ -458,11 +474,11 @@ export default function AccaGeneratorPage() {
       });
     } catch (e) {
       setAvailability(null);
-      setError(e instanceof Error ? e.message : 'Failed to check availability');
+      setError(e instanceof Error ? e.message : t('acca.availability_failed'));
     } finally {
       setAvailabilityLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // Risk-first: when risk (or config) changes, reload which markets have odds in that band.
   useEffect(() => {
@@ -516,15 +532,15 @@ export default function AccaGeneratorPage() {
     const q = result?.quota || config?.quota;
     if (!q) return null;
     if (q.exempt || q.remaining === null) {
-      return q.exempt ? 'Admin — unlimited generations' : `Used today: ${q.usedToday} (unlimited)`;
+      return q.exempt ? t('acca.quota_admin') : t('acca.quota_used_unlimited', { n: String(q.usedToday) });
     }
-    return `${q.remaining} of ${q.maxPerDay} generations left today`;
-  }, [config, result]);
+    return t('acca.quota_left', { remaining: String(q.remaining), max: String(q.maxPerDay) });
+  }, [config, result, t]);
 
   const riskProfiles = config?.riskProfiles?.length ? config.riskProfiles : FALLBACK_RISK_PROFILES;
   const activeRisk = riskProfiles.find((p) => p.key === riskLevel) || riskProfiles[1];
   const combinedBand = activeRisk ? estimateCombinedBand(activeRisk, legs) : null;
-  const overallExposure = overallExposureLabel(riskLevel, legs);
+  const overallExposure = overallExposureLabel(riskLevel, legs, t);
 
   const availableMarketOptions = useMemo<MarketOption[]>(() => {
     if (!availability?.markets?.length) return [];
@@ -572,13 +588,18 @@ export default function AccaGeneratorPage() {
         }),
       });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(getApiErrorMessage(body, 'Generation failed'));
+      if (!res.ok) throw new Error(getApiErrorMessage(body, t('acca.generate_failed')));
       const data = body as GenerateResult;
       setResult(data);
-      setTitle(`Acca ${data.legs.length}-fold @ ${formatOdds(Number(data.combinedOdds))}`);
+      setTitle(
+        t('acca.default_title', {
+          n: String(data.legs.length),
+          odds: formatOdds(Number(data.combinedOdds)),
+        }),
+      );
       if (config) setConfig({ ...config, quota: data.quota });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Generation failed');
+      setError(e instanceof Error ? e.message : t('acca.generate_failed'));
     } finally {
       setGenerating(false);
     }
@@ -596,22 +617,21 @@ export default function AccaGeneratorPage() {
         body: JSON.stringify({
           generationId: result.generationId,
           title: title.trim() || undefined,
-          description:
-            'Generated with Acca Generator (free pick). Educational/informational only — not a sure bet. Gamble responsibly. 18+.',
+          description: t('acca.publish_description'),
         }),
       });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(getApiErrorMessage(body, 'Publish failed'));
+      if (!res.ok) throw new Error(getApiErrorMessage(body, t('acca.publish_failed')));
       const ticketId = body?.ticket?.id || body?.publishedTicketId;
       setResult(null);
       setTitle('');
       setSuccess(
         ticketId
-          ? `Free pick published (#${ticketId}). It stays on the marketplace until any leg kicks off — open marketplace soon to confirm.`
-          : 'Free pick published. It stays on the marketplace until any leg kicks off.',
+          ? t('acca.publish_success_id', { id: String(ticketId) })
+          : t('acca.publish_success'),
       );
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Publish failed');
+      setError(e instanceof Error ? e.message : t('acca.publish_failed'));
     } finally {
       setPublishing(false);
     }
@@ -626,7 +646,7 @@ export default function AccaGeneratorPage() {
       <DashboardShell>
         <div className="min-h-[calc(100vh-8rem)] bg-[var(--bg)] w-full">
           <div className="section-ux-dashboard-shell flex min-h-[40vh] items-center justify-center text-[var(--text-muted)]">
-            Loading Acca Generator…
+            {t('acca.loading')}
           </div>
         </div>
       </DashboardShell>
@@ -637,90 +657,74 @@ export default function AccaGeneratorPage() {
     <DashboardShell>
       <div className="min-h-[calc(100vh-8rem)] bg-[var(--bg)] w-full min-w-0 max-w-full">
         <div className="section-ux-dashboard-shell min-w-0 max-w-full">
-          <div className="lg:hidden -mx-1 mb-3">
-            <NavBar
-              title="Acca Generator"
-              backHref="/create-pick"
-              backLabel="Create pick"
-              sticky={false}
-            />
-          </div>
-          <div className="hidden lg:block">
-            <PageHeader
-              label="Tools"
-              title="Acca Generator"
-              tagline="Pick a risk band and fixture count, then markets with odds in that band. Same-day slips from synced odds — educational only, then optionally publish as a free marketplace pick."
-            />
-          </div>
+          <PageHeader
+            label={t('acca.landing_label')}
+            title={t('nav.acca_generator')}
+            tagline={t('acca.landing_disclaimer')}
+          />
+          <AccaFamilyNav current="build" />
 
           {quotaLabel && (
             <p className="mb-4 text-sm text-[var(--text-muted)]">{quotaLabel}</p>
           )}
           <p className="mb-4 text-sm text-[var(--text-muted)]">
-            Same day only — today’s remaining kickoffs. Odds are live from our synced database (not a
-            fresh bookmaker pull on each click).
+            {t('acca.same_day_note')}
           </p>
 
           <aside
-            className="mb-5 rounded-xl border border-amber-200/90 bg-amber-50/90 px-4 py-3.5 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/35 dark:text-amber-50"
+            className="mb-5 rounded-xl border border-[var(--accent)]/30 bg-[var(--accent-light)] px-4 py-3.5 text-sm text-[var(--text)]"
             role="note"
-            aria-label="Responsible betting disclaimer"
+            aria-label={t('acca.disclaimer_aria')}
           >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-amber-800/80 dark:text-amber-200/80">
-              Educational &amp; informational · 18+
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--accent)]">
+              {t('acca.landing_disclaimer_kicker')}
             </p>
-            <p className="mt-1.5 leading-relaxed">
-              Risk levels are only odd bands for building sample accumulators — they do{' '}
-              <strong className="font-semibold">not</strong> mean a safer or surest bet. No tip,
-              generator output, or free pick is guaranteed. BetRollover does not place bets for you;
-              use this tool for learning and entertainment, never as financial advice.
-            </p>
-            <p className="mt-2 text-xs leading-relaxed text-amber-900/85 dark:text-amber-100/85">
-              Gamble only with money you can afford to lose.{' '}
+            <p className="mt-1.5 leading-relaxed">{t('acca.tool_disclaimer')}</p>
+            <p className="mt-2 text-xs leading-relaxed text-[var(--text-muted)]">
+              {t('acca.gamble_afford')}{' '}
               <Link
                 href="/responsible-gambling"
-                className="font-semibold underline underline-offset-2 hover:text-amber-950 dark:hover:text-white"
+                className="font-semibold underline underline-offset-2 text-[var(--text)] hover:text-[var(--primary)]"
               >
-                Responsible gambling
+                {t('resp.page_label')}
               </Link>
               {' · '}
-              If betting stops being fun, stop and seek help.
+              {t('acca.if_not_fun')}
             </p>
           </aside>
 
           {!config?.enabled && (
-            <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
+            <div className="mb-4 rounded-xl border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-4 py-3 text-sm text-[var(--text)]">
               {generatorAllowed
-                ? 'Acca Generator is disabled for users. As an admin you can still generate and publish.'
-                : 'Acca Generator is currently disabled by admin.'}
+                ? t('acca.disabled_admin')
+                : t('acca.disabled_users')}
             </div>
           )}
 
           {error && (
-            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-100">
+            <div className="mb-4 rounded-xl border border-[var(--destructive)]/25 bg-[var(--destructive)]/10 px-4 py-3 text-sm text-[var(--destructive)]">
               {error}
             </div>
           )}
           {success && (
-            <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-100">
+            <div className="mb-4 rounded-xl border border-[var(--primary)]/25 bg-[var(--primary-light)] px-4 py-3 text-sm text-[var(--primary)]">
               {success}{' '}
               <Link href="/marketplace" className="underline font-medium">
-                View marketplace
+                {t('acca.view_marketplace')}
               </Link>
               {' · '}
               <Link href="/my-picks" className="underline font-medium">
-                My picks
+                {t('nav.my_picks')}
               </Link>
             </div>
           )}
 
           <div className="mx-auto max-w-3xl">
-      <section className="space-y-6 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm">
+      <section className="space-y-6 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
         <div>
-          <p className="text-sm font-medium text-slate-800">Risk level</p>
-          <p className="mt-1 text-xs text-slate-500">
-            Sets the <span className="font-medium text-slate-600">per-leg</span> odd band only.
-            Overall slip risk also rises with how many fixtures you select in step 3.
+          <p className="text-sm font-medium text-[var(--text)]">{t('acca.risk_level')}</p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
+            {t('acca.risk_level_hint')}
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {riskProfiles.map((p) => {
@@ -735,24 +739,28 @@ export default function AccaGeneratorPage() {
                   }}
                   className={`rounded-xl border px-3 py-3 text-left transition ${
                     on
-                      ? 'border-emerald-600 bg-emerald-50 ring-2 ring-emerald-500/20'
-                      : 'border-slate-200 bg-white hover:border-slate-300'
+                      ? 'border-[var(--primary)] bg-[var(--primary-light)] ring-2 ring-[var(--primary)]/20'
+                      : 'border-[var(--border)] bg-[var(--card)] hover:border-[var(--primary)]/40'
                   }`}
                 >
-                  <span className="block text-sm font-semibold text-slate-900">{p.label}</span>
-                  <span className="mt-1 block text-xs font-medium tabular-nums text-emerald-800">
+                  <span className="block text-sm font-semibold text-[var(--text)]">{p.label}</span>
+                  <span className="mt-1 block text-xs font-medium tabular-nums text-[var(--primary)]">
                     {p.oddMin.toFixed(2)} – {p.oddMax.toFixed(2)}
                   </span>
-                  <span className="mt-1 block text-[11px] leading-snug text-slate-500">{p.description}</span>
+                  <span className="mt-1 block text-[11px] leading-snug text-[var(--text-muted)]">
+                    {isAccaRiskKey(p.key) ? t(RISK_DESC_KEYS[p.key]) : p.description}
+                  </span>
                 </button>
               );
             })}
           </div>
           {activeRisk && (
-            <p className="mt-2 text-xs text-slate-500">
-              Target ~{activeRisk.targetOdd.toFixed(2)} per leg · {activeRisk.label} band
-              {availability ? ` · ${availability.fixtureCount} fixtures in band today` : ''}
-              {availabilityLoading ? ' · checking…' : ''}
+            <p className="mt-2 text-xs text-[var(--text-muted)]">
+              {t('acca.risk_target', { odd: activeRisk.targetOdd.toFixed(2), label: activeRisk.label })}
+              {availability
+                ? ` · ${t('acca.fixtures_in_band', { n: String(availability.fixtureCount) })}`
+                : ''}
+              {availabilityLoading ? ` · ${t('acca.checking')}` : ''}
             </p>
           )}
         </div>
@@ -766,26 +774,24 @@ export default function AccaGeneratorPage() {
               setResult(null);
             }}
           />
-          <p className="mt-2 text-xs text-slate-500">
-            Markets with odds in your risk band
+          <p className="mt-2 text-xs text-[var(--text-muted)]">
+            {t('acca.markets_hint')}
             {availability && selectedMarkets.length > 0
-              ? ` · ${availability.selectedFixtureCount} fixture${
-                  availability.selectedFixtureCount === 1 ? '' : 's'
-                } for your selection`
+              ? ` · ${t('acca.markets_fixtures', { n: String(availability.selectedFixtureCount) })}`
               : ''}
-            . Empty markets are hidden.
           </p>
           {!availabilityLoading && availability && availableMarketOptions.length === 0 && (
-            <p className="mt-2 text-xs text-amber-700">
-              No markets have odds in this risk band for today’s remaining kickoffs. Try another risk level.
+            <p className="mt-2 text-xs text-[var(--accent)]">
+              {t('acca.markets_empty')}
             </p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm max-w-xs">
-            <span className="font-medium text-slate-800">Number of fixtures</span>
-            <input
+          <div className="max-w-xs">
+            <Input
+              id="acca-legs"
+              label={t('acca.legs_label')}
               type="number"
               min={config?.minLegs ?? 2}
               max={maxSelectableLegs}
@@ -799,36 +805,40 @@ export default function AccaGeneratorPage() {
                 );
                 setResult(null);
               }}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              hint={[
+                t('acca.legs_hint_range', {
+                  min: String(config?.minLegs ?? 2),
+                  max: String(config?.maxLegs ?? 8),
+                }),
+                availability && selectedMarkets.length > 0
+                  ? t('acca.legs_hint_capped', { n: String(maxSelectableLegs) })
+                  : '',
+              ]
+                .filter(Boolean)
+                .join(' · ')}
             />
-            <span className="mt-1 block text-xs text-slate-500">
-              Admin range: {config?.minLegs ?? 2}–{config?.maxLegs ?? 8}
-              {availability && selectedMarkets.length > 0
-                ? ` · capped at ${maxSelectableLegs} from available fixtures`
-                : ''}
-            </span>
-          </label>
-          <p className="mt-2 max-w-xl text-xs text-slate-500">
-            More fixtures = higher overall risk, even on Sure/Safe — every leg must win for the acca
-            to land.
+          </div>
+          <p className="mt-2 max-w-xl text-xs text-[var(--text-muted)]">
+            {t('acca.legs_more_risk')}
           </p>
           {combinedBand && (
-            <div className="mt-3 rounded-xl border border-slate-300 bg-white px-4 py-3.5 shadow-sm">
-              <p className="text-sm font-semibold text-slate-900">
-                Overall slip picture · {activeRisk?.label} × {legs}-fold
+            <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--fill-secondary)] px-4 py-3.5">
+              <p className="text-sm font-semibold text-[var(--text)]">
+                {t('acca.slip_picture', { label: activeRisk?.label ?? '', legs: String(legs) })}
               </p>
-              <p className="mt-1.5 text-sm font-semibold text-emerald-800">{overallExposure.label}</p>
-              <p className="mt-1 text-sm leading-snug text-slate-700">{overallExposure.detail}</p>
-              <p className="mt-3 text-sm tabular-nums text-slate-800">
-                Illustrative combined odds near band prices:{' '}
+              <p className="mt-1.5 text-sm font-semibold text-[var(--primary)]">{overallExposure.label}</p>
+              <p className="mt-1 text-sm leading-snug text-[var(--text)]">{overallExposure.detail}</p>
+              <p className="mt-3 text-sm tabular-nums text-[var(--text)]">
+                {t('acca.combined_odds_near')}{' '}
                 <span className="font-semibold">
                   ~{formatOdds(combinedBand.min)} – {formatOdds(combinedBand.max)}
                 </span>
-                <span className="text-slate-600"> · target ~{formatOdds(combinedBand.target)}</span>
+                <span className="text-[var(--text-muted)]">
+                  {' '}
+                  · {t('acca.combined_target', { odd: formatOdds(combinedBand.target) })}
+                </span>
               </p>
-              <p className="mt-1.5 text-xs text-slate-600">
-                Estimate only — actual slip odds depend on the selections generated.
-              </p>
+              <p className="mt-1.5 text-xs text-[var(--text-muted)]">{t('acca.estimate_only')}</p>
             </div>
           )}
         </div>
@@ -839,87 +849,90 @@ export default function AccaGeneratorPage() {
           onClick={() => void onGenerate()}
           fullWidth
         >
-          {generating ? 'Generating…' : 'Generate accumulator'}
+          {generating ? t('acca.generating') : t('acca.generate')}
         </Button>
         {!canGenerate && generatorAllowed && !availabilityLoading && (
-          <p className="text-center text-xs text-slate-500">
+          <p className="text-center text-xs text-[var(--text-muted)]">
             {selectedMarkets.length === 0
-              ? 'Select at least one market with fixtures in this risk band.'
+              ? t('acca.select_market')
               : (availability?.selectedFixtureCount ?? 0) < (config?.minLegs ?? 2)
-                ? 'Not enough fixtures in the selected markets for this risk band.'
+                ? t('acca.not_enough_fixtures')
                 : (availability?.selectedFixtureCount ?? 0) < legs
-                  ? 'Lower the number of fixtures or add markets.'
-                  : 'Adjust risk, markets, or legs to generate.'}
+                  ? t('acca.lower_legs')
+                  : t('acca.adjust_to_generate')}
           </p>
         )}
-        <p className="text-center text-[11px] leading-relaxed text-slate-400">
-          Generated slips are educational samples, not tips or guarantees.{' '}
-          <Link href="/responsible-gambling" className="underline underline-offset-2 hover:text-slate-600">
-            Bet responsibly
+        <p className="text-center text-[11px] leading-relaxed text-[var(--text-muted)]">
+          {t('acca.samples_not_tips')}{' '}
+          <Link href="/responsible-gambling" className="underline underline-offset-2 hover:text-[var(--text)]">
+            {t('acca.bet_responsibly')}
           </Link>
           .
         </p>
       </section>
 
       {result && (
-        <section className="mt-6 space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="mt-6 space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">Suggested slip</h2>
-              <p className="text-xs text-slate-500 mt-1">
-                Combined odds <strong className="text-slate-800">{formatOdds(Number(result.combinedOdds))}</strong>
+              <h2 className="text-sm font-semibold text-[var(--text)]">{t('acca.suggested_slip')}</h2>
+              <p className="text-xs text-[var(--text-muted)] mt-1">
+                {t('acca.combined_odds_line', { odds: formatOdds(Number(result.combinedOdds)) })}
                 {' · '}
-                {result.legs.length} legs
-                {result.riskLevel ? ` · ${result.riskLevel} risk` : ''}
+                {t('acca.legs_count', { n: String(result.legs.length) })}
+                {result.riskLevel ? ` · ${t('acca.risk_suffix', { level: result.riskLevel })}` : ''}
                 {' · '}
-                legs {Number(result.oddMin).toFixed(2)}–{Number(result.oddMax).toFixed(2)}
+                {t('acca.legs_band', {
+                  min: Number(result.oddMin).toFixed(2),
+                  max: Number(result.oddMax).toFixed(2),
+                })}
               </p>
             </div>
             <button
               type="button"
               onClick={() => void onGenerate()}
               disabled={generating || !canGenerate}
-              className="text-xs font-medium text-emerald-700 hover:underline disabled:text-slate-400 disabled:no-underline"
+              className="text-xs font-medium text-[var(--primary)] hover:underline disabled:text-[var(--text-muted)] disabled:no-underline"
             >
-              Regenerate
+              {t('acca.regenerate')}
             </button>
           </div>
 
-          <ul className="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden">
+          <ul className="divide-y divide-[var(--separator)] border border-[var(--separator)] rounded-xl overflow-hidden">
             {result.legs.map((leg) => (
-              <li key={`${leg.fixtureId}-${leg.outcomeKey}`} className="px-4 py-3 bg-slate-50/50">
+              <li key={`${leg.fixtureId}-${leg.outcomeKey}`} className="px-4 py-3 bg-[var(--fill-secondary)]">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-slate-900 truncate">{leg.matchDescription}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      {leg.leagueName || 'Football'} ·{' '}
+                    <p className="text-sm font-medium text-[var(--text)] truncate">{leg.matchDescription}</p>
+                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                      {leg.leagueName || t('create_pick.sport_football')} ·{' '}
                       {new Date(leg.matchDate).toLocaleString(undefined, {
                         weekday: 'short',
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
                     </p>
-                    <p className="text-sm text-emerald-800 mt-1">{leg.prediction}</p>
+                    <p className="text-sm text-[var(--primary)] mt-1">{leg.prediction}</p>
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-sm font-semibold tabular-nums">{Number(leg.odds).toFixed(2)}</p>
-                    <p className="text-[11px] text-slate-400">{Math.round(leg.probability * 100)}% implied</p>
+                    <p className="text-[11px] text-[var(--text-muted)]">
+                      {t('acca.implied', { pct: String(Math.round(leg.probability * 100)) })}
+                    </p>
                   </div>
                 </div>
               </li>
             ))}
           </ul>
 
-          <label className="block text-sm">
-            <span className="font-medium text-slate-800">Title for free pick</span>
-            <input
-              type="text"
-              value={title}
-              maxLength={255}
-              onChange={(e) => setTitle(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-            />
-          </label>
+          <Input
+            id="acca-title"
+            label={t('acca.title_label')}
+            type="text"
+            value={title}
+            maxLength={255}
+            onChange={(e) => setTitle(e.target.value)}
+          />
 
           <Button
             type="button"
@@ -927,12 +940,10 @@ export default function AccaGeneratorPage() {
             onClick={() => void onPublish()}
             fullWidth
           >
-            {publishing ? 'Publishing…' : 'Publish as free pick'}
+            {publishing ? t('acca.publishing') : t('acca.publish_free')}
           </Button>
           <p className="text-xs text-[var(--text-muted)] text-center">
-            Publishes under your account at price 0. Marketplace only shows picks while every leg is still upcoming
-            (we require ~45 minutes to kickoff). Free picks remain informational — not a sure bet. Subject to your
-            daily tipster pick limit if set.
+            {t('acca.publish_note')}
           </p>
         </section>
       )}

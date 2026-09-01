@@ -11,6 +11,7 @@ import { TeamBadge } from '@/components/TeamBadge';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
+import { FixtureLiveChip } from '@/components/FixtureLiveChip';
 import { useLanguage, useT, type SupportedLanguage } from '@/context/LanguageContext';
 import { formatTipsterRankHash } from '@/lib/tipster-rank-ui';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
@@ -18,16 +19,18 @@ import { VerifiedTipsterBadge } from '@/components/VerifiedTipsterBadge';
 import { KickoffUrgencyLine } from '@/components/KickoffUrgencyLine';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { EscrowPurchaseTimeline } from '@/components/EscrowPurchaseTimeline';
+import { EscrowRefundReceipt } from '@/components/EscrowRefundReceipt';
 import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
 import { BookingCodeCopyBlock } from '@/components/BookingCodeCopyBlock';
-import { NavBar } from '@/components/ios/NavBar';
-import { IconPicks } from '@/components/ios/icons';
+import { IconPicks, IconShare, IconShield, IconLock } from '@/components/ios/icons';
 import { hapticSuccess } from '@/lib/haptic';
 import { PickSocialBar } from '@/components/pick-social/PickSocialBar';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import { Button, buttonClassName } from '@/components/ui/Button';
+import { resultChipClass, resultSurfaceClass } from '@/lib/result-chip';
+import { Textarea } from '@/components/ui/Input';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Pick {
@@ -120,24 +123,6 @@ function legResultLabel(
   return result;
 }
 
-const RESULT_STYLE: Record<string, string> = {
-  won:     'bg-emerald-100 text-emerald-700 border-emerald-200',
-  lost:    'bg-red-100 text-red-700 border-red-200',
-  void:    'bg-gray-100 text-gray-600 border-gray-200',
-  pending: 'bg-amber-50 text-amber-700 border-amber-200',
-};
-
-const RESULT_ICON: Record<string, string> = {
-  won: '✓', lost: '✗', void: '—', pending: '⏳',
-};
-
-const COUPON_STATUS_STYLE: Record<string, string> = {
-  won:     'bg-emerald-100 text-emerald-800 border-emerald-300',
-  lost:    'bg-red-100 text-red-800 border-red-300',
-  void:    'bg-gray-100 text-gray-600 border-gray-300',
-  pending: 'bg-amber-50 text-amber-800 border-amber-300',
-};
-
 const DATE_LOCALE: Record<SupportedLanguage, string> = { en: 'en-GB', fr: 'fr-FR' };
 
 function formatDate(s: string | null | undefined, lang: SupportedLanguage) {
@@ -192,7 +177,7 @@ function StarRow({ rating, interactive = false, onChange }: { rating: number; in
         <button key={s} type="button"
           disabled={!interactive}
           onClick={() => onChange?.(s)}
-          className={`text-lg ${interactive ? 'cursor-pointer hover:scale-110 transition-transform' : 'cursor-default'} ${s <= rating ? 'text-amber-400' : 'text-gray-300'}`}
+          className={`text-lg ${interactive ? 'cursor-pointer hover:scale-110 transition-transform' : 'cursor-default'} ${s <= rating ? 'text-[var(--accent)]' : 'text-[var(--separator)]'}`}
         >★</button>
       ))}
     </span>
@@ -249,7 +234,7 @@ function ReviewsSection({ couponId, isPurchased, isSettled }: { couponId: number
         {data && data.total > 0 && (
           <span className="flex items-center gap-1.5 text-sm text-[var(--text-muted)]">
             <StarRow rating={Math.round(data.avg)} />
-            <span className="font-semibold text-amber-500">{data.avg}</span>
+            <span className="font-semibold text-[var(--accent)]">{data.avg}</span>
             <span>({data.total})</span>
           </span>
         )}
@@ -260,11 +245,17 @@ function ReviewsSection({ couponId, isPurchased, isSettled }: { couponId: number
         <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 mb-5 shadow-sm">
           <p className="text-sm font-semibold text-[var(--text)] mb-3">{t('pick_detail.leave_review_title')}</p>
           <StarRow rating={rating} interactive onChange={setRating} />
-          <textarea rows={3} value={comment} onChange={(e) => setComment(e.target.value)}
-            placeholder={t('pick_detail.review_placeholder')}
-            className="mt-3 w-full min-w-0 px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-sm text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] resize-none"
-          />
-          {err && <p className="text-red-500 text-xs mt-1">{err}</p>}
+          <div className="mt-3">
+            <Textarea
+              id="pick-review-comment"
+              rows={3}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder={t('pick_detail.review_placeholder')}
+              className="resize-y"
+            />
+          </div>
+          {err && <p className="text-[var(--destructive)] text-xs mt-1">{err}</p>}
           <Button type="button" onClick={submit} disabled={submitting} className="mt-3">
             {submitting ? t('pick_detail.submitting_review') : t('pick_detail.submit_review')}
           </Button>
@@ -272,8 +263,8 @@ function ReviewsSection({ couponId, isPurchased, isSettled }: { couponId: number
       )}
 
       {myReview?.reviewed && (
-        <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800 px-4 py-3 mb-4 text-sm text-emerald-700 dark:text-emerald-400">
-          ✅ {t('pick_detail.review_thank_you')}
+        <div className="rounded-xl bg-[var(--success-light)] border border-[var(--success)]/25 px-4 py-3 mb-4 text-sm text-[var(--success)]">
+          {t('pick_detail.review_thank_you')}
         </div>
       )}
 
@@ -324,6 +315,8 @@ export default function CouponDetailPage({
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
   const [purchasedAt, setPurchasedAt] = useState<string | null>(null);
   const [escrowStatus, setEscrowStatus] = useState<string | null>(null);
+  const [escrowAmount, setEscrowAmount] = useState<number | null>(null);
+  const [escrowUpdatedAt, setEscrowUpdatedAt] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState(false);
   const [copied, setCopied] = useState(false);
   /** false = browsing as guest (public coupon); true = logged in */
@@ -380,11 +373,15 @@ export default function CouponDetailPage({
               accumulatorId?: number;
               purchasedAt?: string;
               escrowStatus?: string | null;
+              escrowAmount?: number | null;
+              escrowUpdatedAt?: string | null;
             }
           | undefined;
         setIsPurchased(!!row);
         if (row?.purchasedAt) setPurchasedAt(row.purchasedAt);
         if (row?.escrowStatus) setEscrowStatus(row.escrowStatus);
+        if (row?.escrowAmount != null) setEscrowAmount(Number(row.escrowAmount));
+        if (row?.escrowUpdatedAt) setEscrowUpdatedAt(row.escrowUpdatedAt);
       }
     }).catch(() => setCoupon(null)).finally(() => setLoading(false));
   }, [id, router]);
@@ -494,7 +491,7 @@ export default function CouponDetailPage({
   }
 
   const sportMeta = coupon.sport ? (SPORT_META[coupon.sport] ?? SPORT_META['Multi-Sport']) : null;
-  const resultStyle = COUPON_STATUS_STYLE[coupon.result ?? 'pending'] ?? COUPON_STATUS_STYLE.pending;
+  const resultStyle = resultChipClass(coupon.result ?? 'pending');
   const pickCount = coupon.totalPicks ?? coupon.picks.length;
   const couponPending = (coupon.result ?? 'pending').toLowerCase() === 'pending';
   const picksHidden =
@@ -518,32 +515,13 @@ export default function CouponDetailPage({
       <UnifiedHeader />
       <main className="section-ux-page-mid w-full min-w-0 max-w-full">
 
-        <div className="lg:hidden -mx-4 sm:mx-0 mb-2">
-          <NavBar
-            title={coupon.title}
-            backHref="/marketplace"
-            backLabel={t('nav.marketplace')}
-            sticky={false}
-          />
-        </div>
-        <nav
-          className="hidden lg:flex flex-wrap items-center gap-2 py-2.5 px-3 rounded-xl bg-[var(--card)] border border-[var(--border)] mb-4 text-sm shadow-sm min-w-0 max-w-full"
-          aria-label="Breadcrumb"
+        <Link
+          href="/marketplace"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--primary)] hover:underline mb-4"
         >
-          <Link
-            href="/marketplace"
-            className="inline-flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors font-medium"
-          >
-            {t('nav.marketplace')}
-          </Link>
-          <span className="text-[var(--text-muted)]" aria-hidden>
-            /
-          </span>
-          <span className="text-[var(--text)] font-medium truncate max-w-[min(100%,28rem)]" title={coupon.title}>
-            {coupon.title}
-          </span>
-        </nav>
-        <h1 className="hidden lg:block text-2xl sm:text-3xl font-bold text-[var(--text)] mb-6 tracking-tight min-w-0 break-words">{coupon.title}</h1>
+          ← {t('nav.marketplace')}
+        </Link>
+        <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)] mb-6 tracking-tight min-w-0 break-words">{coupon.title}</h1>
 
         {Number(coupon.price) > 0 ? (
           <EscrowTrustCallout
@@ -592,8 +570,8 @@ export default function CouponDetailPage({
                 </span>
                 {settledPicks > 0 && (
                   <span className="flex items-center gap-1">
-                    <span className="text-emerald-600 font-semibold">{wonPicks}W</span>
-                    <span className="text-red-500 font-semibold">{lostPicks}L</span>
+                    <span className="text-[var(--success)] font-semibold">{wonPicks}W</span>
+                    <span className="text-[var(--destructive)] font-semibold">{lostPicks}L</span>
                     <span className="text-[var(--text-muted)]">
                       / {pickCount} {t('pick_card.picks')}
                     </span>
@@ -601,10 +579,10 @@ export default function CouponDetailPage({
                 )}
                 {coupon.purchaseCount != null && coupon.purchaseCount > 0 && (
                   <span
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border shadow-sm ${
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${
                       Number(coupon.price) <= 0
                         ? 'bg-[var(--accent-light)] text-[var(--accent)] border-[var(--accent)]/30'
-                        : 'bg-amber-50 text-amber-950 border-amber-300 dark:bg-amber-950/40 dark:text-amber-100 dark:border-amber-700/60'
+                        : 'bg-[var(--primary-light)] text-[var(--primary)] border-[var(--primary)]/25'
                     }`}
                     title={
                       Number(coupon.price) <= 0
@@ -629,11 +607,10 @@ export default function CouponDetailPage({
 
             {/* Purchase success banner */}
             {purchaseSuccess && (
-              <div className="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700/40 flex items-start gap-3">
-                <span className="text-2xl">🎉</span>
+              <div className="mb-6 p-4 rounded-2xl bg-[var(--success-light)] border border-[var(--success)]/25">
                 <div>
-                  <p className="font-semibold text-emerald-800 dark:text-emerald-300">{t('pick_detail.purchase_success_title')}</p>
-                  <p className="text-sm text-emerald-700 dark:text-emerald-400 mt-0.5">
+                  <p className="font-semibold text-[var(--success)]">{t('pick_detail.purchase_success_title')}</p>
+                  <p className="text-sm text-[var(--success)] mt-0.5 opacity-90">
                     {t('pick_detail.purchase_success_sub')}
                   </p>
                 </div>
@@ -641,37 +618,38 @@ export default function CouponDetailPage({
             )}
 
             {isPurchased ? (
-              <EscrowPurchaseTimeline
-                className="mb-6"
-                result={coupon.result}
-                escrowStatus={escrowStatus}
-                isPaid={Number(coupon.price) > 0}
-                purchasedAt={purchasedAt}
-              />
+              <>
+                <EscrowPurchaseTimeline
+                  className="mb-4"
+                  result={coupon.result}
+                  escrowStatus={escrowStatus}
+                  isPaid={Number(coupon.price) > 0}
+                  purchasedAt={purchasedAt}
+                />
+                <EscrowRefundReceipt
+                  className="mb-6"
+                  result={coupon.result}
+                  escrowStatus={escrowStatus}
+                  isPaid={Number(coupon.price) > 0}
+                  amount={escrowAmount ?? coupon.price}
+                  settledAt={escrowUpdatedAt}
+                />
+              </>
             ) : null}
 
             {/* Settlement result banner */}
             {isSettled && (
               <div
-                className={`mb-6 p-4 rounded-2xl border flex items-start gap-3 ${
-                  coupon.result === 'won'
-                    ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700/40'
-                    : coupon.result === 'void'
-                      ? 'bg-slate-50 dark:bg-slate-900/30 border-slate-200 dark:border-slate-600/50'
-                      : 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700/40'
-                }`}
+                className={`mb-6 p-4 rounded-2xl border ${resultSurfaceClass(coupon.result)}`}
               >
-                <span className="text-2xl">
-                  {coupon.result === 'won' ? '🏆' : coupon.result === 'void' ? '—' : '❌'}
-                </span>
                 <div>
                   <p
                     className={`font-semibold ${
                       coupon.result === 'won'
-                        ? 'text-emerald-800 dark:text-emerald-300'
+                        ? 'text-[var(--success)]'
                         : coupon.result === 'void'
-                          ? 'text-slate-800 dark:text-slate-200'
-                          : 'text-red-800 dark:text-red-300'
+                          ? 'text-[var(--text)]'
+                          : 'text-[var(--destructive)]'
                     }`}
                   >
                     {coupon.result === 'won'
@@ -683,10 +661,10 @@ export default function CouponDetailPage({
                   <p
                     className={`text-sm mt-0.5 ${
                       coupon.result === 'won'
-                        ? 'text-emerald-700 dark:text-emerald-400'
+                        ? 'text-[var(--success)]'
                         : coupon.result === 'void'
-                          ? 'text-slate-600 dark:text-slate-400'
-                          : 'text-red-700 dark:text-red-400'
+                          ? 'text-[var(--text-muted)]'
+                          : 'text-[var(--destructive)]'
                     }`}
                   >
                     {coupon.result === 'won'
@@ -719,10 +697,8 @@ export default function CouponDetailPage({
 
             {picksHidden ? (
               <>
-                <div className="mb-4 p-4 rounded-2xl bg-amber-50/90 dark:bg-amber-950/25 border border-amber-200 dark:border-amber-800/50 flex gap-3 min-w-0">
-                  <span className="text-2xl shrink-0" aria-hidden>
-                    🔒
-                  </span>
+                <div className="mb-4 p-4 rounded-2xl bg-[var(--accent-light)] border border-[var(--accent)]/30 flex gap-3 min-w-0">
+                  <IconLock className="w-6 h-6 shrink-0 text-[var(--accent)]" aria-hidden />
                   <div className="min-w-0">
                     <p className="font-semibold text-[var(--text)]">{t('pick_detail.selections_locked_title')}</p>
                     <p className="text-sm text-[var(--text-muted)] mt-0.5 leading-relaxed">
@@ -736,14 +712,16 @@ export default function CouponDetailPage({
                       key={pick.id ?? idx}
                       className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 p-4 flex items-center gap-3 min-w-0"
                     >
-                      <span className="text-lg opacity-60 shrink-0" aria-hidden>
-                        🔒
-                      </span>
+                      <IconLock className="w-5 h-5 opacity-60 shrink-0 text-[var(--text-muted)]" aria-hidden />
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-[var(--text)]">
-                          {pick.redacted ? pick.matchDescription || `Selection ${idx + 1}` : `Selection ${idx + 1}`}
+                          {pick.redacted
+                            ? pick.matchDescription || t('pick_detail.selection_number', { n: String(idx + 1) })
+                            : t('pick_detail.selection_number', { n: String(idx + 1) })}
                         </p>
-                        <p className="text-xs text-[var(--text-muted)] mt-0.5">Hidden until purchase</p>
+                        <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                          {t('pick_detail.hidden_until_purchase')}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -766,7 +744,7 @@ export default function CouponDetailPage({
                 <div className="space-y-3 mb-8">
                   {coupon.picks.map((pick, idx) => {
                     const pickResult = pick.result ?? 'pending';
-                    const pickStyle = RESULT_STYLE[pickResult] ?? RESULT_STYLE.pending;
+                    const pickStyle = resultChipClass(pickResult);
                     const pickSport = pick.sport
                       ? SPORT_META[
                           pick.sport.charAt(0).toUpperCase() + pick.sport.slice(1).replace('_', ' ')
@@ -780,13 +758,7 @@ export default function CouponDetailPage({
                     return (
                       <div
                         key={pick.id ?? idx}
-                        className={`rounded-2xl border p-4 transition-all ${
-                          pickResult === 'won'
-                            ? 'border-emerald-200 bg-emerald-50/50 dark:bg-emerald-900/10'
-                            : pickResult === 'lost'
-                              ? 'border-red-200 bg-red-50/50 dark:bg-red-900/10'
-                              : 'border-[var(--border)] bg-[var(--card)]'
-                        }`}
+                        className={`rounded-2xl border p-4 transition-all ${resultSurfaceClass(pickResult)}`}
                       >
                         <div className="flex items-start justify-between gap-3 min-w-0">
                           <div className="flex-1 min-w-0">
@@ -821,9 +793,10 @@ export default function CouponDetailPage({
                             <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-muted)]">
                               {pick.matchDate && <span>{formatDateTime(pick.matchDate, lang)}</span>}
                               {isLive && (
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 font-bold text-[10px] tabular-nums">
-                                  🔴 {formatLiveFixturePeriod(pick.fixtureStatus, pick.fixtureStatusElapsed)}
-                                </span>
+                                <FixtureLiveChip
+                                  label={formatLiveFixturePeriod(pick.fixtureStatus, pick.fixtureStatusElapsed)}
+                                  className="px-1.5 py-0.5 text-[10px]"
+                                />
                               )}
                               {pickSport && coupon.sport === 'Multi-Sport' && (
                                 <span
@@ -847,9 +820,9 @@ export default function CouponDetailPage({
                             )}
 
                             <span
-                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${pickStyle}`}
+                              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${pickStyle}`}
                             >
-                              {RESULT_ICON[pickResult]} {legResultLabel(pickResult, t)}
+                              {legResultLabel(pickResult, t)}
                             </span>
                           </div>
                         </div>
@@ -930,11 +903,11 @@ export default function CouponDetailPage({
                     </div>
                   ) : isPurchased ? (
                     <div className="space-y-3">
-                      <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700/40">
-                        <span className="text-emerald-600 text-lg">✓</span>
+                      <div className="flex items-center gap-2 p-3 rounded-xl bg-[var(--success-light)] border border-[var(--success)]/25">
+                        <IconShield className="w-5 h-5 text-[var(--success)] shrink-0" />
                         <div>
-                          <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">{t('pick_detail.purchased_label')}</p>
-                          <p className="text-xs text-emerald-700 dark:text-emerald-400">{t('pick_detail.purchased_revealed_note')}</p>
+                          <p className="text-sm font-semibold text-[var(--success)]">{t('pick_detail.purchased_label')}</p>
+                          <p className="text-xs text-[var(--success)] opacity-90">{t('pick_detail.purchased_revealed_note')}</p>
                         </div>
                       </div>
                       <EscrowPurchaseTimeline
@@ -948,18 +921,18 @@ export default function CouponDetailPage({
                         href="/my-purchases"
                         className="block text-center text-sm text-[var(--primary)] hover:underline"
                       >
-                        View in My Purchases →
+                        {t('pick_card.view_in_my_purchases')}
                       </Link>
                     </div>
                   ) : hasNonPurchaseAccess ? (
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/40">
-                        <span className="text-blue-600 text-lg">✓</span>
+                      <div className="flex items-center gap-2 p-3 rounded-xl bg-[var(--primary-light)] border border-[var(--primary)]/25">
+                        <IconShield className="w-5 h-5 text-[var(--primary)] shrink-0" />
                         <div>
-                          <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">
+                          <p className="text-sm font-semibold text-[var(--primary)]">
                             {coupon.accessViaSubscription ? t('pick_detail.access_via_subscription') : t('pick_detail.access_granted')}
                           </p>
-                          <p className="text-xs text-blue-700 dark:text-blue-400">
+                          <p className="text-xs text-[var(--primary)] opacity-90">
                             {coupon.accessViaSubscription
                               ? t('pick_detail.access_subscription_note')
                               : t('pick_detail.access_granted_note')}
@@ -971,14 +944,14 @@ export default function CouponDetailPage({
                           href="/subscriptions"
                           className="block text-center text-sm text-[var(--primary)] hover:underline"
                         >
-                          Manage subscriptions →
+                          {t('pick_detail.manage_subscriptions_link')}
                         </Link>
                       ) : null}
                     </div>
                   ) : (
                     <div className="space-y-3">
                       {purchaseError && (
-                        <p className="text-xs text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded-lg border border-red-200">{purchaseError}</p>
+                        <p className="text-xs text-[var(--destructive)] bg-[var(--destructive-light)] p-2 rounded-lg border border-[var(--destructive)]/25">{purchaseError}</p>
                       )}
                       <Button
                         type="button"
@@ -993,14 +966,14 @@ export default function CouponDetailPage({
                             : t('marketplace.purchase_btn', { price: `GHS ${Number(coupon.price).toFixed(2)}` })}
                       </Button>
                       {Number(coupon.price) > 0 ? (
-                        <p className="text-[11px] text-center text-emerald-800/90 dark:text-emerald-300/90 leading-snug">
+                        <p className="text-[11px] text-center text-[var(--primary)] leading-snug">
                           {t('pick_detail.fee_refund_line')}
                         </p>
                       ) : null}
                       {!canPurchase && !isPurchased && coupon.price > 0 && walletBalance !== null && walletBalance < coupon.price && (
                         <Link
                           href="/wallet"
-                          className="block text-center text-xs text-amber-600 hover:underline"
+                          className="block text-center text-xs text-[var(--accent)] hover:underline"
                         >
                           {t('pick_detail.insufficient_balance_link')}
                         </Link>
@@ -1010,12 +983,12 @@ export default function CouponDetailPage({
                 </div>
 
                 {/* Escrow protection */}
-                <div className="border-t border-[var(--border)] p-4 bg-emerald-50/50 dark:bg-emerald-900/10">
+                <div className="border-t border-[var(--border)] p-4 bg-[var(--primary-light)]">
                   <div className="flex items-start gap-2">
-                    <span className="text-lg">🛡</span>
+                    <IconShield className="w-5 h-5 shrink-0 text-[var(--primary)]" aria-hidden />
                     <div>
-                      <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300">{t('pick_detail.escrow_badge_title')}</p>
-                      <p className="text-xs text-emerald-700 dark:text-emerald-400 leading-relaxed mt-0.5">
+                      <p className="text-xs font-bold text-[var(--primary)]">{t('pick_detail.escrow_badge_title')}</p>
+                      <p className="text-xs text-[var(--text-muted)] leading-relaxed mt-0.5">
                         {coupon.price === 0 ? t('pick_detail.escrow_free_note') : t('pick_detail.escrow_paid_note')}
                       </p>
                     </div>
@@ -1114,7 +1087,10 @@ export default function CouponDetailPage({
                 onClick={handleShare}
                 fullWidth
               >
-                {copied ? t('pick_detail.link_copied') : t('pick_detail.share_pick')}
+                <span className="inline-flex items-center justify-center gap-2">
+                  <IconShare className="w-4 h-4" />
+                  {copied ? t('pick_detail.link_copied') : t('pick_detail.share_pick')}
+                </span>
               </Button>
 
               {/* Disclaimer */}
@@ -1128,7 +1104,7 @@ export default function CouponDetailPage({
               {isPurchased && (
                 <a
                   href={`/support?couponId=${coupon.id}&open=1`}
-                  className="block text-center text-xs text-[var(--text-muted)] hover:text-red-500 transition-colors"
+                  className="block text-center text-xs text-[var(--text-muted)] hover:text-[var(--destructive)] transition-colors"
                 >
                   {t('pick_detail.raise_dispute')}
                 </a>
@@ -1184,7 +1160,7 @@ export default function CouponDetailPage({
             ) : (
               <Link
                 href="/wallet"
-                className="shrink-0 px-4 py-2.5 rounded-xl border border-amber-400/50 bg-amber-500/10 text-amber-800 dark:text-amber-200 text-sm font-bold"
+                className="shrink-0 px-4 py-2.5 rounded-xl border border-[var(--accent)]/40 bg-[var(--accent-light)] text-[var(--accent)] text-sm font-bold"
               >
                 {t('pick_detail.sticky_top_up')}
               </Link>

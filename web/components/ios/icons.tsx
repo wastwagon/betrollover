@@ -44,6 +44,22 @@ export function IconTrending(props: { className?: string }) {
   );
 }
 
+export function IconBolt(props: { className?: string }) {
+  return (
+    <IconBase className={props.className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" />
+    </IconBase>
+  );
+}
+
+export function IconWarning(props: { className?: string }) {
+  return (
+    <IconBase className={props.className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.3 4.2L2.8 17.5A2 2 0 004.5 20.5h15a2 2 0 001.7-3L13.7 4.2a2 2 0 00-3.4 0z" />
+    </IconBase>
+  );
+}
+
 export function IconRocket(props: { className?: string }) {
   return (
     <IconBase className={props.className}>
@@ -245,6 +261,89 @@ export function IconShield(props: { className?: string }) {
   return (
     <IconBase className={props.className}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z" />
+    </IconBase>
+  );
+}
+
+export function IconHome(props: { className?: string }) {
+  return (
+    <IconBase className={props.className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z" />
+    </IconBase>
+  );
+}
+
+export function IconSettings(props: { className?: string }) {
+  return (
+    <IconBase className={props.className}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M10.3 3.3l.3-1.3h2.8l.3 1.3a7 7 0 011.7.7l1.1-.8 2 2-.8 1.1c.3.5.5 1.1.7 1.7l1.3.3v2.8l-1.3.3a7 7 0 01-.7 1.7l.8 1.1-2 2-1.1-.8a7 7 0 01-1.7.7l-.3 1.3h-2.8l-.3-1.3a7 7 0 01-1.7-.7l-1.1.8-2-2 .8-1.1a7 7 0 01-.7-1.7l-1.3-.3V8.6l1.3-.3a7 7 0 01.7-1.7l-.8-1.1 2-2 1.1.8a7 7 0 011.7-.7z"
+      />
+      <circle cx="12" cy="12" r="2.5" />
+    </IconBase>
+  );
+}
+
+export function IconMail(props: { className?: string }) {
+  return (
+    <IconBase className={props.className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V7a1 1 0 011-1z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 8l8 6 8-6" />
+    </IconBase>
+  );
+}
+
+export function IconClipboard(props: { className?: string }) {
+  return (
+    <IconBase className={props.className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5h6a2 2 0 012 2v12a2 2 0 01-2 2H9a2 2 0 01-2-2V7a2 2 0 012-2z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+    </IconBase>
+  );
+}
+
+export function IconGlobe(props: { className?: string }) {
+  return (
+    <IconBase className={props.className}>
+      <circle cx="12" cy="12" r="9" />
+      <path strokeLinecap="round" d="M3 12h18M12 3c2.5 2.8 4 6 4 9s-1.5 6.2-4 9c-2.5-2.8-4-6-4-9s1.5-6.2 4-9z" />
+    </IconBase>
+  );
+}
+
+export function IconMegaphone(props: { className?: string }) {
+  return (
+    <IconBase className={props.className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 10v4l10-2V8L4 10zM14 9.2v5.6A3 3 0 0017 18h1" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7 14.5V18a1 1 0 001 1h1.5" />
+    </IconBase>
+  );
+}
+
+export function IconCreditCard(props: { className?: string }) {
+  return (
+    <IconBase className={props.className}>
+      <rect x="3" y="6" width="18" height="12" rx="2" />
+      <path strokeLinecap="round" d="M3 10h18" />
+    </IconBase>
+  );
+}
+
+export function IconShare(props: { className?: string }) {
+  return (
+    <IconBase className={props.className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7M16 6l-4-4-4 4M12 2v13" />
+    </IconBase>
+  );
+}
+
+export function IconLock(props: { className?: string }) {
+  return (
+    <IconBase className={props.className}>
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path strokeLinecap="round" d="M8 11V8a4 4 0 018 0v3" />
     </IconBase>
   );
 }

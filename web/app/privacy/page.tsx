@@ -7,18 +7,13 @@ import type { Metadata } from 'next';
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
-  const title = locale === 'fr' ? `Politique de Confidentialité` : `Privacy Policy`;
-  const description = locale === 'fr'
-    ? `Politique de Confidentialité de ${SITE_NAME} — comment nous collectons, utilisons et protégeons vos données personnelles sur notre marketplace éducative de tipsters.`
-    : `${SITE_NAME} Privacy Policy — how we collect, use, and protect your personal data on our educational tipster marketplace.`;
+  const t = buildT(locale);
   return {
-    title,
-    description,
+    title: t('privacy.title'),
+    description: t('privacy.meta_desc', { site: SITE_NAME }),
     alternates: seoAlternates('/privacy', locale),
   };
 }
-
-const EFFECTIVE_DATE = 'February 2025';
 
 export default async function PrivacyPage() {
   const locale = await getLocale();
@@ -33,7 +28,7 @@ export default async function PrivacyPage() {
           <PageHeader
             label={t('privacy.legal')}
             title={t('privacy.title')}
-            tagline={`${t('privacy.effective')}: ${EFFECTIVE_DATE}`}
+            tagline={`${t('privacy.effective')}: ${t('privacy.effective_date')}`}
           />
           <article className="section-ux-prose min-w-0">
           <div className="prose prose-slate max-w-none min-w-0 text-[var(--text)] space-y-8 leading-relaxed text-sm">

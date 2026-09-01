@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { Button, buttonClassName } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 function getToken() {
   if (typeof window === 'undefined') return null;
@@ -85,14 +86,17 @@ export default function AdminPickCommentsPage() {
         </p>
 
         <div className="flex flex-wrap gap-2 mb-6">
-          <input
-            type="text"
-            inputMode="numeric"
-            placeholder="Filter by pick ID"
-            value={filterPickId}
-            onChange={(e) => setFilterPickId(e.target.value)}
-            className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--text)] w-40"
-          />
+          <div className="w-40">
+            <Input
+              id="admin-pick-comments-pick-id"
+              type="text"
+              inputMode="numeric"
+              placeholder="Filter by pick ID"
+              value={filterPickId}
+              onChange={(e) => setFilterPickId(e.target.value)}
+              aria-label="Filter by pick ID"
+            />
+          </div>
           <button
             type="button"
             onClick={() => void load()}

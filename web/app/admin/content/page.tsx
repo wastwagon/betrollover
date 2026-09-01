@@ -7,6 +7,7 @@ import { AdminSidebar } from '@/components/AdminSidebar';
 
 import { getApiUrl } from '@/lib/site-config';
 import { buttonClassName } from '@/components/ui/Button';
+import { Input, Textarea } from '@/components/ui/Input';
 
 interface ContentPage {
   id: number;
@@ -137,34 +138,29 @@ export default function AdminContentPage() {
                   </div>
                   {isEditing ? (
                     <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Title</label>
-                        <input
-                          type="text"
-                          value={form.title}
-                          onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                          className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Content</label>
-                        <textarea
-                          value={form.content}
-                          onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
-                          rows={12}
-                          className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] font-mono text-sm"
-                        />
-                        <p className="text-xs text-[var(--text-muted)] mt-1">Supports plain text. Line breaks preserved.</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Meta Description (SEO)</label>
-                        <input
-                          type="text"
-                          value={form.metaDescription}
-                          onChange={(e) => setForm((f) => ({ ...f, metaDescription: e.target.value }))}
-                          className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
-                        />
-                      </div>
+                      <Input
+                        id="admin-content-title"
+                        label="Title"
+                        type="text"
+                        value={form.title}
+                        onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                      />
+                      <Textarea
+                        id="admin-content-body"
+                        label="Content"
+                        value={form.content}
+                        onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
+                        rows={12}
+                        className="font-mono"
+                        hint="Supports plain text. Line breaks preserved."
+                      />
+                      <Input
+                        id="admin-content-meta"
+                        label="Meta Description (SEO)"
+                        type="text"
+                        value={form.metaDescription}
+                        onChange={(e) => setForm((f) => ({ ...f, metaDescription: e.target.value }))}
+                      />
                     </div>
                   ) : (
                     <div className="text-sm text-[var(--text-muted)]">

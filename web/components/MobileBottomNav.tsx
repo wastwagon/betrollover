@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
 import { hapticLight } from '@/lib/haptic';
 import { localizeHref, stripLocalePrefix } from '@/lib/locale-path';
+import { useAccaGeneratorEnabled } from '@/hooks/useAccaGeneratorEnabled';
 
 type NavItemId = 'home' | 'marketplace' | 'tipsters' | 'create' | 'acca';
 
@@ -77,8 +78,8 @@ const ICONS: Record<NavItemId, (p: { active?: boolean }) => JSX.Element> = {
   acca: AccaIcon,
 };
 
-/** Admin only — auth pages keep bottom nav so tablets can reach Home/Marketplace without the desktop mega-header. */
-const HIDE_PATHS = ['/admin', '/login', '/register'];
+/** Auth + admin — match UnifiedHeader isAuthPath so login/register/verify/forgot stay header-only. */
+const HIDE_PATHS = ['/admin', '/login', '/register', '/forgot-password', '/verify-email'];
 
 function isActive(pathname: string, href: string): boolean {
   const path = stripLocalePrefix(pathname);
@@ -95,6 +96,7 @@ export function MobileBottomNav() {
   const pathname = usePathname();
   const { t } = useLanguage();
   const [mounted, setMounted] = useState(false);
+  const accaEnabled = useAccaGeneratorEnabled();
 
   useLayoutEffect(() => {
     setMounted(true);
@@ -102,7 +104,7 @@ export function MobileBottomNav() {
 
   if (!mounted || shouldHideNav(pathname)) return null;
 
-  const navItems = buildNavItems();
+  const navItems = buildNavItems().filter((item) => item.id !== 'acca' || accaEnabled);
 
   const nav = (
     <nav

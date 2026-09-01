@@ -6,7 +6,6 @@ import { BottomSheet } from './BottomSheet';
 import { GroupedListSection, GroupedListButton } from './GroupedList';
 import {
   IconDashboard,
-  IconTable,
   IconPerson,
   IconWallet,
   IconEarnings,
@@ -15,8 +14,7 @@ import {
   IconStar,
   IconBell,
   IconLogout,
-  IconTarget,
-  IconChart,
+  IconRocket,
 } from './icons';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
@@ -34,16 +32,14 @@ export interface MobileAccountSheetProps {
   onSignOut: () => void;
   labels: {
     dashboard: string;
-    leagueTables: string;
     profile: string;
     wallet: string;
     earnings: string;
     myPicks: string;
-    createPick: string;
-    accaGenerator: string;
     myPurchases: string;
     subscriptions: string;
     notifications: string;
+    invite: string;
   };
 }
 
@@ -78,20 +74,18 @@ export function MobileAccountSheet({
 
   const items = [
     { href: '/dashboard', icon: <IconDashboard />, label: labels.dashboard },
-    { href: '/league-tables', icon: <IconTable />, label: labels.leagueTables },
     { href: '/profile', icon: <IconPerson />, label: labels.profile },
     {
       href: '/wallet',
       icon: <IconWallet />,
       label: labels.wallet,
       badge: pendingWithdrawalCount > 0 ? String(pendingWithdrawalCount) : undefined,
-      badgeClassName: 'bg-amber-500',
+      badgeClassName: 'bg-[var(--accent)]',
     },
     { href: '/earnings', icon: <IconEarnings />, label: labels.earnings },
-    { href: '/create-pick', icon: <IconTarget />, label: labels.createPick },
-    { href: '/acca-generator', icon: <IconChart />, label: labels.accaGenerator },
     { href: '/my-picks', icon: <IconPicks />, label: labels.myPicks },
     { href: '/my-purchases', icon: <IconBag />, label: labels.myPurchases },
+    { href: '/invite', icon: <IconRocket />, label: labels.invite },
     ...(isSubscriptionsEnabled()
       ? [{ href: '/subscriptions', icon: <IconStar />, label: labels.subscriptions }]
       : []),
@@ -100,7 +94,7 @@ export function MobileAccountSheet({
       icon: <IconBell />,
       label: labels.notifications,
       badge: unreadCount > 0 ? String(unreadCount) : undefined,
-      badgeClassName: 'bg-red-500',
+      badgeClassName: 'bg-[var(--destructive)]',
     },
   ];
 

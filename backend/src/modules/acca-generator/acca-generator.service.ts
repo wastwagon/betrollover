@@ -122,6 +122,11 @@ export class AccaGeneratorService {
     }
   }
 
+  async getEnabledStatus() {
+    const limits = await this.loadLimits();
+    return { enabled: limits.enabled };
+  }
+
   async getPublicConfig(userId: number) {
     const limits = await this.loadLimits();
     const quota = await this.getQuota(userId, limits);

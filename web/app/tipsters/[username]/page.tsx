@@ -19,7 +19,6 @@ import { FollowersCountButton } from '@/components/TipsterFollowersModal';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { VerifiedTipsterBadge } from '@/components/VerifiedTipsterBadge';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
-import { NavBar } from '@/components/ios/NavBar';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { TipsterTrustStrip, type TipsterReviewSnippet } from '@/components/TipsterTrustStrip';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
@@ -30,6 +29,8 @@ import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import { TIPSTER_ACTIVE_WITHIN_DAYS, TIPSTER_FORM_POST_CAP } from '@betrollover/shared-types';
 import { FollowPushNudge } from '@/components/FollowPushNudge';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { SegmentedControl } from '@/components/ios/SegmentedControl';
 
 interface Pick {
   id?: number;
@@ -498,10 +499,7 @@ export default function TipsterProfilePage() {
           disabled={loading}
         >
         <div className="section-ux-page w-full min-w-0">
-          <div className="lg:hidden -mx-4 sm:mx-0 mb-3">
-            <NavBar title={tipster.display_name} backHref="/tipsters" backLabel={t('tipster.back_to_tipsters')} sticky={false} />
-          </div>
-          <Link href="/tipsters" className="hidden lg:inline-block text-sm text-[var(--primary)] hover:underline mb-4">
+          <Link href="/tipsters" className="inline-block text-sm text-[var(--primary)] hover:underline mb-4">
             {t('tipster.back_to_tipsters')}
           </Link>
 
@@ -615,24 +613,24 @@ export default function TipsterProfilePage() {
                   {t('tipster.posted_date_filter_label')}
                 </p>
                 <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 p-3 rounded-[var(--radius)] bg-[var(--bg)] border border-[var(--separator)]">
-                  <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)] shrink-0">
-                    <span>{t('tipster.date_from')}</span>
-                    <input
+                  <div className="w-full sm:w-auto sm:min-w-[10rem] shrink-0">
+                    <Input
+                      id="tipster-date-from"
+                      label={t('tipster.date_from')}
                       type="date"
                       value={dateFromDraft}
                       onChange={(e) => setDateFromDraft(e.target.value)}
-                      className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--card)] px-2 py-1.5 text-sm text-[var(--text)]"
                     />
-                  </label>
-                  <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)] shrink-0">
-                    <span>{t('tipster.date_to')}</span>
-                    <input
+                  </div>
+                  <div className="w-full sm:w-auto sm:min-w-[10rem] shrink-0">
+                    <Input
+                      id="tipster-date-to"
+                      label={t('tipster.date_to')}
                       type="date"
                       value={dateToDraft}
                       onChange={(e) => setDateToDraft(e.target.value)}
-                      className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--card)] px-2 py-1.5 text-sm text-[var(--text)]"
                     />
-                  </label>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     <Button
                       type="button"
@@ -838,30 +836,16 @@ export default function TipsterProfilePage() {
         <section className="section-ux-gutter mb-12">
           {/* Active / Archive tabs */}
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center mb-3">
-            <div className="inline-flex flex-1 min-w-0 w-full sm:w-auto max-w-full p-1 rounded-[var(--radius)] bg-[var(--fill-secondary)] border border-[var(--separator)]">
-              <button
-                type="button"
-                onClick={() => setCouponFilter('active')}
-                className={`flex-1 min-w-0 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  couponFilter === 'active'
-                    ? 'bg-[var(--primary)] text-white shadow-sm'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text)]'
-                }`}
-              >
-                {t('tipster.active')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setCouponFilter('archive')}
-                className={`flex-1 min-w-0 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  couponFilter === 'archive'
-                    ? 'bg-[var(--primary)] text-white shadow-sm'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text)]'
-                }`}
-              >
-                {t('tipster.archive')}
-              </button>
-            </div>
+            <SegmentedControl
+              aria-label={t('tipster.active')}
+              className="max-w-none sm:max-w-xs"
+              options={[
+                { value: 'active' as const, label: t('tipster.active') },
+                { value: 'archive' as const, label: t('tipster.archive') },
+              ]}
+              value={couponFilter}
+              onChange={setCouponFilter}
+            />
             <span className="text-sm text-[var(--text-muted)]">
               {couponFilter === 'active'
                 ? t('tipster.available', { n: String(filteredActive.length) })
@@ -878,7 +862,7 @@ export default function TipsterProfilePage() {
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
                   sportFilter === 'all'
                     ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                    : 'bg-white/60 dark:bg-gray-800/60 text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
+                    : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
                 }`}
               >
                 🌐 {t('tipster.all_sports')}
@@ -894,7 +878,7 @@ export default function TipsterProfilePage() {
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
                       sportFilter === s
                         ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                        : 'bg-white/60 dark:bg-gray-800/60 text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
+                        : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
                     }`}
                   >
                     {meta.icon} {meta.label}

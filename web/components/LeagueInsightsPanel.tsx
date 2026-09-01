@@ -182,7 +182,7 @@ export function LeagueInsightsPanel({
       {panelOpen && (
         <div className={`${isFull ? 'px-3 sm:px-4 py-4' : 'border-t border-[var(--border)] px-3 pb-3 pt-2'}`}>
           {err && (
-            <p className="text-xs text-amber-700 dark:text-amber-400 mb-2">{err}</p>
+            <p className="text-xs text-[var(--accent)] mb-2">{err}</p>
           )}
 
           <div className="flex flex-wrap items-stretch gap-2 mb-3">

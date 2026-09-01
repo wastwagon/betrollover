@@ -13,6 +13,8 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { EscrowPurchaseTimeline } from '@/components/EscrowPurchaseTimeline';
+import { EscrowRefundReceipt } from '@/components/EscrowRefundReceipt';
+import { OUTCOME_TEXT } from '@/lib/result-chip';
 import { useErrorToast } from '@/hooks/useErrorToast';
 import { ErrorToast } from '@/components/ErrorToast';
 import { getApiUrl } from '@/lib/site-config';
@@ -21,6 +23,7 @@ import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { IconShield } from '@/components/ios/icons';
 import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import { SegmentedControl } from '@/components/ios/SegmentedControl';
 
 /* ─── Types ─────────────────────────────────────────────────── */
 interface PickItem {
@@ -63,6 +66,7 @@ interface Purchase {
   purchasedAt: string;
   escrowStatus?: string | null;
   escrowAmount?: number | null;
+  escrowUpdatedAt?: string | null;
   pick?: {
     id: number;
     title: string;
@@ -289,9 +293,9 @@ export default function MyPurchasesPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6 min-w-0">
               {[
                 { labelKey: 'my_purchases.filter_all' as const, value: stats.total,    color: 'text-[var(--primary)]' },
-                { labelKey: 'my_purchases.filter_pending' as const, value: stats.pending,  color: 'text-amber-500' },
-                { labelKey: 'my_purchases.filter_won' as const, value: stats.won,      color: 'text-emerald-600' },
-                { labelKey: 'my_purchases.filter_lost' as const, value: stats.lost,     color: 'text-red-500' },
+                { labelKey: 'my_purchases.filter_pending' as const, value: stats.pending,  color: 'text-[var(--accent)]' },
+                { labelKey: 'my_purchases.filter_won' as const, value: stats.won,      color: OUTCOME_TEXT.positive },
+                { labelKey: 'my_purchases.filter_lost' as const, value: stats.lost,     color: OUTCOME_TEXT.negative },
               ].map(({ labelKey, value, color }) => (
                 <div
                   key={labelKey}
@@ -304,40 +308,29 @@ export default function MyPurchasesPage() {
             </div>
           )}
 
-          {/* ─── Result filter pills ───────────────────────────── */}
+          {/* ─── Result filter ─────────────────────────────────── */}
           {!loading && stats.total > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4 min-w-0 max-w-full">
-              {RESULT_FILTERS.map(({ key, labelKey }) => {
-                const count =
-                  key === 'all'
-                    ? stats.total
-                    : key === 'won'
-                      ? stats.won
-                      : key === 'lost'
-                        ? stats.lost
-                        : key === 'pending'
-                          ? stats.pending
-                          : stats.void;
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setResultFilter(key)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${
-                      resultFilter === key
-                        ? 'bg-[var(--primary)] text-white shadow-sm'
-                        : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
-                    }`}
-                  >
-                    {t(labelKey)}
-                    <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold ${
-                      resultFilter === key ? 'bg-white/20 text-white' : 'bg-[var(--bg)] text-[var(--text-muted)]'
-                    }`}>
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
+            <div className="mb-4 w-full min-w-0 overflow-x-auto">
+              <SegmentedControl
+                aria-label={t('my_purchases.filter_all')}
+                className="max-w-none min-w-[28rem]"
+                options={RESULT_FILTERS.map(({ key, labelKey }) => ({
+                  value: key,
+                  label: t(labelKey),
+                  count:
+                    key === 'all'
+                      ? stats.total
+                      : key === 'won'
+                        ? stats.won
+                        : key === 'lost'
+                          ? stats.lost
+                          : key === 'pending'
+                            ? stats.pending
+                            : stats.void,
+                }))}
+                value={resultFilter}
+                onChange={setResultFilter}
+              />
             </div>
           )}
 
@@ -496,6 +489,13 @@ export default function MyPurchasesPage() {
                       escrowStatus={p.escrowStatus}
                       isPaid={Number(p.purchasePrice) > 0}
                       purchasedAt={p.purchasedAt}
+                    />
+                    <EscrowRefundReceipt
+                      result={p.pick.result}
+                      escrowStatus={p.escrowStatus}
+                      isPaid={Number(p.purchasePrice) > 0}
+                      amount={p.escrowAmount ?? p.purchasePrice}
+                      settledAt={p.escrowUpdatedAt}
                     />
                   </div>
                 ) : null,

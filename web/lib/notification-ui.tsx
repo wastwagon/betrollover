@@ -20,26 +20,26 @@ export type NotificationVisual = {
 
 const MARKETPLACE: NotificationVisual = {
   Icon: IconCart,
-  colorClass: 'text-emerald-600',
-  bgClass: 'bg-emerald-500/10',
+  colorClass: 'text-[var(--primary)]',
+  bgClass: 'bg-[var(--primary-light)]',
 };
 
 const SOCIAL_CHAT: NotificationVisual = {
   Icon: IconChat,
-  colorClass: 'text-emerald-600',
-  bgClass: 'bg-emerald-500/10',
+  colorClass: 'text-[var(--primary)]',
+  bgClass: 'bg-[var(--primary-light)]',
 };
 
 const SOCIAL_HEART: NotificationVisual = {
   Icon: IconHeart,
-  colorClass: 'text-emerald-600',
-  bgClass: 'bg-emerald-500/10',
+  colorClass: 'text-[var(--destructive)]',
+  bgClass: 'bg-[var(--destructive-light)]',
 };
 
 const WALLET: NotificationVisual = {
   Icon: IconWallet,
-  colorClass: 'text-blue-600',
-  bgClass: 'bg-blue-500/10',
+  colorClass: 'text-[var(--primary)]',
+  bgClass: 'bg-[var(--primary-light)]',
 };
 
 const ACCOUNT: NotificationVisual = {
@@ -50,36 +50,36 @@ const ACCOUNT: NotificationVisual = {
 
 const ACHIEVEMENT: NotificationVisual = {
   Icon: IconTrophy,
-  colorClass: 'text-amber-600',
-  bgClass: 'bg-amber-500/10',
+  colorClass: 'text-[var(--accent)]',
+  bgClass: 'bg-[var(--accent-light)]',
 };
 
 const SYSTEM: NotificationVisual = {
   Icon: IconBell,
-  colorClass: 'text-slate-500',
-  bgClass: 'bg-slate-500/10',
+  colorClass: 'text-[var(--text-muted)]',
+  bgClass: 'bg-[var(--fill-secondary)]',
 };
 
 const BY_TYPE: Record<string, NotificationVisual> = {
   purchase: MARKETPLACE,
-  settlement: { Icon: IconTrophy, colorClass: 'text-blue-600', bgClass: 'bg-blue-500/10' },
-  refund: { Icon: IconWallet, colorClass: 'text-amber-600', bgClass: 'bg-amber-500/10' },
+  settlement: { Icon: IconTrophy, colorClass: 'text-[var(--primary)]', bgClass: 'bg-[var(--primary-light)]' },
+  refund: { Icon: IconWallet, colorClass: 'text-[var(--accent)]', bgClass: 'bg-[var(--accent-light)]' },
   payout: MARKETPLACE,
   pick_published: MARKETPLACE,
   coupon_sold: MARKETPLACE,
   new_pick_from_followed: MARKETPLACE,
-  subscription: { Icon: IconStar, colorClass: 'text-amber-600', bgClass: 'bg-amber-500/10' },
+  subscription: { Icon: IconStar, colorClass: 'text-[var(--accent)]', bgClass: 'bg-[var(--accent-light)]' },
   subscription_refund: WALLET,
   subscription_payout: WALLET,
   deposit_success: WALLET,
   withdrawal: WALLET,
-  withdrawal_done: { Icon: IconWallet, colorClass: 'text-emerald-600', bgClass: 'bg-emerald-500/10' },
-  withdrawal_failed: { Icon: IconWallet, colorClass: 'text-red-600', bgClass: 'bg-red-500/10' },
-  withdrawal_rejected: { Icon: IconWallet, colorClass: 'text-orange-600', bgClass: 'bg-orange-500/10' },
-  new_follower: { Icon: IconUsers, colorClass: 'text-cyan-600', bgClass: 'bg-cyan-500/10' },
-  follow: { Icon: IconUsers, colorClass: 'text-cyan-600', bgClass: 'bg-cyan-500/10' },
+  withdrawal_done: { Icon: IconWallet, colorClass: 'text-[var(--success)]', bgClass: 'bg-[var(--success-light)]' },
+  withdrawal_failed: { Icon: IconWallet, colorClass: 'text-[var(--destructive)]', bgClass: 'bg-[var(--destructive-light)]' },
+  withdrawal_rejected: { Icon: IconWallet, colorClass: 'text-[var(--accent)]', bgClass: 'bg-[var(--accent-light)]' },
+  new_follower: { Icon: IconUsers, colorClass: 'text-[var(--primary)]', bgClass: 'bg-[var(--primary-light)]' },
+  follow: { Icon: IconUsers, colorClass: 'text-[var(--primary)]', bgClass: 'bg-[var(--primary-light)]' },
   roi_below_minimum: ACCOUNT,
-  tipster_approved: { Icon: IconPicks, colorClass: 'text-emerald-600', bgClass: 'bg-emerald-500/10' },
+  tipster_approved: { Icon: IconPicks, colorClass: 'text-[var(--success)]', bgClass: 'bg-[var(--success-light)]' },
   tipster_rejected: ACCOUNT,
   support: ACCOUNT,
   leaderboard_rank_up: ACHIEVEMENT,
@@ -98,10 +98,10 @@ const BY_ICON: Record<string, NotificationVisual> = {
   comment: SOCIAL_CHAT,
   trophy: ACHIEVEMENT,
   wallet: WALLET,
-  'user-plus': { Icon: IconUsers, colorClass: 'text-cyan-600', bgClass: 'bg-cyan-500/10' },
-  star: { Icon: IconStar, colorClass: 'text-amber-600', bgClass: 'bg-amber-500/10' },
-  check: { Icon: IconPicks, colorClass: 'text-emerald-600', bgClass: 'bg-emerald-500/10' },
-  alert: { Icon: IconShield, colorClass: 'text-orange-600', bgClass: 'bg-orange-500/10' },
+  'user-plus': { Icon: IconUsers, colorClass: 'text-[var(--primary)]', bgClass: 'bg-[var(--primary-light)]' },
+  star: { Icon: IconStar, colorClass: 'text-[var(--accent)]', bgClass: 'bg-[var(--accent-light)]' },
+  check: { Icon: IconPicks, colorClass: 'text-[var(--success)]', bgClass: 'bg-[var(--success-light)]' },
+  alert: { Icon: IconShield, colorClass: 'text-[var(--accent)]', bgClass: 'bg-[var(--accent-light)]' },
 };
 
 /**

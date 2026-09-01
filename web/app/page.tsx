@@ -1,8 +1,5 @@
 import Link from 'next/link';
 import {
-  ArtworkBuyerBrowse,
-  ArtworkBuyerSecure,
-  ArtworkBuyerOutcome,
   ArtworkSellerAccount,
   ArtworkSellerRoi,
   ArtworkSellerPayout,
@@ -77,43 +74,31 @@ export default async function HomePage() {
         </div>
         <HomeQuickMarketplaceSections initialMarketItems={homeData.marketplaceItems} initialLeaderboard={homeData.topTipsters} />
 
-        <HomeMarketingCollapse summary={`${t('home.how_it_works')} · ${t('home.features_title')}`}>
-        {/* How It Works — collapsed by default so tipsters/picks stay first */}
+        <section className="border-t border-[var(--border)] w-full min-w-0">
+          <div className="section-ux-cap-4xl w-full min-w-0 px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-[var(--primary)] mb-4">
+              {t('home.how_it_works')}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 min-w-0">
+              {[
+                { n: '01', title: t('home.step1_title'), desc: t('home.step1_desc') },
+                { n: '02', title: t('home.step2_title'), desc: t('home.step2_desc') },
+                { n: '03', title: t('home.step3_title'), desc: t('home.step3_desc') },
+              ].map((step) => (
+                <div key={step.n} className="min-w-0">
+                  <p className="text-[11px] font-bold text-[var(--text-tertiary)] tracking-widest mb-1">{step.n}</p>
+                  <h3 className="font-display text-sm font-semibold text-[var(--text)] mb-1">{step.title}</h3>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed line-clamp-3">{step.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <HomeMarketingCollapse summary={`${t('home.for_sellers')} · ${t('home.features_title')}`}>
         <section className="py-6 sm:py-10 md:py-14 px-4 sm:px-6 lg:px-8 w-full min-w-0">
           <div className="section-ux-cap-4xl w-full min-w-0">
-            <div className="text-center mb-8 sm:mb-12 px-1">
-              <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-[var(--primary)] mb-3">{t('home.how_it_works')}</p>
-              <h2 className="font-display text-display-sm sm:text-display-md text-[var(--text)] mb-3 leading-snug">{t('home.how_it_works_sub')}</h2>
-              <p className="text-[var(--text-muted)] text-sm sm:text-base max-w-xl mx-auto leading-relaxed">{t('home.escrow_note')}</p>
-              <p className="text-xs sm:text-sm font-semibold text-[var(--text-tertiary)] uppercase tracking-wide mt-4 mb-1" aria-hidden="true">{t('home.for_buyers')}</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 min-w-0">
-              <div className="flex flex-col items-center text-center min-w-0">
-                <div className="flex flex-col items-center gap-2 mb-3 w-full">
-                  <ArtworkBuyerBrowse className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-[var(--primary)]" />
-                  <span className="text-[11px] font-bold text-[var(--text-tertiary)] tracking-widest">01</span>
-                </div>
-                <h3 className="font-display text-base font-semibold text-[var(--text)] mb-2">{t('home.step1_title')}</h3>
-                <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('home.step1_desc')}</p>
-              </div>
-              <div className="flex flex-col items-center text-center min-w-0">
-                <div className="flex flex-col items-center gap-2 mb-3 w-full">
-                  <ArtworkBuyerSecure className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-[var(--primary)]" />
-                  <span className="text-[11px] font-bold text-[var(--text-tertiary)] tracking-widest">02</span>
-                </div>
-                <h3 className="font-display text-base font-semibold text-[var(--text)] mb-2">{t('home.step2_title')}</h3>
-                <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('home.step2_desc')}</p>
-              </div>
-              <div className="flex flex-col items-center text-center min-w-0">
-                <div className="flex flex-col items-center gap-2 mb-3 w-full">
-                  <ArtworkBuyerOutcome className="h-[3.25rem] w-[5.4rem] sm:h-14 sm:w-24 shrink-0 text-[var(--accent)]" />
-                  <span className="text-[11px] font-bold text-[var(--text-tertiary)] tracking-widest">03</span>
-                </div>
-                <h3 className="font-display text-base font-semibold text-[var(--text)] mb-2">{t('home.step3_title')}</h3>
-                <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('home.step3_desc')}</p>
-              </div>
-            </div>
-            <div className="mt-10 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 gap-6 min-w-0 border-t border-[var(--separator)] pt-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 min-w-0">
               <div className="flex items-start gap-3 sm:gap-4 min-w-0">
                 <ArtworkNewsGuides className="h-11 w-11 sm:h-12 sm:w-12 shrink-0 text-[var(--primary)]" />
                 <div className="min-w-0">

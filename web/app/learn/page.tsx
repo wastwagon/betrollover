@@ -2,12 +2,38 @@ import Link from 'next/link';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
+import { DiscoverFamilyNav } from '@/components/DiscoverFamilyNav';
+import { EducationRelatedLinks } from '@/components/EducationRelatedLinks';
+import { buttonClassName } from '@/components/ui/button-styles';
 import { SITE_NAME } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
 
 export default async function LearnPage() {
   const locale = await getLocale();
   const t = buildT(locale);
+  const glossary = [
+    { term: t('learn.term_escrow'), def: t('learn.def_escrow') },
+    { term: t('learn.term_roi'), def: t('learn.def_roi') },
+    { term: t('learn.term_winrate'), def: t('learn.def_winrate') },
+    { term: t('learn.term_acca'), def: t('learn.def_acca') },
+    { term: t('learn.term_settlement'), def: t('learn.def_settlement') },
+    { term: t('learn.term_void'), def: t('learn.def_void') },
+    { term: t('learn.term_pick'), def: t('learn.def_pick') },
+    { term: t('learn.term_tipster'), def: t('learn.def_tipster') },
+  ];
+  const evaluate = [
+    { title: t('learn.eval_track_title'), desc: t('learn.eval_track_desc') },
+    { title: t('learn.eval_consistency_title'), desc: t('learn.eval_consistency_desc') },
+    { title: t('learn.eval_transparency_title'), desc: t('learn.eval_transparency_desc') },
+    { title: t('learn.eval_price_title'), desc: t('learn.eval_price_desc') },
+  ];
+  const market = [
+    { title: t('learn.market_football_title'), desc: t('learn.market_football_desc') },
+    { title: t('learn.market_compare_title'), desc: t('learn.market_compare_desc') },
+    { title: t('learn.market_free_title'), desc: t('learn.market_free_desc') },
+    { title: t('learn.market_escrow_title'), desc: t('learn.market_escrow_desc') },
+  ];
+
   return (
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
@@ -18,115 +44,78 @@ export default async function LearnPage() {
             title={t('learn.page_title')}
             tagline={t('learn.page_intro', { site: SITE_NAME })}
           />
+          <DiscoverFamilyNav current="learn" />
+          <EducationRelatedLinks current="learn" />
           <article className="section-ux-prose min-w-0">
           <div className="prose prose-slate max-w-none text-[var(--text)] space-y-12 leading-relaxed min-w-0">
 
             <section>
               <h2 className="text-xl font-semibold mb-4">{t('learn.section_platform')}</h2>
+              <p>{t('learn.platform_p1', { site: SITE_NAME })}</p>
+              <p>{t('learn.platform_p2')}</p>
               <p>
-                {SITE_NAME} is a tipster marketplace: analysts publish multi-selection picks and you can buy or get free access. 
-                Every paid purchase is held in <strong>escrow</strong> until the pick settles. If the tipster&apos;s selections lose, your money is refunded to your wallet. 
-                If they win, the tipster earns their share. That protection is what makes the platform different from simple tip sheets — you only pay when the picks deliver.
-              </p>
-              <p>
-                <strong>Settlement</strong> is automatic: we use official data (API-Sports, The Odds API) to mark each pick as won, lost, or void. 
-                A published pick wins only if every non-void selection wins. All tipsters are <strong>verified</strong>; performance stats (win rate, ROI, streak) are calculated from settled results only, so you see real track records.
-              </p>
-              <p>
-                For more detail, see <Link href="/how-it-works" className="text-[var(--primary)] hover:underline">How it works</Link> and our <Link href="/how-it-works#faq" className="text-[var(--primary)] hover:underline">FAQs</Link>.
+                {t('learn.platform_more_prefix')}{' '}
+                <Link href="/how-it-works" className="text-[var(--primary)] hover:underline">{t('learn.cta_how_it_works')}</Link>
+                {' '}{t('learn.platform_more_and')}{' '}
+                <Link href="/how-it-works#faq" className="text-[var(--primary)] hover:underline">{t('how_it_works.faq_title')}</Link>.
               </p>
             </section>
 
             <section id="glossary">
               <h2 className="text-xl font-semibold mb-4">{t('learn.section_glossary')}</h2>
               <dl className="space-y-5 min-w-0">
-                <div>
-                  <dt className="font-semibold text-[var(--text)]">Escrow</dt>
-                  <dd className="mt-1 text-[var(--text-muted)]">
-                    Your payment is held by the platform until the pick settles. The tipster does not receive it until results are in. 
-                    If the selections lose, the amount you paid is refunded to your wallet. Escrow protects buyers and keeps tipsters accountable.
-                  </dd>
-                </div>
-                <div>
-                  <dt className="font-semibold text-[var(--text)]">ROI (Return on Investment)</dt>
-                  <dd className="mt-1 text-[var(--text-muted)]">
-                    The tipster&apos;s profit or loss as a percentage of what buyers paid for their picks (flat unit model). 
-                    A positive ROI over many settled picks indicates the tipster has added value. We show ROI so you can compare tipsters objectively.
-                  </dd>
-                </div>
-                <div>
-                  <dt className="font-semibold text-[var(--text)]">Win rate</dt>
-                  <dd className="mt-1 text-[var(--text-muted)]">
-                    The percentage of a tipster&apos;s picks that won (out of all settled picks). 
-                    Win rate alone doesn&apos;t tell you everything — a 60% win rate on low odds is different from 60% on value picks — so we pair it with ROI and streak.
-                  </dd>
-                </div>
-                <div>
-                  <dt className="font-semibold text-[var(--text)]">Accumulator (acca)</dt>
-                  <dd className="mt-1 text-[var(--text-muted)]">
-                    A single listing that combines multiple selections (e.g. 3 match winners). The pick wins only if every selection wins. 
-                    Multi-selection slips offer higher combined prices but are harder to land; tipsters often mix singles and accas.
-                  </dd>
-                </div>
-                <div>
-                  <dt className="font-semibold text-[var(--text)]">Settlement</dt>
-                  <dd className="mt-1 text-[var(--text-muted)]">
-                    The process of marking each pick as won, lost, or void after the event finishes. We use official sources so results are fair and consistent. 
-                    Once settled, escrow is released (to the tipster if the pick won, or refunded to you if it lost).
-                  </dd>
-                </div>
-                <div>
-                  <dt className="font-semibold text-[var(--text)]">Void</dt>
-                  <dd className="mt-1 text-[var(--text-muted)]">
-                    A pick that is cancelled (e.g. match abandoned, no official result). It doesn&apos;t count as a win or a loss. 
-                    In a multi-selection pick, the void selection is typically ignored when deciding if the overall pick wins.
-                  </dd>
-                </div>
-                <div>
-                  <dt className="font-semibold text-[var(--text)]">Pick</dt>
-                  <dd className="mt-1 text-[var(--text-muted)]">
-                    A tipster&apos;s published set of selections (one or more matchups). You buy or unlock the listing to see every leg. 
-                    Each pick has a price (including free), and once you purchase, it&apos;s held in escrow until settlement.
-                  </dd>
-                </div>
-                <div>
-                  <dt className="font-semibold text-[var(--text)]">Tipster</dt>
-                  <dd className="mt-1 text-[var(--text-muted)]">
-                    A verified analyst who publishes picks on the platform. Tipsters are vetted; their win rate, ROI, and streak are shown so you can compare and follow the ones that match your style.
-                  </dd>
-                </div>
+                {glossary.map((item) => (
+                  <div key={item.term}>
+                    <dt className="font-semibold text-[var(--text)]">{item.term}</dt>
+                    <dd className="mt-1 text-[var(--text-muted)]">{item.def}</dd>
+                  </div>
+                ))}
               </dl>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold mb-4">{t('learn.section_evaluate')}</h2>
-              <p className="mb-4">
-                Before you buy a pick or follow a tipster, use the stats we show to make an informed choice:
-              </p>
+              <p className="mb-4">{t('learn.evaluate_intro')}</p>
               <ul className="list-disc pl-6 space-y-2">
-                <li><strong>Track record</strong> — Look at win rate and ROI over a decent number of settled picks. A small sample can be luck; 50+ settled results give a clearer picture.</li>
-                <li><strong>Consistency</strong> — Streak and recent form show whether performance is stable. Some tipsters excel in one sport; check their history in the sport you care about.</li>
-                <li><strong>Transparency</strong> — All our tipsters are verified and their results are based on settled outcomes only. No hiding losses or cherry-picking.</li>
-                <li><strong>Price vs value</strong> — Free picks let you try a tipster; paid picks often reflect confidence or demand. Compare what you pay to the tipster&apos;s ROI and your own budget.</li>
+                {evaluate.map((item) => (
+                  <li key={item.title}>
+                    <strong>{item.title}</strong>
+                    {' — '}
+                    {item.desc}
+                  </li>
+                ))}
               </ul>
               <p className="mt-4">
-                Browse the <Link href="/leaderboard" className="text-[var(--primary)] hover:underline">leaderboard</Link> to see who is still posting and ranked by form (results + recent activity), and the <Link href="/marketplace" className="text-[var(--primary)] hover:underline">marketplace</Link> to compare live listings.
+                {t('learn.evaluate_footer_before')}{' '}
+                <Link href="/leaderboard" className="text-[var(--primary)] hover:underline">{t('nav.leaderboard')}</Link>
+                {' '}{t('learn.evaluate_footer_mid')}{' '}
+                <Link href="/marketplace" className="text-[var(--primary)] hover:underline">{t('nav.marketplace')}</Link>
+                {' '}{t('learn.evaluate_footer_after')}
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold mb-4">{t('learn.section_marketplace')}</h2>
-              <p className="mb-4">
-                The marketplace is where tipsters list their picks. Here&apos;s how to use it well:
-              </p>
+              <p className="mb-4">{t('learn.market_intro')}</p>
               <ul className="list-disc pl-6 space-y-2">
-                <li><strong>Focus on football</strong> — Compare tipsters by win rate, ROI, and streak within football picks on the marketplace.</li>
-                <li><strong>Compare stats</strong> — Win rate, ROI, and streak are on every tipster card. Use them to shortlist who fits your risk and style.</li>
-                <li><strong>Free vs paid</strong> — Many tipsters offer free picks so you can test their style. Paid picks may bundle more selective matchups.</li>
-                <li><strong>Escrow protection</strong> — Every purchase is protected. If the pick loses, you get a refund. There&apos;s no need to &quot;claim&quot; — it&apos;s automatic.</li>
+                {market.map((item) => (
+                  <li key={item.title}>
+                    <strong>{item.title}</strong>
+                    {' — '}
+                    {item.desc}
+                  </li>
+                ))}
               </ul>
               <p className="mt-4">
-                New to the platform? Start with <Link href="/how-it-works" className="text-[var(--primary)] hover:underline">How it works</Link> and the <Link href="/how-it-works#faq" className="text-[var(--primary)] hover:underline">FAQs</Link>, then explore the <Link href="/marketplace" className="text-[var(--primary)] hover:underline">marketplace</Link> or <Link href="/discover" className="text-[var(--primary)] hover:underline">Discover</Link> for news and strategy guides.
+                {t('learn.market_footer_new')}{' '}
+                <Link href="/how-it-works" className="text-[var(--primary)] hover:underline">{t('learn.cta_how_it_works')}</Link>
+                {' '}{t('learn.market_footer_and')}{' '}
+                <Link href="/how-it-works#faq" className="text-[var(--primary)] hover:underline">{t('how_it_works.faq_title')}</Link>
+                {t('learn.market_footer_then')}{' '}
+                <Link href="/marketplace" className="text-[var(--primary)] hover:underline">{t('nav.marketplace')}</Link>
+                {' '}{t('learn.market_footer_or')}{' '}
+                <Link href="/discover" className="text-[var(--primary)] hover:underline">{t('nav.discover')}</Link>
+                {t('learn.market_footer_end')}
               </p>
             </section>
 
@@ -135,21 +124,21 @@ export default async function LearnPage() {
               <div className="flex flex-col sm:flex-row flex-wrap gap-3">
                 <Link
                   href="/marketplace"
-                  className="inline-flex items-center justify-center gap-2 font-semibold transition-colors duration-200 touch-manipulation bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-sm px-4 py-2.5 text-sm rounded-[var(--radius)] min-h-[44px] w-full sm:w-auto"
+                  className={buttonClassName({ className: 'w-full sm:w-auto' })}
                 >
                   {t('learn.cta_marketplace')}
                 </Link>
                 <Link
                   href="/how-it-works"
-                  className="inline-flex items-center justify-center gap-2 font-semibold transition-colors duration-200 touch-manipulation bg-[var(--card)] text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)] px-4 py-2.5 text-sm rounded-[var(--radius)] min-h-[44px] w-full sm:w-auto"
+                  className={buttonClassName({ variant: 'secondary', className: 'w-full sm:w-auto' })}
                 >
                   {t('learn.cta_how_it_works')}
                 </Link>
                 <Link
-                  href="/discover"
-                  className="inline-flex items-center justify-center gap-2 font-semibold transition-colors duration-200 touch-manipulation bg-[var(--card)] text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)] px-4 py-2.5 text-sm rounded-[var(--radius)] min-h-[44px] w-full sm:w-auto"
+                  href="/guides"
+                  className={buttonClassName({ variant: 'secondary', className: 'w-full sm:w-auto' })}
                 >
-                  {t('learn.cta_discover')}
+                  {t('learn.open_howtos')}
                 </Link>
               </div>
             </div>

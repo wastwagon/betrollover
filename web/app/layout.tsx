@@ -4,7 +4,6 @@ import { QueryProvider } from '@/components/QueryProvider';
 import { SlipCartProvider } from '@/context/SlipCartContext';
 import { CurrencyProvider } from '@/context/CurrencyContext';
 import { LanguageProvider } from '@/context/LanguageContext';
-import { TopBar } from '@/components/TopBar';
 import { SkipToMainContent } from '@/components/SkipToMainContent';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { RateAppPrompt } from '@/components/RateAppPrompt';
@@ -130,7 +129,6 @@ export default async function RootLayout({
             <CurrencyProvider>
               <SlipCartProvider>
                 <SkipToMainContent />
-                <TopBar />
                 <div
                   id="main-content"
                   tabIndex={-1}

@@ -22,6 +22,7 @@ import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { filterDiscoverySports, isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import { buttonClassName } from '@/components/ui/Button';
+import { Input, fieldControlClassName } from '@/components/ui/Input';
 
 type Period = 'all_time' | 'monthly' | 'weekly';
 type SportFilter = 'all' | 'football' | 'basketball' | 'rugby' | 'mma' | 'volleyball' | 'hockey' | 'american_football';
@@ -283,18 +284,21 @@ export default function TipstersPage({
           </div>
           {period === 'all_time' && (
             <div className="mt-4 flex flex-col sm:flex-row gap-3 sm:items-center min-w-0 max-w-full">
-              <input
-                type="search"
-                placeholder={t('tipster.search_placeholder')}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full min-w-0 max-w-md px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--text)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-                aria-label={t('common.search')}
-              />
+              <div className="w-full min-w-0 max-w-md">
+                <Input
+                  id="tipsters-search"
+                  type="search"
+                  placeholder={t('tipster.search_placeholder')}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  aria-label={t('common.search')}
+                />
+              </div>
               <select
+                id="tipsters-sort"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="w-full min-w-0 sm:w-auto sm:min-w-[200px] px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                className={fieldControlClassName(undefined, 'sm:w-auto sm:min-w-[200px]')}
                 aria-label={t('common.filter')}
               >
                 <option value="roi">{t('tipster.sort_roi')}</option>

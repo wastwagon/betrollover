@@ -7,6 +7,7 @@ import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { Button, buttonClassName } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 interface DbFixture {
   id: number;
@@ -882,66 +883,54 @@ export default function AdminFixturesPage() {
                 <p className="text-xs text-red-600 dark:text-red-400 mb-2">{streamThresholdError}</p>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                <label className="text-xs text-gray-600 dark:text-gray-400">
-                  Warn active
-                  <input
-                    type="number"
-                    min={1}
-                    value={streamThresholds.warnActiveConnections}
-                    onChange={(e) => setStreamThresholds((s) => ({ ...s, warnActiveConnections: Math.max(1, Number(e.target.value) || 1) }))}
-                    className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1 text-sm text-gray-900 dark:text-white"
-                  />
-                </label>
-                <label className="text-xs text-gray-600 dark:text-gray-400">
-                  Critical active
-                  <input
-                    type="number"
-                    min={1}
-                    value={streamThresholds.criticalActiveConnections}
-                    onChange={(e) => setStreamThresholds((s) => ({ ...s, criticalActiveConnections: Math.max(1, Number(e.target.value) || 1) }))}
-                    className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1 text-sm text-gray-900 dark:text-white"
-                  />
-                </label>
-                <label className="text-xs text-gray-600 dark:text-gray-400">
-                  Warn events/min
-                  <input
-                    type="number"
-                    min={1}
-                    value={streamThresholds.warnEventsPerMinute}
-                    onChange={(e) => setStreamThresholds((s) => ({ ...s, warnEventsPerMinute: Math.max(1, Number(e.target.value) || 1) }))}
-                    className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1 text-sm text-gray-900 dark:text-white"
-                  />
-                </label>
-                <label className="text-xs text-gray-600 dark:text-gray-400">
-                  Warn payload (B)
-                  <input
-                    type="number"
-                    min={1}
-                    value={streamThresholds.warnAvgPayloadBytes}
-                    onChange={(e) => setStreamThresholds((s) => ({ ...s, warnAvgPayloadBytes: Math.max(1, Number(e.target.value) || 1) }))}
-                    className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1 text-sm text-gray-900 dark:text-white"
-                  />
-                </label>
-                <label className="text-xs text-gray-600 dark:text-gray-400">
-                  Warn stale (s)
-                  <input
-                    type="number"
-                    min={1}
-                    value={streamThresholds.warnStaleSeconds}
-                    onChange={(e) => setStreamThresholds((s) => ({ ...s, warnStaleSeconds: Math.max(1, Number(e.target.value) || 1) }))}
-                    className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1 text-sm text-gray-900 dark:text-white"
-                  />
-                </label>
-                <label className="text-xs text-gray-600 dark:text-gray-400">
-                  Critical stale (s)
-                  <input
-                    type="number"
-                    min={1}
-                    value={streamThresholds.criticalStaleSeconds}
-                    onChange={(e) => setStreamThresholds((s) => ({ ...s, criticalStaleSeconds: Math.max(1, Number(e.target.value) || 1) }))}
-                    className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1 text-sm text-gray-900 dark:text-white"
-                  />
-                </label>
+                <Input
+                  id="stream-warn-active"
+                  label="Warn active"
+                  type="number"
+                  min={1}
+                  value={streamThresholds.warnActiveConnections}
+                  onChange={(e) => setStreamThresholds((s) => ({ ...s, warnActiveConnections: Math.max(1, Number(e.target.value) || 1) }))}
+                />
+                <Input
+                  id="stream-critical-active"
+                  label="Critical active"
+                  type="number"
+                  min={1}
+                  value={streamThresholds.criticalActiveConnections}
+                  onChange={(e) => setStreamThresholds((s) => ({ ...s, criticalActiveConnections: Math.max(1, Number(e.target.value) || 1) }))}
+                />
+                <Input
+                  id="stream-warn-events"
+                  label="Warn events/min"
+                  type="number"
+                  min={1}
+                  value={streamThresholds.warnEventsPerMinute}
+                  onChange={(e) => setStreamThresholds((s) => ({ ...s, warnEventsPerMinute: Math.max(1, Number(e.target.value) || 1) }))}
+                />
+                <Input
+                  id="stream-warn-payload"
+                  label="Warn payload (B)"
+                  type="number"
+                  min={1}
+                  value={streamThresholds.warnAvgPayloadBytes}
+                  onChange={(e) => setStreamThresholds((s) => ({ ...s, warnAvgPayloadBytes: Math.max(1, Number(e.target.value) || 1) }))}
+                />
+                <Input
+                  id="stream-warn-stale"
+                  label="Warn stale (s)"
+                  type="number"
+                  min={1}
+                  value={streamThresholds.warnStaleSeconds}
+                  onChange={(e) => setStreamThresholds((s) => ({ ...s, warnStaleSeconds: Math.max(1, Number(e.target.value) || 1) }))}
+                />
+                <Input
+                  id="stream-critical-stale"
+                  label="Critical stale (s)"
+                  type="number"
+                  min={1}
+                  value={streamThresholds.criticalStaleSeconds}
+                  onChange={(e) => setStreamThresholds((s) => ({ ...s, criticalStaleSeconds: Math.max(1, Number(e.target.value) || 1) }))}
+                />
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <button
@@ -1078,7 +1067,7 @@ export default function AdminFixturesPage() {
                   </svg>
                   {settling ? 'Settling picks…' : 'Fetching results…'}
                 </span>
-              ) : '⚡ Fetch Results & Settle Picks'}
+              ) : 'Fetch results & settle picks'}
             </button>
             <button
               type="button"

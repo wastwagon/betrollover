@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
+import { Input, fieldControlClassName } from '@/components/ui/Input';
 
 interface Notification {
   id: number;
@@ -109,35 +110,42 @@ export default function AdminNotificationsPage() {
         </div>
 
         <div className="mb-6 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
-          <input
-            type="number"
-            placeholder="Filter by User ID"
-            value={userIdFilter}
-            onChange={(e) => {
-              setUserIdFilter(e.target.value);
-              setPage(1);
-            }}
-            className="w-full sm:flex-1 sm:min-w-[160px] px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-          />
+          <div className="w-full sm:flex-1 sm:min-w-[160px]">
+            <Input
+              id="admin-notifications-user-id"
+              type="number"
+              placeholder="Filter by User ID"
+              value={userIdFilter}
+              onChange={(e) => {
+                setUserIdFilter(e.target.value);
+                setPage(1);
+              }}
+              aria-label="Filter by User ID"
+            />
+          </div>
           <select
+            id="admin-notifications-audience"
             value={audienceFilter}
             onChange={(e) => {
               setAudienceFilter(e.target.value as 'all' | 'followers' | 'subscribers');
               setPage(1);
             }}
-            className="w-full sm:w-auto px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+            className={fieldControlClassName(undefined, 'sm:w-auto')}
+            aria-label="Filter by audience"
           >
             <option value="all">All audiences</option>
             <option value="followers">Followers</option>
             <option value="subscribers">Subscribers</option>
           </select>
           <select
+            id="admin-notifications-delivery"
             value={deliveryModeFilter}
             onChange={(e) => {
               setDeliveryModeFilter(e.target.value as 'all' | 'teaser' | 'detailed_card');
               setPage(1);
             }}
-            className="w-full sm:w-auto px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+            className={fieldControlClassName(undefined, 'sm:w-auto')}
+            aria-label="Filter by delivery mode"
           >
             <option value="all">All delivery modes</option>
             <option value="teaser">Teaser</option>

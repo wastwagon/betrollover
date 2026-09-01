@@ -8,6 +8,7 @@ import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { NEWS_SPORT_OPTIONS } from '@/lib/sports-content';
 import { buttonClassName } from '@/components/ui/Button';
+import { Input, Textarea, Field, fieldControlClassName } from '@/components/ui/Input';
 
 const CATEGORIES = ['news', 'transfer_rumour', 'confirmed_transfer', 'injury', 'gossip'] as const;
 const LANGUAGES = ['en', 'fr'] as const;
@@ -74,112 +75,98 @@ export default function AdminNewsCreatePage() {
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6">Create News Article</h1>
         <form onSubmit={submit} className="max-w-2xl space-y-4">
           {error ? <p className="text-red-600 text-sm">{error}</p> : null}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label>
-            <input
-              type="text"
-              value={form.title}
-              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              onBlur={generateSlug}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Slug *</label>
-            <input
-              type="text"
-              value={form.slug}
-              onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-              required
-            />
-          </div>
+          <Input
+            id="news-title"
+            label="Title *"
+            type="text"
+            value={form.title}
+            onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+            onBlur={generateSlug}
+            required
+          />
+          <Input
+            id="news-slug"
+            label="Slug *"
+            type="text"
+            value={form.slug}
+            onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
+            required
+          />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+            <Field label="Category" htmlFor="news-category">
               <select
+                id="news-category"
                 value={form.category}
-                onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as any }))}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+                onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as (typeof CATEGORIES)[number] }))}
+                className={fieldControlClassName()}
               >
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>{c.replace('_', ' ')}</option>
                 ))}
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sport</label>
+            </Field>
+            <Field label="Sport" htmlFor="news-sport">
               <select
+                id="news-sport"
                 value={form.sport}
                 onChange={(e) => setForm((f) => ({ ...f, sport: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+                className={fieldControlClassName()}
               >
                 {NEWS_SPORT_OPTIONS.map((s) => (
                   <option key={s.value} value={s.value}>{s.label}</option>
                 ))}
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Language</label>
+            </Field>
+            <Field label="Language" htmlFor="news-language" hint="Same slug for French = same article, different language">
               <select
+                id="news-language"
                 value={form.language}
-                onChange={(e) => setForm((f) => ({ ...f, language: e.target.value as any }))}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+                onChange={(e) => setForm((f) => ({ ...f, language: e.target.value as (typeof LANGUAGES)[number] }))}
+                className={fieldControlClassName()}
               >
                 {LANGUAGES.map((l) => (
                   <option key={l} value={l}>{l === 'en' ? 'English' : 'Français'}</option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 mt-0.5">Same slug for French = same article, different language</p>
-            </div>
+            </Field>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Excerpt</label>
-            <textarea
-              value={form.excerpt}
-              onChange={(e) => setForm((f) => ({ ...f, excerpt: e.target.value }))}
-              rows={2}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content (HTML) *</label>
-            <textarea
-              value={form.content}
-              onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
-              rows={10}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 font-mono text-sm"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image URL</label>
-            <input
-              type="url"
-              value={form.imageUrl}
-              onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Source URL</label>
-            <input
-              type="url"
-              value={form.sourceUrl}
-              onChange={(e) => setForm((f) => ({ ...f, sourceUrl: e.target.value }))}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Publish Date (leave empty for draft)</label>
-            <input
-              type="datetime-local"
-              value={form.publishedAt}
-              onChange={(e) => setForm((f) => ({ ...f, publishedAt: e.target.value }))}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-            />
-          </div>
+          <Textarea
+            id="news-excerpt"
+            label="Excerpt"
+            value={form.excerpt}
+            onChange={(e) => setForm((f) => ({ ...f, excerpt: e.target.value }))}
+            rows={2}
+          />
+          <Textarea
+            id="news-content"
+            label="Content (HTML) *"
+            value={form.content}
+            onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
+            rows={10}
+            required
+            className="font-mono"
+          />
+          <Input
+            id="news-image"
+            label="Image URL"
+            type="url"
+            value={form.imageUrl}
+            onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
+          />
+          <Input
+            id="news-source"
+            label="Source URL"
+            type="url"
+            value={form.sourceUrl}
+            onChange={(e) => setForm((f) => ({ ...f, sourceUrl: e.target.value }))}
+          />
+          <Input
+            id="news-published"
+            label="Publish Date (leave empty for draft)"
+            type="datetime-local"
+            value={form.publishedAt}
+            onChange={(e) => setForm((f) => ({ ...f, publishedAt: e.target.value }))}
+          />
           <div className="flex items-center gap-2">
             <input
               type="checkbox"

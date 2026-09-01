@@ -12,6 +12,7 @@ import { AdSlot } from '@/components/AdSlot';
 import { getApiUrl } from '@/lib/site-config';
 import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 import { buttonClassName } from '@/components/ui/Button';
+import { fieldControlClassName } from '@/components/ui/Input';
 
 type LeagueRow = { apiId: number; name: string; country: string | null; season: number | null };
 
@@ -107,7 +108,7 @@ export default function LeagueTablesPage() {
         </div>
 
         {directoryFailed && (
-          <p className="mb-4 text-sm text-amber-700 dark:text-amber-400 rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20 px-4 py-3">
+          <p className="mb-4 text-sm text-[var(--text)] rounded-xl border border-[var(--accent)]/30 bg-[var(--accent-light)] px-4 py-3">
             {t('league_stats.directory_error')}
           </p>
         )}
@@ -124,7 +125,7 @@ export default function LeagueTablesPage() {
               id="lt-league"
               value={selectedApiId || ''}
               onChange={(e) => setSelectedApiId(Number(e.target.value) || 0)}
-              className="w-full min-h-[48px] px-3 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] touch-manipulation"
+              className={fieldControlClassName(undefined, 'min-h-[48px]')}
             >
               <option value="">{t('league_stats.choose_league')}</option>
               {leaguesSorted.map((l) => (

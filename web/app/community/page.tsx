@@ -11,6 +11,9 @@ import { useT } from '@/context/LanguageContext';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { IconChat } from '@/components/ios/icons';
 const ALLOWED_REACTIONS = ['👍', '❤️', '😂', '🔥'];
 const POLL_INTERVAL = 3000; // 3 s normal, slows to 8 s if idle
 
@@ -67,14 +70,14 @@ function UserBadge({ role }: { role: string }) {
   const t = useT();
   if (role === 'admin') {
     return (
-      <span className="ml-1 px-1 py-0.5 text-[10px] bg-red-600 text-white rounded font-bold">
+      <span className="ml-1 px-1 py-0.5 text-[10px] bg-[var(--destructive)] text-white rounded font-bold">
         {t('community.badge_admin')}
       </span>
     );
   }
   if (role === 'tipster') {
     return (
-      <span className="ml-1 px-1 py-0.5 text-[10px] bg-emerald-600 text-white rounded font-bold">
+      <span className="ml-1 px-1 py-0.5 text-[10px] bg-[var(--primary)] text-white rounded font-bold">
         ✓ {t('community.badge_tipster')}
       </span>
     );
@@ -89,7 +92,12 @@ function Avatar({ user, size = 32 }: { user: ChatUser; size?: number }) {
       className="rounded-full flex items-center justify-center text-white font-bold shrink-0"
       style={{
         width: size, height: size, fontSize: size * 0.4,
-        background: user.role === 'admin' ? '#dc2626' : user.role === 'tipster' ? '#059669' : '#6366f1',
+        background:
+          user.role === 'admin'
+            ? 'var(--destructive)'
+            : user.role === 'tipster'
+              ? 'var(--primary)'
+              : 'var(--text-muted)',
       }}
     >
       {initials}
@@ -271,13 +279,13 @@ function CommunityPageInner() {
   const activeRoom = rooms.find((r) => r.slug === activeSlug);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-950 text-white w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--text)] w-full min-w-0 max-w-full overflow-x-hidden">
       <UnifiedHeader />
 
       <main className="section-ux-community-shell w-full min-w-0" style={{ height: 'calc(100vh - 140px)' }}>
         {/* Active users bar - top center */}
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 max-w-[calc(100vw-1rem)] flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-800/95 border border-gray-700 text-sm text-gray-300 shadow-lg">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" aria-hidden />
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 max-w-[calc(100vw-1rem)] flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--card)] border border-[var(--border)] text-sm text-[var(--text-muted)]">
+          <span className="w-2 h-2 rounded-full bg-[var(--success)] animate-pulse" aria-hidden />
           {totalOnline !== null ? (
             <span>{totalOnline === 1 ? t('community.users_online', { count: '1' }) : t('community.users_online_plural', { count: String(totalOnline) })}</span>
           ) : (
@@ -287,7 +295,7 @@ function CommunityPageInner() {
 
         {/* Room sidebar */}
         <aside className="w-64 shrink-0 hidden md:flex flex-col gap-1">
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-2">{t('community.rooms_section')}</h2>
+          <h2 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2 px-2">{t('community.rooms_section')}</h2>
           {rooms.map((room) => (
             <button
               key={room.slug}
@@ -296,18 +304,18 @@ function CommunityPageInner() {
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
                 activeSlug === room.slug
                   ? 'bg-[var(--primary)] text-white'
-                  : 'text-gray-300 hover:bg-gray-800'
+                  : 'text-[var(--text-muted)] hover:bg-[var(--fill-secondary)]'
               }`}
             >
               <span className="text-xl">{room.icon}</span>
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-sm truncate">{room.name}</div>
-                <div className="flex items-center gap-2 text-xs text-gray-400">
+                <div className="flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
                   {room.todayMessages > 0 && (
                     <span>{t('community.messages_today_badge', { count: String(room.todayMessages) })}</span>
                   )}
                   {(room.activeInRoom ?? 0) > 0 && (
-                    <span className="text-emerald-400">
+                    <span className="text-[var(--success)]">
                       {t('community.chatting', { count: String(room.activeInRoom) })}
                     </span>
                   )}
@@ -317,8 +325,8 @@ function CommunityPageInner() {
           ))}
 
           {/* Disclaimer */}
-          <div className="mt-4 p-3 bg-gray-900 rounded-lg text-xs text-gray-500 leading-relaxed">
-            <p className="font-semibold text-gray-400 mb-1">{t('community.rules_title')}</p>
+          <div className="mt-4 p-3 bg-[var(--card)] rounded-lg text-xs text-[var(--text-tertiary)] leading-relaxed border border-[var(--border)]">
+            <p className="font-semibold text-[var(--text-muted)] mb-1">{t('community.rules_title')}</p>
             <ul className="space-y-0.5 list-disc list-inside">
               <li>{t('community.rule1')}</li>
               <li>{t('community.rule2')}</li>
@@ -334,30 +342,41 @@ function CommunityPageInner() {
 
         {/* Chat panel + right ad column */}
         <div className="flex-1 flex gap-2 sm:gap-4 min-w-0">
-          <div className="flex-1 flex flex-col bg-gray-900 rounded-xl overflow-hidden border border-gray-800 min-w-0">
+          <div className="flex-1 flex flex-col bg-[var(--card)] rounded-xl overflow-hidden border border-[var(--border)] min-w-0">
 
           {/* Room header */}
-          <div className="px-3 sm:px-4 py-3 border-b border-gray-800 flex items-center justify-between gap-2 min-w-0">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <span className="text-2xl shrink-0">{activeRoom?.icon}</span>
-              <div className="min-w-0">
-                <h1 className="font-bold text-white truncate">{activeRoom?.name || t('common.loading')}</h1>
-                {activeRoom?.description && (
-                  <p className="text-xs text-gray-400">{activeRoom.description}</p>
-                )}
-              </div>
+          <div className="px-3 sm:px-4 py-3 border-b border-[var(--separator)] flex items-center gap-2 min-w-0">
+            <span className="text-2xl shrink-0">{activeRoom?.icon}</span>
+            <div className="min-w-0">
+              <h1 className="font-bold text-[var(--text)] truncate">{activeRoom?.name || t('common.loading')}</h1>
+              {activeRoom?.description && (
+                <p className="text-xs text-[var(--text-muted)]">{activeRoom.description}</p>
+              )}
             </div>
-            {/* Mobile room selector */}
-            <select
-              className="md:hidden shrink-0 min-w-0 max-w-[45%] bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-2 py-1"
-              aria-label={t('community.choose_room')}
-              value={activeSlug}
-              onChange={(e) => router.push(`/community?room=${e.target.value}`)}
-            >
-              {rooms.map((r) => (
-                <option key={r.slug} value={r.slug}>{r.icon} {r.name}</option>
-              ))}
-            </select>
+          </div>
+          {/* Mobile room picker — leading chips; desktop uses the sidebar */}
+          <div
+            className="md:hidden px-3 py-2 border-b border-[var(--separator)] flex gap-2 overflow-x-auto overscroll-x-contain scrollbar-hide"
+            role="tablist"
+            aria-label={t('community.choose_room')}
+          >
+            {rooms.map((room) => (
+              <button
+                key={room.slug}
+                type="button"
+                role="tab"
+                aria-selected={activeSlug === room.slug}
+                onClick={() => router.push(`/community?room=${room.slug}`)}
+                className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                  activeSlug === room.slug
+                    ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
+                    : 'bg-[var(--fill-secondary)] text-[var(--text-muted)] border-[var(--border)]'
+                }`}
+              >
+                <span aria-hidden>{room.icon}</span>
+                {room.name}
+              </button>
+            ))}
           </div>
 
           {/* Pinned message */}
@@ -372,15 +391,19 @@ function CommunityPageInner() {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
             {loading ? (
-              <div className="flex items-center justify-center h-full text-gray-500">
+              <div className="flex items-center justify-center h-full text-[var(--text-muted)]">
                 <div className="text-center">
                   <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                   <p className="text-sm">{t('community.loading_messages')}</p>
                 </div>
               </div>
             ) : messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-2">
-                <span className="text-5xl">{activeRoom?.icon || '💬'}</span>
+              <div className="flex flex-col items-center justify-center h-full text-[var(--text-muted)] space-y-2">
+                {activeRoom?.icon ? (
+                  <span className="text-5xl" aria-hidden>{activeRoom.icon}</span>
+                ) : (
+                  <IconChat className="w-12 h-12 text-[var(--text-tertiary)]" />
+                )}
                 <p className="font-medium">{t('community.no_messages')}</p>
                 <p className="text-sm">{t('community.empty_invite')}</p>
               </div>
@@ -397,9 +420,9 @@ function CommunityPageInner() {
                         </span>
                       )}
                       <UserBadge role={msg.user.role} />
-                      <span className="text-xs text-gray-500 ml-1">{timeAgo(msg.createdAt, t)}</span>
+                      <span className="text-xs text-[var(--text-tertiary)] ml-1">{timeAgo(msg.createdAt, t)}</span>
                     </div>
-                    <p className="text-gray-200 text-sm leading-relaxed break-words">{msg.content}</p>
+                    <p className="text-[var(--text)] text-sm leading-relaxed break-words">{msg.content}</p>
 
                     {/* Reactions */}
                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
@@ -413,7 +436,7 @@ function CommunityPageInner() {
                             className={`text-sm px-2 py-0.5 rounded-full border transition-colors ${
                               count > 0
                                 ? 'border-[var(--primary)] bg-[var(--primary-light)] text-[var(--text)]'
-                                : 'border-gray-700 text-gray-500 hover:border-gray-500'
+                                : 'border-[var(--border)] text-[var(--text-tertiary)] hover:border-[var(--text-muted)]'
                             }`}
                           >
                             {emoji}{count > 0 && <span className="ml-1 text-xs">{count}</span>}
@@ -424,9 +447,9 @@ function CommunityPageInner() {
                         <button
                           type="button"
                           onClick={() => setReportingId(reportingId === msg.id ? null : msg.id)}
-                          className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-xs text-gray-500 hover:text-red-400 transition-all ml-1"
+                          className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-xs text-[var(--text-tertiary)] hover:text-[var(--destructive)] transition-all ml-1"
                         >
-                          ⚑ {t('community.report')}
+                          {t('community.report')}
                         </button>
                       )}
                     </div>
@@ -434,15 +457,15 @@ function CommunityPageInner() {
                     {/* Report confirm */}
                     {reportingId === msg.id && (
                       <div className="mt-1 flex items-center gap-2 text-sm">
-                        <span className="text-gray-400">{t('community.report_confirm')}</span>
+                        <span className="text-[var(--text-muted)]">{t('community.report_confirm')}</span>
                         <button
                           type="button"
                           onClick={() => handleReport(msg.id)}
-                          className="text-red-400 hover:text-red-300 font-medium"
+                          className="text-[var(--destructive)] hover:opacity-80 font-medium"
                         >
                           {t('community.report_yes')}
                         </button>
-                        <button type="button" onClick={() => setReportingId(null)} className="text-gray-500">
+                        <button type="button" onClick={() => setReportingId(null)} className="text-[var(--text-tertiary)]">
                           {t('common.cancel')}
                         </button>
                       </div>
@@ -455,25 +478,27 @@ function CommunityPageInner() {
           </div>
 
           {/* Full-width ad above input */}
-          <div className="px-4 py-2 border-t border-gray-800">
+          <div className="px-4 py-2 border-t border-[var(--separator)]">
             <AdSlot zoneSlug="community-above-input" fullWidth className="w-full" />
           </div>
           {/* Input area */}
-          <div className="px-4 py-3 border-t border-gray-800">
+          <div className="px-4 py-3 border-t border-[var(--separator)]">
             {error && (
-              <p className="text-red-400 text-xs mb-2 px-1">{error}</p>
+              <p className="text-[var(--destructive)] text-xs mb-2 px-1">{error}</p>
             )}
             {currentUser ? (
-              <div className="flex flex-col sm:flex-row gap-2">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                  placeholder={t('community.send_placeholder', { room: activeRoom?.name || '' })}
-                  maxLength={500}
-                  className="flex-1 min-w-0 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                />
+              <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
+                <div className="flex-1 min-w-0">
+                  <Input
+                    id="community-composer"
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                    placeholder={t('community.send_placeholder', { room: activeRoom?.name || '' })}
+                    maxLength={500}
+                  />
+                </div>
                 <Button
                   type="button"
                   onClick={handleSend}
@@ -486,8 +511,8 @@ function CommunityPageInner() {
               </div>
             ) : (
               <div className="text-center py-2">
-                <span className="text-gray-400 text-sm">
-                  <Link href="/login" className="text-[var(--primary)] hover:underline font-medium">
+                <span className="text-[var(--text-muted)] text-sm">
+                  <Link href={currentLoginRedirectPath()} className="text-[var(--primary)] hover:underline font-medium">
                     {t('auth.login')}
                   </Link>{' '}
                   {t('common.or')}{' '}
@@ -517,7 +542,7 @@ function CommunityPageInner() {
 function CommunityPageFallback() {
   const t = useT();
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center text-white w-full min-w-0 max-w-full overflow-x-hidden px-4 text-center">
+    <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center text-[var(--text)] w-full min-w-0 max-w-full overflow-x-hidden px-4 text-center">
       {t('community.loading_page')}
     </div>
   );

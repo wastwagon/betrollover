@@ -16,6 +16,8 @@ import { WithdrawalRequest } from './entities/withdrawal-request.entity';
 describe('WalletService', () => {
   let service: WalletService;
   let depositRepo: jest.Mocked<{ findOne: jest.Mock; update: jest.Mock }>;
+  let withdrawalRepo: jest.Mocked<{ find: jest.Mock; save: jest.Mock; findOne: jest.Mock; update: jest.Mock }>;
+  let txRepo: jest.Mocked<{ save: jest.Mock; findOne: jest.Mock }>;
   let paystackService: jest.Mocked<Partial<PaystackService>>;
   let creditSpy: jest.SpyInstance;
   let walletRepo: jest.Mocked<{ findOne: jest.Mock; create: jest.Mock; save: jest.Mock; manager: { transaction: jest.Mock } }>;
@@ -41,19 +43,30 @@ describe('WalletService', () => {
       findOne: jest.fn(),
       update: jest.fn(),
     };
+    withdrawalRepo = {
+      find: jest.fn(),
+      save: jest.fn(async (input) => input),
+      findOne: jest.fn(),
+      update: jest.fn(),
+    };
+    txRepo = {
+      save: jest.fn(),
+      findOne: jest.fn().mockResolvedValue(null),
+    };
     paystackService = {
       verifyWebhookSignature: jest.fn(),
       verifyTransaction: jest.fn(),
+      verifyTransfer: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WalletService,
         { provide: getRepositoryToken(UserWallet), useValue: walletRepo },
-        { provide: getRepositoryToken(WalletTransaction), useValue: { save: jest.fn(), findOne: jest.fn().mockResolvedValue(null) } },
+        { provide: getRepositoryToken(WalletTransaction), useValue: txRepo },
         { provide: getRepositoryToken(DepositRequest), useValue: depositRepo },
         { provide: getRepositoryToken(PayoutMethod), useValue: { find: jest.fn() } },
-        { provide: getRepositoryToken(WithdrawalRequest), useValue: { find: jest.fn(), save: jest.fn() } },
+        { provide: getRepositoryToken(WithdrawalRequest), useValue: withdrawalRepo },
         { provide: PaystackService, useValue: paystackService },
         { provide: UsersService, useValue: { findById: jest.fn().mockResolvedValue({ displayName: 'Test', email: 'test@example.com' }) } },
         { provide: NotificationsService, useValue: { create: jest.fn().mockResolvedValue({}) } },
@@ -147,6 +160,66 @@ describe('WalletService', () => {
       (depositRepo.findOne as jest.Mock).mockResolvedValue(mockDeposit);
 
       await expect(service.handlePaystackWebhook(rawBody, 'valid-sig')).rejects.toThrow(ForbiddenException);
+      expect(creditSpy).not.toHaveBeenCalled();
+    });
+
+    it('should complete a processing withdrawal on transfer.success', async () => {
+      (paystackService.verifyWebhookSignature as jest.Mock).mockResolvedValue(true);
+      (paystackService.verifyTransfer as jest.Mock).mockResolvedValue({ status: 'success' });
+      (withdrawalRepo.update as jest.Mock).mockResolvedValue({ affected: 1 });
+      (withdrawalRepo.findOne as jest.Mock).mockResolvedValue({
+        id: 9,
+        userId: 10,
+        amount: 25,
+        currency: 'GHS',
+        reference: 'wdr_ref_1',
+        status: 'completed',
+      });
+
+      const payload = {
+        event: 'transfer.success',
+        data: { reference: 'wdr_ref_1', transfer_code: 'TRF_abc' },
+      };
+      const result = await service.handlePaystackWebhook(JSON.stringify(payload), 'valid-sig');
+
+      expect(result).toEqual({ received: true });
+      expect(withdrawalRepo.update).toHaveBeenCalled();
+      expect(creditSpy).not.toHaveBeenCalled();
+    });
+
+    it('should refund the wallet on transfer.failed', async () => {
+      (paystackService.verifyWebhookSignature as jest.Mock).mockResolvedValue(true);
+      (withdrawalRepo.update as jest.Mock).mockResolvedValue({ affected: 1 });
+      (withdrawalRepo.findOne as jest.Mock).mockResolvedValue({
+        id: 9,
+        userId: 10,
+        amount: 25,
+        currency: 'GHS',
+        reference: 'wdr_ref_1',
+        status: 'failed',
+      });
+
+      const payload = {
+        event: 'transfer.failed',
+        data: { reference: 'wdr_ref_1', transfer_code: 'TRF_abc', reason: 'Insufficient balance' },
+      };
+      const result = await service.handlePaystackWebhook(JSON.stringify(payload), 'valid-sig');
+
+      expect(result).toEqual({ received: true });
+      expect(creditSpy).toHaveBeenCalledWith(10, 25, 'refund', 'wdr_ref_1', 'Withdrawal failed - refund');
+    });
+
+    it('should not refund twice when transfer.failed is already finalized', async () => {
+      (paystackService.verifyWebhookSignature as jest.Mock).mockResolvedValue(true);
+      (withdrawalRepo.update as jest.Mock).mockResolvedValue({ affected: 0 });
+
+      const payload = {
+        event: 'transfer.failed',
+        data: { reference: 'wdr_ref_1', transfer_code: 'TRF_abc' },
+      };
+      const result = await service.handlePaystackWebhook(JSON.stringify(payload), 'valid-sig');
+
+      expect(result).toEqual({ received: true });
       expect(creditSpy).not.toHaveBeenCalled();
     });
   });

@@ -25,13 +25,13 @@ export function ApiErrorBanner({ message, onRetry, showHint = false, className =
 
   return (
     <div
-      className={`rounded-xl border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/40 p-4 ${className}`}
+      className={`rounded-xl border border-[var(--destructive)]/30 bg-[var(--destructive-light)] p-4 ${className}`}
       role="alert"
       aria-live="polite"
     >
-      <p className="text-sm font-medium text-red-700 dark:text-red-300">{message}</p>
+      <p className="text-sm font-medium text-[var(--destructive)]">{message}</p>
       {isServerError && (
-        <p className="mt-1 text-xs text-red-600 dark:text-red-400">{t('auth.backend_unavailable_hint')}</p>
+        <p className="mt-1 text-xs text-[var(--text-muted)]">{t('auth.backend_unavailable_hint')}</p>
       )}
       {onRetry && (
         <button

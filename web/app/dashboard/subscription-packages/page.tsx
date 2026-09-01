@@ -11,9 +11,9 @@ import { useToast } from '@/hooks/useToast';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { useT } from '@/context/LanguageContext';
-import { NavBar } from '@/components/ios/NavBar';
 import { fetchSellingThresholds, SELLING_THRESHOLDS_FALLBACK, type SellingThresholds } from '@/lib/selling-thresholds';
 import { Button } from '@/components/ui/Button';
+import { Input, Field, fieldControlClassName } from '@/components/ui/Input';
 
 interface SubscriptionPackage {
   id: number;
@@ -119,24 +119,14 @@ export default function SubscriptionPackagesPage() {
     <DashboardShell>
       {toastSuccess ? <SuccessToast message={toastSuccess} onClose={clearSuccess} /> : null}
       <div className="section-ux-dashboard-shell">
-        <div className="lg:hidden -mx-1 mb-3">
-          <NavBar
-            title="VIP subscription package"
-            backHref="/dashboard"
-            backLabel={t('nav.dashboard')}
-            sticky={false}
-          />
-        </div>
-        <Link href="/dashboard" className="hidden lg:inline-block text-sm text-[var(--primary)] hover:underline mb-4">
+        <Link href="/dashboard" className="inline-block text-sm text-[var(--primary)] hover:underline mb-4">
           ← Dashboard
         </Link>
-        <div className="hidden lg:block">
-          <PageHeader
-            label="Subscription Packages"
-            title="VIP subscription package"
-            tagline="One active VIP channel per tipster. Subscribers pay from wallet; funds follow your escrow rules."
-          />
-        </div>
+        <PageHeader
+          label="Subscription Packages"
+          title="VIP subscription package"
+          tagline="One active VIP channel per tipster. Subscribers pay from wallet; funds follow your escrow rules."
+        />
         <p className="text-sm text-[var(--text-muted)] mb-4 max-w-xl border border-amber-200/80 bg-amber-50/50 dark:bg-amber-950/20 rounded-xl px-4 py-3 leading-relaxed">
           {t('subscriptions.vip_create_eligibility', {
             minRoi: String(thresholds.minimumROI),
@@ -154,44 +144,34 @@ export default function SubscriptionPackagesPage() {
         <form onSubmit={handleCreate} className="rounded-[var(--radius)] p-6 mb-8 border border-[var(--separator)] bg-[var(--card)] max-w-xl w-full min-w-0">
           <h3 className="font-semibold text-[var(--text)] mb-4">New package</h3>
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-[var(--text)] mb-1">
-                Name <span className="text-red-500" aria-hidden="true">*</span>
-              </label>
-              <input
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder="e.g. Monthly Access"
-                className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg)]"
-                required
-                aria-required="true"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--text)] mb-1">
-                Price (GHS) <span className="text-red-500" aria-hidden="true">*</span>
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={form.price}
-                onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-                placeholder="0"
-                className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg)]"
-                required
-                aria-required="true"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--text)] mb-1">
-                Duration (days) <span className="text-red-500" aria-hidden="true">*</span>
-              </label>
+            <Input
+              id="vip-package-name"
+              label="Name"
+              type="text"
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              placeholder="e.g. Monthly Access"
+              required
+              aria-required="true"
+            />
+            <Input
+              id="vip-package-price"
+              label="Price (GHS)"
+              type="number"
+              step="0.01"
+              min="0"
+              value={form.price}
+              onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+              placeholder="0"
+              required
+              aria-required="true"
+            />
+            <Field label="Duration (days)" htmlFor="vip-package-duration">
               <select
+                id="vip-package-duration"
                 value={form.durationDays}
                 onChange={(e) => setForm((f) => ({ ...f, durationDays: e.target.value }))}
-                className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg)]"
+                className={fieldControlClassName()}
                 required
                 aria-required="true"
               >
@@ -200,27 +180,21 @@ export default function SubscriptionPackagesPage() {
                 <option value="90">90 days</option>
                 <option value="365">365 days</option>
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--text)] mb-1">
-                ROI guarantee threshold (%) <span className="text-red-500" aria-hidden="true">*</span>
-              </label>
-              <p className="text-xs text-[var(--text-muted)] mb-1.5">
-                Minimum win-rate % subscribers must reach for the period; refunds apply if results fall below this (per your package rules).
-              </p>
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                max="100"
-                value={form.roiGuaranteeMin}
-                onChange={(e) => setForm((f) => ({ ...f, roiGuaranteeMin: e.target.value }))}
-                placeholder="e.g. 20"
-                className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg)]"
-                required
-                aria-required="true"
-              />
-            </div>
+            </Field>
+            <Input
+              id="vip-package-roi"
+              label="ROI guarantee threshold (%)"
+              type="number"
+              step="0.1"
+              min="0"
+              max="100"
+              value={form.roiGuaranteeMin}
+              onChange={(e) => setForm((f) => ({ ...f, roiGuaranteeMin: e.target.value }))}
+              placeholder="e.g. 20"
+              required
+              aria-required="true"
+              hint="Minimum win-rate % subscribers must reach for the period; refunds apply if results fall below this (per your package rules)."
+            />
             <Button type="submit" disabled={submitting} fullWidth>
               {submitting ? 'Creating...' : 'Create package'}
             </Button>

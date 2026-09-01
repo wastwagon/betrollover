@@ -20,6 +20,10 @@ export class PaystackSettings {
   @Column({ type: 'varchar', length: 20, default: 'live' })
   mode: string;
 
+  /** Paystack Transfers (instant MoMo). Starter businesses cannot use this. */
+  @Column({ default: false })
+  transfersEnabled: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
 import { useRouter } from 'next/navigation';
+import { useT } from '@/context/LanguageContext';
 
 export interface PredictionFixture {
   id?: number;
@@ -74,18 +75,19 @@ interface PredictionCardProps {
 }
 
 export function PredictionCard({ prediction, onCopyBet, className = '', linkToDetail = true }: PredictionCardProps) {
+  const t = useT();
   const router = useRouter();
   const [avatarError, setAvatarError] = useState(false);
   const showAvatar = prediction.avatar_url && !avatarError;
   const tipsterName = prediction.display_name || prediction.username || 'Tipster';
   const confidenceClass =
     prediction.confidence_level === 'max'
-      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+      ? 'bg-[var(--primary-light)] text-[var(--primary)]'
       : prediction.confidence_level === 'high'
-        ? 'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300'
+        ? 'bg-[var(--primary)]/10 text-[var(--primary)]'
         : prediction.confidence_level === 'medium'
-          ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
-          : 'bg-slate-100 text-slate-700 dark:bg-slate-700/50 dark:text-slate-300';
+          ? 'bg-[var(--accent)]/15 text-[var(--text)]'
+          : 'bg-[var(--fill-secondary)] text-[var(--text-muted)]';
 
   const cardContent = (
     <div className="p-4 flex flex-col flex-1">
@@ -178,15 +180,15 @@ export function PredictionCard({ prediction, onCopyBet, className = '', linkToDe
       {/* Footer */}
       <div className="mt-auto pt-3 border-t border-[var(--border)] flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 min-w-0">
         <span className="text-sm font-bold text-[var(--text)] min-w-0">
-          Total Odds: {Number(prediction.combined_odds).toFixed(2)}
+          {t('pick_detail.total_odds_prefix')} {Number(prediction.combined_odds).toFixed(2)}
         </span>
         {onCopyBet && (
           <button
             type="button"
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onCopyBet(); }}
-            className="px-4 py-2 rounded-xl font-semibold text-sm bg-[var(--accent)] hover:bg-amber-600 text-white transition-colors w-full sm:w-auto shrink-0 text-center"
+            className="px-4 py-2 rounded-xl font-semibold text-sm bg-[var(--accent)] hover:opacity-90 text-white transition-colors w-full sm:w-auto shrink-0 text-center"
           >
-            Copy Bet
+            {t('pick_detail.copy_bet')}
           </button>
         )}
       </div>

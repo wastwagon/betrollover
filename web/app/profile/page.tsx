@@ -12,10 +12,10 @@ import { useT } from '@/context/LanguageContext';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
-import { NavBar } from '@/components/ios/NavBar';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { NotificationPreferencesSection } from '@/components/notifications/NotificationPreferencesSection';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 interface Profile {
   id: number;
@@ -279,21 +279,11 @@ export default function ProfilePage() {
       <div className="min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full bg-[var(--bg)]">
         <PullToRefresh onRefresh={() => loadProfile({ soft: true })} disabled={loading}>
         <div className="section-ux-dashboard-shell w-full min-w-0 max-w-full">
-          <div className="lg:hidden -mx-1 mb-3">
-            <NavBar
-              title={t('profile.title')}
-              backHref="/dashboard"
-              backLabel={t('nav.dashboard')}
-              sticky={false}
-            />
-          </div>
-          <div className="hidden lg:block">
-            <PageHeader
-              label={t('profile.title')}
-              title={t('profile.title')}
-              tagline={t('profile.tagline')}
-            />
-          </div>
+          <PageHeader
+            label={t('profile.title')}
+            title={t('profile.title')}
+            tagline={t('profile.tagline')}
+          />
 
           <div className="mb-4">
             <AdSlot zoneSlug="profile-full" fullWidth className="w-full" />
@@ -343,46 +333,34 @@ export default function ProfilePage() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0 space-y-3">
-              <div className="min-w-0">
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.email')}</label>
-                <input
-                  type="email"
-                  value={profile?.email || ''}
-                  disabled
-                  className="w-full min-w-0 px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text-muted)]"
-                />
-                <p className="text-xs text-[var(--text-muted)] mt-1">{t('profile.email_cannot_change')}</p>
-              </div>
-              <div className="min-w-0">
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.display_name')}</label>
-                <input
-                  type="text"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full min-w-0 px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
-                />
-              </div>
-              <div className="min-w-0">
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.phone')}</label>
-                <input
-                  type="text"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder={t('profile.optional')}
-                  className="w-full min-w-0 px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
-                />
-              </div>
-              <div className="min-w-0">
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.contact_email')}</label>
-                <input
-                  type="email"
-                  value={contactEmail}
-                  onChange={(e) => setContactEmail(e.target.value)}
-                  placeholder={t('profile.contact_email_placeholder')}
-                  className="w-full min-w-0 px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
-                />
-                <p className="text-xs text-[var(--text-muted)] mt-1">{t('profile.contact_email_hint')}</p>
-              </div>
+              <Input
+                label={t('profile.email')}
+                type="email"
+                value={profile?.email || ''}
+                disabled
+                hint={t('profile.email_cannot_change')}
+              />
+              <Input
+                label={t('profile.display_name')}
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+              />
+              <Input
+                label={t('profile.phone')}
+                type="text"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder={t('profile.optional')}
+              />
+              <Input
+                label={t('profile.contact_email')}
+                type="email"
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+                placeholder={t('profile.contact_email_placeholder')}
+                hint={t('profile.contact_email_hint')}
+              />
               <label className="flex items-start gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -405,38 +383,32 @@ export default function ProfilePage() {
           <form onSubmit={changePassword} className="ios-grouped-section p-5 min-w-0">
             <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('profile.change_password')}</h2>
             <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.current_password')}</label>
-                <input
-                  type="password"
-                  value={pwCurrent}
-                  onChange={(e) => setPwCurrent(e.target.value)}
-                  required
-                  className="w-full min-w-0 px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.new_password')}</label>
-                <input
-                  type="password"
-                  value={pwNew}
-                  onChange={(e) => setPwNew(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full min-w-0 px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.confirm_new_password')}</label>
-                <input
-                  type="password"
-                  value={pwConfirm}
-                  onChange={(e) => setPwConfirm(e.target.value)}
-                  required
-                  className="w-full min-w-0 px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
-                />
-              </div>
-              {pwMsg && <p className={`text-sm ${pwMsg.startsWith(t('profile.password_updated')) ? 'text-green-600' : 'text-red-600'}`}>{pwMsg}</p>}
+              <Input
+                label={t('profile.current_password')}
+                type="password"
+                value={pwCurrent}
+                onChange={(e) => setPwCurrent(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
+              <Input
+                label={t('profile.new_password')}
+                type="password"
+                value={pwNew}
+                onChange={(e) => setPwNew(e.target.value)}
+                required
+                minLength={6}
+                autoComplete="new-password"
+              />
+              <Input
+                label={t('profile.confirm_new_password')}
+                type="password"
+                value={pwConfirm}
+                onChange={(e) => setPwConfirm(e.target.value)}
+                required
+                autoComplete="new-password"
+              />
+              {pwMsg && <p className={`text-sm ${pwMsg.startsWith(t('profile.password_updated')) ? 'text-[var(--success)]' : 'text-[var(--destructive)]'}`}>{pwMsg}</p>}
               <Button type="submit" size="md" disabled={pwSaving}>
                 {pwSaving ? t('profile.updating') : t('profile.change_password')}
               </Button>
@@ -469,17 +441,15 @@ export default function ProfilePage() {
                 />
                 <span className="text-sm text-[var(--text)] min-w-0 break-words">{t('profile.delete_confirm_checkbox')}</span>
               </label>
-              <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-0.5">{t('profile.delete_confirm_password')}</label>
-                <input
-                  type="password"
-                  value={deletePassword}
-                  onChange={(e) => setDeletePassword(e.target.value)}
-                  placeholder={t('profile.current_password')}
-                  className="w-full min-w-0 px-4 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
-                  disabled={!deleteConfirm}
-                />
-              </div>
+              <Input
+                label={t('profile.delete_confirm_password')}
+                type="password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                placeholder={t('profile.current_password')}
+                disabled={!deleteConfirm}
+                autoComplete="current-password"
+              />
               {deleteMsg && <p className="text-sm text-red-600">{deleteMsg}</p>}
               <Button
                 type="submit"

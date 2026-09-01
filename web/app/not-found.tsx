@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
+import { buttonClassName } from '@/components/ui/button-styles';
 import { getLocale, buildT } from '@/lib/i18n';
+import type { TranslationKey } from '@/lib/translations/en';
 
 export const metadata = {
   title: 'Page Not Found | BetRollover',
@@ -12,7 +14,7 @@ export default async function NotFound() {
   const locale = await getLocale();
   const t = buildT(locale);
 
-  const QUICK_LINKS = [
+  const QUICK_LINKS: { href: string; labelKey: TranslationKey; descKey: TranslationKey }[] = [
     { href: '/marketplace', labelKey: 'error.quick_marketplace', descKey: 'error.quick_marketplace_desc' },
     { href: '/tipsters', labelKey: 'error.quick_tipsters', descKey: 'error.quick_tipsters_desc' },
     { href: '/leaderboard', labelKey: 'error.quick_leaderboard', descKey: 'error.quick_leaderboard_desc' },
@@ -54,7 +56,7 @@ export default async function NotFound() {
 
         <Link
           href="/"
-          className="inline-flex items-center justify-center gap-2 font-semibold transition-colors duration-200 touch-manipulation bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-sm px-4 py-2.5 text-sm rounded-[var(--radius)] min-h-[44px]"
+          className={buttonClassName()}
         >
           {t('error.back_home')}
         </Link>

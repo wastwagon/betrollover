@@ -5,6 +5,7 @@ import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
+import { DiscoverFamilyNav } from '@/components/DiscoverFamilyNav';
 import { buttonClassName } from '@/components/ui/Button';
 import { getLocale, buildT } from '@/lib/i18n';
 import {
@@ -14,10 +15,10 @@ import {
 } from '@/lib/seo/public-content';
 
 const CATEGORY_COLORS: Record<string, string> = {
-  news:                'bg-blue-100 text-blue-700',
-  transfer_rumour:     'bg-amber-100 text-amber-700',
-  confirmed_transfer:  'bg-emerald-100 text-emerald-700',
-  injury:              'bg-red-100 text-red-700',
+  news:                'bg-[var(--fill-secondary)] text-[var(--text)]',
+  transfer_rumour:     'bg-[var(--accent-light)] text-[var(--accent)]',
+  confirmed_transfer:  'bg-[var(--success-light)] text-[var(--success)]',
+  injury:              'bg-[var(--destructive-light)] text-[var(--destructive)]',
   gossip:              'bg-[var(--accent-light)] text-[var(--accent)]',
 };
 
@@ -79,6 +80,7 @@ export default async function NewsArticlePage({
             undefined
           }
         />
+        <DiscoverFamilyNav current="news" />
 
         <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 mb-6">
           <Link
@@ -227,7 +229,7 @@ function RelatedRow({
         className="flex gap-3 p-3 hover:bg-[var(--bg)] transition-colors group"
       >
         {rel.imageUrl ? (
-          <div className="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100">
+          <div className="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-[var(--fill-secondary)]">
             <Image
               src={rel.imageUrl} alt={rel.title}
               width={56} height={56}
@@ -241,7 +243,7 @@ function RelatedRow({
           </div>
         )}
         <div className="min-w-0">
-          <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold uppercase mb-1 ${CATEGORY_COLORS[rel.category || ''] ?? 'bg-slate-100 text-slate-600'}`}>
+          <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold uppercase mb-1 ${CATEGORY_COLORS[rel.category || ''] ?? 'bg-[var(--fill-secondary)] text-[var(--text-muted)]'}`}>
             {getCategoryLabel(t, rel.category || 'news')}
           </span>
           <p className="text-xs font-semibold text-[var(--text)] group-hover:text-[var(--primary)] transition-colors leading-snug line-clamp-2">

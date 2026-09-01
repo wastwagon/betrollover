@@ -6,6 +6,7 @@ import { getLocale, buildT } from '@/lib/i18n';
 import { seoAlternates } from '@/lib/site-config';
 import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 import { fetchSellingThresholds } from '@/lib/selling-thresholds';
+import { buttonClassName } from '@/components/ui/button-styles';
 import type { Metadata } from 'next';
 
 const footballOnly = isFootballOnlyDiscovery();
@@ -81,13 +82,13 @@ export default async function AboutPage() {
               <div className="flex flex-col sm:flex-row flex-wrap gap-3">
                 <Link
                   href="/marketplace"
-                  className="inline-flex items-center justify-center gap-2 font-semibold transition-colors duration-200 touch-manipulation bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-sm px-4 py-2.5 text-sm rounded-[var(--radius)] min-h-[44px] w-full sm:w-auto"
+                  className={buttonClassName({ className: 'w-full sm:w-auto' })}
                 >
                   {t('home.view_marketplace')}
                 </Link>
                 <Link
                   href="/register"
-                  className="inline-flex items-center justify-center gap-2 font-semibold transition-colors duration-200 touch-manipulation bg-[var(--card)] text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)] px-4 py-2.5 text-sm rounded-[var(--radius)] min-h-[44px] w-full sm:w-auto"
+                  className={buttonClassName({ variant: 'secondary', className: 'w-full sm:w-auto' })}
                 >
                   {t('auth.register')}
                 </Link>

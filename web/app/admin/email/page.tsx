@@ -7,6 +7,7 @@ import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { buttonClassName } from '@/components/ui/Button';
+import { Input, Field, fieldControlClassName } from '@/components/ui/Input';
 
 interface SmtpSettings {
   host: string;
@@ -236,71 +237,59 @@ export default function AdminEmailPage() {
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-8">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">SMTP Settings</h3>
               <div className="space-y-5">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">SMTP Host</label>
-                  <input
-                    type="text"
-                    value={form.host}
-                    onChange={(e) => setForm((f) => ({ ...f, host: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">smtp.resend.com for Resend</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">SMTP Port</label>
-                  <input
-                    type="number"
-                    value={form.port}
-                    onChange={(e) => setForm((f) => ({ ...f, port: parseInt(e.target.value, 10) || 465 }))}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">587 for TLS, 465 for SSL</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">SMTP Username</label>
-                  <input
-                    type="text"
-                    value={form.username}
-                    onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">For Resend use: resend</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">SMTP Password (API Key)</label>
-                  <input
-                    type="password"
-                    value={form.password}
-                    onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-                    placeholder={settings?.password === '********' ? 'Leave blank to keep current' : ''}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Your Resend API key (starts with re_)</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Encryption</label>
+                <Input
+                  id="admin-smtp-host"
+                  label="SMTP Host"
+                  type="text"
+                  value={form.host}
+                  onChange={(e) => setForm((f) => ({ ...f, host: e.target.value }))}
+                  hint="smtp.resend.com for Resend"
+                />
+                <Input
+                  id="admin-smtp-port"
+                  label="SMTP Port"
+                  type="number"
+                  value={form.port}
+                  onChange={(e) => setForm((f) => ({ ...f, port: parseInt(e.target.value, 10) || 465 }))}
+                  hint="587 for TLS, 465 for SSL"
+                />
+                <Input
+                  id="admin-smtp-username"
+                  label="SMTP Username"
+                  type="text"
+                  value={form.username}
+                  onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
+                  hint="For Resend use: resend"
+                />
+                <Input
+                  id="admin-smtp-password"
+                  label="SMTP Password (API Key)"
+                  type="password"
+                  value={form.password}
+                  onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+                  placeholder={settings?.password === '********' ? 'Leave blank to keep current' : ''}
+                  hint="Your Resend API key (starts with re_)"
+                />
+                <Field label="Encryption" htmlFor="admin-smtp-encryption">
                   <select
+                    id="admin-smtp-encryption"
                     value={form.encryption}
                     onChange={(e) => setForm((f) => ({ ...f, encryption: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
+                    className={fieldControlClassName()}
                   >
                     <option value="SSL">SSL (port 465)</option>
                     <option value="TLS">TLS (port 587)</option>
                   </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Admin notification inbox</label>
-                  <input
-                    type="email"
-                    value={form.adminNotificationEmail}
-                    onChange={(e) => setForm((f) => ({ ...f, adminNotificationEmail: e.target.value }))}
-                    placeholder="ops@yourcompany.com"
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    Receives platform alerts (withdrawal requests, support tickets, etc.) in addition to every account with the admin role. Leave blank to use only admin accounts. You can also set <code className="text-[11px] bg-gray-100 dark:bg-gray-700 px-1 rounded">ADMIN_NOTIFICATION_EMAIL</code> on the server (comma-separated).
-                  </p>
-                </div>
+                </Field>
+                <Input
+                  id="admin-smtp-notify"
+                  label="Admin notification inbox"
+                  type="email"
+                  value={form.adminNotificationEmail}
+                  onChange={(e) => setForm((f) => ({ ...f, adminNotificationEmail: e.target.value }))}
+                  placeholder="ops@yourcompany.com"
+                  hint="Receives platform alerts (withdrawal requests, support tickets, etc.) in addition to every account with the admin role. Leave blank to use only admin accounts. You can also set ADMIN_NOTIFICATION_EMAIL on the server (comma-separated)."
+                />
                 <button type="button"
                   onClick={save}
                   disabled={saving}
@@ -314,14 +303,17 @@ export default function AdminEmailPage() {
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border-l-4 border-l-emerald-500 border border-gray-200 dark:border-gray-700 p-4 sm:p-8">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Test Email Configuration</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Send a test email to verify your SMTP configuration.</p>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-stretch">
-                <input
-                  type="email"
-                  value={testEmail}
-                  onChange={(e) => setTestEmail(e.target.value)}
-                  placeholder="test@example.com"
-                  className="w-full min-w-0 sm:flex-1 sm:min-w-[200px] px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                />
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-end">
+                <div className="w-full min-w-0 sm:flex-1 sm:min-w-[200px]">
+                  <Input
+                    id="admin-smtp-test"
+                    type="email"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    placeholder="test@example.com"
+                    aria-label="Test email address"
+                  />
+                </div>
                 <button type="button"
                   onClick={sendTest}
                   disabled={testing}

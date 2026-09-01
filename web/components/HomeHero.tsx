@@ -86,7 +86,7 @@ export function HomeHero({
   const statItems: { key: StatKey; value: string }[] = [
     { key: 'verified', value: formatNumber(s.verifiedTipsters) },
     { key: 'marketplacePurchases', value: formatNumber(s.successfulPurchases) },
-    { key: 'paidOut', value: paidOutFormatted },
+    ...(s.totalPaidOut > 0 ? [{ key: 'paidOut' as const, value: paidOutFormatted }] : []),
   ];
 
   return (
@@ -199,7 +199,7 @@ export function HomeHero({
             <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[var(--text-muted)]">
               {t('home.app_snapshot_title')}
             </p>
-            <div className="ios-grouped-section mx-0 grid grid-cols-1 divide-y divide-[var(--separator)] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+            <div className={`ios-grouped-section mx-0 grid grid-cols-1 divide-y divide-[var(--separator)] sm:divide-x sm:divide-y-0 ${statItems.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
               {statItems.map((item) => (
                 <div
                   key={item.key}

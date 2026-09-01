@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
 
 import { getApiUrl } from '@/lib/site-config';
+import { Input } from '@/components/ui/Input';
 
 interface Purchase {
   id: number;
@@ -86,26 +87,32 @@ export default function AdminPurchasesPage() {
         </div>
 
         <div className="mb-6 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
-          <input
-            type="number"
-            placeholder="Filter by User ID"
-            value={userIdFilter}
-            onChange={(e) => {
-              setUserIdFilter(e.target.value);
-              setPage(1);
-            }}
-            className="w-full sm:flex-1 sm:min-w-[160px] px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-          />
-          <input
-            type="number"
-            placeholder="Filter by Accumulator ID"
-            value={accumulatorIdFilter}
-            onChange={(e) => {
-              setAccumulatorIdFilter(e.target.value);
-              setPage(1);
-            }}
-            className="w-full sm:flex-1 sm:min-w-[180px] px-4 py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-          />
+          <div className="w-full sm:flex-1 sm:min-w-[160px]">
+            <Input
+              id="admin-purchases-user-id"
+              type="number"
+              placeholder="Filter by User ID"
+              value={userIdFilter}
+              onChange={(e) => {
+                setUserIdFilter(e.target.value);
+                setPage(1);
+              }}
+              aria-label="Filter by User ID"
+            />
+          </div>
+          <div className="w-full sm:flex-1 sm:min-w-[180px]">
+            <Input
+              id="admin-purchases-accumulator-id"
+              type="number"
+              placeholder="Filter by Accumulator ID"
+              value={accumulatorIdFilter}
+              onChange={(e) => {
+                setAccumulatorIdFilter(e.target.value);
+                setPage(1);
+              }}
+              aria-label="Filter by Accumulator ID"
+            />
+          </div>
         </div>
 
         {loading && (

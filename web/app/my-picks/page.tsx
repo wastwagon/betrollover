@@ -12,13 +12,12 @@ import { useErrorToast } from '@/hooks/useErrorToast';
 import { ErrorToast } from '@/components/ErrorToast';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
-import { NavBar } from '@/components/ios/NavBar';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { TipsterSellUnlockChecklist } from '@/components/TipsterSellUnlockChecklist';
-
 import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
+import { buttonClassName } from '@/components/ui/Button';
 
 const SPORT_FILTER_KEYS_ALL = [
   { key: '', labelKey: 'my_picks.filter_all' as const },
@@ -141,29 +140,19 @@ export default function MyPicksPage() {
       <div className="min-h-[calc(100vh-8rem)] bg-[var(--bg)] w-full min-w-0 max-w-full">
         <PullToRefresh onRefresh={loadPicks} disabled={loading}>
         <div className="section-ux-dashboard-shell min-w-0 max-w-full">
-          <div className="lg:hidden -mx-1 mb-3">
-            <NavBar
-              title={t('my_picks.title')}
-              backHref="/dashboard"
-              backLabel={t('nav.dashboard')}
-              sticky={false}
-            />
-          </div>
-          <div className="hidden lg:block">
-            <PageHeader
-              label={t('my_picks.title')}
-              title={t('my_picks.title')}
-              tagline={t('my_picks.tagline')}
-              action={
-                <a
-                  href="/create-pick"
-                  className="inline-flex w-full sm:w-auto items-center justify-center min-h-[40px] px-4 py-2 rounded-xl text-sm font-semibold bg-white/20 hover:bg-white/30 text-white border border-white/30 transition-colors"
-                >
-                  {t('my_picks.create_pick')}
-                </a>
-              }
-            />
-          </div>
+          <PageHeader
+            label={t('my_picks.title')}
+            title={t('my_picks.title')}
+            tagline={t('my_picks.tagline')}
+            action={
+              <a
+                href="/create-pick"
+                className={buttonClassName({ size: 'sm', className: 'w-full sm:w-auto' })}
+              >
+                {t('my_picks.create_pick')}
+              </a>
+            }
+          />
 
           <div className="mb-4">
             <TipsterSellUnlockChecklist />

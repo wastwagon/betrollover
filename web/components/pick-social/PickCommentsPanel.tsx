@@ -159,7 +159,7 @@ function CommentBody({
             <button
               type="button"
               onClick={onDelete}
-              className="text-[10px] text-[var(--text-muted)] hover:text-rose-600 opacity-0 group-hover:opacity-100 sm:opacity-100 transition-opacity"
+              className="text-[10px] text-[var(--text-muted)] hover:text-[var(--destructive)] opacity-0 group-hover:opacity-100 sm:opacity-100 transition-opacity"
             >
               {t('pick_social.delete_comment')}
             </button>
@@ -437,7 +437,7 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
           <p className="text-sm text-[var(--text-muted)] text-center py-8">{t('common.loading')}</p>
         )}
         {!loading && error && !items.length && (
-          <p className="text-sm text-rose-600 text-center py-6">{error}</p>
+          <p className="text-sm text-[var(--destructive)] text-center py-6">{error}</p>
         )}
         {!loading && items.length === 0 && !error && (
           <p className="text-sm text-[var(--text-muted)] text-center py-8">{t('pick_social.no_comments_yet')}</p>
@@ -468,7 +468,7 @@ export function PickCommentsPanel({ pickId, onCommentCountChange }: PickComments
             </button>
           </div>
         )}
-        {error && items.length > 0 ? <p className="text-xs text-rose-600 mb-2">{error}</p> : null}
+        {error && items.length > 0 ? <p className="text-xs text-[var(--destructive)] mb-2">{error}</p> : null}
         <div className="flex gap-2">
           <CommentMentionTextarea
             value={text}

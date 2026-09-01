@@ -6,6 +6,7 @@ import type { Fixture, FixtureOdd } from '../types';
 import { groupOddsByMarket, MARKET_ORDER, filterCorrectScoreOdds } from '../odds-utils';
 import { formatMarketValue, formatFixtureDateTime } from '../utils/format';
 import { Button } from '@/components/ui/Button';
+import { useT } from '@/context/LanguageContext';
 
 interface FootballFixtureCardProps {
   fixture: Fixture;
@@ -27,6 +28,7 @@ export function FootballFixtureCard({
   onToggleCollapsed,
   onAddSelection,
 }: FootballFixtureCardProps) {
+  const t = useT();
   const groupedOdds = fixture.odds ? groupOddsByMarket(fixture.odds) : {};
   const hasOdds = fixture.odds && fixture.odds.length > 0;
   const showOdds = hasOdds && !isCollapsed;
@@ -89,11 +91,11 @@ export function FootballFixtureCard({
               className="shrink-0"
               onClick={toggleCollapsed}
             >
-              {isCollapsed ? 'Show Odds' : 'Hide Odds'}
+              {isCollapsed ? t('create_pick.show_odds') : t('create_pick.hide_odds')}
             </Button>
           )}
           {fixture.oddsError && (
-            <div className="min-w-0 max-w-full sm:max-w-xs px-3 py-1.5 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg break-words">
+            <div className="min-w-0 max-w-full sm:max-w-xs px-3 py-1.5 text-xs text-[var(--accent)] bg-[var(--accent-light)] rounded-lg break-words">
               {fixture.oddsError}
             </div>
           )}

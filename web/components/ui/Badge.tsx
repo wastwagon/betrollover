@@ -12,7 +12,7 @@ const toneClass: Record<BadgeTone, string> = {
   success:
     'bg-[var(--success-light)] text-[var(--success)] border border-[var(--success)]/20',
   danger:
-    'bg-red-50 text-red-700 border border-red-200/80 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/50',
+    'bg-[var(--destructive-light)] text-[var(--destructive)] border border-[var(--destructive)]/25',
   ai:
     'bg-[var(--primary-light)] text-[var(--primary-hover)] border border-[var(--primary)]/25',
 };

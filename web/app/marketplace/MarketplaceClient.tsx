@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
+import { AccaFamilyNav } from '@/components/AccaFamilyNav';
 import { Button, buttonClassName } from '@/components/ui/Button';
 import { AdSlot } from '@/components/AdSlot';
 import { PickCard } from '@/components/PickCard';
@@ -20,7 +21,7 @@ import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { GrowthDistributionStrip } from '@/components/GrowthDistributionStrip';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { MarketplaceFilterBar } from '@/components/ios/MarketplaceFilterBar';
-import { matchesMarketplaceDayFilter, type MarketplaceDayFilter } from '@/lib/acca-desk-board-badge';
+import { matchesMarketplaceDayFilter, isAccaDeskCard, type MarketplaceDayFilter } from '@/lib/acca-desk-board-badge';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
@@ -47,6 +48,7 @@ const VALID_SPORT_KEYS = new Set<string>(
 
 type PriceFilter = 'all' | 'free' | 'paid';
 type DayFilter = MarketplaceDayFilter;
+type SourceFilter = 'all' | 'acca_desk' | 'community';
 type SortBy = 'newest' | 'price-low' | 'price-high' | 'tipster-rank' | 'following-only' | 'relevance';
 
 interface Pick {
@@ -135,6 +137,7 @@ export default function MarketplacePage({
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
   const [dayFilter, setDayFilter] = useState<DayFilter>('all');
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
   const [sortBy, setSortBy] = useState<SortBy>('newest');
   const footballOnly = isFootballOnlyDiscovery();
   const [sportFilter, setSportFilter] = useState<string>(footballOnly ? FOOTBALL_SPORT_KEY : '');
@@ -168,6 +171,9 @@ export default function MarketplacePage({
     const day = searchParams.get('day');
     if (day === 'today' || day === 'tomorrow') setDayFilter(day);
     else if (day === 'all' || day == null) setDayFilter('all');
+    const desk = searchParams.get('desk');
+    if (desk === 'acca_desk' || desk === 'community') setSourceFilter(desk);
+    else if (desk === 'all' || desk == null) setSourceFilter('all');
     const sort = searchParams.get('sort');
     if (
       sort === 'newest' ||
@@ -189,13 +195,14 @@ export default function MarketplacePage({
     if (debouncedTipster) p.set('tipster', debouncedTipster);
     if (priceFilter !== 'all') p.set('priceFilter', priceFilter);
     if (dayFilter !== 'all') p.set('day', dayFilter);
+    if (sourceFilter !== 'all') p.set('desk', sourceFilter);
     // Always persist sort (incl. newest) so auto “For you” can’t overwrite an explicit newest choice.
     p.set('sort', sortBy);
     const qs = p.toString();
     const next = qs ? `/marketplace?${qs}` : '/marketplace';
     const cur = `${window.location.pathname}${window.location.search}`;
     if (cur !== next) router.replace(next, { scroll: false });
-  }, [sportFilter, debouncedTipster, priceFilter, dayFilter, sortBy, router]);
+  }, [sportFilter, debouncedTipster, priceFilter, dayFilter, sourceFilter, sortBy, router]);
 
   const filteredAndSortedPicks = useMemo(() => {
     let list = [...picks]; // API already filters by sport when sportFilter is set
@@ -209,6 +216,15 @@ export default function MarketplacePage({
           tipsterType: p.tipster?.tipsterType ?? p.tipster?.tipster_type,
           picks: p.picks,
         }),
+      );
+    }
+    if (sourceFilter === 'acca_desk') {
+      list = list.filter((p) =>
+        isAccaDeskCard(p.title, p.tipster?.tipsterType ?? p.tipster?.tipster_type),
+      );
+    } else if (sourceFilter === 'community') {
+      list = list.filter(
+        (p) => !isAccaDeskCard(p.title, p.tipster?.tipsterType ?? p.tipster?.tipster_type),
       );
     }
     if (sortBy === 'following-only' && followedTipsterUsernames.size > 0) {
@@ -237,7 +253,23 @@ export default function MarketplacePage({
       list.sort((a, b) => score(b) - score(a));
     }
     return list;
-  }, [picks, sortBy, followedTipsterUsernames, footballOnly, dayFilter]);
+  }, [picks, sortBy, followedTipsterUsernames, footballOnly, dayFilter, sourceFilter]);
+
+  const deskPicks = useMemo(
+    () =>
+      filteredAndSortedPicks.filter((p) =>
+        isAccaDeskCard(p.title, p.tipster?.tipsterType ?? p.tipster?.tipster_type),
+      ),
+    [filteredAndSortedPicks],
+  );
+  const communityPicks = useMemo(
+    () =>
+      filteredAndSortedPicks.filter(
+        (p) => !isAccaDeskCard(p.title, p.tipster?.tipsterType ?? p.tipster?.tipster_type),
+      ),
+    [filteredAndSortedPicks],
+  );
+  const splitBySource = sourceFilter === 'all' && deskPicks.length > 0;
 
   const filterCounts = useMemo(() => {
     let base = [...picks];
@@ -271,8 +303,15 @@ export default function MarketplacePage({
       if (Number(p.price) === 0) free += 1;
       else paid += 1;
     }
+    let desk = 0;
+    let community = 0;
+    for (const p of base) {
+      if (isAccaDeskCard(p.title, p.tipster?.tipsterType ?? p.tipster?.tipster_type)) desk += 1;
+      else community += 1;
+    }
     return {
       day: { all: base.length, today, tomorrow },
+      source: { all: base.length, acca_desk: desk, community },
       // Price is also applied server-side — only show free/paid tallies when browsing All.
       price:
         priceFilter === 'all'
@@ -629,6 +668,7 @@ export default function MarketplacePage({
               </Link>
             </div>
           </div>
+          <AccaFamilyNav current="buy" />
 
           {!footballOnly && sportFilter ? (
             <div className="mb-4 rounded-2xl border border-[var(--separator)] bg-[var(--card)] px-4 py-3.5">
@@ -639,13 +679,13 @@ export default function MarketplacePage({
                       {
                         football: t('nav.football'),
                         basketball: t('nav.basketball'),
-                        rugby: 'Rugby',
-                        mma: 'MMA',
-                        volleyball: 'Volleyball',
-                        hockey: 'Hockey',
-                        american_football: 'Amer. Football',
-                        tennis: 'Tennis',
-                        multi: 'Multi-Sport',
+                        rugby: t('nav.rugby'),
+                        mma: t('nav.mma'),
+                        volleyball: t('nav.volleyball'),
+                        hockey: t('nav.hockey'),
+                        american_football: t('nav.american_football'),
+                        tennis: t('nav.tennis'),
+                        multi: t('nav.sports'),
                       } as Record<string, string>
                     )[sportFilter] || sportFilter,
                 })}
@@ -657,13 +697,13 @@ export default function MarketplacePage({
                       {
                         football: t('nav.football'),
                         basketball: t('nav.basketball'),
-                        rugby: 'Rugby',
-                        mma: 'MMA',
-                        volleyball: 'Volleyball',
-                        hockey: 'Hockey',
-                        american_football: 'Amer. Football',
-                        tennis: 'Tennis',
-                        multi: 'Multi-Sport',
+                        rugby: t('nav.rugby'),
+                        mma: t('nav.mma'),
+                        volleyball: t('nav.volleyball'),
+                        hockey: t('nav.hockey'),
+                        american_football: t('nav.american_football'),
+                        tennis: t('nav.tennis'),
+                        multi: t('nav.sports'),
                       } as Record<string, string>
                     )[sportFilter] || sportFilter,
                 })}
@@ -684,13 +724,13 @@ export default function MarketplacePage({
                       { key: '', label: t('marketplace.filter_all_sports') },
                       { key: 'football', label: t('nav.football') },
                       { key: 'basketball', label: t('nav.basketball') },
-                      { key: 'rugby', label: 'Rugby' },
-                      { key: 'mma', label: 'MMA' },
-                      { key: 'volleyball', label: 'Volleyball' },
-                      { key: 'hockey', label: 'Hockey' },
-                      { key: 'american_football', label: 'Amer. Football' },
-                      { key: 'tennis', label: 'Tennis' },
-                      { key: 'multi', label: 'Multi-Sport' },
+                      { key: 'rugby', label: t('nav.rugby') },
+                      { key: 'mma', label: t('nav.mma') },
+                      { key: 'volleyball', label: t('nav.volleyball') },
+                      { key: 'hockey', label: t('nav.hockey') },
+                      { key: 'american_football', label: t('nav.american_football') },
+                      { key: 'tennis', label: t('nav.tennis') },
+                      { key: 'multi', label: t('nav.sports') },
                     ] as { key: string; label: string }[]
                   ).map(({ key, label }) => (
                     <button
@@ -719,12 +759,13 @@ export default function MarketplacePage({
                 hasActiveFilters={
                   priceFilter !== 'all' ||
                   dayFilter !== 'all' ||
+                  sourceFilter !== 'all' ||
                   sortBy !== 'newest' ||
                   !!debouncedTipster ||
                   (!footballOnly && !!sportFilter)
                 }
                 current={{
-                  desk: 'all',
+                  desk: sourceFilter,
                   dayFilter,
                   priceFilter,
                   sortBy,
@@ -734,6 +775,7 @@ export default function MarketplacePage({
                 onApply={(f: MarketplaceSavedFilter) => {
                   setPriceFilter(f.priceFilter === 'sold' ? 'paid' : f.priceFilter);
                   setDayFilter(f.dayFilter ?? 'all');
+                  setSourceFilter(f.desk === 'acca_desk' || f.desk === 'community' ? f.desk : 'all');
                   setSortBy(f.sortBy);
                   setTipsterSearch(f.tipsterSearch);
                   setDebouncedTipster(f.tipsterSearch);
@@ -745,6 +787,8 @@ export default function MarketplacePage({
                 onPriceFilterChange={setPriceFilter}
                 dayFilter={dayFilter}
                 onDayFilterChange={setDayFilter}
+                sourceFilter={sourceFilter}
+                onSourceFilterChange={setSourceFilter}
                 sortBy={sortBy}
                 onSortByChange={setSortBy}
                 tipsterSearch={tipsterSearch}
@@ -755,12 +799,14 @@ export default function MarketplacePage({
                 hasActiveFilters={
                   priceFilter !== 'all' ||
                   dayFilter !== 'all' ||
+                  sourceFilter !== 'all' ||
                   sortBy !== 'newest' ||
                   !!debouncedTipster
                 }
                 onClear={() => {
                   setPriceFilter('all');
                   setDayFilter('all');
+                  setSourceFilter('all');
                   setSortBy('newest');
                   setTipsterSearch('');
                   setDebouncedTipster('');
@@ -768,6 +814,9 @@ export default function MarketplacePage({
                 labels={{
                   filterPrice: t('marketplace.filter_price'),
                   filterDay: t('marketplace.filter_day'),
+                  filterSource: t('marketplace.filter_source'),
+                  sourceDesk: t('marketplace.source_desk'),
+                  sourceTipsters: t('marketplace.source_tipsters'),
                   all: t('common.all'),
                   free: t('marketplace.filter_free_only'),
                   paid: t('marketplace.filter_paid_only'),
@@ -830,6 +879,7 @@ export default function MarketplacePage({
                 onActionClick={() => {
                   setPriceFilter('all');
                   setDayFilter('all');
+                  setSourceFilter('all');
                   setSortBy('newest');
                   setTipsterSearch('');
                   setDebouncedTipster('');
@@ -840,9 +890,47 @@ export default function MarketplacePage({
           {!loading && filteredAndSortedPicks.length > 0 && (
             <>
               <MarketplaceBookingCodesShelf items={bookingCodeShelfItems} />
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-8 min-w-0">
-                {filteredAndSortedPicks.map((a) => renderMarketplacePickCard(a))}
-              </div>
+              {splitBySource ? (
+                <div className="space-y-8 pb-8">
+                  <section aria-labelledby="market-shelf-desk">
+                    <div className="mb-3 px-0.5">
+                      <h2 id="market-shelf-desk" className="text-base font-semibold text-[var(--text)]">
+                        {t('marketplace.shelf_desk')}
+                      </h2>
+                      <p className="text-sm text-[var(--text-muted)] mt-0.5">{t('marketplace.shelf_desk_sub')}</p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-w-0">
+                      {deskPicks.map((a) => renderMarketplacePickCard(a))}
+                    </div>
+                  </section>
+                  <section aria-labelledby="market-shelf-tipsters">
+                    <div className="mb-3 px-0.5">
+                      <h2 id="market-shelf-tipsters" className="text-base font-semibold text-[var(--text)]">
+                        {t('marketplace.shelf_tipsters')}
+                      </h2>
+                    </div>
+                    {communityPicks.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-w-0">
+                        {communityPicks.map((a) => renderMarketplacePickCard(a))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-[var(--text-muted)]">
+                        {t('marketplace.shelf_tipsters_empty')}{' '}
+                        <Link
+                          href="/tipsters"
+                          className="font-semibold text-[var(--primary)] underline underline-offset-2"
+                        >
+                          {t('marketplace.shelf_tipsters_browse')}
+                        </Link>
+                      </p>
+                    )}
+                  </section>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-8 min-w-0">
+                  {filteredAndSortedPicks.map((a) => renderMarketplacePickCard(a))}
+                </div>
+              )}
             </>
           )}
           {!loading && hasMore && (

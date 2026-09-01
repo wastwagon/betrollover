@@ -6,6 +6,7 @@ import { AdminSidebar } from '@/components/AdminSidebar';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { Button, buttonClassName } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 interface SportEvent {
   id: number;
@@ -298,7 +299,7 @@ export default function AdminSportsPage() {
                           <span>{sportDef?.icon ?? '•'}</span>
                           <span>{sportDef?.label ?? h.sport}</span>
                           <span className={`ml-auto text-[10px] font-bold ${h.stale ? 'text-red-600' : 'text-emerald-600'}`}>
-                            {h.stale ? '⚠ STALE' : '✓ OK'}
+                            {h.stale ? 'STALE' : 'OK'}
                           </span>
                         </p>
                         <p className="text-[var(--text-muted)] mt-0.5">
@@ -310,7 +311,7 @@ export default function AdminSportsPage() {
                 </div>
                 {healthData.some((h) => h.stale) && (
                   <p className="mt-3 text-xs text-red-600 dark:text-red-400">
-                    ⚠ One or more sports have stale data (&gt;25h). Use &quot;Sync All Sports&quot; below or check your environment variables.
+                    One or more sports have stale data (&gt;25h). Use &quot;Sync All Sports&quot; below or check your environment variables.
                   </p>
                 )}
               </>
@@ -343,7 +344,7 @@ export default function AdminSportsPage() {
               className={buttonClassName({ size: 'sm' })}
               title="Sync all 7 non-football sports in sequence"
             >
-              {syncingAll ? '⏳ Syncing All…' : '⚡ Sync All Sports'}
+              {syncingAll ? 'Syncing all…' : 'Sync all sports'}
             </button>
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-[var(--text-muted)]">Days ahead:</label>
@@ -369,7 +370,7 @@ export default function AdminSportsPage() {
               disabled={syncing === selectedSport}
               className={buttonClassName({ size: 'sm' })}
             >
-              {syncing === selectedSport ? 'Syncing…' : `⚡ Sync ${selectedDef?.label ?? ''}`}
+              {syncing === selectedSport ? 'Syncing…' : `Sync ${selectedDef?.label ?? ''}`}
             </button>
             <button type="button"
               onClick={() => triggerSync('results')}
@@ -438,7 +439,7 @@ export default function AdminSportsPage() {
                   disabled={syncing === selectedSport}
                   className={buttonClassName({ size: 'sm' })}
                 >
-                  {syncing === selectedSport ? 'Syncing…' : `⚡ Sync Now`}
+                  {syncing === selectedSport ? 'Syncing…' : 'Sync now'}
                 </button>
               </div>
             ) : (
@@ -511,28 +512,24 @@ export default function AdminSportsPage() {
                   {settleModal.event.homeTeam} vs {settleModal.event.awayTeam}
                 </p>
                 <div className="flex gap-4 mb-4">
-                  <label className="flex-1">
-                    <span className="block text-xs text-[var(--text-muted)] mb-1">Home score</span>
-                    <input
-                      type="number"
-                      min={0}
-                      value={settleScores.homeScore}
-                      onChange={(e) => setSettleScores((s) => ({ ...s, homeScore: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
-                      placeholder="0"
-                    />
-                  </label>
-                  <label className="flex-1">
-                    <span className="block text-xs text-[var(--text-muted)] mb-1">Away score</span>
-                    <input
-                      type="number"
-                      min={0}
-                      value={settleScores.awayScore}
-                      onChange={(e) => setSettleScores((s) => ({ ...s, awayScore: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]"
-                      placeholder="0"
-                    />
-                  </label>
+                  <Input
+                    id="admin-sports-home-score"
+                    label="Home score"
+                    type="number"
+                    min={0}
+                    value={settleScores.homeScore}
+                    onChange={(e) => setSettleScores((s) => ({ ...s, homeScore: e.target.value }))}
+                    placeholder="0"
+                  />
+                  <Input
+                    id="admin-sports-away-score"
+                    label="Away score"
+                    type="number"
+                    min={0}
+                    value={settleScores.awayScore}
+                    onChange={(e) => setSettleScores((s) => ({ ...s, awayScore: e.target.value }))}
+                    placeholder="0"
+                  />
                 </div>
                 {selectedSport === 'tennis' && (
                   <p className="text-xs text-[var(--text-muted)] mb-3">

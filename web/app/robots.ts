@@ -6,6 +6,8 @@ const PRIVATE_PATHS = [
   '/fr/admin/',
   '/dashboard',
   '/fr/dashboard',
+  '/dashboard/sell',
+  '/fr/dashboard/sell',
   '/profile',
   '/fr/profile',
   '/wallet',
