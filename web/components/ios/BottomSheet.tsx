@@ -1,6 +1,14 @@
 'use client';
 
-import { useEffect, useRef, useCallback, useState, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useCallback,
+  useState,
+  type ReactNode,
+  type PointerEvent as ReactPointerEvent,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { hapticLight } from '@/lib/haptic';
 
@@ -75,7 +83,7 @@ export function BottomSheet({
   }, [open, dismiss]);
 
   const onBackdropPointer = useCallback(
-    (e: React.MouseEvent) => {
+    (e: React.PointerEvent | React.MouseEvent) => {
       if (e.target === e.currentTarget) dismiss();
     },
     [dismiss],
@@ -116,11 +124,15 @@ export function BottomSheet({
   return createPortal(
     <div
       className="fixed inset-0 z-[100] flex flex-col justify-end"
+      data-br-bottom-sheet=""
       role="presentation"
-      onMouseDown={onBackdropPointer}
+      onPointerDown={onBackdropPointer}
     >
+      {/* pointer-events-none: Safari/iPadOS backdrop-filter can paint this layer above the sheet
+          and swallow taps (App Review: account rows did nothing on iPad). Clicks on the dimmed
+          area still hit this flex parent and dismiss. */}
       <div
-        className="absolute inset-0 bg-black/40"
+        className="absolute inset-0 z-0 bg-black/40 pointer-events-none"
         style={{
           backdropFilter: 'blur(4px)',
           WebkitBackdropFilter: 'blur(4px)',
@@ -133,12 +145,13 @@ export function BottomSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
-        className={`relative w-full ${maxHeightClass} flex flex-col rounded-t-2xl bg-[var(--card)] border-t border-[var(--separator)] shadow-2xl ${draggingUi ? '' : 'animate-slide-up'} ${className}`}
+        className={`relative z-10 w-full ${maxHeightClass} flex flex-col rounded-t-2xl bg-[var(--card)] border-t border-[var(--separator)] shadow-2xl pointer-events-auto ${draggingUi ? '' : 'animate-slide-up'} ${className}`}
         style={{
           paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))',
           transform: offsetY ? `translateY(${offsetY}px)` : undefined,
           transition: draggingUi ? 'none' : 'transform 0.28s var(--ease-ios)',
         }}
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >
         <div

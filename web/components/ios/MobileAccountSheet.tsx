@@ -1,7 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { BottomSheet } from './BottomSheet';
 import { GroupedListSection, GroupedListButton } from './GroupedList';
 import {
@@ -63,14 +62,9 @@ export function MobileAccountSheet({
   labels,
 }: MobileAccountSheetProps) {
   const pathname = usePathname();
-  const router = useRouter();
 
-  const nav = (href: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
-    onClose();
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-    e.preventDefault();
-    router.push(href);
-  };
+  // Real <a href> rows (no preventDefault). WKWebView/iPad follows native links even
+  // if a parent overlay or React state update races the click.
 
   const items = [
     { href: '/dashboard', icon: <IconDashboard />, label: labels.dashboard },
@@ -101,18 +95,20 @@ export function MobileAccountSheet({
   return (
     <BottomSheet open={open} onClose={onClose} title={title} doneLabel={doneLabel} maxHeightClass="max-h-[min(88dvh,640px)]">
       {balance !== null ? (
-        <div className="px-4 py-3 border-b border-[var(--separator)]">
+        <a
+          href="/wallet"
+          className="block w-full text-left px-4 py-3 border-b border-[var(--separator)] hover:bg-[var(--fill-secondary)] touch-manipulation"
+        >
           <p className="text-xs font-medium text-[var(--text-muted)] mb-0.5">{walletLabel}</p>
           <p className="text-xl font-semibold text-[var(--text)] tabular-nums">{balanceFormatted}</p>
-        </div>
+        </a>
       ) : null}
       <GroupedListSection className="mb-0 mt-2">
         {items.map((item) => (
-          <Link
+          <a
             key={item.href}
             href={item.href}
-            onClick={nav(item.href)}
-            className={`ios-list-row flex items-center gap-3 px-4 py-3 min-h-[44px] border-b border-[var(--separator)] last:border-b-0 transition-colors touch-manipulation ${
+            className={`ios-list-row flex items-center gap-3 px-4 py-3 min-h-[44px] w-full text-left border-b border-[var(--separator)] last:border-b-0 transition-colors touch-manipulation ${
               isActive(pathname, item.href)
                 ? 'bg-[var(--primary-light)] text-[var(--primary)]'
                 : 'text-[var(--text)] hover:bg-[var(--fill-secondary)]'
@@ -127,7 +123,7 @@ export function MobileAccountSheet({
                 {item.badge}
               </span>
             ) : null}
-          </Link>
+          </a>
         ))}
         <GroupedListButton
           icon={<IconLogout />}

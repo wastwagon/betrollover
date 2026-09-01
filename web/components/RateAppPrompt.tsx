@@ -7,6 +7,7 @@ import { useT } from '@/context/LanguageContext';
 import { APP_STORE_URL, getApiUrl } from '@/lib/site-config';
 import { trackEvent } from '@/lib/analytics';
 import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
+import { dropAuthIfUnauthorized, getAuthToken } from '@/lib/auth-token-storage';
 import { Button } from '@/components/ui/Button';
 import { isIosClient } from '@/lib/webview-context';
 
@@ -83,13 +84,13 @@ export function RateAppPrompt() {
 
     let cancelled = false;
     const run = async () => {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       if (!token) return;
       try {
         const res = await fetch(`${getApiUrl()}/accumulators/purchased`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) return;
+        if (dropAuthIfUnauthorized(res) || !res.ok) return;
         const data = await res.json();
         const rows = Array.isArray(data) ? data : [];
         const settled = rows.some((row: { pick?: { result?: string } }) => {

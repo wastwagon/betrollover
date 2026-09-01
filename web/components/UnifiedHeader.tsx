@@ -6,7 +6,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { getApiUrl } from '@/lib/site-config';
-import { AUTH_STORAGE_SYNC, emitAuthStorageSync } from '@/lib/auth-storage-sync';
+import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
+import { dropAuthIfUnauthorized, getAuthToken, clearAuthToken } from '@/lib/auth-token-storage';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { trackEvent } from '@/lib/analytics';
@@ -249,7 +250,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
   /* ── Auth / data ─────────────────────────────────────── */
   const syncAuth = useCallback(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token = getAuthToken();
     const next = !!token;
     setIsSignedIn(next);
     if (!next) {
@@ -284,10 +285,15 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
   }, [syncAuth]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = getAuthToken();
     if (!token) return;
     fetch(`${getApiUrl()}/wallet/balance`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : null).then(d => d && setBalance(+d.balance)).catch(() => {});
+      .then((r) => {
+        if (dropAuthIfUnauthorized(r)) return null;
+        return r.ok ? r.json() : null;
+      })
+      .then((d) => d && setBalance(+d.balance))
+      .catch(() => {});
   }, [pathname, isSignedIn]);
 
   /* ── Close on outside click / Escape ─────────────────── */
@@ -310,11 +316,17 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
       }
     }
     function onPointerDown(e: PointerEvent) {
-      const t = e.target as Node;
-      if (desktopMenuPortalRef.current?.contains(t)) return;
-      if (headerRef.current && !headerRef.current.contains(t)) {
+      const node = e.target as Node | null;
+      // Tapping a label often targets a Text node, not an Element.
+      const el = node instanceof Element ? node : node?.parentElement;
+      if (!el) return;
+      if (desktopMenuPortalRef.current?.contains(el)) return;
+      // Account sheet (and other bottom sheets) portal to document.body — they are
+      // outside headerRef. Closing on capture pointerdown unmounted the rows before
+      // click, so iPad taps on Dashboard/Wallet/etc. did nothing.
+      if (el.closest('[data-br-bottom-sheet]')) return;
+      if (headerRef.current && !headerRef.current.contains(el)) {
         closeAll();
-        setMobileOpen(false);
       }
     }
     document.addEventListener('keydown', onKey);
@@ -345,8 +357,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
   const cancelClose = () => { if (hoverTimeout.current) clearTimeout(hoverTimeout.current); };
 
   const signOut = () => {
-    localStorage.removeItem('token');
-    emitAuthStorageSync();
+    clearAuthToken();
     setMobileOpen(false);
     router.push('/'); router.refresh();
   };
@@ -631,7 +642,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
             {/* ── Right side (auth utils) ── */}
             {isSignedIn && (
-              <div className="hidden lg:flex items-center gap-2">
+              <div className="hidden xl:flex items-center gap-2">
                 {/* Wallet */}
                 {balance !== null && (
                   <Link
@@ -770,7 +781,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
             )}
 
             {/* GHS/EN and 18+ sit with search/account on the right. */}
-            <div className="flex items-center justify-end gap-1 sm:gap-2 min-w-0 shrink-0 max-lg:ml-auto lg:contents">
+            <div className="flex items-center justify-end gap-1 sm:gap-2 min-w-0 shrink-0 max-xl:ml-auto xl:contents">
             <div className="flex items-center gap-1">
               <span className="hidden sm:inline-flex shrink-0 rounded-md border border-[var(--border)] bg-[var(--fill-secondary)] px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-[var(--text)]">
                 {t('topbar.disclaimer_5')}
@@ -778,7 +789,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               <LocaleSwitchers tone="onSurface" />
             </div>
             {!isAuthPath ? (
-            <div className="lg:hidden flex items-center justify-end gap-1 sm:gap-2 min-w-0">
+            <div className="xl:hidden flex items-center justify-end gap-1 sm:gap-2 min-w-0">
               <button
                 type="button"
                 aria-label={t('common.search')}

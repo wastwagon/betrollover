@@ -7,6 +7,7 @@ import { getApiUrl } from '@/lib/site-config';
 import { useLanguage, useT } from '@/context/LanguageContext';
 import { getNotificationVisual } from '@/lib/notification-ui';
 import { localizeNotification } from '@/lib/notification-display';
+import { dropAuthIfUnauthorized, getAuthToken } from '@/lib/auth-token-storage';
 import {
   isNotificationRead,
   type NotificationListItem,
@@ -35,7 +36,7 @@ export function NotificationBellMenu({
   const rootRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
-    const token = localStorage.getItem('token');
+    const token = getAuthToken();
     if (!token) {
       setItems([]);
       onUnreadCountChange?.(0);
@@ -45,6 +46,11 @@ export function NotificationBellMenu({
       const r = await fetch(`${getApiUrl()}/notifications?limit=5`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (dropAuthIfUnauthorized(r)) {
+        setItems([]);
+        onUnreadCountChange?.(0);
+        return;
+      }
       const data = r.ok ? await r.json() : [];
       const list = Array.isArray(data) ? (data as NotificationListItem[]) : [];
       setItems(list);

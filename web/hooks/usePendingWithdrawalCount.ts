@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { getApiUrl } from '@/lib/site-config';
 import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
+import { dropAuthIfUnauthorized, getAuthToken } from '@/lib/auth-token-storage';
 
 export const PENDING_WITHDRAWALS_INVALIDATE = 'betrollover-pending-withdrawals-invalidate';
 
@@ -20,7 +21,7 @@ function fetchPendingCount(): Promise<number> {
   }
   if (inFlight) return inFlight;
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const token = getAuthToken();
   if (!token) {
     cacheCount = 0;
     cacheAt = now;
@@ -28,7 +29,10 @@ function fetchPendingCount(): Promise<number> {
   }
 
   inFlight = fetch(`${getApiUrl()}/wallet/withdrawals`, { headers: { Authorization: `Bearer ${token}` } })
-    .then((r) => (r.ok ? r.json() : []))
+    .then((r) => {
+      if (dropAuthIfUnauthorized(r)) return [];
+      return r.ok ? r.json() : [];
+    })
     .then((arr: unknown) => {
       const list = Array.isArray(arr) ? arr : [];
       const n = list.filter((w: { status?: string }) => w.status === 'pending' || w.status === 'processing').length;
