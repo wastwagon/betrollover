@@ -18,7 +18,7 @@ import { localizeHref, stripLocalePrefix } from '@/lib/locale-path';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import { useAccaGeneratorEnabled } from '@/hooks/useAccaGeneratorEnabled';
 import { buttonClassName } from '@/components/ui/Button';
-import { LocaleSwitchers } from '@/components/TopBar';
+import { LocaleSwitchers, TopBar } from '@/components/TopBar';
 import {
   IconSearch,
   IconTrophy,
@@ -429,15 +429,17 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
         .animate-slide-in-left { animation: slideInLeft 0.25s ease-out both; }
       `}</style>
 
-      <header
-        ref={headerRef}
-        className={`z-50 w-full min-w-0 max-w-full ios-chrome border-b ${
+      <div
+        className={`z-50 w-full min-w-0 max-w-full ${
           hideTopBar
             ? 'sticky top-0'
-            : // Mobile: fixed at the top (TopBar is desktop-only). Safe-area pads the notch.
-              // Desktop: sticky under in-flow TopBar.
-              'max-md:fixed max-md:left-0 max-md:right-0 max-md:top-0 max-md:pt-[env(safe-area-inset-top,0px)] md:sticky md:top-0'
+            : 'max-md:fixed max-md:left-0 max-md:right-0 max-md:top-0 max-md:pt-[env(safe-area-inset-top,0px)] md:sticky md:top-0'
         }`}
+      >
+        {!hideTopBar ? <TopBar /> : null}
+      <header
+        ref={headerRef}
+        className="w-full min-w-0 max-w-full ios-chrome border-b"
       >
         <div className="w-full min-w-0 max-w-none px-4 sm:px-6 lg:px-8 xl:px-10">
           <div className="flex items-center h-[var(--br-header-h)] min-w-0 gap-3 lg:gap-6">
@@ -457,7 +459,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
             {/* ── Desktop nav (centered in remaining space) ── */}
             {!isAuthPath ? (
-            <nav className="hidden lg:flex items-center gap-1 min-w-0" aria-label="Main navigation">
+            <nav className="hidden lg:flex flex-1 items-center justify-center gap-1 min-w-0" aria-label="Main navigation">
 
               {/* Home */}
               <NavBtn href="/" label={t('header.home')} />
@@ -525,6 +527,8 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                 </DesktopMenuPortal>
               </div>
 
+              <NavBtn href="/leaderboard" label={t('nav.leaderboard')} />
+
               {/* Browse ▾ */}
               <div className="relative">
                 <NavBtn menuKey="browse" label={t('nav.browse')} />
@@ -582,11 +586,24 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                 <NavBtn href="/subscriptions/marketplace" label={t('nav.subscriptions')} />
               )}
 
-              <NavBtn
-                href="/create-pick"
-                label={t('nav.create_pick')}
-                badge={isSignedIn && slipCount !== undefined && slipCount > 0 ? (slipCount > 9 ? '9+' : String(slipCount)) : undefined}
-              />
+              <Link
+                href={localizeHref('/create-pick', pathname)}
+                aria-current={isActive(pathname, '/create-pick') ? 'page' : undefined}
+                className={buttonClassName({
+                  size: 'sm',
+                  className: `h-9 rounded-full px-3.5 text-[13px] shadow-none whitespace-nowrap ${
+                    isActive(pathname, '/create-pick') ? 'bg-[var(--primary-hover)]' : ''
+                  }`,
+                })}
+              >
+                <span className="text-[15px] font-semibold leading-none" aria-hidden>+ </span>
+                {t('nav.create_pick')}
+                {isSignedIn && slipCount !== undefined && slipCount > 0 ? (
+                  <span className="min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold bg-white/25 text-white rounded-full">
+                    {slipCount > 9 ? '9+' : slipCount}
+                  </span>
+                ) : null}
+              </Link>
               {accaEnabled ? (
                 <NavBtn href="/acca-generator" label={t('nav.acca_generator')} />
               ) : null}
@@ -743,8 +760,8 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               </div>
             )}
 
-            {/* Quiet chrome: 18+ and locale */}
-            <div className="flex items-center gap-0.5">
+            {/* Locale stays in the main header on small screens; desktop uses TopBar. */}
+            <div className="flex md:hidden items-center gap-0.5">
               <span className="hidden sm:inline text-[10px] font-medium tracking-wider text-[var(--text-tertiary)] px-1" title={t('topbar.disclaimer_5')}>
                 18+
               </span>
@@ -847,6 +864,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
           ) : null}
         </div>
       </header>
+      </div>
       {/* Keeps page titles clear of the fixed mobile header (safe-area + header row). */}
       {!hideTopBar ? (
         <div className="md:hidden w-full shrink-0 h-[var(--br-chrome-below-header)] pointer-events-none" aria-hidden />

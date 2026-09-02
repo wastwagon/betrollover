@@ -1843,6 +1843,10 @@ const fr: Record<string, string> = {
   'topbar.disclaimer_3': 'Les remboursements couvrent uniquement le coût d\'achat du pronostic — pas les mises bookmaker',
   'topbar.disclaimer_4': 'BetRollover et ses tipsters n\'acceptent aucune responsabilité pour les pertes encourues en agissant sur les pronostics',
   'topbar.disclaimer_5': '18+ uniquement',
+  'topbar.community': 'Communauté',
+  'topbar.support': 'Assistance',
+  'topbar.archive': 'Archives',
+  'topbar.help': 'Aide',
 
   // ── Create Pick page ─────────────────────────────────────────────────────
   'create_pick.title': 'Créer un Pronostic',

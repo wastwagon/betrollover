@@ -1846,6 +1846,10 @@ const en = {
   'topbar.disclaimer_3': 'Refunds cover pick purchase cost only — not any bookmaker stake or wager',
   'topbar.disclaimer_4': 'BetRollover and its tipsters accept no liability for losses incurred from acting on picks',
   'topbar.disclaimer_5': '18+ only',
+  'topbar.community': 'Community',
+  'topbar.support': 'Support',
+  'topbar.archive': 'Archive',
+  'topbar.help': 'Help',
 
   // ── Create Pick page ─────────────────────────────────────────────────────
   'create_pick.title': 'Create Pick',

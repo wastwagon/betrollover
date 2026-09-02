@@ -60,11 +60,25 @@
 
   /**
    * App chrome heights — keep UnifiedHeader / sticky filters / toasts aligned.
-   * TopBar (disclaimer marquee) is desktop-only. Mobile header sits at the top
+   * TopBar utility rail is desktop-only. Mobile header sits at the top
    * with safe-area padding so GHS/EN live in the main header, not a second band.
    */
   --br-topbar-h: 0px;
   --br-header-h: 4.5rem;
+  --br-chrome-below-header: 4.5rem;
+  --br-toast-top: 5rem;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --br-topbar-h: 2.25rem;
+    --br-chrome-below-header: calc(var(--br-topbar-h) + var(--br-header-h));
+    --br-toast-top: calc(var(--br-chrome-below-header) + 0.5rem);
+  }
+}
+
+[data-admin-shell] {
+  --br-topbar-h: 0px;
   --br-chrome-below-header: 4.5rem;
   --br-toast-top: 5rem;
 }
