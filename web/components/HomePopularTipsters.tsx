@@ -123,7 +123,7 @@ export function HomePopularTipsters({
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <div
                 key={i}
-                className="h-28 sm:h-32 rounded-xl bg-[var(--card)] border border-[var(--separator)] animate-pulse"
+                className="h-44 sm:h-48 rounded-xl bg-[var(--card)] border border-[var(--separator)] animate-pulse"
               />
             ))}
           </div>

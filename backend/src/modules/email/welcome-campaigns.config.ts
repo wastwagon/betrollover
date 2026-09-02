@@ -43,7 +43,7 @@ export const WELCOME_STEPS: WelcomeStep[] = [
     subject: 'Follow tipsters for free shorts',
     eyebrow: 'Follow',
     title: 'Short lists, not long accas',
-    body: 'Follow Acca Desk Over 1.5 / Over 2.5 tipsters for 2-fold shorts, or check Free Tip of the Day on the homepage. Pick your own legs.',
+    body: 'Follow Over 1.5 / Over 2.5 tipsters for 2-fold shorts, or check Free Tip of the Day on the homepage. Pick your own legs.',
     ctaLabel: 'See tipsters',
     ctaPath: '/marketplace',
   },

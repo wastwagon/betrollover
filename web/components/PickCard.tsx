@@ -47,13 +47,7 @@ interface Tipster {
   displayName: string;
   username: string;
   avatarUrl?: string | null;
-  /** Platform AI tipster (from API `isAi`; some payloads use `is_ai`). */
-  isAi?: boolean;
-  is_ai?: boolean;
-  /** Verified account (from API `isVerified` / `is_verified`). */
-  isVerified?: boolean;
-  is_verified?: boolean;
-  /** `acca_desk` vs classic `ai`. */
+  /** `acca_desk` vs classic `ai` — drives the Today/Tomorrow board chip, not an AI pill. */
   tipsterType?: string | null;
   tipster_type?: string | null;
   winRate: number;
@@ -279,16 +273,16 @@ export function PickCard({
                       {tipster?.displayName || t('pick_card.tipster')}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1.5 mt-0">
-                    <span className="text-[9px] text-[var(--text-muted)]">
+                  <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0 mt-0 min-w-0">
+                    <span className="text-[9px] text-[var(--text-muted)] tabular-nums">
                       {tipster ? `${tipster.totalPicks}p` : `${totalPicks}p`}
                     </span>
-                    <span className="text-[9px] font-bold text-[var(--success)]">
-                      {tipster?.winRate != null ? `${Number(tipster.winRate).toFixed(1)}%` : '—'}
+                    <span className="text-[9px] font-bold text-[var(--success)] tabular-nums">
+                      {tipster?.winRate != null ? `${Number(tipster.winRate).toFixed(0)}%` : '—'}
                     </span>
                     {tipster?.roi != null && (
                       <span
-                        className={`text-[9px] font-bold ${
+                        className={`text-[9px] font-bold tabular-nums ${
                           Number(tipster.roi) > 0
                             ? 'text-[var(--success)]'
                             : Number(tipster.roi) < 0
@@ -296,12 +290,7 @@ export function PickCard({
                               : 'text-[var(--text-muted)]'
                         }`}
                       >
-                        {`${Number(tipster.roi).toFixed(1)}% ROI`}
-                      </span>
-                    )}
-                    {tipster && (tipster.wonPicks > 0 || tipster.lostPicks > 0) && (
-                      <span className="text-[9px] text-[var(--text-muted)]">
-                        {tipster.wonPicks}W / {tipster.lostPicks}L
+                        {`${Number(tipster.roi).toFixed(1)}%`}
                       </span>
                     )}
                     {tipster &&
@@ -634,7 +623,7 @@ export function PickCard({
                           </span>
                         ) : null}
                       </div>
-                      <div className="flex items-center gap-4 mt-1">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 min-w-0">
                         <span className="text-sm text-[var(--text-muted)]">
                           {t('pick_card.picks_count', { n: String(tipster.totalPicks) })}
                         </span>

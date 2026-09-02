@@ -14,8 +14,6 @@ import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { FixtureLiveChip } from '@/components/FixtureLiveChip';
 import { useLanguage, useT, type SupportedLanguage } from '@/context/LanguageContext';
 import { formatTipsterRankHash } from '@/lib/tipster-rank-ui';
-import { AiTipsterBadge } from '@/components/AiTipsterBadge';
-import { VerifiedTipsterBadge } from '@/components/VerifiedTipsterBadge';
 import { KickoffUrgencyLine } from '@/components/KickoffUrgencyLine';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { EscrowPurchaseTimeline } from '@/components/EscrowPurchaseTimeline';
@@ -1041,10 +1039,8 @@ export default function CouponDetailPage({
                       )}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-[var(--text)] flex flex-wrap items-center gap-2 min-w-0">
-                        <span className="truncate min-w-0">{coupon.tipster.displayName}</span>
-                        {coupon.tipster.isAi ? <AiTipsterBadge tipsterType={coupon.tipster.tipsterType} /> : null}
-                        {!coupon.tipster.isAi && coupon.tipster.isVerified ? <VerifiedTipsterBadge /> : null}
+                      <p className="text-sm font-semibold text-[var(--text)] truncate min-w-0">
+                        {coupon.tipster.displayName}
                       </p>
                       <p className="text-xs text-[var(--text-muted)]">@{coupon.tipster.username}</p>
                     </div>

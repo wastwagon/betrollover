@@ -120,8 +120,8 @@ export function TipsterCard({
                 >
                   {tipster.display_name}
                 </h3>
-                {!tipster.is_ai && tipster.is_verified ? (
-                  <VerifiedTipsterBadge className={premium ? '!text-[9px] !px-1.5 !py-px' : undefined} />
+                {!premium && !tipster.is_ai && tipster.is_verified ? (
+                  <VerifiedTipsterBadge />
                 ) : null}
               </span>
             </Link>
@@ -251,14 +251,16 @@ export function TipsterCard({
           </>
         )}
 
-        <TipsterTrustStrip
-          className={premium ? 'mb-0' : 'mb-3'}
-          compact
-          settledCount={settledCount}
-          avgOdds={premium ? null : tipster.avg_odds}
-          avgRating={premium ? null : tipster.avg_rating}
-          reviewCount={premium ? null : tipster.review_count}
-        />
+        {!premium ? (
+          <TipsterTrustStrip
+            className="mb-3"
+            compact
+            settledCount={settledCount}
+            avgOdds={tipster.avg_odds}
+            avgRating={tipster.avg_rating}
+            reviewCount={tipster.review_count}
+          />
+        ) : null}
 
         {tipster.bio ? (
           <p className="text-xs text-[var(--text-muted)] line-clamp-2 mb-3">{tipster.bio}</p>

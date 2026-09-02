@@ -372,7 +372,7 @@ export default function LeaderboardPage({
                   }`}
                 >
                 <div
-                  className={`flex md:grid md:grid-cols-[3rem_1fr_5rem_8rem_8rem_8rem_10rem] items-center gap-3 md:gap-4 px-4 py-3.5 min-w-0 w-full max-w-full overflow-x-hidden`}
+                  className={`flex flex-wrap md:grid md:grid-cols-[3rem_1fr_5rem_8rem_8rem_8rem_10rem] items-center gap-3 md:gap-4 px-4 py-3.5 min-w-0 w-full max-w-full overflow-x-hidden`}
                 >
                   <div className="shrink-0"><RankBadge rank={rank} /></div>
 
@@ -452,16 +452,18 @@ export default function LeaderboardPage({
                     <span className="text-[10px] text-[var(--text-muted)]">{t('tipster.total_picks')}</span>
                   </div>
 
-                  {/* Mobile stats */}
-                  <div className="md:hidden flex items-center gap-2 sm:gap-3 ml-auto shrink-0">
+                  {/* Mobile stats — own row so Form/WR/ROI never collide with the name. */}
+                  <div className="md:hidden basis-full flex flex-wrap items-center gap-x-3 gap-y-0.5 min-w-0 pl-[3.25rem]">
                     {period === 'all_time' && entry.form_points != null ? (
-                      <span className="text-xs font-bold text-[var(--text)]">{entry.form_points} {t('leaderboard.form_col')}</span>
+                      <span className="text-xs font-bold text-[var(--text)] tabular-nums">
+                        {entry.form_points} {t('leaderboard.form_col')}
+                      </span>
                     ) : null}
-                    <span className={`text-xs font-bold ${winRate >= 60 ? 'text-[var(--success)]' : 'text-[var(--text)]'}`}>
-                      {winRate.toFixed(1)}% WR
+                    <span className={`text-xs font-bold tabular-nums ${winRate >= 60 ? 'text-[var(--success)]' : 'text-[var(--text)]'}`}>
+                      {winRate.toFixed(0)}% {t('tipster.win_rate_short')}
                     </span>
-                    <span className={`text-xs font-bold ${roi > 0 ? 'text-[var(--success)]' : 'text-[var(--destructive)]'}`}>
-                      {roi > 0 ? '+' : ''}{roi.toFixed(1)}% ROI
+                    <span className={`text-xs font-bold tabular-nums ${roi > 0 ? 'text-[var(--success)]' : 'text-[var(--destructive)]'}`}>
+                      {roi > 0 ? '+' : ''}{roi.toFixed(1)}% {t('tipster.roi')}
                     </span>
                   </div>
 

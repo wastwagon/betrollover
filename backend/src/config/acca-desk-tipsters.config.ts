@@ -32,8 +32,8 @@ function desk(
   return {
     username: `Acca${riskLabel}${marketSlug}`,
     display_name: `${riskLabel} · ${marketLabel}`,
-    bio: `${riskLabel} Acca Desk · ${marketLabel} only · up to 4 daily 2-fold free picks (early / afternoon / evening / midnight), clustered by kick-off. Odd-band education — not guaranteed. 18+.`,
-    avatar_url: `/avatars/acca_${risk}_${marketKey}.png`,
+    bio: `${riskLabel} · ${marketLabel} only. Up to 4 free 2-fold picks a day (early / afternoon / evening / midnight), clustered by kick-off. Educational odd bands — not guaranteed. 18+.`,
+    avatar_url: `/avatars/acca_${risk}_${marketKey}.png?v=2`,
     strategy_id: `acca_desk_${risk}_${marketKey}`,
     riskLevel: risk,
     markets,

@@ -342,7 +342,7 @@ ${this.bodyCell(`${this.copyP(this.escapeEmailText(data.body))}${data.extraHtml 
     const cards = slice
       .map((slip) => {
         const title = this.escapeEmailText(slip.title || `Pick #${slip.ticketId}`);
-        const name = this.escapeEmailText(slip.tipsterName || 'Acca Desk');
+        const name = this.escapeEmailText(slip.tipsterName || 'Tipster');
         const odds = Number(slip.totalOdds || 0).toFixed(2);
         const legs = (slip.legs || [])
           .slice(0, 2)
@@ -373,10 +373,10 @@ ${this.bodyCell(`${this.copyP(this.escapeEmailText(data.body))}${data.extraHtml 
       .join('\n');
     return this.sendCampaignEmail({
       to,
-      subject: 'Today’s Acca Desk shorts',
-      eyebrow: 'Acca Desk',
+      subject: 'Today’s 2-fold shorts',
+      eyebrow: 'Picks you follow',
       title: 'Two-fold shorts from tipsters you follow',
-      body: 'Acca Desk posts early / afternoon / evening / midnight 2-folds. Informational only — 18+. Educational odd bands, not a guarantee. You pick your own legs; we don’t stake for you.',
+      body: 'Early / afternoon / evening / midnight 2-folds from tipsters you follow. Informational only — 18+. Educational odd bands, not a guarantee. You pick your own legs; we don’t stake for you.',
       ctaLabel: 'Browse marketplace',
       ctaPath: '/marketplace',
       extraHtml: cards,
