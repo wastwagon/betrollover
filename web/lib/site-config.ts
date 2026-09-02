@@ -68,7 +68,7 @@ export const SITE_DESCRIPTION = isFootballOnlyDiscovery()
 /** Page title without the brand — root layout template appends `| BetRollover`. */
 export const SITE_TITLE_CORE = isFootballOnlyDiscovery()
   ? 'Football Predictions & Escrow-Protected Picks'
-  : 'Verified Sports Tips | Football, Basketball & More';
+  : 'Verified Sports Tips for Football, Basketball and More';
 
 export const SITE_DEFAULT_TITLE = `${SITE_TITLE_CORE} — ${SITE_NAME}`;
 

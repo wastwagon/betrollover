@@ -5,8 +5,8 @@ export const RESULT_CHIP = {
   lost: 'bg-[var(--destructive-light)] text-[var(--destructive)] border border-[var(--destructive)]/25',
   void: 'bg-[var(--fill-secondary)] text-[var(--text-muted)] border border-[var(--separator)]',
   cancelled: 'bg-[var(--fill-secondary)] text-[var(--text-muted)] border border-[var(--separator)]',
-  pending: 'bg-[var(--accent-light)] text-[var(--accent)] border border-[var(--accent)]/25',
-  pending_approval: 'bg-[var(--accent-light)] text-[var(--accent)] border border-[var(--accent)]/25',
+  pending: 'bg-[var(--fill-secondary)] text-[var(--text)] border border-[var(--separator)]',
+  pending_approval: 'bg-[var(--fill-secondary)] text-[var(--text)] border border-[var(--separator)]',
   active: 'bg-[var(--primary-light)] text-[var(--primary)] border border-[var(--primary)]/20',
 } as const;
 

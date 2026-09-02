@@ -26,6 +26,20 @@ public class Config {
     // Your URL including https:// or http:// prefix and including www. or any required subdomain (e.g., "https://www.example.org")
     public static String HOME_URL = "https://betrollover.com";
 
+    public static String withAndroidAppSource(String url) {
+        if (url == null || url.isEmpty()) return url;
+        if (url.contains("src=android_app")) return url;
+        return url + (url.contains("?") ? "&" : "?") + "src=android_app";
+    }
+
+    public static String userAgentWithAppTag(String currentUa) {
+        String base = (USER_AGENT != null && !USER_AGENT.isEmpty())
+                ? USER_AGENT
+                : (currentUa == null ? "" : currentUa);
+        if (base.contains("BetRolloverApp")) return base;
+        return (base + " BetRolloverApp").trim();
+    }
+
     // Set to "false" to disable the progress spinner/loading spinner
     public static final boolean ACTIVATE_PROGRESS_BAR = true;
 

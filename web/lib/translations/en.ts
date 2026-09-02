@@ -1738,13 +1738,13 @@ const en = {
   'resp.tip_5': 'Sports prediction should be treated as entertainment, not a source of income',
 
   // ── SEO metadata (titles & descriptions for layout files) ────────────────
-  'seo.marketplace_title': 'Football Predictions Marketplace | Escrow-Protected Picks',
+  'seo.marketplace_title': 'Football Predictions Marketplace',
   'seo.marketplace_desc': 'Buy free & premium football predictions from verified tipsters. Escrow-protected picks — refunded if tips lose. Win rate & ROI transparent. Ghana-based, trusted across Africa and worldwide.',
-  'seo.marketplace_title_multisport': 'Multi-Sport Tipster Marketplace | Free & Premium Picks',
+  'seo.marketplace_title_multisport': 'Multi-Sport Tipster Marketplace',
   'seo.marketplace_desc_multisport': 'Browse verified tipster picks across all major global sports — football, basketball, tennis, MMA, rugby and more. Compare win rate and ROI. Free and premium picks; refunded if tips lose.',
-  'seo.tipsters_title': 'Football Tipster Directory | Search Verified Analysts',
+  'seo.tipsters_title': 'Football Tipster Directory',
   'seo.tipsters_desc': 'Browse and follow verified football tipsters. Filter by ROI, win rate, and sport. Escrow-protected picks — Ghana-based, worldwide audience.',
-  'seo.leaderboard_title': 'Football Tipster Form Leaderboard | Active Rankings',
+  'seo.leaderboard_title': 'Football Tipster Form Leaderboard',
   'seo.leaderboard_desc': 'Active football tipsters ranked by recent form points, then ROI. Inactive accounts are not listed. Separate from the searchable directory.',
   'leaderboard.empty_logged_sub':
     'No tipsters match this filter right now. Try another period or sport, or browse all profiles.',
@@ -1760,11 +1760,11 @@ const en = {
     'This week: only tipsters with at least one settled pick posted in the current calendar week are listed. Those with at least {n} settled selections posted that week are ranked first by ROI, then profit, then win rate; everyone else in the week follows below, by ROI.',
   'seo.discover_title': 'Football News and Guides Hub',
   'seo.discover_desc': 'One hub for match news and educational guides. For daily transfer and injury stories use News; for escrow and tipster how-tos use Guides.',
-  'seo.news_title': 'Football Match News | Transfers, Injuries & Previews',
+  'seo.news_title': 'Football Match News',
   'seo.news_desc': 'Latest football match news: transfers, injuries, previews, and analysis from leagues worldwide — built for African and global fans.',
   'seo.resources_title': 'Tipster Resource Library',
   'seo.resources_desc': 'Long-form articles on bankroll, ROI, and marketplace basics. Separate from daily match news and the escrow how-to guides.',
-  'seo.picks_archive_title': 'Settled Football Predictions Archive | Past Results',
+  'seo.picks_archive_title': 'Settled Football Predictions Archive',
   'seo.picks_archive_desc': 'Browse settled football predictions and escrow-protected pick results. Review win rates, ROI, and outcomes from verified tipsters.',
 
   // ── Picks archive page (client; route /coupons/archive) ───────────────────
@@ -1806,11 +1806,11 @@ const en = {
   'marketplace.featured_section_title': 'Marketplace picks',
   'marketplace.featured_section_subtitle': 'Browse selections from verified tipsters',
 
-  'seo.register_title': 'Sign up | Football Predictions & Escrow Picks',
+  'seo.register_title': 'Sign up',
   'seo.register_desc':
     'Join BetRollover — football predictions, escrow-protected picks, and multi-currency wallets. Ghana-based for Africa and a global match audience.',
   'seo.register_og_alt': 'BetRollover — football predictions & escrow-protected picks',
-  'seo.login_title': 'Sign In | Football Predictions',
+  'seo.login_title': 'Sign In',
   'seo.login_desc':
     'Log in to browse football predictions, buy escrow-protected picks, manage your wallet, and follow verified tipsters.',
 

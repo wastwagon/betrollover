@@ -6,7 +6,7 @@ import { getLocale, buildT } from '@/lib/i18n';
 import type { TranslationKey } from '@/lib/translations/en';
 
 export const metadata = {
-  title: 'Page Not Found | BetRollover',
+  title: 'Page Not Found',
   robots: { index: false },
 };
 

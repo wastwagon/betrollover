@@ -579,11 +579,7 @@ export default function CouponDetailPage({
                 )}
                 {coupon.purchaseCount != null && coupon.purchaseCount > 0 && (
                   <span
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${
-                      Number(coupon.price) <= 0
-                        ? 'bg-[var(--accent-light)] text-[var(--accent)] border-[var(--accent)]/30'
-                        : 'bg-[var(--primary-light)] text-[var(--primary)] border-[var(--primary)]/25'
-                    }`}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border bg-[var(--primary-light)] text-[var(--primary)] border-[var(--primary)]/25"
                     title={
                       Number(coupon.price) <= 0
                         ? t('pick_card.badge_free_unlocks_hint')

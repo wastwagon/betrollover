@@ -9,6 +9,23 @@ export class VisitorSession {
   @Index()
   sessionId: string;
 
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  @Index()
+  deviceId: string | null = null;
+
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  @Index()
+  trafficSource: string | null = null;
+
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  utmSource: string | null = null;
+
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  utmMedium: string | null = null;
+
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  utmCampaign: string | null = null;
+
   @Column({ type: 'int', nullable: true })
   @Index()
   userId: number | null = null;

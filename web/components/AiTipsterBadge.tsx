@@ -5,8 +5,7 @@ import { Badge } from '@/components/ui/Badge';
 import { isAccaDeskTipsterType } from '@/lib/tipster-kind';
 
 /**
- * Platform-operated tipster indicator. Acca Desk vs classic 1-fixture AI.
- * Does not change listing order.
+ * Classic 1-fixture AI indicator. Acca Desk is omitted so those tipsters read like the rest of the board.
  */
 export function AiTipsterBadge({
   className = '',
@@ -16,15 +15,15 @@ export function AiTipsterBadge({
   tipsterType?: string | null;
 }) {
   const t = useT();
-  const desk = isAccaDeskTipsterType(tipsterType);
+  if (isAccaDeskTipsterType(tipsterType)) return null;
   return (
     <Badge
       tone="ai"
       className={className}
-      title={desk ? t('tipster.acca_desk_badge_title') : t('tipster.ai_badge_title')}
-      aria-label={desk ? t('tipster.acca_desk_badge_aria') : t('tipster.ai_badge_aria')}
+      title={t('tipster.ai_badge_title')}
+      aria-label={t('tipster.ai_badge_aria')}
     >
-      {desk ? t('tipster.acca_desk_badge') : t('tipster.ai_badge')}
+      {t('tipster.ai_badge')}
     </Badge>
   );
 }

@@ -82,7 +82,7 @@ export async function fetchHomePublicData(options?: { revalidate?: number }): Pr
 
     const [statsRes, lbRes, marketRes, featuredRes, freeTipRes, headlineRes] = await Promise.all([
       fetch(`${api}/accumulators/stats/public`, init),
-      fetch(`${api}/leaderboard?period=all_time&limit=24`, init),
+      fetch(`${api}/leaderboard?period=all_time&limit=50`, init),
       fetch(`${api}/accumulators/marketplace/public?${marketQs}`, init),
       fetch(`${api}/accumulators/featured`, init),
       fetch(`${api}/accumulators/free-tip-of-the-day?${freeTipOfTheDayQuery()}`, init),

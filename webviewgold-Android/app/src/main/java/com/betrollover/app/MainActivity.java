@@ -604,7 +604,10 @@ public class MainActivity extends AppCompatActivity
                     new IInAppMessageClickListener() {
                         @Override
                         public void onClick(@NonNull IInAppMessageClickEvent osInAppMessageAction) {
-                            webView.loadUrl(osInAppMessageAction.getResult().getUrl());
+                            String u = osInAppMessageAction.getResult().getUrl();
+                            if (u != null && !u.isEmpty()) {
+                                webView.loadUrl(Config.withAndroidAppSource(u));
+                            }
                         }
                     }
             );
@@ -1026,9 +1029,7 @@ public class MainActivity extends AppCompatActivity
             }
         }
 
-        if (!Config.USER_AGENT.isEmpty()) {
-            webSettings.setUserAgentString(Config.USER_AGENT);
-        }
+        webSettings.setUserAgentString(Config.userAgentWithAppTag(webSettings.getUserAgentString()));
 
         if (Config.CLEAR_CACHE_ON_STARTUP) {
             webView.clearCache(true);
@@ -1448,7 +1449,7 @@ public class MainActivity extends AppCompatActivity
                     Intent external = new Intent(Intent.ACTION_VIEW, Uri.parse(urlToLoad));
                     startActivity(external);
                 } else {
-                    webView.loadUrl(urlToLoad);
+                    webView.loadUrl(Config.withAndroidAppSource(urlToLoad));
                 }
             }
         } else if (URLUtil.isValidUrl(urlString)) {
@@ -1459,7 +1460,7 @@ public class MainActivity extends AppCompatActivity
                 Intent external = new Intent(Intent.ACTION_VIEW, Uri.parse(urlToLoad));
                 startActivity(external);
             } else {
-                webView.loadUrl(urlToLoad);
+                webView.loadUrl(Config.withAndroidAppSource(urlToLoad));
             }
         }
     }
@@ -2163,11 +2164,11 @@ public class MainActivity extends AppCompatActivity
                     deepLinkingURL = null;
                 } else if (Config.IS_CUSTOM_SCHEME_ENABLED) {
                     if (Deeplinking.isValidSchemeURL(deepLinkingURL)) {
-                        webView.loadUrl(Deeplinking.convertSchemeToHttps(deepLinkingURL));
+                        webView.loadUrl(Config.withAndroidAppSource(Deeplinking.convertSchemeToHttps(deepLinkingURL)));
                         return;
                     }
                 } else if (URLUtil.isValidUrl(deepLinkingURL)) {
-                    webView.loadUrl(deepLinkingURL);
+                    webView.loadUrl(Config.withAndroidAppSource(deepLinkingURL));
                     return;
                 } else {
                     Toast.makeText(this, "URL is not valid", Toast.LENGTH_SHORT).show();
@@ -2233,7 +2234,7 @@ public class MainActivity extends AppCompatActivity
                 loadLocal(INDEX_FILE);
             } else {
                 if (BuildConfig.IS_DEBUG_MODE) Log.d(TAG, " HOME_URL " + urlToLoad);
-                webView.loadUrl(urlToLoad);
+                webView.loadUrl(Config.withAndroidAppSource(urlToLoad));
             }
         }
     }
@@ -5472,9 +5473,10 @@ public class MainActivity extends AppCompatActivity
                     mWebviewPop.setWebChromeClient(new AdvanceWebChromeClient());
                     mWebviewPop.setWebViewClient(new AdvanceWebViewClient());
                     if (!Config.USER_AGENT.isEmpty()) {
-                        mWebviewPop.getSettings().setUserAgentString(Config.USER_AGENT);
+                        mWebviewPop.getSettings().setUserAgentString(Config.userAgentWithAppTag(Config.USER_AGENT));
                     } else {
-                        mWebviewPop.getSettings().setUserAgentString(mWebviewPop.getSettings().getUserAgentString().replace("wv", ""));
+                        mWebviewPop.getSettings().setUserAgentString(Config.userAgentWithAppTag(
+                                mWebviewPop.getSettings().getUserAgentString().replace("wv", "")));
                     }
                     mContainer.addView(mWebviewPop);
 
@@ -5861,9 +5863,9 @@ public class MainActivity extends AppCompatActivity
         webSettings.setUseWideViewPort(true);
 
         if (!Config.USER_AGENT.isEmpty()) {
-            webSettings.setUserAgentString(Config.USER_AGENT);
+            webSettings.setUserAgentString(Config.userAgentWithAppTag(Config.USER_AGENT));
         } else {
-            webSettings.setUserAgentString(webSettings.getUserAgentString().replace("wv", ""));
+            webSettings.setUserAgentString(Config.userAgentWithAppTag(webSettings.getUserAgentString().replace("wv", "")));
         }
 
 

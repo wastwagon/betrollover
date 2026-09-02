@@ -844,22 +844,26 @@ class WebViewController: UIViewController, OSSubscriptionObserver, GADBannerView
         case .phone:
             if useragent_iphone.isEqual("")
             {
-                
+                if let defaultUa = WKWebView().value(forKey: "userAgent") as? String {
+                    webView.customUserAgent = userAgentWithIosAppTag(defaultUa)
+                }
             }
             else
             {
-                webView.customUserAgent = useragent_iphone
+                webView.customUserAgent = userAgentWithIosAppTag(useragent_iphone)
             }
         case .unspecified:
             break
         case .pad:
             if useragent_ipad.isEqual("")
             {
-                
+                if let defaultUa = WKWebView().value(forKey: "userAgent") as? String {
+                    webView.customUserAgent = userAgentWithIosAppTag(defaultUa)
+                }
             }
             else
             {
-                webView.customUserAgent = useragent_ipad
+                webView.customUserAgent = userAgentWithIosAppTag(useragent_ipad)
             }
         case .tv:
             break
@@ -1760,6 +1764,7 @@ class WebViewController: UIViewController, OSSubscriptionObserver, GADBannerView
             urlExtUUID = String(format: "%@uuid=%@", (url.contains("?") ? "&" : "?"), Constants.kDeviceId);
         }
         url += urlExtUUID
+        url = withIosAppSource(url)
         
         let urlToLoad = URL(string: url)!
         let request = URLRequest(url: urlToLoad)

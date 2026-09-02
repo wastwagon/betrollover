@@ -50,7 +50,7 @@ export function KickoffUrgencyLine({ picks, className = '', compact = false }: K
   }
 
   const tone =
-    urgency.labelKey === 'soon' ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]';
+    urgency.labelKey === 'soon' ? 'text-[var(--primary)]' : 'text-[var(--text-muted)]';
 
   return (
     <p

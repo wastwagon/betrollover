@@ -63,8 +63,25 @@ export class EmailService {
     return (process.env.APP_URL || 'https://betrollover.com').replace(/\/$/, '');
   }
 
+  private trackedUrl(pathOrUrl: string, campaign: string): string {
+    try {
+      const abs = pathOrUrl.startsWith('http')
+        ? pathOrUrl
+        : `${this.appOrigin()}${pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`}`;
+      const u = new URL(abs);
+      if (!u.searchParams.has('utm_source')) {
+        u.searchParams.set('utm_source', 'email');
+        u.searchParams.set('utm_medium', 'transactional');
+        u.searchParams.set('utm_campaign', campaign.slice(0, 80));
+      }
+      return u.toString();
+    } catch {
+      return pathOrUrl;
+    }
+  }
+
   private prefsUrl(): string {
-    return `${this.appOrigin()}/profile#notification-preferences`;
+    return this.trackedUrl('/profile#notification-preferences', 'email_prefs');
   }
 
   /**
@@ -217,7 +234,7 @@ export class EmailService {
     extraHtml?: string;
     extraText?: string;
   }): Promise<{ sent: boolean; error?: string }> {
-    const ctaUrl = `${this.appOrigin()}${data.ctaPath.startsWith('/') ? data.ctaPath : `/${data.ctaPath}`}`;
+    const ctaUrl = this.trackedUrl(data.ctaPath, 'campaign');
     const inner = `${this.brandHeader(this.escapeEmailText(data.eyebrow), this.escapeEmailText(data.title))}
 ${this.bodyCell(`${this.copyP(this.escapeEmailText(data.body))}${data.extraHtml || ''}${this.ctaButton(ctaUrl, data.ctaLabel)}`)}`;
     const html = this.premiumDocument(
@@ -452,7 +469,7 @@ ${this.bodyCell(`${this.copyP(this.escapeEmailText(data.body))}${data.extraHtml 
    * Premium purchase receipt (transactional). Sent on every successful marketplace purchase.
    */
   async sendPurchaseConfirmation(to: string, amount: number, pickId: number, pickTitle?: string | null) {
-    const ctaUrl = `${this.appOrigin()}/coupons/${pickId}`;
+    const ctaUrl = this.trackedUrl(`/coupons/${pickId}`, 'purchase_receipt');
     const ref = couponUserFacingRef(pickId, pickTitle);
     const safeRef = this.escapeEmailText(ref);
     const amountLabel = amount > 0 ? `GHS ${amount.toFixed(2)}` : 'Free pick';
@@ -473,7 +490,7 @@ ${this.bodyCell(`
   }
 
   async sendPickApproved(to: string, _pickTitleUnused?: string) {
-    const ctaUrl = `${this.appOrigin()}/marketplace`;
+    const ctaUrl = this.trackedUrl('/marketplace', 'pick_live');
     const inner = `${this.brandHeader('Marketplace', 'Your pick is live', 'It’s listed for buyers. You’ll get settlement mail when results are in.')}
 ${this.bodyCell(`${this.copyP('Share your profile so followers can find the slip.')}${this.ctaButton(ctaUrl, 'Open marketplace')}`)}`;
     return this.send({
@@ -485,7 +502,7 @@ ${this.bodyCell(`${this.copyP('Share your profile so followers can find the slip
   }
 
   async sendPickRejected(to: string, _pickTitleUnused?: string) {
-    const ctaUrl = `${this.appOrigin()}/support`;
+    const ctaUrl = this.trackedUrl('/support', 'pick_rejected');
     const inner = `${this.brandHeader('Marketplace', 'Pick not published', 'This slip did not meet listing rules.')}
 ${this.bodyCell(`${this.copyP('Check your picks, then try again. Support can explain if something looks wrong.')}${this.ctaButton(ctaUrl, 'Contact support')}`)}`;
     return this.send({
@@ -497,7 +514,7 @@ ${this.bodyCell(`${this.copyP('Check your picks, then try again. Support can exp
   }
 
   async sendTipsterApproved(to: string) {
-    const ctaUrl = `${this.appOrigin()}/create-pick`;
+    const ctaUrl = this.trackedUrl('/create-pick', 'tipster_approved');
     const inner = `${this.brandHeader('Tipster', 'You’re approved', 'Create picks and track ROI. Paid listings need the platform minimum ROI.')}
 ${this.bodyCell(`${this.copyP('Start with free slips if you’re still building a record.')}${this.ctaButton(ctaUrl, 'Create a pick')}`)}`;
     return this.send({
@@ -509,7 +526,7 @@ ${this.bodyCell(`${this.copyP('Start with free slips if you’re still building 
   }
 
   async sendTipsterRejected(to: string) {
-    const ctaUrl = `${this.appOrigin()}/support`;
+    const ctaUrl = this.trackedUrl('/support', 'tipster_rejected');
     const inner = `${this.brandHeader('Tipster', 'Selling not enabled', 'We could not turn on tipster selling on this account right now.')}
 ${this.bodyCell(`${this.copyP('Eligibility follows platform rules and ROI. Support can walk you through next steps.')}${this.ctaButton(ctaUrl, 'Contact support')}`)}`;
     return this.send({
@@ -551,7 +568,7 @@ ${this.bodyCell(`${this.copyP('This unlocks wallet, picks, and notifications.')}
 
   async sendSettlement(to: string, pickId: number, won: boolean, pickTitle?: string | null) {
     const ref = couponUserFacingRef(pickId, pickTitle);
-    const ctaUrl = `${this.appOrigin()}/my-purchases`;
+    const ctaUrl = this.trackedUrl('/my-purchases', 'settlement');
     const inner = `${this.brandHeader(
       'Settlement',
       won ? 'This pick won' : 'This pick settled',
@@ -581,10 +598,8 @@ ${this.bodyCell(`${this.copyP(won ? 'Check purchases for the result card. Wallet
     metadata?: Record<string, string>;
   }) {
     const ctaUrl = data.link
-      ? data.link.startsWith('http')
-        ? data.link
-        : `${this.appOrigin()}${data.link}`
-      : this.appOrigin();
+      ? this.trackedUrl(data.link, data.type || 'in_app')
+      : this.trackedUrl('/', 'in_app');
     const subject = getEmailSubject(data.type, data.title, data.metadata);
     const ctaText = getCtaText(data.type);
     const eyebrow = getCategoryEyebrow(data.type);
@@ -652,7 +667,7 @@ ${this.bodyCell(`
       isSubscription?: boolean;
     },
   ) {
-    const ctaUrl = data.link.startsWith('http') ? data.link : `${this.appOrigin()}${data.link}`;
+    const ctaUrl = this.trackedUrl(data.link, 'coupon_alert');
     const tipsterName = this.escapeEmailText(data.tipsterName || 'Tipster');
     const couponHeadline = this.escapeEmailText(couponEmailHeadline(data.accumulatorId, data.couponTitle));
     const priceLabel = Number(data.price) > 0 ? `GHS ${Number(data.price).toFixed(2)}` : 'Free';
@@ -776,7 +791,7 @@ ${this.bodyCell(`
       return { sent: 0 };
     }
 
-    const ctaUrl = link.startsWith('http') ? link : `${this.appOrigin()}${link}`;
+    const ctaUrl = this.trackedUrl(link, 'admin_alert');
     const safeMessage = this.escapeEmailText(message || '').replace(/\n/g, '<br>');
     const safeSubject = this.escapeEmailText(subject);
 

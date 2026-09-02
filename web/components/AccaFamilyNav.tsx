@@ -7,7 +7,7 @@ import type { TranslationKey } from '@/lib/translations/en';
 export type AccaJob = 'buy' | 'build' | 'climb';
 
 const JOBS: { id: AccaJob; href: string; labelKey: TranslationKey; shortKey: TranslationKey }[] = [
-  { id: 'buy', href: '/marketplace?desk=acca_desk', labelKey: 'acca.job_buy', shortKey: 'acca.job_buy_short' },
+  { id: 'buy', href: '/marketplace', labelKey: 'acca.job_buy', shortKey: 'acca.job_buy_short' },
   { id: 'build', href: '/acca-generator', labelKey: 'acca.job_build', shortKey: 'acca.job_build_short' },
   { id: 'climb', href: '/rollover', labelKey: 'acca.job_climb', shortKey: 'acca.job_climb_short' },
 ];

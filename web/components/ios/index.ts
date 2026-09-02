@@ -11,6 +11,6 @@ export type { SegmentOption } from './SegmentedControl';
 export type { BottomSheetProps } from './BottomSheet';
 export { PullToRefresh } from './PullToRefresh';
 export { MarketplaceFilterBar } from './MarketplaceFilterBar';
-export type { MarketplacePriceFilter, MarketplaceSortBy, MarketplaceSourceFilter } from './MarketplaceFilterBar';
+export type { MarketplacePriceFilter, MarketplaceSortBy } from './MarketplaceFilterBar';
 export * from './icons';
 export { hapticLight, hapticSuccess, hapticError } from '@/lib/haptic';

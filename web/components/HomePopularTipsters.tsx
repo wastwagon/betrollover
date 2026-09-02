@@ -42,29 +42,45 @@ function mapLeaderboardToTipsterCard(entry: Record<string, unknown>, index: numb
   };
 }
 
+/** Leaderboard order within each group, zipped so Acca Desk sits beside humans. */
+function mixDeskAndHumans(entries: Record<string, unknown>[], max = 8): Record<string, unknown>[] {
+  const desk: Record<string, unknown>[] = [];
+  const people: Record<string, unknown>[] = [];
+  for (const e of entries) {
+    if (!hasPrimaryLeaderboardSample(e)) continue;
+    if (isAccaDeskTipsterType((e.tipster_type as string | null) ?? null)) desk.push(e);
+    else people.push(e);
+  }
+  const out: Record<string, unknown>[] = [];
+  let i = 0;
+  let j = 0;
+  while (out.length < max && (i < desk.length || j < people.length)) {
+    if (i < desk.length) {
+      out.push(desk[i++]);
+      if (out.length >= max) break;
+    }
+    if (j < people.length) out.push(people[j++]);
+  }
+  return out;
+}
+
 export function HomePopularTipsters({
   initialLeaderboard = [],
 }: {
   initialLeaderboard?: Record<string, unknown>[];
 }) {
   const t = useT();
-  const seeded = initialLeaderboard
-    .filter(hasPrimaryLeaderboardSample)
-    .filter((e) => !isAccaDeskTipsterType((e.tipster_type as string | null) ?? null))
-    .map((e, i) => mapLeaderboardToTipsterCard(e, i));
+  const seeded = mixDeskAndHumans(initialLeaderboard).map((e, i) => mapLeaderboardToTipsterCard(e, i));
   const [tipsters, setTipsters] = useState<TipsterCardData[]>(seeded);
   const [loading, setLoading] = useState(seeded.length === 0);
 
   useEffect(() => {
     const load = (showSpinner: boolean) => {
       if (showSpinner) setLoading(true);
-      fetch(getApiUrl() + '/leaderboard?period=all_time&limit=24', { cache: 'no-store' })
+      fetch(getApiUrl() + '/leaderboard?period=all_time&limit=50', { cache: 'no-store' })
         .then((r) => (r.ok ? r.json() : { leaderboard: [] }))
         .then((data) => {
-          const entries = ((data.leaderboard || []) as Record<string, unknown>[])
-            .filter(hasPrimaryLeaderboardSample)
-            .filter((e) => !isAccaDeskTipsterType((e.tipster_type as string | null) ?? null))
-            .slice(0, 8);
+          const entries = mixDeskAndHumans((data.leaderboard || []) as Record<string, unknown>[]);
           setTipsters(entries.map((e, i) => mapLeaderboardToTipsterCard(e, i)));
         })
         .catch(() => {

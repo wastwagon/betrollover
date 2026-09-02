@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/Button';
 
 export type MarketplacePriceFilter = 'all' | 'free' | 'paid';
 export type MarketplaceDayFilter = 'all' | 'today' | 'tomorrow';
-export type MarketplaceSourceFilter = 'all' | 'acca_desk' | 'community';
 export type MarketplaceSortBy =
   | 'newest'
   | 'price-low'
@@ -20,7 +19,6 @@ export type MarketplaceSortBy =
 export type MarketplaceFilterCounts = {
   day: { all: number; today: number; tomorrow: number };
   price: { all: number; free: number; paid: number };
-  source?: { all: number; acca_desk: number; community: number };
 };
 
 export interface MarketplaceFilterBarProps {
@@ -28,8 +26,6 @@ export interface MarketplaceFilterBarProps {
   onPriceFilterChange: (v: MarketplacePriceFilter) => void;
   dayFilter: MarketplaceDayFilter;
   onDayFilterChange: (v: MarketplaceDayFilter) => void;
-  sourceFilter: MarketplaceSourceFilter;
-  onSourceFilterChange: (v: MarketplaceSourceFilter) => void;
   sortBy: MarketplaceSortBy;
   onSortByChange: (v: MarketplaceSortBy) => void;
   tipsterSearch: string;
@@ -40,9 +36,6 @@ export interface MarketplaceFilterBarProps {
   labels: {
     filterPrice: string;
     filterDay: string;
-    filterSource: string;
-    sourceDesk: string;
-    sourceTipsters: string;
     all: string;
     free: string;
     paid: string;
@@ -71,8 +64,6 @@ export function MarketplaceFilterBar({
   onPriceFilterChange,
   dayFilter,
   onDayFilterChange,
-  sourceFilter,
-  onSourceFilterChange,
   sortBy,
   onSortByChange,
   tipsterSearch,
@@ -97,33 +88,14 @@ export function MarketplaceFilterBar({
 
   const dayCounts = counts?.day;
   const priceCounts = counts?.price;
-  const sourceCounts = counts?.source;
   const sheetHasExtras =
     sortBy !== 'newest' ||
     !!debouncedTipster ||
     dayFilter !== 'all' ||
-    priceFilter !== 'all' ||
-    sourceFilter !== 'all';
+    priceFilter !== 'all';
 
   return (
     <div className="mb-3 min-w-0 max-w-full space-y-2.5">
-      <div className="space-y-1">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)] px-0.5">
-          {labels.filterSource}
-        </p>
-        <SegmentedControl
-          aria-label={labels.filterSource}
-          className="w-full max-w-lg"
-          options={[
-            { value: 'all' as const, label: labels.all, count: sourceCounts?.all },
-            { value: 'community' as const, label: labels.sourceTipsters, count: sourceCounts?.community },
-            { value: 'acca_desk' as const, label: labels.sourceDesk, count: sourceCounts?.acca_desk },
-          ]}
-          value={sourceFilter}
-          onChange={onSourceFilterChange}
-        />
-      </div>
-
       <div className="space-y-1">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)] px-0.5">
           {labels.filterDay}

@@ -8,6 +8,7 @@ const geoip = require('geoip-lite') as { lookup: (ip: string) => { country: stri
 const UAParser = require('ua-parser-js') as new (ua?: string) => { getResult: () => { device?: { type?: string } } };
 import { VisitorSession } from './entities/visitor-session.entity';
 import { AnalyticsEvent } from './entities/analytics-event.entity';
+import { classifyTrafficSource, isBotUserAgent } from './traffic-source';
 
 /** Allowed custom event types - prevents arbitrary strings */
 export const ANALYTICS_EVENT_TYPES = [
@@ -70,6 +71,7 @@ export class AnalyticsTrackingService {
    */
   async trackPageView(data: {
     sessionId: string;
+    deviceId?: string;
     userId?: number;
     page?: string;
     referrer?: string;
@@ -77,12 +79,31 @@ export class AnalyticsTrackingService {
     country?: string;
     deviceType?: string;
     clientIp?: string;
+    utmSource?: string;
+    utmMedium?: string;
+    utmCampaign?: string;
+    src?: string;
   }) {
+    if (isBotUserAgent(data.userAgent)) return { ok: true, skipped: 'bot' };
+
     const country = data.country ?? this.getCountryFromIp(data.clientIp);
     const deviceType = data.deviceType ?? this.parseDeviceType(data.userAgent);
+    const trafficSource = classifyTrafficSource({
+      utmSource: data.utmSource,
+      utmMedium: data.utmMedium,
+      src: data.src,
+      landingReferrer: data.referrer,
+      userAgent: data.userAgent,
+      page: data.page,
+    });
 
     const session = this.visitorRepo.create({
       sessionId: data.sessionId,
+      deviceId: data.deviceId?.slice(0, 64) || null,
+      trafficSource,
+      utmSource: data.utmSource?.slice(0, 64) || null,
+      utmMedium: data.utmMedium?.slice(0, 64) || null,
+      utmCampaign: data.utmCampaign?.slice(0, 128) || null,
       userId: data.userId ?? null,
       page: data.page ?? null,
       referrer: data.referrer ?? null,

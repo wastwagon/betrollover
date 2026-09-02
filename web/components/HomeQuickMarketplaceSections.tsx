@@ -8,7 +8,6 @@ import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-ca
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { useT } from '@/context/LanguageContext';
 import { hasPrimaryLeaderboardSample } from '@/lib/leaderboard-sample';
-import { isAccaDeskCard } from '@/lib/acca-desk-board-badge';
 
 interface Pick {
   id?: number;
@@ -71,26 +70,34 @@ function leaderboardUsernameSet(data: unknown): Set<string> {
   return names;
 }
 
-function isIndependentTipsterCard(a: MarketplaceCardItem): boolean {
-  return !isAccaDeskCard(a.title, a.tipster?.tipsterType ?? a.tipster?.tipster_type);
-}
-
-/** Prefer leaderboard tipsters; fill with newest independent listings. Acca Desk stays on Market. */
+/**
+ * One latest pick per tipster (humans and Acca Desk together).
+ * Prefer leaderboard names, then fill with newest listings so the shelf stays busy.
+ */
 function pickEliteShowcase(all: MarketplaceCardItem[], eliteNames: Set<string>, max = 6): MarketplaceCardItem[] {
-  const people = all.filter(isIndependentTipsterCard);
-  const seen = new Set<number>();
+  const newestFirst = [...all].sort(
+    (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime(),
+  );
+  const seenTipster = new Set<string>();
+  const unique: MarketplaceCardItem[] = [];
+  for (const a of newestFirst) {
+    const key = a.tipster?.username?.trim().toLowerCase() || `pick:${a.id}`;
+    if (seenTipster.has(key)) continue;
+    seenTipster.add(key);
+    unique.push(a);
+  }
   const out: MarketplaceCardItem[] = [];
-  for (const a of people) {
+  const used = new Set<number>();
+  for (const a of unique) {
     const u = a.tipster?.username?.trim().toLowerCase();
-    if (u && eliteNames.has(u) && !seen.has(a.id)) {
-      seen.add(a.id);
+    if (u && eliteNames.has(u)) {
       out.push(a);
+      used.add(a.id);
       if (out.length >= max) return out;
     }
   }
-  for (const a of people) {
-    if (!seen.has(a.id)) {
-      seen.add(a.id);
+  for (const a of unique) {
+    if (!used.has(a.id)) {
       out.push(a);
       if (out.length >= max) return out;
     }
@@ -130,7 +137,7 @@ export function HomeQuickMarketplaceSections({
         const token = localStorage.getItem('token');
         const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
         const [lbRes, allRes] = await Promise.all([
-          fetch(`${api}/leaderboard?period=all_time&limit=24`),
+          fetch(`${api}/leaderboard?period=all_time&limit=50`),
           fetch(`${api}/accumulators/marketplace/public?limit=48`, { headers }),
         ]);
         const lbJson = lbRes.ok ? await lbRes.json() : {};

@@ -1733,14 +1733,14 @@ const fr: Record<string, string> = {
   'resp.tip_5': 'La prédiction sportive est un divertissement, pas une source de revenus',
 
   // ── SEO metadata (titles & descriptions for layout files) ────────────────
-  'seo.marketplace_title': 'Pronostics Football | Picks Protégés par Escrow',
+  'seo.marketplace_title': 'Marché des pronostics football',
   'seo.marketplace_desc': 'Achetez des pronostics football gratuits et premium de tipsters vérifiés. Picks protégés par escrow — remboursés en cas de perte. Taux de victoire & ROI transparents. Basée au Ghana, forte en Afrique et mondiale.',
-  'seo.marketplace_title_multisport': 'Marché multi-sports | Pronostics gratuits et premium',
+  'seo.marketplace_title_multisport': 'Marché multi-sports',
   'seo.marketplace_desc_multisport':
     'Parcourez des pronostics de tipsters vérifiés sur tous les sports majeurs — football, basketball, tennis, MMA, rugby et plus. Comparez taux de victoire et ROI. Pronostics gratuits et premium ; remboursés en cas de perte.',
-  'seo.tipsters_title': 'Annuaire des tipsters football | Chercher des analystes vérifiés',
+  'seo.tipsters_title': 'Annuaire des tipsters football',
   'seo.tipsters_desc': 'Parcourez et suivez des tipsters football vérifiés. Filtrez par ROI, taux de réussite et sport. Pronostics sous escrow — basé au Ghana, audience mondiale.',
-  'seo.leaderboard_title': 'Classement de forme des tipsters | Actifs uniquement',
+  'seo.leaderboard_title': 'Classement de forme des tipsters',
   'seo.leaderboard_desc': 'Tipsters football actifs classés par points de forme récente, puis ROI. Les comptes inactifs n’apparaissent pas. Distinct de l’annuaire.',
   'leaderboard.empty_logged_sub':
     'Aucun tipster ne correspond à ce filtre pour le moment. Essayez une autre période ou un autre sport, ou parcourez tous les profils.',
@@ -1757,11 +1757,11 @@ const fr: Record<string, string> = {
     'Cette semaine : seuls les tipsters avec au moins un pronostic arbitré publié dans la semaine civile en cours apparaissent. Ceux avec au moins {n} pronostics arbitrés publiés cette semaine-là sont classés en premier par ROI, puis profit, puis taux de réussite ; les autres sur la semaine suivent en dessous, par ROI.',
   'seo.discover_title': 'Hub Actualités et Guides Football',
   'seo.discover_desc': 'Un hub pour l’actualité des matchs et les guides éducatifs. Pour les transferts et blessures du jour, voir Actualités ; pour l’escrow et l’évaluation des tipsters, voir Guides.',
-  'seo.news_title': 'Actualités Matchs Football | Transferts, Blessures & Aperçus',
+  'seo.news_title': 'Actualités matchs football',
   'seo.news_desc': 'Dernières actualités football : transferts, blessures, aperçus et analyses des ligues mondiales — pour les fans en Afrique et dans le monde.',
   'seo.resources_title': 'Bibliothèque de ressources tipsters',
   'seo.resources_desc': 'Articles de fond sur le bankroll, le ROI et les bases du marketplace. Distinct de l’actualité quotidienne et des guides escrow.',
-  'seo.picks_archive_title': 'Archive des Pronostics Football | Résultats passés',
+  'seo.picks_archive_title': 'Archive des pronostics football',
   'seo.picks_archive_desc': 'Parcourez les pronostics football réglés et les résultats sous escrow. Consultez taux de victoire, ROI et issues des tipsters vérifiés.',
 
   // ── Archive pronostics (client ; route /coupons/archive) ─────────────────
@@ -1803,11 +1803,11 @@ const fr: Record<string, string> = {
   'marketplace.featured_section_title': 'Pronostics du marché',
   'marketplace.featured_section_subtitle': 'Parcourez les sélections de tipsters vérifiés',
 
-  'seo.register_title': 'Inscription | Pronostics Football & Picks Escrow',
+  'seo.register_title': 'Inscription',
   'seo.register_desc':
     'Rejoignez BetRollover — pronostics football, picks protégés par escrow et portefeuille multi-devises. Basée au Ghana pour l\'Afrique et un public mondial.',
   'seo.register_og_alt': 'BetRollover — pronostics football & picks protégés par escrow',
-  'seo.login_title': 'Connexion | Pronostics Football',
+  'seo.login_title': 'Connexion',
   'seo.login_desc':
     'Connectez-vous pour parcourir les pronostics football, acheter des picks protégés par escrow, gérer votre portefeuille et suivre les tipsters vérifiés.',
 

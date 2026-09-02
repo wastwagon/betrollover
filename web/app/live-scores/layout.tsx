@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { getLocale } from '@/lib/i18n';
 
-const TITLE = 'Live Football Scores | Match Centre';
+const TITLE = 'Live Football Scores';
 const DESCRIPTION =
   'Follow live football scores, kickoff times, and match status. Jump from headline fixtures to marketplace picks on BetRollover.';
 

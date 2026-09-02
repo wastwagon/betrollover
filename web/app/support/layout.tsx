@@ -13,6 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description:
         'Raise a support ticket or dispute. Support replies are typically within 24 hours (Mon–Fri); wallet and payment disputes within 48 hours.',
     },
+    robots: { index: false, follow: true },
   };
 }
 

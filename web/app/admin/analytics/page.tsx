@@ -21,6 +21,7 @@ interface TimeSeriesData {
 
 interface ConversionFunnel {
   visitors: number;
+  visitorSessions?: number;
   registered: number;
   contentCreators: number;
   marketplaceSellers: number;
@@ -207,12 +208,16 @@ export default function AdminAnalyticsPage() {
   const [retention, setRetention] = useState<{ activeLast7d: number; activeLast14d: number; returningUsers: number; retentionRate: number } | null>(null);
   const [visitorStats, setVisitorStats] = useState<{
     uniqueSessions: number;
+    uniqueDevices?: number;
     pageViews: number;
     topPages: { page: string; views: number }[];
-    dailyVisitors?: { date: string; uniqueSessions: number; pageViews: number }[];
+    dailyVisitors?: { date: string; uniqueSessions: number; uniqueDevices?: number; pageViews: number }[];
     todayVisitors?: number;
+    todaySessions?: number;
+    todayDevices?: number;
     todayPageViews?: number;
     totalVisitors?: number;
+    totalDevices?: number;
     activeSessionsNow?: number;
     trafficSources?: { source: string; count: number; percent: number }[];
     deviceBreakdown?: { device: string; count: number }[];
@@ -315,6 +320,23 @@ export default function AdminAnalyticsPage() {
     'overview' | 'revenue' | 'users' | 'picks' | 'engagement' | 'visitors' | 'ai' | 'sports' | 'wallet' | 'acca'
   >('overview');
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d'>('30d');
+
+  const sourceLabel = (source: string) =>
+    ({
+      telegram: 'Telegram',
+      android_app: 'Android app',
+      ios_app: 'iOS app',
+      email: 'Email',
+      organic: 'Organic',
+      social: 'Social',
+      referral: 'Referral',
+      direct: 'Direct',
+    }[source] || source);
+
+  const piePercent = (raw: number | undefined) => {
+    const n = raw ?? 0;
+    return n <= 1 ? n * 100 : n;
+  };
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -510,16 +532,17 @@ export default function AdminAnalyticsPage() {
 
         {/* Visitor & Traffic KPI Cards - Self-hosted analytics */}
         {visitorStats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+          <div className="mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-5">
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Today&apos;s Visitors</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{visitorStats.todayVisitors ?? 0}</p>
-              <p className="text-xs text-gray-500 mt-1">Unique sessions today</p>
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Today&apos;s devices</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{visitorStats.todayDevices ?? visitorStats.todayVisitors ?? 0}</p>
+              <p className="text-xs text-gray-500 mt-1">Unique browsers (localStorage). Telegram in-app may still split.</p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-5">
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Total Visitors</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{visitorStats.totalVisitors ?? visitorStats.uniqueSessions ?? 0}</p>
-              <p className="text-xs text-gray-500 mt-1">All-time unique sessions</p>
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Today&apos;s sessions</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{visitorStats.todaySessions ?? visitorStats.todayVisitors ?? 0}</p>
+              <p className="text-xs text-gray-500 mt-1">30-minute windows, not people</p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-5">
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Active Now</p>
@@ -532,15 +555,31 @@ export default function AdminAnalyticsPage() {
               <p className="text-xs text-gray-500 mt-1">Total views today</p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-5">
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Period Sessions</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{visitorStats.uniqueSessions}</p>
-              <p className="text-xs text-gray-500 mt-1">Last {dateRange} unique</p>
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Period devices</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{visitorStats.uniqueDevices ?? visitorStats.uniqueSessions}</p>
+              <p className="text-xs text-gray-500 mt-1">Last {dateRange} unique browsers</p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-5">
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Period Page Views</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{visitorStats.pageViews}</p>
-              <p className="text-xs text-gray-500 mt-1">Last {dateRange} total</p>
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Period sessions</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{visitorStats.uniqueSessions}</p>
+              <p className="text-xs text-gray-500 mt-1">Last {dateRange} 30-min sessions</p>
             </div>
+            </div>
+            {realTime && (visitorStats.todayDevices ?? visitorStats.todayVisitors) ? (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                Signup vs today&apos;s devices:{' '}
+                <span className="font-semibold text-gray-800 dark:text-gray-200">
+                  {realTime.users.last24h} / {visitorStats.todayDevices ?? visitorStats.todayVisitors} ={' '}
+                  {(
+                    (realTime.users.last24h / Math.max(1, visitorStats.todayDevices ?? visitorStats.todayVisitors ?? 1)) *
+                    100
+                  ).toFixed(2)}
+                  %
+                </span>
+                {' '}
+                (members are rolling 24h; devices are calendar UTC today). Historic rows without a device ID still count as one device per session.
+              </p>
+            ) : null}
           </div>
         )}
 
@@ -698,14 +737,28 @@ export default function AdminAnalyticsPage() {
 
             {/* Visitor Traffic Chart - from self-hosted tracking */}
             {visitorStats?.dailyVisitors && visitorStats.dailyVisitors.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Daily Visitors</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Unique sessions per day (from page tracking beacon)</p>
-                <SimpleChart
-                  data={visitorStats.dailyVisitors.map((d) => ({ date: d.date, value: d.uniqueSessions }))}
-                  color="blue"
-                  valueLabel="Sessions"
-                />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Daily unique devices</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Unique browsers per day. Rows without a device ID fall back to session.</p>
+                  <SimpleChart
+                    data={visitorStats.dailyVisitors.map((d) => ({
+                      date: d.date,
+                      value: d.uniqueDevices ?? d.uniqueSessions,
+                    }))}
+                    color="green"
+                    valueLabel="Devices"
+                  />
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Daily sessions</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">30-minute sessions per day (from page tracking beacon)</p>
+                  <SimpleChart
+                    data={visitorStats.dailyVisitors.map((d) => ({ date: d.date, value: d.uniqueSessions }))}
+                    color="blue"
+                    valueLabel="Sessions"
+                  />
+                </div>
               </div>
             )}
 
@@ -713,11 +766,13 @@ export default function AdminAnalyticsPage() {
             {visitorStats?.trafficSources && visitorStats.trafficSources.length > 0 && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Traffic Sources</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Where visitors come from (last {dateRange})</p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  First-touch per session (last {dateRange}). Telegram, Android/iOS app, and email are tagged from UTMs, <code className="text-xs">src=</code>, or user-agent — not from the beacon&apos;s HTTP Referer.
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
                   {visitorStats.trafficSources.map((s) => (
                     <div key={s.source} className="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600">
-                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{s.source}</p>
+                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{sourceLabel(s.source)}</p>
                       <p className="text-2xl font-bold text-gray-900 dark:text-white">{s.count}</p>
                       <p className="text-sm text-gray-600 dark:text-gray-300">{s.percent}%</p>
                     </div>
@@ -733,17 +788,19 @@ export default function AdminAnalyticsPage() {
                         cx="50%"
                         cy="50%"
                         outerRadius={70}
-                        label={(entry: { source?: string; percent?: number }) => `${entry?.source ?? 'Unknown'} ${((entry?.percent ?? 0) * 100).toFixed(0)}%`}
+                        label={(entry: { source?: string; percent?: number }) =>
+                          `${sourceLabel(entry?.source ?? '')} ${piePercent(entry?.percent).toFixed(0)}%`
+                        }
                       >
                         {visitorStats.trafficSources.filter((s) => s.count > 0).map((_, i) => (
-                          <Cell key={i} fill={['#3b82f6', '#10b981', '#8b5cf6', '#f97316'][i % 4]} />
+                          <Cell key={i} fill={['#3b82f6', '#10b981', '#8b5cf6', '#f97316', '#06b6d4', '#e11d48', '#64748b', '#a3a3a3'][i % 8]} />
                         ))}
                       </Pie>
                       <Tooltip formatter={(v, _n, props) => {
   const p = props as { payload?: { percent?: number; source?: string } };
   const val = typeof v === 'number' ? v : 0;
-  const pct = (p?.payload?.percent ?? 0) < 1 ? (p?.payload?.percent ?? 0) * 100 : (p?.payload?.percent ?? 0);
-  return [`${val} (${pct.toFixed(1)}%)`, p?.payload?.source ?? ''];
+  const pct = piePercent(p?.payload?.percent);
+  return [`${val} (${pct.toFixed(1)}%)`, sourceLabel(p?.payload?.source ?? '')];
 }} />
                     </PieChart>
                   </ResponsiveContainer>
@@ -755,10 +812,13 @@ export default function AdminAnalyticsPage() {
             {funnel && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Conversion Funnel</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Unique users at each stage. % = conversion from previous step.</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                  Unique devices at the top (session ID if no device ID yet). Seller and buyer counts are parallel, not a nested pipe.
+                  {funnel.visitorSessions != null ? ` All-time sessions: ${funnel.visitorSessions}.` : ''}
+                </p>
                 <div className="space-y-4">
                   {[
-                    { label: 'Visitors / Users', value: funnel.visitors, rate: 100 },
+                    { label: 'Unique devices', value: funnel.visitors, rate: 100 },
                     { label: 'Registered', value: funnel.registered, rate: funnel.conversionRates?.registration ?? 0 },
                     { label: 'Content Creators', value: funnel.contentCreators, rate: funnel.conversionRates?.contentCreator ?? 0 },
                     { label: 'Marketplace Sellers', value: funnel.marketplaceSellers, rate: funnel.conversionRates?.seller ?? 0 },
@@ -1172,23 +1232,26 @@ export default function AdminAnalyticsPage() {
         {activeTab === 'visitors' && (
           <div className="space-y-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Visitor & Traffic Analytics</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Self-hosted analytics from the page tracking beacon. No third-party scripts.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Devices = unique browsers (localStorage). Sessions = 30-minute visits. Tag Telegram channel links with{' '}
+              <code className="text-xs">?utm_source=telegram</code>. The Android app sends <code className="text-xs">src=android_app</code>.
+            </p>
 
             {visitorStats && (
               <>
                 {/* Visitor KPI summary */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Today&apos;s Visitors</p>
-                    <p className="text-xl font-bold text-gray-900 dark:text-white">{visitorStats.todayVisitors ?? 0}</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Today&apos;s devices</p>
+                    <p className="text-xl font-bold text-gray-900 dark:text-white">{visitorStats.todayDevices ?? visitorStats.todayVisitors ?? 0}</p>
                   </div>
                   <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Visitors</p>
-                    <p className="text-xl font-bold text-gray-900 dark:text-white">{visitorStats.totalVisitors ?? visitorStats.uniqueSessions ?? 0}</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Today&apos;s sessions</p>
+                    <p className="text-xl font-bold text-gray-900 dark:text-white">{visitorStats.todaySessions ?? visitorStats.todayVisitors ?? 0}</p>
                   </div>
                   <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Active Now</p>
-                    <p className="text-xl font-bold text-emerald-600">{visitorStats.activeSessionsNow ?? 0}</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">All-time devices</p>
+                    <p className="text-xl font-bold text-gray-900 dark:text-white">{visitorStats.totalDevices ?? visitorStats.totalVisitors ?? visitorStats.uniqueSessions ?? 0}</p>
                   </div>
                   <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
                     <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Page Views (period)</p>
@@ -1200,11 +1263,11 @@ export default function AdminAnalyticsPage() {
                 {visitorStats.trafficSources && visitorStats.trafficSources.length > 0 && (
                   <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Traffic Sources (Last {dateRange})</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Where visitors come from: direct, organic search, social, referral</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">First-touch per session: Telegram, Android/iOS app, email, organic, social, referral, direct</p>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                       {visitorStats.trafficSources.map((s) => (
                         <div key={s.source} className="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50">
-                          <p className="text-xs font-semibold text-gray-500 uppercase">{s.source}</p>
+                          <p className="text-xs font-semibold text-gray-500 uppercase">{sourceLabel(s.source)}</p>
                           <p className="text-2xl font-bold">{s.count}</p>
                           <p className="text-sm text-gray-600">{s.percent}%</p>
                         </div>
@@ -1222,7 +1285,7 @@ export default function AdminAnalyticsPage() {
                       <div className="space-y-2">
                         {visitorStats.conversionBySource.map((s) => (
                           <div key={s.source} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-                            <span className="font-medium capitalize min-w-0">{s.source}</span>
+                            <span className="font-medium min-w-0">{sourceLabel(s.source)}</span>
                             <span className="shrink-0 text-sm sm:text-base">{s.sessions} ({s.percent}%)</span>
                           </div>
                         ))}
@@ -1304,11 +1367,15 @@ export default function AdminAnalyticsPage() {
                 {/* Daily visitor chart */}
                 {visitorStats.dailyVisitors && visitorStats.dailyVisitors.length > 0 && (
                   <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Daily Visitors Trend</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Daily unique devices</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Unique browsers per day. Rows without a device ID fall back to session.</p>
                     <SimpleChart
-                      data={visitorStats.dailyVisitors.map((d) => ({ date: d.date, value: d.uniqueSessions }))}
-                      color="blue"
-                      valueLabel="Sessions"
+                      data={visitorStats.dailyVisitors.map((d) => ({
+                        date: d.date,
+                        value: d.uniqueDevices ?? d.uniqueSessions,
+                      }))}
+                      color="green"
+                      valueLabel="Devices"
                     />
                   </div>
                 )}

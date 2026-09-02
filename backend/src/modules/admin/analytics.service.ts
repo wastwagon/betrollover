@@ -15,6 +15,9 @@ import { Tipster } from '../predictions/entities/tipster.entity';
 import { Prediction } from '../predictions/entities/prediction.entity';
 import { AnalyticsDaily } from './entities/analytics-daily.entity';
 import { AccaGeneratorRun } from '../acca-generator/entities/acca-generator-run.entity';
+import { classifyTrafficSource, TRAFFIC_SOURCES, type TrafficSource } from './traffic-source';
+
+const UNIQUE_DEVICE_SQL = `COALESCE(NULLIF(device_id, ''), session_id)`;
 
 @Injectable()
 export class AnalyticsService {
@@ -174,6 +177,7 @@ export class AnalyticsService {
       totalListings,
       totalPurchases,
       uniqueVisitorsFromTracking,
+      uniqueSessionsFromTracking,
     ] = await Promise.all([
       this.usersRepo.count(),
       this.usersRepo.count({ where: [{ role: UserRole.USER }, { role: UserRole.TIPSTER }] }),
@@ -196,6 +200,11 @@ export class AnalyticsService {
       this.ticketsRepo.count(),
       this.marketplaceRepo.count({ where: { status: 'active' } }),
       this.purchasesRepo.count(),
+      this.visitorRepo.manager
+        .query(
+          `SELECT COUNT(DISTINCT ${UNIQUE_DEVICE_SQL})::int as count FROM visitor_sessions`,
+        )
+        .then((r: { count: number }[]) => parseInt(String(r?.[0]?.count ?? 0), 10)),
       this.visitorRepo
         .createQueryBuilder('v')
         .select('COUNT(DISTINCT v.sessionId)', 'count')
@@ -216,6 +225,7 @@ export class AnalyticsService {
 
     return {
       visitors,
+      visitorSessions: uniqueSessionsFromTracking,
       registered,
       contentCreators: creators,
       marketplaceSellers: sellers,
@@ -729,19 +739,24 @@ export class AnalyticsService {
     };
   }
 
-  /** Classify referrer into traffic source */
-  private classifyTrafficSource(referrer: string | null): string {
-    if (!referrer || referrer.trim() === '') return 'direct';
-    const r = referrer.toLowerCase();
-    // Internal / same-site
-    if (r.includes('betrollover') || r.includes('localhost') || r.startsWith('/')) return 'direct';
-    // Organic search
-    const searchEngines = ['google', 'bing', 'yahoo', 'duckduckgo', 'baidu', 'yandex', 'ecosia'];
-    if (searchEngines.some((e) => r.includes(e))) return 'organic';
-    // Social
-    const social = ['facebook', 'twitter', 'x.com', 'instagram', 'linkedin', 'telegram', 'tiktok', 'youtube', 'pinterest', 'whatsapp', 'reddit'];
-    if (social.some((s) => r.includes(s))) return 'social';
-    return 'referral';
+  /** Classify referrer into traffic source. Prefer stored ingest class, then UTMs/UA/document.referrer. */
+  private resolveTrafficSource(row: {
+    traffic_source?: string | null;
+    utm_source?: string | null;
+    utm_medium?: string | null;
+    referrer?: string | null;
+    user_agent?: string | null;
+    page?: string | null;
+  }): TrafficSource {
+    const stored = (row.traffic_source || '').trim().toLowerCase();
+    if ((TRAFFIC_SOURCES as readonly string[]).includes(stored)) return stored as TrafficSource;
+    return classifyTrafficSource({
+      utmSource: row.utm_source,
+      utmMedium: row.utm_medium,
+      landingReferrer: row.referrer,
+      userAgent: row.user_agent,
+      page: row.page,
+    });
   }
 
   /**
@@ -753,26 +768,38 @@ export class AnalyticsService {
     const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
     const todayStart = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z');
 
+    const countPair = (since: Date | null) =>
+      this.visitorRepo.manager
+        .query(
+          since
+            ? `SELECT COUNT(DISTINCT session_id)::int as sessions,
+                      COUNT(DISTINCT ${UNIQUE_DEVICE_SQL})::int as devices
+               FROM visitor_sessions WHERE created_at >= $1`
+            : `SELECT COUNT(DISTINCT session_id)::int as sessions,
+                      COUNT(DISTINCT ${UNIQUE_DEVICE_SQL})::int as devices
+               FROM visitor_sessions`,
+          since ? [since] : [],
+        )
+        .then((r: { sessions: number; devices: number }[]) => ({
+          sessions: Number(r?.[0]?.sessions) || 0,
+          devices: Number(r?.[0]?.devices) || 0,
+        }));
+
     const [
-      uniqueSessions,
+      periodCounts,
       pageViews,
       byPage,
-      totalVisitorsAllTime,
-      todaySessions,
+      allTimeCounts,
+      todayCounts,
       todayPageViews,
       activeSessionsNow,
       dailyBreakdown,
-      referrerRows,
+      sourceRows,
       deviceBreakdown,
       byCountry,
       avgSessionDurationSec,
     ] = await Promise.all([
-      this.visitorRepo
-        .createQueryBuilder('v')
-        .select('COUNT(DISTINCT v.sessionId)', 'count')
-        .where('v.createdAt >= :start', { start })
-        .getRawOne()
-        .then((r) => parseInt(r?.count || '0', 10)),
+      countPair(start),
       this.visitorRepo.count({ where: { createdAt: MoreThanOrEqual(start) } }),
       this.visitorRepo
         .createQueryBuilder('v')
@@ -784,17 +811,8 @@ export class AnalyticsService {
         .orderBy('COUNT(*)', 'DESC')
         .limit(25)
         .getRawMany(),
-      this.visitorRepo
-        .createQueryBuilder('v')
-        .select('COUNT(DISTINCT v.sessionId)', 'count')
-        .getRawOne()
-        .then((r) => parseInt(r?.count || '0', 10)),
-      this.visitorRepo
-        .createQueryBuilder('v')
-        .select('COUNT(DISTINCT v.sessionId)', 'count')
-        .where('v.createdAt >= :todayStart', { todayStart })
-        .getRawOne()
-        .then((r) => parseInt(r?.count || '0', 10)),
+      countPair(null),
+      countPair(todayStart),
       this.visitorRepo.count({ where: { createdAt: MoreThanOrEqual(todayStart) } }),
       this.visitorRepo
         .createQueryBuilder('v')
@@ -805,22 +823,32 @@ export class AnalyticsService {
       this.visitorRepo.manager.query(
         `SELECT DATE(created_at) as date,
                 COUNT(DISTINCT session_id)::int as "uniqueSessions",
+                COUNT(DISTINCT ${UNIQUE_DEVICE_SQL})::int as "uniqueDevices",
                 COUNT(*)::int as "pageViews"
          FROM visitor_sessions
          WHERE created_at >= $1
          GROUP BY DATE(created_at)
          ORDER BY date ASC`,
         [start],
-      ) as Promise<{ date: string; uniqueSessions: number; pageViews: number }[]>,
+      ) as Promise<{ date: string; uniqueSessions: number; uniqueDevices: number; pageViews: number }[]>,
       this.visitorRepo.manager.query(
-        `SELECT referrer FROM (
-           SELECT DISTINCT ON (session_id) session_id, referrer
+        `SELECT traffic_source, utm_source, utm_medium, referrer, user_agent, page FROM (
+           SELECT DISTINCT ON (session_id) session_id, traffic_source, utm_source, utm_medium, referrer, user_agent, page
            FROM visitor_sessions
            WHERE created_at >= $1
            ORDER BY session_id, created_at ASC
          ) sub`,
         [start],
-      ) as Promise<{ referrer: string | null }[]>,
+      ) as Promise<
+        {
+          traffic_source: string | null;
+          utm_source: string | null;
+          utm_medium: string | null;
+          referrer: string | null;
+          user_agent: string | null;
+          page: string | null;
+        }[]
+      >,
       this.visitorRepo.manager.query(
         `SELECT COALESCE(device_type, 'unknown') as device, COUNT(DISTINCT session_id)::int as count
          FROM visitor_sessions WHERE created_at >= $1 GROUP BY COALESCE(device_type, 'unknown')`,
@@ -842,13 +870,15 @@ export class AnalyticsService {
         .then((r: { avg_sec: number }[]) => r?.[0]?.avg_sec ?? 0),
     ]);
 
-    const sourceCounts: Record<string, number> = { direct: 0, organic: 0, social: 0, referral: 0 };
-    for (const row of referrerRows || []) {
-      const src = this.classifyTrafficSource(row?.referrer ?? null);
+    const uniqueSessions = periodCounts.sessions;
+    const uniqueDevices = periodCounts.devices;
+    const sourceCounts: Record<string, number> = Object.fromEntries(TRAFFIC_SOURCES.map((s) => [s, 0]));
+    for (const row of sourceRows || []) {
+      const src = this.resolveTrafficSource(row);
       sourceCounts[src] = (sourceCounts[src] || 0) + 1;
     }
     const totalForSources = Object.values(sourceCounts).reduce((a, b) => a + b, 0);
-    const trafficSources = (['direct', 'organic', 'social', 'referral'] as const).map((source) => ({
+    const trafficSources = TRAFFIC_SOURCES.map((source) => ({
       source,
       count: sourceCounts[source] || 0,
       percent: totalForSources > 0 ? Math.round(((sourceCounts[source] || 0) / totalForSources) * 1000) / 10 : 0,
@@ -856,16 +886,22 @@ export class AnalyticsService {
 
     return {
       uniqueSessions,
+      uniqueDevices,
       pageViews,
       topPages: (byPage || []).map((r: any) => ({ page: r.page || '/', views: parseInt(r.views, 10) })),
       dailyVisitors: (dailyBreakdown || []).map((r: any) => ({
         date: typeof r.date === 'string' ? r.date : r.date?.toISOString?.()?.slice(0, 10) ?? '',
         uniqueSessions: typeof r.uniqueSessions === 'number' ? r.uniqueSessions : parseInt(String(r?.uniqueSessions ?? 0), 10),
+        uniqueDevices:
+          typeof r.uniqueDevices === 'number' ? r.uniqueDevices : parseInt(String(r?.uniqueDevices ?? 0), 10),
         pageViews: typeof r.pageViews === 'number' ? r.pageViews : parseInt(String(r?.pageViews ?? 0), 10),
       })),
-      todayVisitors: todaySessions,
+      todayVisitors: todayCounts.sessions,
+      todaySessions: todayCounts.sessions,
+      todayDevices: todayCounts.devices,
       todayPageViews,
-      totalVisitors: totalVisitorsAllTime,
+      totalVisitors: allTimeCounts.sessions,
+      totalDevices: allTimeCounts.devices,
       activeSessionsNow,
       trafficSources,
       deviceBreakdown: (deviceBreakdown || []).map((r: any) => ({ device: r.device, count: Number(r.count) || 0 })),
@@ -878,21 +914,28 @@ export class AnalyticsService {
   /** Sessions with logged-in user, by traffic source (engagement attribution) */
   private async getConversionBySource(start: Date): Promise<{ source: string; sessions: number; percent: number }[]> {
     const rows = (await this.visitorRepo.manager.query(
-      `SELECT referrer FROM (
-         SELECT DISTINCT ON (session_id) session_id, referrer, user_id
+      `SELECT traffic_source, utm_source, utm_medium, referrer, user_agent, page FROM (
+         SELECT DISTINCT ON (session_id) session_id, traffic_source, utm_source, utm_medium, referrer, user_agent, page, user_id
          FROM visitor_sessions
          WHERE created_at >= $1 AND user_id IS NOT NULL
          ORDER BY session_id, created_at ASC
        ) sub`,
       [start],
-    )) as { referrer: string | null }[];
-    const counts: Record<string, number> = { direct: 0, organic: 0, social: 0, referral: 0 };
+    )) as {
+      traffic_source: string | null;
+      utm_source: string | null;
+      utm_medium: string | null;
+      referrer: string | null;
+      user_agent: string | null;
+      page: string | null;
+    }[];
+    const counts: Record<string, number> = Object.fromEntries(TRAFFIC_SOURCES.map((s) => [s, 0]));
     for (const r of rows) {
-      const src = this.classifyTrafficSource(r?.referrer ?? null);
+      const src = this.resolveTrafficSource(r);
       counts[src] = (counts[src] || 0) + 1;
     }
     const total = rows.length;
-    return (['direct', 'organic', 'social', 'referral'] as const).map((source) => ({
+    return TRAFFIC_SOURCES.map((source) => ({
       source,
       sessions: counts[source] || 0,
       percent: total > 0 ? Math.round(((counts[source] || 0) / total) * 1000) / 10 : 0,

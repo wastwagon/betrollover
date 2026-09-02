@@ -5,6 +5,8 @@ const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL |
 /**
  * Proxy analytics track to the backend. If the backend returns 404 (e.g. old
  * API image without the route), respond with 200 so the console stays clean.
+ * Do not forward the page's HTTP Referer — that is always this origin and
+ * would classify every hit as Direct. The beacon body sends document.referrer.
  */
 function getClientIp(request: NextRequest): string | null {
   const forwarded = request.headers.get('x-forwarded-for');
@@ -15,14 +17,11 @@ function getClientIp(request: NextRequest): string | null {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
-    const referer = request.headers.get('referer') || request.headers.get('referrer');
     const clientIp = getClientIp(request);
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (referer) headers['Referer'] = referer;
     const payload = { ...body, ...(clientIp && { clientIp }) };
     const res = await fetch(`${BACKEND_URL}/api/v1/analytics/track`, {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
     if (!res.ok && res.status !== 404) {

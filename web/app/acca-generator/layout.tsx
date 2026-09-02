@@ -3,7 +3,7 @@ import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
 import { getLocale } from '@/lib/i18n';
 
-const TITLE = 'Football Acca Generator | Same-Day Accumulator Builder';
+const TITLE = 'Football Acca Generator';
 const DESCRIPTION =
   'Build same-day football accumulators from synced odds. Choose Sure, Safe, Medium, or High risk bands, pick available markets, generate a slip, and publish a free marketplace pick. Educational tool — 18+.';
 

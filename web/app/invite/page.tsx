@@ -12,6 +12,7 @@ import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { Button, buttonClassName } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { OUTCOME_TEXT } from '@/lib/result-chip';
+import { withUtm } from '@/lib/utm';
 
 interface Conversion {
   id: number;
@@ -64,12 +65,21 @@ export default function InvitePage() {
   useEffect(() => { load(); }, [load]);
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const shareUrl  = stats ? `${origin}/register?ref=${stats.code}` : '';
+  const registerBase = stats ? `${origin}/register?ref=${stats.code}` : '';
+  const shareUrl = registerBase
+    ? withUtm(registerBase, { source: 'invite', medium: 'share', campaign: 'referral' })
+    : '';
+  const telegramShareUrl = registerBase
+    ? withUtm(registerBase, { source: 'telegram', medium: 'social', campaign: 'invite' })
+    : '';
+  const whatsappShareUrl = registerBase
+    ? withUtm(registerBase, { source: 'whatsapp', medium: 'social', campaign: 'invite' })
+    : '';
   const shareText = stats
     ? `Join me on BetRollover — the AI-powered tipster marketplace! Sign up with Google or Apple using this link (your referral is tracked automatically): ${shareUrl}`
     : '';
-  const whatsappHref = shareText ? `https://wa.me/?text=${encodeURIComponent(shareText)}` : '';
-  const telegramHref = shareText ? `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}` : '';
+  const whatsappHref = whatsappShareUrl ? `https://wa.me/?text=${encodeURIComponent(`Join me on BetRollover — ${whatsappShareUrl}`)}` : '';
+  const telegramHref = telegramShareUrl ? `https://t.me/share/url?url=${encodeURIComponent(telegramShareUrl)}&text=${encodeURIComponent(shareText)}` : '';
 
   return (
     <DashboardShell>

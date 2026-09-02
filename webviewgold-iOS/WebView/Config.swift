@@ -23,6 +23,17 @@ var app_admin_email = ""
 var host = "betrollover.com" //Set your domain host without http:// or https:// prefixes and without any subdomain like "www."
 var webviewurl = "https://betrollover.com" //Set your full web app/website URL including http:// or https:// prefix and including subdomains if they are in your URL, like "www.", for example
 
+func withIosAppSource(_ url: String) -> String {
+    if url.isEmpty || url.hasPrefix("javascript:") { return url }
+    if url.contains("src=ios_app") || url.contains("src=android_app") { return url }
+    return url + (url.contains("?") ? "&" : "?") + "src=ios_app"
+}
+
+func userAgentWithIosAppTag(_ current: String) -> String {
+    if current.contains("BetRolloveriOS") || current.contains("BetRolloverApp") { return current }
+    return (current + " BetRolloveriOS").trimmingCharacters(in: .whitespaces)
+}
+
 // 5. You are all done! Enjoy your app! :-)
 
 /************************************************************************************************************************/

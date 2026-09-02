@@ -35,8 +35,6 @@ const LOCALISED_PAGES: Array<{
   { path: '/how-it-works',           changeFrequency: 'monthly', priority: 0.6  },
   { path: '/learn',                  changeFrequency: 'monthly', priority: 0.7  },
   { path: '/contact',                changeFrequency: 'monthly', priority: 0.6  },
-  { path: '/support',                changeFrequency: 'weekly',  priority: 0.5  },
-  { path: '/invite',                 changeFrequency: 'monthly', priority: 0.5  },
   { path: '/coupons/archive',        changeFrequency: 'daily',   priority: 0.7  },
   { path: '/terms',                  changeFrequency: 'monthly', priority: 0.4  },
   { path: '/privacy',                changeFrequency: 'monthly', priority: 0.4  },

@@ -18,7 +18,7 @@ import { HomeMarketingCollapse } from '@/components/HomeMarketingCollapse';
 import { FeaturedPicks } from '@/components/FeaturedPicks';
 import { HomeFreeTipOfTheDay } from '@/components/HomeFreeTipOfTheDay';
 import { HomeQuickMarketplaceSections } from '@/components/HomeQuickMarketplaceSections';
-import { SITE_TITLE_CORE, SITE_DESCRIPTION, SITE_DEFAULT_TITLE, localizedUrl, seoAlternates } from '@/lib/site-config';
+import { SITE_DESCRIPTION, SITE_DEFAULT_TITLE, localizedUrl, seoAlternates } from '@/lib/site-config';
 import { fetchSellingThresholds } from '@/lib/selling-thresholds';
 import { fetchHomePublicData } from '@/lib/home-public-data';
 import { getLocale, buildT } from '@/lib/i18n';
@@ -28,7 +28,7 @@ import type { Metadata } from 'next';
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   return {
-    title: SITE_TITLE_CORE,
+    title: { absolute: SITE_DEFAULT_TITLE },
     description: SITE_DESCRIPTION,
     alternates: seoAlternates('/', locale),
     openGraph: {

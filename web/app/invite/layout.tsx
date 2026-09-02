@@ -16,6 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: 'Invite & Earn — Share Your Referral Code',
       description: 'Earn rewards by inviting friends to the BetRollover tipster marketplace.',
     },
+    robots: { index: false, follow: true },
   };
 }
 

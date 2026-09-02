@@ -6,7 +6,7 @@ export function isLikelyEmbeddedWebView(): boolean {
   if (typeof navigator === 'undefined') return false;
   const ua = navigator.userAgent || '';
   if (/; wv\)/i.test(ua)) return true;
-  if (/WebViewGold/i.test(ua)) return true;
+  if (/WebViewGold|BetRolloverApp/i.test(ua)) return true;
   if (/FBAN|FBAV|Instagram|Line\/|LinkedInApp|Snapchat/i.test(ua)) return true;
   return false;
 }

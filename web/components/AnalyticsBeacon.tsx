@@ -2,24 +2,17 @@
 
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-function getOrCreateSessionId(): string {
-  if (typeof window === 'undefined') return '';
-  const key = 'br_session_id';
-  let sid = sessionStorage.getItem(key);
-  if (!sid) {
-    sid = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
-    sessionStorage.setItem(key, sid);
-  }
-  return sid;
-}
+import {
+  buildPageViewPayload,
+  shouldSkipAnalyticsBeacon,
+} from '@/lib/analytics-client';
 
 function track(page: string) {
-  const sessionId = getOrCreateSessionId();
-  // Use same-origin proxy so we avoid CORS and can handle 404 from older API images
+  if (shouldSkipAnalyticsBeacon()) return;
   fetch('/api/analytics/track', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sessionId, page }),
+    body: JSON.stringify(buildPageViewPayload(page)),
     keepalive: true,
   }).catch(() => {});
 }
@@ -36,8 +29,6 @@ export function AnalyticsBeacon() {
       if (!cancelled) track(page);
     };
 
-    // Defer non-critical analytics slightly to avoid competing with above-the-fold work.
-    // Prefer idle callback when available, with a small timeout fallback.
     if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
       const onVisible = () => {
         document.removeEventListener('visibilitychange', onVisible);

@@ -20,6 +20,7 @@ import { PickSocialBar, type PickSocialCounts } from '@/components/pick-social/P
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { Button, buttonClassName } from '@/components/ui/Button';
 import { accaDeskBoardBadge } from '@/lib/acca-desk-board-badge';
+import { isAccaDeskTipsterType } from '@/lib/tipster-kind';
 import { resultChipClass } from '@/lib/result-chip';
 
 interface Pick {
@@ -69,6 +70,7 @@ interface Tipster {
 
 function tipsterShowsAiBadge(t: Tipster | null | undefined): boolean {
   if (!t) return false;
+  if (isAccaDeskTipsterType(t.tipsterType ?? t.tipster_type)) return false;
   return t.isAi === true || t.is_ai === true;
 }
 
@@ -252,11 +254,7 @@ export function PickCard({
         {deskBoard ? (
           <div className="absolute top-1.5 right-1.5 z-10">
             <span
-              className={`flex-shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded ${
-                deskBoard === 'tomorrow'
-                  ? 'bg-[var(--accent-light)] text-[var(--accent)]'
-                  : 'bg-[var(--primary-light)] text-[var(--primary)]'
-              }`}
+              className="flex-shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-[var(--primary)] text-white"
               title={
                 deskBoard === 'tomorrow'
                   ? t('pick_card.desk_tomorrow_title')
@@ -333,7 +331,7 @@ export function PickCard({
                       tipster.wonPicks + tipster.lostPicks > 0 &&
                       tipster.wonPicks + tipster.lostPicks < LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING && (
                       <span
-                        className="text-[9px] font-semibold text-[var(--accent)]"
+                        className="text-[9px] font-semibold text-[var(--text-muted)]"
                         title={t('tipster.early_sample_hint', {
                           n: String(LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING),
                         })}
@@ -383,11 +381,7 @@ export function PickCard({
             <div className="flex flex-wrap items-center gap-1.5 mt-1">
               {purchaseActivityLabel && (
                 <span
-                    className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-                    isFree
-                      ? 'bg-[var(--accent-light)] text-[var(--accent)] border-[var(--accent)]/30'
-                      : 'bg-[var(--primary-light)] text-[var(--primary)] border-[var(--primary)]/25'
-                  }`}
+                  className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-[10px] font-bold border bg-[var(--primary-light)] text-[var(--primary)] border-[var(--primary)]/25"
                   title={isFree ? t('pick_card.badge_free_unlocks_hint') : t('pick_card.badge_purchases_hint')}
                 >
                   <span aria-hidden className="opacity-90">
@@ -479,7 +473,7 @@ export function PickCard({
                               className="text-[9px] px-1.5 py-px"
                             />
                           ) : isStarted ? (
-                            <span className="text-[9px] font-medium text-[var(--accent)]">
+                            <span className="text-[9px] font-medium text-[var(--primary)]">
                               {t('kickoff.started_short')}
                             </span>
                           ) : matchDate ? (
@@ -660,11 +654,7 @@ export function PickCard({
                         ) : null}
                         {deskBoard ? (
                           <span
-                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
-                              deskBoard === 'tomorrow'
-                                ? 'bg-[var(--accent-light)] text-[var(--accent)]'
-                                : 'bg-[var(--primary-light)] text-[var(--primary)]'
-                            }`}
+                            className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[var(--primary)] text-white"
                           >
                             {deskBoard === 'tomorrow' ? t('pick_card.desk_tomorrow') : t('pick_card.desk_today')}
                           </span>
@@ -684,7 +674,7 @@ export function PickCard({
                         {tipster.wonPicks + tipster.lostPicks > 0 &&
                           tipster.wonPicks + tipster.lostPicks < LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING && (
                           <span
-                            className="text-sm font-semibold text-[var(--accent)]"
+                            className="text-sm font-semibold text-[var(--text-muted)]"
                             title={t('tipster.early_sample_hint', {
                               n: String(LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING),
                             })}
@@ -838,11 +828,7 @@ export function PickCard({
                           ) : null}
                           {deskBoard ? (
                             <span
-                              className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
-                                deskBoard === 'tomorrow'
-                                  ? 'bg-[var(--accent-light)] text-[var(--accent)]'
-                                  : 'bg-[var(--primary-light)] text-[var(--primary)]'
-                              }`}
+                              className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[var(--primary)] text-white"
                             >
                               {deskBoard === 'tomorrow' ? t('pick_card.desk_tomorrow') : t('pick_card.desk_today')}
                             </span>
