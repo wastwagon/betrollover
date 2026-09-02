@@ -22,10 +22,9 @@ import { LocaleSwitchers, TopBar } from '@/components/TopBar';
 import {
   IconSearch,
   IconTrophy,
-  IconTrending,
-  IconChart,
   IconRocket,
   IconTarget,
+  IconAcca,
   IconPackage,
   IconCart,
   IconDiamond,
@@ -489,13 +488,6 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       <SectionLabel>{t('header.section_discover_tipsters')}</SectionLabel>
                       <CompactNavLink href="/tipsters" icon={<IconSearch />} label={t('nav.browse')} onClick={closeAll} />
                       <CompactNavLink href="/leaderboard" icon={<IconTrophy />} label={t('nav.leaderboard')} onClick={closeAll} />
-                      <CompactNavLink
-                        href="/tipsters?sort=winRate"
-                        icon={<IconTrending />}
-                        label={t('tipster.top_win_rate')}
-                        onClick={closeAll}
-                      />
-                      <CompactNavLink href="/tipsters?sort=roi" icon={<IconChart />} label={t('tipster.best_roi')} onClick={closeAll} />
                     </div>
 
                     <div className="py-1 px-1 border-t border-[var(--separator)]">
@@ -505,7 +497,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       )}
                       <CompactNavLink href="/create-pick" icon={<IconTarget />} label={t('nav.create_pick')} onClick={closeAll} />
                       {accaEnabled ? (
-                        <CompactNavLink href="/acca-generator" icon={<IconChart />} label={t('nav.acca_generator')} onClick={closeAll} />
+                        <CompactNavLink href="/acca-generator" icon={<IconAcca />} label={t('nav.acca_generator')} onClick={closeAll} />
                       ) : null}
                       {isSubscriptionsEnabled() ? (
                         <CompactNavLink
@@ -605,7 +597,22 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                 ) : null}
               </Link>
               {accaEnabled ? (
-                <NavBtn href="/acca-generator" label={t('nav.acca_generator')} />
+                <Link
+                  href={localizeHref('/acca-generator', pathname)}
+                  aria-current={isActive(pathname, '/acca-generator') ? 'page' : undefined}
+                  className={buttonClassName({
+                    size: 'sm',
+                    variant: 'secondary',
+                    className: `h-9 rounded-full px-3.5 text-[13px] shadow-none whitespace-nowrap gap-1.5 ${
+                      isActive(pathname, '/acca-generator')
+                        ? 'border-[var(--primary)] text-[var(--primary)] bg-[var(--primary-light)]'
+                        : ''
+                    }`,
+                  })}
+                >
+                  <IconAcca className="w-4 h-4" />
+                  {t('nav.acca_generator')}
+                </Link>
               ) : null}
             </nav>
             ) : null}

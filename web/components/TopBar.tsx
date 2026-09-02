@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, Fragment } from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
@@ -143,6 +143,8 @@ export function LocaleSwitchers({ tone = 'onPrimary' }: { tone?: 'onPrimary' | '
         </Dropdown>
       </div>
 
+      {tone === 'onPrimary' ? <RailDivider /> : null}
+
       <div className="relative">
         <button
           type="button"
@@ -235,7 +237,7 @@ function RailLink({ item, pathname, label }: { item: RailItem; pathname: string;
 }
 
 function RailDivider() {
-  return <span className="mx-2.5 h-3 w-px shrink-0 bg-white" aria-hidden />;
+  return <span className="mx-1.5 h-3 w-px shrink-0 bg-white" aria-hidden />;
 }
 
 function RailMenu({
@@ -328,35 +330,42 @@ export function TopBar() {
     <div className="hidden md:flex h-[var(--br-topbar-h)] items-center bg-[#111111] text-white">
       <div className="relative flex w-full min-w-0 items-center justify-center px-4 sm:px-6 lg:px-8 xl:px-10">
         <nav className="flex min-w-0 max-w-[calc(100%-11rem)] lg:max-w-[calc(100%-14rem)] items-center justify-center overflow-x-auto scrollbar-hide" aria-label={t('footer.discover')}>
-          {MATCH_LINKS.map((item) => (
-            <RailLink key={item.href} item={item} pathname={pathname} label={t(item.labelKey)} />
+          {[
+            ...MATCH_LINKS.map((item) => (
+              <RailLink key={item.href} item={item} pathname={pathname} label={t(item.labelKey)} />
+            )),
+            ...EDITORIAL_LINKS.map((item) => (
+              <RailLink key={item.href} item={item} pathname={pathname} label={t(item.labelKey)} />
+            )),
+            <RailMenu key="learn" label={t('nav.learn')} items={LEARN_LINKS} pathname={pathname} t={t} />,
+            <RailMenu key="help" label={t('topbar.help')} items={HELP_LINKS} pathname={pathname} t={t} />,
+          ].map((node, i, items) => (
+            <Fragment key={node.key ?? i}>
+              {node}
+              {i < items.length - 1 ? <RailDivider /> : null}
+            </Fragment>
           ))}
-          <RailDivider />
-          {EDITORIAL_LINKS.map((item) => (
-            <RailLink key={item.href} item={item} pathname={pathname} label={t(item.labelKey)} />
-          ))}
-          <RailDivider />
-          <RailMenu label={t('nav.learn')} items={LEARN_LINKS} pathname={pathname} t={t} />
-          <RailMenu label={t('topbar.help')} items={HELP_LINKS} pathname={pathname} t={t} />
         </nav>
 
-        <div className="absolute right-4 sm:right-6 lg:right-8 xl:right-10 top-1/2 -translate-y-1/2 flex shrink-0 items-center gap-2">
+        <div className="absolute right-4 sm:right-6 lg:right-8 xl:right-10 top-1/2 -translate-y-1/2 flex shrink-0 items-center">
           <a
             href={TELEGRAM_ADS_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden lg:inline text-[11px] font-medium tracking-wide text-white hover:text-white transition-colors whitespace-nowrap"
+            className="hidden lg:inline text-[11px] font-medium tracking-wide text-white hover:text-white transition-colors whitespace-nowrap px-2 py-1"
             onClick={() => trackEvent('telegram_cta_clicked', { source: 'topbar' })}
           >
             {t('footer.telegram_cta')}
           </a>
+          <span className="hidden lg:inline-flex"><RailDivider /></span>
           <Link
             href={localizeHref('/responsible-gambling', pathname)}
-            className="text-[10px] font-semibold tracking-wider text-white hover:text-white transition-colors"
+            className="text-[10px] font-semibold tracking-wider text-white hover:text-white transition-colors px-2 py-1"
             title={t('topbar.disclaimer_5')}
           >
             18+
           </Link>
+          <RailDivider />
           <LocaleSwitchers tone="onPrimary" />
         </div>
       </div>

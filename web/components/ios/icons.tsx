@@ -77,6 +77,17 @@ export function IconTarget(props: { className?: string }) {
   );
 }
 
+/** Stacked slips — accumulator / multi-leg generator. */
+export function IconAcca(props: { className?: string }) {
+  return (
+    <IconBase className={props.className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7 6.5h11.5A1.5 1.5 0 0120 8v9.5" />
+      <rect x="4" y="8" width="13.5" height="11" rx="2" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7 12.5h7.5M7 15.5h5" />
+    </IconBase>
+  );
+}
+
 export function IconPackage(props: { className?: string }) {
   return (
     <IconBase className={props.className}>
