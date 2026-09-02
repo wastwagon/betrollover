@@ -10,8 +10,6 @@ import { useT } from '@/context/LanguageContext';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { tipsterRankBadgeClass, tipsterRankBadgeContent } from '@/lib/tipster-rank-ui';
 import { formatFootballOutcomeLabel, LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
-import { AiTipsterBadge } from '@/components/AiTipsterBadge';
-import { VerifiedTipsterBadge } from '@/components/VerifiedTipsterBadge';
 import { KickoffUrgencyLine } from '@/components/KickoffUrgencyLine';
 import { FixtureLiveChip } from '@/components/FixtureLiveChip';
 import { BookingCodeCopyBlock } from '@/components/BookingCodeCopyBlock';
@@ -20,7 +18,6 @@ import { PickSocialBar, type PickSocialCounts } from '@/components/pick-social/P
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { Button, buttonClassName } from '@/components/ui/Button';
 import { accaDeskBoardBadge } from '@/lib/acca-desk-board-badge';
-import { isAccaDeskTipsterType } from '@/lib/tipster-kind';
 import { resultChipClass } from '@/lib/result-chip';
 
 interface Pick {
@@ -66,17 +63,6 @@ interface Tipster {
   lostPicks: number;
   /** Global all-time leaderboard rank; null if not on leaderboard (e.g. no settled picks). */
   rank: number | null;
-}
-
-function tipsterShowsAiBadge(t: Tipster | null | undefined): boolean {
-  if (!t) return false;
-  if (isAccaDeskTipsterType(t.tipsterType ?? t.tipster_type)) return false;
-  return t.isAi === true || t.is_ai === true;
-}
-
-function tipsterShowsVerifiedBadge(t: Tipster | null | undefined): boolean {
-  if (!t || tipsterShowsAiBadge(t)) return false;
-  return t.isVerified === true || t.is_verified === true;
 }
 
 const SPORT_META: Record<string, { icon: string; label: string; color: string }> = {
@@ -292,15 +278,6 @@ export function PickCard({
                     <p className="font-medium text-xs text-[var(--text)] truncate min-w-0" title={tipster ? `${t('pick_card.tipster')}: ${tipster.displayName}` : t('pick_card.tipster')}>
                       {tipster?.displayName || t('pick_card.tipster')}
                     </p>
-                    {tipsterShowsAiBadge(tipster) ? (
-                      <AiTipsterBadge
-                        className="!text-[9px] !px-1.5 !py-px"
-                        tipsterType={tipster?.tipsterType ?? tipster?.tipster_type}
-                      />
-                    ) : null}
-                    {tipsterShowsVerifiedBadge(tipster) ? (
-                      <VerifiedTipsterBadge className="!text-[9px] !px-1.5 !py-px" />
-                    ) : null}
                   </div>
                   <div className="flex items-center gap-1.5 mt-0">
                     <span className="text-[9px] text-[var(--text-muted)]">
@@ -649,9 +626,6 @@ export function PickCard({
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-medium text-base text-[var(--text)]">{tipster.displayName}</p>
-                        {tipsterShowsAiBadge(tipster) ? (
-                          <AiTipsterBadge tipsterType={tipster?.tipsterType ?? tipster?.tipster_type} />
-                        ) : null}
                         {deskBoard ? (
                           <span
                             className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[var(--primary)] text-white"
@@ -659,7 +633,6 @@ export function PickCard({
                             {deskBoard === 'tomorrow' ? t('pick_card.desk_tomorrow') : t('pick_card.desk_today')}
                           </span>
                         ) : null}
-                        {tipsterShowsVerifiedBadge(tipster) ? <VerifiedTipsterBadge /> : null}
                       </div>
                       <div className="flex items-center gap-4 mt-1">
                         <span className="text-sm text-[var(--text-muted)]">
@@ -823,9 +796,6 @@ export function PickCard({
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold text-[var(--text)]">{tipster.displayName}</p>
-                          {tipsterShowsAiBadge(tipster) ? (
-                            <AiTipsterBadge tipsterType={tipster?.tipsterType ?? tipster?.tipster_type} />
-                          ) : null}
                           {deskBoard ? (
                             <span
                               className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[var(--primary)] text-white"
@@ -833,7 +803,6 @@ export function PickCard({
                               {deskBoard === 'tomorrow' ? t('pick_card.desk_tomorrow') : t('pick_card.desk_today')}
                             </span>
                           ) : null}
-                          {tipsterShowsVerifiedBadge(tipster) ? <VerifiedTipsterBadge /> : null}
                         </div>
                         <p className="text-xs text-[var(--text-muted)]">
                           {t('pick_card.win_rate', { rate: (tipster?.winRate != null ? Number(tipster.winRate).toFixed(1) : '—') })} • {t('pick_card.picks_count', { n: String(tipster.totalPicks) })}

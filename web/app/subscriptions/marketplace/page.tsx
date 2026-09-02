@@ -10,7 +10,6 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { EmptyState } from '@/components/EmptyState';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
-import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { fetchSellingThresholds, type SellingThresholds, SELLING_THRESHOLDS_FALLBACK } from '@/lib/selling-thresholds';
 import { useT } from '@/context/LanguageContext';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
@@ -198,7 +197,6 @@ export default function SubscriptionMarketplacePage() {
                           <Link href={tip ? `/tipsters/${tip.username}` : '#'} className="font-semibold text-[var(--text)] truncate block">
                             {tip?.displayName ?? 'Tipster'}
                           </Link>
-                          {tip?.isAi === true ? <AiTipsterBadge tipsterType={tip.tipsterType} /> : null}
                         </div>
                         {tip?.username && (
                           <p className="text-xs text-[var(--text-muted)]">@{tip.username}</p>

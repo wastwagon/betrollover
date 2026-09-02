@@ -13,9 +13,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { trackEvent } from '@/lib/analytics';
 import { usePendingWithdrawalCount } from '@/hooks/usePendingWithdrawalCount';
 import { MobileAccountSheet } from '@/components/ios/MobileAccountSheet';
-import { GlobalSearchSheet } from '@/components/GlobalSearchSheet';
 import { NotificationBellMenu } from '@/components/notifications/NotificationBellMenu';
-import { hapticLight } from '@/lib/haptic';
 import { localizeHref, stripLocalePrefix } from '@/lib/locale-path';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import { useAccaGeneratorEnabled } from '@/hooks/useAccaGeneratorEnabled';
@@ -236,7 +234,6 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
   const pendingWithdrawalCount = usePendingWithdrawalCount();
   const [openMenu,         setOpenMenu]         = useState<MenuKey>(null);
   const [mobileOpen,       setMobileOpen]       = useState(false);
-  const [searchOpen,       setSearchOpen]       = useState(false);
   const [mounted,           setMounted]          = useState(false);
 
   const hoverTimeout  = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -625,21 +622,6 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
             </nav>
             ) : null}
 
-            {/* Desktop search (guests + signed-in) */}
-            {!isAuthPath ? (
-            <button
-              type="button"
-              aria-label={t('common.search')}
-              onClick={() => {
-                hapticLight();
-                setSearchOpen(true);
-              }}
-              className="hidden lg:inline-flex touch-target items-center justify-center p-2.5 rounded-xl text-[var(--text-muted)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] transition-colors border border-[var(--border)] bg-[var(--card)]"
-            >
-              <IconSearch />
-            </button>
-            ) : null}
-
             {/* ── Right side (auth utils) ── */}
             {isSignedIn && (
               <div className="hidden xl:flex items-center gap-2">
@@ -790,19 +772,6 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
             </div>
             {!isAuthPath ? (
             <div className="xl:hidden flex items-center justify-end gap-1 sm:gap-2 min-w-0">
-              <button
-                type="button"
-                aria-label={t('common.search')}
-                onClick={() => {
-                  hapticLight();
-                  setSearchOpen(true);
-                }}
-                className="touch-target p-2.5 rounded-xl text-[var(--text-muted)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] transition-colors border border-[var(--border)] bg-[var(--card)]"
-              >
-                <span className="inline-flex w-6 h-6 items-center justify-center text-[var(--primary)]">
-                  <IconSearch />
-                </span>
-              </button>
               {isSignedIn ? (
                 <>
                   <button
@@ -902,7 +871,6 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
       {!hideTopBar ? (
         <div className="md:hidden w-full shrink-0 h-[var(--br-chrome-below-header)] pointer-events-none" aria-hidden />
       ) : null}
-      {mounted ? <GlobalSearchSheet open={searchOpen} onClose={() => setSearchOpen(false)} /> : null}
     </>
   );
 }

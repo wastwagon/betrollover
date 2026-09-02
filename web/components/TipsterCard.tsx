@@ -6,11 +6,9 @@ import Image from 'next/image';
 import { getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { FollowersCountButton } from '@/components/TipsterFollowersModal';
-import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { VerifiedTipsterBadge } from '@/components/VerifiedTipsterBadge';
 import { TipsterTrustStrip } from '@/components/TipsterTrustStrip';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
-import { isAccaDeskTipsterType } from '@/lib/tipster-kind';
 import { TIPSTER_ACTIVE_WITHIN_DAYS, TIPSTER_FORM_POST_CAP } from '@betrollover/shared-types';
 import { Button } from '@/components/ui/Button';
 
@@ -122,12 +120,6 @@ export function TipsterCard({
                 >
                   {tipster.display_name}
                 </h3>
-                {tipster.is_ai && !isAccaDeskTipsterType(tipster.tipster_type) ? (
-                  <AiTipsterBadge
-                    className={premium ? '!text-[9px] !px-1.5 !py-px' : undefined}
-                    tipsterType={tipster.tipster_type}
-                  />
-                ) : null}
                 {!tipster.is_ai && tipster.is_verified ? (
                   <VerifiedTipsterBadge className={premium ? '!text-[9px] !px-1.5 !py-px' : undefined} />
                 ) : null}
