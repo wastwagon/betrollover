@@ -361,22 +361,36 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
   /* ── Desktop nav item ────────────────────────────────── */
   const NavBtn = ({
-    menuKey, label, href,
-  }: { menuKey?: MenuKey; label: string; href?: string }) => {
+    menuKey, label, href, badge,
+  }: { menuKey?: MenuKey; label: string; href?: string; badge?: string }) => {
     const active = href ? isActive(pathname, href) : false;
     const isOpen = menuKey ? openMenu === menuKey : false;
     const triggerId = menuKey ? `main-nav-${menuKey}-trigger` : undefined;
     const panelId = menuKey ? `main-nav-${menuKey}-panel` : undefined;
-    const cls = `flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-150 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/50 focus-visible:ring-offset-2 ${
-      active || isOpen
-        ? 'text-[var(--primary)] bg-[var(--primary-light)] border border-[var(--primary)]/25'
-        : 'text-[var(--text)] hover:text-[var(--primary)] hover:bg-[var(--primary-light)] border border-transparent'
+    const cls = `relative flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[13px] font-medium tracking-tight whitespace-nowrap transition-colors duration-150 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/40 focus-visible:ring-offset-2 ${
+      active
+        ? 'text-[var(--primary)] after:absolute after:inset-x-2.5 after:bottom-0 after:h-[1.5px] after:rounded-full after:bg-[var(--primary)]'
+        : isOpen
+          ? 'text-[var(--text)] bg-[var(--fill-secondary)]'
+          : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--fill-secondary)]'
     }`;
+
+    const inner = (
+      <>
+        {label}
+        {badge ? (
+          <span className="min-w-[16px] h-[16px] px-1 flex items-center justify-center text-[10px] font-semibold rounded-full bg-[var(--fill-secondary)] text-[var(--text-muted)]">
+            {badge}
+          </span>
+        ) : null}
+        {menuKey ? <NavChevron open={isOpen} /> : null}
+      </>
+    );
 
     if (href && !menuKey) {
       return (
         <Link href={localizeHref(href, pathname)} className={cls} aria-current={active ? 'page' : undefined}>
-          {label}
+          {inner}
         </Link>
       );
     }
@@ -393,8 +407,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
         onFocus={() => setOpenMenu(menuKey!)}
         onClick={() => setOpenMenu(isOpen ? null : menuKey!)}
       >
-        {label}
-        {menuKey && <NavChevron open={isOpen} />}
+        {inner}
       </button>
     );
   };
@@ -426,32 +439,32 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               'max-md:fixed max-md:left-0 max-md:right-0 max-md:top-0 max-md:pt-[env(safe-area-inset-top,0px)] md:sticky md:top-0'
         }`}
       >
-        <div className="section-ux-gutter-wide min-w-0 max-w-full">
-          <div className="flex items-center justify-between h-[var(--br-header-h)] min-w-0 gap-1.5 sm:gap-2">
+        <div className="w-full min-w-0 max-w-none px-4 sm:px-6 lg:px-8 xl:px-10">
+          <div className="flex items-center h-[var(--br-header-h)] min-w-0 gap-3 lg:gap-6">
 
             {/* ── Logo ── */}
-            <Link href="/" className="flex items-center gap-2 sm:gap-2.5 min-w-0 shrink-0 group" aria-label="BetRollover home">
+            <Link href="/" className="flex items-center gap-2 min-w-0 shrink-0 group" aria-label="BetRollover home">
               <Image
                 src="/BetRollover-logo.png" alt="BetRollover"
                 width={52} height={52}
-                className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl shadow-md group-hover:shadow-lg transition-shadow object-contain shrink-0"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg object-contain shrink-0"
                 priority
               />
-              <span className="hidden sm:block font-bold text-base text-[var(--text)] group-hover:text-[var(--primary)] transition-colors">
+              <span className="hidden sm:block font-semibold text-[15px] tracking-tight text-[var(--text)] group-hover:text-[var(--primary)] transition-colors">
                 BetRollover
               </span>
             </Link>
 
-            {/* ── Desktop nav ── */}
+            {/* ── Desktop nav (centered in remaining space) ── */}
             {!isAuthPath ? (
-            <nav className="hidden lg:flex items-center gap-0.5" aria-label="Main navigation">
+            <nav className="hidden lg:flex items-center gap-1 min-w-0" aria-label="Main navigation">
 
               {/* Home */}
               <NavBtn href="/" label={t('header.home')} />
 
               <NavBtn href="/marketplace" label={t('nav.marketplace')} />
 
-              <NavBtn href="/rollover" label={t('nav.rollover_short')} />
+              <NavBtn href="/rollover" label={t('nav.rollover')} />
 
               {/* Tipsters ▾ */}
               <div className="relative">
@@ -569,67 +582,36 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                 <NavBtn href="/subscriptions/marketplace" label={t('nav.subscriptions')} />
               )}
 
-              {/* Divider */}
-              <div className="w-px h-6 bg-[var(--separator)] mx-1.5" />
-
-              {/* Create Pick + Acca Generator CTAs */}
-              {isSignedIn && (
-                <div className="flex items-center gap-1.5">
-                  <Link
-                    href="/create-pick"
-                    title={t('nav.create_pick')}
-                    aria-label={t('nav.create_pick')}
-                    className={buttonClassName({
-                      size: 'sm',
-                      className: `gap-1.5 ${isActive(pathname, '/create-pick') ? 'bg-[var(--primary-hover)]' : ''}`,
-                    })}
-                  >
-                    {t('nav.create_pick_short')}
-                    {slipCount !== undefined && slipCount > 0 && (
-                      <span className="min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold bg-white/25 text-white rounded-full">
-                        {slipCount > 9 ? '9+' : slipCount}
-                      </span>
-                    )}
-                  </Link>
-                  {accaEnabled ? (
-                  <Link
-                    href="/acca-generator"
-                    title={t('nav.acca_generator')}
-                    aria-label={t('nav.acca_generator')}
-                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-[var(--radius)] font-semibold text-sm transition-colors border ${
-                      isActive(pathname, '/acca-generator')
-                        ? 'bg-[var(--text)] text-[var(--card)] border-[var(--text)]'
-                        : 'bg-[var(--card)] text-[var(--text)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
-                    }`}
-                  >
-                    {t('nav.acca_generator_short')}
-                  </Link>
-                  ) : null}
-                </div>
-              )}
-
-              {/* Guest CTAs */}
-              {!isSignedIn && (
-                <>
-                  <Link href="/login" className="px-4 py-2 text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors">
-                    {t('nav.login')}
-                  </Link>
-                  <Link href="/register" className={buttonClassName({ size: 'sm' })}>
-                    {t('nav.register')}
-                  </Link>
-                </>
-              )}
+              <NavBtn
+                href="/create-pick"
+                label={t('nav.create_pick')}
+                badge={isSignedIn && slipCount !== undefined && slipCount > 0 ? (slipCount > 9 ? '9+' : String(slipCount)) : undefined}
+              />
+              {accaEnabled ? (
+                <NavBtn href="/acca-generator" label={t('nav.acca_generator')} />
+              ) : null}
             </nav>
             ) : null}
 
-            {/* ── Right side (auth utils) ── */}
+            {/* ── Right: actions, identity, locale ── */}
+            <div className="ml-auto flex items-center justify-end gap-3 min-w-0 shrink-0">
+            {!isAuthPath && !isSignedIn ? (
+              <div className="hidden lg:flex items-center gap-1.5">
+                <Link href="/login" className="px-3 py-1.5 text-[13px] font-medium text-[var(--text-muted)] hover:text-[var(--text)] transition-colors">
+                  {t('nav.login')}
+                </Link>
+                <Link href="/register" className={buttonClassName({ size: 'sm', className: 'h-9 rounded-full px-3.5 text-[13px] shadow-none' })}>
+                  {t('nav.register')}
+                </Link>
+              </div>
+            ) : null}
+
             {isSignedIn && (
-              <div className="hidden xl:flex items-center gap-2">
-                {/* Wallet */}
+              <div className="hidden xl:flex items-center gap-0.5">
                 {balance !== null && (
                   <Link
                     href="/wallet"
-                    className="relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold text-[var(--primary)] bg-[var(--primary-light)] hover:opacity-90 border border-[var(--primary)]/20 transition-all"
+                    className="relative flex items-center gap-1.5 h-9 px-2.5 rounded-full text-[13px] font-semibold text-[var(--primary)] bg-[var(--primary-light)] hover:bg-[var(--primary)]/20 transition-colors"
                     aria-label={`Wallet balance: ${format(balance).primary}${pendingWithdrawalCount > 0 ? `, ${pendingWithdrawalCount} withdrawal(s) in progress` : ''}`}
                   >
                     {pendingWithdrawalCount > 0 && (
@@ -652,7 +634,6 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                   onUnreadCountChange={setUnreadCount}
                 />
 
-                {/* Account ▾ */}
                 <div className="relative">
                   <button
                     type="button"
@@ -661,10 +642,10 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                     aria-haspopup="true"
                     aria-controls="main-nav-account-panel"
                     aria-label="My account"
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/50 focus-visible:ring-offset-2 ${
+                    className={`flex items-center gap-1 h-9 pl-1.5 pr-2 rounded-full text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/40 focus-visible:ring-offset-2 ${
                       openMenu === 'account'
-                        ? 'bg-[var(--primary-light)] text-[var(--primary)] border border-[var(--primary)]/25'
-                        : 'text-[var(--text)] hover:text-[var(--primary)] hover:bg-[var(--primary-light)] border border-transparent'
+                        ? 'bg-[var(--fill-secondary)] text-[var(--text)]'
+                        : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--fill-secondary)]'
                     }`}
                     onMouseEnter={() => openAfterDelay('account')}
                     onMouseLeave={closeAfterDelay}
@@ -762,16 +743,15 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
               </div>
             )}
 
-            {/* GHS/EN and 18+ sit with search/account on the right. */}
-            <div className="flex items-center justify-end gap-1 sm:gap-2 min-w-0 shrink-0 max-xl:ml-auto xl:contents">
-            <div className="flex items-center gap-1">
-              <span className="hidden sm:inline-flex shrink-0 rounded-md border border-[var(--border)] bg-[var(--fill-secondary)] px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-[var(--text)]">
-                {t('topbar.disclaimer_5')}
+            {/* Quiet chrome: 18+ and locale */}
+            <div className="flex items-center gap-0.5">
+              <span className="hidden sm:inline text-[10px] font-medium tracking-wider text-[var(--text-tertiary)] px-1" title={t('topbar.disclaimer_5')}>
+                18+
               </span>
-              <LocaleSwitchers tone="onSurface" />
+              <LocaleSwitchers tone="quiet" />
             </div>
             {!isAuthPath ? (
-            <div className="xl:hidden flex items-center justify-end gap-1 sm:gap-2 min-w-0">
+            <div className="xl:hidden flex items-center justify-end gap-1 min-w-0">
               {isSignedIn ? (
                 <>
                   <button
@@ -780,7 +760,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                     aria-expanded={mobileOpen}
                     aria-haspopup="true"
                     onClick={() => setMobileOpen(o => !o)}
-                    className="p-2.5 rounded-xl text-[var(--text-muted)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] transition-colors border border-[var(--border)] bg-[var(--card)]"
+                    className="p-2 rounded-full text-[var(--text-muted)] hover:bg-[var(--fill-secondary)] hover:text-[var(--text)] transition-colors"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -814,21 +794,21 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                   )}
                 </>
               ) : (
-                <>
+                <div className="lg:hidden flex items-center gap-1">
                   <Link
                     href="/login"
-                    className="shrink-0 whitespace-nowrap px-1.5 py-2 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors"
+                    className="shrink-0 whitespace-nowrap px-1.5 py-2 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
                   >
                     {t('nav.login')}
                   </Link>
                   <Link
                     href="/register"
-                    className={buttonClassName({ size: 'sm', className: 'shrink-0 whitespace-nowrap' })}
+                    className={buttonClassName({ size: 'sm', className: 'shrink-0 whitespace-nowrap h-9 rounded-full shadow-none' })}
                   >
                     <span className="sm:hidden">{t('nav.register_short')}</span>
                     <span className="hidden sm:inline">{t('nav.register')}</span>
                   </Link>
-                </>
+                </div>
               )}
             </div>
             ) : null}

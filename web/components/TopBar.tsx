@@ -58,7 +58,7 @@ function Dropdown({ open, onClose, triggerRef, children }: {
   return createPortal(panel, document.body);
 }
 
-export function LocaleSwitchers({ tone = 'onPrimary' }: { tone?: 'onPrimary' | 'onSurface' }) {
+export function LocaleSwitchers({ tone = 'onPrimary' }: { tone?: 'onPrimary' | 'onSurface' | 'quiet' }) {
   const pathname = usePathname();
   const router = useRouter();
   const { language, languages, setLang } = useLanguage();
@@ -78,7 +78,9 @@ export function LocaleSwitchers({ tone = 'onPrimary' }: { tone?: 'onPrimary' | '
   };
 
   const btnCls =
-    tone === 'onSurface'
+    tone === 'quiet'
+      ? 'flex items-center gap-0.5 px-1.5 py-1 rounded-md text-[11px] font-semibold tracking-wide text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--fill-secondary)] transition-colors'
+      : tone === 'onSurface'
       ? 'flex items-center gap-1 px-2 py-1 rounded-md text-[var(--text-muted)] hover:bg-[var(--fill-secondary)] hover:text-[var(--text)] transition-colors text-xs font-medium border border-[var(--border)] bg-[var(--card)]'
       : 'flex items-center gap-1 px-2 py-1 rounded-md text-white/90 hover:bg-white/15 transition-colors text-xs font-medium';
 
