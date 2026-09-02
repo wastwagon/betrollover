@@ -85,8 +85,8 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: SITE_NAME,
-    /** Content draws under the status bar; TopBar already pads `safe-area-inset-top`. */
-    statusBarStyle: 'black-translucent',
+    /** Dark icons on a light bar so the clock/network sit on the same white as the header. */
+    statusBarStyle: 'default',
   },
   ...(googleSiteVerification ? { verification: { google: googleSiteVerification } } : {}),
 };
@@ -96,10 +96,10 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  /** Brand primary — status bar / PWA chrome must match TopBar (`--primary`), not a darker leftover. */
+  /** Status bar / PWA chrome matches the white header, not brand green. */
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#10b981' },
-    { media: '(prefers-color-scheme: dark)', color: '#34d399' },
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#1c1c1e' },
   ],
   viewportFit: 'cover',
 };

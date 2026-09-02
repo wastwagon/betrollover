@@ -1114,6 +1114,7 @@ const fr: Record<string, string> = {
   'tipster.compare_add': 'Comparer',
   'tipster.compare_selected': 'En comparaison',
   'tipster.win_rate_short': 'TR',
+  'tipster.total_picks_short': 'Pronos',
   'tipster.settled_short': 'Réglés',
   'tipster.rating_histogram': 'Répartition des notes',
   'tipster.period_alltime': 'Tout le temps',

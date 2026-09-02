@@ -165,14 +165,14 @@ var imagenotfound = "Image not found." //Set the title label of the "Image not f
 
 //Custom Status Bar Design
 
-// BetRollover brand (matches web themeColor #10b981 / Android colorPrimary)
-var statusBarBackgroundColor = #colorLiteral(red: 0.06274509803921569, green: 0.7254901960784313, blue: 0.5058823529411764, alpha: 1)
+// BetRollover header (matches web themeColor #ffffff)
+var statusBarBackgroundColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
 
-var darkModeStatusBarBackgroundColor = #colorLiteral(red: 0.20392156862745098, green: 0.8274509803921568, blue: 0.6, alpha: 1)
+var darkModeStatusBarBackgroundColor = #colorLiteral(red: 0.10980392156862745, green: 0.10980392156862745, blue: 0.11764705882352941, alpha: 1)
 
-var statusBarTextColor = "white" //Light icons on emerald bar; requires iOS 13 or higher
+var statusBarTextColor = "black" //Dark icons on white bar; requires iOS 13 or higher
 
-var darkModeStatusBarTextColor = "white" //Match light mode on emerald bar
+var darkModeStatusBarTextColor = "white" //Light icons on dark chrome
 
 //Custom Bottom Bar Design
 

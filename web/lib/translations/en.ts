@@ -1119,6 +1119,7 @@ const en = {
   'tipster.compare_add': 'Compare',
   'tipster.compare_selected': 'In compare',
   'tipster.win_rate_short': 'WR',
+  'tipster.total_picks_short': 'Picks',
   'tipster.settled_short': 'Settled',
   'tipster.rating_histogram': 'Rating distribution',
   'tipster.period_alltime': 'All Time',

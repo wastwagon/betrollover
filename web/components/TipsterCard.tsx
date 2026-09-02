@@ -153,15 +153,15 @@ export function TipsterCard({
           </div>
         </div>
 
-        {/* Metric row — compact on premium (pick-card density) */}
+        {/* Metric grid — 2×2 on premium so ROI/Form never collide in a 2-col home shelf. */}
         {premium ? (
-          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-[var(--primary)]/20 bg-[var(--primary)]/5 px-2 py-1.5">
-            <div className="min-w-0">
-              <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+          <div className="mb-2 grid grid-cols-2 gap-x-3 gap-y-3 rounded-lg border border-[var(--primary)]/20 bg-[var(--primary)]/5 px-2.5 py-2.5 min-w-0">
+            <div className="min-w-0 overflow-hidden">
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--text-muted)] truncate">
                 {t('tipster.roi')}
               </p>
               <p
-                className={`text-sm font-bold tabular-nums leading-none mt-0.5 ${
+                className={`text-sm font-bold tabular-nums leading-tight mt-0.5 truncate ${
                   roiPositive
                     ? 'text-[var(--success)]'
                     : roiNegative
@@ -172,31 +172,32 @@ export function TipsterCard({
                 {roiDisplay}
               </p>
             </div>
-            <div className="flex shrink-0 items-center gap-2 text-right">
-              {tipster.form_points != null ? (
-                <div title={t('leaderboard.form_hint', { days: String(TIPSTER_ACTIVE_WITHIN_DAYS), cap: String(TIPSTER_FORM_POST_CAP) })}>
-                  <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-                    {t('leaderboard.form_col')}
-                  </p>
-                  <p className="text-xs font-bold text-[var(--text)] tabular-nums mt-0.5">
-                    {tipster.form_points > 0 ? tipster.form_points : '—'}
-                  </p>
-                </div>
-              ) : null}
-              <div>
-                <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-                  {t('tipster.win_rate')}
-                </p>
-                <p className="text-xs font-bold text-[var(--text)] tabular-nums mt-0.5">{winRateDisplay}</p>
-              </div>
-              <div>
-                <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-                  {t('tipster.total_picks')}
-                </p>
-                <p className="text-xs font-bold text-[var(--text)] tabular-nums mt-0.5">
-                  {tipster.total_predictions ?? 0}
-                </p>
-              </div>
+            <div
+              className="min-w-0 overflow-hidden"
+              title={t('leaderboard.form_hint', { days: String(TIPSTER_ACTIVE_WITHIN_DAYS), cap: String(TIPSTER_FORM_POST_CAP) })}
+            >
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--text-muted)] truncate">
+                {t('leaderboard.form_col')}
+              </p>
+              <p className="text-sm font-bold text-[var(--text)] tabular-nums leading-tight mt-0.5 truncate">
+                {tipster.form_points != null && tipster.form_points > 0 ? tipster.form_points : '—'}
+              </p>
+            </div>
+            <div className="min-w-0 overflow-hidden">
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--text-muted)] truncate">
+                {t('tipster.win_rate_short')}
+              </p>
+              <p className="text-sm font-bold text-[var(--text)] tabular-nums leading-tight mt-0.5 truncate">
+                {winRateDisplay}
+              </p>
+            </div>
+            <div className="min-w-0 overflow-hidden">
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--text-muted)] truncate">
+                {t('tipster.total_picks_short')}
+              </p>
+              <p className="text-sm font-bold text-[var(--text)] tabular-nums leading-tight mt-0.5 truncate">
+                {tipster.total_predictions ?? 0}
+              </p>
             </div>
           </div>
         ) : (
@@ -218,9 +219,9 @@ export function TipsterCard({
               </p>
             </div>
             <dl className="grid grid-cols-3 gap-px rounded-lg overflow-hidden border border-[var(--separator)] bg-[var(--separator)] mb-3">
-              <div className="bg-[var(--card)] px-2 py-2.5 text-center">
+              <div className="bg-[var(--card)] px-1.5 sm:px-2 py-2.5 text-center min-w-0 overflow-hidden">
                 <dt
-                  className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)]"
+                  className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)] truncate"
                   title={t('leaderboard.form_hint', {
                     days: String(TIPSTER_ACTIVE_WITHIN_DAYS),
                     cap: String(TIPSTER_FORM_POST_CAP),
@@ -228,21 +229,21 @@ export function TipsterCard({
                 >
                   {t('leaderboard.form_col')}
                 </dt>
-                <dd className="text-sm font-bold text-[var(--text)] tabular-nums mt-0.5">
+                <dd className="text-sm font-bold text-[var(--text)] tabular-nums mt-0.5 truncate">
                   {tipster.form_points != null && tipster.form_points > 0 ? tipster.form_points : '—'}
                 </dd>
               </div>
-              <div className="bg-[var(--card)] px-2 py-2.5 text-center">
-                <dt className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)]">
-                  {t('tipster.win_rate')}
+              <div className="bg-[var(--card)] px-1.5 sm:px-2 py-2.5 text-center min-w-0 overflow-hidden">
+                <dt className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)] truncate">
+                  {t('tipster.win_rate_short')}
                 </dt>
-                <dd className="text-sm font-bold text-[var(--text)] tabular-nums mt-0.5">{winRateDisplay}</dd>
+                <dd className="text-sm font-bold text-[var(--text)] tabular-nums mt-0.5 truncate">{winRateDisplay}</dd>
               </div>
-              <div className="bg-[var(--card)] px-2 py-2.5 text-center">
-                <dt className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)]">
-                  {t('tipster.total_picks')}
+              <div className="bg-[var(--card)] px-1.5 sm:px-2 py-2.5 text-center min-w-0 overflow-hidden">
+                <dt className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)] truncate">
+                  {t('tipster.total_picks_short')}
                 </dt>
-                <dd className="text-sm font-bold text-[var(--text)] tabular-nums mt-0.5">
+                <dd className="text-sm font-bold text-[var(--text)] tabular-nums mt-0.5 truncate">
                   {tipster.total_predictions ?? 0}
                 </dd>
               </div>
