@@ -47,6 +47,23 @@ export function isSportEnabled(sport: SportType): boolean {
   return getEnabledSports().includes(sport);
 }
 
+const PLATFORM_CHAT_SLUGS = new Set(['announcements', 'general']);
+
+/** Map a chat room slug to a sport, or null for platform / unknown rooms. */
+export function sportFromChatRoomSlug(slug: string): SportType | null {
+  const key = slug.replace(/-/g, '_');
+  if (SPORT_TYPES.includes(key as SportType)) return key as SportType;
+  return null;
+}
+
+/** Public community list: platform rooms plus rooms for currently enabled sports. */
+export function isChatRoomPublic(slug: string): boolean {
+  if (PLATFORM_CHAT_SLUGS.has(slug)) return true;
+  const sport = sportFromChatRoomSlug(slug);
+  if (!sport) return true;
+  return isSportEnabled(sport);
+}
+
 /** Get API-Sports base URL for a sport. Throws if sport has no URL configured. */
 export function getSportApiBaseUrl(sport: SportType): string {
   const url = SPORT_API_BASE_URLS[sport];

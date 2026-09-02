@@ -10,6 +10,7 @@ import { ChatReaction } from './entities/chat-reaction.entity';
 import { ChatReport } from './entities/chat-report.entity';
 import { ChatBan } from './entities/chat-ban.entity';
 import { filterMessageContent, isAllowedReaction } from './chat-filter.util';
+import { isChatRoomPublic } from '../../config/sports.config';
 
 @Injectable()
 export class ChatService {
@@ -33,44 +34,28 @@ export class ChatService {
       where: { isActive: true },
       order: { sortOrder: 'ASC' },
     });
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const activeSince = new Date(Date.now() - this.ACTIVE_WINDOW_MINUTES * 60 * 1000);
-
-    const [todayCounts, activePerRoom] = await Promise.all([
-      this.dataSource.query(`
-        SELECT room_id, COUNT(*) as count
-        FROM chat_messages
-        WHERE is_deleted = FALSE AND created_at >= $1
-        GROUP BY room_id
-      `, [today]),
-      this.dataSource.query(`
-        SELECT room_id, COUNT(DISTINCT user_id) as count
-        FROM chat_messages
-        WHERE is_deleted = FALSE AND created_at >= $1 AND user_id IS NOT NULL
-        GROUP BY room_id
-      `, [activeSince]),
-    ]);
-
-    const todayMap = Object.fromEntries(todayCounts.map((r: any) => [r.room_id, parseInt(r.count)]));
-    const activeMap = Object.fromEntries(activePerRoom.map((r: any) => [r.room_id, parseInt(r.count)]));
-
-    return rooms.map((r) => ({
-      ...r,
-      todayMessages: todayMap[r.id] || 0,
-      activeInRoom: activeMap[r.id] || 0,
-    }));
+    return this.withRoomActivity(rooms.filter((r) => isChatRoomPublic(r.slug)));
   }
 
-  /** Total distinct users who sent a message in any room in the last N minutes */
+  /** All rooms for admin management, including hidden sport rooms. */
+  async getAdminRooms(): Promise<any[]> {
+    const rooms = await this.roomRepo.find({
+      order: { sortOrder: 'ASC' },
+    });
+    return this.withRoomActivity(rooms);
+  }
+
+  /** Total distinct users who sent a message in a public room in the last N minutes */
   async getTotalActiveOnline(): Promise<number> {
+    const publicIds = await this.publicRoomIds();
+    if (publicIds.length === 0) return 0;
     const activeSince = new Date(Date.now() - this.ACTIVE_WINDOW_MINUTES * 60 * 1000);
     const [row] = await this.dataSource.query(`
       SELECT COUNT(DISTINCT user_id) as count
       FROM chat_messages
       WHERE is_deleted = FALSE AND created_at >= $1 AND user_id IS NOT NULL
-    `, [activeSince]);
+        AND room_id = ANY($2)
+    `, [activeSince, publicIds]);
     return row ? parseInt(row.count) : 0;
   }
 
@@ -82,10 +67,19 @@ export class ChatService {
     return room;
   }
 
+  /** Public community lookup — hidden sport rooms 404 like they were never listed. */
+  async getPublicRoom(idOrSlug: string): Promise<ChatRoom> {
+    const room = await this.getRoom(idOrSlug);
+    if (!room.isActive || !isChatRoomPublic(room.slug)) {
+      throw new NotFoundException('This chat room does not exist.');
+    }
+    return room;
+  }
+
   // ─── Messages ────────────────────────────────────────────────────────────
 
   async getMessages(roomIdOrSlug: string, limit = 100, beforeId?: number): Promise<any[]> {
-    const room = await this.getRoom(roomIdOrSlug);
+    const room = await this.getPublicRoom(roomIdOrSlug);
 
     let query = this.dataSource
       .createQueryBuilder(ChatMessage, 'm')
@@ -140,7 +134,7 @@ export class ChatService {
   }
 
   async getNewMessages(roomIdOrSlug: string, afterId: number): Promise<any[]> {
-    const room = await this.getRoom(roomIdOrSlug);
+    const room = await this.getPublicRoom(roomIdOrSlug);
 
     const messages = await this.dataSource
       .createQueryBuilder(ChatMessage, 'm')
@@ -180,7 +174,12 @@ export class ChatService {
 
   async sendMessage(userId: number, roomIdOrSlug: string, content: string): Promise<any> {
     const room = await this.getRoom(roomIdOrSlug);
-    if (!room.isActive) throw new ForbiddenException('This chat room is currently closed. Please try again later.');
+    if (!isChatRoomPublic(room.slug)) {
+      throw new NotFoundException('This chat room does not exist.');
+    }
+    if (!room.isActive) {
+      throw new ForbiddenException('This chat room is currently closed. Please try again later.');
+    }
 
     // Check ban/mute
     await this.assertNotBanned(userId);
@@ -387,6 +386,41 @@ export class ChatService {
   }
 
   // ─── Private helpers ─────────────────────────────────────────────────────
+
+  private async publicRoomIds(): Promise<number[]> {
+    const rooms = await this.roomRepo.find({ where: { isActive: true } });
+    return rooms.filter((r) => isChatRoomPublic(r.slug)).map((r) => r.id);
+  }
+
+  private async withRoomActivity(rooms: ChatRoom[]): Promise<any[]> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const activeSince = new Date(Date.now() - this.ACTIVE_WINDOW_MINUTES * 60 * 1000);
+
+    const [todayCounts, activePerRoom] = await Promise.all([
+      this.dataSource.query(`
+        SELECT room_id, COUNT(*) as count
+        FROM chat_messages
+        WHERE is_deleted = FALSE AND created_at >= $1
+        GROUP BY room_id
+      `, [today]),
+      this.dataSource.query(`
+        SELECT room_id, COUNT(DISTINCT user_id) as count
+        FROM chat_messages
+        WHERE is_deleted = FALSE AND created_at >= $1 AND user_id IS NOT NULL
+        GROUP BY room_id
+      `, [activeSince]),
+    ]);
+
+    const todayMap = Object.fromEntries(todayCounts.map((r: any) => [r.room_id, parseInt(r.count)]));
+    const activeMap = Object.fromEntries(activePerRoom.map((r: any) => [r.room_id, parseInt(r.count)]));
+
+    return rooms.map((r) => ({
+      ...r,
+      todayMessages: todayMap[r.id] || 0,
+      activeInRoom: activeMap[r.id] || 0,
+    }));
+  }
 
   private async assertNotBanned(userId: number): Promise<void> {
     const [ban] = await this.dataSource.query(`

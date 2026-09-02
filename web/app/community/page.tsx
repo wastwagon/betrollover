@@ -13,6 +13,7 @@ import { getApiErrorMessage } from '@/lib/api-error-message';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { filterDiscoveryChatRooms, isDiscoveryChatRoomAllowed } from '@/lib/football-only-discovery';
 import { IconChat } from '@/components/ios/icons';
 const ALLOWED_REACTIONS = ['👍', '❤️', '😂', '🔥'];
 const POLL_INTERVAL = 3000; // 3 s normal, slows to 8 s if idle
@@ -144,7 +145,8 @@ function CommunityPageInner() {
       fetch(`${getApiUrl()}/chat/presence`).then((r) => r.json()),
     ])
       .then(([roomsData, presenceData]) => {
-        setRooms(Array.isArray(roomsData) ? roomsData : []);
+        const raw = Array.isArray(roomsData) ? roomsData : [];
+        setRooms(filterDiscoveryChatRooms(raw));
         setTotalOnline(typeof presenceData?.totalOnline === 'number' ? presenceData.totalOnline : null);
       })
       .catch(() => {
@@ -159,8 +161,21 @@ function CommunityPageInner() {
     return () => clearInterval(interval);
   }, [refreshRoomsAndPresence]);
 
+  // Hidden sport rooms stay out of the sidebar; send leftover deep-links to General.
+  useEffect(() => {
+    if (rooms.length === 0) return;
+    if (!rooms.some((r) => r.slug === activeSlug)) {
+      router.replace('/community?room=general');
+    }
+  }, [rooms, activeSlug, router]);
+
   // Load initial messages when room changes
   useEffect(() => {
+    if (!isDiscoveryChatRoomAllowed(activeSlug)) {
+      setLoading(false);
+      setMessages([]);
+      return;
+    }
     setLoading(true);
     setMessages([]);
     lastIdRef.current = 0;
@@ -192,6 +207,7 @@ function CommunityPageInner() {
   // Adaptive polling
   const poll = useCallback(async () => {
     if (document.hidden) return;
+    if (!isDiscoveryChatRoomAllowed(activeSlug)) return;
     try {
       const res = await fetch(`${getApiUrl()}/chat/rooms/${activeSlug}/poll?after_id=${lastIdRef.current}`);
       if (!res.ok) return;
@@ -296,33 +312,48 @@ function CommunityPageInner() {
         {/* Room sidebar */}
         <aside className="w-64 shrink-0 hidden md:flex flex-col gap-1">
           <h2 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2 px-2">{t('community.rooms_section')}</h2>
-          {rooms.map((room) => (
-            <button
-              key={room.slug}
-              type="button"
-              onClick={() => router.push(`/community?room=${room.slug}`)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
-                activeSlug === room.slug
-                  ? 'bg-[var(--primary)] text-white'
-                  : 'text-[var(--text-muted)] hover:bg-[var(--fill-secondary)]'
-              }`}
-            >
-              <span className="text-xl">{room.icon}</span>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm truncate">{room.name}</div>
-                <div className="flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
-                  {room.todayMessages > 0 && (
-                    <span>{t('community.messages_today_badge', { count: String(room.todayMessages) })}</span>
-                  )}
-                  {(room.activeInRoom ?? 0) > 0 && (
-                    <span className="text-[var(--success)]">
-                      {t('community.chatting', { count: String(room.activeInRoom) })}
-                    </span>
-                  )}
+          {rooms.map((room) => {
+            const selected = activeSlug === room.slug;
+            return (
+              <button
+                key={room.slug}
+                type="button"
+                onClick={() => router.push(`/community?room=${room.slug}`)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
+                  selected
+                    ? 'bg-[var(--primary)] text-white'
+                    : 'text-[var(--text-muted)] hover:bg-[var(--fill-secondary)]'
+                }`}
+              >
+                <span className="text-xl">{room.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm truncate">{room.name}</div>
+                  <div
+                    className={`flex items-center gap-2 text-xs ${
+                      selected ? 'text-white/90' : 'text-[var(--text-tertiary)]'
+                    }`}
+                  >
+                    {room.todayMessages > 0 && (
+                      <span
+                        className={
+                          selected
+                            ? 'inline-flex items-center font-semibold text-[11px] leading-none px-1.5 py-0.5 rounded-full bg-white text-[var(--text)]'
+                            : undefined
+                        }
+                      >
+                        {t('community.messages_today_badge', { count: String(room.todayMessages) })}
+                      </span>
+                    )}
+                    {(room.activeInRoom ?? 0) > 0 && (
+                      <span className={selected ? 'font-medium text-white' : 'text-[var(--success)]'}>
+                        {t('community.chatting', { count: String(room.activeInRoom) })}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </button>
-          ))}
+              </button>
+            );
+          })}
 
           {/* Disclaimer */}
           <div className="mt-4 p-3 bg-[var(--card)] rounded-lg text-xs text-[var(--text-tertiary)] leading-relaxed border border-[var(--border)]">

@@ -65,3 +65,17 @@ export function isDiscoverySportAllowed(sport: string | null | undefined): boole
   const s = sport.toLowerCase().trim();
   return s === FOOTBALL_SPORT_KEY || s === 'soccer';
 }
+
+/** Platform rooms plus football. Extra sport rooms stay hidden while discovery is football-only. */
+export const FOOTBALL_ONLY_CHAT_SLUGS = ['announcements', 'general', 'football'] as const;
+
+export function isDiscoveryChatRoomAllowed(slug: string | null | undefined): boolean {
+  if (!isFootballOnlyDiscovery()) return true;
+  if (!slug) return false;
+  return (FOOTBALL_ONLY_CHAT_SLUGS as readonly string[]).includes(slug);
+}
+
+export function filterDiscoveryChatRooms<T extends { slug: string }>(rooms: T[]): T[] {
+  if (!isFootballOnlyDiscovery()) return rooms;
+  return rooms.filter((r) => isDiscoveryChatRoomAllowed(r.slug));
+}

@@ -111,7 +111,7 @@ export default function AdminChatPage() {
   const loadRooms = async () => {
     setLoading(true);
     try {
-      const res = await fetch(api('/rooms'), { headers: authHeaders() });
+      const res = await fetch(api('/admin/rooms'), { headers: authHeaders() });
       const data = res.ok ? await res.json() : null;
       setRooms(Array.isArray(data) ? data : []);
     } catch {

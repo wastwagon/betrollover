@@ -25,7 +25,7 @@ export class ChatController {
 
   @Get('rooms/:slug')
   getRoom(@Param('slug') slug: string) {
-    return this.chatService.getRoom(slug);
+    return this.chatService.getPublicRoom(slug);
   }
 
   @Get('rooms/:slug/messages')
@@ -142,6 +142,13 @@ export class ChatController {
   liftBan(@Param('userId') userId: string, @Request() req: any) {
     this.assertAdmin(req.user);
     return this.chatService.liftBan(parseInt(userId));
+  }
+
+  @Get('admin/rooms')
+  @UseGuards(JwtAuthGuard)
+  getAdminRooms(@Request() req: any) {
+    this.assertAdmin(req.user);
+    return this.chatService.getAdminRooms();
   }
 
   @Get('admin/flagged')
