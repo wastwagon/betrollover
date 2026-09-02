@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
 import { DiscoverFamilyNav } from '@/components/DiscoverFamilyNav';
-import { buttonClassName } from '@/components/ui/Button';
+import { buttonClassName } from '@/components/ui/button-styles';
 import { getLocale, buildT } from '@/lib/i18n';
 import {
   fetchNewsArticleBySlug,

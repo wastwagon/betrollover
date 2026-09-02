@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { IconBook } from '@/components/ios/icons';
-import { buttonClassName } from '@/components/ui/Button';
+import { buttonClassName } from '@/components/ui/button-styles';
 import { getLocale, buildT } from '@/lib/i18n';
 
 export default async function NewsArticleNotFound() {

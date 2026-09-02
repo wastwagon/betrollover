@@ -48,7 +48,7 @@ const nextConfig = {
         key: 'Content-Security-Policy-Report-Only',
         value: [
           "default-src 'self'",
-          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://js.paystack.co https://www.googletagmanager.com https://www.google-analytics.com",
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://js.paystack.co https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com",
           "style-src 'self' 'unsafe-inline' https://accounts.google.com",
           // http/ws: local API (localhost:6001) + Next HMR. Report-only, so this does not block.
           "connect-src 'self' https: http: ws: wss:",
