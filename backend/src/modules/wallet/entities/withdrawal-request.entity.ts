@@ -32,6 +32,10 @@ export class WithdrawalRequest {
   @Column({ type: 'varchar', length: 100, nullable: true })
   paystackTransferCode: string | null = null;
 
+  /** On-chain hash (or off-platform transfer id) when admin completes a manual send. */
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  externalTxHash: string | null = null;
+
   @Column('text', { nullable: true })
   failureReason: string | null = null;
 

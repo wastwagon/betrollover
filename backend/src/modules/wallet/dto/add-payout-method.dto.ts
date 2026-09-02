@@ -47,4 +47,9 @@ export class AddPayoutMethodDto {
   @IsOptional()
   @IsString()
   cryptoCurrency?: string;
+
+  /** TRC20 | ERC20 | BEP20 — required when type is crypto */
+  @IsOptional()
+  @IsString()
+  network?: string;
 }

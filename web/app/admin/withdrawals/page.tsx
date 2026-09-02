@@ -33,6 +33,7 @@ interface Withdrawal {
   status: string;
   reference: string | null;
   paystackTransferCode: string | null;
+  externalTxHash?: string | null;
   failureReason: string | null;
   createdAt: string;
   updatedAt?: string;
@@ -47,15 +48,21 @@ interface Withdrawal {
   payoutMethod?: PayoutMethod | null;
 }
 
-type ActionState = { type: 'none' } | { type: 'confirming_approve' } | { type: 'rejecting'; reason: string };
+type ActionState =
+  | { type: 'none' }
+  | { type: 'confirming_approve'; txHash: string }
+  | { type: 'rejecting'; reason: string };
 
 /** Admin can complete, fail, or cancel while the request is still open (manual = pending; Paystack path = processing). */
 function canAdminActOnWithdrawal(status: string): boolean {
   return status === 'pending' || status === 'processing';
 }
 
-function payoutRailLabel(w: Withdrawal): 'Paystack' | 'Manual' {
+function payoutRailLabel(w: Withdrawal): 'Paystack' | 'Crypto' | 'Bank' | 'MoMo' | 'Manual' {
   if (w.paystackTransferCode || w.payoutMethod?.recipientCode?.startsWith('RCP_')) return 'Paystack';
+  if (w.payoutMethod?.type === 'crypto') return 'Crypto';
+  if (w.payoutMethod?.type === 'bank') return 'Bank';
+  if (w.payoutMethod?.type === 'mobile_money') return 'MoMo';
   return 'Manual';
 }
 
@@ -65,7 +72,10 @@ function formatPayoutInfo(pm: PayoutMethod | null | undefined): string {
     try {
       const d = JSON.parse(pm.manualDetails);
       const parts: string[] = [pm.displayName];
-      if (d.walletAddress) parts.push(`${d.cryptoCurrency ?? 'Crypto'}: ${String(d.walletAddress).slice(0, 12)}…`);
+      if (d.walletAddress) {
+        const token = [d.cryptoCurrency ?? 'Crypto', d.network].filter(Boolean).join(' ');
+        parts.push(`${token}: ${String(d.walletAddress)}`);
+      }
       if (d.phone) parts.push(`Phone: ${d.phone}`);
       if (d.accountNumber) parts.push(`Acc: ${d.accountNumber}`);
       if (d.bankName) parts.push(`Bank: ${d.bankName}`);
@@ -179,6 +189,7 @@ function PayoutDetailModal({ w, onClose }: { w: Withdrawal; onClose: () => void 
             <DetailRow label="Status" value={w.status} />
             <DetailRow label="Reference" value={w.reference ?? undefined} mono copyLabel="Reference" />
             <DetailRow label="Paystack transfer" value={w.paystackTransferCode ?? undefined} mono copyLabel="Transfer code" />
+            <DetailRow label="On-chain / transfer id" value={w.externalTxHash ?? undefined} mono copyLabel="Transfer id" />
             <DetailRow label="Failure reason" value={w.failureReason ?? undefined} />
           </section>
 
@@ -286,6 +297,7 @@ export default function AdminWithdrawalsPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [userIdFilter, setUserIdFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [payoutTypeFilter, setPayoutTypeFilter] = useState('');
   const [actionState, setActionState] = useState<Record<number, ActionState>>({});
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [detailWithdrawal, setDetailWithdrawal] = useState<Withdrawal | null>(null);
@@ -297,6 +309,7 @@ export default function AdminWithdrawalsPage() {
     const params = new URLSearchParams({ page: pg.toString(), limit: '50' });
     if (userIdFilter) params.append('userId', userIdFilter);
     if (statusFilter) params.append('status', statusFilter);
+    if (payoutTypeFilter) params.append('payoutType', payoutTypeFilter);
     fetch(`${getApiUrl()}/admin/withdrawals?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -310,7 +323,7 @@ export default function AdminWithdrawalsPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchData(page); }, [page, userIdFilter, statusFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchData(page); }, [page, userIdFilter, statusFilter, payoutTypeFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Keep payout detail modal in sync when the list refetches (e.g. wallet balance after approve/reject). */
   useEffect(() => {
@@ -321,7 +334,7 @@ export default function AdminWithdrawalsPage() {
     });
   }, [withdrawals]);
 
-  const updateStatus = async (id: number, status: string, failureReason?: string) => {
+  const updateStatus = async (id: number, status: string, failureReason?: string, externalTxHash?: string) => {
     const token = localStorage.getItem('token');
     if (!token) return;
     setUpdatingId(id);
@@ -329,7 +342,7 @@ export default function AdminWithdrawalsPage() {
       const res = await fetch(`${getApiUrl()}/admin/withdrawals/${id}/status`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, failureReason }),
+        body: JSON.stringify({ status, failureReason, externalTxHash }),
       });
       if (res.ok) {
         await res.json().catch(() => ({}));
@@ -359,7 +372,7 @@ export default function AdminWithdrawalsPage() {
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Withdrawals Management</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Review and process withdrawal requests. Instant Paystack Mobile Money is off until you enable it in Admin → Settings (Registered Business required). Until then every payout is manual. <strong>Reject</strong> records a <strong>Rejected</strong> status (optional reason shown to the user).{' '}
+            Review and process withdrawal requests. Rails: Paystack Mobile Money (if enabled in Settings), or manual Bank / Crypto / MoMo. Crypto is sent off-platform to the saved address — paste the tx hash when you approve. <strong>Reject</strong> records a <strong>Rejected</strong> status (optional reason shown to the user).{' '}
             <strong>Cancel &amp; refund</strong> records <strong>Cancelled</strong> — use when stopping the payout without a formal rejection (e.g. duplicate request). Both refund the debited amount. Users get email and in-app updates.
           </p>
         </div>
@@ -409,6 +422,19 @@ export default function AdminWithdrawalsPage() {
             <option value="failed">Failed</option>
             <option value="rejected">Rejected</option>
             <option value="cancelled">Cancelled</option>
+          </select>
+          <select
+            id="admin-withdrawals-rail"
+            value={payoutTypeFilter}
+            onChange={(e) => { setPayoutTypeFilter(e.target.value); setPage(1); }}
+            className={fieldControlClassName(undefined, 'sm:w-auto')}
+            aria-label="Filter by payout rail"
+          >
+            <option value="">All rails</option>
+            <option value="mobile_money">Mobile Money</option>
+            <option value="bank">Bank</option>
+            <option value="crypto">Crypto</option>
+            <option value="manual">Manual</option>
           </select>
         </div>
 
@@ -504,6 +530,12 @@ export default function AdminWithdrawalsPage() {
                                   {w.paystackTransferCode.length > 18 ? '…' : ''}
                                 </p>
                               )}
+                              {w.externalTxHash && (
+                                <p className="text-[10px] font-mono text-gray-400 dark:text-gray-500 mt-0.5 truncate max-w-[140px]" title={w.externalTxHash}>
+                                  TX: {w.externalTxHash.slice(0, 18)}
+                                  {w.externalTxHash.length > 18 ? '…' : ''}
+                                </p>
+                              )}
                             </td>
 
                             {/* Inline action cell */}
@@ -519,7 +551,7 @@ export default function AdminWithdrawalsPage() {
                                 <div className="flex flex-wrap gap-2">
                                   <button
                                     type="button"
-                                    onClick={() => setAction(w.id, { type: 'confirming_approve' })}
+                                    onClick={() => setAction(w.id, { type: 'confirming_approve', txHash: w.externalTxHash ?? '' })}
                                     className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-semibold transition-colors"
                                   >
                                     ✓ Approve
@@ -549,12 +581,25 @@ export default function AdminWithdrawalsPage() {
                                   <p className="text-xs font-semibold text-green-700 dark:text-green-400">
                                     {payoutRailLabel(w) === 'Paystack' && w.status === 'processing'
                                       ? 'Paystack may still be sending this. Only approve if you paid the user yourself or confirmed success in Paystack.'
-                                      : 'Confirm payment was sent?'}
+                                      : w.payoutMethod?.type === 'crypto'
+                                        ? 'Send the crypto off-platform, then confirm. Paste the tx hash if you have it.'
+                                        : 'Confirm payment was sent?'}
                                   </p>
+                                  {(w.payoutMethod?.type === 'crypto' || w.payoutMethod?.type === 'bank' || w.payoutMethod?.type === 'manual') && (
+                                    <Input
+                                      id={`admin-withdraw-tx-${w.id}`}
+                                      placeholder={w.payoutMethod?.type === 'crypto' ? 'Tx hash (optional)' : 'Transfer id (optional)'}
+                                      value={action.txHash}
+                                      onChange={(e) =>
+                                        setAction(w.id, { type: 'confirming_approve', txHash: e.target.value })
+                                      }
+                                      aria-label="Transfer id"
+                                    />
+                                  )}
                                   <div className="flex gap-2">
                                     <button
                                       type="button"
-                                      onClick={() => void updateStatus(w.id, 'completed')}
+                                      onClick={() => void updateStatus(w.id, 'completed', undefined, action.txHash || undefined)}
                                       className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-semibold"
                                     >
                                       Yes, Approve

@@ -7,6 +7,7 @@ import {
   selectEligibleRolloverTicket,
   slotKeyFromTitle,
   utcDateStamp,
+  fillPlanCalendarDates,
 } from './rollover-desk.util';
 
 function ticket(
@@ -112,5 +113,16 @@ describe('rollover-desk.util', () => {
     const twoLive = buildBoardMoneyLadder([1.64, 1.8, null]);
     expect(twoLive[1]).toMatchObject({ stakeGhs: 164, returnGhs: 295, odds: 1.8 });
     expect(twoLive[2]).toMatchObject({ stakeGhs: 295, returnGhs: 472, odds: 1.6 });
+  });
+
+  it('keeps attached calendar dates and fills open days forward from today', () => {
+    expect(fillPlanCalendarDates([null, null, null], '2026-09-02')).toEqual([
+      '2026-09-02',
+      '2026-09-03',
+      '2026-09-04',
+    ]);
+    expect(
+      fillPlanCalendarDates(['2026-08-30', '2026-08-30', '2026-08-31', null, null], '2026-09-02'),
+    ).toEqual(['2026-08-30', '2026-08-30', '2026-08-31', '2026-09-01', '2026-09-02']);
   });
 });

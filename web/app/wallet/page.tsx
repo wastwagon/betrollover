@@ -85,12 +85,15 @@ function WalletContent() {
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
   const [showPayoutForm, setShowPayoutForm] = useState(false);
   const [payoutForm, setPayoutForm] = useState({
-    type: 'mobile_money' as 'mobile_money' | 'bank',
+    type: 'mobile_money' as 'mobile_money' | 'bank' | 'crypto',
     name: '',
     phone: '',
     provider: 'MTN',
     accountNumber: '',
     bankName: '',
+    cryptoCurrency: 'USDT',
+    network: 'TRC20',
+    walletAddress: '',
   });
   const [payoutLoading, setPayoutLoading] = useState(false);
   const [payoutError, setPayoutError] = useState<string | null>(null);
@@ -275,6 +278,18 @@ function WalletContent() {
     }
   };
 
+  const emptyPayoutForm = {
+    type: 'mobile_money' as const,
+    name: '',
+    phone: '',
+    provider: 'MTN',
+    accountNumber: '',
+    bankName: '',
+    cryptoCurrency: 'USDT',
+    network: 'TRC20',
+    walletAddress: '',
+  };
+
   const handleAddPayoutMethod = async () => {
     if (payoutForm.type === 'mobile_money') {
       if (!payoutForm.name.trim() || !payoutForm.phone.trim()) {
@@ -286,11 +301,19 @@ function WalletContent() {
         setPayoutError(t('wallet.name_account_bank_required'));
         return;
       }
+    } else if (payoutForm.type === 'crypto') {
+      if (!payoutForm.name.trim() || !payoutForm.walletAddress.trim()) {
+        setPayoutError(t('wallet.wallet_address_required'));
+        return;
+      }
     }
     setPayoutError(null);
     setPayoutLoading(true);
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) {
+      setPayoutLoading(false);
+      return;
+    }
     try {
       const body =
         payoutForm.type === 'mobile_money'
@@ -302,14 +325,24 @@ function WalletContent() {
               country: 'GH',
               currency: 'GHS',
             }
-          : {
-              type: 'bank' as const,
-              name: payoutForm.name,
-              accountNumber: payoutForm.accountNumber,
-              bankName: payoutForm.bankName,
-              country: 'GH',
-              currency: 'GHS',
-            };
+          : payoutForm.type === 'bank'
+            ? {
+                type: 'bank' as const,
+                name: payoutForm.name,
+                accountNumber: payoutForm.accountNumber,
+                bankName: payoutForm.bankName,
+                country: 'GH',
+                currency: 'GHS',
+              }
+            : {
+                type: 'crypto' as const,
+                name: payoutForm.name,
+                walletAddress: payoutForm.walletAddress,
+                cryptoCurrency: payoutForm.cryptoCurrency,
+                network: payoutForm.network,
+                country: 'GH',
+                currency: 'GHS',
+              };
       const res = await fetch(`${getApiUrl()}/wallet/payout-methods`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -318,14 +351,7 @@ function WalletContent() {
       const data = await res.json();
       if (!res.ok) throw new Error(getApiErrorMessage(data, t('wallet.failed_add_payout')));
       setShowPayoutForm(false);
-      setPayoutForm({
-        type: 'mobile_money',
-        name: '',
-        phone: '',
-        provider: 'MTN',
-        accountNumber: '',
-        bankName: '',
-      });
+      setPayoutForm(emptyPayoutForm);
       loadData();
     } catch (e) {
       setPayoutError(e instanceof Error ? e.message : t('wallet.failed'));
@@ -529,17 +555,20 @@ function WalletContent() {
                           <select
                             id="wallet-payout-type"
                             value={payoutForm.type}
-                            onChange={(e) => setPayoutForm((p) => ({ ...p, type: e.target.value as 'mobile_money' | 'bank' }))}
+                            onChange={(e) => setPayoutForm((p) => ({ ...p, type: e.target.value as 'mobile_money' | 'bank' | 'crypto' }))}
                             className={fieldControlClassName()}
                           >
                             <option value="mobile_money">{t('wallet.mobile_money')}</option>
                             <option value="bank">{t('wallet.bank_account')}</option>
+                            <option value="crypto">{t('wallet.cryptocurrency')}</option>
                           </select>
                         </Field>
                         <p className="text-xs text-[var(--text-muted)] -mt-1">
                           {payoutForm.type === 'mobile_money'
                             ? t(momoInstantPayout ? 'wallet.payout_momo_hint' : 'wallet.payout_momo_hint_manual')
-                            : t('wallet.payout_bank_hint')}
+                            : payoutForm.type === 'bank'
+                              ? t('wallet.payout_bank_hint')
+                              : t('wallet.payout_crypto_hint')}
                         </p>
                         <Input
                           label={t('wallet.account_holder')}
@@ -585,6 +614,45 @@ function WalletContent() {
                             />
                           </>
                         )}
+                        {payoutForm.type === 'crypto' && (
+                          <>
+                            <Field label={t('wallet.crypto_asset')} htmlFor="wallet-payout-asset">
+                              <select
+                                id="wallet-payout-asset"
+                                value={payoutForm.cryptoCurrency}
+                                onChange={(e) => setPayoutForm((p) => ({ ...p, cryptoCurrency: e.target.value }))}
+                                className={fieldControlClassName()}
+                              >
+                                <option value="USDT">USDT</option>
+                                <option value="USDC">USDC</option>
+                              </select>
+                            </Field>
+                            <Field label={t('wallet.crypto_network')} htmlFor="wallet-payout-network">
+                              <select
+                                id="wallet-payout-network"
+                                value={payoutForm.network}
+                                onChange={(e) => setPayoutForm((p) => ({ ...p, network: e.target.value }))}
+                                className={fieldControlClassName()}
+                              >
+                                <option value="TRC20">TRC20 (Tron)</option>
+                                <option value="ERC20">ERC20 (Ethereum)</option>
+                                <option value="BEP20">BEP20 (BNB Chain)</option>
+                              </select>
+                            </Field>
+                            <Input
+                              label={t('wallet.wallet_address')}
+                              placeholder={
+                                payoutForm.network === 'TRC20'
+                                  ? 'T…'
+                                  : '0x…'
+                              }
+                              value={payoutForm.walletAddress}
+                              onChange={(e) => setPayoutForm((p) => ({ ...p, walletAddress: e.target.value }))}
+                              autoComplete="off"
+                              spellCheck={false}
+                            />
+                          </>
+                        )}
                         {payoutError && <p className="text-sm text-[var(--destructive)]">{payoutError}</p>}
                         <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                           <Button
@@ -624,13 +692,14 @@ function WalletContent() {
                   <div className="space-y-3">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] min-w-0">
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-semibold text-[var(--text-muted)] mb-0.5">Payout method</p>
+                        <p className="text-xs font-semibold text-[var(--text-muted)] mb-0.5">{t('wallet.payout_method')}</p>
                         <p className="text-sm text-[var(--text)] font-medium break-words">
                           {payoutMethods[0].displayName}
                           {payoutMethods[0].accountMasked && <span className="text-[var(--text-muted)]"> · {payoutMethods[0].accountMasked}</span>}
                           <span className="ml-1 text-xs text-[var(--text-muted)]">
-                            {payoutMethods[0].type === 'mobile_money' ? '· Mobile Money'
-                              : payoutMethods[0].type === 'bank' ? '· Bank'
+                            {payoutMethods[0].type === 'mobile_money' ? `· ${t('wallet.mobile_money')}`
+                              : payoutMethods[0].type === 'bank' ? `· ${t('wallet.bank_account')}`
+                              : payoutMethods[0].type === 'crypto' ? `· ${t('wallet.cryptocurrency')}`
                               : ''}
                           </span>
                         </p>

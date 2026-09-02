@@ -25,6 +25,7 @@ import {
   slotKeyFromTitle,
   utcDateStamp,
   utcDayBounds,
+  fillPlanCalendarDates,
 } from './rollover-desk.util';
 
 @Injectable()
@@ -128,6 +129,13 @@ export class RolloverDeskService {
         exampleStakeGhs: money.stakeGhs,
         exampleReturnGhs: money.returnGhs,
       };
+    });
+    const planDates = fillPlanCalendarDates(
+      slots.map((s) => s.calendarDate),
+      date,
+    );
+    slots.forEach((slot, i) => {
+      slot.calendarDate = planDates[i];
     });
 
     const finishMoney = ladder[ladder.length - 1];

@@ -3,55 +3,10 @@
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { useT } from '@/context/LanguageContext';
-import {
-  IconUsers,
-  IconCart,
-  IconBag,
-  IconCreditCard,
-  IconEarnings,
-  IconShield,
-  IconWallet,
-  IconLive,
-  IconGlobe,
-  IconTrending,
-  IconChart,
-  IconTarget,
-  IconBook,
-  IconBell,
-  IconMegaphone,
-  IconMail,
-  IconSettings,
-  IconChat,
-  IconBolt,
-} from '@/components/ios/icons';
+import { adminNavFor } from '@/lib/admin-nav';
+import { IconBolt } from '@/components/ios/icons';
 import { StatCard } from './StatCard';
 import type { Stats, User } from './types';
-
-const ADMIN_LINKS = [
-  { href: '/admin/users', icon: IconUsers, label: 'Users' },
-  { href: '/admin/marketplace', icon: IconCart, label: 'Marketplace' },
-  { href: '/admin/purchases', icon: IconBag, label: 'Purchases' },
-  { href: '/admin/deposits', icon: IconCreditCard, label: 'Deposits' },
-  { href: '/admin/withdrawals', icon: IconEarnings, label: 'Withdrawals' },
-  { href: '/admin/escrow', icon: IconShield, label: 'Escrow' },
-  { href: '/admin/wallet', icon: IconWallet, label: 'Wallet' },
-  { href: '/admin/fixtures', icon: IconLive, label: 'Fixtures' },
-  { href: '/admin/sports', icon: IconGlobe, label: 'Multi-Sport Sync' },
-  { href: '/admin/analytics', icon: IconTrending, label: 'Analytics' },
-  { href: '/admin/analytics?tab=sports', icon: IconGlobe, label: 'Sports Analytics' },
-  { href: '/admin/analytics?tab=acca', icon: IconChart, label: 'Acca Gen Analytics' },
-  { href: '/admin/ai-predictions', icon: IconTarget, label: 'AI Predictions' },
-  { href: '/admin/acca-desk', icon: IconChart, label: 'Acca Desk' },
-  { href: '/admin/news', icon: IconBook, label: 'News' },
-  { href: '/admin/content', icon: IconBook, label: 'Content Pages' },
-  { href: '/admin/resources', icon: IconBook, label: 'Resources' },
-  { href: '/admin/notifications', icon: IconBell, label: 'Notifications' },
-  { href: '/admin/ads', icon: IconMegaphone, label: 'Ads' },
-  { href: '/admin/email', icon: IconMail, label: 'Email Settings' },
-  { href: '/admin/settings', icon: IconSettings, label: 'Settings' },
-  { href: '/community', icon: IconChat, label: 'Community Chat' },
-  { href: '/admin/chat', icon: IconShield, label: 'Chat Moderation' },
-] as const;
 
 export function AdminDashboardHome({
   user,
@@ -94,7 +49,7 @@ export function AdminDashboardHome({
               hint="tipsters.is_active — matches public homepage count."
               value={stats?.users?.tipsters ?? 0}
             />
-            <StatCard title="Wallets" value={stats?.wallets?.count ?? 0} />
+            <StatCard title="Wallets" value={stats?.wallets?.count ?? 0} link="/admin/wallet" />
             <StatCard title="Total Balance (GHS)" value={stats?.wallets?.totalBalance ?? 0} format="currency" />
           </div>
 
@@ -114,7 +69,6 @@ export function AdminDashboardHome({
               hint={t('admin.stats_marketplace_active_hint')}
               value={stats?.picks?.activeMarketplace ?? 0}
             />
-            <StatCard title="Escrow Held (GHS)" value={stats?.escrow?.held ?? 0} format="currency" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
@@ -143,8 +97,9 @@ export function AdminDashboardHome({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <StatCard title="Pending Deposits" value={stats?.deposits?.pending ?? 0} />
+            <StatCard title="Pending Deposits" value={stats?.deposits?.pending ?? 0} link="/admin/deposits" />
             <StatCard title="Pending Withdrawals" value={stats?.withdrawals?.pending ?? 0} link="/admin/withdrawals" />
+            <StatCard title="Escrow Held (GHS)" value={stats?.escrow?.held ?? 0} format="currency" link="/admin/escrow" />
           </div>
 
           <div className="mb-6 sm:mb-8 bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] p-4 sm:p-6 min-w-0">
@@ -169,7 +124,7 @@ export function AdminDashboardHome({
             <div className="bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] p-4 sm:p-6 min-w-0">
               <h2 className="text-base sm:text-lg font-semibold text-[var(--text)] mb-3 sm:mb-4">{t('dashboard.quick_actions')}</h2>
               <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-1.5">
-                {ADMIN_LINKS.map(({ href, icon: Icon, label }) => (
+                {adminNavFor('dashboard').map(({ href, icon: Icon, label }) => (
                   <Link
                     key={href}
                     href={href}
@@ -207,7 +162,7 @@ export function AdminDashboardHome({
                     label: 'Live buyable (homepage)',
                     value: stats?.picks?.liveMarketplace != null ? `${stats.picks.liveMarketplace}` : '—',
                   },
-                  { label: 'Escrow Held', value: escrowHeld },
+                  { label: 'Escrow Held', value: escrowHeld, link: { href: '/admin/escrow', text: escrowHeld } },
                   {
                     label: 'Gross revenue (all purchases)',
                     value: stats?.purchases?.revenue != null ? `GHS ${Number(stats.purchases.revenue).toFixed(2)}` : '—',
@@ -223,11 +178,13 @@ export function AdminDashboardHome({
                     label: 'Pending Deposits',
                     value: stats?.deposits?.pending != null ? `${stats.deposits.pending}` : '—',
                     highlight: (stats?.deposits?.pending ?? 0) > 0,
+                    link: { href: '/admin/deposits', text: stats?.deposits?.pending != null ? `${stats.deposits.pending}` : '—' },
                   },
                   {
                     label: 'Pending Withdrawals',
                     value: stats?.withdrawals?.pending != null ? `${stats.withdrawals.pending}` : '—',
                     highlight: (stats?.withdrawals?.pending ?? 0) > 0,
+                    link: { href: '/admin/withdrawals', text: stats?.withdrawals?.pending != null ? `${stats.withdrawals.pending}` : '—' },
                   },
                   { label: 'Sports Active', value: '7 / 7 Live' },
                   { label: 'Multi-Sport Sync', value: undefined, link: { href: '/admin/sports', text: 'View Sync Status →' } },

@@ -599,6 +599,9 @@ export default function AdminAccaDeskPage() {
                 {overview.rollover.pendingDay ? (
                   <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
                     Pending day {overview.rollover.pendingDay.dayNumber}
+                    {overview.rollover.pendingDay.calendarDate
+                      ? ` · ${overview.rollover.pendingDay.calendarDate}`
+                      : ''}
                     {overview.rollover.pendingDay.ticketId ? (
                       <>
                         {' · '}

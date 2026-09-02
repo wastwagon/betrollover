@@ -1,77 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback, type ComponentType } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
-import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
-import {
-  IconHome,
-  IconDashboard,
-  IconTrending,
-  IconTarget,
-  IconChart,
-  IconPackage,
-  IconStar,
-  IconUsers,
-  IconCart,
-  IconBag,
-  IconCreditCard,
-  IconEarnings,
-  IconChat,
-  IconClipboard,
-  IconShield,
-  IconWallet,
-  IconBell,
-  IconLive,
-  IconGlobe,
-  IconBook,
-  IconMegaphone,
-  IconMail,
-  IconSettings,
-  IconLogout,
-} from '@/components/ios/icons';
-
-type MenuItem = {
-  href: string;
-  icon: ComponentType<{ className?: string }>;
-  label: string;
-};
-
-const menuItems: MenuItem[] = [
-  { href: '/', icon: IconHome, label: 'Home' },
-  { href: '/dashboard', icon: IconDashboard, label: 'Dashboard' },
-  { href: '/admin/analytics', icon: IconTrending, label: 'Analytics' },
-  { href: '/admin/ai-predictions', icon: IconTarget, label: 'AI Predictions' },
-  { href: '/admin/acca-desk', icon: IconChart, label: 'Acca Desk' },
-  ...(isSubscriptionsEnabled()
-    ? [
-        { href: '/admin/ai-tipster-packages', icon: IconPackage, label: 'AI Packages' },
-        { href: '/admin/subscriptions', icon: IconStar, label: 'VIP subscribers' },
-      ]
-    : []),
-  { href: '/admin/users', icon: IconUsers, label: 'Users' },
-  { href: '/admin/marketplace', icon: IconCart, label: 'Marketplace' },
-  { href: '/admin/purchases', icon: IconBag, label: 'Purchases' },
-  { href: '/admin/deposits', icon: IconCreditCard, label: 'Deposits' },
-  { href: '/admin/withdrawals', icon: IconEarnings, label: 'Withdrawals' },
-  { href: '/admin/support', icon: IconChat, label: 'Support' },
-  { href: '/admin/audit-log', icon: IconClipboard, label: 'Audit log' },
-  { href: '/admin/chat', icon: IconChat, label: 'Chat Moderation' },
-  { href: '/admin/pick-comments', icon: IconChat, label: 'Pick Comments' },
-  { href: '/admin/escrow', icon: IconShield, label: 'Escrow' },
-  { href: '/admin/wallet', icon: IconWallet, label: 'Wallet' },
-  { href: '/admin/notifications', icon: IconBell, label: 'Notifications' },
-  { href: '/admin/fixtures', icon: IconLive, label: 'Fixtures' },
-  { href: '/admin/sports', icon: IconGlobe, label: 'Multi-Sport' },
-  { href: '/admin/content', icon: IconBook, label: 'Content' },
-  { href: '/admin/news', icon: IconBook, label: 'News' },
-  { href: '/admin/resources', icon: IconBook, label: 'Resources' },
-  { href: '/admin/ads', icon: IconMegaphone, label: 'Ads' },
-  { href: '/admin/email', icon: IconMail, label: 'Email' },
-  { href: '/admin/settings', icon: IconSettings, label: 'Settings' },
-];
+import { adminNavFor } from '@/lib/admin-nav';
+import { IconLogout } from '@/components/ios/icons';
 
 function SidebarContent({
   onItemClick,
@@ -109,7 +44,7 @@ function SidebarContent({
         </div>
       </div>
       <nav className="flex-1 min-h-0 overflow-y-auto p-3 space-y-1 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' as const }}>
-        {menuItems.map((item) => {
+        {adminNavFor('sidebar').map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link

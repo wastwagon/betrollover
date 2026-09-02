@@ -14,6 +14,7 @@ import { UserPurchasedPick } from '../accumulators/entities/user-purchased-pick.
 import { DepositRequest } from '../wallet/entities/deposit-request.entity';
 import { WithdrawalRequest } from '../wallet/entities/withdrawal-request.entity';
 import { PayoutMethod } from '../wallet/entities/payout-method.entity';
+import { normalizeExternalTxHash } from '../wallet/crypto-payout';
 import { SettlementService } from '../accumulators/settlement.service';
 import { OddsApiSettlementService } from '../odds-api/odds-api-settlement.service';
 import { VolleyballSyncService } from '../volleyball/volleyball-sync.service';
@@ -126,7 +127,7 @@ export class AdminService {
       this.depositRepo.count(),
       this.withdrawalRepo.count(),
       this.depositRepo.count({ where: { status: 'pending' } }),
-      this.withdrawalRepo.count({ where: { status: 'pending' } }),
+      this.withdrawalRepo.count({ where: { status: In(['pending', 'processing']) } }),
     ]);
 
     const [escrowHeld, subscriptionEscrowHeld] = await Promise.all([
@@ -1577,13 +1578,26 @@ export class AdminService {
   }
 
   // Withdrawals Management
-  async getAllWithdrawals(params: { userId?: number; status?: string; limit?: number; page?: number }) {
+  async getAllWithdrawals(params: {
+    userId?: number;
+    status?: string;
+    payoutType?: string;
+    limit?: number;
+    page?: number;
+  }) {
     const pageNum = Math.max(1, params.page ?? 1);
     const limitNum = Math.min(100, params.limit ?? 50);
     const skip = (pageNum - 1) * limitNum;
     const qb = this.withdrawalRepo.createQueryBuilder('w').orderBy('w.createdAt', 'DESC');
     if (params.userId) qb.andWhere('w.userId = :userId', { userId: params.userId });
     if (params.status) qb.andWhere('w.status = :status', { status: params.status });
+    const payoutType = params.payoutType?.trim();
+    if (payoutType && ['mobile_money', 'bank', 'crypto', 'manual'].includes(payoutType)) {
+      qb.andWhere(
+        `EXISTS (SELECT 1 FROM payout_methods pm WHERE pm.id = w.payout_method_id AND pm.type = :payoutType)`,
+        { payoutType },
+      );
+    }
     const [withdrawals, total] = await qb.skip(skip).take(limitNum).getManyAndCount();
 
     // Load payout methods and users for display (admin manual fulfill)
@@ -1635,7 +1649,13 @@ export class AdminService {
     return { items, total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) };
   }
 
-  async updateWithdrawalStatus(adminId: number, id: number, status: string, failureReason?: string) {
+  async updateWithdrawalStatus(
+    adminId: number,
+    id: number,
+    status: string,
+    failureReason?: string,
+    externalTxHash?: string,
+  ) {
     const allowed = new Set(['completed', 'failed', 'cancelled', 'rejected']);
     if (!allowed.has(status)) {
       throw new BadRequestException('Invalid status. Use completed, failed, rejected, or cancelled.');
@@ -1655,6 +1675,13 @@ export class AdminService {
       }
 
       if (failureReason) locked.failureReason = failureReason;
+      if (status === 'completed') {
+        const hash = normalizeExternalTxHash(externalTxHash);
+        if (externalTxHash?.trim() && !hash) {
+          throw new BadRequestException('Enter a valid transfer / transaction id (8–128 letters or numbers, no spaces).');
+        }
+        if (hash) locked.externalTxHash = hash;
+      }
       locked.status = status;
       const saved = await withdrawalRepo.save(locked);
 
@@ -1710,11 +1737,23 @@ export class AdminService {
         metadata: { amount: Number(withdrawal.amount).toFixed(2), reason: failureReason ?? '' },
       }).catch(() => {});
     } else if (status === 'completed') {
+      let sentTo = payout?.displayName || 'your payout method';
+      if (payout?.type === 'crypto' && payout.manualDetails) {
+        try {
+          const d = JSON.parse(payout.manualDetails) as { cryptoCurrency?: string; network?: string };
+          if (d.cryptoCurrency && d.network) {
+            sentTo = `your ${d.cryptoCurrency} (${d.network}) wallet`;
+          }
+        } catch {
+          /* keep displayName */
+        }
+      }
+      const hashNote = withdrawal.externalTxHash ? ` Transfer id: ${withdrawal.externalTxHash}.` : '';
       await this.notificationsService.create({
         userId: withdrawal.userId,
         type: 'withdrawal_done',
         title: 'Withdrawal Completed',
-        message: `Your withdrawal of ${withdrawal.currency || 'GHS'} ${Number(withdrawal.amount).toFixed(2)} has been processed and sent to ${payout?.displayName || 'your payout method'}.`,
+        message: `Your withdrawal of ${withdrawal.currency || 'GHS'} ${Number(withdrawal.amount).toFixed(2)} has been processed and sent to ${sentTo}.${hashNote}`,
         link: '/wallet',
         icon: 'wallet',
         sendEmail: true,
@@ -1727,6 +1766,7 @@ export class AdminService {
       amount: Number(withdrawal.amount),
       userId: withdrawal.userId,
       failureReason: failureReason ?? null,
+      externalTxHash: withdrawal.externalTxHash ?? null,
     });
     return withdrawal;
   }

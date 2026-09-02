@@ -19,6 +19,12 @@ import {
   normalizeGhanaMomoPhone,
   toPaystackMomoBankCode,
 } from './ghana-momo';
+import {
+  maskCryptoAddress,
+  normalizeCryptoAddress,
+  normalizeCryptoAsset,
+  normalizeCryptoNetwork,
+} from './crypto-payout';
 
 @Injectable()
 export class WalletService {
@@ -505,6 +511,7 @@ export class WalletService {
       bankName?: string;
       walletAddress?: string;
       cryptoCurrency?: string;
+      network?: string;
     },
   ) {
     const { emailVerifiedAt } = await this.usersService.getEmailVerificationStatus(user.id);
@@ -516,9 +523,6 @@ export class WalletService {
       throw new ForbiddenException('Only tipsters can add payout methods');
     }
 
-    if (dto.type === 'crypto') {
-      throw new BadRequestException('Cryptocurrency payouts are not available. Use Mobile Money or a bank account.');
-    }
     if (dto.type === 'mobile_money') {
       if (!dto.phone || !dto.provider) {
         throw new BadRequestException('Phone and provider required for mobile money');
@@ -539,6 +543,46 @@ export class WalletService {
       if (existing) await this.payoutRepo.remove(existing);
       return this.payoutRepo.save(row);
     };
+
+    // Crypto: admin sends USDT/USDC off-platform. Address does not expire.
+    if (dto.type === 'crypto') {
+      const asset = normalizeCryptoAsset(dto.cryptoCurrency);
+      const network = normalizeCryptoNetwork(dto.network);
+      if (!asset) {
+        throw new BadRequestException('Choose USDT or USDC');
+      }
+      if (!network) {
+        throw new BadRequestException('Choose TRC20, ERC20, or BEP20');
+      }
+      const walletAddress = normalizeCryptoAddress(dto.walletAddress, network);
+      if (!walletAddress) {
+        throw new BadRequestException(
+          network === 'TRC20'
+            ? 'Enter a valid Tron (TRC20) address starting with T'
+            : 'Enter a valid 0x address for this network',
+        );
+      }
+      const country = dto.country || 'GH';
+      const currency = dto.currency || 'GHS';
+      const manualDetails = JSON.stringify({
+        walletAddress,
+        cryptoCurrency: asset,
+        network,
+      });
+      return savePayout({
+        userId: user.id,
+        type: 'crypto',
+        recipientCode: `manual_${Date.now()}`,
+        displayName: dto.name,
+        accountMasked: `${asset} · ${network} · ${maskCryptoAddress(walletAddress)}`,
+        country,
+        currency,
+        manualDetails,
+        bankCode: null,
+        provider: network,
+        isDefault: true,
+      });
+    }
 
     // Manual: admin processes (legacy / other mobile money)
     if (dto.type === 'manual') {

@@ -15,7 +15,7 @@ export class PayoutMethod {
   userId: number;
 
   @Column({ length: 20 })
-  type: string; // mobile_money | bank | manual
+  type: string; // mobile_money | bank | manual | crypto
 
   @Column({ length: 100 })
   recipientCode: string;
@@ -27,7 +27,8 @@ export class PayoutMethod {
   currency: string | null = null;
 
   @Column({ type: 'text', nullable: true })
-  manualDetails: string | null = null; // JSON: { phone?, accountNumber?, bankName?, provider? }
+  /** JSON: { phone?, accountNumber?, bankName?, provider?, walletAddress?, cryptoCurrency?, network? } */
+  manualDetails: string | null = null;
 
   @Column({ length: 100 })
   displayName: string;

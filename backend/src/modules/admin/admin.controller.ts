@@ -1312,6 +1312,7 @@ export class AdminController {
     @CurrentUser() user: User,
     @Query('userId') userId?: string,
     @Query('status') status?: string,
+    @Query('payoutType') payoutType?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -1319,6 +1320,7 @@ export class AdminController {
     return this.adminService.getAllWithdrawals({
       userId: userId ? parseInt(userId, 10) : undefined,
       status,
+      payoutType,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });
@@ -1329,10 +1331,16 @@ export class AdminController {
   async updateWithdrawalStatus(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: { status: string; failureReason?: string },
+    @Body() body: { status: string; failureReason?: string; externalTxHash?: string },
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
-    return this.adminService.updateWithdrawalStatus(user.id, id, body.status, body.failureReason);
+    return this.adminService.updateWithdrawalStatus(
+      user.id,
+      id,
+      body.status,
+      body.failureReason,
+      body.externalTxHash,
+    );
   }
 
   // Payout Methods Management

@@ -6,7 +6,7 @@ import { PickCard } from '@/components/PickCard';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { getApiUrl } from '@/lib/site-config';
-import { useT } from '@/context/LanguageContext';
+import { useLanguage, useT, type SupportedLanguage } from '@/context/LanguageContext';
 import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 import { Badge } from '@/components/ui/Badge';
 import { Surface } from '@/components/ui/Surface';
@@ -163,6 +163,22 @@ function formatAmount(n: number): string {
   return Math.round(n).toLocaleString('en-US');
 }
 
+const DATE_LOCALE: Record<SupportedLanguage, string> = { en: 'en-GB', fr: 'fr-FR' };
+
+/** YYYY-MM-DD (Accra desk day) → "Wed 2 Sep" without timezone shift. */
+function formatPlanDate(iso: string | null, lang: SupportedLanguage): string {
+  if (!iso) return '';
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!match) return iso;
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12));
+  return date.toLocaleDateString(DATE_LOCALE[lang], {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  });
+}
+
 function AmountFigure({
   amount,
   tone,
@@ -206,6 +222,7 @@ function MoneyCell({
 
 export function RolloverBoard() {
   const t = useT();
+  const { lang } = useLanguage();
   const [board, setBoard] = useState<Board | null>(null);
   const [error, setError] = useState(false);
 
@@ -491,7 +508,18 @@ export function RolloverBoard() {
                 <DayMark dayNumber={day.dayNumber} status={day.status} live={inPlay} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <StatusCell status={day.status} label={t(statusKey(day.status))} />
+                    <div className="flex min-w-0 items-center gap-2">
+                      <StatusCell status={day.status} label={t(statusKey(day.status))} />
+                      {day.calendarDate ? (
+                        <span
+                          className={`truncate text-[11px] tabular-nums ${
+                            reached ? 'text-[var(--text-muted)]' : 'text-[var(--text-tertiary)]'
+                          }`}
+                        >
+                          {formatPlanDate(day.calendarDate, lang)}
+                        </span>
+                      ) : null}
+                    </div>
                     <span
                       className={`text-xs tabular-nums ${
                         odds.live ? 'font-medium text-[var(--text)]' : 'font-medium text-[var(--text-tertiary)]'
@@ -536,6 +564,7 @@ export function RolloverBoard() {
             <thead>
               <tr className="text-left text-[11px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
                 <th className="px-5 py-3 font-semibold border-b border-[var(--separator)]">{t('rollover.day')}</th>
+                <th className="px-4 py-3 font-semibold border-b border-[var(--separator)]">{t('rollover.date')}</th>
                 <th className="px-4 py-3 font-semibold border-b border-[var(--separator)]">{t('rollover.status')}</th>
                 <th className="px-4 py-3 font-semibold border-b border-[var(--separator)]">{t('rollover.odds')}</th>
                 <th className="px-4 py-3 font-semibold border-b border-[var(--separator)]">{t('rollover.stake')}</th>
@@ -564,6 +593,15 @@ export function RolloverBoard() {
                         <span className="absolute inset-y-0 left-0 w-[2px] bg-[var(--primary)]" aria-hidden />
                       ) : null}
                       <DayMark dayNumber={day.dayNumber} status={day.status} live={inPlay} />
+                    </td>
+                    <td
+                      className={`px-4 py-3 whitespace-nowrap tabular-nums border-b ${hairline} ${
+                        reached ? 'text-[var(--text)]' : 'text-[var(--text-tertiary)]'
+                      }`}
+                    >
+                      {day.calendarDate ? formatPlanDate(day.calendarDate, lang) : (
+                        <span className="text-[var(--text-tertiary)]">·</span>
+                      )}
                     </td>
                     <td className={`px-4 py-3 border-b ${hairline}`}>
                       <StatusCell status={day.status} label={t(statusKey(day.status))} />

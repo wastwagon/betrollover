@@ -1,4 +1,4 @@
-import { ACCA_DESK_TIME_SLOTS, accraDateStr, type AccaDeskSlotKey } from '../../config/acca-desk-slots';
+import { ACCA_DESK_TIME_SLOTS, accraDateStr, addDateStrDays, type AccaDeskSlotKey } from '../../config/acca-desk-slots';
 import {
   ROLLOVER_EXAMPLE_MAX_MONEY_DAY,
   ROLLOVER_EXAMPLE_STAKE_GHS,
@@ -128,4 +128,23 @@ export function buildBoardMoneyLadder(
     stake = returnGhs;
   }
   return rows;
+}
+
+/** Attached days keep their real Accra date; open days continue one calendar day at a time. */
+export function fillPlanCalendarDates(
+  dates: Array<string | null | undefined>,
+  today: string,
+): string[] {
+  const out: string[] = [];
+  let last: string | null = null;
+  for (const raw of dates) {
+    if (raw) {
+      last = raw;
+      out.push(raw);
+    } else {
+      last = last ? addDateStrDays(last, 1) : today;
+      out.push(last);
+    }
+  }
+  return out;
 }
