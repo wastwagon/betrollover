@@ -1,4 +1,5 @@
 import {
+  archiveMoneyForRun,
   buildBoardMoneyLadder,
   exampleMoneyForDay,
   exampleReturnGhs,
@@ -98,6 +99,28 @@ describe('rollover-desk.util', () => {
     expect(exampleMoneyForDay(1, 10, 50).returnGhs).toBe(80);
     expect(exampleMoneyForDay(2, 10, 50).stakeGhs).toBe(80);
     expect(exampleMoneyForDay(2, 10, 50).returnGhs).toBe(128);
+  });
+
+  it('records After win from consecutive real odds, not dummy 1.6', () => {
+    const cutAtDay4 = archiveMoneyForRun([
+      { dayNumber: 1, status: 'won', combinedOdds: 1.64 },
+      { dayNumber: 2, status: 'won', combinedOdds: 1.8 },
+      { dayNumber: 3, status: 'won', combinedOdds: 1.7 },
+      { dayNumber: 4, status: 'lost', combinedOdds: 1.62 },
+    ]);
+    expect(cutAtDay4.wonDays).toBe(3);
+    expect(cutAtDay4.stakeGhs).toBe(100);
+    // 100×1.64=164; 164×1.80=295; 295×1.70=502 — dummy ×1.60³ is 410
+    expect(cutAtDay4.returnGhs).toBe(502);
+    expect(exampleMoneyForDay(3).returnGhs).toBe(410);
+
+    const holeAfterDay2 = archiveMoneyForRun([
+      { dayNumber: 1, status: 'won', combinedOdds: 1.6 },
+      { dayNumber: 2, status: 'won', combinedOdds: 1.6 },
+      { dayNumber: 4, status: 'won', combinedOdds: 2.0 },
+    ]);
+    expect(holeAfterDay2.wonDays).toBe(2);
+    expect(holeAfterDay2.returnGhs).toBe(256);
   });
 
   it('replaces dummy 1.6 with live odds and chains stake from After win', () => {

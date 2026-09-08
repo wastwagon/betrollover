@@ -109,6 +109,53 @@ export function resolveDayOdds(
   return targetOdds;
 }
 
+export type RolloverDayStatLike = {
+  dayNumber: number;
+  status: string;
+  combinedOdds?: number | null;
+};
+
+/**
+ * Odds for won days from Day 1 until the first non-win.
+ * A cut on Day 4 with Days 1–3 won yields three rungs — not dummy ×1.60³.
+ */
+export function consecutiveWonDayOdds(days: RolloverDayStatLike[]): Array<number | null> {
+  const byNumber = new Map(days.map((d) => [d.dayNumber, d]));
+  const odds: Array<number | null> = [];
+  for (let n = 1; ; n++) {
+    const day = byNumber.get(n);
+    if (!day || day.status !== 'won') break;
+    const raw = day.combinedOdds;
+    odds.push(raw != null && Number.isFinite(Number(raw)) && Number(raw) > 0 ? Number(raw) : null);
+  }
+  return odds;
+}
+
+/** Example bank after a consecutive win streak, using attached coupon odds. */
+export function archiveMoneyForWonOdds(
+  dayOdds: Array<number | null>,
+  start = ROLLOVER_EXAMPLE_STAKE_GHS,
+  targetOdds = ROLLOVER_TARGET_ODDS,
+): { wonDays: number; stakeGhs: number | null; returnGhs: number | null } {
+  if (!dayOdds.length) {
+    return { wonDays: 0, stakeGhs: null, returnGhs: null };
+  }
+  const ladder = buildBoardMoneyLadder(dayOdds, start, targetOdds);
+  return {
+    wonDays: dayOdds.length,
+    stakeGhs: Math.round(start),
+    returnGhs: ladder[ladder.length - 1].returnGhs,
+  };
+}
+
+export function archiveMoneyForRun(
+  days: RolloverDayStatLike[],
+  start = ROLLOVER_EXAMPLE_STAKE_GHS,
+  targetOdds = ROLLOVER_TARGET_ODDS,
+): { wonDays: number; stakeGhs: number | null; returnGhs: number | null } {
+  return archiveMoneyForWonOdds(consecutiveWonDayOdds(days), start, targetOdds);
+}
+
 /**
  * Full plan ladder. Each open day uses ×targetOdds; an attached coupon's odds
  * replace that dummy for the day. Stake day N = After win day N−1.

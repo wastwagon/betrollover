@@ -18,8 +18,8 @@ import { RolloverDay } from './entities/rollover-day.entity';
 import { RolloverRun } from './entities/rollover-run.entity';
 import { RolloverSettings } from './entities/rollover-settings.entity';
 import {
+  archiveMoneyForRun,
   buildBoardMoneyLadder,
-  exampleMoneyForDay,
   isEligibleRolloverTicket,
   selectEligibleRolloverTicket,
   slotKeyFromTitle,
@@ -838,44 +838,54 @@ export class RolloverDeskService {
     };
     if (!runs.length) return empty;
 
-    const won = await this.dayRepo
-      .createQueryBuilder('d')
-      .select('d.run_id', 'runId')
-      .addSelect('MAX(d.day_number)', 'maxWon')
-      .where('d.status = :st', { st: 'won' })
-      .groupBy('d.run_id')
-      .getRawMany<{ runId: number | string; maxWon: number | string }>();
-    const maxByRun = new Map(won.map((r) => [Number(r.runId), Number(r.maxWon)]));
-
-    let bestWonDays = 0;
-    let bestRun: RolloverRun | null = null;
-    for (const run of runs) {
-      const n = maxByRun.get(run.id) ?? 0;
-      if (n > bestWonDays) {
-        bestWonDays = n;
-        bestRun = run;
-      }
+    const days = await this.dayRepo.find({
+      where: { runId: In(runs.map((r) => r.id)) },
+      order: { dayNumber: 'ASC' },
+    });
+    const daysByRun = new Map<number, RolloverDay[]>();
+    for (const day of days) {
+      const list = daysByRun.get(day.runId) ?? [];
+      list.push(day);
+      daysByRun.set(day.runId, list);
     }
 
-    const stake = Number(bestRun?.campaignStakeGhs ?? ROLLOVER_EXAMPLE_STAKE_GHS);
-    const money =
-      bestWonDays > 0
-        ? exampleMoneyForDay(bestWonDays, ROLLOVER_EXAMPLE_MAX_MONEY_DAY, stake)
-        : { stakeGhs: null, returnGhs: null };
+    let bestWonDays = 0;
+    let bestReturn = -1;
+    let bestStake: number | null = null;
+    let bestBank: number | null = null;
+
+    for (const run of runs) {
+      const stake = Number(run.campaignStakeGhs ?? ROLLOVER_EXAMPLE_STAKE_GHS);
+      const money = archiveMoneyForRun(daysByRun.get(run.id) ?? [], stake);
+      const betterDays = money.wonDays > bestWonDays;
+      const sameDaysBetterBank =
+        money.wonDays === bestWonDays && money.wonDays > 0 && (money.returnGhs ?? -1) > bestReturn;
+      if (!betterDays && !sameDaysBetterBank) continue;
+      bestWonDays = money.wonDays;
+      bestReturn = money.returnGhs ?? -1;
+      bestStake = money.stakeGhs;
+      bestBank = money.returnGhs;
+    }
 
     const lastEndedRun = runs.find((r) => r.status !== 'active') ?? null;
+    const lastEndedMoney = lastEndedRun
+      ? archiveMoneyForRun(
+          daysByRun.get(lastEndedRun.id) ?? [],
+          Number(lastEndedRun.campaignStakeGhs ?? ROLLOVER_EXAMPLE_STAKE_GHS),
+        )
+      : null;
 
     return {
       bestWonDays,
-      bestCampaignStakeGhs: bestWonDays > 0 ? stake : null,
-      bestExampleReturnGhs: money.returnGhs,
+      bestCampaignStakeGhs: bestWonDays > 0 ? bestStake : null,
+      bestExampleReturnGhs: bestWonDays > 0 ? bestBank : null,
       campaignsCompleted: runs.filter((r) => r.status === 'completed').length,
       campaignsCut: runs.filter((r) => r.status === 'broken').length,
       campaignsReset: runs.filter((r) => r.status === 'reset').length,
       lastEnded: lastEndedRun
         ? {
             status: lastEndedRun.status,
-            wonDays: maxByRun.get(lastEndedRun.id) ?? 0,
+            wonDays: lastEndedMoney?.wonDays ?? 0,
             endedDay: lastEndedRun.currentDay,
             endedAt: lastEndedRun.brokenAt ?? lastEndedRun.completedAt ?? lastEndedRun.resetAt ?? lastEndedRun.startedAt,
           }

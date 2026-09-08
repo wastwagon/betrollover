@@ -439,7 +439,7 @@ export function RolloverBoard() {
               </div>
               <div className="min-w-0 flex-1 pl-5">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-                  {t('rollover.win')}
+                  {t('rollover.stat_best_win')}
                 </p>
                 <p className="mt-2">
                   {winAmount ? (
@@ -449,8 +449,10 @@ export function RolloverBoard() {
                   )}
                 </p>
                 <p className="mt-1.5 text-[12px] text-[var(--text-muted)] truncate">
-                  {stakeAmount && winAmount
-                    ? t('rollover.stat_from_stake', { stake: stakeAmount })
+                  {stakeAmount && winAmount && bestRun !== '—'
+                    ? bestRun === '1'
+                      ? t('rollover.stat_from_stake_one', { stake: stakeAmount })
+                      : t('rollover.stat_from_stake', { days: bestRun, stake: stakeAmount })
                     : ''}
                 </p>
               </div>
