@@ -26,11 +26,11 @@
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <!-- Match Config.scaleSplashImage (60% of min safe width/height) -->
-                            <constraint firstItem="pCu-Fm-vzc" firstAttribute="width" secondItem="6Tk-OE-BBY" secondAttribute="width" multiplier="0.6" relation="lessThanOrEqual" id="splash-cap-w"/>
-                            <constraint firstItem="pCu-Fm-vzc" firstAttribute="width" secondItem="6Tk-OE-BBY" secondAttribute="height" multiplier="0.6" relation="lessThanOrEqual" id="splash-cap-h"/>
-                            <constraint firstItem="pCu-Fm-vzc" firstAttribute="width" secondItem="6Tk-OE-BBY" secondAttribute="width" multiplier="0.6" priority="900" id="splash-pref-w"/>
-                            <constraint firstItem="pCu-Fm-vzc" firstAttribute="width" secondItem="6Tk-OE-BBY" secondAttribute="height" multiplier="0.6" priority="899" id="splash-pref-h"/>
+                            <!-- Match Config.scaleSplashImage (30% of min safe width/height) -->
+                            <constraint firstItem="pCu-Fm-vzc" firstAttribute="width" secondItem="6Tk-OE-BBY" secondAttribute="width" multiplier="0.3" relation="lessThanOrEqual" id="splash-cap-w"/>
+                            <constraint firstItem="pCu-Fm-vzc" firstAttribute="width" secondItem="6Tk-OE-BBY" secondAttribute="height" multiplier="0.3" relation="lessThanOrEqual" id="splash-cap-h"/>
+                            <constraint firstItem="pCu-Fm-vzc" firstAttribute="width" secondItem="6Tk-OE-BBY" secondAttribute="width" multiplier="0.3" priority="900" id="splash-pref-w"/>
+                            <constraint firstItem="pCu-Fm-vzc" firstAttribute="width" secondItem="6Tk-OE-BBY" secondAttribute="height" multiplier="0.3" priority="899" id="splash-pref-h"/>
                             <constraint firstItem="pCu-Fm-vzc" firstAttribute="height" secondItem="pCu-Fm-vzc" secondAttribute="width" multiplier="1" id="splash-aspect"/>
                             <constraint firstItem="pCu-Fm-vzc" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="splash-cx"/>
                             <constraint firstItem="pCu-Fm-vzc" firstAttribute="centerY" secondItem="6Tk-OE-BBY" secondAttribute="centerY" id="splash-cy"/>

@@ -1,5 +1,5 @@
 # Uncomment the next line to define a global platform for your project
- platform :ios, '12.0'
+ platform :ios, '15.0'
 
 target 'OneSignalNotificationServiceExtension' do
   # Comment the next line if you're not using Swift and don't want to use dynamic frameworks
@@ -44,8 +44,8 @@ post_install do |installer|
           IO.write(xcconfig_path, IO.read(xcconfig_path).gsub("DT_TOOLCHAIN_DIR", "TOOLCHAIN_DIR"))
       end
 
-      # Set the IPHONEOS_DEPLOYMENT_TARGET to 12.0
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+      # Apple rejects MinimumOSVersion below current App Store floor (ITMS-90068)
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
     end
   end
 end

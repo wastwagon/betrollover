@@ -200,7 +200,7 @@ var remainSplashOption = true //Set to "true" if you want to display the Splash 
 
 var splashTimeout = 2500 //Set the splash screen timeout time for the remainSplashOption option in milliseconds (if useLoadingSign is active, the loading sign will show as usual after this time duration if the home URL still has some loading to do)
 
-var scaleSplashImage = 60 // Logo vs smallest width/height [0–100]. 60 = same as Android SCALE_SPLASH_IMAGE (prominent; was 32).
+var scaleSplashImage = 30 // Logo vs smallest width/height [0–100]. 30 = 50% smaller than prior 60.
 
 /// Hide splash when WKWebView `estimatedProgress` reaches this. Splash also hides on `didStart`/`didCommit`. `1.0` = progress-only (use with didStart disabled = old behavior).
 var splashDismissAtEstimatedProgress = 0.12
