@@ -1,0 +1,10 @@
+---
+description: Do not touch or reference WebViewGold native apps unless explicitly asked
+alwaysApply: true
+---
+
+# WebViewGold out of scope
+
+- Do **not** read, edit, search, stage, or commit `webviewgold-iOS/` or `webviewgold-Android/` unless the user explicitly asks for native app work.
+- Treat those folders as local-only (gitignored). Prefer the web + backend platform for product work.
+- Ignore prior conversation suggestions about API-Football engagement features unless the user reopens that topic.

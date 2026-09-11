@@ -61,3 +61,7 @@ database/dump/
 # Mobile deep-link verification (fill from Play Console / Apple; inject via CI or `git add -f` if private repo)
 web/public/.well-known/assetlinks.json
 web/public/.well-known/apple-app-site-association
+
+# Native WebViewGold apps — keep local, exclude from git
+webviewgold-iOS/
+webviewgold-Android/
