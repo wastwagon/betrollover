@@ -1,12 +1,14 @@
 'use client';
 
+import { useMemo } from 'react';
 import { TeamBadge } from '@/components/TeamBadge';
 import { LeagueInsightsPanel } from '@/components/LeagueInsightsPanel';
 import type { Fixture, FixtureOdd } from '../types';
-import { groupOddsByMarket, MARKET_ORDER, filterCorrectScoreOdds } from '../odds-utils';
+import { groupOddsByMarket, orderedMarketNames } from '../odds-utils';
 import { formatMarketValue, formatFixtureDateTime } from '../utils/format';
 import { Button } from '@/components/ui/Button';
 import { useT } from '@/context/LanguageContext';
+import { OddsMarketAccordion } from './OddsMarketAccordion';
 
 interface FootballFixtureCardProps {
   fixture: Fixture;
@@ -29,7 +31,11 @@ export function FootballFixtureCard({
   onAddSelection,
 }: FootballFixtureCardProps) {
   const t = useT();
-  const groupedOdds = fixture.odds ? groupOddsByMarket(fixture.odds) : {};
+  const groupedOdds = useMemo(
+    () => (fixture.odds ? groupOddsByMarket(fixture.odds) : {}),
+    [fixture.odds],
+  );
+  const marketNames = useMemo(() => orderedMarketNames(groupedOdds), [groupedOdds]);
   const hasOdds = fixture.odds && fixture.odds.length > 0;
   const showOdds = hasOdds && !isCollapsed;
 
@@ -40,10 +46,10 @@ export function FootballFixtureCard({
 
   return (
     <div className="bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] overflow-hidden transition-shadow hover:shadow-card-hover w-full min-w-0 max-w-full">
-      <div className="p-4 cursor-pointer min-w-0" onClick={() => !hasOdds && onLoadOdds(fixture)}>
+      <div className="p-3 sm:p-4 cursor-pointer min-w-0" onClick={() => !hasOdds && onLoadOdds(fixture)}>
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 min-w-0">
           <div className="min-w-0 flex-1">
-            <span className="font-semibold text-[var(--text)] text-base flex items-center gap-2 flex-wrap min-w-0 break-words">
+            <span className="font-semibold text-[var(--text)] text-[15px] sm:text-base flex items-center gap-2 flex-wrap min-w-0 break-words">
               <span className="flex items-center gap-1.5">
                 <TeamBadge
                   logo={fixture.homeTeamLogo}
@@ -73,7 +79,7 @@ export function FootballFixtureCard({
               type="button"
               variant="secondary"
               size="sm"
-              className="shrink-0"
+              className="shrink-0 min-h-11 sm:min-h-9"
               onClick={(e) => {
                 e.stopPropagation();
                 onLoadOdds(fixture);
@@ -88,7 +94,7 @@ export function FootballFixtureCard({
               type="button"
               variant="secondary"
               size="sm"
-              className="shrink-0"
+              className="shrink-0 min-h-11 sm:min-h-9"
               onClick={toggleCollapsed}
             >
               {isCollapsed ? t('create_pick.show_odds') : t('create_pick.hide_odds')}
@@ -103,7 +109,7 @@ export function FootballFixtureCard({
       </div>
 
       {showLeagueInsights && fixture.league?.apiId != null && (
-        <div className="px-4 pb-3 border-t border-[var(--border)]">
+        <div className="px-3 sm:px-4 pb-3 border-t border-[var(--border)]">
           <LeagueInsightsPanel
             leagueApiId={fixture.league.apiId}
             season={fixture.league.season ?? null}
@@ -113,34 +119,13 @@ export function FootballFixtureCard({
       )}
 
       {showOdds && (
-        <div className="px-4 pb-4 pt-0 border-t border-[var(--border)]">
-          {MARKET_ORDER.filter((market) => groupedOdds[market]).map((marketName) => {
-            let marketOdds = groupedOdds[marketName];
-            if (marketName === 'Correct Score') {
-              marketOdds = filterCorrectScoreOdds(marketOdds);
-              if (marketOdds.length === 0) return null;
-            }
-            return (
-              <div key={marketName} className="mt-3 first:mt-3">
-                <p className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide mb-2">
-                  {marketName}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {marketOdds.map((odd) => (
-                    <button
-                      type="button"
-                      key={odd.id}
-                      onClick={() => onAddSelection(fixture, odd)}
-                      className="px-3 py-2 rounded-lg bg-[var(--bg)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] font-medium text-sm transition-colors border border-[var(--border)] active:scale-95"
-                    >
-                      <span className="font-semibold">{formatMarketValue(odd.marketName, odd.marketValue)}</span>
-                      <span className="ml-1.5 text-[var(--primary)]">{Number(odd.odds).toFixed(2)}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+        <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0 border-t border-[var(--border)]">
+          <OddsMarketAccordion
+            marketNames={marketNames}
+            groupedOdds={groupedOdds}
+            formatValue={(odd) => formatMarketValue(odd.marketName, odd.marketValue)}
+            onSelect={(odd) => onAddSelection(fixture, odd)}
+          />
         </div>
       )}
     </div>

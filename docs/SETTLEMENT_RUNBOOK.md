@@ -19,12 +19,17 @@ Short checklist for deployment and day-to-day settlement (fixtures, multi-sport,
 
 | Goal | Where | Action |
 |------|--------|--------|
-| Fetch **football** results and settle | **Admin → Fixtures** | “Fetch Results & Settle” |
+| Fetch **football** results (+ corners/cards stats) and settle | **Admin → Fixtures** | “Fetch Results & Settle” |
 | Fetch **other sports** (Basketball, Rugby, MMA, Volleyball, Hockey, Tennis, Amer. Football) results and settle | **Admin → Multi-Sport** | “Sync Results & Settle” |
-| Only run settlement (no new result fetch) | **Admin → Dashboard** | “Run Settlement Now” |
+| Only run settlement (no new result fetch) | **Admin → Dashboard** | “Run Settlement Now” — **does not** pull `/fixtures/statistics`; use Fixtures first if corner/card picks are pending |
 | Manually set result for one **sport event** (e.g. match >3 days old, Odds API no longer returns it) | **Admin → Multi-Sport** → select sport | “Settle” on the event row, enter home/away score |
+| Re-grade after score/stat corrections | **Admin → Fixtures** | “Reconcile” (no API fetch) |
 
 **Mixed coupons (e.g. football + basketball):** Use **Fixtures → Fetch Results & Settle** first for football, then **Multi-Sport → Sync Results & Settle** so other sports get results and full settlement runs.
+
+**Corner / card markets:** Settlement needs match stats on the fixture (`home_corners`, cards columns). Fetch Results / cron fills these from API-Football `/fixtures/statistics`. Diagnostic field `pendingCornerCardPicksMissingStats` > 0 means run Fixtures → Fetch Results & Settle again.
+
+**Not offered / not settled:** Corners Race To and 1H/2H total corners (no period/event data). Existing DB rows are hidden on Create Pick and blocked on new odds sync.
 
 ---
 
@@ -40,4 +45,5 @@ Short checklist for deployment and day-to-day settlement (fixtures, multi-sport,
 ## Stuck picks
 
 - **stuckPendingPicksPastCutoff** in the diagnostic = pending picks on fixtures/events that are >2h in the past and not FT.
+- **pendingCornerCardPicksMissingStats** = FT fixtures with pending corner/card/booking picks but missing stats columns — run **Fixtures → Fetch Results & Settle**.
 - **Fix:** Either run “Fetch Results & Settle” / “Sync Results & Settle” again (if the API has the result now), or for **sport_events** use **Settle** on that event with the correct score. For **fixtures** that are postponed/cancelled, settlement will auto-void picks on PST/CANC; if a fixture is still missing results, fix the fixture (or data source) and re-run settlement.

@@ -1017,7 +1017,7 @@ export default function AdminFixturesPage() {
             <button type="button"
               onClick={() => syncOdds(true)}
               disabled={syncing || fetchingResults || settling || reconciling}
-              title="Re-fetch odds for all upcoming fixtures (which markets are stored depends on DB market_config: BTTS, DNB, first-half, handicaps, etc.)"
+              title="Re-fetch odds for upcoming fixtures. Known markets follow market_config enable flags; unlisted board markets (e.g. corners/cards) sync unless denied. Race To / 1H–2H corners are blocked (no settle inputs)."
               className={buttonClassName()}
             >
               Force Refresh Odds
@@ -1040,7 +1040,7 @@ export default function AdminFixturesPage() {
             <button type="button"
               onClick={fetchResults}
               disabled={syncing || fetchingResults || settling || reconciling}
-              title="Fetch scores for finished matches from API-Sports (same as the cron, but manual)"
+              title="Fetch scores + match stats (corners/cards) for finished matches from API-Sports (same as the cron, but manual)"
               className="px-5 py-2.5 rounded-xl font-semibold bg-[var(--accent)] text-white hover:brightness-95 disabled:opacity-50 transition-colors"
             >
               {fetchingResults && !settling ? (
@@ -1056,7 +1056,7 @@ export default function AdminFixturesPage() {
             <button type="button"
               onClick={fetchResultsAndSettle}
               disabled={syncing || fetchingResults || settling || reconciling}
-              title="Fetch results from API-Sports, then immediately settle pending picks. Use when matches have finished but picks are still pending."
+              title="Fetch scores + corners/cards stats from API-Sports, then settle pending picks (including corner/card markets). Prefer this over Dashboard Settle alone when corner/card picks are pending."
               className={buttonClassName()}
             >
               {fetchingResults || settling ? (
@@ -1073,7 +1073,7 @@ export default function AdminFixturesPage() {
               type="button"
               onClick={reconcileSettledPicks}
               disabled={syncing || fetchingResults || settling || reconciling}
-              title="After scores are corrected in the DB, re-grade settled picks and fix escrow if the pick should have won instead of lost (or vice versa). Does not fetch from the API."
+              title="After scores/stats are corrected in the DB, re-grade settled picks (incl. corners/cards) and fix escrow if the outcome flipped. Does not fetch from the API — run Fetch Results first if stats are missing."
               className={buttonClassName()}
             >
               {reconciling ? (

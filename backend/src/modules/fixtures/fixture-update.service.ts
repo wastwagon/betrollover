@@ -12,6 +12,7 @@ import { Cache } from 'cache-manager';
 import { getSportApiBaseUrl } from '../../config/sports.config';
 import { normalizeFixtureElapsed } from './fixture-status-elapsed.util';
 import { extractHalftimeScores } from './fixture-halftime.util';
+import { parseFixtureStatisticsResponse } from './fixture-statistics.util';
 import {
   MAX_FIXTURES_TO_UPDATE_PER_RUN,
   RESULTS_FETCH_BATCH_SIZE,
@@ -216,6 +217,41 @@ export class FixtureUpdateService {
       }
 
       this.logger.log(`Updated ${updated} finished fixtures`);
+
+      // PASS 3: FT fixtures with pending picks but missing corners/cards stats
+      const statsRows = await this.dataSource.query<
+        { id: number; api_id: number; home_team_name: string; away_team_name: string }[]
+      >(
+        `SELECT DISTINCT f.id, f.api_id, f.home_team_name, f.away_team_name
+         FROM fixtures f
+         JOIN accumulator_picks ap ON ap.fixture_id = f.id
+         WHERE ap.result = 'pending'
+           AND f.status IN ('FT', 'AET', 'PEN')
+           AND (
+             f.home_corners IS NULL OR f.away_corners IS NULL
+             OR f.home_yellow_cards IS NULL OR f.away_yellow_cards IS NULL
+           )
+           AND (
+             ap.prediction ILIKE '%corner%'
+             OR ap.prediction ILIKE '%card%'
+             OR ap.prediction ILIKE '%booking%'
+           )
+         LIMIT 40`,
+      );
+      let statsSynced = 0;
+      for (const row of statsRows || []) {
+        const ok = await this.syncMatchStatisticsIfNeeded(
+          apiKey,
+          row.id,
+          row.api_id,
+          row.home_team_name,
+          row.away_team_name,
+        );
+        if (ok) statsSynced++;
+      }
+      // Count stats-only backfills so callers (cron / Fetch Results) can trigger settlement
+      updated += statsSynced;
+
       return { updated, errors: 0 };
     } catch (error: any) {
       this.logger.error('Error updating finished fixtures', error);
@@ -278,6 +314,16 @@ export class FixtureUpdateService {
             },
           );
           updated++;
+          // Corners/cards for settlement — only once FT (or equivalent finished) and stats missing
+          if (['FT', 'AET', 'PEN'].includes(status)) {
+            await this.syncMatchStatisticsIfNeeded(
+              apiKey,
+              dbId,
+              apiId,
+              fixtureData?.teams?.home?.name,
+              fixtureData?.teams?.away?.name,
+            );
+          }
         } else if (NO_RESULT_STATUSES.includes(status)) {
           // Postponed/cancelled: update status so settlement can void linked picks
           await this.fixtureRepo.update(
@@ -291,5 +337,74 @@ export class FixtureUpdateService {
       }
     }
     return updated;
+  }
+
+  /**
+   * Fetch /fixtures/statistics and persist corners + cards when not already stored.
+   * @returns true when stats were written (so callers can bump `updated` / trigger settle).
+   */
+  private async syncMatchStatisticsIfNeeded(
+    apiKey: string,
+    fixtureId: number,
+    apiId: number,
+    homeTeamName?: string,
+    awayTeamName?: string,
+  ): Promise<boolean> {
+    try {
+      const existing = await this.fixtureRepo.findOne({
+        where: { id: fixtureId },
+        select: [
+          'id',
+          'homeCorners',
+          'awayCorners',
+          'homeYellowCards',
+          'awayYellowCards',
+          'homeTeamName',
+          'awayTeamName',
+        ],
+      });
+      if (!existing) return false;
+      // Re-fetch if corners or yellows missing (cards markets need yellows; same payload fills both)
+      if (
+        existing.homeCorners != null &&
+        existing.awayCorners != null &&
+        existing.homeYellowCards != null &&
+        existing.awayYellowCards != null
+      ) {
+        return false;
+      }
+
+      const res = await fetch(`${getSportApiBaseUrl('football')}/fixtures/statistics?fixture=${apiId}`, {
+        headers: { 'x-apisports-key': apiKey },
+      });
+      if (!res.ok) {
+        this.logger.debug(`Statistics fetch failed for fixture ${apiId}: ${res.status}`);
+        return false;
+      }
+      await this.updateUsage(res.headers);
+      const data = await safeJson<any>(res);
+      const stats = parseFixtureStatisticsResponse(
+        data,
+        homeTeamName || existing.homeTeamName,
+        awayTeamName || existing.awayTeamName,
+      );
+      if (stats.homeCorners == null && stats.awayCorners == null) return false;
+
+      await this.fixtureRepo.update(
+        { id: fixtureId },
+        {
+          homeCorners: stats.homeCorners,
+          awayCorners: stats.awayCorners,
+          homeYellowCards: stats.homeYellowCards,
+          awayYellowCards: stats.awayYellowCards,
+          homeRedCards: stats.homeRedCards,
+          awayRedCards: stats.awayRedCards,
+        },
+      );
+      return true;
+    } catch (e: any) {
+      this.logger.warn(`syncMatchStatisticsIfNeeded ${apiId}: ${e?.message || e}`);
+      return false;
+    }
   }
 }

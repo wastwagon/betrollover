@@ -11,4 +11,10 @@ describe('normalizeApiMarketName', () => {
   it('passes through unknown names', () => {
     expect(normalizeApiMarketName('Corners Over/Under')).toBe('Corners Over/Under');
   });
+
+  it('normalizes common corner spellings', () => {
+    expect(normalizeApiMarketName('Corners Over Under')).toBe('Corners Over/Under');
+    expect(normalizeApiMarketName('Corners 1x2')).toBe('Corners 1X2');
+    expect(normalizeApiMarketName('Multicorners')).toBe('Corners Over/Under');
+  });
 });

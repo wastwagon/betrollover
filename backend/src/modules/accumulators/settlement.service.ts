@@ -23,9 +23,14 @@ export const SETTLEMENT_SUPPORTED_MARKETS = [
   'Over/Under: Over/Under 1.5, 2.5, 3.5 (goals, points, etc.)',
   'Canonical outcome_key slugs: ht_home/ht_draw/ht_away, dnb_home/dnb_away, over15/under15/over35/under35, fh_over05…fh_under25, odd_goals/even_goals (when stored on pick)',
   'First Half Winner; First Half Over/Under 0.5, 1.5, 2.5 (needs HT score on fixture)',
-  'Handicap/Spread: Home -3.5, Away +2.5, Team Name ±N (incl. Asian / European Handicap labels)',
+  'Half-Time/Full-Time: Home/Home, 1/X, etc. (needs HT + FT scores)',
+  'Asian Handicap: Home/Away ±N including quarter lines (push/half → void)',
+  'European Handicap: Home/Draw/Away ±N (3-way)',
+  'Handicap/Spread: Home -3.5, Away +2.5, Team Name ±N',
   'Odd/Even: Total goals/points odd or even (incl. Odd/Even: Odd/Even)',
   'Draw No Bet: Match winner, draw = void',
+  'Corners: O/U, team O/U, 1X2, Asian Handicap, Odd/Even, ranges (needs fixture corners stats)',
+  'Cards / Yellow Cards / Booking Points O/U (needs fixture card stats)',
   'Set Betting (tennis): 2-0, 2-1 (order-agnostic)',
   'Correct Score: 2-1, 1:1 (dash or colon)',
 ] as const;
@@ -63,6 +68,17 @@ export class SettlementService {
     return key || (pick.prediction || '').trim();
   }
 
+  private fixtureMatchStats(fix: Fixture) {
+    return {
+      homeCorners: fix.homeCorners,
+      awayCorners: fix.awayCorners,
+      homeYellowCards: fix.homeYellowCards,
+      awayYellowCards: fix.awayYellowCards,
+      homeRedCards: fix.homeRedCards,
+      awayRedCards: fix.awayRedCards,
+    };
+  }
+
   /** Persist ROI, win rate, avg odds, streaks from accumulator_tickets (single source of truth). */
   private async persistTipsterStatsForUserIds(userIds: Iterable<number>): Promise<void> {
     const unique = [...new Set([...userIds].filter((id) => id != null && id > 0))];
@@ -97,11 +113,25 @@ export class SettlementService {
     const [ftFixtures, scoredPastFixtures] = await Promise.all([
       this.fixtureRepo.find({
         where: { status: 'FT' },
-        select: ['id', 'homeScore', 'awayScore', 'homeTeamName', 'awayTeamName', 'htHomeScore', 'htAwayScore'],
+        select: ['id', 'homeScore', 'awayScore', 'homeTeamName', 'awayTeamName', 'htHomeScore', 'htAwayScore', 'homeCorners', 'awayCorners', 'homeYellowCards', 'awayYellowCards', 'homeRedCards', 'awayRedCards'],
       }),
       this.fixtureRepo
         .createQueryBuilder('f')
-        .select(['f.id', 'f.homeScore', 'f.awayScore', 'f.homeTeamName', 'f.awayTeamName', 'f.htHomeScore', 'f.htAwayScore'])
+        .select([
+          'f.id',
+          'f.homeScore',
+          'f.awayScore',
+          'f.homeTeamName',
+          'f.awayTeamName',
+          'f.htHomeScore',
+          'f.htAwayScore',
+          'f.homeCorners',
+          'f.awayCorners',
+          'f.homeYellowCards',
+          'f.awayYellowCards',
+          'f.homeRedCards',
+          'f.awayRedCards',
+        ])
         .where("f.status != 'FT'")
         .andWhere('f.matchDate < :cutoff', { cutoff: twoHoursAgo })
         .andWhere('f.homeScore IS NOT NULL')
@@ -181,6 +211,7 @@ export class SettlementService {
           fix.awayTeamName,
           fix.htHomeScore,
           fix.htAwayScore,
+          this.fixtureMatchStats(fix),
         );
         if (!computed || computed === pick.result) continue;
         deltas.push({ pickId: pick.id, accumulatorId: pick.accumulatorId, computed });
@@ -468,6 +499,7 @@ export class SettlementService {
         fix.awayTeamName,
         fix.htHomeScore,
         fix.htAwayScore,
+        this.fixtureMatchStats(fix),
       );
       if (result) {
         pick.result = result;

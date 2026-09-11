@@ -521,94 +521,65 @@ export default function CreatePickPage() {
   }, []);
 
   const loadFixtureOdds = async (f: Fixture) => {
-    // If odds already loaded, skip
-    if (f.odds && f.odds.length > 0) return;
-
     // If already loading, skip
     if (loadingOdds.has(f.id)) return;
 
     setLoadingOdds((prev) => new Set(prev).add(f.id));
     const token = localStorage.getItem('token');
-    
+
     try {
-      // Try to load odds from fixture endpoint (auto-loads if missing)
+      // Always refresh from API so create-pick gets the full market board (corners, cards, etc.)
+      const syncRes = await fetch(`${getApiUrl()}/fixtures/${f.id}/odds`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (syncRes.ok) {
+        const syncData = await syncRes.json();
+        if (syncData.odds && syncData.odds.length > 0) {
+          setFixtures((prev) =>
+            prev.map((fix) =>
+              fix.id === f.id ? { ...fix, odds: syncData.odds, oddsError: undefined } : fix,
+            ),
+          );
+          return;
+        }
+      }
+
+      // Fallback: read whatever is already stored on the fixture
       const res = await fetch(`${getApiUrl()}/fixtures/${f.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
-      if (!res.ok) {
-        console.error(`Failed to fetch fixture ${f.id}:`, res.status, await res.text().catch(() => ''));
-        return;
-      }
-      
-      const data = await res.json();
-      console.log(`Fixture ${f.id} data:`, { hasOdds: !!data.odds, oddsLength: data.odds?.length || 0 });
-      
-      if (data.odds && data.odds.length > 0) {
-        // Update fixture with odds
-        setFixtures((prev) =>
-          prev.map((fix) => (fix.id === f.id ? { ...fix, odds: data.odds } : fix))
-        );
-      } else {
-        // If no odds, try to sync them
-        console.log(`No odds found for fixture ${f.id}, attempting to sync...`);
-        const syncRes = await fetch(`${getApiUrl()}/fixtures/${f.id}/odds`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        
-        if (syncRes.ok) {
-          const syncData = await syncRes.json();
-          console.log(`Sync response for fixture ${f.id}:`, { success: syncData.success, oddsLength: syncData.odds?.length || 0 });
-          
-          if (syncData.odds && syncData.odds.length > 0) {
-            setFixtures((prev) =>
-              prev.map((fix) => (fix.id === f.id ? { ...fix, odds: syncData.odds } : fix))
-            );
-          } else {
-            // Reload fixture after sync
-            const reloadRes = await fetch(`${getApiUrl()}/fixtures/${f.id}`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            if (reloadRes.ok) {
-              const reloadData = await reloadRes.json();
-              if (reloadData.odds && reloadData.odds.length > 0) {
-                setFixtures((prev) =>
-                  prev.map((fix) => (fix.id === f.id ? { ...fix, odds: reloadData.odds } : fix))
-                );
-              } else {
-                // No odds available - mark fixture with error message
-                setFixtures((prev) =>
-                  prev.map((fix) => 
-                    fix.id === f.id 
-                      ? { ...fix, oddsError: t('create_pick.odds_not_available_yet') }
-                      : fix
-                  )
-                );
-              }
-            }
-          }
-        } else {
-          const errorText = await syncRes.text().catch(() => '');
-          console.error(`Failed to sync odds for fixture ${f.id}:`, syncRes.status, errorText);
-          // Mark fixture with error message
+      if (res.ok) {
+        const data = await res.json();
+        if (data.odds && data.odds.length > 0) {
           setFixtures((prev) =>
-            prev.map((fix) => 
-              fix.id === f.id 
-                ? { ...fix, oddsError: t('create_pick.odds_fetch_failed') }
-                : fix
-            )
+            prev.map((fix) =>
+              fix.id === f.id ? { ...fix, odds: data.odds, oddsError: undefined } : fix,
+            ),
           );
+          return;
         }
       }
+
+      setFixtures((prev) =>
+        prev.map((fix) =>
+          fix.id === f.id
+            ? {
+                ...fix,
+                oddsError: syncRes.ok
+                  ? t('create_pick.odds_not_available_yet')
+                  : t('create_pick.odds_fetch_failed'),
+              }
+            : fix,
+        ),
+      );
     } catch (error) {
       showError(error);
       setFixtures((prev) =>
-        prev.map((fix) => 
-          fix.id === f.id 
-            ? { ...fix, oddsError: formatError(error) }
-            : fix
-        )
+        prev.map((fix) =>
+          fix.id === f.id ? { ...fix, oddsError: formatError(error) } : fix,
+        ),
       );
     } finally {
       setLoadingOdds((prev) => {

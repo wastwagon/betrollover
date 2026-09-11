@@ -45,6 +45,24 @@ export class FixtureArchive {
   @Column({ type: 'int', name: 'ht_away_score', nullable: true })
   htAwayScore: number | null = null;
 
+  @Column({ type: 'int', name: 'home_corners', nullable: true })
+  homeCorners: number | null = null;
+
+  @Column({ type: 'int', name: 'away_corners', nullable: true })
+  awayCorners: number | null = null;
+
+  @Column({ type: 'int', name: 'home_yellow_cards', nullable: true })
+  homeYellowCards: number | null = null;
+
+  @Column({ type: 'int', name: 'away_yellow_cards', nullable: true })
+  awayYellowCards: number | null = null;
+
+  @Column({ type: 'int', name: 'home_red_cards', nullable: true })
+  homeRedCards: number | null = null;
+
+  @Column({ type: 'int', name: 'away_red_cards', nullable: true })
+  awayRedCards: number | null = null;
+
   @Column({ type: 'timestamp', name: 'synced_at', nullable: true })
   syncedAt: Date | null = null;
 

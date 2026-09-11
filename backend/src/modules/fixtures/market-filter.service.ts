@@ -11,6 +11,39 @@ const CORRECT_SCORE_ALLOWED = new Set([
   '3-0', '3:0', '0-3', '0:3', '3-1', '3:1', '1-3', '1:3', '3-2', '3:2', '2-3', '2:3',
 ]);
 
+/** Skip noisy / non-football-prop noise if API ever returns it under odds. */
+const DENIED_EXTRA_MARKETS = new Set(
+  [
+    'Player Props',
+    'Anytime Goalscorer',
+    'First Goalscorer',
+    'Last Goalscorer',
+    // Needs chronological events — we only store FT totals from /fixtures/statistics
+    'Corners Race To',
+    'Race to Corners',
+    // Needs period corner totals — API statistics endpoint is full-match only
+    'Total Corners (1st Half)',
+    'Total Corners (2nd Half)',
+  ].map((s) => s.toLowerCase()),
+);
+
+function isDeniedExtraMarket(marketName: string): boolean {
+  const n = (marketName || '').trim().toLowerCase();
+  if (DENIED_EXTRA_MARKETS.has(n)) return true;
+  // Substring guards for bookmaker spelling variants
+  if (n.includes('corner') && n.includes('race')) return true;
+  if (
+    n.includes('corner') &&
+    (n.includes('1st half') ||
+      n.includes('2nd half') ||
+      n.includes('first half') ||
+      n.includes('second half'))
+  ) {
+    return true;
+  }
+  return false;
+}
+
 @Injectable()
 export class MarketFilterService {
   private marketConfigCache: Map<string, MarketConfig> = new Map();
@@ -21,11 +54,11 @@ export class MarketFilterService {
   ) {}
 
   /**
-   * Load market configs from database and cache them
+   * Load all market configs (enabled and disabled) so disable toggles are respected
+   * when allow-unknown passthrough is active.
    */
   async loadMarketConfigs(): Promise<void> {
     const configs = await this.marketConfigRepo.find({
-      where: { isEnabled: true },
       order: { displayOrder: 'ASC' },
     });
     this.marketConfigCache.clear();
@@ -35,12 +68,17 @@ export class MarketFilterService {
   }
 
   /**
-   * Check if a market is allowed
+   * Check if a market is allowed.
+   * Known `market_config` rows must be enabled; unknown API markets (corners, cards, etc.)
+   * are allowed through for pick creation so we sync the full bookmaker board.
+   * Denied extras (Race To, period corners, player props) are always blocked.
    */
   isMarketAllowed(marketName: string): boolean {
     const normalized = normalizeApiMarketName(marketName);
+    if (isDeniedExtraMarket(normalized) || isDeniedExtraMarket(marketName)) return false;
     const config = this.marketConfigCache.get(normalized);
-    return config?.isEnabled === true;
+    if (config) return config.isEnabled === true;
+    return true;
   }
 
   /**
@@ -48,14 +86,20 @@ export class MarketFilterService {
    */
   isMarketValueAllowed(marketName: string, marketValue: string): boolean {
     const normalized = normalizeApiMarketName(marketName);
-    const config = this.marketConfigCache.get(normalized);
-    if (!config || !config.isEnabled) return false;
+    if (isDeniedExtraMarket(normalized)) return false;
 
-    // Correct Score: only common scores (0-0, 1-0, 1-1, 2-1, etc.)
+    const config = this.marketConfigCache.get(normalized);
+
+    // Correct Score: only common scores (0-0, 1-0, 1-1, 2-1, etc.) — even if config missing
     if (normalized === 'Correct Score') {
+      if (config && !config.isEnabled) return false;
       const val = (marketValue || '').trim().replace(/:/g, '-');
       return CORRECT_SCORE_ALLOWED.has(val);
     }
+
+    // Unlisted API markets (corners, cards, …): keep all outcomes for pick creation
+    if (!config) return true;
+    if (!config.isEnabled) return false;
 
     // If no allowedValues specified, all values are allowed
     if (!config.allowedValues || config.allowedValues.length === 0) {
@@ -123,7 +167,9 @@ export class MarketFilterService {
    * Get all enabled market names
    */
   getEnabledMarkets(): string[] {
-    return Array.from(this.marketConfigCache.keys());
+    return Array.from(this.marketConfigCache.values())
+      .filter((c) => c.isEnabled)
+      .map((c) => c.marketName);
   }
 
   /**

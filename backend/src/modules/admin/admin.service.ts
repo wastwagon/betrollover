@@ -1034,6 +1034,7 @@ export class AdminService {
       pendingTickets,
       unfinishedFixturesNoScores,
       unfinishedEventsNoScores,
+      pendingCornerCardPicksMissingStats,
     ] = await Promise.all([
       this.dataSource.query(
         `SELECT COUNT(*)::int AS c FROM accumulator_picks WHERE result = 'pending' AND fixture_id IS NOT NULL`,
@@ -1058,6 +1059,21 @@ export class AdminService {
       ).then((r) => Number((r as any[])[0]?.c ?? 0)),
       this.dataSource.query(
         `SELECT COUNT(*)::int AS c FROM sport_events WHERE status != 'FT' AND event_date < NOW() - INTERVAL '2 hours' AND (home_score IS NULL OR away_score IS NULL)`,
+      ).then((r) => Number((r as any[])[0]?.c ?? 0)),
+      this.dataSource.query(
+        `SELECT COUNT(*)::int AS c FROM accumulator_picks ap
+         JOIN fixtures f ON f.id = ap.fixture_id
+         WHERE ap.result = 'pending'
+           AND f.status IN ('FT', 'AET', 'PEN')
+           AND (
+             ap.prediction ILIKE '%corner%'
+             OR ap.prediction ILIKE '%card%'
+             OR ap.prediction ILIKE '%booking%'
+           )
+           AND (
+             f.home_corners IS NULL OR f.away_corners IS NULL
+             OR f.home_yellow_cards IS NULL OR f.away_yellow_cards IS NULL
+           )`,
       ).then((r) => Number((r as any[])[0]?.c ?? 0)),
     ]);
 
@@ -1097,6 +1113,7 @@ export class AdminService {
       pendingTickets,
       unfinishedFixturesNoScores,
       unfinishedEventsNoScores,
+      pendingCornerCardPicksMissingStats,
       apiSportsKeyConfigured: !!apiSportsKey,
       oddsApiKeyConfigured: !!oddsApiKey,
       enableScheduling: process.env.ENABLE_SCHEDULING === 'true',

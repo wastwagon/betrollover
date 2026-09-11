@@ -98,6 +98,12 @@ export class ResultTrackerService {
                   'awayTeamName',
                   'htHomeScore',
                   'htAwayScore',
+                  'homeCorners',
+                  'awayCorners',
+                  'homeYellowCards',
+                  'awayYellowCards',
+                  'homeRedCards',
+                  'awayRedCards',
                 ],
               })
             ).map((f) => [f.id, f] as const),
@@ -122,6 +128,14 @@ export class ResultTrackerService {
         fixture.awayTeamName,
         fixture.htHomeScore,
         fixture.htAwayScore,
+        {
+          homeCorners: fixture.homeCorners,
+          awayCorners: fixture.awayCorners,
+          homeYellowCards: fixture.homeYellowCards,
+          awayYellowCards: fixture.awayYellowCards,
+          homeRedCards: fixture.homeRedCards,
+          awayRedCards: fixture.awayRedCards,
+        },
       );
 
       if (legResult == null) continue;
@@ -164,6 +178,14 @@ export class ResultTrackerService {
     awayTeam?: string | null,
     htHome?: number | null,
     htAway?: number | null,
+    matchStats?: {
+      homeCorners?: number | null;
+      awayCorners?: number | null;
+      homeYellowCards?: number | null;
+      awayYellowCards?: number | null;
+      homeRedCards?: number | null;
+      awayRedCards?: number | null;
+    } | null,
   ): 'won' | 'lost' | 'void' | null {
     const outcome = (selectedOutcome || '').trim().toLowerCase();
     const r = determinePickResult(
@@ -174,6 +196,7 @@ export class ResultTrackerService {
       awayTeam ?? undefined,
       htHome ?? null,
       htAway ?? null,
+      matchStats ?? null,
     );
     if (r === 'won') return 'won';
     if (r === 'void') return 'void';

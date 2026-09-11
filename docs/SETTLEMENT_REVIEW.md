@@ -78,6 +78,9 @@ Settlement determines the final outcome (won/lost/void) of each pick in a coupon
 | `lastOddsApiResultsAt` | Last time Odds API results sync ran (ISO) |
 | `lastOddsApiResultsCount` | Events marked FT in that run |
 | `stuckPendingPicksPastCutoff` | Pending picks on fixtures/events &gt;2h in the past and not FT (candidates for manual settle or void) |
+| `pendingCornerCardPicksMissingStats` | FT football picks on corner/card/booking markets whose fixture still lacks match stats — run **Fixtures → Fetch Results & Settle** |
+
+**Corner / card markets:** Settlement uses `/fixtures/statistics` columns on the fixture. Dashboard “Run Settlement Now” does not fetch those stats by itself. Race To and 1H/2H total corners are not offered (no settle inputs).
 
 ---
 

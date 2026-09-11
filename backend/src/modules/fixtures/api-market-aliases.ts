@@ -52,6 +52,29 @@ export const API_MARKET_ALIASES: Record<string, string> = {
   'European Handicap': 'European Handicap',
   'Handicap Result': 'European Handicap',
   '3-Way Handicap': 'European Handicap',
+  // Corners (common API / bookmaker spellings → stable labels for create-pick)
+  'Corners Over Under': 'Corners Over/Under',
+  'Corners Over/Under': 'Corners Over/Under',
+  'Total Corners': 'Corners Over/Under',
+  'Corner Over Under': 'Corners Over/Under',
+  'Home Corners Over/Under': 'Home Corners Over/Under',
+  'Away Corners Over/Under': 'Away Corners Over/Under',
+  'Corners 1x2': 'Corners 1X2',
+  'Corners 1X2': 'Corners 1X2',
+  'Corner Match Bet': 'Corners 1X2',
+  'Corners Asian Handicap': 'Corners Asian Handicap',
+  'Corners. Asian Handicap': 'Corners Asian Handicap',
+  // Race To / 1H–2H aliases omitted — denied in MarketFilterService (no settle inputs)
+  'Corners. Odd/Even': 'Corners Odd/Even',
+  'Corners Odd/Even': 'Corners Odd/Even',
+  Multicorners: 'Corners Over/Under',
+  'Multi Corners': 'Corners Over/Under',
+  multicorners: 'Corners Over/Under',
+  // Cards
+  'Cards Over/Under': 'Cards Over/Under',
+  'Total Cards': 'Cards Over/Under',
+  'Booking Points': 'Booking Points',
+  'Yellow Cards': 'Yellow Cards',
 };
 
 export function normalizeApiMarketName(apiName: string): string {

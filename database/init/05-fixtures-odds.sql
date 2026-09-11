@@ -27,6 +27,12 @@ CREATE TABLE IF NOT EXISTS fixtures (
 
 ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS ht_home_score INT NULL;
 ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS ht_away_score INT NULL;
+ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS home_corners INT NULL;
+ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS away_corners INT NULL;
+ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS home_yellow_cards INT NULL;
+ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS away_yellow_cards INT NULL;
+ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS home_red_cards INT NULL;
+ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS away_red_cards INT NULL;
 
 CREATE INDEX idx_fixtures_date ON fixtures(match_date);
 CREATE INDEX idx_fixtures_status ON fixtures(status);

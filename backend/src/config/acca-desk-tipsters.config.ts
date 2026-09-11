@@ -1,8 +1,8 @@
 /**
  * Acca Desk tipsters — automated 2-leg free picks via Acca Generator.
  *
- * Core roster: Sure + Safe + Medium × (1X2, DC, BTTS, O2.5, O1.5, Mix) = 18.
- * Plus High · O2.5 and High · O1.5 so totals have all four risk bands.
+ * Core roster: Sure + Safe + Medium × (1X2, DC, BTTS, O2.5, O1.5, U1.5, DNB, FH1X2, FHO1.5, Mix).
+ * Plus High for totals (O2.5 / O1.5 / U1.5 / FH Over 1.5).
  * Order = fixture allocation order (fixed exclusivity).
  */
 
@@ -47,13 +47,17 @@ const MARKET_SLUG: Record<string, string> = {
   btts: 'BTTS',
   o25: 'O25',
   o15: 'O15',
+  u15: 'U15',
+  dnb: 'DNB',
+  fh1x2: 'FH1X2',
+  fh015: 'FHO15',
   mix: 'Mix',
 };
 
 const RISKS: AccaDeskTipsterConfig['riskLevel'][] = ['sure', 'safe', 'medium'];
 
-/** High is totals-only (O2.5 / O1.5). 1X2, DC, BTTS, Mix stay Sure / Safe / Medium. */
-const HIGH_MARKET_KEYS = new Set(['o25', 'o15']);
+/** High is totals-only (FT O/U + 1H Over 1.5). 1X2, DC, BTTS, DNB, FH Winner, Mix stay Sure / Safe / Medium. */
+const HIGH_MARKET_KEYS = new Set(['o25', 'o15', 'u15', 'fh015']);
 
 const MARKET_SPECS: { key: string; label: string; markets: string[] }[] = [
   { key: '1x2', label: '1X2 (Match Winner)', markets: ['match_winner'] },
@@ -61,10 +65,14 @@ const MARKET_SPECS: { key: string; label: string; markets: string[] }[] = [
   { key: 'btts', label: 'BTTS (Yes)', markets: ['btts'] },
   { key: 'o25', label: 'Over 2.5 Goals', markets: ['over25'] },
   { key: 'o15', label: 'Over 1.5 Goals', markets: ['over15'] },
+  { key: 'u15', label: 'Under 1.5 Goals', markets: ['under15'] },
+  { key: 'dnb', label: 'Draw No Bet', markets: ['dnb'] },
+  { key: 'fh1x2', label: '1st Half Winner', markets: ['fh_winner'] },
+  { key: 'fh015', label: '1st Half Over 1.5', markets: ['fh_over15'] },
   { key: 'mix', label: 'Mixed Markets', markets: [...new Set(['over15', ...DEFAULT_ACCA_MARKETS])] },
 ];
 
-/** Fixed order: Sure block → Safe → Medium; within each: 1X2, DC, BTTS, O2.5, O1.5, Mix. Then High totals. */
+/** Fixed order: Sure → Safe → Medium blocks; then High totals. */
 export const ACCA_DESK_TIPSTERS: AccaDeskTipsterConfig[] = [
   ...RISKS.flatMap((risk) => MARKET_SPECS.map((m) => desk(risk, m.key, m.label, m.markets))),
   ...MARKET_SPECS.filter((m) => HIGH_MARKET_KEYS.has(m.key)).map((m) =>

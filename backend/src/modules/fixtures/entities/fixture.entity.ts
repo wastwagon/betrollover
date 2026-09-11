@@ -62,6 +62,25 @@ export class Fixture {
   @Column({ type: 'int', nullable: true, name: 'ht_away_score' })
   htAwayScore: number | null = null;
 
+  /** Full-time match stats from API-Football /fixtures/statistics (corners / cards settlement). */
+  @Column({ type: 'int', nullable: true, name: 'home_corners' })
+  homeCorners: number | null = null;
+
+  @Column({ type: 'int', nullable: true, name: 'away_corners' })
+  awayCorners: number | null = null;
+
+  @Column({ type: 'int', nullable: true, name: 'home_yellow_cards' })
+  homeYellowCards: number | null = null;
+
+  @Column({ type: 'int', nullable: true, name: 'away_yellow_cards' })
+  awayYellowCards: number | null = null;
+
+  @Column({ type: 'int', nullable: true, name: 'home_red_cards' })
+  homeRedCards: number | null = null;
+
+  @Column({ type: 'int', nullable: true, name: 'away_red_cards' })
+  awayRedCards: number | null = null;
+
   @Column({ type: 'timestamp', nullable: true })
   syncedAt: Date | null = null;
 

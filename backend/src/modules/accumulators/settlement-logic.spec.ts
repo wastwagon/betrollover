@@ -234,12 +234,112 @@ describe('settlement-logic', () => {
       expect(determinePickResult('asian handicap: home -1', 3, 1)).toBe('won');
       expect(determinePickResult('asian handicap: home -1', 1, 1)).toBe('lost');
     });
+
+    it('voids on push', () => {
+      expect(determinePickResult('asian handicap: home -1', 2, 1)).toBe('void');
+    });
+
+    it('voids quarter-line half outcomes', () => {
+      // Home -0.75, win by 1 → half win / half push → void in binary settlement
+      expect(determinePickResult('asian handicap: home -0.75', 2, 1)).toBe('void');
+      expect(determinePickResult('asian handicap: home -0.75', 3, 1)).toBe('won');
+    });
   });
 
   describe('European Handicap (coupon label)', () => {
-    it('uses same spread parsing as Asian', () => {
+    it('3-way home/draw/away with home-applied line', () => {
       expect(determinePickResult('european handicap: home -1', 3, 1)).toBe('won');
+      expect(determinePickResult('european handicap: draw -1', 2, 1)).toBe('won');
+      // Away -1: apply -1 to home → 0-0 becomes away win on handicap
+      expect(determinePickResult('european handicap: away -1', 0, 0)).toBe('won');
       expect(determinePickResult('european handicap: away +1', 1, 0)).toBe('lost');
+    });
+  });
+
+  describe('Half-Time/Full-Time', () => {
+    it('grades HT/FT combo', () => {
+      expect(
+        determinePickResult('half-time/full-time: home/home', 2, 0, undefined, undefined, 1, 0),
+      ).toBe('won');
+      // HT home, FT away — winning combo when match flips
+      expect(
+        determinePickResult('half-time/full-time: home/away', 0, 2, undefined, undefined, 1, 0),
+      ).toBe('won');
+      expect(
+        determinePickResult('half-time/full-time: home/home', 0, 2, undefined, undefined, 1, 0),
+      ).toBe('lost');
+      expect(determinePickResult('half-time/full-time: 1/1', 2, 0, undefined, undefined, 1, 0)).toBe(
+        'won',
+      );
+    });
+  });
+
+  describe('Corners / cards (needs match stats)', () => {
+    const stats = {
+      homeCorners: 5,
+      awayCorners: 3,
+      homeYellowCards: 2,
+      awayYellowCards: 1,
+      homeRedCards: 0,
+      awayRedCards: 0,
+    };
+
+    it('corners over/under', () => {
+      expect(
+        determinePickResult('corners over/under: over 7.5', 1, 0, 'A', 'B', null, null, stats),
+      ).toBe('won');
+      expect(
+        determinePickResult('corners over/under: under 7.5', 1, 0, 'A', 'B', null, null, stats),
+      ).toBe('lost');
+    });
+
+    it('corners 1x2 and team corners', () => {
+      expect(determinePickResult('corners 1x2: home', 1, 0, 'A', 'B', null, null, stats)).toBe(
+        'won',
+      );
+      expect(
+        determinePickResult('home corners over/under: over 4.5', 1, 0, 'A', 'B', null, null, stats),
+      ).toBe('won');
+    });
+
+    it('cards over/under uses yellow+red', () => {
+      expect(
+        determinePickResult('cards over/under: over 2.5', 1, 0, 'A', 'B', null, null, stats),
+      ).toBe('won');
+    });
+
+    it('stays pending without stats', () => {
+      expect(determinePickResult('corners over/under: over 7.5', 1, 0)).toBeNull();
+    });
+
+    it('never grades Race To or period corners with FT totals', () => {
+      expect(
+        determinePickResult('corners race to: 5', 1, 0, 'A', 'B', null, null, stats),
+      ).toBeNull();
+      expect(
+        determinePickResult(
+          'total corners (1st half): over 4.5',
+          1,
+          0,
+          'A',
+          'B',
+          null,
+          null,
+          stats,
+        ),
+      ).toBeNull();
+      expect(
+        determinePickResult(
+          'total corners (2nd half): under 5.5',
+          1,
+          0,
+          'A',
+          'B',
+          null,
+          null,
+          stats,
+        ),
+      ).toBeNull();
     });
   });
 
