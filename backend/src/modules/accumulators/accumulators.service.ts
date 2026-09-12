@@ -473,15 +473,29 @@ export class AccumulatorsService {
         select: ['id', 'displayName', 'tipsterType'],
       });
       if (price === 0) {
+        // Acca Desk: one digest after the batch run — not one channel spam per coupon.
+        if (tipster?.tipsterType !== ACCA_DESK_TIPSTER_TYPE) {
+          this.telegramChannelService
+            .postNewPick({
+              couponId: ticket.id,
+              title: dto.title,
+              tipsterName: tipster?.displayName || creatorName,
+              totalOdds: Number(ticket.totalOdds),
+              isFree: true,
+              bookmakerKey,
+              bookingCode,
+            })
+            .catch(() => {});
+        }
+      } else {
         this.telegramChannelService
-          .postFreePick({
+          .postNewPick({
             couponId: ticket.id,
             title: dto.title,
             tipsterName: tipster?.displayName || creatorName,
             totalOdds: Number(ticket.totalOdds),
-            isFree: true,
-            bookmakerKey,
-            bookingCode,
+            isFree: false,
+            priceGhs: price,
           })
           .catch(() => {});
       }

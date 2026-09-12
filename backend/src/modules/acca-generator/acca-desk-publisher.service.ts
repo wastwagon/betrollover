@@ -30,6 +30,7 @@ import { AccaGeneratorService } from './acca-generator.service';
 import { AccaDeskSetupService } from './acca-desk-setup.service';
 import { RolloverDeskService } from './rollover-desk.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { TelegramChannelService } from '../telegram/telegram-channel.service';
 import { ROLLOVER_OWNER_USERNAME } from '../../config/rollover-desk.config';
 import type { AccaDeskShort } from '../email/acca-desk-shorts.config';
 
@@ -59,6 +60,7 @@ export class AccaDeskPublisherService {
     private readonly setup: AccaDeskSetupService,
     private readonly rollover: RolloverDeskService,
     private readonly notifications: NotificationsService,
+    private readonly telegramChannel: TelegramChannelService,
     @InjectRepository(Tipster)
     private readonly tipsterRepo: Repository<Tipster>,
     @InjectRepository(AccumulatorTicket)
@@ -258,6 +260,14 @@ export class AccaDeskPublisherService {
     this.logger.log(
       `Acca Desk deskDay=${deskDayStr}: published=${result.published} already=${result.skippedAlreadyPosted} empty=${result.skippedEmptyPool} errors=${result.errors}`,
     );
+    if (result.published > 0) {
+      this.telegramChannel
+        .postAccaDeskDigest({ deskDay: deskDayStr, publishedCount: result.published })
+        .catch((err: unknown) => {
+          const message = err instanceof Error ? err.message : String(err);
+          this.logger.warn(`Acca Desk Telegram digest failed: ${message}`);
+        });
+    }
     if (shorts.length) {
       try {
         await this.notifications.notifyFollowersOfAccaDeskShorts(shorts);
