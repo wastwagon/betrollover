@@ -980,8 +980,8 @@ const fr: Record<string, string> = {
   'pick_detail.share_pick': 'Partager le pronostic',
   'pick_detail.share_whatsapp': 'Partager sur WhatsApp',
   'pick_detail.share_telegram': 'Partager sur Telegram',
-  'pick_detail.copy_share': 'Copier le message',
-  'pick_detail.share_copied': 'Message copié',
+  'pick_detail.copy_share': 'Copier le texte à partager',
+  'pick_detail.share_copied': 'Texte copié',
 
   'escrow_timeline.title': 'Statut escrow',
   'escrow_timeline.step_purchased': 'Acheté',

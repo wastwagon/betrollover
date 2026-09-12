@@ -984,8 +984,8 @@ const en = {
   'pick_detail.share_pick': 'Share pick',
   'pick_detail.share_whatsapp': 'Share on WhatsApp',
   'pick_detail.share_telegram': 'Share on Telegram',
-  'pick_detail.copy_share': 'Copy message',
-  'pick_detail.share_copied': 'Message copied',
+  'pick_detail.copy_share': 'Copy share text',
+  'pick_detail.share_copied': 'Share text copied',
 
   // ── Escrow purchase timeline ─────────────────────────────────────────────
   'escrow_timeline.title': 'Escrow status',

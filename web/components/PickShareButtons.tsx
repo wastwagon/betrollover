@@ -11,7 +11,7 @@ import {
   whatsappShareHref,
 } from '@/lib/pick-share';
 import { buttonClassName } from '@/components/ui/Button';
-import { IconShare } from '@/components/ios/icons';
+import { IconCopy, IconShare, IconTelegram, IconWhatsApp } from '@/components/ios/icons';
 
 export function PickShareButtons({
   couponId,
@@ -94,6 +94,10 @@ export function PickShareButtons({
     }
   };
 
+  const waLabel = t('pick_detail.share_whatsapp');
+  const tgLabel = t('pick_detail.share_telegram');
+  const copyLabel = copied ? t('pick_detail.share_copied') : t('pick_detail.copy_share');
+
   if (dense) {
     return (
       <div className="flex flex-wrap items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
@@ -101,24 +105,33 @@ export function PickShareButtons({
           href={waHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 rounded-full bg-[#25D366]/15 px-2.5 py-1.5 text-[10px] font-semibold text-[#128C7E] hover:bg-[#25D366]/25"
+          title={waLabel}
+          aria-label={waLabel}
+          className="inline-flex items-center gap-1.5 rounded-full bg-[#25D366]/15 px-2.5 py-1.5 text-[10px] font-semibold text-[#128C7E] hover:bg-[#25D366]/25 transition-colors"
         >
+          <IconWhatsApp className="w-3.5 h-3.5" />
           WhatsApp
         </a>
         <a
           href={tgHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 rounded-full bg-sky-500/15 px-2.5 py-1.5 text-[10px] font-semibold text-sky-700 hover:bg-sky-500/25"
+          title={tgLabel}
+          aria-label={tgLabel}
+          className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/15 px-2.5 py-1.5 text-[10px] font-semibold text-sky-700 hover:bg-sky-500/25 transition-colors"
         >
+          <IconTelegram className="w-3.5 h-3.5" />
           Telegram
         </a>
         <button
           type="button"
           onClick={() => void copyMessage()}
-          className="inline-flex items-center gap-1 rounded-full bg-[var(--fill-secondary)] px-2.5 py-1.5 text-[10px] font-semibold text-[var(--text-muted)] hover:text-[var(--primary)]"
+          title={copyLabel}
+          aria-label={copyLabel}
+          className="inline-flex items-center gap-1.5 rounded-full bg-[var(--fill-secondary)] px-2.5 py-1.5 text-[10px] font-semibold text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors"
         >
-          {copied ? t('pick_detail.share_copied') : t('pick_detail.copy_share')}
+          <IconCopy className="w-3.5 h-3.5" />
+          {copyLabel}
         </button>
       </div>
     );
@@ -133,34 +146,52 @@ export function PickShareButtons({
         {message}
       </p>
       <div className="flex flex-wrap gap-2">
-        <a href={waHref} target="_blank" rel="noopener noreferrer" className={buttonClassName({ size: 'sm' })}>
-          {t('pick_detail.share_whatsapp')}
+        <a
+          href={waHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={waLabel}
+          aria-label={waLabel}
+          className={`${buttonClassName({ size: 'sm' })} inline-flex items-center gap-1.5 !bg-[#25D366] hover:!bg-[#1da851] !text-white`}
+        >
+          <IconWhatsApp className="w-4 h-4" />
+          {waLabel}
         </a>
         <a
           href={tgHref}
           target="_blank"
           rel="noopener noreferrer"
+          title={tgLabel}
+          aria-label={tgLabel}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 text-white text-xs font-semibold hover:bg-sky-700 transition-colors"
         >
-          {t('pick_detail.share_telegram')}
+          <IconTelegram className="w-4 h-4" />
+          {tgLabel}
         </a>
         <button
           type="button"
           onClick={() => void copyMessage()}
+          title={copyLabel}
+          aria-label={copyLabel}
           className={buttonClassName({ size: 'sm', variant: 'secondary' })}
         >
           <span className="inline-flex items-center gap-1.5">
-            <IconShare className="w-3.5 h-3.5" />
-            {copied ? t('pick_detail.share_copied') : t('pick_detail.copy_share')}
+            <IconCopy className="w-3.5 h-3.5" />
+            {copyLabel}
           </span>
         </button>
         {canNativeShare ? (
           <button
             type="button"
             onClick={() => void nativeShare()}
+            title={t('common.share')}
+            aria-label={t('common.share')}
             className={buttonClassName({ size: 'sm', variant: 'secondary' })}
           >
-            {t('common.share')}
+            <span className="inline-flex items-center gap-1.5">
+              <IconShare className="w-3.5 h-3.5" />
+              {t('common.share')}
+            </span>
           </button>
         ) : null}
       </div>

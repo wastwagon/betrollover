@@ -350,6 +350,33 @@ export function IconShare(props: { className?: string }) {
   );
 }
 
+/** Official-style filled WhatsApp glyph (currentColor). */
+export function IconWhatsApp(props: { className?: string }) {
+  return (
+    <svg className={`shrink-0 ${props.className ?? 'w-4 h-4'}`} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M12.04 2C6.58 2 2.15 6.4 2.15 11.84c0 1.99.59 3.84 1.61 5.4L2 22l4.92-1.71a9.86 9.86 0 004.12.89h.01c5.46 0 9.89-4.4 9.89-9.84C20.94 6.4 16.5 2 12.04 2zm5.75 13.99c-.24.68-1.4 1.24-1.94 1.32-.5.07-1.14.1-1.84-.12-.42-.13-.97-.32-1.67-.62-2.94-1.27-4.85-4.23-5-4.42-.14-.19-1.18-1.57-1.18-3 0-1.42.74-2.12 1-2.41.26-.29.57-.36.76-.36h.55c.18 0 .42-.07.65.5.24.58.81 2 .88 2.14.07.14.12.31.02.5-.1.19-.14.31-.28.48-.14.17-.29.37-.42.5-.14.14-.28.29-.12.57.16.28.7 1.15 1.5 1.86 1.03.91 1.9 1.2 2.17 1.33.27.14.43.12.59-.07.16-.19.68-.79.86-1.06.18-.27.36-.22.61-.13.24.09 1.55.73 1.81.86.27.14.45.2.52.31.07.12.07.67-.17 1.35z" />
+    </svg>
+  );
+}
+
+/** Official-style filled Telegram paper-plane glyph (currentColor). */
+export function IconTelegram(props: { className?: string }) {
+  return (
+    <svg className={`shrink-0 ${props.className ?? 'w-4 h-4'}`} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M21.94 4.32c.23-.98-.66-1.8-1.6-1.43L2.66 9.66c-1.03.4-1 .98-.18 1.23l4.7 1.47 1.82 5.58c.23.7.4.97.88.97.44 0 .64-.2.88-.44l2.62-2.54 5.05 3.73c.93.51 1.6.25 1.83-.86l3.07-14.48.01-.01zM8.3 13.36l8.84-5.57c.42-.27.8-.12.48.18l-7.2 6.5-.28 3.2-1.84-4.31z" />
+    </svg>
+  );
+}
+
+export function IconCopy(props: { className?: string }) {
+  return (
+    <IconBase className={props.className}>
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 15V5a2 2 0 012-2h10" />
+    </IconBase>
+  );
+}
+
 export function IconLock(props: { className?: string }) {
   return (
     <IconBase className={props.className}>
