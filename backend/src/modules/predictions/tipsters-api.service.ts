@@ -15,6 +15,7 @@ import {
   LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING,
   LEADERBOARD_MIN_SETTLED_WEEKLY,
   TIPSTER_ACTIVE_WITHIN_DAYS,
+  compareLeaderboardLead,
   computeTipsterFormPoints,
   daysSinceTimestamp,
   isTipsterActivePoster,
@@ -128,8 +129,8 @@ function compareFormThenRoi(
   a: { form_points?: number; roi: number; total_profit?: number; profit?: number; win_rate: number },
   b: { form_points?: number; roi: number; total_profit?: number; profit?: number; win_rate: number },
 ): number {
-  const pts = (b.form_points ?? 0) - (a.form_points ?? 0);
-  if (pts !== 0) return pts;
+  const lead = compareLeaderboardLead(a, b);
+  if (lead !== 0) return lead;
   return compareLeaderboardRows(a, b);
 }
 

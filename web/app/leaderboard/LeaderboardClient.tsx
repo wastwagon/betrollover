@@ -160,7 +160,7 @@ export default function LeaderboardPage({
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
-    // Same list as homepage Top Performing: GET /leaderboard rank is form order among active posters.
+    // Form order among active posters. Homepage Top Performing uses this list but hides ROI below 0%.
     const params = new URLSearchParams({ limit: '50' });
     if (p !== 'all_time') params.set('period', p);
     if (s !== 'all') params.set('sport', s);

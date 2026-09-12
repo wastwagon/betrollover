@@ -55,6 +55,31 @@ export function computeTipsterFormPoints(input: TipsterFormPointsInput): number 
   return wrPts + roiPts + postPts + recency;
 }
 
+/**
+ * All-time board rank uses this, not form points alone.
+ * Form (activity + WR) plus signed ROI so a daily desk at −12% cannot sit above +ROI posters.
+ */
+export function leaderboardLeadScore(formPoints: number, roi: number): number {
+  return (Number(formPoints) || 0) + (Number(roi) || 0);
+}
+
+export type LeaderboardLeadRow = {
+  form_points?: number;
+  roi: number;
+};
+
+/**
+ * 1) ROI ≥ 0 above ROI &lt; 0 (negatives never take #2 over a profitable desk).
+ * 2) Higher form+ROI lead score.
+ * Inactive posters already have form 0 and are dropped before sort.
+ */
+export function compareLeaderboardLead(a: LeaderboardLeadRow, b: LeaderboardLeadRow): number {
+  const aNonNeg = (Number(a.roi) || 0) >= 0 ? 1 : 0;
+  const bNonNeg = (Number(b.roi) || 0) >= 0 ? 1 : 0;
+  if (bNonNeg !== aNonNeg) return bNonNeg - aNonNeg;
+  return leaderboardLeadScore(b.form_points ?? 0, b.roi) - leaderboardLeadScore(a.form_points ?? 0, a.roi);
+}
+
 export function daysSinceTimestamp(lastPostedAt: Date | string | null | undefined, now = new Date()): number | null {
   if (!lastPostedAt) return null;
   const t = lastPostedAt instanceof Date ? lastPostedAt.getTime() : new Date(lastPostedAt).getTime();

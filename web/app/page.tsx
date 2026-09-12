@@ -63,7 +63,7 @@ export default async function HomePage() {
           <AdSlot zoneSlug="home-below-hero" fullWidth className="w-full" />
         </div>
         {/* Tipsters immediately after the banner — Tipstrr-style discovery */}
-        <HomePopularTipsters initialLeaderboard={homeData.topTipsters.slice(0, 8)} />
+        <HomePopularTipsters initialLeaderboard={homeData.topTipsters} />
         <HomeFollowingShelf />
         <FeaturedPicks initialFeatured={homeData.featuredPicks} />
         <section id="free-tip-of-the-day" className="w-full min-w-0">

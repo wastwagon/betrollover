@@ -187,7 +187,7 @@ const fr: Record<string, string> = {
   'match.picks_count': '{count} pronostics',
   'match.no_picks_yet': 'Aucun pronostic marketplace pour ce match — parcourez le football ou revenez avant le coup d\'envoi.',
   'home.featured_tipsters': 'Meilleurs Tipsters',
-  'home.featured_tipsters_sub': 'Pronostic marketplace publié dans les {days} derniers jours. Classés par forme (résultats + jours de publication récents).',
+  'home.featured_tipsters_sub': 'Même ordre que le classement. Forme plus ROI, parmi les tipsters ayant publié dans les {days} derniers jours.',
   'home.free_tip': 'Pronostic Gratuit du Jour',
   'home.free_tip_sub': 'Pronostics gratuits en cours des tipsters au meilleur taux de réussite et ROI positif',
   'home.free_tip_browse_all': 'Tous les pronostics →',
@@ -1140,7 +1140,7 @@ const fr: Record<string, string> = {
   'tipster.sort_followers': 'Trier par Abonnés',
   'tipster.streak': 'Série',
   'tipster.rank_prefix': 'Rang #',
-  'tipster.leaderboard_rank_title': 'Position au classement all-time parmi les tipsters ayant publié dans les {days} derniers jours (points de forme, puis ROI)',
+  'tipster.leaderboard_rank_title': 'Position au classement all-time parmi les tipsters ayant publié dans les {days} derniers jours (forme + ROI ; le ROI positif passe d’abord)',
   'tipster.x_follower': '{n} abonné',
   'tipster.x_followers': '{n} abonnés',
   'tipster.followers_title': 'Abonnés',
@@ -1746,16 +1746,16 @@ const fr: Record<string, string> = {
   'seo.tipsters_title': 'Annuaire des tipsters football',
   'seo.tipsters_desc': 'Parcourez et suivez des tipsters football vérifiés. Filtrez par ROI, taux de réussite et sport. Pronostics sous escrow — basé au Ghana, audience mondiale.',
   'seo.leaderboard_title': 'Classement de forme des tipsters',
-  'seo.leaderboard_desc': 'Tipsters football actifs classés par points de forme récente, puis ROI. Les comptes inactifs n’apparaissent pas. Distinct de l’annuaire.',
+  'seo.leaderboard_desc': 'Tipsters football actifs classés par forme plus ROI. Le ROI positif passe au-dessus du négatif. Les comptes inactifs n’apparaissent pas. Distinct de l’annuaire.',
   'leaderboard.empty_logged_sub':
     'Aucun tipster ne correspond à ce filtre pour le moment. Essayez une autre période ou un autre sport, ou parcourez tous les profils.',
   'leaderboard.empty_logged_cta': 'Voir tous les tipsters',
   'leaderboard.form_col': 'Forme',
-  'leaderboard.form_hint': 'Taux de réussite, ROI plafonné et jours de publication marketplace des {days} derniers jours ({cap} jours max comptent).',
+  'leaderboard.form_hint': 'Score d’activité : taux de réussite, ROI positif plafonné et jours de publication marketplace des {days} derniers jours ({cap} jours max comptent). Le rang utilise ce score plus le ROI signé.',
   'leaderboard.actions_col': 'Actions',
   'leaderboard.important_note_title': 'Note importante',
   'leaderboard.rank_notice_all_time':
-    'Classement all-time : uniquement les tipsters qui ont publié un pronostic marketplace dans les {days} derniers jours. Ceux avec au moins {n} pronostics arbitrés sont classés en premier par points de forme (taux de réussite, ROI plafonné, jours de publication récents — au-delà de {cap} jours dans la fenêtre, pas de points en plus), puis ROI. Les autres encore actifs figurent en dessous jusqu’à {n} pronostics arbitrés. Les comptes inactifs n’apparaissent pas.',
+    'Classement all-time : uniquement les tipsters qui ont publié un pronostic marketplace dans les {days} derniers jours — un compte inactif ne peut pas mener, même avec un ROI all-time élevé. Ceux avec au moins {n} pronostics arbitrés sont classés ainsi : tout ROI à 0 % ou plus passe au-dessus de tout ROI négatif, puis par score de tête (points de forme + ROI). La forme récompense encore le taux de réussite et les publications récentes (au-delà de {cap} jours dans la fenêtre, pas de points en plus). Les autres encore actifs figurent en dessous jusqu’à {n} pronostics arbitrés.',
   'leaderboard.rank_notice_monthly':
     'Ce mois-ci : seuls les tipsters avec au moins un pronostic arbitré publié dans le mois civil en cours apparaissent. Ceux avec au moins {n} pronostics arbitrés publiés ce mois-là sont classés en premier par ROI, puis profit, puis taux de réussite ; les autres sur le mois suivent en dessous, par ROI.',
   'leaderboard.rank_notice_weekly':

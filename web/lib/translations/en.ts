@@ -190,7 +190,7 @@ const en = {
   'match.picks_count': '{count} picks',
   'match.no_picks_yet': 'No marketplace picks for this fixture yet — browse all football picks or check back closer to kickoff.',
   'home.featured_tipsters': 'Top Performing Tipsters',
-  'home.featured_tipsters_sub': 'Posted a marketplace pick in the last {days} days. Ranked by form (results + recent posting days).',
+  'home.featured_tipsters_sub': 'Same order as the leaderboard. Form plus ROI, among tipsters who posted in the last {days} days.',
   'home.free_tip': 'Free Tip of the Day',
   'home.free_tip_sub': 'Live free picks from tipsters with a high hit rate and positive ROI',
   'home.free_tip_browse_all': 'All picks →',
@@ -1145,7 +1145,7 @@ const en = {
   'tipster.sort_followers': 'Sort by Followers',
   'tipster.streak': 'Streak',
   'tipster.rank_prefix': 'Rank #',
-  'tipster.leaderboard_rank_title': 'All-time leaderboard position among tipsters who posted in the last {days} days (form points, then ROI)',
+  'tipster.leaderboard_rank_title': 'All-time leaderboard position among tipsters who posted in the last {days} days (form + ROI; positive ROI lists first)',
   'tipster.x_follower': '{n} follower',
   'tipster.x_followers': '{n} followers',
   'tipster.followers_title': 'Followers',
@@ -1750,15 +1750,15 @@ const en = {
   'seo.tipsters_title': 'Football Tipster Directory',
   'seo.tipsters_desc': 'Browse and follow verified football tipsters. Filter by ROI, win rate, and sport. Escrow-protected picks — Ghana-based, worldwide audience.',
   'seo.leaderboard_title': 'Football Tipster Form Leaderboard',
-  'seo.leaderboard_desc': 'Active football tipsters ranked by recent form points, then ROI. Inactive accounts are not listed. Separate from the searchable directory.',
+  'seo.leaderboard_desc': 'Active football tipsters ranked by form plus ROI. Positive ROI lists above negative. Inactive accounts are not listed. Separate from the searchable directory.',
   'leaderboard.empty_logged_sub':
     'No tipsters match this filter right now. Try another period or sport, or browse all profiles.',
   'leaderboard.empty_logged_cta': 'Browse all tipsters',
   'leaderboard.form_col': 'Form',
-  'leaderboard.form_hint': 'Win rate, capped ROI, and marketplace posting days in the last {days} days (max {cap} days count).',
+  'leaderboard.form_hint': 'Activity score: win rate, capped positive ROI, and marketplace posting days in the last {days} days (max {cap} days count). Rank uses this plus signed ROI.',
   'leaderboard.important_note_title': 'Important note',
   'leaderboard.rank_notice_all_time':
-    'All-time list: only tipsters who posted a marketplace pick in the last {days} days. Those with at least {n} settled picks rank first by form points (win rate, capped ROI, recent posting days — extra days beyond {cap} in the window do not add points), then ROI. Everyone else who is still posting appears below until they reach {n} settled picks. Inactive accounts are not listed.',
+    'All-time list: only tipsters who posted a marketplace pick in the last {days} days — inactive accounts cannot lead, even with a high all-time ROI. Those with at least {n} settled picks rank first: every desk at 0% ROI or better sits above every negative-ROI desk, then by lead score (form points + ROI). Form still rewards win rate and recent posting (extra days beyond {cap} in the window do not add points). Everyone else who is still posting appears below until they reach {n} settled picks.',
   'leaderboard.rank_notice_monthly':
     'This month: only tipsters with at least one settled pick posted in the current calendar month are listed. Those with at least {n} settled selections posted that month are ranked first by ROI, then profit, then win rate; everyone else in the month follows below, by ROI.',
   'leaderboard.rank_notice_weekly':
