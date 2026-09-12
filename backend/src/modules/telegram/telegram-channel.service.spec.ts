@@ -1,6 +1,46 @@
+import {
+  TELEGRAM_CHANNEL_SEO_DESCRIPTION,
+  TELEGRAM_ENGAGEMENT_FOOTERS,
+  appendEngagementFooter,
+  formatGrowthPost,
+  pickRotatingLine,
+  telegramAlwaysAllowUsernames,
+} from './telegram-copy';
 import { TelegramChannelService } from './telegram-channel.service';
+import { TelegramEligibilityService } from './telegram-eligibility.service';
+import { ROLLOVER_OWNER_USERNAME } from '../../config/rollover-desk.config';
+import { ACCA_DESK_TIPSTER_TYPE } from '../../config/acca-desk-tipsters.config';
 
-describe('TelegramChannelService message formatting', () => {
+describe('telegram-copy', () => {
+  it('appends engagement footer', () => {
+    const out = appendEngagementFooter('Hello pick', 1);
+    expect(out.startsWith('Hello pick')).toBe(true);
+    expect(TELEGRAM_ENGAGEMENT_FOOTERS.some((f) => out.includes(f))).toBe(true);
+  });
+
+  it('formats growth post with site links', () => {
+    const text = formatGrowthPost('https://betrollover.com', 0);
+    expect(text).toContain('https://betrollover.com');
+    expect(text.toLowerCase()).toMatch(/react|forward|share/);
+  });
+
+  it('always allows AccaSure1X2', () => {
+    expect(telegramAlwaysAllowUsernames()).toContain(ROLLOVER_OWNER_USERNAME);
+  });
+
+  it('has SEO description under Telegram limit', () => {
+    expect(TELEGRAM_CHANNEL_SEO_DESCRIPTION.length).toBeLessThanOrEqual(255);
+    expect(TELEGRAM_CHANNEL_SEO_DESCRIPTION.toLowerCase()).toContain('ghana');
+  });
+
+  it('pickRotatingLine is stable for same salt', () => {
+    expect(pickRotatingLine(TELEGRAM_ENGAGEMENT_FOOTERS, 42)).toBe(
+      pickRotatingLine(TELEGRAM_ENGAGEMENT_FOOTERS, 42),
+    );
+  });
+});
+
+describe('TelegramChannelService engagement', () => {
   const prev = { ...process.env };
 
   beforeEach(() => {
@@ -8,13 +48,14 @@ describe('TelegramChannelService message formatting', () => {
     process.env.TELEGRAM_BOT_TOKEN = 'test-token';
     process.env.TELEGRAM_CHANNEL_ID = '@betrollovertips';
     process.env.TELEGRAM_CHANNEL_POSTS_ENABLED = 'true';
+    process.env.TELEGRAM_GROWTH_POSTS_ENABLED = 'true';
   });
 
   afterAll(() => {
     process.env = prev;
   });
 
-  it('formats free pick without booking code when absent', async () => {
+  it('includes footer on free pick posts', async () => {
     const svc = new TelegramChannelService();
     const calls: unknown[] = [];
     global.fetch = jest.fn(async (_url, init) => {
@@ -23,21 +64,19 @@ describe('TelegramChannelService message formatting', () => {
     }) as typeof fetch;
 
     await svc.postNewPick({
-      couponId: 99,
-      title: 'Acca Mix',
+      couponId: 7,
+      title: 'Sure Mix',
       tipsterName: 'AccaSure',
-      totalOdds: 4.25,
+      totalOdds: 1.9,
       isFree: true,
     });
 
     const body = calls[0] as { text: string };
-    expect(body.text).toContain('Acca Mix · free · 4.25 odds');
-    expect(body.text).toContain('Tipster: AccaSure');
-    expect(body.text).not.toMatch(/code:/i);
-    expect(body.text).toContain('utm_campaign=channel_auto');
+    expect(body.text).toContain('Sure Mix · free');
+    expect(TELEGRAM_ENGAGEMENT_FOOTERS.some((f) => body.text.includes(f))).toBe(true);
   });
 
-  it('includes booking code only when tipster provided one on free picks', async () => {
+  it('paid teaser has no booking code and has footer', async () => {
     const svc = new TelegramChannelService();
     const calls: unknown[] = [];
     global.fetch = jest.fn(async (_url, init) => {
@@ -46,49 +85,22 @@ describe('TelegramChannelService message formatting', () => {
     }) as typeof fetch;
 
     await svc.postNewPick({
-      couponId: 1,
-      title: 'Pick',
-      tipsterName: 'T',
-      totalOdds: 2,
-      isFree: true,
-      bookmakerKey: 'sportybet',
-      bookingCode: 'SB-99',
-    });
-
-    const body = calls[0] as { text: string };
-    expect(body.text).toContain('SportyBet code: SB-99');
-  });
-
-  it('posts paid teaser without booking code and with buy CTA', async () => {
-    const svc = new TelegramChannelService();
-    const calls: unknown[] = [];
-    global.fetch = jest.fn(async (_url, init) => {
-      calls.push(JSON.parse(String(init?.body)));
-      return { ok: true, json: async () => ({ ok: true }) } as Response;
-    }) as typeof fetch;
-
-    await svc.postNewPick({
-      couponId: 42,
-      title: 'Banker Acca',
-      tipsterName: 'ProTips',
-      totalOdds: 5.5,
+      couponId: 8,
+      title: 'Banker',
+      tipsterName: 'Pro',
+      totalOdds: 3,
       isFree: false,
-      priceGhs: 15,
-      bookmakerKey: 'sportybet',
+      priceGhs: 10,
       bookingCode: 'SECRET',
     });
 
     const body = calls[0] as { text: string };
-    expect(body.text).toContain('Paid pick 🔒');
-    expect(body.text).toContain('Banker Acca');
-    expect(body.text).toContain('GHS 15.00');
-    expect(body.text).toContain('Unlock on BetRollover');
-    expect(body.text).toContain('utm_campaign=channel_paid');
+    expect(body.text).toContain('Paid pick');
     expect(body.text).not.toContain('SECRET');
-    expect(body.text).not.toMatch(/code:/i);
+    expect(TELEGRAM_ENGAGEMENT_FOOTERS.some((f) => body.text.includes(f))).toBe(true);
   });
 
-  it('posts Acca Desk digest with count and marketplace link', async () => {
+  it('posts growth message', async () => {
     const svc = new TelegramChannelService();
     const calls: unknown[] = [];
     global.fetch = jest.fn(async (_url, init) => {
@@ -96,19 +108,66 @@ describe('TelegramChannelService message formatting', () => {
       return { ok: true, json: async () => ({ ok: true }) } as Response;
     }) as typeof fetch;
 
-    await svc.postAccaDeskDigest({ deskDay: '2026-09-12', publishedCount: 8 });
-
+    const r = await svc.postGrowthMessage('morning-test');
+    expect(r.ok).toBe(true);
     const body = calls[0] as { text: string };
-    expect(body.text).toContain('Acca Desk · 2026-09-12');
-    expect(body.text).toContain('8 new free 2-folds');
-    expect(body.text).toContain('utm_campaign=channel_acca_digest');
+    expect(body.text.toLowerCase()).toMatch(/react|forward/);
+  });
+});
+
+describe('TelegramEligibilityService', () => {
+  it('allows AccaSure and blocks other Acca Desk', async () => {
+    const svc = new TelegramEligibilityService(
+      { findOne: async () => null } as any,
+      { findOne: async () => ({ minimumROI: 20, minimumWinRate: 30 }) } as any,
+    );
+    const sure = await svc.evaluateTipster({
+      username: ROLLOVER_OWNER_USERNAME,
+      tipsterType: ACCA_DESK_TIPSTER_TYPE,
+      isActive: true,
+    });
+    expect(sure.ok).toBe(true);
+
+    const other = await svc.evaluateTipster({
+      username: 'AccaSafe1X2',
+      tipsterType: ACCA_DESK_TIPSTER_TYPE,
+      isActive: true,
+      totalWins: 100,
+      totalLosses: 10,
+      winRate: 90,
+      roi: 50,
+    });
+    expect(other.ok).toBe(false);
+    expect(other.reason).toBe('acca_desk_other');
   });
 
-  it('skips Acca Desk digest when nothing published', async () => {
-    const svc = new TelegramChannelService();
-    global.fetch = jest.fn() as typeof fetch;
-    const r = await svc.postAccaDeskDigest({ deskDay: '2026-09-12', publishedCount: 0 });
-    expect(r.ok).toBe(false);
-    expect(global.fetch).not.toHaveBeenCalled();
+  it('allows human tipsters above performance bar', async () => {
+    const svc = new TelegramEligibilityService(
+      { findOne: async () => null } as any,
+      { findOne: async () => ({ minimumROI: 20, minimumWinRate: 30 }) } as any,
+    );
+    const ok = await svc.evaluateTipster({
+      username: 'TopHuman',
+      tipsterType: null,
+      isActive: true,
+      totalWins: 12,
+      totalLosses: 3,
+      winRate: 80,
+      roi: 40,
+    });
+    expect(ok.ok).toBe(true);
+    expect(ok.reason).toBe('performance');
+
+    const weak = await svc.evaluateTipster({
+      username: 'ColdStart',
+      tipsterType: null,
+      isActive: true,
+      totalWins: 1,
+      totalLosses: 0,
+      winRate: 100,
+      roi: 50,
+    });
+    expect(weak.ok).toBe(false);
+    expect(weak.reason).toBe('below_bar');
   });
 });

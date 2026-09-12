@@ -1,5 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { bookmakerLabelForKey } from '@betrollover/shared-types';
+import {
+  TELEGRAM_CHANNEL_SEO_DESCRIPTION,
+  appendEngagementFooter,
+  formatGrowthPost,
+} from './telegram-copy';
 
 export type TelegramPickPostInput = {
   couponId: number;
@@ -29,25 +34,31 @@ export class TelegramChannelService {
     return Boolean(this.token() && this.channelId() && this.enabled());
   }
 
-  status(): { enabled: boolean; configured: boolean; channelId: string | null } {
+  status(): {
+    enabled: boolean;
+    configured: boolean;
+    channelId: string | null;
+    growthPostsEnabled: boolean;
+  } {
     const channelId = this.channelId();
     return {
       enabled: this.enabled(),
       configured: Boolean(this.token() && channelId),
       channelId,
+      growthPostsEnabled: this.growthEnabled(),
     };
   }
 
   /**
    * Free pick (optional booking code) or paid teaser (never includes booking code).
-   * Fire-and-forget safe: never throws to callers.
+   * Always appends a soft react/share footer.
    */
   async postNewPick(input: TelegramPickPostInput): Promise<{ ok: boolean; error?: string }> {
-    const text = input.isFree ? this.formatFreePick(input) : this.formatPaidPick(input);
-    return this.sendMessage(text);
+    const core = input.isFree ? this.formatFreePick(input) : this.formatPaidPick(input);
+    return this.sendMessage(appendEngagementFooter(core, input.couponId));
   }
 
-  /** @deprecated use postNewPick — kept for callers/tests that only post free. */
+  /** @deprecated use postNewPick */
   async postFreePick(input: TelegramPickPostInput): Promise<{ ok: boolean; error?: string }> {
     if (!input.isFree) {
       return { ok: false, error: 'skipped_paid' };
@@ -56,11 +67,15 @@ export class TelegramChannelService {
   }
 
   async postWin(input: TelegramWinPostInput): Promise<{ ok: boolean; error?: string }> {
-    return this.sendMessage(this.formatWin(input));
+    const core = this.formatWin(input);
+    return this.sendMessage(appendEngagementFooter(core, `win-${input.couponId}`));
   }
 
-  /** One message after Acca Desk batch publish — avoids N channel posts per desk day. */
-  async postAccaDeskDigest(input: {
+  /**
+   * AccaSure-focused digest (not full Acca Desk roster).
+   * Prefer individual AccaSure1X2 posts; use this when batching Sure publishes.
+   */
+  async postAccaSureDigest(input: {
     deskDay: string;
     publishedCount: number;
   }): Promise<{ ok: boolean; error?: string }> {
@@ -70,14 +85,30 @@ export class TelegramChannelService {
     const day = (input.deskDay || '').trim() || 'today';
     const n = input.publishedCount;
     const base = this.siteOrigin();
-    const url = `${base}/marketplace?utm_source=telegram&utm_medium=social&utm_campaign=channel_acca_digest`;
-    const text = [
-      `Acca Desk · ${day}`,
-      `${n} new free 2-fold${n === 1 ? '' : 's'} just published.`,
-      'Open BetRollover marketplace to view & share.',
+    const url = `${base}/rollover?utm_source=telegram&utm_medium=social&utm_campaign=channel_acca_sure`;
+    const core = [
+      `AccaSure · ${day}`,
+      `${n} new free Sure · 1X2 2-fold${n === 1 ? '' : 's'} on BetRollover.`,
+      'Open the board · react if you’re on it · forward to a friend.',
       '',
       url,
     ].join('\n');
+    return this.sendMessage(appendEngagementFooter(core, `acca-sure-${day}-${n}`));
+  }
+
+  /** @deprecated Acca Desk full digest removed — Sure-first. */
+  async postAccaDeskDigest(input: {
+    deskDay: string;
+    publishedCount: number;
+  }): Promise<{ ok: boolean; error?: string }> {
+    return this.postAccaSureDigest(input);
+  }
+
+  async postGrowthMessage(salt?: number | string): Promise<{ ok: boolean; error?: string }> {
+    if (!this.growthEnabled()) {
+      return { ok: false, error: 'growth_disabled' };
+    }
+    const text = formatGrowthPost(this.siteOrigin(), salt ?? Date.now());
     return this.sendMessage(text);
   }
 
@@ -85,7 +116,41 @@ export class TelegramChannelService {
     const text =
       customText?.trim() ||
       `BetRollover Telegram channel test ✅\n${new Date().toISOString()}\n${this.siteOrigin()}`;
-    return this.sendMessage(text);
+    return this.sendMessage(appendEngagementFooter(text, 'test'));
+  }
+
+  /**
+   * Sync channel About text (Telegram discovery / “SEO”).
+   * Bot must be channel admin with change-info permission.
+   */
+  async syncChannelSeoDescription(custom?: string): Promise<{ ok: boolean; error?: string }> {
+    const token = this.token();
+    const chatId = this.channelId();
+    if (!token || !chatId) return { ok: false, error: 'not_configured' };
+    const description = (custom || process.env.TELEGRAM_CHANNEL_SEO_DESCRIPTION || TELEGRAM_CHANNEL_SEO_DESCRIPTION)
+      .trim()
+      .slice(0, 255);
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${token}/setChatDescription`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, description }),
+      });
+      const json = (await res.json().catch(() => null)) as
+        | { ok?: boolean; description?: string }
+        | null;
+      if (!res.ok || !json?.ok) {
+        const err = json?.description || `HTTP ${res.status}`;
+        this.logger.warn(`Telegram setChatDescription failed: ${err}`);
+        return { ok: false, error: err };
+      }
+      this.logger.log('Telegram channel description synced (SEO about text)');
+      return { ok: true };
+    } catch (e) {
+      const err = e instanceof Error ? e.message : String(e);
+      this.logger.warn(`Telegram setChatDescription error: ${err}`);
+      return { ok: false, error: err };
+    }
   }
 
   async sendMessage(text: string): Promise<{ ok: boolean; error?: string }> {
@@ -146,7 +211,6 @@ export class TelegramChannelService {
     return lines.join('\n');
   }
 
-  /** Paid alert — teaser only; unlock on BetRollover (escrow if it loses). */
   private formatPaidPick(input: TelegramPickPostInput): string {
     const title = (input.title || '').trim() || 'Pick';
     const odds =
@@ -180,6 +244,7 @@ export class TelegramChannelService {
     const priceBit = input.isFree ? 'free' : 'paid';
     const lines = [`Won ✅ · ${title}${odds ? ` · ${odds}` : ''} · ${priceBit}`];
     if (tipster) lines.push(`Tipster: ${tipster}`);
+    lines.push('We win together — react & share the W.');
     lines.push('');
     lines.push(url);
     return lines.join('\n');
@@ -202,6 +267,11 @@ export class TelegramChannelService {
     return v !== '0' && v !== 'false' && v !== 'off' && v !== 'no';
   }
 
+  private growthEnabled(): boolean {
+    const v = (process.env.TELEGRAM_GROWTH_POSTS_ENABLED || 'true').trim().toLowerCase();
+    return v !== '0' && v !== 'false' && v !== 'off' && v !== 'no';
+  }
+
   private token(): string | null {
     const t = (process.env.TELEGRAM_BOT_TOKEN || '').trim();
     return t || null;
@@ -210,9 +280,7 @@ export class TelegramChannelService {
   private channelId(): string | null {
     const explicit = (process.env.TELEGRAM_CHANNEL_ID || '').trim();
     if (explicit) return explicit;
-    const handle = (process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE || '')
-      .trim()
-      .replace(/^@/, '');
+    const handle = (process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE || '').trim().replace(/^@/, '');
     if (handle) return `@${handle}`;
     return '@betrollovertips';
   }

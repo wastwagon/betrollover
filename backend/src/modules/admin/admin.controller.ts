@@ -1001,6 +1001,26 @@ export class AdminController {
     return { ok: true, ...this.telegramChannel.status() };
   }
 
+  @Post('telegram/growth-now')
+  async telegramGrowthNow(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const result = await this.telegramChannel.postGrowthMessage(`admin-${Date.now()}`);
+    if (!result.ok) {
+      throw new BadRequestException(result.error || 'Telegram growth post failed');
+    }
+    return { ok: true, ...this.telegramChannel.status() };
+  }
+
+  @Post('telegram/sync-seo')
+  async telegramSyncSeo(@CurrentUser() user: User, @Body() body?: { description?: string }) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const result = await this.telegramChannel.syncChannelSeoDescription(body?.description);
+    if (!result.ok) {
+      throw new BadRequestException(result.error || 'Telegram SEO sync failed');
+    }
+    return { ok: true, ...this.telegramChannel.status() };
+  }
+
   @Patch('content-pages/:slug')
   async updateContentPage(
     @CurrentUser() user: User,

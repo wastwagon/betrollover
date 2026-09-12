@@ -27,6 +27,7 @@ import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { EmailService } from '../email/email.service';
 import { TelegramChannelService } from '../telegram/telegram-channel.service';
+import { TelegramEligibilityService } from '../telegram/telegram-eligibility.service';
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { SportEvent } from '../sport-events/entities/sport-event.entity';
 import { FootballService } from '../football/football.service';
@@ -44,6 +45,7 @@ import { isAllowedAfricanBookmakerKey, LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKI
 import { isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
 import { ACCA_GENERATOR_LEGS_MAX } from '../acca-generator/acca-generator.constants';
 import { ACCA_DESK_TIPSTER_TYPE } from '../../config/acca-desk-tipsters.config';
+import { ROLLOVER_OWNER_USERNAME } from '../../config/rollover-desk.config';
 import {
   classicAiMarketplaceTicketExcludeRawSql,
   classicAiPublicExcludeRawSql,
@@ -156,6 +158,7 @@ export class AccumulatorsService {
     @Inject(forwardRef(() => EmailService))
     private emailService: EmailService,
     private telegramChannelService: TelegramChannelService,
+    private telegramEligibility: TelegramEligibilityService,
     private footballService: FootballService,
     private tipsterService: TipsterService,
     @Inject(forwardRef(() => UsersService))
@@ -470,37 +473,30 @@ export class AccumulatorsService {
 
       const tipster = await this.tipsterRepo.findOne({
         where: { userId },
-        select: ['id', 'displayName', 'tipsterType'],
+        select: ['id', 'displayName', 'tipsterType', 'username'],
       });
-      if (price === 0) {
-        // Acca Desk: one digest after the batch run — not one channel spam per coupon.
-        if (tipster?.tipsterType !== ACCA_DESK_TIPSTER_TYPE) {
+      const isAccaDesk = tipster?.tipsterType === ACCA_DESK_TIPSTER_TYPE;
+      const isAccaSure = (tipster?.username || '').toLowerCase() === ROLLOVER_OWNER_USERNAME.toLowerCase();
+      // Acca Desk: only AccaSure1X2 hits the channel (other desks stay on-site).
+      const mayTelegram = !isAccaDesk || isAccaSure;
+      if (mayTelegram) {
+        const elig = await this.telegramEligibility.canPostForUserId(userId);
+        if (elig.ok) {
           this.telegramChannelService
             .postNewPick({
               couponId: ticket.id,
               title: dto.title,
               tipsterName: tipster?.displayName || creatorName,
               totalOdds: Number(ticket.totalOdds),
-              isFree: true,
-              bookmakerKey,
-              bookingCode,
+              isFree: price === 0,
+              priceGhs: price > 0 ? price : undefined,
+              bookmakerKey: price === 0 ? bookmakerKey : undefined,
+              bookingCode: price === 0 ? bookingCode : undefined,
             })
             .catch(() => {});
         }
-      } else {
-        this.telegramChannelService
-          .postNewPick({
-            couponId: ticket.id,
-            title: dto.title,
-            tipsterName: tipster?.displayName || creatorName,
-            totalOdds: Number(ticket.totalOdds),
-            isFree: false,
-            priceGhs: price,
-          })
-          .catch(() => {});
       }
       if (tipster) {
-        const isAccaDesk = tipster.tipsterType === ACCA_DESK_TIPSTER_TYPE;
         await this.notificationsService.notifyFollowersOfNewCoupon({
           tipsterId: tipster.id,
           tipsterUserId: userId,

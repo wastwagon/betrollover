@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccumulatorsModule } from '../accumulators/accumulators.module';
 import { FixturesModule } from '../fixtures/fixtures.module';
 import { NotificationsModule } from '../notifications/notifications.module';
-import { TelegramModule } from '../telegram/telegram.module';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { FixtureOdd } from '../fixtures/entities/fixture-odd.entity';
@@ -44,7 +43,6 @@ import { RolloverDeskController } from './rollover-desk.controller';
     ]),
     AccumulatorsModule,
     NotificationsModule,
-    TelegramModule,
     forwardRef(() => FixturesModule),
   ],
   controllers: [AccaGeneratorController, RolloverDeskController],

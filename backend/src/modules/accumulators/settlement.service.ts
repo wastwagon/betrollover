@@ -10,6 +10,7 @@ import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TelegramChannelService } from '../telegram/telegram-channel.service';
+import { TelegramEligibilityService } from '../telegram/telegram-eligibility.service';
 import { determinePickResult } from './settlement-logic';
 import { clampPlatformCommissionPercent, splitGrossForTipsterPayout } from '../../common/platform-commission';
 import { couponUserFacingRef } from '../../common/coupon-public-label';
@@ -59,6 +60,7 @@ export class SettlementService {
     private walletService: WalletService,
     private notificationsService: NotificationsService,
     private telegramChannelService: TelegramChannelService,
+    private telegramEligibility: TelegramEligibilityService,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     @Inject(forwardRef(() => TipstersApiService))
@@ -612,6 +614,8 @@ export class SettlementService {
       for (const post of wonMarketplacePosts) {
         const ticket = allPendingTickets.find((t) => t.id === post.couponId);
         const tipsterName = ticket?.userId != null ? nameById.get(ticket.userId) ?? null : null;
+        const elig = await this.telegramEligibility.canPostForUserId(ticket?.userId);
+        if (!elig.ok) continue;
         this.telegramChannelService
           .postWin({
             ...post,
