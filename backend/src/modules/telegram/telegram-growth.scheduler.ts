@@ -4,7 +4,7 @@ import { isSchedulingEnabled } from '../email/scheduling-enabled';
 import { TelegramChannelService } from './telegram-channel.service';
 
 /**
- * Twice-daily growth posts (Africa/Accra) — invite / react / forward.
+ * Growth (2×/day) + daily bankroll/strategy advice (Africa/Accra).
  * Separate from pick alerts so tips stay clean.
  */
 @Injectable()
@@ -18,7 +18,15 @@ export class TelegramGrowthScheduler {
     timeZone: process.env.PREDICTION_TIMEZONE || 'Africa/Accra',
   })
   async morningGrowth(): Promise<void> {
-    await this.run('morning');
+    await this.runGrowth('morning');
+  }
+
+  /** Midday advice — bankroll / stay-in-profit strategies — default 12:00 Africa/Accra */
+  @Cron(process.env.TELEGRAM_ADVICE_CRON || '0 12 * * *', {
+    timeZone: process.env.PREDICTION_TIMEZONE || 'Africa/Accra',
+  })
+  async middayAdvice(): Promise<void> {
+    await this.runAdvice('midday');
   }
 
   /** Evening growth — default 19:00 Africa/Accra */
@@ -26,10 +34,10 @@ export class TelegramGrowthScheduler {
     timeZone: process.env.PREDICTION_TIMEZONE || 'Africa/Accra',
   })
   async eveningGrowth(): Promise<void> {
-    await this.run('evening');
+    await this.runGrowth('evening');
   }
 
-  private async run(slot: 'morning' | 'evening'): Promise<void> {
+  private async runGrowth(slot: 'morning' | 'evening'): Promise<void> {
     if (!isSchedulingEnabled()) return;
     if (!this.telegram.isConfigured()) return;
     const result = await this.telegram.postGrowthMessage(`${slot}-${new Date().toISOString().slice(0, 10)}`);
@@ -37,6 +45,17 @@ export class TelegramGrowthScheduler {
       this.logger.log(`Telegram growth post sent (${slot})`);
     } else if (result.error && result.error !== 'growth_disabled' && result.error !== 'disabled') {
       this.logger.warn(`Telegram growth post failed (${slot}): ${result.error}`);
+    }
+  }
+
+  private async runAdvice(slot: string): Promise<void> {
+    if (!isSchedulingEnabled()) return;
+    if (!this.telegram.isConfigured()) return;
+    const result = await this.telegram.postAdviceMessage(`${slot}-${new Date().toISOString().slice(0, 10)}`);
+    if (result.ok) {
+      this.logger.log(`Telegram advice post sent (${slot})`);
+    } else if (result.error && result.error !== 'advice_disabled' && result.error !== 'disabled') {
+      this.logger.warn(`Telegram advice post failed (${slot}): ${result.error}`);
     }
   }
 }

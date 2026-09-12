@@ -1011,6 +1011,16 @@ export class AdminController {
     return { ok: true, ...this.telegramChannel.status() };
   }
 
+  @Post('telegram/advice-now')
+  async telegramAdviceNow(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const result = await this.telegramChannel.postAdviceMessage(`admin-${Date.now()}`);
+    if (!result.ok) {
+      throw new BadRequestException(result.error || 'Telegram advice post failed');
+    }
+    return { ok: true, ...this.telegramChannel.status() };
+  }
+
   @Post('telegram/sync-seo')
   async telegramSyncSeo(@CurrentUser() user: User, @Body() body?: { description?: string }) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');

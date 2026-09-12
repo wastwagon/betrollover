@@ -3,6 +3,7 @@ import { bookmakerLabelForKey } from '@betrollover/shared-types';
 import {
   TELEGRAM_CHANNEL_SEO_DESCRIPTION,
   appendEngagementFooter,
+  formatAdvicePost,
   formatGrowthPost,
 } from './telegram-copy';
 
@@ -39,6 +40,7 @@ export class TelegramChannelService {
     configured: boolean;
     channelId: string | null;
     growthPostsEnabled: boolean;
+    advicePostsEnabled: boolean;
   } {
     const channelId = this.channelId();
     return {
@@ -46,6 +48,7 @@ export class TelegramChannelService {
       configured: Boolean(this.token() && channelId),
       channelId,
       growthPostsEnabled: this.growthEnabled(),
+      advicePostsEnabled: this.adviceEnabled(),
     };
   }
 
@@ -110,6 +113,16 @@ export class TelegramChannelService {
     }
     const text = formatGrowthPost(this.siteOrigin(), salt ?? Date.now());
     return this.sendMessage(text);
+  }
+
+  /** Daily bankroll / “stay in profit” strategy education. */
+  async postAdviceMessage(salt?: number | string): Promise<{ ok: boolean; error?: string }> {
+    if (!this.adviceEnabled()) {
+      return { ok: false, error: 'advice_disabled' };
+    }
+    const s = salt ?? Date.now();
+    const core = formatAdvicePost(this.siteOrigin(), s);
+    return this.sendMessage(appendEngagementFooter(core, `advice-${s}`));
   }
 
   async sendTestMessage(customText?: string): Promise<{ ok: boolean; error?: string }> {
@@ -269,6 +282,11 @@ export class TelegramChannelService {
 
   private growthEnabled(): boolean {
     const v = (process.env.TELEGRAM_GROWTH_POSTS_ENABLED || 'true').trim().toLowerCase();
+    return v !== '0' && v !== 'false' && v !== 'off' && v !== 'no';
+  }
+
+  private adviceEnabled(): boolean {
+    const v = (process.env.TELEGRAM_ADVICE_POSTS_ENABLED || 'true').trim().toLowerCase();
     return v !== '0' && v !== 'false' && v !== 'off' && v !== 'no';
   }
 

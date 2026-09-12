@@ -2,6 +2,7 @@ import {
   TELEGRAM_CHANNEL_SEO_DESCRIPTION,
   TELEGRAM_ENGAGEMENT_FOOTERS,
   appendEngagementFooter,
+  formatAdvicePost,
   formatGrowthPost,
   pickRotatingLine,
   telegramAlwaysAllowUsernames,
@@ -22,6 +23,38 @@ describe('telegram-copy', () => {
     const text = formatGrowthPost('https://betrollover.com', 0);
     expect(text).toContain('https://betrollover.com');
     expect(text.toLowerCase()).toMatch(/react|forward|share/);
+  });
+
+  it('formats advice post about bankroll / profit discipline', () => {
+    const text = formatAdvicePost('https://betrollover.com', 1);
+    expect(text.toLowerCase()).toMatch(/bankroll|profit|discipline|stake/);
+    expect(text).toContain('18+');
+  });
+
+  it('includes bookie withdraw and essentials protection across advice pool', () => {
+    const joined = Array.from({ length: 12 }, (_, i) => formatAdvicePost('https://betrollover.com', i)).join(
+      '\n---\n',
+    );
+    expect(joined.toLowerCase()).toMatch(/school fees|rent|housekeeping/);
+    expect(joined.toLowerCase()).toMatch(/withdraw/);
+    expect(joined.toLowerCase()).toMatch(/sportybet|bookie|bookmaker/);
+  });
+
+  it('advice posts get engagement footer asking for reactions', async () => {
+    process.env.APP_URL = 'https://betrollover.com';
+    process.env.TELEGRAM_BOT_TOKEN = 'test-token';
+    process.env.TELEGRAM_CHANNEL_ID = '@betrollovertips';
+    process.env.TELEGRAM_CHANNEL_POSTS_ENABLED = 'true';
+    process.env.TELEGRAM_ADVICE_POSTS_ENABLED = 'true';
+    const svc = new TelegramChannelService();
+    const calls: unknown[] = [];
+    global.fetch = jest.fn(async (_url, init) => {
+      calls.push(JSON.parse(String(init?.body)));
+      return { ok: true, json: async () => ({ ok: true }) } as Response;
+    }) as typeof fetch;
+    await svc.postAdviceMessage('test-advice');
+    const body = calls[0] as { text: string };
+    expect(TELEGRAM_ENGAGEMENT_FOOTERS.some((f) => body.text.includes(f))).toBe(true);
   });
 
   it('always allows AccaSure1X2', () => {
