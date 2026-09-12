@@ -63,7 +63,8 @@ describe('telegram-copy', () => {
 
   it('has SEO description under Telegram limit', () => {
     expect(TELEGRAM_CHANNEL_SEO_DESCRIPTION.length).toBeLessThanOrEqual(255);
-    expect(TELEGRAM_CHANNEL_SEO_DESCRIPTION.toLowerCase()).toContain('ghana');
+    expect(TELEGRAM_CHANNEL_SEO_DESCRIPTION.toLowerCase()).toContain('football');
+    expect(TELEGRAM_CHANNEL_SEO_DESCRIPTION.toLowerCase()).toContain('tipster');
   });
 
   it('pickRotatingLine is stable for same salt', () => {

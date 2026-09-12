@@ -12,9 +12,9 @@ export const TELEGRAM_ENGAGEMENT_FOOTERS = [
 
 /** Standalone growth posts — 2×/day. Keep short; keyword-rich for Telegram search snippets. */
 export const TELEGRAM_GROWTH_POSTS = [
-  `Ghana football tips & free Acca picks daily 🇬🇭
+  `Football tips & free Acca picks daily
 
-BetRollover — tipster marketplace with escrow: paid pick loses → pick price refunded to wallet.
+BetRollover — global tipster marketplace with escrow: paid pick loses → pick price refunded to wallet.
 
 🔥 React if you want today’s tips
 ↗️ Forward this channel to a friend
@@ -22,9 +22,9 @@ BetRollover — tipster marketplace with escrow: paid pick loses → pick price 
 
 18+ · Information only · Not a bookmaker`,
 
-  `Looking for football tips Ghana / Accra?
+  `Looking for football tips & tipster analysis?
 
-Free Acca Desk · verified tipsters · escrow-protected paid picks on BetRollover.
+Free Acca Desk · top tipsters · escrow-protected paid picks on BetRollover.
 
 ❤️ React · ↗️ Share this channel · Grow with us
 {site}/invite?utm_source=telegram&utm_medium=social&utm_campaign=channel_growth
@@ -40,7 +40,7 @@ Open BetRollover for AccaSure & top tipsters.
 
 18+ · Educational tips only`,
 
-  `Tipster marketplace for Ghana 🇬🇭
+  `Tipster marketplace — football & more
 
 • Free Acca picks
 • Paid picks with refund-on-loss escrow
@@ -146,7 +146,7 @@ Rule: bookie balance is not savings. Withdraw. Protect. Then tip selectively.
  * Bot can sync via setChatDescription when admin.
  */
 export const TELEGRAM_CHANNEL_SEO_DESCRIPTION =
-  'Ghana football tips & tipster marketplace | Free Acca Desk picks daily | Escrow refund if paid pick loses | SportyBet-ready tips | Join BetRollover.com — 18+ education only';
+  'Football tips & tipster marketplace | Free Acca Desk picks daily | Escrow refund if paid pick loses | Join BetRollover.com — 18+ education only';
 
 export function pickRotatingLine(lines: readonly string[], salt: number | string): string {
   if (!lines.length) return '';
