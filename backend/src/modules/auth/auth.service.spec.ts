@@ -1,12 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
+import { RecaptchaService } from './recaptcha.service';
 import { UsersService } from '../users/users.service';
 import { WalletService } from '../wallet/wallet.service';
 import { EmailService } from '../email/email.service';
+import { ReferralsService } from '../referrals/referrals.service';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { PasswordResetOtp } from '../otp/entities/password-reset-otp.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
@@ -19,6 +21,8 @@ describe('AuthService', () => {
   let jwtService: jest.Mocked<Partial<JwtService>>;
   let walletService: jest.Mocked<Partial<WalletService>>;
   let emailService: jest.Mocked<Partial<EmailService>>;
+  let recaptcha: { verifyOrThrow: jest.Mock };
+  let referralsService: { registerSignup: jest.Mock };
 
   const mockUser: Partial<User> = {
     id: 1,
@@ -36,6 +40,7 @@ describe('AuthService', () => {
       findById: jest.fn(),
       validatePassword: jest.fn(),
       create: jest.fn(),
+      allocateUniqueUsername: jest.fn(),
       setEmailVerified: jest.fn(),
       isAtLeast18: jest.fn().mockReturnValue(true),
       verifyEmailByToken: jest.fn(),
@@ -53,6 +58,9 @@ describe('AuthService', () => {
       sendVerificationEmail: jest.fn().mockResolvedValue({ sent: true }),
     };
 
+    recaptcha = { verifyOrThrow: jest.fn().mockResolvedValue(undefined) };
+    referralsService = { registerSignup: jest.fn().mockResolvedValue(undefined) };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -60,6 +68,8 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: jwtService },
         { provide: WalletService, useValue: walletService },
         { provide: EmailService, useValue: emailService },
+        { provide: RecaptchaService, useValue: recaptcha },
+        { provide: ReferralsService, useValue: referralsService },
         { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue('http://localhost:6002') } },
         { provide: getRepositoryToken(Tipster), useValue: { findOne: jest.fn(), create: jest.fn(), save: jest.fn() } },
         { provide: getRepositoryToken(PasswordResetOtp), useValue: { findOne: jest.fn(), save: jest.fn(), delete: jest.fn() } },
@@ -177,6 +187,50 @@ describe('AuthService', () => {
     it('should return revoked: false when token is empty', async () => {
       const result = await service.logout('');
       expect(result).toEqual({ revoked: false });
+    });
+  });
+
+  describe('register', () => {
+    it('rejects a weak password after captcha', async () => {
+      await expect(
+        service.register({ email: 'new@example.com', password: 'short', recaptchaToken: 'tok' }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(usersService.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects an email that already exists', async () => {
+      (usersService.findByEmail as jest.Mock).mockResolvedValue(mockUser);
+      await expect(
+        service.register({ email: 'test@example.com', password: 'Password1', recaptchaToken: 'tok' }),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(usersService.create).not.toHaveBeenCalled();
+    });
+
+    it('creates the user, wallet, and session without sending a verification email', async () => {
+      (usersService.findByEmail as jest.Mock).mockResolvedValue(null);
+      (usersService.allocateUniqueUsername as jest.Mock).mockResolvedValue('newuser');
+      (usersService.create as jest.Mock).mockResolvedValue({ ...mockUser, id: 9, email: 'new@example.com', username: 'newuser' });
+      (usersService.findById as jest.Mock).mockResolvedValue({ ...mockUser, id: 9, emailVerifiedAt: new Date() });
+      const tipsterRepo = moduleRef.get(getRepositoryToken(Tipster)) as { findOne: jest.Mock; create: jest.Mock; save: jest.Mock };
+      tipsterRepo.findOne.mockResolvedValue(null);
+      tipsterRepo.create.mockImplementation((o) => o);
+      tipsterRepo.save.mockResolvedValue({});
+
+      const result = await service.register({
+        email: 'New@example.com',
+        password: 'Password1',
+        recaptchaToken: 'tok',
+        referralCode: 'ABCD1234',
+      });
+
+      expect(recaptcha.verifyOrThrow).toHaveBeenCalledWith('tok');
+      expect(usersService.create).toHaveBeenCalledWith(
+        expect.objectContaining({ email: 'new@example.com', username: 'newuser', password: 'Password1' }),
+      );
+      expect(walletService.getOrCreateWallet).toHaveBeenCalledWith(9);
+      expect(referralsService.registerSignup).toHaveBeenCalledWith(9, 'ABCD1234');
+      expect(emailService.sendVerificationEmail).not.toHaveBeenCalled();
+      expect(result.access_token).toBe('mock-jwt-token');
     });
   });
 

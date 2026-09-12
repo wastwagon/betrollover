@@ -160,6 +160,8 @@ export class UsersService {
       role: (data.role as UserRole) || UserRole.TIPSTER,
       dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
       ageVerifiedAt: new Date(), // Age verification disabled – treat all new users as verified
+      // No verification email: account is usable immediately (wallet/payouts check this stamp).
+      emailVerifiedAt: new Date(),
       country: data.country ?? 'Ghana',
       countryCode: data.countryCode ?? 'GHA',
       flagEmoji: data.flagEmoji ?? '🇬🇭',
@@ -171,6 +173,22 @@ export class UsersService {
     return saved;
   }
 
+  /** Unique public username from an email local-part (or other seed). */
+  async allocateUniqueUsername(seed: string): Promise<string> {
+    const base =
+      (seed || 'user')
+        .replace(/@.*$/, '')
+        .replace(/[^a-zA-Z0-9_]/g, '_')
+        .slice(0, 20) || 'user';
+    let username = base;
+    for (let attempts = 0; attempts < 100; attempts++) {
+      const existing = await this.usersRepository.findOne({ where: { username }, select: ['id'] });
+      if (!existing) return username;
+      username = `${base}_${Math.floor(1000 + Math.random() * 9000)}`.slice(0, 24);
+    }
+    return `${base}_${Date.now().toString(36)}`.slice(0, 24);
+  }
+
   /** Create user from Google OAuth (no password). Username derived from email or sub. */
   async createFromGoogle(data: {
     email: string;
@@ -178,17 +196,9 @@ export class UsersService {
     providerGoogleId: string;
     avatar?: string | null;
   }): Promise<User> {
-    const baseUsername = data.email.includes('@')
-      ? data.email.replace(/@.*$/, '').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 20) || 'user'
-      : `google_${data.providerGoogleId.slice(0, 12)}`;
-    let username = baseUsername;
-    let attempts = 0;
-    while (attempts < 100) {
-      const existing = await this.usersRepository.findOne({ where: { username }, select: ['id'] });
-      if (!existing) break;
-      username = `${baseUsername}_${Math.floor(1000 + Math.random() * 9000)}`;
-      attempts++;
-    }
+    const username = await this.allocateUniqueUsername(
+      data.email.includes('@') ? data.email : `google_${data.providerGoogleId.slice(0, 12)}`,
+    );
     const user = this.usersRepository.create({
       email: data.email,
       username,
@@ -212,17 +222,9 @@ export class UsersService {
     displayName: string;
     providerAppleId: string;
   }): Promise<User> {
-    const baseUsername = data.email.includes('@')
-      ? data.email.replace(/@.*$/, '').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 20) || 'user'
-      : `apple_${data.providerAppleId.slice(0, 12)}`;
-    let username = baseUsername;
-    let attempts = 0;
-    while (attempts < 100) {
-      const existing = await this.usersRepository.findOne({ where: { username }, select: ['id'] });
-      if (!existing) break;
-      username = `${baseUsername}_${Math.floor(1000 + Math.random() * 9000)}`;
-      attempts++;
-    }
+    const username = await this.allocateUniqueUsername(
+      data.email.includes('@') ? data.email : `apple_${data.providerAppleId.slice(0, 12)}`,
+    );
     const user = this.usersRepository.create({
       email: data.email,
       username,

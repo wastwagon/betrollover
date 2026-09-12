@@ -1,4 +1,4 @@
-import { Injectable, Logger, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
 import { validatePasswordPolicy } from '../../common/password-policy.util';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -13,6 +13,8 @@ import * as crypto from 'crypto';
 import { UsersService } from '../users/users.service';
 import { WalletService } from '../wallet/wallet.service';
 import { EmailService } from '../email/email.service';
+import { ReferralsService } from '../referrals/referrals.service';
+import { RecaptchaService } from './recaptcha.service';
 import { User } from '../users/entities/user.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { PasswordResetOtp } from '../otp/entities/password-reset-otp.entity';
@@ -40,6 +42,8 @@ export class AuthService {
     private walletService: WalletService,
     private emailService: EmailService,
     private config: ConfigService,
+    private recaptcha: RecaptchaService,
+    private referralsService: ReferralsService,
     @InjectRepository(Tipster)
     private tipsterRepo: Repository<Tipster>,
     @InjectRepository(PasswordResetOtp)
@@ -47,6 +51,53 @@ export class AuthService {
     @InjectRepository(RefreshToken)
     private refreshTokenRepo: Repository<RefreshToken>,
   ) { }
+
+  /**
+   * Email/password signup with no verification email or phone.
+   * reCAPTCHA blocks bots; the account is usable immediately (same as Google/Apple).
+   */
+  async register(data: {
+    email: string;
+    password: string;
+    recaptchaToken?: string;
+    referralCode?: string;
+  }) {
+    await this.recaptcha.verifyOrThrow(data.recaptchaToken);
+    const policy = validatePasswordPolicy(data.password);
+    if (!policy.valid) throw new BadRequestException(policy.message);
+
+    const email = data.email.trim().toLowerCase();
+    const existing = await this.usersService.findByEmail(email);
+    if (existing) {
+      throw new ConflictException('This email is already registered. Please sign in or use a different email.');
+    }
+
+    const username = await this.usersService.allocateUniqueUsername(email);
+    const user = await this.usersService.create({
+      email,
+      username,
+      password: data.password,
+      displayName: username,
+    });
+    await this.walletService.getOrCreateWallet(user.id);
+    await this.ensureTipsterForUser(user);
+
+    const ref = data.referralCode?.trim();
+    if (ref) {
+      await this.referralsService.registerSignup(user.id, ref).catch((err) => {
+        this.logger.warn(`Referral attach failed for user ${user.id}: ${err instanceof Error ? err.message : err}`);
+      });
+    }
+
+    this.emailService
+      .sendAdminNotification({
+        type: 'new_user_registered',
+        metadata: { displayName: user.displayName, email: user.email, username: user.username },
+      })
+      .catch(() => undefined);
+
+    return this.login(user);
+  }
 
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.usersService.findByEmail(email);

@@ -9,11 +9,9 @@ export interface LoginRequest {
 
 export interface RegisterRequest {
   email: string;
-  username: string;
-  displayName: string;
   password: string;
-  confirmPassword: string;
-  otpCode: string;
+  recaptchaToken?: string;
+  referralCode?: string;
 }
 
 export interface AuthUser {

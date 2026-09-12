@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Logger, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, Logger, Post, Query, UseGuards } from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
 import { AppleLoginDto } from './dto/apple-login.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
@@ -15,6 +16,24 @@ export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
   constructor(private readonly authService: AuthService) { }
+
+  @Post('register')
+  @Throttle({ default: { limit: 8, ttl: 3600000 } }) // 8 per hour per IP
+  async register(@Body() dto: RegisterDto) {
+    try {
+      return await this.authService.register({
+        email: dto.email,
+        password: dto.password,
+        recaptchaToken: dto.recaptchaToken,
+        referralCode: dto.referralCode,
+      });
+    } catch (err: unknown) {
+      if (err instanceof HttpException) throw err;
+      const e = err as { message?: string; stack?: string };
+      this.logger.error(`[Register] ${e?.message ?? err}`, e?.stack);
+      throw err;
+    }
+  }
 
   @Post('google')
   @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 per min per IP

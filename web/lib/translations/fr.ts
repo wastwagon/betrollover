@@ -75,8 +75,8 @@ const fr: Record<string, string> = {
   'auth.no_account': 'Vous n\'avez pas de compte ?',
   'auth.have_account': 'Vous avez déjà un compte ?',
   'auth.login_cta': 'Connexion à votre compte',
-  'auth.register_cta': 'Créez votre compte avec Google ou Apple',
-  'auth.register_subtitle': 'Continuez avec Google ou Apple pour créer votre compte instantanément',
+  'auth.register_cta': 'Créez votre compte',
+  'auth.register_subtitle': 'E-mail, Google ou Apple — vous pouvez utiliser le site tout de suite.',
   'auth.referral_code': 'Code de parrainage (optionnel)',
   'auth.terms_agree': 'En vous inscrivant, vous acceptez nos',
   'auth.terms': 'Conditions d\'Utilisation',
@@ -2115,6 +2115,9 @@ const fr: Record<string, string> = {
   'auth.sign_in_with_apple': 'Se connecter avec Apple',
   'auth.sign_up_with_apple': 'S\'inscrire avec Apple',
   'auth.or_continue_with': 'ou continuer avec',
+  'auth.or_use_email': 'ou utiliser l’e-mail',
+  'auth.recaptcha_required': 'Veuillez confirmer que vous n’êtes pas un robot.',
+  'auth.password_hint': 'Au moins 8 caractères, avec une lettre et un chiffre',
 
   // ── Error / Not found ────────────────────────────────────────────────────
   'error.off_side': 'Cette page est hors jeu',

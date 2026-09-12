@@ -78,8 +78,8 @@ const en = {
   'auth.no_account': 'Don\'t have an account?',
   'auth.have_account': 'Already have an account?',
   'auth.login_cta': 'Sign in to your account',
-  'auth.register_cta': 'Create your account with Google or Apple',
-  'auth.register_subtitle': 'Continue with Google or Apple to create your account instantly',
+  'auth.register_cta': 'Create your account',
+  'auth.register_subtitle': 'Use email, Google, or Apple — you can start using the site right away.',
   'auth.referral_code': 'Referral code (optional)',
   'auth.terms_agree': 'By registering you agree to our',
   'auth.terms': 'Terms of Service',
@@ -2109,6 +2109,9 @@ const en = {
   'auth.sign_in_with_apple': 'Sign in with Apple',
   'auth.sign_up_with_apple': 'Sign up with Apple',
   'auth.or_continue_with': 'or continue with',
+  'auth.or_use_email': 'or use email',
+  'auth.recaptcha_required': 'Please confirm you are not a robot.',
+  'auth.password_hint': 'At least 8 characters, with a letter and a number',
 
   // ── Error / Not found ────────────────────────────────────────────────────
   'error.off_side': 'This page went off-side',

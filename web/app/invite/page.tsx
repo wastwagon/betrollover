@@ -76,7 +76,7 @@ export default function InvitePage() {
     ? withUtm(registerBase, { source: 'whatsapp', medium: 'social', campaign: 'invite' })
     : '';
   const shareText = stats
-    ? `Join me on BetRollover — the AI-powered tipster marketplace! Sign up with Google or Apple using this link (your referral is tracked automatically): ${shareUrl}`
+    ? `Join me on BetRollover — the AI-powered tipster marketplace! Sign up with this link (your referral is tracked automatically): ${shareUrl}`
     : '';
   const whatsappHref = whatsappShareUrl ? `https://wa.me/?text=${encodeURIComponent(`Join me on BetRollover — ${whatsappShareUrl}`)}` : '';
   const telegramHref = telegramShareUrl ? `https://t.me/share/url?url=${encodeURIComponent(telegramShareUrl)}&text=${encodeURIComponent(shareText)}` : '';
