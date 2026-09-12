@@ -20,7 +20,8 @@ import { EscrowPurchaseTimeline } from '@/components/EscrowPurchaseTimeline';
 import { EscrowRefundReceipt } from '@/components/EscrowRefundReceipt';
 import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
 import { BookingCodeCopyBlock } from '@/components/BookingCodeCopyBlock';
-import { IconPicks, IconShare, IconShield, IconLock } from '@/components/ios/icons';
+import { PickShareButtons } from '@/components/PickShareButtons';
+import { IconPicks, IconShield, IconLock } from '@/components/ios/icons';
 import { hapticSuccess } from '@/lib/haptic';
 import { PickSocialBar } from '@/components/pick-social/PickSocialBar';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
@@ -316,7 +317,6 @@ export default function CouponDetailPage({
   const [escrowAmount, setEscrowAmount] = useState<number | null>(null);
   const [escrowUpdatedAt, setEscrowUpdatedAt] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState(false);
-  const [copied, setCopied] = useState(false);
   /** false = browsing as guest (public coupon); true = logged in */
   const [isAuthed, setIsAuthed] = useState(false);
   const [socialCounts, setSocialCounts] = useState<PickSocialCounts>({
@@ -459,14 +459,6 @@ export default function CouponDetailPage({
     } finally {
       setPurchasing(false);
     }
-  };
-
-  const handleShare = () => {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
   };
 
   if (loading) return <CouponDetailSkeleton />;
@@ -1072,18 +1064,18 @@ export default function CouponDetailPage({
                 </div>
               )}
 
-              {/* Share */}
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleShare}
-                fullWidth
-              >
-                <span className="inline-flex items-center justify-center gap-2">
-                  <IconShare className="w-4 h-4" />
-                  {copied ? t('pick_detail.link_copied') : t('pick_detail.share_pick')}
-                </span>
-              </Button>
+              {/* Share — booking code only if tipster added one and API revealed it */}
+              <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-4">
+                <PickShareButtons
+                  couponId={coupon.id}
+                  title={coupon.title}
+                  tipsterName={coupon.tipster?.displayName}
+                  totalOdds={Number(coupon.totalOdds)}
+                  isFree={coupon.price === 0}
+                  bookmakerKey={coupon.bookmakerKey}
+                  bookingCode={coupon.bookingCode}
+                />
+              </div>
 
               {/* Disclaimer */}
               <div className="rounded-xl bg-[var(--card)] border border-[var(--border)] p-3">

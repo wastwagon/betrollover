@@ -33,6 +33,7 @@ import { NewsModule } from '../news/news.module';
 import { ResourcesModule } from '../resources/resources.module';
 import { AdsModule } from '../ads/ads.module';
 import { EmailModule } from '../email/email.module';
+import { TelegramModule } from '../telegram/telegram.module';
 import { WalletModule } from '../wallet/wallet.module';
 import { UsersModule } from '../users/users.module';
 import { SmtpSettings } from '../email/entities/smtp-settings.entity';
@@ -99,6 +100,7 @@ import { AccaGeneratorEvent } from '../acca-generator/entities/acca-generator-ev
     ResourcesModule,
     AdsModule,
     EmailModule,
+    TelegramModule,
     WalletModule,
     UsersModule,
     PredictionsModule,

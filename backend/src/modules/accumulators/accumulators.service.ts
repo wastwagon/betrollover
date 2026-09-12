@@ -26,6 +26,7 @@ import { UsersService } from '../users/users.service';
 import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { EmailService } from '../email/email.service';
+import { TelegramChannelService } from '../telegram/telegram-channel.service';
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { SportEvent } from '../sport-events/entities/sport-event.entity';
 import { FootballService } from '../football/football.service';
@@ -154,6 +155,7 @@ export class AccumulatorsService {
     private notificationsService: NotificationsService,
     @Inject(forwardRef(() => EmailService))
     private emailService: EmailService,
+    private telegramChannelService: TelegramChannelService,
     private footballService: FootballService,
     private tipsterService: TipsterService,
     @Inject(forwardRef(() => UsersService))
@@ -470,6 +472,19 @@ export class AccumulatorsService {
         where: { userId },
         select: ['id', 'displayName', 'tipsterType'],
       });
+      if (price === 0) {
+        this.telegramChannelService
+          .postFreePick({
+            couponId: ticket.id,
+            title: dto.title,
+            tipsterName: tipster?.displayName || creatorName,
+            totalOdds: Number(ticket.totalOdds),
+            isFree: true,
+            bookmakerKey,
+            bookingCode,
+          })
+          .catch(() => {});
+      }
       if (tipster) {
         const isAccaDesk = tipster.tipsterType === ACCA_DESK_TIPSTER_TYPE;
         await this.notificationsService.notifyFollowersOfNewCoupon({

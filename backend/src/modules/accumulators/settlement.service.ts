@@ -9,11 +9,13 @@ import { SportEvent } from '../sport-events/entities/sport-event.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { TelegramChannelService } from '../telegram/telegram-channel.service';
 import { determinePickResult } from './settlement-logic';
 import { clampPlatformCommissionPercent, splitGrossForTipsterPayout } from '../../common/platform-commission';
 import { couponUserFacingRef } from '../../common/coupon-public-label';
 import { TipstersApiService } from '../predictions/tipsters-api.service';
 import { ResultTrackerService } from '../predictions/result-tracker.service';
+import { User } from '../users/entities/user.entity';
 
 /** Market types and selection formats we support for settlement. See determinePickResult. */
 export const SETTLEMENT_SUPPORTED_MARKETS = [
@@ -52,8 +54,11 @@ export class SettlementService {
     private sportEventRepo: Repository<SportEvent>,
     @InjectRepository(ApiSettings)
     private apiSettingsRepo: Repository<ApiSettings>,
+    @InjectRepository(User)
+    private usersRepo: Repository<User>,
     private walletService: WalletService,
     private notificationsService: NotificationsService,
+    private telegramChannelService: TelegramChannelService,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     @Inject(forwardRef(() => TipstersApiService))
@@ -536,7 +541,7 @@ export class SettlementService {
 
     const allPendingTickets = await this.ticketRepo.find({
       where: { result: 'pending' },
-      select: ['id', 'userId', 'isMarketplace', 'price', 'title'],
+      select: ['id', 'userId', 'isMarketplace', 'price', 'title', 'totalOdds'],
     });
     const pendingTicketIds = allPendingTickets.map((t) => t.id);
     const pendingTicketPicks = pendingTicketIds.length
@@ -551,6 +556,13 @@ export class SettlementService {
 
     let ticketsSettled = 0;
     const statsSyncUserIds = new Set<number>();
+    const wonMarketplacePosts: Array<{
+      couponId: number;
+      title: string;
+      tipsterName: string | null;
+      totalOdds: number | null;
+      isFree: boolean;
+    }> = [];
     for (const ticket of allPendingTickets) {
       const picks = picksByTicketId.get(ticket.id) ?? [];
       const allSettled = picks.length > 0 && picks.every((p) => p.result !== 'pending');
@@ -567,6 +579,45 @@ export class SettlementService {
       const priceNum = Number(ticket.price);
       if (ticket.isMarketplace && priceNum > 0) {
         await this.settleEscrow(ticket.id, ticket.userId, ticket.result, ticket.title);
+      }
+      if (ticket.isMarketplace && ticket.result === 'won') {
+        wonMarketplacePosts.push({
+          couponId: ticket.id,
+          title: ticket.title || 'Pick',
+          tipsterName: null,
+          totalOdds: ticket.totalOdds != null ? Number(ticket.totalOdds) : null,
+          isFree: !(priceNum > 0),
+        });
+      }
+    }
+
+    if (wonMarketplacePosts.length > 0) {
+      const sellerIds = [
+        ...new Set(
+          allPendingTickets
+            .filter((t) => wonMarketplacePosts.some((w) => w.couponId === t.id) && t.userId != null)
+            .map((t) => t.userId as number),
+        ),
+      ];
+      const sellers =
+        sellerIds.length > 0
+          ? await this.usersRepo.find({
+              where: { id: In(sellerIds) },
+              select: ['id', 'displayName', 'username'],
+            })
+          : [];
+      const nameById = new Map(
+        sellers.map((u) => [u.id, u.displayName || u.username || 'Tipster'] as const),
+      );
+      for (const post of wonMarketplacePosts) {
+        const ticket = allPendingTickets.find((t) => t.id === post.couponId);
+        const tipsterName = ticket?.userId != null ? nameById.get(ticket.userId) ?? null : null;
+        this.telegramChannelService
+          .postWin({
+            ...post,
+            tipsterName,
+          })
+          .catch(() => {});
       }
     }
 

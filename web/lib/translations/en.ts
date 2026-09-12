@@ -982,6 +982,10 @@ const en = {
   'pick_detail.fee_refund_line': 'Escrow held · full pick price refunded to wallet if it loses',
   'pick_detail.sticky_top_up': 'Top up wallet',
   'pick_detail.share_pick': 'Share pick',
+  'pick_detail.share_whatsapp': 'Share on WhatsApp',
+  'pick_detail.share_telegram': 'Share on Telegram',
+  'pick_detail.copy_share': 'Copy message',
+  'pick_detail.share_copied': 'Message copied',
 
   // ── Escrow purchase timeline ─────────────────────────────────────────────
   'escrow_timeline.title': 'Escrow status',

@@ -978,6 +978,10 @@ const fr: Record<string, string> = {
     'Escrow · prix du pronostic remboursé sur le portefeuille en cas de perte',
   'pick_detail.sticky_top_up': 'Recharger le portefeuille',
   'pick_detail.share_pick': 'Partager le pronostic',
+  'pick_detail.share_whatsapp': 'Partager sur WhatsApp',
+  'pick_detail.share_telegram': 'Partager sur Telegram',
+  'pick_detail.copy_share': 'Copier le message',
+  'pick_detail.share_copied': 'Message copié',
 
   'escrow_timeline.title': 'Statut escrow',
   'escrow_timeline.step_purchased': 'Acheté',

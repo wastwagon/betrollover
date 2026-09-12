@@ -15,6 +15,7 @@ import { UsersModule } from '../users/users.module';
 import { WalletModule } from '../wallet/wallet.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { EmailModule } from '../email/email.module';
+import { TelegramModule } from '../telegram/telegram.module';
 import { FootballModule } from '../football/football.module';
 import { TipsterModule } from '../tipster/tipster.module';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
@@ -48,6 +49,7 @@ import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity'
     forwardRef(() => WalletModule),
     forwardRef(() => NotificationsModule),
     forwardRef(() => EmailModule),
+    TelegramModule,
     FootballModule,
     TipsterModule,
     forwardRef(() => SubscriptionsModule),

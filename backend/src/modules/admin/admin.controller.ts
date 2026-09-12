@@ -37,6 +37,7 @@ import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { MarketingCampaignService } from '../email/marketing-campaign.service';
+import { TelegramChannelService } from '../telegram/telegram-channel.service';
 import { UpdateApiSportsKeyDto, TestApiSportsConnectionDto } from './dto/api-sports.dto';
 
 @Controller('admin')
@@ -74,6 +75,7 @@ export class AdminController {
     private readonly accumulatorsService: AccumulatorsService,
     private readonly subscriptionsService: SubscriptionsService,
     private readonly marketingCampaigns: MarketingCampaignService,
+    private readonly telegramChannel: TelegramChannelService,
     private readonly dataSource: DataSource,
   ) { }
 
@@ -981,6 +983,22 @@ export class AdminController {
   async sendTestEmail(@CurrentUser() user: User, @Body() body: { to: string }) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.adminService.sendTestEmail(body.to);
+  }
+
+  @Get('telegram/status')
+  async telegramStatus(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.telegramChannel.status();
+  }
+
+  @Post('test-telegram')
+  async sendTestTelegram(@CurrentUser() user: User, @Body() body?: { text?: string }) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const result = await this.telegramChannel.sendTestMessage(body?.text);
+    if (!result.ok) {
+      throw new BadRequestException(result.error || 'Telegram send failed');
+    }
+    return { ok: true, ...this.telegramChannel.status() };
   }
 
   @Patch('content-pages/:slug')

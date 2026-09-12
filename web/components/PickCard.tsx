@@ -13,6 +13,7 @@ import { formatFootballOutcomeLabel, LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING
 import { KickoffUrgencyLine } from '@/components/KickoffUrgencyLine';
 import { FixtureLiveChip } from '@/components/FixtureLiveChip';
 import { BookingCodeCopyBlock } from '@/components/BookingCodeCopyBlock';
+import { PickShareButtons } from '@/components/PickShareButtons';
 import { BottomSheet } from '@/components/ios/BottomSheet';
 import { PickSocialBar, type PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
@@ -392,6 +393,21 @@ export function PickCard({
               initialCopyCount={bookingCodeCopyCount}
               dense
             />
+          ) : null}
+
+          {isFree && showFullDetails ? (
+            <div className="mb-2">
+              <PickShareButtons
+                couponId={id}
+                title={title}
+                tipsterName={tipster?.displayName}
+                totalOdds={totalOdds}
+                isFree
+                bookmakerKey={bookmakerKey}
+                bookingCode={bookingCode}
+                dense
+              />
+            </div>
           ) : null}
 
           {/* Pick Details - Show for free or purchased picks */}
