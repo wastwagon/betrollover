@@ -107,10 +107,9 @@ export function PickShareButtons({
           rel="noopener noreferrer"
           title={waLabel}
           aria-label={waLabel}
-          className="inline-flex items-center gap-1.5 rounded-full bg-[#25D366]/15 px-2.5 py-1.5 text-[10px] font-semibold text-[#128C7E] hover:bg-[#25D366]/25 transition-colors"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#25D366]/15 text-[#128C7E] hover:bg-[#25D366]/25 transition-colors"
         >
-          <IconWhatsApp className="w-3.5 h-3.5" />
-          WhatsApp
+          <IconWhatsApp className="w-4 h-4" />
         </a>
         <a
           href={tgHref}
@@ -118,20 +117,18 @@ export function PickShareButtons({
           rel="noopener noreferrer"
           title={tgLabel}
           aria-label={tgLabel}
-          className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/15 px-2.5 py-1.5 text-[10px] font-semibold text-sky-700 hover:bg-sky-500/25 transition-colors"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/15 text-sky-700 hover:bg-sky-500/25 transition-colors"
         >
-          <IconTelegram className="w-3.5 h-3.5" />
-          Telegram
+          <IconTelegram className="w-4 h-4" />
         </a>
         <button
           type="button"
           onClick={() => void copyMessage()}
           title={copyLabel}
           aria-label={copyLabel}
-          className="inline-flex items-center gap-1.5 rounded-full bg-[var(--fill-secondary)] px-2.5 py-1.5 text-[10px] font-semibold text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--fill-secondary)] text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors"
         >
-          <IconCopy className="w-3.5 h-3.5" />
-          {copyLabel}
+          <IconCopy className="w-4 h-4" />
         </button>
       </div>
     );

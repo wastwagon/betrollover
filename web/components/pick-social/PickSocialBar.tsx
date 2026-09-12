@@ -56,8 +56,14 @@ export function PickSocialBar({
   const [reactors, setReactors] = useState<ReactorUser[]>([]);
   const [reactorsLoading, setReactorsLoading] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  /** Set after mount so SSR and first client paint match (avoids hydration mismatch). */
+  const [guestCommentHint, setGuestCommentHint] = useState(false);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const barRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setGuestCommentHint(!localStorage.getItem('token'));
+  }, []);
 
   useEffect(() => {
     setReactionCount(reactionCountProp);
@@ -251,11 +257,7 @@ export function PickSocialBar({
           type="button"
           onClick={openComments}
           aria-label={t('pick_social.open_comments')}
-          title={
-            typeof window !== 'undefined' && !localStorage.getItem('token')
-              ? t('pick_social.sign_in_to_comment')
-              : undefined
-          }
+          title={guestCommentHint ? t('pick_social.sign_in_to_comment') : undefined}
           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-[var(--fill-secondary)] text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 transition-colors"
         >
           <IconChat className="w-4 h-4" />
