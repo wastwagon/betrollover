@@ -1193,19 +1193,19 @@ const fr: Record<string, string> = {
     'Parcourez les forfaits actifs des tipsters. Les stats reflètent les pronostics réglés. Paiement depuis le portefeuille.',
   'subscriptions.marketplace_empty_title': 'Aucun forfait VIP',
   'subscriptions.marketplace_empty_desc': 'Quand un tipster publiera un forfait, il apparaîtra ici.',
+  'subscriptions.marketplace_load_error_title': 'Impossible de charger les forfaits VIP',
+  'subscriptions.marketplace_load_error_desc':
+    'La boutique est active, mais cette page n’a pas pu joindre l’API. Essayez http://localhost:6002 si vous avez ouvert 127.0.0.1, puis actualisez.',
   'subscriptions.performance_heading': 'Performance (pronostics réglés)',
   'subscriptions.picks_record': 'Bilan',
   'subscriptions.picks_total': 'au total',
-  'subscriptions.roi_guarantee_label': 'Seuil de garantie ROI',
-  'subscriptions.roi_commitment_committed': 'Engagé',
-  'subscriptions.roi_commitment_not_committed': 'Non engagé',
-  'subscriptions.roi_target_delivery': 'Objectif de ROI livré : {n}',
-  'subscriptions.roi_target_unpublished': 'Aucun engagement de ROI n\'a encore été publié pour ce forfait.',
   'subscriptions.subscribe_cta': 'S’abonner',
   'subscriptions.vip_already_subscribed_hint':
     'Vous avez déjà un forfait VIP actif avec ce tipster. Gérez-le depuis la page Mes abonnements.',
   'subscriptions.marketplace_footnote':
     'Les tipsters ont besoin d\'au moins {minRoi} % de ROI réglé et {minWr} % de taux de victoire réglé (seuils admin en direct) pour proposer un forfait VIP — même barème que les pronostics payants sur le marché. Les stats reflètent les pronostics réglés.',
+  'subscriptions.period_end_split':
+    'À la fin de la période, la plateforme conserve 30 % et le tipster reçoit 70 % — le même partage qu’un pronostic payant gagnant. Pas de remboursement de garantie ROI.',
   'subscriptions.marketplace_link_escrow': 'Escrow & remboursements',
   'subscriptions.marketplace_link_eval': 'Évaluer les tipsters',
   'subscriptions.vip_create_eligibility':
@@ -1229,7 +1229,6 @@ const fr: Record<string, string> = {
   'tipster.desc_win_rate': 'Plus haut % de gagnants ce mois-ci',
   'tipster.best_roi': 'Meilleur ROI',
   'tipster.desc_roi': 'Meilleur retour sur investissement',
-  'tipster.roi_guarantee': 'Garantie ROI : remboursement si inférieur à {n}%',
   'tipster.subscribed': 'Abonné',
   'tipster.join_vip': 'Rejoindre VIP',
   'tipster.subscribe': 'S\'abonner',

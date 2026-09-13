@@ -143,7 +143,7 @@ export const NOTIFICATION_TYPES = {
     icon: 'refund',
     defaultSubject: 'Subscription Refunded',
     emailSubject: (ctx: Record<string, string>) =>
-      ctx.packageName ? `Refund: ${ctx.packageName} (ROI guarantee)` : 'Subscription refund credited',
+      ctx.packageName ? `Refund: ${ctx.packageName}` : 'Subscription refund credited',
     ctaText: 'View Subscriptions',
     category: 'wallet',
   },

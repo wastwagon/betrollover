@@ -17,7 +17,7 @@ export const VIP_TIPSTER = {
 };
 
 export const VIP_PACKAGE_NAME = 'VIP · Two-Fold Monthly';
-export const VIP_PACKAGE_PRICE = 79;
+export const VIP_PACKAGE_PRICE = 300;
 export const VIP_PACKAGE_DURATION_DAYS = 30;
 
 /** Per-leg band. Combined 2.20–2.80 still rejects stacked shorts or two 1.70s. */

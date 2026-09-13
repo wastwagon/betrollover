@@ -10,8 +10,6 @@ import { AI_TIPSTERS } from '../../config/ai-tipsters.config';
 const DEFAULT_AI_PACKAGE_NAME = 'AI VIP Monthly';
 const DEFAULT_AI_PACKAGE_PRICE = 49;
 const DEFAULT_AI_PACKAGE_DURATION_DAYS = 30;
-const DEFAULT_AI_PACKAGE_ROI_GUARANTEE_MIN = 20;
-const DEFAULT_AI_PACKAGE_ROI_GUARANTEE_ENABLED = true;
 
 @Injectable()
 export class TipstersSetupService {
@@ -182,8 +180,8 @@ export class TipstersSetupService {
       name: DEFAULT_AI_PACKAGE_NAME,
       price: DEFAULT_AI_PACKAGE_PRICE,
       durationDays: DEFAULT_AI_PACKAGE_DURATION_DAYS,
-      roiGuaranteeEnabled: DEFAULT_AI_PACKAGE_ROI_GUARANTEE_ENABLED,
-      roiGuaranteeMin: DEFAULT_AI_PACKAGE_ROI_GUARANTEE_MIN,
+      roiGuaranteeEnabled: false,
+      roiGuaranteeMin: null,
       status: 'active',
     });
     await this.packageRepo.save(pkg);

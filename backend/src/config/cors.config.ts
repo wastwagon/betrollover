@@ -27,13 +27,14 @@ export function buildAllowedOrigins(isProduction: boolean): (string | RegExp)[] 
     const appUrl = process.env.APP_URL?.trim();
     if (appUrl) addOriginWithWwwVariants(appUrl);
   } else {
+    // Chrome often opens 127.0.0.1 even when docs say localhost — treat them as the same loopback.
+    const devPorts = [6000, 6001, 6002, 3000, 3001, 5173, 8080];
+    for (const port of devPorts) {
+      allowedOrigins.push(`http://localhost:${port}`, `http://127.0.0.1:${port}`, `http://[::1]:${port}`);
+    }
     allowedOrigins.push(
-      'http://localhost:6000',
-      'http://localhost:6001',
-      'http://localhost:6002',
-      'http://localhost:3000',
-      'http://localhost:3001',
-      /^https?:\/\/localhost:(6000|6001|6002|3000|3001|5173|8080)$/,
+      /^https?:\/\/(localhost|127\.0\.0\.1):(6000|6001|6002|3000|3001|5173|8080)$/,
+      /^https?:\/\/\[::1\]:(6000|6001|6002|3000|3001|5173|8080)$/,
     );
     const devAppUrl = process.env.APP_URL?.trim();
     if (devAppUrl) addOriginWithWwwVariants(devAppUrl);

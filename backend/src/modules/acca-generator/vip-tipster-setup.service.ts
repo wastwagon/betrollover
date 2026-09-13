@@ -99,10 +99,29 @@ export class VipTipsterSetupService {
       order: { createdAt: 'ASC' },
     });
     if (existing) {
+      let dirty = false;
       if (existing.status !== 'active') {
         existing.status = 'active';
-        await this.packageRepo.save(existing);
+        dirty = true;
       }
+      if (Number(existing.price) !== VIP_PACKAGE_PRICE) {
+        existing.price = VIP_PACKAGE_PRICE;
+        dirty = true;
+      }
+      if (existing.name !== VIP_PACKAGE_NAME) {
+        existing.name = VIP_PACKAGE_NAME;
+        dirty = true;
+      }
+      if (existing.durationDays !== VIP_PACKAGE_DURATION_DAYS) {
+        existing.durationDays = VIP_PACKAGE_DURATION_DAYS;
+        dirty = true;
+      }
+      if (existing.roiGuaranteeEnabled) {
+        existing.roiGuaranteeEnabled = false;
+        existing.roiGuaranteeMin = null;
+        dirty = true;
+      }
+      if (dirty) await this.packageRepo.save(existing);
       return { id: existing.id, created: false };
     }
     const pkg = this.packageRepo.create({

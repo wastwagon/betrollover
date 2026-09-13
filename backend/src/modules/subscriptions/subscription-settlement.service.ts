@@ -4,13 +4,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual } from 'typeorm';
 import { Subscription } from './entities/subscription.entity';
 import { SubscriptionEscrow } from './entities/subscription-escrow.entity';
-import { RoiGuaranteeRefund } from './entities/roi-guarantee-refund.entity';
-import { TipsterSubscriptionPackage } from './entities/tipster-subscription-package.entity';
 import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { DataSource } from 'typeorm';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { clampPlatformCommissionPercent, splitGrossForTipsterPayout } from '../../common/platform-commission';
+
+const PREDICTION_TIME_ZONE =
+  process.env.PREDICTION_TIMEZONE || process.env.TIMEZONE || 'Africa/Accra';
 
 @Injectable()
 export class SubscriptionSettlementService {
@@ -21,22 +21,17 @@ export class SubscriptionSettlementService {
     private readonly subRepo: Repository<Subscription>,
     @InjectRepository(SubscriptionEscrow)
     private readonly escrowRepo: Repository<SubscriptionEscrow>,
-    @InjectRepository(RoiGuaranteeRefund)
-    private readonly refundRepo: Repository<RoiGuaranteeRefund>,
-    @InjectRepository(TipsterSubscriptionPackage)
-    private readonly packageRepo: Repository<TipsterSubscriptionPackage>,
     @InjectRepository(ApiSettings)
     private readonly apiSettingsRepo: Repository<ApiSettings>,
     private readonly walletService: WalletService,
     private readonly notificationsService: NotificationsService,
-    private readonly dataSource: DataSource,
   ) {}
 
   /**
    * Run daily: settle subscriptions that have ended.
-   * Release escrow to tipster or refund user (ROI guarantee).
+   * Release escrow to the tipster minus the same platform commission as marketplace wins.
    */
-  @Cron('0 3 * * *') // Every day at 3 AM
+  @Cron('0 3 * * *', { timeZone: PREDICTION_TIME_ZONE })
   async runPeriodEndSettlement() {
     const ended = await this.subRepo.find({
       where: { status: 'active', endsAt: LessThanOrEqual(new Date()) },
@@ -67,131 +62,66 @@ export class SubscriptionSettlementService {
     const pkg = sub.package;
     const tipsterUserId = pkg.tipsterUserId;
     const amount = Number(escrow.amount);
-    const userId = sub.userId;
 
-    let refund = false;
-    let roiAchieved: number | null = null;
+    const apiRow = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
+    const liveRate = clampPlatformCommissionPercent(apiRow?.platformCommissionRate);
+    const commissionRate =
+      escrow.commissionRatePercentAtPurchase != null
+        ? clampPlatformCommissionPercent(escrow.commissionRatePercentAtPurchase)
+        : liveRate;
+    const { commission, netPayout } = splitGrossForTipsterPayout(amount, commissionRate);
 
-    if (pkg.roiGuaranteeEnabled && pkg.roiGuaranteeMin != null) {
-      roiAchieved = await this.computeRoiForPeriod(tipsterUserId, sub.startedAt, sub.endsAt);
-      if (roiAchieved < Number(pkg.roiGuaranteeMin)) {
-        refund = true;
-      }
-    }
-
-    if (refund) {
-      await this.walletService.credit(
-        userId,
-        amount,
-        'refund',
-        `sub-${sub.id}-roi-refund`,
-        `ROI guarantee refund: ${pkg.name}`,
-      );
-      escrow.status = 'refunded';
-      escrow.refundReason = `ROI ${roiAchieved}% below threshold ${pkg.roiGuaranteeMin}%`;
-      escrow.releasedAt = new Date();
-
-      await this.refundRepo.save(
-        this.refundRepo.create({
-          subscriptionId: sub.id,
-          userId,
-          amount,
-          roiAchieved: roiAchieved ?? null,
-          roiThreshold: pkg.roiGuaranteeMin ?? null,
-        }),
-      );
-
-      this.notificationsService
-        .create({
-          userId,
-          type: 'subscription_refund',
-          title: 'Subscription Refunded',
-          message: `Your subscription to ${pkg.name} was refunded (ROI guarantee). GHS ${amount.toFixed(2)} credited.`,
-          link: '/subscriptions',
-          icon: 'refund',
-          sendEmail: true,
-          metadata: { packageName: pkg.name },
-        })
-        .catch(() => {});
-    } else {
-      const apiRow = await this.apiSettingsRepo.findOne({ where: { id: 1 } });
-      const commissionRate = clampPlatformCommissionPercent(apiRow?.platformCommissionRate);
-      const { commission, netPayout } = splitGrossForTipsterPayout(amount, commissionRate);
-
-      await this.walletService.credit(
+    await this.walletService.credit(
+      tipsterUserId,
+      netPayout,
+      'subscription_payout',
+      `sub-${sub.id}`,
+      `Subscription payout: ${pkg.name} (gross GHS ${amount.toFixed(2)} − ${commissionRate}% platform fee)`,
+    );
+    if (commission > 0) {
+      await this.walletService.recordTransaction(
         tipsterUserId,
-        netPayout,
-        'subscription_payout',
-        `sub-${sub.id}`,
-        `Subscription payout: ${pkg.name} (gross GHS ${amount.toFixed(2)} − ${commissionRate}% platform fee)`,
+        commission,
+        'commission',
+        `commission-sub-${sub.id}`,
+        `Platform commission (${commissionRate}%) on subscription "${pkg.name}"`,
+        {
+          subscriptionId: sub.id,
+          grossAmount: amount,
+          commissionRate,
+          netPayout,
+        },
       );
-      if (commission > 0) {
-        await this.walletService.recordTransaction(
-          tipsterUserId,
-          commission,
-          'commission',
-          `commission-sub-${sub.id}`,
-          `Platform commission (${commissionRate}%) on subscription "${pkg.name}"`,
-          {
-            subscriptionId: sub.id,
-            grossAmount: amount,
-            commissionRate,
-            netPayout,
-          },
-        );
-      }
-      escrow.status = 'released';
-      escrow.releasedAt = new Date();
-      escrow.releasedTipsterNet = netPayout;
-      escrow.releasedPlatformFee = commission;
-      escrow.releasedCommissionRatePercent = commissionRate;
-
-      this.notificationsService
-        .create({
-          userId: tipsterUserId,
-          type: 'subscription_payout',
-          title: 'Subscription Payout',
-          message:
-            commission > 0
-              ? `Subscription ${pkg.name} ended. GHS ${netPayout.toFixed(2)} credited (gross GHS ${amount.toFixed(2)} − ${commissionRate}% platform fee).`
-              : `Subscription ${pkg.name} ended. GHS ${netPayout.toFixed(2)} released to wallet.`,
-          link: '/dashboard',
-          icon: 'wallet',
-          sendEmail: true,
-          metadata: {
-            packageName: pkg.name,
-            grossAmount: String(amount),
-            netPayout: String(netPayout),
-            commissionRate: String(commissionRate),
-          },
-        })
-        .catch(() => {});
     }
+    escrow.status = 'released';
+    escrow.releasedAt = new Date();
+    escrow.releasedTipsterNet = netPayout;
+    escrow.releasedPlatformFee = commission;
+    escrow.releasedCommissionRatePercent = commissionRate;
+
+    this.notificationsService
+      .create({
+        userId: tipsterUserId,
+        type: 'subscription_payout',
+        title: 'Subscription Payout',
+        message:
+          commission > 0
+            ? `Subscription ${pkg.name} ended. GHS ${netPayout.toFixed(2)} credited (gross GHS ${amount.toFixed(2)} − ${commissionRate}% platform fee).`
+            : `Subscription ${pkg.name} ended. GHS ${netPayout.toFixed(2)} released to wallet.`,
+        link: '/dashboard',
+        icon: 'wallet',
+        sendEmail: true,
+        metadata: {
+          packageName: pkg.name,
+          grossAmount: String(amount),
+          netPayout: String(netPayout),
+          commissionRate: String(commissionRate),
+        },
+      })
+      .catch(() => {});
 
     await this.escrowRepo.save(escrow);
     sub.status = 'ended';
     await this.subRepo.save(sub);
-  }
-
-  /** ROI % for tipster's settled marketplace coupons in period (same basis as marketplace stats). */
-  private async computeRoiForPeriod(tipsterUserId: number, start: Date, end: Date): Promise<number> {
-    const result = await this.dataSource.query(
-      `
-      SELECT
-        COALESCE(
-          ((COALESCE(SUM(CASE WHEN t.result = 'won' THEN t.total_odds ELSE 0 END), 0) - NULLIF(COUNT(*), 0)) / NULLIF(COUNT(*), 0)) * 100,
-          -100
-        ) as roi
-      FROM accumulator_tickets t
-      WHERE t.user_id = $1
-        AND t.is_marketplace = true
-        AND t.result IN ('won', 'lost')
-        AND t.updated_at >= $2
-        AND t.updated_at <= $3
-      `,
-      [tipsterUserId, start, end],
-    );
-    const row = Array.isArray(result) && result.length > 0 ? result[0] : null;
-    return row && typeof row === 'object' && 'roi' in row ? Number(row.roi) : -100;
   }
 }

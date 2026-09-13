@@ -161,6 +161,9 @@ function CheckoutContent() {
               <p className="text-2xl font-bold text-[var(--primary)] mt-2 tabular-nums">
                 GHS {price.toFixed(2)} / {t('subscriptions.checkout_days', { n: String(pkg.durationDays) })}
               </p>
+              <p className="text-xs text-[var(--text-muted)] mt-2 leading-snug">
+                {t('subscriptions.period_end_split')}
+              </p>
             </div>
             <div className="text-sm text-[var(--text-muted)]">
               {t('subscriptions.checkout_wallet_balance')}{' '}

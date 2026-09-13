@@ -9,12 +9,28 @@ export const SITE_URL =
   process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:6002';
 
 /** Base URL of the API (no path). Use for building upload/avatar URLs. */
+function alignLoopbackHost(apiBase: string): string {
+  if (typeof window === 'undefined' || !/^https?:\/\//i.test(apiBase)) return apiBase;
+  try {
+    const api = new URL(apiBase);
+    const pageHost = window.location.hostname;
+    const loopback = new Set(['localhost', '127.0.0.1', '::1']);
+    if (loopback.has(api.hostname) && loopback.has(pageHost) && api.hostname !== pageHost) {
+      api.hostname = pageHost;
+      return api.origin;
+    }
+  } catch {
+    return apiBase;
+  }
+  return apiBase;
+}
+
 export const getApiBaseUrl = (): string => {
   const base =
     typeof window !== 'undefined'
       ? (process.env.NEXT_PUBLIC_API_URL || '/api/backend')
       : (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001');
-  return base.replace(/\/$/, '');
+  return alignLoopbackHost(base.replace(/\/$/, ''));
 };
 
 /** API base URL including /api/v1. Use for all API fetch calls. */

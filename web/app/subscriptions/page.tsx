@@ -120,7 +120,11 @@ function SubscriptionsContent() {
     );
   }
 
-  const activeSubs = subscriptions.filter((s) => s.status === 'active');
+  const activeSubs = subscriptions.filter((s) => {
+    if (s.status !== 'active') return false;
+    const end = s.endsAt ? new Date(s.endsAt).getTime() : 0;
+    return !end || end > Date.now();
+  });
 
   return (
     <DashboardShell>

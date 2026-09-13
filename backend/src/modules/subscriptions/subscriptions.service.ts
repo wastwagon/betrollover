@@ -30,23 +30,16 @@ import {
 } from '../../common/classic-ai-public-visibility.util';
 import { VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
 
-const DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_MIN = 20;
-const DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_ENABLED = true;
-
 export interface CreatePackageDto {
   name: string;
   price: number;
   durationDays?: number;
-  roiGuaranteeMin?: number | null;
-  roiGuaranteeEnabled?: boolean;
 }
 
 export interface UpdatePackageDto {
   name?: string;
   price?: number;
   durationDays?: number;
-  roiGuaranteeMin?: number | null;
-  roiGuaranteeEnabled?: boolean;
   status?: 'active' | 'inactive';
 }
 
@@ -167,8 +160,8 @@ export class SubscriptionsService {
       name: dto.name,
       price: normalizedPrice,
       durationDays: dto.durationDays ?? 30,
-      roiGuaranteeMin: dto.roiGuaranteeMin ?? DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_MIN,
-      roiGuaranteeEnabled: dto.roiGuaranteeEnabled ?? DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_ENABLED,
+      roiGuaranteeMin: null,
+      roiGuaranteeEnabled: false,
       status: 'active',
     });
     return this.packageRepo.save(pkg);
@@ -338,17 +331,9 @@ export class SubscriptionsService {
       pkg.price = normalizedPrice;
     }
     if (dto.durationDays !== undefined) pkg.durationDays = dto.durationDays;
-    if (dto.roiGuaranteeEnabled !== undefined) pkg.roiGuaranteeEnabled = dto.roiGuaranteeEnabled;
-    if (dto.roiGuaranteeMin !== undefined) pkg.roiGuaranteeMin = dto.roiGuaranteeMin;
     if (dto.status !== undefined) pkg.status = dto.status;
-    if (pkg.status === 'active') {
-      if (pkg.roiGuaranteeEnabled !== true) {
-        throw new BadRequestException('Active subscription packages must have ROI commitment enabled');
-      }
-      if (pkg.roiGuaranteeMin == null) {
-        pkg.roiGuaranteeMin = DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_MIN;
-      }
-    }
+    pkg.roiGuaranteeEnabled = false;
+    pkg.roiGuaranteeMin = null;
     return this.packageRepo.save(pkg);
   }
 
@@ -543,9 +528,13 @@ export class SubscriptionsService {
     if (sub.status !== 'active') {
       throw new BadRequestException('Subscription is not active');
     }
-    sub.status = 'cancelled';
-    await this.subscriptionRepo.save(sub);
-    return { ok: true, message: 'Subscription will end at period end. No further charges.' };
+    // Plans are prepaid and do not auto-renew. Access and escrow stay until endsAt;
+    // nightly settlement then pays the tipster (30% platform / 70% tipster).
+    return {
+      ok: true,
+      message: 'VIP plans do not auto-renew. Access stays until the listed end date; no further charge.',
+      endsAt: sub.endsAt,
+    };
   }
 
   /** Tipsters who have at least one subscription package (for admin filters). */

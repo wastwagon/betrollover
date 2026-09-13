@@ -20,8 +20,6 @@ interface SubscriptionPackage {
   name: string;
   price: number;
   durationDays: number;
-  roiGuaranteeMin?: number | null;
-  roiGuaranteeEnabled: boolean;
   status: string;
 }
 
@@ -37,7 +35,6 @@ export default function SubscriptionPackagesPage() {
     name: '',
     price: '',
     durationDays: '30',
-    roiGuaranteeMin: '',
   });
 
   useEffect(() => {
@@ -76,8 +73,7 @@ export default function SubscriptionPackagesPage() {
     if (!token) return;
     const price = parseFloat(form.price);
     const durationDays = parseInt(form.durationDays, 10) || 30;
-    const roiGuaranteeMin = parseFloat(form.roiGuaranteeMin);
-    if (!form.name.trim() || isNaN(price) || price < 0 || isNaN(roiGuaranteeMin) || roiGuaranteeMin < 0) return;
+    if (!form.name.trim() || isNaN(price) || price <= 0) return;
     setSubmitting(true);
     try {
       const res = await fetch(`${getApiUrl()}/subscriptions/packages`, {
@@ -87,14 +83,12 @@ export default function SubscriptionPackagesPage() {
           name: form.name.trim(),
           price,
           durationDays,
-          roiGuaranteeEnabled: true,
-          roiGuaranteeMin,
         }),
       });
       if (res.ok) {
         const pkg = await res.json();
         setPackages((prev) => [pkg, ...prev]);
-        setForm({ name: '', price: '', durationDays: '30', roiGuaranteeMin: '' });
+        setForm({ name: '', price: '', durationDays: '30' });
         showSuccess('Subscription package created successfully!');
       } else {
         const err = await res.json().catch(() => ({}));
@@ -132,6 +126,9 @@ export default function SubscriptionPackagesPage() {
             minRoi: String(thresholds.minimumROI),
             minWr: String(thresholds.minimumWinRate),
           })}
+        </p>
+        <p className="text-sm text-[var(--text-muted)] mb-4 max-w-xl">
+          {t('subscriptions.period_end_split')}
         </p>
 
         {packages.length > 0 && (
@@ -181,20 +178,6 @@ export default function SubscriptionPackagesPage() {
                 <option value="365">365 days</option>
               </select>
             </Field>
-            <Input
-              id="vip-package-roi"
-              label="ROI guarantee threshold (%)"
-              type="number"
-              step="0.1"
-              min="0"
-              max="100"
-              value={form.roiGuaranteeMin}
-              onChange={(e) => setForm((f) => ({ ...f, roiGuaranteeMin: e.target.value }))}
-              placeholder="e.g. 20"
-              required
-              aria-required="true"
-              hint="Minimum win-rate % subscribers must reach for the period; refunds apply if results fall below this (per your package rules)."
-            />
             <Button type="submit" disabled={submitting} fullWidth>
               {submitting ? 'Creating...' : 'Create package'}
             </Button>
@@ -215,12 +198,7 @@ export default function SubscriptionPackagesPage() {
                 >
                   <h4 className="font-semibold text-[var(--text)]">{pkg.name}</h4>
                   <p className="text-lg font-bold text-[var(--primary)]">GHS {Number(pkg.price).toFixed(2)}/{pkg.durationDays}d</p>
-                  {(pkg.roiGuaranteeMin != null || pkg.roiGuaranteeEnabled) && (
-                    <p className="text-xs text-[var(--text-muted)] mt-1">
-                      ROI guarantee threshold:{' '}
-                      {pkg.roiGuaranteeMin != null ? `${Number(pkg.roiGuaranteeMin)}%` : '—'}
-                    </p>
-                  )}
+                  <p className="text-xs text-[var(--text-muted)] mt-1">{t('subscriptions.period_end_split')}</p>
                 </div>
               ))}
             </div>

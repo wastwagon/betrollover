@@ -32,8 +32,6 @@ interface CatalogPackage {
   name: string;
   price: number;
   durationDays: number;
-  roiGuaranteeMin: number | null;
-  roiGuaranteeEnabled: boolean;
 }
 
 interface CatalogItem {
@@ -75,8 +73,6 @@ interface AdminSubscriptionRow {
     name: string;
     price: number;
     durationDays: number;
-    roiGuaranteeMin: number | null;
-    roiGuaranteeEnabled: boolean;
     tipsterUserId: number;
   };
   tipster: {
@@ -554,8 +550,6 @@ export default function AdminSubscriptionsPage() {
     const settled = (perf?.wonPicks ?? 0) + (perf?.lostPicks ?? 0);
     const roiDisplay = settled > 0 && perf ? `${Number(perf.roi).toFixed(1)}%` : '—';
     const wrDisplay = settled > 0 && perf ? `${Number(perf.winRate).toFixed(1)}%` : '—';
-    const hasCommittedRoi = pkg.roiGuaranteeEnabled && pkg.roiGuaranteeMin != null;
-    const committedRoiValue = pkg.roiGuaranteeMin != null ? `${Number(pkg.roiGuaranteeMin).toFixed(1)}%` : '—';
     const isAi = !!tip?.isAi;
 
     return (
@@ -628,25 +622,6 @@ export default function AdminSubscriptionsPage() {
             <p className="text-lg font-bold text-[var(--primary)]">
               GHS {Number(pkg.price).toFixed(2)} <span className="text-sm font-normal text-[var(--text-muted)]">/ {pkg.durationDays}d</span>
             </p>
-            <div className="mt-2 rounded-lg border border-[var(--border)] bg-[var(--bg-warm)]/70 px-3 py-2">
-              <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)] min-w-0">
-                  {t('subscriptions.roi_guarantee_label')}
-                </span>
-                <span
-                  className={`self-start sm:self-auto text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                    hasCommittedRoi
-                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
-                      : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'
-                  }`}
-                >
-                  {hasCommittedRoi ? t('subscriptions.roi_commitment_committed') : t('subscriptions.roi_commitment_not_committed')}
-                </span>
-              </div>
-              <p className="text-xs text-[var(--text)] mt-1">
-                {hasCommittedRoi ? t('subscriptions.roi_target_delivery', { n: committedRoiValue }) : t('subscriptions.roi_target_unpublished')}
-              </p>
-            </div>
             <p className="text-[10px] text-[var(--text-muted)] mt-2">
               Same listing as{' '}
               <Link href="/subscriptions/marketplace" className="text-[var(--primary)] hover:underline">
@@ -675,8 +650,6 @@ export default function AdminSubscriptionsPage() {
     const settled = (perf?.wonPicks ?? 0) + (perf?.lostPicks ?? 0);
     const roiDisplay = settled > 0 && perf ? `${Number(perf.roi).toFixed(1)}%` : '—';
     const wrDisplay = settled > 0 && perf ? `${Number(perf.winRate).toFixed(1)}%` : '—';
-    const hasCommittedRoi = pkg.roiGuaranteeEnabled && pkg.roiGuaranteeMin != null;
-    const committedRoiValue = pkg.roiGuaranteeMin != null ? `${Number(pkg.roiGuaranteeMin).toFixed(1)}%` : '—';
     const isAi = tip?.isAi ?? false;
     const isReviewed = reviewedIds.includes(row.id);
 
@@ -806,25 +779,6 @@ export default function AdminSubscriptionsPage() {
               <p className="text-lg font-bold text-[var(--primary)]">
                 GHS {pkg.price.toFixed(2)} <span className="text-sm font-normal text-[var(--text-muted)]">/ {pkg.durationDays}d</span>
               </p>
-              <div className="mt-2 rounded-lg border border-[var(--border)] bg-[var(--bg-warm)]/70 px-3 py-2">
-                <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)] min-w-0">
-                    {t('subscriptions.roi_guarantee_label')}
-                  </span>
-                  <span
-                    className={`self-start sm:self-auto text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                      hasCommittedRoi
-                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
-                        : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'
-                    }`}
-                  >
-                    {hasCommittedRoi ? t('subscriptions.roi_commitment_committed') : t('subscriptions.roi_commitment_not_committed')}
-                  </span>
-                </div>
-                <p className="text-xs text-[var(--text)] mt-1">
-                  {hasCommittedRoi ? t('subscriptions.roi_target_delivery', { n: committedRoiValue }) : t('subscriptions.roi_target_unpublished')}
-                </p>
-              </div>
 
               <div className="flex flex-wrap gap-2 text-xs mt-3">
                 <span className={`px-2 py-0.5 rounded-full font-medium ${statusBadgeClass(row.status)}`}>{row.status}</span>

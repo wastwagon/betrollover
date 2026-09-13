@@ -1197,19 +1197,19 @@ const en = {
   'subscriptions.marketplace_tagline': 'Browse active plans from tipsters. Performance stats are from settled picks. Pay from your wallet.',
   'subscriptions.marketplace_empty_title': 'No VIP packages yet',
   'subscriptions.marketplace_empty_desc': 'When tipsters publish a subscription plan, it will appear here.',
+  'subscriptions.marketplace_load_error_title': 'Could not load VIP packages',
+  'subscriptions.marketplace_load_error_desc':
+    'The shop is up, but this page could not reach the API. Refresh, or open the site as localhost instead of 127.0.0.1.',
   'subscriptions.performance_heading': 'Performance (settled picks)',
   'subscriptions.picks_record': 'Record',
   'subscriptions.picks_total': 'total',
-  'subscriptions.roi_guarantee_label': 'ROI guarantee threshold',
-  'subscriptions.roi_commitment_committed': 'Committed',
-  'subscriptions.roi_commitment_not_committed': 'Not committed',
-  'subscriptions.roi_target_delivery': 'Target ROI delivery: {n}',
-  'subscriptions.roi_target_unpublished': 'No target ROI commitment published for this package yet.',
   'subscriptions.subscribe_cta': 'Subscribe',
   'subscriptions.vip_already_subscribed_hint':
     'You already have an active VIP plan with this tipster. Manage it from your subscriptions page.',
   'subscriptions.marketplace_footnote':
     'Tipsters need at least {minRoi}% settled ROI and {minWr}% settled win rate (live admin thresholds) to offer VIP packages — same bar as paid marketplace picks. Stats shown reflect settled pick performance.',
+  'subscriptions.period_end_split':
+    'When the period ends, the platform keeps 30% and the tipster receives 70% — the same split as a winning paid pick. There is no ROI guarantee refund.',
   'subscriptions.marketplace_link_escrow': 'Escrow & refunds',
   'subscriptions.marketplace_link_eval': 'Evaluating tipsters',
   'subscriptions.vip_create_eligibility':
@@ -1233,7 +1233,6 @@ const en = {
   'tipster.desc_win_rate': 'Highest % winners this month',
   'tipster.best_roi': 'Best ROI',
   'tipster.desc_roi': 'Best return on investment',
-  'tipster.roi_guarantee': 'ROI guarantee: refund if below {n}%',
   'tipster.subscribed': 'Subscribed',
   'tipster.join_vip': 'Join VIP',
   'tipster.subscribe': 'Subscribe',

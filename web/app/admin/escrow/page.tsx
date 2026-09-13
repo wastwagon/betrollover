@@ -136,7 +136,7 @@ export default function AdminEscrowPage() {
           <p className="text-gray-600 dark:text-gray-400">
             <strong>Marketplace picks:</strong> funds held until picks settle — released to the tipster on a win, refunded
             to buyers on loss/void. <strong>VIP subscriptions:</strong> funds held until the subscription period ends — then
-            released to the tipster (minus platform fee) or refunded under the ROI guarantee. Both use the platform rate
+            released to the tipster minus the platform commission (same 30% default as a winning paid pick). Both use the platform rate
             below for tipster net vs platform fee on release.
           </p>
           <p className="mt-2 text-sm font-medium text-amber-800 dark:text-amber-200">

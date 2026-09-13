@@ -90,8 +90,6 @@ interface SubscriptionPackage {
   name: string;
   price: number;
   durationDays: number;
-  roiGuaranteeMin?: number | null;
-  roiGuaranteeEnabled: boolean;
 }
 
 type TipsterPerformancePeriod = 'all' | 'week' | 'month' | 'd60' | 'd90';
@@ -761,9 +759,6 @@ export default function TipsterProfilePage() {
               {subscriptionPackages.map((pkg) => {
                 const isSubscribed = subscribedPackageIds.has(pkg.id);
                 const needsTopUp = isAuthed && pkg.price > 0 && walletBalance !== null && walletBalance < pkg.price;
-                const hasCommittedRoi = pkg.roiGuaranteeEnabled && pkg.roiGuaranteeMin != null;
-                const committedRoiValue =
-                  pkg.roiGuaranteeMin != null ? `${Number(pkg.roiGuaranteeMin).toFixed(1)}%` : '—';
                 return (
                   <div
                     key={pkg.id}
@@ -779,29 +774,9 @@ export default function TipsterProfilePage() {
                         </span>
                       ) : null}
                     </p>
-                    <div className="mb-3 rounded-[var(--radius-sm)] border border-[var(--separator)] bg-[var(--bg)] px-3 py-2">
-                      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2 min-w-0">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)] min-w-0">
-                          {t('subscriptions.roi_guarantee_label')}
-                        </span>
-                        <span
-                          className={`self-start sm:self-auto text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                            hasCommittedRoi
-                              ? 'bg-[var(--primary-light)] text-[var(--primary)]'
-                              : 'bg-[var(--fill-secondary)] text-[var(--text-muted)]'
-                          }`}
-                        >
-                          {hasCommittedRoi
-                            ? t('subscriptions.roi_commitment_committed')
-                            : t('subscriptions.roi_commitment_not_committed')}
-                        </span>
-                      </div>
-                      <p className="text-xs text-[var(--text)] mt-1">
-                        {hasCommittedRoi
-                          ? t('subscriptions.roi_target_delivery', { n: committedRoiValue })
-                          : t('subscriptions.roi_target_unpublished')}
-                      </p>
-                    </div>
+                    <p className="text-xs text-[var(--text-muted)] mb-3 leading-snug">
+                      {t('subscriptions.period_end_split')}
+                    </p>
                     {isSubscribed ? (
                       <span className="inline-flex px-3 py-1.5 rounded-[var(--radius)] bg-[var(--primary-light)] text-[var(--primary)] text-sm font-medium">{t('tipster.subscribed')}</span>
                     ) : (

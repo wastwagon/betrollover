@@ -7,6 +7,7 @@ import {
   VIP_LEG_TARGET_ODD,
   VIP_MAX_COMBINED_ODDS,
   VIP_MIN_COMBINED_ODDS,
+  VIP_PACKAGE_PRICE,
 } from './vip-tipster.config';
 
 describe('vip league gates', () => {
@@ -25,6 +26,10 @@ describe('vip league gates', () => {
     expect(isVipBrazilOver15League(71)).toBe(true);
     expect(isVipBrazilOver15League(72)).toBe(true);
     expect(isVipBrazilOver15League(40)).toBe(false);
+  });
+
+  it('prices the monthly VIP plan at GHS 300', () => {
+    expect(VIP_PACKAGE_PRICE).toBe(300);
   });
 
   it('lets the combined-odds gate drop stacked shorts and two long 1X prices', () => {

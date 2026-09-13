@@ -374,8 +374,6 @@ export class AdminController {
       name?: string;
       price?: number;
       durationDays?: number;
-      roiGuaranteeMin?: number | null;
-      roiGuaranteeEnabled?: boolean;
       status?: 'active' | 'inactive';
     },
   ) {
@@ -399,8 +397,6 @@ export class AdminController {
       name: body.name?.trim(),
       price: body.price !== undefined ? Number(body.price) : undefined,
       durationDays: body.durationDays !== undefined ? Number(body.durationDays) : undefined,
-      roiGuaranteeMin: body.roiGuaranteeMin ?? undefined,
-      roiGuaranteeEnabled: body.roiGuaranteeEnabled,
       status: body.status,
     });
   }
