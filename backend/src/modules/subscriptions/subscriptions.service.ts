@@ -28,6 +28,7 @@ import {
   classicAiPublicExcludeSql,
   isClassicAiHiddenFromPublic,
 } from '../../common/classic-ai-public-visibility.util';
+import { VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
 
 const DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_MIN = 20;
 const DEFAULT_SUBSCRIPTION_ROI_GUARANTEE_ENABLED = true;
@@ -93,6 +94,11 @@ export class SubscriptionsService {
   /** Ensures tipster owns packages and has not exceeded rolling coupon cap per package. */
   async assertCanLinkCouponsToPackages(tipsterUserId: number, packageIds: number[]) {
     if (!packageIds?.length) return;
+    const tipster = await this.tipsterRepo.findOne({
+      where: { userId: tipsterUserId },
+      select: ['tipsterType'],
+    });
+    const isVipDesk = (tipster?.tipsterType || '').toLowerCase() === VIP_TIPSTER_TYPE;
     for (const pkgId of packageIds) {
       const pkg = await this.getPackage(pkgId);
       if (pkg.tipsterUserId !== tipsterUserId) {
@@ -101,6 +107,9 @@ export class SubscriptionsService {
       if (pkg.status !== 'active') {
         throw new BadRequestException(`Subscription package "${pkg.name}" is not active`);
       }
+      // VIP Two-Fold caps at 2 slips per Accra desk day in VipTipsterPublisherService.
+      // A createdAt rolling window would block today's catch-up after last night's early publish.
+      if (isVipDesk) continue;
       const n = await this.countSubscriptionCouponsInWindow(pkgId, pkg.durationDays);
       if (n >= MAX_SUBSCRIPTION_COUPONS_PER_WINDOW) {
         throw new BadRequestException(

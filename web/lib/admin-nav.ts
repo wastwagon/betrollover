@@ -42,6 +42,7 @@ export function getAdminNavItems(): AdminNavItem[] {
     { href: '/admin/analytics', icon: IconTrending, label: 'Analytics' },
     { href: '/admin/ai-predictions', icon: IconTarget, label: 'AI Predictions' },
     { href: '/admin/acca-desk', icon: IconChart, label: 'Acca Desk' },
+    { href: '/admin/vip-tipster', icon: IconStar, label: 'VIP Two-Fold' },
   ];
   if (vip) {
     items.push(

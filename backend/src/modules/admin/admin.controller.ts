@@ -14,6 +14,8 @@ import { ResultTrackerService } from '../predictions/result-tracker.service';
 import { TipstersSetupService } from '../predictions/tipsters-setup.service';
 import { AccaDeskSetupService } from '../acca-generator/acca-desk-setup.service';
 import { AccaDeskPublisherService } from '../acca-generator/acca-desk-publisher.service';
+import { VipTipsterSetupService } from '../acca-generator/vip-tipster-setup.service';
+import { VipTipsterPublisherService } from '../acca-generator/vip-tipster-publisher.service';
 import { RolloverDeskService } from '../acca-generator/rollover-desk.service';
 import { resolveDeskDayArg } from '../../config/acca-desk-slots';
 import { NewsArticle, NewsCategory, normalizeNewsSport } from '../news/entities/news-article.entity';
@@ -56,6 +58,8 @@ export class AdminController {
     private readonly tipstersSetup: TipstersSetupService,
     private readonly accaDeskSetup: AccaDeskSetupService,
     private readonly accaDeskPublisher: AccaDeskPublisherService,
+    private readonly vipTipsterSetup: VipTipsterSetupService,
+    private readonly vipTipsterPublisher: VipTipsterPublisherService,
     private readonly rolloverDesk: RolloverDeskService,
     private readonly newsService: NewsService,
     private readonly transfersSyncService: TransfersSyncService,
@@ -243,6 +247,38 @@ export class AdminController {
   async getAccaDeskOverview(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.accaDeskPublisher.getOverview();
+  }
+
+  @Post('setup/vip-tipster')
+  async initializeVipTipster(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.vipTipsterSetup.initializeVipTipster();
+  }
+
+  /** Manual VIP Two-Fold publish. Body `{ deskDay?: 'today' | 'tomorrow' | YYYY-MM-DD }`. */
+  @Post('vip-tipster/run-daily')
+  async runVipTipsterDaily(
+    @CurrentUser() user: User,
+    @Body() body?: { deskDay?: string },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const tz = process.env.PREDICTION_TIMEZONE || 'Africa/Accra';
+    let deskDayStr: string;
+    try {
+      ({ deskDayStr } = resolveDeskDayArg(body?.deskDay, tz));
+    } catch (err: unknown) {
+      throw new BadRequestException(err instanceof Error ? err.message : 'Invalid deskDay');
+    }
+    return this.vipTipsterPublisher.runDaily({
+      ensureSetup: true,
+      deskDayStr,
+    });
+  }
+
+  @Get('vip-tipster/overview')
+  async getVipTipsterOverview(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.vipTipsterPublisher.getOverview();
   }
 
   @Get('rollover')
