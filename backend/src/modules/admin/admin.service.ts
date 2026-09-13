@@ -42,6 +42,7 @@ import {
   ACCA_GENERATOR_LEGS_MIN,
 } from '../acca-generator/acca-generator.constants';
 import { UsersService } from '../users/users.service';
+import { classifyPaystackSecret, pickPaystackSecret } from '../wallet/paystack-keys';
 
 @Injectable()
 export class AdminService {
@@ -1324,11 +1325,18 @@ export class AdminService {
       s = this.paystackSettingsRepo.create({ mode: 'live', transfersEnabled: false });
       await this.paystackSettingsRepo.save(s);
     }
+    const picked = pickPaystackSecret({
+      dbKey: s.secretKey,
+      envKey: process.env.PAYSTACK_SECRET_KEY,
+      mode: s.mode,
+    });
     return {
       secretKey: s.secretKey ? '********' : '',
       publicKey: s.publicKey ? '********' : '',
       mode: s.mode || 'live',
-      configured: !!(s.secretKey?.trim() && s.secretKey.startsWith('sk_')),
+      configured: picked.kind !== 'invalid',
+      keyKind: picked.kind,
+      keySource: picked.source,
       transfersEnabled: s.transfersEnabled === true,
     };
   }
@@ -1338,14 +1346,23 @@ export class AdminService {
     publicKey?: string;
     mode?: string;
     transfersEnabled?: boolean;
+    clearSecretKey?: boolean;
   }) {
     let s = await this.paystackSettingsRepo.findOne({ where: { id: 1 } });
     if (!s) {
       s = this.paystackSettingsRepo.create({ mode: 'live', transfersEnabled: false });
       await this.paystackSettingsRepo.save(s);
     }
-    if (data.secretKey !== undefined && data.secretKey !== '' && data.secretKey !== '********') {
-      s.secretKey = data.secretKey.trim();
+    if (data.clearSecretKey === true) {
+      s.secretKey = null;
+    } else if (data.secretKey !== undefined && data.secretKey !== '' && data.secretKey !== '********') {
+      const classified = classifyPaystackSecret(data.secretKey);
+      if (classified.kind === 'invalid') {
+        throw new BadRequestException(
+          'Paystack secret must be a full sk_live_ or sk_test_ key from the dashboard, not a placeholder.',
+        );
+      }
+      s.secretKey = classified.key;
     }
     if (data.publicKey !== undefined && data.publicKey !== '' && data.publicKey !== '********') {
       s.publicKey = data.publicKey.trim();

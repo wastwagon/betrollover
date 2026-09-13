@@ -111,6 +111,8 @@ export default function AdminSettingsPage() {
   const [paystackPublicKey, setPaystackPublicKey] = useState('');
   const [paystackMode, setPaystackMode] = useState<'live' | 'test'>('live');
   const [paystackConfigured, setPaystackConfigured] = useState(false);
+  const [paystackKeyKind, setPaystackKeyKind] = useState<'live' | 'test' | 'invalid'>('invalid');
+  const [paystackKeySource, setPaystackKeySource] = useState<'db' | 'env' | ''>('');
   const [paystackTransfersEnabled, setPaystackTransfersEnabled] = useState(false);
   const [paystackSaving, setPaystackSaving] = useState(false);
   const [paystackSaveResult, setPaystackSaveResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -225,6 +227,8 @@ export default function AdminSettingsPage() {
         setPaystackPublicKey(data.publicKey || '');
         setPaystackMode((data.mode || 'live') as 'live' | 'test');
         setPaystackConfigured(data.configured || false);
+        setPaystackKeyKind((data.keyKind || 'invalid') as 'live' | 'test' | 'invalid');
+        setPaystackKeySource((data.keySource || '') as 'db' | 'env' | '');
         setPaystackTransfersEnabled(data.transfersEnabled === true);
       }
     } catch (e) {
@@ -916,7 +920,9 @@ export default function AdminSettingsPage() {
                         ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200'
                         : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
                     }`}>
-                      {paystackConfigured ? 'Configured' : 'Not configured'}
+                      {paystackConfigured
+                        ? `Configured · ${paystackKeyKind} key (${paystackKeySource === 'db' ? 'Admin' : '.env'})`
+                        : 'Not configured'}
                     </span>
                   </div>
                 </div>
@@ -949,7 +955,7 @@ export default function AdminSettingsPage() {
                     placeholder="pk_live_xxxx or pk_test_xxxx"
                   />
                   <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Get keys from <a href="https://dashboard.paystack.com/#/settings/developers" target="_blank" rel="noopener noreferrer" className="text-red-600 dark:text-red-400 underline">Paystack Dashboard</a>. Leave blank to keep existing. .env PAYSTACK_SECRET_KEY is used as fallback if not set here.
+                    Get keys from <a href="https://dashboard.paystack.com/#/settings/developers" target="_blank" rel="noopener noreferrer" className="text-red-600 dark:text-red-400 underline">Paystack Dashboard</a>. Paste a full live secret (not <code className="font-mono">sk_live_xxx</code>). Leave blank to keep the stored key. If deposits fail with “integration deactivated”, paste a fresh live secret or clear the stored key so <code className="font-mono">PAYSTACK_SECRET_KEY</code> is used.
                   </p>
                   <label className="flex items-start gap-2 text-sm text-gray-800 dark:text-gray-200">
                     <input
@@ -995,6 +1001,8 @@ export default function AdminSettingsPage() {
                         if (res.ok) {
                           setPaystackSaveResult({ success: true, message: 'Paystack settings saved.' });
                           setPaystackConfigured(data.configured || false);
+                          setPaystackKeyKind((data.keyKind || 'invalid') as 'live' | 'test' | 'invalid');
+                          setPaystackKeySource((data.keySource || '') as 'db' | 'env' | '');
                           setPaystackTransfersEnabled(data.transfersEnabled === true);
                         } else {
                           setPaystackSaveResult({ success: false, message: getApiErrorMessage(data, 'Failed to save') });
@@ -1021,6 +1029,43 @@ export default function AdminSettingsPage() {
                         Save Paystack Settings
                       </>
                     )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const token = localStorage.getItem('token');
+                      if (!token) return;
+                      setPaystackSaving(true);
+                      setPaystackSaveResult(null);
+                      try {
+                        const res = await fetch(`${getApiUrl()}/admin/settings/paystack`, {
+                          method: 'PATCH',
+                          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ clearSecretKey: true, mode: paystackMode }),
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (res.ok) {
+                          setPaystackSecretKey('');
+                          setPaystackSaveResult({
+                            success: true,
+                            message: 'Cleared the stored Paystack secret. Deposits now use PAYSTACK_SECRET_KEY from the server environment if it is a full live/test key.',
+                          });
+                          setPaystackConfigured(data.configured || false);
+                          setPaystackKeyKind((data.keyKind || 'invalid') as 'live' | 'test' | 'invalid');
+                          setPaystackKeySource((data.keySource || '') as 'db' | 'env' | '');
+                        } else {
+                          setPaystackSaveResult({ success: false, message: getApiErrorMessage(data, 'Failed to clear key') });
+                        }
+                      } catch (e: any) {
+                        setPaystackSaveResult({ success: false, message: e?.message || 'Network error' });
+                      } finally {
+                        setPaystackSaving(false);
+                      }
+                    }}
+                    disabled={paystackSaving}
+                    className="text-sm font-medium text-gray-600 dark:text-gray-300 underline underline-offset-2 hover:text-gray-900 dark:hover:text-white disabled:opacity-50"
+                  >
+                    Clear stored secret (use .env)
                   </button>
                 </div>
               </div>

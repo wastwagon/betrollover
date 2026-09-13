@@ -1,12 +1,14 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaystackSettings } from './entities/paystack-settings.entity';
 import { normalizeGhanaMomoPhone, toPaystackMomoBankCode } from './ghana-momo';
+import { mapPaystackClientError, pickPaystackSecret } from './paystack-keys';
 
 @Injectable()
 export class PaystackService {
+  private readonly logger = new Logger(PaystackService.name);
   private readonly baseUrl = 'https://api.paystack.co';
 
   constructor(
@@ -15,16 +17,24 @@ export class PaystackService {
     private paystackSettingsRepo: Repository<PaystackSettings>,
   ) {}
 
-  private async getSecretKey(): Promise<string> {
+  private async resolveSecret() {
     const settings = await this.paystackSettingsRepo.findOne({ where: { id: 1 } });
-    const dbKey = settings?.secretKey?.trim();
-    if (dbKey && dbKey.startsWith('sk_')) return dbKey;
-    return this.config.get<string>('PAYSTACK_SECRET_KEY') || '';
+    return {
+      settings,
+      ...pickPaystackSecret({
+        dbKey: settings?.secretKey,
+        envKey: this.config.get<string>('PAYSTACK_SECRET_KEY'),
+        mode: settings?.mode,
+      }),
+    };
+  }
+
+  private async getSecretKey(): Promise<string> {
+    return (await this.resolveSecret()).key;
   }
 
   async isConfigured(): Promise<boolean> {
-    const key = await this.getSecretKey();
-    return !!key && key.startsWith('sk_');
+    return (await this.resolveSecret()).kind !== 'invalid';
   }
 
   /** Instant MoMo payouts. Off by default — Starter Paystack accounts cannot send Transfers. */
@@ -72,7 +82,11 @@ export class PaystackService {
 
     const data = await res.json();
     if (!data.status) {
-      throw new BadRequestException(data.message || 'Paystack initialization failed');
+      const picked = await this.resolveSecret();
+      this.logger.warn(
+        `Paystack initialize failed (${res.status}) kind=${picked.kind} source=${picked.source}: ${data.message || 'unknown'}`,
+      );
+      throw new BadRequestException(mapPaystackClientError(data.message));
     }
     return data.data;
   }
@@ -144,7 +158,7 @@ export class PaystackService {
 
     const data = await res.json();
     if (!data.status) {
-      throw new BadRequestException(data.message || 'Failed to create payout recipient');
+      throw new BadRequestException(mapPaystackClientError(data.message, 'Failed to create payout recipient'));
     }
     return data.data;
   }
@@ -197,7 +211,7 @@ export class PaystackService {
 
     const data = await res.json();
     if (!data.status) {
-      throw new BadRequestException(data.message || 'Transfer failed');
+      throw new BadRequestException(mapPaystackClientError(data.message, 'Transfer failed'));
     }
     return data.data;
   }
