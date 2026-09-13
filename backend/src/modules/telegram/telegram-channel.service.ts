@@ -4,7 +4,9 @@ import {
   TELEGRAM_CHANNEL_SEO_DESCRIPTION,
   appendEngagementFooter,
   formatAdvicePost,
+  formatCommunityAppealPost,
   formatGrowthPost,
+  formatTipsterRecruitPost,
 } from './telegram-copy';
 
 export type TelegramPickPostInput = {
@@ -41,6 +43,8 @@ export class TelegramChannelService {
     channelId: string | null;
     growthPostsEnabled: boolean;
     advicePostsEnabled: boolean;
+    communityAppealEnabled: boolean;
+    tipsterRecruitEnabled: boolean;
   } {
     const channelId = this.channelId();
     return {
@@ -49,6 +53,8 @@ export class TelegramChannelService {
       channelId,
       growthPostsEnabled: this.growthEnabled(),
       advicePostsEnabled: this.adviceEnabled(),
+      communityAppealEnabled: this.communityAppealEnabled(),
+      tipsterRecruitEnabled: this.tipsterRecruitEnabled(),
     };
   }
 
@@ -92,9 +98,7 @@ export class TelegramChannelService {
     const core = [
       `AccaSure · ${day}`,
       `${n} new free Sure · 1X2 2-fold${n === 1 ? '' : 's'} on BetRollover.`,
-      'Open the board · react if you’re on it · forward to a friend.',
-      '',
-      url,
+      `Open the board → ${url}`,
     ].join('\n');
     return this.sendMessage(appendEngagementFooter(core, `acca-sure-${day}-${n}`));
   }
@@ -115,14 +119,35 @@ export class TelegramChannelService {
     return this.sendMessage(text);
   }
 
-  /** Daily bankroll / “stay in profit” strategy education. */
+  /** Daily bankroll / “stay in profit” strategy education (complete post — no extra footer). */
   async postAdviceMessage(salt?: number | string): Promise<{ ok: boolean; error?: string }> {
     if (!this.adviceEnabled()) {
       return { ok: false, error: 'advice_disabled' };
     }
     const s = salt ?? Date.now();
-    const core = formatAdvicePost(this.siteOrigin(), s);
-    return this.sendMessage(appendEngagementFooter(core, `advice-${s}`));
+    return this.sendMessage(formatAdvicePost(this.siteOrigin(), s));
+  }
+
+  /**
+   * Exact daily community appeal (react meanings + share join link).
+   * No extra engagement footer — message is complete as written.
+   */
+  async postCommunityAppealMessage(): Promise<{ ok: boolean; error?: string }> {
+    if (!this.communityAppealEnabled()) {
+      return { ok: false, error: 'community_appeal_disabled' };
+    }
+    return this.sendMessage(formatCommunityAppealPost());
+  }
+
+  /**
+   * Daily tipster recruit — website register + invite tipster friends.
+   * Earning = creating paid picks, not sharing the link.
+   */
+  async postTipsterRecruitMessage(): Promise<{ ok: boolean; error?: string }> {
+    if (!this.tipsterRecruitEnabled()) {
+      return { ok: false, error: 'tipster_recruit_disabled' };
+    }
+    return this.sendMessage(formatTipsterRecruitPost(this.siteOrigin()));
   }
 
   async sendTestMessage(customText?: string): Promise<{ ok: boolean; error?: string }> {
@@ -257,7 +282,7 @@ export class TelegramChannelService {
     const priceBit = input.isFree ? 'free' : 'paid';
     const lines = [`Won ✅ · ${title}${odds ? ` · ${odds}` : ''} · ${priceBit}`];
     if (tipster) lines.push(`Tipster: ${tipster}`);
-    lines.push('We win together — react & share the W.');
+    lines.push('Won together — share the W.');
     lines.push('');
     lines.push(url);
     return lines.join('\n');
@@ -287,6 +312,16 @@ export class TelegramChannelService {
 
   private adviceEnabled(): boolean {
     const v = (process.env.TELEGRAM_ADVICE_POSTS_ENABLED || 'true').trim().toLowerCase();
+    return v !== '0' && v !== 'false' && v !== 'off' && v !== 'no';
+  }
+
+  private communityAppealEnabled(): boolean {
+    const v = (process.env.TELEGRAM_COMMUNITY_APPEAL_ENABLED || 'true').trim().toLowerCase();
+    return v !== '0' && v !== 'false' && v !== 'off' && v !== 'no';
+  }
+
+  private tipsterRecruitEnabled(): boolean {
+    const v = (process.env.TELEGRAM_TIPSTER_RECRUIT_ENABLED || 'true').trim().toLowerCase();
     return v !== '0' && v !== 'false' && v !== 'off' && v !== 'no';
   }
 

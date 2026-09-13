@@ -1,62 +1,132 @@
 import { LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
 import { ROLLOVER_OWNER_USERNAME } from '../../config/rollover-desk.config';
 
-/** Soft CTAs — rotate so posts don’t look copy-paste. Telegram rewards reactions + forwards. */
+/**
+ * BetRollover Telegram voice — one job per post type.
+ *
+ * Daily cadence (Africa/Accra):
+ *  08:00  Growth        → discover free tips + join channel
+ *  10:00  Tipster recruit → register on site; invite tipster friends (earn via paid picks)
+ *  12:00  Advice        → bankroll / stay-in-profit education
+ *  17:00  Community     → react meanings + share channel (exact ask)
+ *  19:00  Growth        → escrow trust + join channel / open site
+ *
+ * Tip & win alerts (event-driven): product first + short engagement footer.
+ * Reaction legend lives ONLY on the community appeal (not every tip).
+ *
+ * Placeholders: {channel} = t.me join · {site} = web origin · {register} = register URL
+ */
+
+const LEGAL_LINE = '18+ · Information only · Not a bookmaker';
+
+/** Short footer on tip/win alerts — no reaction legend (that is the 17:00 post). */
 export const TELEGRAM_ENGAGEMENT_FOOTERS = [
-  '🔥 React if you’re on this · ↗️ Forward to one friend · We grow together',
-  '❤️ React · ↗️ Share with a friend who follows tips · Win together',
-  '👍 React if useful · ↗️ Forward this channel · Help others find us',
-  '🔥 Drop a reaction · ↗️ Share the pick · Join us on BetRollover',
-  '✨ React & forward · Invite a friend · We win together',
+  `🔥 React · ↗️ Forward to a friend\n👉 {channel}`,
+  `Support free tips: react · forward\n👉 {channel}`,
+  `👍 Useful? React · ↗️ Share the channel\n👉 {channel}`,
+  `We grow when you forward\n👉 {channel}`,
+  `React if you’re on it · invite one friend\n👉 {channel}`,
 ] as const;
 
-/** Standalone growth posts — 2×/day. Keep short; keyword-rich for Telegram search snippets. */
+/** 2×/day discovery — free tips + Telegram join. No tipster-earn CTA (separate post). */
 export const TELEGRAM_GROWTH_POSTS = [
-  `Football tips & free Acca picks daily
+  `📌 Discover · Free football tips daily
 
-BetRollover — global tipster marketplace with escrow: paid pick loses → pick price refunded to wallet.
+BetRollover Acca Desk + top tipsters — settled results, not noise.
 
-🔥 React if you want today’s tips
-↗️ Forward this channel to a friend
-👉 Join: {site}/register?utm_source=telegram&utm_medium=social&utm_campaign=channel_growth
+Follow this channel so you never miss today’s free picks.
+↗️ Forward to a friend who follows tips
+👉 Join: {channel}
 
-18+ · Information only · Not a bookmaker`,
+Open the board: {site}?utm_source=telegram&utm_medium=social&utm_campaign=channel_growth
 
-  `Looking for football tips & tipster analysis?
+${LEGAL_LINE}`,
 
-Free Acca Desk · top tipsters · escrow-protected paid picks on BetRollover.
+  `📌 Discover · Tipster marketplace
 
-❤️ React · ↗️ Share this channel · Grow with us
-{site}/invite?utm_source=telegram&utm_medium=social&utm_campaign=channel_growth
+Free Acca picks · paid picks with escrow (tip price refunded if it loses).
 
-We win together — help a friend join.`,
+Stay subscribed · share the channel with a friend
+👉 {channel}
 
-  `Free tips today + escrow if a paid pick loses.
+{site}/marketplace?utm_source=telegram&utm_medium=social&utm_campaign=channel_growth
 
-Open BetRollover for AccaSure & top tipsters.
-🔥 React · ↗️ Forward · Subscribe so you don’t miss wins
+${LEGAL_LINE}`,
+
+  `📌 Discover · Escrow-protected tips
+
+Paid pick loses → tip price returns to your BetRollover wallet.
+Free tips stay free on this channel.
+
+↗️ Forward · 👉 Join: {channel}
 
 {site}?utm_source=telegram&utm_medium=social&utm_campaign=channel_growth
 
-18+ · Educational tips only`,
+${LEGAL_LINE}`,
 
-  `Tipster marketplace — football & more
+  `📌 Discover · AccaSure & top tipsters
 
-• Free Acca picks
-• Paid picks with refund-on-loss escrow
-• Real settlement on BetRollover
+Real settlement on BetRollover. Free Sure 1X2 doubles + marketplace analysis.
 
-React 🔥 · Forward ↗️ · Invite a friend
-{site}/register?utm_source=telegram&utm_medium=social&utm_campaign=channel_growth`,
+👉 Channel: {channel}
+App: {site}?utm_source=telegram&utm_medium=social&utm_campaign=channel_growth
+
+${LEGAL_LINE}`,
 ] as const;
 
 /**
+ * Daily tipster recruit — register on the website; invite tipster friends to join.
+ * Earning comes from publishing paid picks (not from sharing the link).
+ */
+export const TELEGRAM_TIPSTER_RECRUIT_POST = `💼 Tipsters · Join BetRollover & earn
+
+Know someone who posts solid football tips? Or ready to tip yourself?
+
+On BetRollover tipsters:
+• Create a free account
+• Publish free picks to build a public record
+• Create paid picks when they meet the ROI / win-rate bar
+• Earn when those paid picks win (buyers protected by escrow)
+
+Register here:
+👉 {register}
+
+Share this link with tipster friends so they can register too — then they earn by creating paid picks on the marketplace (not by sharing the link).
+
+Buyers can use the same link to register and follow tipsters.
+Free tips stay on this channel: {channel}
+
+${LEGAL_LINE}`;
+
+/**
+ * Daily community appeal — exact subscriber ask (react meanings + share join link).
+ * Sent once/day; do not append engagement footer (message is complete).
+ */
+export const TELEGRAM_COMMUNITY_APPEAL_POST = `👋 Community · Quick ask from the BetRollover team
+
+These tips are completely free. We don’t charge for this channel — we only ask for one small thing.
+
+A quiet channel feels empty. When you react on a tip, it shows you’re here with us and keeps the community warm.
+
+Please react on the coupons using:
+
+🔥 — I’m on it
+👍 — solid pick
+❤️ — support the free tips
+👏 — well done / W
+
+And please share our Telegram with a friend who loves football tips:
+
+👉 Join here: {channel}
+
+It costs nothing, takes a second, and means a lot. Thank you for supporting free tips 🙏`;
+
+/**
  * Daily strategy / bankroll advice — education only.
- * Staying in profit = discipline, not chasing; never risk essentials (fees/rent/housekeeping).
- * BetRollover escrow ≠ bookmaker payout.
+ * Soft channel CTA; no react legend (community post owns that).
  */
 export const TELEGRAM_ADVICE_POSTS = [
-  `💡 Daily tip: staying in profit starts with bankroll rules
+  `💡 Advice · Staying in profit starts with bankroll rules
 
 • Only stake money you can afford to lose
 • Never use school fees, rent, or housekeeping money
@@ -64,13 +134,14 @@ export const TELEGRAM_ADVICE_POSTS = [
 • Track results — emotion fades, numbers don’t
 • When ahead at the bookie: withdraw some profit — don’t leave it all as “play balance”
 
-BetRollover: tipster ROI + escrow on paid picks (tip price refunded if it loses). Education, not a bookmaker.
+BetRollover: tipster ROI + escrow on paid picks (tip price refunded if it loses).
 
-🔥 React if this helps · ↗️ Forward to a friend
-{site}/learn?utm_source=telegram&utm_campaign=channel_advice
-18+`,
+Learn more: {site}/learn?utm_source=telegram&utm_campaign=channel_advice
+Channel: {channel}
 
-  `📊 Strategy: profit > “sure things”
+${LEGAL_LINE}`,
+
+  `💡 Advice · Profit > “sure things”
 
 Long-term edge comes from:
 • Selective picks (not every match)
@@ -80,11 +151,12 @@ Long-term edge comes from:
 
 Follow AccaSure & top tipsters on BetRollover — settle real results, don’t guess.
 
-❤️ React · Share with someone who overbets
 {site}?utm_source=telegram&utm_campaign=channel_advice
-18+ · Information only`,
+Channel: {channel}
 
-  `🛡️ Stay in profit mindset
+${LEGAL_LINE}`,
+
+  `💡 Advice · Stay-in-profit mindset
 
 1. Cap daily spend before kick-off
 2. Prefer fewer, higher-conviction picks
@@ -94,24 +166,26 @@ Follow AccaSure & top tipsters on BetRollover — settle real results, don’t g
 
 Discipline beats hot streaks.
 
-🔥 React · ↗️ Forward this channel
 {site}/responsible-gambling?utm_source=telegram&utm_campaign=channel_advice
-18+`,
+Channel: {channel}
 
-  `🎯 Bankroll tip of the day
+${LEGAL_LINE}`,
+
+  `💡 Advice · Bankroll tip of the day
 
 Chasing “one big Acca” to recover losses is how bankrolls die — and how rent money disappears.
 
 Better: small units, clear stop-loss for the day, review tomorrow.
 If it’s school fees, rent, or housekeeping — it is not stake money.
 
-Free Acca Desk + escrow-protected marketplace on BetRollover help you learn with structure.
+Free Acca Desk + escrow-protected marketplace help you learn with structure.
 
-✨ React if you’re building discipline · Invite a friend
 {site}/marketplace?utm_source=telegram&utm_campaign=channel_advice
-18+`,
+Channel: {channel}
 
-  `📈 How tipsters stay relevant (and you stay solvent)
+${LEGAL_LINE}`,
+
+  `💡 Advice · How tipsters stay relevant (and you stay solvent)
 
 • Win rate without ROI can still lose money
 • Sample size matters — ignore 2-pick “gods”
@@ -120,11 +194,12 @@ Free Acca Desk + escrow-protected marketplace on BetRollover help you learn with
 
 Stay patient. Stay selective. Stay in profit.
 
-🔥 React · ↗️ Share
 {site}/leaderboard?utm_source=telegram&utm_campaign=channel_advice
-18+`,
+Channel: {channel}
 
-  `💸 How to withdraw from the bookie & keep your profit
+${LEGAL_LINE}`,
+
+  `💡 Advice · Withdraw from the bookie & keep your profit
 
 Winning on SportyBet / Betway / etc. is only half — locking cash is the other half.
 
@@ -132,13 +207,14 @@ Winning on SportyBet / Betway / etc. is only half — locking cash is the other 
 2. Don’t leave full winnings as “available balance” to chase the next Acca
 3. Move withdrawn cash to life first — school fees, rent, housekeeping
 4. Only keep a small stake bankroll in the bookie app
-5. BetRollover tips are research — your bookie withdrawal is how you stay in profit in real life
+5. BetRollover tips are research — bookie withdrawal is how you stay in profit in real life
 
 Rule: bookie balance is not savings. Withdraw. Protect. Then tip selectively.
 
-🔥 React if you withdraw wins · ↗️ Forward to a friend
 {site}/responsible-gambling?utm_source=telegram&utm_campaign=channel_advice
-18+`,
+Channel: {channel}
+
+${LEGAL_LINE}`,
 ] as const;
 
 /**
@@ -147,6 +223,20 @@ Rule: bookie balance is not savings. Withdraw. Protect. Then tip selectively.
  */
 export const TELEGRAM_CHANNEL_SEO_DESCRIPTION =
   'Football tips & tipster marketplace | Free Acca Desk picks daily | Escrow refund if paid pick loses | Join BetRollover.com — 18+ education only';
+
+/** Public join URL for the tips channel (defaults to @betrollovertips). */
+export function telegramChannelJoinUrl(): string {
+  const fromAds = (process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE || '').trim().replace(/^@/, '');
+  if (fromAds) return `https://t.me/${fromAds}`;
+  const channelId = (process.env.TELEGRAM_CHANNEL_ID || '').trim();
+  if (channelId.startsWith('@')) return `https://t.me/${channelId.slice(1)}`;
+  return 'https://t.me/betrollovertips';
+}
+
+export function telegramRegisterUrl(siteOrigin: string): string {
+  const site = siteOrigin.replace(/\/$/, '') || 'https://betrollover.com';
+  return `${site}/register?utm_source=telegram&utm_medium=social&utm_campaign=channel_tipster_recruit`;
+}
 
 export function pickRotatingLine(lines: readonly string[], salt: number | string): string {
   if (!lines.length) return '';
@@ -160,22 +250,34 @@ function hashString(s: string): number {
   return h;
 }
 
+function applyTelegramCopyVars(template: string, siteOrigin: string): string {
+  const site = siteOrigin.replace(/\/$/, '') || 'https://betrollover.com';
+  return template
+    .replace(/\{site\}/g, site)
+    .replace(/\{channel\}/g, telegramChannelJoinUrl())
+    .replace(/\{register\}/g, telegramRegisterUrl(site));
+}
+
 export function appendEngagementFooter(body: string, salt: number | string): string {
-  const footer = pickRotatingLine(TELEGRAM_ENGAGEMENT_FOOTERS, salt);
+  const footer = applyTelegramCopyVars(pickRotatingLine(TELEGRAM_ENGAGEMENT_FOOTERS, salt), '');
   const trimmed = body.trimEnd();
   return `${trimmed}\n\n${footer}`;
 }
 
 export function formatGrowthPost(siteOrigin: string, salt: number | string): string {
-  const site = siteOrigin.replace(/\/$/, '') || 'https://betrollover.com';
-  const template = pickRotatingLine(TELEGRAM_GROWTH_POSTS, salt);
-  return template.replace(/\{site\}/g, site);
+  return applyTelegramCopyVars(pickRotatingLine(TELEGRAM_GROWTH_POSTS, salt), siteOrigin);
+}
+
+export function formatCommunityAppealPost(): string {
+  return applyTelegramCopyVars(TELEGRAM_COMMUNITY_APPEAL_POST, '');
+}
+
+export function formatTipsterRecruitPost(siteOrigin: string): string {
+  return applyTelegramCopyVars(TELEGRAM_TIPSTER_RECRUIT_POST, siteOrigin);
 }
 
 export function formatAdvicePost(siteOrigin: string, salt: number | string): string {
-  const site = siteOrigin.replace(/\/$/, '') || 'https://betrollover.com';
-  const template = pickRotatingLine(TELEGRAM_ADVICE_POSTS, salt);
-  return template.replace(/\{site\}/g, site);
+  return applyTelegramCopyVars(pickRotatingLine(TELEGRAM_ADVICE_POSTS, salt), siteOrigin);
 }
 
 export function telegramAlwaysAllowUsernames(): string[] {

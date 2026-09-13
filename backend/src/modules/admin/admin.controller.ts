@@ -1021,6 +1021,26 @@ export class AdminController {
     return { ok: true, ...this.telegramChannel.status() };
   }
 
+  @Post('telegram/community-appeal-now')
+  async telegramCommunityAppealNow(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const result = await this.telegramChannel.postCommunityAppealMessage();
+    if (!result.ok) {
+      throw new BadRequestException(result.error || 'Telegram community appeal failed');
+    }
+    return { ok: true, ...this.telegramChannel.status() };
+  }
+
+  @Post('telegram/tipster-recruit-now')
+  async telegramTipsterRecruitNow(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const result = await this.telegramChannel.postTipsterRecruitMessage();
+    if (!result.ok) {
+      throw new BadRequestException(result.error || 'Telegram tipster recruit failed');
+    }
+    return { ok: true, ...this.telegramChannel.status() };
+  }
+
   @Post('telegram/sync-seo')
   async telegramSyncSeo(@CurrentUser() user: User, @Body() body?: { description?: string }) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');

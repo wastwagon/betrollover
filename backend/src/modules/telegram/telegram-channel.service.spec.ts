@@ -3,7 +3,9 @@ import {
   TELEGRAM_ENGAGEMENT_FOOTERS,
   appendEngagementFooter,
   formatAdvicePost,
+  formatCommunityAppealPost,
   formatGrowthPost,
+  formatTipsterRecruitPost,
   pickRotatingLine,
   telegramAlwaysAllowUsernames,
 } from './telegram-copy';
@@ -13,20 +15,56 @@ import { ROLLOVER_OWNER_USERNAME } from '../../config/rollover-desk.config';
 import { ACCA_DESK_TIPSTER_TYPE } from '../../config/acca-desk-tipsters.config';
 
 describe('telegram-copy', () => {
-  it('appends engagement footer', () => {
+  it('appends short engagement footer with channel join link', () => {
+    process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE = 'betrollovertips';
     const out = appendEngagementFooter('Hello pick', 1);
     expect(out.startsWith('Hello pick')).toBe(true);
-    expect(TELEGRAM_ENGAGEMENT_FOOTERS.some((f) => out.includes(f))).toBe(true);
+    expect(out).toContain('https://t.me/betrollovertips');
+    expect(out).not.toContain('{channel}');
+    expect(out).not.toContain('I’m on it');
   });
 
-  it('formats growth post with site links', () => {
+  it('formats growth post as discover (channel + site), not tipster earn', () => {
+    process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE = 'betrollovertips';
     const text = formatGrowthPost('https://betrollover.com', 0);
+    expect(text).toContain('Discover');
     expect(text).toContain('https://betrollover.com');
-    expect(text.toLowerCase()).toMatch(/react|forward|share/);
+    expect(text).toContain('https://t.me/betrollovertips');
+    expect(text.toLowerCase()).not.toContain('70%');
+    expect(text).not.toContain('{channel}');
+  });
+
+  it('formats tipster recruit with register link; earn via paid picks not share', () => {
+    process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE = 'betrollovertips';
+    const text = formatTipsterRecruitPost('https://betrollover.com');
+    expect(text).toContain('Tipsters');
+    expect(text).toContain(
+      'https://betrollover.com/register?utm_source=telegram&utm_medium=social&utm_campaign=channel_tipster_recruit',
+    );
+    expect(text.toLowerCase()).toContain('earn');
+    expect(text.toLowerCase()).toContain('paid picks');
+    expect(text).toContain('not by sharing the link');
+    expect(text).toContain('tipster friends');
+    expect(text).not.toMatch(/70%/);
+    expect(text).not.toContain('{register}');
+  });
+
+  it('formats exact daily community appeal with join link', () => {
+    process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE = 'betrollovertips';
+    const text = formatCommunityAppealPost();
+    expect(text).toContain('Quick ask from the BetRollover team');
+    expect(text).toContain('🔥 — I’m on it');
+    expect(text).toContain('👍 — solid pick');
+    expect(text).toContain('❤️ — support the free tips');
+    expect(text).toContain('👏 — well done / W');
+    expect(text).toContain('👉 Join here: https://t.me/betrollovertips');
+    expect(text).not.toContain('{channel}');
+    expect(text).not.toContain('Complete message');
   });
 
   it('formats advice post about bankroll / profit discipline', () => {
     const text = formatAdvicePost('https://betrollover.com', 1);
+    expect(text).toContain('Advice');
     expect(text.toLowerCase()).toMatch(/bankroll|profit|discipline|stake/);
     expect(text).toContain('18+');
   });
@@ -40,12 +78,13 @@ describe('telegram-copy', () => {
     expect(joined.toLowerCase()).toMatch(/sportybet|bookie|bookmaker/);
   });
 
-  it('advice posts get engagement footer asking for reactions', async () => {
+  it('advice posts are complete without tip engagement footer', async () => {
     process.env.APP_URL = 'https://betrollover.com';
     process.env.TELEGRAM_BOT_TOKEN = 'test-token';
     process.env.TELEGRAM_CHANNEL_ID = '@betrollovertips';
     process.env.TELEGRAM_CHANNEL_POSTS_ENABLED = 'true';
     process.env.TELEGRAM_ADVICE_POSTS_ENABLED = 'true';
+    process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE = 'betrollovertips';
     const svc = new TelegramChannelService();
     const calls: unknown[] = [];
     global.fetch = jest.fn(async (_url, init) => {
@@ -54,7 +93,9 @@ describe('telegram-copy', () => {
     }) as typeof fetch;
     await svc.postAdviceMessage('test-advice');
     const body = calls[0] as { text: string };
-    expect(TELEGRAM_ENGAGEMENT_FOOTERS.some((f) => body.text.includes(f))).toBe(true);
+    expect(body.text).toContain('Advice');
+    expect(body.text).toContain('https://t.me/betrollovertips');
+    expect(body.text).not.toContain('I’m on it');
   });
 
   it('always allows AccaSure1X2', () => {
@@ -83,6 +124,9 @@ describe('TelegramChannelService engagement', () => {
     process.env.TELEGRAM_CHANNEL_ID = '@betrollovertips';
     process.env.TELEGRAM_CHANNEL_POSTS_ENABLED = 'true';
     process.env.TELEGRAM_GROWTH_POSTS_ENABLED = 'true';
+    process.env.TELEGRAM_COMMUNITY_APPEAL_ENABLED = 'true';
+    process.env.TELEGRAM_TIPSTER_RECRUIT_ENABLED = 'true';
+    process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE = 'betrollovertips';
   });
 
   afterAll(() => {
@@ -107,7 +151,7 @@ describe('TelegramChannelService engagement', () => {
 
     const body = calls[0] as { text: string };
     expect(body.text).toContain('Sure Mix · free');
-    expect(TELEGRAM_ENGAGEMENT_FOOTERS.some((f) => body.text.includes(f))).toBe(true);
+    expect(body.text).toContain('https://t.me/betrollovertips');
   });
 
   it('paid teaser has no booking code and has footer', async () => {
@@ -131,7 +175,7 @@ describe('TelegramChannelService engagement', () => {
     const body = calls[0] as { text: string };
     expect(body.text).toContain('Paid pick');
     expect(body.text).not.toContain('SECRET');
-    expect(TELEGRAM_ENGAGEMENT_FOOTERS.some((f) => body.text.includes(f))).toBe(true);
+    expect(body.text).toContain('https://t.me/betrollovertips');
   });
 
   it('posts growth message', async () => {
@@ -145,7 +189,42 @@ describe('TelegramChannelService engagement', () => {
     const r = await svc.postGrowthMessage('morning-test');
     expect(r.ok).toBe(true);
     const body = calls[0] as { text: string };
-    expect(body.text.toLowerCase()).toMatch(/react|forward/);
+    expect(body.text).toContain('Discover');
+    expect(body.text).toContain('https://t.me/betrollovertips');
+  });
+
+  it('posts exact community appeal once without extra footer chrome', async () => {
+    const svc = new TelegramChannelService();
+    const calls: unknown[] = [];
+    global.fetch = jest.fn(async (_url, init) => {
+      calls.push(JSON.parse(String(init?.body)));
+      return { ok: true, json: async () => ({ ok: true }) } as Response;
+    }) as typeof fetch;
+
+    const r = await svc.postCommunityAppealMessage();
+    expect(r.ok).toBe(true);
+    const body = calls[0] as { text: string };
+    expect(body.text).toContain('Quick ask from the BetRollover team');
+    expect(body.text).toContain('👉 Join here: https://t.me/betrollovertips');
+    expect(body.text).not.toContain('Complete message');
+    expect(body.text.endsWith('🙏')).toBe(true);
+  });
+
+  it('posts tipster recruit with register URL', async () => {
+    const svc = new TelegramChannelService();
+    const calls: unknown[] = [];
+    global.fetch = jest.fn(async (_url, init) => {
+      calls.push(JSON.parse(String(init?.body)));
+      return { ok: true, json: async () => ({ ok: true }) } as Response;
+    }) as typeof fetch;
+
+    const r = await svc.postTipsterRecruitMessage();
+    expect(r.ok).toBe(true);
+    const body = calls[0] as { text: string };
+    expect(body.text).toContain('/register?utm_source=telegram');
+    expect(body.text).toContain('tipster friends');
+    expect(body.text).toContain('paid picks');
+    expect(body.text).not.toMatch(/70%/);
   });
 });
 

@@ -4,8 +4,9 @@ import { isSchedulingEnabled } from '../email/scheduling-enabled';
 import { TelegramChannelService } from './telegram-channel.service';
 
 /**
- * Growth (2×/day) + daily bankroll/strategy advice (Africa/Accra).
- * Separate from pick alerts so tips stay clean.
+ * Scheduled channel posts (Africa/Accra) — one job each:
+ *  08:00 growth · 10:00 tipster recruit · 12:00 advice · 17:00 community · 19:00 growth
+ * Tip/win alerts are event-driven (not here).
  */
 @Injectable()
 export class TelegramGrowthScheduler {
@@ -13,7 +14,7 @@ export class TelegramGrowthScheduler {
 
   constructor(private readonly telegram: TelegramChannelService) {}
 
-  /** Morning growth — default 08:00 Africa/Accra */
+  /** Morning growth — discover free tips + join channel — default 08:00 */
   @Cron(process.env.TELEGRAM_GROWTH_CRON_MORNING || '0 8 * * *', {
     timeZone: process.env.PREDICTION_TIMEZONE || 'Africa/Accra',
   })
@@ -21,7 +22,15 @@ export class TelegramGrowthScheduler {
     await this.runGrowth('morning');
   }
 
-  /** Midday advice — bankroll / stay-in-profit strategies — default 12:00 Africa/Accra */
+  /** Tipster recruit — register + invite tipster friends (earn via paid picks) — default 10:00 */
+  @Cron(process.env.TELEGRAM_TIPSTER_RECRUIT_CRON || '0 10 * * *', {
+    timeZone: process.env.PREDICTION_TIMEZONE || 'Africa/Accra',
+  })
+  async morningTipsterRecruit(): Promise<void> {
+    await this.runTipsterRecruit();
+  }
+
+  /** Midday advice — bankroll / stay-in-profit — default 12:00 */
   @Cron(process.env.TELEGRAM_ADVICE_CRON || '0 12 * * *', {
     timeZone: process.env.PREDICTION_TIMEZONE || 'Africa/Accra',
   })
@@ -29,7 +38,15 @@ export class TelegramGrowthScheduler {
     await this.runAdvice('midday');
   }
 
-  /** Evening growth — default 19:00 Africa/Accra */
+  /** Community appeal — react meanings + share channel — default 17:00 */
+  @Cron(process.env.TELEGRAM_COMMUNITY_APPEAL_CRON || '0 17 * * *', {
+    timeZone: process.env.PREDICTION_TIMEZONE || 'Africa/Accra',
+  })
+  async dailyCommunityAppeal(): Promise<void> {
+    await this.runCommunityAppeal();
+  }
+
+  /** Evening growth — escrow trust + channel — default 19:00 */
   @Cron(process.env.TELEGRAM_GROWTH_CRON_EVENING || '0 19 * * *', {
     timeZone: process.env.PREDICTION_TIMEZONE || 'Africa/Accra',
   })
@@ -56,6 +73,36 @@ export class TelegramGrowthScheduler {
       this.logger.log(`Telegram advice post sent (${slot})`);
     } else if (result.error && result.error !== 'advice_disabled' && result.error !== 'disabled') {
       this.logger.warn(`Telegram advice post failed (${slot}): ${result.error}`);
+    }
+  }
+
+  private async runCommunityAppeal(): Promise<void> {
+    if (!isSchedulingEnabled()) return;
+    if (!this.telegram.isConfigured()) return;
+    const result = await this.telegram.postCommunityAppealMessage();
+    if (result.ok) {
+      this.logger.log('Telegram community appeal post sent');
+    } else if (
+      result.error &&
+      result.error !== 'community_appeal_disabled' &&
+      result.error !== 'disabled'
+    ) {
+      this.logger.warn(`Telegram community appeal failed: ${result.error}`);
+    }
+  }
+
+  private async runTipsterRecruit(): Promise<void> {
+    if (!isSchedulingEnabled()) return;
+    if (!this.telegram.isConfigured()) return;
+    const result = await this.telegram.postTipsterRecruitMessage();
+    if (result.ok) {
+      this.logger.log('Telegram tipster recruit post sent');
+    } else if (
+      result.error &&
+      result.error !== 'tipster_recruit_disabled' &&
+      result.error !== 'disabled'
+    ) {
+      this.logger.warn(`Telegram tipster recruit failed: ${result.error}`);
     }
   }
 }
