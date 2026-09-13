@@ -14,10 +14,10 @@ export class TelegramVipMembership {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
+  @Column({ type: 'int', unique: true })
   userId: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   subscriptionId: number | null = null;
 
   @Column({ type: 'bigint', nullable: true })
