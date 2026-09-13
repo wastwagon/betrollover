@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { ACCA_DESK_TIPSTER_TYPE } from '../../config/acca-desk-tipsters.config';
+import { VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
 import { ROLLOVER_OWNER_USERNAME } from '../../config/rollover-desk.config';
 import {
   telegramAlwaysAllowUsernames,
@@ -78,8 +79,8 @@ export class TelegramEligibilityService {
       return { ok: true, reason: username === ROLLOVER_OWNER_USERNAME ? 'acca_sure' : 'allowlist', username };
     }
 
-    // Other Acca Desk personas → no (AccaSure only for desk brand)
-    if (tipster.tipsterType === ACCA_DESK_TIPSTER_TYPE) {
+    // Other Acca Desk personas → no (AccaSure only for desk brand). House VIP posts to the private VIP chat.
+    if (tipster.tipsterType === ACCA_DESK_TIPSTER_TYPE || tipster.tipsterType === VIP_TIPSTER_TYPE) {
       return { ok: false, reason: 'acca_desk_other', username };
     }
 

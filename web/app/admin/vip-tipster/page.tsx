@@ -61,13 +61,24 @@ type RunResult = {
   errors: number;
 };
 
+type VipTelegramStatus = {
+  enabled: boolean;
+  configured: boolean;
+  chatId: string | null;
+  botUsername: string | null;
+  webhookUrl: string | null;
+  webhookSecretSet: boolean;
+};
+
 export default function AdminVipTipsterPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [overview, setOverview] = useState<Overview | null>(null);
+  const [telegram, setTelegram] = useState<VipTelegramStatus | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [settingUp, setSettingUp] = useState(false);
   const [running, setRunning] = useState(false);
+  const [telegramBusy, setTelegramBusy] = useState(false);
 
   const loadData = useCallback(async () => {
     const token = localStorage.getItem('token');
@@ -77,15 +88,24 @@ export default function AdminVipTipsterPage() {
     }
     setLoading(true);
     try {
-      const res = await fetch(`${getApiUrl()}/admin/vip-tipster/overview`, {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: 'no-store',
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok) {
+      const [overviewRes, telegramRes] = await Promise.all([
+        fetch(`${getApiUrl()}/admin/vip-tipster/overview`, {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store',
+        }),
+        fetch(`${getApiUrl()}/admin/telegram/vip/status`, {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store',
+        }),
+      ]);
+      const data = await overviewRes.json().catch(() => ({}));
+      if (overviewRes.ok) {
         setOverview(data as Overview);
       } else {
         setMessage({ type: 'error', text: getApiErrorMessage(data, 'Failed to load VIP overview') });
+      }
+      if (telegramRes.ok) {
+        setTelegram((await telegramRes.json()) as VipTelegramStatus);
       }
     } catch (e) {
       setMessage({ type: 'error', text: (e as Error).message || 'Failed to load VIP overview' });
@@ -265,6 +285,108 @@ export default function AdminVipTipsterPage() {
               <Link href="/admin/acca-desk" className={buttonClassName({ variant: 'secondary' })}>
                 Acca Desk
               </Link>
+            </div>
+
+            <div className="mb-8 rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 space-y-3">
+              <h2 className="text-lg font-semibold text-[var(--text)]">VIP Telegram bot</h2>
+              <p className="text-sm text-[var(--text-muted)]">
+                Same bot token as the public channel. Add it as admin of BETROLLOVER VIP (invite users, ban users, post messages).
+                Set <code className="font-mono text-xs">TELEGRAM_VIP_CHAT_ID</code>, <code className="font-mono text-xs">TELEGRAM_BOT_USERNAME</code>,
+                and <code className="font-mono text-xs">TELEGRAM_WEBHOOK_URL=https://api.betrollover.com/telegram/webhook</code>.
+              </p>
+              <p className="text-sm">
+                {telegram?.configured ? (
+                  <span className="text-emerald-700 dark:text-emerald-300">
+                    Configured · chat {telegram.chatId || '—'} · @{telegram.botUsername || 'unset'}
+                    {telegram.webhookSecretSet ? ' · webhook secret set' : ''}
+                  </span>
+                ) : (
+                  <span className="text-amber-700 dark:text-amber-300">Not configured — paying members will not get a Telegram invite yet.</span>
+                )}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={telegramBusy}
+                  className={buttonClassName({ variant: 'secondary' })}
+                  onClick={async () => {
+                    const token = localStorage.getItem('token');
+                    if (!token) return;
+                    setTelegramBusy(true);
+                    setMessage(null);
+                    try {
+                      const res = await fetch(`${getApiUrl()}/admin/telegram/vip/test`, {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                      });
+                      const data = await res.json().catch(() => ({}));
+                      setMessage(
+                        res.ok
+                          ? { type: 'success', text: 'Posted a test message to the VIP chat.' }
+                          : { type: 'error', text: getApiErrorMessage(data, 'VIP Telegram test failed') },
+                      );
+                    } finally {
+                      setTelegramBusy(false);
+                    }
+                  }}
+                >
+                  Test VIP post
+                </button>
+                <button
+                  type="button"
+                  disabled={telegramBusy}
+                  className={buttonClassName({ variant: 'secondary' })}
+                  onClick={async () => {
+                    const token = localStorage.getItem('token');
+                    if (!token) return;
+                    setTelegramBusy(true);
+                    setMessage(null);
+                    try {
+                      const res = await fetch(`${getApiUrl()}/admin/telegram/vip/setup-webhook`, {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${token}` },
+                      });
+                      const data = await res.json().catch(() => ({}));
+                      setMessage(
+                        res.ok
+                          ? { type: 'success', text: `Webhook set to ${data.url || 'Telegram'}.` }
+                          : { type: 'error', text: getApiErrorMessage(data, 'Webhook setup failed') },
+                      );
+                    } finally {
+                      setTelegramBusy(false);
+                    }
+                  }}
+                >
+                  Set VIP webhook
+                </button>
+                <button
+                  type="button"
+                  disabled={telegramBusy}
+                  className={buttonClassName({ variant: 'secondary' })}
+                  onClick={async () => {
+                    const token = localStorage.getItem('token');
+                    if (!token) return;
+                    setTelegramBusy(true);
+                    setMessage(null);
+                    try {
+                      const res = await fetch(`${getApiUrl()}/admin/telegram/vip/kick-expired`, {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${token}` },
+                      });
+                      const data = await res.json().catch(() => ({}));
+                      setMessage(
+                        res.ok
+                          ? { type: 'success', text: `Removed ${data.kicked ?? 0} expired member(s).` }
+                          : { type: 'error', text: getApiErrorMessage(data, 'Kick failed') },
+                      );
+                    } finally {
+                      setTelegramBusy(false);
+                    }
+                  }}
+                >
+                  Remove expired members
+                </button>
+              </div>
             </div>
 
             <p className="mb-4 text-sm text-[var(--text-muted)]">

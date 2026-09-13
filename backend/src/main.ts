@@ -106,6 +106,7 @@ async function bootstrap() {
     exclude: [
       { path: 'health', method: RequestMethod.ALL },
       { path: 'wallet/paystack-webhook', method: RequestMethod.POST },
+      { path: 'telegram/webhook', method: RequestMethod.POST },
       { path: 'docs', method: RequestMethod.ALL },
       { path: 'docs-json', method: RequestMethod.ALL },
       { path: 'avatars', method: RequestMethod.ALL },

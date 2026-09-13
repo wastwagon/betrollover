@@ -28,6 +28,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { EmailService } from '../email/email.service';
 import { TelegramChannelService } from '../telegram/telegram-channel.service';
 import { TelegramEligibilityService } from '../telegram/telegram-eligibility.service';
+import { TelegramVipService } from '../telegram/telegram-vip.service';
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { SportEvent } from '../sport-events/entities/sport-event.entity';
 import { FootballService } from '../football/football.service';
@@ -159,6 +160,7 @@ export class AccumulatorsService {
     private emailService: EmailService,
     private telegramChannelService: TelegramChannelService,
     private telegramEligibility: TelegramEligibilityService,
+    private telegramVip: TelegramVipService,
     private footballService: FootballService,
     private tipsterService: TipsterService,
     @Inject(forwardRef(() => UsersService))
@@ -526,7 +528,10 @@ export class AccumulatorsService {
       await this.subscriptionsService.addCouponToPackages(ticket.id, dto.subscriptionPackageIds!, userId);
       const creator = await this.usersRepo.findOne({ where: { id: userId }, select: ['displayName', 'username'] });
       const creatorName = creator?.displayName || creator?.username || 'Tipster';
-      const tipster = await this.tipsterRepo.findOne({ where: { userId }, select: ['id', 'displayName'] });
+      const tipster = await this.tipsterRepo.findOne({
+        where: { userId },
+        select: ['id', 'displayName'],
+      });
       if (tipster) {
         const subscriberUserIds = await this.subscriptionsService.getActiveSubscriberUserIdsForPackages(
           dto.subscriptionPackageIds!,
@@ -547,6 +552,22 @@ export class AccumulatorsService {
             })),
           },
         });
+      }
+      if (await this.telegramVip.isHouseVipUserId(userId)) {
+        this.telegramVip
+          .postVipCoupon({
+            couponId: ticket.id,
+            title: dto.title,
+            totalOdds: Number(ticket.totalOdds),
+            legs: dto.selections.map((s) => ({
+              matchDescription: s.matchDescription,
+              prediction: s.prediction,
+              odds: Number(s.odds),
+            })),
+            bookmakerKey: ticket.bookmakerKey,
+            bookingCode: ticket.bookingCode,
+          })
+          .catch(() => {});
       }
     }
 

@@ -102,6 +102,12 @@ export class User {
   @Column('timestamp', { nullable: true })
   ageVerifiedAt: Date | null = null;
 
+  @Column({ type: 'bigint', unique: true, nullable: true })
+  telegramUserId: string | null = null;
+
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  telegramUsername: string | null = null;
+
   @CreateDateColumn()
   createdAt: Date;
 

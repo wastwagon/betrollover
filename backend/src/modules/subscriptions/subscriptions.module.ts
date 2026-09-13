@@ -12,6 +12,7 @@ import { SubscriptionSettlementService } from './subscription-settlement.service
 import { UsersModule } from '../users/users.module';
 import { WalletModule } from '../wallet/wallet.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { TelegramModule } from '../telegram/telegram.module';
 import { TipsterModule } from '../tipster/tipster.module';
 import { PredictionsModule } from '../predictions/predictions.module';
 import { User } from '../users/entities/user.entity';
@@ -37,6 +38,7 @@ import { PickMarketplace } from '../accumulators/entities/pick-marketplace.entit
     ]),
     WalletModule,
     NotificationsModule,
+    TelegramModule,
   ],
   controllers: [SubscriptionsController],
   providers: [SubscriptionsService, SubscriptionSettlementService],

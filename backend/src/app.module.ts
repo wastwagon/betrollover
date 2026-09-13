@@ -40,6 +40,7 @@ import { SupportModule } from './modules/support/support.module';
 import { ReferralsModule } from './modules/referrals/referrals.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { AccaGeneratorModule } from './modules/acca-generator/acca-generator.module';
+import { TelegramModule } from './modules/telegram/telegram.module';
 
 @Module({
   imports: [
@@ -101,6 +102,7 @@ import { AccaGeneratorModule } from './modules/acca-generator/acca-generator.mod
     ReferralsModule,
     ChatModule,
     AccaGeneratorModule,
+    TelegramModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: HttpExceptionFilter },

@@ -98,6 +98,13 @@ export class SubscriptionsController {
     return this.subscriptionsService.getMySubscriptions(user.id);
   }
 
+  @Post('me/telegram-invite')
+  @UseGuards(JwtAuthGuard)
+  refreshTelegramInvite(@CurrentUser() user: User) {
+    this.assertSubscriptionsEnabled();
+    return this.subscriptionsService.refreshTelegramVipAccess(user.id);
+  }
+
   @Get('me/coupons')
   @UseGuards(JwtAuthGuard)
   getMySubscriptionCoupons(@CurrentUser() user: User) {

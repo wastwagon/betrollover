@@ -40,6 +40,7 @@ import { UsersService } from '../users/users.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { MarketingCampaignService } from '../email/marketing-campaign.service';
 import { TelegramChannelService } from '../telegram/telegram-channel.service';
+import { TelegramVipService } from '../telegram/telegram-vip.service';
 import { UpdateApiSportsKeyDto, TestApiSportsConnectionDto } from './dto/api-sports.dto';
 
 @Controller('admin')
@@ -80,6 +81,7 @@ export class AdminController {
     private readonly subscriptionsService: SubscriptionsService,
     private readonly marketingCampaigns: MarketingCampaignService,
     private readonly telegramChannel: TelegramChannelService,
+    private readonly telegramVip: TelegramVipService,
     private readonly dataSource: DataSource,
   ) { }
 
@@ -1026,7 +1028,35 @@ export class AdminController {
   @Get('telegram/status')
   async telegramStatus(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
-    return this.telegramChannel.status();
+    return { ...this.telegramChannel.status(), vip: this.telegramVip.status() };
+  }
+
+  @Get('telegram/vip/status')
+  async telegramVipStatus(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.telegramVip.status();
+  }
+
+  @Post('telegram/vip/test')
+  async telegramVipTest(@CurrentUser() user: User, @Body() body?: { text?: string }) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const result = await this.telegramVip.sendTestMessage(body?.text);
+    if (!result.ok) throw new BadRequestException(result.error || 'VIP Telegram send failed');
+    return { ok: true, ...this.telegramVip.status() };
+  }
+
+  @Post('telegram/vip/setup-webhook')
+  async telegramVipSetupWebhook(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const result = await this.telegramVip.setupWebhook();
+    if (!result.ok) throw new BadRequestException(result.error || 'Webhook setup failed');
+    return result;
+  }
+
+  @Post('telegram/vip/kick-expired')
+  async telegramVipKickExpired(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.telegramVip.kickExpired();
   }
 
   @Post('test-telegram')

@@ -29,6 +29,7 @@ import {
   isClassicAiHiddenFromPublic,
 } from '../../common/classic-ai-public-visibility.util';
 import { VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
+import { TelegramVipService } from '../telegram/telegram-vip.service';
 
 export interface CreatePackageDto {
   name: string;
@@ -70,6 +71,7 @@ export class SubscriptionsService {
     private readonly notificationsService: NotificationsService,
     @InjectRepository(ApiSettings)
     private readonly apiSettingsRepo: Repository<ApiSettings>,
+    private readonly telegramVip: TelegramVipService,
   ) {}
 
   async countSubscriptionCouponsInWindow(packageId: number, windowDays: number): Promise<number> {
@@ -419,6 +421,9 @@ export class SubscriptionsService {
       })
       .catch(() => {});
 
+    saved.package = pkg;
+    this.telegramVip.grantAccessForSubscription(userId, saved).catch(() => {});
+
     return {
       subscription: saved,
       package: pkg,
@@ -468,11 +473,24 @@ export class SubscriptionsService {
   }
 
   async getMySubscriptions(userId: number) {
-    return this.subscriptionRepo.find({
+    const rows = await this.subscriptionRepo.find({
       where: { userId },
       relations: ['package'],
       order: { createdAt: 'DESC' },
     });
+    const telegramVip = await this.telegramVip.accessForUser(userId);
+    const houseId = await this.telegramVip.houseVipTipsterUserId();
+    return rows.map((s) => ({
+      ...s,
+      telegramVip: houseId && s.package?.tipsterUserId === houseId ? telegramVip : null,
+    }));
+  }
+
+  async refreshTelegramVipAccess(userId: number) {
+    if (!(await this.telegramVip.hasActiveHouseVip(userId))) {
+      throw new ForbiddenException('Active VIP · Two-Fold subscription required.');
+    }
+    return this.telegramVip.refreshAccess(userId);
   }
 
   /** Active subscriber user IDs for one or more packages (excludes expired/cancelled). */

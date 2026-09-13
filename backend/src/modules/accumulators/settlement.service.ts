@@ -11,6 +11,7 @@ import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TelegramChannelService } from '../telegram/telegram-channel.service';
 import { TelegramEligibilityService } from '../telegram/telegram-eligibility.service';
+import { TelegramVipService } from '../telegram/telegram-vip.service';
 import { determinePickResult } from './settlement-logic';
 import { clampPlatformCommissionPercent, splitGrossForTipsterPayout } from '../../common/platform-commission';
 import { couponUserFacingRef } from '../../common/coupon-public-label';
@@ -61,6 +62,7 @@ export class SettlementService {
     private notificationsService: NotificationsService,
     private telegramChannelService: TelegramChannelService,
     private telegramEligibility: TelegramEligibilityService,
+    private telegramVip: TelegramVipService,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     @Inject(forwardRef(() => TipstersApiService))
@@ -556,6 +558,7 @@ export class SettlementService {
       picksByTicketId.set(p.accumulatorId, list);
     }
 
+    const houseVipUserId = await this.telegramVip.houseVipTipsterUserId();
     let ticketsSettled = 0;
     const statsSyncUserIds = new Set<number>();
     const wonMarketplacePosts: Array<{
@@ -590,6 +593,15 @@ export class SettlementService {
           totalOdds: ticket.totalOdds != null ? Number(ticket.totalOdds) : null,
           isFree: !(priceNum > 0),
         });
+      }
+      if (ticket.result === 'won' && houseVipUserId != null && ticket.userId === houseVipUserId) {
+        this.telegramVip
+          .postVipWin({
+            couponId: ticket.id,
+            title: ticket.title || 'Pick',
+            totalOdds: ticket.totalOdds != null ? Number(ticket.totalOdds) : null,
+          })
+          .catch(() => {});
       }
     }
 

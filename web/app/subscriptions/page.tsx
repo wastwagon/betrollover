@@ -22,6 +22,13 @@ interface Subscription {
   amountPaid: number;
   status: string;
   package?: { id: number; name: string; price: number; durationDays: number };
+  telegramVip?: {
+    configured: boolean;
+    joinUrl: string | null;
+    inviteUrl: string | null;
+    botUrl: string | null;
+    status: string | null;
+  } | null;
 }
 
 interface FeedPick {
@@ -194,6 +201,39 @@ function SubscriptionsContent() {
                     <p className="text-sm font-medium text-[var(--primary)] mt-2">
                       GHS {Number(s.amountPaid).toFixed(2)}/{s.package?.durationDays ?? 30}d
                     </p>
+                    {s.telegramVip?.configured && (
+                      <div className="mt-3 space-y-2">
+                        <p className="text-xs text-[var(--text-muted)]">{t('subscriptions.telegram_hint')}</p>
+                        {s.telegramVip.joinUrl && (
+                          <a
+                            href={s.telegramVip.joinUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={buttonClassName({ variant: 'secondary' }) + ' inline-flex'}
+                          >
+                            {s.telegramVip.botUrl ? t('subscriptions.telegram_open_bot') : t('subscriptions.telegram_join')}
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          className="block text-xs font-medium text-[var(--primary)] hover:underline"
+                          onClick={async () => {
+                            const token = localStorage.getItem('token');
+                            if (!token) return;
+                            const res = await fetch(`${getApiUrl()}/subscriptions/me/telegram-invite`, {
+                              method: 'POST',
+                              headers: { Authorization: `Bearer ${token}` },
+                            });
+                            const data = await res.json().catch(() => ({}));
+                            const url = data.joinUrl || data.botUrl || data.inviteUrl;
+                            if (url) window.open(url, '_blank', 'noopener,noreferrer');
+                            await loadSubscriptions();
+                          }}
+                        >
+                          {t('subscriptions.telegram_refresh')}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
