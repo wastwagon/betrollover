@@ -4,7 +4,7 @@ import { IconShield } from '@/components/ios/icons';
 type EscrowTrustCalloutProps = {
   title: string;
   body: string;
-  linkLabel: string;
+  linkLabel?: string;
   linkHref?: string;
   className?: string;
 };
@@ -25,14 +25,16 @@ export function EscrowTrustCallout({
         <div className="min-w-0 flex-1 space-y-1">
           <p className="text-xs font-bold text-[var(--primary)]">{title}</p>
           <p className="text-xs sm:text-sm text-[var(--text)] leading-relaxed">{body}</p>
-          <p className="pt-0.5">
-            <Link
-              href={linkHref}
-              className="text-xs font-semibold text-[var(--primary)] hover:underline underline-offset-2"
-            >
-              {linkLabel}
-            </Link>
-          </p>
+          {linkLabel ? (
+            <p className="pt-0.5">
+              <Link
+                href={linkHref}
+                className="text-xs font-semibold text-[var(--primary)] hover:underline underline-offset-2"
+              >
+                {linkLabel}
+              </Link>
+            </p>
+          ) : null}
         </div>
       </div>
     </aside>

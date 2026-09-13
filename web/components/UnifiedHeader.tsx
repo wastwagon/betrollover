@@ -15,7 +15,7 @@ import { usePendingWithdrawalCount } from '@/hooks/usePendingWithdrawalCount';
 import { MobileAccountSheet } from '@/components/ios/MobileAccountSheet';
 import { NotificationBellMenu } from '@/components/notifications/NotificationBellMenu';
 import { localizeHref, stripLocalePrefix } from '@/lib/locale-path';
-import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import { isHumanVipPackagesEnabled, isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import { useAccaGeneratorEnabled } from '@/hooks/useAccaGeneratorEnabled';
 import { buttonClassName } from '@/components/ui/Button';
 import { LocaleSwitchers, TopBar } from '@/components/TopBar';
@@ -499,7 +499,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       {accaEnabled ? (
                         <CompactNavLink href="/acca-generator" icon={<IconAcca />} label={t('nav.acca_generator')} onClick={closeAll} />
                       ) : null}
-                      {isSubscriptionsEnabled() ? (
+                      {isHumanVipPackagesEnabled() ? (
                         <CompactNavLink
                           href="/dashboard/subscription-packages"
                           icon={<IconPackage />}

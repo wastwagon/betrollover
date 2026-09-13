@@ -14,7 +14,6 @@ import { Subscription } from './entities/subscription.entity';
 import { SubscriptionEscrow } from './entities/subscription-escrow.entity';
 import { SubscriptionCouponAccess } from './entities/subscription-coupon-access.entity';
 import { RoiGuaranteeRefund } from './entities/roi-guarantee-refund.entity';
-import { PickMarketplace } from '../accumulators/entities/pick-marketplace.entity';
 import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { Tipster } from '../predictions/entities/tipster.entity';
@@ -29,7 +28,12 @@ import {
   isClassicAiHiddenFromPublic,
 } from '../../common/classic-ai-public-visibility.util';
 import { VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
+import { isHumanVipPackagesEnabled } from '../../common/subscriptions-enabled';
 import { TelegramVipService } from '../telegram/telegram-vip.service';
+import {
+  HUMAN_VIP_INCLUDED_SLIPS_PER_PERIOD,
+  vipPackageDeliveryMeta,
+} from './vip-package-channel';
 
 export interface CreatePackageDto {
   name: string;
@@ -44,8 +48,6 @@ export interface UpdatePackageDto {
   status?: 'active' | 'inactive';
 }
 
-/** Max subscription-placement coupons per package per rolling window (window = package duration days). */
-const MAX_SUBSCRIPTION_COUPONS_PER_WINDOW = 2;
 
 @Injectable()
 export class SubscriptionsService {
@@ -58,8 +60,6 @@ export class SubscriptionsService {
     private readonly escrowRepo: Repository<SubscriptionEscrow>,
     @InjectRepository(SubscriptionCouponAccess)
     private readonly couponAccessRepo: Repository<SubscriptionCouponAccess>,
-    @InjectRepository(PickMarketplace)
-    private readonly marketplaceRepo: Repository<PickMarketplace>,
     @InjectRepository(Tipster)
     private readonly tipsterRepo: Repository<Tipster>,
     @InjectRepository(User)
@@ -89,6 +89,14 @@ export class SubscriptionsService {
   /** Ensures tipster owns packages and has not exceeded rolling coupon cap per package. */
   async assertCanLinkCouponsToPackages(tipsterUserId: number, packageIds: number[]) {
     if (!packageIds?.length) return;
+    if (
+      !isHumanVipPackagesEnabled() &&
+      !(await this.telegramVip.isHouseVipUserId(tipsterUserId))
+    ) {
+      throw new ForbiddenException(
+        'Independent VIP packages are paused. Publish to the marketplace instead.',
+      );
+    }
     const tipster = await this.tipsterRepo.findOne({
       where: { userId: tipsterUserId },
       select: ['tipsterType'],
@@ -106,15 +114,23 @@ export class SubscriptionsService {
       // A createdAt rolling window would block today's catch-up after last night's early publish.
       if (isVipDesk) continue;
       const n = await this.countSubscriptionCouponsInWindow(pkgId, pkg.durationDays);
-      if (n >= MAX_SUBSCRIPTION_COUPONS_PER_WINDOW) {
+      if (n >= HUMAN_VIP_INCLUDED_SLIPS_PER_PERIOD) {
         throw new BadRequestException(
-          `You can add at most ${MAX_SUBSCRIPTION_COUPONS_PER_WINDOW} subscription picks per ${pkg.durationDays}-day period for "${pkg.name}". Try again when older picks fall outside the window.`,
+          `This VIP plan includes ${HUMAN_VIP_INCLUDED_SLIPS_PER_PERIOD} subscription picks per ${pkg.durationDays}-day period for "${pkg.name}". Try again when older picks fall outside the window.`,
         );
       }
     }
   }
 
   async createPackage(tipsterUserId: number, dto: CreatePackageDto) {
+    if (
+      !isHumanVipPackagesEnabled() &&
+      !(await this.telegramVip.isHouseVipUserId(tipsterUserId))
+    ) {
+      throw new ForbiddenException(
+        'Independent VIP packages are paused. Sell paid picks on the marketplace instead.',
+      );
+    }
     const user = await this.usersRepo.findOne({ where: { id: tipsterUserId }, select: ['id'] });
     if (!user) throw new NotFoundException('User not found');
     const ticketMap = await this.tipstersApi.getPublicTicketStatsForUsers([tipsterUserId]);
@@ -162,11 +178,32 @@ export class SubscriptionsService {
       name: dto.name,
       price: normalizedPrice,
       durationDays: dto.durationDays ?? 30,
-      roiGuaranteeMin: null,
       roiGuaranteeEnabled: false,
+      roiGuaranteeMin: null,
       status: 'active',
     });
-    return this.packageRepo.save(pkg);
+    const saved = await this.packageRepo.save(pkg);
+    const tipster = await this.tipsterRepo.findOne({
+      where: { userId: tipsterUserId },
+      select: ['tipsterType'],
+    });
+    return this.serializePackage(saved, tipster?.tipsterType);
+  }
+
+  private serializePackage(pkg: TipsterSubscriptionPackage, tipsterType?: string | null) {
+    return {
+      id: pkg.id,
+      name: pkg.name,
+      price: Number(pkg.price),
+      durationDays: pkg.durationDays,
+      status: pkg.status,
+      tipsterUserId: pkg.tipsterUserId,
+      roiGuaranteeMin: pkg.roiGuaranteeMin != null ? Number(pkg.roiGuaranteeMin) : null,
+      roiGuaranteeEnabled: !!pkg.roiGuaranteeEnabled,
+      createdAt: pkg.createdAt,
+      updatedAt: pkg.updatedAt,
+      ...vipPackageDeliveryMeta(tipsterType),
+    };
   }
 
   async getPackagesByTipsterUsername(username: string) {
@@ -176,10 +213,21 @@ export class SubscriptionsService {
   }
 
   async getPackagesByTipster(tipsterUserId: number) {
-    return this.packageRepo.find({
+    if (
+      !isHumanVipPackagesEnabled() &&
+      !(await this.telegramVip.isHouseVipUserId(tipsterUserId))
+    ) {
+      return [];
+    }
+    const tipster = await this.tipsterRepo.findOne({
+      where: { userId: tipsterUserId },
+      select: ['tipsterType'],
+    });
+    const pkgs = await this.packageRepo.find({
       where: { tipsterUserId, status: 'active' },
       order: { createdAt: 'DESC' },
     });
+    return pkgs.map((pkg) => this.serializePackage(pkg, tipster?.tipsterType));
   }
 
   /**
@@ -195,6 +243,9 @@ export class SubscriptionsService {
       .innerJoin(Tipster, 't', 't.userId = p.tipsterUserId')
       .where('p.status = :pkgStatus', { pkgStatus: 'active' })
       .andWhere('u.status = :userStatus', { userStatus: UserStatus.ACTIVE });
+    if (!isHumanVipPackagesEnabled()) {
+      baseQb.andWhere('t.tipsterType = :vipDesk', { vipDesk: VIP_TIPSTER_TYPE });
+    }
     if (isClassicAiHiddenFromPublic()) {
       baseQb.andWhere(classicAiPublicExcludeSql('t'), { classicAiTipsterType: CLASSIC_AI_TIPSTER_TYPE });
     }
@@ -253,6 +304,7 @@ export class SubscriptionsService {
           tipsterUserId: pkg.tipsterUserId,
           roiGuaranteeMin: pkg.roiGuaranteeMin != null ? Number(pkg.roiGuaranteeMin) : null,
           roiGuaranteeEnabled: pkg.roiGuaranteeEnabled,
+          ...vipPackageDeliveryMeta(t?.tipsterType),
         },
         tipster: t
           ? {
@@ -359,9 +411,30 @@ export class SubscriptionsService {
     return { updated: result.affected ?? 0 };
   }
 
+  async getPublicPackage(id: number) {
+    const pkg = await this.getPackage(id);
+    if (
+      !isHumanVipPackagesEnabled() &&
+      !(await this.telegramVip.isHouseVipUserId(pkg.tipsterUserId))
+    ) {
+      throw new NotFoundException('Package not found');
+    }
+    const tipster = await this.tipsterRepo.findOne({
+      where: { userId: pkg.tipsterUserId },
+      select: ['tipsterType'],
+    });
+    return this.serializePackage(pkg, tipster?.tipsterType);
+  }
+
   async subscribe(userId: number, packageId: number) {
     const pkg = await this.getPackage(packageId);
     if (pkg.status !== 'active') {
+      throw new BadRequestException('This subscription package is not available');
+    }
+    if (
+      !isHumanVipPackagesEnabled() &&
+      !(await this.telegramVip.isHouseVipUserId(pkg.tipsterUserId))
+    ) {
       throw new BadRequestException('This subscription package is not available');
     }
     if (pkg.tipsterUserId === userId) {
@@ -413,7 +486,7 @@ export class SubscriptionsService {
         userId,
         type: 'subscription',
         title: 'Subscription Active',
-        message: `You're now subscribed to ${pkg.name}. You can view the tipster's subscription picks in your dashboard.`,
+        message: `You're now subscribed to ${pkg.name}. Included VIP slips appear in My Subscriptions. Paid marketplace picks from this tipster are still sold separately.`,
         link: '/subscriptions',
         icon: 'star',
         sendEmail: true,
@@ -443,33 +516,12 @@ export class SubscriptionsService {
     if (activeSubs.length === 0) return [];
 
     const packageIds = activeSubs.map((s) => s.packageId);
-    const tipsterUserIds = [...new Set(activeSubs.map((s) => s.package.tipsterUserId))];
+    if (packageIds.length === 0) return [];
 
-    // 1) Explicit subscription-only coupons linked to subscribed packages.
-    const accessRows = packageIds.length
-      ? await this.couponAccessRepo.find({
-          where: { subscriptionPackageId: In(packageIds) },
-          relations: ['accumulator'],
-        })
-      : [];
-
-    // 2) Marketplace coupons from subscribed tipsters (AI/human), so subscribers
-    // can see paid marketplace posts from tipsters they actively subscribe to.
-    const marketplaceRows = tipsterUserIds.length
-      ? await this.marketplaceRepo.find({
-          where: { sellerId: In(tipsterUserIds), status: 'active' },
-          select: ['accumulatorId'],
-          order: { createdAt: 'DESC' },
-        })
-      : [];
-
-    const accumulatorIds = [
-      ...new Set([
-        ...accessRows.map((a) => a.accumulatorId),
-        ...marketplaceRows.map((m) => m.accumulatorId),
-      ]),
-    ];
-    return accumulatorIds;
+    const accessRows = await this.couponAccessRepo.find({
+      where: { subscriptionPackageId: In(packageIds) },
+    });
+    return [...new Set(accessRows.map((a) => a.accumulatorId))];
   }
 
   async getMySubscriptions(userId: number) {
@@ -480,8 +532,25 @@ export class SubscriptionsService {
     });
     const telegramVip = await this.telegramVip.accessForUser(userId);
     const houseId = await this.telegramVip.houseVipTipsterUserId();
+    const tipsterUserIds = [
+      ...new Set(rows.map((s) => s.package?.tipsterUserId).filter((id): id is number => Number.isFinite(id))),
+    ];
+    const tipsters = tipsterUserIds.length
+      ? await this.tipsterRepo.find({
+          where: { userId: In(tipsterUserIds) },
+          select: ['userId', 'tipsterType', 'username'],
+        })
+      : [];
+    const typeByUser = new Map(tipsters.map((t) => [t.userId as number, t.tipsterType]));
+    const usernameByUser = new Map(tipsters.map((t) => [t.userId as number, t.username]));
     return rows.map((s) => ({
       ...s,
+      package: s.package
+        ? {
+            ...this.serializePackage(s.package, typeByUser.get(s.package.tipsterUserId)),
+            tipsterUsername: usernameByUser.get(s.package.tipsterUserId) ?? null,
+          }
+        : s.package,
       telegramVip: houseId && s.package?.tipsterUserId === houseId ? telegramVip : null,
     }));
   }
@@ -522,6 +591,34 @@ export class SubscriptionsService {
       .andWhere('(s.endsAt IS NULL OR s.endsAt > :now)', { now })
       .getCount();
     return count > 0;
+  }
+
+  /** VIP plan unlocks only coupons linked to the subscribed package — not paid marketplace listings. */
+  async hasSubscriptionAccessToCoupon(userId: number, accumulatorId: number): Promise<boolean> {
+    const now = new Date();
+    const count = await this.couponAccessRepo
+      .createQueryBuilder('sca')
+      .innerJoin(
+        Subscription,
+        's',
+        's.packageId = sca.subscriptionPackageId',
+      )
+      .where('sca.accumulatorId = :accumulatorId', { accumulatorId })
+      .andWhere('s.userId = :userId', { userId })
+      .andWhere('s.status = :status', { status: 'active' })
+      .andWhere('(s.endsAt IS NULL OR s.endsAt > :now)', { now })
+      .getCount();
+    return count > 0;
+  }
+
+  async countPackageCouponsPostedBetween(packageId: number, from: Date, to: Date): Promise<number> {
+    return this.couponAccessRepo
+      .createQueryBuilder('sca')
+      .innerJoin(AccumulatorTicket, 'at', 'at.id = sca.accumulatorId')
+      .where('sca.subscriptionPackageId = :packageId', { packageId })
+      .andWhere('at.createdAt >= :from', { from })
+      .andWhere('at.createdAt <= :to', { to })
+      .getCount();
   }
 
   /** Add coupon to subscription packages (called when tipster creates coupon with subscription placement) */

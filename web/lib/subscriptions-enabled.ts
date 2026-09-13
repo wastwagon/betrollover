@@ -7,6 +7,9 @@
  * Set NEXT_PUBLIC_SUBSCRIPTIONS_ENABLED=true (or SUBSCRIPTIONS_ENABLED=true)
  * to turn VIP subscriptions back on.
  *
+ * Independent tipster VIP plans can be paused without hiding the house Two-Fold desk:
+ * NEXT_PUBLIC_HUMAN_VIP_PACKAGES_ENABLED=false (and HUMAN_VIP_PACKAGES_ENABLED=false on the API).
+ *
  * Default: false (hidden).
  */
 
@@ -25,4 +28,14 @@ export function isSubscriptionsEnabled(): boolean {
   const serverFlag = parseFlag(process.env.SUBSCRIPTIONS_ENABLED);
   if (serverFlag !== null) return serverFlag;
   return false;
+}
+
+/** Independent tipster VIP packages (not the house Two-Fold desk). Default on. */
+export function isHumanVipPackagesEnabled(): boolean {
+  if (!isSubscriptionsEnabled()) return false;
+  const publicFlag = parseFlag(process.env.NEXT_PUBLIC_HUMAN_VIP_PACKAGES_ENABLED);
+  if (publicFlag !== null) return publicFlag;
+  const serverFlag = parseFlag(process.env.HUMAN_VIP_PACKAGES_ENABLED);
+  if (serverFlag !== null) return serverFlag;
+  return true;
 }

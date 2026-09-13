@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input, Field, fieldControlClassName } from '@/components/ui/Input';
 import { SellerPayoutSplitCallout } from '@/components/SellerPayoutSplitCallout';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import { isHumanVipPackagesEnabled, isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import type { SellingThresholds } from '@/lib/selling-thresholds';
 import { useT } from '@/context/LanguageContext';
 
@@ -113,7 +113,7 @@ export function CreatePickPublishFields({
         autoComplete="off"
         hint={t('create_pick.booking_code_hint_short')}
       />
-      {sellTh && (placement === 'marketplace' || (placement === 'subscription' && price > 0)) && (
+      {sellTh && placement === 'marketplace' && Number(price) > 0 && (
         <div className={`border border-[var(--accent)]/25 bg-[var(--accent-light)] space-y-1.5 ${rulesPad}`}>
           <p className={`${dense ? 'text-[11px]' : 'text-xs'} font-semibold text-[var(--text)]`}>
             {t('create_pick.paid_marketplace_rules_title')}
@@ -139,27 +139,31 @@ export function CreatePickPublishFields({
           )}
         </div>
       )}
-      <Input
-        id={`${idPrefix}-price`}
-        label={`${t('create_pick.price_label')} ${t('create_pick.price_note')}`}
-        type="number"
-        min={0}
-        value={price || ''}
-        onChange={(e) => {
-          onPrice(Number(e.target.value) || 0);
-          onClearError();
-        }}
-        placeholder="0"
-      />
-      {Number(price) > 0 && sellTh && myTipStats && !paidSaleAllowed && (
+      {placement === 'marketplace' && (
+        <Input
+          id={`${idPrefix}-price`}
+          label={`${t('create_pick.price_label')} ${t('create_pick.price_note')}`}
+          type="number"
+          min={0}
+          value={price || ''}
+          onChange={(e) => {
+            onPrice(Number(e.target.value) || 0);
+            onClearError();
+          }}
+          placeholder="0"
+        />
+      )}
+      {placement === 'marketplace' && Number(price) > 0 && sellTh && myTipStats && !paidSaleAllowed && (
         <p className={`${dense ? 'text-[11px]' : 'text-xs'} text-[var(--accent)] leading-snug`}>
           {t('create_pick.paid_price_blocked_hint')}
         </p>
       )}
-      <SellerPayoutSplitCallout priceGhs={Number(price) || 0} compact={dense} className="mt-2" />
-      {isSubscriptionsEnabled() ? (
+      {placement === 'marketplace' && (
+        <SellerPayoutSplitCallout priceGhs={Number(price) || 0} compact={dense} className="mt-2" />
+      )}
+      {isSubscriptionsEnabled() && (isHumanVipPackagesEnabled() || myPackages.length > 0) ? (
         <div>
-          <Field label="Placement" htmlFor={`${idPrefix}-placement`}>
+          <Field label={t('create_pick.placement_label')} htmlFor={`${idPrefix}-placement`}>
             <select
               id={`${idPrefix}-placement`}
               value={placement}
@@ -168,17 +172,18 @@ export function CreatePickPublishFields({
                 onPlacement(v);
                 onClearError();
                 if (v === 'marketplace') onPackages([]);
+                if (v === 'subscription') onPrice(0);
               }}
               className={fieldControlClassName()}
             >
-              <option value="marketplace">Marketplace only</option>
-              <option value="subscription">VIP / subscription only</option>
+              <option value="marketplace">{t('create_pick.placement_marketplace')}</option>
+              <option value="subscription">{t('create_pick.placement_subscription')}</option>
             </select>
           </Field>
           {placement === 'subscription' && myPackages.length > 0 && (
             <div className="mt-2 space-y-1">
               <span className={`${dense ? 'text-xs' : 'text-sm'} text-[var(--text-muted)]`}>
-                {dense ? 'Add to packages:' : 'Add to package:'}
+                {t('create_pick.add_to_packages')}
               </span>
               {myPackages.map((p) => (
                 <label
@@ -200,20 +205,16 @@ export function CreatePickPublishFields({
               ))}
             </div>
           )}
-          {placement === 'subscription' && myPackages.length === 0 && (
+          {placement === 'subscription' && myPackages.length === 0 && isHumanVipPackagesEnabled() && (
             <p className={`${dense ? 'text-xs mt-1' : 'text-sm'} text-[var(--text-muted)]`}>
               <Link href="/dashboard/subscription-packages" className="text-[var(--primary)] hover:underline">
-                {dense ? 'Create subscription packages' : 'Create a VIP package'}
-              </Link>{' '}
-              first.
+                {t('create_pick.create_vip_package_first')}
+              </Link>
             </p>
           )}
-          {sellTh && placement === 'subscription' && price === 0 && (
+          {placement === 'subscription' && (
             <p className={`${dense ? 'text-[10px] mt-2' : 'text-xs'} text-[var(--text-muted)] leading-snug`}>
-              {t('create_pick.vip_same_bar', {
-                minRoi: String(sellTh.minimumROI),
-                minWr: String(sellTh.minimumWinRate),
-              })}
+              {t('create_pick.vip_included_hint')}
             </p>
           )}
         </div>

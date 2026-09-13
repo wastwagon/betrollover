@@ -26,11 +26,13 @@ import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 import { useCurrency } from '@/context/CurrencyContext';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import { isVipDeskTipsterType } from '@/lib/tipster-kind';
 import { TIPSTER_ACTIVE_WITHIN_DAYS, TIPSTER_FORM_POST_CAP } from '@betrollover/shared-types';
 import { FollowPushNudge } from '@/components/FollowPushNudge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { SegmentedControl } from '@/components/ios/SegmentedControl';
+import { VipPackageCadenceNote, VipPackageChannelBadge } from '@/components/VipPackageChannelBadge';
 
 interface Pick {
   id?: number;
@@ -90,6 +92,8 @@ interface SubscriptionPackage {
   name: string;
   price: number;
   durationDays: number;
+  channel?: 'house' | 'tipster';
+  includedSlipsPerPeriod?: number | null;
 }
 
 type TipsterPerformancePeriod = 'all' | 'week' | 'month' | 'd60' | 'd90';
@@ -139,6 +143,8 @@ interface TipsterProfile {
     avg_odds?: number;
   };
   marketplace_coupons: MarketplaceCoupon[];
+  /** True when live VIP slips exist but this viewer is not a subscriber. */
+  live_vip_locked?: boolean;
   archived_coupons?: MarketplaceCoupon[];
   /** Total settled count (won/lost/void) for Archive tab label. Backend may cap list at 50. */
   archived_settled_count?: number;
@@ -178,6 +184,23 @@ export default function TipsterProfilePage() {
   const [dateFromDraft, setDateFromDraft] = useState('');
   const [dateToDraft, setDateToDraft] = useState('');
   const { showError, showSuccess, clearError, clearSuccess, error: toastError, success: toastSuccess } = useToast();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (new URLSearchParams(window.location.search).get('tab') === 'archive') {
+      setCouponFilter('archive');
+    }
+  }, []);
+
+  const setCouponTab = useCallback((next: 'active' | 'archive') => {
+    setCouponFilter(next);
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (next === 'archive') url.searchParams.set('tab', 'archive');
+    else url.searchParams.delete('tab');
+    const qs = url.searchParams.toString();
+    window.history.replaceState(null, '', `${url.pathname}${qs ? `?${qs}` : ''}${url.hash}`);
+  }, []);
 
   const refetchProfile = useCallback(() => {
     const token = localStorage.getItem('token');
@@ -736,79 +759,26 @@ export default function TipsterProfilePage() {
                 reviews={reviewItems}
                 ratingHistogram={ratingHistogram}
               />
-              {/* Platform fee transparency note */}
-              <p className="text-[10px] text-[var(--text-tertiary)] mt-2">
-                {t('tipster.commission_note_full')}{' '}
-                <Link href="/resources" className="underline hover:text-[var(--primary)]">{t('tipster.learn_more')}</Link>
-              </p>
+              {isVipDeskTipsterType(tipster.tipster_type) ? null : (
+                <p className="text-[10px] text-[var(--text-tertiary)] mt-2">
+                  {t('tipster.commission_note_full')}{' '}
+                  <Link href="/resources" className="underline hover:text-[var(--primary)]">{t('tipster.learn_more')}</Link>
+                </p>
+              )}
             </div>
           </div>
         </div>
 
-        <EscrowTrustCallout
-          className="section-ux-gutter mb-8"
-          title={t('tipster.trust_callout_title')}
-          body={t('tipster.trust_callout_body')}
-          linkLabel={t('home.how_it_works')}
-        />
-
-        {isSubscriptionsEnabled() && subscriptionPackages.length > 0 && (
-          <section className="section-ux-gutter mb-10">
-            <h2 className="text-lg font-semibold text-[var(--text)] mb-4">{t('tipster.subscription_packages')}</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {subscriptionPackages.map((pkg) => {
-                const isSubscribed = subscribedPackageIds.has(pkg.id);
-                const needsTopUp = isAuthed && pkg.price > 0 && walletBalance !== null && walletBalance < pkg.price;
-                return (
-                  <div
-                    key={pkg.id}
-                    className="rounded-[var(--radius)] p-5 border border-[var(--separator)] bg-[var(--card)]"
-                  >
-                    <h3 className="font-semibold text-[var(--text)] mb-1">{pkg.name}</h3>
-                    <p className="text-lg font-semibold text-[var(--primary)] mb-2">
-                      {format(Number(pkg.price), { showOriginal: true }).primary}
-                      <span className="text-sm font-normal text-[var(--text-muted)]">/{pkg.durationDays}d</span>
-                      {format(Number(pkg.price), { showOriginal: true }).original ? (
-                        <span className="block text-xs font-normal text-[var(--text-muted)] mt-0.5">
-                          {format(Number(pkg.price), { showOriginal: true }).original}
-                        </span>
-                      ) : null}
-                    </p>
-                    <p className="text-xs text-[var(--text-muted)] mb-3 leading-snug">
-                      {t('subscriptions.period_end_split')}
-                    </p>
-                    {isSubscribed ? (
-                      <span className="inline-flex px-3 py-1.5 rounded-[var(--radius)] bg-[var(--primary-light)] text-[var(--primary)] text-sm font-medium">{t('tipster.subscribed')}</span>
-                    ) : (
-                      <>
-                        <Button
-                          type="button"
-                          onClick={() => handleSubscribe(pkg.id)}
-                          disabled={subscribeLoading === pkg.id}
-                          fullWidth
-                        >
-                          {subscribeLoading === pkg.id ? '...' : t('tipster.subscribe')}
-                        </Button>
-                        {needsTopUp && (
-                          <p className="mt-2 text-xs text-[var(--text-muted)]">
-                            {t('tipster.insufficient_balance')}
-                          </p>
-                        )}
-                        {!isAuthed && (
-                          <p className="mt-2 text-xs text-[var(--text-muted)]">
-                            Log in to continue subscription checkout.
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </section>
+        {isVipDeskTipsterType(tipster.tipster_type) ? null : (
+          <EscrowTrustCallout
+            className="section-ux-gutter mb-8"
+            title={t('tipster.trust_callout_title')}
+            body={t('tipster.trust_callout_body')}
+            linkLabel={t('home.how_it_works')}
+          />
         )}
 
-        <section className="section-ux-gutter mb-12">
+        <section id="tipster-picks" className="section-ux-gutter mb-12">
           {/* Active / Archive tabs */}
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center mb-3">
             <SegmentedControl
@@ -819,11 +789,13 @@ export default function TipsterProfilePage() {
                 { value: 'archive' as const, label: t('tipster.archive') },
               ]}
               value={couponFilter}
-              onChange={setCouponFilter}
+              onChange={setCouponTab}
             />
             <span className="text-sm text-[var(--text-muted)]">
               {couponFilter === 'active'
-                ? t('tipster.available', { n: String(filteredActive.length) })
+                ? isVipDeskTipsterType(tipster.tipster_type) && profile?.live_vip_locked
+                  ? t('tipster.live_vip_subscribers_only_count')
+                  : t('tipster.available', { n: String(filteredActive.length) })
                 : t('tipster.settled', { n: String(profile?.archived_settled_count ?? filteredArchive.length) })}
             </span>
           </div>
@@ -866,11 +838,20 @@ export default function TipsterProfilePage() {
           {couponFilter === 'active' && (
             <>
               {!filteredActive.length ? (
-                <p className="text-[var(--text-muted)]">
-                  {sportFilter !== 'all'
-                    ? t('tipster.no_active_picks_sport', { sport: SPORT_META[sportFilter]?.label ?? sportFilter })
-                    : t('tipster.no_active_predictions')}
-                </p>
+                <div className="space-y-2">
+                  <p className="text-[var(--text-muted)]">
+                    {sportFilter !== 'all'
+                      ? t('tipster.no_active_picks_sport', { sport: SPORT_META[sportFilter]?.label ?? sportFilter })
+                      : profile?.live_vip_locked
+                        ? t('tipster.live_vip_subscribers_only')
+                        : t('tipster.no_active_predictions')}
+                  </p>
+                  {profile?.live_vip_locked ? (
+                    <a href="#subscription-packages" className="inline-block text-sm font-medium text-[var(--primary)] hover:underline">
+                      {t('tipster.join_vip')}
+                    </a>
+                  ) : null}
+                </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
                   {filteredActive.map((a) => {
@@ -889,9 +870,9 @@ export default function TipsterProfilePage() {
                         purchaseCount={a.purchaseCount}
                         picks={a.picks || []}
                         tipster={a.tipster}
-                        picksRevealed={viewerIsAdmin}
-                        isPurchased={isPurchased}
-                        canPurchase={canPurchase}
+                        picksRevealed={viewerIsAdmin || isVipDeskTipsterType(tipster.tipster_type)}
+                        isPurchased={isPurchased || isVipDeskTipsterType(tipster.tipster_type)}
+                        canPurchase={canPurchase && !isVipDeskTipsterType(tipster.tipster_type)}
                         walletBalance={walletBalance}
                         onPurchase={() => purchase(a.id)}
                         purchasing={purchasing === a.id}
@@ -959,6 +940,78 @@ export default function TipsterProfilePage() {
             </>
           )}
         </section>
+
+        {isSubscriptionsEnabled() && subscriptionPackages.length > 0 && (
+          <section id="subscription-packages" className="section-ux-gutter mb-10">
+            <h2 className="text-lg font-semibold text-[var(--text)] mb-4">{t('tipster.subscription_packages')}</h2>
+            <EscrowTrustCallout
+              className="mb-4"
+              title={t('subscriptions.trust_callout_title')}
+              body={t('subscriptions.trust_callout_body')}
+              linkLabel={t('subscriptions.marketplace_link_escrow')}
+              linkHref="/guides/escrow-refunds"
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {subscriptionPackages.map((pkg) => {
+                const isSubscribed = subscribedPackageIds.has(pkg.id);
+                const needsTopUp = isAuthed && pkg.price > 0 && walletBalance !== null && walletBalance < pkg.price;
+                return (
+                  <div
+                    key={pkg.id}
+                    className="rounded-[var(--radius)] p-5 border border-[var(--separator)] bg-[var(--card)]"
+                  >
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <h3 className="font-semibold text-[var(--text)]">{pkg.name}</h3>
+                      <VipPackageChannelBadge channel={pkg.channel} />
+                    </div>
+                    <p className="text-lg font-semibold text-[var(--primary)] mb-2">
+                      {format(Number(pkg.price), { showOriginal: true }).primary}
+                      <span className="text-sm font-normal text-[var(--text-muted)]">/{pkg.durationDays}d</span>
+                      {format(Number(pkg.price), { showOriginal: true }).original ? (
+                        <span className="block text-xs font-normal text-[var(--text-muted)] mt-0.5">
+                          {format(Number(pkg.price), { showOriginal: true }).original}
+                        </span>
+                      ) : null}
+                    </p>
+                    <VipPackageCadenceNote
+                      className="text-xs text-[var(--text-muted)] mb-2 leading-snug"
+                      channel={pkg.channel}
+                      includedSlipsPerPeriod={pkg.includedSlipsPerPeriod}
+                      durationDays={pkg.durationDays}
+                    />
+                    <p className="text-xs text-[var(--text-muted)] mb-3 leading-snug">
+                      {t('subscriptions.period_end_split')}
+                    </p>
+                    {isSubscribed ? (
+                      <span className="inline-flex px-3 py-1.5 rounded-[var(--radius)] bg-[var(--primary-light)] text-[var(--primary)] text-sm font-medium">{t('tipster.subscribed')}</span>
+                    ) : (
+                      <>
+                        <Button
+                          type="button"
+                          onClick={() => handleSubscribe(pkg.id)}
+                          disabled={subscribeLoading === pkg.id}
+                          fullWidth
+                        >
+                          {subscribeLoading === pkg.id ? '...' : t('tipster.subscribe')}
+                        </Button>
+                        {needsTopUp && (
+                          <p className="mt-2 text-xs text-[var(--text-muted)]">
+                            {t('tipster.insufficient_balance')}
+                          </p>
+                        )}
+                        {!isAuthed && (
+                          <p className="mt-2 text-xs text-[var(--text-muted)]">
+                            Log in to continue subscription checkout.
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
         </div>
         </PullToRefresh>
       </main>

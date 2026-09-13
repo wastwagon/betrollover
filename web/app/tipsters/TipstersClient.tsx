@@ -20,7 +20,7 @@ import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
 import { IconPackage, IconTarget, IconTrophy } from '@/components/ios/icons';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { filterDiscoverySports, isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
-import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import { isHumanVipPackagesEnabled } from '@/lib/subscriptions-enabled';
 import { buttonClassName } from '@/components/ui/Button';
 import { Input, fieldControlClassName } from '@/components/ui/Input';
 
@@ -216,7 +216,7 @@ export default function TipstersPage({
           >
             <IconTarget className="w-4 h-4 shrink-0" aria-hidden /> {t('nav.create_pick')}
           </Link>
-          {isSignedIn && isSubscriptionsEnabled() && (
+          {isSignedIn && isHumanVipPackagesEnabled() && (
             <Link
               href="/dashboard/subscription-packages"
               className={buttonClassName({ variant: 'secondary', size: 'sm', className: 'w-full sm:w-auto' })}

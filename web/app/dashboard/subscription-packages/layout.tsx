@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation';
-import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import { isHumanVipPackagesEnabled, isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
-/** Tipster VIP package manager — hidden while subscriptions are disabled. */
+/** Tipster VIP package manager — hidden while subscriptions or human VIP plans are disabled. */
 export default function SubscriptionPackagesLayout({ children }: { children: React.ReactNode }) {
-  if (!isSubscriptionsEnabled()) {
-    redirect('/dashboard');
+  if (!isSubscriptionsEnabled() || !isHumanVipPackagesEnabled()) {
+    redirect(isSubscriptionsEnabled() ? '/subscriptions/marketplace' : '/dashboard');
   }
   return children;
 }

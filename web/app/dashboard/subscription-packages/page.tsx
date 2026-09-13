@@ -21,6 +21,7 @@ interface SubscriptionPackage {
   price: number;
   durationDays: number;
   status: string;
+  includedSlipsPerPeriod?: number | null;
 }
 
 export default function SubscriptionPackagesPage() {
@@ -119,13 +120,16 @@ export default function SubscriptionPackagesPage() {
         <PageHeader
           label="Subscription Packages"
           title="VIP subscription package"
-          tagline="One active VIP channel per tipster. Subscribers pay from wallet; funds follow your escrow rules."
+          tagline={t('subscriptions.seller_package_tagline')}
         />
         <p className="text-sm text-[var(--text-muted)] mb-4 max-w-xl border border-amber-200/80 bg-amber-50/50 dark:bg-amber-950/20 rounded-xl px-4 py-3 leading-relaxed">
           {t('subscriptions.vip_create_eligibility', {
             minRoi: String(thresholds.minimumROI),
             minWr: String(thresholds.minimumWinRate),
           })}
+        </p>
+        <p className="text-sm text-[var(--text-muted)] mb-4 max-w-xl leading-relaxed">
+          {t('subscriptions.seller_package_rules')}
         </p>
         <p className="text-sm text-[var(--text-muted)] mb-4 max-w-xl">
           {t('subscriptions.period_end_split')}
@@ -198,6 +202,12 @@ export default function SubscriptionPackagesPage() {
                 >
                   <h4 className="font-semibold text-[var(--text)]">{pkg.name}</h4>
                   <p className="text-lg font-bold text-[var(--primary)]">GHS {Number(pkg.price).toFixed(2)}/{pkg.durationDays}d</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">
+                    {t('subscriptions.cadence_tipster', {
+                      n: String(pkg.includedSlipsPerPeriod ?? 2),
+                      days: String(pkg.durationDays),
+                    })}
+                  </p>
                   <p className="text-xs text-[var(--text-muted)] mt-1">{t('subscriptions.period_end_split')}</p>
                 </div>
               ))}

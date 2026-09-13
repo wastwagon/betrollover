@@ -13,6 +13,7 @@ import { getApiUrl } from '@/lib/site-config';
 import { useLanguage, useT } from '@/context/LanguageContext';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { buttonClassName } from '@/components/ui/Button';
+import { VipPackageCadenceNote, VipPackageChannelBadge } from '@/components/VipPackageChannelBadge';
 
 interface Subscription {
   id: number;
@@ -21,7 +22,15 @@ interface Subscription {
   endsAt: string;
   amountPaid: number;
   status: string;
-  package?: { id: number; name: string; price: number; durationDays: number };
+  package?: {
+    id: number;
+    name: string;
+    price: number;
+    durationDays: number;
+    channel?: 'house' | 'tipster';
+    includedSlipsPerPeriod?: number | null;
+    tipsterUsername?: string | null;
+  };
   telegramVip?: {
     configured: boolean;
     joinUrl: string | null;
@@ -74,6 +83,8 @@ function SubscriptionsContent() {
   const loadSubscriptions = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!token) {
+      setSubsLoading(false);
+      setFeedLoading(false);
       router.replace('/subscriptions/marketplace');
       return;
     }
@@ -149,13 +160,13 @@ function SubscriptionsContent() {
         )}
 
         {activeSubs.length === 0 ? (
-          <div className="rounded-[var(--radius)] p-8 text-center border border-[var(--separator)] bg-[var(--card)] min-w-0 max-w-full">
+          <div className="w-full min-w-0 max-w-lg rounded-2xl p-6 sm:p-8 text-center border border-[var(--separator)] bg-[var(--card)] shadow-sm">
             <p className="font-display text-[var(--text)] font-semibold mb-2">{t('subscriptions.page_empty_title')}</p>
             <p className="text-sm text-[var(--text-muted)] mb-3">{t('subscriptions.page_empty_sub')}</p>
-            <p className="text-sm text-[var(--text-muted)] mb-6 max-w-[28rem] mx-auto leading-relaxed">
+            <p className="text-sm text-[var(--text-muted)] mb-6 leading-relaxed">
               {t('subscriptions.page_empty_hint')}
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center min-w-0 max-w-full">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center min-w-0">
               <Link
                 href="/subscriptions/marketplace"
                 className={buttonClassName()}
@@ -190,9 +201,12 @@ function SubscriptionsContent() {
                     key={s.id}
                     className="rounded-xl p-4 border border-[var(--border)] bg-[var(--card)] min-w-0"
                   >
-                    <h3 className="font-semibold text-[var(--text)] break-words">
-                      {s.package?.name ?? t('subscriptions.package_fallback')}
-                    </h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-[var(--text)] break-words">
+                        {s.package?.name ?? t('subscriptions.package_fallback')}
+                      </h3>
+                      <VipPackageChannelBadge channel={s.package?.channel} />
+                    </div>
                     <p className="text-sm text-[var(--text-muted)] mt-1">
                       {t('subscriptions.ends_on', {
                         date: new Date(s.endsAt).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-GB'),
@@ -201,6 +215,20 @@ function SubscriptionsContent() {
                     <p className="text-sm font-medium text-[var(--primary)] mt-2">
                       GHS {Number(s.amountPaid).toFixed(2)}/{s.package?.durationDays ?? 30}d
                     </p>
+                    <VipPackageCadenceNote
+                      className="text-xs text-[var(--text-muted)] mt-2 leading-snug"
+                      channel={s.package?.channel}
+                      includedSlipsPerPeriod={s.package?.includedSlipsPerPeriod}
+                      durationDays={s.package?.durationDays}
+                    />
+                    {s.package?.tipsterUsername ? (
+                      <Link
+                        href={`/tipsters/${encodeURIComponent(s.package.tipsterUsername)}?tab=archive`}
+                        className="inline-block mt-3 text-xs font-medium text-[var(--primary)] hover:underline"
+                      >
+                        {t('subscriptions.view_tipster_archive')}
+                      </Link>
+                    ) : null}
                     {s.telegramVip?.configured && (
                       <div className="mt-3 space-y-2">
                         <p className="text-xs text-[var(--text-muted)]">{t('subscriptions.telegram_hint')}</p>

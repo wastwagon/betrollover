@@ -71,6 +71,11 @@ export default async function EscrowRefundsGuidePage() {
             .
           </p>
 
+          <h2 className="text-lg font-semibold mt-6">{t('guides.escrow_s4_title')}</h2>
+          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
+            {t('guides.escrow_s4_body')}
+          </p>
+
           <div className="mt-7 rounded-xl border border-[var(--primary)]/25 bg-[var(--primary-light)] p-4">
             <p className="text-xs text-[var(--text)] leading-relaxed">
               {t('guides.escrow_callout')}

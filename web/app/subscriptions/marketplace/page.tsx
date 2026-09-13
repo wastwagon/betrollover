@@ -14,6 +14,7 @@ import { fetchSellingThresholds, type SellingThresholds, SELLING_THRESHOLDS_FALL
 import { useT } from '@/context/LanguageContext';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { buttonClassName } from '@/components/ui/Button';
+import { VipPackageCadenceNote, VipPackageChannelBadge } from '@/components/VipPackageChannelBadge';
 
 interface MarketplaceItem {
   package: {
@@ -21,8 +22,10 @@ interface MarketplaceItem {
     name: string;
     price: number;
     durationDays: number;
-    /** Tipster’s platform user id — used to detect an existing active subscription. */
     tipsterUserId?: number;
+    channel?: 'house' | 'tipster';
+    delivery?: 'telegram' | 'in_app';
+    includedSlipsPerPeriod?: number | null;
   };
   tipster: {
     id: number;
@@ -130,9 +133,10 @@ export default function SubscriptionMarketplacePage() {
         />
         <EscrowTrustCallout
           className="mb-6"
-          title={t('marketplace.trust_callout_title')}
-          body={t('marketplace.trust_callout_body')}
-          linkLabel={t('home.how_it_works')}
+          title={t('subscriptions.trust_callout_title')}
+          body={t('subscriptions.trust_callout_body')}
+          linkLabel={t('subscriptions.marketplace_link_escrow')}
+          linkHref="/guides/escrow-refunds"
         />
 
         {loading ? (
@@ -245,11 +249,20 @@ export default function SubscriptionMarketplacePage() {
                     </div>
 
                     <div className="border-t border-[var(--border)] pt-3 mt-auto">
-                      <h3 className="font-semibold text-[var(--text)] text-sm mb-1">{pkg.name}</h3>
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <h3 className="font-semibold text-[var(--text)] text-sm">{pkg.name}</h3>
+                        <VipPackageChannelBadge channel={pkg.channel} />
+                      </div>
                       <p className="text-lg font-bold text-[var(--primary)]">
                         GHS {Number(pkg.price).toFixed(2)}{' '}
                         <span className="text-sm font-normal text-[var(--text-muted)]">/ {pkg.durationDays}d</span>
                       </p>
+                      <VipPackageCadenceNote
+                        className="text-xs text-[var(--text-muted)] mt-2 leading-snug"
+                        channel={pkg.channel}
+                        includedSlipsPerPeriod={pkg.includedSlipsPerPeriod}
+                        durationDays={pkg.durationDays}
+                      />
                       <p className="text-xs text-[var(--text-muted)] mt-2 leading-snug">
                         {t('subscriptions.period_end_split')}
                       </p>

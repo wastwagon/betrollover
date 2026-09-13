@@ -1,7 +1,7 @@
 'use client';
 
 import { useT } from '@/context/LanguageContext';
-import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import { isHumanVipPackagesEnabled, isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import { DashAction } from './DashAction';
 import type { DashboardSurface, PurchaseStats, User } from './types';
 
@@ -20,6 +20,7 @@ export function DashboardActionGroups({
 }) {
   const t = useT();
   const vip = isSubscriptionsEnabled();
+  const humanVip = isHumanVipPackagesEnabled();
 
   return (
     <section className="mb-6 sm:mb-8 space-y-6">
@@ -60,7 +61,7 @@ export function DashboardActionGroups({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <DashAction href="/create-pick" badge="New" title={t('dashboard.create_pick')} desc={t('dashboard.card_create_desc')} primary />
           <DashAction href="/my-picks" badge="Picks" title={t('dashboard.my_picks')} desc={t('dashboard.card_my_picks_desc')} />
-          {vip ? (
+          {humanVip ? (
             <DashAction
               href="/dashboard/subscription-packages"
               badge="Pack"

@@ -275,14 +275,18 @@ export class AccumulatorsService {
       bookingCode = dtoCode;
     }
 
-    // Default price to 0 (free) if not provided or invalid
-    const price = dto.price && dto.price > 0 ? dto.price : 0;
     const rawPlacement = (dto.placement || 'marketplace').toLowerCase().trim();
     if (rawPlacement === 'both') {
       throw new BadRequestException('Choose either marketplace or subscription — not both.');
     }
     const placementNorm: 'marketplace' | 'subscription' =
       rawPlacement === 'subscription' ? 'subscription' : 'marketplace';
+
+    // VIP-only slips are included in the plan fee — never sold as paid marketplace picks.
+    let price = dto.price && dto.price > 0 ? dto.price : 0;
+    if (placementNorm === 'subscription') {
+      price = 0;
+    }
 
     if (placementNorm === 'subscription') {
       if (!isSubscriptionsEnabled()) {
@@ -303,7 +307,7 @@ export class AccumulatorsService {
       }
     }
 
-    // ROI + win rate: any paid pick (marketplace or subscription-only). Aligns with VIP package rules.
+    // ROI + win rate: paid marketplace listings only. VIP-only slips are always price 0.
     if (price > 0) {
       const user = await this.usersRepo.findOne({ where: { id: userId } });
       if (!user) throw new NotFoundException('User not found');
@@ -320,7 +324,7 @@ export class AccumulatorsService {
           parts.push(`win rate ${stats.winRate}% (minimum ${policy.minimumWinRate}%)`);
         }
         throw new BadRequestException(
-          `Paid picks require both minimum ROI and win rate (marketplace or VIP subscribers). Current: ${parts.join('; ')}. Use price 0 (free) until your settled results meet every requirement.`,
+          `Paid marketplace picks require both minimum ROI and win rate. Current: ${parts.join('; ')}. Use price 0 (free) until your settled results meet every requirement.`,
         );
       }
     }
@@ -617,9 +621,9 @@ export class AccumulatorsService {
     if (ticket.userId === viewerUserId) {
       return { revealed: true };
     }
-    const hasSubscriptionAccess = await this.subscriptionsService.hasActiveSubscriptionToTipster(
+    const hasSubscriptionAccess = await this.subscriptionsService.hasSubscriptionAccessToCoupon(
       viewerUserId,
-      ticket.userId,
+      ticket.id,
     );
     if (hasSubscriptionAccess) {
       return { revealed: true, accessViaSubscription: true };
@@ -2267,14 +2271,6 @@ export class AccumulatorsService {
         if (existing) throw new BadRequestException('You have already purchased this pick');
 
         const price = Number(listing.price);
-        if (
-          price > 0 &&
-          (await this.subscriptionsService.hasActiveSubscriptionToTipster(buyerId, ticket.userId))
-        ) {
-          throw new BadRequestException(
-            'You already have active subscription access to this tipster. No purchase is needed.',
-          );
-        }
         if (price > 0) {
           await this.walletService.debit(
             buyerId,

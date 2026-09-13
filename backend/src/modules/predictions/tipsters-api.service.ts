@@ -8,9 +8,11 @@ import { TipsterFollow } from './entities/tipster-follow.entity';
 import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
 import { AccumulatorPick } from '../accumulators/entities/accumulator-pick.entity';
 import { PickMarketplace } from '../accumulators/entities/pick-marketplace.entity';
-import { User, UserStatus } from '../users/entities/user.entity';
+import { User, UserRole, UserStatus } from '../users/entities/user.entity';
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { TipsterSubscriptionPackage } from '../subscriptions/entities/tipster-subscription-package.entity';
+import { Subscription } from '../subscriptions/entities/subscription.entity';
+import { SubscriptionCouponAccess } from '../subscriptions/entities/subscription-coupon-access.entity';
 import {
   LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING,
   LEADERBOARD_MIN_SETTLED_WEEKLY,
@@ -21,7 +23,8 @@ import {
   isTipsterActivePoster,
 } from '@betrollover/shared-types';
 import { AccumulatorsService } from '../accumulators/accumulators.service';
-import { isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
+import { isHumanVipPackagesEnabled, isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
+import { VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
 import {
   CLASSIC_AI_TIPSTER_TYPE,
   classicAiPublicExcludeRawSql,
@@ -165,6 +168,8 @@ export class TipstersApiService {
     private fixtureRepo: Repository<Fixture>,
     @InjectRepository(TipsterSubscriptionPackage)
     private subscriptionPackageRepo: Repository<TipsterSubscriptionPackage>,
+    @InjectRepository(Subscription)
+    private subscriptionRepo: Repository<Subscription>,
     @Inject(forwardRef(() => AccumulatorsService))
     private readonly accumulatorsService: AccumulatorsService,
   ) {}
@@ -174,10 +179,15 @@ export class TipstersApiService {
     if (!isSubscriptionsEnabled()) return new Map();
     if (userIds.length === 0) return new Map();
     const unique = [...new Set(userIds)];
-    const rows = await this.subscriptionPackageRepo.find({
-      where: { tipsterUserId: In(unique), status: 'active' },
-      select: ['id', 'tipsterUserId'],
-    });
+    const qb = this.subscriptionPackageRepo
+      .createQueryBuilder('p')
+      .innerJoin(Tipster, 't', 't.userId = p.tipsterUserId')
+      .where('p.tipsterUserId IN (:...ids)', { ids: unique })
+      .andWhere('p.status = :status', { status: 'active' });
+    if (!isHumanVipPackagesEnabled()) {
+      qb.andWhere('t.tipsterType = :vipDesk', { vipDesk: VIP_TIPSTER_TYPE });
+    }
+    const rows = await qb.select(['p.id', 'p.tipsterUserId']).getMany();
     const m = new Map<number, number>();
     for (const r of rows) {
       m.set(r.tipsterUserId, r.id);
@@ -186,8 +196,9 @@ export class TipstersApiService {
   }
 
   /**
-   * Marketplace posts in the rolling activity window (any sport). Used as an “still posting” gate.
-   * postsInWindow is distinct Accra calendar days with at least one marketplace ticket.
+   * Posts in the rolling activity window (any sport). Used as an “still posting” gate.
+   * Marketplace tickets for every tipster; house VIP desk also counts subscription slips.
+   * postsInWindow is distinct Accra calendar days with at least one counted ticket.
    */
   private async loadMarketplaceActivityByUserIds(
     userIds: number[],
@@ -204,7 +215,13 @@ export class TipstersApiService {
         'postsInWindow',
       )
       .where('t.user_id IN (:...ids)', { ids: [...new Set(userIds)] })
-      .andWhere('t.is_marketplace = true')
+      .andWhere(
+        `(t.is_marketplace = true OR EXISTS (
+           SELECT 1 FROM tipsters tp
+           WHERE tp.user_id = t.user_id AND tp.tipster_type = :vipDesk
+         ))`,
+        { vipDesk: VIP_TIPSTER_TYPE },
+      )
       .andWhere('t.created_at >= :since', { since })
       .groupBy('t.user_id')
       .getRawMany<{ userId: string | number; lastPostedAt: Date | string; postsInWindow: string | number }>();
@@ -220,7 +237,8 @@ export class TipstersApiService {
   }
 
   /**
-   * All-time leaderboard rows for tipsters who posted a marketplace pick in the activity window.
+   * All-time leaderboard rows for tipsters who posted in the activity window
+   * (marketplace, or house VIP subscription slips).
    * Sorted by form points (results + capped recent posting days), then ROI. Same list as homepage Top Performing.
    */
   private async computeAllTimeLeaderboardSortedEntries(sport?: string): Promise<{
@@ -626,14 +644,70 @@ export class TipstersApiService {
     this.applyTipsterProfilePeriodFilter(qb, window.period);
   }
 
+  /** House VIP desk posts subscription-only slips — include them on the public profile archive. */
+  private profileIncludesSubscriptionTickets(tipsterType?: string | null): boolean {
+    return tipsterType === VIP_TIPSTER_TYPE;
+  }
+
+  /** Live VIP slips: subscribers, the desk owner, or admin. Archive stays public. */
+  private async viewerCanSeeLiveVipSlips(
+    viewerUserId: number | undefined,
+    tipsterUserId: number,
+  ): Promise<boolean> {
+    if (!viewerUserId) return false;
+    if (viewerUserId === tipsterUserId) return true;
+    const viewer = await this.usersRepo.findOne({
+      where: { id: viewerUserId },
+      select: ['id', 'role'],
+    });
+    if (viewer?.role === UserRole.ADMIN) return true;
+    if (!isSubscriptionsEnabled()) return false;
+    const now = new Date();
+    const count = await this.subscriptionRepo
+      .createQueryBuilder('s')
+      .innerJoin('s.package', 'pkg')
+      .where('s.userId = :viewerUserId', { viewerUserId })
+      .andWhere('s.status = :status', { status: 'active' })
+      .andWhere('pkg.tipsterUserId = :tipsterUserId', { tipsterUserId })
+      .andWhere('(s.endsAt IS NULL OR s.endsAt > :now)', { now })
+      .getCount();
+    return count > 0;
+  }
+
+  private pendingVipTicketsQb(tipsterUserId: number, window: TipsterProfilePerformanceWindow) {
+    const qb = this.ticketRepo
+      .createQueryBuilder('t')
+      .innerJoin(SubscriptionCouponAccess, 'sca', 'sca.accumulatorId = t.id')
+      .where('t.userId = :uid', { uid: tipsterUserId })
+      .andWhere('t.result = :pend', { pend: 'pending' })
+      .andWhere('t.isMarketplace = :im', { im: false });
+    if (window.kind === 'posted_between') {
+      qb.andWhere('t.createdAt >= :__pv0', { __pv0: window.startUtc });
+      qb.andWhere('t.createdAt < :__pv1', { __pv1: window.endExclusiveUtc });
+    }
+    return qb;
+  }
+
+  private applyProfileTicketChannel(
+    qb: SelectQueryBuilder<AccumulatorTicket>,
+    includeSubscriptionTickets: boolean,
+  ): void {
+    if (!includeSubscriptionTickets) {
+      qb.andWhere('t.isMarketplace = :im', { im: true });
+    }
+  }
+
   /**
-   * Marketplace settled coupons only.
+   * Settled coupons for the public profile.
+   * Marketplace tipsters: marketplace listings only.
+   * House VIP desk: subscription slips (the product archive).
    * Settlement presets: window by `updated_at`. Custom posted range: window by `createdAt`.
    * `total` = won + lost + void; ROI / win rate use won+lost only (same as public profile formulas).
    */
   private async computeMarketplaceProfileStats(
     userId: number,
     window: TipsterProfilePerformanceWindow,
+    includeSubscriptionTickets = false,
   ): Promise<{
     total: number;
     won: number;
@@ -653,11 +727,11 @@ export class TipstersApiService {
       .addSelect(`COALESCE(SUM(CASE WHEN t.result = :won2 THEN t.totalOdds ELSE 0 END), 0)`, 'totalOddsWon')
       .addSelect('COALESCE(AVG(t.totalOdds), 0)', 'avgOdds')
       .where('t.userId = :uid', { uid: userId })
-      .andWhere('t.isMarketplace = :im', { im: true })
       .andWhere('t.result IN (:...fin)', { fin: ['won', 'lost', 'void'] })
       .setParameter('won', 'won')
       .setParameter('lost', 'lost')
       .setParameter('won2', 'won');
+    this.applyProfileTicketChannel(qb, includeSubscriptionTickets);
 
     this.applyTipsterProfileWindowOnTicket(qb, window);
 
@@ -682,8 +756,8 @@ export class TipstersApiService {
       .createQueryBuilder('t')
       .select(['t.id', 't.result'])
       .where('t.userId = :uid', { uid: userId })
-      .andWhere('t.isMarketplace = :im', { im: true })
       .andWhere('t.result IN (:...wl)', { wl: ['won', 'lost'] });
+    this.applyProfileTicketChannel(streakQb, includeSubscriptionTickets);
     this.applyTipsterProfileWindowOnTicket(streakQb, window);
     const streakRows = await streakQb.orderBy('t.updatedAt', 'DESC').take(500).getMany();
     const { currentStreak, bestStreak, worstStreak } = this.computeStreakFromOrderedResults(streakRows);
@@ -924,6 +998,14 @@ export class TipstersApiService {
     }
 
     const marketplaceCoupons = await this.getMarketplaceCouponsForTipster(username, window, viewerUserId);
+    const includeSub = this.profileIncludesSubscriptionTickets(tipster.tipsterType);
+    let liveVipLocked = false;
+    if (includeSub && tipster.userId != null) {
+      const canSeeLive = await this.viewerCanSeeLiveVipSlips(viewerUserId, tipster.userId);
+      if (!canSeeLive) {
+        liveVipLocked = (await this.pendingVipTicketsQb(tipster.userId, window).getCount()) > 0;
+      }
+    }
 
     let totalPredictions = tipster.totalPredictions;
     let totalWins = tipster.totalWins;
@@ -936,7 +1018,11 @@ export class TipstersApiService {
     let avgOddsLive = Number(tipster.avgOdds);
 
     if (tipster.userId != null) {
-      const mp = await this.computeMarketplaceProfileStats(tipster.userId, window);
+      const mp = await this.computeMarketplaceProfileStats(
+        tipster.userId,
+        window,
+        this.profileIncludesSubscriptionTickets(tipster.tipsterType),
+      );
       totalPredictions = mp.total;
       totalWins = mp.won;
       totalLosses = mp.lost;
@@ -995,6 +1081,7 @@ export class TipstersApiService {
         is_active: tipster.isActive,
       },
       marketplace_coupons: marketplaceCoupons,
+      live_vip_locked: liveVipLocked,
       archived_coupons: await this.getArchivedCouponsForTipster(username, window, viewerUserId),
       archived_settled_count: await this.getArchivedSettledCount(username, window),
       performance_history: performance,
@@ -1003,20 +1090,23 @@ export class TipstersApiService {
     };
   }
 
-  /** Total count of settled marketplace coupons in the selected window. */
+  /** Total count of settled profile coupons in the selected window. */
   async getArchivedSettledCount(username: string, window: TipsterProfilePerformanceWindow): Promise<number> {
-    const tipster = await this.tipsterRepo.findOne({ where: { username }, select: ['userId'] });
+    const tipster = await this.tipsterRepo.findOne({
+      where: { username },
+      select: ['userId', 'tipsterType'],
+    });
     if (!tipster?.userId) return 0;
     const qb = this.ticketRepo
       .createQueryBuilder('t')
       .where('t.userId = :uid', { uid: tipster.userId })
-      .andWhere('t.isMarketplace = :im', { im: true })
       .andWhere('t.result IN (:...r)', { r: ['won', 'lost', 'void'] });
+    this.applyProfileTicketChannel(qb, this.profileIncludesSubscriptionTickets(tipster.tipsterType));
     this.applyTipsterProfileWindowOnTicket(qb, window);
     return qb.getCount();
   }
 
-  /** Settled marketplace coupons for archive; limited to 50 most recent in the selected window. */
+  /** Settled coupons for archive; limited to 50 most recent in the selected window. */
   async getArchivedCouponsForTipster(
     username: string,
     window: TipsterProfilePerformanceWindow,
@@ -1025,7 +1115,8 @@ export class TipstersApiService {
     const tipster = await this.tipsterRepo.findOne({ where: { username } });
     if (!tipster?.userId) return [];
 
-    const mp = await this.computeMarketplaceProfileStats(tipster.userId, window);
+    const includeSub = this.profileIncludesSubscriptionTickets(tipster.tipsterType);
+    const mp = await this.computeMarketplaceProfileStats(tipster.userId, window, includeSub);
     const winRate = mp.winRate;
     const totalPredictions = mp.total;
     const totalWins = mp.won;
@@ -1035,8 +1126,8 @@ export class TipstersApiService {
       .createQueryBuilder('t')
       .leftJoinAndSelect('t.picks', 'p')
       .where('t.userId = :uid', { uid: tipster.userId })
-      .andWhere('t.isMarketplace = :im', { im: true })
       .andWhere('t.result IN (:...r)', { r: ['won', 'lost', 'void'] });
+    this.applyProfileTicketChannel(qb, includeSub);
     this.applyTipsterProfileWindowOnTicket(qb, window);
     const tickets = await qb.orderBy('t.updatedAt', 'DESC').take(50).getMany();
 
@@ -1088,7 +1179,7 @@ export class TipstersApiService {
     return this.accumulatorsService.mergeSocialCountsOntoRecords(mapped, viewerUserId);
   }
 
-  /** Marketplace coupons for this tipster only. Deduplicated, same format as marketplace. */
+  /** Active coupons for this tipster. Marketplace listings for everyone; house VIP live slips for subscribers only. */
   async getMarketplaceCouponsForTipster(
     username: string,
     window: TipsterProfilePerformanceWindow,
@@ -1097,7 +1188,8 @@ export class TipstersApiService {
     const tipster = await this.tipsterRepo.findOne({ where: { username } });
     if (!tipster?.userId) return [];
 
-    const mp = await this.computeMarketplaceProfileStats(tipster.userId, window);
+    const includeSub = this.profileIncludesSubscriptionTickets(tipster.tipsterType);
+    const mp = await this.computeMarketplaceProfileStats(tipster.userId, window, includeSub);
     const winRate = mp.winRate;
     const totalPredictions = mp.total;
     const totalWins = mp.won;
@@ -1108,21 +1200,39 @@ export class TipstersApiService {
       select: ['accumulatorId', 'price', 'purchaseCount'],
     });
     const accIds = rows.map((r) => r.accumulatorId);
-    if (accIds.length === 0) return [];
+    const tickets: AccumulatorTicket[] = [];
 
-    // Only show tickets that are still unsettled (result = pending). Settled tickets appear in Archive.
-    const tqb = this.ticketRepo
-      .createQueryBuilder('t')
-      .leftJoinAndSelect('t.picks', 'p')
-      .where('t.id IN (:...ids)', { ids: accIds })
-      .andWhere('t.userId = :uid', { uid: tipster.userId })
-      .andWhere('t.result = :pend', { pend: 'pending' })
-      .andWhere('t.isMarketplace = :im', { im: true });
-    if (window.kind === 'posted_between') {
-      tqb.andWhere('t.createdAt >= :__pa0', { __pa0: window.startUtc });
-      tqb.andWhere('t.createdAt < :__pa1', { __pa1: window.endExclusiveUtc });
+    if (accIds.length > 0) {
+      // Only show tickets that are still unsettled (result = pending). Settled tickets appear in Archive.
+      const tqb = this.ticketRepo
+        .createQueryBuilder('t')
+        .leftJoinAndSelect('t.picks', 'p')
+        .where('t.id IN (:...ids)', { ids: accIds })
+        .andWhere('t.userId = :uid', { uid: tipster.userId })
+        .andWhere('t.result = :pend', { pend: 'pending' })
+        .andWhere('t.isMarketplace = :im', { im: true });
+      if (window.kind === 'posted_between') {
+        tqb.andWhere('t.createdAt >= :__pa0', { __pa0: window.startUtc });
+        tqb.andWhere('t.createdAt < :__pa1', { __pa1: window.endExclusiveUtc });
+      }
+      tickets.push(...(await tqb.orderBy('t.createdAt', 'DESC').getMany()));
     }
-    const tickets = await tqb.orderBy('t.createdAt', 'DESC').getMany();
+
+    if (includeSub && (await this.viewerCanSeeLiveVipSlips(viewerUserId, tipster.userId))) {
+      const vipQb = this.pendingVipTicketsQb(tipster.userId, window)
+        .leftJoinAndSelect('t.picks', 'p')
+        .orderBy('t.createdAt', 'DESC');
+      const vipTickets = await vipQb.getMany();
+      const seenIds = new Set(tickets.map((t) => t.id));
+      for (const t of vipTickets) {
+        if (!seenIds.has(t.id)) {
+          seenIds.add(t.id);
+          tickets.push(t);
+        }
+      }
+    }
+
+    if (tickets.length === 0) return [];
 
     // Include all marketplace coupons (upcoming + started/settled) so picks show on profile
     const validTickets = tickets.filter((t) => t.picks?.length);
@@ -1148,7 +1258,7 @@ export class TipstersApiService {
 
     const mapped = deduped.map((ticket) => ({
       ...ticket,
-      price: priceMap.get(ticket.id) ?? 0,
+      price: priceMap.get(ticket.id) ?? Number(ticket.price) ?? 0,
       purchaseCount: purchaseCountMap.get(ticket.id) ?? 0,
       tipster: user
         ? {

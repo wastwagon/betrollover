@@ -82,7 +82,7 @@ export class SubscriptionsController {
   @Get('packages/package/:id')
   getPackage(@Param('id', ParseIntPipe) id: number) {
     this.assertSubscriptionsEnabled();
-    return this.subscriptionsService.getPackage(id);
+    return this.subscriptionsService.getPublicPackage(id);
   }
 
   @Post('subscribe')

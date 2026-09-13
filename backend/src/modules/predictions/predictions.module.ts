@@ -16,6 +16,8 @@ import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.e
 import { AccumulatorPick } from '../accumulators/entities/accumulator-pick.entity';
 import { PickMarketplace } from '../accumulators/entities/pick-marketplace.entity';
 import { TipsterSubscriptionPackage } from '../subscriptions/entities/tipster-subscription-package.entity';
+import { Subscription } from '../subscriptions/entities/subscription.entity';
+import { SubscriptionCouponAccess } from '../subscriptions/entities/subscription-coupon-access.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { PredictionEngineService } from './prediction-engine.service';
 import { PredictionMarketplaceSyncService } from './prediction-marketplace-sync.service';
@@ -47,6 +49,8 @@ import { TipsterModule } from '../tipster/tipster.module';
       AccumulatorPick,
       PickMarketplace,
       TipsterSubscriptionPackage,
+      Subscription,
+      SubscriptionCouponAccess,
       ApiSettings,
     ]),
     forwardRef(() => FixturesModule),

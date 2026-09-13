@@ -17,7 +17,6 @@ import { TipsterModule } from '../tipster/tipster.module';
 import { PredictionsModule } from '../predictions/predictions.module';
 import { User } from '../users/entities/user.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
-import { PickMarketplace } from '../accumulators/entities/pick-marketplace.entity';
 
 @Module({
   imports: [
@@ -34,7 +33,6 @@ import { PickMarketplace } from '../accumulators/entities/pick-marketplace.entit
       Tipster,
       User,
       ApiSettings,
-      PickMarketplace,
     ]),
     WalletModule,
     NotificationsModule,

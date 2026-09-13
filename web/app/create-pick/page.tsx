@@ -69,6 +69,11 @@ export default function CreatePickPage() {
       setSubscriptionPackageIds([]);
     }
   }, [placement]);
+  useEffect(() => {
+    if (placement === 'subscription' && price !== 0) {
+      setPrice(0);
+    }
+  }, [placement, price]);
   const [myPackages, setMyPackages] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -97,13 +102,14 @@ export default function CreatePickPage() {
     !dailyQuota.exempt &&
     dailyQuota.maxPerDay > 0;
 
-  /** Paid (price > 0) requires settled ROI + win rate ≥ admin minimums. Server enforces too — keep in sync. */
+  /** Paid marketplace (price > 0) requires settled ROI + win rate ≥ admin minimums. VIP-only slips are always included (price 0). */
   const paidSaleAllowed = useMemo(() => {
+    if (placement === 'subscription') return true;
     const p = Number(price) || 0;
     if (p <= 0) return true;
     if (!sellTh || !myTipStats) return false;
     return myTipStats.roi >= sellTh.minimumROI && myTipStats.winRate >= sellTh.minimumWinRate;
-  }, [price, sellTh, myTipStats]);
+  }, [placement, price, sellTh, myTipStats]);
 
   const subscriptionMissingPackages =
     placement === 'subscription' && subscriptionPackageIds.length === 0;
@@ -675,7 +681,7 @@ export default function CreatePickPage() {
       setFormError(t('create_pick.error_bookie_code_pair'));
       return;
     }
-    const priceNum = Number(price) || 0;
+    const priceNum = placement === 'subscription' ? 0 : Number(price) || 0;
     if (priceNum > 0 && !paidSaleAllowed) {
       setFormError(
         sellTh && myTipStats
@@ -699,7 +705,7 @@ export default function CreatePickPage() {
       body: JSON.stringify({
         title: title.trim(),
         ...(keyTrim && codeTrim ? { bookmakerKey: keyTrim, bookingCode: codeTrim } : {}),
-        price: Number(price) || 0,
+        price: priceNum,
         isMarketplace: placement === 'marketplace',
         placement,
         subscriptionPackageIds: placement === 'subscription' ? subscriptionPackageIds : undefined,
