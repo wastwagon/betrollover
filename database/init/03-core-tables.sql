@@ -86,7 +86,7 @@ CREATE INDEX idx_wallet_user ON user_wallets(user_id);
 CREATE TABLE IF NOT EXISTS wallet_transactions (
   id SERIAL PRIMARY KEY,
   user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  type VARCHAR(20) NOT NULL CHECK (type IN ('deposit','withdrawal','purchase','refund','commission','payout','credit','adjustment','subscription','subscription_payout')),
+  type VARCHAR(20) NOT NULL CHECK (type IN ('deposit','withdrawal','purchase','refund','commission','payout','credit','adjustment','subscription','subscription_payout','settle_adj')),
   amount DECIMAL(10,2) NOT NULL,
   currency VARCHAR(3) DEFAULT 'GHS',
   status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending','completed','failed','cancelled')),
