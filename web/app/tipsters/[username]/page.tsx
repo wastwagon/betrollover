@@ -870,7 +870,12 @@ export default function TipsterProfilePage() {
                         purchaseCount={a.purchaseCount}
                         picks={a.picks || []}
                         tipster={a.tipster}
-                        picksRevealed={viewerIsAdmin || isVipDeskTipsterType(tipster.tipster_type)}
+                        picksRevealed={
+                          viewerIsAdmin ||
+                          isVipDeskTipsterType(tipster.tipster_type) ||
+                          a.picksRevealed === true
+                        }
+                        requiresSubscription={isVipDeskTipsterType(tipster.tipster_type)}
                         isPurchased={isPurchased || isVipDeskTipsterType(tipster.tipster_type)}
                         canPurchase={canPurchase && !isVipDeskTipsterType(tipster.tipster_type)}
                         walletBalance={walletBalance}
@@ -922,6 +927,8 @@ export default function TipsterProfilePage() {
                       isPurchased={false}
                       canPurchase={false}
                       viewOnly
+                      picksRevealed
+                      requiresSubscription={isVipDeskTipsterType(tipster.tipster_type)}
                       walletBalance={walletBalance}
                       onPurchase={() => {}}
                       createdAt={a.createdAt}

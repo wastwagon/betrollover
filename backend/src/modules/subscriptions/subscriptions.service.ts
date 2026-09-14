@@ -611,6 +611,11 @@ export class SubscriptionsService {
     return count > 0;
   }
 
+  async isCouponLinkedToSubscriptionPackage(accumulatorId: number): Promise<boolean> {
+    const n = await this.couponAccessRepo.count({ where: { accumulatorId } });
+    return n > 0;
+  }
+
   async countPackageCouponsPostedBetween(packageId: number, from: Date, to: Date): Promise<number> {
     return this.couponAccessRepo
       .createQueryBuilder('sca')

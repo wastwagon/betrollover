@@ -780,14 +780,17 @@ export class SettlementService {
       if (ticket.result !== 'won') continue;
       const legs = await this.telegramLegsForPicks(picks);
       if (ticket.isMarketplace) {
-        wonMarketplacePosts.push({
-          couponId: ticket.id,
-          title: ticket.title || 'Pick',
-          tipsterName: null,
-          totalOdds: ticket.totalOdds != null ? Number(ticket.totalOdds) : null,
-          isFree: !(priceNum > 0),
-          legs,
-        });
+        const isHouseVip = houseVipUserId != null && ticket.userId === houseVipUserId;
+        if (!isHouseVip) {
+          wonMarketplacePosts.push({
+            couponId: ticket.id,
+            title: ticket.title || 'Pick',
+            tipsterName: null,
+            totalOdds: ticket.totalOdds != null ? Number(ticket.totalOdds) : null,
+            isFree: !(priceNum > 0),
+            legs,
+          });
+        }
       }
       if (houseVipUserId != null && ticket.userId === houseVipUserId) {
         wonVipPosts.push({

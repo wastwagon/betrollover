@@ -294,7 +294,11 @@ export function UserDashboardHome({
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                         {feedPicks.slice(0, 4).map((pick) => {
                           const isPurchased = purchases.some((p) => p.accumulatorId === pick.id);
-                          const canPurchase = pick.price === 0 || (walletBalance !== null && walletBalance >= pick.price);
+                          const subscriptionLocked =
+                            pick.requiresSubscription === true && pick.picksRevealed !== true && !isPurchased;
+                          const canPurchase =
+                            !subscriptionLocked &&
+                            (pick.price === 0 || (walletBalance !== null && walletBalance >= pick.price));
                           return (
                             <PickCard
                               key={pick.id}
@@ -307,6 +311,7 @@ export function UserDashboardHome({
                               picks={pick.picks || []}
                               tipster={pick.tipster}
                               picksRevealed={pick.picksRevealed === true}
+                              requiresSubscription={pick.requiresSubscription === true}
                               bookmakerKey={pick.bookmakerKey}
                               bookingCode={pick.bookingCode}
                               bookingCodeCopyCount={pick.bookingCodeCopyCount ?? 0}

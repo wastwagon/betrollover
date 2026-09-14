@@ -116,6 +116,8 @@ interface PickCardProps {
   reviewCount?: number | null;
   /** From API: viewer may see full legs (purchase, subscription, free/settled, seller, admin). Drives View vs Purchase CTA when true. */
   picksRevealed?: boolean;
+  /** Price 0 but legs stay covered until an active VIP subscription (house VIP · Two-Fold). */
+  requiresSubscription?: boolean;
   /** When legs are visible, API may include bookmaker + code (withheld for locked paid picks). */
   bookmakerKey?: string | null;
   bookingCode?: string | null;
@@ -159,6 +161,7 @@ export function PickCard({
   avgRating,
   reviewCount,
   picksRevealed = false,
+  requiresSubscription = false,
   bookmakerKey,
   bookingCode,
   bookingCodeCopyCount = 0,
@@ -183,10 +186,13 @@ export function PickCard({
     }
   }, [showUnveil]);
 
-  const isFree = price === 0;
-  const showFullDetails = isFree || isPurchased || viewOnly || picksRevealed;
+  const isFree = price === 0 && !requiresSubscription;
+  const showFullDetails = isPurchased || picksRevealed || (viewOnly && !requiresSubscription);
   /** Match primary CTA to server-granted leg visibility (subscription, settled, etc.). */
-  const showAccessCTA = isPurchased || viewOnly || isFree || picksRevealed;
+  const showAccessCTA = isPurchased || picksRevealed || (viewOnly && !requiresSubscription);
+  const subscribeHref = tipster?.username
+    ? `/tipsters/${encodeURIComponent(tipster.username)}#subscription-packages`
+    : '/subscriptions/marketplace';
 
   const purchaseActivityLabel =
     purchaseCount !== undefined && purchaseCount > 0
@@ -372,6 +378,11 @@ export function PickCard({
                   {t(`status.${displayStatus}` as any) || displayStatus.replace(/_/g, ' ')}
                 </span>
               )}
+              {requiresSubscription ? (
+                <span className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-semibold bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/25">
+                  {t('pick_card.vip_included')}
+                </span>
+              ) : null}
             </div>
             {price > 0 && priceDisplay && (
               <div className="mt-1">
@@ -520,7 +531,9 @@ export function PickCard({
                   <rect x="5" y="11" width="14" height="10" rx="2" />
                   <path d="M8 11V8a4 4 0 0 1 8 0v3" />
                 </svg>
-                <p className="text-[10px] text-[var(--text-muted)]">{t('pick_card.purchase_to_view')}</p>
+                <p className="text-[10px] text-[var(--text-muted)]">
+                  {requiresSubscription ? t('pick_card.subscribe_to_view') : t('pick_card.purchase_to_view')}
+                </p>
               </div>
             </div>
           )}
@@ -546,6 +559,13 @@ export function PickCard({
                 className={buttonClassName({ variant: 'primary', size: 'sm', fullWidth: true, className: 'text-xs' })}
               >
                 {t('pick_card.view_details')}
+              </Link>
+            ) : requiresSubscription ? (
+              <Link
+                href={subscribeHref}
+                className={buttonClassName({ variant: 'accent', size: 'sm', fullWidth: true, className: 'text-xs' })}
+              >
+                {t('pick_card.subscribe_cta')}
               </Link>
             ) : canPurchase ? (
               <Button
@@ -676,7 +696,11 @@ export function PickCard({
                     {t('pick_card.picks_odds', { n: String(totalPicks), odds: Number(totalOdds).toFixed(2) })}
                   </span>
                   <span className={`text-lg font-bold ${price === 0 ? 'text-[var(--success)]' : 'text-[var(--primary)]'}`}>
-                    {price === 0 ? t('status.free') : (priceDisplay?.primary ?? `GHS ${Number(price).toFixed(2)}`)}
+                    {requiresSubscription
+                      ? t('pick_card.vip_included')
+                      : price === 0
+                        ? t('status.free')
+                        : (priceDisplay?.primary ?? `GHS ${Number(price).toFixed(2)}`)}
                   </span>
                 </div>
                 {bookmakerKey && bookingCode ? (
@@ -739,9 +763,16 @@ export function PickCard({
               </div>
 
               {/* Purchase Button in Modal - only when legs are not already visible to this viewer */}
-              {!isPurchased && !isFree && !picksRevealed && (
+              {!isPurchased && !picksRevealed && (
                 <div className="mt-6 pt-6 border-t border-[var(--border)]">
-                  {canPurchase ? (
+                  {requiresSubscription ? (
+                    <Link
+                      href={subscribeHref}
+                      className={buttonClassName({ variant: 'accent', fullWidth: true, className: 'px-6 py-3' })}
+                    >
+                      {t('pick_card.subscribe_cta')}
+                    </Link>
+                  ) : canPurchase ? (
                     <Button
                       type="button"
                       variant="primary"
@@ -825,7 +856,11 @@ export function PickCard({
                     {t('pick_card.picks_odds', { n: String(totalPicks), odds: Number(totalOdds).toFixed(2) })}
                   </span>
                   <span className={`text-lg font-bold ${price === 0 ? 'text-[var(--success)]' : 'text-[var(--primary)]'}`}>
-                    {price === 0 ? t('status.free') : (priceDisplay?.primary ?? `GHS ${Number(price).toFixed(2)}`)}
+                    {requiresSubscription
+                      ? t('pick_card.vip_included')
+                      : price === 0
+                        ? t('status.free')
+                        : (priceDisplay?.primary ?? `GHS ${Number(price).toFixed(2)}`)}
                   </span>
                 </div>
 

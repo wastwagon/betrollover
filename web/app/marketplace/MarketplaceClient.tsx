@@ -99,6 +99,7 @@ interface Accumulator {
   avgRating?: number | null;
   reviewCount?: number | null;
   picksRevealed?: boolean;
+  requiresSubscription?: boolean;
   bookmakerKey?: string | null;
   bookingCode?: string | null;
   bookingCodeCopyCount?: number;
@@ -227,7 +228,7 @@ export default function MarketplacePage({
       const score = (p: Accumulator) => {
         let s = 0;
         if (p.tipster?.username && followedTipsterUsernames.has(p.tipster.username)) s += 100;
-        if (p.price === 0) s += 25;
+        if (p.price === 0 && p.requiresSubscription !== true) s += 25;
         const rank = p.tipster?.rank ?? 999;
         s += Math.max(0, 40 - Math.min(rank, 40));
         s += Math.min(20, Number(p.purchaseCount) || 0);
@@ -269,7 +270,7 @@ export default function MarketplacePage({
     let free = 0;
     let paid = 0;
     for (const p of dayScoped) {
-      if (Number(p.price) === 0) free += 1;
+      if (Number(p.price) === 0 && p.requiresSubscription !== true) free += 1;
       else paid += 1;
     }
     return {
@@ -288,7 +289,7 @@ export default function MarketplacePage({
         (p) =>
           !!p.bookmakerKey &&
           !!p.bookingCode &&
-          (p.price === 0 || p.picksRevealed === true || purchasedIds.has(p.id)),
+          (p.picksRevealed === true || purchasedIds.has(p.id)),
       )
       .slice(0, 8)
       .map((p) => ({
@@ -561,7 +562,9 @@ export default function MarketplacePage({
 
   const renderMarketplacePickCard = (a: Accumulator) => {
     const isPurchased = purchasedIds.has(a.id);
-    const canPurchase = a.price === 0 || (walletBalance !== null && walletBalance >= a.price);
+    const subscriptionLocked = a.requiresSubscription === true && a.picksRevealed !== true && !isPurchased;
+    const canPurchase =
+      !subscriptionLocked && (a.price === 0 || (walletBalance !== null && walletBalance >= a.price));
 
     return (
       <PickCard
@@ -584,6 +587,7 @@ export default function MarketplacePage({
         picks={a.picks || []}
         tipster={a.tipster}
         picksRevealed={a.picksRevealed === true}
+        requiresSubscription={a.requiresSubscription === true}
         bookmakerKey={a.bookmakerKey}
         bookingCode={a.bookingCode}
         bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}

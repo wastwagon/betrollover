@@ -59,6 +59,8 @@ interface Coupon {
   bookmakerKey?: string | null;
   bookingCode?: string | null;
   bookingCodeCopyCount?: number;
+  picksRevealed?: boolean;
+  requiresSubscription?: boolean;
   reactionCount?: number;
   hasReacted?: boolean;
   commentCount?: number;
@@ -512,6 +514,8 @@ export default function CouponsArchivePage({
                 canPurchase={false}
                 walletBalance={walletBalance}
                 viewOnly
+                picksRevealed={coupon.picksRevealed === true}
+                requiresSubscription={coupon.requiresSubscription === true}
                 onPurchase={() => {}}
                 createdAt={coupon.createdAt}
                 bookmakerKey={coupon.bookmakerKey}

@@ -345,7 +345,7 @@ export class AccaGeneratorService {
       generationId: number;
       title?: string;
       description?: string;
-      placement?: 'marketplace' | 'subscription';
+      placement?: 'marketplace' | 'subscription' | 'both';
       subscriptionPackageIds?: number[];
     },
   ) {
@@ -370,9 +370,14 @@ export class AccaGeneratorService {
       (body.title || '').trim() ||
       `Acca Generator ${selections.length}-fold · ${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC`;
 
-    const placement = body.placement === 'subscription' ? 'subscription' : 'marketplace';
+    const placement =
+      body.placement === 'subscription'
+        ? 'subscription'
+        : body.placement === 'both'
+          ? 'both'
+          : 'marketplace';
     const subscriptionPackageIds =
-      placement === 'subscription' ? body.subscriptionPackageIds?.filter((id) => id > 0) : undefined;
+      placement === 'marketplace' ? undefined : body.subscriptionPackageIds?.filter((id) => id > 0);
 
     const dto: CreateAccumulatorDto = {
       title: title.slice(0, 255),
@@ -381,7 +386,7 @@ export class AccaGeneratorService {
         'Generated with Acca Generator (free pick). Educational/informational only — not a sure bet. Gamble responsibly. 18+.'
       ).slice(0, 2000),
       price: 0,
-      isMarketplace: placement === 'marketplace',
+      isMarketplace: placement !== 'subscription',
       sport: 'football',
       placement,
       subscriptionPackageIds,

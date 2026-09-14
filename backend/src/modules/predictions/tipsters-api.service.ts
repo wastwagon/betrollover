@@ -651,7 +651,7 @@ export class TipstersApiService {
     this.applyTipsterProfilePeriodFilter(qb, window.period);
   }
 
-  /** House VIP desk posts subscription-only slips — include them on the public profile archive. */
+  /** House VIP desk: include subscription slips on the public profile archive (settled record). */
   private profileIncludesSubscriptionTickets(tipsterType?: string | null): boolean {
     return tipsterType === VIP_TIPSTER_TYPE;
   }
@@ -686,8 +686,7 @@ export class TipstersApiService {
       .createQueryBuilder('t')
       .innerJoin(SubscriptionCouponAccess, 'sca', 'sca.accumulatorId = t.id')
       .where('t.userId = :uid', { uid: tipsterUserId })
-      .andWhere('t.result = :pend', { pend: 'pending' })
-      .andWhere('t.isMarketplace = :im', { im: false });
+      .andWhere('t.result = :pend', { pend: 'pending' });
     if (window.kind === 'posted_between') {
       qb.andWhere('t.createdAt >= :__pv0', { __pv0: window.startUtc });
       qb.andWhere('t.createdAt < :__pv1', { __pv1: window.endExclusiveUtc });
@@ -1207,6 +1206,11 @@ export class TipstersApiService {
     if (!tipster?.userId) return [];
 
     const includeSub = this.profileIncludesSubscriptionTickets(tipster.tipsterType);
+    const canSeeLiveVip =
+      includeSub && tipster.userId != null
+        ? await this.viewerCanSeeLiveVipSlips(viewerUserId, tipster.userId)
+        : false;
+
     const mp = await this.computeMarketplaceProfileStats(tipster.userId, window, includeSub);
     const winRate = mp.winRate;
     const totalPredictions = mp.total;
@@ -1220,7 +1224,9 @@ export class TipstersApiService {
     const accIds = rows.map((r) => r.accumulatorId);
     const tickets: AccumulatorTicket[] = [];
 
-    if (accIds.length > 0) {
+    // House VIP live slips stay off the public profile Active tab (same as reports:
+    // archive/settled is public; live is subscribers only). Marketplace still shows covered cards.
+    if (accIds.length > 0 && (!includeSub || canSeeLiveVip)) {
       // Only show tickets that are still unsettled (result = pending). Settled tickets appear in Archive.
       const tqb = this.ticketRepo
         .createQueryBuilder('t')
@@ -1236,7 +1242,7 @@ export class TipstersApiService {
       tickets.push(...(await tqb.orderBy('t.createdAt', 'DESC').getMany()));
     }
 
-    if (includeSub && (await this.viewerCanSeeLiveVipSlips(viewerUserId, tipster.userId))) {
+    if (includeSub && canSeeLiveVip) {
       const vipQb = this.pendingVipTicketsQb(tipster.userId, window)
         .leftJoinAndSelect('t.picks', 'p')
         .orderBy('t.createdAt', 'DESC');
@@ -1549,7 +1555,7 @@ export class TipstersApiService {
 
     const listingRows = await this.marketplaceRepo.find({
       where: { accumulatorId: In(tickets.map((t) => t.id)), status: 'active' },
-      select: ['accumulatorId', 'price', 'purchaseCount', 'status'],
+      select: ['accumulatorId', 'price', 'purchaseCount', 'status', 'placement', 'subscriptionPackageId'],
     });
     const priceMap = new Map(listingRows.map((r) => [r.accumulatorId, Number(r.price)]));
     const purchaseMap = new Map(listingRows.map((r) => [r.accumulatorId, r.purchaseCount || 0]));
@@ -1597,7 +1603,7 @@ export class TipstersApiService {
     return Promise.all(
       filtered.map(async (ticket) => {
         const row = rowByAccId.get(ticket.id) ?? null;
-        const { picks, picksRevealed, accessViaSubscription } =
+        const { picks, picksRevealed, accessViaSubscription, requiresSubscription } =
           await this.accumulatorsService.applyViewerPickVisibilityForTicket(
             ticket,
             row,
@@ -1622,6 +1628,7 @@ export class TipstersApiService {
           result: ticket.result,
           picks,
           picksRevealed,
+          requiresSubscription,
           ...(accessViaSubscription ? { accessViaSubscription: true } : {}),
           tipster: tipsterUser
             ? {

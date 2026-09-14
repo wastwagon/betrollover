@@ -29,6 +29,7 @@ import { TipsterSubscriptionPackage } from '../subscriptions/entities/tipster-su
 import { SyncStatus } from '../fixtures/entities/sync-status.entity';
 import { AccaGeneratorService } from './acca-generator.service';
 import { VipTipsterSetupService } from './vip-tipster-setup.service';
+import { AccumulatorsService } from '../accumulators/accumulators.service';
 
 export type VipTipsterRunResult = {
   enabled: boolean;
@@ -55,6 +56,7 @@ export class VipTipsterPublisherService {
   constructor(
     private readonly accaGenerator: AccaGeneratorService,
     private readonly setup: VipTipsterSetupService,
+    private readonly accumulatorsService: AccumulatorsService,
     @InjectRepository(Tipster)
     private readonly tipsterRepo: Repository<Tipster>,
     @InjectRepository(AccumulatorTicket)
@@ -262,6 +264,8 @@ export class VipTipsterPublisherService {
       };
     }
 
+    await this.accumulatorsService.ensureHouseVipMarketplaceListings();
+
     const existing = await this.findDeskDayTickets(tipster.userId, deskDayStr);
     const usedFixtureIds = new Set<number>();
     await this.addDeskDayFixtureIds(usedFixtureIds, [tipster.userId], deskDayStr);
@@ -312,14 +316,14 @@ export class VipTipsterPublisherService {
             255,
           );
         const description = (
-          `${VIP_TIPSTER.bio} ${generated.constructionLabel} · ${slot.label} · ${deskDayStr}. VIP subscribers only.`
+          `${VIP_TIPSTER.bio} ${generated.constructionLabel} · ${slot.label} · ${deskDayStr}. Covered on marketplace; legs for VIP subscribers.`
         ).slice(0, 2000);
 
         const published = await this.accaGenerator.publish(tipster.userId, {
           generationId: generated.generationId,
           title,
           description,
-          placement: 'subscription',
+          placement: 'both',
           subscriptionPackageIds: [pkg.id],
         });
 

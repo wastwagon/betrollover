@@ -47,6 +47,8 @@ interface MarketplaceCardItem {
   bookmakerKey?: string | null;
   bookingCode?: string | null;
   bookingCodeCopyCount?: number;
+  picksRevealed?: boolean;
+  requiresSubscription?: boolean;
   reactionCount?: number;
   hasReacted?: boolean;
   commentCount?: number;
@@ -186,6 +188,8 @@ export function HomeQuickMarketplaceSections({
         bookmakerKey={a.bookmakerKey}
         bookingCode={a.bookingCode}
         bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}
+        picksRevealed={a.picksRevealed === true}
+        requiresSubscription={a.requiresSubscription === true}
         viewOnly
         detailsHref={`/coupons/${a.id}`}
         onPurchase={() => {}}

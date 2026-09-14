@@ -60,6 +60,11 @@ import {
   isClassicAiHiddenFromPublic,
   isClassicAiTipsterRow,
 } from '../../common/classic-ai-public-visibility.util';
+import {
+  listingIsSubscriptionGated,
+  marketplaceOpenFreeListingSql,
+} from '../../common/subscription-gated-listing.util';
+import { VIP_TIPSTER, VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
 
 /** Keep pick create aligned with Acca Generator max legs (admin can still lower Acca range). */
 const MAX_SELECTIONS_PER_PICK = ACCA_GENERATOR_LEGS_MAX;
@@ -94,7 +99,7 @@ export interface CreateAccumulatorDto {
    * Used only for display; each selection carries its own `sport` for routing.
    */
   sport?: string;
-  /** Placement: 'marketplace' | 'subscription' (default: marketplace). 'both' is rejected. */
+  /** Placement: 'marketplace' | 'subscription' (default: marketplace). House VIP may use 'both'. */
   placement?: string;
   /** If placement includes subscription: package IDs to add coupon to */
   subscriptionPackageIds?: number[];
@@ -129,6 +134,7 @@ type PickCommentTreeNode = {
 @Injectable()
 export class AccumulatorsService {
   private readonly logger = new Logger(AccumulatorsService.name);
+  private houseVipListEnsure: Promise<number> | null = null;
 
   constructor(
     @InjectRepository(AccumulatorTicket)
@@ -283,19 +289,34 @@ export class AccumulatorsService {
     }
 
     const rawPlacement = (dto.placement || 'marketplace').toLowerCase().trim();
-    if (rawPlacement === 'both') {
+    const isHouseVip = await this.telegramVip.isHouseVipUserId(userId);
+    if (rawPlacement === 'both' && !isHouseVip) {
       throw new BadRequestException('Choose either marketplace or subscription — not both.');
     }
-    const placementNorm: 'marketplace' | 'subscription' =
-      rawPlacement === 'subscription' ? 'subscription' : 'marketplace';
+    const placementNorm: 'marketplace' | 'subscription' | 'both' =
+      rawPlacement === 'both' && isHouseVip
+        ? 'both'
+        : rawPlacement === 'subscription'
+          ? 'subscription'
+          : 'marketplace';
 
     // VIP-only slips are included in the plan fee — never sold as paid marketplace picks.
     let price = dto.price && dto.price > 0 ? dto.price : 0;
-    if (placementNorm === 'subscription') {
+    if (placementNorm === 'subscription' || placementNorm === 'both') {
       price = 0;
     }
 
-    if (placementNorm === 'subscription') {
+    if (placementNorm === 'both') {
+      if (!isSubscriptionsEnabled()) {
+        throw new BadRequestException('VIP subscriptions are temporarily disabled. Publish to the marketplace instead.');
+      }
+      if (!dto.isMarketplace) {
+        throw new BadRequestException('Marketplace placement requires listing on the marketplace.');
+      }
+      if (!(dto.subscriptionPackageIds?.length)) {
+        throw new BadRequestException('Select your VIP package for subscription-only picks.');
+      }
+    } else if (placementNorm === 'subscription') {
       if (!isSubscriptionsEnabled()) {
         throw new BadRequestException('VIP subscriptions are temporarily disabled. Publish to the marketplace instead.');
       }
@@ -363,7 +384,7 @@ export class AccumulatorsService {
       price: price,
       status: 'active',
       result: 'pending',
-      isMarketplace: dto.isMarketplace,
+      isMarketplace: dto.isMarketplace || placementNorm === 'both',
       bookmakerKey,
       bookingCode,
     });
@@ -448,24 +469,26 @@ export class AccumulatorsService {
       await this.pickRepo.save(pick);
     }
 
-    if (dto.isMarketplace) {
+    if (dto.isMarketplace || placementNorm === 'both') {
       await this.marketplaceRepo.save({
         accumulatorId: ticket.id,
         sellerId: userId,
-        price: dto.price,
+        price,
         status: 'active',
-        maxPurchases: dto.price === 0 ? 999999 : 999999,
-        placement: 'marketplace',
-        subscriptionPackageId: null,
+        maxPurchases: 999999,
+        placement: placementNorm === 'both' ? 'both' : 'marketplace',
+        subscriptionPackageId: placementNorm === 'both' ? (dto.subscriptionPackageIds?.[0] ?? null) : null,
       });
       await this.notificationsService.create({
         userId,
         type: 'pick_published',
         title: 'Pick Published',
         message:
-          price > 0
-            ? `Your pick is now live on the marketplace at GHS ${price.toFixed(2)}.`
-            : `Your free pick is now live on the marketplace.`,
+          placementNorm === 'both'
+            ? 'Your VIP pick is live on the marketplace (legs covered for non-subscribers).'
+            : price > 0
+              ? `Your pick is now live on the marketplace at GHS ${price.toFixed(2)}.`
+              : `Your free pick is now live on the marketplace.`,
         link: '/marketplace',
         icon: 'check',
         sendEmail: true,
@@ -480,7 +503,7 @@ export class AccumulatorsService {
           couponId: ticket.id,
           creatorName,
           price,
-          isFree: price === 0,
+          isFree: price === 0 && placementNorm !== 'both',
         },
       }).catch(() => { });
 
@@ -489,9 +512,10 @@ export class AccumulatorsService {
         select: ['id', 'displayName', 'tipsterType', 'username'],
       });
       const isAccaDesk = tipster?.tipsterType === ACCA_DESK_TIPSTER_TYPE;
+      const isVipDesk = isHouseVip || tipster?.tipsterType === VIP_TIPSTER_TYPE;
       const isAccaSure = (tipster?.username || '').toLowerCase() === ROLLOVER_OWNER_USERNAME.toLowerCase();
-      // Acca Desk: only AccaSure1X2 hits the channel (other desks stay on-site).
-      const mayTelegram = !isAccaDesk || isAccaSure;
+      // Acca Desk: only AccaSure1X2 hits the channel. House VIP stays on the private VIP channel.
+      const mayTelegram = (!isAccaDesk || isAccaSure) && !isVipDesk;
       if (mayTelegram) {
         const elig = await this.telegramEligibility.canPostForUserId(userId);
         if (elig.ok) {
@@ -523,9 +547,9 @@ export class AccumulatorsService {
           couponTitle: dto.title,
           price,
           accumulatorId: ticket.id,
-          skipEmail: isAccaDesk,
+          skipEmail: isAccaDesk || isVipDesk,
           couponCard:
-            !isAccaDesk && price === 0
+            !isAccaDesk && !isVipDesk && price === 0
               ? {
                   totalOdds: Number(ticket.totalOdds),
                   isSubscription: false,
@@ -540,8 +564,13 @@ export class AccumulatorsService {
         });
       }
       this.resultTrackerService.scheduleLeaderboardRefresh('marketplace-post');
-    } else if (placementNorm === 'subscription' && (dto.subscriptionPackageIds?.length ?? 0) > 0) {
-      // Subscription-only: add coupon to packages (no marketplace listing)
+    }
+
+    if (
+      (placementNorm === 'subscription' || placementNorm === 'both') &&
+      (dto.subscriptionPackageIds?.length ?? 0) > 0
+    ) {
+      // Included in the VIP plan; marketplace listing is covered for non-subscribers when placement is both.
       await this.subscriptionsService.addCouponToPackages(ticket.id, dto.subscriptionPackageIds!, userId);
       const creator = await this.usersRepo.findOne({ where: { id: userId }, select: ['displayName', 'username'] });
       const creatorName = creator?.displayName || creator?.username || 'Tipster';
@@ -607,6 +636,14 @@ export class AccumulatorsService {
     return next;
   }
 
+  private async couponIsSubscriptionGated(
+    ticketId: number,
+    listingRow: PickMarketplace | null,
+  ): Promise<boolean> {
+    if (listingIsSubscriptionGated(listingRow)) return true;
+    return this.subscriptionsService.isCouponLinkedToSubscriptionPackage(ticketId);
+  }
+
   /**
    * Whether the viewer may see full pick legs and booking code (matches applyCouponPickVisibility rules).
    */
@@ -615,41 +652,42 @@ export class AccumulatorsService {
     listingRow: PickMarketplace | null,
     viewerUserId: number | null | undefined,
     opts?: { forceFullPicks?: boolean; viewerIsAdmin?: boolean },
-  ): Promise<{ revealed: boolean; accessViaSubscription?: boolean }> {
+  ): Promise<{ revealed: boolean; accessViaSubscription?: boolean; requiresSubscription: boolean }> {
+    const requiresSubscription = await this.couponIsSubscriptionGated(ticket.id, listingRow);
     if (opts?.forceFullPicks || opts?.viewerIsAdmin) {
-      return { revealed: true };
+      return { revealed: true, requiresSubscription };
     }
     const effectivePrice =
       listingRow && listingRow.status === 'active'
         ? Number(listingRow.price)
         : Number(ticket.price ?? 0);
-    if (effectivePrice <= 0) {
-      return { revealed: true };
+    if (effectivePrice <= 0 && !requiresSubscription) {
+      return { revealed: true, requiresSubscription };
     }
     const settled = ['won', 'lost', 'void'].includes((ticket.result || 'pending').toLowerCase());
     if (settled) {
-      return { revealed: true };
+      return { revealed: true, requiresSubscription };
     }
     if (viewerUserId == null) {
-      return { revealed: false };
+      return { revealed: false, requiresSubscription };
     }
     if (ticket.userId === viewerUserId) {
-      return { revealed: true };
+      return { revealed: true, requiresSubscription };
     }
     const hasSubscriptionAccess = await this.subscriptionsService.hasSubscriptionAccessToCoupon(
       viewerUserId,
       ticket.id,
     );
     if (hasSubscriptionAccess) {
-      return { revealed: true, accessViaSubscription: true };
+      return { revealed: true, accessViaSubscription: true, requiresSubscription };
     }
     const purchased = await this.purchasedRepo.findOne({
       where: { userId: viewerUserId, accumulatorId: ticket.id },
     });
     if (purchased) {
-      return { revealed: true };
+      return { revealed: true, requiresSubscription };
     }
-    return { revealed: false };
+    return { revealed: false, requiresSubscription };
   }
 
   private async getBookingCodeCopyCountsByAccumulatorIds(ids: number[]): Promise<Map<number, number>> {
@@ -713,7 +751,7 @@ export class AccumulatorsService {
     }
     const row = await this.marketplaceRepo.findOne({
       where: { accumulatorId },
-      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status', 'placement', 'subscriptionPackageId'],
     });
     const state = await this.couponPicksRevealState(ticket, row, userId, {});
     if (!state.revealed) {
@@ -748,7 +786,7 @@ export class AccumulatorsService {
     }
     const row = await this.marketplaceRepo.findOne({
       where: { accumulatorId },
-      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status', 'placement', 'subscriptionPackageId'],
     });
     const state = await this.couponPicksRevealState(ticket, row, viewerUserId ?? null, {
       viewerIsAdmin: viewerIsAdmin === true,
@@ -809,12 +847,14 @@ export class AccumulatorsService {
       return {
         ...this.stripBookingCodeFromPayload(payload),
         picksRevealed: false,
+        requiresSubscription: state.requiresSubscription,
         picks: this.buildRedactedPicksForCoupon((payload.picks as Array<{ id?: number }>) || []),
       };
     }
     return {
       ...payload,
       picksRevealed: true,
+      requiresSubscription: state.requiresSubscription,
       ...(state.accessViaSubscription ? { accessViaSubscription: true as const } : {}),
     };
   }
@@ -838,6 +878,7 @@ export class AccumulatorsService {
     return {
       picks: (applied.picks as unknown[]) ?? picksPayload,
       picksRevealed: applied.picksRevealed === true,
+      requiresSubscription: applied.requiresSubscription === true,
       ...(applied.accessViaSubscription === true ? { accessViaSubscription: true as const } : {}),
     };
   }
@@ -927,7 +968,7 @@ export class AccumulatorsService {
     // Include tipster metadata and marketplace row so the detail page has full context
     const row = await this.marketplaceRepo.findOne({
       where: { accumulatorId: id },
-      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status', 'placement', 'subscriptionPackageId'],
     });
     const [withTipster] = await this.enrichWithTipsterMetadata(
       [enriched],
@@ -954,7 +995,7 @@ export class AccumulatorsService {
     const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
     const rows = await this.marketplaceRepo.find({
       where: { accumulatorId: In(accIds) },
-      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status', 'placement', 'subscriptionPackageId'],
     });
     const withTipster = await this.enrichWithTipsterMetadata(enrichedTickets, rows, userId);
     const ticketMap = new Map(withTipster.map((t) => [t.id, t]));
@@ -1080,6 +1121,7 @@ export class AccumulatorsService {
       viewerIsAdmin?: boolean;
     },
   ) {
+    await this.ensureHouseVipMarketplaceListings();
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
     const offset = Math.max(options?.offset ?? 0, 0);
     const adminFilterMode = options?.showPending !== undefined || options?.showNotStated !== undefined || options?.showSettled !== undefined;
@@ -1110,7 +1152,7 @@ export class AccumulatorsService {
       }
       qb.andWhere(accaDeskPausedMarketplaceTicketExcludeRawSql('t'));
 
-      if (options?.priceFilter === 'free') qb.andWhere('pm.price = 0');
+      if (options?.priceFilter === 'free') qb.andWhere(marketplaceOpenFreeListingSql('pm'));
       if (options?.priceFilter === 'paid') qb.andWhere('pm.price > 0');
       if (options?.priceFilter === 'sold') qb.andWhere('pm.purchase_count > 0');
 
@@ -1157,7 +1199,7 @@ export class AccumulatorsService {
 
       const rows = await this.marketplaceRepo.find({
         where: { accumulatorId: In(pageIds), status: 'active' },
-        select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
+        select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status', 'placement', 'subscriptionPackageId'],
       });
 
       const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
@@ -1183,10 +1225,10 @@ export class AccumulatorsService {
     const marketplaceWhere = { status: 'active' as const };
     const rows = await this.marketplaceRepo.find({
       where: marketplaceWhere,
-      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status', 'placement', 'subscriptionPackageId'],
     });
     const rowsFiltered = rows.filter((r) => {
-      if (options?.priceFilter === 'free') return Number(r.price) === 0;
+      if (options?.priceFilter === 'free') return Number(r.price) === 0 && !listingIsSubscriptionGated(r);
       if (options?.priceFilter === 'paid') return Number(r.price) > 0;
       if (options?.priceFilter === 'sold') return Number(r.purchaseCount ?? 0) > 0;
       return true;
@@ -1326,6 +1368,7 @@ export class AccumulatorsService {
     tipsterSearch?: string;
     viewerUserId?: number;
   }) {
+    await this.ensureHouseVipMarketplaceListings();
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
     const offset = Math.max(options?.offset ?? 0, 0);
 
@@ -1352,7 +1395,7 @@ export class AccumulatorsService {
     qb.andWhere(accaDeskPausedMarketplaceTicketExcludeRawSql('t'));
 
     if (options?.priceFilter === 'free' || options?.freeOnly) {
-      qb.andWhere('pm.price = 0');
+      qb.andWhere(marketplaceOpenFreeListingSql('pm'));
     }
     if (options?.priceFilter === 'paid') {
       qb.andWhere('pm.price > 0');
@@ -1395,7 +1438,7 @@ export class AccumulatorsService {
 
     const rowsForPaginated = await this.marketplaceRepo.find({
       where: { accumulatorId: In(pageIds), status: 'active' },
-      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status', 'placement', 'subscriptionPackageId'],
     });
 
     const itemsWithMeta = await this.enrichWithTipsterMetadata(
@@ -1493,7 +1536,7 @@ export class AccumulatorsService {
 
     const rowsForPaginated = await this.marketplaceRepo.find({
       where: { accumulatorId: In(pageIds), status: 'active' },
-      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status'],
+      select: ['accumulatorId', 'price', 'purchaseCount', 'viewCount', 'status', 'placement', 'subscriptionPackageId'],
     });
 
     const itemsWithMeta = await this.enrichWithTipsterMetadata(
@@ -1558,6 +1601,7 @@ export class AccumulatorsService {
 
   /** Tipsters who have marketplace coupons (for admin filter dropdown) */
   async getMarketplaceTipsters(): Promise<{ username: string; displayName: string }[]> {
+    await this.ensureHouseVipMarketplaceListings();
     const rows = await this.marketplaceRepo
       .createQueryBuilder('pm')
       .select('DISTINCT pm.seller_id', 'sellerId')
@@ -1570,6 +1614,73 @@ export class AccumulatorsService {
       order: { displayName: 'ASC' },
     });
     return users.map((u) => ({ username: u.username, displayName: u.displayName || u.username }));
+  }
+
+  /**
+   * List existing house VIP tickets on the marketplace (covered for non-subscribers).
+   * Idempotent — used so admin/customer marketplace and reports see VipTwoFold without waiting for the next cron.
+   */
+  async ensureHouseVipMarketplaceListings(): Promise<number> {
+    if (this.houseVipListEnsure) return this.houseVipListEnsure;
+    this.houseVipListEnsure = this.ensureHouseVipMarketplaceListingsInner().finally(() => {
+      this.houseVipListEnsure = null;
+    });
+    return this.houseVipListEnsure;
+  }
+
+  private async ensureHouseVipMarketplaceListingsInner(): Promise<number> {
+    const tipster = await this.tipsterRepo.findOne({
+      where: { username: VIP_TIPSTER.username, tipsterType: VIP_TIPSTER_TYPE },
+      select: ['userId'],
+    });
+    if (!tipster?.userId) return 0;
+
+    const pkgRows = await this.dataSource.query(
+      `SELECT id FROM tipster_subscription_packages
+       WHERE tipster_user_id = $1 AND status = 'active'
+       ORDER BY created_at ASC
+       LIMIT 1`,
+      [tipster.userId],
+    );
+    const packageId = Number(pkgRows?.[0]?.id);
+    if (!Number.isFinite(packageId) || packageId < 1) return 0;
+
+    const unlisted = await this.ticketRepo
+      .createQueryBuilder('t')
+      .leftJoin(PickMarketplace, 'pm', 'pm.accumulator_id = t.id')
+      .where('t.userId = :uid', { uid: tipster.userId })
+      .andWhere('pm.id IS NULL')
+      .select(['t.id', 't.price', 't.isMarketplace'])
+      .getMany();
+    if (unlisted.length === 0) return 0;
+
+    let listed = 0;
+    for (const ticket of unlisted) {
+      const existingListing = await this.marketplaceRepo.findOne({
+        where: { accumulatorId: ticket.id },
+        select: ['id'],
+      });
+      if (existingListing) continue;
+      if (!ticket.isMarketplace) {
+        ticket.isMarketplace = true;
+        await this.ticketRepo.save(ticket);
+      }
+      await this.marketplaceRepo.save({
+        accumulatorId: ticket.id,
+        sellerId: tipster.userId,
+        price: 0,
+        status: 'active',
+        maxPurchases: 999999,
+        placement: 'both',
+        subscriptionPackageId: packageId,
+      });
+      await this.subscriptionsService.addCouponToPackages(ticket.id, [packageId], tipster.userId);
+      listed += 1;
+    }
+    if (listed > 0) {
+      this.logger.log(`Listed ${listed} house VIP ticket(s) on marketplace (covered for non-subscribers)`);
+    }
+    return listed;
   }
 
   /** Diagnostic: why marketplace might be empty (admin debugging) */
@@ -1847,11 +1958,12 @@ export class AccumulatorsService {
   ): Promise<number[]> {
     const qb = this.ticketRepo
       .createQueryBuilder('t')
-      .innerJoin(PickMarketplace, 'pm', "pm.accumulator_id = t.id AND pm.status = 'active' AND pm.price = 0")
+      .innerJoin(PickMarketplace, 'pm', `pm.accumulator_id = t.id AND pm.status = 'active' AND ${marketplaceOpenFreeListingSql('pm')}`)
       .innerJoin(Tipster, 'ts', 'ts.user_id = t.user_id')
       .where("t.status = 'active'")
       .andWhere("t.result = 'pending'")
       .andWhere('t.is_marketplace = true')
+      .andWhere('(ts.tipster_type IS NULL OR ts.tipster_type <> :vipDesk)', { vipDesk: VIP_TIPSTER_TYPE })
       .andWhere('ts.roi > 0')
       .andWhere('(ts.total_wins + ts.total_losses) >= :minSettled', { minSettled })
       .andWhere(
@@ -2106,7 +2218,7 @@ export class AccumulatorsService {
   async getMarketplacePublic(limit = 4, viewerUserId?: number) {
     const rows = await this.marketplaceRepo.find({
       where: { status: 'active' },
-      select: ['accumulatorId', 'price', 'purchaseCount'],
+      select: ['accumulatorId', 'price', 'purchaseCount', 'placement', 'subscriptionPackageId'],
       order: { purchaseCount: 'DESC' },
       take: limit,
     });
@@ -2217,6 +2329,7 @@ export class AccumulatorsService {
     to?: string;
     viewerUserId?: number;
   }) {
+    await this.ensureHouseVipMarketplaceListings();
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 200);
     const offset = Math.max(options?.offset ?? 0, 0);
     const { fromUtc, toExclusiveUtc } = this.resolveArchiveDateRange(options?.from, options?.to);
@@ -2292,15 +2405,25 @@ export class AccumulatorsService {
     const rows = pageIds.length
       ? await this.marketplaceRepo.find({
           where: { accumulatorId: In(pageIds) },
-          select: ['accumulatorId', 'price', 'purchaseCount'],
+          select: ['accumulatorId', 'price', 'purchaseCount', 'placement', 'subscriptionPackageId', 'status'],
         })
       : [];
 
     const enrichedTickets = await this.enrichPicksWithFixtureScores(tickets);
-    const items = await this.enrichWithTipsterMetadata(enrichedTickets, rows, options?.viewerUserId);
-    await this.mergeBookingCodeCopyCountsForTicketsPlain(
-      items as Array<Record<string, unknown> & { id: number; bookmakerKey?: string | null; bookingCode?: string | null }>,
+    const itemsWithMeta = await this.enrichWithTipsterMetadata(enrichedTickets, rows, options?.viewerUserId);
+    const rowByAccId = new Map(rows.map((r) => [r.accumulatorId, r]));
+    const ticketById = new Map(enrichedTickets.map((t) => [t.id, t]));
+    const items = await Promise.all(
+      itemsWithMeta.map((item) =>
+        this.applyCouponPickVisibility(
+          item as Record<string, unknown>,
+          ticketById.get((item as { id: number }).id)!,
+          rowByAccId.get((item as { id: number }).id) ?? null,
+          options?.viewerUserId ?? null,
+        ),
+      ),
     );
+    await this.mergeBookingCodeCopyCountsIntoPayloads(items as Record<string, unknown>[]);
     return {
       items,
       total,
@@ -2334,6 +2457,15 @@ export class AccumulatorsService {
           where: { accumulatorId, status: 'active' },
         });
         if (!listing) throw new NotFoundException('Pick not listed on marketplace');
+
+        const subscriptionGated =
+          listingIsSubscriptionGated(listing) ||
+          (await this.subscriptionsService.isCouponLinkedToSubscriptionPackage(accumulatorId));
+        if (subscriptionGated) {
+          throw new ForbiddenException(
+            'This pick is included with a VIP subscription. Subscribe to unlock it.',
+          );
+        }
 
         const existing = await purchasedRepo.findOne({
           where: { userId: buyerId, accumulatorId },

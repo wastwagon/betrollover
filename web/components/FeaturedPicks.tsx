@@ -43,6 +43,8 @@ interface Accumulator {
   bookmakerKey?: string | null;
   bookingCode?: string | null;
   bookingCodeCopyCount?: number;
+  picksRevealed?: boolean;
+  requiresSubscription?: boolean;
   reactionCount?: number;
   hasReacted?: boolean;
   commentCount?: number;
@@ -97,6 +99,8 @@ export function FeaturedPicks({
               bookmakerKey={a.bookmakerKey}
               bookingCode={a.bookingCode}
               bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}
+              picksRevealed={a.picksRevealed === true}
+              requiresSubscription={a.requiresSubscription === true}
               viewOnly={true}
               detailsHref="/marketplace"
               onPurchase={() => { }}

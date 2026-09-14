@@ -29,6 +29,7 @@ export interface FeedPick {
   } | null;
   createdAt: string;
   picksRevealed?: boolean;
+  requiresSubscription?: boolean;
   bookmakerKey?: string | null;
   bookingCode?: string | null;
   bookingCodeCopyCount?: number;

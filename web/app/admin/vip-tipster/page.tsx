@@ -167,6 +167,7 @@ function VipSlipCards({
             viewOnly
             detailsHref={`/coupons/${t.id}`}
             picksRevealed
+            requiresSubscription
             expandableLegs
             socialEnabled={false}
             isPurchased

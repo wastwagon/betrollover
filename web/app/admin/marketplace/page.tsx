@@ -45,6 +45,8 @@ interface Accumulator {
   bookmakerKey?: string | null;
   bookingCode?: string | null;
   bookingCodeCopyCount?: number;
+  picksRevealed?: boolean;
+  requiresSubscription?: boolean;
   reactionCount?: number;
   hasReacted?: boolean;
   commentCount?: number;
@@ -433,6 +435,8 @@ export default function AdminMarketplacePage() {
                   isPurchased={false}
                   canPurchase={false}
                   viewOnly
+                  picksRevealed={a.picksRevealed === true}
+                  requiresSubscription={a.requiresSubscription === true}
                   onPurchase={() => {}}
                   purchasing={false}
                   className="opacity-95"

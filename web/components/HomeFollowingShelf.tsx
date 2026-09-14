@@ -41,6 +41,7 @@ type FeedItem = {
   hasReacted?: boolean;
   commentCount?: number;
   picksRevealed?: boolean;
+  requiresSubscription?: boolean;
 };
 
 /**
@@ -178,7 +179,7 @@ export function HomeFollowingShelf() {
                 bookingCode={a.bookingCode}
                 bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}
                 picksRevealed={a.picksRevealed === true}
-                viewOnly
+                requiresSubscription={a.requiresSubscription === true}
                 detailsHref={`/coupons/${a.id}`}
                 onPurchase={() => {}}
                 purchasing={false}

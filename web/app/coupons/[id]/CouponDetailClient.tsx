@@ -83,6 +83,8 @@ interface Coupon {
   bookingCodeCopyCount?: number;
   /** false = API withheld leg details until purchase (paid marketplace). */
   picksRevealed?: boolean;
+  /** Price 0 VIP listing — subscribe instead of unlocking as a free pick. */
+  requiresSubscription?: boolean;
   /** true when access to paid picks is unlocked via an active subscription to this tipster. */
   accessViaSubscription?: boolean;
   price: number;
@@ -484,21 +486,35 @@ export default function CouponDetailPage({
   const resultStyle = resultChipClass(coupon.result ?? 'pending');
   const pickCount = coupon.totalPicks ?? coupon.picks.length;
   const couponPending = (coupon.result ?? 'pending').toLowerCase() === 'pending';
+  const subscriptionLocked =
+    couponPending &&
+    coupon.requiresSubscription === true &&
+    coupon.picksRevealed !== true &&
+    !isPurchased;
   const picksHidden =
     couponPending &&
-    Number(coupon.price) > 0 &&
     (coupon.picksRevealed === false ||
-      (coupon.picksRevealed === undefined && !isPurchased));
+      subscriptionLocked ||
+      (Number(coupon.price) > 0 &&
+        (coupon.picksRevealed === false ||
+          (coupon.picksRevealed === undefined && !isPurchased))));
   const wonPicks = picksHidden ? 0 : coupon.picks.filter(p => p.result === 'won').length;
   const lostPicks = picksHidden ? 0 : coupon.picks.filter(p => p.result === 'lost').length;
   const settledPicks = wonPicks + lostPicks;
-  const canPurchase = !isPurchased && (coupon.price === 0 || (walletBalance !== null && walletBalance >= coupon.price));
+  const canPurchase =
+    !isPurchased &&
+    !subscriptionLocked &&
+    (coupon.price === 0 || (walletBalance !== null && walletBalance >= coupon.price));
   const isSettled = ['won', 'lost', 'void'].includes((coupon.result ?? 'pending').toLowerCase());
   const hasNonPurchaseAccess =
     couponPending &&
-    Number(coupon.price) > 0 &&
     coupon.picksRevealed === true &&
-    !isPurchased;
+    !isPurchased &&
+    (Number(coupon.price) > 0 || coupon.requiresSubscription === true || coupon.accessViaSubscription === true);
+  const subscribeHref = coupon.tipster?.username
+    ? `/tipsters/${encodeURIComponent(coupon.tipster.username)}#subscription-packages`
+    : '/subscriptions/marketplace';
+  const isOpenFree = Number(coupon.price) === 0 && coupon.requiresSubscription !== true;
 
   return (
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
@@ -688,7 +704,9 @@ export default function CouponDetailPage({
                   <div className="min-w-0">
                     <p className="font-semibold text-[var(--text)]">{t('pick_detail.selections_locked_title')}</p>
                     <p className="text-sm text-[var(--text-muted)] mt-0.5 leading-relaxed">
-                      {t('pick_detail.selections_locked_body')}
+                      {subscriptionLocked
+                        ? t('pick_detail.selections_locked_vip_body')
+                        : t('pick_detail.selections_locked_body')}
                     </p>
                   </div>
                 </div>
@@ -706,7 +724,9 @@ export default function CouponDetailPage({
                             : t('pick_detail.selection_number', { n: String(idx + 1) })}
                         </p>
                         <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                          {t('pick_detail.hidden_until_purchase')}
+                          {subscriptionLocked
+                            ? t('pick_detail.hidden_until_subscribe')
+                            : t('pick_detail.hidden_until_purchase')}
                         </p>
                       </div>
                     </div>
@@ -715,7 +735,9 @@ export default function CouponDetailPage({
                 <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 mb-6">
                   <h3 className="text-sm font-semibold text-[var(--text)] mb-2">{t('pick_detail.odds_breakdown_title')}</h3>
                   <p className="text-sm text-[var(--text-muted)] mb-3">
-                    {t('pick_detail.per_leg_unlock_note')}
+                    {subscriptionLocked
+                      ? t('pick_detail.per_leg_unlock_vip_note')
+                      : t('pick_detail.per_leg_unlock_note')}
                   </p>
                   <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between gap-2 min-w-0">
                     <span className="text-sm font-semibold text-[var(--text)] shrink-0">{t('pick_detail.total_odds_balance')}</span>
@@ -854,7 +876,11 @@ export default function CouponDetailPage({
                 <div className="p-5">
                   <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3 mb-4 min-w-0">
                     <span className="text-lg font-semibold text-[var(--primary)] tabular-nums shrink-0">
-                      {coupon.price === 0 ? t('common.free') : `GHS ${Number(coupon.price).toFixed(2)}`}
+                      {coupon.requiresSubscription
+                        ? t('pick_card.vip_included')
+                        : isOpenFree
+                          ? t('common.free')
+                          : `GHS ${Number(coupon.price).toFixed(2)}`}
                     </span>
                     {coupon.price > 0 && walletBalance !== null && (
                       <span className="text-xs text-[var(--text-muted)] tabular-nums min-w-0 sm:text-right">
@@ -939,6 +965,14 @@ export default function CouponDetailPage({
                       {purchaseError && (
                         <p className="text-xs text-[var(--destructive)] bg-[var(--destructive-light)] p-2 rounded-lg border border-[var(--destructive)]/25">{purchaseError}</p>
                       )}
+                      {subscriptionLocked ? (
+                        <Link
+                          href={subscribeHref}
+                          className={buttonClassName({ variant: 'accent', fullWidth: true })}
+                        >
+                          {t('pick_card.subscribe_cta')}
+                        </Link>
+                      ) : (
                       <Button
                         type="button"
                         onClick={handlePurchase}
@@ -947,10 +981,11 @@ export default function CouponDetailPage({
                       >
                         {purchasing
                           ? t('pick_card.processing')
-                          : coupon.price === 0
+                          : isOpenFree
                             ? t('pick_detail.get_free_pick')
                             : t('marketplace.purchase_btn', { price: `GHS ${Number(coupon.price).toFixed(2)}` })}
                       </Button>
+                      )}
                       {Number(coupon.price) > 0 ? (
                         <p className="text-[11px] text-center text-[var(--primary)] leading-snug">
                           {t('pick_detail.fee_refund_line')}
@@ -975,7 +1010,7 @@ export default function CouponDetailPage({
                     <div>
                       <p className="text-xs font-bold text-[var(--primary)]">{t('pick_detail.escrow_badge_title')}</p>
                       <p className="text-xs text-[var(--text-muted)] leading-relaxed mt-0.5">
-                        {coupon.price === 0 ? t('pick_detail.escrow_free_note') : t('pick_detail.escrow_paid_note')}
+                        {isOpenFree ? t('pick_detail.escrow_free_note') : coupon.requiresSubscription ? t('pick_detail.selections_locked_vip_body') : t('pick_detail.escrow_paid_note')}
                       </p>
                     </div>
                   </div>
@@ -1071,7 +1106,7 @@ export default function CouponDetailPage({
                   title={coupon.title}
                   tipsterName={coupon.tipster?.displayName}
                   totalOdds={Number(coupon.totalOdds)}
-                  isFree={coupon.price === 0}
+                  isFree={isOpenFree}
                   bookmakerKey={coupon.bookmakerKey}
                   bookingCode={coupon.bookingCode}
                 />
@@ -1113,7 +1148,11 @@ export default function CouponDetailPage({
           <div className="flex items-center gap-2 max-w-lg mx-auto min-w-0">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-[var(--primary)] tabular-nums truncate">
-                {coupon.price === 0 ? t('common.free') : `GHS ${Number(coupon.price).toFixed(2)}`}
+                {coupon.requiresSubscription
+                  ? t('pick_card.vip_included')
+                  : isOpenFree
+                    ? t('common.free')
+                    : `GHS ${Number(coupon.price).toFixed(2)}`}
               </p>
               {Number(coupon.price) > 0 ? (
                 <p className="text-[10px] text-[var(--text-muted)] truncate">{t('pick_detail.fee_refund_line')}</p>
@@ -1127,6 +1166,13 @@ export default function CouponDetailPage({
               >
                 {t('nav.login')}
               </Link>
+            ) : subscriptionLocked ? (
+              <Link
+                href={subscribeHref}
+                className={buttonClassName({ size: 'sm', className: 'shrink-0' })}
+              >
+                {t('pick_card.subscribe_cta')}
+              </Link>
             ) : canPurchase ? (
               <Button
                 type="button"
@@ -1137,7 +1183,7 @@ export default function CouponDetailPage({
               >
                 {purchasing
                   ? t('pick_card.processing')
-                  : coupon.price === 0
+                  : isOpenFree
                     ? t('pick_detail.get_free_pick')
                     : t('pick_card.purchase')}
               </Button>

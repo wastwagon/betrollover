@@ -30,7 +30,7 @@ export class PickMarketplace {
   @Column({ type: 'int', nullable: true })
   predictionId: number | null = null;
 
-  /** Placement: 'marketplace' | 'subscription' (legacy rows may still store 'both') */
+  /** Placement: 'marketplace' | 'subscription' | 'both' (house VIP: marketplace card + subscription unlock) */
   @Column({ length: 20, default: 'marketplace' })
   placement: string;
 
