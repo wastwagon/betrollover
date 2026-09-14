@@ -11,7 +11,7 @@ import { TipsterPerformanceLog } from './entities/tipster-performance-log.entity
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { FixtureUpdateService } from '../fixtures/fixture-update.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { determinePickResult } from '../accumulators/settlement-logic';
+import { aggregateTicketResult, determinePickResult, remainingAccumulatorOdds } from '../accumulators/settlement-logic';
 import { TipstersApiService } from './tipsters-api.service';
 import {
   LEADERBOARD_CACHE_GEN_KEY,
@@ -218,8 +218,6 @@ export class ResultTrackerService {
     );
     if (!allSettled) return false;
 
-    const hasVoid = fixtures.some((f) => f.resultStatus === 'void');
-    const allWon = fixtures.every((f) => f.resultStatus === 'won');
     const prediction = await this.predictionRepo.findOne({
       where: { id: predictionId },
       select: ['id', 'tipsterId', 'combinedOdds', 'status'],
@@ -227,24 +225,19 @@ export class ResultTrackerService {
 
     if (!prediction || prediction.status !== 'pending') return false;
 
-    const combinedOdds = Number(prediction.combinedOdds);
-    let status: string;
-    let actualResult: number;
-    if (hasVoid) {
-      status = 'void';
-      actualResult = 0;
-    } else if (allWon) {
-      status = 'won';
-      actualResult = combinedOdds - 1;
-    } else {
-      status = 'lost';
-      actualResult = -1;
-    }
+    const result = aggregateTicketResult(fixtures.map((f) => ({ result: f.resultStatus })));
+    const reducedOdds = remainingAccumulatorOdds(
+      fixtures.map((f) => ({ result: f.resultStatus, odds: f.selectionOdds })),
+    );
+    const combinedOdds = reducedOdds ?? Number(prediction.combinedOdds);
+    const status = result;
+    const actualResult = result === 'won' ? combinedOdds - 1 : result === 'lost' ? -1 : 0;
 
     await this.predictionRepo.update(predictionId, {
       status,
       actualResult,
       settledAt: new Date(),
+      ...(reducedOdds != null ? { combinedOdds: reducedOdds } : {}),
     });
 
     /** Tipster ROI / avg odds / win rate are persisted from accumulator_tickets in SettlementService.runSettlement */

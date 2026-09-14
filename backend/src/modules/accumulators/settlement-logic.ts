@@ -84,6 +84,42 @@ function gradeOu(total: number, pred: string): 'won' | 'lost' | null {
   return null;
 }
 
+export type AccumulatorOutcome = 'won' | 'lost' | 'void';
+
+/**
+ * Bookmaker order: drop voided legs (DNB draw, postponed, AH push), then settle what remains.
+ * Lost remaining leg → lost; all remaining won → won; nothing remaining → void.
+ */
+export function aggregateTicketResult(
+  picks: Array<{ result?: string | null }>,
+): AccumulatorOutcome {
+  const remaining = picks.filter((p) => {
+    const r = (p.result || '').toLowerCase();
+    return r === 'won' || r === 'lost';
+  });
+  if (remaining.length === 0) return 'void';
+  if (remaining.some((p) => (p.result || '').toLowerCase() === 'lost')) return 'lost';
+  return 'won';
+}
+
+/**
+ * Combined odds after dropping voided legs. Null when there is nothing to reduce
+ * (no voids, or every leg void).
+ */
+export function remainingAccumulatorOdds(
+  picks: Array<{ result?: string | null; odds?: number | string | null }>,
+): number | null {
+  if (picks.length === 0) return null;
+  const remaining = picks.filter((p) => (p.result || '').toLowerCase() !== 'void');
+  if (remaining.length === 0 || remaining.length === picks.length) return null;
+  const product = remaining.reduce((acc, p) => {
+    const o = Number(p.odds);
+    return acc * (Number.isFinite(o) && o > 0 ? o : 1);
+  }, 1);
+  if (!Number.isFinite(product) || product <= 0) return null;
+  return Math.round(product * 1000) / 1000;
+}
+
 /**
  * Pure settlement logic for determining pick result from prediction and scores.
  * Extracted for unit testing. Used by SettlementService.

@@ -14,7 +14,12 @@ import { TelegramChannelService } from '../telegram/telegram-channel.service';
 import { TelegramEligibilityService } from '../telegram/telegram-eligibility.service';
 import { TelegramVipService } from '../telegram/telegram-vip.service';
 import type { TelegramSlipLeg } from '../telegram/telegram-slip';
-import { determinePickResult } from './settlement-logic';
+import {
+  aggregateTicketResult,
+  determinePickResult,
+  remainingAccumulatorOdds,
+  type AccumulatorOutcome,
+} from './settlement-logic';
 import { clampPlatformCommissionPercent, splitGrossForTipsterPayout } from '../../common/platform-commission';
 import { couponUserFacingRef } from '../../common/coupon-public-label';
 import { TipstersApiService } from '../predictions/tipsters-api.service';
@@ -347,25 +352,30 @@ export class SettlementService {
             return { picks: ticketDeltas.length, changed: false, escrow: false };
           }
 
-          const newAgg = this.aggregateTicketResult(picks);
-          if (newAgg === ticket.result) {
+          const patch = this.ticketOutcomePatch(picks, ticket.totalOdds);
+          if (patch.result === ticket.result && patch.totalOdds == null) {
             return { picks: ticketDeltas.length, changed: false, escrow: false };
           }
 
           const oldResult = ticket.result;
           let escrowAdjusted = false;
-          if (ticket.isMarketplace && Number(ticket.price) > 0 && this.escrowWalletFlipNeeded(oldResult, newAgg)) {
+          if (
+            patch.result !== oldResult &&
+            ticket.isMarketplace &&
+            Number(ticket.price) > 0 &&
+            this.escrowWalletFlipNeeded(oldResult, patch.result)
+          ) {
             const couponRef = couponUserFacingRef(ticketId, ticket.title);
             if (oldResult === 'won') {
-              await this.escrowWonToLostOrVoid(manager, ticketId, ticket.userId, couponRef, newAgg === 'void');
+              await this.escrowWonToLostOrVoid(manager, ticketId, ticket.userId, couponRef, patch.result === 'void');
               escrowAdjusted = true;
-            } else if (newAgg === 'won') {
+            } else if (patch.result === 'won') {
               await this.escrowLostOrVoidToWon(manager, ticketId, ticket.userId, couponRef);
               escrowAdjusted = true;
             }
           }
 
-          await tRepo.update({ id: ticketId }, { result: newAgg, status: newAgg });
+          await tRepo.update({ id: ticketId }, patch);
           return {
             picks: ticketDeltas.length,
             changed: true,
@@ -393,13 +403,114 @@ export class SettlementService {
       );
     }
 
+    const voidedLegFix = await this.reaggregateTicketsWithVoidedLegs();
+    ticketsOutcomeChanged += voidedLegFix.ticketsChanged;
+    escrowTicketsAdjusted += voidedLegFix.escrowTicketsAdjusted;
+    for (const userId of voidedLegFix.userIds) {
+      await this.persistTipsterStatsForUserIds([userId]);
+    }
+
     return { picksRegraded, ticketsOutcomeChanged, escrowTicketsAdjusted, errors };
   }
 
-  private aggregateTicketResult(picks: AccumulatorPick[]): 'won' | 'lost' | 'void' {
-    const hasLost = picks.some((p) => p.result === 'lost');
-    const hasVoid = picks.some((p) => p.result === 'void');
-    return hasLost ? 'lost' : hasVoid ? 'void' : 'won';
+  private ticketOutcomePatch(
+    picks: AccumulatorPick[],
+    currentOdds?: number | string | null,
+  ): { result: AccumulatorOutcome; status: AccumulatorOutcome; totalOdds?: number } {
+    const result = aggregateTicketResult(picks);
+    const patch: { result: AccumulatorOutcome; status: AccumulatorOutcome; totalOdds?: number } = {
+      result,
+      status: result,
+    };
+    const reduced = remainingAccumulatorOdds(picks);
+    if (reduced != null && (currentOdds == null || Number(currentOdds) !== reduced)) {
+      patch.totalOdds = reduced;
+    }
+    return patch;
+  }
+
+  /**
+   * Old rule voided the whole coupon whenever any leg voided. Re-open tickets that still have
+   * a won/lost remaining leg (DNB draw + winning other side, postponed + settled rest).
+   */
+  private async reaggregateTicketsWithVoidedLegs(): Promise<{
+    ticketsChanged: number;
+    escrowTicketsAdjusted: number;
+    userIds: number[];
+  }> {
+    const tickets = await this.ticketRepo
+      .createQueryBuilder('t')
+      .innerJoin('t.picks', 'p')
+      .where('t.result = :voidResult', { voidResult: 'void' })
+      .andWhere('p.result IN (:...active)', { active: ['won', 'lost'] })
+      .select(['t.id', 't.userId', 't.isMarketplace', 't.price', 't.title', 't.totalOdds', 't.result'])
+      .distinct(true)
+      .getMany();
+
+    let ticketsChanged = 0;
+    let escrowTicketsAdjusted = 0;
+    const userIds: number[] = [];
+
+    for (const ticket of tickets) {
+      try {
+        const summary = await this.dataSource.transaction(async (manager) => {
+          const pRepo = manager.getRepository(AccumulatorPick);
+          const tRepo = manager.getRepository(AccumulatorTicket);
+          const picks = await pRepo.find({ where: { accumulatorId: ticket.id } });
+          if (!picks.length || picks.some((p) => p.result === 'pending')) {
+            return { changed: false, escrow: false };
+          }
+
+          const patch = this.ticketOutcomePatch(picks, ticket.totalOdds);
+          if (patch.result === ticket.result && patch.totalOdds == null) {
+            return { changed: false, escrow: false };
+          }
+
+          let escrowAdjusted = false;
+          if (
+            patch.result !== ticket.result &&
+            ticket.isMarketplace &&
+            Number(ticket.price) > 0 &&
+            this.escrowWalletFlipNeeded(ticket.result, patch.result)
+          ) {
+            const couponRef = couponUserFacingRef(ticket.id, ticket.title);
+            if (ticket.result === 'won') {
+              await this.escrowWonToLostOrVoid(
+                manager,
+                ticket.id,
+                ticket.userId,
+                couponRef,
+                patch.result === 'void',
+              );
+              escrowAdjusted = true;
+            } else if (patch.result === 'won') {
+              await this.escrowLostOrVoidToWon(manager, ticket.id, ticket.userId, couponRef);
+              escrowAdjusted = true;
+            }
+          }
+
+          await tRepo.update({ id: ticket.id }, patch);
+          return { changed: true, escrow: escrowAdjusted, userId: ticket.userId };
+        });
+
+        if (summary.changed) {
+          ticketsChanged += 1;
+          if (summary.userId != null) userIds.push(summary.userId);
+        }
+        if (summary.escrow) escrowTicketsAdjusted += 1;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        this.logger.warn(`Void-leg reaggregate failed for ticket ${ticket.id}: ${msg}`);
+      }
+    }
+
+    if (ticketsChanged > 0) {
+      this.logger.log(
+        `Reaggregated ${ticketsChanged} ticket(s) with voided legs (${escrowTicketsAdjusted} escrow adjustment(s))`,
+      );
+    }
+
+    return { ticketsChanged, escrowTicketsAdjusted, userIds: [...new Set(userIds)] };
   }
 
   private escrowWalletFlipNeeded(oldResult: string, newResult: string): boolean {
@@ -516,7 +627,8 @@ export class SettlementService {
    * 1. Update scored non-FT fixtures (match_date > 2h ago) to status=FT
    * 2. Load pending picks, then only those fixtures/events (never `In()` all historical FT ids)
    * 3. For each pending pick on a finished fixture/event, determine won/lost via determinePickResult
-   * 4. For tickets where all picks are settled, set ticket result (won/lost/void) and status
+   * 4. For tickets where all picks are settled, set ticket result (won/lost/void). Voided legs
+   *    (DNB draw, postponed, AH push) are dropped; remaining legs settle at reduced odds.
    * 5. If marketplace coupon with price > 0: settle escrow (payout tipster or refund buyer)
    *
    * Supported markets: Match Winner, Double Chance, BTTS, O/U (full + first half), DNB, Odd/Even, Asian Handicap, Correct Score, etc.
@@ -653,10 +765,10 @@ export class SettlementService {
       const allSettled = picks.length > 0 && picks.every((p) => p.result !== 'pending');
       if (!allSettled) continue;
 
-      const hasLost = picks.some((p) => p.result === 'lost');
-      const hasVoid = picks.some((p) => p.result === 'void');
-      ticket.result = hasLost ? 'lost' : hasVoid ? 'void' : 'won';
-      ticket.status = ticket.result;
+      const patch = this.ticketOutcomePatch(picks, ticket.totalOdds);
+      ticket.result = patch.result;
+      ticket.status = patch.status;
+      if (patch.totalOdds != null) ticket.totalOdds = patch.totalOdds;
       await this.ticketRepo.save(ticket);
       ticketsSettled++;
       if (ticket.userId != null) statsSyncUserIds.add(ticket.userId);
@@ -729,6 +841,10 @@ export class SettlementService {
           .catch(() => {});
       }
     }
+
+    const voidedLegFix = await this.reaggregateTicketsWithVoidedLegs();
+    ticketsSettled += voidedLegFix.ticketsChanged;
+    for (const userId of voidedLegFix.userIds) statsSyncUserIds.add(userId);
 
     if (statsSyncUserIds.size > 0) {
       await this.persistTipsterStatsForUserIds(statsSyncUserIds);

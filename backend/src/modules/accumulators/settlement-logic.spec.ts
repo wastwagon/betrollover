@@ -1,4 +1,4 @@
-import { determinePickResult } from './settlement-logic';
+import { aggregateTicketResult, determinePickResult, remainingAccumulatorOdds } from './settlement-logic';
 
 describe('settlement-logic', () => {
   describe('Match Winner (1X2)', () => {
@@ -374,6 +374,48 @@ describe('settlement-logic', () => {
       expect(determinePickResult('fh_over05', 0, 0, undefined, undefined, 0, 1)).toBe('won');
       expect(determinePickResult('fh_under15', 9, 9, undefined, undefined, 0, 1)).toBe('won');
       expect(determinePickResult('fh_over25', 0, 0)).toBeNull();
+    });
+  });
+
+  describe('Ticket aggregation (voided legs dropped)', () => {
+    it('void + won → won', () => {
+      expect(aggregateTicketResult([{ result: 'void' }, { result: 'won' }])).toBe('won');
+    });
+
+    it('void + lost → lost', () => {
+      expect(aggregateTicketResult([{ result: 'void' }, { result: 'lost' }])).toBe('lost');
+    });
+
+    it('all void → void', () => {
+      expect(aggregateTicketResult([{ result: 'void' }, { result: 'void' }])).toBe('void');
+    });
+
+    it('won + won → won; any lost → lost', () => {
+      expect(aggregateTicketResult([{ result: 'won' }, { result: 'won' }])).toBe('won');
+      expect(aggregateTicketResult([{ result: 'won' }, { result: 'lost' }, { result: 'void' }])).toBe(
+        'lost',
+      );
+    });
+
+    it('reduces combined odds to remaining legs', () => {
+      expect(
+        remainingAccumulatorOdds([
+          { result: 'void', odds: 1.4 },
+          { result: 'won', odds: 1.5 },
+        ]),
+      ).toBe(1.5);
+      expect(
+        remainingAccumulatorOdds([
+          { result: 'won', odds: 1.4 },
+          { result: 'won', odds: 1.5 },
+        ]),
+      ).toBeNull();
+      expect(
+        remainingAccumulatorOdds([
+          { result: 'void', odds: 1.4 },
+          { result: 'void', odds: 1.5 },
+        ]),
+      ).toBeNull();
     });
   });
 
