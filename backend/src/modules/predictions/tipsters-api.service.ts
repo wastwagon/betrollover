@@ -26,6 +26,12 @@ import { AccumulatorsService } from '../accumulators/accumulators.service';
 import { isHumanVipPackagesEnabled, isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
 import { VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
 import {
+  accaDeskPausedPublicExcludeRawSql,
+  accaDeskPausedPublicExcludeSql,
+  accaDeskPausedUsernames,
+  isAccaDeskPublishingPaused,
+} from '../../config/acca-desk-tipsters.config';
+import {
   CLASSIC_AI_TIPSTER_TYPE,
   classicAiPublicExcludeRawSql,
   classicAiPublicExcludeSql,
@@ -313,6 +319,7 @@ export class TipstersApiService {
     const hideClassicAi = isClassicAiHiddenFromPublic();
     const tipsters = tipstersRaw.filter((t) => {
       if (hideClassicAi && isClassicAiTipsterRow(t)) return false;
+      if (isAccaDeskPublishingPaused(t.username)) return false;
       return t.isAi || (t.userId != null && activeHumanIds.has(t.userId));
     });
     const humanUserIds = tipsters.filter((t) => t.userId != null).map((t) => t.userId!);
@@ -787,6 +794,10 @@ export class TipstersApiService {
     if (isClassicAiHiddenFromPublic()) {
       qb.andWhere(classicAiPublicExcludeSql('t'), { classicAiTipsterType: CLASSIC_AI_TIPSTER_TYPE });
     }
+    const pausedDesks = accaDeskPausedUsernames();
+    if (pausedDesks.length > 0) {
+      qb.andWhere(accaDeskPausedPublicExcludeSql('t'), { accaDeskPaused: pausedDesks });
+    }
     qb
       .select([
         't.id',
@@ -968,6 +979,10 @@ export class TipstersApiService {
     if (isClassicAiHiddenFromPublic()) {
       qb.andWhere(classicAiPublicExcludeSql('t'), { classicAiTipsterType: CLASSIC_AI_TIPSTER_TYPE });
     }
+    const pausedDesks = accaDeskPausedUsernames();
+    if (pausedDesks.length > 0) {
+      qb.andWhere(accaDeskPausedPublicExcludeSql('t'), { accaDeskPaused: pausedDesks });
+    }
     const rows = await qb.orderBy('t.username', 'ASC').getRawMany<{ username: string }>();
     return { usernames: rows.map((r) => r.username) };
   }
@@ -982,6 +997,9 @@ export class TipstersApiService {
     });
     if (!tipster) return null;
     if (isClassicAiHiddenFromPublic() && isClassicAiTipsterRow(tipster)) {
+      return null;
+    }
+    if (isAccaDeskPublishingPaused(tipster.username)) {
       return null;
     }
 
@@ -1335,6 +1353,7 @@ export class TipstersApiService {
     const classicAiHideClause = isClassicAiHiddenFromPublic()
       ? `AND ${classicAiPublicExcludeRawSql('t')}`
       : '';
+    const pausedDeskHideClause = `AND ${accaDeskPausedPublicExcludeRawSql('t')}`;
 
     const [aiRows, humanRows] = await Promise.all([
       this.tipsterRepo.query(
@@ -1350,6 +1369,7 @@ export class TipstersApiService {
            OR EXISTS (SELECT 1 FROM users u WHERE u.id = t.user_id AND u.status = 'active')
          )
          ${classicAiHideClause}
+         ${pausedDeskHideClause}
          GROUP BY t.id, t.username, t.display_name, t.avatar_url`,
         [],
       ),
@@ -1364,6 +1384,7 @@ export class TipstersApiService {
            AND at.result IN ('won', 'lost') AND ${dateFilter} ${sportDisplayFilter}
          WHERE t.is_active = true AND t.user_id IS NOT NULL
          ${classicAiHideClause}
+         ${pausedDeskHideClause}
          GROUP BY t.id, t.username, t.display_name, t.avatar_url`,
         [],
       ),
@@ -1504,9 +1525,11 @@ export class TipstersApiService {
       select: ['id', 'userId', 'username', 'displayName', 'avatarUrl', 'winRate', 'isAi', 'roi', 'tipsterType'],
     });
     const hideClassicAi = isClassicAiHiddenFromPublic();
-    const visibleTipsters = hideClassicAi
-      ? tipsters.filter((t) => !isClassicAiTipsterRow(t))
-      : tipsters;
+    const visibleTipsters = tipsters.filter((t) => {
+      if (hideClassicAi && isClassicAiTipsterRow(t)) return false;
+      if (isAccaDeskPublishingPaused(t.username)) return false;
+      return true;
+    });
     const followedUserIds = visibleTipsters.filter((t) => t.userId != null).map((t) => t.userId!);
     if (followedUserIds.length === 0) return [];
 

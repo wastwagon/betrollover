@@ -14,6 +14,24 @@ import { TelegramEligibilityService } from './telegram-eligibility.service';
 import { ROLLOVER_OWNER_USERNAME } from '../../config/rollover-desk.config';
 import { ACCA_DESK_TIPSTER_TYPE } from '../../config/acca-desk-tipsters.config';
 
+jest.mock('./telegram-coupon-card', () => {
+  const actual = jest.requireActual('./telegram-coupon-card');
+  return {
+    ...actual,
+    renderCouponCardPng: jest.fn(async () => Buffer.from('png')),
+  };
+});
+
+function parseTelegramCall(url: unknown, init?: RequestInit) {
+  const href = String(url);
+  if (href.includes('sendPhoto')) {
+    const form = init?.body as FormData;
+    return { method: 'sendPhoto' as const, caption: String(form?.get?.('caption') ?? '') };
+  }
+  const body = JSON.parse(String(init?.body));
+  return { method: 'sendMessage' as const, text: String(body.text || '') };
+}
+
 describe('telegram-copy', () => {
   it('appends short engagement footer with channel join link', () => {
     process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE = 'betrollovertips';
@@ -135,9 +153,9 @@ describe('TelegramChannelService engagement', () => {
 
   it('includes footer on free pick posts', async () => {
     const svc = new TelegramChannelService();
-    const calls: unknown[] = [];
-    global.fetch = jest.fn(async (_url, init) => {
-      calls.push(JSON.parse(String(init?.body)));
+    const calls: { method: string; caption?: string; text?: string }[] = [];
+    global.fetch = jest.fn(async (url, init) => {
+      calls.push(parseTelegramCall(url, init as RequestInit));
       return { ok: true, json: async () => ({ ok: true }) } as Response;
     }) as typeof fetch;
 
@@ -147,18 +165,22 @@ describe('TelegramChannelService engagement', () => {
       tipsterName: 'AccaSure',
       totalOdds: 1.9,
       isFree: true,
+      legs: [
+        { matchDescription: 'A vs B', prediction: 'Home Win', odds: 1.4 },
+        { matchDescription: 'C vs D', prediction: 'Home Win', odds: 1.35 },
+      ],
     });
 
-    const body = calls[0] as { text: string };
-    expect(body.text).toContain('Sure Mix · free');
-    expect(body.text).toContain('https://t.me/betrollovertips');
+    expect(calls[0].method).toBe('sendPhoto');
+    expect(calls[0].caption).toContain('Sure Mix · free');
+    expect(calls[0].caption).toContain('https://t.me/betrollovertips');
   });
 
   it('paid teaser has no booking code and has footer', async () => {
     const svc = new TelegramChannelService();
-    const calls: unknown[] = [];
-    global.fetch = jest.fn(async (_url, init) => {
-      calls.push(JSON.parse(String(init?.body)));
+    const calls: { method: string; caption?: string; text?: string }[] = [];
+    global.fetch = jest.fn(async (url, init) => {
+      calls.push(parseTelegramCall(url, init as RequestInit));
       return { ok: true, json: async () => ({ ok: true }) } as Response;
     }) as typeof fetch;
 
@@ -170,12 +192,44 @@ describe('TelegramChannelService engagement', () => {
       isFree: false,
       priceGhs: 10,
       bookingCode: 'SECRET',
+      legs: [{ matchDescription: 'Hidden vs Match', prediction: 'Home', odds: 1.5 }],
     });
 
-    const body = calls[0] as { text: string };
-    expect(body.text).toContain('Paid pick');
-    expect(body.text).not.toContain('SECRET');
-    expect(body.text).toContain('https://t.me/betrollovertips');
+    expect(calls[0].method).toBe('sendPhoto');
+    expect(calls[0].caption).toContain('Paid pick');
+    expect(calls[0].caption).not.toContain('SECRET');
+    expect(calls[0].caption).toContain('https://t.me/betrollovertips');
+  });
+
+  it('won posts send a card caption with the coupon link', async () => {
+    const svc = new TelegramChannelService();
+    const calls: { method: string; caption?: string; text?: string }[] = [];
+    global.fetch = jest.fn(async (url, init) => {
+      calls.push(parseTelegramCall(url, init as RequestInit));
+      return { ok: true, json: async () => ({ ok: true }) } as Response;
+    }) as typeof fetch;
+
+    await svc.postWin({
+      couponId: 9,
+      title: 'Sure Mix',
+      tipsterName: 'AccaSure',
+      totalOdds: 1.9,
+      isFree: true,
+      legs: [
+        {
+          matchDescription: 'A vs B',
+          prediction: 'Home Win',
+          odds: 1.4,
+          result: 'won',
+          homeScore: 2,
+          awayScore: 1,
+        },
+      ],
+    });
+
+    expect(calls[0].method).toBe('sendPhoto');
+    expect(calls[0].caption).toContain('Won ✅');
+    expect(calls[0].caption).toContain('/coupons/9');
   });
 
   it('posts growth message', async () => {

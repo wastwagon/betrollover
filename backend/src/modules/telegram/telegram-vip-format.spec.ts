@@ -1,4 +1,4 @@
-import { formatVipCouponPost, parseVipStartPayload, vipBotStartUrl } from './telegram-vip-format';
+import { formatVipCouponPost, formatVipWinPost, parseVipStartPayload, vipBotStartUrl } from './telegram-vip-format';
 
 describe('VIP Telegram format', () => {
   it('formats a two-fold with booking code', () => {
@@ -30,5 +30,26 @@ describe('VIP Telegram format', () => {
   it('builds a bot deep link', () => {
     expect(vipBotStartUrl('BetRolloverTipsBot', 'abc')).toBe('https://t.me/BetRolloverTipsBot?start=vabc');
     expect(vipBotStartUrl(null, 'abc')).toBeNull();
+  });
+
+  it('formats a won post with WON on each fixture', () => {
+    const text = formatVipWinPost({
+      title: 'VIP · Two-Fold · Home win',
+      totalOdds: 1.63,
+      couponUrl: 'https://betrollover.com/coupons/1',
+      legs: [
+        {
+          matchDescription: 'Al-Ahli Jeddah vs Pakhtakor',
+          prediction: 'Home Win',
+          result: 'won',
+          homeScore: 2,
+          awayScore: 0,
+        },
+      ],
+    });
+    expect(text).toContain('VIP won');
+    expect(text).toContain('Al-Ahli Jeddah vs Pakhtakor');
+    expect(text).toContain('WON');
+    expect(text).toContain('FT 2-0');
   });
 });

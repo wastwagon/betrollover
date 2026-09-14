@@ -1212,7 +1212,7 @@ const fr: Record<string, string> = {
   'subscriptions.vip_already_subscribed_hint':
     'Vous avez déjà un forfait VIP actif avec ce tipster. Gérez-le depuis la page Mes abonnements.',
   'subscriptions.marketplace_footnote':
-    'Le desk Two-Fold publie 1 à 2 tickets la plupart des jours sur Telegram privé. Les tipsters indépendants publient jusqu’à 2 tickets VIP in-app par période et ont besoin d’au moins {minRoi} % de ROI réglé et {minWr} % de taux de victoire pour proposer un forfait. Les tickets VIP perdants ne sont pas remboursés. Remboursement intégral uniquement si zéro ticket VIP est publié sur le forfait pendant la période. Les pronostics payants du marché restent remboursés si ce coupon perd, et ne sont pas inclus dans le VIP.',
+    'Le desk Two-Fold publie un ticket la plupart des jours sur Telegram privé. Les tipsters indépendants publient jusqu’à 2 tickets VIP in-app par période et ont besoin d’au moins {minRoi} % de ROI réglé et {minWr} % de taux de victoire pour proposer un forfait. Les tickets VIP perdants ne sont pas remboursés. Remboursement intégral uniquement si zéro ticket VIP est publié sur le forfait pendant la période. Les pronostics payants du marché restent remboursés si ce coupon perd, et ne sont pas inclus dans le VIP.',
   'subscriptions.trust_callout_title': 'Escrow du forfait VIP',
   'subscriptions.trust_callout_body':
     'Le prix du forfait reste bloqué jusqu’à la fin de la période. Ce n’est pas l’escrow d’un pronostic : les tickets VIP perdants ne sont pas remboursés. Remboursement intégral uniquement si zéro ticket VIP est publié sur ce forfait pendant votre période. Si au moins un ticket est publié, le tipster reçoit 70 % et la plateforme conserve 30 % à la fin — même si ces tickets perdent. Les pronostics payants du même tipster ne sont pas inclus.',
@@ -1220,7 +1220,7 @@ const fr: Record<string, string> = {
     'Zéro ticket VIP sur ce forfait pendant votre période → remboursement intégral. Au moins un publié → 70 % au tipster et 30 % de frais plateforme à la fin, même si tous les tickets perdent.',
   'subscriptions.channel_house': 'Maison · quotidien + Telegram',
   'subscriptions.channel_tipster': 'Tipster · in-app',
-  'subscriptions.cadence_house': '1 à 2 tickets la plupart des jours, publiés sur le canal Telegram privé BETROLLOVER VIP.',
+  'subscriptions.cadence_house': 'Un ticket la plupart des jours, publié sur le canal Telegram privé BETROLLOVER VIP.',
   'subscriptions.cadence_tipster':
     'Jusqu’à {n} tickets VIP inclus sur ce forfait de {days} jours, in-app uniquement. Les pronostics payants de ce tipster se vendent à part.',
   'subscriptions.checkout_house_includes':

@@ -435,7 +435,7 @@ export default function AdminAccaDeskPage() {
               {[
                 { label: 'Enabled', value: overview.enabled ? 'Yes' : 'No' },
                 {
-                  label: 'Early (20:00)',
+                  label: 'Early (20:10)',
                   value: overview.earlyEnabled === false ? 'Off' : 'On',
                 },
                 { label: 'Roster setup', value: `${overview.setupCount}/${overview.rosterSize}` },
@@ -489,7 +489,7 @@ export default function AdminAccaDeskPage() {
                   )}
                 </p>
               ) : (
-                <p className="text-sm text-gray-500">No early/tomorrow sync status yet (20:00 Accra or Publish tomorrow).</p>
+                <p className="text-sm text-gray-500">No early/tomorrow sync status yet (20:10 Accra or Publish tomorrow).</p>
               )}
             </div>
 
@@ -505,7 +505,7 @@ export default function AdminAccaDeskPage() {
                     </p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                       Manual attach only — no auto-posting and no odds gate. List includes today’s Acca Desk board
-                      and tomorrow’s early publish (20:00). Pick any pending AccaSure1X2 2-fold below to put it live
+                      and tomorrow’s early publish (20:10, after VIP). Pick any pending AccaSure1X2 2-fold below to put it live
                       on{' '}
                       <span className="font-medium text-gray-700 dark:text-gray-200">/rollover</span>. If Day 1 is
                       live or already won and another slot is still to play, use{' '}
@@ -693,7 +693,7 @@ export default function AdminAccaDeskPage() {
                 {(overview.rollover.candidates?.length ?? 0) === 0 ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     No AccaSure1X2 coupons for today’s or tomorrow’s desk day. Wait for Acca Desk to publish (or the
-                    20:00 early run), or generate a slot above, then attach the one you want.
+                    20:10 early run), or generate a slot above, then attach the one you want.
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -821,7 +821,7 @@ export default function AdminAccaDeskPage() {
                 </h2>
                 {(overview.tomorrowTickets?.length ?? 0) === 0 ? (
                   <p className="text-gray-500 dark:text-gray-400 py-4">
-                    No tomorrow board yet. Early cron posts at 20:00 Accra, or use &quot;Publish tomorrow&quot;.
+                    No tomorrow board yet. Early cron posts at 20:10 Accra (after VIP), or use &quot;Publish tomorrow&quot;.
                   </p>
                 ) : (
                   <div className="space-y-3 max-h-[32rem] overflow-y-auto">

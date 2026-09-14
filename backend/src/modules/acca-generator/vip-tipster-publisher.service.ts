@@ -10,10 +10,20 @@ import {
   isVipTipsterEnabled,
   type VipConstructionKey,
 } from '../../config/vip-tipster.config';
-import { accraDateStr, deskDayFromTitle, deskDayFixtureWindow } from '../../config/acca-desk-slots';
+import {
+  accraDateStr,
+  addDateStrDays,
+  deskDayFromTitle,
+  deskDayFixtureWindow,
+  slotForKickoff,
+  ACCA_DESK_TIME_SLOTS,
+  type AccaDeskSlotKey,
+} from '../../config/acca-desk-slots';
+import { ACCA_DESK_TIPSTER_TYPE } from '../../config/acca-desk-tipsters.config';
 import { isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
 import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
 import { AccumulatorPick } from '../accumulators/entities/accumulator-pick.entity';
+import { Fixture } from '../fixtures/entities/fixture.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { TipsterSubscriptionPackage } from '../subscriptions/entities/tipster-subscription-package.entity';
 import { SyncStatus } from '../fixtures/entities/sync-status.entity';
@@ -33,6 +43,7 @@ export type VipTipsterRunResult = {
     status: 'published' | 'skipped_already' | 'empty_pool' | 'no_user' | 'error' | 'disabled';
     ticketId?: number;
     construction?: VipConstructionKey;
+    slotKey?: AccaDeskSlotKey;
     message?: string;
   }[];
 };
@@ -50,6 +61,8 @@ export class VipTipsterPublisherService {
     private readonly ticketRepo: Repository<AccumulatorTicket>,
     @InjectRepository(AccumulatorPick)
     private readonly pickRepo: Repository<AccumulatorPick>,
+    @InjectRepository(Fixture)
+    private readonly fixtureRepo: Repository<Fixture>,
     @InjectRepository(TipsterSubscriptionPackage)
     private readonly packageRepo: Repository<TipsterSubscriptionPackage>,
     @InjectRepository(SyncStatus)
@@ -69,8 +82,12 @@ export class VipTipsterPublisherService {
 
     const tz = this.predictionTimeZone();
     const todayDesk = accraDateStr(new Date(), tz);
-    const tickets = tipster?.userId ? await this.findDeskDayTickets(tipster.userId, todayDesk) : [];
-    const ticketIds = tickets.map((t) => t.id);
+    const tomorrowDesk = addDateStrDays(todayDesk, 1);
+    const todayTickets = tipster?.userId ? await this.findDeskDayTickets(tipster.userId, todayDesk) : [];
+    const tomorrowTickets = tipster?.userId
+      ? await this.findDeskDayTickets(tipster.userId, tomorrowDesk)
+      : [];
+    const ticketIds = [...todayTickets, ...tomorrowTickets].map((t) => t.id);
     const picks =
       ticketIds.length > 0
         ? await this.pickRepo.find({
@@ -85,8 +102,68 @@ export class VipTipsterPublisherService {
       picksByTicket.set(p.accumulatorId, list);
     }
 
+    const fixtureIds = [
+      ...new Set(picks.map((p) => p.fixtureId).filter((id): id is number => id != null)),
+    ];
+    const fixtures = fixtureIds.length
+      ? await this.fixtureRepo.find({
+          where: { id: In(fixtureIds) },
+          select: [
+            'id',
+            'homeScore',
+            'awayScore',
+            'status',
+            'statusElapsed',
+            'homeTeamLogo',
+            'awayTeamLogo',
+            'homeTeamName',
+            'awayTeamName',
+            'homeCountryCode',
+            'awayCountryCode',
+          ],
+        })
+      : [];
+    const fixtureMap = new Map(fixtures.map((f) => [f.id, f]));
+
     const sync = await this.syncStatusRepo.findOne({ where: { syncType: 'vip_desk' } });
     const earlySync = await this.syncStatusRepo.findOne({ where: { syncType: 'vip_desk_early' } });
+    const serialize = (rows: AccumulatorTicket[]) =>
+      rows.map((t) => {
+        const ticketPicks = (picksByTicket.get(t.id) || []).map((p) => {
+          const fix = p.fixtureId != null ? fixtureMap.get(p.fixtureId) : undefined;
+          return {
+            id: p.id,
+            matchDescription: p.matchDescription,
+            prediction: p.prediction,
+            odds: Number(p.odds),
+            matchDate: p.matchDate,
+            result: p.result,
+            homeScore: fix?.homeScore ?? null,
+            awayScore: fix?.awayScore ?? null,
+            fixtureStatus: fix?.status ?? null,
+            fixtureStatusElapsed: fix?.statusElapsed ?? null,
+            homeTeamLogo: fix?.homeTeamLogo ?? null,
+            awayTeamLogo: fix?.awayTeamLogo ?? null,
+            homeTeamName: fix?.homeTeamName ?? null,
+            awayTeamName: fix?.awayTeamName ?? null,
+            homeCountryCode: fix?.homeCountryCode ?? null,
+            awayCountryCode: fix?.awayCountryCode ?? null,
+          };
+        });
+        return {
+          id: t.id,
+          title: t.title,
+          totalOdds: Number(t.totalOdds),
+          totalPicks: Number(t.totalPicks),
+          price: Number(t.price) || 0,
+          status: t.status,
+          result: t.result,
+          createdAt: t.createdAt?.toISOString?.() || String(t.createdAt),
+          bookmakerKey: t.bookmakerKey,
+          bookingCode: t.bookingCode,
+          picks: ticketPicks,
+        };
+      });
 
     return {
       enabled: isVipTipsterEnabled(),
@@ -95,16 +172,25 @@ export class VipTipsterPublisherService {
       earlyCron: VIP_TIPSTER_EARLY_CRON,
       timezone: tz,
       todayDeskDay: todayDesk,
+      tomorrowDeskDay: tomorrowDesk,
       maxPerDay: VIP_MAX_COUPONS_PER_DAY,
       username: VIP_TIPSTER.username,
       displayName: VIP_TIPSTER.display_name,
+      avatarUrl: tipster?.avatarUrl || VIP_TIPSTER.avatar_url,
+      winRate: tipster ? Number(tipster.winRate) : 0,
+      roi: tipster ? Number(tipster.roi) : 0,
+      totalPicks: tipster?.totalPredictions ?? 0,
+      wonPicks: tipster?.totalWins ?? 0,
+      lostPicks: tipster?.totalLosses ?? 0,
+      rank: tipster?.leaderboardRank ?? null,
       setup: !!tipster,
       isActive: tipster?.isActive ?? false,
       userId: tipster?.userId ?? null,
       packageId: pkg?.id ?? null,
       packageName: pkg?.name ?? null,
       packagePrice: pkg ? Number(pkg.price) : null,
-      todayPublished: tickets.length,
+      todayPublished: todayTickets.length,
+      tomorrowPublished: tomorrowTickets.length,
       syncStatus: sync
         ? {
             status: sync.status,
@@ -121,19 +207,8 @@ export class VipTipsterPublisherService {
             lastError: earlySync.lastError,
           }
         : null,
-      todayTickets: tickets.map((t) => ({
-        id: t.id,
-        title: t.title,
-        totalOdds: Number(t.totalOdds),
-        totalPicks: Number(t.totalPicks),
-        status: t.status,
-        createdAt: t.createdAt?.toISOString?.() || String(t.createdAt),
-        legs: (picksByTicket.get(t.id) || []).map((p) => ({
-          matchDescription: p.matchDescription,
-          prediction: p.prediction,
-          odds: Number(p.odds),
-        })),
-      })),
+      todayTickets: serialize(todayTickets),
+      tomorrowTickets: serialize(tomorrowTickets),
     };
   }
 
@@ -189,52 +264,54 @@ export class VipTipsterPublisherService {
 
     const existing = await this.findDeskDayTickets(tipster.userId, deskDayStr);
     const usedFixtureIds = new Set<number>();
-    if (existing.length) {
-      const existingPicks = await this.pickRepo.find({
-        where: { accumulatorId: In(existing.map((t) => t.id)) },
-        select: ['fixtureId'],
-      });
-      for (const p of existingPicks) {
-        if (p.fixtureId) usedFixtureIds.add(p.fixtureId);
-      }
-    }
+    await this.addDeskDayFixtureIds(usedFixtureIds, [tipster.userId], deskDayStr);
+    await this.addAccaDeskFixtureIds(usedFixtureIds, deskDayStr);
 
+    const postedSlots = await this.postedSlotsForDeskDay(existing);
     const result: VipTipsterRunResult = {
       enabled: true,
       deskDay: deskDayStr,
       published: 0,
-      skippedAlreadyPosted: existing.length,
+      skippedAlreadyPosted: postedSlots.size,
       skippedEmptyPool: 0,
       skippedNoUser: 0,
       errors: 0,
       details: [],
     };
 
-    let lastConstruction: VipConstructionKey | undefined;
-    const remaining = Math.max(0, VIP_MAX_COUPONS_PER_DAY - existing.length);
-    for (let i = 0; i < remaining; i++) {
-      const prefer: VipConstructionKey =
-        lastConstruction === 'home_draw' ? 'brazil_over15' : 'home_draw';
+    for (const slot of ACCA_DESK_TIME_SLOTS) {
+      if (postedSlots.has(slot.key)) {
+        result.details.push({ status: 'skipped_already', slotKey: slot.key });
+        continue;
+      }
+      if (postedSlots.size >= VIP_MAX_COUPONS_PER_DAY) {
+        result.details.push({ status: 'skipped_already', slotKey: slot.key });
+        continue;
+      }
       try {
         const generated = await this.accaGenerator.generateForVip({
           userId: tipster.userId,
           excludeFixtureIds: usedFixtureIds,
           deskDayStr,
-          preferConstruction: prefer,
+          slotKey: slot.key,
         });
         if (!generated.ok) {
           result.skippedEmptyPool++;
-          result.details.push({ status: 'empty_pool', message: `prefer=${prefer}` });
-          break;
+          result.details.push({
+            status: 'empty_pool',
+            slotKey: slot.key,
+            message: `home_win candidates=${generated.candidates}`,
+          });
+          continue;
         }
 
         const title =
-          `${VIP_TIPSTER.display_name} · ${generated.constructionLabel} · 2-fold @ ${generated.combinedOdds} · ${deskDayStr}`.slice(
+          `${VIP_TIPSTER.display_name} · ${generated.constructionLabel} · ${slot.label} · 2-fold @ ${generated.combinedOdds} · ${deskDayStr}`.slice(
             0,
             255,
           );
         const description = (
-          `${VIP_TIPSTER.bio} ${generated.constructionLabel} · ${deskDayStr}. VIP subscribers only.`
+          `${VIP_TIPSTER.bio} ${generated.constructionLabel} · ${slot.label} · ${deskDayStr}. VIP subscribers only.`
         ).slice(0, 2000);
 
         const published = await this.accaGenerator.publish(tipster.userId, {
@@ -248,7 +325,7 @@ export class VipTipsterPublisherService {
         for (const leg of generated.legs) {
           if (leg.fixtureId) usedFixtureIds.add(leg.fixtureId);
         }
-        lastConstruction = generated.construction;
+        postedSlots.add(slot.key);
 
         const ticketId = Number(
           (published as { publishedTicketId?: number })?.publishedTicketId ??
@@ -259,16 +336,16 @@ export class VipTipsterPublisherService {
           status: 'published',
           ticketId: Number.isFinite(ticketId) ? ticketId : undefined,
           construction: generated.construction,
+          slotKey: slot.key,
         });
         this.logger.log(
-          `VIP published ${generated.construction} deskDay=${deskDayStr} ticket=#${ticketId} odds=${generated.combinedOdds}`,
+          `VIP published ${generated.construction} ${slot.key} deskDay=${deskDayStr} ticket=#${ticketId} odds=${generated.combinedOdds}`,
         );
       } catch (err: unknown) {
         result.errors++;
         const message = err instanceof Error ? err.message : String(err);
-        this.logger.error(`VIP publish failed deskDay=${deskDayStr}: ${message}`);
-        result.details.push({ status: 'error', message });
-        break;
+        this.logger.error(`VIP publish failed ${slot.key} deskDay=${deskDayStr}: ${message}`);
+        result.details.push({ status: 'error', slotKey: slot.key, message });
       }
     }
 
@@ -293,7 +370,64 @@ export class VipTipsterPublisherService {
     return process.env.PREDICTION_TIMEZONE || 'Africa/Accra';
   }
 
+  private async addAccaDeskFixtureIds(usedFixtureIds: Set<number>, deskDayStr: string): Promise<void> {
+    const tipsters = await this.tipsterRepo.find({
+      where: { tipsterType: ACCA_DESK_TIPSTER_TYPE },
+      select: ['userId'],
+    });
+    const userIds = tipsters.map((t) => t.userId).filter((id): id is number => id != null);
+    await this.addDeskDayFixtureIds(usedFixtureIds, userIds, deskDayStr);
+  }
+
+  private async addDeskDayFixtureIds(
+    usedFixtureIds: Set<number>,
+    userIds: number[],
+    deskDayStr: string,
+  ): Promise<void> {
+    if (!userIds.length) return;
+    const tickets = await this.findDeskDayTicketsForUsers(userIds, deskDayStr);
+    if (!tickets.length) return;
+    const picks = await this.pickRepo.find({
+      where: { accumulatorId: In(tickets.map((t) => t.id)) },
+      select: ['fixtureId'],
+    });
+    for (const p of picks) {
+      if (p.fixtureId) usedFixtureIds.add(p.fixtureId);
+    }
+  }
+
+  private async postedSlotsForDeskDay(tickets: AccumulatorTicket[]): Promise<Set<AccaDeskSlotKey>> {
+    const slots = new Set<AccaDeskSlotKey>();
+    if (!tickets.length) return slots;
+    const picks = await this.pickRepo.find({
+      where: { accumulatorId: In(tickets.map((t) => t.id)) },
+      select: ['accumulatorId', 'matchDate'],
+    });
+    const earliestByTicket = new Map<number, Date>();
+    for (const p of picks) {
+      if (!p.matchDate) continue;
+      const prev = earliestByTicket.get(p.accumulatorId);
+      if (!prev || p.matchDate < prev) earliestByTicket.set(p.accumulatorId, p.matchDate);
+    }
+    const tz = this.predictionTimeZone();
+    for (const t of tickets) {
+      const kickoff = earliestByTicket.get(t.id);
+      const fromKickoff = kickoff ? slotForKickoff(kickoff, tz)?.key : null;
+      const fromTitle = ACCA_DESK_TIME_SLOTS.find((s) => t.title?.includes(`· ${s.label} ·`))?.key;
+      const key = fromTitle || fromKickoff;
+      if (key) slots.add(key);
+    }
+    return slots;
+  }
+
   private async findDeskDayTickets(userId: number, deskDayStr: string): Promise<AccumulatorTicket[]> {
+    return this.findDeskDayTicketsForUsers([userId], deskDayStr);
+  }
+
+  private async findDeskDayTicketsForUsers(
+    userIds: number[],
+    deskDayStr: string,
+  ): Promise<AccumulatorTicket[]> {
     const { start, end } = deskDayFixtureWindow(deskDayStr, this.predictionTimeZone());
     const createdFrom = new Date(start);
     createdFrom.setUTCDate(createdFrom.getUTCDate() - 1);
@@ -302,9 +436,11 @@ export class VipTipsterPublisherService {
 
     const candidates = await this.ticketRepo
       .createQueryBuilder('t')
-      .where('t.userId = :userId', { userId })
+      .where('t.userId IN (:...userIds)', { userIds })
       .andWhere('t.createdAt >= :createdFrom', { createdFrom })
       .andWhere('t.createdAt < :createdTo', { createdTo })
+      .andWhere("t.status NOT IN ('cancelled', 'void')")
+      .andWhere("t.result NOT IN ('void', 'cancelled')")
       .orderBy('t.createdAt', 'ASC')
       .getMany();
 

@@ -20,7 +20,7 @@ import {
 const PREDICTION_TIME_ZONE =
   process.env.PREDICTION_TIMEZONE || process.env.TIMEZONE || 'Africa/Accra';
 const DESK_WINDOW_MINUTE = 30;
-const BOOT_CATCHUP_MS = 25_000;
+const BOOT_CATCHUP_MS = 45_000;
 
 @Injectable()
 export class AccaDeskSchedulerService implements OnModuleInit {
@@ -47,7 +47,7 @@ export class AccaDeskSchedulerService implements OnModuleInit {
     }, BOOT_CATCHUP_MS);
   }
 
-  /** 20:00 Africa/Accra — publish tomorrow’s full desk day (~24h ahead). */
+  /** 20:10 Africa/Accra — tomorrow’s desk, after VIP Home+Home. */
   @Cron(ACCA_DESK_EARLY_CRON, { timeZone: PREDICTION_TIME_ZONE })
   async handleEarlyTomorrow(): Promise<void> {
     if (!isAccaDeskEarlyPublishEnabled()) {
@@ -56,7 +56,7 @@ export class AccaDeskSchedulerService implements OnModuleInit {
     }
     const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
     const tomorrow = addDateStrDays(today, 1);
-    await this.runLocked('20:00 early', tomorrow, 'acca_desk_early');
+    await this.runLocked('20:10 early', tomorrow, 'acca_desk_early');
   }
 
   /** 00:30 Africa/Accra — catch-up for today’s desk day after midnight. */

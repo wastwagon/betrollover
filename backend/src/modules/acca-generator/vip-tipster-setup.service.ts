@@ -46,7 +46,7 @@ export class VipTipsterSetupService {
       source: 'vip_desk',
       strategy_id: config.strategy_id,
       legs: config.legs,
-      constructions: ['home_draw', 'brazil_over15'],
+      constructions: ['home_win'],
     };
 
     const existing = await this.tipsterRepo.findOne({ where: { username: config.username } });

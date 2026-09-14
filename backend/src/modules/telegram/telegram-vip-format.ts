@@ -4,6 +4,10 @@ export type VipSlipLeg = {
   matchDescription?: string | null;
   prediction?: string | null;
   odds?: number | null;
+  matchDate?: string | Date | null;
+  result?: string | null;
+  homeScore?: number | null;
+  awayScore?: number | null;
 };
 
 export function formatVipCouponPost(input: {
@@ -43,15 +47,23 @@ export function formatVipWinPost(input: {
   title: string;
   totalOdds?: number | null;
   couponUrl: string;
+  legs?: VipSlipLeg[];
 }): string {
   const odds =
     input.totalOdds != null && Number.isFinite(Number(input.totalOdds))
       ? Number(input.totalOdds).toFixed(2)
       : '';
-  return [
-    `VIP won ✅ · ${input.title.trim() || 'Two-Fold'}${odds ? ` · ${odds}` : ''}`,
-    input.couponUrl,
-  ].join('\n');
+  const lines = [`VIP won ✅ · ${input.title.trim() || 'Two-Fold'}${odds ? ` · ${odds}` : ''}`];
+  for (const leg of input.legs || []) {
+    const match = (leg.matchDescription || '').trim();
+    const pred = (leg.prediction || '').trim();
+    const mark = (leg.result || 'won').toUpperCase();
+    const score =
+      leg.homeScore != null && leg.awayScore != null ? ` FT ${leg.homeScore}-${leg.awayScore}` : '';
+    if (match || pred) lines.push(`• ${match}${match && pred ? ' — ' : ''}${pred} · ${mark}${score}`);
+  }
+  lines.push(input.couponUrl);
+  return lines.join('\n');
 }
 
 export function vipBotStartUrl(botUsername: string | null | undefined, linkToken: string): string | null {

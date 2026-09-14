@@ -4,6 +4,7 @@ import { In, Repository } from 'typeorm';
 import { TipsterFollow } from './entities/tipster-follow.entity';
 import { Tipster } from './entities/tipster.entity';
 import { NotificationsService } from '../notifications/notifications.service';
+import { isAccaDeskPublishingPaused } from '../../config/acca-desk-tipsters.config';
 import {
   isClassicAiHiddenFromPublic,
   isClassicAiTipsterRow,
@@ -23,6 +24,9 @@ export class TipsterFollowService {
     const tipster = await this.tipsterRepo.findOne({ where: { username } });
     if (!tipster) throw new NotFoundException('Tipster not found');
     if (isClassicAiHiddenFromPublic() && isClassicAiTipsterRow(tipster)) {
+      throw new NotFoundException('Tipster not found');
+    }
+    if (isAccaDeskPublishingPaused(tipster.username)) {
       throw new NotFoundException('Tipster not found');
     }
 
@@ -69,7 +73,9 @@ export class TipsterFollowService {
       relations: ['tipster'],
       select: { tipster: { id: true, username: true, displayName: true, avatarUrl: true } },
     });
-    return follows.map((f) => ({
+    return follows
+      .filter((f) => f.tipster && !isAccaDeskPublishingPaused(f.tipster.username))
+      .map((f) => ({
       id: f.tipster.id,
       username: f.tipster.username,
       displayName: f.tipster.displayName,
@@ -101,6 +107,9 @@ export class TipsterFollowService {
   }> {
     const tipster = await this.tipsterRepo.findOne({ where: { username: tipsterUsername } });
     if (!tipster) throw new NotFoundException('Tipster not found');
+    if (isAccaDeskPublishingPaused(tipster.username)) {
+      throw new NotFoundException('Tipster not found');
+    }
 
     const [rows, total] = await this.followRepo.findAndCount({
       where: { tipsterId: tipster.id },

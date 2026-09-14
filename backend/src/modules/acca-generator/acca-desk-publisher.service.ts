@@ -11,6 +11,7 @@ import {
   ACCA_DESK_TIPSTER_TYPE,
   isAccaDeskEarlyPublishEnabled,
   isAccaDeskEnabled,
+  isAccaDeskPublishingPaused,
   type AccaDeskTipsterConfig,
 } from '../../config/acca-desk-tipsters.config';
 import {
@@ -31,6 +32,7 @@ import { AccaDeskSetupService } from './acca-desk-setup.service';
 import { RolloverDeskService } from './rollover-desk.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ROLLOVER_OWNER_USERNAME } from '../../config/rollover-desk.config';
+import { VIP_TIPSTER, VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
 import type { AccaDeskShort } from '../email/acca-desk-shorts.config';
 
 export type AccaDeskRunResult = {
@@ -225,6 +227,7 @@ export class AccaDeskPublisherService {
     const shorts: AccaDeskShort[] = [];
 
     for (const config of ACCA_DESK_TIPSTERS) {
+      if (isAccaDeskPublishingPaused(config.username)) continue;
       for (const slot of ACCA_DESK_TIME_SLOTS) {
         try {
           const outcome = await this.publishOne(
@@ -522,6 +525,11 @@ export class AccaDeskPublisherService {
   ): Promise<void> {
     const tipsters = await this.tipsterRepo.find({ where: { tipsterType: ACCA_DESK_TIPSTER_TYPE } });
     const userIds = tipsters.map((t) => t.userId).filter((id): id is number => id != null);
+    const vip = await this.tipsterRepo.findOne({
+      where: { username: VIP_TIPSTER.username, tipsterType: VIP_TIPSTER_TYPE },
+      select: ['userId'],
+    });
+    if (vip?.userId) userIds.push(vip.userId);
     if (!userIds.length) return;
     const tickets = await this.findDeskDayTickets(userIds, deskDayStr);
     if (!tickets.length) return;

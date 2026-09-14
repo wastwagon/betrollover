@@ -1217,7 +1217,7 @@ const en = {
   'subscriptions.vip_already_subscribed_hint':
     'You already have an active VIP plan with this tipster. Manage it from your subscriptions page.',
   'subscriptions.marketplace_footnote':
-    'House Two-Fold posts 1–2 slips most days to private Telegram. Independent tipsters post up to 2 in-app VIP slips per plan period and need at least {minRoi}% settled ROI and {minWr}% settled win rate to offer a plan. Losing VIP slips are not refunded. Full refund only if zero VIP slips are published on the plan during the period. Paid marketplace picks still refund if that coupon loses, and are not included in VIP.',
+    'House Two-Fold posts one slip most days to private Telegram. Independent tipsters post up to 2 in-app VIP slips per plan period and need at least {minRoi}% settled ROI and {minWr}% settled win rate to offer a plan. Losing VIP slips are not refunded. Full refund only if zero VIP slips are published on the plan during the period. Paid marketplace picks still refund if that coupon loses, and are not included in VIP.',
   'subscriptions.trust_callout_title': 'VIP plan escrow',
   'subscriptions.trust_callout_body':
     'The plan fee is held until the period ends. This is not pick escrow: losing VIP slips are not refunded. Full refund only if zero VIP slips are published on this plan during your period. If at least one is published, the tipster is paid 70% and the platform keeps 30% at period end — even if those slips lose. Paid marketplace picks from the same tipster are not included.',
@@ -1225,7 +1225,7 @@ const en = {
     'Zero VIP slips on this plan during your period → full refund. At least one posted → 70% to the tipster and 30% platform fee at period end, even if every slip loses.',
   'subscriptions.channel_house': 'House · daily + Telegram',
   'subscriptions.channel_tipster': 'Tipster · in-app',
-  'subscriptions.cadence_house': '1–2 slips most days, posted to the private BETROLLOVER VIP Telegram channel.',
+  'subscriptions.cadence_house': 'One slip most days, posted to the private BETROLLOVER VIP Telegram channel.',
   'subscriptions.cadence_tipster':
     'Up to {n} included VIP slips in this {days}-day plan, in-app only. Paid marketplace picks from this tipster are sold separately.',
   'subscriptions.checkout_house_includes':

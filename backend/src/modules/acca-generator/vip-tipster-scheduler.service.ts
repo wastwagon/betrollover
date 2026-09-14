@@ -16,7 +16,7 @@ import { isSchedulingEnabled } from '../email/scheduling-enabled';
 
 const PREDICTION_TIME_ZONE =
   process.env.PREDICTION_TIMEZONE || process.env.TIMEZONE || 'Africa/Accra';
-const BOOT_CATCHUP_MS = 40_000;
+const BOOT_CATCHUP_MS = 20_000;
 
 @Injectable()
 export class VipTipsterSchedulerService implements OnModuleInit {
@@ -45,19 +45,33 @@ export class VipTipsterSchedulerService implements OnModuleInit {
     }, BOOT_CATCHUP_MS);
   }
 
-  /** 20:05 Africa/Accra — tomorrow’s VIP slips (~24h ahead), after Acca Desk 20:00. */
+  /** 20:00 Africa/Accra — tomorrow’s VIP slips (~24h ahead), before Acca Desk 20:10. */
   @Cron(VIP_TIPSTER_EARLY_CRON, { timeZone: PREDICTION_TIME_ZONE })
   async handleEarlyTomorrow(): Promise<void> {
     const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
     const tomorrow = addDateStrDays(today, 1);
-    await this.runLocked('20:05 early', tomorrow, 'vip_desk_early');
+    await this.runLocked('20:00 early', tomorrow, 'vip_desk_early');
   }
 
-  /** 08:45 Africa/Accra — fill remaining VIP slips for today. */
+  /** 00:20 Africa/Accra — today’s remaining VIP slots, before Acca Desk 00:30. */
   @Cron(VIP_TIPSTER_DAILY_CRON, { timeZone: PREDICTION_TIME_ZONE })
+  async handleMidnightCatchup(): Promise<void> {
+    const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
+    await this.runLocked('00:20 catch-up', today, 'vip_desk');
+  }
+
+  /** Before Acca Desk 06:00 — claim new homes from overnight odds. */
+  @Cron('50 5 * * *', { timeZone: PREDICTION_TIME_ZONE })
+  async handleDawnCatchup(): Promise<void> {
+    const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
+    await this.runLocked('05:50 catch-up', today, 'vip_desk');
+  }
+
+  /** Before Acca Desk 08:45 — last VIP fill of the morning. */
+  @Cron('35 8 * * *', { timeZone: PREDICTION_TIME_ZONE })
   async handleMorningCatchup(): Promise<void> {
     const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
-    await this.runLocked('08:45 catch-up', today, 'vip_desk');
+    await this.runLocked('08:35 catch-up', today, 'vip_desk');
   }
 
   private async catchUpIfDue(): Promise<void> {

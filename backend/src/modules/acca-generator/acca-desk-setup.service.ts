@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import {
   ACCA_DESK_TIPSTERS,
   ACCA_DESK_TIPSTER_TYPE,
+  isAccaDeskPublishingPaused,
 } from '../../config/acca-desk-tipsters.config';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { User, UserRole, UserStatus } from '../users/entities/user.entity';
@@ -54,7 +55,7 @@ export class AccaDeskSetupService {
         isAi: true,
         tipsterType: ACCA_DESK_TIPSTER_TYPE,
         personalityProfile,
-        isActive: true,
+        isActive: !isAccaDeskPublishingPaused(config.username),
         userId: user.id,
       };
 
@@ -66,7 +67,7 @@ export class AccaDeskSetupService {
           isAi: true,
           tipsterType: ACCA_DESK_TIPSTER_TYPE,
           personalityProfile: personalityProfile as any,
-          isActive: true,
+          isActive: !isAccaDeskPublishingPaused(config.username),
           userId: user.id,
         });
         updated++;

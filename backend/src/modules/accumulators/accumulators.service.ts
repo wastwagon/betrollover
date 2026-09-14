@@ -45,7 +45,14 @@ import { couponUserFacingRef } from '../../common/coupon-public-label';
 import { isAllowedAfricanBookmakerKey, LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
 import { isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
 import { ACCA_GENERATOR_LEGS_MAX } from '../acca-generator/acca-generator.constants';
-import { ACCA_DESK_TIPSTER_TYPE } from '../../config/acca-desk-tipsters.config';
+import {
+  ACCA_DESK_TIPSTER_TYPE,
+  accaDeskPausedMarketplaceTicketExcludeRawSql,
+  accaDeskPausedPublicExcludeRawSql,
+  accaDeskPausedPublicExcludeSql,
+  accaDeskPausedUsernames,
+  isAccaDeskPublishingPaused,
+} from '../../config/acca-desk-tipsters.config';
 import { ROLLOVER_OWNER_USERNAME } from '../../config/rollover-desk.config';
 import {
   classicAiMarketplaceTicketExcludeRawSql,
@@ -498,6 +505,12 @@ export class AccumulatorsService {
               priceGhs: price > 0 ? price : undefined,
               bookmakerKey: price === 0 ? bookmakerKey : undefined,
               bookingCode: price === 0 ? bookingCode : undefined,
+              legs: dto.selections.map((s) => ({
+                matchDescription: s.matchDescription,
+                prediction: s.prediction,
+                odds: Number(s.odds),
+                matchDate: s.matchDate || null,
+              })),
             })
             .catch(() => {});
         }
@@ -563,10 +576,12 @@ export class AccumulatorsService {
             couponId: ticket.id,
             title: dto.title,
             totalOdds: Number(ticket.totalOdds),
+            tipsterName: 'VIP · Two-Fold',
             legs: dto.selections.map((s) => ({
               matchDescription: s.matchDescription,
               prediction: s.prediction,
               odds: Number(s.odds),
+              matchDate: s.matchDate || null,
             })),
             bookmakerKey: ticket.bookmakerKey,
             bookingCode: ticket.bookingCode,
@@ -1093,6 +1108,7 @@ export class AccumulatorsService {
       if (isClassicAiHiddenFromPublic()) {
         qb.andWhere(classicAiMarketplaceTicketExcludeRawSql('t'));
       }
+      qb.andWhere(accaDeskPausedMarketplaceTicketExcludeRawSql('t'));
 
       if (options?.priceFilter === 'free') qb.andWhere('pm.price = 0');
       if (options?.priceFilter === 'paid') qb.andWhere('pm.price > 0');
@@ -1241,13 +1257,33 @@ export class AccumulatorsService {
       if (ownerIds.length > 0) {
         const tipsterRows = await this.tipsterRepo.find({
           where: { userId: In(ownerIds) },
-          select: ['userId', 'isAi', 'tipsterType'],
+          select: ['userId', 'isAi', 'tipsterType', 'username'],
         });
         const classicOwnerIds = new Set(
           tipsterRows.filter((row) => isClassicAiTipsterRow(row)).map((row) => row.userId!),
         );
         if (classicOwnerIds.size > 0) {
           validTickets = validTickets.filter((t) => !classicOwnerIds.has(t.userId));
+        }
+        const pausedOwnerIds = new Set(
+          tipsterRows.filter((row) => isAccaDeskPublishingPaused(row.username)).map((row) => row.userId!),
+        );
+        if (pausedOwnerIds.size > 0) {
+          validTickets = validTickets.filter((t) => !pausedOwnerIds.has(t.userId));
+        }
+      }
+    } else if (!includeAllListings) {
+      const ownerIds = [...new Set(validTickets.map((t) => t.userId).filter(Boolean))];
+      if (ownerIds.length > 0) {
+        const tipsterRows = await this.tipsterRepo.find({
+          where: { userId: In(ownerIds) },
+          select: ['userId', 'username'],
+        });
+        const pausedOwnerIds = new Set(
+          tipsterRows.filter((row) => isAccaDeskPublishingPaused(row.username)).map((row) => row.userId!),
+        );
+        if (pausedOwnerIds.size > 0) {
+          validTickets = validTickets.filter((t) => !pausedOwnerIds.has(t.userId));
         }
       }
     }
@@ -1313,6 +1349,7 @@ export class AccumulatorsService {
     if (isClassicAiHiddenFromPublic()) {
       qb.andWhere(classicAiMarketplaceTicketExcludeRawSql('t'));
     }
+    qb.andWhere(accaDeskPausedMarketplaceTicketExcludeRawSql('t'));
 
     if (options?.priceFilter === 'free' || options?.freeOnly) {
       qb.andWhere('pm.price = 0');
@@ -1405,6 +1442,7 @@ export class AccumulatorsService {
       )`
           : ''
       }
+      AND ${accaDeskPausedMarketplaceTicketExcludeRawSql('t')}
     `;
 
     // Use EXISTS (not JOIN + DISTINCT): Postgres rejects DISTINCT t.id ORDER BY t.created_at
@@ -1833,6 +1871,10 @@ export class AccumulatorsService {
     if (isClassicAiHiddenFromPublic()) {
       qb.andWhere(classicAiPublicExcludeRawSql('ts'));
     }
+    const pausedDesks = accaDeskPausedUsernames();
+    if (pausedDesks.length > 0) {
+      qb.andWhere(accaDeskPausedPublicExcludeSql('ts'), { accaDeskPaused: pausedDesks });
+    }
 
     const rows = await qb
       .select('t.id', 'id')
@@ -1927,6 +1969,7 @@ export class AccumulatorsService {
     const hideClassic = isClassicAiHiddenFromPublic()
       ? `AND ${classicAiMarketplaceTicketExcludeRawSql('t')}`
       : '';
+    const hidePausedDesks = `AND ${accaDeskPausedMarketplaceTicketExcludeRawSql('t')}`;
     const validSubQuery = `
       SELECT pm.accumulator_id FROM pick_marketplace pm
       INNER JOIN accumulator_tickets t ON t.id = pm.accumulator_id AND t.status = 'active' AND t.result = 'pending'
@@ -1937,6 +1980,7 @@ export class AccumulatorsService {
         WHERE ap.accumulator_id = pm.accumulator_id AND f.match_date <= NOW()
       )
       ${hideClassic}
+      ${hidePausedDesks}
     `;
     const result = await this.dataSource
       .createQueryBuilder()
@@ -1988,14 +2032,15 @@ export class AccumulatorsService {
     const hideClassic = isClassicAiHiddenFromPublic()
       ? `AND ${classicAiMarketplaceTicketExcludeRawSql('t')}`
       : '';
+    const hidePausedDesks = `AND ${accaDeskPausedMarketplaceTicketExcludeRawSql('t')}`;
     const rows = await this.dataSource.query(
       `SELECT
          (SELECT COUNT(DISTINCT t.id)::int FROM accumulator_tickets t
           INNER JOIN pick_marketplace pm ON pm.accumulator_id = t.id
-          WHERE t.result = 'won' ${hideClassic}) AS won,
+          WHERE t.result = 'won' ${hideClassic} ${hidePausedDesks}) AS won,
          (SELECT COUNT(DISTINCT t.id)::int FROM accumulator_tickets t
           INNER JOIN pick_marketplace pm ON pm.accumulator_id = t.id
-          WHERE t.result = 'lost' ${hideClassic}) AS lost`,
+          WHERE t.result = 'lost' ${hideClassic} ${hidePausedDesks}) AS lost`,
     );
     const row = rows[0] ?? {};
     return { won: Number(row.won ?? 0), lost: Number(row.lost ?? 0) };
@@ -2013,13 +2058,16 @@ export class AccumulatorsService {
       { won: wonMarketplace, lost: lostMarketplace },
     ] = await Promise.all([
       this.apiSettingsRepo.findOne({ where: { id: 1 } }),
-      isClassicAiHiddenFromPublic()
-        ? this.tipsterRepo
-            .createQueryBuilder('t')
-            .where('t.isActive = :active', { active: true })
-            .andWhere(classicAiPublicExcludeRawSql('t'))
-            .getCount()
-        : this.tipsterRepo.count({ where: { isActive: true } }),
+      this.tipsterRepo
+        .createQueryBuilder('t')
+        .where('t.isActive = :active', { active: true })
+        .andWhere(
+          isClassicAiHiddenFromPublic()
+            ? `(${classicAiPublicExcludeRawSql('t')})`
+            : 'TRUE',
+        )
+        .andWhere(accaDeskPausedPublicExcludeRawSql('t'))
+        .getCount(),
       this.getLiveMarketplaceCount(),
       this.getMarketplacePurchaseCount(),
       this.getTotalNetTipsterPayouts(),
@@ -2089,13 +2137,33 @@ export class AccumulatorsService {
       if (ownerIds.length > 0) {
         const tipsterRows = await this.tipsterRepo.find({
           where: { userId: In(ownerIds) },
-          select: ['userId', 'isAi', 'tipsterType'],
+          select: ['userId', 'isAi', 'tipsterType', 'username'],
         });
         const classicOwnerIds = new Set(
           tipsterRows.filter((row) => isClassicAiTipsterRow(row)).map((row) => row.userId!),
         );
         if (classicOwnerIds.size > 0) {
           validTickets = validTickets.filter((t) => !classicOwnerIds.has(t.userId));
+        }
+        const pausedOwnerIds = new Set(
+          tipsterRows.filter((row) => isAccaDeskPublishingPaused(row.username)).map((row) => row.userId!),
+        );
+        if (pausedOwnerIds.size > 0) {
+          validTickets = validTickets.filter((t) => !pausedOwnerIds.has(t.userId));
+        }
+      }
+    } else if (validTickets.length > 0) {
+      const ownerIds = [...new Set(validTickets.map((t) => t.userId).filter(Boolean))];
+      if (ownerIds.length > 0) {
+        const tipsterRows = await this.tipsterRepo.find({
+          where: { userId: In(ownerIds) },
+          select: ['userId', 'username'],
+        });
+        const pausedOwnerIds = new Set(
+          tipsterRows.filter((row) => isAccaDeskPublishingPaused(row.username)).map((row) => row.userId!),
+        );
+        if (pausedOwnerIds.size > 0) {
+          validTickets = validTickets.filter((t) => !pausedOwnerIds.has(t.userId));
         }
       }
     }
@@ -2168,6 +2236,7 @@ export class AccumulatorsService {
     if (isClassicAiHiddenFromPublic()) {
       statsQb.andWhere(classicAiMarketplaceTicketExcludeRawSql('t'));
     }
+    statsQb.andWhere(accaDeskPausedMarketplaceTicketExcludeRawSql('t'));
     if (fromUtc) {
       statsQb.andWhere('t.updatedAt >= :fromUtc', { fromUtc });
     }
@@ -2210,6 +2279,7 @@ export class AccumulatorsService {
     if (isClassicAiHiddenFromPublic()) {
       listQb.andWhere(classicAiMarketplaceTicketExcludeRawSql('t'));
     }
+    listQb.andWhere(accaDeskPausedMarketplaceTicketExcludeRawSql('t'));
     if (fromUtc) {
       listQb.andWhere('t.updatedAt >= :fromUtc', { fromUtc });
     }

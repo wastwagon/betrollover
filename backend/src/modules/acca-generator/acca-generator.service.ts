@@ -39,14 +39,13 @@ import {
 import { pickGreedyLegs, rotateAwayFromRecentRuns } from './acca-generator-pick.util';
 import { pickVipFoldPair } from '../../config/vip-tipster.pair';
 import {
+  VIP_BLACKLIST_LEAGUE_API_IDS,
   VIP_CONSTRUCTIONS,
   VIP_LEG_ODD_MAX,
   VIP_LEG_ODD_MIN,
   VIP_LEG_TARGET_ODD,
   VIP_MAX_COMBINED_ODDS,
   VIP_MIN_COMBINED_ODDS,
-  VIP_REJECT_SAME_LEAGUE_API_IDS,
-  type VipConstructionKey,
 } from '../../config/vip-tipster.config';
 
 const ACCA_EVENT_TYPES = new Set(['tool_open', 'quota_hit', 'empty_pool']);
@@ -658,6 +657,7 @@ export class AccaGeneratorService {
     /** Acca Desk board date — uses [D 06:00, D+1 06:00) pool. */
     deskDayStr?: string;
     leagueApiIds?: number[];
+    excludeLeagueApiIds?: number[];
   }): Promise<AccaGeneratorSelection[]> {
     const window = opts.deskDayStr
       ? (() => {
@@ -669,9 +669,13 @@ export class AccaGeneratorService {
     const halfSpan = Math.max((opts.oddMax - opts.oddMin) / 2, 0.05);
     const bestByFixture = new Map<number, AccaGeneratorSelection>();
     const exclude = opts.excludeFixtureIds;
+    const blockedLeagues = new Set(
+      (opts.excludeLeagueApiIds || []).filter((id) => Number.isFinite(id) && id > 0),
+    );
 
     for (const row of pool) {
       if (exclude?.has(row.fixtureId)) continue;
+      if (row.leagueApiId != null && blockedLeagues.has(row.leagueApiId)) continue;
       if (!opts.allowedOutcomes.has(row.outcomeKey)) continue;
 
       const probability = Math.min(0.95, Math.max(0.05, 1 / row.odds));
@@ -840,15 +844,14 @@ export class AccaGeneratorService {
   }
 
   /**
-   * VIP desk: 2-leg Home or Draw (whitelist) or Brazil Over 1.5, combined 2.20–2.80.
-   * Does not use Acca Desk risk bands or the public picker.
+   * VIP desk: 2-leg Home+Home @ 1.20–1.40, combined 1.50–1.99.
+   * Optional slotKey restricts the pool to one Acca Desk kick-off window.
    */
   async generateForVip(opts: {
     userId: number;
     excludeFixtureIds?: Iterable<number>;
     deskDayStr?: string;
-    /** Try this construction first; always fall back to the other. */
-    preferConstruction?: VipConstructionKey;
+    slotKey?: AccaDeskSlotKey;
   }) {
     const tz = this.predictionTimeZone();
     const deskDayStr = opts.deskDayStr || accraDateStr(new Date(), tz);
@@ -856,40 +859,41 @@ export class AccaGeneratorService {
       [...(opts.excludeFixtureIds || [])].filter((id) => Number.isFinite(id) && id > 0),
     );
 
-    const order: VipConstructionKey[] =
-      opts.preferConstruction === 'brazil_over15'
-        ? ['brazil_over15', 'home_draw']
-        : ['home_draw', 'brazil_over15'];
-
-    for (const key of order) {
-      const construction = VIP_CONSTRUCTIONS.find((c) => c.key === key);
-      if (!construction) continue;
-      const candidates = await this.buildCandidates({
-        allowedOutcomes: new Set(construction.outcomeKeys),
-        oddMin: VIP_LEG_ODD_MIN,
-        oddMax: VIP_LEG_ODD_MAX,
-        targetOdd: VIP_LEG_TARGET_ODD,
-        excludeFixtureIds,
-        deskDayStr,
-        leagueApiIds: [...construction.leagueApiIds],
-      });
-      const selected = pickVipFoldPair(candidates, {
-        minCombined: VIP_MIN_COMBINED_ODDS,
-        maxCombined: VIP_MAX_COMBINED_ODDS,
-        maxGapMs: ACCA_DESK_MAX_KICKOFF_GAP_MS,
-        rejectSameLeagueApiIds: VIP_REJECT_SAME_LEAGUE_API_IDS,
-      });
-      if (selected.length < 2) continue;
-
+    const construction = VIP_CONSTRUCTIONS[0];
+    if (!construction) {
+      return {
+        ok: false as const,
+        reason: 'empty_pool' as const,
+        candidates: 0,
+        deskDay: deskDayStr,
+      };
+    }
+    let candidates = await this.buildCandidates({
+      allowedOutcomes: new Set(construction.outcomeKeys),
+      oddMin: VIP_LEG_ODD_MIN,
+      oddMax: VIP_LEG_ODD_MAX,
+      targetOdd: VIP_LEG_TARGET_ODD,
+      excludeFixtureIds,
+      deskDayStr,
+      excludeLeagueApiIds: [...VIP_BLACKLIST_LEAGUE_API_IDS],
+    });
+    if (opts.slotKey) {
+      candidates = candidates.filter((c) => slotForKickoff(c.matchDate, tz)?.key === opts.slotKey);
+    }
+    const selected = pickVipFoldPair(candidates, {
+      minCombined: VIP_MIN_COMBINED_ODDS,
+      maxCombined: VIP_MAX_COMBINED_ODDS,
+      maxGapMs: ACCA_DESK_MAX_KICKOFF_GAP_MS,
+    });
+    if (selected.length === 2) {
       const combinedOdds = productOdds(selected.map((s) => s.odds));
-      const markets = key === 'brazil_over15' ? ['over15'] : ['double_chance'];
       const run = await this.runRepo.save(
         this.runRepo.create({
           userId: opts.userId,
           legsRequested: 2,
           legsReturned: selected.length,
-          markets,
-          riskLevel: 'safe',
+          markets: ['match_winner'],
+          riskLevel: 'sure',
           oddMin: VIP_LEG_ODD_MIN,
           oddMax: VIP_LEG_ODD_MAX,
           combinedOdds,
@@ -902,8 +906,8 @@ export class AccaGeneratorService {
         generationId: run.id,
         legs: selected.map(({ score: _s, ...leg }) => leg),
         combinedOdds,
-        markets,
-        construction: key,
+        markets: ['match_winner'] as string[],
+        construction: construction.key,
         constructionLabel: construction.label,
         deskDay: deskDayStr,
       };
@@ -914,12 +918,13 @@ export class AccaGeneratorService {
       legsRequested: 2,
       excluded: excludeFixtureIds.size,
       deskDay: deskDayStr,
-      preferConstruction: opts.preferConstruction ?? 'home_draw',
+      construction: construction.key,
+      slotKey: opts.slotKey ?? null,
     });
     return {
       ok: false as const,
       reason: 'empty_pool' as const,
-      candidates: 0,
+      candidates: candidates.length,
       deskDay: deskDayStr,
     };
   }

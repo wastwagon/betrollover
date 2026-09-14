@@ -84,11 +84,60 @@ export const ACCA_DESK_TIPSTER_TYPE = 'acca_desk';
 export const ACCA_DESK_LEGS = 2 as const;
 export { ACCA_DESK_MAX_PER_DAY, ACCA_DESK_TIME_SLOTS } from './acca-desk-slots';
 
+/**
+ * Live desks that lose as a book (week + month + all-time). Stay in the roster
+ * so they can be turned back on, but do not publish or appear on public lists.
+ */
+export const ACCA_DESK_PAUSED_USERNAMES = new Set([
+  'AccaMediumO25',
+  'AccaSafeBTTS',
+  'AccaSafeO25',
+  'AccaSureBTTS',
+  'AccaSureO15',
+  'AccaMedium1X2',
+  'AccaSureMix',
+  'AccaHighFHO15',
+  'AccaHighU15',
+]);
+
+export function isAccaDeskPublishingPaused(username: string): boolean {
+  return ACCA_DESK_PAUSED_USERNAMES.has(username);
+}
+
+export function accaDeskPausedUsernames(): string[] {
+  return [...ACCA_DESK_PAUSED_USERNAMES];
+}
+
+/** TypeORM QB. Bind `:...accaDeskPaused` to `accaDeskPausedUsernames()`. */
+export function accaDeskPausedPublicExcludeSql(tipsterAlias = 't'): string {
+  return `${tipsterAlias}.username NOT IN (:...accaDeskPaused)`;
+}
+
+/** Raw SQL. Usernames are compile-time constants from the pause set. */
+export function accaDeskPausedPublicExcludeRawSql(tipsterAlias = 't'): string {
+  const names = accaDeskPausedUsernames();
+  if (names.length === 0) return 'TRUE';
+  const list = names.map((n) => `'${n.replace(/'/g, "''")}'`).join(', ');
+  return `${tipsterAlias}.username NOT IN (${list})`;
+}
+
+/** Hide paused Acca desk marketplace tickets (ticket owner = tipster user_id). */
+export function accaDeskPausedMarketplaceTicketExcludeRawSql(ticketAlias = 't'): string {
+  const names = accaDeskPausedUsernames();
+  if (names.length === 0) return 'TRUE';
+  const list = names.map((n) => `'${n.replace(/'/g, "''")}'`).join(', ');
+  return `NOT EXISTS (
+    SELECT 1 FROM tipsters paused_acca
+    WHERE paused_acca.user_id = ${ticketAlias}.user_id
+      AND paused_acca.username IN (${list})
+  )`;
+}
+
 /** Cron: 00:30 Africa/Accra — catch-up for today’s desk day after midnight. */
 export const ACCA_DESK_DAILY_CRON = process.env.ACCA_DESK_DAILY_CRON || '30 0 * * *';
 
-/** Cron: 20:00 Africa/Accra — publish tomorrow’s full desk day (~24h ahead). */
-export const ACCA_DESK_EARLY_CRON = process.env.ACCA_DESK_EARLY_CRON || '0 20 * * *';
+/** Cron: 20:10 Africa/Accra — tomorrow’s desk, after VIP Home+Home at 20:00. */
+export const ACCA_DESK_EARLY_CRON = process.env.ACCA_DESK_EARLY_CRON || '10 20 * * *';
 
 export function isAccaDeskEnabled(): boolean {
   const raw = (process.env.ACCA_DESK_ENABLED || 'true').toLowerCase().trim();
