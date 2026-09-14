@@ -868,7 +868,12 @@ export class AccumulatorsService {
     listingRow: PickMarketplace | null,
     viewerUserId: number,
     picksPayload: unknown[],
-  ): Promise<{ picks: unknown[]; picksRevealed: boolean; accessViaSubscription?: boolean }> {
+  ): Promise<{
+    picks: unknown[];
+    picksRevealed: boolean;
+    requiresSubscription: boolean;
+    accessViaSubscription?: boolean;
+  }> {
     const applied = await this.applyCouponPickVisibility(
       { picks: picksPayload } as Record<string, unknown>,
       ticket,
