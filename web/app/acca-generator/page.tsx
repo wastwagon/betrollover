@@ -46,6 +46,7 @@ type Availability = {
   oddMin: number;
   oddMax: number;
   targetOdd: number;
+  over15Only?: boolean;
   date: string;
   asOf: string;
   fixtureCount: number;
@@ -64,6 +65,7 @@ type Config = {
   /** True when the signed-in user is admin (may use tool while disabled). */
   adminBypassDisabled?: boolean;
   riskProfiles?: RiskProfile[];
+  over15RiskProfiles?: RiskProfile[];
   markets: MarketOption[];
   defaults: {
     riskLevel?: AccaRiskKey;
@@ -134,6 +136,19 @@ const FALLBACK_RISK_PROFILES: RiskProfile[] = [
     targetOdd: 2.8,
   },
 ];
+
+/** Offline fallback — keep in sync with backend ACCA_O15_ODDS_BY_RISK. */
+const FALLBACK_O15_RISK_PROFILES: RiskProfile[] = FALLBACK_RISK_PROFILES.map((p) => {
+  const band =
+    p.key === 'sure'
+      ? { oddMin: 1.18, oddMax: 1.32, targetOdd: 1.25 }
+      : p.key === 'safe'
+        ? { oddMin: 1.33, oddMax: 1.48, targetOdd: 1.4 }
+        : p.key === 'medium'
+          ? { oddMin: 1.49, oddMax: 1.64, targetOdd: 1.56 }
+          : { oddMin: 1.65, oddMax: 1.85, targetOdd: 1.74 };
+  return { ...p, ...band };
+});
 
 const ACCA_RISK_KEYS: AccaRiskKey[] = ['sure', 'safe', 'medium', 'high'];
 
@@ -509,6 +524,11 @@ export default function AccaGeneratorPage() {
               prev
                 ? {
                     ...prev,
+                    oddMin: data.oddMin,
+                    oddMax: data.oddMax,
+                    targetOdd: data.targetOdd,
+                    over15Only: data.over15Only,
+                    fixtureCount: data.fixtureCount,
                     selectedFixtureCount: data.selectedFixtureCount,
                     asOf: data.asOf,
                   }
@@ -537,7 +557,14 @@ export default function AccaGeneratorPage() {
     return t('acca.quota_left', { remaining: String(q.remaining), max: String(q.maxPerDay) });
   }, [config, result, t]);
 
-  const riskProfiles = config?.riskProfiles?.length ? config.riskProfiles : FALLBACK_RISK_PROFILES;
+  const over15Only = selectedMarkets.length === 1 && selectedMarkets[0] === 'over15';
+  const genericRiskProfiles = config?.riskProfiles?.length
+    ? config.riskProfiles
+    : FALLBACK_RISK_PROFILES;
+  const over15RiskProfiles = config?.over15RiskProfiles?.length
+    ? config.over15RiskProfiles
+    : FALLBACK_O15_RISK_PROFILES;
+  const riskProfiles = over15Only ? over15RiskProfiles : genericRiskProfiles;
   const activeRisk = riskProfiles.find((p) => p.key === riskLevel) || riskProfiles[1];
   const combinedBand = activeRisk ? estimateCombinedBand(activeRisk, legs) : null;
   const overallExposure = overallExposureLabel(riskLevel, legs, t);

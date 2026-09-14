@@ -30,12 +30,19 @@ import {
   ACCA_GENERATOR_MARKET_KEYS,
   ACCA_GENERATOR_MARKETS,
   ACCA_RISK_PROFILES,
+  isOver15OnlyMarkets,
+  marketsIncludeOver15,
   outcomeFamily,
   outcomeKeysForMarkets,
   resolveRiskProfile,
   type AccaRiskLevel,
   type AccaRiskProfile,
 } from './acca-generator.markets';
+import {
+  ACCA_O15_BLACKLIST_LEAGUE_API_IDS,
+  ACCA_O15_ODDS_BY_RISK,
+  isAccaO15LeagueAllowed,
+} from '../../config/acca-desk-tipsters.config';
 import { pickGreedyLegs, rotateAwayFromRecentRuns } from './acca-generator-pick.util';
 import { pickVipFoldPair } from '../../config/vip-tipster.pair';
 import {
@@ -150,6 +157,11 @@ export class AccaGeneratorService {
       /** Same calendar day only — denser markets, avoids thin future days. */
       sameDayOnly: true,
       riskProfiles: ACCA_RISK_PROFILES,
+      /** Same Over 1.5 bands as Acca Desk — used when the user selects only that market. */
+      over15RiskProfiles: ACCA_RISK_PROFILES.map((p) => ({
+        ...p,
+        ...ACCA_O15_ODDS_BY_RISK[p.key],
+      })),
       markets: ACCA_GENERATOR_MARKETS.map((m) => ({ key: m.key, label: m.label })),
       defaults: ACCA_GENERATOR_DEFAULTS,
       /** Admins may generate/publish when the feature flag is off. */
@@ -169,14 +181,30 @@ export class AccaGeneratorService {
    */
   async getAvailability(riskLevel?: string, marketsCsv?: string) {
     const risk = resolveRiskProfile(riskLevel || ACCA_GENERATOR_DEFAULTS.riskLevel);
-    const lines = await this.loadTodayOddsInBand(risk.oddMin, risk.oddMax);
+    const catalogLines = await this.loadTodayOddsInBand(risk.oddMin, risk.oddMax);
     const { dateStr } = this.todayBounds();
+
+    const selectedKeys = (marketsCsv || '')
+      .split(',')
+      .map((s) => s.trim().toLowerCase())
+      .filter((k) => ACCA_GENERATOR_MARKET_KEYS.has(k));
+    const over15Only = isOver15OnlyMarkets(selectedKeys);
+    const o15Band = over15Only ? ACCA_O15_ODDS_BY_RISK[risk.key] : null;
+    const oddMin = o15Band?.oddMin ?? risk.oddMin;
+    const oddMax = o15Band?.oddMax ?? risk.oddMax;
+    const targetOdd = o15Band?.targetOdd ?? risk.targetOdd;
+    const o15Lines = over15Only
+      ? await this.loadTodayOddsInBand(oddMin, oddMax, [...ACCA_O15_BLACKLIST_LEAGUE_API_IDS])
+      : catalogLines;
 
     const markets = ACCA_GENERATOR_MARKETS.map((m) => {
       const keys = new Set(m.outcomeKeys);
+      const source = m.key === 'over15' && over15Only ? o15Lines : catalogLines;
       const fixtureIds = new Set<number>();
-      for (const line of lines) {
-        if (keys.has(line.outcomeKey)) fixtureIds.add(line.fixtureId);
+      for (const line of source) {
+        if (!keys.has(line.outcomeKey)) continue;
+        if (line.outcomeKey === 'over15' && !isAccaO15LeagueAllowed(line.leagueApiId)) continue;
+        fixtureIds.add(line.fixtureId);
       }
       return {
         key: m.key,
@@ -187,25 +215,29 @@ export class AccaGeneratorService {
     });
 
     const availableMarkets = markets.filter((m) => m.available);
-    const allFixtures = new Set(lines.map((l) => l.fixtureId));
+    const countLines = over15Only ? o15Lines : catalogLines;
+    const allFixtures = new Set(countLines.map((l) => l.fixtureId));
 
-    const selectedKeys = (marketsCsv || '')
-      .split(',')
-      .map((s) => s.trim().toLowerCase())
-      .filter((k) => ACCA_GENERATOR_MARKET_KEYS.has(k));
     let selectedFixtureCount = 0;
     if (selectedKeys.length) {
       const allowed = outcomeKeysForMarkets(selectedKeys);
       selectedFixtureCount = new Set(
-        lines.filter((l) => allowed.has(l.outcomeKey)).map((l) => l.fixtureId),
+        countLines
+          .filter((l) => {
+            if (!allowed.has(l.outcomeKey)) return false;
+            if (l.outcomeKey === 'over15' && !isAccaO15LeagueAllowed(l.leagueApiId)) return false;
+            return true;
+          })
+          .map((l) => l.fixtureId),
       ).size;
     }
 
     return {
       riskLevel: risk.key,
-      oddMin: risk.oddMin,
-      oddMax: risk.oddMax,
-      targetOdd: risk.targetOdd,
+      oddMin,
+      oddMax,
+      targetOdd,
+      over15Only,
       date: dateStr,
       asOf: new Date().toISOString(),
       /** Unique fixtures that have ≥1 line in this risk band today */
@@ -224,7 +256,11 @@ export class AccaGeneratorService {
 
     const markets = this.normalizeMarkets(dto.markets);
     const risk = this.resolveRiskFromDto(dto);
-    const { oddMin, oddMax, targetOdd } = risk;
+    const over15Only = isOver15OnlyMarkets(markets);
+    const o15Band = over15Only ? ACCA_O15_ODDS_BY_RISK[risk.key] : null;
+    const oddMin = o15Band?.oddMin ?? risk.oddMin;
+    const oddMax = o15Band?.oddMax ?? risk.oddMax;
+    const targetOdd = o15Band?.targetOdd ?? risk.targetOdd;
     const legs = Math.floor(Number(dto.legs));
 
     if (!Number.isFinite(legs) || legs < limits.minLegs || legs > limits.maxLegs) {
@@ -234,12 +270,18 @@ export class AccaGeneratorService {
     await this.assertGenerationQuota(userId, limits);
 
     const allowedOutcomes = outcomeKeysForMarkets(markets);
-    const candidates = await this.buildCandidates({
+    let candidates = await this.buildCandidates({
       allowedOutcomes,
       oddMin,
       oddMax,
       targetOdd,
+      excludeLeagueApiIds: over15Only ? [...ACCA_O15_BLACKLIST_LEAGUE_API_IDS] : undefined,
     });
+    if (marketsIncludeOver15(markets) && !over15Only) {
+      candidates = candidates.filter(
+        (c) => c.outcomeKey !== 'over15' || isAccaO15LeagueAllowed(c.leagueApiId),
+      );
+    }
 
     if (candidates.length < legs) {
       await this.recordEvent(userId, 'empty_pool', {
@@ -557,6 +599,7 @@ export class AccaGeneratorService {
     oddMax: number,
     window?: { start: Date; endExclusive: Date },
     leagueApiIds?: number[],
+    excludeLeagueApiIds?: number[],
   ): Promise<
     {
       fixtureId: number;
@@ -579,6 +622,7 @@ export class AccaGeneratorService {
     const end = window?.endExclusive ?? endOfDay;
     const endInclusive = !window;
     const leagueIds = (leagueApiIds || []).filter((id) => Number.isFinite(id) && id > 0);
+    const blockedLeagueIds = (excludeLeagueApiIds || []).filter((id) => Number.isFinite(id) && id > 0);
 
     const fixturesQb = this.fixtureRepo
       .createQueryBuilder('f')
@@ -594,6 +638,11 @@ export class AccaGeneratorService {
       .take(leagueIds.length ? 400 : 800);
     if (leagueIds.length) {
       fixturesQb.andWhere('lg.apiId IN (:...leagueIds)', { leagueIds });
+    }
+    if (blockedLeagueIds.length) {
+      fixturesQb.andWhere('(lg.apiId IS NULL OR lg.apiId NOT IN (:...blockedLeagueIds))', {
+        blockedLeagueIds,
+      });
     }
 
     const fixtures = await fixturesQb.getMany();
@@ -644,8 +693,8 @@ export class AccaGeneratorService {
     return rows;
   }
 
-  private async loadTodayOddsInBand(oddMin: number, oddMax: number) {
-    return this.loadOddsInBand(oddMin, oddMax);
+  private async loadTodayOddsInBand(oddMin: number, oddMax: number, excludeLeagueApiIds?: number[]) {
+    return this.loadOddsInBand(oddMin, oddMax, undefined, undefined, excludeLeagueApiIds);
   }
 
   private async buildCandidates(opts: {
@@ -665,7 +714,13 @@ export class AccaGeneratorService {
           return { start, endExclusive: end };
         })()
       : undefined;
-    const pool = await this.loadOddsInBand(opts.oddMin, opts.oddMax, window, opts.leagueApiIds);
+    const pool = await this.loadOddsInBand(
+      opts.oddMin,
+      opts.oddMax,
+      window,
+      opts.leagueApiIds,
+      opts.excludeLeagueApiIds,
+    );
     const halfSpan = Math.max((opts.oddMax - opts.oddMin) / 2, 0.05);
     const bestByFixture = new Map<number, AccaGeneratorSelection>();
     const exclude = opts.excludeFixtureIds;
@@ -742,6 +797,10 @@ export class AccaGeneratorService {
     slotKey?: AccaDeskSlotKey;
     /** Accra desk day YYYY-MM-DD (default: today). */
     deskDayStr?: string;
+    oddMin?: number;
+    oddMax?: number;
+    targetOdd?: number;
+    excludeLeagueApiIds?: readonly number[];
   }) {
     const markets = this.normalizeMarkets(opts.markets);
     const risk = this.resolveRiskFromDto({ markets, legs: opts.legs, riskLevel: opts.riskLevel });
@@ -757,13 +816,17 @@ export class AccaGeneratorService {
       [...(opts.excludeFixtureIds || [])].filter((id) => Number.isFinite(id) && id > 0),
     );
     const allowedOutcomes = outcomeKeysForMarkets(markets);
+    const oddMin = opts.oddMin ?? risk.oddMin;
+    const oddMax = opts.oddMax ?? risk.oddMax;
+    const targetOdd = opts.targetOdd ?? risk.targetOdd;
     let candidates = await this.buildCandidates({
       allowedOutcomes,
-      oddMin: risk.oddMin,
-      oddMax: risk.oddMax,
-      targetOdd: risk.targetOdd,
+      oddMin,
+      oddMax,
+      targetOdd,
       excludeFixtureIds,
       deskDayStr,
+      excludeLeagueApiIds: opts.excludeLeagueApiIds ? [...opts.excludeLeagueApiIds] : undefined,
     });
 
     if (opts.slotKey) {
@@ -823,8 +886,8 @@ export class AccaGeneratorService {
         legsReturned: selected.length,
         markets,
         riskLevel: risk.key,
-        oddMin: risk.oddMin,
-        oddMax: risk.oddMax,
+        oddMin,
+        oddMax,
         combinedOdds,
         selections: selected as unknown as Record<string, unknown>[],
       }),
@@ -837,8 +900,8 @@ export class AccaGeneratorService {
       combinedOdds,
       markets,
       riskLevel: risk.key,
-      oddMin: risk.oddMin,
-      oddMax: risk.oddMax,
+      oddMin,
+      oddMax,
       deskDay: deskDayStr,
     };
   }

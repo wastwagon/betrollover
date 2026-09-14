@@ -406,6 +406,10 @@ export class AccaDeskPublisherService {
       excludeFixtureIds: usedFixtureIds,
       slotKey: slot.key,
       deskDayStr,
+      oddMin: config.oddMin,
+      oddMax: config.oddMax,
+      targetOdd: config.targetOdd,
+      excludeLeagueApiIds: config.excludeLeagueApiIds,
     });
 
     if (!generated.ok) {

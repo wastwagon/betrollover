@@ -1,15 +1,14 @@
 /**
- * Classic 1-fixture AI tipsters (tipsterType=ai) can keep generating in the background
- * while staying hidden from public browse / leaderboard / marketplace / settled archive.
- * Acca Desk (tipsterType=acca_desk) and humans stay visible.
+ * Classic 1-fixture AI tipsters (tipsterType=ai). Public by default.
+ * Acca Desk (tipsterType=acca_desk) is unaffected.
  *
- * Toggle: HIDE_CLASSIC_AI_TIPSTERS_FROM_PUBLIC=false to show them again.
+ * Toggle: HIDE_CLASSIC_AI_TIPSTERS_FROM_PUBLIC=true to hide browse / leaderboard / marketplace.
  */
 export const CLASSIC_AI_TIPSTER_TYPE = 'ai';
 
 export function isClassicAiHiddenFromPublic(): boolean {
-  const raw = (process.env.HIDE_CLASSIC_AI_TIPSTERS_FROM_PUBLIC ?? 'true').toLowerCase().trim();
-  return raw !== 'false' && raw !== '0' && raw !== 'no';
+  const raw = (process.env.HIDE_CLASSIC_AI_TIPSTERS_FROM_PUBLIC ?? 'false').toLowerCase().trim();
+  return raw === 'true' || raw === '1' || raw === 'yes';
 }
 
 export function isClassicAiTipsterRow(row: {

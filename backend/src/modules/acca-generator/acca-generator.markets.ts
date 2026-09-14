@@ -113,6 +113,26 @@ export function outcomeKeysForMarkets(marketKeys: string[]): Set<string> {
   return out;
 }
 
+function normalizedMarketKeys(markets: readonly string[]): string[] {
+  return [
+    ...new Set(
+      markets
+        .map((m) => String(m || '').trim().toLowerCase())
+        .filter((k) => ACCA_GENERATOR_MARKET_KEYS.has(k)),
+    ),
+  ];
+}
+
+/** True when the user/desk asked only for full-time Over 1.5. */
+export function isOver15OnlyMarkets(markets: readonly string[]): boolean {
+  const keys = normalizedMarketKeys(markets);
+  return keys.length > 0 && keys.every((k) => k === 'over15');
+}
+
+export function marketsIncludeOver15(markets: readonly string[]): boolean {
+  return normalizedMarketKeys(markets).includes('over15');
+}
+
 /** Group outcomes so slips don’t stack four identical market types. */
 export function outcomeFamily(outcomeKey: string): string {
   const k = outcomeKey.toLowerCase();
