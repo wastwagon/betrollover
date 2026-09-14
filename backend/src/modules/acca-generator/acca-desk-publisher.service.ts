@@ -190,7 +190,7 @@ export class AccaDeskPublisherService {
   }
 
   /**
-   * Acca Desk pass for one desk day: up to 4 time-slotted 2-leg coupons per bot.
+   * Acca Desk pass for one desk day: up to ACCA_DESK_MAX_PER_DAY 2-leg coupons per bot.
    * Idempotent per tipster + desk day + slot. Fixture exclusivity within that desk day.
    */
   async runDaily(opts?: {
@@ -223,7 +223,7 @@ export class AccaDeskPublisherService {
       details: [],
     };
 
-    const postedSlotsByUser = new Map<number, Set<AccaDeskSlotKey>>();
+    const postedByUser = new Map<number, { slots: Set<AccaDeskSlotKey>; count: number }>();
     const shorts: AccaDeskShort[] = [];
 
     for (const config of ACCA_DESK_TIPSTERS) {
@@ -234,7 +234,7 @@ export class AccaDeskPublisherService {
             config,
             slot,
             usedFixtureIds,
-            postedSlotsByUser,
+            postedByUser,
             deskDayStr,
           );
           result.details.push(outcome.detail);
@@ -313,7 +313,7 @@ export class AccaDeskPublisherService {
       : ACCA_DESK_TIME_SLOTS;
     const usedFixtureIds = new Set<number>();
     await this.seedUsedFixturesForDeskDay(usedFixtureIds, deskDayStr);
-    const postedSlotsByUser = new Map<number, Set<AccaDeskSlotKey>>();
+    const postedByUser = new Map<number, { slots: Set<AccaDeskSlotKey>; count: number }>();
     const result: AccaDeskRunResult = {
       enabled: true,
       deskDay: deskDayStr,
@@ -331,7 +331,7 @@ export class AccaDeskPublisherService {
           config,
           slot,
           usedFixtureIds,
-          postedSlotsByUser,
+          postedByUser,
           deskDayStr,
         );
         result.details.push(outcome.detail);
@@ -376,7 +376,7 @@ export class AccaDeskPublisherService {
     config: AccaDeskTipsterConfig,
     slot: AccaDeskTimeSlot,
     usedFixtureIds: Set<number>,
-    postedSlotsByUser: Map<number, Set<AccaDeskSlotKey>>,
+    postedByUser: Map<number, { slots: Set<AccaDeskSlotKey>; count: number }>,
     deskDayStr: string,
   ): Promise<{ detail: AccaDeskRunResult['details'][number]; short?: AccaDeskShort }> {
     const tipster = await this.tipsterRepo.findOne({
@@ -386,13 +386,13 @@ export class AccaDeskPublisherService {
       return { detail: { username: config.username, status: 'no_user', slotKey: slot.key } };
     }
 
-    const posted = await this.postedSlotsForDeskDay(tipster.userId, deskDayStr, postedSlotsByUser);
-    if (posted.has(slot.key)) {
+    const posted = await this.postedSlotsForDeskDay(tipster.userId, deskDayStr, postedByUser);
+    if (posted.slots.has(slot.key)) {
       return {
         detail: { username: config.username, status: 'skipped_already', slotKey: slot.key },
       };
     }
-    if (posted.size >= ACCA_DESK_MAX_PER_DAY) {
+    if (posted.count >= ACCA_DESK_MAX_PER_DAY) {
       return {
         detail: { username: config.username, status: 'skipped_already', slotKey: slot.key },
       };
@@ -436,7 +436,8 @@ export class AccaDeskPublisherService {
     for (const leg of generated.legs) {
       if (leg.fixtureId) usedFixtureIds.add(leg.fixtureId);
     }
-    posted.add(slot.key);
+    posted.slots.add(slot.key);
+    posted.count += 1;
 
     const ticketId = Number(
       (published as { publishedTicketId?: number })?.publishedTicketId ??
@@ -545,8 +546,8 @@ export class AccaDeskPublisherService {
   private async postedSlotsForDeskDay(
     userId: number,
     deskDayStr: string,
-    cache: Map<number, Set<AccaDeskSlotKey>>,
-  ): Promise<Set<AccaDeskSlotKey>> {
+    cache: Map<number, { slots: Set<AccaDeskSlotKey>; count: number }>,
+  ): Promise<{ slots: Set<AccaDeskSlotKey>; count: number }> {
     const cacheKey = userId;
     const cached = cache.get(cacheKey);
     if (cached) return cached;
@@ -554,8 +555,9 @@ export class AccaDeskPublisherService {
     const tickets = await this.findDeskDayTickets([userId], deskDayStr);
     const slots = new Set<AccaDeskSlotKey>();
     if (!tickets.length) {
-      cache.set(cacheKey, slots);
-      return slots;
+      const empty = { slots, count: 0 };
+      cache.set(cacheKey, empty);
+      return empty;
     }
 
     const picks = await this.pickRepo.find({
@@ -578,7 +580,8 @@ export class AccaDeskPublisherService {
       if (key) slots.add(key);
     }
 
-    cache.set(cacheKey, slots);
-    return slots;
+    const posted = { slots, count: tickets.length };
+    cache.set(cacheKey, posted);
+    return posted;
   }
 }

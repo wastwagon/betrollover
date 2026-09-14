@@ -38,14 +38,14 @@ export async function telegramSendPhoto(opts: {
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const token = telegramBotToken();
   if (!token) return { ok: false, error: 'not_configured' };
+  if (!opts.png?.length) return { ok: false, error: 'empty_photo' };
+  const filename = opts.filename || 'coupon.png';
+  const bytes = Uint8Array.from(opts.png);
+  const photo = new File([bytes], filename, { type: 'image/png' });
   const form = new FormData();
   form.append('chat_id', opts.chatId);
   form.append('caption', (opts.caption || '').slice(0, 1024));
-  form.append(
-    'photo',
-    new Blob([new Uint8Array(opts.png)], { type: 'image/png' }),
-    opts.filename || 'coupon.png',
-  );
+  form.append('photo', photo);
   try {
     const res = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
       method: 'POST',

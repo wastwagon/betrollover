@@ -304,6 +304,7 @@ export class TelegramVipService {
         caption,
       });
       if (photo.ok) return photo;
+      this.logger.warn(`VIP sendPhoto failed: ${photo.error}`);
     } catch (e) {
       this.logger.warn(`VIP coupon card render failed: ${e instanceof Error ? e.message : String(e)}`);
     }
@@ -348,6 +349,7 @@ export class TelegramVipService {
         caption,
       });
       if (photo.ok) return photo;
+      this.logger.warn(`VIP won sendPhoto failed: ${photo.error}`);
     } catch (e) {
       this.logger.warn(`VIP won card render failed: ${e instanceof Error ? e.message : String(e)}`);
     }

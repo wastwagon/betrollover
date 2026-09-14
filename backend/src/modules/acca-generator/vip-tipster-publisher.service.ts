@@ -268,11 +268,12 @@ export class VipTipsterPublisherService {
     await this.addAccaDeskFixtureIds(usedFixtureIds, deskDayStr);
 
     const postedSlots = await this.postedSlotsForDeskDay(existing);
+    let postedCount = existing.length;
     const result: VipTipsterRunResult = {
       enabled: true,
       deskDay: deskDayStr,
       published: 0,
-      skippedAlreadyPosted: postedSlots.size,
+      skippedAlreadyPosted: postedCount,
       skippedEmptyPool: 0,
       skippedNoUser: 0,
       errors: 0,
@@ -284,7 +285,7 @@ export class VipTipsterPublisherService {
         result.details.push({ status: 'skipped_already', slotKey: slot.key });
         continue;
       }
-      if (postedSlots.size >= VIP_MAX_COUPONS_PER_DAY) {
+      if (postedCount >= VIP_MAX_COUPONS_PER_DAY) {
         result.details.push({ status: 'skipped_already', slotKey: slot.key });
         continue;
       }
@@ -326,6 +327,7 @@ export class VipTipsterPublisherService {
           if (leg.fixtureId) usedFixtureIds.add(leg.fixtureId);
         }
         postedSlots.add(slot.key);
+        postedCount += 1;
 
         const ticketId = Number(
           (published as { publishedTicketId?: number })?.publishedTicketId ??

@@ -1,4 +1,4 @@
-import sharp from 'sharp';
+import * as sharp from 'sharp';
 import { bookmakerLabelForKey, formatFootballOutcomeLabel } from '@betrollover/shared-types';
 
 export type TelegramCouponCardLeg = {

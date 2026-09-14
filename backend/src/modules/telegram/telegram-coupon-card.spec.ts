@@ -1,4 +1,4 @@
-import { buildCouponCardSvg, couponCardCaption } from './telegram-coupon-card';
+import { buildCouponCardSvg, couponCardCaption, renderCouponCardPng } from './telegram-coupon-card';
 
 describe('telegram coupon card svg', () => {
   it('renders live VIP two-fold with combined odds and legs', () => {
@@ -92,6 +92,22 @@ describe('telegram coupon card svg', () => {
     });
     expect(svg).toContain('Foo &amp; Bar &lt;Baz&gt;');
     expect(svg).not.toContain('Foo & Bar <Baz>');
+  });
+
+  it('renders a real PNG via sharp (CJS import, not .default)', async () => {
+    const png = await renderCouponCardPng({
+      title: 'VIP · Two-Fold · Home win',
+      tipsterName: 'VIP · Two-Fold',
+      totalOdds: 1.626,
+      channel: 'vip',
+      variant: 'live',
+      legs: [
+        { matchDescription: 'Al-Ahli Jeddah vs Pakhtakor', prediction: 'Home Win', odds: 1.27 },
+        { matchDescription: 'Inter vs Udinese', prediction: 'Home Win', odds: 1.28 },
+      ],
+    });
+    expect(png.slice(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+    expect(png.length).toBeGreaterThan(1000);
   });
 
   it('keeps captions under Telegram photo limit', () => {

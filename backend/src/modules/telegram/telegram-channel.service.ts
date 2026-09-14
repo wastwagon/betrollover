@@ -267,7 +267,11 @@ export class TelegramChannelService {
         bookingCode: input.bookingCode,
         priceGhs: input.priceGhs,
       });
-      return telegramSendPhoto({ chatId, png, caption: input.caption });
+      const photo = await telegramSendPhoto({ chatId, png, caption: input.caption });
+      if (!photo.ok) {
+        this.logger.warn(`Telegram sendPhoto failed: ${photo.error}`);
+      }
+      return photo;
     } catch (e) {
       const err = e instanceof Error ? e.message : String(e);
       this.logger.warn(`Telegram coupon card render failed: ${err}`);

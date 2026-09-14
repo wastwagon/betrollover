@@ -27,8 +27,8 @@ describe('vip league gates', () => {
     expect(VIP_PACKAGE_PRICE).toBe(300);
   });
 
-  it('posts up to four Home+Home slips (one per Acca Desk time slot)', () => {
-    expect(VIP_MAX_COUPONS_PER_DAY).toBe(4);
+  it('posts up to two Home+Home slips per desk day', () => {
+    expect(VIP_MAX_COUPONS_PER_DAY).toBe(2);
     expect(VIP_CONSTRUCTIONS.map((c) => c.key)).toEqual(['home_win']);
     expect(VIP_CONSTRUCTIONS[0].outcomeKeys).toEqual(['home']);
   });

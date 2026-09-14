@@ -110,7 +110,7 @@ export class SubscriptionsService {
       if (pkg.status !== 'active') {
         throw new BadRequestException(`Subscription package "${pkg.name}" is not active`);
       }
-      // VIP Two-Fold publishes up to four slotted slips per Accra desk day in VipTipsterPublisherService.
+      // VIP Two-Fold publishes up to VIP_MAX_COUPONS_PER_DAY slips per Accra desk day in VipTipsterPublisherService.
       // A createdAt rolling window would block today's catch-up after last night's early publish.
       if (isVipDesk) continue;
       const n = await this.countSubscriptionCouponsInWindow(pkgId, pkg.durationDays);

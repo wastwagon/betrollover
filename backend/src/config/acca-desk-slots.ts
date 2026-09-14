@@ -1,6 +1,7 @@
 /**
  * Acca Desk time buckets (PREDICTION_TIMEZONE / Africa/Accra).
- * One 2-fold per slot per tipster when enough clustered fixtures exist.
+ * Each tipster posts at most ACCA_DESK_MAX_PER_DAY 2-folds per desk day.
+ * Slots are kick-off windows used to cluster legs — not a 1:1 publish quota.
  *
  * Desk day D windows (Accra):
  *   Early      D 06:00–14:59
@@ -42,7 +43,8 @@ export const ACCA_DESK_TIME_SLOTS: AccaDeskTimeSlot[] = [
 /** Max kick-off gap between the two legs in one coupon. */
 export const ACCA_DESK_MAX_KICKOFF_GAP_MS = 3 * 60 * 60 * 1000;
 
-export const ACCA_DESK_MAX_PER_DAY = ACCA_DESK_TIME_SLOTS.length;
+/** Max published 2-folds per Acca Desk tipster per desk day (not per time slot). */
+export const ACCA_DESK_MAX_PER_DAY = 2;
 
 /** Accra (or PREDICTION_TIMEZONE) calendar date YYYY-MM-DD. */
 export function accraDateStr(date: Date = new Date(), timeZone = 'Africa/Accra'): string {

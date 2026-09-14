@@ -1,18 +1,17 @@
 /**
  * VIP two-fold tipster — Home+Home only, separate from Acca Desk.
  *
- * Same four Acca Desk kick-off windows (Early / Afternoon / Evening / Midnight).
+ * Same Acca Desk kick-off windows (Early / Afternoon / Evening / Midnight).
  * Publishes first so AccaSure1X2 can still mix Away on leftover fixtures.
  * Construction: two Home wins @ 1.20–1.40, combined 1.50–1.99.
  */
-import { ACCA_DESK_TIME_SLOTS } from './acca-desk-slots';
 
 export const VIP_TIPSTER_TYPE = 'vip_desk';
 
 export const VIP_TIPSTER = {
   username: 'VipTwoFold',
   display_name: 'VIP · Two-Fold',
-  bio: 'VIP 2-folds: two Home wins (about 1.20–1.40). Combined 1.50–1.99. Up to four slips a day (early / afternoon / evening / midnight) when clustered homes exist. Educational — not guaranteed. 18+.',
+  bio: 'VIP 2-folds: two Home wins (about 1.20–1.40). Combined 1.50–1.99. Up to two slips a day when clustered homes exist. Educational — not guaranteed. 18+.',
   avatar_url: '/avatars/acca_safe_dc.png?v=2',
   strategy_id: 'vip_desk_two_fold',
   legs: 2 as const,
@@ -29,7 +28,8 @@ export const VIP_LEG_TARGET_ODD = 1.28;
 export const VIP_MIN_COMBINED_ODDS = 1.5;
 export const VIP_MAX_COMBINED_ODDS = 1.99;
 
-export const VIP_MAX_COUPONS_PER_DAY = ACCA_DESK_TIME_SLOTS.length;
+/** Max published VIP 2-folds per desk day. */
+export const VIP_MAX_COUPONS_PER_DAY = 2;
 
 /**
  * Latvia Virsliga / 1. Liga / Super Cup — 0/4 on archive Home+Home shorts.

@@ -1,4 +1,6 @@
 import {
+  ACCA_DESK_MAX_PER_DAY,
+  ACCA_DESK_TIME_SLOTS,
   pickTimeClusteredPair,
   slotForKickoff,
   deskDayFixtureWindow,
@@ -10,6 +12,13 @@ import {
 } from './acca-desk-slots';
 
 const TZ = 'Africa/Accra';
+
+describe('daily coupon cap', () => {
+  it('allows two 2-folds per tipster, not one per kick-off window', () => {
+    expect(ACCA_DESK_MAX_PER_DAY).toBe(2);
+    expect(ACCA_DESK_TIME_SLOTS.length).toBeGreaterThan(ACCA_DESK_MAX_PER_DAY);
+  });
+});
 
 describe('slotForKickoff', () => {
   it('maps early / afternoon / evening / midnight Accra times', () => {

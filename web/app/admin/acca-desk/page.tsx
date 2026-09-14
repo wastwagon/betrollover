@@ -355,8 +355,8 @@ export default function AdminAccaDeskPage() {
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Acca Desk</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Automated. Each Acca Desk tipster posts up to 4 free 2-folds per desk day
-            (early / afternoon / evening / midnight). Primary publish at{' '}
+            Automated. Each Acca Desk tipster posts up to 2 free 2-folds per desk day
+            (picked from early / afternoon / evening / midnight kick-off windows). Primary publish at{' '}
             {overview?.earlyCron || '0 20 * * *'} ({overview?.timezone || 'Africa/Accra'}) for{' '}
             <strong>tomorrow</strong>; catch-up at {overview?.cron || '30 0 * * *'}, 06:00 and 08:45 for{' '}
             <strong>today</strong>. Cards badge Today / Tomorrow from the earliest Accra kickoff. Followers get one batched email
@@ -431,7 +431,7 @@ export default function AdminAccaDeskPage() {
           </div>
         ) : overview ? (
           <>
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 mb-8">
               {[
                 { label: 'Enabled', value: overview.enabled ? 'Yes' : 'No' },
                 {
@@ -440,6 +440,7 @@ export default function AdminAccaDeskPage() {
                 },
                 { label: 'Roster setup', value: `${overview.setupCount}/${overview.rosterSize}` },
                 { label: 'Active', value: String(overview.activeCount) },
+                { label: 'Cap / tipster', value: String(overview.maxPerDay ?? 2) },
                 { label: 'Today published', value: String(overview.todayPublished) },
                 { label: 'Tomorrow published', value: String(overview.tomorrowPublished ?? 0) },
               ].map((c) => (
