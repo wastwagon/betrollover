@@ -1,6 +1,7 @@
 import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
-import { Repository, In, DataSource, EntityManager } from 'typeorm';
+import { Repository, In, DataSource, EntityManager, FindOptionsWhere } from 'typeorm';
+import { chunkIds } from '../../common/sql-in-chunks';
 import { AccumulatorTicket } from './entities/accumulator-ticket.entity';
 import { AccumulatorPick } from './entities/accumulator-pick.entity';
 import { EscrowFund } from './entities/escrow-fund.entity';
@@ -12,6 +13,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { TelegramChannelService } from '../telegram/telegram-channel.service';
 import { TelegramEligibilityService } from '../telegram/telegram-eligibility.service';
 import { TelegramVipService } from '../telegram/telegram-vip.service';
+import type { TelegramCouponCardLeg } from '../telegram/telegram-coupon-card';
 import { determinePickResult } from './settlement-logic';
 import { clampPlatformCommissionPercent, splitGrossForTipsterPayout } from '../../common/platform-commission';
 import { couponUserFacingRef } from '../../common/coupon-public-label';
@@ -38,6 +40,36 @@ export const SETTLEMENT_SUPPORTED_MARKETS = [
   'Set Betting (tennis): 2-0, 2-1 (order-agnostic)',
   'Correct Score: 2-1, 1:1 (dash or colon)',
 ] as const;
+
+/** Re-grade settled picks on fixtures/events from this window (admin reconcile). */
+const RECONCILE_LOOKBACK_MS = 30 * 24 * 60 * 60 * 1000;
+
+const FIXTURE_GRADE_SELECT: (keyof Fixture)[] = [
+  'id',
+  'status',
+  'matchDate',
+  'homeScore',
+  'awayScore',
+  'homeTeamName',
+  'awayTeamName',
+  'htHomeScore',
+  'htAwayScore',
+  'homeCorners',
+  'awayCorners',
+  'homeYellowCards',
+  'awayYellowCards',
+  'homeRedCards',
+  'awayRedCards',
+];
+
+const EVENT_GRADE_SELECT: (keyof SportEvent)[] = [
+  'id',
+  'status',
+  'homeScore',
+  'awayScore',
+  'homeTeam',
+  'awayTeam',
+];
 
 @Injectable()
 export class SettlementService {
@@ -77,6 +109,27 @@ export class SettlementService {
     return key || (pick.prediction || '').trim();
   }
 
+  private async telegramLegsForPicks(picks: AccumulatorPick[]): Promise<TelegramCouponCardLeg[]> {
+    const [fixtureMap, eventMap] = await Promise.all([
+      this.loadFixturesForGrading(picks.map((p) => p.fixtureId)),
+      this.loadEventsForGrading(picks.map((p) => p.eventId)),
+    ]);
+    return picks.map((p) => {
+      const src =
+        (p.fixtureId != null ? fixtureMap.get(p.fixtureId) : undefined) ||
+        (p.eventId != null ? eventMap.get(p.eventId) : undefined);
+      return {
+        matchDescription: p.matchDescription,
+        prediction: p.prediction,
+        odds: Number(p.odds),
+        matchDate: p.matchDate,
+        result: p.result,
+        homeScore: src?.homeScore ?? null,
+        awayScore: src?.awayScore ?? null,
+      };
+    });
+  }
+
   private fixtureMatchStats(fix: Fixture) {
     return {
       homeCorners: fix.homeCorners,
@@ -111,87 +164,88 @@ export class SettlementService {
     return this.runSettlement();
   }
 
-  private async loadFinishedFixtureAndEventMaps(twoHoursAgo: Date): Promise<{
-    finishedFixtures: Fixture[];
-    fixtureMap: Map<number, Fixture>;
-    fixtureIds: number[];
-    eventsWithScores: SportEvent[];
-    eventMap: Map<number, SportEvent>;
-    eventIds: number[];
-  }> {
-    const [ftFixtures, scoredPastFixtures] = await Promise.all([
-      this.fixtureRepo.find({
-        where: { status: 'FT' },
-        select: ['id', 'homeScore', 'awayScore', 'homeTeamName', 'awayTeamName', 'htHomeScore', 'htAwayScore', 'homeCorners', 'awayCorners', 'homeYellowCards', 'awayYellowCards', 'homeRedCards', 'awayRedCards'],
-      }),
-      this.fixtureRepo
-        .createQueryBuilder('f')
-        .select([
-          'f.id',
-          'f.homeScore',
-          'f.awayScore',
-          'f.homeTeamName',
-          'f.awayTeamName',
-          'f.htHomeScore',
-          'f.htAwayScore',
-          'f.homeCorners',
-          'f.awayCorners',
-          'f.homeYellowCards',
-          'f.awayYellowCards',
-          'f.homeRedCards',
-          'f.awayRedCards',
-        ])
-        .where("f.status != 'FT'")
-        .andWhere('f.matchDate < :cutoff', { cutoff: twoHoursAgo })
-        .andWhere('f.homeScore IS NOT NULL')
-        .andWhere('f.awayScore IS NOT NULL')
-        .getMany(),
-    ]);
-
-    const seen = new Set(ftFixtures.map((f) => f.id));
-    const finishedFixtures = [...ftFixtures];
+  /**
+   * Catch missed API status updates: scored matches that started >2h ago but are still not FT.
+   * Do not load every FT fixture — that is tens of thousands of rows and blows Postgres `In()`.
+   */
+  private async promoteScoredPastFixturesToFt(twoHoursAgo: Date): Promise<void> {
+    const scoredPastFixtures = await this.fixtureRepo
+      .createQueryBuilder('f')
+      .select(['f.id'])
+      .where("f.status != 'FT'")
+      .andWhere('f.matchDate < :cutoff', { cutoff: twoHoursAgo })
+      .andWhere('f.homeScore IS NOT NULL')
+      .andWhere('f.awayScore IS NOT NULL')
+      .getMany();
     for (const f of scoredPastFixtures) {
-      if (f.homeScore != null && f.awayScore != null && !seen.has(f.id)) {
-        seen.add(f.id);
-        finishedFixtures.push(f);
-        await this.fixtureRepo.update({ id: f.id }, { status: 'FT', statusElapsed: null });
-      }
+      await this.fixtureRepo.update({ id: f.id }, { status: 'FT', statusElapsed: null });
     }
+    if (scoredPastFixtures.length > 0) {
+      this.logger.log(`Marked ${scoredPastFixtures.length} scored fixture(s) as FT`);
+    }
+  }
 
-    const fixtureIds = finishedFixtures
-      .filter((f) => f.homeScore !== null && f.awayScore !== null)
-      .map((f) => f.id);
+  private isFixtureReadyToGrade(fix: Fixture, twoHoursAgo: Date): boolean {
+    if (fix.homeScore == null || fix.awayScore == null) return false;
+    if (['PST', 'CANC', 'ABD', 'AWD', 'WO'].includes(fix.status)) return false;
+    if (fix.status === 'FT') return true;
+    return fix.matchDate != null && fix.matchDate < twoHoursAgo;
+  }
 
-    const finishedEvents = await this.sportEventRepo.find({
-      where: [
-        { sport: 'basketball', status: 'FT' },
-        { sport: 'rugby', status: 'FT' },
-        { sport: 'mma', status: 'FT' },
-        { sport: 'volleyball', status: 'FT' },
-        { sport: 'hockey', status: 'FT' },
-        { sport: 'american_football', status: 'FT' },
-        { sport: 'tennis', status: 'FT' },
-      ],
-      select: ['id', 'homeScore', 'awayScore', 'homeTeam', 'awayTeam'],
-    });
-    const eventsWithScores = finishedEvents.filter((e) => e.homeScore != null && e.awayScore != null);
-    const eventIds = eventsWithScores.map((e) => e.id);
-    const eventMap = new Map(eventsWithScores.map((e) => [e.id, e]));
-    const fixtureMap = new Map(finishedFixtures.map((f) => [f.id, f]));
+  private isEventReadyToGrade(evt: SportEvent): boolean {
+    return evt.status === 'FT' && evt.homeScore != null && evt.awayScore != null;
+  }
 
-    return {
-      finishedFixtures,
-      fixtureMap,
-      fixtureIds,
-      eventsWithScores,
-      eventMap,
-      eventIds,
-    };
+  private async loadFixturesForGrading(
+    ids: Iterable<number | null | undefined>,
+  ): Promise<Map<number, Fixture>> {
+    const fixtures: Fixture[] = [];
+    for (const chunk of chunkIds(ids)) {
+      fixtures.push(
+        ...(await this.fixtureRepo.find({
+          where: { id: In(chunk) },
+          select: FIXTURE_GRADE_SELECT,
+        })),
+      );
+    }
+    return new Map(fixtures.map((f) => [f.id, f]));
+  }
+
+  private async loadEventsForGrading(
+    ids: Iterable<number | null | undefined>,
+  ): Promise<Map<number, SportEvent>> {
+    const events: SportEvent[] = [];
+    for (const chunk of chunkIds(ids)) {
+      events.push(
+        ...(await this.sportEventRepo.find({
+          where: { id: In(chunk) },
+          select: EVENT_GRADE_SELECT,
+        })),
+      );
+    }
+    return new Map(events.map((e) => [e.id, e]));
+  }
+
+  private async findPicksWhereIn(
+    column: 'fixtureId' | 'eventId' | 'accumulatorId',
+    ids: Iterable<number | null | undefined>,
+    extra: FindOptionsWhere<AccumulatorPick> = {},
+  ): Promise<AccumulatorPick[]> {
+    const rows: AccumulatorPick[] = [];
+    for (const chunk of chunkIds(ids)) {
+      rows.push(
+        ...(await this.pickRepo.find({
+          where: { ...extra, [column]: In(chunk) },
+        })),
+      );
+    }
+    return rows;
   }
 
   /**
    * Re-grade picks already marked won/lost/void using current fixture/event scores; updates coupon outcome and
    * escrow when the result flips (e.g. wrong score while API quota was exhausted). Run after scores are correct.
+   * Limited to fixtures/events with match date in the last 30 days so we never `In()` tens of thousands of ids.
    */
   async reconcileMisgradedSettlements(): Promise<{
     picksRegraded: number;
@@ -200,50 +254,65 @@ export class SettlementService {
     errors: string[];
   }> {
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-    const { fixtureMap, fixtureIds, eventMap, eventIds } = await this.loadFinishedFixtureAndEventMaps(twoHoursAgo);
+    await this.promoteScoredPastFixturesToFt(twoHoursAgo);
+    const since = new Date(Date.now() - RECONCILE_LOOKBACK_MS);
+
+    const [fixturePicks, eventPicks] = await Promise.all([
+      this.pickRepo
+        .createQueryBuilder('p')
+        .innerJoin(Fixture, 'f', 'f.id = p.fixtureId')
+        .where('p.result IN (:...results)', { results: ['won', 'lost', 'void'] })
+        .andWhere('f.matchDate >= :since', { since })
+        .andWhere('f.homeScore IS NOT NULL')
+        .andWhere('f.awayScore IS NOT NULL')
+        .getMany(),
+      this.pickRepo
+        .createQueryBuilder('p')
+        .innerJoin(SportEvent, 'e', 'e.id = p.eventId')
+        .where('p.result IN (:...results)', { results: ['won', 'lost', 'void'] })
+        .andWhere('e.eventDate >= :since', { since })
+        .andWhere('e.homeScore IS NOT NULL')
+        .andWhere('e.awayScore IS NOT NULL')
+        .getMany(),
+    ]);
+
+    const [fixtureMap, eventMap] = await Promise.all([
+      this.loadFixturesForGrading(fixturePicks.map((p) => p.fixtureId)),
+      this.loadEventsForGrading(eventPicks.map((p) => p.eventId)),
+    ]);
 
     type Computed = 'won' | 'lost' | 'void';
     const deltas: { pickId: number; accumulatorId: number; computed: Computed }[] = [];
 
-    if (fixtureIds.length > 0) {
-      const picks = await this.pickRepo.find({
-        where: { fixtureId: In(fixtureIds), result: In(['won', 'lost', 'void']) },
-      });
-      for (const pick of picks) {
-        const fix = fixtureMap.get(pick.fixtureId!);
-        if (!fix || fix.homeScore == null || fix.awayScore == null) continue;
-        const computed = determinePickResult(
-          this.pickGradingInput(pick),
-          fix.homeScore,
-          fix.awayScore,
-          fix.homeTeamName,
-          fix.awayTeamName,
-          fix.htHomeScore,
-          fix.htAwayScore,
-          this.fixtureMatchStats(fix),
-        );
-        if (!computed || computed === pick.result) continue;
-        deltas.push({ pickId: pick.id, accumulatorId: pick.accumulatorId, computed });
-      }
+    for (const pick of fixturePicks) {
+      const fix = fixtureMap.get(pick.fixtureId!);
+      if (!fix || !this.isFixtureReadyToGrade(fix, twoHoursAgo)) continue;
+      const computed = determinePickResult(
+        this.pickGradingInput(pick),
+        fix.homeScore!,
+        fix.awayScore!,
+        fix.homeTeamName,
+        fix.awayTeamName,
+        fix.htHomeScore,
+        fix.htAwayScore,
+        this.fixtureMatchStats(fix),
+      );
+      if (!computed || computed === pick.result) continue;
+      deltas.push({ pickId: pick.id, accumulatorId: pick.accumulatorId, computed });
     }
 
-    if (eventIds.length > 0) {
-      const picks = await this.pickRepo.find({
-        where: { eventId: In(eventIds), result: In(['won', 'lost', 'void']) },
-      });
-      for (const pick of picks) {
-        const evt = eventMap.get(pick.eventId!);
-        if (!evt || evt.homeScore == null || evt.awayScore == null) continue;
-        const computed = determinePickResult(
-          this.pickGradingInput(pick),
-          evt.homeScore,
-          evt.awayScore,
-          evt.homeTeam,
-          evt.awayTeam,
-        );
-        if (!computed || computed === pick.result) continue;
-        deltas.push({ pickId: pick.id, accumulatorId: pick.accumulatorId, computed });
-      }
+    for (const pick of eventPicks) {
+      const evt = eventMap.get(pick.eventId!);
+      if (!evt || !this.isEventReadyToGrade(evt)) continue;
+      const computed = determinePickResult(
+        this.pickGradingInput(pick),
+        evt.homeScore!,
+        evt.awayScore!,
+        evt.homeTeam,
+        evt.awayTeam,
+      );
+      if (!computed || computed === pick.result) continue;
+      deltas.push({ pickId: pick.id, accumulatorId: pick.accumulatorId, computed });
     }
 
     const ticketIds = [...new Set(deltas.map((d) => d.accumulatorId))];
@@ -439,9 +508,9 @@ export class SettlementService {
    * Settle picks for finished fixtures. Call periodically (e.g. cron every 4h) or via POST /admin/settlement/run.
    *
    * Flow:
-   * 1. Find finished fixtures: status=FT OR (has scores + match_date > 2h ago) — catches missed API updates
-   * 2. Update any non-FT fixtures with scores to status=FT
-   * 3. For each pending pick on those fixtures, determine won/lost via determinePickResult
+   * 1. Update scored non-FT fixtures (match_date > 2h ago) to status=FT
+   * 2. Load pending picks, then only those fixtures/events (never `In()` all historical FT ids)
+   * 3. For each pending pick on a finished fixture/event, determine won/lost via determinePickResult
    * 4. For tickets where all picks are settled, set ticket result (won/lost/void) and status
    * 5. If marketplace coupon with price > 0: settle escrow (payout tipster or refund buyer)
    *
@@ -453,25 +522,23 @@ export class SettlementService {
     ticketsSettled: number;
   }> {
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-    const { fixtureMap, fixtureIds, eventMap, eventIds, finishedFixtures, eventsWithScores } =
-      await this.loadFinishedFixtureAndEventMaps(twoHoursAgo);
+    await this.promoteScoredPastFixturesToFt(twoHoursAgo);
+
+    const pendingPicks = await this.pickRepo.find({ where: { result: 'pending' } });
+    const pendingFixturePicks = pendingPicks.filter((p) => p.fixtureId != null);
+    const pendingEventPicks = pendingPicks.filter((p) => p.eventId != null);
+
+    const [fixtureMap, eventMap] = await Promise.all([
+      this.loadFixturesForGrading(pendingFixturePicks.map((p) => p.fixtureId)),
+      this.loadEventsForGrading(pendingEventPicks.map((p) => p.eventId)),
+    ]);
 
     this.logger.debug(
-      `Settlement: ${fixtureIds.length} finished fixtures, ${finishedFixtures.length} total`,
-    );
-
-    const pendingFixturePicks = fixtureIds.length > 0
-      ? await this.pickRepo.find({ where: { fixtureId: In(fixtureIds), result: 'pending' } })
-      : [];
-    const pendingEventPicks = eventIds.length > 0
-      ? await this.pickRepo.find({ where: { eventId: In(eventIds), result: 'pending' } })
-      : [];
-
-    this.logger.debug(
-      `Settlement: ${eventsWithScores.length} finished sport_events, ${pendingFixturePicks.length} pending fixture picks, ${pendingEventPicks.length} pending event picks`,
+      `Settlement: ${pendingPicks.length} pending picks (${pendingFixturePicks.length} fixture, ${pendingEventPicks.length} event)`,
     );
 
     let picksUpdated = 0;
+    const voidedPickIds = new Set<number>();
 
     // Auto-void picks on fixtures that are postponed/cancelled (no result, match date in past)
     const voidStatuses = ['PST', 'CANC', 'ABD', 'AWD', 'WO'];
@@ -483,13 +550,12 @@ export class SettlementService {
       .getMany();
     const voidFixtureIds = voidFixtures.map((f) => f.id);
     if (voidFixtureIds.length > 0) {
-      const voidPicks = await this.pickRepo.find({
-        where: { fixtureId: In(voidFixtureIds), result: 'pending' },
-      });
+      const voidPicks = await this.findPicksWhereIn('fixtureId', voidFixtureIds, { result: 'pending' });
       for (const pick of voidPicks) {
         pick.result = 'void';
         await this.pickRepo.save(pick);
         picksUpdated++;
+        voidedPickIds.add(pick.id);
       }
       if (voidPicks.length > 0) {
         this.logger.log(`Voided ${voidPicks.length} pick(s) on postponed/cancelled fixtures`);
@@ -497,13 +563,14 @@ export class SettlementService {
     }
 
     for (const pick of pendingFixturePicks) {
+      if (voidedPickIds.has(pick.id)) continue;
       const fix = fixtureMap.get(pick.fixtureId!);
-      if (!fix || fix.homeScore == null || fix.awayScore == null) continue;
+      if (!fix || !this.isFixtureReadyToGrade(fix, twoHoursAgo)) continue;
 
       const result = determinePickResult(
         this.pickGradingInput(pick),
-        fix.homeScore,
-        fix.awayScore,
+        fix.homeScore!,
+        fix.awayScore!,
         fix.homeTeamName,
         fix.awayTeamName,
         fix.htHomeScore,
@@ -523,12 +590,12 @@ export class SettlementService {
 
     for (const pick of pendingEventPicks) {
       const evt = eventMap.get(pick.eventId!);
-      if (!evt || evt.homeScore == null || evt.awayScore == null) continue;
+      if (!evt || !this.isEventReadyToGrade(evt)) continue;
 
       const result = determinePickResult(
         this.pickGradingInput(pick),
-        evt.homeScore,
-        evt.awayScore,
+        evt.homeScore!,
+        evt.awayScore!,
         evt.homeTeam,
         evt.awayTeam,
       );
@@ -547,10 +614,10 @@ export class SettlementService {
       where: { result: 'pending' },
       select: ['id', 'userId', 'isMarketplace', 'price', 'title', 'totalOdds'],
     });
-    const pendingTicketIds = allPendingTickets.map((t) => t.id);
-    const pendingTicketPicks = pendingTicketIds.length
-      ? await this.pickRepo.find({ where: { accumulatorId: In(pendingTicketIds) } })
-      : [];
+    const pendingTicketPicks = await this.findPicksWhereIn(
+      'accumulatorId',
+      allPendingTickets.map((t) => t.id),
+    );
     const picksByTicketId = new Map<number, AccumulatorPick[]>();
     for (const p of pendingTicketPicks) {
       const list = picksByTicketId.get(p.accumulatorId) ?? [];
@@ -567,6 +634,13 @@ export class SettlementService {
       tipsterName: string | null;
       totalOdds: number | null;
       isFree: boolean;
+      legs: TelegramCouponCardLeg[];
+    }> = [];
+    const wonVipPosts: Array<{
+      couponId: number;
+      title: string;
+      totalOdds: number | null;
+      legs: TelegramCouponCardLeg[];
     }> = [];
     for (const ticket of allPendingTickets) {
       const picks = picksByTicketId.get(ticket.id) ?? [];
@@ -585,24 +659,35 @@ export class SettlementService {
       if (ticket.isMarketplace && priceNum > 0) {
         await this.settleEscrow(ticket.id, ticket.userId, ticket.result, ticket.title);
       }
-      if (ticket.isMarketplace && ticket.result === 'won') {
+      if (ticket.result !== 'won') continue;
+      const legs = await this.telegramLegsForPicks(picks);
+      if (ticket.isMarketplace) {
         wonMarketplacePosts.push({
           couponId: ticket.id,
           title: ticket.title || 'Pick',
           tipsterName: null,
           totalOdds: ticket.totalOdds != null ? Number(ticket.totalOdds) : null,
           isFree: !(priceNum > 0),
+          legs,
         });
       }
-      if (ticket.result === 'won' && houseVipUserId != null && ticket.userId === houseVipUserId) {
-        this.telegramVip
-          .postVipWin({
-            couponId: ticket.id,
-            title: ticket.title || 'Pick',
-            totalOdds: ticket.totalOdds != null ? Number(ticket.totalOdds) : null,
-          })
-          .catch(() => {});
+      if (houseVipUserId != null && ticket.userId === houseVipUserId) {
+        wonVipPosts.push({
+          couponId: ticket.id,
+          title: ticket.title || 'Pick',
+          totalOdds: ticket.totalOdds != null ? Number(ticket.totalOdds) : null,
+          legs,
+        });
       }
+    }
+
+    for (const post of wonVipPosts) {
+      this.telegramVip
+        .postVipWin({
+          ...post,
+          tipsterName: 'VIP · Two-Fold',
+        })
+        .catch(() => {});
     }
 
     if (wonMarketplacePosts.length > 0) {

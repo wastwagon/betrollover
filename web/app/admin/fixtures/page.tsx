@@ -1091,7 +1091,7 @@ export default function AdminFixturesPage() {
             <p className="w-full text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               Use when matches have finished but picks are still &quot;pending&quot;. Scheduled sync runs about every minute — this forces it immediately.
               {' '}
-              <strong className="text-gray-600 dark:text-gray-300">Reconcile</strong> is for when scores were wrong at settlement (e.g. API quota): fetch correct scores first, then run it — it updates already-settled picks and wallets if the outcome flips.
+              <strong className="text-gray-600 dark:text-gray-300">Reconcile</strong> is for when scores were wrong at settlement (e.g. API quota): fetch correct scores first, then run it — it updates already-settled picks (last 30 days) and wallets if the outcome flips.
             </p>
           </div>
         </div>
