@@ -66,6 +66,9 @@ interface MarketplaceCoupon {
   createdAt?: string;
   status?: string;
   result?: string;
+  /** false = API withheld leg details until purchase or subscription. */
+  picksRevealed?: boolean;
+  requiresSubscription?: boolean;
   bookmakerKey?: string | null;
   bookingCode?: string | null;
   bookingCodeCopyCount?: number;
