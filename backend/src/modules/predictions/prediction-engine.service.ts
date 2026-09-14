@@ -27,6 +27,7 @@ import {
 import { OddsSyncService } from '../fixtures/odds-sync.service';
 import { PredictionMarketplaceSyncService } from './prediction-marketplace-sync.service';
 import { engineOutcomeKeyFromOddsLine } from '../fixtures/odds-outcome-keys';
+import { classicAiOwnerUserIds } from '../../common/classic-ai-public-visibility.util';
 
 /** Settled AI coupons in this window drive sort order, cold-skip, and tepid tightening. */
 const AI_ROLLING_STATS_DAYS = 56;
@@ -112,15 +113,15 @@ export class PredictionEngineService {
   }
 
   /**
-   * Fixture IDs already used by any AI tipster on marketplace for the given date range.
-   * Used to avoid assigning the same fixture to another tipster on re-runs (catch-up or manual).
+   * Fixture IDs already used by classic 1-fixture AI on marketplace for this UTC day.
+   * Acca Desk and VIP keep their own exclusivity — they must not empty this pool.
    */
   private async getAlreadyUsedFixtureIdsForDate(startOfDay: Date, endOfDay: Date): Promise<Set<number>> {
     const aiTipsters = await this.tipsterRepo.find({
       where: { isAi: true },
-      select: ['userId'],
+      select: ['id', 'userId', 'isAi', 'tipsterType'],
     });
-    const userIds = aiTipsters.map((t) => t.userId).filter((id): id is number => id != null);
+    const userIds = classicAiOwnerUserIds(aiTipsters);
     if (userIds.length === 0) return new Set();
 
     const tickets = await this.ticketRepo.find({

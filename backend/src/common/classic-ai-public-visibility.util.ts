@@ -20,6 +20,19 @@ export function isClassicAiTipsterRow(row: {
   return type === CLASSIC_AI_TIPSTER_TYPE;
 }
 
+/** Linked user ids for classic 1-fixture AI only (excludes Acca Desk and VIP). */
+export function classicAiOwnerUserIds(
+  rows: Array<{ isAi?: boolean | null; tipsterType?: string | null; userId?: number | null }>,
+): number[] {
+  const ids: number[] = [];
+  for (const row of rows) {
+    if (!isClassicAiTipsterRow(row) || row.userId == null) continue;
+    const id = Number(row.userId);
+    if (Number.isFinite(id) && id > 0) ids.push(id);
+  }
+  return ids;
+}
+
 /**
  * TypeORM QB fragment on tipsters alias.
  * Uses snake_case DB columns so nested SQL functions stay valid under SnakeNamingStrategy.

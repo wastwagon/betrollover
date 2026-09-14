@@ -1,4 +1,4 @@
-import { isClassicAiHiddenFromPublic } from './classic-ai-public-visibility.util';
+import { isClassicAiHiddenFromPublic, classicAiOwnerUserIds } from './classic-ai-public-visibility.util';
 
 describe('classic AI public visibility', () => {
   const key = 'HIDE_CLASSIC_AI_TIPSTERS_FROM_PUBLIC';
@@ -19,5 +19,16 @@ describe('classic AI public visibility', () => {
     expect(isClassicAiHiddenFromPublic()).toBe(true);
     process.env[key] = 'false';
     expect(isClassicAiHiddenFromPublic()).toBe(false);
+  });
+
+  it('does not treat Acca Desk or VIP owners as classic AI for fixture locking', () => {
+    expect(
+      classicAiOwnerUserIds([
+        { isAi: true, tipsterType: 'ai', userId: 11 },
+        { isAi: true, tipsterType: 'acca_desk', userId: 22 },
+        { isAi: true, tipsterType: 'vip', userId: 33 },
+        { isAi: false, tipsterType: 'ai', userId: 44 },
+      ]),
+    ).toEqual([11]);
   });
 });
