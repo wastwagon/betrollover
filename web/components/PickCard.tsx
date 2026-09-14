@@ -26,7 +26,7 @@ interface Pick {
   matchDescription?: string;
   prediction?: string;
   odds?: number;
-  matchDate?: string | Date;
+  matchDate?: string | Date | null;
   homeScore?: number | null;
   awayScore?: number | null;
   fixtureStatus?: string | null;
