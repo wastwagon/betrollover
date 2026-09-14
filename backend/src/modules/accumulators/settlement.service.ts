@@ -283,8 +283,10 @@ export class SettlementService {
 
     type Computed = 'won' | 'lost' | 'void';
     const deltas: { pickId: number; accumulatorId: number; computed: Computed }[] = [];
+    const seenPickIds = new Set<number>();
 
     for (const pick of fixturePicks) {
+      if (seenPickIds.has(pick.id)) continue;
       const fix = fixtureMap.get(pick.fixtureId!);
       if (!fix || !this.isFixtureReadyToGrade(fix, twoHoursAgo)) continue;
       const computed = determinePickResult(
@@ -298,10 +300,12 @@ export class SettlementService {
         this.fixtureMatchStats(fix),
       );
       if (!computed || computed === pick.result) continue;
+      seenPickIds.add(pick.id);
       deltas.push({ pickId: pick.id, accumulatorId: pick.accumulatorId, computed });
     }
 
     for (const pick of eventPicks) {
+      if (seenPickIds.has(pick.id)) continue;
       const evt = eventMap.get(pick.eventId!);
       if (!evt || !this.isEventReadyToGrade(evt)) continue;
       const computed = determinePickResult(
@@ -312,6 +316,7 @@ export class SettlementService {
         evt.awayTeam,
       );
       if (!computed || computed === pick.result) continue;
+      seenPickIds.add(pick.id);
       deltas.push({ pickId: pick.id, accumulatorId: pick.accumulatorId, computed });
     }
 
@@ -589,6 +594,7 @@ export class SettlementService {
     }
 
     for (const pick of pendingEventPicks) {
+      if (voidedPickIds.has(pick.id) || pick.result !== 'pending') continue;
       const evt = eventMap.get(pick.eventId!);
       if (!evt || !this.isEventReadyToGrade(evt)) continue;
 
@@ -698,13 +704,15 @@ export class SettlementService {
             .map((t) => t.userId as number),
         ),
       ];
-      const sellers =
-        sellerIds.length > 0
-          ? await this.usersRepo.find({
-              where: { id: In(sellerIds) },
-              select: ['id', 'displayName', 'username'],
-            })
-          : [];
+      const sellers: User[] = [];
+      for (const chunk of chunkIds(sellerIds)) {
+        sellers.push(
+          ...(await this.usersRepo.find({
+            where: { id: In(chunk) },
+            select: ['id', 'displayName', 'username'],
+          })),
+        );
+      }
       const nameById = new Map(
         sellers.map((u) => [u.id, u.displayName || u.username || 'Tipster'] as const),
       );
