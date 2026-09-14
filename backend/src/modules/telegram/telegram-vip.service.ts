@@ -4,6 +4,8 @@ import { randomBytes } from 'crypto';
 import { Repository } from 'typeorm';
 import { VIP_TIPSTER, VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
+import { AccumulatorPick } from '../accumulators/entities/accumulator-pick.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { Subscription } from '../subscriptions/entities/subscription.entity';
 import { User } from '../users/entities/user.entity';
@@ -11,11 +13,17 @@ import { TelegramVipMembership } from './entities/telegram-vip-membership.entity
 import {
   telegramApi,
   telegramBotUsername,
+  telegramSendPhoto,
   telegramVipChatId,
   telegramVipEnabled,
   telegramWebhookSecret,
   telegramWebhookUrl,
 } from './telegram-api';
+import {
+  couponCardCaption,
+  renderCouponCardPng,
+  type TelegramCouponCardLeg,
+} from './telegram-coupon-card';
 import {
   formatVipCouponPost,
   formatVipWinPost,
@@ -40,6 +48,10 @@ export class TelegramVipService {
     private readonly tipsterRepo: Repository<Tipster>,
     @InjectRepository(User)
     private readonly usersRepo: Repository<User>,
+    @InjectRepository(AccumulatorTicket)
+    private readonly ticketRepo: Repository<AccumulatorTicket>,
+    @InjectRepository(AccumulatorPick)
+    private readonly pickRepo: Repository<AccumulatorPick>,
     private readonly notifications: NotificationsService,
   ) {}
 
@@ -212,6 +224,52 @@ export class TelegramVipService {
     return { ok: true, url };
   }
 
+  /**
+   * Post the VIP slip (or win card) again. Use when the Telegram message was deleted.
+   * Creates a new chat message — Telegram cannot restore the old one.
+   */
+  async repostHouseVipCoupon(ticketId: number): Promise<{ ok: boolean; error?: string; couponId: number }> {
+    if (!telegramVipEnabled()) return { ok: false, error: 'not_configured', couponId: ticketId };
+    const ticket = await this.ticketRepo.findOne({ where: { id: ticketId } });
+    if (!ticket) return { ok: false, error: 'not_found', couponId: ticketId };
+    if (!(await this.isHouseVipUserId(ticket.userId))) {
+      return { ok: false, error: 'not_vip_coupon', couponId: ticketId };
+    }
+    const picks = await this.pickRepo.find({
+      where: { accumulatorId: ticket.id },
+      order: { id: 'ASC' },
+    });
+    const legs = picks.map((p) => ({
+      matchDescription: p.matchDescription,
+      prediction: p.prediction,
+      odds: Number(p.odds),
+      matchDate: p.matchDate,
+      result: p.result,
+    }));
+    const won = (ticket.result || '').toLowerCase() === 'won';
+    const posted = won
+      ? await this.postVipWin({
+          couponId: ticket.id,
+          title: ticket.title || 'Two-Fold',
+          totalOdds: ticket.totalOdds != null ? Number(ticket.totalOdds) : null,
+          tipsterName: 'VIP · Two-Fold',
+          legs,
+        })
+      : await this.postVipCoupon({
+          couponId: ticket.id,
+          title: ticket.title || 'Two-Fold',
+          totalOdds: ticket.totalOdds != null ? Number(ticket.totalOdds) : null,
+          tipsterName: 'VIP · Two-Fold',
+          bookmakerKey: ticket.bookmakerKey,
+          bookingCode: ticket.bookingCode,
+          legs,
+        });
+    if (posted.ok) {
+      this.logger.log(`VIP coupon #${ticket.id} resent to Telegram (${won ? 'win' : 'slip'})`);
+    }
+    return { ...posted, couponId: ticket.id };
+  }
+
   async postVipCoupon(input: {
     couponId: number;
     title: string;
@@ -219,11 +277,39 @@ export class TelegramVipService {
     legs?: VipSlipLeg[];
     bookmakerKey?: string | null;
     bookingCode?: string | null;
+    tipsterName?: string | null;
   }): Promise<{ ok: boolean; error?: string }> {
     if (!telegramVipEnabled()) return { ok: false, error: 'not_configured' };
+    const couponUrl = this.couponUrl(input.couponId);
+    const caption = couponCardCaption({
+      headline: `BETROLLOVER VIP · ${(input.title || 'Two-Fold').trim()}${
+        input.totalOdds != null ? ` · ${Number(input.totalOdds).toFixed(2)}` : ''
+      }`,
+      couponUrl,
+    });
+    try {
+      const png = await renderCouponCardPng({
+        title: input.title,
+        tipsterName: input.tipsterName || 'VIP · Two-Fold',
+        totalOdds: input.totalOdds,
+        channel: 'vip',
+        variant: 'live',
+        legs: input.legs,
+        bookmakerKey: input.bookmakerKey,
+        bookingCode: input.bookingCode,
+      });
+      const photo = await telegramSendPhoto({
+        chatId: telegramVipChatId()!,
+        png,
+        caption,
+      });
+      if (photo.ok) return photo;
+    } catch (e) {
+      this.logger.warn(`VIP coupon card render failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
     const text = formatVipCouponPost({
       ...input,
-      couponUrl: this.couponUrl(input.couponId),
+      couponUrl,
     });
     return telegramApi('sendMessage', {
       chat_id: telegramVipChatId(),
@@ -236,11 +322,38 @@ export class TelegramVipService {
     couponId: number;
     title: string;
     totalOdds?: number | null;
+    legs?: TelegramCouponCardLeg[];
+    tipsterName?: string | null;
   }): Promise<{ ok: boolean; error?: string }> {
     if (!telegramVipEnabled()) return { ok: false, error: 'not_configured' };
+    const couponUrl = this.couponUrl(input.couponId);
+    const caption = couponCardCaption({
+      headline: `VIP won ✅ · ${(input.title || 'Two-Fold').trim()}${
+        input.totalOdds != null ? ` · ${Number(input.totalOdds).toFixed(2)}` : ''
+      }`,
+      couponUrl,
+    });
+    try {
+      const png = await renderCouponCardPng({
+        title: input.title,
+        tipsterName: input.tipsterName || 'VIP · Two-Fold',
+        totalOdds: input.totalOdds,
+        channel: 'vip',
+        variant: 'won',
+        legs: input.legs,
+      });
+      const photo = await telegramSendPhoto({
+        chatId: telegramVipChatId()!,
+        png,
+        caption,
+      });
+      if (photo.ok) return photo;
+    } catch (e) {
+      this.logger.warn(`VIP won card render failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
     const text = formatVipWinPost({
       ...input,
-      couponUrl: this.couponUrl(input.couponId),
+      couponUrl,
     });
     return telegramApi('sendMessage', {
       chat_id: telegramVipChatId(),

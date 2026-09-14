@@ -283,6 +283,27 @@ export class AdminController {
     return this.vipTipsterPublisher.getOverview();
   }
 
+  /** Post a VIP Two-Fold coupon to Telegram again (new message if the last one was deleted). */
+  @Post('vip-tipster/tickets/:id/repost-telegram')
+  async repostVipTipsterTelegram(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const result = await this.telegramVip.repostHouseVipCoupon(id);
+    if (!result.ok) {
+      if (result.error === 'not_found') throw new NotFoundException('Coupon not found');
+      if (result.error === 'not_vip_coupon') {
+        throw new BadRequestException('That coupon is not a VIP Two-Fold slip');
+      }
+      if (result.error === 'not_configured') {
+        throw new BadRequestException('VIP Telegram is not configured');
+      }
+      throw new BadRequestException(result.error || 'Telegram resend failed');
+    }
+    return result;
+  }
+
   @Get('rollover')
   async getRolloverAdmin(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');

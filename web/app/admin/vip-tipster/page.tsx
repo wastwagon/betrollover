@@ -4,18 +4,43 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
+import { PickCard } from '@/components/PickCard';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { buttonClassName } from '@/components/ui/Button';
+
+type VipPick = {
+  id?: number;
+  matchDescription?: string;
+  prediction?: string;
+  odds?: number;
+  matchDate?: string | Date | null;
+  result?: string;
+  homeScore?: number | null;
+  awayScore?: number | null;
+  fixtureStatus?: string | null;
+  fixtureStatusElapsed?: number | null;
+  homeTeamLogo?: string | null;
+  awayTeamLogo?: string | null;
+  homeTeamName?: string | null;
+  awayTeamName?: string | null;
+  homeCountryCode?: string | null;
+  awayCountryCode?: string | null;
+};
 
 type TodayTicket = {
   id: number;
   title: string;
   totalOdds: number;
   totalPicks: number;
+  price?: number;
   status: string;
+  result?: string;
   createdAt: string;
-  legs: { matchDescription: string; prediction: string; odds: number }[];
+  bookmakerKey?: string | null;
+  bookingCode?: string | null;
+  picks?: VipPick[];
+  legs?: VipPick[];
 };
 
 type Overview = {
@@ -25,9 +50,17 @@ type Overview = {
   earlyCron: string;
   timezone: string;
   todayDeskDay: string;
+  tomorrowDeskDay: string;
   maxPerDay: number;
   username: string;
   displayName: string;
+  avatarUrl?: string | null;
+  winRate?: number;
+  roi?: number;
+  totalPicks?: number;
+  wonPicks?: number;
+  lostPicks?: number;
+  rank?: number | null;
   setup: boolean;
   isActive: boolean;
   userId: number | null;
@@ -35,6 +68,7 @@ type Overview = {
   packageName: string | null;
   packagePrice: number | null;
   todayPublished: number;
+  tomorrowPublished: number;
   syncStatus: {
     status: string;
     lastSyncAt?: string | null;
@@ -48,6 +82,7 @@ type Overview = {
     lastError?: string | null;
   } | null;
   todayTickets: TodayTicket[];
+  tomorrowTickets: TodayTicket[];
 };
 
 type RunResult = {
@@ -70,6 +105,93 @@ type VipTelegramStatus = {
   webhookSecretSet: boolean;
 };
 
+function VipSlipCards({
+  tickets,
+  empty,
+  className,
+  tipster,
+  telegramConfigured,
+  resendingId,
+  onResendTelegram,
+}: {
+  tickets?: TodayTicket[];
+  empty: string;
+  className?: string;
+  tipster: {
+    displayName: string;
+    username: string;
+    avatarUrl?: string | null;
+    winRate?: number;
+    roi?: number;
+    totalPicks?: number;
+    wonPicks?: number;
+    lostPicks?: number;
+    rank?: number | null;
+  };
+  telegramConfigured: boolean;
+  resendingId: number | null;
+  onResendTelegram: (ticket: TodayTicket) => void;
+}) {
+  if (!tickets?.length) {
+    return <p className={`text-[var(--text-muted)] ${className || ''}`}>{empty}</p>;
+  }
+  return (
+    <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl ${className || ''}`}>
+      {tickets.map((t) => (
+        <div key={t.id} className="space-y-2">
+          <PickCard
+            id={t.id}
+            title={t.title}
+            totalPicks={t.totalPicks}
+            totalOdds={t.totalOdds}
+            price={t.price ?? 0}
+            status={t.status}
+            result={t.result}
+            picks={t.picks || t.legs || []}
+            tipster={{
+              displayName: tipster.displayName,
+              username: tipster.username,
+              avatarUrl: tipster.avatarUrl,
+              tipsterType: 'vip_desk',
+              winRate: tipster.winRate ?? 0,
+              roi: tipster.roi,
+              totalPicks: tipster.totalPicks ?? 0,
+              wonPicks: tipster.wonPicks ?? 0,
+              lostPicks: tipster.lostPicks ?? 0,
+              rank: tipster.rank ?? null,
+            }}
+            createdAt={t.createdAt}
+            bookmakerKey={t.bookmakerKey}
+            bookingCode={t.bookingCode}
+            bookingCodeCopyCount={0}
+            viewOnly
+            detailsHref={`/coupons/${t.id}`}
+            picksRevealed
+            expandableLegs
+            socialEnabled={false}
+            isPurchased
+            canPurchase={false}
+            onPurchase={() => {}}
+          />
+          <button
+            type="button"
+            disabled={resendingId === t.id || !telegramConfigured}
+            title={
+              telegramConfigured
+                ? 'Post this slip to the VIP Telegram chat again if the last message was deleted'
+                : 'VIP Telegram is not configured'
+            }
+            className={buttonClassName({ variant: 'secondary', size: 'sm', fullWidth: true })}
+            onClick={() => onResendTelegram(t)}
+          >
+            {resendingId === t.id ? 'Sending to Telegram…' : 'Resend to Telegram'}
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function AdminVipTipsterPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -79,6 +201,7 @@ export default function AdminVipTipsterPage() {
   const [settingUp, setSettingUp] = useState(false);
   const [running, setRunning] = useState(false);
   const [telegramBusy, setTelegramBusy] = useState(false);
+  const [resendingId, setResendingId] = useState<number | null>(null);
 
   const loadData = useCallback(async () => {
     const token = localStorage.getItem('token');
@@ -182,6 +305,36 @@ export default function AdminVipTipsterPage() {
     }
   };
 
+  const handleResendTelegram = async (ticket: TodayTicket) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const ok = window.confirm(
+      `Post “${ticket.title}” to the VIP Telegram chat again? This creates a new message if the last one was deleted.`,
+    );
+    if (!ok) return;
+    setResendingId(ticket.id);
+    setMessage(null);
+    try {
+      const res = await fetch(`${getApiUrl()}/admin/vip-tipster/tickets/${ticket.id}/repost-telegram`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setMessage({
+          type: 'success',
+          text: `Posted coupon #${ticket.id} to VIP Telegram.`,
+        });
+      } else {
+        setMessage({ type: 'error', text: getApiErrorMessage(data, 'Telegram resend failed') });
+      }
+    } catch (e) {
+      setMessage({ type: 'error', text: (e as Error).message || 'Telegram resend failed' });
+    } finally {
+      setResendingId(null);
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
@@ -189,9 +342,10 @@ export default function AdminVipTipsterPage() {
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">VIP Two-Fold</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            One paid tipster, up to two 2-folds a day for subscribers. Home or Draw at 1.42–1.70
-            (Brazil, Championship, Serie A, Liga Alef, USL Championship) or Brazil Over 1.5.
-            Combined 2.20–2.80. Not Acca Desk — free bots stay on the marketplace.
+            One paid tipster. Two Home wins at 1.20–1.40, combined 1.50–1.99. Same Early /
+            Afternoon / Evening / Midnight windows as Acca Desk — skip a slot when no pair
+            exists. VIP publishes first so AccaSure1X2 never reuses those fixtures (Sure can
+            still mix Away on what is left).
           </p>
         </div>
 
@@ -231,11 +385,15 @@ export default function AdminVipTipsterPage() {
                 </div>
               </div>
               <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
-                <div className="text-xs text-[var(--text-muted)]">Today ({overview?.todayDeskDay})</div>
-                <div className="font-semibold text-[var(--text)]">
-                  {overview?.todayPublished ?? 0} / {overview?.maxPerDay ?? 2}
+                <div className="text-xs text-[var(--text-muted)]">
+                  Tomorrow ({overview?.tomorrowDeskDay || '—'})
                 </div>
-                <div className="text-sm text-[var(--text-muted)]">Subscription slips</div>
+                <div className="font-semibold text-[var(--text)]">
+                  {overview?.tomorrowPublished ?? 0} / {overview?.maxPerDay ?? 1}
+                </div>
+                <div className="text-sm text-[var(--text-muted)]">
+                  Today {overview?.todayDeskDay}: {overview?.todayPublished ?? 0} posted
+                </div>
               </div>
               <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
                 <div className="text-xs text-[var(--text-muted)]">Flags</div>
@@ -390,39 +548,58 @@ export default function AdminVipTipsterPage() {
             </div>
 
             <p className="mb-4 text-sm text-[var(--text-muted)]">
-              Early cron {overview?.earlyCron || '5 20 * * *'} ({overview?.timezone}) for tomorrow;
-              catch-up {overview?.cron || '45 8 * * *'} for today. Last run:{' '}
+              Early cron {overview?.earlyCron || '0 20 * * *'} ({overview?.timezone}) for tomorrow
+              (before Acca Desk); catch-up {overview?.cron || '20 0 * * *'} for today. Last run:{' '}
               {overview?.syncStatus?.lastSyncAt
                 ? `${overview.syncStatus.status} · ${overview.syncStatus.lastSyncCount ?? 0} published`
                 : 'never'}
               {overview?.syncStatus?.lastError ? ` · ${overview.syncStatus.lastError}` : ''}
             </p>
 
-            <h2 className="text-lg font-semibold text-[var(--text)] mb-3">Today’s VIP slips</h2>
-            {overview?.todayTickets?.length ? (
-              <ul className="space-y-3">
-                {overview.todayTickets.map((t) => (
-                  <li
-                    key={t.id}
-                    className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4"
-                  >
-                    <div className="font-medium text-[var(--text)]">{t.title}</div>
-                    <div className="text-sm text-[var(--text-muted)] mb-2">
-                      #{t.id} · {t.totalPicks}-fold @ {t.totalOdds} · {t.status}
-                    </div>
-                    <ul className="text-sm text-[var(--text)] space-y-1">
-                      {t.legs.map((leg, i) => (
-                        <li key={`${t.id}-${i}`}>
-                          {leg.matchDescription} — {leg.prediction} @ {leg.odds}
-                        </li>
-                      ))}
-                    </ul>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-[var(--text-muted)]">No VIP slips for this desk day yet.</p>
-            )}
+            <h2 className="text-lg font-semibold text-[var(--text)] mb-3">
+              Tomorrow’s VIP slips ({overview?.tomorrowDeskDay})
+            </h2>
+            <VipSlipCards
+              tickets={overview?.tomorrowTickets}
+              empty="No VIP slip for tomorrow yet."
+              className="mb-8"
+              telegramConfigured={!!telegram?.configured}
+              resendingId={resendingId}
+              onResendTelegram={handleResendTelegram}
+              tipster={{
+                displayName: overview?.displayName || 'VIP · Two-Fold',
+                username: overview?.username || 'VipTwoFold',
+                avatarUrl: overview?.avatarUrl,
+                winRate: overview?.winRate,
+                roi: overview?.roi,
+                totalPicks: overview?.totalPicks,
+                wonPicks: overview?.wonPicks,
+                lostPicks: overview?.lostPicks,
+                rank: overview?.rank,
+              }}
+            />
+
+            <h2 className="text-lg font-semibold text-[var(--text)] mb-3">
+              Today’s VIP slips ({overview?.todayDeskDay})
+            </h2>
+            <VipSlipCards
+              tickets={overview?.todayTickets}
+              empty="No VIP slips for this desk day yet."
+              telegramConfigured={!!telegram?.configured}
+              resendingId={resendingId}
+              onResendTelegram={handleResendTelegram}
+              tipster={{
+                displayName: overview?.displayName || 'VIP · Two-Fold',
+                username: overview?.username || 'VipTwoFold',
+                avatarUrl: overview?.avatarUrl,
+                winRate: overview?.winRate,
+                roi: overview?.roi,
+                totalPicks: overview?.totalPicks,
+                wonPicks: overview?.wonPicks,
+                lostPicks: overview?.lostPicks,
+                rank: overview?.rank,
+              }}
+            />
           </>
         )}
       </main>
