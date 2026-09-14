@@ -13,17 +13,11 @@ import { TelegramVipMembership } from './entities/telegram-vip-membership.entity
 import {
   telegramApi,
   telegramBotUsername,
-  telegramSendPhoto,
   telegramVipChatId,
   telegramVipEnabled,
   telegramWebhookSecret,
   telegramWebhookUrl,
 } from './telegram-api';
-import {
-  couponCardCaption,
-  renderCouponCardPng,
-  type TelegramCouponCardLeg,
-} from './telegram-coupon-card';
 import {
   formatVipCouponPost,
   formatVipWinPost,
@@ -281,33 +275,6 @@ export class TelegramVipService {
   }): Promise<{ ok: boolean; error?: string }> {
     if (!telegramVipEnabled()) return { ok: false, error: 'not_configured' };
     const couponUrl = this.couponUrl(input.couponId);
-    const caption = couponCardCaption({
-      headline: `BETROLLOVER VIP · ${(input.title || 'Two-Fold').trim()}${
-        input.totalOdds != null ? ` · ${Number(input.totalOdds).toFixed(2)}` : ''
-      }`,
-      couponUrl,
-    });
-    try {
-      const png = await renderCouponCardPng({
-        title: input.title,
-        tipsterName: input.tipsterName || 'VIP · Two-Fold',
-        totalOdds: input.totalOdds,
-        channel: 'vip',
-        variant: 'live',
-        legs: input.legs,
-        bookmakerKey: input.bookmakerKey,
-        bookingCode: input.bookingCode,
-      });
-      const photo = await telegramSendPhoto({
-        chatId: telegramVipChatId()!,
-        png,
-        caption,
-      });
-      if (photo.ok) return photo;
-      this.logger.warn(`VIP sendPhoto failed: ${photo.error}`);
-    } catch (e) {
-      this.logger.warn(`VIP coupon card render failed: ${e instanceof Error ? e.message : String(e)}`);
-    }
     const text = formatVipCouponPost({
       ...input,
       couponUrl,
@@ -323,36 +290,11 @@ export class TelegramVipService {
     couponId: number;
     title: string;
     totalOdds?: number | null;
-    legs?: TelegramCouponCardLeg[];
+    legs?: VipSlipLeg[];
     tipsterName?: string | null;
   }): Promise<{ ok: boolean; error?: string }> {
     if (!telegramVipEnabled()) return { ok: false, error: 'not_configured' };
     const couponUrl = this.couponUrl(input.couponId);
-    const caption = couponCardCaption({
-      headline: `VIP won ✅ · ${(input.title || 'Two-Fold').trim()}${
-        input.totalOdds != null ? ` · ${Number(input.totalOdds).toFixed(2)}` : ''
-      }`,
-      couponUrl,
-    });
-    try {
-      const png = await renderCouponCardPng({
-        title: input.title,
-        tipsterName: input.tipsterName || 'VIP · Two-Fold',
-        totalOdds: input.totalOdds,
-        channel: 'vip',
-        variant: 'won',
-        legs: input.legs,
-      });
-      const photo = await telegramSendPhoto({
-        chatId: telegramVipChatId()!,
-        png,
-        caption,
-      });
-      if (photo.ok) return photo;
-      this.logger.warn(`VIP won sendPhoto failed: ${photo.error}`);
-    } catch (e) {
-      this.logger.warn(`VIP won card render failed: ${e instanceof Error ? e.message : String(e)}`);
-    }
     const text = formatVipWinPost({
       ...input,
       couponUrl,

@@ -8,12 +8,7 @@ import {
   formatGrowthPost,
   formatTipsterRecruitPost,
 } from './telegram-copy';
-import { telegramSendPhoto } from './telegram-api';
-import {
-  couponCardCaption,
-  renderCouponCardPng,
-  type TelegramCouponCardLeg,
-} from './telegram-coupon-card';
+import { telegramKickoffLabel, type TelegramSlipLeg } from './telegram-slip';
 
 export type TelegramPickPostInput = {
   couponId: number;
@@ -25,7 +20,7 @@ export type TelegramPickPostInput = {
   priceGhs?: number | null;
   bookmakerKey?: string | null;
   bookingCode?: string | null;
-  legs?: TelegramCouponCardLeg[];
+  legs?: TelegramSlipLeg[];
 };
 
 export type TelegramWinPostInput = {
@@ -34,7 +29,7 @@ export type TelegramWinPostInput = {
   tipsterName?: string | null;
   totalOdds?: number | null;
   isFree: boolean;
-  legs?: TelegramCouponCardLeg[];
+  legs?: TelegramSlipLeg[];
 };
 
 @Injectable()
@@ -72,28 +67,6 @@ export class TelegramChannelService {
    */
   async postNewPick(input: TelegramPickPostInput): Promise<{ ok: boolean; error?: string }> {
     const core = input.isFree ? this.formatFreePick(input) : this.formatPaidPick(input);
-    const caption = appendEngagementFooter(
-      couponCardCaption({
-        headline: input.isFree
-          ? `${(input.title || 'Pick').trim()} · free${input.totalOdds != null ? ` · ${Number(input.totalOdds).toFixed(2)}` : ''}`
-          : `Paid pick 🔒 · ${(input.title || 'Pick').trim()}`,
-        couponUrl: this.couponUrl(input.couponId, input.isFree ? 'free' : 'paid'),
-      }),
-      input.couponId,
-    );
-    const photo = await this.sendCouponPhoto({
-      caption,
-      channel: input.isFree ? 'free' : 'paid',
-      variant: 'live',
-      title: input.title,
-      tipsterName: input.tipsterName,
-      totalOdds: input.totalOdds,
-      legs: input.isFree ? input.legs : [],
-      bookmakerKey: input.isFree ? input.bookmakerKey : undefined,
-      bookingCode: input.isFree ? input.bookingCode : undefined,
-      priceGhs: input.priceGhs,
-    });
-    if (photo.ok) return photo;
     return this.sendMessage(appendEngagementFooter(core, input.couponId));
   }
 
@@ -107,25 +80,6 @@ export class TelegramChannelService {
 
   async postWin(input: TelegramWinPostInput): Promise<{ ok: boolean; error?: string }> {
     const core = this.formatWin(input);
-    const caption = appendEngagementFooter(
-      couponCardCaption({
-        headline: `Won ✅ · ${(input.title || 'Pick').trim()}${
-          input.totalOdds != null ? ` · ${Number(input.totalOdds).toFixed(2)}` : ''
-        }`,
-        couponUrl: this.couponUrl(input.couponId, 'win'),
-      }),
-      `win-${input.couponId}`,
-    );
-    const photo = await this.sendCouponPhoto({
-      caption,
-      channel: input.isFree ? 'free' : 'paid',
-      variant: 'won',
-      title: input.title,
-      tipsterName: input.tipsterName,
-      totalOdds: input.totalOdds,
-      legs: input.legs,
-    });
-    if (photo.ok) return photo;
     return this.sendMessage(appendEngagementFooter(core, `win-${input.couponId}`));
   }
 
@@ -240,45 +194,6 @@ export class TelegramChannelService {
     }
   }
 
-  private async sendCouponPhoto(input: {
-    caption: string;
-    channel: 'vip' | 'free' | 'paid';
-    variant: 'live' | 'won';
-    title: string;
-    tipsterName?: string | null;
-    totalOdds?: number | null;
-    legs?: TelegramCouponCardLeg[];
-    bookmakerKey?: string | null;
-    bookingCode?: string | null;
-    priceGhs?: number | null;
-  }): Promise<{ ok: boolean; error?: string }> {
-    if (!this.enabled()) return { ok: false, error: 'disabled' };
-    const chatId = this.channelId();
-    if (!this.token() || !chatId) return { ok: false, error: 'not_configured' };
-    try {
-      const png = await renderCouponCardPng({
-        title: input.title,
-        tipsterName: input.tipsterName,
-        totalOdds: input.totalOdds,
-        channel: input.channel,
-        variant: input.variant,
-        legs: input.legs,
-        bookmakerKey: input.bookmakerKey,
-        bookingCode: input.bookingCode,
-        priceGhs: input.priceGhs,
-      });
-      const photo = await telegramSendPhoto({ chatId, png, caption: input.caption });
-      if (!photo.ok) {
-        this.logger.warn(`Telegram sendPhoto failed: ${photo.error}`);
-      }
-      return photo;
-    } catch (e) {
-      const err = e instanceof Error ? e.message : String(e);
-      this.logger.warn(`Telegram coupon card render failed: ${err}`);
-      return { ok: false, error: err };
-    }
-  }
-
   async sendMessage(text: string): Promise<{ ok: boolean; error?: string }> {
     if (!this.enabled()) {
       return { ok: false, error: 'disabled' };
@@ -334,7 +249,10 @@ export class TelegramChannelService {
       const pred = (leg.prediction || '').trim();
       const lo =
         leg.odds != null && Number.isFinite(Number(leg.odds)) ? ` @ ${Number(leg.odds).toFixed(2)}` : '';
-      if (match || pred) lines.push(`• ${match}${match && pred ? ' — ' : ''}${pred}${lo}`);
+      const when = telegramKickoffLabel(leg.matchDate);
+      if (match || pred) {
+        lines.push(`• ${match}${match && pred ? ' — ' : ''}${pred}${lo}${when ? ` · ${when}` : ''}`);
+      }
     }
     if (code) {
       lines.push(bookie ? `${bookie} code: ${code}` : `Booking code: ${code}`);

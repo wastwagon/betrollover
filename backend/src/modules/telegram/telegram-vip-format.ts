@@ -1,14 +1,7 @@
 import { bookmakerLabelForKey } from '@betrollover/shared-types';
+import { telegramKickoffLabel, type TelegramSlipLeg } from './telegram-slip';
 
-export type VipSlipLeg = {
-  matchDescription?: string | null;
-  prediction?: string | null;
-  odds?: number | null;
-  matchDate?: string | Date | null;
-  result?: string | null;
-  homeScore?: number | null;
-  awayScore?: number | null;
-};
+export type VipSlipLeg = TelegramSlipLeg;
 
 export function formatVipCouponPost(input: {
   title: string;
@@ -29,7 +22,10 @@ export function formatVipCouponPost(input: {
     const pred = (leg.prediction || '').trim();
     const lo =
       leg.odds != null && Number.isFinite(Number(leg.odds)) ? ` @ ${Number(leg.odds).toFixed(2)}` : '';
-    if (match || pred) lines.push(`• ${match}${match && pred ? ' — ' : ''}${pred}${lo}`);
+    const when = telegramKickoffLabel(leg.matchDate);
+    if (match || pred) {
+      lines.push(`• ${match}${match && pred ? ' — ' : ''}${pred}${lo}${when ? ` · ${when}` : ''}`);
+    }
   }
   const code = (input.bookingCode || '').trim();
   if (code) {

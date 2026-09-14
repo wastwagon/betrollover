@@ -13,7 +13,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { TelegramChannelService } from '../telegram/telegram-channel.service';
 import { TelegramEligibilityService } from '../telegram/telegram-eligibility.service';
 import { TelegramVipService } from '../telegram/telegram-vip.service';
-import type { TelegramCouponCardLeg } from '../telegram/telegram-coupon-card';
+import type { TelegramSlipLeg } from '../telegram/telegram-slip';
 import { determinePickResult } from './settlement-logic';
 import { clampPlatformCommissionPercent, splitGrossForTipsterPayout } from '../../common/platform-commission';
 import { couponUserFacingRef } from '../../common/coupon-public-label';
@@ -109,7 +109,7 @@ export class SettlementService {
     return key || (pick.prediction || '').trim();
   }
 
-  private async telegramLegsForPicks(picks: AccumulatorPick[]): Promise<TelegramCouponCardLeg[]> {
+  private async telegramLegsForPicks(picks: AccumulatorPick[]): Promise<TelegramSlipLeg[]> {
     const [fixtureMap, eventMap] = await Promise.all([
       this.loadFixturesForGrading(picks.map((p) => p.fixtureId)),
       this.loadEventsForGrading(picks.map((p) => p.eventId)),
@@ -640,13 +640,13 @@ export class SettlementService {
       tipsterName: string | null;
       totalOdds: number | null;
       isFree: boolean;
-      legs: TelegramCouponCardLeg[];
+      legs: TelegramSlipLeg[];
     }> = [];
     const wonVipPosts: Array<{
       couponId: number;
       title: string;
       totalOdds: number | null;
-      legs: TelegramCouponCardLeg[];
+      legs: TelegramSlipLeg[];
     }> = [];
     for (const ticket of allPendingTickets) {
       const picks = picksByTicketId.get(ticket.id) ?? [];

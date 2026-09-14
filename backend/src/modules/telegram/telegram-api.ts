@@ -30,37 +30,6 @@ export function telegramBotUsername(): string | null {
   return u || null;
 }
 
-export async function telegramSendPhoto(opts: {
-  chatId: string;
-  png: Buffer;
-  caption: string;
-  filename?: string;
-}): Promise<{ ok: true } | { ok: false; error: string }> {
-  const token = telegramBotToken();
-  if (!token) return { ok: false, error: 'not_configured' };
-  if (!opts.png?.length) return { ok: false, error: 'empty_photo' };
-  const filename = opts.filename || 'coupon.png';
-  const bytes = Uint8Array.from(opts.png);
-  const photo = new File([bytes], filename, { type: 'image/png' });
-  const form = new FormData();
-  form.append('chat_id', opts.chatId);
-  form.append('caption', (opts.caption || '').slice(0, 1024));
-  form.append('photo', photo);
-  try {
-    const res = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-      method: 'POST',
-      body: form,
-    });
-    const json = (await res.json().catch(() => null)) as { ok?: boolean; description?: string } | null;
-    if (!res.ok || !json?.ok) {
-      return { ok: false, error: json?.description || `HTTP ${res.status}` };
-    }
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) };
-  }
-}
-
 export async function telegramApi<T = unknown>(
   method: string,
   body: Record<string, unknown>,

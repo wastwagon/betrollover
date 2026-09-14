@@ -14,22 +14,19 @@ import { TelegramEligibilityService } from './telegram-eligibility.service';
 import { ROLLOVER_OWNER_USERNAME } from '../../config/rollover-desk.config';
 import { ACCA_DESK_TIPSTER_TYPE } from '../../config/acca-desk-tipsters.config';
 
-jest.mock('./telegram-coupon-card', () => {
-  const actual = jest.requireActual('./telegram-coupon-card');
-  return {
-    ...actual,
-    renderCouponCardPng: jest.fn(async () => Buffer.from('png')),
-  };
-});
-
 function parseTelegramCall(url: unknown, init?: RequestInit) {
   const href = String(url);
-  if (href.includes('sendPhoto')) {
-    const form = init?.body as FormData;
-    return { method: 'sendPhoto' as const, caption: String(form?.get?.('caption') ?? '') };
+  const method = href.includes('/sendPhoto')
+    ? 'sendPhoto'
+    : href.includes('/sendMessage')
+      ? 'sendMessage'
+      : 'unknown';
+  const bodyRaw = (init as RequestInit)?.body;
+  if (typeof bodyRaw === 'string') {
+    const body = JSON.parse(bodyRaw) as { text?: string; caption?: string };
+    return { method, text: String(body.text || ''), caption: body.caption };
   }
-  const body = JSON.parse(String(init?.body));
-  return { method: 'sendMessage' as const, text: String(body.text || '') };
+  return { method, text: '', caption: undefined as string | undefined };
 }
 
 describe('telegram-copy', () => {
@@ -171,9 +168,11 @@ describe('TelegramChannelService engagement', () => {
       ],
     });
 
-    expect(calls[0].method).toBe('sendPhoto');
-    expect(calls[0].caption).toContain('Sure Mix · free');
-    expect(calls[0].caption).toContain('https://t.me/betrollovertips');
+    expect(calls[0].method).toBe('sendMessage');
+    expect(calls[0].text).toContain('Sure Mix · free');
+    expect(calls[0].text).toContain('A vs B');
+    expect(calls[0].text).toContain('Home Win');
+    expect(calls[0].text).toContain('https://t.me/betrollovertips');
   });
 
   it('paid teaser has no booking code and has footer', async () => {
@@ -195,13 +194,13 @@ describe('TelegramChannelService engagement', () => {
       legs: [{ matchDescription: 'Hidden vs Match', prediction: 'Home', odds: 1.5 }],
     });
 
-    expect(calls[0].method).toBe('sendPhoto');
-    expect(calls[0].caption).toContain('Paid pick');
-    expect(calls[0].caption).not.toContain('SECRET');
-    expect(calls[0].caption).toContain('https://t.me/betrollovertips');
+    expect(calls[0].method).toBe('sendMessage');
+    expect(calls[0].text).toContain('Paid pick');
+    expect(calls[0].text).not.toContain('SECRET');
+    expect(calls[0].text).toContain('https://t.me/betrollovertips');
   });
 
-  it('won posts send a card caption with the coupon link', async () => {
+  it('won posts send text with the coupon link', async () => {
     const svc = new TelegramChannelService();
     const calls: { method: string; caption?: string; text?: string }[] = [];
     global.fetch = jest.fn(async (url, init) => {
@@ -227,9 +226,13 @@ describe('TelegramChannelService engagement', () => {
       ],
     });
 
-    expect(calls[0].method).toBe('sendPhoto');
-    expect(calls[0].caption).toContain('Won ✅');
-    expect(calls[0].caption).toContain('/coupons/9');
+    expect(calls[0].method).toBe('sendMessage');
+    expect(calls[0].text).toContain('Won ✅');
+    expect(calls[0].text).toContain('A vs B');
+    expect(calls[0].text).toContain('Home Win');
+    expect(calls[0].text).toContain('WON');
+    expect(calls[0].text).toContain('FT 2-1');
+    expect(calls[0].text).toContain('/coupons/9');
   });
 
   it('posts growth message', async () => {
