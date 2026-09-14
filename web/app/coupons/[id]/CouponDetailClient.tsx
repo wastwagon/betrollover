@@ -493,11 +493,10 @@ export default function CouponDetailPage({
     !isPurchased;
   const picksHidden =
     couponPending &&
+    coupon.picksRevealed !== true &&
     (coupon.picksRevealed === false ||
       subscriptionLocked ||
-      (Number(coupon.price) > 0 &&
-        (coupon.picksRevealed === false ||
-          (coupon.picksRevealed === undefined && !isPurchased))));
+      (Number(coupon.price) > 0 && !isPurchased));
   const wonPicks = picksHidden ? 0 : coupon.picks.filter(p => p.result === 'won').length;
   const lostPicks = picksHidden ? 0 : coupon.picks.filter(p => p.result === 'lost').length;
   const settledPicks = wonPicks + lostPicks;
