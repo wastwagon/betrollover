@@ -54,6 +54,7 @@ import {
   VIP_LEG_TARGET_ODD,
   VIP_MAX_COMBINED_ODDS,
   VIP_MIN_COMBINED_ODDS,
+  VIP_SKIP_AMATEUR_LEAGUE_NAMES,
 } from '../../config/vip-tipster.config';
 
 const ACCA_EVENT_TYPES = new Set(['tool_open', 'quota_hit', 'empty_pool']);
@@ -960,7 +961,7 @@ export class AccaGeneratorService {
       excludeFixtureIds,
       deskDayStr,
       excludeLeagueApiIds: [...VIP_BLACKLIST_LEAGUE_API_IDS],
-      skipAmateurLeagueNames: true,
+      skipAmateurLeagueNames: VIP_SKIP_AMATEUR_LEAGUE_NAMES,
     });
     if (opts.slotKey) {
       candidates = candidates.filter((c) => slotForKickoff(c.matchDate, tz)?.key === opts.slotKey);

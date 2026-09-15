@@ -33,6 +33,12 @@ export const VIP_MAX_COMBINED_ODDS = 1.99;
 export const VIP_MAX_COUPONS_PER_DAY = 2;
 
 /**
+ * Skip amateur / youth / reserve league names and U23/II sides.
+ * Same hygiene as AccaSure1X2 — short Home favorites in youth pools blank often.
+ */
+export const VIP_SKIP_AMATEUR_LEAGUE_NAMES = true;
+
+/**
  * Latvia Virsliga / 1. Liga / Super Cup — 0/4 on archive Home+Home shorts.
  * No whitelist: AccaSure1X2 uses the full enabled-league pool.
  */

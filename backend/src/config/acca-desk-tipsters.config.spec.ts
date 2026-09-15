@@ -65,6 +65,7 @@ describe('acca desk Over 1.5 league filter', () => {
     expect(sure1x2.oddMax).toBeUndefined();
     expect(sure1x2.excludeLeagueApiIds).toBeUndefined();
     expect(sure1x2.excludeSlotKeys).toEqual([...ACCA_1X2_EXCLUDE_SLOT_KEYS]);
+    expect(sure1x2.skipAmateurLeagueNames).toBe(true);
     const safeBtts = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaSafeBTTS')!;
     expect(safeBtts.excludeLeagueApiIds).toBeUndefined();
     expect(safeBtts.oddMin).toBeUndefined();
@@ -117,9 +118,25 @@ describe('AccaMedium1X2 desk shape', () => {
 
     const sure = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaSure1X2')!;
     expect(sure.allowedOutcomeKeys).toBeUndefined();
-    expect(sure.skipAmateurLeagueNames).toBeUndefined();
+    expect(sure.skipAmateurLeagueNames).toBe(true);
     expect(sure.combinedOddMax).toBeUndefined();
     expect(sure.excludeSlotKeys).toEqual(['midnight']);
+  });
+});
+
+describe('AccaSure1X2 desk shape', () => {
+  it('skips Midnight and amateur, keeps Evening and away legs on Sure band', () => {
+    const sure = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaSure1X2')!;
+    expect(sure.markets).toEqual(['match_winner']);
+    expect(sure.riskLevel).toBe('sure');
+    expect(sure.excludeSlotKeys).toEqual([...ACCA_1X2_EXCLUDE_SLOT_KEYS]);
+    expect(sure.excludeSlotKeys).toEqual(['midnight']);
+    expect(sure.skipAmateurLeagueNames).toBe(true);
+    expect(sure.allowedOutcomeKeys).toBeUndefined();
+    expect(sure.combinedOddMax).toBeUndefined();
+    expect(sure.oddMin).toBeUndefined();
+    expect(sure.excludeLeagueApiIds).toBeUndefined();
+    expect(isAccaDeskPublishingPaused('AccaSure1X2')).toBe(false);
   });
 });
 
@@ -213,6 +230,22 @@ describe('AccaMediumMix desk shape', () => {
     expect(medium.excludeSlotKeys).toBeUndefined();
     expect(medium.allowedOutcomeKeys).toBeUndefined();
     expect(medium.excludeLeagueApiIds).toBeUndefined();
+  });
+});
+
+describe('AccaHighO25 desk shape', () => {
+  it('stays live, skips amateur/youth, keeps High band and all slots', () => {
+    const high = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaHighO25')!;
+    expect(high.markets).toEqual(['over25']);
+    expect(high.riskLevel).toBe('high');
+    expect(high.skipAmateurLeagueNames).toBe(true);
+    expect(high.excludeSlotKeys).toBeUndefined();
+    expect(high.combinedOddMax).toBeUndefined();
+    expect(high.excludeLeagueApiIds).toBeUndefined();
+    expect(isAccaDeskPublishingPaused('AccaHighO25')).toBe(false);
+
+    const highO15 = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaHighO15')!;
+    expect(highO15.skipAmateurLeagueNames).toBeUndefined();
   });
 });
 

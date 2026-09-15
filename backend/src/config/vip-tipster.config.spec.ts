@@ -9,6 +9,7 @@ import {
   VIP_MAX_COUPONS_PER_DAY,
   VIP_MIN_COMBINED_ODDS,
   VIP_PACKAGE_PRICE,
+  VIP_SKIP_AMATEUR_LEAGUE_NAMES,
 } from './vip-tipster.config';
 
 describe('vip league gates', () => {
@@ -21,6 +22,10 @@ describe('vip league gates', () => {
     for (const id of VIP_BLACKLIST_LEAGUE_API_IDS) {
       expect(isVipAllowedLeagueApiId(id)).toBe(false);
     }
+  });
+
+  it('skips amateur / youth / reserve pools on Home+Home shorts', () => {
+    expect(VIP_SKIP_AMATEUR_LEAGUE_NAMES).toBe(true);
   });
 
   it('prices the monthly VIP plan at GHS 300', () => {

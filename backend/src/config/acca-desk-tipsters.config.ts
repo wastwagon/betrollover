@@ -245,6 +245,10 @@ function extrasForDesk(risk: AccaDeskTipsterConfig['riskLevel'], spec: (typeof M
   }
   if (spec.key === '1x2') {
     extras.excludeSlotKeys = ACCA_1X2_EXCLUDE_SLOT_KEYS;
+    if (risk === 'sure') {
+      // AccaSure1X2 archive: youth −1.59u; Other +18.2%. Keep away legs + Evening.
+      extras.skipAmateurLeagueNames = true;
+    }
     if (risk === 'safe') {
       extras.excludeLeagueApiIds = ACCA_1X2_BLACKLIST_LEAGUE_API_IDS;
       extras.oddMin = ACCA_SAFE_1X2_ODDS.oddMin;
@@ -283,6 +287,10 @@ function extrasForDesk(risk: AccaDeskTipsterConfig['riskLevel'], spec: (typeof M
   if (spec.key === 'mix' && risk === 'medium') {
     extras.skipAmateurLeagueNames = true;
     extras.combinedOddMax = ACCA_MEDIUM_MIX_ODDS.combinedOddMax;
+  }
+  // AccaHighO25 archive: youth 0–3 (−3u); Other alone +39%. Keep High band + all slots.
+  if (spec.key === 'o25' && risk === 'high') {
+    extras.skipAmateurLeagueNames = true;
   }
   return extras;
 }
