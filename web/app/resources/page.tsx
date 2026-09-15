@@ -130,7 +130,7 @@ export default function ResourcesPage() {
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">{t('resources.popular_guides')}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Link
-              href="/guides/escrow-refunds"
+              href="/guides/purchase-protection"
               className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
             >
               {t('resources.escrow_link')}

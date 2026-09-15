@@ -146,7 +146,7 @@ export default async function HowItWorksPage() {
                   {t('auth.register')}
                 </Link>
                 <Link
-                  href="/guides/escrow-refunds"
+                  href="/guides/purchase-protection"
                   className={buttonClassName({ variant: 'secondary', className: 'w-full sm:w-auto' })}
                 >
                   {t('how_it_works.guides_link')}

@@ -60,7 +60,7 @@ export function matchMetaDescription(detail: PublicFixtureDetail): string {
     detail.relatedPicks.total > 0
       ? `${detail.relatedPicks.total} expert picks available. `
       : '';
-  return `${picks}Live score, league standings, and escrow-protected tipster picks for ${detail.homeTeamName} vs ${detail.awayTeamName}. Kickoff ${kickoff}.`;
+  return `${picks}Live score, league standings, and purchase-protected tipster picks for ${detail.homeTeamName} vs ${detail.awayTeamName}. Kickoff ${kickoff}.`;
 }
 
 export async function fetchPublicFixtureDetail(

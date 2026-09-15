@@ -1464,7 +1464,7 @@ export default function AdminSettingsPage() {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                     When an AI tipster’s <strong>ROI</strong> and <strong>win rate</strong> (on their profile / leaderboard)
                     meet the minimum ROI and minimum win rate above, new prediction syncs list at this price on the
-                    marketplace with the same escrow rules as human paid picks. Set to <strong>0</strong> to keep all AI
+                    marketplace with the same purchase-protection rules as human paid picks. Set to <strong>0</strong> to keep all AI
                     picks free.
                   </p>
                   <div className="flex items-center gap-3 mb-4">
@@ -1780,11 +1780,11 @@ export default function AdminSettingsPage() {
                 <div className="rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] shadow-sm p-4 sm:p-6">
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Platform Commission</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                    % deducted from tipster payouts when a winning pick is settled via escrow.
+                    % deducted from tipster payouts when a winning pick is paid after results.
                   </p>
                   {/* Live preview */}
                   <div className="bg-amber-100/60 dark:bg-amber-900/30 rounded-xl p-3 mb-4 text-xs space-y-1">
-                    <p className="font-semibold text-amber-800 dark:text-amber-200">Example payout (GHS 100 escrow)</p>
+                    <p className="font-semibold text-amber-800 dark:text-amber-200">Example payout (GHS 100 purchase)</p>
                     <p className="text-gray-600 dark:text-gray-400">Platform fee ({commissionRate}%): <span className="font-bold text-amber-700 dark:text-amber-300">GHS {(100 * commissionRate / 100).toFixed(2)}</span></p>
                     <p className="text-gray-600 dark:text-gray-400">Tipster receives: <span className="font-bold text-emerald-600">GHS {(100 - 100 * commissionRate / 100).toFixed(2)}</span></p>
                   </div>

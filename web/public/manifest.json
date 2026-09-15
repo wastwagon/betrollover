@@ -1,7 +1,7 @@
 {
   "name": "BetRollover — Football Tipster Marketplace",
   "short_name": "BetRollover",
-  "description": "Football tipster marketplace with escrow-protected picks, live scores, and Acca Generator. Ghana-based, 18+.",
+  "description": "Football tipster marketplace with purchase-protected picks, live scores, and Acca Generator. Ghana-based, 18+.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f2f2f7",

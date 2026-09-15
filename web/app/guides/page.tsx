@@ -30,7 +30,7 @@ export default async function GuidesIndexPage() {
   const t = buildT(locale);
   const GUIDES = [
     {
-      href: '/guides/escrow-refunds',
+      href: '/guides/purchase-protection',
       title: t('guides.escrow_card_title'),
       summary: t('guides.escrow_card_summary'),
     },

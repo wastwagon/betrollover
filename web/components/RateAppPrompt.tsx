@@ -65,7 +65,7 @@ function resolveRateStore(): RateStore | null {
 
 /**
  * Ask for a store rating after the user has experienced a settled purchase
- * (win or escrow refund / loss). iOS never links to Google Play (App Store 2.3.10).
+ * (win or automatic refund / loss). iOS never links to Google Play (App Store 2.3.10).
  */
 export function RateAppPrompt() {
   const t = useT();

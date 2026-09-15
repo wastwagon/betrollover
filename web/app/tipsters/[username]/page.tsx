@@ -959,7 +959,7 @@ export default function TipsterProfilePage() {
               title={t('subscriptions.trust_callout_title')}
               body={t('subscriptions.trust_callout_body')}
               linkLabel={t('subscriptions.marketplace_link_escrow')}
-              linkHref="/guides/escrow-refunds"
+              linkHref="/guides/purchase-protection"
             />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {subscriptionPackages.map((pkg) => {

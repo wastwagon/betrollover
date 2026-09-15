@@ -72,10 +72,10 @@ export const PLAY_STORE_URL =
 export const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL?.trim() || '';
 
 const SITE_DESCRIPTION_FOOTBALL =
-  'Football predictions from verified tipsters. Escrow-protected picks, refunded if they lose. Ghana-based — trusted across Africa and worldwide.';
+  'Football predictions from verified tipsters. Purchase-protected picks, refunded if they lose. Ghana-based — trusted across Africa and worldwide.';
 
 const SITE_DESCRIPTION_MULTISPORT =
-  'Verified tipster picks across football and more. Escrow-protected, refunded if tips lose. Ghana-based for Africa and a global audience.';
+  'Verified tipster picks across football and more. Purchase-protected, refunded if tips lose. Ghana-based for Africa and a global audience.';
 
 export const SITE_DESCRIPTION = isFootballOnlyDiscovery()
   ? SITE_DESCRIPTION_FOOTBALL
@@ -83,7 +83,7 @@ export const SITE_DESCRIPTION = isFootballOnlyDiscovery()
 
 /** Page title without the brand — root layout template appends `| BetRollover`. */
 export const SITE_TITLE_CORE = isFootballOnlyDiscovery()
-  ? 'Football Predictions & Escrow-Protected Picks'
+  ? 'Football Predictions & Purchase-Protected Picks'
   : 'Verified Sports Tips for Football, Basketball and More';
 
 export const SITE_DEFAULT_TITLE = `${SITE_TITLE_CORE} — ${SITE_NAME}`;
@@ -91,8 +91,8 @@ export const SITE_DEFAULT_TITLE = `${SITE_TITLE_CORE} — ${SITE_NAME}`;
 const SITE_KEYWORDS_FOOTBALL = [
   'football predictions',
   'football tips today',
-  'escrow-protected picks',
-  'escrow protected football tips',
+  'purchase-protected picks',
+  'refund if football tips lose',
   'verified football tipsters',
   'football tipster marketplace',
   'free football tips',
@@ -132,7 +132,7 @@ const SITE_KEYWORDS_MULTISPORT = [
   'win rate tipsters',
   'ROI sports tips',
   'accumulator picks',
-  'escrow-protected picks',
+  'purchase-protected picks',
   'risk-free sports tips',
   'free sports tips',
   'multi-sport picks',
@@ -145,7 +145,7 @@ const SITE_KEYWORDS_MULTISPORT = [
   'free football tips',
   'tipster platform',
   'buy sports picks',
-  'escrow sports tips',
+  'refund if sports tips lose',
   'worldwide sports picks',
   'football predictions Ghana',
   'Nigeria tipsters',

@@ -1002,7 +1002,7 @@ export default function CouponDetailPage({
                   )}
                 </div>
 
-                {/* Escrow protection */}
+                {/* Purchase protection */}
                 <div className="border-t border-[var(--border)] p-4 bg-[var(--primary-light)]">
                   <div className="flex items-start gap-2">
                     <IconShield className="w-5 h-5 shrink-0 text-[var(--primary)]" aria-hidden />

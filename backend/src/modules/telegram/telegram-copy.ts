@@ -9,7 +9,7 @@ import { ROLLOVER_OWNER_USERNAME } from '../../config/rollover-desk.config';
  *  10:00  Tipster recruit → register on site; invite tipster friends (earn via paid picks)
  *  12:00  Advice        → bankroll / stay-in-profit education
  *  17:00  Community     → react meanings + share channel (exact ask)
- *  19:00  Growth        → escrow trust + join channel / open site
+ *  19:00  Growth        → purchase protection + join channel / open site
  *
  * Tip & win alerts (event-driven): product first + short engagement footer.
  * Reaction legend lives ONLY on the community appeal (not every tip).
@@ -44,7 +44,7 @@ ${LEGAL_LINE}`,
 
   `📌 Discover · Tipster marketplace
 
-Free Acca picks · paid picks with escrow (tip price refunded if it loses).
+Free Acca picks · paid picks with purchase protection (tip price refunded if it loses).
 
 Stay subscribed · share the channel with a friend
 👉 {channel}
@@ -53,7 +53,7 @@ Stay subscribed · share the channel with a friend
 
 ${LEGAL_LINE}`,
 
-  `📌 Discover · Escrow-protected tips
+  `📌 Discover · Purchase-protected tips
 
 Paid pick loses → tip price returns to your BetRollover wallet.
 Free tips stay free on this channel.
@@ -86,7 +86,7 @@ On BetRollover tipsters:
 • Create a free account
 • Publish free picks to build a public record
 • Create paid picks when they meet the ROI / win-rate bar
-• Earn when those paid picks win (buyers protected by escrow)
+• Earn when those paid picks win (buyers have purchase protection)
 
 Register here:
 👉 {register}
@@ -134,7 +134,7 @@ export const TELEGRAM_ADVICE_POSTS = [
 • Track results — emotion fades, numbers don’t
 • When ahead at the bookie: withdraw some profit — don’t leave it all as “play balance”
 
-BetRollover: tipster ROI + escrow on paid picks (tip price refunded if it loses).
+BetRollover: tipster ROI + purchase protection on paid picks (tip price refunded if it loses).
 
 Learn more: {site}/learn?utm_source=telegram&utm_campaign=channel_advice
 Channel: {channel}
@@ -162,7 +162,7 @@ ${LEGAL_LINE}`,
 2. Prefer fewer, higher-conviction picks
 3. Treat tips as research — your stake is your call
 4. Never touch school fees, rent, or housekeeping money for bets
-5. On BetRollover, paid pick loss → escrow refunds the tip price (not your bookmaker stake)
+5. On BetRollover, paid pick loss → automatic refund of the tip price (not your bookmaker stake)
 
 Discipline beats hot streaks.
 
@@ -178,7 +178,7 @@ Chasing “one big Acca” to recover losses is how bankrolls die — and how re
 Better: small units, clear stop-loss for the day, review tomorrow.
 If it’s school fees, rent, or housekeeping — it is not stake money.
 
-Free Acca Desk + escrow-protected marketplace help you learn with structure.
+Free Acca Desk + purchase-protected marketplace help you learn with structure.
 
 {site}/marketplace?utm_source=telegram&utm_campaign=channel_advice
 Channel: {channel}
@@ -222,7 +222,7 @@ ${LEGAL_LINE}`,
  * Bot can sync via setChatDescription when admin.
  */
 export const TELEGRAM_CHANNEL_SEO_DESCRIPTION =
-  'Football tips & tipster marketplace | Free Acca Desk picks daily | Escrow refund if paid pick loses | Join BetRollover.com — 18+ education only';
+  'Football tips & tipster marketplace | Free Acca Desk picks daily | Refund if paid pick loses | Join BetRollover.com — 18+ education only';
 
 /** Public join URL for the tips channel (defaults to @betrollovertips). */
 export function telegramChannelJoinUrl(): string {

@@ -38,7 +38,7 @@ export function ArtworkBuyerBrowse({ className }: { className?: string }) {
   );
 }
 
-/** Purchase & secure — escrow lock */
+/** Purchase & secure — pending settlement */
 export function ArtworkBuyerSecure({ className }: { className?: string }) {
   return (
     <SvgWrap className={className}>

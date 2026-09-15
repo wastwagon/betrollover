@@ -2534,7 +2534,7 @@ export class AccumulatorsService {
         userId: buyerId,
         type: 'purchase',
         title: 'Purchase Complete',
-        message: `Your purchase is complete. Funds are held in escrow until the pick settles.`,
+        message: `Your purchase is complete. It is pending settlement — refunded if the pick loses.`,
         link: `/my-purchases`,
         icon: 'cart',
         sendEmail: false,

@@ -16,7 +16,7 @@ export type EducationFold =
 const LINKS: { id: EducationFold; href: string; labelKey: TranslationKey }[] = [
   { id: 'guides', href: '/guides', labelKey: 'discover.job_guides_short' },
   { id: 'learn', href: '/learn', labelKey: 'nav.learn' },
-  { id: 'escrow', href: '/guides/escrow-refunds', labelKey: 'guides.escrow_short' },
+  { id: 'escrow', href: '/guides/purchase-protection', labelKey: 'guides.escrow_short' },
   { id: 'evaluate', href: '/guides/evaluate-tipsters', labelKey: 'guides.eval_short' },
   { id: 'news', href: '/news', labelKey: 'nav.news' },
   { id: 'library', href: '/resources', labelKey: 'education.library' },

@@ -136,7 +136,7 @@ export default function SubscriptionMarketplacePage() {
           title={t('subscriptions.trust_callout_title')}
           body={t('subscriptions.trust_callout_body')}
           linkLabel={t('subscriptions.marketplace_link_escrow')}
-          linkHref="/guides/escrow-refunds"
+          linkHref="/guides/purchase-protection"
         />
 
         {loading ? (
@@ -326,7 +326,7 @@ export default function SubscriptionMarketplacePage() {
             {t('home.how_it_works')}
           </Link>
           <Link
-            href="/guides/escrow-refunds"
+            href="/guides/purchase-protection"
             className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
           >
             {t('subscriptions.marketplace_link_escrow')}

@@ -38,8 +38,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   if (isFootballOnlyDiscovery()) {
     return {
-      title: `Football Predictions & Escrow-Protected Picks`,
-      description: `Football predictions from verified tipsters. Escrow-protected picks for a global match audience — strong across Africa. Refunded if tips lose.`,
+      title: `Football Predictions & Purchase-Protected Picks`,
+      description: `Football predictions from verified tipsters. Purchase-protected picks for a global match audience — strong across Africa. Refunded if tips lose.`,
       robots: { index: false, follow: true },
     };
   }
@@ -49,7 +49,7 @@ export async function generateMetadata({
   if (!label) return { title: 'Marketplace' };
   return {
     title: `${label} picks`,
-    description: `Browse escrow-protected ${label.toLowerCase()} tips from verified tipsters on ${SITE_NAME}.`,
+    description: `Browse purchase-protected ${label.toLowerCase()} tips from verified tipsters on ${SITE_NAME}.`,
   };
 }
 

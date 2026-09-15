@@ -60,6 +60,13 @@ function formatPerson(
   return { name, sub: sub || `#${id}` };
 }
 
+function settlementStatusLabel(status: string): string {
+  if (status === 'held') return 'pending';
+  if (status === 'released') return 'paid out';
+  if (status === 'refunded') return 'refunded';
+  return status;
+}
+
 function noteHint(note: EscrowBreakdownNote | undefined, kind: 'net' | 'fee') {
   if (note === 'if_won') {
     return kind === 'net' ? 'if pick wins' : 'if pick wins';
@@ -132,29 +139,29 @@ export default function AdminEscrowPage() {
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Escrow Funds</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Pending settlement</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            <strong>Marketplace picks:</strong> funds held until picks settle — released to the tipster on a win, refunded
-            to buyers on loss/void. <strong>VIP subscriptions:</strong> funds held until the subscription period ends — then
-            released to the tipster minus the platform commission (same 30% default as a winning paid pick). Both use the platform rate
-            below for tipster net vs platform fee on release.
+            <strong>Marketplace picks:</strong> purchases stay pending settlement until results. On a win the tipster is
+            paid after results; on loss/void the buyer is refunded. <strong>VIP subscriptions:</strong> period-end
+            payout — the tipster is paid after the period ends minus the platform commission (same 30% default as a
+            winning paid pick). Both use the platform rate below for tipster net vs platform fee on payout.
           </p>
           <p className="mt-2 text-sm font-medium text-amber-800 dark:text-amber-200">
             Current platform commission rate: {commissionRatePercent.toFixed(1)}% (tipster receives{' '}
-            {(100 - commissionRatePercent).toFixed(1)}% of gross on release)
+            {(100 - commissionRatePercent).toFixed(1)}% of gross on payout)
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8">
           <div className="rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] shadow-sm p-4 sm:p-6">
-            <p className="text-sm font-medium text-amber-700 dark:text-amber-300 mb-2">Total held (picks + VIP)</p>
+            <p className="text-sm font-medium text-amber-700 dark:text-amber-300 mb-2">Total pending (picks + VIP)</p>
             <p className="text-3xl font-bold text-gray-900 dark:text-white">GHS {totalHeld.toFixed(2)}</p>
             <p className="mt-2 text-xs text-amber-800/80 dark:text-amber-200/90">
-              Pick escrow: GHS {totalHeldPick.toFixed(2)} · VIP subscription escrow: GHS {totalHeldSub.toFixed(2)}
+              Pick pending: GHS {totalHeldPick.toFixed(2)} · VIP pending: GHS {totalHeldSub.toFixed(2)}
             </p>
           </div>
           <div className="rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] shadow-sm p-4 sm:p-6">
-            <p className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">Active holdings</p>
+            <p className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">Active pending</p>
             <p className="text-3xl font-bold text-gray-900 dark:text-white">{activeHoldings}</p>
             <p className="mt-2 text-xs text-blue-800/80 dark:text-blue-200/90">
               {pickHeld.length} pick · {subHeld.length} VIP
@@ -166,7 +173,7 @@ export default function AdminEscrowPage() {
           <div className="flex items-center justify-center py-12">
             <div className="flex flex-col items-center gap-3">
               <div className="w-12 h-12 rounded-full border-4 border-red-200 border-t-red-600 animate-spin" />
-              <p className="text-gray-600 dark:text-gray-400 font-medium">Loading escrow funds...</p>
+              <p className="text-gray-600 dark:text-gray-400 font-medium">Loading pending settlement...</p>
             </div>
           </div>
         )}
@@ -184,14 +191,14 @@ export default function AdminEscrowPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No escrow records</h3>
-                <p className="text-gray-600 dark:text-gray-400">No marketplace pick or VIP subscription escrow rows yet.</p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No pending settlement records</h3>
+                <p className="text-gray-600 dark:text-gray-400">No marketplace pick or VIP subscription settlement rows yet.</p>
               </div>
             ) : (
               <>
                 {funds.length > 0 && (
                   <section>
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Marketplace pick escrow</h2>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Marketplace pick settlement</h2>
                     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                       <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -279,7 +286,7 @@ export default function AdminEscrowPage() {
                                             : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
                                       }`}
                                     >
-                                      {f.status}
+                                      {settlementStatusLabel(f.status)}
                                     </span>
                                   </td>
                                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
@@ -297,7 +304,7 @@ export default function AdminEscrowPage() {
 
                 {subscriptionFunds.length > 0 && (
                   <section>
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">VIP subscription escrow</h2>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">VIP subscription period-end payout</h2>
                     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                       <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -387,7 +394,7 @@ export default function AdminEscrowPage() {
                                             : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
                                       }`}
                                     >
-                                      {f.status}
+                                      {settlementStatusLabel(f.status)}
                                     </span>
                                   </td>
                                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">

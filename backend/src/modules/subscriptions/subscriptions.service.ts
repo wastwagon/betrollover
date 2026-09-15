@@ -903,9 +903,9 @@ export class SubscriptionsService {
       refundedAmount: refundDue > 0 ? refundDue : null,
       message:
         refundDue > 0
-          ? `Subscription removed. GHS ${refundDue.toFixed(2)} refunded to the subscriber (held escrow).`
+          ? `Subscription removed. GHS ${refundDue.toFixed(2)} refunded to the subscriber (pending settlement).`
           : escrow?.status === 'released'
-            ? 'Subscription removed. Escrow had already been released to the tipster; no refund issued.'
+            ? 'Subscription removed. The tipster had already been paid after period end; no refund issued.'
             : 'Subscription removed.',
     };
   }

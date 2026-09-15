@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   const title = 'Community Chat';
   const description = footballOnly
-    ? 'Join the BetRollover community. Discuss football predictions and escrow-protected picks with verified tipsters — Africa and global match fans welcome.'
+    ? 'Join the BetRollover community. Discuss football predictions and purchase-protected picks with verified tipsters — Africa and global match fans welcome.'
     : 'Join the BetRollover community. Discuss football, basketball, tennis, and all sports with verified tipsters and fellow enthusiasts in real time.';
   return {
     title,

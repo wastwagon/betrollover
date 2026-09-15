@@ -259,7 +259,7 @@ export function couponMetaDescription(coupon: PublicCouponMeta): string {
     result === 'won' ? 'Won' : result === 'lost' ? 'Lost' : result === 'void' ? 'Void' : 'Pending';
   const oddsPart = odds ? ` Combined odds ${odds}.` : '';
   return truncateMetaDescription(
-    `${priceLabel} by ${tipster} on BetRollover.${oddsPart} Result: ${resultLabel}. Escrow-protected marketplace — 18+.`,
+    `${priceLabel} by ${tipster} on BetRollover.${oddsPart} Result: ${resultLabel}. Purchase-protected marketplace — 18+.`,
   );
 }
 

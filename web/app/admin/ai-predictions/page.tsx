@@ -213,7 +213,7 @@ export default function AdminAiPredictionsPage() {
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             Sync predictions to the marketplace. AI picks are <strong>free</strong> unless the tipster meets minimum ROI
             and win rate in Admin → Settings; then they list at your configured <strong>AI pick price</strong> (GHS),
-            with the same escrow as human paid picks. Run setup/ai-tipsters first if tipsters have no user link.
+            with the same purchase protection as human paid picks. Run setup/ai-tipsters first if tipsters have no user link.
           </p>
         </div>
 

@@ -278,7 +278,7 @@ export class TelegramChannelService {
     const head = `Paid pick 🔒 · ${title}${odds ? ` · ${odds} odds` : ''}${price ? ` · GHS ${price}` : ''}`;
     const lines = [head];
     if (tipster) lines.push(`Tipster: ${tipster}`);
-    lines.push('Unlock on BetRollover — escrow refunds the pick price if it loses.');
+    lines.push('Unlock on BetRollover — the pick price is refunded if it loses.');
     lines.push('');
     lines.push(url);
     return lines.join('\n');

@@ -160,7 +160,7 @@ function CheckoutContent() {
         title={t('subscriptions.trust_callout_title')}
         body={t('subscriptions.trust_callout_body')}
         linkLabel={t('subscriptions.marketplace_link_escrow')}
-        linkHref="/guides/escrow-refunds"
+        linkHref="/guides/purchase-protection"
       />
 
       {error && (

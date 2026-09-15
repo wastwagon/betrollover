@@ -1073,7 +1073,7 @@ export default function AdminFixturesPage() {
               type="button"
               onClick={reconcileSettledPicks}
               disabled={syncing || fetchingResults || settling || reconciling}
-              title="After scores/stats are corrected in the DB, re-grade settled picks (incl. corners/cards) and fix escrow if the outcome flipped. Does not fetch from the API — run Fetch Results first if stats are missing."
+              title="After scores/stats are corrected in the DB, re-grade settled picks (incl. corners/cards) and fix payouts if the outcome flipped. Does not fetch from the API — run Fetch Results first if stats are missing."
               className={buttonClassName()}
             >
               {reconciling ? (
@@ -1102,7 +1102,7 @@ export default function AdminFixturesPage() {
               <p>
                 Reconcile: <strong>{reconcileMsg.picksRegraded}</strong> pick{reconcileMsg.picksRegraded !== 1 ? 's' : ''} regraded,{' '}
                 <strong>{reconcileMsg.ticketsOutcomeChanged}</strong> pick{reconcileMsg.ticketsOutcomeChanged !== 1 ? 's' : ''} outcome updated,{' '}
-                <strong>{reconcileMsg.escrowTicketsAdjusted}</strong> escrow adjustment{reconcileMsg.escrowTicketsAdjusted !== 1 ? 's' : ''}.
+                <strong>{reconcileMsg.escrowTicketsAdjusted}</strong> settlement adjustment{reconcileMsg.escrowTicketsAdjusted !== 1 ? 's' : ''}.
               </p>
               {reconcileMsg.errors.length > 0 && (
                 <ul className="list-disc pl-5 text-sm text-rose-800 dark:text-rose-200">

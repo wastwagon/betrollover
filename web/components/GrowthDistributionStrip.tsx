@@ -18,7 +18,7 @@ type GrowthDistributionStripProps = {
 };
 
 /**
- * Telegram alerts + optional App Store CTA + escrow education.
+ * Telegram alerts + optional App Store CTA + refund education.
  * No Play Store / Android download links (App Store 2.3.10).
  */
 export function GrowthDistributionStrip({ className = '', compact = false }: GrowthDistributionStripProps) {
@@ -65,7 +65,7 @@ export function GrowthDistributionStrip({ className = '', compact = false }: Gro
             </a>
           ) : null}
           <Link
-            href="/guides/escrow-refunds"
+            href="/guides/purchase-protection"
             className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3.5 py-2 text-xs font-semibold text-[var(--primary)] hover:border-[var(--primary)] transition-colors"
           >
             {t('growth.escrow_case_cta')}

@@ -46,7 +46,7 @@ export class TelegramGrowthScheduler {
     await this.runCommunityAppeal();
   }
 
-  /** Evening growth — escrow trust + channel — default 19:00 */
+  /** Evening growth — purchase protection + channel — default 19:00 */
   @Cron(process.env.TELEGRAM_GROWTH_CRON_EVENING || '0 19 * * *', {
     timeZone: process.env.PREDICTION_TIMEZONE || 'Africa/Accra',
   })

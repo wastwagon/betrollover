@@ -18,8 +18,8 @@ export async function generateMetadata(): Promise<Metadata> {
       ? 'About the Football Predictions Marketplace'
       : 'About the Tipster Marketplace',
     description: footballOnly
-      ? 'About BetRollover: Ghana-based football predictions marketplace for Africa and a global match audience. Escrow-protected picks, verified tipsters, refund if tips lose.'
-      : 'Learn about BetRollover — Ghana-based, global audience. All major global sports: football, basketball, tennis, MMA, rugby and more. Escrow-protected picks, verified tipsters. Refund if tips lose. Worldwide coverage.',
+      ? 'About BetRollover: Ghana-based football predictions marketplace for Africa and a global match audience. Purchase-protected picks, verified tipsters, refund if tips lose.'
+      : 'Learn about BetRollover — Ghana-based, global audience. All major global sports: football, basketball, tennis, MMA, rugby and more. Purchase-protected picks, verified tipsters. Refund if tips lose. Worldwide coverage.',
     alternates: seoAlternates('/about', locale),
   };
 }

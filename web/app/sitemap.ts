@@ -29,7 +29,7 @@ const LOCALISED_PAGES: Array<{
   { path: '/news',                   changeFrequency: 'daily',   priority: 0.8  },
   { path: '/resources',              changeFrequency: 'weekly',  priority: 0.7  },
   { path: '/guides',                 changeFrequency: 'weekly',  priority: 0.65 },
-  { path: '/guides/escrow-refunds',  changeFrequency: 'monthly', priority: 0.6  },
+  { path: '/guides/purchase-protection', changeFrequency: 'monthly', priority: 0.6  },
   { path: '/guides/evaluate-tipsters', changeFrequency: 'monthly', priority: 0.6 },
   { path: '/about',                  changeFrequency: 'monthly', priority: 0.6  },
   { path: '/how-it-works',           changeFrequency: 'monthly', priority: 0.6  },

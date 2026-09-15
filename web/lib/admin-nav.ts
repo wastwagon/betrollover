@@ -60,7 +60,7 @@ export function getAdminNavItems(): AdminNavItem[] {
     { href: '/admin/audit-log', icon: IconClipboard, label: 'Audit log' },
     { href: '/admin/chat', icon: IconChat, label: 'Chat Moderation' },
     { href: '/admin/pick-comments', icon: IconChat, label: 'Pick Comments' },
-    { href: '/admin/escrow', icon: IconShield, label: 'Escrow' },
+    { href: '/admin/escrow', icon: IconShield, label: 'Settlement' },
     { href: '/admin/wallet', icon: IconWallet, label: 'Wallet' },
     { href: '/admin/notifications', icon: IconBell, label: 'Notifications' },
     { href: '/admin/fixtures', icon: IconLive, label: 'Fixtures' },

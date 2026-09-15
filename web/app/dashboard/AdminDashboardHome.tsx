@@ -99,7 +99,7 @@ export function AdminDashboardHome({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
             <StatCard title="Pending Deposits" value={stats?.deposits?.pending ?? 0} link="/admin/deposits" />
             <StatCard title="Pending Withdrawals" value={stats?.withdrawals?.pending ?? 0} link="/admin/withdrawals" />
-            <StatCard title="Escrow Held (GHS)" value={stats?.escrow?.held ?? 0} format="currency" link="/admin/escrow" />
+            <StatCard title="Pending settlement (GHS)" value={stats?.escrow?.held ?? 0} format="currency" link="/admin/escrow" />
           </div>
 
           <div className="mb-6 sm:mb-8 bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] p-4 sm:p-6 min-w-0">
@@ -162,7 +162,7 @@ export function AdminDashboardHome({
                     label: 'Live buyable (homepage)',
                     value: stats?.picks?.liveMarketplace != null ? `${stats.picks.liveMarketplace}` : '—',
                   },
-                  { label: 'Escrow Held', value: escrowHeld, link: { href: '/admin/escrow', text: escrowHeld } },
+                  { label: 'Pending settlement', value: escrowHeld, link: { href: '/admin/escrow', text: escrowHeld } },
                   {
                     label: 'Gross revenue (all purchases)',
                     value: stats?.purchases?.revenue != null ? `GHS ${Number(stats.purchases.revenue).toFixed(2)}` : '—',

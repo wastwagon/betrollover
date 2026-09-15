@@ -916,7 +916,7 @@ export function PickCard({
               {price > 0 && (
                 <div className="bg-[var(--fill-secondary)] border border-[var(--separator)] rounded-xl p-4 mb-6">
                   <div className="flex items-start gap-3">
-                    <span className="text-sm font-semibold text-[var(--primary)]">Escrow</span>
+                    <span className="text-sm font-semibold text-[var(--primary)]">{t('pick.escrow')}</span>
                     <div>
                       <p className="font-semibold text-[var(--text)] mb-1">{t('pick_card.funds_in_escrow')}</p>
                       <p className="text-sm text-[var(--text-muted)]">

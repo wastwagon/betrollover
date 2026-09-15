@@ -107,8 +107,16 @@ function formatShort(iso: string) {
 }
 
 function formatMoney(value: number | null | undefined) {
-  if (value == null || Number.isNaN(value)) return '—';
+  if (value == null || Number.isNaN(Number(value))) return '—';
   return `GHS ${Number(value).toFixed(2)}`;
+}
+
+function settlementStatusLabel(status: string | null | undefined): string {
+  if (!status) return '';
+  if (status === 'held') return 'pending';
+  if (status === 'released') return 'paid out';
+  if (status === 'refunded') return 'refunded';
+  return status;
 }
 
 function formatDateOnly(value: string): string {
@@ -304,7 +312,7 @@ export default function AdminSubscriptionsPage() {
       'packageName',
       'packageDurationDays',
       'amountPaid',
-      'escrowStatus',
+      'settlementStatus',
       'escrowGrossAmount',
       'escrowCommissionRateAtPurchase',
       'escrowReleasedTipsterNet',
@@ -329,7 +337,7 @@ export default function AdminSubscriptionsPage() {
         row.package.name,
         row.package.durationDays,
         row.amountPaid,
-        row.escrowStatus ?? '',
+        settlementStatusLabel(row.escrowStatus),
         row.escrowGrossAmount ?? '',
         row.escrowCommissionRateAtPurchase ?? '',
         row.escrowReleasedTipsterNet ?? '',
@@ -443,7 +451,7 @@ export default function AdminSubscriptionsPage() {
     const kind = row.tipster?.isAi ? 'AI' : 'Human';
     if (
       !confirm(
-        `Permanently delete this subscription?\n\n• Subscriber: ${sub}\n• Package: ${row.package.name}\n• Tipster (${kind}): ${tip}\n\nIf escrow is still held, the subscriber will be refunded. If payout already went to the tipster, no refund is issued. This cannot be undone.`,
+        `Permanently delete this subscription?\n\n• Subscriber: ${sub}\n• Package: ${row.package.name}\n• Tipster (${kind}): ${tip}\n\nIf settlement is still pending, the subscriber will be refunded. If payout already went to the tipster, no refund is issued. This cannot be undone.`,
       )
     ) {
       return;
@@ -475,7 +483,7 @@ export default function AdminSubscriptionsPage() {
     if (!Number.isFinite(uid) || uid <= 0) return;
     if (
       !confirm(
-        `Remove every VIP subscription for user #${uid}?\n\nHeld escrow is refunded per subscription. If escrow was already released to tipsters, no extra refund is issued. This cannot be undone.`,
+        `Remove every VIP subscription for user #${uid}?\n\nPending settlement is refunded per subscription. If the tipster was already paid after period end, no extra refund is issued. This cannot be undone.`,
       )
     ) {
       return;
@@ -496,7 +504,7 @@ export default function AdminSubscriptionsPage() {
         alert(
           removed === 0
             ? 'No subscription rows found for this user.'
-            : `Removed ${removed} subscription(s). Total refunded from held escrow: GHS ${total.toFixed(2)}`,
+            : `Removed ${removed} subscription(s). Total refunded from pending settlement: GHS ${total.toFixed(2)}`,
         );
         loadRows();
       } else {
@@ -665,7 +673,7 @@ export default function AdminSubscriptionsPage() {
             onClick={() => handleDelete(row)}
             disabled={deletingId === row.id}
             className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-[var(--destructive)] hover:opacity-90 text-white text-xs font-medium disabled:opacity-50 z-10 shadow"
-            title="Delete subscription (refund held escrow)"
+            title="Delete subscription (refund pending settlement)"
           >
             {deletingId === row.id ? 'Deleting…' : 'Delete'}
           </button>
@@ -708,7 +716,7 @@ export default function AdminSubscriptionsPage() {
 
             <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 mb-3">
               <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">
-                Escrow breakdown
+                Payout breakdown
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                 <div>
@@ -724,13 +732,13 @@ export default function AdminSubscriptionsPage() {
                   </span>
                 </div>
                 <div>
-                  <span className="text-[var(--text-muted)] text-xs block">Tipster net (released)</span>
+                  <span className="text-[var(--text-muted)] text-xs block">Tipster net (paid out)</span>
                   <span className="font-semibold text-emerald-600 dark:text-emerald-400">
                     {formatMoney(row.escrowReleasedTipsterNet)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[var(--text-muted)] text-xs block">Platform fee (released)</span>
+                  <span className="text-[var(--text-muted)] text-xs block">Platform fee (paid out)</span>
                   <span className="font-semibold text-amber-700 dark:text-amber-300">
                     {formatMoney(row.escrowReleasedPlatformFee)}
                   </span>
@@ -738,11 +746,11 @@ export default function AdminSubscriptionsPage() {
               </div>
               {row.escrowStatus === 'held' ? (
                 <p className="mt-2 text-[11px] text-[var(--text-muted)]">
-                  Held escrow has projected split only; final values are written when period-end settlement releases.
+                  Pending settlement has projected split only; final values are written when period-end payout runs.
                 </p>
               ) : row.escrowStatus === 'released' ? (
                 <p className="mt-2 text-[11px] text-[var(--text-muted)]">
-                  Released rate:{' '}
+                  Payout rate:{' '}
                   {row.escrowReleasedCommissionRate != null
                     ? `${Number(row.escrowReleasedCommissionRate).toFixed(2)}%`
                     : '—'}
@@ -789,7 +797,7 @@ export default function AdminSubscriptionsPage() {
                 )}
                 {row.escrowStatus && (
                   <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 font-medium">
-                    Escrow: {row.escrowStatus}
+                    Settlement: {settlementStatusLabel(row.escrowStatus)}
                   </span>
                 )}
               </div>
@@ -851,7 +859,7 @@ export default function AdminSubscriptionsPage() {
             (human + AI tipsters). Use <strong className="text-gray-800 dark:text-gray-200">Delete</strong> on a card to
             unpublish that package from the shop (existing subscribers keep access until their period ends).{' '}
             <strong className="text-gray-800 dark:text-gray-200">VIP subscribers</strong> lists real checkouts — remove a
-            row to revoke access (refunds held escrow like picks).
+            row to revoke access (refunds pending settlement like picks).
           </p>
           <div className="flex flex-wrap gap-2 mb-4">
             <Link
@@ -1081,7 +1089,7 @@ export default function AdminSubscriptionsPage() {
               </button>
             </div>
             <p className="text-xs text-amber-900/90 dark:text-amber-200/90 mb-4">
-              Held escrow: subscriber is refunded when you delete. Released escrow: tipster was already paid; delete only removes the record. Use{' '}
+              Pending settlement: subscriber is refunded when you delete. Already paid after period end: tipster was already paid; delete only removes the record. Use{' '}
               <strong>Subscriber user ID</strong> to load every VIP purchase for that account (not limited to the newest 5,000 global rows).
             </p>
             {(statusFilter !== 'all' ||
@@ -1134,7 +1142,7 @@ export default function AdminSubscriptionsPage() {
                   <p className="text-sm font-semibold text-[var(--text)]">{totals.count}</p>
                 </div>
                 <div className="rounded-lg border border-[var(--border)] bg-white dark:bg-gray-800 px-3 py-2">
-                  <p className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">Escrow gross</p>
+                  <p className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">Gross</p>
                   <p className="text-sm font-semibold text-[var(--text)]">{formatMoney(totals.gross)}</p>
                 </div>
                 <div className="rounded-lg border border-[var(--border)] bg-white dark:bg-gray-800 px-3 py-2">
@@ -1150,7 +1158,7 @@ export default function AdminSubscriptionsPage() {
                   </p>
                 </div>
                 <div className="rounded-lg border border-[var(--border)] bg-white dark:bg-gray-800 px-3 py-2">
-                  <p className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">Escrow statuses</p>
+                  <p className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">Settlement statuses</p>
                   <p className="text-xs font-medium text-[var(--text)]">
                     held {totals.heldCount} · released {totals.releasedCount} · refunded {totals.refundedCount}
                   </p>
@@ -1177,7 +1185,7 @@ export default function AdminSubscriptionsPage() {
                 <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">Settlement warnings</p>
                 {endedWithHeld > 0 ? (
                   <p className="text-xs text-amber-900/90 dark:text-amber-200 mt-1">
-                    {endedWithHeld} ended subscription{endedWithHeld !== 1 ? 's' : ''} still show held escrow.
+                    {endedWithHeld} ended subscription{endedWithHeld !== 1 ? 's' : ''} still show pending settlement.
                     <button
                       type="button"
                       onClick={() => {

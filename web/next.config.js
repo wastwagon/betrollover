@@ -100,8 +100,21 @@ const nextConfig = {
    * Set SKIP_WWW_REDIRECT=1 to disable if you must serve www as primary during migration.
    */
   async redirects() {
-    if (process.env.SKIP_WWW_REDIRECT === '1') return [];
+    const copyRedirects = [
+      {
+        source: '/guides/escrow-refunds',
+        destination: '/guides/purchase-protection',
+        permanent: true,
+      },
+      {
+        source: '/fr/guides/escrow-refunds',
+        destination: '/fr/guides/purchase-protection',
+        permanent: true,
+      },
+    ];
+    if (process.env.SKIP_WWW_REDIRECT === '1') return copyRedirects;
     return [
+      ...copyRedirects,
       {
         source: '/:path*',
         has: [{ type: 'host', value: 'www.betrollover.com' }],

@@ -474,7 +474,7 @@ ${this.bodyCell(`${this.copyP(this.escapeEmailText(data.body))}${data.extraHtml 
     const safeRef = this.escapeEmailText(ref);
     const amountLabel = amount > 0 ? `GHS ${amount.toFixed(2)}` : 'Free pick';
     const subject = `Receipt · ${this.escapeEmailText(couponEmailHeadline(pickId, pickTitle))}`;
-    const inner = `${this.brandHeader('Receipt', 'Purchase confirmed', 'Your pick is secured. Funds stay in escrow until settlement.')}
+    const inner = `${this.brandHeader('Receipt', 'Purchase confirmed', 'Your pick is secured. Pending settlement — refunded if it loses.')}
 ${this.bodyCell(`
   ${this.insetCard(`
     <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:${BR.muted};text-transform:uppercase;letter-spacing:0.08em;">Pick</p>
@@ -485,7 +485,7 @@ ${this.bodyCell(`
   `)}
   ${this.ctaButton(ctaUrl, 'View pick')}
 `)}`;
-    const text = `Purchase confirmed\n\n${ref}\nAmount: ${amountLabel}\nFunds remain in escrow until settlement.\n\nOpen: ${ctaUrl}\n\n18+ Informational only.\n— BetRollover`;
+    const text = `Purchase confirmed\n\n${ref}\nAmount: ${amountLabel}\nPending settlement — refunded if the pick loses.\n\nOpen: ${ctaUrl}\n\n18+ Informational only.\n— BetRollover`;
     return this.send({ to, subject, text, html: this.premiumDocument(inner) });
   }
 
