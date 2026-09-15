@@ -217,11 +217,24 @@ describe('AccaMediumMix desk shape', () => {
 });
 
 describe('acca desk pause list', () => {
-  it('leaves the full roster publishing, including AccaSure', () => {
-    expect(ACCA_DESK_PAUSED_USERNAMES.size).toBe(0);
-    expect(isAccaDeskPublishingPaused('AccaMediumO25')).toBe(false);
+  it('pauses Sure/Safe/Medium O25 + Sure/Safe BTTS; High O25 / Medium BTTS keep publishing', () => {
+    expect([...ACCA_DESK_PAUSED_USERNAMES].sort()).toEqual(
+      ['AccaMediumO25', 'AccaSafeBTTS', 'AccaSafeO25', 'AccaSureBTTS', 'AccaSureO25'].sort(),
+    );
+    expect(isAccaDeskPublishingPaused('AccaSureO25')).toBe(true);
+    expect(isAccaDeskPublishingPaused('AccaSureBTTS')).toBe(true);
+    expect(isAccaDeskPublishingPaused('AccaSafeO25')).toBe(true);
+    expect(isAccaDeskPublishingPaused('AccaMediumO25')).toBe(true);
+    expect(isAccaDeskPublishingPaused('AccaSafeBTTS')).toBe(true);
+    expect(isAccaDeskPublishingPaused('AccaMediumBTTS')).toBe(false);
+    expect(isAccaDeskPublishingPaused('AccaHighO25')).toBe(false);
     expect(isAccaDeskPublishingPaused('AccaSure1X2')).toBe(false);
     expect(isAccaDeskPublishingPaused('AccaSureO15')).toBe(false);
-    expect(accaDeskPausedPublicExcludeRawSql('t')).toBe('TRUE');
+    expect(accaDeskPausedPublicExcludeRawSql('t')).toContain("'AccaSureO25'");
+    expect(accaDeskPausedPublicExcludeRawSql('t')).toContain("'AccaSureBTTS'");
+    expect(accaDeskPausedPublicExcludeRawSql('t')).toContain("'AccaSafeO25'");
+    expect(accaDeskPausedPublicExcludeRawSql('t')).toContain("'AccaMediumO25'");
+    expect(accaDeskPausedPublicExcludeRawSql('t')).toContain("'AccaSafeBTTS'");
+    expect(accaDeskPausedPublicExcludeRawSql('t')).toContain('NOT IN');
   });
 });

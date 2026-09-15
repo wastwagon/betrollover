@@ -302,9 +302,17 @@ export const ACCA_DESK_LEGS = 2 as const;
 export { ACCA_DESK_EARLY_SLOT_KEYS, ACCA_DESK_MAX_PER_DAY, ACCA_DESK_TIME_SLOTS } from './acca-desk-slots';
 
 /**
- * Empty = every Acca Desk persona publishes. Do not add AccaSure1X2 or VipTwoFold here.
+ * Paused desks skip publish + show inactive on setup; marketplace/public lists hide them.
+ * Do not add AccaSure1X2 or VipTwoFold here.
+ * AccaHighO25 / AccaMediumBTTS stay live (long O2.5 and Medium BTTS pay).
  */
-export const ACCA_DESK_PAUSED_USERNAMES = new Set<string>([]);
+export const ACCA_DESK_PAUSED_USERNAMES = new Set<string>([
+  'AccaSureO25',
+  'AccaSureBTTS',
+  'AccaSafeO25',
+  'AccaMediumO25',
+  'AccaSafeBTTS',
+]);
 
 export function isAccaDeskPublishingPaused(username: string): boolean {
   return ACCA_DESK_PAUSED_USERNAMES.has(username);
