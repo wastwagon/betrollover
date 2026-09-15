@@ -11,6 +11,7 @@ import {
   ACCA_MEDIUM_1X2_OUTCOME_KEYS,
   ACCA_SURE_DC_BLACKLIST_LEAGUE_API_IDS,
   ACCA_MEDIUM_DC_EXCLUDE_SLOT_KEYS,
+  ACCA_SAFE_DC_EXCLUDE_SLOT_KEYS,
   ACCA_MEDIUM_BTTS_EXCLUDE_SLOT_KEYS,
   ACCA_MEDIUM_BTTS_ODDS,
   ACCA_MEDIUM_MIX_ODDS,
@@ -64,11 +65,11 @@ describe('acca desk Over 1.5 league filter', () => {
     expect(sure1x2.oddMax).toBeUndefined();
     expect(sure1x2.excludeLeagueApiIds).toBeUndefined();
     expect(sure1x2.excludeSlotKeys).toEqual([...ACCA_1X2_EXCLUDE_SLOT_KEYS]);
-    const dc = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaSafeDC')!;
-    expect(dc.excludeLeagueApiIds).toBeUndefined();
-    expect(dc.oddMin).toBeUndefined();
-    expect(dc.excludeSlotKeys).toBeUndefined();
-    expect(dc.distinctOutcomeKeys).toBeUndefined();
+    const safeBtts = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaSafeBTTS')!;
+    expect(safeBtts.excludeLeagueApiIds).toBeUndefined();
+    expect(safeBtts.oddMin).toBeUndefined();
+    expect(safeBtts.excludeSlotKeys).toBeUndefined();
+    expect(safeBtts.distinctOutcomeKeys).toBeUndefined();
 
     const mix = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaSafeMix')!;
     expect(mix.markets).toContain('over15');
@@ -134,10 +135,20 @@ describe('AccaSureDC desk shape', () => {
     expect(isAccaSureDcLeagueAllowed(39)).toBe(true);
     expect(isAccaSureDcLeagueAllowed(253)).toBe(true);
 
+  });
+});
+
+describe('AccaSafeDC desk shape', () => {
+  it('skips Early and amateur, keeps Midnight/Evening and stacked X2', () => {
     const safe = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaSafeDC')!;
+    expect(safe.markets).toEqual(['double_chance']);
+    expect(safe.excludeSlotKeys).toEqual([...ACCA_SAFE_DC_EXCLUDE_SLOT_KEYS]);
+    expect(safe.excludeSlotKeys).toEqual(['early']);
+    expect(safe.excludeSlotKeys).not.toContain('midnight');
+    expect(safe.excludeSlotKeys).not.toContain('evening');
+    expect(safe.skipAmateurLeagueNames).toBe(true);
     expect(safe.distinctOutcomeKeys).toBeUndefined();
-    expect(safe.skipAmateurLeagueNames).toBeUndefined();
-    expect(safe.excludeSlotKeys).toBeUndefined();
+    expect(safe.excludeLeagueApiIds).toBeUndefined();
   });
 });
 

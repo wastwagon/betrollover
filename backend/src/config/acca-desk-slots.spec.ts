@@ -51,6 +51,20 @@ describe('daily coupon cap', () => {
     });
     expect(slots.map((s) => s.key)).toEqual(['early', 'afternoon', 'evening']);
   });
+
+  it('leaves Early + Afternoon when Medium DC skips Evening and Midnight', () => {
+    const slots = slotsForDeskAttempt(ACCA_DESK_TIME_SLOTS, {
+      excludeSlotKeys: ['evening', 'midnight'],
+    });
+    expect(slots.map((s) => s.key)).toEqual(['early', 'afternoon']);
+  });
+
+  it('leaves Afternoon + Evening + Midnight when Safe DC skips Early only', () => {
+    const slots = slotsForDeskAttempt(ACCA_DESK_TIME_SLOTS, {
+      excludeSlotKeys: ['early'],
+    });
+    expect(slots.map((s) => s.key)).toEqual(['afternoon', 'evening', 'midnight']);
+  });
 });
 
 describe('slotForKickoff', () => {

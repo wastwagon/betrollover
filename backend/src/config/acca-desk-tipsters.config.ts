@@ -189,6 +189,13 @@ export function isAccaSureDcLeagueAllowed(apiId: number | null | undefined): boo
 }
 
 /**
+ * AccaSafeDC archive: +5.8% / +6.10u. Midnight is 9–5 (+7.82u) — the whole edge.
+ * Early is 11–19 (−3.39u). Youth −3.13u. Do not copy AccaMediumDC Evening+Midnight
+ * skip (would flip Safe DC red) or AccaSureDC distinct keys (X2+X2 is +3.68u).
+ */
+export const ACCA_SAFE_DC_EXCLUDE_SLOT_KEYS: readonly AccaDeskSlotKey[] = ['early'];
+
+/**
  * AccaMediumDC archive: Afternoon X2+X2 is +24u; Evening 2–17 and Midnight 0–4
  * are LATAM/MLS home wins that kill ~2.00 draw-or-away. Keep Early + Afternoon.
  */
@@ -257,6 +264,10 @@ function extrasForDesk(risk: AccaDeskTipsterConfig['riskLevel'], spec: (typeof M
     extras.excludeLeagueApiIds = ACCA_SURE_DC_BLACKLIST_LEAGUE_API_IDS;
     extras.skipAmateurLeagueNames = true;
     extras.distinctOutcomeKeys = true;
+  }
+  if (spec.key === 'dc' && risk === 'safe') {
+    extras.excludeSlotKeys = ACCA_SAFE_DC_EXCLUDE_SLOT_KEYS;
+    extras.skipAmateurLeagueNames = true;
   }
   if (spec.key === 'dc' && risk === 'medium') {
     extras.excludeSlotKeys = ACCA_MEDIUM_DC_EXCLUDE_SLOT_KEYS;
