@@ -46,6 +46,43 @@ export const ACCA_DESK_MAX_KICKOFF_GAP_MS = 3 * 60 * 60 * 1000;
 /** Max published 2-folds per Acca Desk tipster per desk day (not per time slot). */
 export const ACCA_DESK_MAX_PER_DAY = 2;
 
+/**
+ * 20:10 early run only tries these windows so Evening/Midnight cannot consume
+ * the daily cap before tomorrow’s Early/Afternoon odds exist.
+ */
+export const ACCA_DESK_EARLY_SLOT_KEYS: readonly AccaDeskSlotKey[] = ['early', 'afternoon'];
+
+/** Slots this desk is allowed to attempt, in roster order. */
+export function slotsForDeskAttempt(
+  slots: readonly AccaDeskTimeSlot[],
+  opts?: {
+    excludeSlotKeys?: readonly AccaDeskSlotKey[];
+    restrictToSlotKeys?: readonly AccaDeskSlotKey[];
+  },
+): AccaDeskTimeSlot[] {
+  const exclude = new Set(opts?.excludeSlotKeys ?? []);
+  const restrict = opts?.restrictToSlotKeys?.length ? new Set(opts.restrictToSlotKeys) : null;
+  return slots.filter((slot) => {
+    if (exclude.has(slot.key)) return false;
+    if (restrict && !restrict.has(slot.key)) return false;
+    return true;
+  });
+}
+
+/**
+ * Future desk days (the 20:10 / admin “publish tomorrow” pass) only fill Early + Afternoon.
+ * Otherwise Evening/Midnight consume the daily cap before those odds exist.
+ */
+export function restrictSlotKeysForDeskDay(opts: {
+  deskDayStr: string;
+  todayStr: string;
+  explicit?: readonly AccaDeskSlotKey[];
+}): readonly AccaDeskSlotKey[] | undefined {
+  if (opts.explicit && opts.explicit.length > 0) return opts.explicit;
+  if (opts.deskDayStr > opts.todayStr) return ACCA_DESK_EARLY_SLOT_KEYS;
+  return undefined;
+}
+
 /** Accra (or PREDICTION_TIMEZONE) calendar date YYYY-MM-DD. */
 export function accraDateStr(date: Date = new Date(), timeZone = 'Africa/Accra'): string {
   try {
@@ -151,16 +188,37 @@ export type ClusterCandidate = {
   matchDate: string;
   score?: number;
   outcomeKey: string;
+  odds?: number;
 };
+
+function pairCombinedOdds(a: ClusterCandidate, b: ClusterCandidate): number | null {
+  const oa = Number(a.odds);
+  const ob = Number(b.odds);
+  if (!Number.isFinite(oa) || !Number.isFinite(ob) || oa <= 0 || ob <= 0) return null;
+  return Math.round(oa * ob * 1000) / 1000;
+}
+
+function combinedInBand(
+  combined: number | null,
+  opts?: { minCombined?: number; maxCombined?: number },
+): boolean {
+  if (opts?.minCombined == null && opts?.maxCombined == null) return true;
+  if (combined == null) return false;
+  if (opts?.minCombined != null && combined < opts.minCombined) return false;
+  if (opts?.maxCombined != null && combined > opts.maxCombined) return false;
+  return true;
+}
 
 /**
  * Pick 2 legs in the same slot: best-scoring fixture, then best partner within maxGapMs.
  * Prefers closer kick-offs when partner scores tie. Cross-midnight pairs OK within maxGapMs.
+ * Optional combined-odds band skips pairs outside the desk’s target slip size.
  */
 export function pickTimeClusteredPair<T extends ClusterCandidate>(
   candidates: T[],
   maxGapMs: number,
   outcomeFamily: (outcomeKey: string) => string,
+  opts?: { minCombined?: number; maxCombined?: number; distinctOutcomeKeys?: boolean },
 ): T[] {
   if (candidates.length < 2) return [];
   const sorted = [...candidates].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
@@ -175,10 +233,12 @@ export function pickTimeClusteredPair<T extends ClusterCandidate>(
 
     for (const other of sorted) {
       if (other.fixtureId === first.fixtureId) continue;
+      if (opts?.distinctOutcomeKeys && other.outcomeKey === first.outcomeKey) continue;
       const t2 = new Date(other.matchDate).getTime();
       if (!Number.isFinite(t2)) continue;
       const gap = Math.abs(t2 - t1);
       if (gap > maxGapMs) continue;
+      if (!combinedInBand(pairCombinedOdds(first, other), opts)) continue;
       const sameFamily = outcomeFamily(first.outcomeKey) === outcomeFamily(other.outcomeKey);
       const adj = (other.score ?? 0) - (sameFamily ? 0.12 : 0);
       if (adj > bestAdj || (adj === bestAdj && gap < bestGap)) {

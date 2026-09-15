@@ -149,7 +149,7 @@ interface TipsterProfile {
   /** True when live VIP slips exist but this viewer is not a subscriber. */
   live_vip_locked?: boolean;
   archived_coupons?: MarketplaceCoupon[];
-  /** Total settled count (won/lost/void) for Archive tab label. Backend may cap list at 50. */
+  /** Total settled count (won/lost/void) for Archive tab label. Matches archived_coupons length. */
   archived_settled_count?: number;
   is_following: boolean;
   performance_period?: TipsterPerformancePeriod | null;

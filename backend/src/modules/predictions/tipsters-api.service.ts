@@ -1123,7 +1123,7 @@ export class TipstersApiService {
     return qb.getCount();
   }
 
-  /** Settled coupons for archive; limited to 50 most recent in the selected window. */
+  /** Settled coupons for the Archive tab — full window, newest first. */
   async getArchivedCouponsForTipster(
     username: string,
     window: TipsterProfilePerformanceWindow,
@@ -1146,7 +1146,7 @@ export class TipstersApiService {
       .andWhere('t.result IN (:...r)', { r: ['won', 'lost', 'void'] });
     this.applyProfileTicketChannel(qb, includeSub);
     this.applyTipsterProfileWindowOnTicket(qb, window);
-    const tickets = await qb.orderBy('t.updatedAt', 'DESC').take(50).getMany();
+    const tickets = await qb.orderBy('t.updatedAt', 'DESC').getMany();
 
     const validTickets = tickets.filter((t) => t.picks?.length);
     const user = await this.usersRepo.findOne({

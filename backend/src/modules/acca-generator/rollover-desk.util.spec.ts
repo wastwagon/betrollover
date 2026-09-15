@@ -1,3 +1,4 @@
+import { ROLLOVER_SLOT_ORDER } from '../../config/rollover-desk.config';
 import {
   archiveMoneyForRun,
   buildBoardMoneyLadder,
@@ -35,6 +36,10 @@ describe('rollover-desk.util', () => {
     expect(slotKeyFromTitle(ticket(1, 2.0, 'Early').title)).toBe('early');
     expect(slotKeyFromTitle(ticket(1, 2.0, 'Afternoon').title)).toBe('afternoon');
     expect(slotKeyFromTitle(ticket(1, 2.0, 'Evening').title)).toBe('evening');
+  });
+
+  it('does not offer Midnight on the rollover attach board', () => {
+    expect(ROLLOVER_SLOT_ORDER).toEqual(['early', 'afternoon', 'evening']);
   });
 
   it('parses AccaSure1X2 titles that omit the calendar-date suffix', () => {

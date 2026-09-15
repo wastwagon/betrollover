@@ -11,7 +11,7 @@ import { TipsterPerformanceLog } from './entities/tipster-performance-log.entity
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { FixtureUpdateService } from '../fixtures/fixture-update.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { aggregateTicketResult, determinePickResult, remainingAccumulatorOdds } from '../accumulators/settlement-logic';
+import { aggregateTicketResult, determinePickResult, remainingAccumulatorOdds, ticketReadyToSettle } from '../accumulators/settlement-logic';
 import { TipstersApiService } from './tipsters-api.service';
 import {
   LEADERBOARD_CACHE_GEN_KEY,
@@ -205,7 +205,7 @@ export class ResultTrackerService {
   }
 
   /**
-   * Check if all legs of accumulator are finished and settle
+   * Settle when the ticket is ready: any lost leg, or every remaining leg graded.
    */
   private async checkAccaSettlement(predictionId: number): Promise<boolean> {
     const fixtures = await this.predictionFixtureRepo.find({
@@ -213,10 +213,7 @@ export class ResultTrackerService {
       order: { legNumber: 'ASC' },
     });
 
-    const allSettled = fixtures.every(
-      (f) => ['won', 'lost', 'void'].includes(f.resultStatus),
-    );
-    if (!allSettled) return false;
+    if (!ticketReadyToSettle(fixtures.map((f) => ({ result: f.resultStatus })))) return false;
 
     const prediction = await this.predictionRepo.findOne({
       where: { id: predictionId },

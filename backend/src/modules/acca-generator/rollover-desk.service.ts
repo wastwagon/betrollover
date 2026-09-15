@@ -1,13 +1,14 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { ACCA_DESK_TIME_SLOTS, addDateStrDays, deskDayFromTitle, type AccaDeskSlotKey } from '../../config/acca-desk-slots';
+import { addDateStrDays, deskDayFromTitle, type AccaDeskSlotKey } from '../../config/acca-desk-slots';
 import {
   ROLLOVER_EXAMPLE_MAX_MONEY_DAY,
   ROLLOVER_EXAMPLE_STAKE_GHS,
   ROLLOVER_OWNER_DISPLAY_FALLBACK,
   ROLLOVER_OWNER_USERNAME,
   ROLLOVER_PLAN_DAYS,
+  ROLLOVER_SLOT_ORDER,
   ROLLOVER_TARGET_ODDS,
   ROLLOVER_TIMEZONE,
 } from '../../config/rollover-desk.config';
@@ -289,9 +290,9 @@ export class RolloverDeskService {
     });
     // Slot generate buttons are for today's board only — don't mark posted from tomorrow's early run.
     const postedSlots = Object.fromEntries(
-      ACCA_DESK_TIME_SLOTS.map((s) => [
-        s.key,
-        candidates.some((c) => c.slotKey === s.key && (c.deskDay == null || c.deskDay === date)),
+      ROLLOVER_SLOT_ORDER.map((key) => [
+        key,
+        candidates.some((c) => c.slotKey === key && (c.deskDay == null || c.deskDay === date)),
       ]),
     ) as Record<AccaDeskSlotKey, boolean>;
 

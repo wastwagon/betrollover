@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import {
@@ -19,7 +19,9 @@ import {
   addDateStrDays,
   deskDayFromTitle,
   deskDayFixtureWindow,
+  restrictSlotKeysForDeskDay,
   slotForKickoff,
+  slotsForDeskAttempt,
   type AccaDeskSlotKey,
   type AccaDeskTimeSlot,
 } from '../../config/acca-desk-slots';
@@ -31,6 +33,7 @@ import { AccaGeneratorService } from './acca-generator.service';
 import { AccaDeskSetupService } from './acca-desk-setup.service';
 import { RolloverDeskService } from './rollover-desk.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { SyncLockService } from '../fixtures/sync-lock.service';
 import { ROLLOVER_OWNER_USERNAME } from '../../config/rollover-desk.config';
 import { VIP_TIPSTER, VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
 import type { AccaDeskShort } from '../email/acca-desk-shorts.config';
@@ -45,7 +48,7 @@ export type AccaDeskRunResult = {
   errors: number;
   details: {
     username: string;
-    status: 'published' | 'skipped_already' | 'empty_pool' | 'no_user' | 'error';
+    status: 'published' | 'skipped_already' | 'empty_pool' | 'no_user' | 'error' | 'skipped_cap';
     ticketId?: number;
     slotKey?: AccaDeskSlotKey;
     message?: string;
@@ -61,6 +64,7 @@ export class AccaDeskPublisherService {
     private readonly setup: AccaDeskSetupService,
     private readonly rollover: RolloverDeskService,
     private readonly notifications: NotificationsService,
+    private readonly syncLock: SyncLockService,
     @InjectRepository(Tipster)
     private readonly tipsterRepo: Repository<Tipster>,
     @InjectRepository(AccumulatorTicket)
@@ -92,6 +96,7 @@ export class AccaDeskPublisherService {
         userId: row?.userId ?? null,
         tipsterId: row?.id ?? null,
         setup: !!row,
+        excludeSlotKeys: c.excludeSlotKeys ?? [],
       };
     });
 
@@ -197,6 +202,36 @@ export class AccaDeskPublisherService {
     ensureSetup?: boolean;
     /** Accra YYYY-MM-DD. Default: today. */
     deskDayStr?: string;
+    /** Limit which kick-off windows this pass may fill (20:10 early = Early+Afternoon). */
+    restrictToSlotKeys?: readonly AccaDeskSlotKey[];
+    /** Cron already holds `acca_desk`. Admin/manual callers omit this. */
+    alreadyLocked?: boolean;
+  }): Promise<AccaDeskRunResult> {
+    if (!opts?.alreadyLocked) {
+      if (!(await this.syncLock.tryStartSync('acca_desk'))) {
+        throw new ConflictException('Acca Desk publish is already running');
+      }
+      try {
+        return await this.runDailyUnlocked(opts);
+      } finally {
+        await this.syncStatusRepo.upsert(
+          {
+            syncType: 'acca_desk',
+            status: 'success',
+            lastSyncAt: new Date(),
+            lastError: null,
+          },
+          ['syncType'],
+        );
+      }
+    }
+    return this.runDailyUnlocked(opts);
+  }
+
+  private async runDailyUnlocked(opts?: {
+    ensureSetup?: boolean;
+    deskDayStr?: string;
+    restrictToSlotKeys?: readonly AccaDeskSlotKey[];
   }): Promise<AccaDeskRunResult> {
     const tz = this.predictionTimeZone();
     const deskDayStr = opts?.deskDayStr || accraDateStr(new Date(), tz);
@@ -225,10 +260,19 @@ export class AccaDeskPublisherService {
 
     const postedByUser = new Map<number, { slots: Set<AccaDeskSlotKey>; count: number }>();
     const shorts: AccaDeskShort[] = [];
+    const restrictToSlotKeys = restrictSlotKeysForDeskDay({
+      deskDayStr,
+      todayStr: accraDateStr(new Date(), tz),
+      explicit: opts?.restrictToSlotKeys,
+    });
 
     for (const config of ACCA_DESK_TIPSTERS) {
       if (isAccaDeskPublishingPaused(config.username)) continue;
-      for (const slot of ACCA_DESK_TIME_SLOTS) {
+      const slots = slotsForDeskAttempt(ACCA_DESK_TIME_SLOTS, {
+        excludeSlotKeys: config.excludeSlotKeys,
+        restrictToSlotKeys,
+      });
+      for (const slot of slots) {
         try {
           const outcome = await this.publishOne(
             config,
@@ -240,7 +284,9 @@ export class AccaDeskPublisherService {
           result.details.push(outcome.detail);
           if (outcome.short) shorts.push(outcome.short);
           if (outcome.detail.status === 'published') result.published++;
-          else if (outcome.detail.status === 'skipped_already') result.skippedAlreadyPosted++;
+          else if (outcome.detail.status === 'skipped_already' || outcome.detail.status === 'skipped_cap') {
+            result.skippedAlreadyPosted++;
+          }
           else if (outcome.detail.status === 'empty_pool') result.skippedEmptyPool++;
           else if (outcome.detail.status === 'no_user') result.skippedNoUser++;
           else result.errors++;
@@ -308,9 +354,15 @@ export class AccaDeskPublisherService {
       };
     }
 
-    const slots = opts?.slotKey
-      ? ACCA_DESK_TIME_SLOTS.filter((s) => s.key === opts.slotKey)
-      : ACCA_DESK_TIME_SLOTS;
+    const restrictToSlotKeys = restrictSlotKeysForDeskDay({
+      deskDayStr,
+      todayStr: accraDateStr(new Date(), tz),
+      explicit: opts?.slotKey ? [opts.slotKey] : undefined,
+    });
+    const slots = slotsForDeskAttempt(ACCA_DESK_TIME_SLOTS, {
+      excludeSlotKeys: config.excludeSlotKeys,
+      restrictToSlotKeys,
+    });
     const usedFixtureIds = new Set<number>();
     await this.seedUsedFixturesForDeskDay(usedFixtureIds, deskDayStr);
     const postedByUser = new Map<number, { slots: Set<AccaDeskSlotKey>; count: number }>();
@@ -336,8 +388,9 @@ export class AccaDeskPublisherService {
         );
         result.details.push(outcome.detail);
         if (outcome.detail.status === 'published') result.published++;
-        else if (outcome.detail.status === 'skipped_already') result.skippedAlreadyPosted++;
-        else if (outcome.detail.status === 'empty_pool') result.skippedEmptyPool++;
+        else if (outcome.detail.status === 'skipped_already' || outcome.detail.status === 'skipped_cap') {
+          result.skippedAlreadyPosted++;
+        } else if (outcome.detail.status === 'empty_pool') result.skippedEmptyPool++;
         else if (outcome.detail.status === 'no_user') result.skippedNoUser++;
         else result.errors++;
       } catch (err: unknown) {
@@ -394,7 +447,7 @@ export class AccaDeskPublisherService {
     }
     if (posted.count >= ACCA_DESK_MAX_PER_DAY) {
       return {
-        detail: { username: config.username, status: 'skipped_already', slotKey: slot.key },
+        detail: { username: config.username, status: 'skipped_cap', slotKey: slot.key },
       };
     }
 
@@ -410,6 +463,11 @@ export class AccaDeskPublisherService {
       oddMax: config.oddMax,
       targetOdd: config.targetOdd,
       excludeLeagueApiIds: config.excludeLeagueApiIds,
+      combinedOddMin: config.combinedOddMin,
+      combinedOddMax: config.combinedOddMax,
+      skipAmateurLeagueNames: config.skipAmateurLeagueNames,
+      distinctOutcomeKeys: config.distinctOutcomeKeys,
+      allowedOutcomeKeys: config.allowedOutcomeKeys,
     });
 
     if (!generated.ok) {
@@ -497,8 +555,10 @@ export class AccaDeskPublisherService {
     const candidates = await this.ticketRepo
       .createQueryBuilder('t')
       .where('t.userId IN (:...userIds)', { userIds })
-      .andWhere('t.createdAt >= :createdFrom', { createdFrom })
-      .andWhere('t.createdAt < :createdTo', { createdTo })
+      .andWhere(
+        '(t.title LIKE :deskStamp OR (t.createdAt >= :createdFrom AND t.createdAt < :createdTo))',
+        { deskStamp: `% · ${deskDayStr}`, createdFrom, createdTo },
+      )
       .orderBy('t.createdAt', 'DESC')
       .getMany();
 

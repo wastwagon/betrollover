@@ -1,8 +1,11 @@
 import {
+  ACCA_DESK_EARLY_SLOT_KEYS,
   ACCA_DESK_MAX_PER_DAY,
   ACCA_DESK_TIME_SLOTS,
   pickTimeClusteredPair,
   slotForKickoff,
+  slotsForDeskAttempt,
+  restrictSlotKeysForDeskDay,
   deskDayFixtureWindow,
   addDateStrDays,
   accraDateStr,
@@ -17,6 +20,36 @@ describe('daily coupon cap', () => {
   it('allows two 2-folds per tipster, not one per kick-off window', () => {
     expect(ACCA_DESK_MAX_PER_DAY).toBe(2);
     expect(ACCA_DESK_TIME_SLOTS.length).toBeGreaterThan(ACCA_DESK_MAX_PER_DAY);
+  });
+
+  it('restricts a future desk day to Early + Afternoon unless the caller passes slots', () => {
+    expect(
+      restrictSlotKeysForDeskDay({ deskDayStr: '2026-09-16', todayStr: '2026-09-15' }),
+    ).toEqual(['early', 'afternoon']);
+    expect(
+      restrictSlotKeysForDeskDay({ deskDayStr: '2026-09-15', todayStr: '2026-09-15' }),
+    ).toBeUndefined();
+    expect(
+      restrictSlotKeysForDeskDay({
+        deskDayStr: '2026-09-16',
+        todayStr: '2026-09-15',
+        explicit: ['evening'],
+      }),
+    ).toEqual(['evening']);
+  });
+
+  it('drops Midnight for 1X2 desks even on catch-up', () => {
+    const slots = slotsForDeskAttempt(ACCA_DESK_TIME_SLOTS, {
+      excludeSlotKeys: ['midnight'],
+    });
+    expect(slots.map((s) => s.key)).toEqual(['early', 'afternoon', 'evening']);
+  });
+
+  it('leaves Early + Afternoon + Evening when Medium BTTS skips Midnight only', () => {
+    const slots = slotsForDeskAttempt(ACCA_DESK_TIME_SLOTS, {
+      excludeSlotKeys: ['midnight'],
+    });
+    expect(slots.map((s) => s.key)).toEqual(['early', 'afternoon', 'evening']);
   });
 });
 
@@ -113,5 +146,50 @@ describe('pickTimeClusteredPair', () => {
       family,
     );
     expect(pair.map((p) => p.fixtureId).sort((a, b) => a - b)).toEqual([1, 2]);
+  });
+
+  it('skips a pair whose combined odds sit outside the Safe 1X2 band', () => {
+    const pair = pickTimeClusteredPair(
+      [
+        { fixtureId: 1, matchDate: '2026-08-14T10:00:00.000Z', score: 0.9, outcomeKey: 'home', odds: 1.6 },
+        { fixtureId: 2, matchDate: '2026-08-14T11:00:00.000Z', score: 0.89, outcomeKey: 'home', odds: 1.6 },
+        { fixtureId: 3, matchDate: '2026-08-14T10:30:00.000Z', score: 0.7, outcomeKey: 'away', odds: 1.45 },
+      ],
+      maxGap,
+      family,
+      { minCombined: 2.2, maxCombined: 2.45 },
+    );
+    expect(pair.map((p) => p.fixtureId).sort((a, b) => a - b)).toEqual([1, 3]);
+    expect(pair[0].odds! * pair[1].odds!).toBeLessThanOrEqual(2.45);
+  });
+
+  it('skips a Medium 1X2 pair above the 4.10 combined cap', () => {
+    const pair = pickTimeClusteredPair(
+      [
+        { fixtureId: 1, matchDate: '2026-08-14T15:00:00.000Z', score: 0.9, outcomeKey: 'home', odds: 2.1 },
+        { fixtureId: 2, matchDate: '2026-08-14T16:00:00.000Z', score: 0.89, outcomeKey: 'home', odds: 2.1 },
+        { fixtureId: 3, matchDate: '2026-08-14T15:30:00.000Z', score: 0.7, outcomeKey: 'home', odds: 1.95 },
+      ],
+      maxGap,
+      family,
+      { maxCombined: 4.1 },
+    );
+    expect(pair.map((p) => p.fixtureId).sort((a, b) => a - b)).toEqual([1, 3]);
+    expect(pair[0].odds! * pair[1].odds!).toBeLessThanOrEqual(4.1);
+  });
+
+  it('refuses two home_away legs when distinctOutcomeKeys is set', () => {
+    const pair = pickTimeClusteredPair(
+      [
+        { fixtureId: 1, matchDate: '2026-08-14T10:00:00.000Z', score: 0.9, outcomeKey: 'home_away', odds: 1.28 },
+        { fixtureId: 2, matchDate: '2026-08-14T11:00:00.000Z', score: 0.89, outcomeKey: 'home_away', odds: 1.28 },
+        { fixtureId: 3, matchDate: '2026-08-14T10:30:00.000Z', score: 0.7, outcomeKey: 'draw_away', odds: 1.28 },
+      ],
+      maxGap,
+      family,
+      { distinctOutcomeKeys: true },
+    );
+    expect(pair.map((p) => p.fixtureId).sort((a, b) => a - b)).toEqual([1, 3]);
+    expect(new Set(pair.map((p) => p.outcomeKey)).size).toBe(2);
   });
 });

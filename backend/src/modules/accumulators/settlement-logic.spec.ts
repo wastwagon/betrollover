@@ -1,4 +1,4 @@
-import { aggregateTicketResult, determinePickResult, remainingAccumulatorOdds } from './settlement-logic';
+import { aggregateTicketResult, determinePickResult, remainingAccumulatorOdds, isStalePendingPick, ticketReadyToSettle } from './settlement-logic';
 
 describe('settlement-logic', () => {
   describe('Match Winner (1X2)', () => {
@@ -395,6 +395,31 @@ describe('settlement-logic', () => {
       expect(aggregateTicketResult([{ result: 'won' }, { result: 'lost' }, { result: 'void' }])).toBe(
         'lost',
       );
+    });
+
+    it('settles as soon as one remaining leg is lost, even if another is pending', () => {
+      expect(ticketReadyToSettle([{ result: 'lost' }, { result: 'pending' }])).toBe(true);
+      expect(aggregateTicketResult([{ result: 'lost' }, { result: 'pending' }])).toBe('lost');
+      expect(ticketReadyToSettle([{ result: 'won' }, { result: 'pending' }])).toBe(false);
+      expect(ticketReadyToSettle([{ result: 'won' }, { result: 'won' }])).toBe(true);
+    });
+
+    it('treats ungraded legs as stale 36h after kick-off', () => {
+      const now = new Date('2026-09-15T12:00:00.000Z');
+      expect(
+        isStalePendingPick({
+          result: 'pending',
+          matchDate: '2026-09-13T20:00:00.000Z',
+          now,
+        }),
+      ).toBe(true);
+      expect(
+        isStalePendingPick({
+          result: 'pending',
+          matchDate: '2026-09-14T20:00:00.000Z',
+          now,
+        }),
+      ).toBe(false);
     });
 
     it('reduces combined odds to remaining legs', () => {

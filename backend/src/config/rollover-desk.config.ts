@@ -21,4 +21,7 @@ export const ROLLOVER_EXAMPLE_STAKE_GHS = 100;
 export const ROLLOVER_EXAMPLE_MAX_MONEY_DAY = ROLLOVER_PLAN_DAYS;
 export const ROLLOVER_TIMEZONE = process.env.PREDICTION_TIMEZONE || 'Africa/Accra';
 
-export const ROLLOVER_SLOT_ORDER: AccaDeskSlotKey[] = ACCA_DESK_TIME_SLOTS.map((s) => s.key);
+/** AccaSure1X2 does not publish Midnight — rollover cannot attach a slot that will never exist. */
+export const ROLLOVER_SLOT_ORDER: AccaDeskSlotKey[] = ACCA_DESK_TIME_SLOTS.map((s) => s.key).filter(
+  (key) => key !== 'midnight',
+);

@@ -89,6 +89,9 @@ export type AccumulatorOutcome = 'won' | 'lost' | 'void';
 /**
  * Bookmaker order: drop voided legs (DNB draw, postponed, AH push), then settle what remains.
  * Lost remaining leg → lost; all remaining won → won; nothing remaining → void.
+ *
+ * Pending legs are ignored here — callers must use `ticketReadyToSettle` so a
+ * won+pending coupon is not marked won before the other leg finishes.
  */
 export function aggregateTicketResult(
   picks: Array<{ result?: string | null }>,
@@ -100,6 +103,31 @@ export function aggregateTicketResult(
   if (remaining.length === 0) return 'void';
   if (remaining.some((p) => (p.result || '').toLowerCase() === 'lost')) return 'lost';
   return 'won';
+}
+
+/** True when the coupon can be graded: every leg done, or any leg already lost. */
+export function ticketReadyToSettle(picks: Array<{ result?: string | null }>): boolean {
+  if (!picks.length) return false;
+  const statuses = picks.map((p) => (p.result || 'pending').toLowerCase());
+  if (statuses.some((r) => r === 'lost')) return true;
+  return statuses.every((r) => r !== 'pending');
+}
+
+/** Void ungradable legs this long after kick-off so one dead fixture cannot pin an acca open. */
+export const STALE_PENDING_PICK_MS = 36 * 60 * 60 * 1000;
+
+export function isStalePendingPick(opts: {
+  result?: string | null;
+  matchDate?: Date | string | null;
+  now?: Date;
+  horizonMs?: number;
+}): boolean {
+  if ((opts.result || 'pending').toLowerCase() !== 'pending') return false;
+  if (opts.matchDate == null) return false;
+  const kickoff = new Date(opts.matchDate).getTime();
+  if (!Number.isFinite(kickoff)) return false;
+  const now = (opts.now ?? new Date()).getTime();
+  return now - kickoff >= (opts.horizonMs ?? STALE_PENDING_PICK_MS);
 }
 
 /**

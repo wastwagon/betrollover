@@ -17,6 +17,8 @@ import {
   deskDayFixtureWindow,
   slotForKickoff,
   ACCA_DESK_TIME_SLOTS,
+  restrictSlotKeysForDeskDay,
+  slotsForDeskAttempt,
   type AccaDeskSlotKey,
 } from '../../config/acca-desk-slots';
 import { ACCA_DESK_TIPSTER_TYPE } from '../../config/acca-desk-tipsters.config';
@@ -284,7 +286,13 @@ export class VipTipsterPublisherService {
       details: [],
     };
 
-    for (const slot of ACCA_DESK_TIME_SLOTS) {
+    const restrictToSlotKeys = restrictSlotKeysForDeskDay({
+      deskDayStr,
+      todayStr: accraDateStr(new Date(), tz),
+    });
+    const slots = slotsForDeskAttempt(ACCA_DESK_TIME_SLOTS, { restrictToSlotKeys });
+
+    for (const slot of slots) {
       if (postedSlots.has(slot.key)) {
         result.details.push({ status: 'skipped_already', slotKey: slot.key });
         continue;

@@ -2,11 +2,23 @@ import {
   ACCA_DESK_MAX_PER_DAY,
   ACCA_DESK_PAUSED_USERNAMES,
   ACCA_DESK_TIPSTERS,
+  ACCA_1X2_BLACKLIST_LEAGUE_API_IDS,
+  ACCA_1X2_EXCLUDE_SLOT_KEYS,
   ACCA_O15_BLACKLIST_LEAGUE_API_IDS,
   ACCA_O15_ODDS_BY_RISK,
+  ACCA_SAFE_1X2_ODDS,
+  ACCA_MEDIUM_1X2_ODDS,
+  ACCA_MEDIUM_1X2_OUTCOME_KEYS,
+  ACCA_SURE_DC_BLACKLIST_LEAGUE_API_IDS,
+  ACCA_MEDIUM_DC_EXCLUDE_SLOT_KEYS,
+  ACCA_MEDIUM_BTTS_EXCLUDE_SLOT_KEYS,
+  ACCA_MEDIUM_BTTS_ODDS,
+  ACCA_MEDIUM_MIX_ODDS,
   accaDeskPausedPublicExcludeRawSql,
+  isAcca1X2LeagueAllowed,
   isAccaDeskPublishingPaused,
   isAccaO15LeagueAllowed,
+  isAccaSureDcLeagueAllowed,
 } from './acca-desk-tipsters.config';
 
 describe('acca desk daily cap', () => {
@@ -51,9 +63,12 @@ describe('acca desk Over 1.5 league filter', () => {
     expect(sure1x2.oddMin).toBeUndefined();
     expect(sure1x2.oddMax).toBeUndefined();
     expect(sure1x2.excludeLeagueApiIds).toBeUndefined();
+    expect(sure1x2.excludeSlotKeys).toEqual([...ACCA_1X2_EXCLUDE_SLOT_KEYS]);
     const dc = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaSafeDC')!;
     expect(dc.excludeLeagueApiIds).toBeUndefined();
     expect(dc.oddMin).toBeUndefined();
+    expect(dc.excludeSlotKeys).toBeUndefined();
+    expect(dc.distinctOutcomeKeys).toBeUndefined();
 
     const mix = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaSafeMix')!;
     expect(mix.markets).toContain('over15');
@@ -62,6 +77,131 @@ describe('acca desk Over 1.5 league filter', () => {
     const fh = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaHighFHO15')!;
     expect(fh.markets).toEqual(['fh_over15']);
     expect(fh.excludeLeagueApiIds).toBeUndefined();
+  });
+});
+
+describe('AccaSafe1X2 desk shape', () => {
+  it('skips Midnight, tightens the Safe band, and blacklists grind 1X2 leagues', () => {
+    const safe = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaSafe1X2')!;
+    expect(safe.markets).toEqual(['match_winner']);
+    expect(safe.excludeSlotKeys).toEqual(['midnight']);
+    expect(safe.oddMin).toBe(ACCA_SAFE_1X2_ODDS.oddMin);
+    expect(safe.oddMax).toBe(ACCA_SAFE_1X2_ODDS.oddMax);
+    expect(safe.targetOdd).toBe(ACCA_SAFE_1X2_ODDS.targetOdd);
+    expect(safe.combinedOddMin).toBe(2.2);
+    expect(safe.combinedOddMax).toBe(2.45);
+    expect((safe.oddMax ?? 0) * (safe.oddMax ?? 0)).toBeGreaterThan(safe.combinedOddMax ?? 0);
+    expect(safe.skipAmateurLeagueNames).toBe(true);
+    expect(safe.excludeLeagueApiIds).toEqual([...ACCA_1X2_BLACKLIST_LEAGUE_API_IDS]);
+    expect(isAcca1X2LeagueAllowed(262)).toBe(false);
+    expect(isAcca1X2LeagueAllowed(39)).toBe(true);
+  });
+});
+
+describe('AccaMedium1X2 desk shape', () => {
+  it('skips Midnight, keeps Evening, Home-only, amateur skip, combined cap 4.10', () => {
+    const medium = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaMedium1X2')!;
+    expect(medium.markets).toEqual(['match_winner']);
+    expect(medium.excludeSlotKeys).toEqual(['midnight']);
+    expect(medium.excludeSlotKeys).not.toContain('evening');
+    expect(medium.oddMin).toBeUndefined();
+    expect(medium.combinedOddMin).toBeUndefined();
+    expect(medium.combinedOddMax).toBe(ACCA_MEDIUM_1X2_ODDS.combinedOddMax);
+    expect(medium.combinedOddMax).toBe(4.1);
+    expect(medium.allowedOutcomeKeys).toEqual([...ACCA_MEDIUM_1X2_OUTCOME_KEYS]);
+    expect(medium.allowedOutcomeKeys).toEqual(['home']);
+    expect(medium.skipAmateurLeagueNames).toBe(true);
+    expect(medium.excludeLeagueApiIds).toBeUndefined();
+    expect(medium.distinctOutcomeKeys).toBeUndefined();
+
+    const sure = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaSure1X2')!;
+    expect(sure.allowedOutcomeKeys).toBeUndefined();
+    expect(sure.skipAmateurLeagueNames).toBeUndefined();
+    expect(sure.combinedOddMax).toBeUndefined();
+    expect(sure.excludeSlotKeys).toEqual(['midnight']);
+  });
+});
+
+describe('AccaSureDC desk shape', () => {
+  it('keeps Midnight, skips youth/grind leagues, and refuses stacked 12+12', () => {
+    const sure = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaSureDC')!;
+    expect(sure.markets).toEqual(['double_chance']);
+    expect(sure.excludeSlotKeys).toBeUndefined();
+    expect(sure.skipAmateurLeagueNames).toBe(true);
+    expect(sure.distinctOutcomeKeys).toBe(true);
+    expect(sure.excludeLeagueApiIds).toEqual([...ACCA_SURE_DC_BLACKLIST_LEAGUE_API_IDS]);
+    expect(isAccaSureDcLeagueAllowed(233)).toBe(false);
+    expect(isAccaSureDcLeagueAllowed(39)).toBe(true);
+    expect(isAccaSureDcLeagueAllowed(253)).toBe(true);
+
+    const safe = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaSafeDC')!;
+    expect(safe.distinctOutcomeKeys).toBeUndefined();
+    expect(safe.skipAmateurLeagueNames).toBeUndefined();
+    expect(safe.excludeSlotKeys).toBeUndefined();
+  });
+});
+
+describe('AccaMediumDC desk shape', () => {
+  it('skips Evening and Midnight, keeps youth and stacked X2', () => {
+    const medium = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaMediumDC')!;
+    expect(medium.markets).toEqual(['double_chance']);
+    expect(medium.excludeSlotKeys).toEqual([...ACCA_MEDIUM_DC_EXCLUDE_SLOT_KEYS]);
+    expect(medium.excludeSlotKeys).toEqual(['evening', 'midnight']);
+    expect(medium.skipAmateurLeagueNames).toBeUndefined();
+    expect(medium.distinctOutcomeKeys).toBeUndefined();
+    expect(medium.excludeLeagueApiIds).toBeUndefined();
+  });
+});
+
+describe('AccaMediumBTTS desk shape', () => {
+  it('skips Midnight only, keeps Evening and youth, caps combined at 4.10', () => {
+    const medium = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaMediumBTTS')!;
+    expect(medium.markets).toEqual(['btts']);
+    expect(medium.excludeSlotKeys).toEqual([...ACCA_MEDIUM_BTTS_EXCLUDE_SLOT_KEYS]);
+    expect(medium.excludeSlotKeys).toEqual(['midnight']);
+    expect(medium.excludeSlotKeys).not.toContain('evening');
+    expect(medium.combinedOddMax).toBe(ACCA_MEDIUM_BTTS_ODDS.combinedOddMax);
+    expect(medium.combinedOddMax).toBe(4.1);
+    expect(medium.skipAmateurLeagueNames).toBeUndefined();
+    expect(medium.allowedOutcomeKeys).toBeUndefined();
+    expect(medium.excludeLeagueApiIds).toBeUndefined();
+
+    const sure = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaSureBTTS')!;
+    const safe = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaSafeBTTS')!;
+    expect(sure.excludeSlotKeys).toBeUndefined();
+    expect(sure.combinedOddMax).toBeUndefined();
+    expect(safe.excludeSlotKeys).toBeUndefined();
+    expect(safe.combinedOddMax).toBeUndefined();
+  });
+});
+
+describe('AccaSureMix desk shape', () => {
+  it('skips youth and stacked identical keys, keeps all slots', () => {
+    const sure = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaSureMix')!;
+    expect(sure.markets).toEqual(expect.arrayContaining(['over15', 'over25', 'btts', 'double_chance', 'match_winner']));
+    expect(sure.skipAmateurLeagueNames).toBe(true);
+    expect(sure.distinctOutcomeKeys).toBe(true);
+    expect(sure.excludeSlotKeys).toBeUndefined();
+    expect(sure.excludeLeagueApiIds).toBeUndefined();
+    expect(sure.combinedOddMax).toBeUndefined();
+
+    const safe = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaSafeMix')!;
+    expect(safe.skipAmateurLeagueNames).toBeUndefined();
+    expect(safe.distinctOutcomeKeys).toBeUndefined();
+  });
+});
+
+describe('AccaMediumMix desk shape', () => {
+  it('skips amateur, caps combined at 4.10, keeps Evening and BTTS stacks', () => {
+    const medium = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaMediumMix')!;
+    expect(medium.markets).toEqual(expect.arrayContaining(['over15', 'over25', 'btts', 'double_chance', 'match_winner']));
+    expect(medium.skipAmateurLeagueNames).toBe(true);
+    expect(medium.combinedOddMax).toBe(ACCA_MEDIUM_MIX_ODDS.combinedOddMax);
+    expect(medium.combinedOddMax).toBe(4.1);
+    expect(medium.distinctOutcomeKeys).toBeUndefined();
+    expect(medium.excludeSlotKeys).toBeUndefined();
+    expect(medium.allowedOutcomeKeys).toBeUndefined();
+    expect(medium.excludeLeagueApiIds).toBeUndefined();
   });
 });
 

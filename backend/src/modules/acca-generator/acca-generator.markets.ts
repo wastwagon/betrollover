@@ -103,12 +103,18 @@ export function resolveRiskProfile(riskLevel?: string | null): AccaRiskProfile {
   );
 }
 
-export function outcomeKeysForMarkets(marketKeys: string[]): Set<string> {
+export function outcomeKeysForMarkets(
+  marketKeys: string[],
+  restrictTo?: readonly string[],
+): Set<string> {
   const out = new Set<string>();
   for (const key of marketKeys) {
     const def = ACCA_GENERATOR_MARKETS.find((m) => m.key === key);
     if (!def) continue;
     for (const ok of def.outcomeKeys) out.add(ok);
+  }
+  if (restrictTo != null && restrictTo.length > 0) {
+    return new Set([...out].filter((k) => restrictTo.includes(k)));
   }
   return out;
 }

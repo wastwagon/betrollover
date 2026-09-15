@@ -67,6 +67,10 @@ export const AMATEUR_LEAGUE_NAME_BLOCKLIST: readonly string[] = [
   ' u23',
   'women u',
   'reserve',
+  'next pro',
+  'mls next',
+  'revelação',
+  'revelacao',
   ' amateur',
   'geoje citizen',
   'korean fa cup',
@@ -135,6 +139,17 @@ export function isAmateurLeagueName(leagueName: string | null | undefined): bool
   if (!leagueName) return true;
   const n = leagueName.toLowerCase().trim();
   return AMATEUR_LEAGUE_NAME_BLOCKLIST.some((frag) => n.includes(frag));
+}
+
+/**
+ * Youth / reserve sides that leak through senior league ids (PAOK II, Timbers II, U23).
+ * "II" must be the last token of a side so "Juan Pablo II College" stays.
+ */
+export function isYouthOrReserveMatch(matchDescription: string | null | undefined): boolean {
+  if (!matchDescription) return false;
+  const n = matchDescription.toLowerCase();
+  if (/\b(u-?23|u-?21|u-?20|u-?19|u-?18|reserves?)\b|\bres\./.test(n)) return true;
+  return n.split(/\s+vs\.?\s+/).some((side) => /\bii$/.test(side.trim()));
 }
 
 export function isMajorLeagueForSafeAcca(

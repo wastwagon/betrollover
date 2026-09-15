@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import {
   ACCA_DESK_DAILY_CRON,
   ACCA_DESK_EARLY_CRON,
+  ACCA_DESK_EARLY_SLOT_KEYS,
   isAccaDeskEarlyPublishEnabled,
   isAccaDeskEnabled,
 } from '../../config/acca-desk-tipsters.config';
@@ -115,6 +116,8 @@ export class AccaDeskSchedulerService implements OnModuleInit {
       const result = await this.publisher.runDaily({
         ensureSetup: true,
         deskDayStr,
+        restrictToSlotKeys: syncType === 'acca_desk_early' ? ACCA_DESK_EARLY_SLOT_KEYS : undefined,
+        alreadyLocked: true,
       });
       // Always clear the shared `acca_desk` lock row.
       await this.syncStatusRepo.upsert(

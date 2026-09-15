@@ -2,6 +2,7 @@
  * VIP two-fold tipster — Home+Home only, separate from Acca Desk.
  *
  * Same Acca Desk kick-off windows (Early / Afternoon / Evening / Midnight).
+ * Tomorrow’s 20:00 pass only fills Early + Afternoon so Evening cannot eat the 2/day cap.
  * Publishes first so AccaSure1X2 can still mix Away on leftover fixtures.
  * Construction: two Home wins @ 1.20–1.40, combined 1.50–1.99.
  */

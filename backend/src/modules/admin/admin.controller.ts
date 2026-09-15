@@ -316,7 +316,7 @@ export class AdminController {
     return this.rolloverDesk.syncNow();
   }
 
-  /** Publish AccaSure1X2 only (rollover owner). Body `{ slotKey?: 'early' | 'afternoon' | 'evening' | 'midnight', deskDay?: string }`. */
+  /** Publish AccaSure1X2 only (rollover owner). Body `{ slotKey?: 'early' | 'afternoon' | 'evening', deskDay?: string }`. */
   @Post('rollover/publish')
   async publishRolloverOwner(
     @CurrentUser() user: User,
@@ -325,11 +325,11 @@ export class AdminController {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     const raw = body?.slotKey?.trim().toLowerCase();
     const slotKey =
-      raw === 'early' || raw === 'afternoon' || raw === 'evening' || raw === 'midnight'
+      raw === 'early' || raw === 'afternoon' || raw === 'evening'
         ? raw
         : undefined;
     if (raw && !slotKey) {
-      throw new BadRequestException('slotKey must be early, afternoon, evening, or midnight');
+      throw new BadRequestException('slotKey must be early, afternoon, or evening');
     }
     const tz = process.env.PREDICTION_TIMEZONE || 'Africa/Accra';
     let deskDayStr: string;

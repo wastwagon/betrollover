@@ -17,7 +17,9 @@ import type { TelegramSlipLeg } from '../telegram/telegram-slip';
 import {
   aggregateTicketResult,
   determinePickResult,
+  isStalePendingPick,
   remainingAccumulatorOdds,
+  ticketReadyToSettle,
   type AccumulatorOutcome,
 } from './settlement-logic';
 import { clampPlatformCommissionPercent, splitGrossForTipsterPayout } from '../../common/platform-commission';
@@ -348,7 +350,7 @@ export class SettlementService {
           }
 
           const picks = await pRepo.find({ where: { accumulatorId: ticketId } });
-          if (!picks.length || !picks.every((p) => p.result !== 'pending')) {
+          if (!ticketReadyToSettle(picks)) {
             return { picks: ticketDeltas.length, changed: false, escrow: false };
           }
 
@@ -457,7 +459,7 @@ export class SettlementService {
           const pRepo = manager.getRepository(AccumulatorPick);
           const tRepo = manager.getRepository(AccumulatorTicket);
           const picks = await pRepo.find({ where: { accumulatorId: ticket.id } });
-          if (!picks.length || picks.some((p) => p.result === 'pending')) {
+          if (!ticketReadyToSettle(picks)) {
             return { changed: false, escrow: false };
           }
 
@@ -627,8 +629,9 @@ export class SettlementService {
    * 1. Update scored non-FT fixtures (match_date > 2h ago) to status=FT
    * 2. Load pending picks, then only those fixtures/events (never `In()` all historical FT ids)
    * 3. For each pending pick on a finished fixture/event, determine won/lost via determinePickResult
-   * 4. For tickets where all picks are settled, set ticket result (won/lost/void). Voided legs
-   *    (DNB draw, postponed, AH push) are dropped; remaining legs settle at reduced odds.
+   * 4. For tickets that are ready (all legs graded, or any leg already lost), set ticket result.
+   *    Voided legs (DNB draw, postponed, AH push) are dropped; remaining legs settle at reduced odds.
+   *    Pending legs older than 36h with no score are voided so one missing fixture cannot pin an acca.
    * 5. If marketplace coupon with price > 0: settle escrow (payout tipster or refund buyer)
    *
    * Supported markets: Match Winner, Double Chance, BTTS, O/U (full + first half), DNB, Odd/Even, Asian Handicap, Correct Score, etc.
@@ -676,6 +679,24 @@ export class SettlementService {
       }
       if (voidPicks.length > 0) {
         this.logger.log(`Voided ${voidPicks.length} pick(s) on postponed/cancelled fixtures`);
+      }
+    }
+
+    const stalePending = pendingPicks.filter((p) => isStalePendingPick({ result: p.result, matchDate: p.matchDate }));
+    if (stalePending.length > 0) {
+      let staleVoided = 0;
+      for (const pick of stalePending) {
+        if (voidedPickIds.has(pick.id) || pick.result !== 'pending') continue;
+        const fix = pick.fixtureId != null ? fixtureMap.get(pick.fixtureId) : undefined;
+        if (fix && this.isFixtureReadyToGrade(fix, twoHoursAgo)) continue;
+        pick.result = 'void';
+        await this.pickRepo.save(pick);
+        picksUpdated++;
+        staleVoided++;
+        voidedPickIds.add(pick.id);
+      }
+      if (staleVoided > 0) {
+        this.logger.log(`Voided ${staleVoided} stale pending pick(s) (>36h after kick-off, ungradable)`);
       }
     }
 
@@ -762,8 +783,7 @@ export class SettlementService {
     }> = [];
     for (const ticket of allPendingTickets) {
       const picks = picksByTicketId.get(ticket.id) ?? [];
-      const allSettled = picks.length > 0 && picks.every((p) => p.result !== 'pending');
-      if (!allSettled) continue;
+      if (!ticketReadyToSettle(picks)) continue;
 
       const patch = this.ticketOutcomePatch(picks, ticket.totalOdds);
       ticket.result = patch.result;

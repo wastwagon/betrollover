@@ -7,6 +7,7 @@
  */
 
 import { DEFAULT_ACCA_MARKETS, type AccaRiskLevel } from '../modules/acca-generator/acca-generator.markets';
+import type { AccaDeskSlotKey } from './acca-desk-slots';
 
 export type AccaDeskTipsterConfig = {
   username: string;
@@ -25,9 +26,32 @@ export type AccaDeskTipsterConfig = {
   targetOdd?: number;
   /** API-Football league ids skipped when building this desk's pool. */
   excludeLeagueApiIds?: readonly number[];
+  /** Kick-off windows this desk will not publish (e.g. Midnight 1X2). */
+  excludeSlotKeys?: readonly AccaDeskSlotKey[];
+  skipAmateurLeagueNames?: boolean;
+  /** Inclusive combined-odds floor for the 2-fold. */
+  combinedOddMin?: number;
+  /** Inclusive combined-odds ceiling for the 2-fold. */
+  combinedOddMax?: number;
+  /** Do not pair two legs with the same outcome key (AccaSureDC: no 12+12). */
+  distinctOutcomeKeys?: boolean;
+  /** Intersect with the market catalog (AccaMedium1X2: Home only). */
+  allowedOutcomeKeys?: readonly string[];
 };
 
-type DeskExtras = Pick<AccaDeskTipsterConfig, 'oddMin' | 'oddMax' | 'targetOdd' | 'excludeLeagueApiIds'>;
+type DeskExtras = Pick<
+  AccaDeskTipsterConfig,
+  | 'oddMin'
+  | 'oddMax'
+  | 'targetOdd'
+  | 'excludeLeagueApiIds'
+  | 'excludeSlotKeys'
+  | 'skipAmateurLeagueNames'
+  | 'combinedOddMin'
+  | 'combinedOddMax'
+  | 'distinctOutcomeKeys'
+  | 'allowedOutcomeKeys'
+>;
 
 function desk(
   risk: AccaDeskTipsterConfig['riskLevel'],
@@ -102,6 +126,93 @@ export function isAccaO15LeagueAllowed(apiId: number | null | undefined): boolea
   return !(ACCA_O15_BLACKLIST_LEAGUE_API_IDS as readonly number[]).includes(apiId);
 }
 
+/**
+ * AccaSafe1X2 Midnight archive: Home favorites in AUS NPL / NWSL / Liga MX / Chile /
+ * Ecuador / USL drew or upset at 1.50–1.62. Skip even if they kick off in Early.
+ */
+export const ACCA_1X2_BLACKLIST_LEAGUE_API_IDS = [
+  188, // A-League
+  189, // A-League Women
+  194, // Victoria NPL
+  196, // New South Wales NPL
+  242, // Ecuador Liga Pro
+  244, // USL Championship (alt id)
+  254, // NWSL
+  255, // USL Championship
+  262, // Liga MX
+  263, // Liga de Expansión MX
+  265, // Chile Primera División
+  266, // Chile Primera B
+  339, // Guatemala Liga Nacional
+] as const;
+
+/** Safe 1X2: shorter than generic Safe 1.40–1.75 so two legs stay in the 2.20–2.45 slip. */
+export const ACCA_SAFE_1X2_ODDS = {
+  oddMin: 1.4,
+  oddMax: 1.6,
+  targetOdd: 1.5,
+  combinedOddMin: 2.2,
+  combinedOddMax: 2.45,
+} as const;
+
+export const ACCA_1X2_EXCLUDE_SLOT_KEYS: readonly AccaDeskSlotKey[] = ['midnight'];
+
+/**
+ * AccaMedium1X2 archive: 94 slips at ~3.96 combined, 25.5% vs 25.2% BE (−4.8%).
+ * Midnight leftovers are already excluded. Away+Home was −11.0u; combined >4.10
+ * was 1–16 (−12.8u); youth exact-winner −6.7u. Keep Evening (flat, unlike Medium DC).
+ */
+export const ACCA_MEDIUM_1X2_OUTCOME_KEYS = ['home'] as const;
+export const ACCA_MEDIUM_1X2_ODDS = {
+  combinedOddMax: 4.1,
+} as const;
+
+export function isAcca1X2LeagueAllowed(apiId: number | null | undefined): boolean {
+  if (apiId == null || !Number.isFinite(apiId)) return true;
+  return !(ACCA_1X2_BLACKLIST_LEAGUE_API_IDS as readonly number[]).includes(apiId);
+}
+
+/**
+ * AccaSureDC archive: U23 / Egypt / Algeria / Chile B / Ecuador 12-draws ate the 1.28 margin.
+ * Do not copy the 1X2 Midnight slot ban — DC Midnight was flat.
+ */
+export const ACCA_SURE_DC_BLACKLIST_LEAGUE_API_IDS = [
+  186, // Algeria Ligue 1
+  233, // Egypt Premier League
+  242, // Ecuador Liga Pro
+  266, // Chile Primera B
+] as const;
+
+export function isAccaSureDcLeagueAllowed(apiId: number | null | undefined): boolean {
+  if (apiId == null || !Number.isFinite(apiId)) return true;
+  return !(ACCA_SURE_DC_BLACKLIST_LEAGUE_API_IDS as readonly number[]).includes(apiId);
+}
+
+/**
+ * AccaMediumDC archive: Afternoon X2+X2 is +24u; Evening 2–17 and Midnight 0–4
+ * are LATAM/MLS home wins that kill ~2.00 draw-or-away. Keep Early + Afternoon.
+ */
+export const ACCA_MEDIUM_DC_EXCLUDE_SLOT_KEYS: readonly AccaDeskSlotKey[] = ['evening', 'midnight'];
+
+/**
+ * AccaMediumBTTS archive: +25.2% / +20.65u. Evening is +13.96u — do not copy
+ * AccaMediumDC’s Evening skip. Midnight 1–6 (−3.45u) is dead 0-0 / 3-0 night games.
+ * Combined >4.10 is hygiene (0–4 in 4.10–4.50). Keep youth (n=6).
+ */
+export const ACCA_MEDIUM_BTTS_EXCLUDE_SLOT_KEYS: readonly AccaDeskSlotKey[] = ['midnight'];
+export const ACCA_MEDIUM_BTTS_ODDS = {
+  combinedOddMax: 4.1,
+} as const;
+
+/**
+ * AccaMediumMix archive: +51.4% / +37.54u (t=2.27). Youth 1–9 (−6.07u),
+ * almost all Early U21/II. Combined >4.50 is 0–3. Keep Evening, BTTS stacks,
+ * Away 1X2 — do not copy AccaSureMix distinct keys or AccaMediumDC Evening skip.
+ */
+export const ACCA_MEDIUM_MIX_ODDS = {
+  combinedOddMax: 4.1,
+} as const;
+
 const MARKET_SPECS: { key: string; label: string; markets: string[] }[] = [
   { key: '1x2', label: '1X2 (Match Winner)', markets: ['match_winner'] },
   { key: 'dc', label: 'Double Chance', markets: ['double_chance'] },
@@ -125,6 +236,43 @@ function extrasForDesk(risk: AccaDeskTipsterConfig['riskLevel'], spec: (typeof M
     extras.oddMax = band.oddMax;
     extras.targetOdd = band.targetOdd;
   }
+  if (spec.key === '1x2') {
+    extras.excludeSlotKeys = ACCA_1X2_EXCLUDE_SLOT_KEYS;
+    if (risk === 'safe') {
+      extras.excludeLeagueApiIds = ACCA_1X2_BLACKLIST_LEAGUE_API_IDS;
+      extras.oddMin = ACCA_SAFE_1X2_ODDS.oddMin;
+      extras.oddMax = ACCA_SAFE_1X2_ODDS.oddMax;
+      extras.targetOdd = ACCA_SAFE_1X2_ODDS.targetOdd;
+      extras.combinedOddMin = ACCA_SAFE_1X2_ODDS.combinedOddMin;
+      extras.combinedOddMax = ACCA_SAFE_1X2_ODDS.combinedOddMax;
+      extras.skipAmateurLeagueNames = true;
+    }
+    if (risk === 'medium') {
+      extras.allowedOutcomeKeys = ACCA_MEDIUM_1X2_OUTCOME_KEYS;
+      extras.combinedOddMax = ACCA_MEDIUM_1X2_ODDS.combinedOddMax;
+      extras.skipAmateurLeagueNames = true;
+    }
+  }
+  if (spec.key === 'dc' && risk === 'sure') {
+    extras.excludeLeagueApiIds = ACCA_SURE_DC_BLACKLIST_LEAGUE_API_IDS;
+    extras.skipAmateurLeagueNames = true;
+    extras.distinctOutcomeKeys = true;
+  }
+  if (spec.key === 'dc' && risk === 'medium') {
+    extras.excludeSlotKeys = ACCA_MEDIUM_DC_EXCLUDE_SLOT_KEYS;
+  }
+  if (spec.key === 'btts' && risk === 'medium') {
+    extras.excludeSlotKeys = ACCA_MEDIUM_BTTS_EXCLUDE_SLOT_KEYS;
+    extras.combinedOddMax = ACCA_MEDIUM_BTTS_ODDS.combinedOddMax;
+  }
+  if (spec.key === 'mix' && risk === 'sure') {
+    extras.skipAmateurLeagueNames = true;
+    extras.distinctOutcomeKeys = true;
+  }
+  if (spec.key === 'mix' && risk === 'medium') {
+    extras.skipAmateurLeagueNames = true;
+    extras.combinedOddMax = ACCA_MEDIUM_MIX_ODDS.combinedOddMax;
+  }
   return extras;
 }
 
@@ -140,7 +288,7 @@ export const ACCA_DESK_TIPSTERS: AccaDeskTipsterConfig[] = [
 
 export const ACCA_DESK_TIPSTER_TYPE = 'acca_desk';
 export const ACCA_DESK_LEGS = 2 as const;
-export { ACCA_DESK_MAX_PER_DAY, ACCA_DESK_TIME_SLOTS } from './acca-desk-slots';
+export { ACCA_DESK_EARLY_SLOT_KEYS, ACCA_DESK_MAX_PER_DAY, ACCA_DESK_TIME_SLOTS } from './acca-desk-slots';
 
 /**
  * Empty = every Acca Desk persona publishes. Do not add AccaSure1X2 or VipTwoFold here.

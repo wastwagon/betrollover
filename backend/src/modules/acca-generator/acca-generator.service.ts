@@ -38,6 +38,7 @@ import {
   type AccaRiskLevel,
   type AccaRiskProfile,
 } from './acca-generator.markets';
+import { isAmateurLeagueName, isYouthOrReserveMatch } from '../../config/major-leagues.config';
 import {
   ACCA_O15_BLACKLIST_LEAGUE_API_IDS,
   ACCA_O15_ODDS_BY_RISK,
@@ -712,6 +713,7 @@ export class AccaGeneratorService {
     deskDayStr?: string;
     leagueApiIds?: number[];
     excludeLeagueApiIds?: number[];
+    skipAmateurLeagueNames?: boolean;
   }): Promise<AccaGeneratorSelection[]> {
     const window = opts.deskDayStr
       ? (() => {
@@ -736,6 +738,10 @@ export class AccaGeneratorService {
     for (const row of pool) {
       if (exclude?.has(row.fixtureId)) continue;
       if (row.leagueApiId != null && blockedLeagues.has(row.leagueApiId)) continue;
+      if (opts.skipAmateurLeagueNames) {
+        if (isAmateurLeagueName(row.leagueName)) continue;
+        if (isYouthOrReserveMatch(`${row.homeTeamName} vs ${row.awayTeamName}`)) continue;
+      }
       if (!opts.allowedOutcomes.has(row.outcomeKey)) continue;
 
       const probability = Math.min(0.95, Math.max(0.05, 1 / row.odds));
@@ -806,6 +812,11 @@ export class AccaGeneratorService {
     oddMax?: number;
     targetOdd?: number;
     excludeLeagueApiIds?: readonly number[];
+    combinedOddMin?: number;
+    combinedOddMax?: number;
+    skipAmateurLeagueNames?: boolean;
+    distinctOutcomeKeys?: boolean;
+    allowedOutcomeKeys?: readonly string[];
   }) {
     const markets = this.normalizeMarkets(opts.markets);
     const risk = this.resolveRiskFromDto({ markets, legs: opts.legs, riskLevel: opts.riskLevel });
@@ -820,7 +831,7 @@ export class AccaGeneratorService {
     const excludeFixtureIds = new Set(
       [...(opts.excludeFixtureIds || [])].filter((id) => Number.isFinite(id) && id > 0),
     );
-    const allowedOutcomes = outcomeKeysForMarkets(markets);
+    const allowedOutcomes = outcomeKeysForMarkets(markets, opts.allowedOutcomeKeys);
     const oddMin = opts.oddMin ?? risk.oddMin;
     const oddMax = opts.oddMax ?? risk.oddMax;
     const targetOdd = opts.targetOdd ?? risk.targetOdd;
@@ -832,6 +843,7 @@ export class AccaGeneratorService {
       excludeFixtureIds,
       deskDayStr,
       excludeLeagueApiIds: opts.excludeLeagueApiIds ? [...opts.excludeLeagueApiIds] : undefined,
+      skipAmateurLeagueNames: opts.skipAmateurLeagueNames,
     });
 
     if (opts.slotKey) {
@@ -861,7 +873,11 @@ export class AccaGeneratorService {
 
     const selected =
       legs === 2
-        ? pickTimeClusteredPair(candidates, ACCA_DESK_MAX_KICKOFF_GAP_MS, outcomeFamily)
+        ? pickTimeClusteredPair(candidates, ACCA_DESK_MAX_KICKOFF_GAP_MS, outcomeFamily, {
+            minCombined: opts.combinedOddMin,
+            maxCombined: opts.combinedOddMax,
+            distinctOutcomeKeys: opts.distinctOutcomeKeys,
+          })
         : pickGreedyLegs(candidates, legs);
     if (selected.length < legs) {
       await this.recordEvent(opts.userId, 'empty_pool', {
@@ -944,6 +960,7 @@ export class AccaGeneratorService {
       excludeFixtureIds,
       deskDayStr,
       excludeLeagueApiIds: [...VIP_BLACKLIST_LEAGUE_API_IDS],
+      skipAmateurLeagueNames: true,
     });
     if (opts.slotKey) {
       candidates = candidates.filter((c) => slotForKickoff(c.matchDate, tz)?.key === opts.slotKey);

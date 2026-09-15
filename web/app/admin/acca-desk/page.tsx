@@ -114,7 +114,7 @@ type Overview = {
       status: string;
       combinedOdds: number | null;
     } | null;
-    postedSlots?: Record<'early' | 'afternoon' | 'evening' | 'midnight', boolean>;
+    postedSlots?: Partial<Record<'early' | 'afternoon' | 'evening' | 'midnight', boolean>>;
     candidates?: {
       id: number;
       title: string;
@@ -650,7 +650,7 @@ export default function AdminAccaDeskPage() {
                   >
                     {rolloverBusy === 'publish' ? 'Publishing…' : 'Publish remaining AccaSure1X2 slots'}
                   </Button>
-                  {(['early', 'afternoon', 'evening', 'midnight'] as const).map((slot) => {
+                  {(['early', 'afternoon', 'evening'] as const).map((slot) => {
                     const posted = overview.rollover?.postedSlots?.[slot];
                     return (
                       <Button
