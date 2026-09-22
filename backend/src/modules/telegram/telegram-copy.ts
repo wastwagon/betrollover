@@ -28,48 +28,49 @@ export const TELEGRAM_ENGAGEMENT_FOOTERS = [
   `React if you’re on it · invite one friend\n👉 {channel}`,
 ] as const;
 
-/** 2×/day discovery — free tips + Telegram join. No tipster-earn CTA (separate post). */
+/** 2×/day discovery — free tips, anti-scam, Rollover VIP invite. */
 export const TELEGRAM_GROWTH_POSTS = [
-  `📌 Discover · Free football tips daily
+  `📌 Rollover VIP
 
-BetRollover Acca Desk + top tipsters — settled results, not noise.
+Don't buy fake "fixed" tickets on Telegram — there are no real fixed matches.
+You lose twice: the ticket fee and your stake.
 
-Follow this channel so you never miss today’s free picks.
-↗️ Forward to a friend who follows tips
-👉 Join: {channel}
+Join Rollover VIP. We post one max-bet slip a day.
+Message @{contact} to join.
+👉 {channel}
 
-Open the board: {site}?utm_source=telegram&utm_medium=social&utm_campaign=channel_growth
+Board: {site}/rollover?utm_source=telegram&utm_medium=social&utm_campaign=channel_vip
 
 ${LEGAL_LINE}`,
 
-  `📌 Discover · Tipster marketplace
+  `📌 Discover · Free tips + VIP
 
-Free Acca picks · paid picks with purchase protection (tip price refunded if it loses).
+Free Acca picks stay on this channel.
+Want the daily VIP max-bet slip? Message @{contact}.
 
-Stay subscribed · share the channel with a friend
 👉 {channel}
+{site}?utm_source=telegram&utm_medium=social&utm_campaign=channel_growth
 
-{site}/marketplace?utm_source=telegram&utm_medium=social&utm_campaign=channel_growth
+${LEGAL_LINE}`,
+
+  `📌 Skip the Telegram scams
+
+No "fixed matches." No private ticket sellers.
+Rollover VIP = one clear max-bet slip a day on BetRollover.
+
+Talk to @{contact}
+👉 {channel}
 
 ${LEGAL_LINE}`,
 
   `📌 Discover · Purchase-protected tips
 
 Paid pick loses → tip price returns to your BetRollover wallet.
-Free tips stay free on this channel.
+Free tips stay free here. VIP slips: message @{contact}.
 
 ↗️ Forward · 👉 Join: {channel}
 
 {site}?utm_source=telegram&utm_medium=social&utm_campaign=channel_growth
-
-${LEGAL_LINE}`,
-
-  `📌 Discover · AccaSure & top tipsters
-
-Real settlement on BetRollover. Free Sure 1X2 doubles + marketplace analysis.
-
-👉 Channel: {channel}
-App: {site}?utm_source=telegram&utm_medium=social&utm_campaign=channel_growth
 
 ${LEGAL_LINE}`,
 ] as const;
@@ -221,16 +222,29 @@ ${LEGAL_LINE}`,
  * Channel About / description — Telegram “SEO” is mostly title + @username + this text.
  * Bot can sync via setChatDescription when admin.
  */
-export const TELEGRAM_CHANNEL_SEO_DESCRIPTION =
-  'Football tips & tipster marketplace | Free Acca Desk picks daily | Refund if paid pick loses | Join BetRollover.com — 18+ education only';
+export function telegramChannelSeoDescription(): string {
+  return applyTelegramCopyVars(
+    'Football tips & Rollover VIP | Free Acca picks daily | One VIP max-bet slip a day — message @{contact} | Refund if paid pick loses | 18+ education only',
+    '',
+  );
+}
+
+/** @deprecated Prefer telegramChannelSeoDescription() so @{contact} stays correct. */
+export const TELEGRAM_CHANNEL_SEO_DESCRIPTION = telegramChannelSeoDescription();
+
+/** @handle without @ — DM contact for VIP (defaults to betrollovertips). */
+export function telegramAdsHandle(): string {
+  const fromAds = (process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE || '').trim().replace(/^@/, '');
+  if (fromAds && !/^-?\d+$/.test(fromAds)) return fromAds;
+  const channelId = (process.env.TELEGRAM_CHANNEL_ID || '').trim().replace(/^@/, '');
+  // Channel IDs are often numeric (-100…); only treat @username forms as a public handle.
+  if (channelId && !/^-?\d+$/.test(channelId)) return channelId;
+  return 'betrollovertips';
+}
 
 /** Public join URL for the tips channel (defaults to @betrollovertips). */
 export function telegramChannelJoinUrl(): string {
-  const fromAds = (process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE || '').trim().replace(/^@/, '');
-  if (fromAds) return `https://t.me/${fromAds}`;
-  const channelId = (process.env.TELEGRAM_CHANNEL_ID || '').trim();
-  if (channelId.startsWith('@')) return `https://t.me/${channelId.slice(1)}`;
-  return 'https://t.me/betrollovertips';
+  return `https://t.me/${telegramAdsHandle()}`;
 }
 
 export function telegramRegisterUrl(siteOrigin: string): string {
@@ -255,7 +269,64 @@ function applyTelegramCopyVars(template: string, siteOrigin: string): string {
   return template
     .replace(/\{site\}/g, site)
     .replace(/\{channel\}/g, telegramChannelJoinUrl())
+    .replace(/\{contact\}/g, telegramAdsHandle())
     .replace(/\{register\}/g, telegramRegisterUrl(site));
+}
+
+/** Free-channel teaser when VIP posts a slip — no legs / codes (members-only). */
+export function formatVipPublicSlipTeaser(input: {
+  siteOrigin: string;
+  totalOdds?: number | null;
+}): string {
+  const odds =
+    input.totalOdds != null && Number.isFinite(Number(input.totalOdds))
+      ? Number(input.totalOdds).toFixed(2)
+      : '';
+  const site = input.siteOrigin.replace(/\/$/, '') || 'https://betrollover.com';
+  return applyTelegramCopyVars(
+    [
+      `VIP · Two-Fold · new max-bet slip${odds ? ` · ${odds}` : ''}`,
+      '',
+      'Full slip is in BETROLLOVER VIP (members only).',
+      'Want in? Message @{contact}',
+      '👉 {channel}',
+      '',
+      `Board: ${site}/rollover?utm_source=telegram&utm_medium=social&utm_campaign=channel_vip`,
+      '',
+      LEGAL_LINE,
+    ].join('\n'),
+    site,
+  );
+}
+
+/** Free-channel win alert for VIP — settled legs OK; CTA to message contact. */
+export function formatVipPublicWinPost(input: {
+  siteOrigin: string;
+  title: string;
+  totalOdds?: number | null;
+  legs?: { matchDescription?: string | null; prediction?: string | null; result?: string | null; homeScore?: number | null; awayScore?: number | null }[];
+}): string {
+  const odds =
+    input.totalOdds != null && Number.isFinite(Number(input.totalOdds))
+      ? Number(input.totalOdds).toFixed(2)
+      : '';
+  const lines = [
+    `VIP won ✅ · ${(input.title || 'Two-Fold').trim()}${odds ? ` · ${odds}` : ''}`,
+  ];
+  for (const leg of input.legs || []) {
+    const match = (leg.matchDescription || '').trim();
+    const pred = (leg.prediction || '').trim();
+    const mark = (leg.result || 'won').toUpperCase();
+    const score =
+      leg.homeScore != null && leg.awayScore != null ? ` FT ${leg.homeScore}-${leg.awayScore}` : '';
+    if (match || pred) lines.push(`• ${match}${match && pred ? ' — ' : ''}${pred} · ${mark}${score}`);
+  }
+  lines.push('');
+  lines.push('Join Rollover VIP — message @{contact}');
+  lines.push('👉 {channel}');
+  lines.push('');
+  lines.push(LEGAL_LINE);
+  return applyTelegramCopyVars(lines.join('\n'), input.siteOrigin);
 }
 
 export function appendEngagementFooter(body: string, salt: number | string): string {

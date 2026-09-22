@@ -6,8 +6,12 @@ import {
   formatCommunityAppealPost,
   formatGrowthPost,
   formatTipsterRecruitPost,
+  formatVipPublicSlipTeaser,
+  formatVipPublicWinPost,
   pickRotatingLine,
+  telegramAdsHandle,
   telegramAlwaysAllowUsernames,
+  telegramChannelSeoDescription,
 } from './telegram-copy';
 import { TelegramChannelService } from './telegram-channel.service';
 import { TelegramEligibilityService } from './telegram-eligibility.service';
@@ -39,14 +43,45 @@ describe('telegram-copy', () => {
     expect(out).not.toContain('I’m on it');
   });
 
-  it('formats growth post as discover (channel + site), not tipster earn', () => {
+  it('formats growth post for VIP invite + channel join', () => {
     process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE = 'betrollovertips';
     const text = formatGrowthPost('https://betrollover.com', 0);
-    expect(text).toContain('Discover');
-    expect(text).toContain('https://betrollover.com');
+    expect(text).toContain('Rollover VIP');
+    expect(text).toContain('@betrollovertips');
     expect(text).toContain('https://t.me/betrollovertips');
-    expect(text.toLowerCase()).not.toContain('70%');
+    expect(text.toLowerCase()).toContain('fixed');
     expect(text).not.toContain('{channel}');
+    expect(text).not.toContain('{contact}');
+  });
+
+  it('formats VIP free-channel slip teaser without legs', () => {
+    process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE = 'betrollovertips';
+    const text = formatVipPublicSlipTeaser({ siteOrigin: 'https://betrollover.com', totalOdds: 1.65 });
+    expect(text).toContain('1.65');
+    expect(text).toContain('@betrollovertips');
+    expect(text.toLowerCase()).toContain('members only');
+    expect(text).not.toContain('Home Win');
+    expect(text).toContain('/rollover');
+  });
+
+  it('formats VIP free-channel win with contact CTA', () => {
+    process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE = 'betrollovertips';
+    const text = formatVipPublicWinPost({
+      siteOrigin: 'https://betrollover.com',
+      title: 'VIP · Two-Fold',
+      totalOdds: 1.59,
+      legs: [{ matchDescription: 'Team A vs Team B', prediction: 'Home', result: 'won' }],
+    });
+    expect(text).toContain('VIP won');
+    expect(text).toContain('Team A vs Team B');
+    expect(text).toContain('@betrollovertips');
+    expect(telegramAdsHandle()).toBe('betrollovertips');
+  });
+
+  it('ignores numeric TELEGRAM_CHANNEL_ID when resolving public @handle', () => {
+    delete process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE;
+    process.env.TELEGRAM_CHANNEL_ID = '-1001950138526';
+    expect(telegramAdsHandle()).toBe('betrollovertips');
   });
 
   it('formats tipster recruit with register link; earn via paid picks not share', () => {
@@ -118,9 +153,10 @@ describe('telegram-copy', () => {
   });
 
   it('has SEO description under Telegram limit', () => {
+    expect(telegramChannelSeoDescription().length).toBeLessThanOrEqual(255);
+    expect(telegramChannelSeoDescription().toLowerCase()).toContain('football');
+    expect(telegramChannelSeoDescription().toLowerCase()).toContain('vip');
     expect(TELEGRAM_CHANNEL_SEO_DESCRIPTION.length).toBeLessThanOrEqual(255);
-    expect(TELEGRAM_CHANNEL_SEO_DESCRIPTION.toLowerCase()).toContain('football');
-    expect(TELEGRAM_CHANNEL_SEO_DESCRIPTION.toLowerCase()).toContain('tipster');
   });
 
   it('pickRotatingLine is stable for same salt', () => {
@@ -246,8 +282,24 @@ describe('TelegramChannelService engagement', () => {
     const r = await svc.postGrowthMessage('morning-test');
     expect(r.ok).toBe(true);
     const body = calls[0] as { text: string };
-    expect(body.text).toContain('Discover');
+    expect(body.text).toMatch(/Rollover VIP|Discover/);
     expect(body.text).toContain('https://t.me/betrollovertips');
+  });
+
+  it('posts VIP slip teaser to free channel without legs', async () => {
+    const svc = new TelegramChannelService();
+    const calls: unknown[] = [];
+    global.fetch = jest.fn(async (_url, init) => {
+      calls.push(JSON.parse(String(init?.body)));
+      return { ok: true, json: async () => ({ ok: true }) } as Response;
+    }) as typeof fetch;
+
+    const r = await svc.postVipSlipTeaser({ couponId: 42, totalOdds: 1.72 });
+    expect(r.ok).toBe(true);
+    const body = calls[0] as { text: string };
+    expect(body.text).toContain('1.72');
+    expect(body.text).toContain('@betrollovertips');
+    expect(body.text.toLowerCase()).toContain('members only');
   });
 
   it('posts exact community appeal once without extra footer chrome', async () => {

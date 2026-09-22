@@ -1,12 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { bookmakerLabelForKey } from '@betrollover/shared-types';
 import {
-  TELEGRAM_CHANNEL_SEO_DESCRIPTION,
   appendEngagementFooter,
   formatAdvicePost,
   formatCommunityAppealPost,
   formatGrowthPost,
   formatTipsterRecruitPost,
+  formatVipPublicSlipTeaser,
+  formatVipPublicWinPost,
+  telegramChannelSeoDescription,
 } from './telegram-copy';
 import { telegramKickoffLabel, type TelegramSlipLeg } from './telegram-slip';
 import { PUBLIC_CHANNEL_SURE_USERNAME } from '../../config/rollover-desk.config';
@@ -82,6 +84,34 @@ export class TelegramChannelService {
   async postWin(input: TelegramWinPostInput): Promise<{ ok: boolean; error?: string }> {
     const core = this.formatWin(input);
     return this.sendMessage(appendEngagementFooter(core, `win-${input.couponId}`));
+  }
+
+  /** Free channel: VIP slip posted (teaser only — no legs/codes). */
+  async postVipSlipTeaser(input: {
+    couponId: number;
+    totalOdds?: number | null;
+  }): Promise<{ ok: boolean; error?: string }> {
+    const text = formatVipPublicSlipTeaser({
+      siteOrigin: this.siteOrigin(),
+      totalOdds: input.totalOdds,
+    });
+    return this.sendMessage(text);
+  }
+
+  /** Free channel: VIP win + contact CTA for Rollover VIP. */
+  async postVipPublicWin(input: {
+    couponId: number;
+    title: string;
+    totalOdds?: number | null;
+    legs?: TelegramSlipLeg[];
+  }): Promise<{ ok: boolean; error?: string }> {
+    const text = formatVipPublicWinPost({
+      siteOrigin: this.siteOrigin(),
+      title: input.title,
+      totalOdds: input.totalOdds,
+      legs: input.legs,
+    });
+    return this.sendMessage(appendEngagementFooter(text, `vip-win-${input.couponId}`));
   }
 
   /**
@@ -169,7 +199,7 @@ export class TelegramChannelService {
     const token = this.token();
     const chatId = this.channelId();
     if (!token || !chatId) return { ok: false, error: 'not_configured' };
-    const description = (custom || process.env.TELEGRAM_CHANNEL_SEO_DESCRIPTION || TELEGRAM_CHANNEL_SEO_DESCRIPTION)
+    const description = (custom || process.env.TELEGRAM_CHANNEL_SEO_DESCRIPTION || telegramChannelSeoDescription())
       .trim()
       .slice(0, 255);
     try {

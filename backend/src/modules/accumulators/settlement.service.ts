@@ -829,6 +829,14 @@ export class SettlementService {
           tipsterName: 'VIP · Two-Fold',
         })
         .catch(() => {});
+      this.telegramChannelService
+        .postVipPublicWin({
+          couponId: post.couponId,
+          title: post.title,
+          totalOdds: post.totalOdds,
+          legs: post.legs,
+        })
+        .catch(() => {});
     }
 
     if (wonMarketplacePosts.length > 0) {

@@ -616,6 +616,13 @@ export class AccumulatorsService {
             bookingCode: ticket.bookingCode,
           })
           .catch(() => {});
+        // Free channel teaser (no legs) so people can message @betrollovertips to join VIP.
+        this.telegramChannelService
+          .postVipSlipTeaser({
+            couponId: ticket.id,
+            totalOdds: Number(ticket.totalOdds),
+          })
+          .catch(() => {});
       }
     }
 
