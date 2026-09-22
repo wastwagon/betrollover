@@ -11,7 +11,7 @@ import {
 } from './telegram-copy';
 import { TelegramChannelService } from './telegram-channel.service';
 import { TelegramEligibilityService } from './telegram-eligibility.service';
-import { ROLLOVER_OWNER_USERNAME } from '../../config/rollover-desk.config';
+import { PUBLIC_CHANNEL_SURE_USERNAME } from '../../config/rollover-desk.config';
 import { ACCA_DESK_TIPSTER_TYPE } from '../../config/acca-desk-tipsters.config';
 
 function parseTelegramCall(url: unknown, init?: RequestInit) {
@@ -114,7 +114,7 @@ describe('telegram-copy', () => {
   });
 
   it('always allows AccaSure1X2', () => {
-    expect(telegramAlwaysAllowUsernames()).toContain(ROLLOVER_OWNER_USERNAME);
+    expect(telegramAlwaysAllowUsernames()).toContain(PUBLIC_CHANNEL_SURE_USERNAME);
   });
 
   it('has SEO description under Telegram limit', () => {
@@ -292,7 +292,7 @@ describe('TelegramEligibilityService', () => {
       { findOne: async () => ({ minimumROI: 20, minimumWinRate: 30 }) } as any,
     );
     const sure = await svc.evaluateTipster({
-      username: ROLLOVER_OWNER_USERNAME,
+      username: PUBLIC_CHANNEL_SURE_USERNAME,
       tipsterType: ACCA_DESK_TIPSTER_TYPE,
       isActive: true,
     });

@@ -1,27 +1,32 @@
 /**
- * Public 10-day educational rollover — Acca Desk Sure · 1X2 (AccaSure1X2) only.
- * One 2-fold per plan day. Admin attaches manually — no auto-attach, no odds gate.
- * Acca Desk may still publish AccaSure1X2 to the marketplace; rollover pins are separate.
+ * Public 7-day educational rollover — VIP · Two-Fold (VipTwoFold) only.
+ * One 2-fold per plan day. Auto-attaches after VIP publish; admin can still attach manually.
+ * Live tips stay subscription-gated (same as marketplace). Settled tips are public.
  * Not a payout.
  */
 
 import { ACCA_DESK_TIME_SLOTS, type AccaDeskSlotKey } from './acca-desk-slots';
+import { VIP_TIPSTER } from './vip-tipster.config';
 
-/** Existing Acca Desk tipster: Sure · 1X2 (Match Winner). Do not create a new account. */
-export const ROLLOVER_OWNER_USERNAME = 'AccaSure1X2';
+/** Rollover board owner — existing VIP desk tipster. Do not create a new account. */
+export const ROLLOVER_OWNER_USERNAME = VIP_TIPSTER.username;
 
-export const ROLLOVER_OWNER_DISPLAY_FALLBACK = 'Sure · 1X2 (Match Winner)';
+export const ROLLOVER_OWNER_DISPLAY_FALLBACK = VIP_TIPSTER.display_name;
 
-export const ROLLOVER_PLAN_DAYS = 10;
-/** Example-money multiplier for empty / future days (typical AccaSure1X2 band ~1.6+). */
+/**
+ * AccaSure1X2 stays on the free public Telegram channel.
+ * Do not reuse ROLLOVER_OWNER for channel allowlist — VIP must not post there.
+ */
+export const PUBLIC_CHANNEL_SURE_USERNAME = 'AccaSure1X2';
+
+export const ROLLOVER_PLAN_DAYS = 7;
+/** Example-money multiplier for empty / future days (VIP combined band ~1.50–1.99). */
 export const ROLLOVER_TARGET_ODDS = 1.6;
 /** Public board starting example stake (GHS). */
 export const ROLLOVER_EXAMPLE_STAKE_GHS = 100;
-/** Show cash figures for every plan day (10 × 1.6 from 100 stays readable). */
+/** Show cash figures for every plan day. */
 export const ROLLOVER_EXAMPLE_MAX_MONEY_DAY = ROLLOVER_PLAN_DAYS;
 export const ROLLOVER_TIMEZONE = process.env.PREDICTION_TIMEZONE || 'Africa/Accra';
 
-/** AccaSure1X2 does not publish Midnight — rollover cannot attach a slot that will never exist. */
-export const ROLLOVER_SLOT_ORDER: AccaDeskSlotKey[] = ACCA_DESK_TIME_SLOTS.map((s) => s.key).filter(
-  (key) => key !== 'midnight',
-);
+/** VIP can publish every Acca Desk window, including Midnight. */
+export const ROLLOVER_SLOT_ORDER: AccaDeskSlotKey[] = ACCA_DESK_TIME_SLOTS.map((s) => s.key);

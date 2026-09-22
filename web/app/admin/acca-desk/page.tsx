@@ -498,22 +498,22 @@ export default function AdminAccaDeskPage() {
               <div className="mb-8 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
                   <div>
-                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">10-day rollover (AccaSure1X2)</h2>
+                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">7-day VIP rollover (VipTwoFold)</h2>
                     <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
                       {overview.rollover.run
-                        ? `${overview.rollover.run.status} · day ${overview.rollover.run.currentDay}/${overview.rollover.planDays ?? 10} · started ${formatWhen(overview.rollover.run.startedAt)}`
-                        : 'No run yet. Reset if needed, then manually attach an AccaSure1X2 coupon as Day 1.'}
+                        ? `${overview.rollover.run.status} · day ${overview.rollover.run.currentDay}/${overview.rollover.planDays ?? 7} · started ${formatWhen(overview.rollover.run.startedAt)}`
+                        : 'No run yet. VIP · Two-Fold auto-attaches after publish, or reset then attach Day 1 manually.'}
                     </p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      Manual attach only — no auto-posting and no odds gate. List includes today’s Acca Desk board
-                      and tomorrow’s early publish (20:10, after VIP). Pick any pending AccaSure1X2 2-fold below to put it live
-                      on{' '}
-                      <span className="font-medium text-gray-700 dark:text-gray-200">/rollover</span>. If Day 1 is
-                      live or already won and another slot is still to play, use{' '}
-                      <span className="font-medium text-gray-700 dark:text-gray-200">Attach as Day 2</span>
-                      {' — '}do not Switch, that would replace Day 1. A loss auto-resets the public table. Use Clear
-                      stats to wipe the public records strip without touching the live board. Example-money
-                      multiplier on the board is ×{Number(overview.rollover.targetOdds ?? 1.6).toFixed(2)} only.
+                      Owner is VIP · Two-Fold. New VIP slips auto-attach (two same-day slips → Day N and Day N+1; a loss
+                      starts Day 1). Live tips stay subscription-gated on{' '}
+                      <span className="font-medium text-gray-700 dark:text-gray-200">/rollover</span>. Manual attach below
+                      is still available. Publish VIP from{' '}
+                      <Link href="/admin/vip-tipster" className="font-medium text-teal-700 dark:text-teal-300 hover:underline">
+                        VIP Tipster
+                      </Link>
+                      . Example-money multiplier on the board is ×{Number(overview.rollover.targetOdds ?? 1.6).toFixed(2)}{' '}
+                      only.
                     </p>
                   </div>
                   <Link href="/rollover" className="text-sm font-medium text-teal-700 dark:text-teal-300 hover:underline">
@@ -567,7 +567,7 @@ export default function AdminAccaDeskPage() {
                     onClick={() => {
                       if (
                         !window.confirm(
-                          'Reset the public 10-day table? This ends the current campaign at Day 1 of a new cycle. Records are kept.',
+                          'Reset the public 7-day VIP table? This ends the current campaign at Day 1 of a new cycle. Records are kept.',
                         )
                       ) {
                         return;
@@ -585,7 +585,7 @@ export default function AdminAccaDeskPage() {
                     onClick={() => {
                       if (
                         !window.confirm(
-                          'Clear public records (best run, finished, cut, reset)? The live 10-day table is not reset.',
+                          'Clear public records (best run, finished, cut, reset)? The live 7-day table is not reset.',
                         )
                       ) {
                         return;
@@ -639,36 +639,14 @@ export default function AdminAccaDeskPage() {
                     disabled={!!rolloverBusy}
                     onClick={() => rolloverAction('rollover/sync', undefined, 'sync')}
                   >
-                    {rolloverBusy === 'sync' ? 'Syncing…' : 'Sync settlement'}
+                    {rolloverBusy === 'sync' ? 'Syncing…' : 'Sync settlement + auto-attach'}
                   </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    disabled={!!rolloverBusy}
-                    onClick={() => rolloverAction('rollover/publish', {}, 'publish')}
+                  <Link
+                    href="/admin/vip-tipster"
+                    className={buttonClassName({ size: 'sm', variant: 'secondary' })}
                   >
-                    {rolloverBusy === 'publish' ? 'Publishing…' : 'Publish remaining AccaSure1X2 slots'}
-                  </Button>
-                  {(['early', 'afternoon', 'evening'] as const).map((slot) => {
-                    const posted = overview.rollover?.postedSlots?.[slot];
-                    return (
-                      <Button
-                        key={slot}
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        disabled={!!rolloverBusy || posted}
-                        onClick={() => rolloverAction('rollover/publish', { slotKey: slot }, `publish-${slot}`)}
-                      >
-                        {rolloverBusy === `publish-${slot}`
-                          ? 'Publishing…'
-                          : posted
-                            ? `${slot} posted`
-                            : `Generate ${slot}`}
-                      </Button>
-                    );
-                  })}
+                    Open VIP Tipster publish
+                  </Link>
                   <Button
                     type="button"
                     size="sm"
@@ -693,8 +671,8 @@ export default function AdminAccaDeskPage() {
 
                 {(overview.rollover.candidates?.length ?? 0) === 0 ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    No AccaSure1X2 coupons for today’s or tomorrow’s desk day. Wait for Acca Desk to publish (or the
-                    20:10 early run), or generate a slot above, then attach the one you want.
+                    No VipTwoFold coupons for today’s or tomorrow’s desk day. Publish from VIP Tipster (or wait for the
+                    VIP cron), then sync — unused slips auto-attach, or attach manually below.
                   </p>
                 ) : (
                   <div className="space-y-2">

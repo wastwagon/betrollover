@@ -9,6 +9,7 @@ import {
   formatTipsterRecruitPost,
 } from './telegram-copy';
 import { telegramKickoffLabel, type TelegramSlipLeg } from './telegram-slip';
+import { PUBLIC_CHANNEL_SURE_USERNAME } from '../../config/rollover-desk.config';
 
 export type TelegramPickPostInput = {
   couponId: number;
@@ -97,11 +98,11 @@ export class TelegramChannelService {
     const day = (input.deskDay || '').trim() || 'today';
     const n = input.publishedCount;
     const base = this.siteOrigin();
-    const url = `${base}/rollover?utm_source=telegram&utm_medium=social&utm_campaign=channel_acca_sure`;
+    const url = `${base}/tipsters/${PUBLIC_CHANNEL_SURE_USERNAME}?utm_source=telegram&utm_medium=social&utm_campaign=channel_acca_sure`;
     const core = [
       `AccaSure · ${day}`,
       `${n} new free Sure · 1X2 2-fold${n === 1 ? '' : 's'} on BetRollover.`,
-      `Open the board → ${url}`,
+      `View tips → ${url}`,
     ].join('\n');
     return this.sendMessage(appendEngagementFooter(core, `acca-sure-${day}-${n}`));
   }

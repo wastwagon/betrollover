@@ -3,9 +3,9 @@ import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
 import { getLocale } from '@/lib/i18n';
 
-const TITLE = '10-Day Rollover';
+const TITLE = '7-Day VIP Rollover';
 const DESCRIPTION =
-  'Follow the public Acca Desk Sure · 1X2 10-day run. One free 2-fold per plan day, chosen manually — education, not a bookmaker payout. 18+.';
+  'Follow the VIP · Two-Fold 7-day educational board. Live tips for subscribers; settled history is public so you can decide to join. Not a bookmaker payout. 18+.';
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -14,11 +14,10 @@ export async function generateMetadata(): Promise<Metadata> {
     description: DESCRIPTION,
     keywords: [
       'football rollover',
-      '10 day acca',
-      '1X2 tips Ghana',
-      'Acca Desk',
+      '7 day vip tips',
+      'VIP Two-Fold',
       'BetRollover rollover',
-      'free football coupon',
+      'football coupon Ghana',
     ],
     alternates: seoAlternates('/rollover', locale),
     openGraph: {
@@ -26,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: TITLE,
       description: DESCRIPTION,
       type: 'website',
-      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'BetRollover 10-Day Rollover' }],
+      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'BetRollover 7-Day VIP Rollover' }],
     },
     twitter: {
       card: 'summary_large_image',
@@ -39,19 +38,24 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const FAQS = [
   {
-    question: 'What is the 10-day rollover?',
+    question: 'What is the 7-day VIP rollover?',
     answer:
-      'It is a public educational board. Each plan day an admin attaches one Acca Desk Sure · 1X2 (AccaSure1X2) two-fold from that tipster’s marketplace coupons. A win advances the day; a loss resets the table to a new campaign at Day 1. Admin may attach a later same-day slot as the next plan day. We do not pay odds or credit wallets for this board.',
+      'It is a public educational board linked to VIP · Two-Fold. Each plan day uses one VIP two-fold. Two slips on the same day become Day N and Day N+1. A win advances the day; a loss starts a new campaign at Day 1. Live tips are for VIP subscribers; settled tips are public. We do not pay odds or credit wallets for this board.',
+  },
+  {
+    question: 'Can I see today’s tip without a VIP subscription?',
+    answer:
+      'Active (pending) coupons stay locked for non-subscribers — you see a Subscribe CTA, same as marketplace VIP cards. Settled won/lost coupons are fully visible so you can judge form before joining.',
   },
   {
     question: 'Is this betting on the odds?',
     answer:
-      'No. BetRollover is not a bookmaker. The coupon is free tipster information. Any wager you place with a third-party bookmaker is outside this app.',
+      'No. BetRollover is not a bookmaker. The coupon is tipster information. Any wager you place with a third-party bookmaker is outside this app.',
   },
   {
     question: 'What do the GHS figures mean?',
     answer:
-      'They are a worked example of compounding that campaign’s example stake (default GHS 100) at the board’s target multiplier for every plan day. Day 10 shows the full-run example bank if every coupon hits. They are not payouts.',
+      'They are a worked example of compounding that campaign’s example stake (default GHS 100) at the board’s target multiplier for every plan day. Day 7 shows the full-run example bank if every coupon hits. They are not payouts.',
   },
 ];
 

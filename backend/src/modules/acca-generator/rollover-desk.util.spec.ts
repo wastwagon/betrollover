@@ -38,8 +38,8 @@ describe('rollover-desk.util', () => {
     expect(slotKeyFromTitle(ticket(1, 2.0, 'Evening').title)).toBe('evening');
   });
 
-  it('does not offer Midnight on the rollover attach board', () => {
-    expect(ROLLOVER_SLOT_ORDER).toEqual(['early', 'afternoon', 'evening']);
+  it('offers every Acca Desk slot including Midnight for VIP attach', () => {
+    expect(ROLLOVER_SLOT_ORDER).toEqual(['early', 'afternoon', 'evening', 'midnight']);
   });
 
   it('parses AccaSure1X2 titles that omit the calendar-date suffix', () => {
@@ -83,7 +83,7 @@ describe('rollover-desk.util', () => {
     expect(picked).toBeNull();
   });
 
-  it('shows example cash for the full 10-day plan from GHS 100 at ×1.6', () => {
+  it('shows example cash for the full 7-day plan from GHS 100 at ×1.6', () => {
     expect(exampleStakeGhs(1)).toBe(100);
     expect(exampleReturnGhs(1)).toBe(160);
     expect(exampleMoneyForDay(1).stakeGhs).toBe(100);
@@ -92,18 +92,19 @@ describe('rollover-desk.util', () => {
     expect(exampleMoneyForDay(2).returnGhs).toBe(256);
     expect(exampleMoneyForDay(4).stakeGhs).toBe(410);
     expect(exampleMoneyForDay(4).returnGhs).toBe(656);
-    expect(exampleMoneyForDay(10).stakeGhs).toBe(6882);
-    expect(exampleMoneyForDay(10).returnGhs).toBe(11011);
-    expect(exampleMoneyForDay(11).stakeGhs).toBeNull();
+    expect(exampleMoneyForDay(7).stakeGhs).toBe(1680);
+    expect(exampleMoneyForDay(7).returnGhs).toBe(2688);
+    expect(exampleMoneyForDay(8).stakeGhs).toBeNull();
+    expect(exampleMoneyForDay(10).stakeGhs).toBeNull();
   });
 
   it('scales example cash from a custom campaign stake', () => {
     expect(exampleStakeGhs(1, 50)).toBe(50);
     expect(exampleReturnGhs(1, 50)).toBe(80);
-    expect(exampleMoneyForDay(1, 10, 50).stakeGhs).toBe(50);
-    expect(exampleMoneyForDay(1, 10, 50).returnGhs).toBe(80);
-    expect(exampleMoneyForDay(2, 10, 50).stakeGhs).toBe(80);
-    expect(exampleMoneyForDay(2, 10, 50).returnGhs).toBe(128);
+    expect(exampleMoneyForDay(1, 7, 50).stakeGhs).toBe(50);
+    expect(exampleMoneyForDay(1, 7, 50).returnGhs).toBe(80);
+    expect(exampleMoneyForDay(2, 7, 50).stakeGhs).toBe(80);
+    expect(exampleMoneyForDay(2, 7, 50).returnGhs).toBe(128);
   });
 
   it('records After win from consecutive real odds, not dummy 1.6', () => {

@@ -1,5 +1,5 @@
 import { LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
-import { ROLLOVER_OWNER_USERNAME } from '../../config/rollover-desk.config';
+import { PUBLIC_CHANNEL_SURE_USERNAME } from '../../config/rollover-desk.config';
 
 /**
  * BetRollover Telegram voice — one job per post type.
@@ -285,7 +285,7 @@ export function telegramAlwaysAllowUsernames(): string[] {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
-  const set = new Set<string>([ROLLOVER_OWNER_USERNAME, ...extra]);
+  const set = new Set<string>([PUBLIC_CHANNEL_SURE_USERNAME, ...extra]);
   return [...set];
 }
 

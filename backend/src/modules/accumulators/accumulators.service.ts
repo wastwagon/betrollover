@@ -53,7 +53,7 @@ import {
   accaDeskPausedUsernames,
   isAccaDeskPublishingPaused,
 } from '../../config/acca-desk-tipsters.config';
-import { ROLLOVER_OWNER_USERNAME } from '../../config/rollover-desk.config';
+import { PUBLIC_CHANNEL_SURE_USERNAME } from '../../config/rollover-desk.config';
 import {
   classicAiMarketplaceTicketExcludeRawSql,
   classicAiPublicExcludeRawSql,
@@ -513,8 +513,8 @@ export class AccumulatorsService {
       });
       const isAccaDesk = tipster?.tipsterType === ACCA_DESK_TIPSTER_TYPE;
       const isVipDesk = isHouseVip || tipster?.tipsterType === VIP_TIPSTER_TYPE;
-      const isAccaSure = (tipster?.username || '').toLowerCase() === ROLLOVER_OWNER_USERNAME.toLowerCase();
-      // Acca Desk: only AccaSure1X2 hits the channel. House VIP stays on the private VIP channel.
+      const isAccaSure = (tipster?.username || '').toLowerCase() === PUBLIC_CHANNEL_SURE_USERNAME.toLowerCase();
+      // Acca Desk: only AccaSure1X2 hits the public channel. House VIP stays on the private VIP channel.
       const mayTelegram = (!isAccaDesk || isAccaSure) && !isVipDesk;
       if (mayTelegram) {
         const elig = await this.telegramEligibility.canPostForUserId(userId);

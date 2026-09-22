@@ -32,6 +32,7 @@ import { SyncStatus } from '../fixtures/entities/sync-status.entity';
 import { AccaGeneratorService } from './acca-generator.service';
 import { VipTipsterSetupService } from './vip-tipster-setup.service';
 import { AccumulatorsService } from '../accumulators/accumulators.service';
+import { RolloverDeskService } from './rollover-desk.service';
 
 export type VipTipsterRunResult = {
   enabled: boolean;
@@ -59,6 +60,7 @@ export class VipTipsterPublisherService {
     private readonly accaGenerator: AccaGeneratorService,
     private readonly setup: VipTipsterSetupService,
     private readonly accumulatorsService: AccumulatorsService,
+    private readonly rollover: RolloverDeskService,
     @InjectRepository(Tipster)
     private readonly tipsterRepo: Repository<Tipster>,
     @InjectRepository(AccumulatorTicket)
@@ -360,6 +362,15 @@ export class VipTipsterPublisherService {
         const message = err instanceof Error ? err.message : String(err);
         this.logger.error(`VIP publish failed ${slot.key} deskDay=${deskDayStr}: ${message}`);
         result.details.push({ status: 'error', slotKey: slot.key, message });
+      }
+    }
+
+    if (result.published > 0) {
+      try {
+        await this.rollover.autoAttachAfterPublish();
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        this.logger.warn(`VIP → rollover auto-attach failed: ${message}`);
       }
     }
 

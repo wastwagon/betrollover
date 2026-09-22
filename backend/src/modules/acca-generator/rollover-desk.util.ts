@@ -39,7 +39,7 @@ export function slotKeyFromTitle(title: string | null | undefined): AccaDeskSlot
   return ACCA_DESK_TIME_SLOTS.find((s) => title.includes(`· ${s.label} ·`))?.key ?? null;
 }
 
-/** Pending marketplace 2-fold — only rule for manual rollover attach. */
+/** Pending marketplace 2-fold — eligibility for rollover attach (auto or admin). */
 export function isEligibleRolloverTicket(t: RolloverTicketLike): boolean {
   if (t.totalPicks !== 2) return false;
   const result = (t.result || 'pending').toLowerCase();

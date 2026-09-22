@@ -34,7 +34,7 @@ import { AccaDeskSetupService } from './acca-desk-setup.service';
 import { RolloverDeskService } from './rollover-desk.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SyncLockService } from '../fixtures/sync-lock.service';
-import { ROLLOVER_OWNER_USERNAME } from '../../config/rollover-desk.config';
+import { PUBLIC_CHANNEL_SURE_USERNAME } from '../../config/rollover-desk.config';
 import { VIP_TIPSTER, VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
 import type { AccaDeskShort } from '../email/acca-desk-shorts.config';
 
@@ -317,13 +317,13 @@ export class AccaDeskPublisherService {
         this.logger.warn(`Acca Desk follower shorts email failed: ${message}`);
       }
     }
-    // Rollover is manual-only (admin attach AccaSure1X2). Never auto-attach after desk publish.
+    // Rollover auto-attaches VipTwoFold only (see VipTipsterPublisherService). Acca Desk does not attach.
     return result;
   }
 
   /**
-   * Publish AccaSure1X2 only (rollover owner). Optional slot; otherwise remaining unposted slots.
-   * Does not attach — admin picks the coupon on the rollover board.
+   * Legacy helper: publish AccaSure1X2 (public free tipster), not the rollover owner.
+   * Rollover auto-attaches VipTwoFold — prefer VIP Tipster admin / cron for the board.
    */
   async publishRolloverOwner(opts?: {
     slotKey?: AccaDeskSlotKey;
@@ -340,7 +340,7 @@ export class AccaDeskPublisherService {
       await this.setup.initializeAccaDeskTipsters();
     }
 
-    const config = ACCA_DESK_TIPSTERS.find((c) => c.username === ROLLOVER_OWNER_USERNAME);
+    const config = ACCA_DESK_TIPSTERS.find((c) => c.username === PUBLIC_CHANNEL_SURE_USERNAME);
     if (!config) {
       return {
         enabled: true,
@@ -350,7 +350,7 @@ export class AccaDeskPublisherService {
         skippedEmptyPool: 0,
         skippedNoUser: 1,
         errors: 0,
-        details: [{ username: ROLLOVER_OWNER_USERNAME, status: 'no_user' }],
+        details: [{ username: PUBLIC_CHANNEL_SURE_USERNAME, status: 'no_user' }],
       };
     }
 
@@ -407,7 +407,7 @@ export class AccaDeskPublisherService {
     }
 
     this.logger.log(
-      `Rollover ${ROLLOVER_OWNER_USERNAME} publish deskDay=${deskDayStr}: published=${result.published} already=${result.skippedAlreadyPosted} empty=${result.skippedEmptyPool} errors=${result.errors}`,
+      `AccaSure ${PUBLIC_CHANNEL_SURE_USERNAME} publish deskDay=${deskDayStr}: published=${result.published} already=${result.skippedAlreadyPosted} empty=${result.skippedEmptyPool} errors=${result.errors}`,
     );
     return result;
   }

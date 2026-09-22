@@ -316,7 +316,7 @@ export class AdminController {
     return this.rolloverDesk.syncNow();
   }
 
-  /** Publish AccaSure1X2 only (rollover owner). Body `{ slotKey?: 'early' | 'afternoon' | 'evening', deskDay?: string }`. */
+  /** Legacy: publish AccaSure1X2 (not rollover owner). Prefer VIP Tipster admin for /rollover. Body `{ slotKey?: 'early' | 'afternoon' | 'evening', deskDay?: string }`. */
   @Post('rollover/publish')
   async publishRolloverOwner(
     @CurrentUser() user: User,
@@ -325,11 +325,11 @@ export class AdminController {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     const raw = body?.slotKey?.trim().toLowerCase();
     const slotKey =
-      raw === 'early' || raw === 'afternoon' || raw === 'evening'
+      raw === 'early' || raw === 'afternoon' || raw === 'evening' || raw === 'midnight'
         ? raw
         : undefined;
     if (raw && !slotKey) {
-      throw new BadRequestException('slotKey must be early, afternoon, or evening');
+      throw new BadRequestException('slotKey must be early, afternoon, evening, or midnight');
     }
     const tz = process.env.PREDICTION_TIMEZONE || 'Africa/Accra';
     let deskDayStr: string;
@@ -341,9 +341,9 @@ export class AdminController {
     return this.accaDeskPublisher.publishRolloverOwner({ slotKey, deskDayStr, ensureSetup: true });
   }
 
-  /** Attach a specific AccaSure1X2 `{ ticketId }`, or earliest eligible pending 2-fold.
+  /** Attach a specific VipTwoFold `{ ticketId }`, or earliest eligible pending 2-fold.
    * `{ asNextDay: true }` attaches a later slot as the next plan day on the same calendar date.
-   * Manual only — cron never attaches. */
+   * VIP publish also auto-attaches; this is the manual override. */
   @Post('rollover/attach')
   async attachRolloverAdmin(
     @CurrentUser() user: User,

@@ -346,7 +346,8 @@ export default function AdminVipTipsterPage() {
             One paid tipster. Two Home wins at 1.20–1.40, combined 1.50–1.99. Up to 2 slips
             per desk day, using the same Early / Afternoon / Evening / Midnight windows as
             Acca Desk — skip a window when no pair exists. VIP publishes first so AccaSure1X2
-            never reuses those fixtures (Sure can still mix Away on what is left).
+            never reuses those fixtures (Sure can still mix Away on what is left). New VIP
+            slips auto-attach to the 7-day /rollover board.
           </p>
         </div>
 

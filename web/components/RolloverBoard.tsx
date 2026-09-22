@@ -21,6 +21,8 @@ type Coupon = {
   sport?: string;
   status?: string;
   result?: string;
+  picksRevealed?: boolean;
+  requiresSubscription?: boolean;
   picks?: {
     id?: number;
     matchDescription?: string;
@@ -371,6 +373,8 @@ export function RolloverBoard() {
               status={coupon.status}
               result={coupon.result}
               picks={coupon.picks || []}
+              picksRevealed={!!coupon.picksRevealed}
+              requiresSubscription={!!coupon.requiresSubscription}
               tipster={coupon.tipster}
               createdAt={coupon.createdAt}
               bookmakerKey={coupon.bookmakerKey}

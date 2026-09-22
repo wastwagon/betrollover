@@ -5,7 +5,7 @@ import { Tipster } from '../predictions/entities/tipster.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { ACCA_DESK_TIPSTER_TYPE } from '../../config/acca-desk-tipsters.config';
 import { VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
-import { ROLLOVER_OWNER_USERNAME } from '../../config/rollover-desk.config';
+import { PUBLIC_CHANNEL_SURE_USERNAME } from '../../config/rollover-desk.config';
 import {
   telegramAlwaysAllowUsernames,
   telegramMinRoi,
@@ -76,7 +76,7 @@ export class TelegramEligibilityService {
 
     const allow = telegramAlwaysAllowUsernames().map((u) => u.toLowerCase());
     if (allow.includes(username.toLowerCase())) {
-      return { ok: true, reason: username === ROLLOVER_OWNER_USERNAME ? 'acca_sure' : 'allowlist', username };
+      return { ok: true, reason: username === PUBLIC_CHANNEL_SURE_USERNAME ? 'acca_sure' : 'allowlist', username };
     }
 
     // Other Acca Desk personas → no (AccaSure only for desk brand). House VIP posts to the private VIP chat.

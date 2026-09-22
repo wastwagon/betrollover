@@ -49,15 +49,28 @@ export class RolloverDeskService {
   ) {}
 
   /**
-   * Settlement sync only (serialized). Coupons are never auto-attached —
-   * admin must pick AccaSure1X2 manually via adminAttach.
+   * Settlement sync + auto-attach unused VIP · Two-Fold coupons (serialized).
+   * Admin can still attach manually via adminAttach.
    */
   async syncBoard(): Promise<void> {
-    this.attachChain = this.attachChain.then(() => this.syncSettledDays()).catch((err: unknown) => {
-      const message = err instanceof Error ? err.message : String(err);
-      this.logger.warn(`Rollover settlement sync failed: ${message}`);
-    });
+    this.attachChain = this.attachChain
+      .then(async () => {
+        await this.syncSettledDays();
+        await this.autoAttachPendingTickets();
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err);
+        this.logger.warn(`Rollover board sync failed: ${message}`);
+      });
     await this.attachChain;
+  }
+
+  /**
+   * After VIP publish (or admin sync): attach unused pending VipTwoFold 2-folds.
+   * Two slips the same desk day become Day N and Day N+1. A loss starts a new Day 1.
+   */
+  async autoAttachAfterPublish(): Promise<void> {
+    await this.syncBoard();
   }
 
   async getBoard(viewerUserId?: number | null) {
@@ -182,10 +195,9 @@ export class RolloverDeskService {
   }
 
   /**
-   * Admin: attach a specific AccaSure1X2 coupon, or the earliest eligible pending 2-fold.
+   * Admin: attach a specific VipTwoFold coupon, or the earliest eligible pending 2-fold.
    * Same won/lost/void cut as before. Same-day pending can be switched.
    * `asNextDay` attaches a later slot as the next plan day on the same calendar date.
-   * Manual only — never called by cron.
    */
   async adminAttach(opts?: { ticketId?: number; asNextDay?: boolean }) {
     await this.syncSettledDays();
@@ -200,7 +212,7 @@ export class RolloverDeskService {
         : await this.pickTodayTicket();
     if (!ticket) {
       throw new BadRequestException(
-        `No eligible ${ROLLOVER_OWNER_USERNAME} pending 2-fold for today’s or tomorrow’s Acca Desk board. Publish AccaSure1X2 first, then attach the coupon you want.`,
+        `No eligible ${ROLLOVER_OWNER_USERNAME} pending 2-fold for today’s or tomorrow’s VIP board. Publish VIP · Two-Fold first, then attach the coupon you want.`,
       );
     }
     return this.commitAttach(ticket, {
@@ -255,7 +267,7 @@ export class RolloverDeskService {
   }
 
   async syncNow() {
-    await this.syncSettledDays();
+    await this.syncBoard();
     return this.getAdminState();
   }
 
@@ -397,6 +409,7 @@ export class RolloverDeskService {
         await this.createRun();
         endedRunIds.add(run.id);
         this.logger.log(`Rollover day ${day.dayNumber} lost ticket=#${ticket.id} — run broken, new campaign started`);
+        // Next unused VIP slip becomes Day 1 (autoAttach runs after syncSettledDays in syncBoard).
         continue;
       }
 
@@ -408,6 +421,67 @@ export class RolloverDeskService {
         await this.dayRepo.save(day);
         this.logger.log(`Rollover day ${day.dayNumber} voided ticket=#${ticket.id} — retry same plan day`);
       }
+    }
+  }
+
+  /**
+   * Attach unused VipTwoFold pending 2-folds onto the active run.
+   * Same-day second slip → Day N+1. After a cut/finish, next unused slip → Day 1.
+   */
+  private async autoAttachPendingTickets(): Promise<void> {
+    for (let guard = 0; guard < ROLLOVER_PLAN_DAYS; guard++) {
+      let run = await this.runRepo.findOne({ where: { status: 'active' }, order: { id: 'DESC' } });
+      if (!run) run = await this.createRun();
+
+      const date = utcDateStamp();
+      const pending = await this.dayRepo.findOne({
+        where: { runId: run.id, status: 'pending' },
+        order: { dayNumber: 'ASC' },
+      });
+
+      if (pending?.ticketId && this.dateOnly(pending.calendarDate) !== date) {
+        return;
+      }
+
+      const last = await this.dayRepo.findOne({
+        where: { runId: run.id },
+        order: { dayNumber: 'DESC' },
+      });
+
+      if (last && last.dayNumber >= ROLLOVER_PLAN_DAYS && last.ticketId && last.status === 'pending') {
+        return;
+      }
+
+      if (pending && !pending.ticketId) {
+        const ticket = await this.pickTodayTicket();
+        if (!ticket) return;
+        const filled = await this.commitAttach(ticket, { replaceSameDay: false, strict: false });
+        if (!filled.attached) return;
+        continue;
+      }
+
+      const todayAlreadyHasCoupon = !!(
+        last &&
+        last.ticketId &&
+        this.dateOnly(last.calendarDate) === date &&
+        (last.status === 'pending' || last.status === 'won')
+      );
+      const asNextDay =
+        todayAlreadyHasCoupon && !!last && last.dayNumber < ROLLOVER_PLAN_DAYS;
+
+      const used = await this.usedTicketIds();
+      const ticket = selectEligibleRolloverTicket(await this.listAttachableOwnerTickets(), used);
+      if (!ticket) return;
+
+      const result = await this.commitAttach(ticket, {
+        replaceSameDay: false,
+        strict: false,
+        asNextDay,
+      });
+      if (!result.attached) return;
+      this.logger.log(
+        `Rollover auto-attached day ${result.dayNumber} ticket=#${result.ticketId} odds=${result.combinedOdds}${asNextDay ? ' (same-day next)' : ''}`,
+      );
     }
   }
 
@@ -564,7 +638,7 @@ export class RolloverDeskService {
     }
     if (this.dateOnly(last.calendarDate) !== date) {
       throw new BadRequestException(
-        'Attach as next day is only for a later Acca Desk slot on the same calendar day (e.g. evening after afternoon).',
+        'Attach as next day is only for a later VIP slot on the same calendar day (e.g. evening after afternoon).',
       );
     }
     return this.insertPlanDay(run, last.dayNumber + 1, date, ticket, true);
@@ -630,7 +704,7 @@ export class RolloverDeskService {
     if (desk) {
       if (desk !== todayStamp && desk !== tomorrowStamp) {
         throw new BadRequestException(
-          'Coupon must be from today’s or tomorrow’s Acca Desk board (after the 20:00 early publish).',
+          'Coupon must be from today’s or tomorrow’s VIP board (after the 20:00 early publish).',
         );
       }
     } else {
@@ -640,7 +714,7 @@ export class RolloverDeskService {
       const createdTo = new Date(end);
       createdTo.setUTCDate(createdTo.getUTCDate() + 1);
       if (ticket.createdAt < createdFrom || ticket.createdAt >= createdTo) {
-        throw new BadRequestException('Coupon must be from a recent Acca Desk publish.');
+        throw new BadRequestException('Coupon must be from a recent VIP publish.');
       }
     }
     if (!ticket.isMarketplace || ticket.totalPicks !== 2) {
@@ -653,8 +727,8 @@ export class RolloverDeskService {
   }
 
   /**
-   * AccaSure1X2 coupons for today’s desk day plus tomorrow’s (20:00 early board).
-   * After today’s slots settle, admin still needs tomorrow’s pending coupons to attach.
+   * VipTwoFold coupons for today’s desk day plus tomorrow’s (20:00 early board).
+   * After today’s slots settle, unused tomorrow pending coupons can start the next Day 1.
    */
   private async listAttachableOwnerTickets(): Promise<AccumulatorTicket[]> {
     const tipster = await this.tipsterRepo.findOne({
