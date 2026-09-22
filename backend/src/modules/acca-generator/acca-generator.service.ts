@@ -38,7 +38,7 @@ import {
   type AccaRiskLevel,
   type AccaRiskProfile,
 } from './acca-generator.markets';
-import { isAmateurLeagueName, isYouthOrReserveMatch } from '../../config/major-leagues.config';
+import { isAmateurLeagueName, isCupCompetitionName, isYouthOrReserveMatch } from '../../config/major-leagues.config';
 import {
   ACCA_O15_BLACKLIST_LEAGUE_API_IDS,
   ACCA_O15_ODDS_BY_RISK,
@@ -715,6 +715,7 @@ export class AccaGeneratorService {
     leagueApiIds?: number[];
     excludeLeagueApiIds?: number[];
     skipAmateurLeagueNames?: boolean;
+    skipCupLeagueNames?: boolean;
   }): Promise<AccaGeneratorSelection[]> {
     const window = opts.deskDayStr
       ? (() => {
@@ -743,6 +744,7 @@ export class AccaGeneratorService {
         if (isAmateurLeagueName(row.leagueName)) continue;
         if (isYouthOrReserveMatch(`${row.homeTeamName} vs ${row.awayTeamName}`)) continue;
       }
+      if (opts.skipCupLeagueNames && isCupCompetitionName(row.leagueName)) continue;
       if (!opts.allowedOutcomes.has(row.outcomeKey)) continue;
 
       const probability = Math.min(0.95, Math.max(0.05, 1 / row.odds));
@@ -773,6 +775,53 @@ export class AccaGeneratorService {
     }
 
     return [...bestByFixture.values()].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+  }
+
+  /**
+   * Bank · Half: home team scored in last FT match and did not lose by 4+.
+   * No prior FT row → keep the candidate (pool stays usable).
+   */
+  private async filterHomeScoringForm(
+    candidates: AccaGeneratorSelection[],
+  ): Promise<AccaGeneratorSelection[]> {
+    if (!candidates.length) return candidates;
+    const kept: AccaGeneratorSelection[] = [];
+    for (const c of candidates) {
+      const homeName = (c.matchDescription || '').split(/\s+vs\.?\s+/i)[0]?.trim();
+      if (!homeName) {
+        kept.push(c);
+        continue;
+      }
+      const before = new Date(c.matchDate);
+      if (!Number.isFinite(before.getTime())) {
+        kept.push(c);
+        continue;
+      }
+      const last = await this.fixtureRepo
+        .createQueryBuilder('f')
+        .where('(f.homeTeamName = :name OR f.awayTeamName = :name)', { name: homeName })
+        .andWhere('f.status IN (:...st)', { st: ['FT', 'AET', 'PEN'] })
+        .andWhere('f.matchDate < :before', { before })
+        .andWhere('f.homeScore IS NOT NULL')
+        .andWhere('f.awayScore IS NOT NULL')
+        .orderBy('f.matchDate', 'DESC')
+        .getOne();
+      if (!last) {
+        kept.push(c);
+        continue;
+      }
+      const isHome = last.homeTeamName === homeName;
+      const gf = Number(isHome ? last.homeScore : last.awayScore);
+      const ga = Number(isHome ? last.awayScore : last.homeScore);
+      if (!Number.isFinite(gf) || !Number.isFinite(ga)) {
+        kept.push(c);
+        continue;
+      }
+      if (gf < 1) continue;
+      if (ga - gf >= 4) continue;
+      kept.push(c);
+    }
+    return kept;
   }
 
   /** Today's generations for this user, newest first, as fixture-id stacks. */
@@ -816,6 +865,8 @@ export class AccaGeneratorService {
     combinedOddMin?: number;
     combinedOddMax?: number;
     skipAmateurLeagueNames?: boolean;
+    skipCupLeagueNames?: boolean;
+    requireHomeScoringForm?: boolean;
     distinctOutcomeKeys?: boolean;
     allowedOutcomeKeys?: readonly string[];
   }) {
@@ -845,10 +896,15 @@ export class AccaGeneratorService {
       deskDayStr,
       excludeLeagueApiIds: opts.excludeLeagueApiIds ? [...opts.excludeLeagueApiIds] : undefined,
       skipAmateurLeagueNames: opts.skipAmateurLeagueNames,
+      skipCupLeagueNames: opts.skipCupLeagueNames,
     });
 
     if (opts.slotKey) {
       candidates = candidates.filter((c) => slotForKickoff(c.matchDate, tz)?.key === opts.slotKey);
+    }
+
+    if (opts.requireHomeScoringForm) {
+      candidates = await this.filterHomeScoringForm(candidates);
     }
 
     if (candidates.length < legs) {

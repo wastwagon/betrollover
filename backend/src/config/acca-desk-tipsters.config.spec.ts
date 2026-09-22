@@ -23,12 +23,38 @@ import {
 } from './acca-desk-tipsters.config';
 
 describe('acca desk daily cap', () => {
-  it('caps every roster tipster at two coupons and states that in the bio', () => {
+  it('caps roster tipsters at two coupons except Bank · Half (one)', () => {
     expect(ACCA_DESK_MAX_PER_DAY).toBe(2);
     expect(ACCA_DESK_TIPSTERS.length).toBeGreaterThan(0);
+    expect(ACCA_DESK_TIPSTERS[0]?.username).toBe('BankHalf');
     for (const tipster of ACCA_DESK_TIPSTERS) {
+      if (tipster.username === 'BankHalf') {
+        expect(tipster.maxPerDay).toBe(1);
+        expect(tipster.bio).toMatch(/One 2-fold a day/);
+        continue;
+      }
       expect(tipster.bio).toMatch(/Up to 2 free 2-fold picks a day/);
     }
+  });
+});
+
+describe('Bank · Half desk', () => {
+  it('claims HT home 2-folds first with the locked odd band and filters', () => {
+    const bank = ACCA_DESK_TIPSTERS.find((t) => t.username === 'BankHalf')!;
+    expect(bank).toBeDefined();
+    expect(bank.markets).toEqual(['fh_winner']);
+    expect(bank.allowedOutcomeKeys).toEqual(['ht_home']);
+    expect(bank.oddMin).toBe(1.47);
+    expect(bank.oddMax).toBe(1.6);
+    expect(bank.targetOdd).toBe(1.54);
+    expect(bank.combinedOddMin).toBe(2.2);
+    expect(bank.combinedOddMax).toBe(2.5);
+    expect(bank.excludeSlotKeys).toEqual(['midnight']);
+    expect(bank.skipAmateurLeagueNames).toBe(true);
+    expect(bank.skipCupLeagueNames).toBe(true);
+    expect(bank.requireHomeScoringForm).toBe(true);
+    expect(bank.maxPerDay).toBe(1);
+    expect(bank.excludeLeagueApiIds).toEqual(expect.arrayContaining([364, 365, 1176]));
   });
 });
 

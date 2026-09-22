@@ -44,6 +44,12 @@ export class AccaDeskSetupService {
         riskLevel: config.riskLevel,
         markets: config.markets,
         legs: config.legs,
+        ...(config.maxPerDay != null ? { maxPerDay: config.maxPerDay } : {}),
+        ...(config.skipCupLeagueNames ? { skipCupLeagueNames: true } : {}),
+        ...(config.requireHomeScoringForm ? { requireHomeScoringForm: true } : {}),
+        ...(config.allowedOutcomeKeys?.length
+          ? { allowedOutcomeKeys: [...config.allowedOutcomeKeys] }
+          : {}),
       };
 
       const existing = await this.tipsterRepo.findOne({ where: { username: config.username } });

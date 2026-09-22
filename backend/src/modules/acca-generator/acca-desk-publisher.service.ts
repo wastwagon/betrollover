@@ -9,6 +9,7 @@ import {
   ACCA_DESK_TIME_SLOTS,
   ACCA_DESK_TIPSTERS,
   ACCA_DESK_TIPSTER_TYPE,
+  BANK_HALF_TIPSTER,
   isAccaDeskEarlyPublishEnabled,
   isAccaDeskEnabled,
   isAccaDeskPublishingPaused,
@@ -92,6 +93,10 @@ export class AccaDeskPublisherService {
         markets: c.markets,
         legs: c.legs,
         strategyId: c.strategy_id,
+        maxPerDay: c.maxPerDay ?? ACCA_DESK_MAX_PER_DAY,
+        skipCupLeagueNames: !!c.skipCupLeagueNames,
+        requireHomeScoringForm: !!c.requireHomeScoringForm,
+        allowedOutcomeKeys: c.allowedOutcomeKeys ?? [],
         isActive: row?.isActive ?? false,
         userId: row?.userId ?? null,
         tipsterId: row?.id ?? null,
@@ -165,6 +170,7 @@ export class AccaDeskPublisherService {
       tomorrowDeskDay: tomorrowDesk,
       legs: ACCA_DESK_LEGS,
       maxPerDay: ACCA_DESK_MAX_PER_DAY,
+      bankHalfMaxPerDay: BANK_HALF_TIPSTER.maxPerDay ?? 1,
       timeSlots: ACCA_DESK_TIME_SLOTS.map((s) => s.key),
       rosterSize: ACCA_DESK_TIPSTERS.length,
       setupCount: roster.filter((r) => r.setup).length,
@@ -445,7 +451,8 @@ export class AccaDeskPublisherService {
         detail: { username: config.username, status: 'skipped_already', slotKey: slot.key },
       };
     }
-    if (posted.count >= ACCA_DESK_MAX_PER_DAY) {
+    const maxPerDay = config.maxPerDay ?? ACCA_DESK_MAX_PER_DAY;
+    if (posted.count >= maxPerDay) {
       return {
         detail: { username: config.username, status: 'skipped_cap', slotKey: slot.key },
       };
@@ -466,6 +473,8 @@ export class AccaDeskPublisherService {
       combinedOddMin: config.combinedOddMin,
       combinedOddMax: config.combinedOddMax,
       skipAmateurLeagueNames: config.skipAmateurLeagueNames,
+      skipCupLeagueNames: config.skipCupLeagueNames,
+      requireHomeScoringForm: config.requireHomeScoringForm,
       distinctOutcomeKeys: config.distinctOutcomeKeys,
       allowedOutcomeKeys: config.allowedOutcomeKeys,
     });

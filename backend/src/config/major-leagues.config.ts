@@ -142,6 +142,69 @@ export function isAmateurLeagueName(leagueName: string | null | undefined): bool
 }
 
 /**
+ * Domestic / continental cups — Bank · Half and short HT homes blank more often here.
+ * Name fragments only; league ids stay on the enabled-league pool.
+ */
+const CUP_LEAGUE_NAME_FRAGMENTS: readonly string[] = [
+  ' cup',
+  'cup ',
+  ' cup-',
+  'league cup',
+  'players cup',
+  'challenge cup',
+  'emperor',
+  '天皇杯',
+  'fa cup',
+  'efl cup',
+  'carabao',
+  'coupe de',
+  'dfb pokal',
+  'coppa',
+  'copa del rey',
+  'copa del',
+  'copa de',
+  'copa libertadores',
+  'copa sudamericana',
+  'super cup',
+  'supercup',
+  'supercopa',
+  'community shield',
+  'charity shield',
+  'trophee',
+  'trophée',
+  'open cup',
+  'leagues cup',
+  'swiss cup',
+  'scottish cup',
+  'welsh cup',
+  'nvb beker',
+  'knvb beker',
+  'taca de',
+  'taça de',
+  'svenska cupen',
+  'nm cupen',
+  'turkish cup',
+  'hungary cup',
+  'romania cup',
+  'champions league',
+  'europa league',
+  'conference league',
+  'uefa europa',
+  'uefa conference',
+  'continental cup',
+  'conti cup',
+  'wsl cup',
+];
+
+export function isCupCompetitionName(leagueName: string | null | undefined): boolean {
+  if (!leagueName) return false;
+  const n = ` ${leagueName.toLowerCase().trim()} `;
+  // EFL / English Championship is a league, not a cup.
+  if (/\bchampionship\b/.test(n) && !/\bcup\b/.test(n)) return false;
+  return CUP_LEAGUE_NAME_FRAGMENTS.some((frag) => n.includes(frag));
+}
+
+/**
  * Youth / reserve sides that leak through senior league ids (PAOK II, Timbers II, U23).
  * "II" must be the last token of a side so "Juan Pablo II College" stays.
  */

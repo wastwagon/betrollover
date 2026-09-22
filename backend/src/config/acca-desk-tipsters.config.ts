@@ -1,13 +1,35 @@
 /**
  * Acca Desk tipsters — automated 2-leg free picks via Acca Generator.
  *
- * Core roster: Sure + Safe + Medium × (1X2, DC, BTTS, O2.5, O1.5, U1.5, DNB, FH1X2, FHO1.5, Mix).
- * Plus High for totals (O2.5 / O1.5 / U1.5 / FH Over 1.5).
+ * Bank · Half leads the roster (HT Home only, one slip/day), then
+ * Sure + Safe + Medium × (1X2, DC, BTTS, O2.5, O1.5, U1.5, DNB, FH1X2, FHO1.5, Mix),
+ * plus High for totals (O2.5 / O1.5 / U1.5 / FH Over 1.5).
  * Order = fixture allocation order (fixed exclusivity).
  */
 
 import { DEFAULT_ACCA_MARKETS, type AccaRiskLevel } from '../modules/acca-generator/acca-generator.markets';
 import type { AccaDeskSlotKey } from './acca-desk-slots';
+import {
+  BANK_HALF_AVATAR_URL,
+  BANK_HALF_BIO,
+  BANK_HALF_BLACKLIST_LEAGUE_API_IDS,
+  BANK_HALF_DISPLAY_NAME,
+  BANK_HALF_EXCLUDE_SLOT_KEYS,
+  BANK_HALF_LEG_ODD_MAX,
+  BANK_HALF_LEG_ODD_MIN,
+  BANK_HALF_LEG_TARGET_ODD,
+  BANK_HALF_LEGS,
+  BANK_HALF_MARKETS,
+  BANK_HALF_MAX_COMBINED_ODDS,
+  BANK_HALF_MAX_COUPONS_PER_DAY,
+  BANK_HALF_MIN_COMBINED_ODDS,
+  BANK_HALF_OUTCOME_KEYS,
+  BANK_HALF_REQUIRE_HOME_SCORING_FORM,
+  BANK_HALF_SKIP_AMATEUR_LEAGUE_NAMES,
+  BANK_HALF_SKIP_CUP_LEAGUE_NAMES,
+  BANK_HALF_STRATEGY_ID,
+  BANK_HALF_USERNAME,
+} from './bank-half.config';
 
 export type AccaDeskTipsterConfig = {
   username: string;
@@ -29,6 +51,15 @@ export type AccaDeskTipsterConfig = {
   /** Kick-off windows this desk will not publish (e.g. Midnight 1X2). */
   excludeSlotKeys?: readonly AccaDeskSlotKey[];
   skipAmateurLeagueNames?: boolean;
+  /** Skip domestic / continental cups (Bank · Half). */
+  skipCupLeagueNames?: boolean;
+  /**
+   * Home side must have scored in its last FT match and not lost by 4+.
+   * Used by Bank · Half.
+   */
+  requireHomeScoringForm?: boolean;
+  /** Override ACCA_DESK_MAX_PER_DAY (Bank · Half = 1). */
+  maxPerDay?: number;
   /** Inclusive combined-odds floor for the 2-fold. */
   combinedOddMin?: number;
   /** Inclusive combined-odds ceiling for the 2-fold. */
@@ -47,6 +78,9 @@ type DeskExtras = Pick<
   | 'excludeLeagueApiIds'
   | 'excludeSlotKeys'
   | 'skipAmateurLeagueNames'
+  | 'skipCupLeagueNames'
+  | 'requireHomeScoringForm'
+  | 'maxPerDay'
   | 'combinedOddMin'
   | 'combinedOddMax'
   | 'distinctOutcomeKeys'
@@ -295,8 +329,32 @@ function extrasForDesk(risk: AccaDeskTipsterConfig['riskLevel'], spec: (typeof M
   return extras;
 }
 
-/** Fixed order: Sure → Safe → Medium blocks; then High totals. */
+/** Fixed order: Bank · Half first (claims HT homes), then Sure → Safe → Medium; then High totals. */
+export const BANK_HALF_TIPSTER: AccaDeskTipsterConfig = {
+  username: BANK_HALF_USERNAME,
+  display_name: BANK_HALF_DISPLAY_NAME,
+  bio: BANK_HALF_BIO,
+  avatar_url: BANK_HALF_AVATAR_URL,
+  strategy_id: BANK_HALF_STRATEGY_ID,
+  riskLevel: 'safe',
+  markets: [...BANK_HALF_MARKETS],
+  legs: BANK_HALF_LEGS,
+  oddMin: BANK_HALF_LEG_ODD_MIN,
+  oddMax: BANK_HALF_LEG_ODD_MAX,
+  targetOdd: BANK_HALF_LEG_TARGET_ODD,
+  combinedOddMin: BANK_HALF_MIN_COMBINED_ODDS,
+  combinedOddMax: BANK_HALF_MAX_COMBINED_ODDS,
+  allowedOutcomeKeys: [...BANK_HALF_OUTCOME_KEYS],
+  excludeSlotKeys: [...BANK_HALF_EXCLUDE_SLOT_KEYS],
+  excludeLeagueApiIds: [...BANK_HALF_BLACKLIST_LEAGUE_API_IDS],
+  skipAmateurLeagueNames: BANK_HALF_SKIP_AMATEUR_LEAGUE_NAMES,
+  skipCupLeagueNames: BANK_HALF_SKIP_CUP_LEAGUE_NAMES,
+  requireHomeScoringForm: BANK_HALF_REQUIRE_HOME_SCORING_FORM,
+  maxPerDay: BANK_HALF_MAX_COUPONS_PER_DAY,
+};
+
 export const ACCA_DESK_TIPSTERS: AccaDeskTipsterConfig[] = [
+  BANK_HALF_TIPSTER,
   ...RISKS.flatMap((risk) =>
     MARKET_SPECS.map((m) => desk(risk, m.key, m.label, m.markets, extrasForDesk(risk, m))),
   ),
@@ -311,7 +369,7 @@ export { ACCA_DESK_EARLY_SLOT_KEYS, ACCA_DESK_MAX_PER_DAY, ACCA_DESK_TIME_SLOTS 
 
 /**
  * Paused desks skip publish + show inactive on setup; marketplace/public lists hide them.
- * Do not add AccaSure1X2 or VipTwoFold here.
+ * Do not add AccaSure1X2, VipTwoFold, or BankHalf here.
  * AccaHighO25 / AccaMediumBTTS stay live (long O2.5 and Medium BTTS pay).
  */
 export const ACCA_DESK_PAUSED_USERNAMES = new Set<string>([

@@ -1,5 +1,6 @@
 import {
   isAmateurLeagueName,
+  isCupCompetitionName,
   isMajorLeagueForSafeAcca,
   isYouthOrReserveMatch,
 } from './major-leagues.config';
@@ -36,5 +37,19 @@ describe('major-leagues.config', () => {
     expect(isYouthOrReserveMatch('PAOK II vs Olympiakos Piraeus II')).toBe(true);
     expect(isYouthOrReserveMatch('Juan Pablo II College vs Alianza Lima')).toBe(false);
     expect(isYouthOrReserveMatch('FC Porto vs Manchester City')).toBe(false);
+  });
+
+  it('flags cup competitions without blocking league Championship names', () => {
+    expect(isCupCompetitionName('Subway Players Cup')).toBe(true);
+    expect(isCupCompetitionName("Emperor's Cup")).toBe(true);
+    expect(isCupCompetitionName('Scottish Challenge Cup')).toBe(true);
+    expect(isCupCompetitionName('FA Cup')).toBe(true);
+    expect(isCupCompetitionName("Women's League Cup")).toBe(true);
+    expect(isCupCompetitionName('WSL Cup')).toBe(true);
+    expect(isCupCompetitionName('UEFA Champions League')).toBe(true);
+    expect(isCupCompetitionName('UEFA Europa League')).toBe(true);
+    expect(isCupCompetitionName('Premier League')).toBe(false);
+    expect(isCupCompetitionName('Championship')).toBe(false);
+    expect(isCupCompetitionName('EFL Championship')).toBe(false);
   });
 });

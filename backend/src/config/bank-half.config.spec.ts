@@ -1,0 +1,33 @@
+import {
+  BANK_HALF_EXCLUDE_SLOT_KEYS,
+  BANK_HALF_LEG_ODD_MAX,
+  BANK_HALF_LEG_ODD_MIN,
+  BANK_HALF_LEG_TARGET_ODD,
+  BANK_HALF_MAX_COMBINED_ODDS,
+  BANK_HALF_MAX_COUPONS_PER_DAY,
+  BANK_HALF_MIN_COMBINED_ODDS,
+  BANK_HALF_OUTCOME_KEYS,
+  BANK_HALF_REQUIRE_HOME_SCORING_FORM,
+  BANK_HALF_SKIP_AMATEUR_LEAGUE_NAMES,
+  BANK_HALF_SKIP_CUP_LEAGUE_NAMES,
+  BANK_HALF_USERNAME,
+} from './bank-half.config';
+
+describe('bank-half.config', () => {
+  it('locks the HT-home 2-fold band used for admin staking', () => {
+    expect(BANK_HALF_USERNAME).toBe('BankHalf');
+    expect(BANK_HALF_OUTCOME_KEYS).toEqual(['ht_home']);
+    expect(BANK_HALF_LEG_ODD_MIN).toBe(1.47);
+    expect(BANK_HALF_LEG_ODD_MAX).toBe(1.6);
+    expect(BANK_HALF_LEG_TARGET_ODD).toBe(1.54);
+    expect(BANK_HALF_MIN_COMBINED_ODDS).toBe(2.2);
+    expect(BANK_HALF_MAX_COMBINED_ODDS).toBe(2.5);
+    expect(BANK_HALF_MAX_COUPONS_PER_DAY).toBe(1);
+    expect(BANK_HALF_EXCLUDE_SLOT_KEYS).toEqual(['midnight']);
+    expect(BANK_HALF_SKIP_AMATEUR_LEAGUE_NAMES).toBe(true);
+    expect(BANK_HALF_SKIP_CUP_LEAGUE_NAMES).toBe(true);
+    expect(BANK_HALF_REQUIRE_HOME_SCORING_FORM).toBe(true);
+    expect(BANK_HALF_LEG_ODD_MIN * BANK_HALF_LEG_ODD_MIN).toBeLessThan(BANK_HALF_MIN_COMBINED_ODDS);
+    expect(BANK_HALF_LEG_ODD_MAX * BANK_HALF_LEG_ODD_MAX).toBeGreaterThan(BANK_HALF_MAX_COMBINED_ODDS);
+  });
+});
