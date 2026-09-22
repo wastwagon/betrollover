@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Bricolage_Grotesque, DM_Sans } from 'next/font/google';
+import localFont from 'next/font/local';
 import { QueryProvider } from '@/components/QueryProvider';
 import { SlipCartProvider } from '@/context/SlipCartContext';
 import { CurrencyProvider } from '@/context/CurrencyContext';
@@ -15,16 +15,26 @@ import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_DEFAULT_TITL
 import { getLocale } from '@/lib/i18n';
 import './globals.css';
 
-const dmSans = DM_Sans({
-  subsets: ['latin'],
+/** Self-hosted so Coolify/Docker builds do not fetch fonts.googleapis.com (flaky / blocked → next/font null parse). */
+const dmSans = localFont({
+  src: [
+    { path: '../fonts/dm-sans-400.woff2', weight: '400', style: 'normal' },
+    { path: '../fonts/dm-sans-500.woff2', weight: '500', style: 'normal' },
+    { path: '../fonts/dm-sans-600.woff2', weight: '600', style: 'normal' },
+    { path: '../fonts/dm-sans-700.woff2', weight: '700', style: 'normal' },
+  ],
   variable: '--font-dm-sans',
-  weight: ['400', '500', '600', '700'],
+  display: 'swap',
 });
 
-const displayFont = Bricolage_Grotesque({
-  subsets: ['latin'],
+const displayFont = localFont({
+  src: [
+    { path: '../fonts/bricolage-500.woff2', weight: '500', style: 'normal' },
+    { path: '../fonts/bricolage-600.woff2', weight: '600', style: 'normal' },
+    { path: '../fonts/bricolage-700.woff2', weight: '700', style: 'normal' },
+  ],
   variable: '--font-display',
-  weight: ['500', '600', '700'],
+  display: 'swap',
 });
 
 // Ensure we only pass strings to className (avoids "Objects are not valid as React child" during hydration)
