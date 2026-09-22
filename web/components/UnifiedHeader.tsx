@@ -31,7 +31,6 @@ import {
   IconLive,
   IconArchive,
   IconTable,
-  IconUsers,
   IconBook,
   IconShield,
   IconPerson,
@@ -486,7 +485,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                 >
                     <div className="py-1 px-1">
                       <SectionLabel>{t('header.section_discover_tipsters')}</SectionLabel>
-                      <CompactNavLink href="/tipsters" icon={<IconSearch />} label={t('nav.browse')} onClick={closeAll} />
+                      <CompactNavLink href="/tipsters" icon={<IconSearch />} label={t('nav.all_tipsters')} onClick={closeAll} />
                       <CompactNavLink href="/leaderboard" icon={<IconTrophy />} label={t('nav.leaderboard')} onClick={closeAll} />
                     </div>
 
@@ -565,9 +564,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
 
                     <div className="py-1 px-1 border-t border-[var(--separator)]">
                       <SectionLabel>{t('header.section_platform')}</SectionLabel>
-                      <CompactNavLink href="/leaderboard" icon={<IconTrophy />} label={t('nav.leaderboard')} onClick={closeAll} />
                       <CompactNavLink href="/league-tables" icon={<IconTable />} label={t('nav.league_tables')} onClick={closeAll} />
-                      <CompactNavLink href="/tipsters" icon={<IconUsers />} label={t('nav.top_tipsters')} onClick={closeAll} />
                       <CompactNavLink href="/guides" icon={<IconBook />} label={t('nav.short_guides')} onClick={closeAll} />
                     </div>
                 </DesktopMenuPortal>

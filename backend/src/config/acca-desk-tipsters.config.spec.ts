@@ -275,25 +275,50 @@ describe('AccaHighO25 desk shape', () => {
   });
 });
 
+describe('AccaSafeFH1X2 / AccaSureFH1X2 hygiene', () => {
+  it('skips amateur/youth and cup competitions on Sure and Safe HT winner desks', () => {
+    const safe = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaSafeFH1X2')!;
+    const sure = ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaSureFH1X2')!;
+    expect(safe.skipAmateurLeagueNames).toBe(true);
+    expect(safe.skipCupLeagueNames).toBe(true);
+    expect(sure.skipAmateurLeagueNames).toBe(true);
+    expect(sure.skipCupLeagueNames).toBe(true);
+    expect(isAccaDeskPublishingPaused('AccaSafeFH1X2')).toBe(false);
+  });
+});
+
 describe('acca desk pause list', () => {
-  it('pauses Sure/Safe/Medium O25 + Sure/Safe BTTS; High O25 / Medium BTTS keep publishing', () => {
+  it('pauses archive-losing desks; keeps Sure 1X2, Safe FH, Medium BTTS, High O25, BankHalf live', () => {
     expect([...ACCA_DESK_PAUSED_USERNAMES].sort()).toEqual(
-      ['AccaMediumO25', 'AccaSafeBTTS', 'AccaSafeO25', 'AccaSureBTTS', 'AccaSureO25'].sort(),
+      [
+        'AccaHighFHO15',
+        'AccaHighO15',
+        'AccaHighU15',
+        'AccaMedium1X2',
+        'AccaMediumDC',
+        'AccaMediumFH1X2',
+        'AccaMediumO25',
+        'AccaSafeBTTS',
+        'AccaSafeO25',
+        'AccaSureBTTS',
+        'AccaSureO15',
+        'AccaSureO25',
+      ].sort(),
     );
     expect(isAccaDeskPublishingPaused('AccaSureO25')).toBe(true);
-    expect(isAccaDeskPublishingPaused('AccaSureBTTS')).toBe(true);
-    expect(isAccaDeskPublishingPaused('AccaSafeO25')).toBe(true);
-    expect(isAccaDeskPublishingPaused('AccaMediumO25')).toBe(true);
-    expect(isAccaDeskPublishingPaused('AccaSafeBTTS')).toBe(true);
+    expect(isAccaDeskPublishingPaused('AccaSureO15')).toBe(true);
+    expect(isAccaDeskPublishingPaused('AccaHighU15')).toBe(true);
+    expect(isAccaDeskPublishingPaused('AccaHighFHO15')).toBe(true);
+    expect(isAccaDeskPublishingPaused('AccaMedium1X2')).toBe(true);
+    expect(isAccaDeskPublishingPaused('AccaMediumDC')).toBe(true);
+    expect(isAccaDeskPublishingPaused('AccaMediumFH1X2')).toBe(true);
     expect(isAccaDeskPublishingPaused('AccaMediumBTTS')).toBe(false);
     expect(isAccaDeskPublishingPaused('AccaHighO25')).toBe(false);
     expect(isAccaDeskPublishingPaused('AccaSure1X2')).toBe(false);
-    expect(isAccaDeskPublishingPaused('AccaSureO15')).toBe(false);
-    expect(accaDeskPausedPublicExcludeRawSql('t')).toContain("'AccaSureO25'");
-    expect(accaDeskPausedPublicExcludeRawSql('t')).toContain("'AccaSureBTTS'");
-    expect(accaDeskPausedPublicExcludeRawSql('t')).toContain("'AccaSafeO25'");
-    expect(accaDeskPausedPublicExcludeRawSql('t')).toContain("'AccaMediumO25'");
-    expect(accaDeskPausedPublicExcludeRawSql('t')).toContain("'AccaSafeBTTS'");
+    expect(isAccaDeskPublishingPaused('AccaSafeFH1X2')).toBe(false);
+    expect(isAccaDeskPublishingPaused('BankHalf')).toBe(false);
+    expect(accaDeskPausedPublicExcludeRawSql('t')).toContain("'AccaSureO15'");
+    expect(accaDeskPausedPublicExcludeRawSql('t')).toContain("'AccaMedium1X2'");
     expect(accaDeskPausedPublicExcludeRawSql('t')).toContain('NOT IN');
   });
 });

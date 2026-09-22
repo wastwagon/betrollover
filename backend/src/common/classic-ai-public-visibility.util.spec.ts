@@ -9,15 +9,17 @@ describe('classic AI public visibility', () => {
     else process.env[key] = previous;
   });
 
-  it('shows classic 1-fixture AI tipsters when the hide flag is unset', () => {
+  it('hides classic 1-fixture AI tipsters by default', () => {
     delete process.env[key];
-    expect(isClassicAiHiddenFromPublic()).toBe(false);
+    expect(isClassicAiHiddenFromPublic()).toBe(true);
   });
 
-  it('hides them only when the flag is explicitly on', () => {
+  it('shows them only when the flag is explicitly off', () => {
+    process.env[key] = 'false';
+    expect(isClassicAiHiddenFromPublic()).toBe(false);
     process.env[key] = 'true';
     expect(isClassicAiHiddenFromPublic()).toBe(true);
-    process.env[key] = 'false';
+    process.env[key] = '0';
     expect(isClassicAiHiddenFromPublic()).toBe(false);
   });
 

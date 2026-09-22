@@ -7,7 +7,7 @@ import { getApiUrl } from '@/lib/site-config';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { useT } from '@/context/LanguageContext';
-import { hasPrimaryLeaderboardSample } from '@/lib/leaderboard-sample';
+import { eliteLeaderboardUsernames, pickEliteShowcase } from '@/lib/home-elite-showcase';
 
 interface Pick {
   id?: number;
@@ -59,60 +59,12 @@ function parseMarketplacePayload(data: unknown): MarketplaceCardItem[] {
   return Array.isArray(items) ? (items as MarketplaceCardItem[]) : [];
 }
 
-function leaderboardUsernameSet(data: unknown): Set<string> {
-  const raw = (data as { leaderboard?: unknown[] })?.leaderboard;
-  const entries = Array.isArray(raw) ? raw : Array.isArray(data) ? data : [];
-  const names = new Set<string>();
-  for (const row of entries) {
-    const e = row as Record<string, unknown>;
-    if (!hasPrimaryLeaderboardSample(e)) continue;
-    const u = (e.username as string | undefined)?.trim().toLowerCase();
-    if (u) names.add(u);
-  }
-  return names;
-}
-
-/**
- * One latest pick per tipster (humans and Acca Desk together).
- * Prefer leaderboard names, then fill with newest listings so the shelf stays busy.
- */
-function pickEliteShowcase(all: MarketplaceCardItem[], eliteNames: Set<string>, max = 6): MarketplaceCardItem[] {
-  const newestFirst = [...all].sort(
-    (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime(),
-  );
-  const seenTipster = new Set<string>();
-  const unique: MarketplaceCardItem[] = [];
-  for (const a of newestFirst) {
-    const key = a.tipster?.username?.trim().toLowerCase() || `pick:${a.id}`;
-    if (seenTipster.has(key)) continue;
-    seenTipster.add(key);
-    unique.push(a);
-  }
-  const out: MarketplaceCardItem[] = [];
-  const used = new Set<number>();
-  for (const a of unique) {
-    const u = a.tipster?.username?.trim().toLowerCase();
-    if (u && eliteNames.has(u)) {
-      out.push(a);
-      used.add(a.id);
-      if (out.length >= max) return out;
-    }
-  }
-  for (const a of unique) {
-    if (!used.has(a.id)) {
-      out.push(a);
-      if (out.length >= max) return out;
-    }
-  }
-  return out;
-}
-
 function seedElite(
   marketItems: Record<string, unknown>[],
   leaderboard: Record<string, unknown>[],
 ): MarketplaceCardItem[] {
   const allItems = parseMarketplacePayload({ items: marketItems });
-  const eliteNames = leaderboardUsernameSet(leaderboard);
+  const eliteNames = eliteLeaderboardUsernames({ leaderboard });
   return pickEliteShowcase(allItems, eliteNames, 8);
 }
 
@@ -145,7 +97,7 @@ export function HomeQuickMarketplaceSections({
         const lbJson = lbRes.ok ? await lbRes.json() : {};
         const allJson = allRes.ok ? await allRes.json() : {};
         if (cancelled) return;
-        const eliteNames = leaderboardUsernameSet(lbJson);
+        const eliteNames = eliteLeaderboardUsernames(lbJson);
         const allItems = parseMarketplacePayload(allJson);
         setElite(pickEliteShowcase(allItems, eliteNames, 8));
       } catch {

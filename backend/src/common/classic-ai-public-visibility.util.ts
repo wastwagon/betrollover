@@ -1,14 +1,15 @@
 /**
- * Classic 1-fixture AI tipsters (tipsterType=ai). Public by default.
- * Acca Desk (tipsterType=acca_desk) is unaffected.
+ * Classic 1-fixture AI tipsters (tipsterType=ai).
+ * Acca Desk (tipsterType=acca_desk) and VIP · Two-Fold are unaffected.
  *
- * Toggle: HIDE_CLASSIC_AI_TIPSTERS_FROM_PUBLIC=true to hide browse / leaderboard / marketplace.
+ * Hidden from public browse / leaderboard / marketplace by default so Acca Desk
+ * is the platform board. Set HIDE_CLASSIC_AI_TIPSTERS_FROM_PUBLIC=false to show them.
  */
 export const CLASSIC_AI_TIPSTER_TYPE = 'ai';
 
 export function isClassicAiHiddenFromPublic(): boolean {
-  const raw = (process.env.HIDE_CLASSIC_AI_TIPSTERS_FROM_PUBLIC ?? 'false').toLowerCase().trim();
-  return raw === 'true' || raw === '1' || raw === 'yes';
+  const raw = (process.env.HIDE_CLASSIC_AI_TIPSTERS_FROM_PUBLIC ?? 'true').toLowerCase().trim();
+  return raw !== 'false' && raw !== '0' && raw !== 'no';
 }
 
 export function isClassicAiTipsterRow(row: {

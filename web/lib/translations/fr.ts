@@ -20,7 +20,8 @@ const fr: Record<string, string> = {
   'nav.american_football': 'Football Américain',
   'nav.tipsters': 'Tipsters',
   'nav.tipsters_short': 'Tipsters',
-  'nav.top_tipsters': 'Meilleurs Tipsters',
+  'nav.top_tipsters': 'Annuaire tipsters',
+  'nav.all_tipsters': 'Tous les tipsters',
   'nav.leaderboard': 'Classement',
   'nav.discover': 'Découvrir',
   'nav.news': 'Actualités',
@@ -195,7 +196,7 @@ const fr: Record<string, string> = {
   'home.marketplace_active_badge': 'Marché',
   'home.marketplace_active_title': 'Activité des meilleurs tipsters',
   'home.marketplace_active_sub':
-    'Nouveaux pronostics des tipsters du classement général — et d’autres annonces récentes pour toujours voir du live.',
+    'Pronostics en cours des tipsters du classement général avec un échantillon principal et un ROI positif.',
   'home.marketplace_active_cta': 'Voir tous les tipsters',
   'home.marketplace_login_to_browse': 'Connectez-vous pour voir les pronostics du marché en direct.',
   'home.how_it_works': 'Comment Ça Marche',

@@ -21,7 +21,8 @@ const en = {
   'nav.american_football': 'American Football',
   'nav.tipsters': 'Tipsters',
   'nav.tipsters_short': 'Tipsters',
-  'nav.top_tipsters': 'Top Tipsters',
+  'nav.top_tipsters': 'Tipster directory',
+  'nav.all_tipsters': 'All tipsters',
   'nav.leaderboard': 'Leaderboard',
   'nav.discover': 'Discover',
   'nav.news': 'News',
@@ -198,7 +199,7 @@ const en = {
   'home.marketplace_active_badge': 'Marketplace',
   'home.marketplace_active_title': 'Latest from top tipsters',
   'home.marketplace_active_sub':
-    'New picks from tipsters on the all-time leaderboard — plus other fresh listings so you always see something live.',
+    'Live picks from tipsters on the all-time leaderboard with a primary sample and positive ROI.',
   'home.marketplace_active_cta': 'Browse all tipsters',
   'home.marketplace_login_to_browse': 'Log in to see live marketplace picks.',
   'home.how_it_works': 'How It Works',

@@ -57,6 +57,7 @@ export class TipstersSetupService {
       if (bio !== undefined) updates.bio = bio || null;
       if (!user.isVerified) updates.isVerified = true;
       if (user.status !== UserStatus.ACTIVE) updates.status = UserStatus.ACTIVE;
+      if (user.role !== UserRole.TIPSTER) updates.role = UserRole.TIPSTER;
       if (Object.keys(updates).length > 0) {
         await this.userRepo.update(user.id, updates);
         Object.assign(user, updates);
@@ -80,8 +81,9 @@ export class TipstersSetupService {
   }
 
   /**
-   * Initialize/sync AI tipsters from config (25 distinct strategies).
-   * Idempotent: upserts by username, preserves existing stats.
+   * Initialize/sync AI tipsters from config (distinct strategies).
+   * Idempotent: upserts by username, preserves existing stats, re-applies display_name/bio/avatar
+   * from config (fixes drift like Midweek Value vs Midweek Away).
    * Deactivates AI tipsters no longer in config; re-activates those restored to config.
    * Creates User records for marketplace display.
    */

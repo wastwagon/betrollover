@@ -270,6 +270,13 @@ const MARKET_SPECS: { key: string; label: string; markets: string[] }[] = [
 function extrasForDesk(risk: AccaDeskTipsterConfig['riskLevel'], spec: (typeof MARKET_SPECS)[number]): DeskExtras {
   const extras: DeskExtras = {};
   // AccaSure1X2 and other non-O1.5 AccaSure desks keep generic bands and the full league pool.
+  if (spec.key === 'fh1x2') {
+    // Free Tip / Board HT winners: skip youth + cups (Bank · Half already stricter).
+    if (risk === 'sure' || risk === 'safe') {
+      extras.skipAmateurLeagueNames = true;
+      extras.skipCupLeagueNames = true;
+    }
+  }
   if (spec.key === 'o15') {
     extras.excludeLeagueApiIds = ACCA_O15_BLACKLIST_LEAGUE_API_IDS;
     const band = ACCA_O15_ODDS_BY_RISK[risk];
@@ -369,8 +376,8 @@ export { ACCA_DESK_EARLY_SLOT_KEYS, ACCA_DESK_MAX_PER_DAY, ACCA_DESK_TIME_SLOTS 
 
 /**
  * Paused desks skip publish + show inactive on setup; marketplace/public lists hide them.
- * Do not add AccaSure1X2, VipTwoFold, or BankHalf here.
- * AccaHighO25 / AccaMediumBTTS stay live (long O2.5 and Medium BTTS pay).
+ * Do not add AccaSure1X2, VipTwoFold, AccaSafeFH1X2, AccaMediumBTTS, AccaHighO25, or BankHalf here.
+ * Archive-losing desks stay paused until a new sample earns them back.
  */
 export const ACCA_DESK_PAUSED_USERNAMES = new Set<string>([
   'AccaSureO25',
@@ -378,6 +385,15 @@ export const ACCA_DESK_PAUSED_USERNAMES = new Set<string>([
   'AccaSafeO25',
   'AccaMediumO25',
   'AccaSafeBTTS',
+  // Short Over 1.5 + High totals that blanked on the public board
+  'AccaSureO15',
+  'AccaHighU15',
+  'AccaHighFHO15',
+  'AccaHighO15',
+  // Medium exact-winner / DC desks deep in the red
+  'AccaMedium1X2',
+  'AccaMediumDC',
+  'AccaMediumFH1X2',
 ]);
 
 export function isAccaDeskPublishingPaused(username: string): boolean {

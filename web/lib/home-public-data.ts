@@ -53,9 +53,13 @@ function leadingRoiFromLeaderboard(data: unknown): number | null {
   return top.roi;
 }
 
-/** Home modules should not lead with low-sample tipsters (secondary leaderboard band). */
+/** Home modules should not lead with low-sample or negative-ROI tipsters. */
 function primaryRankedTipsters(entries: Record<string, unknown>[]): Record<string, unknown>[] {
-  return entries.filter((e) => hasPrimaryLeaderboardSample(e));
+  return entries.filter((e) => {
+    if (!hasPrimaryLeaderboardSample(e)) return false;
+    const roi = Number(e.roi ?? 0);
+    return Number.isFinite(roi) && roi > 0;
+  });
 }
 
 /** Server-safe fetch for homepage trust metrics and teasers. */
