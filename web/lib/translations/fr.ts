@@ -1355,10 +1355,9 @@ const fr: Record<string, string> = {
   'wallet.withdraw_label': 'Demander un retrait',
   'wallet.amount': 'Montant',
   'wallet.currency_note': 'À titre indicatif uniquement. Toutes les transactions sont en GHS.',
-  'wallet.tagline': 'Ajoutez de l’argent sur Telegram, retirez et suivez les transactions',
-  'wallet.manual_deposit_body':
-    'Le paiement par carte et Mobile Money est en pause. Écrivez-nous sur Telegram avec votre nom d’utilisateur BetRollover et le montant en GHS. Nous confirmerons le paiement et créditerons votre portefeuille.',
-  'wallet.manual_deposit_cta': 'Écrire sur Telegram',
+  'wallet.tagline': 'Déposer, retirer et suivre les transactions',
+  'wallet.manual_deposit_body': 'Pour ajouter de l’argent, écrivez-nous avec votre nom d’utilisateur et le montant en GHS.',
+  'wallet.manual_deposit_cta': 'Telegram',
   'wallet.trust_callout_title': 'Remboursements, gains et protection d\'achat',
   'wallet.trust_callout_body':
     'Les remboursements d\'achats de pronostics et les gains des tipsters après règlement apparaissent ici. Les fonds des acheteurs pour les pronostics payants restent en attente de règlement jusqu\'au règlement du pronostic.',

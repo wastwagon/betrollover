@@ -411,18 +411,18 @@ function WalletContent() {
                 </div>
               ) : null}
               {(!canWithdraw || walletTab === 'deposit') && (
-              <div className="mt-3 space-y-3">
-                <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                  {t('wallet.manual_deposit_body')}
+              <div className="mt-3 space-y-2">
+                <p className="text-sm text-[var(--text-muted)]">
+                  {t('wallet.manual_deposit_body')}{' '}
+                  <a
+                    href={TELEGRAM_ADS_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-[var(--primary)] hover:underline"
+                  >
+                    {t('wallet.manual_deposit_cta')}
+                  </a>
                 </p>
-                <a
-                  href={TELEGRAM_ADS_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={buttonClassName({ size: 'lg', fullWidth: true })}
-                >
-                  {t('wallet.manual_deposit_cta')}
-                </a>
                 {depositContinuePath && (
                   <button
                     type="button"

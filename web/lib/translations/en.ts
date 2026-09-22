@@ -1360,10 +1360,9 @@ const en = {
   'wallet.withdraw_label': 'Request withdrawal',
   'wallet.amount': 'Amount',
   'wallet.currency_note': 'For reference only. All transactions are in GHS.',
-  'wallet.tagline': 'Add money on Telegram, withdraw, and track transactions',
-  'wallet.manual_deposit_body':
-    'Card and mobile-money checkout is paused. Message us on Telegram with your BetRollover username and the amount in GHS. We will confirm the payment and credit your wallet.',
-  'wallet.manual_deposit_cta': 'Message on Telegram',
+  'wallet.tagline': 'Deposit, withdraw, and track transactions',
+  'wallet.manual_deposit_body': 'To add money, message us with your username and the amount in GHS.',
+  'wallet.manual_deposit_cta': 'Telegram',
   'wallet.trust_callout_title': 'Refunds, earnings & payouts',
   'wallet.trust_callout_body':
     'Pick purchase refunds and tipster earnings from settled picks show up here. Paid picks stay pending settlement until results are in. If a paid pick loses, the purchase price is refunded automatically.',
