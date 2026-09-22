@@ -214,42 +214,11 @@ export class WalletService {
     });
   }
 
-  async initializeDeposit(user: User, amount: number) {
-    const { emailVerifiedAt } = await this.usersService.getEmailVerificationStatus(user.id);
-    if (!emailVerifiedAt) {
-      throw new ForbiddenException('Please verify your email before making a deposit.');
-    }
-    if (amount < 1 || amount > 10000) {
-      throw new BadRequestException('Amount must be between GHS 1 and GHS 10,000');
-    }
-    const wallet = await this.getOrCreateWallet(user.id);
-    this.ensureWalletActive(wallet, 'Deposits');
-
-    const reference = this.paystackService.generateReference();
-    const appUrl = this.config.get('APP_URL') || process.env.APP_URL || 'http://localhost:6002';
-    const callbackUrl = `${appUrl}/wallet?deposit=success&ref=${reference}`;
-
-    const data = await this.paystackService.initializeTransaction({
-      email: user.email,
-      amount,
-      reference,
-      callbackUrl,
-      metadata: { userId: user.id },
-    });
-
-    await this.depositRepo.save({
-      userId: user.id,
-      reference,
-      amount,
-      currency: 'GHS',
-      status: 'pending',
-    });
-
-    return {
-      authorizationUrl: data.authorization_url,
-      accessCode: data.access_code,
-      reference,
-    };
+  async initializeDeposit(_user: User, _amount: number) {
+    const handle = (process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE || 'betrollovertips').trim().replace(/^@/, '');
+    throw new BadRequestException(
+      `Online checkout is paused. Message us on Telegram at https://t.me/${handle} with your BetRollover username and the amount in GHS. We will confirm payment and credit your wallet.`,
+    );
   }
 
   /**

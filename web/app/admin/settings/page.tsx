@@ -913,7 +913,7 @@ export default function AdminSettingsPage() {
                   <div>
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Paystack Payment Gateway</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                      Configure Paystack API keys for wallet deposits. Instant Ghana Mobile Money payouts (Transfers) stay off until you enable them below — Paystack Starter businesses cannot send third-party payouts. After you are a Registered Business: enable Transfers, uncheck “Confirm transfers” (OTP), and subscribe the webhook to charge.success plus transfer.success, transfer.failed, and transfer.reversed.
+                      Wallet top-ups are manual on Telegram while Paystack cannot activate this account. Keys below stay saved for if a registered business is approved later. Instant Ghana Mobile Money payouts (Transfers) stay off until then.
                     </p>
                     <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${
                       paystackConfigured

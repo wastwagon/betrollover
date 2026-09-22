@@ -1258,8 +1258,8 @@ const en = {
   'subscriptions.checkout_error_complete_failed': 'Could not complete subscription. Please try again.',
   'subscriptions.checkout_days': '{n} days',
   'subscriptions.checkout_wallet_balance': 'Wallet balance:',
-  'subscriptions.checkout_topup_hint': 'Top up your wallet to subscribe.',
-  'subscriptions.checkout_topup_cta': 'Top up and continue',
+  'subscriptions.checkout_topup_hint': 'Add money by messaging us on Telegram, then come back to subscribe.',
+  'subscriptions.checkout_topup_cta': 'Add money on Telegram',
   'subscriptions.checkout_auto_processing': 'Wallet topped up. Completing your subscription automatically...',
   'subscriptions.checkout_processing': 'Processing…',
   'subscriptions.checkout_pay_cta': 'Pay from wallet',
@@ -1360,7 +1360,10 @@ const en = {
   'wallet.withdraw_label': 'Request withdrawal',
   'wallet.amount': 'Amount',
   'wallet.currency_note': 'For reference only. All transactions are in GHS.',
-  'wallet.tagline': 'Deposit, withdraw, and track transactions',
+  'wallet.tagline': 'Add money on Telegram, withdraw, and track transactions',
+  'wallet.manual_deposit_body':
+    'Card and mobile-money checkout is paused. Message us on Telegram with your BetRollover username and the amount in GHS. We will confirm the payment and credit your wallet.',
+  'wallet.manual_deposit_cta': 'Message on Telegram',
   'wallet.trust_callout_title': 'Refunds, earnings & payouts',
   'wallet.trust_callout_body':
     'Pick purchase refunds and tipster earnings from settled picks show up here. Paid picks stay pending settlement until results are in. If a paid pick loses, the purchase price is refunded automatically.',

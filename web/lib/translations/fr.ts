@@ -1253,8 +1253,8 @@ const fr: Record<string, string> = {
   'subscriptions.checkout_error_complete_failed': 'Impossible de finaliser l’abonnement. Veuillez réessayer.',
   'subscriptions.checkout_days': '{n} jours',
   'subscriptions.checkout_wallet_balance': 'Solde du portefeuille :',
-  'subscriptions.checkout_topup_hint': 'Rechargez votre portefeuille pour vous abonner.',
-  'subscriptions.checkout_topup_cta': 'Recharger et continuer',
+  'subscriptions.checkout_topup_hint': 'Ajoutez de l’argent en nous écrivant sur Telegram, puis revenez pour vous abonner.',
+  'subscriptions.checkout_topup_cta': 'Ajouter sur Telegram',
   'subscriptions.checkout_auto_processing': 'Portefeuille rechargé. Finalisation automatique de votre abonnement...',
   'subscriptions.checkout_processing': 'Traitement…',
   'subscriptions.checkout_pay_cta': 'Payer depuis le portefeuille',
@@ -1355,7 +1355,10 @@ const fr: Record<string, string> = {
   'wallet.withdraw_label': 'Demander un retrait',
   'wallet.amount': 'Montant',
   'wallet.currency_note': 'À titre indicatif uniquement. Toutes les transactions sont en GHS.',
-  'wallet.tagline': 'Déposer, retirer et suivre les transactions',
+  'wallet.tagline': 'Ajoutez de l’argent sur Telegram, retirez et suivez les transactions',
+  'wallet.manual_deposit_body':
+    'Le paiement par carte et Mobile Money est en pause. Écrivez-nous sur Telegram avec votre nom d’utilisateur BetRollover et le montant en GHS. Nous confirmerons le paiement et créditerons votre portefeuille.',
+  'wallet.manual_deposit_cta': 'Écrire sur Telegram',
   'wallet.trust_callout_title': 'Remboursements, gains et protection d\'achat',
   'wallet.trust_callout_body':
     'Les remboursements d\'achats de pronostics et les gains des tipsters après règlement apparaissent ici. Les fonds des acheteurs pour les pronostics payants restent en attente de règlement jusqu\'au règlement du pronostic.',

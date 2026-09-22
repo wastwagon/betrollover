@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
-import { getApiUrl } from '@/lib/site-config';
+import { getApiUrl, TELEGRAM_ADS_URL } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { useLanguage, useT } from '@/context/LanguageContext';
 import {
@@ -77,9 +77,6 @@ function WalletContent() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [depositAmount, setDepositAmount] = useState('');
-  const [depositLoading, setDepositLoading] = useState(false);
-  const [depositError, setDepositError] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
@@ -185,7 +182,6 @@ function WalletContent() {
     }
     if (depositState === 'cancelled' || depositState === 'failed') {
       setDepositCallbackState(depositState);
-      setDepositError(null);
       return;
     }
     const ref = searchParams.get('ref');
@@ -206,43 +202,6 @@ function WalletContent() {
       setDepositCallbackState('success');
     }
   }, [searchParams, loadData, t, handledDepositRef]);
-
-  const handleDeposit = async () => {
-    const amount = parseFloat(depositAmount);
-    if (!amount || amount < 1 || amount > 10000) {
-      setDepositError(t('wallet.deposit_range'));
-      return;
-    }
-    setDepositCallbackState(null);
-    setDepositError(null);
-    setDepositLoading(true);
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-    try {
-      const res = await fetch(`${getApiUrl()}/wallet/deposit/initialize`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ amount }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(getApiErrorMessage(data, t('wallet.init_failed')));
-      if (data.authorizationUrl) {
-        window.location.href = data.authorizationUrl;
-      } else {
-        setDepositError(t('wallet.could_not_get_link'));
-      }
-    } catch (e) {
-      setDepositError(e instanceof Error ? e.message : t('wallet.deposit_failed'));
-    } finally {
-      setDepositLoading(false);
-    }
-  };
 
   const handleWithdraw = async () => {
     const amount = parseFloat(withdrawAmount);
@@ -452,26 +411,31 @@ function WalletContent() {
                 </div>
               ) : null}
               {(!canWithdraw || walletTab === 'deposit') && (
-              <div className="mt-3 space-y-2">
-                <Input
-                  type="number"
-                  min={1}
-                  max={10000}
-                  step={0.01}
-                  placeholder={t('wallet.amount_placeholder')}
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                  error={depositError || undefined}
-                />
-                <Button
-                  type="button"
-                  onClick={handleDeposit}
-                  disabled={depositLoading}
-                  fullWidth
-                  size="lg"
+              <div className="mt-3 space-y-3">
+                <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+                  {t('wallet.manual_deposit_body')}
+                </p>
+                <a
+                  href={TELEGRAM_ADS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={buttonClassName({ size: 'lg', fullWidth: true })}
                 >
-                  {depositLoading ? t('wallet.redirecting') : t('wallet.deposit')}
-                </Button>
+                  {t('wallet.manual_deposit_cta')}
+                </a>
+                {depositContinuePath && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = buildResumePath(depositContinuePath);
+                      sessionStorage.removeItem('wallet.afterTopupContinue');
+                      router.push(next);
+                    }}
+                    className={buttonClassName({ variant: 'secondary', size: 'md', fullWidth: true })}
+                  >
+                    {t('wallet.deposit_return_to_checkout')}
+                  </button>
+                )}
               </div>
               )}
             </div>
