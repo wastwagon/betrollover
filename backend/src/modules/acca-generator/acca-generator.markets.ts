@@ -22,6 +22,7 @@ export const ACCA_GENERATOR_MARKETS: readonly AccaMarketDef[] = [
   { key: 'under35', label: 'Under 3.5 Goals', outcomeKeys: ['under35'] },
   { key: 'dnb', label: 'Draw No Bet', outcomeKeys: ['dnb_home', 'dnb_away'] },
   { key: 'fh_winner', label: '1st Half Winner', outcomeKeys: ['ht_home', 'ht_draw', 'ht_away'] },
+  { key: 'fh_over05', label: '1st Half Over 0.5', outcomeKeys: ['fh_over05'] },
   { key: 'fh_over15', label: '1st Half Over 1.5', outcomeKeys: ['fh_over15'] },
   { key: 'fh_under15', label: '1st Half Under 1.5', outcomeKeys: ['fh_under15'] },
 ] as const;

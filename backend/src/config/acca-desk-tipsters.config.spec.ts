@@ -9,6 +9,8 @@ import {
   ACCA_SAFE_1X2_ODDS,
   ACCA_MEDIUM_1X2_ODDS,
   ACCA_MEDIUM_1X2_OUTCOME_KEYS,
+  ACCA_FHO05_ODDS_BY_RISK,
+  ACCA_FHO05_EXCLUDE_SLOT_KEYS,
   ACCA_SURE_DC_BLACKLIST_LEAGUE_API_IDS,
   ACCA_MEDIUM_DC_EXCLUDE_SLOT_KEYS,
   ACCA_SAFE_DC_EXCLUDE_SLOT_KEYS,
@@ -287,8 +289,31 @@ describe('AccaSafeFH1X2 / AccaSureFH1X2 hygiene', () => {
   });
 });
 
+describe('AccaSureFHO05 / AccaSafeFHO05 desks', () => {
+  it('ships Sure+Safe only with short FH Over 0.5 bands and hygiene', () => {
+    const fho05 = ACCA_DESK_TIPSTERS.filter((t) => t.markets.length === 1 && t.markets[0] === 'fh_over05');
+    expect(fho05.map((t) => t.username).sort()).toEqual(['AccaSafeFHO05', 'AccaSureFHO05'].sort());
+    expect(ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaMediumFHO05')).toBeUndefined();
+    expect(ACCA_DESK_TIPSTERS.find((t) => t.username === 'AccaHighFHO05')).toBeUndefined();
+
+    for (const desk of fho05) {
+      const band = ACCA_FHO05_ODDS_BY_RISK[desk.riskLevel as 'sure' | 'safe'];
+      expect(desk.oddMin).toBe(band.oddMin);
+      expect(desk.oddMax).toBe(band.oddMax);
+      expect(desk.targetOdd).toBe(band.targetOdd);
+      expect(desk.combinedOddMin).toBe(band.combinedOddMin);
+      expect(desk.combinedOddMax).toBe(band.combinedOddMax);
+      expect(desk.excludeSlotKeys).toEqual([...ACCA_FHO05_EXCLUDE_SLOT_KEYS]);
+      expect(desk.skipAmateurLeagueNames).toBe(true);
+      expect(desk.skipCupLeagueNames).toBe(true);
+      expect(isAccaDeskPublishingPaused(desk.username)).toBe(false);
+    }
+    expect(ACCA_FHO05_ODDS_BY_RISK.sure.oddMax).toBeLessThan(ACCA_FHO05_ODDS_BY_RISK.safe.oddMin);
+  });
+});
+
 describe('acca desk pause list', () => {
-  it('pauses archive-losing desks; keeps Sure 1X2, Safe FH, Medium BTTS, High O25, BankHalf live', () => {
+  it('pauses archive-losing desks; keeps Sure 1X2, Safe FH, Medium BTTS, High O25, BankHalf, FHO05 live', () => {
     expect([...ACCA_DESK_PAUSED_USERNAMES].sort()).toEqual(
       [
         'AccaHighFHO15',
@@ -316,6 +341,8 @@ describe('acca desk pause list', () => {
     expect(isAccaDeskPublishingPaused('AccaHighO25')).toBe(false);
     expect(isAccaDeskPublishingPaused('AccaSure1X2')).toBe(false);
     expect(isAccaDeskPublishingPaused('AccaSafeFH1X2')).toBe(false);
+    expect(isAccaDeskPublishingPaused('AccaSureFHO05')).toBe(false);
+    expect(isAccaDeskPublishingPaused('AccaSafeFHO05')).toBe(false);
     expect(isAccaDeskPublishingPaused('BankHalf')).toBe(false);
     expect(accaDeskPausedPublicExcludeRawSql('t')).toContain("'AccaSureO15'");
     expect(accaDeskPausedPublicExcludeRawSql('t')).toContain("'AccaMedium1X2'");

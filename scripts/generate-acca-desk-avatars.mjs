@@ -29,6 +29,7 @@ const MARKETS = [
   { key: 'u15', mark: 'U1.5' },
   { key: 'dnb', mark: 'DNB' },
   { key: 'fh1x2', mark: 'FH1X2' },
+  { key: 'fh005', mark: 'FHO05' },
   { key: 'fh015', mark: 'FHO15' },
   { key: 'mix', mark: 'MIX' },
 ];
@@ -37,6 +38,8 @@ const SIZE = 256;
 
 /** High band only for totals (incl. 1H Over 1.5) — keep in sync with HIGH_MARKET_KEYS in acca-desk-tipsters.config.ts */
 const HIGH_MARKET_KEYS = new Set(['o25', 'o15', 'u15', 'fh015']);
+/** Keep in sync with SURE_SAFE_ONLY_MARKET_KEYS in acca-desk-tipsters.config.ts */
+const SURE_SAFE_ONLY_MARKET_KEYS = new Set(['fh005']);
 
 function svg({ from, to, accent, label, initial, mark }) {
   const markSize = mark.length > 4 ? 52 : mark.length > 3 ? 58 : 64;
@@ -60,6 +63,7 @@ const files = [];
 for (const [risk, palette] of Object.entries(RISKS)) {
   for (const market of MARKETS) {
     if (risk === 'high' && !HIGH_MARKET_KEYS.has(market.key)) continue;
+    if (SURE_SAFE_ONLY_MARKET_KEYS.has(market.key) && risk !== 'sure' && risk !== 'safe') continue;
     files.push({
       name: `acca_${risk}_${market.key}.png`,
       svg: svg({ ...palette, mark: market.mark }),

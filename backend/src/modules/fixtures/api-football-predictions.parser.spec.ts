@@ -61,13 +61,14 @@ describe('parseApiFootballPredictionsOutcomes', () => {
       goals: {
         'over 1.5': '55%',
         'under 3.5': '40%',
-        half: { 'Over 1.5': '50%', 'under 2.5': '45%' },
+        half: { 'Over 0.5': '72%', 'Over 1.5': '50%', 'under 2.5': '45%' },
       },
       odd_even: { odd: '48%', even: '52%' },
     });
     const by = Object.fromEntries(out.map((o) => [o.outcome, o.probability]));
     expect(by.over15).toBeCloseTo(0.55);
     expect(by.under35).toBeCloseTo(0.4);
+    expect(by.fh_over05).toBeCloseTo(0.72);
     expect(by.fh_over15).toBeCloseTo(0.5);
     expect(by.fh_under25).toBeCloseTo(0.45);
     expect(by.odd_goals).toBeCloseTo(0.48);

@@ -363,7 +363,8 @@ export default function AdminAccaDeskPage() {
             Automated. Most Acca Desk tipsters post up to 2 free 2-folds per desk day
             (picked from early / afternoon / evening / midnight kick-off windows). Bank · Half
             posts at most one HT-home 2-fold (legs 1.47–1.60, combined 2.20–2.50) and skips cups /
-            youth. Primary publish at{' '}
+            youth. Sure/Safe · 1st Half Over 0.5 use short FH totals bands (skip midnight, cups,
+            youth). Primary publish at{' '}
             {overview?.earlyCron || '0 20 * * *'} ({overview?.timezone || 'Africa/Accra'}) for{' '}
             <strong>tomorrow</strong>; catch-up at {overview?.cron || '30 0 * * *'}, 06:00 and 08:45 for{' '}
             <strong>today</strong>. Cards badge Today / Tomorrow from the earliest Accra kickoff. Followers get one batched email

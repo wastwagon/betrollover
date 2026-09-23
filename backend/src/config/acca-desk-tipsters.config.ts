@@ -2,8 +2,9 @@
  * Acca Desk tipsters — automated 2-leg free picks via Acca Generator.
  *
  * Bank · Half leads the roster (HT Home only, one slip/day), then
- * Sure + Safe + Medium × (1X2, DC, BTTS, O2.5, O1.5, U1.5, DNB, FH1X2, FHO1.5, Mix),
+ * Sure + Safe + Medium × (1X2, DC, BTTS, O2.5, O1.5, U1.5, DNB, FH1X2, FHO0.5*, FHO1.5, Mix),
  * plus High for totals (O2.5 / O1.5 / U1.5 / FH Over 1.5).
+ * *FHO0.5 is Sure + Safe only (prices too short for Medium/High).
  * Order = fixture allocation order (fixed exclusivity).
  */
 
@@ -118,6 +119,7 @@ const MARKET_SLUG: Record<string, string> = {
   u15: 'U15',
   dnb: 'DNB',
   fh1x2: 'FH1X2',
+  fh005: 'FHO05',
   fh015: 'FHO15',
   mix: 'Mix',
 };
@@ -126,6 +128,8 @@ const RISKS: AccaDeskTipsterConfig['riskLevel'][] = ['sure', 'safe', 'medium'];
 
 /** High is totals-only (FT O/U + 1H Over 1.5). 1X2, DC, BTTS, DNB, FH Winner, Mix stay Sure / Safe / Medium. */
 const HIGH_MARKET_KEYS = new Set(['o25', 'o15', 'u15', 'fh015']);
+/** 1H Over 0.5 legs are ~1.15–1.50 — Sure/Safe only (no Medium/High desks). */
+const SURE_SAFE_ONLY_MARKET_KEYS = new Set(['fh005']);
 
 /**
  * AccaSafeO15 / AccaMediumO15 archives: lost Over 1.5 legs were 0-0 or 1-0, mostly
@@ -154,6 +158,20 @@ export const ACCA_O15_ODDS_BY_RISK: Record<
   medium: { oddMin: 1.49, oddMax: 1.64, targetOdd: 1.56 },
   high: { oddMin: 1.65, oddMax: 1.85, targetOdd: 1.74 },
 };
+
+/**
+ * 1st Half Over 0.5 — shorter than FT O1.5. Local odds cluster ~1.20–1.54.
+ * Sure/Safe only; Medium/High would buy blank first halves.
+ */
+export const ACCA_FHO05_ODDS_BY_RISK: Record<
+  'sure' | 'safe',
+  { oddMin: number; oddMax: number; targetOdd: number; combinedOddMin: number; combinedOddMax: number }
+> = {
+  sure: { oddMin: 1.18, oddMax: 1.32, targetOdd: 1.25, combinedOddMin: 1.45, combinedOddMax: 1.75 },
+  safe: { oddMin: 1.33, oddMax: 1.5, targetOdd: 1.4, combinedOddMin: 1.85, combinedOddMax: 2.25 },
+};
+
+export const ACCA_FHO05_EXCLUDE_SLOT_KEYS: readonly AccaDeskSlotKey[] = ['midnight'];
 
 export function isAccaO15LeagueAllowed(apiId: number | null | undefined): boolean {
   if (apiId == null || !Number.isFinite(apiId)) return true;
@@ -263,9 +281,15 @@ const MARKET_SPECS: { key: string; label: string; markets: string[] }[] = [
   { key: 'u15', label: 'Under 1.5 Goals', markets: ['under15'] },
   { key: 'dnb', label: 'Draw No Bet', markets: ['dnb'] },
   { key: 'fh1x2', label: '1st Half Winner', markets: ['fh_winner'] },
+  { key: 'fh005', label: '1st Half Over 0.5', markets: ['fh_over05'] },
   { key: 'fh015', label: '1st Half Over 1.5', markets: ['fh_over15'] },
   { key: 'mix', label: 'Mixed Markets', markets: [...new Set(['over15', ...DEFAULT_ACCA_MARKETS])] },
 ];
+
+function deskRisksForMarket(marketKey: string): AccaDeskTipsterConfig['riskLevel'][] {
+  if (SURE_SAFE_ONLY_MARKET_KEYS.has(marketKey)) return ['sure', 'safe'];
+  return RISKS;
+}
 
 function extrasForDesk(risk: AccaDeskTipsterConfig['riskLevel'], spec: (typeof MARKET_SPECS)[number]): DeskExtras {
   const extras: DeskExtras = {};
@@ -276,6 +300,19 @@ function extrasForDesk(risk: AccaDeskTipsterConfig['riskLevel'], spec: (typeof M
       extras.skipAmateurLeagueNames = true;
       extras.skipCupLeagueNames = true;
     }
+  }
+  if (spec.key === 'fh005') {
+    const band = ACCA_FHO05_ODDS_BY_RISK[risk as 'sure' | 'safe'];
+    if (band) {
+      extras.oddMin = band.oddMin;
+      extras.oddMax = band.oddMax;
+      extras.targetOdd = band.targetOdd;
+      extras.combinedOddMin = band.combinedOddMin;
+      extras.combinedOddMax = band.combinedOddMax;
+    }
+    extras.excludeSlotKeys = ACCA_FHO05_EXCLUDE_SLOT_KEYS;
+    extras.skipAmateurLeagueNames = true;
+    extras.skipCupLeagueNames = true;
   }
   if (spec.key === 'o15') {
     extras.excludeLeagueApiIds = ACCA_O15_BLACKLIST_LEAGUE_API_IDS;
@@ -363,7 +400,9 @@ export const BANK_HALF_TIPSTER: AccaDeskTipsterConfig = {
 export const ACCA_DESK_TIPSTERS: AccaDeskTipsterConfig[] = [
   BANK_HALF_TIPSTER,
   ...RISKS.flatMap((risk) =>
-    MARKET_SPECS.map((m) => desk(risk, m.key, m.label, m.markets, extrasForDesk(risk, m))),
+    MARKET_SPECS.filter((m) => deskRisksForMarket(m.key).includes(risk)).map((m) =>
+      desk(risk, m.key, m.label, m.markets, extrasForDesk(risk, m)),
+    ),
   ),
   ...MARKET_SPECS.filter((m) => HIGH_MARKET_KEYS.has(m.key)).map((m) =>
     desk('high', m.key, m.label, m.markets, extrasForDesk('high', m)),
@@ -376,7 +415,8 @@ export { ACCA_DESK_EARLY_SLOT_KEYS, ACCA_DESK_MAX_PER_DAY, ACCA_DESK_TIME_SLOTS 
 
 /**
  * Paused desks skip publish + show inactive on setup; marketplace/public lists hide them.
- * Do not add AccaSure1X2, VipTwoFold, AccaSafeFH1X2, AccaMediumBTTS, AccaHighO25, or BankHalf here.
+ * Do not add AccaSure1X2, VipTwoFold, AccaSafeFH1X2, AccaMediumBTTS, AccaHighO25,
+ * BankHalf, AccaSureFHO05, or AccaSafeFHO05 here.
  * Archive-losing desks stay paused until a new sample earns them back.
  */
 export const ACCA_DESK_PAUSED_USERNAMES = new Set<string>([

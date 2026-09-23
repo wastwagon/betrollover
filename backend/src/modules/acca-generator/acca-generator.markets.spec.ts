@@ -22,4 +22,8 @@ describe('outcomeKeysForMarkets', () => {
     expect(outcomeKeysForMarkets(['match_winner'], ['home']).has('away')).toBe(false);
     expect(outcomeKeysForMarkets(['btts'], ['home']).size).toBe(0);
   });
+
+  it('exposes 1st Half Over 0.5 for Acca Desk FHO05', () => {
+    expect([...outcomeKeysForMarkets(['fh_over05'])]).toEqual(['fh_over05']);
+  });
 });

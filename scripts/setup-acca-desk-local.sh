@@ -40,12 +40,16 @@ import json, sys
 d = json.load(open("/tmp/acca-desk-overview.json"))
 print(f"rosterSize={d.get('rosterSize')} setupCount={d.get('setupCount')} activeCount={d.get('activeCount')}")
 roster = d.get("roster") or []
-new = [t for t in roster if any(x in (t.get("username") or "") for x in ("U15", "DNB", "FH1X2", "FHO15"))]
+new = [t for t in roster if any(x in (t.get("username") or "") for x in ("U15", "DNB", "FH1X2", "FHO15", "FHO05"))]
 print(f"new_in_roster={len(new)}")
 for t in sorted(new, key=lambda x: x.get("username") or ""):
     print(f"  {t.get('username')} | markets={t.get('markets')}")
-ok = d.get("rosterSize") == 34 and d.get("setupCount") == 34
-print("VERIFY", "OK" if ok else "FAIL (expected roster/setup 34)")
+expected = int(d.get("rosterSize") or 0)
+ok = d.get("rosterSize") == d.get("setupCount") and any(
+    (t.get("username") or "") == "AccaSureFHO05" for t in roster
+) and any((t.get("username") or "") == "AccaSafeFHO05" for t in roster)
+print(f"rosterSize={expected} setupCount={d.get('setupCount')}")
+print("VERIFY", "OK" if ok else "FAIL (setup must match roster and include FHO05 desks)")
 sys.exit(0 if ok else 1)
 PY
 
