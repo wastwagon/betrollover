@@ -33,8 +33,9 @@ export const SETTLEMENT_SUPPORTED_MARKETS = [
   'Match Winner (1X2): Home, Away, Draw (also Match Winner: Team/Player name)',
   'Double Chance: 1X, X2, 12 (slash or text format)',
   'Both Teams To Score: Yes, No',
+  'Home/Away Team Score a Goal: Yes, No',
   'Over/Under: Over/Under 1.5, 2.5, 3.5 (goals, points, etc.)',
-  'Canonical outcome_key slugs: ht_home/ht_draw/ht_away, dnb_home/dnb_away, over15/under15/over35/under35, fh_over05…fh_under25, odd_goals/even_goals (when stored on pick)',
+  'Canonical outcome_key slugs: ht_home/ht_draw/ht_away, dnb_home/dnb_away, over15/under15/over35/under35, fh_over05…fh_under25, odd_goals/even_goals, home_score_yes/no, away_score_yes/no (when stored on pick)',
   'First Half Winner; First Half Over/Under 0.5, 1.5, 2.5 (needs HT score on fixture)',
   'Half-Time/Full-Time: Home/Home, 1/X, etc. (needs HT + FT scores)',
   'Asian Handicap: Home/Away ±N including quarter lines (push/half → void)',
@@ -195,7 +196,8 @@ export class SettlementService {
   private isFixtureReadyToGrade(fix: Fixture, twoHoursAgo: Date): boolean {
     if (fix.homeScore == null || fix.awayScore == null) return false;
     if (['PST', 'CANC', 'ABD', 'AWD', 'WO'].includes(fix.status)) return false;
-    if (fix.status === 'FT') return true;
+    // FT + extras that still carry final scores
+    if (['FT', 'AET', 'PEN'].includes(fix.status)) return true;
     return fix.matchDate != null && fix.matchDate < twoHoursAgo;
   }
 

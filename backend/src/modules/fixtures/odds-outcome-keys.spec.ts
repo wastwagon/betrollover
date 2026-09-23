@@ -13,6 +13,11 @@ describe('outcomeKeyFromOddsLine', () => {
     expect(outcomeKeyFromOddsLine('First Half Winner', 'Home')).toBe('ht_home');
   });
 
+  it('maps home/away team score a goal', () => {
+    expect(outcomeKeyFromOddsLine('Home Team Score a Goal', 'Yes')).toBe('home_score_yes');
+    expect(outcomeKeyFromOddsLine('Away Team Score a Goal', 'No')).toBe('away_score_no');
+  });
+
   it('maps first-half goals over/under lines including 0.5', () => {
     expect(outcomeKeyFromOddsLine('Goals Over/Under First Half', 'Over 0.5')).toBe('fh_over05');
     expect(outcomeKeyFromOddsLine('Goals Over/Under First Half', 'Under 0.5')).toBe('fh_under05');

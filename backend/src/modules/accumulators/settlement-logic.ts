@@ -553,6 +553,20 @@ export function determinePickResult(
   if (pred.includes('btts') || (pred.includes('both teams') && pred.includes('yes'))) return bothScored ? 'won' : 'lost';
   if (pred.includes('both teams') && pred.includes('no')) return !bothScored ? 'won' : 'lost';
 
+  // --- Home / Away team to score (API: "Home Team Score a Goal: Yes") ---
+  if (pred === 'home_score_yes' || (pred.includes('home team score') && pred.includes('yes'))) {
+    return homeScore > 0 ? 'won' : 'lost';
+  }
+  if (pred === 'home_score_no' || (pred.includes('home team score') && pred.includes('no'))) {
+    return homeScore === 0 ? 'won' : 'lost';
+  }
+  if (pred === 'away_score_yes' || (pred.includes('away team score') && pred.includes('yes'))) {
+    return awayScore > 0 ? 'won' : 'lost';
+  }
+  if (pred === 'away_score_no' || (pred.includes('away team score') && pred.includes('no'))) {
+    return awayScore === 0 ? 'won' : 'lost';
+  }
+
   // --- Draw No Bet (match winner, draw = void) ---
   if (pred.includes('draw no bet') || pred.includes('draw_no_bet') || pred.includes('dnb')) {
     if (draw) return 'void';

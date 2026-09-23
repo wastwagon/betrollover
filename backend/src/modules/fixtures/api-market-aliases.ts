@@ -10,6 +10,13 @@ export const API_MARKET_ALIASES: Record<string, string> = {
   BTTS: 'Both Teams To Score',
   GG: 'Both Teams To Score',
   'Both Teams To Score - Yes/No': 'Both Teams To Score',
+  // Home / Away team to score
+  'Home Team Score a Goal': 'Home Team Score a Goal',
+  'Home Team To Score': 'Home Team Score a Goal',
+  'Goals - Home Team To Score': 'Home Team Score a Goal',
+  'Away Team Score a Goal': 'Away Team Score a Goal',
+  'Away Team To Score': 'Away Team Score a Goal',
+  'Goals - Away Team To Score': 'Away Team Score a Goal',
   // Correct Score
   'Correct Score': 'Correct Score',
   'Exact Score': 'Correct Score',

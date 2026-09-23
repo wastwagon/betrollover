@@ -116,6 +116,24 @@ describe('settlement-logic', () => {
     });
   });
 
+  describe('Home / Away Team Score a Goal', () => {
+    it('grades free-text API labels without outcome_key', () => {
+      expect(determinePickResult('Home Team Score a Goal: Yes', 2, 0)).toBe('won');
+      expect(determinePickResult('Home Team Score a Goal: Yes', 0, 2)).toBe('lost');
+      expect(determinePickResult('Away Team Score a Goal: Yes', 0, 2)).toBe('won');
+      expect(determinePickResult('Away Team Score a Goal: Yes', 2, 0)).toBe('lost');
+      expect(determinePickResult('Home Team Score a Goal: No', 0, 1)).toBe('won');
+      expect(determinePickResult('Away Team Score a Goal: No', 1, 0)).toBe('won');
+    });
+
+    it('grades canonical slugs', () => {
+      expect(determinePickResult('home_score_yes', 1, 0)).toBe('won');
+      expect(determinePickResult('home_score_no', 0, 2)).toBe('won');
+      expect(determinePickResult('away_score_yes', 0, 1)).toBe('won');
+      expect(determinePickResult('away_score_no', 3, 0)).toBe('won');
+    });
+  });
+
   describe('Set Betting (tennis)', () => {
     it('order-agnostic: 2-0 wins if actual 2-0 or 0-2', () => {
       expect(determinePickResult('Set Betting: 2-0', 2, 0, 'Novak Djokovic', 'Jack Draper')).toBe('won');

@@ -19,6 +19,25 @@ export function outcomeKeyFromOddsLine(marketName: string, marketValue: string):
     if (v.includes('yes')) return 'btts';
     return null;
   }
+  // API-Football: "Home Team Score a Goal" / "Away Team Score a Goal" (Yes/No)
+  if (
+    canonical === 'Home Team Score a Goal' ||
+    canonical === 'Home Team To Score' ||
+    (canonical.includes('Home Team') && canonical.includes('Score') && !canonical.includes('Both'))
+  ) {
+    if (v.includes('yes')) return 'home_score_yes';
+    if (v.includes('no')) return 'home_score_no';
+    return null;
+  }
+  if (
+    canonical === 'Away Team Score a Goal' ||
+    canonical === 'Away Team To Score' ||
+    (canonical.includes('Away Team') && canonical.includes('Score') && !canonical.includes('Both'))
+  ) {
+    if (v.includes('yes')) return 'away_score_yes';
+    if (v.includes('no')) return 'away_score_no';
+    return null;
+  }
   if (canonical === 'Goals Over/Under') {
     if (v.includes('over') && v.includes('1.5')) return 'over15';
     if (v.includes('under') && v.includes('1.5')) return 'under15';

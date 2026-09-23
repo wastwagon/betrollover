@@ -59,6 +59,14 @@ export function formatFootballOutcomeLabel(outcome: string | null | undefined): 
       return 'Odd/Even: Odd';
     case 'even_goals':
       return 'Odd/Even: Even';
+    case 'home_score_yes':
+      return 'Home Team Score a Goal: Yes';
+    case 'home_score_no':
+      return 'Home Team Score a Goal: No';
+    case 'away_score_yes':
+      return 'Away Team Score a Goal: Yes';
+    case 'away_score_no':
+      return 'Away Team Score a Goal: No';
     default:
       return raw;
   }
