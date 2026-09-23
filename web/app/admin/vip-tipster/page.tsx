@@ -7,7 +7,7 @@ import { AdminSidebar } from '@/components/AdminSidebar';
 import { PickCard } from '@/components/PickCard';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
-import { buttonClassName } from '@/components/ui/Button';
+import { Button, buttonClassName } from '@/components/ui/Button';
 
 type VipPick = {
   id?: number;
