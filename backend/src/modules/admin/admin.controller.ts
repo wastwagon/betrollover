@@ -454,6 +454,33 @@ export class AdminController {
     return this.adminService.getSettlementDiagnostic();
   }
 
+  /** Past kickoff fixtures with pending picks but missing FT scores (API lag) — for manual settle UI. */
+  @Get('settlement/stuck-fixtures')
+  async getStuckSettlementFixtures(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.adminService.listStuckSettlementFixtures();
+  }
+
+  /** Batch FT scores by apiId/fixtureId, then run settlement once (API-Sports lag). */
+  @Post('settlement/apply-scores')
+  async applyFixtureScoresAndSettle(
+    @CurrentUser() user: User,
+    @Body()
+    body: {
+      fixtures?: Array<{
+        apiId?: number;
+        fixtureId?: number;
+        homeScore: number;
+        awayScore: number;
+        htHomeScore?: number | null;
+        htAwayScore?: number | null;
+      }>;
+    },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.adminService.applyFixtureScoresAndSettle(body?.fixtures ?? []);
+  }
+
   @Post('settlement/run')
   async runSettlement(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
@@ -481,6 +508,39 @@ export class AdminController {
       throw new BadRequestException('homeScore and awayScore must be non-negative numbers');
     }
     return this.adminService.manuallySettleSportEvent(id, homeScore, awayScore);
+  }
+
+  /** Settle by API-Sports fixture id when the match is not on the upcoming fixtures list. */
+  @Post('fixtures/by-api/:apiId/settle')
+  async manuallySettleFixtureByApiId(
+    @CurrentUser() user: User,
+    @Param('apiId', ParseIntPipe) apiId: number,
+    @Body()
+    body: {
+      homeScore: number;
+      awayScore: number;
+      htHomeScore?: number | null;
+      htAwayScore?: number | null;
+    },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const homeScore = Number(body?.homeScore);
+    const awayScore = Number(body?.awayScore);
+    if (!Number.isFinite(homeScore) || !Number.isFinite(awayScore) || homeScore < 0 || awayScore < 0) {
+      throw new BadRequestException('homeScore and awayScore must be non-negative numbers');
+    }
+    const htHome = body?.htHomeScore == null ? undefined : Number(body.htHomeScore);
+    const htAway = body?.htAwayScore == null ? undefined : Number(body.htAwayScore);
+    if (
+      (htHome != null && (!Number.isFinite(htHome) || htHome < 0)) ||
+      (htAway != null && (!Number.isFinite(htAway) || htAway < 0))
+    ) {
+      throw new BadRequestException('htHomeScore and htAwayScore must be non-negative numbers when set');
+    }
+    return this.adminService.manuallySettleFixtureByApiId(apiId, homeScore, awayScore, {
+      htHomeScore: htHome,
+      htAwayScore: htAway,
+    });
   }
 
   /**

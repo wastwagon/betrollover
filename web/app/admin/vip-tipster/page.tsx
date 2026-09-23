@@ -203,6 +203,7 @@ export default function AdminVipTipsterPage() {
   const [running, setRunning] = useState(false);
   const [telegramBusy, setTelegramBusy] = useState(false);
   const [resendingId, setResendingId] = useState<number | null>(null);
+  const [forceSettling, setForceSettling] = useState(false);
 
   const loadData = useCallback(async () => {
     const token = localStorage.getItem('token');
@@ -303,6 +304,51 @@ export default function AdminVipTipsterPage() {
       setMessage({ type: 'error', text: (e as Error).message || 'Publish failed' });
     } finally {
       setRunning(false);
+    }
+  };
+
+  const handleForceSettleWslCupStuck = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const ok = window.confirm(
+      'API-Sports still has WSL Cup as NS with no scores. Apply confirmed FT results and settle?\n\n' +
+        '• Crystal Palace W vs Watford W → 1–0\n' +
+        '• Brighton W vs Charlton Athletic W → 4–0\n\n' +
+        'This grades pending picks and can move the 7-day rollover Day 1 off LIVE.',
+    );
+    if (!ok) return;
+    setForceSettling(true);
+    setMessage(null);
+    try {
+      const res = await fetch(`${getApiUrl()}/admin/settlement/apply-scores`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fixtures: [
+            { apiId: 1612632, homeScore: 1, awayScore: 0 },
+            { apiId: 1612639, homeScore: 4, awayScore: 0 },
+          ],
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        const picks = (data as { picksUpdated?: number }).picksUpdated ?? 0;
+        const tickets = (data as { ticketsSettled?: number }).ticketsSettled ?? 0;
+        setMessage({
+          type: 'success',
+          text: `Scores applied. ${picks} pick(s) updated, ${tickets} ticket(s) settled.`,
+        });
+        await loadData();
+      } else {
+        setMessage({ type: 'error', text: getApiErrorMessage(data, 'Force settle failed — deploy latest backend first') });
+      }
+    } catch (e) {
+      setMessage({ type: 'error', text: (e as Error).message || 'Force settle failed' });
+    } finally {
+      setForceSettling(false);
     }
   };
 
@@ -584,6 +630,25 @@ export default function AdminVipTipsterPage() {
             <h2 className="text-lg font-semibold text-[var(--text)] mb-3">
               Today’s VIP slips ({overview?.todayDeskDay})
             </h2>
+            {(overview?.todayTickets ?? []).some((t) =>
+              (t.picks ?? t.legs ?? []).some((p) => (p.result || 'pending').toLowerCase() === 'pending'),
+            ) ? (
+              <div className="mb-4 rounded-xl border border-amber-300/80 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-800 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <p className="text-sm text-amber-950 dark:text-amber-100">
+                  Legs still pending after kickoff? If API-Sports never wrote FT scores (WSL Cup lag), force-apply
+                  Palace <strong>1–0</strong> and Brighton <strong>4–0</strong>, then run settlement.
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  disabled={forceSettling}
+                  onClick={handleForceSettleWslCupStuck}
+                >
+                  {forceSettling ? 'Settling…' : 'Force settle WSL Cup legs'}
+                </Button>
+              </div>
+            ) : null}
             <VipSlipCards
               tickets={overview?.todayTickets}
               empty="No VIP slips for this desk day yet."

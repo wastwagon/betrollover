@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/Input';
 
 interface DbFixture {
   id: number;
+  apiId?: number;
   homeTeamName: string;
   awayTeamName: string;
   leagueName: string | null;
@@ -20,6 +21,7 @@ interface DbFixture {
   awayScore?: number | null;
   htHomeScore?: number | null;
   htAwayScore?: number | null;
+  pendingPicks?: number;
   odds?: { marketName: string; marketValue: string; odds: number }[];
 }
 
@@ -121,6 +123,9 @@ export default function AdminFixturesPage() {
   const [manualAway, setManualAway] = useState('');
   const [manualSettling, setManualSettling] = useState(false);
   const [manualSettleMsg, setManualSettleMsg] = useState<string | null>(null);
+  const [stuckFixtures, setStuckFixtures] = useState<DbFixture[]>([]);
+  const [stuckLoading, setStuckLoading] = useState(false);
+  const [apiIdSettle, setApiIdSettle] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [resultMsg, setResultMsg] = useState<{ updated: number; settled?: number } | null>(null);
   const [reconcileMsg, setReconcileMsg] = useState<{
@@ -259,9 +264,32 @@ export default function AdminFixturesPage() {
       .finally(() => setLoading(false));
   }, [selectedCountry, selectedCompetition]);
 
+  const loadStuck = useCallback(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setStuckLoading(true);
+    fetch(`${getApiUrl()}/admin/settlement/stuck-fixtures`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    })
+      .then((r) => (r.ok ? r.json() : { fixtures: [] }))
+      .then((data) => {
+        const rows = Array.isArray((data as { fixtures?: DbFixture[] })?.fixtures)
+          ? (data as { fixtures: DbFixture[] }).fixtures
+          : [];
+        setStuckFixtures(rows);
+      })
+      .catch(() => setStuckFixtures([]))
+      .finally(() => setStuckLoading(false));
+  }, []);
+
   useEffect(() => {
     setPage(1);
   }, [selectedCountry, selectedCompetition]);
+
+  useEffect(() => {
+    loadStuck();
+  }, [loadStuck]);
 
   useEffect(() => {
     const start = (page - 1) * PAGE_SIZE;
@@ -533,6 +561,27 @@ export default function AdminFixturesPage() {
     setError(null);
   };
 
+  const openManualSettleByApiId = () => {
+    const apiId = Number(apiIdSettle);
+    if (!Number.isFinite(apiId) || apiId <= 0) {
+      setError('Enter a valid API-Sports fixture id.');
+      return;
+    }
+    setManualSettle({
+      id: 0,
+      apiId,
+      homeTeamName: `API fixture ${apiId}`,
+      awayTeamName: '',
+      leagueName: null,
+      matchDate: new Date().toISOString(),
+      status: 'NS',
+    });
+    setManualHome('');
+    setManualAway('');
+    setManualSettleMsg(null);
+    setError(null);
+  };
+
   const submitManualSettle = async () => {
     if (!manualSettle) return;
     const token = localStorage.getItem('token');
@@ -547,7 +596,11 @@ export default function AdminFixturesPage() {
     setError(null);
     setManualSettleMsg(null);
     try {
-      const res = await fetch(`${getApiUrl()}/admin/fixtures/${manualSettle.id}/settle`, {
+      const url =
+        manualSettle.id > 0
+          ? `${getApiUrl()}/admin/fixtures/${manualSettle.id}/settle`
+          : `${getApiUrl()}/admin/fixtures/by-api/${manualSettle.apiId}/settle`;
+      const res = await fetch(url, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -566,7 +619,9 @@ export default function AdminFixturesPage() {
         `Saved ${homeScore}–${awayScore}. ${picks} pick${picks === 1 ? '' : 's'} updated, ${tickets} ticket${tickets === 1 ? '' : 's'} settled.`,
       );
       setManualSettle(null);
+      setApiIdSettle('');
       load();
+      loadStuck();
     } catch {
       setError('Network error during manual settle.');
     } finally {
@@ -1208,6 +1263,77 @@ export default function AdminFixturesPage() {
             </div>
           </div>
         )}
+
+        <div className="mb-6 rounded-2xl border border-amber-200 dark:border-amber-800/60 bg-amber-50/80 dark:bg-amber-950/30 p-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+                Needs settle (past kickoff, still pending)
+              </h2>
+              <p className="text-xs text-amber-800/80 dark:text-amber-200/80 mt-1 max-w-2xl">
+                The list below only shows upcoming NS fixtures. Matches that already kicked off (e.g. VIP WSL Cup)
+                appear here when API-Sports still has no FT score. Settle them so the 7-day rollover can move to Day 2.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={loadStuck}
+              disabled={stuckLoading}
+              className="text-sm font-medium text-amber-800 dark:text-amber-200 hover:underline shrink-0"
+            >
+              {stuckLoading ? 'Refreshing…' : 'Refresh'}
+            </button>
+          </div>
+          <div className="mt-3 flex flex-wrap items-end gap-2">
+            <label className="text-xs text-amber-900 dark:text-amber-100">
+              Or settle by API id
+              <Input
+                value={apiIdSettle}
+                onChange={(e) => setApiIdSettle(e.target.value)}
+                placeholder="e.g. 1612632"
+                className="mt-1 w-36"
+              />
+            </label>
+            <Button type="button" size="sm" variant="secondary" onClick={openManualSettleByApiId}>
+              Open settle
+            </Button>
+            <span className="text-xs text-amber-700/80 dark:text-amber-300/70">
+              Palace W vs Watford W = 1612632 · Brighton W vs Charlton = 1612639
+            </span>
+          </div>
+          {stuckFixtures.length === 0 && !stuckLoading ? (
+            <p className="mt-3 text-sm text-amber-800/70 dark:text-amber-200/70">No stuck fixtures right now.</p>
+          ) : (
+            <ul className="mt-3 divide-y divide-amber-200/70 dark:divide-amber-800/50">
+              {stuckFixtures.map((f) => (
+                <li key={f.id} className="py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white text-sm">
+                      {f.homeTeamName} vs {f.awayTeamName}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      id {f.id}
+                      {f.apiId != null ? ` · api ${f.apiId}` : ''}
+                      {f.leagueName ? ` · ${f.leagueName}` : ''}
+                      {' · '}
+                      {f.status}
+                      {' · '}
+                      {f.matchDate ? new Date(f.matchDate).toLocaleString() : '—'}
+                      {f.pendingPicks != null ? ` · ${f.pendingPicks} pending pick(s)` : ''}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => openManualSettle(f)}
+                    className="text-sm font-medium text-amber-800 dark:text-amber-200 hover:underline shrink-0"
+                  >
+                    Manual settle
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
         {loading && (
           <div className="flex items-center justify-center py-12">

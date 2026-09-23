@@ -1258,6 +1258,124 @@ export class AdminService {
     };
   }
 
+  /** Same as manuallySettleFixture but lookup by API-Sports fixture id. */
+  async manuallySettleFixtureByApiId(
+    apiId: number,
+    homeScore: number,
+    awayScore: number,
+    opts?: { htHomeScore?: number | null; htAwayScore?: number | null },
+  ) {
+    const { Fixture } = await import('../fixtures/entities/fixture.entity');
+    const fixtureRepo = this.dataSource.getRepository(Fixture);
+    const fixture = await fixtureRepo.findOne({
+      where: { apiId },
+      select: ['id'],
+    });
+    if (!fixture) throw new NotFoundException(`Fixture with apiId ${apiId} not found`);
+    return this.manuallySettleFixture(fixture.id, homeScore, awayScore, opts);
+  }
+
+  /**
+   * Batch-write FT scores (by apiId and/or fixtureId), then run settlement once.
+   * For API-Sports lag on finished matches (e.g. WSL Cup still NS).
+   */
+  async applyFixtureScoresAndSettle(
+    entries: Array<{
+      apiId?: number;
+      fixtureId?: number;
+      homeScore: number;
+      awayScore: number;
+      htHomeScore?: number | null;
+      htAwayScore?: number | null;
+    }>,
+  ) {
+    if (!entries?.length) throw new BadRequestException('Provide at least one fixture score');
+    const { Fixture } = await import('../fixtures/entities/fixture.entity');
+    const fixtureRepo = this.dataSource.getRepository(Fixture);
+    const applied: Array<{ fixtureId: number; apiId: number; home: number; away: number }> = [];
+
+    for (const entry of entries) {
+      const homeScore = Number(entry.homeScore);
+      const awayScore = Number(entry.awayScore);
+      if (!Number.isFinite(homeScore) || !Number.isFinite(awayScore) || homeScore < 0 || awayScore < 0) {
+        throw new BadRequestException('Each entry needs non-negative homeScore and awayScore');
+      }
+      let fixture =
+        entry.fixtureId != null
+          ? await fixtureRepo.findOne({
+              where: { id: Number(entry.fixtureId) },
+              select: ['id', 'apiId', 'homeTeamName', 'awayTeamName', 'status'],
+            })
+          : null;
+      if (!fixture && entry.apiId != null) {
+        fixture = await fixtureRepo.findOne({
+          where: { apiId: Number(entry.apiId) },
+          select: ['id', 'apiId', 'homeTeamName', 'awayTeamName', 'status'],
+        });
+      }
+      if (!fixture) {
+        throw new NotFoundException(
+          `Fixture not found (fixtureId=${entry.fixtureId ?? '—'} apiId=${entry.apiId ?? '—'})`,
+        );
+      }
+      const patch: Record<string, unknown> = {
+        status: 'FT',
+        homeScore,
+        awayScore,
+        statusElapsed: null,
+        syncedAt: new Date(),
+      };
+      if (
+        entry.htHomeScore != null &&
+        entry.htAwayScore != null &&
+        Number.isFinite(Number(entry.htHomeScore)) &&
+        Number.isFinite(Number(entry.htAwayScore))
+      ) {
+        patch.htHomeScore = Number(entry.htHomeScore);
+        patch.htAwayScore = Number(entry.htAwayScore);
+      }
+      await fixtureRepo.update({ id: fixture.id }, patch);
+      this.logger.log(
+        `Batch score apply: id=${fixture.id} apiId=${fixture.apiId} ` +
+          `${fixture.homeTeamName} vs ${fixture.awayTeamName} → ${homeScore}-${awayScore}`,
+      );
+      applied.push({ fixtureId: fixture.id, apiId: fixture.apiId, home: homeScore, away: awayScore });
+    }
+
+    const settlement = await this.settlementService.runSettlement();
+    return {
+      message: `Applied ${applied.length} score(s) and ran settlement`,
+      applied,
+      ...settlement,
+    };
+  }
+
+  /**
+   * Fixtures past kickoff with pending picks but not gradeable (no scores / not FT).
+   * These drop out of Admin → Fixtures (upcoming-only list).
+   */
+  async listStuckSettlementFixtures() {
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    const rows = await this.dataSource.query(
+      `SELECT f.id AS "id", f.api_id AS "apiId", f.home_team_name AS "homeTeamName",
+              f.away_team_name AS "awayTeamName", f.league_name AS "leagueName",
+              f.status AS "status", f.home_score AS "homeScore", f.away_score AS "awayScore",
+              f.ht_home_score AS "htHomeScore", f.ht_away_score AS "htAwayScore",
+              f.match_date AS "matchDate",
+              COUNT(ap.id)::int AS "pendingPicks"
+       FROM fixtures f
+       JOIN accumulator_picks ap ON ap.fixture_id = f.id AND ap.result = 'pending'
+       WHERE f.match_date < $1
+         AND (f.home_score IS NULL OR f.away_score IS NULL OR f.status NOT IN ('FT', 'AET', 'PEN'))
+       GROUP BY f.id, f.api_id, f.home_team_name, f.away_team_name, f.league_name, f.status,
+                f.home_score, f.away_score, f.ht_home_score, f.ht_away_score, f.match_date
+       ORDER BY f.match_date ASC
+       LIMIT 50`,
+      [twoHoursAgo],
+    );
+    return { fixtures: rows ?? [], cutoff: twoHoursAgo.toISOString() };
+  }
+
   /**
    * List sport events for admin Multi-Sport page. Includes past and future events (any status)
    * so admins can manually settle events the Odds API no longer returns (>3 days old).

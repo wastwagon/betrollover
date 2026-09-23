@@ -320,6 +320,7 @@ export class RolloverDeskService {
       !!lastDay &&
       lastDay.dayNumber < ROLLOVER_PLAN_DAYS &&
       lastDay.calendarDate === date &&
+      lastDay.status === 'won' &&
       candidates.some((c) => c.eligible && !c.attached);
 
     return {
@@ -443,6 +444,11 @@ export class RolloverDeskService {
         return;
       }
 
+      // Never stack Day N+1 while an earlier LIVE day is still unsettled.
+      if (pending?.ticketId && pending.status === 'pending') {
+        return;
+      }
+
       const last = await this.dayRepo.findOne({
         where: { runId: run.id },
         order: { dayNumber: 'DESC' },
@@ -464,7 +470,7 @@ export class RolloverDeskService {
         last &&
         last.ticketId &&
         this.dateOnly(last.calendarDate) === date &&
-        (last.status === 'pending' || last.status === 'won')
+        last.status === 'won'
       );
       const asNextDay =
         todayAlreadyHasCoupon && !!last && last.dayNumber < ROLLOVER_PLAN_DAYS;
@@ -639,6 +645,11 @@ export class RolloverDeskService {
     if (this.dateOnly(last.calendarDate) !== date) {
       throw new BadRequestException(
         'Attach as next day is only for a later VIP slot on the same calendar day (e.g. evening after afternoon).',
+      );
+    }
+    if (last.status !== 'won') {
+      throw new BadRequestException(
+        `Day ${last.dayNumber} is still ${last.status}. Settle that coupon before attaching the next rollover day.`,
       );
     }
     return this.insertPlanDay(run, last.dayNumber + 1, date, ticket, true);
