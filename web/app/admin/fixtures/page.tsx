@@ -116,6 +116,11 @@ export default function AdminFixturesPage() {
   const [fetchingResults, setFetchingResults] = useState(false);
   const [settling, setSettling] = useState(false);
   const [reconciling, setReconciling] = useState(false);
+  const [manualSettle, setManualSettle] = useState<DbFixture | null>(null);
+  const [manualHome, setManualHome] = useState('');
+  const [manualAway, setManualAway] = useState('');
+  const [manualSettling, setManualSettling] = useState(false);
+  const [manualSettleMsg, setManualSettleMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [resultMsg, setResultMsg] = useState<{ updated: number; settled?: number } | null>(null);
   const [reconcileMsg, setReconcileMsg] = useState<{
@@ -517,6 +522,55 @@ export default function AdminFixturesPage() {
     } finally {
       setFetchingResults(false);
       setSettling(false);
+    }
+  };
+
+  const openManualSettle = (f: DbFixture) => {
+    setManualSettle(f);
+    setManualHome(f.homeScore != null ? String(f.homeScore) : '');
+    setManualAway(f.awayScore != null ? String(f.awayScore) : '');
+    setManualSettleMsg(null);
+    setError(null);
+  };
+
+  const submitManualSettle = async () => {
+    if (!manualSettle) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const homeScore = Number(manualHome);
+    const awayScore = Number(manualAway);
+    if (!Number.isFinite(homeScore) || !Number.isFinite(awayScore) || homeScore < 0 || awayScore < 0) {
+      setError('Enter non-negative home and away scores.');
+      return;
+    }
+    setManualSettling(true);
+    setError(null);
+    setManualSettleMsg(null);
+    try {
+      const res = await fetch(`${getApiUrl()}/admin/fixtures/${manualSettle.id}/settle`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ homeScore, awayScore }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(getApiErrorMessage(data, 'Manual settle failed'));
+        return;
+      }
+      const picks = (data as { picksUpdated?: number })?.picksUpdated ?? 0;
+      const tickets = (data as { ticketsSettled?: number })?.ticketsSettled ?? 0;
+      setManualSettleMsg(
+        `Saved ${homeScore}–${awayScore}. ${picks} pick${picks === 1 ? '' : 's'} updated, ${tickets} ticket${tickets === 1 ? '' : 's'} settled.`,
+      );
+      setManualSettle(null);
+      load();
+    } catch {
+      setError('Network error during manual settle.');
+    } finally {
+      setManualSettling(false);
     }
   };
 
@@ -1209,6 +1263,7 @@ export default function AdminFixturesPage() {
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">FT</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">HT</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -1216,6 +1271,7 @@ export default function AdminFixturesPage() {
                     <tr key={f.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="font-medium text-gray-900 dark:text-white">{f.homeTeamName} vs {f.awayTeamName}</div>
+                        <div className="text-xs text-gray-400">id {f.id}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-400">{f.leagueName || '-'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-400">
@@ -1232,10 +1288,76 @@ export default function AdminFixturesPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm tabular-nums text-gray-600 dark:text-gray-400">
                         {scoreLine(f.htHomeScore, f.htAwayScore)}
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {(f.homeScore == null || f.awayScore == null || !['FT', 'AET', 'PEN'].includes(f.status)) && (
+                          <button
+                            type="button"
+                            onClick={() => openManualSettle(f)}
+                            className="text-sm font-medium text-amber-700 dark:text-amber-300 hover:underline"
+                          >
+                            Manual settle
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {manualSettleMsg && (
+          <div className="fixed bottom-4 right-4 z-50 max-w-sm rounded-lg bg-emerald-600 px-4 py-3 text-sm text-white shadow-lg">
+            {manualSettleMsg}
+          </div>
+        )}
+
+        {manualSettle && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="w-full max-w-md rounded-xl bg-white dark:bg-gray-800 p-5 shadow-xl">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Manual settle</h3>
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                {manualSettle.homeTeamName} vs {manualSettle.awayTeamName}
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Use when API-Sports still shows NS / no score after full time (e.g. WSL Cup).
+              </p>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <label className="text-sm text-gray-700 dark:text-gray-200">
+                  Home
+                  <Input
+                    type="number"
+                    min={0}
+                    value={manualHome}
+                    onChange={(e) => setManualHome(e.target.value)}
+                    className="mt-1"
+                  />
+                </label>
+                <label className="text-sm text-gray-700 dark:text-gray-200">
+                  Away
+                  <Input
+                    type="number"
+                    min={0}
+                    value={manualAway}
+                    onChange={(e) => setManualAway(e.target.value)}
+                    className="mt-1"
+                  />
+                </label>
+              </div>
+              <div className="mt-5 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setManualSettle(null)}
+                  className="px-3 py-1.5 rounded-lg text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+                  disabled={manualSettling}
+                >
+                  Cancel
+                </button>
+                <Button type="button" onClick={submitManualSettle} disabled={manualSettling}>
+                  {manualSettling ? 'Saving…' : 'Save FT & settle'}
+                </Button>
+              </div>
             </div>
           </div>
         )}

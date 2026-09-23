@@ -11,7 +11,7 @@ import { Cache } from 'cache-manager';
 
 import { getSportApiBaseUrl } from '../../config/sports.config';
 import { normalizeFixtureElapsed } from './fixture-status-elapsed.util';
-import { extractHalftimeScores } from './fixture-halftime.util';
+import { extractFulltimeScores, extractHalftimeScores } from './fixture-halftime.util';
 import { parseFixtureStatisticsResponse } from './fixture-statistics.util';
 import {
   MAX_FIXTURES_TO_UPDATE_PER_RUN,
@@ -178,21 +178,28 @@ export class FixtureUpdateService {
       const now = new Date();
       let updated = 0;
 
-      // PASS 1: Fixtures with pending accumulator picks (user coupons) — fetch these first, no limit
+      // PASS 1: Fixtures with pending picks — unfinished OR finished-but-missing scores (API lag)
       const pendingRows = await this.dataSource.query<{ fixture_id: number }[]>(
         `SELECT DISTINCT ap.fixture_id FROM accumulator_picks ap
          JOIN fixtures f ON f.id = ap.fixture_id
          WHERE ap.result = 'pending' AND ap.fixture_id IS NOT NULL
-         AND f.status != 'FT' AND f.match_date <= $1`,
+         AND f.match_date <= $1
+         AND (
+           f.status NOT IN ('FT', 'AET', 'PEN')
+           OR f.home_score IS NULL
+           OR f.away_score IS NULL
+         )`,
         [now],
       );
       const pendingIds = [...new Set(pendingRows.map((r) => r.fixture_id))];
       if (pendingIds.length > 0) {
         const pendingFixtures = await this.fixtureRepo.find({
           where: { id: In(pendingIds) },
-          select: ['id', 'apiId'],
+          select: ['id', 'apiId', 'matchDate', 'homeTeamName', 'awayTeamName'],
         });
-        const fromPass1 = await this.fetchAndUpdateBatch(apiKey, pendingFixtures);
+        const fromPass1 = await this.fetchAndUpdateBatch(apiKey, pendingFixtures, {
+          warnOverdueNoScore: true,
+        });
         updated += fromPass1;
         if (fromPass1 > 0) {
           this.logger.log(`Updated ${fromPass1} fixture(s) with pending picks`);
@@ -261,12 +268,21 @@ export class FixtureUpdateService {
 
   private async fetchAndUpdateBatch(
     apiKey: string,
-    fixtures: { id: number; apiId: number }[],
+    fixtures: {
+      id: number;
+      apiId: number;
+      matchDate?: Date | null;
+      homeTeamName?: string | null;
+      awayTeamName?: string | null;
+    }[],
+    opts?: { warnOverdueNoScore?: boolean },
   ): Promise<number> {
     if (fixtures.length === 0) return 0;
     const batchSize = RESULTS_FETCH_BATCH_SIZE;
     let updated = 0;
     const dbApiIdMap = new Map(fixtures.map((f) => [f.apiId, f.id]));
+    const metaByApiId = new Map(fixtures.map((f) => [f.apiId, f]));
+    const overdueCutoff = new Date(Date.now() - 2.5 * 60 * 60 * 1000);
 
     for (let i = 0; i < fixtures.length; i += batchSize) {
       const batch = fixtures.slice(i, i + batchSize);
@@ -288,6 +304,7 @@ export class FixtureUpdateService {
 
       // Statuses that mean no final score (postponed, cancelled, etc.) - sync status so settlement can void picks
       const NO_RESULT_STATUSES = ['PST', 'CANC', 'ABD', 'AWD', 'WO'];
+      const FINISHED_STATUSES = ['FT', 'AET', 'PEN'];
 
       for (const fixtureData of response) {
         const apiId = fixtureData.fixture.id;
@@ -295,17 +312,17 @@ export class FixtureUpdateService {
         if (!dbId) continue;
 
         const fix = fixtureData.fixture;
-        const goals = fixtureData.goals;
         const status = fix?.status?.short ?? '';
         const ht = extractHalftimeScores(fixtureData);
+        const ftScores = extractFulltimeScores(fixtureData);
 
-        if (goals?.home !== null && goals?.away !== null) {
+        if (ftScores.homeScore != null && ftScores.awayScore != null) {
           await this.fixtureRepo.update(
             { id: dbId },
             {
               status,
-              homeScore: goals.home,
-              awayScore: goals.away,
+              homeScore: ftScores.homeScore,
+              awayScore: ftScores.awayScore,
               statusElapsed: normalizeFixtureElapsed(status, fix?.status?.elapsed),
               syncedAt: new Date(),
               ...(ht.htHomeScore != null && ht.htAwayScore != null
@@ -315,7 +332,7 @@ export class FixtureUpdateService {
           );
           updated++;
           // Corners/cards for settlement — only once FT (or equivalent finished) and stats missing
-          if (['FT', 'AET', 'PEN'].includes(status)) {
+          if (FINISHED_STATUSES.includes(status)) {
             await this.syncMatchStatisticsIfNeeded(
               apiKey,
               dbId,
@@ -331,6 +348,17 @@ export class FixtureUpdateService {
             { status, statusElapsed: null, syncedAt: new Date() },
           );
           updated++;
+        } else if (opts?.warnOverdueNoScore) {
+          const meta = metaByApiId.get(apiId);
+          const kickoff = meta?.matchDate ? new Date(meta.matchDate) : null;
+          if (kickoff && kickoff < overdueCutoff) {
+            this.logger.warn(
+              `API-Sports returned no scores for overdue pending fixture ` +
+                `id=${dbId} apiId=${apiId} status=${status || '—'} ` +
+                `${meta?.homeTeamName ?? '?'} vs ${meta?.awayTeamName ?? '?'} ` +
+                `(kickoff ${kickoff.toISOString()}). Manual settle: POST /admin/fixtures/${dbId}/settle`,
+            );
+          }
         }
         await this.cacheManager.del(`fixture:${dbId}`);
         await this.cacheManager.del(`fixture:api:${apiId}`);

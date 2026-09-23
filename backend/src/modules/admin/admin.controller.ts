@@ -483,6 +483,42 @@ export class AdminController {
     return this.adminService.manuallySettleSportEvent(id, homeScore, awayScore);
   }
 
+  /**
+   * Manually settle a football fixture when API-Sports lags (still NS / null goals after FT).
+   * Body: { homeScore, awayScore, htHomeScore?, htAwayScore? }
+   */
+  @Post('fixtures/:id/settle')
+  async manuallySettleFixture(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+    @Body()
+    body: {
+      homeScore: number;
+      awayScore: number;
+      htHomeScore?: number | null;
+      htAwayScore?: number | null;
+    },
+  ) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    const homeScore = Number(body?.homeScore);
+    const awayScore = Number(body?.awayScore);
+    if (!Number.isFinite(homeScore) || !Number.isFinite(awayScore) || homeScore < 0 || awayScore < 0) {
+      throw new BadRequestException('homeScore and awayScore must be non-negative numbers');
+    }
+    const htHome = body?.htHomeScore == null ? undefined : Number(body.htHomeScore);
+    const htAway = body?.htAwayScore == null ? undefined : Number(body.htAwayScore);
+    if (
+      (htHome != null && (!Number.isFinite(htHome) || htHome < 0)) ||
+      (htAway != null && (!Number.isFinite(htAway) || htAway < 0))
+    ) {
+      throw new BadRequestException('htHomeScore and htAwayScore must be non-negative numbers when set');
+    }
+    return this.adminService.manuallySettleFixture(id, homeScore, awayScore, {
+      htHomeScore: htHome,
+      htAwayScore: htAway,
+    });
+  }
+
   @Post('predictions/generate')
   async generateAiPredictions(
     @CurrentUser() user: User,

@@ -1088,7 +1088,7 @@ export class AdminService {
     ]);
 
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-    const [stuckFixturePicks, stuckEventPicks] = await Promise.all([
+    const [stuckFixturePicks, stuckEventPicks, stuckNoScoreSamples] = await Promise.all([
       this.dataSource.query(
         `SELECT COUNT(*)::int AS c FROM accumulator_picks ap
          JOIN fixtures f ON f.id = ap.fixture_id
@@ -1103,6 +1103,21 @@ export class AdminService {
          AND e.event_date < $1 AND e.status != 'FT'`,
         [twoHoursAgo],
       ).then((r) => Number((r as any[])[0]?.c ?? 0)),
+      this.dataSource.query(
+        `SELECT f.id AS "fixtureId", f.api_id AS "apiId", f.home_team_name AS "homeTeamName",
+                f.away_team_name AS "awayTeamName", f.status, f.home_score AS "homeScore",
+                f.away_score AS "awayScore", f.match_date AS "matchDate",
+                COUNT(ap.id)::int AS "pendingPicks"
+         FROM fixtures f
+         JOIN accumulator_picks ap ON ap.fixture_id = f.id AND ap.result = 'pending'
+         WHERE f.match_date < $1
+           AND (f.home_score IS NULL OR f.away_score IS NULL OR f.status NOT IN ('FT', 'AET', 'PEN'))
+         GROUP BY f.id, f.api_id, f.home_team_name, f.away_team_name, f.status,
+                  f.home_score, f.away_score, f.match_date
+         ORDER BY f.match_date ASC
+         LIMIT 20`,
+        [twoHoursAgo],
+      ),
     ]);
 
     return {
@@ -1123,6 +1138,7 @@ export class AdminService {
       lastOddsApiResultsAt: oddsApiRow?.lastSyncAt?.toISOString() ?? null,
       lastOddsApiResultsCount: oddsApiRow?.lastSyncCount ?? null,
       stuckPendingPicksPastCutoff: stuckFixturePicks + stuckEventPicks,
+      stuckNoScoreSamples,
     };
   }
 
@@ -1181,6 +1197,65 @@ export class AdminService {
     );
     const settlement = await this.settlementService.runSettlement();
     return { message: 'Event marked FT and settlement run', ...settlement };
+  }
+
+  /**
+   * Manually mark a football fixture FT with scores and run settlement.
+   * Use when API-Sports lags (e.g. WSL Cup still NS / null goals after full time).
+   */
+  async manuallySettleFixture(
+    fixtureId: number,
+    homeScore: number,
+    awayScore: number,
+    opts?: { htHomeScore?: number | null; htAwayScore?: number | null },
+  ) {
+    const { Fixture } = await import('../fixtures/entities/fixture.entity');
+    const fixtureRepo = this.dataSource.getRepository(Fixture);
+    const fixture = await fixtureRepo.findOne({
+      where: { id: fixtureId },
+      select: [
+        'id',
+        'apiId',
+        'homeTeamName',
+        'awayTeamName',
+        'status',
+        'homeScore',
+        'awayScore',
+        'matchDate',
+      ],
+    });
+    if (!fixture) throw new NotFoundException('Fixture not found');
+
+    const patch: Record<string, unknown> = {
+      status: 'FT',
+      homeScore,
+      awayScore,
+      statusElapsed: null,
+      syncedAt: new Date(),
+    };
+    if (
+      opts?.htHomeScore != null &&
+      opts?.htAwayScore != null &&
+      Number.isFinite(opts.htHomeScore) &&
+      Number.isFinite(opts.htAwayScore)
+    ) {
+      patch.htHomeScore = opts.htHomeScore;
+      patch.htAwayScore = opts.htAwayScore;
+    }
+
+    await fixtureRepo.update({ id: fixtureId }, patch);
+    this.logger.log(
+      `Manual fixture settle: id=${fixtureId} apiId=${fixture.apiId} ` +
+        `${fixture.homeTeamName} vs ${fixture.awayTeamName} → ${homeScore}-${awayScore} (was ${fixture.status})`,
+    );
+    const settlement = await this.settlementService.runSettlement();
+    return {
+      message: 'Fixture marked FT and settlement run',
+      fixtureId,
+      apiId: fixture.apiId,
+      score: { home: homeScore, away: awayScore },
+      ...settlement,
+    };
   }
 
   /**
