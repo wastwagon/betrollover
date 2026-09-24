@@ -34,7 +34,7 @@
 | Gap | Impact | Recommendation |
 |-----|--------|----------------|
 | **Email verification** | Wallet, tipster request, payout methods, and withdrawals already **require** `emailVerifiedAt`. Ensure verification flow is robust (send email on register, link/OTP, block wallet until verified). | Confirm flow end-to-end; add fallback “resend verification” and clear UX when actions are blocked. |
-| **Fake / bot signups** | PRODUCT_REVIEW.md notes no CAPTCHA on social onboarding. Risk of spam accounts and abuse. | Add reCAPTCHA v3 on social sign-in/signup entry points and apply IP throttling on `/auth/google` and `/auth/apple`. |
+| **Fake / bot signups** | Email signup has no captcha. Google and Apple sign-in use their own identity tokens. | Keep IP throttling on `/auth/register`, `/auth/google`, and `/auth/apple`. |
 | **Display name** | Optional; users can use fake names. Weakens trust on tipster profiles and in support. | Make full name required at registration with simple validation (e.g. 2+ words, letters/spaces). |
 | **Deposit callback** | If Paystack webhook is slow or fails, user returns with `?ref=xxx` but wallet might not be credited. | Add `GET /wallet/deposit/verify?ref=xxx` that verifies with Paystack and credits if not already done (idempotent). |
 
@@ -124,7 +124,7 @@
 | Area | Verdict | Next Steps |
 |------|--------|------------|
 | **Revenue** | Yes — commission on winning coupons, wallet/Paystack, subscriptions, referral. | Ensure Paystack + webhook + optional deposit verify; consider commission on subscription payouts. |
-| **Trust / safety** | Gaps (verification, CAPTCHA, rate limit, name). | Harden registration and verification; add deposit callback. |
+| **Trust / safety** | Gaps (verification, rate limit, name). | Harden registration and verification; add deposit callback. |
 | **Tipster quality** | Optional bar to sell (e.g. min free picks/ROI) and “verified” badge. | Define light rules; expose in UI. |
 | **SEO** | Strong base. | GSC, content cadence, intent pages, French. |
 | **Telegram** | Use as main community and acquisition channel. | Link everywhere; exclusive value; tipster co-promotion. |
@@ -137,7 +137,7 @@
 
 1. **Confirm** email verification flow and Paystack webhook in production.  
 2. **Add** deposit callback verify (`GET /wallet/deposit/verify?ref=xxx`).  
-3. **Add** rate limiting and reCAPTCHA on register (see PRODUCT_REVIEW.md).  
+3. **Confirm** registration rate limits on `/auth/register`, `/auth/google`, and `/auth/apple`.  
 4. **Verify** site in Google Search Console and submit sitemap.  
 5. **Pin** in Telegram: “Sign up at [link]; first purchase escrow-protected — refund if the pick loses.”  
 6. **Reach out** to 2–3 tipsters to join and promote BetRollover to their Telegram/audience.

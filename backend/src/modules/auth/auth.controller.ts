@@ -24,7 +24,6 @@ export class AuthController {
       return await this.authService.register({
         email: dto.email,
         password: dto.password,
-        recaptchaToken: dto.recaptchaToken,
         referralCode: dto.referralCode,
       });
     } catch (err: unknown) {

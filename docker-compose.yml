@@ -134,7 +134,6 @@ services:
       APP_URL: ${APP_URL:-http://localhost:6002}
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
-      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}
       MIGRATIONS_PATH: /app/database/migrations
       SEEDS_PATH: /app/database/seeds
     depends_on:
@@ -169,7 +168,6 @@ services:
       NEXT_PUBLIC_HUMAN_VIP_PACKAGES_ENABLED: ${NEXT_PUBLIC_HUMAN_VIP_PACKAGES_ENABLED:-true}
       SUBSCRIPTIONS_ENABLED: ${SUBSCRIPTIONS_ENABLED:-false}
       HUMAN_VIP_PACKAGES_ENABLED: ${HUMAN_VIP_PACKAGES_ENABLED:-true}
-      NEXT_PUBLIC_RECAPTCHA_SITE_KEY: ${NEXT_PUBLIC_RECAPTCHA_SITE_KEY:-}
       # Server-side: web container must reach api via Docker network (not localhost)
       BACKEND_URL: http://api:3001
     depends_on:

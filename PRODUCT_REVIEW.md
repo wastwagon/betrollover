@@ -11,8 +11,6 @@ Comprehensive review for building a world-class tipster platform.
 - **Display name optional** – users can skip or use fake names
 - **No email verification** – anyone can register with any email
 - **No phone required** – `phone` exists in schema but is optional at registration
-- **No CAPTCHA/reCAPTCHA** – vulnerable to bots
-- **No CAPTCHA/reCAPTCHA** on social onboarding – vulnerable to scripted sign-ins
 
 ### Recommended Improvements (Priority Order)
 
@@ -20,7 +18,6 @@ Comprehensive review for building a world-class tipster platform.
 |----------|-------------|--------|--------|
 | **P0** | **Email verification** – Send OTP/link on signup; require verification before full access | Medium | High |
 | **P0** | **Require full name** – Make `displayName` required, validate format (2+ words, no numbers/symbols) | Low | High |
-| **P0** | **reCAPTCHA v3** – Add to registration form to block bots | Low | High |
 | **P1** | **Phone verification** – Require for tipsters (or wallet deposits); use SMS OTP | Medium | High |
 | **P1** | **Rate limiting** – Throttle registration by IP (e.g. 5/hour) | Low | Medium |
 | **P1** | **Honeypot field** – Hidden field to catch bots | Low | Low |
@@ -41,10 +38,6 @@ displayName: string;  // Make required, remove @IsOptional
 - Send verification email with token/link
 - Block wallet deposits, tipster features until verified
 - Add `/auth/verify-email?token=xxx` endpoint
-
-**3. reCAPTCHA:**
-- Add `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` and `RECAPTCHA_SECRET_KEY`
-- Verify token on backend before creating user
 
 ---
 

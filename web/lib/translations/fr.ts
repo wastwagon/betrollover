@@ -2161,7 +2161,6 @@ const fr: Record<string, string> = {
   'auth.sign_up_with_apple': 'S\'inscrire avec Apple',
   'auth.or_continue_with': 'ou continuer avec',
   'auth.or_use_email': 'ou utiliser l’e-mail',
-  'auth.recaptcha_required': 'Veuillez confirmer que vous n’êtes pas un robot.',
   'auth.password_hint': 'Au moins 8 caractères, avec une lettre et un chiffre',
 
   // ── Error / Not found ────────────────────────────────────────────────────

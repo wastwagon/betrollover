@@ -10,7 +10,6 @@ export interface LoginRequest {
 export interface RegisterRequest {
   email: string;
   password: string;
-  recaptchaToken?: string;
   referralCode?: string;
 }
 

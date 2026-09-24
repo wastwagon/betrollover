@@ -14,7 +14,6 @@ import { UsersService } from '../users/users.service';
 import { WalletService } from '../wallet/wallet.service';
 import { EmailService } from '../email/email.service';
 import { ReferralsService } from '../referrals/referrals.service';
-import { RecaptchaService } from './recaptcha.service';
 import { User } from '../users/entities/user.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { PasswordResetOtp } from '../otp/entities/password-reset-otp.entity';
@@ -42,7 +41,6 @@ export class AuthService {
     private walletService: WalletService,
     private emailService: EmailService,
     private config: ConfigService,
-    private recaptcha: RecaptchaService,
     private referralsService: ReferralsService,
     @InjectRepository(Tipster)
     private tipsterRepo: Repository<Tipster>,
@@ -54,15 +52,13 @@ export class AuthService {
 
   /**
    * Email/password signup with no verification email or phone.
-   * reCAPTCHA blocks bots; the account is usable immediately (same as Google/Apple).
+   * The account is usable immediately (same as Google/Apple).
    */
   async register(data: {
     email: string;
     password: string;
-    recaptchaToken?: string;
     referralCode?: string;
   }) {
-    await this.recaptcha.verifyOrThrow(data.recaptchaToken);
     const policy = validatePasswordPolicy(data.password);
     if (!policy.valid) throw new BadRequestException(policy.message);
 

@@ -2156,7 +2156,6 @@ const en = {
   'auth.sign_up_with_apple': 'Sign up with Apple',
   'auth.or_continue_with': 'or continue with',
   'auth.or_use_email': 'or use email',
-  'auth.recaptcha_required': 'Please confirm you are not a robot.',
   'auth.password_hint': 'At least 8 characters, with a letter and a number',
 
   // ── Error / Not found ────────────────────────────────────────────────────

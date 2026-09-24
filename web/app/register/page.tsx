@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useLanguage, useT } from '@/context/LanguageContext';
+import { useT } from '@/context/LanguageContext';
 import { AuthCard, AuthPageFallback, AuthShell } from '@/components/AuthShell';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { AppleSignInButton } from '@/components/AppleSignInButton';
@@ -14,26 +14,18 @@ import { consumeOAuthSessionToken, setAuthToken } from '@/lib/auth-token-storage
 import { trackEvent, trackRegistrationStartedOnce } from '@/lib/analytics';
 import { Button } from '@/components/ui/Button';
 import { Input, fieldControlClassName } from '@/components/ui/Input';
-import {
-  RecaptchaCheckbox,
-  getRecaptchaSiteKey,
-  resetRecaptcha,
-} from '@/components/RecaptchaCheckbox';
 
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useT();
-  const { lang } = useLanguage();
   const [referralCode, setReferralCode] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [recaptchaToken, setRecaptchaToken] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const recaptchaSiteKey = getRecaptchaSiteKey();
 
   useEffect(() => {
     const ref = searchParams.get('ref');
@@ -69,10 +61,6 @@ function RegisterForm() {
       setError(t('auth.passwords_mismatch'));
       return;
     }
-    if (recaptchaSiteKey && !recaptchaToken) {
-      setError(t('auth.recaptcha_required'));
-      return;
-    }
     setLoading(true);
     try {
       const res = await fetch(`${getApiUrl()}/auth/register`, {
@@ -81,14 +69,11 @@ function RegisterForm() {
         body: JSON.stringify({
           email,
           password,
-          recaptchaToken: recaptchaToken || undefined,
           referralCode: referralCode || undefined,
         }),
       });
       const data = await res.json().catch(() => ({ message: 'Registration failed' }));
       if (!res.ok || typeof data?.access_token !== 'string' || !data.access_token.trim()) {
-        resetRecaptcha();
-        setRecaptchaToken('');
         setError(getApiErrorMessage(data, t('auth.server_error')));
         return;
       }
@@ -101,8 +86,6 @@ function RegisterForm() {
       router.refresh();
     } catch (err) {
       console.error('Register error:', err);
-      resetRecaptcha();
-      setRecaptchaToken('');
       setError(t('auth.server_error'));
     } finally {
       setLoading(false);
@@ -197,11 +180,6 @@ function RegisterForm() {
             autoComplete="new-password"
             disabled={loading}
             className="min-h-[48px] px-4 py-3 text-base"
-          />
-          <RecaptchaCheckbox
-            siteKey={recaptchaSiteKey}
-            hl={lang}
-            onToken={setRecaptchaToken}
           />
           {error && (
             <ApiErrorBanner

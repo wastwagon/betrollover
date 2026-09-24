@@ -52,7 +52,7 @@ const nextConfig = {
           "style-src 'self' 'unsafe-inline' https://accounts.google.com https://www.gstatic.com",
           // http/ws: local API (localhost:6001) + Next HMR. Report-only, so this does not block.
           "connect-src 'self' https: http: ws: wss:",
-          "frame-src 'self' https://accounts.google.com https://appleid.apple.com https://www.google.com https://recaptcha.google.com https://js.paystack.co https://www.googletagmanager.com",
+          "frame-src 'self' https://accounts.google.com https://appleid.apple.com https://www.google.com https://js.paystack.co https://www.googletagmanager.com",
           "img-src 'self' data: https: blob:",
           "font-src 'self' data:",
         ].join('; '),

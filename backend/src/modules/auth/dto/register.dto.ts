@@ -11,11 +11,6 @@ export class RegisterDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(2048)
-  recaptchaToken?: string;
-
-  @IsOptional()
-  @IsString()
   @MaxLength(32)
   referralCode?: string;
 }
