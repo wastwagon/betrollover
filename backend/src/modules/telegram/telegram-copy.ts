@@ -4,12 +4,13 @@ import { PUBLIC_CHANNEL_SURE_USERNAME } from '../../config/rollover-desk.config'
 /**
  * BetRollover Telegram voice — one job per post type.
  *
- * Daily cadence (Africa/Accra):
- *  08:00  Growth        → discover free tips + join channel
- *  10:00  Tipster recruit → register on site; invite tipster friends (earn via paid picks)
- *  12:00  Advice        → bankroll / stay-in-profit education
+ * Daily cadence (Africa/Accra) — three scheduled posts, not five:
+ *  08:00  Growth        → VIP join / purchase protection (rotates)
+ *  12:00  Advice        → bankroll, ROI, or withdraw (rotates)
  *  17:00  Community     → react meanings + share channel (exact ask)
- *  19:00  Growth        → purchase protection + join channel / open site
+ *
+ * Off by default: 10:00 tipster recruit, 19:00 second growth post.
+ * Tip and win alerts stay event-driven (Acca Sure on the free channel, VIP 2-folds in VIP).
  *
  * Tip & win alerts (event-driven): product first + short engagement footer.
  * Reaction legend lives ONLY on the community appeal (not every tip).
@@ -28,7 +29,7 @@ export const TELEGRAM_ENGAGEMENT_FOOTERS = [
   `React if you’re on it · invite one friend\n👉 {channel}`,
 ] as const;
 
-/** 2×/day discovery — free tips, anti-scam, Rollover VIP invite. */
+/** Once/day discovery — VIP join, free tips, purchase protection. */
 export const TELEGRAM_GROWTH_POSTS = [
   `📌 Rollover VIP
 
@@ -50,16 +51,6 @@ Want the daily VIP max-bet slip? Message @{contact}.
 
 👉 {channel}
 {site}?utm_source=telegram&utm_medium=social&utm_campaign=channel_growth
-
-${LEGAL_LINE}`,
-
-  `📌 Skip the Telegram scams
-
-No "fixed matches." No private ticket sellers.
-Rollover VIP = one clear max-bet slip a day on BetRollover.
-
-Talk to @{contact}
-👉 {channel}
 
 ${LEGAL_LINE}`,
 
@@ -138,50 +129,6 @@ export const TELEGRAM_ADVICE_POSTS = [
 BetRollover: tipster ROI + purchase protection on paid picks (tip price refunded if it loses).
 
 Learn more: {site}/learn?utm_source=telegram&utm_campaign=channel_advice
-Channel: {channel}
-
-${LEGAL_LINE}`,
-
-  `💡 Advice · Profit > “sure things”
-
-Long-term edge comes from:
-• Selective picks (not every match)
-• Flat or % staking
-• Walking away when you’re tilted
-• Protecting school fees, rent & housekeeping — those are not a bankroll
-
-Follow AccaSure & top tipsters on BetRollover — settle real results, don’t guess.
-
-{site}?utm_source=telegram&utm_campaign=channel_advice
-Channel: {channel}
-
-${LEGAL_LINE}`,
-
-  `💡 Advice · Stay-in-profit mindset
-
-1. Cap daily spend before kick-off
-2. Prefer fewer, higher-conviction picks
-3. Treat tips as research — your stake is your call
-4. Never touch school fees, rent, or housekeeping money for bets
-5. On BetRollover, paid pick loss → automatic refund of the tip price (not your bookmaker stake)
-
-Discipline beats hot streaks.
-
-{site}/responsible-gambling?utm_source=telegram&utm_campaign=channel_advice
-Channel: {channel}
-
-${LEGAL_LINE}`,
-
-  `💡 Advice · Bankroll tip of the day
-
-Chasing “one big Acca” to recover losses is how bankrolls die — and how rent money disappears.
-
-Better: small units, clear stop-loss for the day, review tomorrow.
-If it’s school fees, rent, or housekeeping — it is not stake money.
-
-Free Acca Desk + purchase-protected marketplace help you learn with structure.
-
-{site}/marketplace?utm_source=telegram&utm_campaign=channel_advice
 Channel: {channel}
 
 ${LEGAL_LINE}`,

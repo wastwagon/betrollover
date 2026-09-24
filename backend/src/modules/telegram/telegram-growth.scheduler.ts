@@ -4,8 +4,9 @@ import { isSchedulingEnabled } from '../email/scheduling-enabled';
 import { TelegramChannelService } from './telegram-channel.service';
 
 /**
- * Scheduled channel posts (Africa/Accra) — one job each:
- *  08:00 growth · 10:00 tipster recruit · 12:00 advice · 17:00 community · 19:00 growth
+ * Scheduled channel posts (Africa/Accra):
+ *  08:00 growth · 12:00 advice · 17:00 community
+ * Evening growth and tipster recruit stay off unless their env flags are turned on.
  * Tip/win alerts are event-driven (not here).
  */
 @Injectable()
@@ -22,7 +23,7 @@ export class TelegramGrowthScheduler {
     await this.runGrowth('morning');
   }
 
-  /** Tipster recruit — register + invite tipster friends (earn via paid picks) — default 10:00 */
+  /** Tipster recruit — off unless TELEGRAM_TIPSTER_RECRUIT_ENABLED=true */
   @Cron(process.env.TELEGRAM_TIPSTER_RECRUIT_CRON || '0 10 * * *', {
     timeZone: process.env.PREDICTION_TIMEZONE || 'Africa/Accra',
   })
@@ -46,11 +47,12 @@ export class TelegramGrowthScheduler {
     await this.runCommunityAppeal();
   }
 
-  /** Evening growth — purchase protection + channel — default 19:00 */
+  /** Evening growth — off unless TELEGRAM_GROWTH_EVENING_ENABLED=true */
   @Cron(process.env.TELEGRAM_GROWTH_CRON_EVENING || '0 19 * * *', {
     timeZone: process.env.PREDICTION_TIMEZONE || 'Africa/Accra',
   })
   async eveningGrowth(): Promise<void> {
+    if (!this.telegram.eveningGrowthEnabled()) return;
     await this.runGrowth('evening');
   }
 

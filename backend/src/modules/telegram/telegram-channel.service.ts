@@ -362,6 +362,12 @@ export class TelegramChannelService {
     return v !== '0' && v !== 'false' && v !== 'off' && v !== 'no';
   }
 
+  /** Second daily growth post. Off unless explicitly enabled — morning growth is enough. */
+  eveningGrowthEnabled(): boolean {
+    const v = (process.env.TELEGRAM_GROWTH_EVENING_ENABLED || 'false').trim().toLowerCase();
+    return v === '1' || v === 'true' || v === 'on' || v === 'yes';
+  }
+
   private adviceEnabled(): boolean {
     const v = (process.env.TELEGRAM_ADVICE_POSTS_ENABLED || 'true').trim().toLowerCase();
     return v !== '0' && v !== 'false' && v !== 'off' && v !== 'no';
@@ -373,8 +379,8 @@ export class TelegramChannelService {
   }
 
   private tipsterRecruitEnabled(): boolean {
-    const v = (process.env.TELEGRAM_TIPSTER_RECRUIT_ENABLED || 'true').trim().toLowerCase();
-    return v !== '0' && v !== 'false' && v !== 'off' && v !== 'no';
+    const v = (process.env.TELEGRAM_TIPSTER_RECRUIT_ENABLED || 'false').trim().toLowerCase();
+    return v === '1' || v === 'true' || v === 'on' || v === 'yes';
   }
 
   private token(): string | null {
