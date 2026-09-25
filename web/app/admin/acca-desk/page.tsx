@@ -534,14 +534,16 @@ export default function AdminAccaDeskPage() {
 
                 {overview.rollover.archive ? (
                   <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
-                    Records: best run Day {overview.rollover.archive.bestWonDays || '—'}
-                    {overview.rollover.archive.bestExampleReturnGhs != null
-                      ? ` · example GHS ${Math.round(Number(overview.rollover.archive.bestCampaignStakeGhs ?? 0))} → ${overview.rollover.archive.bestExampleReturnGhs}`
-                      : ''}
-                    {' · '}
-                    {overview.rollover.archive.campaignsCompleted} finished · {overview.rollover.archive.campaignsCut} cut
+                    Public cycle: {overview.rollover.archive.campaignsCompleted} finished ·{' '}
+                    {overview.rollover.archive.campaignsCut} cut
                     {overview.rollover.archive.campaignsReset
                       ? ` · ${overview.rollover.archive.campaignsReset} reset`
+                      : ''}
+                    {overview.rollover.archive.bestWonDays
+                      ? ` · best streak ${overview.rollover.archive.bestWonDays}d`
+                      : ''}
+                    {overview.rollover.archive.bestExampleReturnGhs != null
+                      ? ` · best harvest example GHS ${Math.round(Number(overview.rollover.archive.bestCampaignStakeGhs ?? 0))} → ${overview.rollover.archive.bestExampleReturnGhs}`
                       : ''}
                   </p>
                 ) : null}
@@ -596,7 +598,7 @@ export default function AdminAccaDeskPage() {
                     onClick={() => {
                       if (
                         !window.confirm(
-                          'Clear public records (best run, finished, cut, reset)? The live 2-day table is not reset.',
+                          'Clear public cycle stats (finished, cut, reset, best streak)? The live 2-day table is not reset.',
                         )
                       ) {
                         return;

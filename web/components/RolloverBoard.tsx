@@ -70,12 +70,8 @@ type Board = {
   exampleFinishGhs?: number | null;
   calendarDate: string;
   archive?: {
-    bestWonDays: number;
-    bestCampaignStakeGhs: number | null;
-    bestExampleReturnGhs: number | null;
     campaignsCompleted: number;
     campaignsCut: number;
-    campaignsReset: number;
     lastEnded?: {
       status: string;
       wonDays: number;
@@ -308,44 +304,38 @@ export function RolloverBoard() {
       : board.days[board.days.length - 1]?.exampleReturnGhs ?? null;
   const lastEndedNote =
     archive?.lastEnded?.status === 'broken'
-      ? t('rollover.last_cut', { day: String(archive.lastEnded.endedDay || archive.lastEnded.wonDays || 1) })
+      ? (archive.lastEnded.endedDay || 0) > board.planDays
+        ? t('rollover.last_cut_cycle')
+        : t('rollover.last_cut', {
+            day: String(archive.lastEnded.endedDay || archive.lastEnded.wonDays || 1),
+          })
       : archive?.lastEnded?.status === 'reset'
         ? t('rollover.last_reset', { day: String(archive.lastEnded.endedDay || archive.lastEnded.wonDays || 1) })
         : archive?.lastEnded?.status === 'completed'
           ? t('rollover.last_finished', { total: String(board.planDays) })
           : null;
 
-  const bestRun = archive && archive.bestWonDays > 0 ? String(archive.bestWonDays) : '—';
-  const stakeAmount =
-    archive?.bestCampaignStakeGhs != null ? formatAmount(archive.bestCampaignStakeGhs) : null;
-  const winAmount =
-    archive?.bestExampleReturnGhs != null ? formatAmount(archive.bestExampleReturnGhs) : null;
+  const startStake = formatAmount(board.exampleStakeStartGhs);
   const outcomeCounts = [
     { key: 'finished', label: t('rollover.stat_finished'), value: String(archive?.campaignsCompleted ?? 0) },
     { key: 'cut', label: t('rollover.stat_cut'), value: String(archive?.campaignsCut ?? 0) },
-    { key: 'reset', label: t('rollover.stat_reset'), value: String(archive?.campaignsReset ?? 0) },
   ];
 
   return (
     <div className="space-y-6">
       <header className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
-              {t('rollover.owner', { name: board.ownerDisplayName })}
-            </p>
-            <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text)]">
-              {runNote}
-            </h2>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
-              {t('rollover.ladder_hint', {
-                stake: formatAmount(board.exampleStakeStartGhs),
-                odds: Number(board.targetOdds).toFixed(2),
-              })}
-            </p>
-          </div>
-          <p className="text-sm tabular-nums text-[var(--text-muted)] sm:text-right">
-            {t('rollover.campaign_stake', { stake: formatAmount(board.exampleStakeStartGhs) })}
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+            {t('rollover.owner', { name: board.ownerDisplayName })}
+          </p>
+          <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text)]">
+            {runNote}
+          </h2>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
+            {t('rollover.ladder_hint', {
+              stake: startStake,
+              odds: Number(board.targetOdds).toFixed(2),
+            })}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -408,105 +398,66 @@ export function RolloverBoard() {
         </div>
       </section>
 
-      <section className="space-y-6">
+      <section className="space-y-4">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
           {t('rollover.records')}
         </p>
 
-        <div className="grid gap-8 lg:grid-cols-12 lg:items-end">
-          <div className="lg:col-span-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-              {t('rollover.stat_best_run')}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <Surface variant="raised" padding="sm" className="flex min-h-[108px] flex-col justify-between">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+              {t('rollover.stat_start')}
             </p>
-            <p className="mt-1 text-[1.65rem] font-bold tabular-nums tracking-tight leading-none text-[var(--text)]">
-              {bestRun}
-            </p>
-            {bestRun !== '—' ? (
-              <p className="mt-1.5 text-sm text-[var(--text-muted)]">{t('rollover.day')}</p>
-            ) : null}
-          </div>
-
-          <div className="lg:col-span-5">
-            <div className="flex divide-x divide-[var(--separator)] border-y border-[var(--separator)] py-5">
-              <div className="min-w-0 flex-1 pr-5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-                  {t('rollover.stake')}
-                </p>
-                <p className="mt-2">
-                  {stakeAmount ? (
-                    <AmountFigure amount={stakeAmount} tone="in" size="lg" />
-                  ) : (
-                    <span className="text-[1.65rem] font-bold text-[var(--text-tertiary)]">—</span>
-                  )}
-                </p>
-                <p className="mt-1.5 text-[12px] text-[var(--text-muted)]">{t('rollover.stat_stake_hint')}</p>
-              </div>
-              <div className="min-w-0 flex-1 pl-5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-                  {t('rollover.stat_best_win')}
-                </p>
-                <p className="mt-2">
-                  {winAmount ? (
-                    <AmountFigure amount={winAmount} tone="out" size="lg" />
-                  ) : (
-                    <span className="text-[1.65rem] font-bold text-[var(--text-tertiary)]">—</span>
-                  )}
-                </p>
-                <p className="mt-1.5 text-[12px] text-[var(--text-muted)] truncate">
-                  {stakeAmount && winAmount && bestRun !== '—'
-                    ? bestRun === '1'
-                      ? t('rollover.stat_from_stake_one', { stake: stakeAmount })
-                      : t('rollover.stat_from_stake', { days: bestRun, stake: stakeAmount })
-                    : ''}
-                </p>
-              </div>
+            <div>
+              <AmountFigure amount={startStake} tone="in" size="lg" />
+              <p className="mt-1.5 text-[12px] text-[var(--text-muted)]">{t('rollover.stat_start_hint')}</p>
             </div>
-          </div>
+          </Surface>
 
-          <div className="lg:col-span-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+          <Surface
+            variant="raised"
+            padding="sm"
+            className="flex min-h-[108px] flex-col justify-between border-[var(--primary)]/30 bg-[var(--primary-light)]/25"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--primary)]">
+              {t('rollover.finish_label', { days: String(board.planDays) })}
+            </p>
+            <div>
+              {finishTotal != null ? (
+                <AmountFigure amount={formatAmount(finishTotal)} tone="out" size="lg" />
+              ) : (
+                <span className="text-[1.65rem] font-bold text-[var(--text-tertiary)]">—</span>
+              )}
+              <p className="mt-1.5 text-[12px] text-[var(--text-muted)]">{t('rollover.stat_harvest_hint')}</p>
+            </div>
+          </Surface>
+
+          <Surface variant="raised" padding="sm" className="flex min-h-[108px] flex-col justify-between">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
               {t('rollover.stat_campaigns')}
             </p>
-            <dl className="mt-3 grid grid-cols-3 gap-3">
+            <dl className="mt-auto grid grid-cols-2 gap-3">
               {outcomeCounts.map((item) => (
-                <div key={item.key}>
-                  <dt className="text-[11px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">{item.label}</dt>
+                <div key={item.key} className="min-w-0">
+                  <dt className="truncate text-[10px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+                    {item.label}
+                  </dt>
                   <dd className="mt-1 text-[1.65rem] font-bold tabular-nums tracking-tight leading-none text-[var(--text)]">
                     {item.value}
                   </dd>
                 </div>
               ))}
             </dl>
-          </div>
+          </Surface>
         </div>
 
         {lastEndedNote ? (
           <p className="text-xs text-[var(--text-muted)]">{lastEndedNote}</p>
         ) : null}
 
-        {finishTotal != null ? (
-          <div className="rounded-[var(--radius)] border border-[var(--primary)]/25 bg-[var(--primary-light)]/35 px-4 py-4 sm:px-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--primary)]">
-              {t('rollover.finish_label', { days: String(board.planDays) })}
-            </p>
-            <p className="mt-2">
-              <AmountFigure amount={formatAmount(finishTotal)} tone="out" size="lg" />
-            </p>
-            <p className="mt-2 text-xs text-[var(--text-muted)] leading-relaxed max-w-2xl">
-              {t('rollover.finish_body', {
-                stake: formatAmount(board.exampleStakeStartGhs),
-                odds: board.targetOdds.toFixed(2),
-                total: formatAmount(finishTotal),
-                days: String(board.planDays),
-              })}
-            </p>
-          </div>
-        ) : null}
-
         <ul className="md:hidden overflow-hidden rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)]">
           {board.days.map((day, i) => {
             const inPlay = day.status === 'pending' && day.ticketId != null;
-            const weekBreak = day.dayNumber === 6;
             const reached = dayHasStarted(day.status);
             const odds = displayOdds(day, board.targetOdds);
             const inner = (
@@ -550,7 +501,7 @@ export function RolloverBoard() {
             return (
               <li
                 key={day.dayNumber}
-                className={weekBreak ? 'border-t-2 border-[var(--border)]' : i > 0 ? 'border-t border-[var(--separator)]' : ''}
+                className={i > 0 ? 'border-t border-[var(--separator)]' : ''}
               >
                 {day.ticketId ? (
                   <Link href={`/coupons/${day.ticketId}`} className="block active:bg-[var(--fill-secondary)]">
@@ -584,14 +535,13 @@ export function RolloverBoard() {
                 const featured = inPlay && day.dayNumber === currentDay;
                 const won = day.status === 'won';
                 const reached = dayHasStarted(day.status);
-                const weekBreak = day.dayNumber === 6;
                 const odds = displayOdds(day, board.targetOdds);
                 const rowBg = inPlay
                   ? 'bg-[var(--primary-light)]/40'
                   : won
                     ? 'bg-[var(--primary-light)]/15 hover:bg-[var(--primary-light)]/30'
                     : 'hover:bg-[var(--fill-secondary)]/40';
-                const hairline = `${day.dayNumber === board.planDays ? 'border-b-0' : weekBreak ? 'border-[var(--border)]' : 'border-[var(--separator)]'}`;
+                const hairline = day.dayNumber === board.planDays ? 'border-b-0' : 'border-[var(--separator)]';
                 return (
                   <tr key={day.dayNumber} className={rowBg}>
                     <td className={`relative px-5 py-3 font-semibold tabular-nums border-b ${hairline}`}>
