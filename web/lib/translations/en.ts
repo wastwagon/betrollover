@@ -63,7 +63,7 @@ const en = {
   'nav.create_pick_short': '+Picks',
   'nav.acca_generator': 'Acca Generator',
   'nav.acca_generator_short': 'Acca',
-  'nav.rollover': '7-Day VIP Rollover',
+  'nav.rollover': '2-Day VIP Rollover',
   'nav.rollover_short': 'Rollover',
   'nav.pick_tab': 'Create',
 
@@ -533,7 +533,7 @@ const en = {
   'acca.job_buy_short': 'Buy',
   'acca.job_build': 'Build a slip',
   'acca.job_build_short': 'Build',
-  'acca.job_climb': '7-day VIP ladder',
+  'acca.job_climb': '2-day VIP ladder',
   'acca.job_climb_short': 'Climb',
   'acca.landing_how': 'How it works',
   'acca.landing_step1': 'Choose Sure, Safe, Medium, or High (per-leg odd band).',
@@ -2355,10 +2355,11 @@ const en = {
   'discover.no_items': 'No items yet.',
 
   'rollover.label': 'VIP · Climb',
-  'rollover.title': '7-Day VIP Rollover',
-  'rollover.tagline': 'VIP · Two-Fold linked board. Live tips for subscribers; settled history is public. Educational — not a payout.',
+  'rollover.title': '2-Day VIP Rollover',
+  'rollover.tagline':
+    'VIP · Two-Fold board: win Day 1, roll to Day 2, then take profit and restart. Live tips for subscribers; settled history is public. Educational — not a payout.',
   'rollover.today': "Today's coupon",
-  'rollover.plan_title': '7-day board',
+  'rollover.plan_title': '2-day board',
   'rollover.no_coupon': 'No VIP · Two-Fold coupon attached for this plan day yet. The run holds on day {day}.',
   'rollover.waiting_settlement': 'Waiting for the current coupon to settle before the next day is attached.',
   'rollover.day': 'Day',
@@ -2371,9 +2372,11 @@ const en = {
   'rollover.example_hint': 'Example only: {stake} at ×{odds} on day {day} would return {ret} if it hits. Not a payout — we do not credit wallets.',
   'rollover.example_later': '×{odds}',
   'rollover.example_later_hint': 'Example figures use ×{odds} for each plan day — not a payout.',
-  'rollover.finish_label': 'If all {days} days hit',
-  'rollover.finish_body': 'From {stake}: open days assume ×{odds}; attached coupons use real odds. Projected finish after day {days}: {total}. Educational only — not a wallet credit.',
-  'rollover.ladder_hint': 'Open days show ×{odds}. When a coupon is attached, real odds replace that and set After win; the next day’s stake follows that After win.',
+  'rollover.finish_label': 'If both days hit',
+  'rollover.finish_body':
+    'From {stake}: Day 1 rolls into Day 2 at ×{odds} when open (attached coupons use real odds). Projected after Day {days}: {total}, then a new cycle starts. Educational only — not a wallet credit.',
+  'rollover.ladder_hint':
+    'Day 1 stake rolls into Day 2 after a win. Open days show ×{odds}; attached coupons use real odds for After win. After Day 2 wins, the example harvest finishes and a new cycle starts at Day 1.',
   'rollover.status_pending': 'Live',
   'rollover.status_won': 'Won',
   'rollover.status_lost': 'Lost',
@@ -2382,10 +2385,11 @@ const en = {
   'rollover.status_empty': '—',
   'rollover.view_coupon': 'View coupon',
   'rollover.disclaimer_label': 'Educational & informational · 18+',
-  'rollover.disclaimer': 'This is a public educational board linked to VIP · Two-Fold. Live tips are for VIP subscribers. Settled tips are public. Paying for a subscription buys information, not a bet. We do not pay odds or credit wallets when this sequence “wins”. Gamble responsibly. 18+ only.',
+  'rollover.disclaimer':
+    'This is a public educational board linked to VIP · Two-Fold. Flow: win Day 1 → roll Day 2 → take-profit example and restart. Live tips are for VIP subscribers. Settled tips are public. Paying for a subscription buys information, not a bet. We do not pay odds or credit wallets when this sequence “wins”. Gamble responsibly. 18+ only.',
   'rollover.run_day': 'Day {day} of {total}',
-  'rollover.run_completed': 'This campaign finished. A new 7-day table has started.',
-  'rollover.run_broken': 'This campaign was cut. A new 7-day table has started at Day 1.',
+  'rollover.run_completed': 'Both days hit. Example harvest complete — a new 2-day cycle has started at Day 1.',
+  'rollover.run_broken': 'This campaign was cut. A new 2-day cycle has started at Day 1.',
   'rollover.owner': 'Published by {name}',
   'rollover.load_error': 'The rollover board could not be loaded. Try again shortly.',
   'rollover.records': 'Records',
@@ -2401,7 +2405,7 @@ const en = {
   'rollover.stat_from_stake_one': 'after 1 win from {stake}',
   'rollover.last_cut': 'Last campaign was cut at Day {day}. This table is a new cycle.',
   'rollover.last_reset': 'Last campaign was reset at Day {day}. This table is a new cycle.',
-  'rollover.last_finished': 'Last campaign finished all {total} days. This table is a new cycle.',
+  'rollover.last_finished': 'Last campaign finished both days. This table is a new cycle.',
 };
 
 export default en;

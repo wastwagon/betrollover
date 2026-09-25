@@ -1272,7 +1272,7 @@ export default function AdminFixturesPage() {
               </h2>
               <p className="text-xs text-amber-800/80 dark:text-amber-200/80 mt-1 max-w-2xl">
                 The list below only shows upcoming NS fixtures. Matches that already kicked off (e.g. VIP WSL Cup)
-                appear here when API-Sports still has no FT score. Settle them so the 7-day rollover can move to Day 2.
+                appear here when API-Sports still has no FT score. Settle them so the 2-day rollover can move to Day 2.
               </p>
             </div>
             <button

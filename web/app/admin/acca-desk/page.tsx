@@ -509,15 +509,15 @@ export default function AdminAccaDeskPage() {
               <div className="mb-8 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
                   <div>
-                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">7-day VIP rollover (VipTwoFold)</h2>
+                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">2-day VIP rollover (VipTwoFold)</h2>
                     <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
                       {overview.rollover.run
-                        ? `${overview.rollover.run.status} · day ${overview.rollover.run.currentDay}/${overview.rollover.planDays ?? 7} · started ${formatWhen(overview.rollover.run.startedAt)}`
+                        ? `${overview.rollover.run.status} · day ${overview.rollover.run.currentDay}/${overview.rollover.planDays ?? 2} · started ${formatWhen(overview.rollover.run.startedAt)}`
                         : 'No run yet. VIP · Two-Fold auto-attaches after publish, or reset then attach Day 1 manually.'}
                     </p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      Owner is VIP · Two-Fold. New VIP slips auto-attach (two same-day slips → Day N and Day N+1; a loss
-                      starts Day 1). Live tips stay subscription-gated on{' '}
+                      Owner is VIP · Two-Fold. Flow: win Day 1 → roll Day 2 → finish &amp; new cycle; a loss starts Day 1.
+                      Two same-day slips → Day N and Day N+1. Live tips stay subscription-gated on{' '}
                       <span className="font-medium text-gray-700 dark:text-gray-200">/rollover</span>. Manual attach below
                       is still available. Publish VIP from{' '}
                       <Link href="/admin/vip-tipster" className="font-medium text-teal-700 dark:text-teal-300 hover:underline">
@@ -578,7 +578,7 @@ export default function AdminAccaDeskPage() {
                     onClick={() => {
                       if (
                         !window.confirm(
-                          'Reset the public 7-day VIP table? This ends the current campaign at Day 1 of a new cycle. Records are kept.',
+                          'Reset the public 2-day VIP table? This ends the current campaign at Day 1 of a new cycle. Records are kept.',
                         )
                       ) {
                         return;
@@ -596,7 +596,7 @@ export default function AdminAccaDeskPage() {
                     onClick={() => {
                       if (
                         !window.confirm(
-                          'Clear public records (best run, finished, cut, reset)? The live 7-day table is not reset.',
+                          'Clear public records (best run, finished, cut, reset)? The live 2-day table is not reset.',
                         )
                       ) {
                         return;

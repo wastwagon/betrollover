@@ -314,7 +314,7 @@ export default function AdminVipTipsterPage() {
       'API-Sports still has WSL Cup as NS with no scores. Apply confirmed FT results and settle?\n\n' +
         '• Crystal Palace W vs Watford W → 1–0\n' +
         '• Brighton W vs Charlton Athletic W → 4–0\n\n' +
-        'This grades pending picks and can move the 7-day rollover Day 1 off LIVE.',
+        'This grades pending picks and can move the 2-day rollover Day 1 off LIVE.',
     );
     if (!ok) return;
     setForceSettling(true);
@@ -393,7 +393,7 @@ export default function AdminVipTipsterPage() {
             per desk day, using the same Early / Afternoon / Evening / Midnight windows as
             Acca Desk — skip a window when no pair exists. VIP publishes first so AccaSure1X2
             never reuses those fixtures (Sure can still mix Away on what is left). New VIP
-            slips auto-attach to the 7-day /rollover board.
+            slips auto-attach to the 2-day /rollover board.
           </p>
         </div>
 

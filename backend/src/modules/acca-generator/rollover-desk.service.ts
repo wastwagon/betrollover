@@ -55,6 +55,7 @@ export class RolloverDeskService {
   async syncBoard(): Promise<void> {
     this.attachChain = this.attachChain
       .then(async () => {
+        await this.retireOversizedActiveRun();
         await this.syncSettledDays();
         await this.autoAttachPendingTickets();
       })
@@ -63,6 +64,37 @@ export class RolloverDeskService {
         this.logger.warn(`Rollover board sync failed: ${message}`);
       });
     await this.attachChain;
+  }
+
+  /**
+   * After shrinking ROLLOVER_PLAN_DAYS (e.g. 7 → 2), end any active run that already
+   * passed the new length, or that already won through the full short plan (Day 2 won
+   * while still waiting for an old Day 3+ attach).
+   */
+  private async retireOversizedActiveRun(): Promise<void> {
+    const run = await this.runRepo.findOne({ where: { status: 'active' }, order: { id: 'DESC' } });
+    if (!run) return;
+    const last = await this.dayRepo.findOne({
+      where: { runId: run.id },
+      order: { dayNumber: 'DESC' },
+    });
+    const dayNum = last?.dayNumber ?? 0;
+    const pastPlan = dayNum > ROLLOVER_PLAN_DAYS || (run.currentDay ?? 0) > ROLLOVER_PLAN_DAYS;
+    const planAlreadyComplete = last?.status === 'won' && dayNum >= ROLLOVER_PLAN_DAYS;
+    if (!pastPlan && !planAlreadyComplete) return;
+
+    const now = new Date();
+    const finishedClean = planAlreadyComplete || (last?.status === 'won' && dayNum >= ROLLOVER_PLAN_DAYS);
+    run.status = finishedClean ? 'completed' : 'broken';
+    if (finishedClean) run.completedAt = now;
+    else run.brokenAt = now;
+    run.currentDay = Math.min(run.currentDay || dayNum, ROLLOVER_PLAN_DAYS);
+    await this.runRepo.save(run);
+    await this.releaseOpenDays(run.id);
+    await this.createRun();
+    this.logger.log(
+      `Rollover active run #${run.id} retired (${finishedClean ? 'completed' : 'cut'} for ${ROLLOVER_PLAN_DAYS}-day plan) → new cycle`,
+    );
   }
 
   /**

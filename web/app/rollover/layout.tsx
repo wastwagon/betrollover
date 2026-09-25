@@ -3,9 +3,9 @@ import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
 import { getLocale } from '@/lib/i18n';
 
-const TITLE = '7-Day VIP Rollover';
+const TITLE = '2-Day VIP Rollover';
 const DESCRIPTION =
-  'Follow the VIP · Two-Fold 7-day educational board. Live tips for subscribers; settled history is public so you can decide to join. Not a bookmaker payout. 18+.';
+  'Follow the VIP · Two-Fold 2-day educational board: win Day 1, roll Day 2, take profit and restart. Live tips for subscribers; settled history is public. Not a bookmaker payout. 18+.';
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: DESCRIPTION,
     keywords: [
       'football rollover',
-      '7 day vip tips',
+      '2 day vip tips',
       'VIP Two-Fold',
       'BetRollover rollover',
       'football coupon Ghana',
@@ -25,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: TITLE,
       description: DESCRIPTION,
       type: 'website',
-      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'BetRollover 7-Day VIP Rollover' }],
+      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'BetRollover 2-Day VIP Rollover' }],
     },
     twitter: {
       card: 'summary_large_image',
@@ -38,9 +38,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const FAQS = [
   {
-    question: 'What is the 7-day VIP rollover?',
+    question: 'What is the 2-day VIP rollover?',
     answer:
-      'It is a public educational board linked to VIP · Two-Fold. Each plan day uses one VIP two-fold. Two slips on the same day become Day N and Day N+1. A win advances the day; a loss starts a new campaign at Day 1. Live tips are for VIP subscribers; settled tips are public. We do not pay odds or credit wallets for this board.',
+      'It is a public educational board linked to VIP · Two-Fold. Each plan day uses one VIP two-fold. Win Day 1 and the example stake rolls to Day 2; win Day 2 and the cycle finishes (take-profit example) and a new board starts at Day 1. A loss cuts the run and starts Day 1. Two slips on the same calendar day can be Day N and Day N+1. Live tips are for VIP subscribers; settled tips are public. We do not pay odds or credit wallets for this board.',
   },
   {
     question: 'Can I see today’s tip without a VIP subscription?',
@@ -55,7 +55,7 @@ const FAQS = [
   {
     question: 'What do the GHS figures mean?',
     answer:
-      'They are a worked example of compounding that campaign’s example stake (default GHS 100) at the board’s target multiplier for every plan day. Day 7 shows the full-run example bank if every coupon hits. They are not payouts.',
+      'They are a worked example of compounding that campaign’s example stake (default GHS 100) at the board’s target multiplier across the two plan days. Day 2 shows the harvest example if both coupons hit, then the cycle restarts. They are not payouts.',
   },
 ];
 

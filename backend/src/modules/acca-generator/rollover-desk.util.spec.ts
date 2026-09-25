@@ -83,28 +83,24 @@ describe('rollover-desk.util', () => {
     expect(picked).toBeNull();
   });
 
-  it('shows example cash for the full 7-day plan from GHS 100 at ×1.6', () => {
+  it('shows example cash for the full 2-day plan from GHS 100 at ×1.6', () => {
     expect(exampleStakeGhs(1)).toBe(100);
     expect(exampleReturnGhs(1)).toBe(160);
     expect(exampleMoneyForDay(1).stakeGhs).toBe(100);
     expect(exampleMoneyForDay(1).returnGhs).toBe(160);
     expect(exampleMoneyForDay(2).stakeGhs).toBe(160);
     expect(exampleMoneyForDay(2).returnGhs).toBe(256);
-    expect(exampleMoneyForDay(4).stakeGhs).toBe(410);
-    expect(exampleMoneyForDay(4).returnGhs).toBe(656);
-    expect(exampleMoneyForDay(7).stakeGhs).toBe(1680);
-    expect(exampleMoneyForDay(7).returnGhs).toBe(2688);
-    expect(exampleMoneyForDay(8).stakeGhs).toBeNull();
-    expect(exampleMoneyForDay(10).stakeGhs).toBeNull();
+    expect(exampleMoneyForDay(3).stakeGhs).toBeNull();
+    expect(exampleMoneyForDay(7).stakeGhs).toBeNull();
   });
 
   it('scales example cash from a custom campaign stake', () => {
     expect(exampleStakeGhs(1, 50)).toBe(50);
     expect(exampleReturnGhs(1, 50)).toBe(80);
-    expect(exampleMoneyForDay(1, 7, 50).stakeGhs).toBe(50);
-    expect(exampleMoneyForDay(1, 7, 50).returnGhs).toBe(80);
-    expect(exampleMoneyForDay(2, 7, 50).stakeGhs).toBe(80);
-    expect(exampleMoneyForDay(2, 7, 50).returnGhs).toBe(128);
+    expect(exampleMoneyForDay(1, 2, 50).stakeGhs).toBe(50);
+    expect(exampleMoneyForDay(1, 2, 50).returnGhs).toBe(80);
+    expect(exampleMoneyForDay(2, 2, 50).stakeGhs).toBe(80);
+    expect(exampleMoneyForDay(2, 2, 50).returnGhs).toBe(128);
   });
 
   it('records After win from consecutive real odds, not dummy 1.6', () => {
@@ -118,7 +114,8 @@ describe('rollover-desk.util', () => {
     expect(cutAtDay4.stakeGhs).toBe(100);
     // 100×1.64=164; 164×1.80=295; 295×1.70=502 — dummy ×1.60³ is 410
     expect(cutAtDay4.returnGhs).toBe(502);
-    expect(exampleMoneyForDay(3).returnGhs).toBe(410);
+    // Dummy ladder still compounds beyond the live 2-day board when maxDay is raised for the check.
+    expect(exampleMoneyForDay(3, 3).returnGhs).toBe(410);
 
     const holeAfterDay2 = archiveMoneyForRun([
       { dayNumber: 1, status: 'won', combinedOdds: 1.6 },

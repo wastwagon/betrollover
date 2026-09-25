@@ -1,6 +1,7 @@
 /**
- * Public 7-day educational rollover — VIP · Two-Fold (VipTwoFold) only.
- * One 2-fold per plan day. Auto-attaches after VIP publish; admin can still attach manually.
+ * Public 2-day educational rollover — VIP · Two-Fold (VipTwoFold) only.
+ * One 2-fold per plan day. Win Day 1 → roll to Day 2; win Day 2 → harvest & new cycle at Day 1.
+ * Loss cuts the run and starts Day 1. Auto-attaches after VIP publish; admin can still attach manually.
  * Live tips stay subscription-gated (same as marketplace). Settled tips are public.
  * Not a payout.
  */
@@ -19,7 +20,8 @@ export const ROLLOVER_OWNER_DISPLAY_FALLBACK = VIP_TIPSTER.display_name;
  */
 export const PUBLIC_CHANNEL_SURE_USERNAME = 'AccaSure1X2';
 
-export const ROLLOVER_PLAN_DAYS = 7;
+/** Plan length: Day 1 stake → Day 2 roll → finish / take-profit example → restart. */
+export const ROLLOVER_PLAN_DAYS = 2;
 /** Example-money multiplier for empty / future days (VIP combined band ~1.50–1.99). */
 export const ROLLOVER_TARGET_ODDS = 1.6;
 /** Public board starting example stake (GHS). */

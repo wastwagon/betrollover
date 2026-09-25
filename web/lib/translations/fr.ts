@@ -60,7 +60,7 @@ const fr: Record<string, string> = {
   'nav.create_pick_short': '+Picks',
   'nav.acca_generator': 'Générateur d\'acca',
   'nav.acca_generator_short': 'Acca',
-  'nav.rollover': 'Relance VIP 7 jours',
+  'nav.rollover': 'Relance VIP 2 jours',
   'nav.rollover_short': 'Relance',
   'nav.pick_tab': 'Créer',
 
@@ -530,7 +530,7 @@ const fr: Record<string, string> = {
   'acca.job_buy_short': 'Desk',
   'acca.job_build': 'Construire un slip',
   'acca.job_build_short': 'Slip',
-  'acca.job_climb': 'Série VIP 7 jours',
+  'acca.job_climb': 'Série VIP 2 jours',
   'acca.job_climb_short': 'Série',
   'acca.landing_how': 'Comment ça marche',
   'acca.landing_step1': 'Choisissez Sure, Safe, Medium ou High (bande de cotes par sélection).',
@@ -2360,10 +2360,11 @@ const fr: Record<string, string> = {
   'discover.no_items': 'Aucun élément pour le moment.',
 
   'rollover.label': 'VIP · Grimper',
-  'rollover.title': 'Relance VIP 7 jours',
-  'rollover.tagline': 'Tableau lié à VIP · Two-Fold. Pronostics live pour abonnés ; historique réglé public. Éducatif — pas un paiement.',
+  'rollover.title': 'Relance VIP 2 jours',
+  'rollover.tagline':
+    'Tableau VIP · Two-Fold : gagnez le jour 1, relancez au jour 2, puis prenez le profit et recommencez. Pronostics live pour abonnés ; historique réglé public. Éducatif — pas un paiement.',
   'rollover.today': 'Coupon du jour',
-  'rollover.plan_title': 'Tableau 7 jours',
+  'rollover.plan_title': 'Tableau 2 jours',
   'rollover.no_coupon': 'Aucun coupon VIP · Two-Fold attaché pour ce jour de série. La série reste au jour {day}.',
   'rollover.waiting_settlement': 'En attente du règlement du coupon en cours avant d’attacher le jour suivant.',
   'rollover.day': 'Jour',
@@ -2376,9 +2377,11 @@ const fr: Record<string, string> = {
   'rollover.example_hint': 'Exemple seulement : {stake} à ×{odds} au jour {day} donnerait {ret} s’il passe. Ce n’est pas un paiement — nous ne créditons pas les portefeuilles.',
   'rollover.example_later': '×{odds}',
   'rollover.example_later_hint': 'Les montants d’exemple utilisent ×{odds} pour chaque jour de série — pas un paiement.',
-  'rollover.finish_label': 'Si les {days} jours passent',
-  'rollover.finish_body': 'Depuis {stake} : jours ouverts à ×{odds} ; coupons attachés = cote réelle. Projection après le jour {days} : {total}. Éducatif uniquement — pas un crédit portefeuille.',
-  'rollover.ladder_hint': 'Jours ouverts : ×{odds}. Coupon attaché = cote réelle pour Après gain ; la mise du jour suivant suit ce Après gain.',
+  'rollover.finish_label': 'Si les deux jours passent',
+  'rollover.finish_body':
+    'Depuis {stake} : le jour 1 se relève au jour 2 à ×{odds} si ouvert (coupons attachés = cote réelle). Projection après le jour {days} : {total}, puis un nouveau cycle. Éducatif uniquement — pas un crédit portefeuille.',
+  'rollover.ladder_hint':
+    'La mise du jour 1 se relève au jour 2 après un gain. Jours ouverts : ×{odds} ; coupon attaché = cote réelle pour Après gain. Après le gain du jour 2, l’exemple de prise de profit se termine et un nouveau cycle commence au jour 1.',
   'rollover.status_pending': 'En cours',
   'rollover.status_won': 'Gagné',
   'rollover.status_lost': 'Perdu',
@@ -2387,10 +2390,11 @@ const fr: Record<string, string> = {
   'rollover.status_empty': '—',
   'rollover.view_coupon': 'Voir le coupon',
   'rollover.disclaimer_label': 'Éducatif et informatif · 18+',
-  'rollover.disclaimer': 'Tableau éducatif public lié à VIP · Two-Fold. Les tips live sont pour les abonnés VIP. Les tips réglés sont publics. Un abonnement achète une information, pas un pari. Nous ne versons pas les cotes et ne créditons pas les portefeuilles si cette série « gagne ». Jouez de manière responsable. 18+ uniquement.',
+  'rollover.disclaimer':
+    'Tableau éducatif public lié à VIP · Two-Fold. Flux : gain jour 1 → relance jour 2 → exemple de prise de profit et redémarrage. Les tips live sont pour les abonnés VIP. Les tips réglés sont publics. Un abonnement achète une information, pas un pari. Nous ne versons pas les cotes et ne créditons pas les portefeuilles si cette série « gagne ». Jouez de manière responsable. 18+ uniquement.',
   'rollover.run_day': 'Jour {day} sur {total}',
-  'rollover.run_completed': 'Cette série est terminée. Un nouveau tableau 7 jours a commencé.',
-  'rollover.run_broken': 'Cette série a été coupée. Un nouveau tableau 7 jours a commencé au jour 1.',
+  'rollover.run_completed': 'Les deux jours sont passés. Exemple de prise de profit terminé — un nouveau cycle 2 jours a commencé au jour 1.',
+  'rollover.run_broken': 'Cette série a été coupée. Un nouveau cycle 2 jours a commencé au jour 1.',
   'rollover.owner': 'Publié par {name}',
   'rollover.load_error': 'Impossible de charger le tableau de relance. Réessayez dans un instant.',
   'rollover.records': 'Records',
@@ -2406,7 +2410,7 @@ const fr: Record<string, string> = {
   'rollover.stat_from_stake_one': 'après 1 gain depuis {stake}',
   'rollover.last_cut': 'La dernière série a été coupée au jour {day}. Ce tableau est un nouveau cycle.',
   'rollover.last_reset': 'La dernière série a été réinitialisée au jour {day}. Ce tableau est un nouveau cycle.',
-  'rollover.last_finished': 'La dernière série a terminé les {total} jours. Ce tableau est un nouveau cycle.',
+  'rollover.last_finished': 'La dernière série a terminé les deux jours. Ce tableau est un nouveau cycle.',
 };
 
 export default fr;
