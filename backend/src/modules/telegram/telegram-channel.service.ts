@@ -153,7 +153,7 @@ export class TelegramChannelService {
     return this.sendMessage(text);
   }
 
-  /** Daily bankroll / “stay in profit” strategy education (complete post — no extra footer). */
+  /** Monthly bankroll / “stay in profit” strategy education (complete post — no extra footer). */
   async postAdviceMessage(salt?: number | string): Promise<{ ok: boolean; error?: string }> {
     if (!this.adviceEnabled()) {
       return { ok: false, error: 'advice_disabled' };
@@ -163,7 +163,7 @@ export class TelegramChannelService {
   }
 
   /**
-   * Exact daily community appeal (react meanings + share join link).
+   * Exact monthly community appeal (react meanings + share join link).
    * No extra engagement footer — message is complete as written.
    */
   async postCommunityAppealMessage(): Promise<{ ok: boolean; error?: string }> {
@@ -174,7 +174,7 @@ export class TelegramChannelService {
   }
 
   /**
-   * Daily tipster recruit — website register + invite tipster friends.
+   * Tipster recruit (off unless enabled) — website register + invite tipster friends.
    * Earning = creating paid picks, not sharing the link.
    */
   async postTipsterRecruitMessage(): Promise<{ ok: boolean; error?: string }> {

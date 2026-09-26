@@ -4,18 +4,20 @@ import { PUBLIC_CHANNEL_SURE_USERNAME } from '../../config/rollover-desk.config'
 /**
  * BetRollover Telegram voice — one job per post type.
  *
- * Daily cadence (Africa/Accra) — three scheduled posts, not five:
+ * Monthly cadence (Africa/Accra) — scheduled promo posts, day 1 only:
  *  08:00  Growth        → VIP join / purchase protection (rotates)
  *  12:00  Advice        → bankroll, ROI, or withdraw (rotates)
  *  17:00  Community     → react meanings + share channel (exact ask)
  *
  * Off by default: 10:00 tipster recruit, 19:00 second growth post.
- * Tip and win alerts stay event-driven (Acca Sure on the free channel, VIP 2-folds in VIP).
+ * Tip and win alerts stay event-driven (Acca Sure on the free channel).
+ * VIP Two-Fold slips stay event-/desk-driven in BETROLLOVER VIP (not throttled here).
  *
  * Tip & win alerts (event-driven): product first + short engagement footer.
  * Reaction legend lives ONLY on the community appeal (not every tip).
  *
- * Placeholders: {channel} = t.me join · {site} = web origin · {register} = register URL
+ * Placeholders: {channel} = public tips channel · {contact} = private DM (@wastwagon)
+ *               {site} = web origin · {register} = register URL
  */
 
 const LEGAL_LINE = '18+ · Information only · Not a bookmaker';
@@ -29,7 +31,7 @@ export const TELEGRAM_ENGAGEMENT_FOOTERS = [
   `React if you’re on it · invite one friend\n👉 {channel}`,
 ] as const;
 
-/** Once/day discovery — VIP join, free tips, purchase protection. */
+/** Monthly discovery — VIP join, free tips, purchase protection. */
 export const TELEGRAM_GROWTH_POSTS = [
   `📌 Rollover VIP
 
@@ -37,10 +39,7 @@ Don't buy fake "fixed" tickets on Telegram — there are no real fixed matches.
 You lose twice: the ticket fee and your stake.
 
 Join Rollover VIP. We post one max-bet slip a day.
-Message @{contact} to join.
-👉 {channel}
-
-Board: {site}/rollover?utm_source=telegram&utm_medium=social&utm_campaign=channel_vip
+Message @{contact} to join
 
 ${LEGAL_LINE}`,
 
@@ -67,7 +66,7 @@ ${LEGAL_LINE}`,
 ] as const;
 
 /**
- * Daily tipster recruit — register on the website; invite tipster friends to join.
+ * Tipster recruit (off unless enabled) — register on the website; invite tipster friends.
  * Earning comes from publishing paid picks (not from sharing the link).
  */
 export const TELEGRAM_TIPSTER_RECRUIT_POST = `💼 Tipsters · Join BetRollover & earn
@@ -91,8 +90,8 @@ Free tips stay on this channel: {channel}
 ${LEGAL_LINE}`;
 
 /**
- * Daily community appeal — exact subscriber ask (react meanings + share join link).
- * Sent once/day; do not append engagement footer (message is complete).
+ * Monthly community appeal — exact subscriber ask (react meanings + share join link).
+ * Sent on day 1; do not append engagement footer (message is complete).
  */
 export const TELEGRAM_COMMUNITY_APPEAL_POST = `👋 Community · Quick ask from the BetRollover team
 
@@ -114,7 +113,7 @@ And please share our Telegram with a friend who loves football tips:
 It costs nothing, takes a second, and means a lot. Thank you for supporting free tips 🙏`;
 
 /**
- * Daily strategy / bankroll advice — education only.
+ * Monthly strategy / bankroll advice — education only.
  * Soft channel CTA; no react legend (community post owns that).
  */
 export const TELEGRAM_ADVICE_POSTS = [
@@ -179,7 +178,10 @@ export function telegramChannelSeoDescription(): string {
 /** @deprecated Prefer telegramChannelSeoDescription() so @{contact} stays correct. */
 export const TELEGRAM_CHANNEL_SEO_DESCRIPTION = telegramChannelSeoDescription();
 
-/** @handle without @ — DM contact for VIP (defaults to betrollovertips). */
+/**
+ * Public channel @handle (no @) — join link / channel posts.
+ * Defaults to betrollovertips. Override with NEXT_PUBLIC_TELEGRAM_ADS_HANDLE.
+ */
 export function telegramAdsHandle(): string {
   const fromAds = (process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE || '').trim().replace(/^@/, '');
   if (fromAds && !/^-?\d+$/.test(fromAds)) return fromAds;
@@ -187,6 +189,17 @@ export function telegramAdsHandle(): string {
   // Channel IDs are often numeric (-100…); only treat @username forms as a public handle.
   if (channelId && !/^-?\d+$/.test(channelId)) return channelId;
   return 'betrollovertips';
+}
+
+/**
+ * Private DM @handle (no @) for VIP join / support.
+ * Defaults to wastwagon. Override with TELEGRAM_CONTACT_HANDLE.
+ * Kept separate from the public channel so people message you directly.
+ */
+export function telegramContactHandle(): string {
+  const fromEnv = (process.env.TELEGRAM_CONTACT_HANDLE || '').trim().replace(/^@/, '');
+  if (fromEnv && !/^-?\d+$/.test(fromEnv)) return fromEnv;
+  return 'wastwagon';
 }
 
 /** Public join URL for the tips channel (defaults to @betrollovertips). */
@@ -216,7 +229,7 @@ function applyTelegramCopyVars(template: string, siteOrigin: string): string {
   return template
     .replace(/\{site\}/g, site)
     .replace(/\{channel\}/g, telegramChannelJoinUrl())
-    .replace(/\{contact\}/g, telegramAdsHandle())
+    .replace(/\{contact\}/g, telegramContactHandle())
     .replace(/\{register\}/g, telegramRegisterUrl(site));
 }
 

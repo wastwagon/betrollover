@@ -10,6 +10,7 @@ import {
   formatVipPublicWinPost,
   pickRotatingLine,
   telegramAdsHandle,
+  telegramContactHandle,
   telegramAlwaysAllowUsernames,
   telegramChannelSeoDescription,
 } from './telegram-copy';
@@ -43,22 +44,25 @@ describe('telegram-copy', () => {
     expect(out).not.toContain('I’m on it');
   });
 
-  it('formats growth post for VIP invite + channel join', () => {
+  it('formats growth post for VIP invite + private contact', () => {
     process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE = 'betrollovertips';
+    delete process.env.TELEGRAM_CONTACT_HANDLE;
     const text = formatGrowthPost('https://betrollover.com', 0);
     expect(text).toContain('Rollover VIP');
-    expect(text).toContain('@betrollovertips');
-    expect(text).toContain('https://t.me/betrollovertips');
+    expect(text).toContain('@wastwagon');
+    expect(text).not.toContain('@betrollovertips');
     expect(text.toLowerCase()).toContain('fixed');
     expect(text).not.toContain('{channel}');
     expect(text).not.toContain('{contact}');
+    expect(text).not.toContain('/rollover');
   });
 
   it('formats VIP free-channel slip teaser without legs', () => {
     process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE = 'betrollovertips';
+    delete process.env.TELEGRAM_CONTACT_HANDLE;
     const text = formatVipPublicSlipTeaser({ siteOrigin: 'https://betrollover.com', totalOdds: 1.65 });
     expect(text).toContain('1.65');
-    expect(text).toContain('@betrollovertips');
+    expect(text).toContain('@wastwagon');
     expect(text.toLowerCase()).toContain('members only');
     expect(text).not.toContain('Home Win');
     expect(text).toContain('/rollover');
@@ -66,6 +70,7 @@ describe('telegram-copy', () => {
 
   it('formats VIP free-channel win with contact CTA', () => {
     process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE = 'betrollovertips';
+    delete process.env.TELEGRAM_CONTACT_HANDLE;
     const text = formatVipPublicWinPost({
       siteOrigin: 'https://betrollover.com',
       title: 'VIP · Two-Fold',
@@ -74,14 +79,16 @@ describe('telegram-copy', () => {
     });
     expect(text).toContain('VIP won');
     expect(text).toContain('Team A vs Team B');
-    expect(text).toContain('@betrollovertips');
+    expect(text).toContain('@wastwagon');
     expect(telegramAdsHandle()).toBe('betrollovertips');
+    expect(telegramContactHandle()).toBe('wastwagon');
   });
 
   it('ignores numeric TELEGRAM_CHANNEL_ID when resolving public @handle', () => {
     delete process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE;
     process.env.TELEGRAM_CHANNEL_ID = '-1001950138526';
     expect(telegramAdsHandle()).toBe('betrollovertips');
+    expect(telegramContactHandle()).toBe('wastwagon');
   });
 
   it('formats tipster recruit with register link; earn via paid picks not share', () => {
@@ -99,7 +106,7 @@ describe('telegram-copy', () => {
     expect(text).not.toContain('{register}');
   });
 
-  it('formats exact daily community appeal with join link', () => {
+  it('formats exact monthly community appeal with join link', () => {
     process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE = 'betrollovertips';
     const text = formatCommunityAppealPost();
     expect(text).toContain('Quick ask from the BetRollover team');
@@ -178,6 +185,7 @@ describe('TelegramChannelService engagement', () => {
     process.env.TELEGRAM_COMMUNITY_APPEAL_ENABLED = 'true';
     process.env.TELEGRAM_TIPSTER_RECRUIT_ENABLED = 'true';
     process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE = 'betrollovertips';
+    delete process.env.TELEGRAM_CONTACT_HANDLE;
   });
 
   afterAll(() => {
@@ -272,6 +280,7 @@ describe('TelegramChannelService engagement', () => {
   });
 
   it('posts growth message', async () => {
+    delete process.env.TELEGRAM_CONTACT_HANDLE;
     const svc = new TelegramChannelService();
     const calls: unknown[] = [];
     global.fetch = jest.fn(async (_url, init) => {
@@ -279,14 +288,16 @@ describe('TelegramChannelService engagement', () => {
       return { ok: true, json: async () => ({ ok: true }) } as Response;
     }) as typeof fetch;
 
-    const r = await svc.postGrowthMessage('morning-test');
+    const r = await svc.postGrowthMessage(0);
     expect(r.ok).toBe(true);
     const body = calls[0] as { text: string };
-    expect(body.text).toMatch(/Rollover VIP|Discover/);
-    expect(body.text).toContain('https://t.me/betrollovertips');
+    expect(body.text).toContain('Rollover VIP');
+    expect(body.text).toContain('@wastwagon');
+    expect(body.text).toContain('18+');
   });
 
   it('posts VIP slip teaser to free channel without legs', async () => {
+    delete process.env.TELEGRAM_CONTACT_HANDLE;
     const svc = new TelegramChannelService();
     const calls: unknown[] = [];
     global.fetch = jest.fn(async (_url, init) => {
@@ -298,7 +309,7 @@ describe('TelegramChannelService engagement', () => {
     expect(r.ok).toBe(true);
     const body = calls[0] as { text: string };
     expect(body.text).toContain('1.72');
-    expect(body.text).toContain('@betrollovertips');
+    expect(body.text).toContain('@wastwagon');
     expect(body.text.toLowerCase()).toContain('members only');
   });
 
