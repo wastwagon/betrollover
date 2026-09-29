@@ -39,6 +39,26 @@ export default async function GuidesIndexPage() {
       title: t('guides.eval_card_title'),
       summary: t('guides.eval_card_summary'),
     },
+    {
+      href: '/guides/read-tipster-stats',
+      title: t('guides.stats_card_title'),
+      summary: t('guides.stats_card_summary'),
+    },
+    {
+      href: '/guides/accumulator-settlement',
+      title: t('guides.acca_card_title'),
+      summary: t('guides.acca_card_summary'),
+    },
+    {
+      href: '/guides/free-and-paid-picks',
+      title: t('guides.free_card_title'),
+      summary: t('guides.free_card_summary'),
+    },
+    {
+      href: '/guides/leaderboard-ranking',
+      title: t('guides.board_card_title'),
+      summary: t('guides.board_card_summary'),
+    },
   ];
 
   return (

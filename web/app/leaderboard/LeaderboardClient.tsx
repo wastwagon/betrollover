@@ -295,6 +295,11 @@ export default function LeaderboardPage({
                     n: String(LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING),
                   })}
           </p>
+          <p className="mt-2 mb-0">
+            <Link href="/guides/leaderboard-ranking" className="font-semibold text-[var(--primary)] hover:underline">
+              {t('guides.board_card_title')}
+            </Link>
+          </p>
         </div>
 
         {/* Table */}

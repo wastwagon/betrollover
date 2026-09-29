@@ -92,6 +92,26 @@ export default async function HomePage() {
                 </div>
               ))}
             </div>
+            <nav className="mt-5 flex flex-wrap gap-x-4 gap-y-2" aria-label={t('nav.short_guides')}>
+              <Link href="/guides/purchase-protection" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                {t('guides.escrow_short')}
+              </Link>
+              <Link href="/guides/evaluate-tipsters" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                {t('guides.eval_short')}
+              </Link>
+              <Link href="/guides/read-tipster-stats" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                {t('guides.stats_short')}
+              </Link>
+              <Link href="/guides/accumulator-settlement" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                {t('guides.acca_short')}
+              </Link>
+              <Link href="/guides/free-and-paid-picks" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                {t('guides.free_short')}
+              </Link>
+              <Link href="/guides/leaderboard-ranking" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                {t('guides.board_short')}
+              </Link>
+            </nav>
           </div>
         </section>
 
@@ -204,6 +224,11 @@ export default async function HomePage() {
                 <p className="text-xs text-[var(--text-tertiary)] leading-relaxed">
                   {t('home.feature_escrow_disclaimer')}
                 </p>
+                <p className="mt-3 mb-0">
+                  <Link href="/guides/purchase-protection" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                    {t('guides.escrow_short')}
+                  </Link>
+                </p>
               </div>
 
               <div className="min-w-0 border-t border-[var(--separator)] pt-5">
@@ -213,6 +238,11 @@ export default async function HomePage() {
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">
                   {t('home.feature_verified_desc', sellVars)}
                 </p>
+                <p className="mt-3 mb-0">
+                  <Link href="/guides/evaluate-tipsters" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                    {t('guides.eval_short')}
+                  </Link>
+                </p>
               </div>
 
               <div className="min-w-0 border-t border-[var(--separator)] pt-5">
@@ -221,6 +251,11 @@ export default async function HomePage() {
                 </h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">
                   {t('home.feature_refunds_desc')}
+                </p>
+                <p className="mt-3 mb-0">
+                  <Link href="/guides/free-and-paid-picks" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                    {t('guides.free_short')}
+                  </Link>
                 </p>
               </div>
 
@@ -248,6 +283,11 @@ export default async function HomePage() {
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">
                   {t('home.feature_stats_desc')}
                 </p>
+                <p className="mt-3 mb-0">
+                  <Link href="/guides/read-tipster-stats" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                    {t('guides.stats_short')}
+                  </Link>
+                </p>
               </div>
 
               <div className="min-w-0 border-t border-[var(--separator)] pt-5">
@@ -256,6 +296,11 @@ export default async function HomePage() {
                 </h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed">
                   {t('home.feature_leaderboard_desc')}
+                </p>
+                <p className="mt-3 mb-0">
+                  <Link href="/guides/leaderboard-ranking" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                    {t('guides.board_short')}
+                  </Link>
                 </p>
               </div>
             </div>

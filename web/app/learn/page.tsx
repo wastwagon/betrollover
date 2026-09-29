@@ -71,6 +71,17 @@ export default async function LearnPage() {
                   </div>
                 ))}
               </dl>
+              <p className="mt-4">
+                {t('learn.guide_links_lead')}{' '}
+                <Link href="/guides/read-tipster-stats" className="text-[var(--primary)] hover:underline">{t('guides.stats_card_title')}</Link>
+                {' · '}
+                <Link href="/guides/accumulator-settlement" className="text-[var(--primary)] hover:underline">{t('guides.acca_card_title')}</Link>
+                {' · '}
+                <Link href="/guides/free-and-paid-picks" className="text-[var(--primary)] hover:underline">{t('guides.free_card_title')}</Link>
+                {' · '}
+                <Link href="/guides/leaderboard-ranking" className="text-[var(--primary)] hover:underline">{t('guides.board_card_title')}</Link>
+                .
+              </p>
             </section>
 
             <section>

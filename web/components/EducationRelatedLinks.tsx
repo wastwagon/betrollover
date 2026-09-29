@@ -9,15 +9,25 @@ export type EducationFold =
   | 'guides'
   | 'escrow'
   | 'evaluate'
+  | 'stats'
+  | 'acca'
+  | 'free'
+  | 'board'
   | 'news'
   | 'library'
   | 'how-it-works';
+
+const GUIDE_PAGES = new Set<EducationFold>(['escrow', 'evaluate', 'stats', 'acca', 'free', 'board']);
 
 const LINKS: { id: EducationFold; href: string; labelKey: TranslationKey }[] = [
   { id: 'guides', href: '/guides', labelKey: 'discover.job_guides_short' },
   { id: 'learn', href: '/learn', labelKey: 'nav.learn' },
   { id: 'escrow', href: '/guides/purchase-protection', labelKey: 'guides.escrow_short' },
   { id: 'evaluate', href: '/guides/evaluate-tipsters', labelKey: 'guides.eval_short' },
+  { id: 'stats', href: '/guides/read-tipster-stats', labelKey: 'guides.stats_short' },
+  { id: 'acca', href: '/guides/accumulator-settlement', labelKey: 'guides.acca_short' },
+  { id: 'free', href: '/guides/free-and-paid-picks', labelKey: 'guides.free_short' },
+  { id: 'board', href: '/guides/leaderboard-ranking', labelKey: 'guides.board_short' },
   { id: 'news', href: '/news', labelKey: 'nav.news' },
   { id: 'library', href: '/resources', labelKey: 'education.library' },
   { id: 'how-it-works', href: '/how-it-works', labelKey: 'learn.cta_how_it_works' },
@@ -30,7 +40,7 @@ export function EducationRelatedLinks({ current }: { current: EducationFold }) {
   const t = useT();
   const shown = LINKS.filter((link) => {
     if (link.id === current) return false;
-    if (current === 'guides' && (link.id === 'escrow' || link.id === 'evaluate')) return false;
+    if (current === 'guides' && GUIDE_PAGES.has(link.id)) return false;
     return true;
   });
 

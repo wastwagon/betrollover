@@ -897,6 +897,12 @@ export default function MarketplacePage({
             >
               {t('subscriptions.marketplace_link_eval')}
             </Link>
+            <Link
+              href="/guides/free-and-paid-picks"
+              className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            >
+              {t('guides.free_short')}
+            </Link>
             {isSubscriptionsEnabled() ? (
               <Link
                 href="/subscriptions/marketplace"

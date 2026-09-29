@@ -141,6 +141,30 @@ export default function ResourcesPage() {
             >
               {t('resources.eval_link')}
             </Link>
+            <Link
+              href="/guides/read-tipster-stats"
+              className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            >
+              {t('resources.stats_link')}
+            </Link>
+            <Link
+              href="/guides/accumulator-settlement"
+              className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            >
+              {t('resources.acca_link')}
+            </Link>
+            <Link
+              href="/guides/free-and-paid-picks"
+              className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            >
+              {t('resources.free_link')}
+            </Link>
+            <Link
+              href="/guides/leaderboard-ranking"
+              className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            >
+              {t('resources.board_link')}
+            </Link>
           </div>
         </section>
 

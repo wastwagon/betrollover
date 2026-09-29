@@ -108,6 +108,11 @@ export default async function HowItWorksPage() {
             <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/30 p-4 sm:p-6 min-w-0">
               <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">{t('how_it_works.settlement_h2')}</h2>
               <p className="m-0 text-[var(--text-muted)] leading-relaxed">{t('how_it_works.settlement_p')}</p>
+              <p className="mt-3 mb-0 text-[var(--text-muted)] leading-relaxed">
+                <Link href="/guides/accumulator-settlement" className="text-[var(--primary)] hover:underline">{t('guides.acca_card_title')}</Link>
+                {' · '}
+                <Link href="/guides/free-and-paid-picks" className="text-[var(--primary)] hover:underline">{t('guides.free_card_title')}</Link>
+              </p>
             </section>
 
             <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/30 p-4 sm:p-6 min-w-0">
