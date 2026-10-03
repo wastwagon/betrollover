@@ -212,6 +212,28 @@ export function shouldUnoptimizeGoogleAvatar(src: string | null | undefined): bo
   return /googleusercontent\.com/i.test(src);
 }
 
+/** Hosts in next.config.js `images.remotePatterns` that should be resized to AVIF/WebP. */
+const OPTIMIZED_IMAGE_HOSTS = new Set([
+  'media.api-sports.io',
+  'api.betrollover.com',
+  'betrollover.com',
+]);
+
+/**
+ * Remote logos and player photos stay on the raw URL unless the host is allowed
+ * through the image optimizer. Unknown hosts and Google avatars stay direct.
+ */
+export function shouldUnoptimizeRemoteImage(src: string | null | undefined): boolean {
+  if (!src || typeof src !== 'string') return true;
+  if (src.startsWith('/')) return false;
+  if (shouldUnoptimizeGoogleAvatar(src)) return true;
+  try {
+    return !OPTIMIZED_IMAGE_HOSTS.has(new URL(src).hostname);
+  } catch {
+    return true;
+  }
+}
+
 /** Build ad image URL. Relative paths (e.g. /uploads/ads/xxx.jpg) become full API URL. */
 export function getAdImageUrl(imageUrl: string | null | undefined): string | null {
   if (!imageUrl) return null;

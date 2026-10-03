@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { shouldUnoptimizeRemoteImage } from '@/lib/site-config';
 
 function countryCodeToFlagEmoji(code: string | null | undefined): string | null {
   if (!code || typeof code !== 'string' || !code.trim()) return null;
@@ -44,8 +45,9 @@ export function TeamBadge({ logo, countryCode, name, size = 24, className = '' }
         height={size}
         className={`object-contain flex-shrink-0 ${className}`}
         style={{ width: size, height: size, minWidth: size, minHeight: size }}
+        sizes={`${size}px`}
         onError={() => setImgError(true)}
-        unoptimized
+        unoptimized={shouldUnoptimizeRemoteImage(logo)}
       />
     );
   }

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getApiUrl } from '@/lib/site-config';
+import { getApiUrl, shouldUnoptimizeRemoteImage } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { FixtureLiveChip } from '@/components/FixtureLiveChip';
@@ -54,7 +54,8 @@ function TeamLogo({ src, alt }: { src: string | null; alt: string }) {
       width={24}
       height={24}
       className="h-6 w-6 shrink-0 rounded-md bg-[var(--fill-secondary)] object-contain p-0.5"
-      unoptimized
+      sizes="24px"
+      unoptimized={shouldUnoptimizeRemoteImage(src)}
     />
   );
 }
@@ -162,7 +163,8 @@ export function HomeNativeMatchRail({
                       width={20}
                       height={20}
                       className="h-5 w-5 shrink-0 rounded-full object-cover"
-                      unoptimized
+                      sizes="20px"
+                      unoptimized={shouldUnoptimizeRemoteImage(m.spotlightPlayer.playerPhoto)}
                     />
                   ) : (
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--card)] text-[9px] font-bold text-[var(--text-muted)]">

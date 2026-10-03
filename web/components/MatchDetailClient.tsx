@@ -10,7 +10,7 @@ import { AdSlot } from '@/components/AdSlot';
 import { PickCard } from '@/components/PickCard';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
 import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
-import { getApiUrl } from '@/lib/site-config';
+import { getApiUrl, shouldUnoptimizeRemoteImage } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { formatLiveFixturePeriod, FIXTURE_NS_CHIP } from '@/lib/live-fixture-display';
 import { FixtureLiveChip } from '@/components/FixtureLiveChip';
@@ -138,7 +138,8 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
                     width={64}
                     height={64}
                     className="h-14 w-14 sm:h-16 sm:w-16 object-contain"
-                    unoptimized
+                    sizes="64px"
+                    unoptimized={shouldUnoptimizeRemoteImage(match.homeTeamLogo)}
                   />
                 ) : (
                   <span className="h-14 w-14 rounded-full bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center text-lg font-bold">
@@ -181,7 +182,8 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
                     width={64}
                     height={64}
                     className="h-14 w-14 sm:h-16 sm:w-16 object-contain"
-                    unoptimized
+                    sizes="64px"
+                    unoptimized={shouldUnoptimizeRemoteImage(match.awayTeamLogo)}
                   />
                 ) : (
                   <span className="h-14 w-14 rounded-full bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center text-lg font-bold">
@@ -207,7 +209,8 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
                     width={40}
                     height={40}
                     className="h-10 w-10 rounded-full object-cover shrink-0"
-                    unoptimized
+                    sizes="40px"
+                    unoptimized={shouldUnoptimizeRemoteImage(match.spotlightPlayer.playerPhoto)}
                   />
                 ) : (
                   <span className="h-10 w-10 rounded-full bg-[var(--card)] border border-[var(--border)] flex items-center justify-center text-sm font-bold shrink-0">

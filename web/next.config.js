@@ -22,6 +22,8 @@ const nextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    // Crests and avatars rarely change. Keep optimized files so crawlers do not re-fetch PNGs.
+    minimumCacheTTL: 60 * 60 * 24 * 30,
     remotePatterns: [
       { protocol: 'https', hostname: 'api.betrollover.com', pathname: '/**' },
       { protocol: 'http', hostname: 'localhost', port: '6001', pathname: '/**' },

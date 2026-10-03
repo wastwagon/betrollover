@@ -6,7 +6,7 @@ import * as sharp from 'sharp';
 
 /**
  * Serves avatar images with optional resize.
- * Use ?size=96 to get a resized image (saves bandwidth - AI tipster avatars can be 25MB+).
+ * Use ?size=96 to get a resized WebP (saves bandwidth — source avatars can be very large).
  * Routes: GET /avatars/resize?path=...&size=96  (path = /avatars/xxx or /uploads/avatars/xxx)
  */
 @Controller('avatars')
@@ -44,9 +44,9 @@ export class AvatarsController {
     try {
       const buffer = await sharp(filePath)
         .resize(size, size, { fit: 'cover' })
-        .jpeg({ quality: 85 })
+        .webp({ quality: 80 })
         .toBuffer();
-      res.set({ 'Cache-Control': 'public, max-age=86400', 'Content-Type': 'image/jpeg' });
+      res.set({ 'Cache-Control': 'public, max-age=86400', 'Content-Type': 'image/webp' });
       res.send(buffer);
     } catch {
       // Fallback: serve original if sharp fails

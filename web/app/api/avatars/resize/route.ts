@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Avatar not found' }, { status: res.status });
     }
     const buffer = await res.arrayBuffer();
-    const contentType = res.headers.get('Content-Type') || 'image/jpeg';
+    const contentType = res.headers.get('Content-Type') || 'image/webp';
     return new NextResponse(buffer, {
       headers: { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=86400' },
     });
