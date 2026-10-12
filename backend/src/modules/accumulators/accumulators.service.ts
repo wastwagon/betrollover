@@ -57,14 +57,15 @@ import { PUBLIC_CHANNEL_SURE_USERNAME } from '../../config/rollover-desk.config'
 import {
   classicAiMarketplaceTicketExcludeRawSql,
   classicAiPublicExcludeRawSql,
+  isClassicAiHiddenFromBrowse,
   isClassicAiHiddenFromPublic,
-  isClassicAiTipsterRow,
 } from '../../common/classic-ai-public-visibility.util';
 import {
   listingIsSubscriptionGated,
   marketplaceOpenFreeListingSql,
 } from '../../common/subscription-gated-listing.util';
 import { VIP_TIPSTER, VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
+import { isVipRosterUsername } from '../../config/vip-roster.config';
 
 /** Keep pick create aligned with Acca Generator max legs (admin can still lower Acca range). */
 const MAX_SELECTIONS_PER_PICK = ACCA_GENERATOR_LEGS_MAX;
@@ -512,10 +513,12 @@ export class AccumulatorsService {
         select: ['id', 'displayName', 'tipsterType', 'username'],
       });
       const isAccaDesk = tipster?.tipsterType === ACCA_DESK_TIPSTER_TYPE;
-      const isVipDesk = isHouseVip || tipster?.tipsterType === VIP_TIPSTER_TYPE;
-      const isAccaSure = (tipster?.username || '').toLowerCase() === PUBLIC_CHANNEL_SURE_USERNAME.toLowerCase();
-      // Acca Desk: only AccaSure1X2 hits the public channel. House VIP stays on the private VIP channel.
-      const mayTelegram = (!isAccaDesk || isAccaSure) && !isVipDesk;
+      const onVipRoster = isVipRosterUsername(tipster?.username);
+      const isFreePublicFace =
+        (tipster?.username || '').toLowerCase() === PUBLIC_CHANNEL_SURE_USERNAME.toLowerCase();
+      // Acca Desk stays off the public channel except the free face (SureTwoFold).
+      // VIP roster posts to the private VIP channel, not the free channel.
+      const mayTelegram = !onVipRoster && (!isAccaDesk || isFreePublicFace);
       if (mayTelegram) {
         const elig = await this.telegramEligibility.canPostForUserId(userId);
         if (elig.ok) {
@@ -539,7 +542,7 @@ export class AccumulatorsService {
             .catch(() => {});
         }
       }
-      if (tipster) {
+      if (tipster && !onVipRoster) {
         await this.notificationsService.notifyFollowersOfNewCoupon({
           tipsterId: tipster.id,
           tipsterUserId: userId,
@@ -547,9 +550,9 @@ export class AccumulatorsService {
           couponTitle: dto.title,
           price,
           accumulatorId: ticket.id,
-          skipEmail: isAccaDesk || isVipDesk,
+          skipEmail: isAccaDesk,
           couponCard:
-            !isAccaDesk && !isVipDesk && price === 0
+            !isAccaDesk && price === 0
               ? {
                   totalOdds: Number(ticket.totalOdds),
                   isSubscription: false,
@@ -599,13 +602,13 @@ export class AccumulatorsService {
           },
         });
       }
-      if (await this.telegramVip.isHouseVipUserId(userId)) {
+      if (await this.telegramVip.isVipRosterUserId(userId)) {
         this.telegramVip
           .postVipCoupon({
             couponId: ticket.id,
             title: dto.title,
             totalOdds: Number(ticket.totalOdds),
-            tipsterName: 'VIP · Two-Fold',
+            tipsterName: tipster?.displayName || 'VIP',
             legs: dto.selections.map((s) => ({
               matchDescription: s.matchDescription,
               prediction: s.prediction,
@@ -621,6 +624,7 @@ export class AccumulatorsService {
           .postVipSlipTeaser({
             couponId: ticket.id,
             totalOdds: Number(ticket.totalOdds),
+            tipsterName: tipster?.displayName || 'VIP',
           })
           .catch(() => {});
       }
@@ -969,9 +973,9 @@ export class AccumulatorsService {
     if (isClassicAiHiddenFromPublic() && !opts?.viewerIsAdmin && ticket.userId !== viewerUserId) {
       const ownerTipster = await this.tipsterRepo.findOne({
         where: { userId: ticket.userId },
-        select: ['isAi', 'tipsterType'],
+        select: ['isAi', 'tipsterType', 'username'],
       });
-      if (ownerTipster && isClassicAiTipsterRow(ownerTipster)) {
+      if (ownerTipster && isClassicAiHiddenFromBrowse(ownerTipster)) {
         return null;
       }
     }
@@ -1314,7 +1318,7 @@ export class AccumulatorsService {
           select: ['userId', 'isAi', 'tipsterType', 'username'],
         });
         const classicOwnerIds = new Set(
-          tipsterRows.filter((row) => isClassicAiTipsterRow(row)).map((row) => row.userId!),
+          tipsterRows.filter((row) => isClassicAiHiddenFromBrowse(row)).map((row) => row.userId!),
         );
         if (classicOwnerIds.size > 0) {
           validTickets = validTickets.filter((t) => !classicOwnerIds.has(t.userId));
@@ -1587,9 +1591,9 @@ export class AccumulatorsService {
     if (isClassicAiHiddenFromPublic() && ticket.userId) {
       const ownerTipster = await this.tipsterRepo.findOne({
         where: { userId: ticket.userId },
-        select: ['isAi', 'tipsterType'],
+        select: ['isAi', 'tipsterType', 'username'],
       });
-      if (ownerTipster && isClassicAiTipsterRow(ownerTipster)) {
+      if (ownerTipster && isClassicAiHiddenFromBrowse(ownerTipster)) {
         return null;
       }
     }
@@ -1630,7 +1634,7 @@ export class AccumulatorsService {
 
   /**
    * List existing house VIP tickets on the marketplace (covered for non-subscribers).
-   * Idempotent — used so admin/customer marketplace and reports see VipTwoFold without waiting for the next cron.
+   * Idempotent — used so admin/customer marketplace and reports see SureTwoFold without waiting for the next cron.
    */
   async ensureHouseVipMarketplaceListings(): Promise<number> {
     if (this.houseVipListEnsure) return this.houseVipListEnsure;
@@ -2264,7 +2268,7 @@ export class AccumulatorsService {
           select: ['userId', 'isAi', 'tipsterType', 'username'],
         });
         const classicOwnerIds = new Set(
-          tipsterRows.filter((row) => isClassicAiTipsterRow(row)).map((row) => row.userId!),
+          tipsterRows.filter((row) => isClassicAiHiddenFromBrowse(row)).map((row) => row.userId!),
         );
         if (classicOwnerIds.size > 0) {
           validTickets = validTickets.filter((t) => !classicOwnerIds.has(t.userId));

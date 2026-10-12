@@ -35,6 +35,10 @@ describe('acca desk daily cap', () => {
         expect(tipster.bio).toMatch(/One 2-fold a day/);
         continue;
       }
+      if (tipster.username === 'AccaSure1X2') {
+        expect(tipster.bio).toMatch(/VIP subscribers/);
+        continue;
+      }
       expect(tipster.bio).toMatch(/Up to 2 free 2-fold picks a day/);
     }
   });

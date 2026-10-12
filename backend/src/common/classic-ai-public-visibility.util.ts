@@ -1,10 +1,13 @@
 /**
  * Classic 1-fixture AI tipsters (tipsterType=ai).
- * Acca Desk (tipsterType=acca_desk) and VIP · Two-Fold are unaffected.
+ * Acca Desk (tipsterType=acca_desk) and the free Two-Fold desk are unaffected.
+ * VIP roster tipsters stay visible even when their type is still `ai`.
  *
  * Hidden from public browse / leaderboard / marketplace by default so Acca Desk
  * is the platform board. Set HIDE_CLASSIC_AI_TIPSTERS_FROM_PUBLIC=false to show them.
  */
+import { isVipRosterUsername, vipRosterUsernameSqlList } from '../config/vip-roster.config';
+
 export const CLASSIC_AI_TIPSTER_TYPE = 'ai';
 
 export function isClassicAiHiddenFromPublic(): boolean {
@@ -19,6 +22,16 @@ export function isClassicAiTipsterRow(row: {
   if (!row.isAi) return false;
   const type = (row.tipsterType || CLASSIC_AI_TIPSTER_TYPE).toLowerCase().trim();
   return type === CLASSIC_AI_TIPSTER_TYPE;
+}
+
+/** Public lists hide classic AI, except tipsters assigned to the VIP plan. */
+export function isClassicAiHiddenFromBrowse(row: {
+  isAi?: boolean | null;
+  tipsterType?: string | null;
+  username?: string | null;
+}): boolean {
+  if (isVipRosterUsername(row.username)) return false;
+  return isClassicAiTipsterRow(row);
 }
 
 /** Linked user ids for classic 1-fixture AI only (excludes Acca Desk and VIP). */
@@ -40,7 +53,7 @@ export function classicAiOwnerUserIds(
  * Keeps humans and non-classic AI (e.g. Acca Desk); hides classic 1-fixture AI.
  */
 export function classicAiPublicExcludeSql(tipsterAlias = 't'): string {
-  return `(${tipsterAlias}.is_ai = false OR COALESCE(NULLIF(TRIM(${tipsterAlias}.tipster_type), ''), 'ai') <> :classicAiTipsterType)`;
+  return `(${tipsterAlias}.is_ai = false OR COALESCE(NULLIF(TRIM(${tipsterAlias}.tipster_type), ''), 'ai') <> :classicAiTipsterType OR LOWER(${tipsterAlias}.username) IN (${vipRosterUsernameSqlList()}))`;
 }
 
 /**
@@ -48,7 +61,7 @@ export function classicAiPublicExcludeSql(tipsterAlias = 't'): string {
  * Safe for static embedding — tipster type value is a fixed constant, not user input.
  */
 export function classicAiPublicExcludeRawSql(tipsterAlias = 't'): string {
-  return `(${tipsterAlias}.is_ai = false OR COALESCE(NULLIF(TRIM(${tipsterAlias}.tipster_type), ''), 'ai') <> '${CLASSIC_AI_TIPSTER_TYPE}')`;
+  return `(${tipsterAlias}.is_ai = false OR COALESCE(NULLIF(TRIM(${tipsterAlias}.tipster_type), ''), 'ai') <> '${CLASSIC_AI_TIPSTER_TYPE}' OR LOWER(${tipsterAlias}.username) IN (${vipRosterUsernameSqlList()}))`;
 }
 
 /**
@@ -61,5 +74,6 @@ export function classicAiMarketplaceTicketExcludeRawSql(ticketAlias = 't'): stri
     WHERE classic_ai_tip.user_id = ${ticketAlias}.user_id
       AND classic_ai_tip.is_ai = true
       AND COALESCE(NULLIF(TRIM(classic_ai_tip.tipster_type), ''), 'ai') = '${CLASSIC_AI_TIPSTER_TYPE}'
+      AND LOWER(classic_ai_tip.username) NOT IN (${vipRosterUsernameSqlList()})
   )`;
 }

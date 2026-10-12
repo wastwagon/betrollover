@@ -407,7 +407,14 @@ export const ACCA_DESK_TIPSTERS: AccaDeskTipsterConfig[] = [
   ...MARKET_SPECS.filter((m) => HIGH_MARKET_KEYS.has(m.key)).map((m) =>
     desk('high', m.key, m.label, m.markets, extrasForDesk('high', m)),
   ),
-];
+].map((tipster) =>
+  tipster.username === 'AccaSure1X2'
+    ? {
+        ...tipster,
+        bio: 'Sure · 1X2 only. Up to 2 VIP 2-folds a day, clustered by kick-off. Live slips are for VIP subscribers. Educational odd bands — not guaranteed. 18+.',
+      }
+    : tipster,
+);
 
 export const ACCA_DESK_TIPSTER_TYPE = 'acca_desk';
 export const ACCA_DESK_LEGS = 2 as const;
@@ -415,7 +422,7 @@ export { ACCA_DESK_EARLY_SLOT_KEYS, ACCA_DESK_MAX_PER_DAY, ACCA_DESK_TIME_SLOTS 
 
 /**
  * Paused desks skip publish + show inactive on setup; marketplace/public lists hide them.
- * Do not add AccaSure1X2, VipTwoFold, AccaSafeFH1X2, AccaMediumBTTS, AccaHighO25,
+ * Do not add AccaSure1X2, SureTwoFold, AccaSafeFH1X2, AccaMediumBTTS, AccaHighO25,
  * BankHalf, AccaSureFHO05, or AccaSafeFHO05 here.
  * Archive-losing desks stay paused until a new sample earns them back.
  */

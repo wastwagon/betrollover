@@ -1,24 +1,31 @@
 /**
- * VIP two-fold tipster — Home+Home only, separate from Acca Desk.
+ * Free two-fold desk — Home+Home only, separate from Acca Desk.
  *
  * Same Acca Desk kick-off windows (Early / Afternoon / Evening / Midnight).
  * Tomorrow’s 20:00 pass only fills Early + Afternoon so Evening cannot eat the 2/day cap.
- * Publishes first so AccaSure1X2 can still mix Away on leftover fixtures.
- * Construction: two Home wins @ 1.20–1.40, combined 1.50–1.99.
+ * Publishes first so Acca Desk can still mix leftover fixtures.
+ * Construction is unchanged: two Home wins @ 1.20–1.40, combined 1.50–1.99.
+ * This tipster is free. The VIP plan is the roster in vip-roster.config.ts.
  */
 
 export const VIP_TIPSTER_TYPE = 'vip_desk';
 
+/**
+ * Earlier usernames. Setup renames the row in place so history stays on the same account.
+ * SureTwoFold is the free Sure-family desk. It is not an Acca Desk persona (those are AccaSure*).
+ */
+export const FORMER_FREE_DESK_USERNAMES = ['VipTwoFold', 'TwoFold', 'AccaSureTwoFold'] as const;
+
 export const VIP_TIPSTER = {
-  username: 'VipTwoFold',
-  display_name: 'VIP · Two-Fold',
-  bio: 'VIP 2-folds: two Home wins (about 1.20–1.40). Combined 1.50–1.99. Up to two slips a day when clustered homes exist. Educational — not guaranteed. 18+.',
-  avatar_url: '/avatars/acca_safe_dc.png?v=2',
+  username: 'SureTwoFold',
+  display_name: 'Sure · Two-Fold',
+  bio: 'Sure · Two-Fold: two Home wins (about 1.20–1.40). Combined 1.50–1.99. Up to two free slips a day when clustered homes exist. Educational — not guaranteed. 18+.',
+  avatar_url: '/avatars/acca_sure_1x2.png?v=2',
   strategy_id: 'vip_desk_two_fold',
   legs: 2 as const,
 };
 
-export const VIP_PACKAGE_NAME = 'VIP · Two-Fold Monthly';
+export const VIP_PACKAGE_NAME = 'VIP Monthly';
 export const VIP_PACKAGE_PRICE = 300;
 export const VIP_PACKAGE_DURATION_DAYS = 30;
 

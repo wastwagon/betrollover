@@ -6,6 +6,7 @@ import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { ACCA_DESK_TIPSTER_TYPE } from '../../config/acca-desk-tipsters.config';
 import { VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
 import { PUBLIC_CHANNEL_SURE_USERNAME } from '../../config/rollover-desk.config';
+import { isVipRosterUsername } from '../../config/vip-roster.config';
 import {
   telegramAlwaysAllowUsernames,
   telegramMinRoi,
@@ -18,6 +19,7 @@ export type TelegramEligibilityReason =
   | 'acca_sure'
   | 'performance'
   | 'acca_desk_other'
+  | 'vip_roster'
   | 'below_bar'
   | 'no_tipster'
   | 'inactive';
@@ -34,8 +36,8 @@ export class TelegramEligibilityService {
   ) {}
 
   /**
-   * Channel stays a highlight reel: AccaSure1X2 + allowlist + tipsters above performance bar.
-   * Other Acca Desk brands are excluded (Sure carries the Acca face).
+   * Public channel full slips: SureTwoFold (free Sure face) + allowlist + tipsters above the bar.
+   * VIP roster never posts legs here. Other Acca Desk brands stay off this channel.
    */
   async canPostForUserId(userId: number | null | undefined): Promise<{
     ok: boolean;
@@ -73,13 +75,16 @@ export class TelegramEligibilityService {
     const username = (tipster.username || '').trim();
     if (!username) return { ok: false, reason: 'no_tipster' };
     if (tipster.isActive === false) return { ok: false, reason: 'inactive', username };
+    if (isVipRosterUsername(username)) {
+      return { ok: false, reason: 'vip_roster', username };
+    }
 
     const allow = telegramAlwaysAllowUsernames().map((u) => u.toLowerCase());
     if (allow.includes(username.toLowerCase())) {
       return { ok: true, reason: username === PUBLIC_CHANNEL_SURE_USERNAME ? 'acca_sure' : 'allowlist', username };
     }
 
-    // Other Acca Desk personas → no (AccaSure only for desk brand). House VIP posts to the private VIP chat.
+    // Remaining Acca Desk personas and the vip_desk type stay off the public full-slip channel.
     if (tipster.tipsterType === ACCA_DESK_TIPSTER_TYPE || tipster.tipsterType === VIP_TIPSTER_TYPE) {
       return { ok: false, reason: 'acca_desk_other', username };
     }

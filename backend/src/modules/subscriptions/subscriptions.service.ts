@@ -28,6 +28,7 @@ import {
   isClassicAiHiddenFromPublic,
 } from '../../common/classic-ai-public-visibility.util';
 import { VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
+import { isVipRosterUsername, VIP_PACKAGE_OWNER_USERNAME } from '../../config/vip-roster.config';
 import { isHumanVipPackagesEnabled } from '../../common/subscriptions-enabled';
 import { TelegramVipService } from '../telegram/telegram-vip.service';
 import {
@@ -99,9 +100,10 @@ export class SubscriptionsService {
     }
     const tipster = await this.tipsterRepo.findOne({
       where: { userId: tipsterUserId },
-      select: ['tipsterType'],
+      select: ['tipsterType', 'username'],
     });
     const isVipDesk = (tipster?.tipsterType || '').toLowerCase() === VIP_TIPSTER_TYPE;
+    const onVipRoster = isVipRosterUsername(tipster?.username);
     for (const pkgId of packageIds) {
       const pkg = await this.getPackage(pkgId);
       if (pkg.tipsterUserId !== tipsterUserId) {
@@ -110,9 +112,8 @@ export class SubscriptionsService {
       if (pkg.status !== 'active') {
         throw new BadRequestException(`Subscription package "${pkg.name}" is not active`);
       }
-      // VIP Two-Fold publishes up to VIP_MAX_COUPONS_PER_DAY slips per Accra desk day in VipTipsterPublisherService.
-      // A createdAt rolling window would block today's catch-up after last night's early publish.
-      if (isVipDesk) continue;
+      // Desk publishers post more than the human 2-slip cap. A createdAt window would block the next slot.
+      if (isVipDesk || onVipRoster) continue;
       const n = await this.countSubscriptionCouponsInWindow(pkgId, pkg.durationDays);
       if (n >= HUMAN_VIP_INCLUDED_SLIPS_PER_PERIOD) {
         throw new BadRequestException(
@@ -213,21 +214,32 @@ export class SubscriptionsService {
   }
 
   async getPackagesByTipster(tipsterUserId: number) {
+    const tipster = await this.tipsterRepo.findOne({
+      where: { userId: tipsterUserId },
+      select: ['tipsterType', 'username'],
+    });
+    const roster = isVipRosterUsername(tipster?.username);
     if (
       !isHumanVipPackagesEnabled() &&
+      !roster &&
       !(await this.telegramVip.isHouseVipUserId(tipsterUserId))
     ) {
       return [];
     }
-    const tipster = await this.tipsterRepo.findOne({
-      where: { userId: tipsterUserId },
-      select: ['tipsterType'],
-    });
+    let packageUserId = tipsterUserId;
+    if (roster) {
+      const owner = await this.tipsterRepo.findOne({
+        where: { username: VIP_PACKAGE_OWNER_USERNAME },
+        select: ['userId'],
+      });
+      if (owner?.userId) packageUserId = owner.userId;
+    }
     const pkgs = await this.packageRepo.find({
-      where: { tipsterUserId, status: 'active' },
+      where: { tipsterUserId: packageUserId, status: 'active' },
       order: { createdAt: 'DESC' },
     });
-    return pkgs.map((pkg) => this.serializePackage(pkg, tipster?.tipsterType));
+    const channelType = roster ? VIP_TIPSTER_TYPE : tipster?.tipsterType;
+    return pkgs.map((pkg) => this.serializePackage(pkg, channelType));
   }
 
   /**
@@ -244,7 +256,10 @@ export class SubscriptionsService {
       .where('p.status = :pkgStatus', { pkgStatus: 'active' })
       .andWhere('u.status = :userStatus', { userStatus: UserStatus.ACTIVE });
     if (!isHumanVipPackagesEnabled()) {
-      baseQb.andWhere('t.tipsterType = :vipDesk', { vipDesk: VIP_TIPSTER_TYPE });
+      baseQb.andWhere('(t.tipsterType = :vipDesk OR LOWER(t.username) = :vipOwner)', {
+        vipDesk: VIP_TIPSTER_TYPE,
+        vipOwner: VIP_PACKAGE_OWNER_USERNAME.toLowerCase(),
+      });
     }
     if (isClassicAiHiddenFromPublic()) {
       baseQb.andWhere(classicAiPublicExcludeSql('t'), { classicAiTipsterType: CLASSIC_AI_TIPSTER_TYPE });
@@ -304,7 +319,7 @@ export class SubscriptionsService {
           tipsterUserId: pkg.tipsterUserId,
           roiGuaranteeMin: pkg.roiGuaranteeMin != null ? Number(pkg.roiGuaranteeMin) : null,
           roiGuaranteeEnabled: pkg.roiGuaranteeEnabled,
-          ...vipPackageDeliveryMeta(t?.tipsterType),
+          ...vipPackageDeliveryMeta(isVipRosterUsername(t?.username) ? VIP_TIPSTER_TYPE : t?.tipsterType),
         },
         tipster: t
           ? {
@@ -557,7 +572,7 @@ export class SubscriptionsService {
 
   async refreshTelegramVipAccess(userId: number) {
     if (!(await this.telegramVip.hasActiveHouseVip(userId))) {
-      throw new ForbiddenException('Active VIP · Two-Fold subscription required.');
+      throw new ForbiddenException('Active VIP subscription required.');
     }
     return this.telegramVip.refreshAccess(userId);
   }

@@ -60,7 +60,12 @@ describe('telegram-copy', () => {
   it('formats VIP free-channel slip teaser without legs', () => {
     process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE = 'betrollovertips';
     delete process.env.TELEGRAM_CONTACT_HANDLE;
-    const text = formatVipPublicSlipTeaser({ siteOrigin: 'https://betrollover.com', totalOdds: 1.65 });
+    const text = formatVipPublicSlipTeaser({
+      siteOrigin: 'https://betrollover.com',
+      totalOdds: 1.65,
+      tipsterName: 'TheAnalyst',
+    });
+    expect(text).toContain('TheAnalyst');
     expect(text).toContain('1.65');
     expect(text).toContain('@wastwagon');
     expect(text.toLowerCase()).toContain('members only');
@@ -74,11 +79,14 @@ describe('telegram-copy', () => {
     const text = formatVipPublicWinPost({
       siteOrigin: 'https://betrollover.com',
       title: 'VIP · Two-Fold',
+      tipsterName: 'LateBloomer',
       totalOdds: 1.59,
-      legs: [{ matchDescription: 'Team A vs Team B', prediction: 'Home', result: 'won' }],
+      legs: [{ matchDescription: 'Team A vs Team B', prediction: 'Home', result: 'won', homeScore: 2, awayScore: 0 }],
     });
     expect(text).toContain('VIP won');
+    expect(text).toContain('LateBloomer');
     expect(text).toContain('Team A vs Team B');
+    expect(text).toContain('FT 2-0');
     expect(text).toContain('@wastwagon');
     expect(telegramAdsHandle()).toBe('betrollovertips');
     expect(telegramContactHandle()).toBe('wastwagon');
@@ -155,8 +163,9 @@ describe('telegram-copy', () => {
     expect(body.text).not.toContain('I’m on it');
   });
 
-  it('always allows AccaSure1X2', () => {
+  it('always allows the free public tipster', () => {
     expect(telegramAlwaysAllowUsernames()).toContain(PUBLIC_CHANNEL_SURE_USERNAME);
+    expect(PUBLIC_CHANNEL_SURE_USERNAME).toBe('SureTwoFold');
   });
 
   it('has SEO description under Telegram limit', () => {
@@ -305,9 +314,10 @@ describe('TelegramChannelService engagement', () => {
       return { ok: true, json: async () => ({ ok: true }) } as Response;
     }) as typeof fetch;
 
-    const r = await svc.postVipSlipTeaser({ couponId: 42, totalOdds: 1.72 });
+    const r = await svc.postVipSlipTeaser({ couponId: 42, totalOdds: 1.72, tipsterName: 'AccaSure1X2' });
     expect(r.ok).toBe(true);
     const body = calls[0] as { text: string };
+    expect(body.text).toContain('AccaSure1X2');
     expect(body.text).toContain('1.72');
     expect(body.text).toContain('@wastwagon');
     expect(body.text.toLowerCase()).toContain('members only');
@@ -349,7 +359,7 @@ describe('TelegramChannelService engagement', () => {
 });
 
 describe('TelegramEligibilityService', () => {
-  it('allows AccaSure and blocks other Acca Desk', async () => {
+  it('allows the free public tipster and blocks VIP roster and other Acca Desk', async () => {
     const svc = new TelegramEligibilityService(
       { findOne: async () => null } as any,
       { findOne: async () => ({ minimumROI: 20, minimumWinRate: 30 }) } as any,
@@ -360,6 +370,18 @@ describe('TelegramEligibilityService', () => {
       isActive: true,
     });
     expect(sure.ok).toBe(true);
+
+    const roster = await svc.evaluateTipster({
+      username: 'AccaSure1X2',
+      tipsterType: ACCA_DESK_TIPSTER_TYPE,
+      isActive: true,
+      totalWins: 100,
+      totalLosses: 10,
+      winRate: 90,
+      roi: 50,
+    });
+    expect(roster.ok).toBe(false);
+    expect(roster.reason).toBe('vip_roster');
 
     const other = await svc.evaluateTipster({
       username: 'AccaSafe1X2',

@@ -35,8 +35,10 @@ import { AccaDeskSetupService } from './acca-desk-setup.service';
 import { RolloverDeskService } from './rollover-desk.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SyncLockService } from '../fixtures/sync-lock.service';
-import { PUBLIC_CHANNEL_SURE_USERNAME } from '../../config/rollover-desk.config';
+import { ROLLOVER_OWNER_USERNAME } from '../../config/rollover-desk.config';
 import { VIP_TIPSTER, VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
+import { isVipRosterUsername } from '../../config/vip-roster.config';
+import { VipTipsterSetupService } from './vip-tipster-setup.service';
 import type { AccaDeskShort } from '../email/acca-desk-shorts.config';
 
 export type AccaDeskRunResult = {
@@ -63,6 +65,7 @@ export class AccaDeskPublisherService {
   constructor(
     private readonly accaGenerator: AccaGeneratorService,
     private readonly setup: AccaDeskSetupService,
+    private readonly vipSetup: VipTipsterSetupService,
     private readonly rollover: RolloverDeskService,
     private readonly notifications: NotificationsService,
     private readonly syncLock: SyncLockService,
@@ -249,6 +252,7 @@ export class AccaDeskPublisherService {
 
     if (opts?.ensureSetup !== false) {
       await this.setup.initializeAccaDeskTipsters();
+      await this.vipSetup.initializeVipTipster();
     }
 
     const usedFixtureIds = new Set<number>();
@@ -323,13 +327,19 @@ export class AccaDeskPublisherService {
         this.logger.warn(`Acca Desk follower shorts email failed: ${message}`);
       }
     }
-    // Rollover auto-attaches VipTwoFold only (see VipTipsterPublisherService). Acca Desk does not attach.
+    if (result.details.some((d) => d.username === ROLLOVER_OWNER_USERNAME && d.status === 'published')) {
+      try {
+        await this.rollover.autoAttachAfterPublish();
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        this.logger.warn(`AccaSure rollover auto-attach failed: ${message}`);
+      }
+    }
     return result;
   }
 
   /**
-   * Legacy helper: publish AccaSure1X2 (public free tipster), not the rollover owner.
-   * Rollover auto-attaches VipTwoFold — prefer VIP Tipster admin / cron for the board.
+   * Publish the rollover owner (AccaSure1X2). Selection rules stay on that desk.
    */
   async publishRolloverOwner(opts?: {
     slotKey?: AccaDeskSlotKey;
@@ -344,9 +354,10 @@ export class AccaDeskPublisherService {
     }
     if (opts?.ensureSetup !== false) {
       await this.setup.initializeAccaDeskTipsters();
+      await this.vipSetup.initializeVipTipster();
     }
 
-    const config = ACCA_DESK_TIPSTERS.find((c) => c.username === PUBLIC_CHANNEL_SURE_USERNAME);
+    const config = ACCA_DESK_TIPSTERS.find((c) => c.username === ROLLOVER_OWNER_USERNAME);
     if (!config) {
       return {
         enabled: true,
@@ -356,7 +367,7 @@ export class AccaDeskPublisherService {
         skippedEmptyPool: 0,
         skippedNoUser: 1,
         errors: 0,
-        details: [{ username: PUBLIC_CHANNEL_SURE_USERNAME, status: 'no_user' }],
+        details: [{ username: ROLLOVER_OWNER_USERNAME, status: 'no_user' }],
       };
     }
 
@@ -413,8 +424,16 @@ export class AccaDeskPublisherService {
     }
 
     this.logger.log(
-      `AccaSure ${PUBLIC_CHANNEL_SURE_USERNAME} publish deskDay=${deskDayStr}: published=${result.published} already=${result.skippedAlreadyPosted} empty=${result.skippedEmptyPool} errors=${result.errors}`,
+      `Rollover owner ${ROLLOVER_OWNER_USERNAME} publish deskDay=${deskDayStr}: published=${result.published} already=${result.skippedAlreadyPosted} empty=${result.skippedEmptyPool} errors=${result.errors}`,
     );
+    if (result.published > 0) {
+      try {
+        await this.rollover.autoAttachAfterPublish();
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        this.logger.warn(`Rollover auto-attach failed: ${message}`);
+      }
+    }
     return result;
   }
 
@@ -494,14 +513,35 @@ export class AccaDeskPublisherService {
       0,
       255,
     );
+    const onRoster = isVipRosterUsername(config.username);
     const description = (
-      `${config.bio} ${slot.label} · ${deskDayStr}. Free pick — educational only.`
+      onRoster
+        ? `${config.bio} ${slot.label} · ${deskDayStr}. Live slip for VIP subscribers. Settled record is public. Educational only.`
+        : `${config.bio} ${slot.label} · ${deskDayStr}. Free pick — educational only.`
     ).slice(0, 2000);
+
+    let subscriptionPackageIds: number[] | undefined;
+    if (onRoster) {
+      const ready = await this.vipSetup.initializeVipTipster();
+      if (!ready.packageId) {
+        return {
+          detail: {
+            username: config.username,
+            status: 'no_user',
+            slotKey: slot.key,
+            message: 'No active VIP package',
+          },
+        };
+      }
+      subscriptionPackageIds = [ready.packageId];
+    }
 
     const published = await this.accaGenerator.publish(tipster.userId, {
       generationId: generated.generationId,
       title,
       description,
+      placement: onRoster ? 'both' : 'marketplace',
+      subscriptionPackageIds,
     });
 
     for (const leg of generated.legs) {
@@ -520,7 +560,7 @@ export class AccaDeskPublisherService {
     );
 
     const short: AccaDeskShort | undefined =
-      Number.isFinite(ticketId) && ticketId > 0
+      !onRoster && Number.isFinite(ticketId) && ticketId > 0
         ? {
             ticketId,
             tipsterUserId: tipster.userId,

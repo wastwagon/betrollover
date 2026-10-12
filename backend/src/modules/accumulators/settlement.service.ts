@@ -766,7 +766,7 @@ export class SettlementService {
       picksByTicketId.set(p.accumulatorId, list);
     }
 
-    const houseVipUserId = await this.telegramVip.houseVipTipsterUserId();
+    const rosterNames = await this.telegramVip.vipRosterNamesByUserId();
     let ticketsSettled = 0;
     const statsSyncUserIds = new Set<number>();
     const wonMarketplacePosts: Array<{
@@ -782,6 +782,7 @@ export class SettlementService {
       title: string;
       totalOdds: number | null;
       legs: TelegramSlipLeg[];
+      tipsterName: string;
     }> = [];
     for (const ticket of allPendingTickets) {
       const picks = picksByTicketId.get(ticket.id) ?? [];
@@ -801,41 +802,38 @@ export class SettlementService {
       }
       if (ticket.result !== 'won') continue;
       const legs = await this.telegramLegsForPicks(picks);
-      if (ticket.isMarketplace) {
-        const isHouseVip = houseVipUserId != null && ticket.userId === houseVipUserId;
-        if (!isHouseVip) {
-          wonMarketplacePosts.push({
-            couponId: ticket.id,
-            title: ticket.title || 'Pick',
-            tipsterName: null,
-            totalOdds: ticket.totalOdds != null ? Number(ticket.totalOdds) : null,
-            isFree: !(priceNum > 0),
-            legs,
-          });
-        }
+      const onRoster = ticket.userId != null && rosterNames.has(ticket.userId);
+      if (ticket.isMarketplace && !onRoster) {
+        wonMarketplacePosts.push({
+          couponId: ticket.id,
+          title: ticket.title || 'Pick',
+          tipsterName: null,
+          totalOdds: ticket.totalOdds != null ? Number(ticket.totalOdds) : null,
+          isFree: !(priceNum > 0),
+          legs,
+        });
       }
-      if (houseVipUserId != null && ticket.userId === houseVipUserId) {
+      if (onRoster) {
         wonVipPosts.push({
           couponId: ticket.id,
           title: ticket.title || 'Pick',
           totalOdds: ticket.totalOdds != null ? Number(ticket.totalOdds) : null,
           legs,
+          tipsterName: rosterNames.get(ticket.userId as number) || 'VIP',
         });
       }
     }
 
     for (const post of wonVipPosts) {
       this.telegramVip
-        .postVipWin({
-          ...post,
-          tipsterName: 'VIP · Two-Fold',
-        })
+        .postVipWin(post)
         .catch(() => {});
       this.telegramChannelService
         .postVipPublicWin({
           couponId: post.couponId,
           title: post.title,
           totalOdds: post.totalOdds,
+          tipsterName: post.tipsterName,
           legs: post.legs,
         })
         .catch(() => {});

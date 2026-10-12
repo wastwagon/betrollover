@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomBytes } from 'crypto';
-import { Repository } from 'typeorm';
-import { VIP_TIPSTER, VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
+import { In, Repository } from 'typeorm';
+import { VIP_PACKAGE_OWNER_USERNAME, VIP_ROSTER_USERNAMES, isVipRosterUsername } from '../../config/vip-roster.config';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
 import { AccumulatorPick } from '../accumulators/entities/accumulator-pick.entity';
@@ -63,10 +63,32 @@ export class TelegramVipService {
 
   async houseVipTipsterUserId(): Promise<number | null> {
     const tipster = await this.tipsterRepo.findOne({
-      where: { username: VIP_TIPSTER.username, tipsterType: VIP_TIPSTER_TYPE },
+      where: { username: VIP_PACKAGE_OWNER_USERNAME },
       select: ['userId'],
     });
     return tipster?.userId ?? null;
+  }
+
+  async isVipRosterUserId(userId: number | null | undefined): Promise<boolean> {
+    if (userId == null) return false;
+    const tipster = await this.tipsterRepo.findOne({
+      where: { userId },
+      select: ['username'],
+    });
+    return isVipRosterUsername(tipster?.username);
+  }
+
+  /** userId → display name for the three VIP tipsters. */
+  async vipRosterNamesByUserId(): Promise<Map<number, string>> {
+    const rows = await this.tipsterRepo.find({
+      where: { username: In([...VIP_ROSTER_USERNAMES]) },
+      select: ['userId', 'username', 'displayName'],
+    });
+    const map = new Map<number, string>();
+    for (const row of rows) {
+      if (row.userId) map.set(row.userId, row.displayName || row.username);
+    }
+    return map;
   }
 
   async isHouseVipUserId(userId: number | null | undefined): Promise<boolean> {
@@ -226,7 +248,7 @@ export class TelegramVipService {
     if (!telegramVipEnabled()) return { ok: false, error: 'not_configured', couponId: ticketId };
     const ticket = await this.ticketRepo.findOne({ where: { id: ticketId } });
     if (!ticket) return { ok: false, error: 'not_found', couponId: ticketId };
-    if (!(await this.isHouseVipUserId(ticket.userId))) {
+    if (!(await this.isVipRosterUserId(ticket.userId))) {
       return { ok: false, error: 'not_vip_coupon', couponId: ticketId };
     }
     const picks = await this.pickRepo.find({
@@ -240,20 +262,25 @@ export class TelegramVipService {
       matchDate: p.matchDate,
       result: p.result,
     }));
+    const owner = await this.tipsterRepo.findOne({
+      where: { userId: ticket.userId },
+      select: ['displayName', 'username'],
+    });
+    const tipsterName = owner?.displayName || owner?.username || 'VIP';
     const won = (ticket.result || '').toLowerCase() === 'won';
     const posted = won
       ? await this.postVipWin({
           couponId: ticket.id,
-          title: ticket.title || 'Two-Fold',
+          title: ticket.title || 'VIP slip',
           totalOdds: ticket.totalOdds != null ? Number(ticket.totalOdds) : null,
-          tipsterName: 'VIP · Two-Fold',
+          tipsterName,
           legs,
         })
       : await this.postVipCoupon({
           couponId: ticket.id,
-          title: ticket.title || 'Two-Fold',
+          title: ticket.title || 'VIP slip',
           totalOdds: ticket.totalOdds != null ? Number(ticket.totalOdds) : null,
-          tipsterName: 'VIP · Two-Fold',
+          tipsterName,
           bookmakerKey: ticket.bookmakerKey,
           bookingCode: ticket.bookingCode,
           legs,
@@ -378,7 +405,7 @@ export class TelegramVipService {
     if (!membership) {
       await telegramApi('sendMessage', {
         chat_id: chatId,
-        text: 'Subscribe to VIP · Two-Fold on BetRollover, then open this bot from your subscriptions page to join the private VIP Telegram.',
+        text: 'Subscribe to VIP on BetRollover, then open this bot from your subscriptions page to join the private VIP Telegram.',
       });
       return;
     }
@@ -387,7 +414,7 @@ export class TelegramVipService {
     if (!active) {
       await telegramApi('sendMessage', {
         chat_id: chatId,
-        text: 'This Telegram is for active VIP · Two-Fold members. Renew on BetRollover, then tap Start again.',
+        text: 'This Telegram is for active VIP members. Renew on BetRollover, then tap Start again.',
       });
       return;
     }

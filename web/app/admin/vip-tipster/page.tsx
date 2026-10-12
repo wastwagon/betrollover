@@ -387,13 +387,13 @@ export default function AdminVipTipsterPage() {
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
         <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">VIP Two-Fold</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Sure · Two-Fold (free)</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            One paid tipster. Two Home wins at 1.20–1.40, combined 1.50–1.99. Up to 2 slips
+            Free Sure-family Home+Home desk. Two Home wins at 1.20–1.40, combined 1.50–1.99. Up to 2 slips
             per desk day, using the same Early / Afternoon / Evening / Midnight windows as
-            Acca Desk — skip a window when no pair exists. VIP publishes first so AccaSure1X2
-            never reuses those fixtures (Sure can still mix Away on what is left). New VIP
-            slips auto-attach to the 2-day /rollover board.
+            Acca Desk — skip a window when no pair exists. This desk still publishes first so
+            other desks do not reuse those fixtures. The VIP plan is TheAnalyst, LateBloomer,
+            and AccaSure1X2. The rollover board attaches AccaSure1X2, not this desk.
           </p>
         </div>
 
@@ -616,7 +616,7 @@ export default function AdminVipTipsterPage() {
               onResendTelegram={handleResendTelegram}
               tipster={{
                 displayName: overview?.displayName || 'VIP · Two-Fold',
-                username: overview?.username || 'VipTwoFold',
+                username: overview?.username || 'SureTwoFold',
                 avatarUrl: overview?.avatarUrl,
                 winRate: overview?.winRate,
                 roi: overview?.roi,
@@ -657,7 +657,7 @@ export default function AdminVipTipsterPage() {
               onResendTelegram={handleResendTelegram}
               tipster={{
                 displayName: overview?.displayName || 'VIP · Two-Fold',
-                username: overview?.username || 'VipTwoFold',
+                username: overview?.username || 'SureTwoFold',
                 avatarUrl: overview?.avatarUrl,
                 winRate: overview?.winRate,
                 roi: overview?.roi,

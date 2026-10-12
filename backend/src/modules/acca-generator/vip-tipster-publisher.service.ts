@@ -22,6 +22,7 @@ import {
   type AccaDeskSlotKey,
 } from '../../config/acca-desk-slots';
 import { ACCA_DESK_TIPSTER_TYPE } from '../../config/acca-desk-tipsters.config';
+import { VIP_PACKAGE_OWNER_USERNAME } from '../../config/vip-roster.config';
 import { isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
 import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
 import { AccumulatorPick } from '../accumulators/entities/accumulator-pick.entity';
@@ -31,9 +32,6 @@ import { TipsterSubscriptionPackage } from '../subscriptions/entities/tipster-su
 import { SyncStatus } from '../fixtures/entities/sync-status.entity';
 import { AccaGeneratorService } from './acca-generator.service';
 import { VipTipsterSetupService } from './vip-tipster-setup.service';
-import { AccumulatorsService } from '../accumulators/accumulators.service';
-import { RolloverDeskService } from './rollover-desk.service';
-
 export type VipTipsterRunResult = {
   enabled: boolean;
   reason?: string;
@@ -59,8 +57,6 @@ export class VipTipsterPublisherService {
   constructor(
     private readonly accaGenerator: AccaGeneratorService,
     private readonly setup: VipTipsterSetupService,
-    private readonly accumulatorsService: AccumulatorsService,
-    private readonly rollover: RolloverDeskService,
     @InjectRepository(Tipster)
     private readonly tipsterRepo: Repository<Tipster>,
     @InjectRepository(AccumulatorTicket)
@@ -79,9 +75,13 @@ export class VipTipsterPublisherService {
     const tipster = await this.tipsterRepo.findOne({
       where: { username: VIP_TIPSTER.username, tipsterType: VIP_TIPSTER_TYPE },
     });
-    const pkg = tipster?.userId
+    const packageOwner = await this.tipsterRepo.findOne({
+      where: { username: VIP_PACKAGE_OWNER_USERNAME },
+      select: ['userId'],
+    });
+    const pkg = packageOwner?.userId
       ? await this.packageRepo.findOne({
-          where: { tipsterUserId: tipster.userId, status: 'active' },
+          where: { tipsterUserId: packageOwner.userId, status: 'active' },
           order: { createdAt: 'ASC' },
         })
       : null;
@@ -251,25 +251,6 @@ export class VipTipsterPublisherService {
       };
     }
 
-    const pkg = await this.packageRepo.findOne({
-      where: { tipsterUserId: tipster.userId, status: 'active' },
-      order: { createdAt: 'ASC' },
-    });
-    if (!pkg) {
-      return {
-        enabled: true,
-        deskDay: deskDayStr,
-        published: 0,
-        skippedAlreadyPosted: 0,
-        skippedEmptyPool: 0,
-        skippedNoUser: 1,
-        errors: 0,
-        details: [{ status: 'no_user', message: 'No active VIP package' }],
-      };
-    }
-
-    await this.accumulatorsService.ensureHouseVipMarketplaceListings();
-
     const existing = await this.findDeskDayTickets(tipster.userId, deskDayStr);
     const usedFixtureIds = new Set<number>();
     await this.addDeskDayFixtureIds(usedFixtureIds, [tipster.userId], deskDayStr);
@@ -326,15 +307,14 @@ export class VipTipsterPublisherService {
             255,
           );
         const description = (
-          `${VIP_TIPSTER.bio} ${generated.constructionLabel} · ${slot.label} · ${deskDayStr}. Covered on marketplace; legs for VIP subscribers.`
+          `${VIP_TIPSTER.bio} ${generated.constructionLabel} · ${slot.label} · ${deskDayStr}. Free pick — educational only.`
         ).slice(0, 2000);
 
         const published = await this.accaGenerator.publish(tipster.userId, {
           generationId: generated.generationId,
           title,
           description,
-          placement: 'both',
-          subscriptionPackageIds: [pkg.id],
+          placement: 'marketplace',
         });
 
         for (const leg of generated.legs) {
@@ -362,15 +342,6 @@ export class VipTipsterPublisherService {
         const message = err instanceof Error ? err.message : String(err);
         this.logger.error(`VIP publish failed ${slot.key} deskDay=${deskDayStr}: ${message}`);
         result.details.push({ status: 'error', slotKey: slot.key, message });
-      }
-    }
-
-    if (result.published > 0) {
-      try {
-        await this.rollover.autoAttachAfterPublish();
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
-        this.logger.warn(`VIP → rollover auto-attach failed: ${message}`);
       }
     }
 

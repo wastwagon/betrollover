@@ -30,6 +30,7 @@ import { TipstersController } from './tipsters.controller';
 import { PredictionsController } from './predictions.controller';
 import { LeaderboardController } from './leaderboard.controller';
 import { TipsterModule } from '../tipster/tipster.module';
+import { TelegramModule } from '../telegram/telegram.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { TipsterModule } from '../tipster/tipster.module';
     ]),
     forwardRef(() => FixturesModule),
     forwardRef(() => AccumulatorsModule),
+    TelegramModule,
   ],
   controllers: [TipstersController, PredictionsController, LeaderboardController],
   providers: [

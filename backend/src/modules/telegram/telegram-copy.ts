@@ -237,15 +237,19 @@ function applyTelegramCopyVars(template: string, siteOrigin: string): string {
 export function formatVipPublicSlipTeaser(input: {
   siteOrigin: string;
   totalOdds?: number | null;
+  tipsterName?: string | null;
 }): string {
   const odds =
     input.totalOdds != null && Number.isFinite(Number(input.totalOdds))
       ? Number(input.totalOdds).toFixed(2)
       : '';
+  const who = (input.tipsterName || '').trim();
   const site = input.siteOrigin.replace(/\/$/, '') || 'https://betrollover.com';
   return applyTelegramCopyVars(
     [
-      `VIP · Two-Fold · new max-bet slip${odds ? ` · ${odds}` : ''}`,
+      who
+        ? `VIP · ${who} · new slip${odds ? ` · ${odds}` : ''}`
+        : `VIP · new slip${odds ? ` · ${odds}` : ''}`,
       '',
       'Full slip is in BETROLLOVER VIP (members only).',
       'Want in? Message @{contact}',
@@ -264,14 +268,16 @@ export function formatVipPublicWinPost(input: {
   siteOrigin: string;
   title: string;
   totalOdds?: number | null;
+  tipsterName?: string | null;
   legs?: { matchDescription?: string | null; prediction?: string | null; result?: string | null; homeScore?: number | null; awayScore?: number | null }[];
 }): string {
   const odds =
     input.totalOdds != null && Number.isFinite(Number(input.totalOdds))
       ? Number(input.totalOdds).toFixed(2)
       : '';
+  const who = (input.tipsterName || '').trim();
   const lines = [
-    `VIP won ✅ · ${(input.title || 'Two-Fold').trim()}${odds ? ` · ${odds}` : ''}`,
+    `VIP won ✅${who ? ` · ${who}` : ''} · ${(input.title || 'Two-Fold').trim()}${odds ? ` · ${odds}` : ''}`,
   ];
   for (const leg of input.legs || []) {
     const match = (leg.matchDescription || '').trim();

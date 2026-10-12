@@ -316,7 +316,7 @@ export class AdminController {
     return this.rolloverDesk.syncNow();
   }
 
-  /** Legacy: publish AccaSure1X2 (not rollover owner). Prefer VIP Tipster admin for /rollover. Body `{ slotKey?: 'early' | 'afternoon' | 'evening', deskDay?: string }`. */
+  /** Publish AccaSure1X2, the rollover owner. Body `{ slotKey?: 'early' | 'afternoon' | 'evening' | 'midnight', deskDay?: string }`. */
   @Post('rollover/publish')
   async publishRolloverOwner(
     @CurrentUser() user: User,
@@ -341,7 +341,7 @@ export class AdminController {
     return this.accaDeskPublisher.publishRolloverOwner({ slotKey, deskDayStr, ensureSetup: true });
   }
 
-  /** Attach a specific VipTwoFold `{ ticketId }`, or earliest eligible pending 2-fold.
+  /** Attach a specific AccaSure1X2 `{ ticketId }`, or earliest eligible pending 2-fold.
    * `{ asNextDay: true }` attaches a later slot as the next plan day on the same calendar date.
    * VIP publish also auto-attaches; this is the manual override. */
   @Post('rollover/attach')

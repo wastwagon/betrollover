@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Prediction } from './entities/prediction.entity';
 import { PredictionFixture } from './entities/prediction-fixture.entity';
 import { Tipster } from './entities/tipster.entity';
+import { isVipRosterUsername } from '../../config/vip-roster.config';
 
 @Injectable()
 export class PredictionsApiService {
@@ -41,8 +42,11 @@ export class PredictionsApiService {
       fixturesByPredictionId.set(f.predictionId, list);
     }
 
+    // Live VIP roster slips are members-only. This feed is pending-only, so drop those tipsters.
+    const publicPredictions = predictions.filter((p) => !isVipRosterUsername((p.tipster as Tipster)?.username));
+
     // Compatibility payload: return camelCase (preferred) plus legacy snake_case keys.
-    const enriched = predictions.map((p) => {
+    const enriched = publicPredictions.map((p) => {
       const pf = fixturesByPredictionId.get(p.id) ?? [];
       return {
         id: p.id,
@@ -103,6 +107,11 @@ export class PredictionsApiService {
       relations: ['tipster'],
     });
     if (!prediction) return null;
+    const tipster = prediction.tipster as Tipster | null;
+    const status = (prediction.status || 'pending').toLowerCase();
+    if (isVipRosterUsername(tipster?.username) && (status === 'pending' || status === 'active')) {
+      return null;
+    }
 
     await this.predictionRepo.increment({ id: predictionId }, 'views', 1);
 

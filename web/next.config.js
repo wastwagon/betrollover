@@ -113,6 +113,36 @@ const nextConfig = {
         destination: '/fr/guides/purchase-protection',
         permanent: true,
       },
+      {
+        source: '/tipsters/VipTwoFold',
+        destination: '/tipsters/SureTwoFold',
+        permanent: true,
+      },
+      {
+        source: '/tipsters/TwoFold',
+        destination: '/tipsters/SureTwoFold',
+        permanent: true,
+      },
+      {
+        source: '/tipsters/AccaSureTwoFold',
+        destination: '/tipsters/SureTwoFold',
+        permanent: true,
+      },
+      {
+        source: '/fr/tipsters/VipTwoFold',
+        destination: '/fr/tipsters/SureTwoFold',
+        permanent: true,
+      },
+      {
+        source: '/fr/tipsters/TwoFold',
+        destination: '/fr/tipsters/SureTwoFold',
+        permanent: true,
+      },
+      {
+        source: '/fr/tipsters/AccaSureTwoFold',
+        destination: '/fr/tipsters/SureTwoFold',
+        permanent: true,
+      },
     ];
     if (process.env.SKIP_WWW_REDIRECT === '1') return copyRedirects;
     return [

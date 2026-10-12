@@ -1155,7 +1155,7 @@ const fr: Record<string, string> = {
   'pick_detail.selections_locked_body':
     'Achetez ce pronostic pour voir matchs, marchés et cotes de chaque sélection. La cote combinée affichée plus haut reste la même que sur la carte marché.',
   'pick_detail.selections_locked_vip_body':
-    'Les sélections VIP · Two-Fold en cours sont réservées aux abonnés. La cote combinée est visible. L’archive réglée reste publique.',
+    'Les sélections VIP en cours sont réservées aux abonnés. La cote combinée est visible. L’archive réglée reste publique.',
   'pick_detail.selection_number': 'Sélection {n}',
   'pick_detail.hidden_until_purchase': 'Masqué jusqu’à l’achat',
   'pick_detail.hidden_until_subscribe': 'Masqué jusqu’à l’abonnement',
@@ -2464,10 +2464,10 @@ const fr: Record<string, string> = {
   'rollover.label': 'VIP · Grimper',
   'rollover.title': 'Relance VIP 2 jours',
   'rollover.tagline':
-    'Tableau VIP · Two-Fold : gagnez le jour 1, relancez au jour 2, puis prenez le profit et recommencez. Pronostics live pour abonnés ; historique réglé public. Éducatif — pas un paiement.',
+    'Tableau AccaSure1X2 : gagnez le jour 1, relancez au jour 2, puis prenez le profit et recommencez. Pronostics live pour abonnés VIP ; historique réglé public. Éducatif — pas un paiement.',
   'rollover.today': 'Coupon du jour',
   'rollover.plan_title': 'Tableau 2 jours',
-  'rollover.no_coupon': 'Aucun coupon VIP · Two-Fold attaché pour ce jour de série. La série reste au jour {day}.',
+  'rollover.no_coupon': 'Aucun coupon AccaSure1X2 attaché pour ce jour de série. La série reste au jour {day}.',
   'rollover.waiting_settlement': 'En attente du règlement du coupon en cours avant d’attacher le jour suivant.',
   'rollover.day': 'Jour',
   'rollover.date': 'Date',
@@ -2489,7 +2489,7 @@ const fr: Record<string, string> = {
   'rollover.view_coupon': 'Voir le coupon',
   'rollover.disclaimer_label': 'Éducatif et informatif · 18+',
   'rollover.disclaimer':
-    'Tableau éducatif public lié à VIP · Two-Fold. Flux : gain jour 1 → relance jour 2 → exemple de prise de profit et redémarrage. Les tips live sont pour les abonnés VIP. Les tips réglés sont publics. Un abonnement achète une information, pas un pari. Nous ne versons pas les cotes et ne créditons pas les portefeuilles si cette série « gagne ». Jouez de manière responsable. 18+ uniquement.',
+    'Tableau éducatif public lié à AccaSure1X2. Flux : gain jour 1 → relance jour 2 → exemple de prise de profit et redémarrage. Les tips live sont pour les abonnés VIP. Les tips réglés sont publics. Un abonnement achète une information, pas un pari. Nous ne versons pas les cotes et ne créditons pas les portefeuilles si cette série « gagne ». Jouez de manière responsable. 18+ uniquement.',
   'rollover.run_day': 'Jour {day} sur {total}',
   'rollover.run_completed': 'Les deux jours sont passés. Exemple de prise de profit terminé — un nouveau cycle 2 jours a commencé au jour 1.',
   'rollover.run_broken': 'Cette série a été coupée. Un nouveau cycle 2 jours a commencé au jour 1.',

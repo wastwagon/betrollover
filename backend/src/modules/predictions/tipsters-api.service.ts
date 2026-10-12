@@ -25,6 +25,7 @@ import {
 import { AccumulatorsService } from '../accumulators/accumulators.service';
 import { isHumanVipPackagesEnabled, isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
 import { VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
+import { isVipRosterUsername, VIP_PACKAGE_OWNER_USERNAME, VIP_ROSTER_USERNAMES } from '../../config/vip-roster.config';
 import {
   accaDeskPausedPublicExcludeRawSql,
   accaDeskPausedPublicExcludeSql,
@@ -35,8 +36,8 @@ import {
   CLASSIC_AI_TIPSTER_TYPE,
   classicAiPublicExcludeRawSql,
   classicAiPublicExcludeSql,
+  isClassicAiHiddenFromBrowse,
   isClassicAiHiddenFromPublic,
-  isClassicAiTipsterRow,
 } from '../../common/classic-ai-public-visibility.util';
 import { computeStreaksFromNewestFirst } from './tipster-streaks.util';
 
@@ -198,6 +199,26 @@ export class TipstersApiService {
     for (const r of rows) {
       m.set(r.tipsterUserId, r.id);
     }
+    const owner = await this.tipsterRepo.findOne({
+      where: { username: VIP_PACKAGE_OWNER_USERNAME },
+      select: ['userId'],
+    });
+    if (owner?.userId) {
+      const housePkg = await this.subscriptionPackageRepo.findOne({
+        where: { tipsterUserId: owner.userId, status: 'active' },
+        order: { createdAt: 'ASC' },
+      });
+      if (housePkg) {
+        const roster = await this.tipsterRepo.find({
+          where: { username: In([...VIP_ROSTER_USERNAMES]) },
+          select: ['userId'],
+        });
+        const wanted = new Set(unique);
+        for (const row of roster) {
+          if (row.userId && wanted.has(row.userId)) m.set(row.userId, housePkg.id);
+        }
+      }
+    }
     return m;
   }
 
@@ -318,7 +339,7 @@ export class TipstersApiService {
     }
     const hideClassicAi = isClassicAiHiddenFromPublic();
     const tipsters = tipstersRaw.filter((t) => {
-      if (hideClassicAi && isClassicAiTipsterRow(t)) return false;
+      if (hideClassicAi && isClassicAiHiddenFromBrowse(t)) return false;
       if (isAccaDeskPublishingPaused(t.username)) return false;
       return t.isAi || (t.userId != null && activeHumanIds.has(t.userId));
     });
@@ -651,15 +672,26 @@ export class TipstersApiService {
     this.applyTipsterProfilePeriodFilter(qb, window.period);
   }
 
-  /** House VIP desk: include subscription slips on the public profile archive (settled record). */
-  private profileIncludesSubscriptionTickets(tipsterType?: string | null): boolean {
-    return tipsterType === VIP_TIPSTER_TYPE;
+  /** VIP roster: include subscription slips on the public profile archive (settled record). */
+  private profileIncludesSubscriptionTickets(username?: string | null): boolean {
+    return isVipRosterUsername(username);
   }
 
-  /** Live VIP slips: subscribers, the desk owner, or admin. Archive stays public. */
+  /** One VIP package unlocks live slips for every roster tipster. */
+  private async vipGateUserId(tipsterUserId: number, username?: string | null): Promise<number> {
+    if (!isVipRosterUsername(username)) return tipsterUserId;
+    const owner = await this.tipsterRepo.findOne({
+      where: { username: VIP_PACKAGE_OWNER_USERNAME },
+      select: ['userId'],
+    });
+    return owner?.userId ?? tipsterUserId;
+  }
+
+  /** Live VIP slips: subscribers, the tipster, or admin. Archive stays public. */
   private async viewerCanSeeLiveVipSlips(
     viewerUserId: number | undefined,
     tipsterUserId: number,
+    username?: string | null,
   ): Promise<boolean> {
     if (!viewerUserId) return false;
     if (viewerUserId === tipsterUserId) return true;
@@ -669,13 +701,14 @@ export class TipstersApiService {
     });
     if (viewer?.role === UserRole.ADMIN) return true;
     if (!isSubscriptionsEnabled()) return false;
+    const gateUserId = await this.vipGateUserId(tipsterUserId, username);
     const now = new Date();
     const count = await this.subscriptionRepo
       .createQueryBuilder('s')
       .innerJoin('s.package', 'pkg')
       .where('s.userId = :viewerUserId', { viewerUserId })
       .andWhere('s.status = :status', { status: 'active' })
-      .andWhere('pkg.tipsterUserId = :tipsterUserId', { tipsterUserId })
+      .andWhere('pkg.tipsterUserId = :gateUserId', { gateUserId })
       .andWhere('(s.endsAt IS NULL OR s.endsAt > :now)', { now })
       .getCount();
     return count > 0;
@@ -995,7 +1028,7 @@ export class TipstersApiService {
       where: { username },
     });
     if (!tipster) return null;
-    if (isClassicAiHiddenFromPublic() && isClassicAiTipsterRow(tipster)) {
+    if (isClassicAiHiddenFromPublic() && isClassicAiHiddenFromBrowse(tipster)) {
       return null;
     }
     if (isAccaDeskPublishingPaused(tipster.username)) {
@@ -1015,10 +1048,10 @@ export class TipstersApiService {
     }
 
     const marketplaceCoupons = await this.getMarketplaceCouponsForTipster(username, window, viewerUserId);
-    const includeSub = this.profileIncludesSubscriptionTickets(tipster.tipsterType);
+    const includeSub = this.profileIncludesSubscriptionTickets(tipster.username);
     let liveVipLocked = false;
     if (includeSub && tipster.userId != null) {
-      const canSeeLive = await this.viewerCanSeeLiveVipSlips(viewerUserId, tipster.userId);
+      const canSeeLive = await this.viewerCanSeeLiveVipSlips(viewerUserId, tipster.userId, tipster.username);
       if (!canSeeLive) {
         liveVipLocked = (await this.pendingVipTicketsQb(tipster.userId, window).getCount()) > 0;
       }
@@ -1038,7 +1071,7 @@ export class TipstersApiService {
       const mp = await this.computeMarketplaceProfileStats(
         tipster.userId,
         window,
-        this.profileIncludesSubscriptionTickets(tipster.tipsterType),
+        this.profileIncludesSubscriptionTickets(tipster.username),
       );
       totalPredictions = mp.total;
       totalWins = mp.won;
@@ -1118,7 +1151,7 @@ export class TipstersApiService {
       .createQueryBuilder('t')
       .where('t.userId = :uid', { uid: tipster.userId })
       .andWhere('t.result IN (:...r)', { r: ['won', 'lost', 'void'] });
-    this.applyProfileTicketChannel(qb, this.profileIncludesSubscriptionTickets(tipster.tipsterType));
+    this.applyProfileTicketChannel(qb, this.profileIncludesSubscriptionTickets(tipster.username));
     this.applyTipsterProfileWindowOnTicket(qb, window);
     return qb.getCount();
   }
@@ -1132,7 +1165,7 @@ export class TipstersApiService {
     const tipster = await this.tipsterRepo.findOne({ where: { username } });
     if (!tipster?.userId) return [];
 
-    const includeSub = this.profileIncludesSubscriptionTickets(tipster.tipsterType);
+    const includeSub = this.profileIncludesSubscriptionTickets(tipster.username);
     const mp = await this.computeMarketplaceProfileStats(tipster.userId, window, includeSub);
     const winRate = mp.winRate;
     const totalPredictions = mp.total;
@@ -1205,10 +1238,10 @@ export class TipstersApiService {
     const tipster = await this.tipsterRepo.findOne({ where: { username } });
     if (!tipster?.userId) return [];
 
-    const includeSub = this.profileIncludesSubscriptionTickets(tipster.tipsterType);
+    const includeSub = this.profileIncludesSubscriptionTickets(tipster.username);
     const canSeeLiveVip =
       includeSub && tipster.userId != null
-        ? await this.viewerCanSeeLiveVipSlips(viewerUserId, tipster.userId)
+        ? await this.viewerCanSeeLiveVipSlips(viewerUserId, tipster.userId, tipster.username)
         : false;
 
     const mp = await this.computeMarketplaceProfileStats(tipster.userId, window, includeSub);
@@ -1284,6 +1317,8 @@ export class TipstersApiService {
       ...ticket,
       price: priceMap.get(ticket.id) ?? Number(ticket.price) ?? 0,
       purchaseCount: purchaseCountMap.get(ticket.id) ?? 0,
+      // Returned only when the viewer may see live VIP slips. The profile must not reveal from username alone.
+      ...(includeSub ? { picksRevealed: true as const } : {}),
       tipster: user
         ? {
             id: user.id,
@@ -1532,7 +1567,7 @@ export class TipstersApiService {
     });
     const hideClassicAi = isClassicAiHiddenFromPublic();
     const visibleTipsters = tipsters.filter((t) => {
-      if (hideClassicAi && isClassicAiTipsterRow(t)) return false;
+      if (hideClassicAi && isClassicAiHiddenFromBrowse(t)) return false;
       if (isAccaDeskPublishingPaused(t.username)) return false;
       return true;
     });

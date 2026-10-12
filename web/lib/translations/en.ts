@@ -1160,7 +1160,7 @@ const en = {
   'pick_detail.selections_locked_body':
     'Purchase this pick to see matches, markets, and odds for each leg. Combined total odds are shown above for reference — same as on the marketplace card.',
   'pick_detail.selections_locked_vip_body':
-    'Live VIP · Two-Fold legs are for subscribers. Combined odds are shown above. Anyone can open Archive for the settled record.',
+    'Live VIP legs are for subscribers. Combined odds are shown above. Anyone can open Archive for the settled record.',
   'pick_detail.selection_number': 'Selection {n}',
   'pick_detail.hidden_until_purchase': 'Hidden until purchase',
   'pick_detail.hidden_until_subscribe': 'Hidden until you subscribe',
@@ -2459,10 +2459,10 @@ const en = {
   'rollover.label': 'VIP · Climb',
   'rollover.title': '2-Day VIP Rollover',
   'rollover.tagline':
-    'VIP · Two-Fold board: win Day 1, roll to Day 2, then take profit and restart. Live tips for subscribers; settled history is public. Educational — not a payout.',
+    'AccaSure1X2 board: win Day 1, roll to Day 2, then take profit and restart. Live tips for VIP subscribers; settled history is public. Educational — not a payout.',
   'rollover.today': "Today's coupon",
   'rollover.plan_title': '2-day board',
-  'rollover.no_coupon': 'No VIP · Two-Fold coupon attached for this plan day yet. The run holds on day {day}.',
+  'rollover.no_coupon': 'No AccaSure1X2 coupon attached for this plan day yet. The run holds on day {day}.',
   'rollover.waiting_settlement': 'Waiting for the current coupon to settle before the next day is attached.',
   'rollover.day': 'Day',
   'rollover.date': 'Date',
@@ -2484,7 +2484,7 @@ const en = {
   'rollover.view_coupon': 'View coupon',
   'rollover.disclaimer_label': 'Educational & informational · 18+',
   'rollover.disclaimer':
-    'This is a public educational board linked to VIP · Two-Fold. Flow: win Day 1 → roll Day 2 → take-profit example and restart. Live tips are for VIP subscribers. Settled tips are public. Paying for a subscription buys information, not a bet. We do not pay odds or credit wallets when this sequence “wins”. Gamble responsibly. 18+ only.',
+    'This is a public educational board linked to AccaSure1X2. Flow: win Day 1 → roll Day 2 → take-profit example and restart. Live tips are for VIP subscribers. Settled tips are public. Paying for a subscription buys information, not a bet. We do not pay odds or credit wallets when this sequence “wins”. Gamble responsibly. 18+ only.',
   'rollover.run_day': 'Day {day} of {total}',
   'rollover.run_completed': 'Both days hit. Example harvest complete — a new 2-day cycle has started at Day 1.',
   'rollover.run_broken': 'This campaign was cut. A new 2-day cycle has started at Day 1.',

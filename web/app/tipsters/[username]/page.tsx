@@ -26,7 +26,7 @@ import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 import { useCurrency } from '@/context/CurrencyContext';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
-import { isVipDeskTipsterType } from '@/lib/tipster-kind';
+import { isVipRosterUsername } from '@/lib/tipster-kind';
 import { TIPSTER_ACTIVE_WITHIN_DAYS, TIPSTER_FORM_POST_CAP } from '@betrollover/shared-types';
 import { FollowPushNudge } from '@/components/FollowPushNudge';
 import { Button } from '@/components/ui/Button';
@@ -762,7 +762,7 @@ export default function TipsterProfilePage() {
                 reviews={reviewItems}
                 ratingHistogram={ratingHistogram}
               />
-              {isVipDeskTipsterType(tipster.tipster_type) ? null : (
+              {isVipRosterUsername(tipster.username) ? null : (
                 <p className="text-[10px] text-[var(--text-tertiary)] mt-2">
                   {t('tipster.commission_note_full')}{' '}
                   <Link href="/resources" className="underline hover:text-[var(--primary)]">{t('tipster.learn_more')}</Link>
@@ -772,7 +772,7 @@ export default function TipsterProfilePage() {
           </div>
         </div>
 
-        {isVipDeskTipsterType(tipster.tipster_type) ? null : (
+        {isVipRosterUsername(tipster.username) ? null : (
           <EscrowTrustCallout
             className="section-ux-gutter mb-8"
             title={t('tipster.trust_callout_title')}
@@ -796,7 +796,7 @@ export default function TipsterProfilePage() {
             />
             <span className="text-sm text-[var(--text-muted)]">
               {couponFilter === 'active'
-                ? isVipDeskTipsterType(tipster.tipster_type) && profile?.live_vip_locked
+                ? isVipRosterUsername(tipster.username) && profile?.live_vip_locked
                   ? t('tipster.live_vip_subscribers_only_count')
                   : t('tipster.available', { n: String(filteredActive.length) })
                 : t('tipster.settled', { n: String(profile?.archived_settled_count ?? filteredArchive.length) })}
@@ -861,6 +861,9 @@ export default function TipsterProfilePage() {
                     const isPurchased = purchasedIds.has(a.id);
                     const canPurchase =
                       a.price === 0 || (walletBalance !== null && walletBalance >= a.price);
+                    const roster = isVipRosterUsername(tipster.username);
+                    const revealed = viewerIsAdmin || a.picksRevealed === true;
+                    const showLegs = revealed || !roster;
                     return (
                       <PickCard
                         key={a.id}
@@ -871,25 +874,21 @@ export default function TipsterProfilePage() {
                         totalOdds={a.totalOdds}
                         price={a.price}
                         purchaseCount={a.purchaseCount}
-                        picks={a.picks || []}
+                        picks={showLegs ? a.picks || [] : []}
                         tipster={a.tipster}
-                        picksRevealed={
-                          viewerIsAdmin ||
-                          isVipDeskTipsterType(tipster.tipster_type) ||
-                          a.picksRevealed === true
-                        }
-                        requiresSubscription={isVipDeskTipsterType(tipster.tipster_type)}
-                        isPurchased={isPurchased || isVipDeskTipsterType(tipster.tipster_type)}
-                        canPurchase={canPurchase && !isVipDeskTipsterType(tipster.tipster_type)}
+                        picksRevealed={revealed}
+                        requiresSubscription={roster}
+                        isPurchased={isPurchased || (roster && revealed)}
+                        canPurchase={canPurchase && !roster}
                         walletBalance={walletBalance}
                         onPurchase={() => purchase(a.id)}
                         purchasing={purchasing === a.id}
                         showUnveil={unveilCouponId === a.id}
                         onUnveilClose={() => setUnveilCouponId(null)}
                         createdAt={a.createdAt}
-                        bookmakerKey={a.bookmakerKey}
-                        bookingCode={a.bookingCode}
-                        bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}
+                        bookmakerKey={showLegs ? a.bookmakerKey : undefined}
+                        bookingCode={showLegs ? a.bookingCode : undefined}
+                        bookingCodeCopyCount={showLegs ? a.bookingCodeCopyCount ?? 0 : 0}
                         {...getPickCardSocialProps(a, {
                           onCountsChange: (id, counts) =>
                             patchProfileCoupons(setProfile, 'marketplace_coupons', id, counts),
@@ -931,7 +930,7 @@ export default function TipsterProfilePage() {
                       canPurchase={false}
                       viewOnly
                       picksRevealed
-                      requiresSubscription={isVipDeskTipsterType(tipster.tipster_type)}
+                      requiresSubscription={isVipRosterUsername(tipster.username)}
                       walletBalance={walletBalance}
                       onPurchase={() => {}}
                       createdAt={a.createdAt}

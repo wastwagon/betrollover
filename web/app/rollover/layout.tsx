@@ -5,7 +5,7 @@ import { getLocale } from '@/lib/i18n';
 
 const TITLE = '2-Day VIP Rollover';
 const DESCRIPTION =
-  'Follow the VIP · Two-Fold 2-day educational board: win Day 1, roll Day 2, take profit and restart. Live tips for subscribers; settled history is public. Not a bookmaker payout. 18+.';
+  'Follow the AccaSure1X2 2-day educational board: win Day 1, roll Day 2, take profit and restart. Live tips for VIP subscribers; settled history is public. Not a bookmaker payout. 18+.';
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -40,7 +40,7 @@ const FAQS = [
   {
     question: 'What is the 2-day VIP rollover?',
     answer:
-      'It is a public educational board linked to VIP · Two-Fold. Each plan day uses one VIP two-fold. Win Day 1 and the example stake rolls to Day 2; win Day 2 and the cycle finishes (take-profit example) and a new board starts at Day 1. A loss cuts the run and starts Day 1. Two slips on the same calendar day can be Day N and Day N+1. Live tips are for VIP subscribers; settled tips are public. We do not pay odds or credit wallets for this board.',
+      'It is a public educational board linked to AccaSure1X2. Each plan day uses one AccaSure1X2 2-fold. Win Day 1 and the example stake rolls to Day 2; win Day 2 and the cycle finishes (take-profit example) and a new board starts at Day 1. A loss cuts the run and starts Day 1. Two slips on the same calendar day can be Day N and Day N+1. Live tips are for VIP subscribers; settled tips are public. We do not pay odds or credit wallets for this board.',
   },
   {
     question: 'Can I see today’s tip without a VIP subscription?',

@@ -13,6 +13,13 @@ import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { TipsterService } from '../tipster/tipster.service';
 import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
 import { ResultTrackerService } from './result-tracker.service';
+import { TipsterSubscriptionPackage } from '../subscriptions/entities/tipster-subscription-package.entity';
+import { Subscription } from '../subscriptions/entities/subscription.entity';
+import { SubscriptionCouponAccess } from '../subscriptions/entities/subscription-coupon-access.entity';
+import { isVipRosterUsername, VIP_PACKAGE_OWNER_USERNAME } from '../../config/vip-roster.config';
+import { FORMER_FREE_DESK_USERNAMES, VIP_TIPSTER } from '../../config/vip-tipster.config';
+import { TelegramVipService } from '../telegram/telegram-vip.service';
+import { TelegramChannelService } from '../telegram/telegram-channel.service';
 
 @Injectable()
 export class PredictionMarketplaceSyncService {
@@ -33,7 +40,15 @@ export class PredictionMarketplaceSyncService {
     private tipsterRepo: Repository<Tipster>,
     @InjectRepository(ApiSettings)
     private apiSettingsRepo: Repository<ApiSettings>,
+    @InjectRepository(TipsterSubscriptionPackage)
+    private packageRepo: Repository<TipsterSubscriptionPackage>,
+    @InjectRepository(Subscription)
+    private subscriptionRepo: Repository<Subscription>,
+    @InjectRepository(SubscriptionCouponAccess)
+    private couponAccessRepo: Repository<SubscriptionCouponAccess>,
     private tipstersSetup: TipstersSetupService,
+    private telegramVip: TelegramVipService,
+    private telegramChannel: TelegramChannelService,
     private notificationsService: NotificationsService,
     private tipsterService: TipsterService,
     @Inject(forwardRef(() => ResultTrackerService))
@@ -77,6 +92,7 @@ export class PredictionMarketplaceSyncService {
       }
     }
 
+    const onRoster = isVipRosterUsername(tipster.username);
     const policy = await this.loadAiMarketplacePricing();
     // Same basis as human paid coupons (accumulators.create) and marketplace listings:
     // ROI / win rate from settled accumulator tickets — not tipsters.roi/winRate, which the
@@ -85,8 +101,12 @@ export class PredictionMarketplaceSyncService {
     const roi = ticketStats.roi;
     const winRate = ticketStats.winRate;
     const meetsThresholds = roi >= policy.minimumROI && winRate >= policy.minimumWinRate;
-    const listPrice =
-      meetsThresholds && policy.aiMarketplaceCouponPrice > 0 ? policy.aiMarketplaceCouponPrice : 0;
+    const listPrice = onRoster
+      ? 0
+      : meetsThresholds && policy.aiMarketplaceCouponPrice > 0
+        ? policy.aiMarketplaceCouponPrice
+        : 0;
+    const housePackageId = onRoster ? await this.houseVipPackageId() : null;
 
     const existing = await this.marketplaceRepo.findOne({
       where: { predictionId: prediction.id },
@@ -97,21 +117,26 @@ export class PredictionMarketplaceSyncService {
         where: { id: existing.accumulatorId },
         select: ['id', 'price', 'status', 'result'],
       });
-      if (
-        ticket &&
-        ticket.status === 'active' &&
-        ticket.result === 'pending' &&
-        Number(ticket.price) !== listPrice
-      ) {
-        await this.ticketRepo.update(ticket.id, { price: listPrice });
+      const pending = !!ticket && ticket.status === 'active' && ticket.result === 'pending';
+      if (pending && onRoster) {
+        await this.gateExistingRosterListing(prediction.id, ticket!, existing, housePackageId);
+      } else if (pending && Number(ticket!.price) !== listPrice) {
+        await this.ticketRepo.update(ticket!.id, { price: listPrice });
         await this.marketplaceRepo.update({ id: existing.id }, { price: listPrice });
         this.logger.log(
-          `Updated AI listing price for prediction ${prediction.id} (accumulator ${ticket.id}): ${ticket.price} -> ${listPrice} GHS`,
+          `Updated AI listing price for prediction ${prediction.id} (accumulator ${ticket!.id}): ${ticket!.price} -> ${listPrice} GHS`,
         );
       } else {
         this.logger.log(`Prediction ${prediction.id} already on marketplace (accumulator ${existing.accumulatorId})`);
       }
       return { accumulatorId: existing.accumulatorId };
+    }
+
+    if (onRoster && !housePackageId) {
+      this.logger.warn(
+        `VIP roster tipster ${tipster.username} has no house package; not publishing prediction ${prediction.id}`,
+      );
+      return null;
     }
 
     // Check for duplicate: same tipster, same fixtures, same markets/odds
@@ -140,9 +165,11 @@ export class PredictionMarketplaceSyncService {
     const ticket = this.ticketRepo.create({
       userId: tipster.userId,
       title,
-      description: isMulti
-        ? 'Hand-picked accumulator from our tipsters.'
-        : 'Single-fixture tip from our AI tipsters.',
+      description: onRoster
+        ? 'Live slip for VIP subscribers. Settled record is public.'
+        : isMulti
+          ? 'Hand-picked accumulator from our tipsters.'
+          : 'Single-fixture tip from our AI tipsters.',
       sport: 'Football',
       totalPicks: fixtures.length,
       totalOdds: Math.round(totalOdds * 1000) / 1000,
@@ -175,13 +202,53 @@ export class PredictionMarketplaceSyncService {
       status: 'active',
       predictionId: prediction.id,
       maxPurchases: 999999,
+      placement: onRoster ? 'both' : 'marketplace',
+      subscriptionPackageId: onRoster ? housePackageId : null,
     });
+    const rosterLegs = fixtures.map((f) => ({
+      matchDescription: `${f.homeTeam} vs ${f.awayTeam}`,
+      prediction: formatFootballOutcomeLabel(f.selectedOutcome),
+      odds: Number(f.selectionOdds),
+      matchDate: f.matchDate,
+    }));
+    if (onRoster && housePackageId) {
+      await this.linkRosterCoupon(ticket.id, housePackageId);
+      const tipsterName = tipster.displayName || tipster.username;
+      this.telegramVip
+        .postVipCoupon({
+          couponId: ticket.id,
+          title,
+          totalOdds: Number(ticket.totalOdds),
+          tipsterName,
+          legs: rosterLegs,
+        })
+        .catch(() => {});
+      this.telegramChannel
+        .postVipSlipTeaser({
+          couponId: ticket.id,
+          totalOdds: Number(ticket.totalOdds),
+          tipsterName,
+        })
+        .catch(() => {});
+      await this.notifyRosterSubscribers({
+        packageId: housePackageId,
+        tipsterUserId: tipster.userId,
+        tipsterDisplayName: tipsterName,
+        couponTitle: title,
+        accumulatorId: ticket.id,
+        totalOdds: Number(ticket.totalOdds),
+        legs: rosterLegs.map((leg) => ({
+          ...leg,
+          matchDate: leg.matchDate ? new Date(leg.matchDate).toISOString() : null,
+        })),
+      });
+    }
 
     const freshTipster = await this.tipsterRepo.findOne({
       where: { id: tipster.id },
       select: ['id', 'userId', 'displayName'],
     });
-    if (freshTipster?.userId) {
+    if (freshTipster?.userId && !onRoster) {
       await this.notificationsService
         .notifyFollowersOfNewCoupon({
           tipsterId: freshTipster.id,
@@ -211,6 +278,99 @@ export class PredictionMarketplaceSyncService {
     this.logger.log(`Synced prediction ${prediction.id} to marketplace as accumulator ${ticket.id}`);
     this.resultTrackerService.scheduleLeaderboardRefresh('ai-marketplace-sync');
     return { accumulatorId: ticket.id };
+  }
+
+  /**
+   * Pending roster listings stay subscription-gated even when the ticket price is already 0.
+   * Without a house package, lock the listing so it is not an open free unlock.
+   */
+  private async gateExistingRosterListing(
+    predictionId: number,
+    ticket: Pick<AccumulatorTicket, 'id' | 'price'>,
+    listing: PickMarketplace,
+    housePackageId: number | null,
+  ): Promise<void> {
+    if (!housePackageId) {
+      await this.ticketRepo.update(ticket.id, { price: 0 });
+      await this.marketplaceRepo.update(
+        { id: listing.id },
+        { price: 0, placement: 'subscription', subscriptionPackageId: null },
+      );
+      this.logger.warn(
+        `VIP roster prediction ${predictionId} has no house package; locked listing ${ticket.id}`,
+      );
+      return;
+    }
+    const alreadyGated =
+      (listing.placement || '').toLowerCase() === 'both' &&
+      Number(listing.subscriptionPackageId) === housePackageId &&
+      Number(listing.price) === 0 &&
+      Number(ticket.price) === 0;
+    if (!alreadyGated) {
+      await this.ticketRepo.update(ticket.id, { price: 0 });
+      await this.marketplaceRepo.update(
+        { id: listing.id },
+        { price: 0, placement: 'both', subscriptionPackageId: housePackageId },
+      );
+      this.logger.log(`Gated VIP roster listing for prediction ${predictionId} (accumulator ${ticket.id})`);
+    }
+    await this.linkRosterCoupon(ticket.id, housePackageId);
+  }
+
+  private async notifyRosterSubscribers(params: {
+    packageId: number;
+    tipsterUserId: number;
+    tipsterDisplayName: string;
+    couponTitle: string;
+    accumulatorId: number;
+    totalOdds: number;
+    legs: Array<{
+      matchDescription: string;
+      prediction: string;
+      odds: number;
+      matchDate?: string | null;
+    }>;
+  }): Promise<void> {
+    const now = new Date();
+    const rows = await this.subscriptionRepo.find({
+      where: { packageId: params.packageId, status: 'active' },
+      select: ['userId', 'endsAt'],
+    });
+    const recipientUserIds = rows
+      .filter((row) => !row.endsAt || new Date(row.endsAt) > now)
+      .map((row) => row.userId);
+    await this.notificationsService
+      .notifyUsersOfSubscriptionCoupon({
+        recipientUserIds,
+        tipsterUserId: params.tipsterUserId,
+        tipsterDisplayName: params.tipsterDisplayName,
+        couponTitle: params.couponTitle,
+        accumulatorId: params.accumulatorId,
+        couponCard: { totalOdds: params.totalOdds, legs: params.legs },
+      })
+      .catch((e) => this.logger.warn(`VIP subscriber notify: ${(e as Error).message}`));
+  }
+
+  private async houseVipPackageId(): Promise<number | null> {
+    for (const username of [VIP_PACKAGE_OWNER_USERNAME, VIP_TIPSTER.username, ...FORMER_FREE_DESK_USERNAMES]) {
+      const owner = await this.tipsterRepo.findOne({ where: { username }, select: ['userId'] });
+      if (!owner?.userId) continue;
+      const pkg = await this.packageRepo.findOne({
+        where: { tipsterUserId: owner.userId, status: 'active' },
+        order: { createdAt: 'ASC' },
+      });
+      if (pkg) return pkg.id;
+    }
+    return null;
+  }
+
+  private async linkRosterCoupon(accumulatorId: number, packageId: number): Promise<void> {
+    await this.couponAccessRepo
+      .createQueryBuilder()
+      .insert()
+      .values({ subscriptionPackageId: packageId, accumulatorId })
+      .orIgnore()
+      .execute();
   }
 
   /**

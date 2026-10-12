@@ -90,10 +90,12 @@ export class TelegramChannelService {
   async postVipSlipTeaser(input: {
     couponId: number;
     totalOdds?: number | null;
+    tipsterName?: string | null;
   }): Promise<{ ok: boolean; error?: string }> {
     const text = formatVipPublicSlipTeaser({
       siteOrigin: this.siteOrigin(),
       totalOdds: input.totalOdds,
+      tipsterName: input.tipsterName,
     });
     return this.sendMessage(text);
   }
@@ -103,12 +105,14 @@ export class TelegramChannelService {
     couponId: number;
     title: string;
     totalOdds?: number | null;
+    tipsterName?: string | null;
     legs?: TelegramSlipLeg[];
   }): Promise<{ ok: boolean; error?: string }> {
     const text = formatVipPublicWinPost({
       siteOrigin: this.siteOrigin(),
       title: input.title,
       totalOdds: input.totalOdds,
+      tipsterName: input.tipsterName,
       legs: input.legs,
     });
     return this.sendMessage(appendEngagementFooter(text, `vip-win-${input.couponId}`));

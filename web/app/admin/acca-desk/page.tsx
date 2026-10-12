@@ -509,21 +509,17 @@ export default function AdminAccaDeskPage() {
               <div className="mb-8 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
                   <div>
-                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">2-day VIP rollover (VipTwoFold)</h2>
+                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">2-day VIP rollover (AccaSure1X2)</h2>
                     <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
                       {overview.rollover.run
                         ? `${overview.rollover.run.status} · day ${overview.rollover.run.currentDay}/${overview.rollover.planDays ?? 2} · started ${formatWhen(overview.rollover.run.startedAt)}`
-                        : 'No run yet. VIP · Two-Fold auto-attaches after publish, or reset then attach Day 1 manually.'}
+                        : 'No run yet. AccaSure1X2 auto-attaches after publish, or reset then attach Day 1 manually.'}
                     </p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      Owner is VIP · Two-Fold. Flow: win Day 1 → roll Day 2 → finish &amp; new cycle; a loss starts Day 1.
+                      Owner is AccaSure1X2. Flow: win Day 1 → roll Day 2 → finish &amp; new cycle; a loss starts Day 1.
                       Two same-day slips → Day N and Day N+1. Live tips stay subscription-gated on{' '}
                       <span className="font-medium text-gray-700 dark:text-gray-200">/rollover</span>. Manual attach below
-                      is still available. Publish VIP from{' '}
-                      <Link href="/admin/vip-tipster" className="font-medium text-teal-700 dark:text-teal-300 hover:underline">
-                        VIP Tipster
-                      </Link>
-                      . Example-money multiplier on the board is ×{Number(overview.rollover.targetOdds ?? 1.6).toFixed(2)}{' '}
+                      is still available. AccaSure1X2 publishes with the Acca Desk cron. Example-money multiplier on the board is ×{Number(overview.rollover.targetOdds ?? 1.6).toFixed(2)}{' '}
                       only.
                     </p>
                   </div>
@@ -684,8 +680,8 @@ export default function AdminAccaDeskPage() {
 
                 {(overview.rollover.candidates?.length ?? 0) === 0 ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    No VipTwoFold coupons for today’s or tomorrow’s desk day. Publish from VIP Tipster (or wait for the
-                    VIP cron), then sync — unused slips auto-attach, or attach manually below.
+                    No AccaSure1X2 coupons for today’s or tomorrow’s desk day. Publish Acca Desk (or wait for the
+                    cron), then sync — unused slips auto-attach, or attach manually below.
                   </p>
                 ) : (
                   <div className="space-y-2">

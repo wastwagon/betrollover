@@ -98,7 +98,7 @@ export class RolloverDeskService {
   }
 
   /**
-   * After VIP publish (or admin sync): attach unused pending VipTwoFold 2-folds.
+   * After AccaSure1X2 publish (or admin sync): attach unused pending 2-folds.
    * Two slips the same desk day become Day N and Day N+1. A loss starts a new Day 1.
    */
   async autoAttachAfterPublish(): Promise<void> {
@@ -227,7 +227,7 @@ export class RolloverDeskService {
   }
 
   /**
-   * Admin: attach a specific VipTwoFold coupon, or the earliest eligible pending 2-fold.
+   * Admin: attach a specific AccaSure1X2 coupon, or the earliest eligible pending 2-fold.
    * Same won/lost/void cut as before. Same-day pending can be switched.
    * `asNextDay` attaches a later slot as the next plan day on the same calendar date.
    */
@@ -244,7 +244,7 @@ export class RolloverDeskService {
         : await this.pickTodayTicket();
     if (!ticket) {
       throw new BadRequestException(
-        `No eligible ${ROLLOVER_OWNER_USERNAME} pending 2-fold for today’s or tomorrow’s VIP board. Publish VIP · Two-Fold first, then attach the coupon you want.`,
+        `No eligible ${ROLLOVER_OWNER_USERNAME} pending 2-fold for today’s or tomorrow’s board. Publish ${ROLLOVER_OWNER_USERNAME} first, then attach the coupon you want.`,
       );
     }
     return this.commitAttach(ticket, {
@@ -458,7 +458,7 @@ export class RolloverDeskService {
   }
 
   /**
-   * Attach unused VipTwoFold pending 2-folds onto the active run.
+   * Attach unused AccaSure1X2 pending 2-folds onto the active run.
    * Same-day second slip → Day N+1. After a cut/finish, next unused slip → Day 1.
    */
   private async autoAttachPendingTickets(): Promise<void> {
@@ -770,7 +770,7 @@ export class RolloverDeskService {
   }
 
   /**
-   * VipTwoFold coupons for today’s desk day plus tomorrow’s (20:00 early board).
+   * AccaSure1X2 coupons for today’s desk day plus tomorrow’s (20:00 early board).
    * After today’s slots settle, unused tomorrow pending coupons can start the next Day 1.
    */
   private async listAttachableOwnerTickets(): Promise<AccumulatorTicket[]> {
