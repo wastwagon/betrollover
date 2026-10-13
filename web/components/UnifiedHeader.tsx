@@ -445,10 +445,12 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
             {/* ── Logo ── */}
             <Link href="/" className="flex items-center gap-2 min-w-0 shrink-0 group" aria-label="BetRollover home">
               <Image
-                src="/BetRollover-logo.png" alt="BetRollover"
-                width={52} height={52}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg object-contain shrink-0"
-                priority
+                src="/brand-mark.webp"
+                alt="BetRollover"
+                width={172}
+                height={96}
+                unoptimized
+                className="h-8 w-auto sm:h-9 rounded-lg object-contain shrink-0"
               />
               <span className="hidden sm:block font-semibold text-[15px] tracking-tight text-[var(--text)] group-hover:text-[var(--primary)] transition-colors">
                 BetRollover

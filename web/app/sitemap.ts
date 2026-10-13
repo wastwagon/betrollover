@@ -19,6 +19,7 @@ const LOCALISED_PAGES: Array<{
   priority: number;
 }> = [
   { path: '/',                       changeFrequency: 'weekly',  priority: 1.0  },
+  { path: '/buy-football-tips',      changeFrequency: 'weekly',  priority: 0.95 },
   { path: '/marketplace',            changeFrequency: 'daily',   priority: 0.9  },
   { path: '/tipsters',               changeFrequency: 'daily',   priority: 0.9  },
   { path: '/leaderboard',            changeFrequency: 'daily',   priority: 0.8  },
@@ -52,7 +53,10 @@ const EN_ONLY_PAGES: Array<{
   priority: number;
 }> = [
   ...(isSubscriptionsEnabled()
-    ? [{ path: '/subscriptions', changeFrequency: 'weekly' as const, priority: 0.5 }]
+    ? [
+        { path: '/subscriptions/marketplace', changeFrequency: 'daily' as const, priority: 0.9 },
+        { path: '/subscriptions', changeFrequency: 'weekly' as const, priority: 0.4 },
+      ]
     : []),
   { path: '/tools/converter',   changeFrequency: 'weekly',  priority: 0.5 },
 ];

@@ -608,6 +608,18 @@ export class SubscriptionsService {
     return count > 0;
   }
 
+  /** True when the user has any active (not expired / not cancelled) VIP subscription. */
+  async hasAnyActiveSubscription(userId: number): Promise<boolean> {
+    const now = new Date();
+    const count = await this.subscriptionRepo
+      .createQueryBuilder('s')
+      .where('s.userId = :userId', { userId })
+      .andWhere('s.status = :status', { status: 'active' })
+      .andWhere('(s.endsAt IS NULL OR s.endsAt > :now)', { now })
+      .getCount();
+    return count > 0;
+  }
+
   /** VIP plan unlocks only coupons linked to the subscribed package — not paid marketplace listings. */
   async hasSubscriptionAccessToCoupon(userId: number, accumulatorId: number): Promise<boolean> {
     const now = new Date();

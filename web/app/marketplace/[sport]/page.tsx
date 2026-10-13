@@ -38,8 +38,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   if (isFootballOnlyDiscovery()) {
     return {
-      title: `Football Predictions & Purchase-Protected Picks`,
-      description: `Football predictions from verified tipsters. Purchase-protected picks for a global match audience — strong across Africa. Refunded if tips lose.`,
+      title: 'Buy Football Tips Today',
+      description:
+        'Buy today\'s paid football predictions from verified tipsters. Refunded if a paid pick loses. Compare win rate and ROI before you pay.',
       robots: { index: false, follow: true },
     };
   }

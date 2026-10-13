@@ -7,14 +7,16 @@ import { AccaFamilyNav } from '@/components/AccaFamilyNav';
 import { buttonClassName } from '@/components/ui/Button';
 import { useT } from '@/context/LanguageContext';
 import { useAccaGeneratorEnabled } from '@/hooks/useAccaGeneratorEnabled';
+import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
 /**
  * Public teaser when the visitor is not signed in.
- * The interactive generator stays behind login.
+ * Generate stays behind login (+ VIP when subscriptions are live).
  */
 export function AccaGeneratorLanding() {
   const t = useT();
   const enabled = useAccaGeneratorEnabled();
+  const vipRequired = isSubscriptionsEnabled();
 
   return (
     <DashboardShell>
@@ -23,7 +25,13 @@ export function AccaGeneratorLanding() {
           <PageHeader
             label={t('acca.landing_label')}
             title={enabled ? t('nav.acca_generator') : t('acca.disabled_title')}
-            tagline={enabled ? t('acca.landing_disclaimer') : t('acca.disabled_body')}
+            tagline={
+              enabled
+                ? vipRequired
+                  ? t('acca.landing_disclaimer_vip')
+                  : t('acca.landing_disclaimer')
+                : t('acca.disabled_body')
+            }
           />
           <AccaFamilyNav current="build" />
 
@@ -36,7 +44,11 @@ export function AccaGeneratorLanding() {
                 {t('acca.landing_disclaimer_kicker')}
               </p>
               <p className="mt-1.5 leading-relaxed">
-                {enabled ? t('acca.landing_disclaimer') : t('acca.disabled_body')}
+                {enabled
+                  ? vipRequired
+                    ? t('acca.landing_disclaimer_vip')
+                    : t('acca.landing_disclaimer')
+                  : t('acca.disabled_body')}
               </p>
             </aside>
 
@@ -49,17 +61,27 @@ export function AccaGeneratorLanding() {
                     <li>{t('acca.landing_step2')}</li>
                     <li>{t('acca.landing_step3')}</li>
                     <li>{t('acca.landing_step4')}</li>
+                    {vipRequired ? <li>{t('acca.landing_step_vip')}</li> : null}
                   </ol>
                   <div className="flex flex-col sm:flex-row gap-3 pt-2">
                     <Link href="/login?redirect=/acca-generator" className={buttonClassName({ size: 'lg', className: 'min-h-[48px]' })}>
                       {t('acca.landing_sign_in')}
                     </Link>
-                    <Link
-                      href="/register?redirect=/acca-generator"
-                      className={buttonClassName({ variant: 'secondary', size: 'lg', className: 'min-h-[48px]' })}
-                    >
-                      {t('acca.landing_create_account')}
-                    </Link>
+                    {vipRequired ? (
+                      <Link
+                        href="/subscriptions/marketplace"
+                        className={buttonClassName({ variant: 'secondary', size: 'lg', className: 'min-h-[48px]' })}
+                      >
+                        {t('acca.vip_gate_cta')}
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/register?redirect=/acca-generator"
+                        className={buttonClassName({ variant: 'secondary', size: 'lg', className: 'min-h-[48px]' })}
+                      >
+                        {t('acca.landing_create_account')}
+                      </Link>
+                    )}
                   </div>
                 </>
               ) : (

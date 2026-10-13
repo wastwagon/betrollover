@@ -13,6 +13,8 @@ import { Fixture } from '../fixtures/entities/fixture.entity';
 import { FixtureOdd } from '../fixtures/entities/fixture-odd.entity';
 import { outcomeKeyFromOddsLine } from '../fixtures/odds-outcome-keys';
 import { AccumulatorsService, CreateAccumulatorDto } from '../accumulators/accumulators.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
 import { User } from '../users/entities/user.entity';
 import { AccaGeneratorRun } from './entities/acca-generator-run.entity';
 import { AccaGeneratorEvent } from './entities/acca-generator-event.entity';
@@ -108,6 +110,7 @@ export class AccaGeneratorService {
     @InjectRepository(User)
     private readonly usersRepo: Repository<User>,
     private readonly accumulatorsService: AccumulatorsService,
+    private readonly subscriptionsService: SubscriptionsService,
   ) {}
 
   /** Product analytics: tool_open (client), quota_hit / empty_pool (server). */
@@ -150,6 +153,7 @@ export class AccaGeneratorService {
   async getPublicConfig(userId: number) {
     const limits = await this.loadLimits();
     const quota = await this.getQuota(userId, limits);
+    const vipAccess = await this.resolveVipAccess(userId, quota.exempt);
     return {
       enabled: limits.enabled,
       minLegs: limits.minLegs,
@@ -168,6 +172,9 @@ export class AccaGeneratorService {
       defaults: ACCA_GENERATOR_DEFAULTS,
       /** Admins may generate/publish when the feature flag is off. */
       adminBypassDisabled: quota.exempt,
+      /** When VIP product is live, generate requires an active subscription (admins exempt). */
+      vipRequired: vipAccess.required,
+      vipAccess: vipAccess.allowed,
       quota,
       /**
        * Odds source note for clients:
@@ -255,6 +262,7 @@ export class AccaGeneratorService {
   async generate(userId: number, dto: GenerateAccaDto) {
     const limits = await this.loadLimits();
     await this.assertEnabled(userId, limits);
+    await this.assertVipAccess(userId);
 
     const markets = this.normalizeMarkets(dto.markets);
     const risk = this.resolveRiskFromDto(dto);
@@ -351,6 +359,8 @@ export class AccaGeneratorService {
       subscriptionPackageIds?: number[];
     },
   ) {
+    await this.assertVipAccess(userId);
+
     const generationId = Math.floor(Number(body.generationId));
     if (!Number.isFinite(generationId) || generationId < 1) {
       throw new BadRequestException('generationId is required');
@@ -467,6 +477,32 @@ export class AccaGeneratorService {
     const user = await this.usersRepo.findOne({ where: { id: userId }, select: ['id', 'role'] });
     if (user?.role === 'admin') return;
     throw new ServiceUnavailableException('Acca Generator is temporarily disabled');
+  }
+
+  private async resolveVipAccess(
+    userId: number,
+    adminExempt: boolean,
+  ): Promise<{ required: boolean; allowed: boolean }> {
+    // VIP product paused → keep Acca usable for signed-in users (admins always allowed).
+    if (!isSubscriptionsEnabled()) {
+      return { required: false, allowed: true };
+    }
+    if (adminExempt) {
+      return { required: true, allowed: true };
+    }
+    const hasVip = await this.subscriptionsService.hasAnyActiveSubscription(userId);
+    return { required: true, allowed: hasVip };
+  }
+
+  /** Blocks generate/publish when VIP subscriptions are live and the user has none. */
+  private async assertVipAccess(userId: number): Promise<void> {
+    if (!isSubscriptionsEnabled()) return;
+    if (await this.isExemptFromGenerationQuota(userId)) return;
+    const hasVip = await this.subscriptionsService.hasAnyActiveSubscription(userId);
+    if (hasVip) return;
+    throw new ForbiddenException(
+      'An active VIP subscription is required to use Acca Generator. Subscribe from the VIP marketplace, then try again.',
+    );
   }
 
   private async isExemptFromGenerationQuota(userId: number): Promise<boolean> {

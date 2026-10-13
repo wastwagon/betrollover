@@ -90,6 +90,10 @@ export default async function GuidesIndexPage() {
           <Link href="/resources" className="font-semibold text-[var(--primary)] hover:underline">
             {t('guides.library_link')}
           </Link>
+          {' · '}
+          <Link href="/buy-football-tips" className="font-semibold text-[var(--primary)] hover:underline">
+            {t('buy.nav')}
+          </Link>
         </p>
       </main>
       <AppFooter />

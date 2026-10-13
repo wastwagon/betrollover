@@ -72,7 +72,7 @@ export const PLAY_STORE_URL =
 export const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL?.trim() || '';
 
 const SITE_DESCRIPTION_FOOTBALL =
-  'Football predictions from verified tipsters. Purchase-protected picks, refunded if they lose. Ghana-based — trusted across Africa and worldwide.';
+  'Buy paid football tips and VIP tipster subscriptions. Purchase-protected picks are refunded if they lose. Two-fold plans and accumulators. Ghana-based, 18+.';
 
 const SITE_DESCRIPTION_MULTISPORT =
   'Verified tipster picks across football and more. Purchase-protected, refunded if tips lose. Ghana-based for Africa and a global audience.';
@@ -83,71 +83,58 @@ export const SITE_DESCRIPTION = isFootballOnlyDiscovery()
 
 /** Page title without the brand — root layout template appends `| BetRollover`. */
 export const SITE_TITLE_CORE = isFootballOnlyDiscovery()
-  ? 'Football Predictions & Purchase-Protected Picks'
-  : 'Verified Sports Tips for Football, Basketball and More';
+  ? 'Buy Football Tips & VIP Tipster Subscriptions'
+  : 'Buy Verified Sports Tips & Tipster Subscriptions';
 
 export const SITE_DEFAULT_TITLE = `${SITE_TITLE_CORE} — ${SITE_NAME}`;
 
 const SITE_KEYWORDS_FOOTBALL = [
-  'football predictions',
-  'football tips today',
+  'buy football tips',
+  'paid football predictions',
+  'football tipster subscription',
+  'VIP football tips',
+  'best football tipsters to subscribe',
+  'football accumulator tips',
+  'two fold football tips',
+  'football tips refund',
   'purchase-protected picks',
-  'refund if football tips lose',
   'verified football tipsters',
-  'football tipster marketplace',
-  'free football tips',
-  'buy football picks',
-  'accumulator picks',
-  'football predictions Africa',
+  'football tips today',
+  'SportyBet booking code tips',
+  'Bet9ja booking code',
   'football tips Ghana',
-  'football predictions Ghana',
   'Nigeria football tips',
   'Kenya football predictions',
   'South Africa football tips',
-  'Premier League predictions',
+  'Premier League tips subscription',
   'Champions League tips',
-  'win rate tipsters',
   'ROI football tips',
-  'refund if tips lose',
-  'global football tips',
-  'African tipster platform',
-  'GHS football tips',
+  'free football tips',
   'tipster marketplace Africa',
 ];
 
 const SITE_KEYWORDS_MULTISPORT = [
-  'tipster marketplace',
+  'buy sports tips',
+  'paid sports predictions',
+  'tipster subscription',
+  'VIP sports tips',
   'verified tipsters',
-  'sports picks',
-  'football tips',
+  'football tipster subscription',
+  'buy football tips',
   'basketball predictions',
   'tennis picks',
   'MMA predictions',
   'rugby tips',
-  'global sports tips',
-  'international tipster',
   'Premier League tips',
   'Champions League tips',
   'NBA picks',
-  'win rate tipsters',
-  'ROI sports tips',
   'accumulator picks',
   'purchase-protected picks',
-  'risk-free sports tips',
+  'refund if sports tips lose',
   'free sports tips',
-  'multi-sport picks',
-  'tipster rank',
-  'tipster ROI',
-  'tipster streak',
   'sports tips marketplace',
   'betting tips Ghana',
   'football tips today',
-  'free football tips',
-  'tipster platform',
-  'buy sports picks',
-  'refund if sports tips lose',
-  'worldwide sports picks',
-  'football predictions Ghana',
   'Nigeria tipsters',
   'Kenya football tips',
   'South Africa sports picks',

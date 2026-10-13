@@ -61,6 +61,20 @@ const nextConfig = {
       },
     ];
     const rules = [
+      {
+        source: '/images/marketing/:path*',
+        headers: [
+          ...securityHeaders,
+          { key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=86400' },
+        ],
+      },
+      {
+        source: '/brand-mark.webp',
+        headers: [
+          ...securityHeaders,
+          { key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=86400' },
+        ],
+      },
       // App Links / Universal Links verification: short cache so cert/bundle updates propagate
       {
         source: '/.well-known/:path*',

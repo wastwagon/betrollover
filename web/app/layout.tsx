@@ -35,6 +35,7 @@ const displayFont = localFont({
   ],
   variable: '--font-display',
   display: 'swap',
+  preload: false,
 });
 
 // Ensure we only pass strings to className (avoids "Objects are not valid as React child" during hydration)

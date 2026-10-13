@@ -1,7 +1,7 @@
 {
-  "name": "BetRollover — Football Tipster Marketplace",
+  "name": "BetRollover — Buy Football Tips",
   "short_name": "BetRollover",
-  "description": "Football tipster marketplace with purchase-protected picks, live scores, and Acca Generator. Ghana-based, 18+.",
+  "description": "Buy paid football tips and VIP tipster subscriptions. Purchase-protected picks, refunded if they lose. Ghana-based, 18+.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f2f2f7",

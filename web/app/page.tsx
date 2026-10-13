@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import {
   ArtworkSellerAccount,
@@ -10,6 +11,7 @@ import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { AdSlot } from '@/components/AdSlot';
 import { HomeHero } from '@/components/HomeHero';
+import { HomeHeroBanner } from '@/components/HomeHeroBanner';
 import { HomeJoinCtaCard } from '@/components/HomeJoinCtaCard';
 import { HomePopularTipsters } from '@/components/HomePopularTipsters';
 import { HomeFollowingShelf } from '@/components/HomeFollowingShelf';
@@ -18,7 +20,7 @@ import { HomeMarketingCollapse } from '@/components/HomeMarketingCollapse';
 import { FeaturedPicks } from '@/components/FeaturedPicks';
 import { HomeFreeTipOfTheDay } from '@/components/HomeFreeTipOfTheDay';
 import { HomeQuickMarketplaceSections } from '@/components/HomeQuickMarketplaceSections';
-import { SITE_DESCRIPTION, SITE_DEFAULT_TITLE, localizedUrl, seoAlternates } from '@/lib/site-config';
+import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { fetchSellingThresholds } from '@/lib/selling-thresholds';
 import { fetchHomePublicData } from '@/lib/home-public-data';
 import { getLocale, buildT } from '@/lib/i18n';
@@ -27,19 +29,32 @@ import type { Metadata } from 'next';
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
+  const t = buildT(locale);
+  const title = t('seo.home_title');
+  const description = t('seo.home_desc');
   return {
-    title: { absolute: SITE_DEFAULT_TITLE },
-    description: SITE_DESCRIPTION,
+    title: { absolute: title },
+    description,
     alternates: seoAlternates('/', locale),
     openGraph: {
       url: localizedUrl('/', locale),
-      title: SITE_DEFAULT_TITLE,
-      description: SITE_DESCRIPTION,
+      title,
+      description,
     },
   };
 }
 
-export default async function HomePage() {
+function HomeStreamFallback() {
+  return (
+    <div className="section-ux-cap-4xl w-full min-w-0 space-y-4 px-4 py-8 sm:px-6 lg:px-8" aria-hidden>
+      <div className="h-8 w-40 animate-pulse rounded-lg bg-[var(--fill-secondary)]" />
+      <div className="h-36 animate-pulse rounded-2xl bg-[var(--fill-secondary)]" />
+      <div className="h-24 animate-pulse rounded-2xl bg-[var(--fill-secondary)]" />
+    </div>
+  );
+}
+
+async function HomeBelowFold() {
   const locale = await getLocale();
   const t = buildT(locale);
   const [th, homeData] = await Promise.all([
@@ -49,11 +64,7 @@ export default async function HomePage() {
   const sellVars = { minRoi: String(th.minimumROI), minWr: String(th.minimumWinRate) };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
-      <UnifiedHeader />
-
-      <main className="bg-[var(--bg)] w-full min-w-0">
-        <HomePullToRefresh>
+    <>
         <HomeHero
           initialStats={homeData.stats}
           initialTodayMatches={homeData.todayMatches}
@@ -110,6 +121,9 @@ export default async function HomePage() {
               </Link>
               <Link href="/guides/leaderboard-ranking" className="text-sm font-semibold text-[var(--primary)] hover:underline">
                 {t('guides.board_short')}
+              </Link>
+              <Link href="/buy-football-tips" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                {t('buy.nav')}
               </Link>
             </nav>
           </div>
@@ -311,6 +325,21 @@ export default async function HomePage() {
           </div>
         </section>
         </HomeMarketingCollapse>
+    </>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
+      <UnifiedHeader />
+
+      <main className="bg-[var(--bg)] w-full min-w-0">
+        <HomePullToRefresh>
+          <HomeHeroBanner />
+          <Suspense fallback={<HomeStreamFallback />}>
+            <HomeBelowFold />
+          </Suspense>
         </HomePullToRefresh>
       </main>
 

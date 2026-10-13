@@ -3,9 +3,9 @@ import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
 import { getLocale } from '@/lib/i18n';
 
-const TITLE = '2-Day VIP Rollover';
+const TITLE = 'VIP Football Tips — 2-Day Two-Fold Rollover';
 const DESCRIPTION =
-  'Follow the AccaSure1X2 2-day educational board: win Day 1, roll Day 2, take profit and restart. Live tips for VIP subscribers; settled history is public. Not a bookmaker payout. 18+.';
+  'Subscribe for live two-fold VIP football tips. Settled history is public so you can judge form first. Win Day 1, roll Day 2, then the example restarts. Not a bookmaker payout. 18+.';
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -13,11 +13,12 @@ export async function generateMetadata(): Promise<Metadata> {
     title: TITLE,
     description: DESCRIPTION,
     keywords: [
-      'football rollover',
+      'VIP football tips',
+      'two fold football tips',
+      'football tipster subscription',
       '2 day vip tips',
-      'VIP Two-Fold',
-      'BetRollover rollover',
-      'football coupon Ghana',
+      'football rollover',
+      'low odds accumulator tips',
     ],
     alternates: seoAlternates('/rollover', locale),
     openGraph: {

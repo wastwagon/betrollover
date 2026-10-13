@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccumulatorsModule } from '../accumulators/accumulators.module';
 import { FixturesModule } from '../fixtures/fixtures.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { FixtureOdd } from '../fixtures/entities/fixture-odd.entity';
@@ -50,6 +51,7 @@ import { VipTipsterSchedulerService } from './vip-tipster-scheduler.service';
     ]),
     AccumulatorsModule,
     NotificationsModule,
+    forwardRef(() => SubscriptionsModule),
     forwardRef(() => FixturesModule),
   ],
   controllers: [AccaGeneratorController, RolloverDeskController],

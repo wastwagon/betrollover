@@ -3,9 +3,9 @@ import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
 import { getLocale } from '@/lib/i18n';
 
-const TITLE = 'Football Acca Generator';
+const TITLE = 'VIP Acca Generator — Football Accumulator Tips';
 const DESCRIPTION =
-  'Build same-day football accumulators from synced odds. Choose Sure, Safe, Medium, or High risk bands, pick available markets, generate a slip, and publish a free marketplace pick. Educational tool — 18+.';
+  'VIP members build same-day football accumulator tips from synced odds. Choose Sure, Safe, Medium, or High odd bands, generate a slip, and publish a free marketplace pick. Educational tool — 18+.';
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -13,12 +13,12 @@ export async function generateMetadata(): Promise<Metadata> {
     title: TITLE,
     description: DESCRIPTION,
     keywords: [
+      'football accumulator tips',
       'acca generator',
       'football accumulator builder',
       'same day acca',
+      'buy accumulator tips',
       'football tips Ghana',
-      'BetRollover acca',
-      'free football picks',
     ],
     alternates: seoAlternates('/acca-generator', locale),
     openGraph: {
@@ -41,12 +41,12 @@ const ACCA_FAQS = [
   {
     question: 'What is the BetRollover Acca Generator?',
     answer:
-      'It is a same-day football accumulator builder that picks legs from synced odds within Sure, Safe, Medium, or High risk bands. You can generate a sample slip and optionally publish it as a free marketplace pick.',
+      'It is a same-day football accumulator builder for VIP subscribers. It picks legs from synced odds within Sure, Safe, Medium, or High risk bands. You can generate a sample slip and optionally publish it as a free marketplace pick.',
   },
   {
-    question: 'Do I need an account to use Acca Generator?',
+    question: 'Do I need VIP to use Acca Generator?',
     answer:
-      'Yes. Sign in to generate and publish. The page is publicly described for discovery; the tool itself requires a BetRollover account.',
+      'Yes. Sign in with an active VIP tipster subscription to generate and publish. Admins can bypass. The page is publicly described for discovery.',
   },
   {
     question: 'Are Acca Generator slips guaranteed tips?',
