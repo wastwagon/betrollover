@@ -13,6 +13,7 @@ import { Fixture } from './entities/fixture.entity';
 import { FixtureArchive } from './entities/fixture-archive.entity';
 import { SyncStatus } from './entities/sync-status.entity';
 import { getSyncDates } from '../../config/api-limits.config';
+import { accraDateStr, addDateStrDays } from '../../config/acca-desk-slots';
 import { SyncLockService } from './sync-lock.service';
 
 const PREDICTION_TIME_ZONE =
@@ -26,7 +27,7 @@ const PREDICTION_CATCHUP_CRON = process.env.PREDICTION_CATCHUP_CRON || '0 2 * * 
  *
  * Full fixture import (enabled leagues, lookahead window) runs every 6 hours (00:00, 06:00, 12:00, 18:00 server local time)
  * so newly published fixtures appear without waiting for a single daily run. ~28 API calls/day for dates — fine on Pro/Ultra.
- * Live + finished fixture sync about every minute (Ultra); periodic settlement every minute. Also: 19:45 odds force, 20:00 AI predictions, 2:00 AM catch-up + archive.
+ * Live + finished fixture sync about every minute (Ultra); periodic settlement every minute. Also: 19:45 odds force, 20:00 AI predictions for the next calendar day, 2:00 AM catch-up for today + archive.
  *
  * Postgres / checkpoints: bursts of WAL and long `checkpoint complete` lines often align with this service — especially
  * the 6-hour full sync (fixtures + odds + cleanup), the 2-hour odds pass, ODDS_FORCE_REFRESH_CRON, and PREDICTION_DAILY_CRON.
@@ -317,7 +318,8 @@ export class FixtureSchedulerService implements OnModuleInit {
 
   /**
    * Daily prediction generation (default 20:00 in PREDICTION_TIME_ZONE).
-   * Generates AI tipster predictions for the current UTC calendar day.
+   * Builds the next calendar day's coupons. At 20:00 the current day's games have
+   * mostly kicked off, so a same-day window drops the weekend slate.
    */
   @Cron(PREDICTION_DAILY_CRON, { timeZone: PREDICTION_TIME_ZONE })
   async handleDailyPredictionGeneration() {
@@ -326,10 +328,12 @@ export class FixtureSchedulerService implements OnModuleInit {
       this.logger.warn('Prediction generation already running, skipping');
       return;
     }
-    this.logger.log('Running scheduled daily prediction generation...');
+    const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
+    const tomorrow = addDateStrDays(today, 1);
+    this.logger.log(`Running scheduled daily prediction generation for ${tomorrow}...`);
     try {
-      const result = await this.predictionEngine.generateDailyPredictionsForAllTipsters();
-      this.logger.log(`Prediction generation completed: ${result.length} predictions`);
+      const result = await this.predictionEngine.generateDailyPredictionsForAllTipsters(tomorrow);
+      this.logger.log(`Prediction generation completed for ${tomorrow}: ${result.length} predictions`);
       await this.updateSyncStatus('predictions', 'success', result.length);
     } catch (error: any) {
       this.logger.error('Error in prediction generation', error);
