@@ -639,21 +639,12 @@ const en = {
   'acca.landing_step2': 'Select markets that have odds in that band today.',
   'acca.landing_step3': 'Set how many fixtures — more legs means higher overall exposure.',
   'acca.landing_step4': 'Generate a slip, then use it your way or publish it free on BetRollover.',
-  'acca.landing_step_vip': 'Subscribe to a VIP plan — Acca Generator unlocks only for active VIP members.',
   'acca.landing_sign_in': 'Sign in to continue',
   'acca.landing_create_account': 'Create free account',
   'acca.landing_already': 'Already browsing picks?',
   'acca.landing_disclaimer_kicker': 'Educational & informational · 18+',
   'acca.landing_disclaimer':
     'Risk levels are odd bands for building sample accumulators — not sure bets. Sign in to generate and optionally publish a free marketplace pick. Gamble responsibly.',
-  'acca.landing_disclaimer_vip':
-    'VIP only. Risk levels are odd bands for sample accumulators — not sure bets. Sign in with an active VIP subscription to generate, then optionally publish a free marketplace pick. 18+.',
-  'acca.vip_gate_badge': 'VIP access',
-  'acca.vip_gate_title': 'Subscribe to unlock Acca Generator',
-  'acca.vip_gate_body':
-    'Generate and publish are included with an active VIP tipster subscription. Browse VIP plans, subscribe from your wallet, then return here to build same-day slips.',
-  'acca.vip_gate_cta': 'See VIP subscriptions',
-  'acca.vip_gate_learn': 'How VIP tips work',
   'acca.disabled_title': 'Acca Generator is paused',
   'acca.disabled_body':
     'This tool is temporarily off. Browse marketplace accumulators and rollover tickets in the meantime.',
@@ -2528,7 +2519,7 @@ const en = {
   'buy.vip_h': 'VIP football tipster subscription',
   'buy.vip_body': 'A VIP plan is a subscription to one tipster, including the house two-fold desk. You pay once for the period and receive the included subscriber-only slips. If that tipster posts none during your period, the fee is returned. Live rollover tips stay locked until you subscribe.',
   'buy.acca_h': 'Accumulator and two-fold tips',
-  'buy.acca_body': 'The 2-day VIP rollover is a low-odds two-fold plan: win day 1, roll day 2, then the example restarts. The Acca Generator builds same-day accumulators in Sure, Safe, Medium, or High odd bands for active VIP subscribers. Those bands are price ranges, not guaranteed results.',
+  'buy.acca_body': 'The 2-day VIP rollover is a low-odds two-fold plan: win day 1, roll day 2, then the example restarts. The Acca Generator is free for signed-in users and builds same-day accumulators in Sure, Safe, Medium, or High odd bands. Those bands are price ranges, not guaranteed results.',
   'buy.codes_h': 'Booking codes for SportyBet, Bet9ja and others',
   'buy.codes_body': 'When a tipster attaches a booking code, you can copy it into that bookmaker to load the same slip. The code does not place the bet and does not change the result.',
   'buy.compare_h': 'Choose a tipster before you pay',

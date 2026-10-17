@@ -3,9 +3,9 @@ import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
 import { getLocale } from '@/lib/i18n';
 
-const TITLE = 'VIP Acca Generator — Football Accumulator Tips';
+const TITLE = 'Acca Generator — Football Accumulator Tips';
 const DESCRIPTION =
-  'VIP members build same-day football accumulator tips from synced odds. Choose Sure, Safe, Medium, or High odd bands, generate a slip, and publish a free marketplace pick. Educational tool — 18+.';
+  'Build same-day football accumulator tips from synced odds. Sign in free, choose Sure, Safe, Medium, or High odd bands, generate a slip, and publish a marketplace pick. Educational tool — 18+.';
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -41,12 +41,12 @@ const ACCA_FAQS = [
   {
     question: 'What is the BetRollover Acca Generator?',
     answer:
-      'It is a same-day football accumulator builder for VIP subscribers. It picks legs from synced odds within Sure, Safe, Medium, or High risk bands. You can generate a sample slip and optionally publish it as a free marketplace pick.',
+      'It is a free same-day football accumulator builder for signed-in users. It picks legs from synced odds within Sure, Safe, Medium, or High risk bands. You can generate a sample slip and optionally publish it as a marketplace pick.',
   },
   {
     question: 'Do I need VIP to use Acca Generator?',
     answer:
-      'Yes. Sign in with an active VIP tipster subscription to generate and publish. Admins can bypass. The page is publicly described for discovery.',
+      'No. Sign in with a free account to generate and publish. A daily generation limit still applies. VIP subscriptions are separate tipster plans.',
   },
   {
     question: 'Are Acca Generator slips guaranteed tips?',

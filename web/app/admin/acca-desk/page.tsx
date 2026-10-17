@@ -271,9 +271,27 @@ export default function AdminAccaDeskPage() {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ deskDay }),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = (await res.json().catch(() => ({}))) as RunResult & {
+        started?: boolean;
+        message?: string;
+        deskDay?: string;
+      };
+      if (res.status === 202 || data.started) {
+        setMessage({
+          type: 'success',
+          text:
+            data.message ||
+            `Publish started for ${deskDay}. Slips land in the background and this page refreshes.`,
+        });
+        for (const delay of [20000, 60000, 120000]) {
+          window.setTimeout(() => {
+            void loadData();
+          }, delay);
+        }
+        return;
+      }
       if (res.ok) {
-        const r = data as RunResult;
+        const r = data;
         setLastRun(r);
         if (!r.enabled) {
           setMessage({ type: 'error', text: 'Acca Desk is disabled (ACCA_DESK_ENABLED=false).' });

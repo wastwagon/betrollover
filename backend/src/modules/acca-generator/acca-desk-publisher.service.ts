@@ -221,17 +221,32 @@ export class AccaDeskPublisherService {
         throw new ConflictException('Acca Desk publish is already running');
       }
       try {
-        return await this.runDailyUnlocked(opts);
-      } finally {
+        const result = await this.runDailyUnlocked(opts);
         await this.syncStatusRepo.upsert(
           {
             syncType: 'acca_desk',
-            status: 'success',
+            status: result.published === 0 && result.errors > 0 ? 'error' : 'success',
             lastSyncAt: new Date(),
-            lastError: null,
+            lastSyncCount: result.published,
+            lastError:
+              result.errors > 0
+                ? `published=${result.published} already=${result.skippedAlreadyPosted} empty=${result.skippedEmptyPool} errors=${result.errors}`
+                : null,
           },
           ['syncType'],
         );
+        return result;
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        await this.syncStatusRepo.upsert(
+          {
+            syncType: 'acca_desk',
+            status: 'error',
+            lastError: message,
+          },
+          ['syncType'],
+        );
+        throw err;
       }
     }
     return this.runDailyUnlocked(opts);

@@ -1791,14 +1791,14 @@ export default function AdminAnalyticsPage() {
           </div>
         )}
 
-        {/* Acca Generator adoption — pre-monetization signal */}
+        {/* Acca Generator adoption */}
         {activeTab === 'acca' && (
           <div className="space-y-6">
             <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 sm:p-5">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Acca Generator — monetization analytics</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Acca Generator</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Adoption, retention (D1/D7), funnel (open → generate → publish → purchase), quota-hit pressure, and published slip quality.
-                Use the date range above for period metrics. Strongest paywall signal: non-admins hitting the daily generation cap.
+                Free for signed-in users. Adoption, retention (D1/D7), funnel (open → generate → publish → purchase), daily-cap pressure, and published slip quality.
+                Use the date range above for period metrics.
               </p>
             </div>
 

@@ -18,7 +18,8 @@ import { AccaDeskPublisherService } from '../acca-generator/acca-desk-publisher.
 import { VipTipsterSetupService } from '../acca-generator/vip-tipster-setup.service';
 import { VipTipsterPublisherService } from '../acca-generator/vip-tipster-publisher.service';
 import { RolloverDeskService } from '../acca-generator/rollover-desk.service';
-import { resolveDeskDayArg } from '../../config/acca-desk-slots';
+import { accraDateStr, resolveDeskDayArg } from '../../config/acca-desk-slots';
+import type { AccaDeskRunResult } from '../acca-generator/acca-desk-publisher.service';
 import { NewsArticle, NewsCategory, normalizeNewsSport } from '../news/entities/news-article.entity';
 import { NewsService } from '../news/news.service';
 import { TransfersSyncService } from '../news/transfers-sync.service';
@@ -233,8 +234,14 @@ export class AdminController {
     return this.accaDeskSetup.initializeAccaDeskTipsters();
   }
 
-  /** Manual Acca Desk publish. Body `{ deskDay?: 'today' | 'tomorrow' | YYYY-MM-DD }`. */
+  /**
+   * Start Acca Desk publish and return immediately.
+   * A full roster pass posts many slips and outlives the proxy timeout.
+   * A dropped response has no CORS header, so the browser reports a CORS failure
+   * and the admin page never shows the slips that did publish.
+   */
   @Post('acca-desk/run-daily')
+  @HttpCode(202)
   async runAccaDeskDaily(
     @CurrentUser() user: User,
     @Body() body?: { deskDay?: string },
@@ -247,10 +254,52 @@ export class AdminController {
     } catch (err: unknown) {
       throw new BadRequestException(err instanceof Error ? err.message : 'Invalid deskDay');
     }
-    return this.accaDeskPublisher.runDaily({
-      ensureSetup: true,
-      deskDayStr,
-    });
+    if (!(await this.syncLock.tryStartSync('acca_desk'))) {
+      throw new ConflictException('Acca Desk publish is already running. Refresh in a minute.');
+    }
+    const trackEarly = deskDayStr > accraDateStr(new Date(), tz);
+    void this.finishAccaDeskRun(deskDayStr, trackEarly);
+    return {
+      started: true,
+      deskDay: deskDayStr,
+      message: trackEarly
+        ? `Tomorrow’s early publish started for ${deskDayStr}. This page refreshes as slips land.`
+        : `Catch-up started for ${deskDayStr}. This page refreshes as slips land.`,
+    };
+  }
+
+  private async finishAccaDeskRun(deskDayStr: string, trackEarly: boolean): Promise<void> {
+    let result: AccaDeskRunResult | null = null;
+    let failure: string | null = null;
+    try {
+      result = await this.accaDeskPublisher.runDaily({
+        ensureSetup: true,
+        deskDayStr,
+        alreadyLocked: true,
+      });
+    } catch (err: unknown) {
+      failure = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Acca Desk manual deskDay=${deskDayStr} failed: ${failure}`);
+    }
+    const published = result?.published ?? 0;
+    const summary = result
+      ? `published=${result.published} already=${result.skippedAlreadyPosted} empty=${result.skippedEmptyPool} errors=${result.errors}`
+      : failure;
+    const status =
+      failure || (result != null && result.errors > 0 && published === 0) ? 'error' : 'success';
+    const row = {
+      status,
+      lastSyncAt: new Date(),
+      lastSyncCount: published,
+      lastError: failure || (result != null && result.errors > 0 ? summary : null),
+    };
+    await this.syncStatusRepo.upsert({ syncType: 'acca_desk', ...row }, ['syncType']);
+    if (trackEarly) {
+      await this.syncStatusRepo.upsert({ syncType: 'acca_desk_early', ...row }, ['syncType']);
+    }
+    if (result) {
+      this.logger.log(`Acca Desk manual deskDay=${deskDayStr}: ${summary}`);
+    }
   }
 
   @Get('acca-desk/overview')
@@ -1827,7 +1876,7 @@ export class AdminController {
     return this.analyticsService.getVisitorStats(days ? parseInt(days, 10) : 7);
   }
 
-  /** Acca Generator adoption: unique users + generations over a period (pre-monetization signal). */
+  /** Acca Generator adoption: unique users + generations over a period. */
   @Get('analytics/acca-generator')
   async getAccaGeneratorUsage(
     @CurrentUser() user: User,

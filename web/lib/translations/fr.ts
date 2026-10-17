@@ -636,21 +636,12 @@ const fr: Record<string, string> = {
   'acca.landing_step2': 'Sélectionnez les marchés qui ont des cotes dans cette bande aujourd’hui.',
   'acca.landing_step3': 'Fixez le nombre de matchs — plus de sélections, plus d’exposition.',
   'acca.landing_step4': 'Générez un slip, puis utilisez-le ou publiez-le gratuitement sur BetRollover.',
-  'acca.landing_step_vip': 'Abonnez-vous à un plan VIP — le générateur d’acca ne s’ouvre qu’aux membres VIP actifs.',
   'acca.landing_sign_in': 'Se connecter pour continuer',
   'acca.landing_create_account': 'Créer un compte gratuit',
   'acca.landing_already': 'Vous parcourez déjà les pronostics ?',
   'acca.landing_disclaimer_kicker': 'Éducatif et informatif · 18+',
   'acca.landing_disclaimer':
     'Les niveaux de risque sont des bandes de cotes pour des accumulators d’exemple — pas des paris sûrs. Connectez-vous pour générer et éventuellement publier un pronostic gratuit. Jouez de façon responsable.',
-  'acca.landing_disclaimer_vip':
-    'Réservé VIP. Les niveaux de risque sont des bandes de cotes pour des accumulators d’exemple — pas des paris sûrs. Connectez-vous avec un abonnement VIP actif pour générer, puis publier éventuellement un pronostic gratuit. 18+.',
-  'acca.vip_gate_badge': 'Accès VIP',
-  'acca.vip_gate_title': 'Abonnez-vous pour débloquer le générateur d’acca',
-  'acca.vip_gate_body':
-    'La génération et la publication sont incluses avec un abonnement tipster VIP actif. Parcourez les plans VIP, abonnez-vous depuis votre portefeuille, puis revenez ici pour construire des slips du jour.',
-  'acca.vip_gate_cta': 'Voir les abonnements VIP',
-  'acca.vip_gate_learn': 'Comment marche le VIP',
   'acca.disabled_title': 'Le générateur d’acca est en pause',
   'acca.disabled_body':
     'Cet outil est temporairement désactivé. Parcourez les accumulators du marché et les tickets rollover en attendant.',
@@ -2533,7 +2524,7 @@ const fr: Record<string, string> = {
   'buy.vip_h': 'Abonnement tipster VIP',
   'buy.vip_body': 'Un plan VIP est un abonnement à un tipster, y compris le bureau deux sélections de la maison. Vous payez une fois pour la période et recevez les coupons réservés aux abonnés. Si le tipster n\'en publie aucun pendant votre période, les frais sont rendus. Les tips de rollover en cours restent verrouillés jusqu\'à l\'abonnement.',
   'buy.acca_h': 'Accumulateurs et pronos à deux sélections',
-  'buy.acca_body': 'Le rollover VIP sur 2 jours est un plan à deux sélections à cote basse : gain jour 1, relance jour 2, puis l\'exemple recommence. Le générateur d\'acca construit des accumulateurs du jour en bandes de cotes Sure, Safe, Medium ou High pour les abonnés VIP actifs. Ces bandes sont des fourchettes de prix, pas des résultats garantis.',
+  'buy.acca_body': 'Le rollover VIP sur 2 jours est un plan à deux sélections à cote basse : gain jour 1, relance jour 2, puis l\'exemple recommence. Le générateur d\'acca est gratuit pour les comptes connectés et construit des accumulateurs du jour en bandes de cotes Sure, Safe, Medium ou High. Ces bandes sont des fourchettes de prix, pas des résultats garantis.',
   'buy.codes_h': 'Codes de réservation SportyBet, Bet9ja et autres',
   'buy.codes_body': 'Quand un tipster joint un code de réservation, vous pouvez le copier chez ce bookmaker pour charger le même coupon. Le code ne place pas le pari et ne change pas le résultat.',
   'buy.compare_h': 'Choisir un tipster avant de payer',

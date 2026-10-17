@@ -6,7 +6,7 @@ import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { AccaFamilyNav } from '@/components/AccaFamilyNav';
 import { AccaGeneratorLanding } from '@/components/AccaGeneratorLanding';
-import { Button, buttonClassName } from '@/components/ui/Button';
+import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
@@ -64,9 +64,6 @@ type Config = {
   sameDayOnly?: boolean;
   /** True when the signed-in user is admin (may use tool while disabled). */
   adminBypassDisabled?: boolean;
-  /** When true, generate requires an active VIP subscription (admins exempt). */
-  vipRequired?: boolean;
-  vipAccess?: boolean;
   riskProfiles?: RiskProfile[];
   over15RiskProfiles?: RiskProfile[];
   markets: MarketOption[];
@@ -501,14 +498,12 @@ export default function AccaGeneratorPage() {
   // Risk-first: when risk (or config) changes, reload which markets have odds in that band.
   useEffect(() => {
     if (!config) return;
-    if (config.vipRequired && !config.vipAccess) return;
     void loadAvailability(riskLevel, selectedMarketsRef.current);
   }, [config, riskLevel, loadAvailability]);
 
   // When the user toggles markets, refresh selectedFixtureCount (debounced).
   useEffect(() => {
     if (!config || !availability) return;
-    if (config.vipRequired && !config.vipAccess) return;
     if (availability.riskLevel !== riskLevel) return;
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -597,11 +592,9 @@ export default function AccaGeneratorPage() {
 
   const generatorAllowed =
     !!config?.enabled || !!config?.adminBypassDisabled || !!config?.quota?.exempt;
-  const vipOk = !config?.vipRequired || !!config?.vipAccess;
 
   const canGenerate =
     generatorAllowed &&
-    vipOk &&
     selectedMarkets.length > 0 &&
     !availabilityLoading &&
     (availability?.selectedFixtureCount ?? 0) >= legs &&
@@ -735,36 +728,6 @@ export default function AccaGeneratorPage() {
             </div>
           )}
 
-          {config?.vipRequired && !config.vipAccess && (
-            <section className="mb-5 rounded-2xl border border-[var(--primary)]/30 bg-[var(--primary-light)] px-5 py-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--primary)]">
-                {t('acca.vip_gate_badge')}
-              </p>
-              <h2 className="mt-1.5 text-base font-semibold text-[var(--text)]">{t('acca.vip_gate_title')}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">{t('acca.vip_gate_body')}</p>
-              <div className="mt-4 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
-                <Link
-                  href="/subscriptions/marketplace"
-                  className={buttonClassName({ className: 'min-h-[48px]' })}
-                >
-                  {t('acca.vip_gate_cta')}
-                </Link>
-                <Link
-                  href="/buy-football-tips"
-                  className={buttonClassName({ variant: 'secondary', className: 'min-h-[48px]' })}
-                >
-                  {t('acca.vip_gate_learn')}
-                </Link>
-                <Link
-                  href="/rollover"
-                  className={buttonClassName({ variant: 'ghost', className: 'min-h-[48px]' })}
-                >
-                  {t('nav.rollover')}
-                </Link>
-              </div>
-            </section>
-          )}
-
           {error && (
             <div className="mb-4 rounded-xl border border-[var(--destructive)]/25 bg-[var(--destructive)]/10 px-4 py-3 text-sm text-[var(--destructive)]">
               {error}
@@ -783,8 +746,8 @@ export default function AccaGeneratorPage() {
             </div>
           )}
 
-          <div className={`mx-auto max-w-3xl ${config?.vipRequired && !config.vipAccess ? 'pointer-events-none opacity-45 select-none' : ''}`}>
-      <section className="space-y-6 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5" aria-disabled={config?.vipRequired && !config.vipAccess ? true : undefined}>
+          <div className="mx-auto max-w-3xl">
+      <section className="space-y-6 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
         <div>
           <p className="text-sm font-medium text-[var(--text)]">{t('acca.risk_level')}</p>
           <p className="mt-1 text-xs text-[var(--text-muted)]">
