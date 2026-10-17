@@ -131,7 +131,21 @@ export default function AdminAiPredictionsPage() {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       });
       const data = await res.json().catch(() => ({}));
-      if (res.ok && data.count !== undefined) {
+      if (res.status === 202 || data.started) {
+        setMessage({
+          type: 'success',
+          text: getApiErrorMessage(
+            data,
+            'Prediction generation started. The logs update when it finishes.',
+          ),
+        });
+        window.setTimeout(() => {
+          void loadData();
+        }, 20000);
+        window.setTimeout(() => {
+          void loadData();
+        }, 70000);
+      } else if (res.ok && data.count !== undefined) {
         setMessage({
           type: 'success',
           text: getApiErrorMessage(data, `Generated ${data.count} predictions`),
@@ -228,7 +242,7 @@ export default function AdminAiPredictionsPage() {
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Latest Predictions</h2>
               {todayPredictions.length === 0 ? (
                 <p className="text-gray-500 dark:text-gray-400 py-4">
-                  No predictions yet. Scheduled generation targets same-day fixtures for the current UTC calendar day.
+                  No predictions yet. The 8:00 PM run builds the next calendar day. The 2:00 AM catch-up fills today if that run saved nothing.
                 </p>
               ) : (
                 <div className="space-y-3">

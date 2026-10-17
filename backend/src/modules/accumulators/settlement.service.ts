@@ -117,6 +117,37 @@ export class SettlementService {
     return key || (pick.prediction || '').trim();
   }
 
+  /** One warning per pick per process. Settlement retries every minute. */
+  private readonly ungradedPickWarned = new Set<number>();
+
+  private warnUngradedPick(
+    pick: AccumulatorPick,
+    context: { fixtureId?: number | null; label?: string | null },
+  ): void {
+    if (this.ungradedPickWarned.has(pick.id)) return;
+    this.ungradedPickWarned.add(pick.id);
+    const grading = this.pickGradingInput(pick).toLowerCase();
+    const needsHalfTime =
+      /^(ht_home|ht_away|ht_draw|fh_over05|fh_under05|fh_over15|fh_under15|fh_over25|fh_under25)$/.test(
+        grading,
+      ) || /first\s*half|1st\s*half|half[\s-]*time/.test(grading);
+    const where = [
+      context.fixtureId != null ? `fixture=${context.fixtureId}` : null,
+      context.label ? context.label : null,
+    ]
+      .filter(Boolean)
+      .join(' ');
+    if (needsHalfTime) {
+      this.logger.warn(
+        `Pick ${pick.id} "${pick.prediction}" (key=${pick.outcomeKey ?? '—'}) is waiting for a half-time score${where ? ` (${where})` : ''}. Full-time score is present; ht_home_score/ht_away_score are empty.`,
+      );
+      return;
+    }
+    this.logger.warn(
+      `Unmatched prediction: "${pick.prediction}" (key=${pick.outcomeKey ?? '—'}${where ? `, ${where}` : ''}). Supported: ${SETTLEMENT_SUPPORTED_MARKETS.join('; ')}`,
+    );
+  }
+
   private async telegramLegsForPicks(picks: AccumulatorPick[]): Promise<TelegramSlipLeg[]> {
     const [fixtureMap, eventMap] = await Promise.all([
       this.loadFixturesForGrading(picks.map((p) => p.fixtureId)),
@@ -722,9 +753,10 @@ export class SettlementService {
         await this.pickRepo.save(pick);
         picksUpdated++;
       } else if (this.pickGradingInput(pick)) {
-        this.logger.warn(
-          `Unmatched prediction: "${pick.prediction}" (key=${pick.outcomeKey ?? '—'}). Supported: ${SETTLEMENT_SUPPORTED_MARKETS.join('; ')}`,
-        );
+        this.warnUngradedPick(pick, {
+          fixtureId: fix.id,
+          label: `${fix.homeTeamName} vs ${fix.awayTeamName}`,
+        });
       }
     }
 
@@ -745,9 +777,9 @@ export class SettlementService {
         await this.pickRepo.save(pick);
         picksUpdated++;
       } else if (this.pickGradingInput(pick)) {
-        this.logger.warn(
-          `Unmatched prediction: "${pick.prediction}" (key=${pick.outcomeKey ?? '—'}). Supported: ${SETTLEMENT_SUPPORTED_MARKETS.join('; ')}`,
-        );
+        this.warnUngradedPick(pick, {
+          label: `${evt.homeTeam} vs ${evt.awayTeam}`,
+        });
       }
     }
 

@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards, ForbiddenException, NotFoundException, BadRequestException, ParseIntPipe, UsePipes, ValidationPipe, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards, ForbiddenException, NotFoundException, BadRequestException, ConflictException, HttpCode, Logger, ParseIntPipe, UsePipes, ValidationPipe, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { DataSource } from 'typeorm';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthService } from '../auth/auth.service';
@@ -42,11 +43,15 @@ import { MarketingCampaignService } from '../email/marketing-campaign.service';
 import { TelegramChannelService } from '../telegram/telegram-channel.service';
 import { TelegramVipService } from '../telegram/telegram-vip.service';
 import { UpdateApiSportsKeyDto, TestApiSportsConnectionDto } from './dto/api-sports.dto';
+import { SyncStatus } from '../fixtures/entities/sync-status.entity';
+import { SyncLockService } from '../fixtures/sync-lock.service';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
 @Throttle({ default: { limit: 120, ttl: 60000 } })
 export class AdminController {
+  private readonly logger = new Logger(AdminController.name);
+
   constructor(
     private readonly adminService: AdminService,
     private readonly authService: AuthService,
@@ -83,6 +88,9 @@ export class AdminController {
     private readonly telegramChannel: TelegramChannelService,
     private readonly telegramVip: TelegramVipService,
     private readonly dataSource: DataSource,
+    private readonly syncLock: SyncLockService,
+    @InjectRepository(SyncStatus)
+    private readonly syncStatusRepo: Repository<SyncStatus>,
   ) { }
 
   @Get('stats')
@@ -579,27 +587,72 @@ export class AdminController {
     });
   }
 
+  /**
+   * Start generation and return immediately.
+   * The run calls API-Football once per fixture and often exceeds the proxy timeout.
+   * A dropped response has no CORS header, so the browser reports a CORS failure.
+   */
   @Post('predictions/generate')
+  @HttpCode(202)
   async generateAiPredictions(
     @CurrentUser() user: User,
     @Query('date') date?: string,
   ) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
-    const result = await this.predictionEngine.runNow(date || undefined);
-    try {
-      await this.dataSource.query(
-        `INSERT INTO admin_actions (action_type, entity_type, admin_user, notes) VALUES ($1, $2, $3, $4)`,
-        ['generate_predictions', 'system', user.email || user.username, `Generated ${result.count} predictions`],
+    if (!(await this.syncLock.tryStartSync('predictions'))) {
+      throw new ConflictException(
+        'Prediction generation is already running. Refresh the logs in a minute.',
       );
-    } catch {
-      // admin_actions table may not exist yet
     }
+    const adminLabel = user.email || user.username;
+    void this.runPredictionGeneration(date, adminLabel);
+    return {
+      started: true,
+      date: date || null,
+      message:
+        'Prediction generation started. It can take a few minutes. The logs on this page update when it finishes.',
+    };
+  }
+
+  private async runPredictionGeneration(date: string | undefined, adminLabel: string): Promise<void> {
     try {
-      this.predictionMarketplaceSync.syncAllPendingToMarketplace();
-    } catch (e) {
-      // this.logger.error('Marketplace sync failed after generation', e); // Assuming logger is available or needs to be injected
+      const result = await this.predictionEngine.runNow(date || undefined);
+      try {
+        await this.dataSource.query(
+          `INSERT INTO admin_actions (action_type, entity_type, admin_user, notes) VALUES ($1, $2, $3, $4)`,
+          ['generate_predictions', 'system', adminLabel, `Generated ${result.count} predictions`],
+        );
+      } catch {
+        // admin_actions table may not exist yet
+      }
+      try {
+        await this.predictionMarketplaceSync.syncAllPendingToMarketplace();
+      } catch (e) {
+        this.logger.warn(`Marketplace sync failed after generation: ${e}`);
+      }
+      await this.syncStatusRepo.upsert(
+        {
+          syncType: 'predictions',
+          status: 'success',
+          lastSyncAt: new Date(),
+          lastSyncCount: result.count,
+          lastError: null,
+        },
+        ['syncType'],
+      );
+      this.logger.log(`Background prediction generation finished: ${result.count} predictions`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Background prediction generation failed: ${message}`);
+      await this.syncStatusRepo.upsert(
+        {
+          syncType: 'predictions',
+          status: 'error',
+          lastError: message,
+        },
+        ['syncType'],
+      );
     }
-    return result;
   }
 
   @Post('news/sync')
