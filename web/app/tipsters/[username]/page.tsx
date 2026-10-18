@@ -703,7 +703,7 @@ export default function TipsterProfilePage() {
                   <p className="text-[10px] text-[var(--text-muted)] mt-2 opacity-90">{t('tipster.performance_settled_hint')}</p>
                 ) : null}
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-px mb-4 min-w-0 rounded-[var(--radius)] overflow-hidden border border-[var(--separator)] bg-[var(--separator)]">
+              <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-px mb-4 min-w-0 rounded-[var(--radius)] overflow-hidden border border-[var(--separator)] bg-[var(--separator)]">
                 <div className="bg-[var(--card)] p-3">
                   <span className="text-[10px] uppercase tracking-wide text-[var(--text-tertiary)]">{t('tipster.roi')}</span>
                   <p className={`font-display font-semibold text-base ${roiColor}`} title={!hasSettledPicks && tipster.total_predictions ? t('tipster.stats_update') : undefined}>{roiDisplay}</p>
@@ -724,6 +724,16 @@ export default function TipsterProfilePage() {
                     {tipster.best_streak != null && tipster.best_streak > 0
                       ? `${tipster.best_streak}W`
                       : '—'}
+                  </p>
+                </div>
+                <div className="bg-[var(--card)] p-3" title={t('tipster.current_win_run_hint')}>
+                  <span className="text-[10px] uppercase tracking-wide text-[var(--text-tertiary)]">{t('tipster.current_win_run')}</span>
+                  <p
+                    className={`font-display font-semibold text-base ${
+                      tipster.current_streak > 0 ? 'text-[var(--success)]' : 'text-[var(--text)]'
+                    }`}
+                  >
+                    {tipster.current_streak > 0 ? `${tipster.current_streak}W` : '—'}
                   </p>
                 </div>
                 <div className="bg-[var(--card)] p-3" title={t('tipster.worst_streak_hint')}>
