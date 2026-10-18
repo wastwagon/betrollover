@@ -726,8 +726,8 @@ export default function TipsterProfilePage() {
                       : '—'}
                   </p>
                 </div>
-                <div className="bg-[var(--card)] p-3" title={t('tipster.current_win_run_hint')}>
-                  <span className="text-[10px] uppercase tracking-wide text-[var(--text-tertiary)]">{t('tipster.current_win_run')}</span>
+                <div className="bg-[var(--card)] p-3" title={t('tipster.current_streak_hint')}>
+                  <span className="text-[10px] uppercase tracking-wide text-[var(--text-tertiary)]">{t('tipster.current_streak')}</span>
                   <p
                     className={`font-display font-semibold text-base ${
                       tipster.current_streak > 0 ? 'text-[var(--success)]' : 'text-[var(--text)]'
