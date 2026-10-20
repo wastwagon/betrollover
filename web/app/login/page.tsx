@@ -9,6 +9,7 @@ import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { AppleSignInButton } from '@/components/AppleSignInButton';
 import { ApiErrorBanner } from '@/components/ApiErrorBanner';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { isGoogleSignInEnabled } from '@/lib/auth-features';
 import { getApiUrl } from '@/lib/site-config';
 import { consumeOAuthSessionToken, setAuthToken } from '@/lib/auth-token-storage';
 import { Button } from '@/components/ui/Button';
@@ -33,7 +34,7 @@ function OauthContinueBlock({
   const [hasOauth, setHasOauth] = useState(false);
 
   useEffect(() => {
-    const google = !!(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '').trim();
+    const google = isGoogleSignInEnabled();
     const apple = !!(process.env.NEXT_PUBLIC_APPLE_CLIENT_ID || process.env.APPLE_CLIENT_ID || '').trim();
     setHasOauth(google || apple);
   }, []);

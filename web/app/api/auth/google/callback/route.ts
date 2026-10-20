@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isGoogleSignInEnabled } from '@/lib/auth-features';
 import {
   completeGoogleSignInFromIdToken,
   getRedirectBase,
@@ -14,6 +15,12 @@ const GOOGLE_OAUTH_NEXT_COOKIE = 'google_oauth_next';
 export async function GET(request: NextRequest) {
   const base = getRedirectBase(request);
   const loginUrl = new URL('/login', base);
+
+  if (!isGoogleSignInEnabled()) {
+    loginUrl.searchParams.set('error', 'Google sign-in is temporarily unavailable. Please use email or Apple.');
+    return NextResponse.redirect(loginUrl, 302);
+  }
+
   const clientId = (process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '').trim();
   const clientSecret = (process.env.GOOGLE_CLIENT_SECRET || '').trim();
   const redirectUri = `${base}/api/auth/google/callback`;

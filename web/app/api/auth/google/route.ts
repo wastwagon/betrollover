@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isGoogleSignInEnabled } from '@/lib/auth-features';
 import { completeGoogleSignInFromIdToken, getRedirectBase } from '@/lib/google-auth-exchange';
 
 export async function POST(request: NextRequest) {
+  if (!isGoogleSignInEnabled()) {
+    const base = getRedirectBase(request);
+    const loginUrl = new URL('/login', base);
+    loginUrl.searchParams.set('error', 'Google sign-in is temporarily unavailable. Please use email or Apple.');
+    return NextResponse.redirect(loginUrl, 302);
+  }
   try {
     const body = await request.json().catch(() => ({}));
     const idToken = typeof body?.id_token === 'string' ? body.id_token.trim() : '';

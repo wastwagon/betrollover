@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useT } from '@/context/LanguageContext';
 import { trackRegistrationStartedOnce } from '@/lib/analytics';
+import { isGoogleSignInEnabled } from '@/lib/auth-features';
 import { shouldPreferGoogleOAuthRedirect, shouldOpenOAuthInExternalTab } from '@/lib/webview-context';
 
 declare global {
@@ -80,7 +81,7 @@ export function GoogleSignInButton({
   const t = useT();
 
   useEffect(() => {
-    setClientId(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '');
+    setClientId(isGoogleSignInEnabled() ? process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '' : '');
   }, []);
 
   useEffect(() => {

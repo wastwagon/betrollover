@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isGoogleSignInEnabled } from '@/lib/auth-features';
 import {
   buildGoogleOAuthState,
   getRedirectBase,
@@ -17,6 +18,11 @@ export async function GET(request: NextRequest) {
   const clientSecret = (process.env.GOOGLE_CLIENT_SECRET || '').trim();
   const base = getRedirectBase(request);
   const loginUrl = new URL('/login', base);
+
+  if (!isGoogleSignInEnabled()) {
+    loginUrl.searchParams.set('error', 'Google sign-in is temporarily unavailable. Please use email or Apple.');
+    return NextResponse.redirect(loginUrl, 302);
+  }
 
   if (!clientId || !clientSecret) {
     loginUrl.searchParams.set(

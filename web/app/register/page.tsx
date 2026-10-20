@@ -9,6 +9,7 @@ import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { AppleSignInButton } from '@/components/AppleSignInButton';
 import { ApiErrorBanner } from '@/components/ApiErrorBanner';
 import { getApiErrorMessage } from '@/lib/api-error-message';
+import { isGoogleSignInEnabled } from '@/lib/auth-features';
 import { getApiUrl } from '@/lib/site-config';
 import { consumeOAuthSessionToken, setAuthToken } from '@/lib/auth-token-storage';
 import { trackEvent, trackRegistrationStartedOnce } from '@/lib/analytics';
@@ -26,6 +27,13 @@ function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [hasOauth, setHasOauth] = useState(false);
+
+  useEffect(() => {
+    const google = isGoogleSignInEnabled();
+    const apple = !!(process.env.NEXT_PUBLIC_APPLE_CLIENT_ID || process.env.APPLE_CLIENT_ID || '').trim();
+    setHasOauth(google || apple);
+  }, []);
 
   useEffect(() => {
     const ref = searchParams.get('ref');
@@ -104,17 +112,23 @@ function RegisterForm() {
           </p>
         </div>
 
-        <GoogleSignInButton variant="signup" className="mb-4" disabled={loading} />
-        <AppleSignInButton variant="signup" className="mb-2" disabled={loading} />
+        {hasOauth ? (
+          <>
+            {isGoogleSignInEnabled() ? (
+              <GoogleSignInButton variant="signup" className="mb-4" disabled={loading} />
+            ) : null}
+            <AppleSignInButton variant="signup" className="mb-2" disabled={loading} />
 
-        <div className="relative my-5">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-[var(--separator)]" />
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-3 bg-[var(--card)] text-[var(--text-muted)]">{t('auth.or_use_email')}</span>
-          </div>
-        </div>
+            <div className="relative my-5">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-[var(--separator)]" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-3 bg-[var(--card)] text-[var(--text-muted)]">{t('auth.or_use_email')}</span>
+              </div>
+            </div>
+          </>
+        ) : null}
 
         <form onSubmit={handleSubmit} className="space-y-4 min-w-0">
           <Input
