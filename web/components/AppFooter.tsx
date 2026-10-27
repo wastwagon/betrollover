@@ -52,6 +52,12 @@ export function AppFooter() {
               <li>
                 <FooterLink href="/buy-football-tips">{t('buy.nav')}</FooterLink>
               </li>
+              <li>
+                <FooterLink href="/football-tips-ghana">{t('footer.ghana_hub')}</FooterLink>
+              </li>
+              <li>
+                <FooterLink href="/track-record">{t('footer.track_record')}</FooterLink>
+              </li>
               {isSubscriptionsEnabled() ? (
                 <li>
                   <FooterLink href="/subscriptions/marketplace">{t('nav.subscription_marketplace')}</FooterLink>

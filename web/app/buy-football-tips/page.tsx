@@ -100,6 +100,10 @@ export default async function BuyFootballTipsPage() {
           </h2>
           <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
             {t('buy.regions_body')}{' '}
+            <Link href="/football-tips-ghana" className="font-semibold text-[var(--primary)] hover:underline">
+              {t('buy.regions_ghana_hub_link')}
+            </Link>
+            {' · '}
             <Link href="/about" className="font-semibold text-[var(--primary)] hover:underline">
               {t('buy.regions_about_link')}
             </Link>

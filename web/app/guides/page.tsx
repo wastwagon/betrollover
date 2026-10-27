@@ -35,6 +35,11 @@ export default async function GuidesIndexPage() {
       summary: t('guides.escrow_card_summary'),
     },
     {
+      href: '/guides/ghana-free-tips-vs-protected',
+      title: t('guides.ghana_vs_card_title'),
+      summary: t('guides.ghana_vs_card_summary'),
+    },
+    {
       href: '/guides/evaluate-tipsters',
       title: t('guides.eval_card_title'),
       summary: t('guides.eval_card_summary'),

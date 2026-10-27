@@ -1709,6 +1709,8 @@ const fr: Record<string, string> = {
   'footer.rights': 'Tous droits réservés.',
   'footer.credits_design_deployed': 'Conception et déploiement par',
   'footer.booking_codes': 'Codes booking (SportyBet & Bet9ja)',
+  'footer.ghana_hub': 'Plateforme tipsters Ghana',
+  'footer.track_record': 'Historique et remboursements',
   'footer.resources': 'Ressources',
   'footer.discover': 'Découvrir',
   'footer.telegram_cta': 'Discuter sur Telegram',
@@ -2594,6 +2596,133 @@ const fr: Record<string, string> = {
   'buy.faq_a3': 'Un prono payant est un seul coupon. Un abonnement VIP couvre un tipster pour un nombre de jours et inclut ses coupons réservés aux abonnés sur cette période.',
   'buy.faq_q4': 'Y a-t-il un code de réservation bookmaker ?',
   'buy.faq_a4': 'Seulement si le tipster en joint un, par exemple un code SportyBet ou Bet9ja. Copier le code charge le coupon de ce bookmaker. Cela ne place pas le pari.',
+  'buy.regions_ghana_hub_link': 'Plateforme tipsters Ghana — guide complet',
+
+  'ghana_hub.meta_title': 'Plateforme tipsters football au Ghana | picks protégés',
+  'ghana_hub.meta_desc':
+    'BetRollover est une plateforme tipsters basée au Ghana. Comparez les taux de victoire vérifiés, achetez des picks payants remboursés s\'ils perdent, et copiez les codes SportyBet ou Bet9ja quand le tipster les ajoute. Pas un bookmaker. 18+.',
+  'ghana_hub.meta_keywords':
+    'plateforme pronostics football ghana|tipster ghana|pronostics football ghana|picks remboursés|tipsters vérifiés ghana|code booking sportybet|marketplace tipsters afrique',
+  'ghana_hub.label': 'Ghana & Afrique',
+  'ghana_hub.title': 'Plateforme tipsters football au Ghana',
+  'ghana_hub.tagline':
+    'Plateforme tipsters avec protection d\'achat — comparez les picks football, payez en GHS, remboursement automatique au portefeuille si un pick payant perd.',
+  'ghana_hub.intro':
+    'Si vous cherchez des pronostics ou une plateforme tipsters au Ghana, vous voulez en général un historique public, des prix clairs et une aide quand un prono payant perd. BetRollover est basé au Ghana pour cela. Plateforme tipsters et contenu pédagogique — pas un bookmaker ni un canal Telegram « gain sûr ». Chaque pick payant sur le marketplace inclut la protection d\'achat : en cas de perte, remboursement automatique au portefeuille. 18+ uniquement.',
+  'ghana_hub.platform_h': 'Qu\'est-ce que BetRollover ?',
+  'ghana_hub.platform_body':
+    'Parcourez des tipsters vérifiés, achetez les pronos du jour sur le marketplace ou suivez des plans VIP. Les coupons réglés restent publics pour juger la forme avant de payer. Portefeuille en GHS, Mobile Money lorsque disponible. Acheteurs aussi au Nigeria, Kenya, Afrique du Sud et dans le monde.',
+  'ghana_hub.protection_h': 'Protection d\'achat vs pronos gratuits',
+  'ghana_hub.protection_body':
+    'Les tips gratuits et codes sur les réseaux sociaux ne sont pas remboursés s\'ils perdent. Sur BetRollover, les picks payants marketplace sont protégés : perte = remboursement auto au portefeuille. Différence clé vs canaux anonymes. Les pronos restent informatifs — vous choisissez d\'utiliser un bookmaker tiers.',
+  'ghana_hub.verify_h': 'Tipsters vérifiés, taux de victoire et historique',
+  'ghana_hub.verify_body':
+    'Chaque tipster affiche taux de victoire et résultats sur les picks réglés. Utilisez l\'annuaire et le classement avant d\'acheter. Tipsters IA internes et vendeurs indépendants suivent les mêmes règles de publication des résultats.',
+  'ghana_hub.bookies_h': 'SportyBet, Bet9ja et codes booking',
+  'ghana_hub.bookies_body':
+    'Quand un tipster joint un code booking, copiez-le dans SportyBet, Bet9ja ou un autre bookmaker pour charger le même coupon. Le code ne place pas le pari. Filtrez le marketplace pour les pronos avec code.',
+  'ghana_hub.vs_telegram_h': 'Comparaison avec Telegram ou X',
+  'ghana_hub.vs_telegram_body':
+    'Les tipsters sur les réseaux montrent rarement tous les résultats réglés ou ne remboursent pas ce que vous avez payé. BetRollover garde les pertes visibles, affiche les stats et rembourse les picks payants qui perdent. Personne ne garantit les gains — comparez les historiques et ne misez que ce que vous pouvez vous permettre de perdre.',
+  'ghana_hub.cta_marketplace': 'Ouvrir le marketplace',
+  'ghana_hub.cta_buy': 'VIP & pronos payants',
+  'ghana_hub.cta_tipsters': 'Annuaire tipsters',
+  'ghana_hub.cta_protection': 'Comment fonctionne la protection d\'achat',
+  'ghana_hub.faq_q1': 'BetRollover est-il un bookmaker au Ghana ?',
+  'ghana_hub.faq_a1':
+    'Non. BetRollover est un marketplace tipsters et plateforme d\'information basée au Ghana. Vous payez pour des pronostics et analyses ; tout pari chez SportyBet, Bet9ja ou un autre bookmaker est séparé. 18+ uniquement.',
+  'ghana_hub.faq_q2': 'Qu\'est-ce que la protection d\'achat sur les pronos payants ?',
+  'ghana_hub.faq_a2':
+    'Si vous achetez un pick payant sur le marketplace et qu\'il est réglé comme perdant, le prix est remboursé automatiquement sur votre portefeuille BetRollover. Les picks gratuits ne sont pas remboursés car aucun frais n\'a été prélevé.',
+  'ghana_hub.faq_q3': 'Puis-je utiliser SportyBet ou Bet9ja avec BetRollover ?',
+  'ghana_hub.faq_a3':
+    'Oui, quand le tipster inclut un code booking. Copiez le code dans l\'app du bookmaker. BetRollover n\'exploite pas ces bookmakers et ne place pas de paris pour vous.',
+  'ghana_hub.faq_q4': 'Les pronos sont-ils garantis gagnants ?',
+  'ghana_hub.faq_a4':
+    'Non. Tous les pronos sont informatifs. La protection d\'achat signifie un remboursement sur les pertes marketplace payantes éligibles — pas une promesse de profit.',
+  'ghana_hub.faq_q5': 'Pour qui est BetRollover au Ghana et en Afrique ?',
+  'ghana_hub.faq_a5':
+    'Fans de football et parieurs qui veulent des stats tipsters vérifiées, un historique réglé transparent, portefeuille GHS et remboursements sur picks payants perdants — plus des acheteurs au Nigeria, Kenya, Afrique du Sud et dans le monde sur le même marketplace.',
+
+  'track_record.nav': 'Historique & remboursements',
+  'track_record.meta_title': 'Historique public & remboursements protection d\'achat',
+  'track_record.meta_desc':
+    'Stats marketplace en direct : pronos réglés (gagnés et perdus), taux de victoire et total GHS remboursé aux acheteurs quand un pick payant perd. Archive complète sur BetRollover.',
+  'track_record.meta_keywords':
+    'historique tipster|remboursements protection achat|pronostics football ghana|archive pronos réglés',
+  'track_record.label': 'Transparence',
+  'track_record.title': 'Historique & remboursements protection d\'achat',
+  'track_record.tagline':
+    'Les picks marketplace réglés restent publics — y compris les pertes. Les picks payants perdants sont remboursés automatiquement sur votre portefeuille.',
+  'track_record.stat_settled': 'Picks marketplace réglés',
+  'track_record.stat_settled_hint': 'Coupons gagnés + perdus listés sur le marketplace (même périmètre que l\'archive).',
+  'track_record.stat_won_lost': 'Gagnés / perdus',
+  'track_record.stat_won_lost_hint': 'Rien n\'est supprimé quand un coupon perd.',
+  'track_record.stat_win_rate': 'Taux de victoire marketplace',
+  'track_record.stat_win_rate_hint': 'Part des picks marketplace terminés qui ont gagné.',
+  'track_record.stat_refunds': 'Remboursé aux acheteurs (GHS)',
+  'track_record.stat_refunds_hint': '{count} remboursements protection d\'achat sur picks payants perdus/annulés.',
+  'track_record.stat_purchases': 'Achats marketplace',
+  'track_record.stat_purchases_hint': 'Achats de picks payants sur coupons listés.',
+  'track_record.stat_tipsters': 'Tipsters actifs',
+  'track_record.stat_tipsters_hint': 'Profils publics qui publient actuellement.',
+  'track_record.body_1':
+    'Les plateformes tipsters gagnent la confiance quand les pertes restent visibles. L\'archive liste gains, pertes et picks annulés — les mêmes données que le taux de victoire et l\'historique sur les profils.',
+  'track_record.body_2':
+    'La protection d\'achat s\'applique aux picks payants marketplace : perte ou annulation = prix du pick recrédité sur le portefeuille BetRollover, sans ticket support. Les picks gratuits ne sont pas remboursés.',
+  'track_record.body_3':
+    'BetRollover n\'est pas un bookmaker. Les remboursements couvrent le prix du prono seulement — pas les mises chez SportyBet, Bet9ja ou autre opérateur. 18+ uniquement.',
+  'track_record.cta_archive': 'Voir l\'archive réglée',
+  'track_record.cta_marketplace': 'Marketplace du jour',
+  'track_record.cta_guide': 'Gratuit vs protégé',
+  'track_record.disclaimer':
+    'Chiffres mis à jour environ toutes les deux minutes. Totaux pour les picks marketplace publics ; certaines annonces internes peuvent être exclues selon la politique.',
+
+  'guides.ghana_vs_short': 'Ghana : gratuit vs protégé',
+  'guides.ghana_vs_meta_title': 'Pronostics gratuits Ghana vs picks protégés',
+  'guides.ghana_vs_meta_desc':
+    'Comment les canaux Telegram/WhatsApp gratuits gagnent de l\'argent, pourquoi les picks affiliés diffèrent des tips marketplace remboursés, et quoi vérifier avant de payer au Ghana. 18+.',
+  'guides.ghana_vs_meta_keywords':
+    'pronostics gratuits ghana|tipsters telegram ghana|protection achat|plateforme tipster ghana',
+  'guides.ghana_vs_label': 'Guide Ghana',
+  'guides.ghana_vs_title': 'Pronostics gratuits vs picks protégés au Ghana',
+  'guides.ghana_vs_tagline':
+    'La plupart des canaux « gratuits » sont payés par les bookmakers — pas par vos gains. BetRollover facture l\'information tipster et rembourse les pertes marketplace éligibles.',
+  'guides.ghana_vs_card_title': 'Gratuit vs protection d\'achat (Ghana)',
+  'guides.ghana_vs_card_summary':
+    'Économie des canaux gratuits et remboursements automatiques sur picks payants marketplace.',
+  'guides.ghana_vs_intro':
+    'Les recherches « plateforme pronostics ghana » montrent souvent Telegram, X et sites comparateurs. Utile — mais différent d\'un marketplace avec règlement public et remboursements portefeuille. 18+ uniquement.',
+  'guides.ghana_vs_free_h': 'Ce que coûtent les « tips gratuits »',
+  'guides.ghana_vs_free_body':
+    'Peu de canaux facturent un abonnement. Beaucoup gagnent quand vous vous inscrivez chez un bookmaker via leur lien. Une mauvaise série coûte la mise — pas de remboursement de « frais de tip ». Archives complètes rares ; captures de gains fréquentes.',
+  'guides.ghana_vs_affiliate_h': 'Sites affiliés vs marketplaces tipsters',
+  'guides.ghana_vs_affiliate_body':
+    'Comparer SportyBet, Bet9ja ou la vitesse MoMo aide à choisir où parier. Ces sites vendent rarement un historique multi-tipsters vérifié ou ne remboursent pas votre achat de pick. BetRollover vend des coupons tipsters — pas des inscriptions bookmaker liées à chaque prono.',
+  'guides.ghana_vs_protected_h': 'Protection d\'achat ici',
+  'guides.ghana_vs_protected_body':
+    'Sur le marketplace, pick payant réglé perdant ou annulé = montant recrédité sur le portefeuille GHS automatiquement. Ce n\'est pas une garantie de gain ni un remboursement de mise bookmaker.',
+  'guides.ghana_vs_record_h': 'Vérifier l\'historique avant de payer',
+  'guides.ghana_vs_record_body':
+    'Comparez les tipsters via picks réglés, taux de victoire et résultats sur la durée. Page historique pour totaux et remboursements, puis profils individuels.',
+  'guides.ghana_vs_choose_h': 'Comment choisir',
+  'guides.ghana_vs_choose_body':
+    'Canaux gratuits pour des idées si vous acceptez le risque total de mise. BetRollover pour achat tracé, règlement public et remboursement sur pertes payantes éligibles. Commencez par un pick payant.',
+  'guides.ghana_vs_faq_q1': 'Les tipsters gratuits sont-ils biaisés ?',
+  'guides.ghana_vs_faq_a1':
+    'Pas toujours, mais beaucoup gagnent via parrainage bookmaker. Cherchez un historique réglé complet, pas seulement des captures gagnantes.',
+  'guides.ghana_vs_faq_q2': 'BetRollover rembourse ma mise SportyBet ?',
+  'guides.ghana_vs_faq_a2':
+    'Non. Nous remboursons le prix du pick marketplace sur BetRollover en cas de perte/annulation. Toute mise chez un bookmaker est séparée.',
+  'guides.ghana_vs_faq_q3': 'La protection d\'achat = paris sûrs ?',
+  'guides.ghana_vs_faq_a3':
+    'Non. Pas de matchs truqués ni gains garantis. Protection = remboursement du fee sur picks payants perdants éligibles.',
+  'guides.ghana_vs_faq_q4': 'En quoi BetRollover diffère-t-il des autres sites tipsters vérifiés ?',
+  'guides.ghana_vs_faq_a4':
+    'Comme d\'autres plateformes vérifiées, nous publions les résultats. BetRollover ajoute le portefeuille GHS, un parcours adapté au Ghana et le remboursement automatique quand un pick payant perd.',
+  'guides.ghana_vs_faq_q5': 'Où voir les pertes ?',
+  'guides.ghana_vs_faq_a5':
+    'Archive des picks réglés et profils tipsters. La page historique résume gagnés/perdus et totaux remboursés.',
 };
 
 export default fr;

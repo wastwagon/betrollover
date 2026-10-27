@@ -13,11 +13,12 @@ export type EducationFold =
   | 'acca'
   | 'free'
   | 'board'
+  | 'ghana_vs'
   | 'news'
   | 'library'
   | 'how-it-works';
 
-const GUIDE_PAGES = new Set<EducationFold>(['escrow', 'evaluate', 'stats', 'acca', 'free', 'board']);
+const GUIDE_PAGES = new Set<EducationFold>(['escrow', 'evaluate', 'stats', 'acca', 'free', 'board', 'ghana_vs']);
 
 const LINKS: { id: EducationFold; href: string; labelKey: TranslationKey }[] = [
   { id: 'guides', href: '/guides', labelKey: 'discover.job_guides_short' },
@@ -28,6 +29,7 @@ const LINKS: { id: EducationFold; href: string; labelKey: TranslationKey }[] = [
   { id: 'acca', href: '/guides/accumulator-settlement', labelKey: 'guides.acca_short' },
   { id: 'free', href: '/guides/free-and-paid-picks', labelKey: 'guides.free_short' },
   { id: 'board', href: '/guides/leaderboard-ranking', labelKey: 'guides.board_short' },
+  { id: 'ghana_vs', href: '/guides/ghana-free-tips-vs-protected', labelKey: 'guides.ghana_vs_short' },
   { id: 'news', href: '/news', labelKey: 'nav.news' },
   { id: 'library', href: '/resources', labelKey: 'education.library' },
   { id: 'how-it-works', href: '/how-it-works', labelKey: 'learn.cta_how_it_works' },

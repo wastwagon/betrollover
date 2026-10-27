@@ -26,6 +26,8 @@ const LOCALISED_PAGES: Array<{
 }> = [
   { path: '/',                       changeFrequency: 'weekly',  priority: 1.0  },
   { path: '/buy-football-tips',      changeFrequency: 'weekly',  priority: 0.95 },
+  { path: '/football-tips-ghana',    changeFrequency: 'weekly',  priority: 0.93 },
+  { path: '/track-record',           changeFrequency: 'daily',   priority: 0.92 },
   { path: '/marketplace',            changeFrequency: 'daily',   priority: 0.9  },
   { path: '/tipsters',               changeFrequency: 'daily',   priority: 0.9  },
   { path: '/leaderboard',            changeFrequency: 'daily',   priority: 0.8  },
@@ -37,6 +39,7 @@ const LOCALISED_PAGES: Array<{
   { path: '/resources',              changeFrequency: 'weekly',  priority: 0.7  },
   { path: '/guides',                 changeFrequency: 'weekly',  priority: 0.65 },
   { path: '/guides/purchase-protection', changeFrequency: 'monthly', priority: 0.6  },
+  { path: '/guides/ghana-free-tips-vs-protected', changeFrequency: 'monthly', priority: 0.65 },
   { path: '/guides/evaluate-tipsters', changeFrequency: 'monthly', priority: 0.6 },
   { path: '/guides/read-tipster-stats', changeFrequency: 'monthly', priority: 0.6 },
   { path: '/guides/accumulator-settlement', changeFrequency: 'monthly', priority: 0.6 },

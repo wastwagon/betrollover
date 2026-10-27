@@ -2160,6 +2160,21 @@ export class AccumulatorsService {
     return Number(result[0]?.cnt ?? 0);
   }
 
+  /** Purchase protection: buyer escrow refunded after a lost/void marketplace pick. */
+  async getTotalMarketplaceBuyerRefunds(): Promise<{ totalGhs: number; count: number }> {
+    const rows = await this.dataSource.query(
+      `SELECT COALESCE(SUM(ef.amount), 0)::float AS total, COUNT(*)::int AS cnt
+       FROM escrow_funds ef
+       INNER JOIN pick_marketplace pm ON pm.accumulator_id = ef.pick_id
+       WHERE ef.status = 'refunded'`,
+    );
+    const row = rows[0] ?? {};
+    return {
+      totalGhs: Number(Number(row.total ?? 0).toFixed(2)),
+      count: Number(row.cnt ?? 0),
+    };
+  }
+
   /** Settled marketplace coupons only (won + lost) for a public win rate that matches the marketplace. */
   async getMarketplaceSettledWinLoss(): Promise<{ won: number; lost: number }> {
     const hideClassic = isClassicAiHiddenFromPublic()
@@ -2189,6 +2204,7 @@ export class AccumulatorsService {
       netTipsterPayouts,
       grossWinningEscrow,
       { won: wonMarketplace, lost: lostMarketplace },
+      buyerRefunds,
     ] = await Promise.all([
       this.apiSettingsRepo.findOne({ where: { id: 1 } }),
       this.tipsterRepo
@@ -2206,6 +2222,7 @@ export class AccumulatorsService {
       this.getTotalNetTipsterPayouts(),
       this.getTotalGrossWinningEscrowReleased(),
       this.getMarketplaceSettledWinLoss(),
+      this.getTotalMarketplaceBuyerRefunds(),
     ]);
     const settled = wonMarketplace + lostMarketplace;
     const winRate = settled > 0 ? Math.round((wonMarketplace / settled) * 100) : 0;
@@ -2214,6 +2231,8 @@ export class AccumulatorsService {
       verifiedTipsters: activeTipstersCount,
       /** Same scope as coupons archive “Total settled” (all-time): marketplace-listed, won + lost. */
       totalPicks: settled,
+      settledWon: wonMarketplace,
+      settledLost: lostMarketplace,
       activePicks: liveMarketplaceCount,
       successfulPurchases: marketplacePurchaseCount,
       winRate,
@@ -2221,17 +2240,23 @@ export class AccumulatorsService {
       totalPaidOut: netTipsterPayouts,
       /** Gross buyer stakes on winning settlements (not net tipster pay). */
       grossWinningStakesGhs: grossWinningEscrow,
+      purchaseProtectionRefundsGhs: buyerRefunds.totalGhs,
+      purchaseProtectionRefundCount: buyerRefunds.count,
       /** All counts above are marketplace-scoped where noted in metricNotes. */
       statsScope: 'marketplace' as const,
       platformCommissionPercent,
       metricNotes: {
         verifiedTipsters: 'Active public tipsters (classic 1-fixture AI excluded while hidden)',
         totalPicks: 'Marketplace picks settled won+lost excluding hidden classic AI (matches /accumulators/archive)',
+        settledWon: 'Marketplace picks settled won',
+        settledLost: 'Marketplace picks settled lost',
         activePicks: 'Live buyable listings (active + pending result + no started fixture)',
         successfulPurchases: 'user_purchased_picks joined to pick_marketplace',
         winRate: 'Marketplace-listed picks: won / (won + lost)',
         totalPaidOut: 'SUM(wallet_transactions.amount) type=payout, status=completed, amount>0',
         grossWinningStakesGhs: 'SUM(escrow_funds.amount) where status=released',
+        purchaseProtectionRefundsGhs: 'SUM(escrow_funds.amount) status=refunded on marketplace picks',
+        purchaseProtectionRefundCount: 'COUNT escrow_funds status=refunded on marketplace picks',
       },
     };
   }
