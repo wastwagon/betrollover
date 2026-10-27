@@ -47,7 +47,7 @@ export function GrowthDistributionStrip({ className = '', compact = false }: Gro
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => trackEvent('telegram_cta_clicked', { source: 'growth_strip' }, token())}
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-sky-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-sky-500 transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-sky-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-sky-800 transition-colors"
           >
             {t('growth.telegram_cta', { handle: TELEGRAM_ADS_HANDLE })}
           </a>

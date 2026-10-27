@@ -6,7 +6,8 @@ import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { PageHeader } from '@/components/PageHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { getApiUrl } from '@/lib/site-config';
-import { useT } from '@/context/LanguageContext';
+import { useLanguage, useT } from '@/context/LanguageContext';
+import { formatDateTimeListRow } from '@/lib/intl-locale';
 import { useDebounce } from '@/hooks/useDebounce';
 import { formatLiveFixturePeriod, FIXTURE_FT_CHIP, FIXTURE_NS_CHIP } from '@/lib/live-fixture-display';
 import { FixtureLiveChip } from '@/components/FixtureLiveChip';
@@ -55,19 +56,6 @@ const POLL_MS = 45_000;
 const MAX_POLL_MS = 120_000;
 const SEARCH_DEBOUNCE_MS = 400;
 
-function formatTime(iso: string) {
-  try {
-    return new Date(iso).toLocaleString(undefined, {
-      day: 'numeric',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return iso;
-  }
-}
-
 function matchesCountry(row: Row, selectedCountry: string): boolean {
   const c = (row.country || '').trim();
   if (!selectedCountry) return true;
@@ -104,6 +92,7 @@ export default function LiveScoresPage({
   } | null;
 }) {
   const t = useT();
+  const { lang } = useLanguage();
   const [data, setData] = useState<Payload | null>(() => {
     if (!initialPayload) return null;
     return {
@@ -560,7 +549,7 @@ export default function LiveScoresPage({
                     >
                       <div className="min-w-0">
                         <p className="text-xs text-[var(--text-muted)] truncate">
-                          {row.leagueName ?? '—'} · {formatTime(row.matchDate)}
+                          {row.leagueName ?? '—'} · {formatDateTimeListRow(row.matchDate, lang)}
                         </p>
                         <Link href={`/matches/${row.id}`} className="font-semibold text-[var(--text)] truncate hover:text-[var(--primary)] block">
                           {row.homeTeamName} <span className="text-[var(--text-muted)] font-normal">vs</span>{' '}
@@ -606,7 +595,7 @@ export default function LiveScoresPage({
                     >
                       <div className="min-w-0">
                         <p className="text-xs text-[var(--text-muted)] truncate">
-                          {row.leagueName ?? '—'} · {formatTime(row.matchDate)}
+                          {row.leagueName ?? '—'} · {formatDateTimeListRow(row.matchDate, lang)}
                         </p>
                         <Link href={`/matches/${row.id}`} className="font-semibold text-[var(--text)] truncate hover:text-[var(--primary)] block">
                           {row.homeTeamName} <span className="text-[var(--text-muted)] font-normal">vs</span>{' '}
@@ -642,7 +631,7 @@ export default function LiveScoresPage({
                     >
                       <div className="min-w-0">
                         <p className="text-xs text-[var(--text-muted)] truncate">
-                          {row.leagueName ?? '—'} · {formatTime(row.matchDate)}
+                          {row.leagueName ?? '—'} · {formatDateTimeListRow(row.matchDate, lang)}
                         </p>
                         <Link href={`/matches/${row.id}`} className="font-semibold text-[var(--text)] truncate hover:text-[var(--primary)] block">
                           {row.homeTeamName} <span className="text-[var(--text-muted)] font-normal">vs</span>{' '}
@@ -675,7 +664,7 @@ export default function LiveScoresPage({
               {t('live_scores.footer_hint')}
               {data.generatedAt && (
                 <span className="ml-1">
-                  ({formatTime(data.generatedAt)})
+                  ({formatDateTimeListRow(data.generatedAt, lang)})
                 </span>
               )}
             </p>

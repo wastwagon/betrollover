@@ -24,11 +24,13 @@ export async function generateMetadata({
   const canonical = localizedUrl(path, locale);
 
   if (!coupon) {
+    const alternates = seoAlternates(path, locale);
     return {
       title: `Football pick #${id}`,
       description:
         'View this football tipster pick on BetRollover. Sign in if the slip is premium or not yet public.',
-      alternates: seoAlternates(path, locale),
+      alternates,
+      openGraph: { url: alternates.canonical },
       robots: { index: false, follow: true },
     };
   }
@@ -36,13 +38,15 @@ export async function generateMetadata({
   const title = couponMetaTitle(coupon);
   const description = couponMetaDescription(coupon);
 
+  const alternates = seoAlternates(path, locale);
+
   return {
     title,
     description,
-    alternates: seoAlternates(path, locale),
+    alternates,
     openGraph: {
       type: 'website',
-      url: canonical,
+      url: alternates.canonical ?? canonical,
       title,
       description,
       images: [{ url: '/og-image.png', width: 1200, height: 630, alt: title }],

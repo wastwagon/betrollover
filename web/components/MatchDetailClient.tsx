@@ -9,7 +9,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 import { PickCard } from '@/components/PickCard';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
-import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { getApiUrl, shouldUnoptimizeRemoteImage } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { formatLiveFixturePeriod, FIXTURE_NS_CHIP } from '@/lib/live-fixture-display';
@@ -301,7 +301,7 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
                   {...getPickCardSocialProps(a as unknown as Parameters<typeof getPickCardSocialProps>[0], {
                     onCountsChange: (id, counts) =>
                       setRelated((prev) => mergeSocialCountsIntoList(prev, id, counts)),
-                    loginRedirectPath: currentLoginRedirectPath(`/matches/${match.id}`),
+                    loginRedirectPath: loginRedirectUrl(`/matches/${match.id}`),
                   })}
                 />
               ))}

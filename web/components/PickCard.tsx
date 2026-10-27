@@ -6,7 +6,10 @@ import Image from 'next/image';
 import { getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { TeamBadge } from './TeamBadge';
 import { useCurrency } from '@/context/CurrencyContext';
-import { useT } from '@/context/LanguageContext';
+import { useLanguage, useT } from '@/context/LanguageContext';
+import { formatDateTimeShort } from '@/lib/intl-locale';
+import { useClientNow } from '@/hooks/useClientNow';
+import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { tipsterRankBadgeClass, tipsterRankBadgeContent } from '@/lib/tipster-rank-ui';
 import { formatFootballOutcomeLabel, LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
@@ -16,7 +19,6 @@ import { BookingCodeCopyBlock } from '@/components/BookingCodeCopyBlock';
 import { PickShareButtons } from '@/components/PickShareButtons';
 import { BottomSheet } from '@/components/ios/BottomSheet';
 import { PickSocialBar, type PickSocialCounts } from '@/components/pick-social/PickSocialBar';
-import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
 import { Button, buttonClassName } from '@/components/ui/Button';
 import { accaDeskBoardBadge } from '@/lib/acca-desk-board-badge';
 import { resultChipClass } from '@/lib/result-chip';
@@ -172,9 +174,10 @@ export function PickCard({
   const [showPurchaseConfirm, setShowPurchaseConfirm] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const t = useT();
+  const { lang } = useLanguage();
+  const clientNow = useClientNow(30_000);
   const { format, currency } = useCurrency();
-  const loginRedirectPath =
-    loginRedirectPathProp ?? (typeof window !== 'undefined' ? currentLoginRedirectPath() : '/login');
+  const loginRedirectPath = loginRedirectPathProp ?? loginRedirectUrl('/marketplace');
 
   /** Price display: primary in selected currency, secondary shows GHS if different */
   const priceDisplay = price > 0 ? format(price, { showOriginal: true }) : null;
@@ -365,7 +368,7 @@ export function PickCard({
               )}
               {createdAt && (
                 <span className="text-[9px] text-[var(--text-muted)]">
-                  {new Date(createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  {formatDateTimeShort(createdAt, lang)}
                 </span>
               )}
               {sport && SPORT_META[sport.toLowerCase()] && (
@@ -428,7 +431,8 @@ export function PickCard({
                 {(expandableLegs && !legsExpanded ? picks.slice(0, collapsedLegCount) : picks.slice(0, expandableLegs ? picks.length : 3)).map((p, i) => {
                   const matchDate = p.matchDate ? new Date(p.matchDate) : null;
                   const pickSettled = ['won', 'lost'].includes(p.result || '');
-                  const isStarted = matchDate ? matchDate <= new Date() : false;
+                  const isStarted =
+                    matchDate && clientNow != null ? matchDate.getTime() <= clientNow : false;
                   const hasLiveScore = p.homeScore != null && p.awayScore != null;
                   const isLive =
                     !pickSettled &&
@@ -471,7 +475,7 @@ export function PickCard({
                             </span>
                           ) : matchDate ? (
                             <span className="text-[9px] text-[var(--text-muted)] tabular-nums">
-                              {new Date(matchDate).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              {formatDateTimeShort(matchDate, lang)}
                             </span>
                           ) : null
                         )}

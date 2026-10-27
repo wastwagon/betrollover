@@ -39,6 +39,18 @@ function isSameOriginReferer(req: NextRequest): boolean {
   }
 }
 
+/** Edge-cacheable marketing home (CrUX TTFB). Vary by URL (/ vs /fr), not cookies. */
+function applyMarketingHomeCache(res: NextResponse, req: NextRequest, pathname: string) {
+  const method = req.method.toUpperCase();
+  if (method !== 'GET' && method !== 'HEAD') return res;
+  if (pathname !== '/' && pathname !== '/fr') return res;
+  res.headers.set(
+    'Cache-Control',
+    'public, s-maxage=60, stale-while-revalidate=600, stale-if-error=86400',
+  );
+  return res;
+}
+
 function withLocaleHeader(req: NextRequest, locale: Locale, pathname: string) {
   const url = req.nextUrl.clone();
   url.pathname = pathname;
@@ -50,6 +62,7 @@ function withLocaleHeader(req: NextRequest, locale: Locale, pathname: string) {
     maxAge: 365 * 24 * 60 * 60,
     sameSite: 'lax',
   });
+  applyMarketingHomeCache(response, req, req.nextUrl.pathname);
   return response;
 }
 
@@ -95,7 +108,9 @@ export function middleware(req: NextRequest) {
 
   const reqHeaders = new Headers(req.headers);
   reqHeaders.set('x-locale', 'en');
-  return NextResponse.next({ request: { headers: reqHeaders } });
+  const response = NextResponse.next({ request: { headers: reqHeaders } });
+  applyMarketingHomeCache(response, req, pathname);
+  return response;
 }
 
 export const config = {

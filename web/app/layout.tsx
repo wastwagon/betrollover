@@ -16,12 +16,11 @@ import { getLocale } from '@/lib/i18n';
 import './globals.css';
 
 /** Self-hosted so Coolify/Docker builds do not fetch fonts.googleapis.com (flaky / blocked → next/font null parse). */
+/** Preload only 400 + 600 — fewer bytes on the LCP critical path (PSI font chain). */
 const dmSans = localFont({
   src: [
     { path: '../fonts/dm-sans-400.woff2', weight: '400', style: 'normal' },
-    { path: '../fonts/dm-sans-500.woff2', weight: '500', style: 'normal' },
     { path: '../fonts/dm-sans-600.woff2', weight: '600', style: 'normal' },
-    { path: '../fonts/dm-sans-700.woff2', weight: '700', style: 'normal' },
   ],
   variable: '--font-dm-sans',
   display: 'swap',

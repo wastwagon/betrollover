@@ -7,6 +7,12 @@ import {
   fetchMatchIdsForSitemap,
   fetchTipsterUsernamesForSitemap,
 } from '@/lib/seo/public-content';
+import {
+  SITEMAP_COUPON_MAX,
+  SITEMAP_MATCH_MAX,
+  SITEMAP_NEWS_MAX_PER_LANGUAGE,
+  sortNewsByPublished,
+} from '@/lib/seo/sitemap-limits';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
 /**
@@ -53,30 +59,29 @@ const EN_ONLY_PAGES: Array<{
   priority: number;
 }> = [
   ...(isSubscriptionsEnabled()
-    ? [
-        { path: '/subscriptions/marketplace', changeFrequency: 'daily' as const, priority: 0.9 },
-        { path: '/subscriptions', changeFrequency: 'weekly' as const, priority: 0.4 },
-      ]
+    ? [{ path: '/subscriptions/marketplace', changeFrequency: 'daily' as const, priority: 0.9 }]
     : []),
   { path: '/tools/converter',   changeFrequency: 'weekly',  priority: 0.5 },
 ];
 
-/** News + tipster profile URLs (requires API at build/runtime; fails soft if unreachable). */
+/**
+ * Dynamic URLs from the API. Deep links are English-only here; pages still expose
+ * hreflang for /fr. That cuts duplicate "crawled, not indexed" /fr/coupons/* noise.
+ */
 async function dynamicSitemapEntries(origin: string): Promise<MetadataRoute.Sitemap> {
   const out: MetadataRoute.Sitemap = [];
   try {
-    const [enNews, frNews, enResources, frResources, usernames, coupons, matches] = await Promise.all([
-      fetchAllNewsArticlesForSitemap('en'),
-      fetchAllNewsArticlesForSitemap('fr'),
+    const [enNews, enResources, frResources, usernames, coupons, matches] = await Promise.all([
+      fetchAllNewsArticlesForSitemap('en', 200, SITEMAP_NEWS_MAX_PER_LANGUAGE),
       fetchAllResourceItemsForSitemap('en'),
       fetchAllResourceItemsForSitemap('fr'),
       fetchTipsterUsernamesForSitemap(),
-      fetchCouponIdsForSitemap(),
-      fetchMatchIdsForSitemap(),
+      fetchCouponIdsForSitemap(SITEMAP_COUPON_MAX),
+      fetchMatchIdsForSitemap(SITEMAP_MATCH_MAX),
     ]);
 
     const seenEn = new Set<string>();
-    for (const a of enNews) {
+    for (const a of sortNewsByPublished(enNews)) {
       if (!a.slug || seenEn.has(a.slug)) continue;
       seenEn.add(a.slug);
       out.push({
@@ -84,18 +89,6 @@ async function dynamicSitemapEntries(origin: string): Promise<MetadataRoute.Site
         lastModified: a.publishedAt ? new Date(a.publishedAt) : undefined,
         changeFrequency: 'weekly',
         priority: 0.65,
-      });
-    }
-
-    const seenFr = new Set<string>();
-    for (const a of frNews) {
-      if (!a.slug || seenFr.has(a.slug)) continue;
-      seenFr.add(a.slug);
-      out.push({
-        url: `${origin}/fr/news/${encodeURIComponent(a.slug)}`,
-        lastModified: a.publishedAt ? new Date(a.publishedAt) : undefined,
-        changeFrequency: 'weekly',
-        priority: 0.6,
       });
     }
 
@@ -133,11 +126,6 @@ async function dynamicSitemapEntries(origin: string): Promise<MetadataRoute.Site
         changeFrequency: 'daily',
         priority: 0.75,
       });
-      out.push({
-        url: `${origin}/fr/tipsters/${seg}`,
-        changeFrequency: 'daily',
-        priority: 0.7,
-      });
     }
 
     for (const c of coupons) {
@@ -148,12 +136,6 @@ async function dynamicSitemapEntries(origin: string): Promise<MetadataRoute.Site
         changeFrequency: 'daily',
         priority: 0.65,
       });
-      out.push({
-        url: `${origin}/fr/coupons/${c.id}`,
-        ...(lastModified && !Number.isNaN(lastModified.getTime()) ? { lastModified } : {}),
-        changeFrequency: 'daily',
-        priority: 0.6,
-      });
     }
 
     for (const m of matches) {
@@ -163,12 +145,6 @@ async function dynamicSitemapEntries(origin: string): Promise<MetadataRoute.Site
         ...(lastModified && !Number.isNaN(lastModified.getTime()) ? { lastModified } : {}),
         changeFrequency: 'hourly',
         priority: 0.7,
-      });
-      out.push({
-        url: `${origin}/fr/matches/${m.id}`,
-        ...(lastModified && !Number.isNaN(lastModified.getTime()) ? { lastModified } : {}),
-        changeFrequency: 'hourly',
-        priority: 0.65,
       });
     }
   } catch {

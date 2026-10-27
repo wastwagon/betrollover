@@ -22,6 +22,7 @@ import { AnalyticsTrackingService } from './analytics-tracking.service';
 import { MigrationRunnerService } from './migration-runner.service';
 import { SeedRunnerService } from './seed-runner.service';
 import { SyncHealthService } from './sync-health.service';
+import { GscHealthService } from './gsc-health.service';
 import { SportEvent } from '../sport-events/entities/sport-event.entity';
 import { PredictionEngineService } from '../predictions/prediction-engine.service';
 import { PredictionsModule } from '../predictions/predictions.module';
@@ -118,7 +119,15 @@ import { AccaGeneratorEvent } from '../acca-generator/entities/acca-generator-ev
     SubscriptionsModule,
   ],
   controllers: [AdminController, AnalyticsTrackingController],
-  providers: [AdminService, AnalyticsService, AnalyticsTrackingService, MigrationRunnerService, SeedRunnerService, SyncHealthService],
-  exports: [MigrationRunnerService, SeedRunnerService, SyncHealthService, AnalyticsService],
+  providers: [
+    AdminService,
+    AnalyticsService,
+    AnalyticsTrackingService,
+    MigrationRunnerService,
+    SeedRunnerService,
+    SyncHealthService,
+    GscHealthService,
+  ],
+  exports: [MigrationRunnerService, SeedRunnerService, SyncHealthService, GscHealthService, AnalyticsService],
 })
 export class AdminModule { }

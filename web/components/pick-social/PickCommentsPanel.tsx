@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { getAvatarUrl, getApiUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
-import { useT } from '@/context/LanguageContext';
+import { useLanguage, useT } from '@/context/LanguageContext';
+import { formatDateTimeShort } from '@/lib/intl-locale';
 import { CommentBodyText } from '@/components/pick-social/CommentBodyText';
 import { scrollCommentsToEnd, shouldAutoScrollComments } from '@/lib/comment-scroll';
 import { CommentMentionTextarea } from '@/components/pick-social/CommentMentionTextarea';
@@ -29,19 +30,6 @@ export interface PickCommentItem {
 interface PickCommentsPanelProps {
   pickId: number;
   onCommentCountChange?: (count: number) => void;
-}
-
-function formatCommentTime(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return '';
-  }
 }
 
 function normalizeComment(c: PickCommentItem): PickCommentItem {
@@ -134,13 +122,16 @@ function CommentBody({
   compact?: boolean;
 }) {
   const t = useT();
+  const { lang } = useLanguage();
   return (
     <div className={`flex gap-2 ${compact ? 'ml-0' : ''} group`}>
       <CommentAvatar user={comment.user} size={compact ? 28 : 32} />
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2 flex-wrap">
           <span className="text-xs font-semibold text-[var(--text)]">{comment.user.displayName}</span>
-          <span className="text-[10px] text-[var(--text-muted)]">{formatCommentTime(comment.createdAt)}</span>
+          <span className="text-[10px] text-[var(--text-muted)]">
+            {formatDateTimeShort(comment.createdAt, lang)}
+          </span>
         </div>
         <p className="text-sm text-[var(--text)] mt-0.5 break-words leading-relaxed">
           <CommentBodyText body={comment.body} />

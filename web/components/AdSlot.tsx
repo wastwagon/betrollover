@@ -69,7 +69,7 @@ export function AdSlot({ zoneSlug, className = '', fullWidth = false }: AdSlotPr
           href={TELEGRAM_ADS_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex max-w-full items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-medium transition-colors"
+          className="inline-flex max-w-full items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-700 hover:bg-sky-800 text-white text-xs font-medium transition-colors"
         >
           {TELEGRAM_ICON}
           <span className="truncate">Contact on Telegram</span>

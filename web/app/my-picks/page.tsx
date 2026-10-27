@@ -14,7 +14,7 @@ import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
-import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { TipsterSellUnlockChecklist } from '@/components/TipsterSellUnlockChecklist';
 import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 import { buttonClassName } from '@/components/ui/Button';
@@ -241,7 +241,7 @@ export default function MyPicksPage() {
                   {...getPickCardSocialProps(a, {
                     onCountsChange: (id, counts) =>
                       setPicks((prev) => mergeSocialCountsIntoList(prev, id, counts)),
-                    loginRedirectPath: currentLoginRedirectPath('/my-picks'),
+                    loginRedirectPath: loginRedirectUrl('/my-picks'),
                   })}
                 />
               ))}

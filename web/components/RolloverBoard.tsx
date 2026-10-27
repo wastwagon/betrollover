@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PickCard } from '@/components/PickCard';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
-import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { getApiUrl } from '@/lib/site-config';
 import { useLanguage, useT, type SupportedLanguage } from '@/context/LanguageContext';
 import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
@@ -376,7 +376,7 @@ export function RolloverBoard() {
               onPurchase={() => {}}
               {...getPickCardSocialProps(coupon, {
                 onCountsChange: (_id, counts) => patchCoupon(counts),
-                loginRedirectPath: currentLoginRedirectPath('/rollover'),
+                loginRedirectPath: loginRedirectUrl('/rollover'),
               })}
             />
           ) : (

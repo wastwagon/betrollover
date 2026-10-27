@@ -7,7 +7,7 @@ import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { PickCard } from '@/components/PickCard';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
-import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getApiUrl } from '@/lib/site-config';
 import { useLanguage, useT } from '@/context/LanguageContext';
@@ -321,7 +321,7 @@ function SubscriptionsContent() {
                         {...getPickCardSocialProps(pick, {
                           onCountsChange: (id, counts) =>
                             setFeedPicks((prev) => mergeSocialCountsIntoList(prev, id, counts)),
-                          loginRedirectPath: currentLoginRedirectPath('/subscriptions'),
+                          loginRedirectPath: loginRedirectUrl('/subscriptions'),
                         })}
                       />
                     );

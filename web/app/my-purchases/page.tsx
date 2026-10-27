@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 import { PickCard } from '@/components/PickCard';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
-import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
@@ -480,7 +480,7 @@ export default function MyPurchasesPage() {
                             ),
                           );
                         },
-                        loginRedirectPath: currentLoginRedirectPath('/my-purchases'),
+                        loginRedirectPath: loginRedirectUrl('/my-purchases'),
                       })}
                     />
                     <EscrowPurchaseTimeline

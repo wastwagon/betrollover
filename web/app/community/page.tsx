@@ -12,7 +12,7 @@ import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { filterDiscoveryChatRooms, isDiscoveryChatRoomAllowed } from '@/lib/football-only-discovery';
 import { IconChat } from '@/components/ios/icons';
 const ALLOWED_REACTIONS = ['👍', '❤️', '😂', '🔥'];
@@ -543,7 +543,7 @@ function CommunityPageInner() {
             ) : (
               <div className="text-center py-2">
                 <span className="text-[var(--text-muted)] text-sm">
-                  <Link href={currentLoginRedirectPath()} className="text-[var(--primary)] hover:underline font-medium">
+                  <Link href={loginRedirectUrl()} className="text-[var(--primary)] hover:underline font-medium">
                     {t('auth.login')}
                   </Link>{' '}
                   {t('common.or')}{' '}

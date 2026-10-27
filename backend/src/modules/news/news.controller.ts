@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
 import { NewsService } from './news.service';
 import { NewsCategory } from './entities/news-article.entity';
 
@@ -30,6 +30,11 @@ export class NewsController {
     @Param('slug') slug: string,
     @Query('language') language?: string,
   ) {
-    return this.newsService.getBySlugOrFail(slug, language || 'en');
+    try {
+      return await this.newsService.getBySlugOrFail(slug, language || 'en');
+    } catch (e) {
+      if (e instanceof NotFoundException) throw e;
+      throw new NotFoundException('Article not found');
+    }
   }
 }

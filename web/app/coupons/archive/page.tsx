@@ -11,6 +11,8 @@ export default async function CouponsArchivePage() {
       <HubCrawlLinks
         locale={locale}
         label="Picks archive"
+        maxLinks={20}
+        rel="nofollow"
         links={items.flatMap((item) => {
           const id = item.id;
           if (typeof id !== 'number') return [];

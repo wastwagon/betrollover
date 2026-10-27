@@ -40,7 +40,9 @@ export async function fetchNewsArticleBySlug(
       next: { revalidate: 120 },
     });
     if (!res.ok) return null;
-    return (await res.json()) as NewsArticlePublic;
+    const data = (await res.json()) as NewsArticlePublic;
+    if (!data?.slug?.trim() || !data?.title?.trim()) return null;
+    return data;
   } catch {
     return null;
   }
@@ -68,12 +70,14 @@ export async function fetchRelatedNewsArticles(
 export async function fetchAllNewsArticlesForSitemap(
   language: SupportedLanguage,
   pageSize = 200,
+  maxArticles = 300,
 ): Promise<Pick<NewsArticlePublic, 'slug' | 'publishedAt'>[]> {
   const out: Pick<NewsArticlePublic, 'slug' | 'publishedAt'>[] = [];
   let offset = 0;
-  const maxPages = 250;
+  const maxPages = Math.ceil(maxArticles / pageSize) + 1;
 
   for (let page = 0; page < maxPages; page++) {
+    if (out.length >= maxArticles) break;
     try {
       const res = await fetch(
         `${API()}/news?language=${language}&limit=${pageSize}&offset=${offset}`,
@@ -84,6 +88,7 @@ export async function fetchAllNewsArticlesForSitemap(
       if (!Array.isArray(batch) || batch.length === 0) break;
       for (const a of batch) {
         if (a?.slug) out.push({ slug: a.slug, publishedAt: a.publishedAt ?? null });
+        if (out.length >= maxArticles) break;
       }
       if (batch.length < pageSize) break;
       offset += pageSize;
@@ -107,16 +112,44 @@ export type TipsterProfileSeo = {
   };
 };
 
-export async function fetchTipsterProfileForSeo(username: string): Promise<TipsterProfileSeo | null> {
-  if (!username) return null;
+export type TipsterProfileSeoFetch =
+  | { state: 'found'; data: TipsterProfileSeo }
+  | { state: 'not_found' }
+  | { state: 'unavailable' };
+
+/** Full public tipster profile for SSR (Googlebot sees real HTML, not loading shells). */
+export async function fetchTipsterProfilePublic(
+  username: string,
+  options?: { revalidate?: number },
+): Promise<Record<string, unknown> | null> {
+  if (!username?.trim()) return null;
+  try {
+    const res = await fetch(`${API()}/tipsters/${encodeURIComponent(username)}`, {
+      next: { revalidate: options?.revalidate ?? 120 },
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as Record<string, unknown>;
+    const tipster = data?.tipster as Record<string, unknown> | undefined;
+    if (!tipster?.username) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchTipsterProfileForSeo(username: string): Promise<TipsterProfileSeoFetch> {
+  if (!username?.trim()) return { state: 'not_found' };
   try {
     const res = await fetch(`${API()}/tipsters/${encodeURIComponent(username)}`, {
       next: { revalidate: 120 },
     });
-    if (!res.ok) return null;
-    return (await res.json()) as TipsterProfileSeo;
+    if (res.status === 404) return { state: 'not_found' };
+    if (!res.ok) return { state: 'unavailable' };
+    const data = (await res.json()) as TipsterProfileSeo;
+    if (!data?.tipster?.username) return { state: 'unavailable' };
+    return { state: 'found', data };
   } catch {
-    return null;
+    return { state: 'unavailable' };
   }
 }
 
@@ -230,7 +263,8 @@ export async function fetchPublicCouponMeta(
     });
     if (!res.ok) return null;
     const data = (await res.json()) as PublicCouponMeta;
-    return data?.id ? data : null;
+    if (!data?.id || !Number.isFinite(Number(data.id))) return null;
+    return data;
   } catch {
     return null;
   }
@@ -286,7 +320,7 @@ function readPagedItems(data: unknown, offset: number, pageSize: number): { item
 }
 
 /** Settled archive + active marketplace coupon IDs for sitemap (fails soft). */
-export async function fetchCouponIdsForSitemap(max = 4000): Promise<Array<{ id: number; lastModified: string | null }>> {
+export async function fetchCouponIdsForSitemap(max = 200): Promise<Array<{ id: number; lastModified: string | null }>> {
   const byId = new Map<number, string | null>();
 
   const pull = async (path: string, pageSize: number) => {
@@ -316,11 +350,17 @@ export async function fetchCouponIdsForSitemap(max = 4000): Promise<Array<{ id: 
 
   await pull('/accumulators/archive?', 200);
   await pull('/accumulators/marketplace/public?', 100);
-  return [...byId.entries()].map(([id, lastModified]) => ({ id, lastModified }));
+  const rows = [...byId.entries()].map(([id, lastModified]) => ({ id, lastModified }));
+  rows.sort((a, b) => {
+    const ta = a.lastModified ? Date.parse(a.lastModified) : 0;
+    const tb = b.lastModified ? Date.parse(b.lastModified) : 0;
+    return tb - ta;
+  });
+  return rows.slice(0, max);
 }
 
 /** Live, upcoming, and recent platform fixtures for sitemap. */
-export async function fetchMatchIdsForSitemap(): Promise<Array<{ id: number; lastModified: string | null }>> {
+export async function fetchMatchIdsForSitemap(max = 48): Promise<Array<{ id: number; lastModified: string | null }>> {
   const byId = new Map<number, string | null>();
   const ingest = (rows: unknown) => {
     if (!Array.isArray(rows)) return;
@@ -351,5 +391,11 @@ export async function fetchMatchIdsForSitemap(): Promise<Array<{ id: number; las
     /* backend unavailable */
   }
 
-  return [...byId.entries()].map(([id, lastModified]) => ({ id, lastModified }));
+  const rows = [...byId.entries()].map(([id, lastModified]) => ({ id, lastModified }));
+  rows.sort((a, b) => {
+    const ta = a.lastModified ? Date.parse(a.lastModified) : 0;
+    const tb = b.lastModified ? Date.parse(b.lastModified) : 0;
+    return tb - ta;
+  });
+  return rows.slice(0, max);
 }

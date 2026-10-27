@@ -12,7 +12,7 @@ import { IconStar, IconEarnings, IconTrending } from '@/components/ios/icons';
 import { useT } from '@/context/LanguageContext';
 import { getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { getPickCardSocialProps } from '@/lib/pick-card-social';
-import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import { buttonClassName } from '@/components/ui/Button';
@@ -245,7 +245,7 @@ export function UserDashboardHome({
                         purchasing={false}
                         {...getPickCardSocialProps(pick, {
                           onCountsChange: onVipCountsChange,
-                          loginRedirectPath: currentLoginRedirectPath(loginPath),
+                          loginRedirectPath: loginRedirectUrl(loginPath),
                         })}
                       />
                     );
@@ -322,7 +322,7 @@ export function UserDashboardHome({
                               purchasing={feedPurchasing === pick.id}
                               {...getPickCardSocialProps(pick, {
                                 onCountsChange: onFeedCountsChange,
-                                loginRedirectPath: currentLoginRedirectPath(loginPath),
+                                loginRedirectPath: loginRedirectUrl(loginPath),
                               })}
                             />
                           );

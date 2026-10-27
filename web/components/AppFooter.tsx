@@ -127,7 +127,9 @@ export function AppFooter() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[var(--text-muted)]">
-          <span>&copy; {new Date().getFullYear()} BetRollover. {t('footer.rights')}</span>
+          <span suppressHydrationWarning>
+            &copy; {new Date().getFullYear()} BetRollover. {t('footer.rights')}
+          </span>
           <span className="inline-flex items-center gap-2 text-center max-w-xl">
             <span className="shrink-0 rounded-md border border-[var(--border)] bg-[var(--fill-secondary)] px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-[var(--text)]">
               {t('topbar.disclaimer_5')}

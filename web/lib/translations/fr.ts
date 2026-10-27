@@ -1898,6 +1898,47 @@ const fr: Record<string, string> = {
   'seo.vip_desc': 'Abonnez-vous à des pronostics football VIP. Plans deux sélections de la maison et plans de tipsters indépendants, payés depuis le portefeuille. Les frais sont rendus si aucun coupon VIP n\'est publié pendant votre période. 18+.',
   'seo.leaderboard_title': 'Classement de forme des tipsters',
   'seo.leaderboard_desc': 'Tipsters football actifs classés par forme plus ROI. Le ROI positif passe au-dessus du négatif. Les comptes inactifs n’apparaissent pas. Distinct de l’annuaire.',
+  'seo.marketplace_keywords':
+    'acheter pronostics football|pronostics football payants|pronostics du jour|tipsters football vérifiés|picks remboursés|code booking football',
+  'seo.marketplace_keywords_multisport':
+    'acheter pronostics sportifs|pronostics payants|tipsters vérifiés|pronostics football|protection d\'achat',
+  'seo.tipsters_keywords':
+    'tipsters football abonnement|tipsters vérifiés|ROI tipster|acheter pronostics football|tipster VIP football',
+  'seo.leaderboard_keywords':
+    'classement tipsters football|forme tipster|ROI tipster football|classement tipsters',
+  'seo.acca_title': 'Générateur d’accumulateur — pronostics football combinés',
+  'seo.acca_desc':
+    'Composez des accumulateurs football du jour à partir des cotes synchronisées. Compte gratuit, bandes Sure, Safe, Medium ou High, générez un coupon et publiez-le sur le marketplace. Outil éducatif — 18+.',
+  'seo.acca_keywords':
+    'pronostics accumulateur football|générateur acca|combiné football|acca du jour|acheter accumulateur|pronostics football Ghana',
+  'seo.acca_faq_1_q': 'Qu’est-ce que le générateur Acca BetRollover ?',
+  'seo.acca_faq_1_a':
+    'Un outil gratuit pour composer un accumulateur football du jour une fois connecté. Il choisit des sélections dans les bandes de cotes Sure, Safe, Medium ou High. Vous pouvez générer un exemple de coupon et le publier gratuitement sur le marketplace.',
+  'seo.acca_faq_2_q': 'Faut-il un abonnement VIP pour utiliser le générateur Acca ?',
+  'seo.acca_faq_2_a':
+    'Non. Connectez-vous avec un compte gratuit pour générer et publier. Une limite quotidienne s’applique. Les abonnements VIP sont des plans tipsters distincts.',
+  'seo.acca_faq_3_q': 'Les coupons Acca sont-ils des pronostics garantis ?',
+  'seo.acca_faq_3_a':
+    'Non. Les niveaux de risque ne sont que des bandes de cotes. Les résultats sont éducatifs et informatifs — pas des paris sûrs. Jouez responsablement. 18+ uniquement.',
+  'seo.rollover_title': 'Pronostics VIP football — relance 2 jours à deux sélections',
+  'seo.rollover_desc':
+    'Abonnez-vous aux pronostics VIP live à deux sélections. L’historique réglé est public pour juger la forme. Gagnez jour 1, enchaînez jour 2, puis l’exemple repart. Pas un paiement bookmaker. 18+.',
+  'seo.rollover_keywords':
+    'pronostics VIP football|deux sélections football|abonnement tipster football|VIP 2 jours|relance football|accumulateur faible cote',
+  'seo.rollover_faq_1_q': 'Qu’est-ce que la relance VIP 2 jours ?',
+  'seo.rollover_faq_1_a':
+    'Un tableau éducatif public lié à AccaSure1X2. Chaque jour de plan utilise un 2-fold AccaSure1X2. Victoire jour 1 : la mise d’exemple passe au jour 2 ; victoire jour 2 : cycle terminé (exemple de prise de profit) et nouveau tableau au jour 1. Une perte coupe la série. Les tips live sont pour les abonnés VIP ; les tips réglés sont publics. Nous ne payons pas les cotes ni ne créditons les portefeuilles.',
+  'seo.rollover_faq_2_q': 'Puis-je voir le tip du jour sans abonnement VIP ?',
+  'seo.rollover_faq_2_a':
+    'Les coupons en cours restent verrouillés pour les non-abonnés — bouton S’abonner, comme sur le marketplace VIP. Les coupons gagnés/perdus réglés sont visibles pour juger la forme avant de rejoindre.',
+  'seo.rollover_faq_3_q': 'Est-ce parier sur les cotes ?',
+  'seo.rollover_faq_3_a':
+    'Non. BetRollover n’est pas un bookmaker. Le coupon est une information tipster. Toute mise chez un bookmaker tiers est en dehors de l’app.',
+  'seo.rollover_faq_4_q': 'Que signifient les montants en GHS ?',
+  'seo.rollover_faq_4_a':
+    'Exemple chiffré de capitalisation avec la mise d’exemple de la campagne (100 GHS par défaut) et le multiplicateur cible sur les deux jours. Le jour 2 montre l’exemple de récolte si les deux coupons passent, puis le cycle repart. Ce ne sont pas des paiements.',
+  'seo.subscriptions_account_desc':
+    'Vos abonnements VIP actifs et coupons inclus. Connexion requise — page compte, pas une landing publique.',
   'leaderboard.empty_logged_sub':
     'Aucun tipster ne correspond à ce filtre pour le moment. Essayez une autre période ou un autre sport, ou parcourez tous les profils.',
   'leaderboard.empty_logged_cta': 'Voir tous les tipsters',

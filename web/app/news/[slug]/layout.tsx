@@ -36,6 +36,7 @@ export async function generateMetadata({
   return {
     title: article.title,
     description,
+    robots: { index: true, follow: true },
     alternates: {
       canonical,
       languages: getAlternates(`/news/${slug}`),

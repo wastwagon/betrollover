@@ -3,16 +3,16 @@
  * Acca Desk (tipsterType=acca_desk) and the free Two-Fold desk are unaffected.
  * VIP roster tipsters stay visible even when their type is still `ai`.
  *
- * Hidden from public browse / leaderboard / marketplace by default so Acca Desk
- * is the platform board. Set HIDE_CLASSIC_AI_TIPSTERS_FROM_PUBLIC=false to show them.
+ * Public by default (browse, profiles, marketplace, sitemap). Set
+ * HIDE_CLASSIC_AI_TIPSTERS_FROM_PUBLIC=true to hide legacy 1-fixture AI again.
  */
 import { isVipRosterUsername, vipRosterUsernameSqlList } from '../config/vip-roster.config';
 
 export const CLASSIC_AI_TIPSTER_TYPE = 'ai';
 
 export function isClassicAiHiddenFromPublic(): boolean {
-  const raw = (process.env.HIDE_CLASSIC_AI_TIPSTERS_FROM_PUBLIC ?? 'true').toLowerCase().trim();
-  return raw !== 'false' && raw !== '0' && raw !== 'no';
+  const raw = (process.env.HIDE_CLASSIC_AI_TIPSTERS_FROM_PUBLIC ?? 'false').toLowerCase().trim();
+  return raw === 'true' || raw === '1' || raw === 'yes';
 }
 
 export function isClassicAiTipsterRow(row: {

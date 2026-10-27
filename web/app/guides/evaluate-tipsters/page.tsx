@@ -16,6 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
+    robots: { index: true, follow: true },
     alternates: seoAlternates('/guides/evaluate-tipsters', locale),
     openGraph: {
       url: localizedUrl('/guides/evaluate-tipsters', locale),

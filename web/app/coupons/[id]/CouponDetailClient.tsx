@@ -24,7 +24,7 @@ import { PickShareButtons } from '@/components/PickShareButtons';
 import { IconPicks, IconShield, IconLock } from '@/components/ios/icons';
 import { hapticSuccess } from '@/lib/haptic';
 import { PickSocialBar } from '@/components/pick-social/PickSocialBar';
-import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import { Button, buttonClassName } from '@/components/ui/Button';
@@ -1026,7 +1026,7 @@ export default function CouponDetailPage({
                   hasReacted={socialCounts.hasReacted}
                   commentCount={socialCounts.commentCount}
                   socialCountsFromServer
-                  loginRedirectPath={currentLoginRedirectPath(`/coupons/${id}`)}
+                  loginRedirectPath={loginRedirectUrl(`/coupons/${id}`)}
                   onCountsChange={(counts) => {
                     setSocialCounts(counts);
                     setCoupon((prev) =>

@@ -7,18 +7,61 @@ if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_APP_URL?.t
 }
 
 const lowMemBuild = process.env.NEXT_BUILD_LOW_MEMORY === '1';
+const isProd = process.env.NODE_ENV === 'production';
+
+const { HERO_LCP_MOBILE_AVIF, HERO_LCP_DESKTOP_AVIF } = require('./lib/marketing-assets.cjs');
+
+function buildSecurityHeaders() {
+  const headers = [
+    { key: 'X-DNS-Prefetch-Control', value: 'on' },
+    { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+    { key: 'X-Content-Type-Options', value: 'nosniff' },
+    { key: 'X-XSS-Protection', value: '1; mode=block' },
+    { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+    { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+    { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups' },
+    {
+      key: 'Content-Security-Policy-Report-Only',
+      value: [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://www.google.com https://www.gstatic.com https://js.paystack.co https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com",
+        "style-src 'self' 'unsafe-inline' https://accounts.google.com https://www.gstatic.com",
+        "connect-src 'self' https: http: ws: wss:",
+        "frame-src 'self' https://accounts.google.com https://appleid.apple.com https://www.google.com https://js.paystack.co https://www.googletagmanager.com",
+        "img-src 'self' data: https: blob:",
+        "font-src 'self' data:",
+      ].join('; '),
+    },
+  ];
+  if (isProd) {
+    headers.push({
+      key: 'Strict-Transport-Security',
+      value: 'max-age=63072000; includeSubDomains; preload',
+    });
+  }
+  return headers;
+}
 
 const nextConfig = {
   reactStrictMode: true,
+  poweredByHeader: false,
   // Smaller Coolify/Docker images: runner copies `.next/standalone` instead of all of node_modules.
   output: 'standalone',
-  ...(lowMemBuild && {
-    experimental: {
-      // Fewer parallel workers during static generation — avoids OOM on 2–4GB build hosts (Coolify/Docker)
-      cpus: 1,
-      memoryBasedWorkersCount: true,
-    },
-  }),
+  compiler: isProd
+    ? {
+        removeConsole: { exclude: ['error', 'warn'] },
+      }
+    : undefined,
+  experimental: {
+    ...(isProd ? { optimizeCss: true } : {}),
+    optimizePackageImports: ['@tanstack/react-query', 'recharts'],
+    ...(lowMemBuild
+      ? {
+          cpus: 1,
+          memoryBasedWorkersCount: true,
+        }
+      : {}),
+  },
   images: {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
@@ -38,29 +81,34 @@ const nextConfig = {
     ],
   },
   async headers() {
-    const securityHeaders = [
-      { key: 'X-DNS-Prefetch-Control', value: 'on' },
-      { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
-      { key: 'X-Content-Type-Options', value: 'nosniff' },
-      { key: 'X-XSS-Protection', value: '1; mode=block' },
-      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-      { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-      // CSP report-only: logs violations without blocking. Set CSP_REPORT_URI to collect (e.g. report-uri https://...).
-      {
-        key: 'Content-Security-Policy-Report-Only',
-        value: [
-          "default-src 'self'",
-          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://www.google.com https://www.gstatic.com https://js.paystack.co https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com",
-          "style-src 'self' 'unsafe-inline' https://accounts.google.com https://www.gstatic.com",
-          // http/ws: local API (localhost:6001) + Next HMR. Report-only, so this does not block.
-          "connect-src 'self' https: http: ws: wss:",
-          "frame-src 'self' https://accounts.google.com https://appleid.apple.com https://www.google.com https://js.paystack.co https://www.googletagmanager.com",
-          "img-src 'self' data: https: blob:",
-          "font-src 'self' data:",
-        ].join('; '),
-      },
-    ];
+    const securityHeaders = buildSecurityHeaders();
+    const heroPreloadLink = [
+      `<${HERO_LCP_MOBILE_AVIF}>; rel=preload; as=image; type=image/avif; fetchpriority=high`,
+      `<${HERO_LCP_DESKTOP_AVIF}>; rel=preload; as=image; type=image/avif; media=(min-width: 768px)`,
+    ].join(', ');
     const rules = [
+      {
+        source: '/',
+        headers: [
+          ...securityHeaders,
+          { key: 'Link', value: heroPreloadLink },
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=60, stale-while-revalidate=600, stale-if-error=86400',
+          },
+        ],
+      },
+      {
+        source: '/fr',
+        headers: [
+          ...securityHeaders,
+          { key: 'Link', value: heroPreloadLink },
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=60, stale-while-revalidate=600, stale-if-error=86400',
+          },
+        ],
+      },
       {
         source: '/images/marketing/:path*',
         headers: [

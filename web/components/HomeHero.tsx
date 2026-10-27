@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getApiUrl } from '@/lib/site-config';
-import { useT } from '@/context/LanguageContext';
+import { useLanguage, useT } from '@/context/LanguageContext';
+import { formatInteger } from '@/lib/intl-locale';
 import { useCurrency } from '@/context/CurrencyContext';
 import type { HomePublicStats } from '@/lib/home-public-data';
 import { HomeNativeMatchRail } from '@/components/HomeNativeMatchRail';
@@ -17,11 +18,6 @@ const defaultStats: HomePublicStats = {
   winRate: 0,
   totalPaidOut: 0,
 };
-
-function formatNumber(n: number): string {
-  if (n <= 0) return '0';
-  return n.toLocaleString();
-}
 
 type StatKey = 'verified' | 'marketplacePurchases' | 'paidOut';
 
@@ -50,6 +46,7 @@ export function HomeHero({
   marketplaceItems = [],
 }: HomeHeroProps) {
   const t = useT();
+  const { lang } = useLanguage();
   const { format } = useCurrency();
   const [stats, setStats] = useState<HomePublicStats | null>(initialStats);
 
@@ -77,8 +74,8 @@ export function HomeHero({
   const paidOutFormatted = format(s.totalPaidOut).primary;
 
   const statItems: { key: StatKey; value: string }[] = [
-    { key: 'verified', value: formatNumber(s.verifiedTipsters) },
-    { key: 'marketplacePurchases', value: formatNumber(s.successfulPurchases) },
+    { key: 'verified', value: formatInteger(s.verifiedTipsters, lang) },
+    { key: 'marketplacePurchases', value: formatInteger(s.successfulPurchases, lang) },
     ...(s.totalPaidOut > 0 ? [{ key: 'paidOut' as const, value: paidOutFormatted }] : []),
   ];
 
@@ -118,7 +115,10 @@ export function HomeHero({
                 title={t(STAT_HINT_KEYS[item.key])}
                 className="min-w-0 px-4 py-4 text-center sm:py-3 sm:text-left"
               >
-                <p className="text-xl font-bold tabular-nums text-[var(--text)] md:text-2xl">
+                <p
+                  className="text-xl font-bold tabular-nums text-[var(--text)] md:text-2xl"
+                  suppressHydrationWarning={item.key === 'paidOut'}
+                >
                   {item.value}
                 </p>
                 <p className="mt-0.5 text-xs text-[var(--text-muted)] md:text-sm">

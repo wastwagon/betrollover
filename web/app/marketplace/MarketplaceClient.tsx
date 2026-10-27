@@ -25,7 +25,7 @@ import { matchesMarketplaceDayFilter, type MarketplaceDayFilter } from '@/lib/ac
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
-import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import {
   FOOTBALL_SPORT_KEY,
   filterDiscoverySports,
@@ -578,7 +578,7 @@ export default function MarketplacePage({
         {...getPickCardSocialProps(a, {
           onCountsChange: (id, counts) =>
             setPicks((prev) => mergeSocialCountsIntoList(prev, id, counts)),
-          loginRedirectPath: currentLoginRedirectPath('/marketplace'),
+          loginRedirectPath: loginRedirectUrl('/marketplace'),
         })}
         avgRating={a.avgRating}
         reviewCount={a.reviewCount}

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { PickCard } from '@/components/PickCard';
 import { getApiUrl } from '@/lib/site-config';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
-import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { useT } from '@/context/LanguageContext';
 import { eliteLeaderboardUsernames, pickEliteShowcase } from '@/lib/home-elite-showcase';
 
@@ -148,7 +148,7 @@ export function HomeQuickMarketplaceSections({
         purchasing={false}
         {...getPickCardSocialProps(a, {
           onCountsChange: (id, counts) => setElite((prev) => mergeSocialCountsIntoList(prev, id, counts)),
-          loginRedirectPath: currentLoginRedirectPath('/'),
+          loginRedirectPath: loginRedirectUrl('/'),
         })}
       />
     ));

@@ -8,6 +8,8 @@ import { IconHeart, IconChat } from '@/components/ios/icons';
 import { BottomSheet } from '@/components/ios/BottomSheet';
 import { PickCommentsPanel } from './PickCommentsPanel';
 import { useT } from '@/context/LanguageContext';
+import { useHydratedLoginRedirect } from '@/hooks/useHydratedLoginRedirect';
+import { loginRedirectReturnPath, loginRedirectUrl } from '@/lib/login-redirect-path';
 import { hapticSuccess } from '@/lib/haptic';
 import { requestPickSocialSummaryBatch } from '@/lib/pick-social-batch';
 
@@ -42,11 +44,14 @@ export function PickSocialBar({
   commentCount: commentCountProp = 0,
   enabled = true,
   socialCountsFromServer = false,
-  loginRedirectPath = '/login',
+  loginRedirectPath: loginRedirectPathProp = loginRedirectUrl('/marketplace'),
   onCountsChange,
 }: PickSocialBarProps) {
   const t = useT();
   const router = useRouter();
+  const loginRedirectPath = useHydratedLoginRedirect(
+    loginRedirectReturnPath(loginRedirectPathProp, '/marketplace'),
+  );
   const API_URL = getApiUrl();
   const [reactionCount, setReactionCount] = useState(reactionCountProp);
   const [hasReacted, setHasReacted] = useState(hasReactedProp);

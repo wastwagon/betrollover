@@ -23,6 +23,7 @@ import {
   IconMegaphone,
   IconMail,
   IconSettings,
+  IconSearch,
 } from '@/components/ios/icons';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
@@ -66,6 +67,7 @@ export function getAdminNavItems(): AdminNavItem[] {
     { href: '/admin/fixtures', icon: IconLive, label: 'Fixtures' },
     { href: '/admin/sports', icon: IconGlobe, label: 'Multi-Sport' },
     { href: '/admin/content', icon: IconBook, label: 'Content' },
+    { href: '/admin/seo', icon: IconSearch, label: 'SEO / GSC' },
     { href: '/admin/news', icon: IconBook, label: 'News' },
     { href: '/admin/resources', icon: IconBook, label: 'Resources' },
     { href: '/admin/ads', icon: IconMegaphone, label: 'Ads' },

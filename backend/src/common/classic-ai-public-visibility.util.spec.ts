@@ -9,18 +9,20 @@ describe('classic AI public visibility', () => {
     else process.env[key] = previous;
   });
 
-  it('hides classic 1-fixture AI tipsters by default', () => {
+  it('shows classic 1-fixture AI tipsters by default', () => {
     delete process.env[key];
-    expect(isClassicAiHiddenFromPublic()).toBe(true);
+    expect(isClassicAiHiddenFromPublic()).toBe(false);
   });
 
-  it('shows them only when the flag is explicitly off', () => {
+  it('respects explicit hide/show env values', () => {
     process.env[key] = 'false';
     expect(isClassicAiHiddenFromPublic()).toBe(false);
     process.env[key] = 'true';
     expect(isClassicAiHiddenFromPublic()).toBe(true);
     process.env[key] = '0';
     expect(isClassicAiHiddenFromPublic()).toBe(false);
+    process.env[key] = 'yes';
+    expect(isClassicAiHiddenFromPublic()).toBe(true);
   });
 
   it('does not treat Acca Desk or VIP owners as classic AI for fixture locking', () => {

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PickCard } from '@/components/PickCard';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
-import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { buttonClassName } from '@/components/ui/Button';
@@ -108,7 +108,7 @@ export function FeaturedPicks({
               {...getPickCardSocialProps(a, {
                 onCountsChange: (id, counts) =>
                   setPicks((prev) => mergeSocialCountsIntoList(prev, id, counts)),
-                loginRedirectPath: currentLoginRedirectPath('/'),
+                loginRedirectPath: loginRedirectUrl('/'),
               })}
             />
           ))}

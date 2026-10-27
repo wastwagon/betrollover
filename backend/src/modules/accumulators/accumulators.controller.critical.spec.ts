@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { AccumulatorsController } from './accumulators.controller';
 import { AccumulatorsService } from './accumulators.service';
+import { OptionalJwtGuard } from '../auth/guards/optional-jwt.guard';
 
 describe('AccumulatorsController (critical paths)', () => {
   let controller: AccumulatorsController;
@@ -16,7 +18,12 @@ describe('AccumulatorsController (critical paths)', () => {
           useValue: { getMarketplacePublicList },
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(ThrottlerGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(OptionalJwtGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<AccumulatorsController>(AccumulatorsController);
   });

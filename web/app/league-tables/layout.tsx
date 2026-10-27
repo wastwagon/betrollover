@@ -11,6 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: TITLE,
     description: DESCRIPTION,
+    robots: { index: true, follow: true },
     alternates: seoAlternates('/league-tables', locale),
     openGraph: {
       url: localizedUrl('/league-tables', locale),

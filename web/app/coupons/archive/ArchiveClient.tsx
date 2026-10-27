@@ -13,7 +13,7 @@ import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
-import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { SegmentedControl } from '@/components/ios/SegmentedControl';
@@ -524,7 +524,7 @@ export default function CouponsArchivePage({
                 {...getPickCardSocialProps(coupon, {
                   onCountsChange: (id, counts) =>
                     setCoupons((prev) => mergeSocialCountsIntoList(prev, id, counts)),
-                  loginRedirectPath: currentLoginRedirectPath('/coupons/archive'),
+                  loginRedirectPath: loginRedirectUrl('/coupons/archive'),
                 })}
               />
             ))}

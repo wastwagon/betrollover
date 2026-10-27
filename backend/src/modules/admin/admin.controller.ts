@@ -34,6 +34,7 @@ import { AmericanFootballSyncService } from '../american-football/american-footb
 import { TennisSyncService } from '../tennis/tennis-sync.service';
 import { OddsApiSettlementService } from '../odds-api/odds-api-settlement.service';
 import { SyncHealthService } from './sync-health.service';
+import { GscHealthService } from './gsc-health.service';
 import { ResourcesService } from '../resources/resources.service';
 import { AdsService } from '../ads/ads.service';
 import { AccumulatorsService } from '../accumulators/accumulators.service';
@@ -81,6 +82,7 @@ export class AdminController {
     private readonly tennisSyncService: TennisSyncService,
     private readonly oddsApiSettlementService: OddsApiSettlementService,
     private readonly syncHealthService: SyncHealthService,
+    private readonly gscHealthService: GscHealthService,
     private readonly resourcesService: ResourcesService,
     private readonly adsService: AdsService,
     private readonly accumulatorsService: AccumulatorsService,
@@ -799,6 +801,24 @@ export class AdminController {
   async getSyncHealth(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.syncHealthService.getStatus();
+  }
+
+  @Get('seo/gsc-health')
+  async getGscHealth(@CurrentUser() user: User, @Query('refresh') refresh?: string) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    if (refresh === '1' || refresh === 'true') {
+      return this.gscHealthService.runCheck(true);
+    }
+    const cached = this.gscHealthService.getLastReport();
+    if (cached) return cached;
+    return this.gscHealthService.runCheck(true);
+  }
+
+  @Post('seo/gsc-health/run')
+  @HttpCode(200)
+  async runGscHealth(@CurrentUser() user: User) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.gscHealthService.runCheck(true);
   }
 
   @Get('sports/events')

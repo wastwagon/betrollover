@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getApiUrl, shouldUnoptimizeRemoteImage } from '@/lib/site-config';
-import { useT } from '@/context/LanguageContext';
+import { useLanguage, useT } from '@/context/LanguageContext';
+import { intlLocaleForLanguage } from '@/lib/intl-locale';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { FixtureLiveChip } from '@/components/FixtureLiveChip';
 import {
@@ -16,13 +17,16 @@ import {
 
 const REFRESH_MS = 60_000;
 
-function formatMatchSchedule(iso: string): { date: string; time: string; combined: string } {
+function formatMatchSchedule(
+  iso: string,
+  intlLocale: string,
+): { date: string; time: string; combined: string } {
   try {
     const d = new Date(iso);
     return {
-      date: d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
-      time: d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
-      combined: d.toLocaleString(undefined, {
+      date: d.toLocaleDateString(intlLocale, { weekday: 'short', month: 'short', day: 'numeric' }),
+      time: d.toLocaleTimeString(intlLocale, { hour: '2-digit', minute: '2-digit' }),
+      combined: d.toLocaleString(intlLocale, {
         weekday: 'short',
         month: 'short',
         day: 'numeric',
@@ -68,6 +72,8 @@ export function HomeNativeMatchRail({
   marketplaceItems?: Record<string, unknown>[];
 }) {
   const t = useT();
+  const { lang } = useLanguage();
+  const intlLocale = intlLocaleForLanguage(lang);
   const [matches, setMatches] = useState<TodayMatchRow[]>(initialMatches);
 
   useEffect(() => {
@@ -111,7 +117,7 @@ export function HomeNativeMatchRail({
         {matches.map((m) => {
           const live = isFixtureLive(m.status);
           const picks = pickCounts.get(m.id) ?? 0;
-          const schedule = formatMatchSchedule(m.matchDate);
+          const schedule = formatMatchSchedule(m.matchDate, intlLocale);
           const livePeriod = formatLiveFixturePeriod(m.status, m.statusElapsed) || 'Live';
 
           return (

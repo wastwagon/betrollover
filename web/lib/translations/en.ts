@@ -1903,6 +1903,47 @@ const en = {
   'seo.vip_desc': 'Subscribe to VIP football tips. House two-fold plans and independent tipster plans, paid from your wallet. The fee is returned if no VIP slips are posted during your period. 18+.',
   'seo.leaderboard_title': 'Football Tipster Form Leaderboard',
   'seo.leaderboard_desc': 'Active football tipsters ranked by form plus ROI. Positive ROI lists above negative. Inactive accounts are not listed. Separate from the searchable directory.',
+  'seo.marketplace_keywords':
+    'buy football tips today|paid football predictions|football tips today|verified football tipsters|purchase-protected picks|football booking code tips',
+  'seo.marketplace_keywords_multisport':
+    'buy sports tips today|paid sports predictions|verified tipsters|football tips today|purchase-protected picks',
+  'seo.tipsters_keywords':
+    'football tipsters to subscribe|verified football tipsters|tipster ROI|buy football tips|VIP football tipster|best football tipsters',
+  'seo.leaderboard_keywords':
+    'football tipster leaderboard|tipster form ranking|football tipster ROI|verified tipsters ranking',
+  'seo.acca_title': 'Acca Generator — Football Accumulator Tips',
+  'seo.acca_desc':
+    'Build same-day football accumulator tips from synced odds. Sign in free, choose Sure, Safe, Medium, or High odd bands, generate a slip, and publish a marketplace pick. Educational tool — 18+.',
+  'seo.acca_keywords':
+    'football accumulator tips|acca generator|football accumulator builder|same day acca|buy accumulator tips|football tips Ghana',
+  'seo.acca_faq_1_q': 'What is the BetRollover Acca Generator?',
+  'seo.acca_faq_1_a':
+    'It is a free same-day football accumulator builder for signed-in users. It picks legs from synced odds within Sure, Safe, Medium, or High risk bands. You can generate a sample slip and optionally publish it as a marketplace pick.',
+  'seo.acca_faq_2_q': 'Do I need VIP to use Acca Generator?',
+  'seo.acca_faq_2_a':
+    'No. Sign in with a free account to generate and publish. A daily generation limit still applies. VIP subscriptions are separate tipster plans.',
+  'seo.acca_faq_3_q': 'Are Acca Generator slips guaranteed tips?',
+  'seo.acca_faq_3_a':
+    'No. Risk levels are odd bands only. Outputs are educational and informational — not sure bets. Gamble responsibly. 18+ only.',
+  'seo.rollover_title': 'VIP Football Tips — 2-Day Two-Fold Rollover',
+  'seo.rollover_desc':
+    'Subscribe for live two-fold VIP football tips. Settled history is public so you can judge form first. Win Day 1, roll Day 2, then the example restarts. Not a bookmaker payout. 18+.',
+  'seo.rollover_keywords':
+    'VIP football tips|two fold football tips|football tipster subscription|2 day vip tips|football rollover|low odds accumulator tips',
+  'seo.rollover_faq_1_q': 'What is the 2-day VIP rollover?',
+  'seo.rollover_faq_1_a':
+    'It is a public educational board linked to AccaSure1X2. Each plan day uses one AccaSure1X2 2-fold. Win Day 1 and the example stake rolls to Day 2; win Day 2 and the cycle finishes (take-profit example) and a new board starts at Day 1. A loss cuts the run and starts Day 1. Live tips are for VIP subscribers; settled tips are public. We do not pay odds or credit wallets for this board.',
+  'seo.rollover_faq_2_q': 'Can I see today’s tip without a VIP subscription?',
+  'seo.rollover_faq_2_a':
+    'Active (pending) coupons stay locked for non-subscribers — you see a Subscribe CTA, same as marketplace VIP cards. Settled won/lost coupons are fully visible so you can judge form before joining.',
+  'seo.rollover_faq_3_q': 'Is this betting on the odds?',
+  'seo.rollover_faq_3_a':
+    'No. BetRollover is not a bookmaker. The coupon is tipster information. Any wager you place with a third-party bookmaker is outside this app.',
+  'seo.rollover_faq_4_q': 'What do the GHS figures mean?',
+  'seo.rollover_faq_4_a':
+    'They are a worked example of compounding that campaign’s example stake (default GHS 100) at the board’s target multiplier across the two plan days. Day 2 shows the harvest example if both coupons hit, then the cycle restarts. They are not payouts.',
+  'seo.subscriptions_account_desc':
+    'Your active VIP subscription plans and included slips. Sign in required — not a public landing page.',
   'leaderboard.empty_logged_sub':
     'No tipsters match this filter right now. Try another period or sport, or browse all profiles.',
   'leaderboard.empty_logged_cta': 'Browse all tipsters',

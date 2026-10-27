@@ -39,7 +39,9 @@ function getCategoryLabel(t: (k: string) => string, cat: string): string {
 }
 
 function getSportLabel(t: (k: string) => string, sport: string): string {
-  return t(`create_pick.sport_${sport}` as 'create_pick.sport_football');
+  const key = `create_pick.sport_${sport}` as 'create_pick.sport_football';
+  const label = t(key);
+  return label === key ? sport.replace(/_/g, ' ') : label;
 }
 
 function formatDate(s: string | null) {
@@ -57,11 +59,16 @@ export default async function NewsArticlePage({
   const { slug } = await params;
   const locale = await getLocale();
   const t = buildT(locale);
-  const article = await fetchNewsArticleBySlug(slug, locale);
 
-  if (!article) notFound();
-
-  const related = await fetchRelatedNewsArticles(locale, article.slug, article.sport);
+  let article: Awaited<ReturnType<typeof fetchNewsArticleBySlug>>;
+  let related: NewsArticlePublic[] = [];
+  try {
+    article = await fetchNewsArticleBySlug(slug, locale);
+    if (!article) notFound();
+    related = await fetchRelatedNewsArticles(locale, article.slug, article.sport);
+  } catch {
+    notFound();
+  }
   const sportLabel = article.sport ? getSportLabel(t, article.sport) : '';
   const categoryLabel = getCategoryLabel(t, article.category || 'news');
 

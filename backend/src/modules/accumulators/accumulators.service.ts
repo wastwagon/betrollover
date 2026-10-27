@@ -1582,37 +1582,42 @@ export class AccumulatorsService {
    * - Settled (won/lost/void): any marketplace coupon so guests can see results and tipster quality (drives sign-ups).
    */
   async getByIdPublic(id: number, viewerUserId?: number) {
-    const ticket = await this.ticketRepo.findOne({
-      where: { id },
-      select: ['id', 'userId', 'isMarketplace', 'result', 'status', 'price'],
-    });
-    if (!ticket?.isMarketplace) return null;
-
-    if (isClassicAiHiddenFromPublic() && ticket.userId) {
-      const ownerTipster = await this.tipsterRepo.findOne({
-        where: { userId: ticket.userId },
-        select: ['isAi', 'tipsterType', 'username'],
+    try {
+      const ticket = await this.ticketRepo.findOne({
+        where: { id },
+        select: ['id', 'userId', 'isMarketplace', 'result', 'status', 'price'],
       });
-      if (ownerTipster && isClassicAiHiddenFromBrowse(ownerTipster)) {
-        return null;
+      if (!ticket?.isMarketplace) return null;
+
+      if (isClassicAiHiddenFromPublic() && ticket.userId) {
+        const ownerTipster = await this.tipsterRepo.findOne({
+          where: { userId: ticket.userId },
+          select: ['isAi', 'tipsterType', 'username'],
+        });
+        if (ownerTipster && isClassicAiHiddenFromBrowse(ownerTipster)) {
+          return null;
+        }
       }
+
+      const row = await this.marketplaceRepo.findOne({
+        where: { accumulatorId: id },
+        select: ['accumulatorId', 'price', 'status'],
+      });
+
+      const settled = ['won', 'lost', 'void'].includes((ticket.result || 'pending').toLowerCase());
+      if (settled) {
+        return await this.getById(id, viewerUserId);
+      }
+
+      if (!row || row.status !== 'active') return null;
+      const listingPrice = Number(row.price);
+      if (listingPrice !== 0) return null;
+
+      return await this.getById(id, viewerUserId);
+    } catch (err) {
+      this.logger.warn(`getByIdPublic failed for coupon ${id}: ${(err as Error)?.message ?? err}`);
+      return null;
     }
-
-    const row = await this.marketplaceRepo.findOne({
-      where: { accumulatorId: id },
-      select: ['accumulatorId', 'price', 'status'],
-    });
-
-    const settled = ['won', 'lost', 'void'].includes((ticket.result || 'pending').toLowerCase());
-    if (settled) {
-      return this.getById(id, viewerUserId);
-    }
-
-    if (!row || row.status !== 'active') return null;
-    const listingPrice = Number(row.price);
-    if (listingPrice !== 0) return null;
-
-    return this.getById(id, viewerUserId);
   }
 
   /** Tipsters who have marketplace coupons (for admin filter dropdown) */

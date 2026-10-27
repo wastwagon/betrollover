@@ -1,6 +1,8 @@
 import Link from 'next/link';
+import { preload } from 'react-dom';
 import { buttonClassName } from '@/components/ui/button-styles';
 import { getLocale, buildT } from '@/lib/i18n';
+import { HERO_LCP_MOBILE_AVIF, HERO_LCP_DESKTOP_AVIF } from '@/lib/marketing-assets';
 
 /**
  * Static hero. Kept out of the homepage data fetch so the LCP image and H1
@@ -9,37 +11,32 @@ import { getLocale, buildT } from '@/lib/i18n';
 export async function HomeHeroBanner() {
   const t = buildT(await getLocale());
 
+  preload(HERO_LCP_MOBILE_AVIF, {
+    as: 'image',
+    fetchPriority: 'high',
+    type: 'image/avif',
+  });
+  preload(HERO_LCP_DESKTOP_AVIF, {
+    as: 'image',
+    fetchPriority: 'high',
+    type: 'image/avif',
+  });
+
   return (
     <section
       className="relative w-full min-w-0 overflow-hidden text-white"
       aria-labelledby="home-hero-title"
     >
-      <link
-        rel="preload"
-        as="image"
-        href="/images/marketing/hero-stadium-800.avif"
-        type="image/avif"
-        media="(max-width: 767px)"
-        fetchPriority="high"
-      />
-      <link
-        rel="preload"
-        as="image"
-        href="/images/marketing/hero-stadium-1280.avif"
-        type="image/avif"
-        media="(min-width: 768px)"
-        fetchPriority="high"
-      />
       <div className="absolute inset-0">
         <picture>
           <source
             media="(max-width: 767px)"
-            srcSet="/images/marketing/hero-stadium-800.avif"
+            srcSet={HERO_LCP_MOBILE_AVIF}
             type="image/avif"
           />
           <source
             media="(min-width: 768px)"
-            srcSet="/images/marketing/hero-stadium-1280.avif"
+            srcSet={HERO_LCP_DESKTOP_AVIF}
             type="image/avif"
           />
           <source
@@ -53,12 +50,12 @@ export async function HomeHeroBanner() {
             type="image/webp"
           />
           <img
-            src="/images/marketing/hero-stadium-1280.webp"
+            src={HERO_LCP_MOBILE_AVIF}
             alt=""
-            width={1280}
-            height={853}
+            width={800}
+            height={533}
             fetchPriority="high"
-            decoding="async"
+            decoding="sync"
             className="absolute inset-0 h-full w-full object-cover object-[center_42%] brightness-[1.04] contrast-[1.02] saturate-[1.08]"
           />
         </picture>

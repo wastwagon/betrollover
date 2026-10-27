@@ -201,9 +201,14 @@ export class AccumulatorsController {
   @Get(':id/public')
   @UseGuards(OptionalJwtGuard)
   async getByIdPublic(@Param('id', ParseIntPipe) id: number, @CurrentUser() user?: User | null) {
-    const coupon = await this.accumulatorsService.getByIdPublic(id, user?.id);
-    if (!coupon) throw new NotFoundException('Pick not found or not available without login');
-    return coupon;
+    try {
+      const coupon = await this.accumulatorsService.getByIdPublic(id, user?.id);
+      if (!coupon) throw new NotFoundException('Pick not found or not available without login');
+      return coupon;
+    } catch (e) {
+      if (e instanceof NotFoundException) throw e;
+      throw new NotFoundException('Pick not found or not available without login');
+    }
   }
 
   /** Tipsters who copied (for hover list); total count includes all logged-in copiers. */

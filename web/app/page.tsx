@@ -27,6 +27,9 @@ import { getLocale, buildT } from '@/lib/i18n';
 import { buttonClassName } from '@/components/ui/button-styles';
 import type { Metadata } from 'next';
 
+/** ISR shell: hero + streamed below-fold; helps TTFB vs fully dynamic HTML. */
+export const revalidate = 60;
+
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   const t = buildT(locale);

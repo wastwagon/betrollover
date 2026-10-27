@@ -44,6 +44,8 @@ export class NewsService {
     if (!a && lang !== 'en') {
       a = await this.repo.findOne({ where: { slug, language: 'en' } });
     }
+    if (!a) return null;
+    if (!a.publishedAt || a.publishedAt > new Date()) return null;
     return a;
   }
 

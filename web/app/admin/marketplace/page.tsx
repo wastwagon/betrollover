@@ -9,7 +9,7 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
-import { currentLoginRedirectPath } from '@/lib/login-redirect-path';
+import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { buttonClassName } from '@/components/ui/Button';
 
 interface Pick {
@@ -447,7 +447,7 @@ export default function AdminMarketplacePage() {
                   {...getPickCardSocialProps(a, {
                     onCountsChange: (id, counts) =>
                       setPicks((prev) => mergeSocialCountsIntoList(prev, id, counts)),
-                    loginRedirectPath: currentLoginRedirectPath('/admin/marketplace'),
+                    loginRedirectPath: loginRedirectUrl('/admin/marketplace'),
                   })}
                 />
                 <button type="button"

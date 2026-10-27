@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { PersonJsonLd } from '@/components/PersonJsonLd';
 import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { getLocale, serverT } from '@/lib/i18n';
@@ -15,16 +16,26 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { username } = await params;
   const locale = await getLocale();
-  const profile = await fetchTipsterProfileForSeo(username);
+  const result = await fetchTipsterProfileForSeo(username);
 
-  if (!profile?.tipster) {
+  if (result.state === 'not_found') {
     return {
       title: serverT('tipster.not_found', locale),
       robots: { index: false, follow: true },
     };
   }
 
-  const tip = profile.tipster;
+  if (result.state === 'unavailable') {
+    const title = `@${username}`;
+    return {
+      title,
+      description: serverT('tipster.predictions', locale),
+      robots: { index: true, follow: true },
+      alternates: seoAlternates(`/tipsters/${username}`, locale),
+    };
+  }
+
+  const tip = result.data.tipster;
   const title = `${tip.display_name} (@${tip.username})`;
   const statsLine = `${Number(tip.win_rate).toFixed(1)}% ${serverT('tipster.win_rate', locale)} · ${Number(tip.roi).toFixed(1)}% ROI`;
   const description = truncateMetaDescription(
@@ -36,6 +47,7 @@ export async function generateMetadata({
   return {
     title,
     description,
+    robots: { index: true, follow: true },
     alternates: seoAlternates(`/tipsters/${tip.username}`, locale),
     openGraph: {
       url: canonical,
@@ -61,8 +73,13 @@ export default async function TipsterUsernameLayout({
 }) {
   const { username } = await params;
   const locale = await getLocale();
-  const profile = await fetchTipsterProfileForSeo(username);
-  const tip = profile?.tipster;
+  const result = await fetchTipsterProfileForSeo(username);
+
+  if (result.state === 'not_found') {
+    notFound();
+  }
+
+  const tip = result.state === 'found' ? result.data.tipster : null;
 
   return (
     <>

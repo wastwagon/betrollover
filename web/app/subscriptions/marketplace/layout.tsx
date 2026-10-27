@@ -18,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
       'subscribe to football tipster',
       'paid football predictions',
     ],
+    robots: { index: true, follow: true },
     alternates: seoAlternates(PATH, locale),
     openGraph: {
       url: localizedUrl(PATH, locale),
