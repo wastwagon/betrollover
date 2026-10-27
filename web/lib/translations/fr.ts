@@ -593,6 +593,9 @@ const fr: Record<string, string> = {
   'guides.free_record_body': 'Les pronostics gratuits et payants réglés comptent tous les deux. Le taux de victoire est la part des pronostics réglés marqués gagnés. Le ROI utilise une mise unitaire par pronostic réglé : un gain rend cette mise multipliée par la cote combinée, une perte ne rend rien. Les pronostics annulés sont exclus des deux chiffres. Les pronostics en attente ne sont pas encore dans l’historique.',
   'guides.free_price_h': 'Quand un tipster peut facturer',
   'guides.free_price_body': 'Un prix n’est possible que si le ROI réglé est d’au moins {minRoi} % et le taux de victoire réglé d’au moins {minWr} %. Ces seuils sont fixés sur la plateforme et peuvent changer. Si l’un des deux est en dessous, les nouvelles fiches restent gratuites jusqu’à ce que les deux remontent.',
+  'guides.free_booking_h': 'SportyBet, Bet9ja et codes booking',
+  'guides.free_booking_body':
+    'Certains tipsters ajoutent un code booking pour charger le même coupon dans SportyBet, Bet9ja ou un autre bookmaker listé. Copiez le code dans l’app — cela ne place pas le pari ni ne garantit le résultat. Filtrez le marketplace pour les pronos avec code, ou consultez la page acheter des pronostics football pour le VIP et le payant.',
   'guides.free_faq_q1': 'Les pronostics gratuits changent-ils le ROI et le taux de victoire ?',
   'guides.free_faq_a1': 'Oui. Un pronostic gratuit réglé comme gagné ou perdu entre dans le taux de victoire, le ROI et la série du tipster. Un pronostic annulé ou encore en attente n’y entre pas.',
   'guides.free_faq_q2': 'Un pronostic gratuit est-il remboursé s’il perd ?',
@@ -1705,6 +1708,7 @@ const fr: Record<string, string> = {
   'footer.disclaimer': 'BetRollover est une plateforme éducative de tipsters — pas une société de paris. Les pronostics sont partagés à titre informatif uniquement. Ni BetRollover ni les tipsters ne sont responsables des pertes encourues. Utilisez de façon responsable.',
   'footer.rights': 'Tous droits réservés.',
   'footer.credits_design_deployed': 'Conception et déploiement par',
+  'footer.booking_codes': 'Codes booking (SportyBet & Bet9ja)',
   'footer.resources': 'Ressources',
   'footer.discover': 'Découvrir',
   'footer.telegram_cta': 'Discuter sur Telegram',
@@ -2563,6 +2567,10 @@ const fr: Record<string, string> = {
   'buy.title': 'Pronostics football VIP et abonnements',
   'buy.tagline': 'Payez un prono unique ou un plan VIP. Les résultats réglés restent publics pour juger la forme avant de vous abonner.',
   'buy.intro': 'Les recherches d\'abonnement tipster, de pronostics VIP et de prédictions payantes cherchent un historique public, un prix clair et un remboursement si le prono perd. C\'est ce que vend BetRollover. Nous ne sommes pas un bookmaker. 18+ uniquement.',
+  'buy.regions_h': 'Pronostics football payants au Ghana, Nigeria, Kenya et ailleurs',
+  'buy.regions_body':
+    'BetRollover est basé au Ghana : portefeuille GHS, Mobile Money lorsque disponible, et picks sous protection d\'achat pour l\'Afrique de l\'Ouest, l\'Est, l\'Afrique du Sud, la francophonie et le monde. Comparez les tipsters vérifiés, achetez les pronos du jour ou ouvrez un plan VIP sur un seul marketplace.',
+  'buy.regions_about_link': 'À propos de BetRollover et nos marchés',
   'buy.picks_h': 'Acheter un prono football',
   'buy.picks_body': 'Le marché liste des pronostics football gratuits et payants. Comparez le taux de victoire et le ROI, puis payez depuis votre portefeuille. Un prono payant perdant est remboursé automatiquement.',
   'buy.vip_h': 'Abonnement tipster VIP',

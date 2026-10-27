@@ -64,6 +64,9 @@ export function AppFooter() {
                 <FooterLink href="/coupons/archive">{t('header.settled_archive')}</FooterLink>
               </li>
               <li>
+                <FooterLink href="/guides/free-and-paid-picks#booking-codes">{t('footer.booking_codes')}</FooterLink>
+              </li>
+              <li>
                 <FooterLink href="/tipsters">{t('nav.top_tipsters')}</FooterLink>
               </li>
               <li>

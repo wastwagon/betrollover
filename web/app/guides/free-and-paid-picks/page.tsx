@@ -81,6 +81,20 @@ export default async function FreeAndPaidPicksGuidePage() {
           <h2 className="text-lg font-semibold mt-6">{t('guides.free_price_h')}</h2>
           <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('guides.free_price_body', vars)}</p>
 
+          <h2 id="booking-codes" className="text-lg font-semibold mt-6 scroll-mt-24">
+            {t('guides.free_booking_h')}
+          </h2>
+          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
+            {t('guides.free_booking_body')}{' '}
+            <Link href="/marketplace" className="text-[var(--primary)] hover:underline">
+              {t('nav.marketplace')}
+            </Link>
+            {' · '}
+            <Link href="/buy-football-tips#booking-codes" className="text-[var(--primary)] hover:underline">
+              {t('buy.nav')}
+            </Link>
+          </p>
+
           <h2 className="text-lg font-semibold mt-6">{t('how_it_works.faq_title')}</h2>
           <dl className="mt-3 space-y-4">
             {faqs.map((faq) => (

@@ -596,6 +596,9 @@ const en = {
   'guides.free_record_body': 'Settled free picks and paid picks both count. Win rate is the share of settled picks marked won. ROI uses one flat unit per settled pick: a win returns that unit times the combined odds, and a loss returns nothing. Void picks are left out of both numbers. Pending picks are not on the record yet.',
   'guides.free_price_h': 'When a tipster can charge',
   'guides.free_price_body': 'A price is allowed only when settled ROI is at least {minRoi}% and settled win rate is at least {minWr}%. Those floors are set on the platform and can change. If either number is below the floor, new listings stay free until both recover.',
+  'guides.free_booking_h': 'SportyBet, Bet9ja and booking codes',
+  'guides.free_booking_body':
+    'Some tipsters attach a bookmaker booking code so you can load the same slip in SportyBet, Bet9ja, or another listed bookie. Copy the code in the app — it does not place the bet or guarantee a result. Filter the marketplace for picks with codes, or see VIP and paid football tips on the buy football tips page.',
   'guides.free_faq_q1': 'Do free picks change ROI and win rate?',
   'guides.free_faq_a1': 'Yes. A free pick that settles as won or lost is part of the tipster’s win rate, ROI, and streak. A void or a pick that is still pending is not.',
   'guides.free_faq_q2': 'Is a free pick refunded if it loses?',
@@ -1710,6 +1713,7 @@ const en = {
   'footer.disclaimer': 'BetRollover is an educational tipster platform — not a betting company. Picks are shared for informational purposes only. Neither BetRollover nor tipsters are liable for any losses incurred by acting on picks. Use responsibly.',
   'footer.rights': 'All rights reserved.',
   'footer.credits_design_deployed': 'Design and deployed by',
+  'footer.booking_codes': 'Booking codes (SportyBet & Bet9ja)',
   'footer.resources': 'Resources',
   'footer.discover': 'Discover',
   'footer.telegram_cta': 'Chat on Telegram',
@@ -2558,6 +2562,10 @@ const en = {
   'buy.title': 'VIP football tips and tipster subscriptions',
   'buy.tagline': 'Pay for a single pick or a VIP plan. Settled results stay public so you can judge form before you subscribe.',
   'buy.intro': 'Searches like football tipster subscription, VIP football tips, and paid predictions usually want a public record, a clear price, and a refund if the pick loses. That is what BetRollover sells. We are not a bookmaker. 18+ only.',
+  'buy.regions_h': 'Paid football tips in Ghana, Nigeria, Kenya and worldwide',
+  'buy.regions_body':
+    'BetRollover is built in Ghana: GHS wallets, Mobile Money where enabled, and purchase-protected picks for buyers in Nigeria, Kenya, South Africa, Francophone Africa, and globally. Compare verified tipsters, buy today’s paid predictions, or open a VIP plan on one marketplace.',
+  'buy.regions_about_link': 'About BetRollover & our markets',
   'buy.picks_h': 'Buy a single football tip',
   'buy.picks_body': 'The marketplace lists free and paid football predictions. Compare win rate and ROI, then pay from your wallet. A paid pick that loses is refunded automatically.',
   'buy.vip_h': 'VIP football tipster subscription',

@@ -82,7 +82,13 @@ export async function HomeHeroBanner() {
             {t('home.hero_title')}
           </h1>
           <p
-            className="mt-3 max-w-md text-sm font-semibold leading-relaxed text-white sm:text-[15px]"
+            className="mt-3 max-w-md text-sm font-medium leading-relaxed text-white/95 sm:text-[15px]"
+            style={{ textShadow: '0 1px 3px rgba(0,0,0,0.65), 0 2px 18px rgba(0,0,0,0.4)' }}
+          >
+            {t('home.hero_subtitle')}
+          </p>
+          <p
+            className="mt-2 max-w-md text-sm font-semibold leading-relaxed text-white sm:text-[15px]"
             style={{ textShadow: '0 1px 3px rgba(0,0,0,0.65), 0 2px 18px rgba(0,0,0,0.4)' }}
           >
             {t('home.hero_escrow_line')}

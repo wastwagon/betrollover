@@ -95,6 +95,16 @@ export default async function BuyFootballTipsPage() {
         <article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-7 text-[var(--text)]">
           <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('buy.intro')}</p>
 
+          <h2 id="regions-africa" className="text-lg font-semibold mt-6 scroll-mt-24">
+            {t('buy.regions_h')}
+          </h2>
+          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
+            {t('buy.regions_body')}{' '}
+            <Link href="/about" className="font-semibold text-[var(--primary)] hover:underline">
+              {t('buy.regions_about_link')}
+            </Link>
+          </p>
+
           <h2 className="text-lg font-semibold mt-6">{t('buy.picks_h')}</h2>
           <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
             {t('buy.picks_body')}{' '}
@@ -114,8 +124,15 @@ export default async function BuyFootballTipsPage() {
             </Link>
           </p>
 
-          <h2 className="text-lg font-semibold mt-6">{t('buy.codes_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('buy.codes_body')}</p>
+          <h2 id="booking-codes" className="text-lg font-semibold mt-6 scroll-mt-24">
+            {t('buy.codes_h')}
+          </h2>
+          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
+            {t('buy.codes_body')}{' '}
+            <Link href="/guides/free-and-paid-picks#booking-codes" className="font-semibold text-[var(--primary)] hover:underline">
+              {t('footer.booking_codes')}
+            </Link>
+          </p>
 
           <h2 className="text-lg font-semibold mt-6">{t('buy.compare_h')}</h2>
           <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
