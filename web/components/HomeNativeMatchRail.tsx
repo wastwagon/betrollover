@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getApiUrl, shouldUnoptimizeRemoteImage } from '@/lib/site-config';
 import { useLanguage, useT } from '@/context/LanguageContext';
-import { intlLocaleForLanguage } from '@/lib/intl-locale';
+import { DISPLAY_TIME_ZONE, intlLocaleForLanguage } from '@/lib/intl-locale';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { FixtureLiveChip } from '@/components/FixtureLiveChip';
 import {
@@ -14,6 +14,7 @@ import {
   parseHeadlineMatchesPayload,
   type TodayMatchRow,
 } from '@/lib/home-today-matches';
+import { scheduleAfterIdle } from '@/lib/schedule-after-idle';
 
 const REFRESH_MS = 60_000;
 
@@ -23,15 +24,17 @@ function formatMatchSchedule(
 ): { date: string; time: string; combined: string } {
   try {
     const d = new Date(iso);
+    const tz = { timeZone: DISPLAY_TIME_ZONE };
     return {
-      date: d.toLocaleDateString(intlLocale, { weekday: 'short', month: 'short', day: 'numeric' }),
-      time: d.toLocaleTimeString(intlLocale, { hour: '2-digit', minute: '2-digit' }),
+      date: d.toLocaleDateString(intlLocale, { weekday: 'short', month: 'short', day: 'numeric', ...tz }),
+      time: d.toLocaleTimeString(intlLocale, { hour: '2-digit', minute: '2-digit', ...tz }),
       combined: d.toLocaleString(intlLocale, {
         weekday: 'short',
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
+        ...tz,
       }),
     };
   } catch {
@@ -86,9 +89,12 @@ export function HomeNativeMatchRail({
         .catch(() => {});
     };
 
-    load();
+    const cancelIdle = scheduleAfterIdle(load);
     const id = window.setInterval(load, REFRESH_MS);
-    return () => window.clearInterval(id);
+    return () => {
+      cancelIdle();
+      window.clearInterval(id);
+    };
   }, []);
 
   const pickCounts = useMemo(() => {

@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { preload } from 'react-dom';
 import { buttonClassName } from '@/components/ui/button-styles';
 import { getLocale, buildT } from '@/lib/i18n';
 import { HERO_LCP_MOBILE_AVIF, HERO_LCP_DESKTOP_AVIF } from '@/lib/marketing-assets';
@@ -10,17 +9,6 @@ import { HERO_LCP_MOBILE_AVIF, HERO_LCP_DESKTOP_AVIF } from '@/lib/marketing-ass
  */
 export async function HomeHeroBanner() {
   const t = buildT(await getLocale());
-
-  preload(HERO_LCP_MOBILE_AVIF, {
-    as: 'image',
-    fetchPriority: 'high',
-    type: 'image/avif',
-  });
-  preload(HERO_LCP_DESKTOP_AVIF, {
-    as: 'image',
-    fetchPriority: 'high',
-    type: 'image/avif',
-  });
 
   return (
     <section
@@ -55,7 +43,7 @@ export async function HomeHeroBanner() {
             width={800}
             height={533}
             fetchPriority="high"
-            decoding="sync"
+            decoding="async"
             className="absolute inset-0 h-full w-full object-cover object-[center_42%] brightness-[1.04] contrast-[1.02] saturate-[1.08]"
           />
         </picture>
@@ -71,7 +59,7 @@ export async function HomeHeroBanner() {
 
       <div className="relative mx-auto flex min-h-[min(68svh,480px)] w-full max-w-7xl flex-col justify-end px-4 pb-8 pt-14 sm:min-h-[400px] sm:px-6 sm:pb-10 sm:pt-16 lg:px-8 lg:pb-12">
         <div className="max-w-xl">
-          <p className="mb-3 max-w-full rounded-2xl border border-white/25 bg-black/35 px-3 py-1.5 text-[10px] font-semibold uppercase leading-snug tracking-[0.12em] text-white/95 sm:text-[11px]">
+          <p className="mb-3 max-w-full rounded-2xl border border-white/40 bg-black/50 px-3 py-1.5 text-[10px] font-semibold uppercase leading-snug tracking-[0.12em] text-white sm:text-[11px]">
             {t('home.hero_badge')}
           </p>
           <h1

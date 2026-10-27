@@ -1,5 +1,8 @@
 import type { SupportedLanguage } from '@/context/LanguageContext';
 
+/** Single timezone for kickoff labels so SSR (often UTC) matches the browser (React #418). */
+export const DISPLAY_TIME_ZONE = 'Africa/Accra';
+
 /** Stable BCP-47 tags so SSR (Node) and the browser format dates the same way. */
 export function intlLocaleForLanguage(lang: SupportedLanguage): string {
   return lang === 'fr' ? 'fr-FR' : 'en-GB';

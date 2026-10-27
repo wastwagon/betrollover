@@ -83,8 +83,8 @@ const nextConfig = {
   async headers() {
     const securityHeaders = buildSecurityHeaders();
     const heroPreloadLink = [
-      `<${HERO_LCP_MOBILE_AVIF}>; rel=preload; as=image; type=image/avif; fetchpriority=high`,
-      `<${HERO_LCP_DESKTOP_AVIF}>; rel=preload; as=image; type=image/avif; media=(min-width: 768px)`,
+      `<${HERO_LCP_MOBILE_AVIF}>; rel=preload; as=image; type=image/avif; fetchpriority=high; media=(max-width: 767px)`,
+      `<${HERO_LCP_DESKTOP_AVIF}>; rel=preload; as=image; type=image/avif; fetchpriority=high; media=(min-width: 768px)`,
     ].join(', ');
     const rules = [
       {

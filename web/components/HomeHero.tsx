@@ -9,6 +9,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import type { HomePublicStats } from '@/lib/home-public-data';
 import { HomeNativeMatchRail } from '@/components/HomeNativeMatchRail';
 import type { TodayMatchRow } from '@/lib/home-today-matches';
+import { scheduleAfterIdle } from '@/lib/schedule-after-idle';
 
 const defaultStats: HomePublicStats = {
   verifiedTipsters: 0,
@@ -62,12 +63,15 @@ export function HomeHero({
         });
     };
 
-    fetchStats();
+    const cancelIdle = scheduleAfterIdle(fetchStats);
     const onVisible = () => {
       if (document.visibilityState === 'visible') fetchStats();
     };
     document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelIdle();
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [initialStats]);
 
   const s = stats || initialStats || defaultStats;
@@ -117,7 +121,7 @@ export function HomeHero({
               >
                 <p
                   className="text-xl font-bold tabular-nums text-[var(--text)] md:text-2xl"
-                  suppressHydrationWarning={item.key === 'paidOut'}
+                  suppressHydrationWarning
                 >
                   {item.value}
                 </p>
