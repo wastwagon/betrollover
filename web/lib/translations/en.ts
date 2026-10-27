@@ -1709,6 +1709,7 @@ const en = {
   'footer.legal': 'Legal',
   'footer.disclaimer': 'BetRollover is an educational tipster platform — not a betting company. Picks are shared for informational purposes only. Neither BetRollover nor tipsters are liable for any losses incurred by acting on picks. Use responsibly.',
   'footer.rights': 'All rights reserved.',
+  'footer.credits_design_deployed': 'Design and deployed by',
   'footer.resources': 'Resources',
   'footer.discover': 'Discover',
   'footer.telegram_cta': 'Chat on Telegram',

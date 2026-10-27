@@ -137,6 +137,17 @@ export function AppFooter() {
             {t('footer.disclaimer')}
           </span>
         </div>
+        <p className="mt-4 text-center text-[11px] text-[var(--text-muted)]">
+          {t('footer.credits_design_deployed')}{' '}
+          <a
+            href="https://oceancyber.net/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={footerLinkClass}
+          >
+            OceanCyber
+          </a>
+        </p>
       </div>
     </footer>
   );

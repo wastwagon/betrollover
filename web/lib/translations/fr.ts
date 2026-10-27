@@ -1704,6 +1704,7 @@ const fr: Record<string, string> = {
   'footer.legal': 'Légal',
   'footer.disclaimer': 'BetRollover est une plateforme éducative de tipsters — pas une société de paris. Les pronostics sont partagés à titre informatif uniquement. Ni BetRollover ni les tipsters ne sont responsables des pertes encourues. Utilisez de façon responsable.',
   'footer.rights': 'Tous droits réservés.',
+  'footer.credits_design_deployed': 'Conception et déploiement par',
   'footer.resources': 'Ressources',
   'footer.discover': 'Découvrir',
   'footer.telegram_cta': 'Discuter sur Telegram',
