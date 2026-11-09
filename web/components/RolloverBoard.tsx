@@ -296,7 +296,6 @@ export function RolloverBoard() {
         : null;
 
   const archive = board.archive;
-  const todayMoney = board.days.find((d) => d.dayNumber === board.today.dayNumber);
 
   const finishTotal =
     board.exampleFinishGhs != null
@@ -316,10 +315,6 @@ export function RolloverBoard() {
           : null;
 
   const startStake = formatAmount(board.exampleStakeStartGhs);
-  const outcomeCounts = [
-    { key: 'finished', label: t('rollover.stat_finished'), value: String(archive?.campaignsCompleted ?? 0) },
-    { key: 'cut', label: t('rollover.stat_cut'), value: String(archive?.campaignsCut ?? 0) },
-  ];
 
   return (
     <div className="space-y-6">
@@ -331,12 +326,6 @@ export function RolloverBoard() {
           <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text)]">
             {runNote}
           </h2>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">
-            {t('rollover.ladder_hint', {
-              stake: startStake,
-              odds: Number(board.targetOdds).toFixed(2),
-            })}
-          </p>
         </div>
         <div className="flex items-center gap-3">
           <div className="h-0.5 flex-1 overflow-hidden bg-[var(--separator)]">
@@ -385,16 +374,6 @@ export function RolloverBoard() {
             </p>
           )}
           {coupon && skipNote ? <p className="mt-3 text-xs text-[var(--text-muted)]">{skipNote}</p> : null}
-          {todayMoney?.exampleStakeGhs != null && todayMoney.exampleReturnGhs != null ? (
-            <p className="mt-3 text-xs text-[var(--text-muted)]">
-              {t('rollover.example_hint', {
-                stake: formatAmount(todayMoney.exampleStakeGhs),
-                ret: formatAmount(todayMoney.exampleReturnGhs),
-                day: String(board.today.dayNumber),
-                odds: displayOdds(todayMoney, board.targetOdds).label,
-              })}
-            </p>
-          ) : null}
         </div>
       </section>
 
@@ -403,7 +382,7 @@ export function RolloverBoard() {
           {t('rollover.records')}
         </p>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Surface variant="raised" padding="sm" className="flex min-h-[108px] flex-col justify-between">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
               {t('rollover.stat_start')}
@@ -432,24 +411,6 @@ export function RolloverBoard() {
                 {t('rollover.stat_harvest_hint', { days: String(board.planDays) })}
               </p>
             </div>
-          </Surface>
-
-          <Surface variant="raised" padding="sm" className="flex min-h-[108px] flex-col justify-between">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
-              {t('rollover.stat_campaigns')}
-            </p>
-            <dl className="mt-auto grid grid-cols-2 gap-3">
-              {outcomeCounts.map((item) => (
-                <div key={item.key} className="min-w-0">
-                  <dt className="truncate text-[10px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
-                    {item.label}
-                  </dt>
-                  <dd className="mt-1 text-[1.65rem] font-bold tabular-nums tracking-tight leading-none text-[var(--text)]">
-                    {item.value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
           </Surface>
         </div>
 
@@ -597,12 +558,9 @@ export function RolloverBoard() {
         </Surface>
       </section>
 
-      <aside className="border-t border-[var(--separator)] pt-5 text-sm text-[var(--text-muted)]" role="note">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">
-          {t('rollover.disclaimer_label')}
-        </p>
-        <p className="mt-2 leading-relaxed max-w-3xl">{t('rollover.disclaimer')}</p>
-        <p className="mt-2">
+      <aside className="border-t border-[var(--separator)] pt-5 text-xs text-[var(--text-muted)]" role="note">
+        <p className="max-w-2xl leading-relaxed">
+          {t('rollover.disclaimer')}{' '}
           <Link href="/responsible-gambling" className="font-medium text-[var(--text)] underline underline-offset-2">
             {t('resp.headline')}
           </Link>
