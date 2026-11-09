@@ -224,7 +224,7 @@ export class TipstersApiService {
 
   /**
    * Posts in the rolling activity window (any sport). Used as an “still posting” gate.
-   * Marketplace tickets for every tipster; house VIP desk also counts subscription slips.
+   * Marketplace tickets for every tipster; AccaSure1X2 also counts VIP subscription slips.
    * postsInWindow is distinct Accra calendar days with at least one counted ticket.
    */
   private async loadMarketplaceActivityByUserIds(
@@ -265,7 +265,7 @@ export class TipstersApiService {
 
   /**
    * All-time leaderboard rows for tipsters who posted in the activity window
-   * (marketplace, or house VIP subscription slips).
+   * (marketplace, or AccaSure1X2 VIP subscription slips).
    * Sorted by form points (results + capped recent posting days), then ROI. Same list as homepage Top Performing.
    */
   private async computeAllTimeLeaderboardSortedEntries(sport?: string): Promise<{
@@ -1229,7 +1229,7 @@ export class TipstersApiService {
     return this.accumulatorsService.mergeSocialCountsOntoRecords(mapped, viewerUserId);
   }
 
-  /** Active coupons for this tipster. Marketplace listings for everyone; house VIP live slips for subscribers only. */
+  /** Active coupons for this tipster. Marketplace for everyone; AccaSure1X2 VIP live slips for subscribers only. */
   async getMarketplaceCouponsForTipster(
     username: string,
     window: TipsterProfilePerformanceWindow,

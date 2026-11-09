@@ -8,7 +8,6 @@ import {
   isVipTipsterEnabled,
 } from '../../config/vip-tipster.config';
 import { accraDateStr, addDateStrDays } from '../../config/acca-desk-slots';
-import { isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
 import { SyncStatus } from '../fixtures/entities/sync-status.entity';
 import { SyncLockService } from '../fixtures/sync-lock.service';
 import { VipTipsterPublisherService } from './vip-tipster-publisher.service';
@@ -18,6 +17,7 @@ const PREDICTION_TIME_ZONE =
   process.env.PREDICTION_TIMEZONE || process.env.TIMEZONE || 'Africa/Accra';
 const BOOT_CATCHUP_MS = 20_000;
 
+/** Free Sure · Two-Fold desk cron (legacy syncType / env: VIP_TIPSTER_*). Not AccaSure1X2 VIP. */
 @Injectable()
 export class VipTipsterSchedulerService implements OnModuleInit {
   private readonly logger = new Logger(VipTipsterSchedulerService.name);
@@ -30,13 +30,11 @@ export class VipTipsterSchedulerService implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    if (!isVipTipsterEnabled() || !isSchedulingEnabled() || !isSubscriptionsEnabled()) {
+    if (!isVipTipsterEnabled() || !isSchedulingEnabled()) {
       this.logger.warn(
         !isVipTipsterEnabled()
-          ? 'VIP tipster is disabled (VIP_TIPSTER_ENABLED=false).'
-          : !isSubscriptionsEnabled()
-            ? 'VIP tipster cron is off (SUBSCRIPTIONS_ENABLED=false).'
-            : 'VIP tipster cron is off (ENABLE_SCHEDULING=false).',
+          ? 'Sure · Two-Fold desk is disabled (VIP_TIPSTER_ENABLED=false).'
+          : 'Sure · Two-Fold desk cron is off (ENABLE_SCHEDULING=false).',
       );
       return;
     }
@@ -45,7 +43,7 @@ export class VipTipsterSchedulerService implements OnModuleInit {
     }, BOOT_CATCHUP_MS);
   }
 
-  /** 20:00 Africa/Accra — tomorrow’s VIP slips (~24h ahead), before Acca Desk 20:10. */
+  /** 20:00 Africa/Accra — tomorrow’s free Two-Fold slips, before Acca Desk 20:10. */
   @Cron(VIP_TIPSTER_EARLY_CRON, { timeZone: PREDICTION_TIME_ZONE })
   async handleEarlyTomorrow(): Promise<void> {
     const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
@@ -53,7 +51,7 @@ export class VipTipsterSchedulerService implements OnModuleInit {
     await this.runLocked('20:00 early', tomorrow, 'vip_desk_early');
   }
 
-  /** 00:20 Africa/Accra — today’s remaining VIP slots, before Acca Desk 00:30. */
+  /** 00:20 Africa/Accra — today’s remaining free Two-Fold slots, before Acca Desk 00:30. */
   @Cron(VIP_TIPSTER_DAILY_CRON, { timeZone: PREDICTION_TIME_ZONE })
   async handleMidnightCatchup(): Promise<void> {
     const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
@@ -67,7 +65,7 @@ export class VipTipsterSchedulerService implements OnModuleInit {
     await this.runLocked('05:50 catch-up', today, 'vip_desk');
   }
 
-  /** Before Acca Desk 08:45 — last VIP fill of the morning. */
+  /** Before Acca Desk 08:45 — last free Two-Fold fill of the morning. */
   @Cron('35 8 * * *', { timeZone: PREDICTION_TIME_ZONE })
   async handleMorningCatchup(): Promise<void> {
     const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
@@ -75,7 +73,7 @@ export class VipTipsterSchedulerService implements OnModuleInit {
   }
 
   private async catchUpIfDue(): Promise<void> {
-    if (!isVipTipsterEnabled() || !isSchedulingEnabled() || !isSubscriptionsEnabled()) return;
+    if (!isVipTipsterEnabled() || !isSchedulingEnabled()) return;
     const today = accraDateStr(new Date(), PREDICTION_TIME_ZONE);
     await this.runLocked('boot catch-up', today, 'vip_desk');
   }
@@ -85,15 +83,15 @@ export class VipTipsterSchedulerService implements OnModuleInit {
     deskDayStr: string,
     syncType: 'vip_desk' | 'vip_desk_early',
   ): Promise<void> {
-    if (!isVipTipsterEnabled() || !isSchedulingEnabled() || !isSubscriptionsEnabled()) return;
+    if (!isVipTipsterEnabled() || !isSchedulingEnabled()) return;
 
     if (!(await this.syncLock.tryStartSync('vip_desk'))) {
-      this.logger.warn(`VIP tipster skipped (${label}) — already running`);
+      this.logger.warn(`Sure · Two-Fold skipped (${label}) — already running`);
       return;
     }
 
     try {
-      this.logger.log(`VIP tipster starting (${label}, deskDay=${deskDayStr})`);
+      this.logger.log(`Sure · Two-Fold starting (${label}, deskDay=${deskDayStr})`);
       const result = await this.publisher.runDaily({ ensureSetup: true, deskDayStr });
       await this.syncStatusRepo.upsert(
         {
@@ -118,11 +116,11 @@ export class VipTipsterSchedulerService implements OnModuleInit {
         );
       }
       this.logger.log(
-        `VIP tipster done (${label}): published=${result.published} empty=${result.skippedEmptyPool} errors=${result.errors}`,
+        `Sure · Two-Fold done (${label}): published=${result.published} empty=${result.skippedEmptyPool} errors=${result.errors}`,
       );
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      this.logger.error(`VIP tipster failed (${label}): ${message}`);
+      this.logger.error(`Sure · Two-Fold failed (${label}): ${message}`);
       await this.syncStatusRepo.upsert(
         {
           syncType: 'vip_desk',

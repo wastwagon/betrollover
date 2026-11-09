@@ -118,7 +118,7 @@ interface PickCardProps {
   reviewCount?: number | null;
   /** From API: viewer may see full legs (purchase, subscription, free/settled, seller, admin). Drives View vs Purchase CTA when true. */
   picksRevealed?: boolean;
-  /** Price 0 but legs stay covered until an active VIP subscription (house VIP · Two-Fold). */
+  /** Price 0 but legs stay covered until an active AccaSure1X2 VIP subscription. */
   requiresSubscription?: boolean;
   /** When legs are visible, API may include bookmaker + code (withheld for locked paid picks). */
   bookmakerKey?: string | null;

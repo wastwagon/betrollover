@@ -78,7 +78,7 @@ describe('telegram-copy', () => {
     delete process.env.TELEGRAM_CONTACT_HANDLE;
     const text = formatVipPublicWinPost({
       siteOrigin: 'https://betrollover.com',
-      title: 'VIP · Two-Fold',
+      title: 'Sure · Two-Fold',
       tipsterName: 'LateBloomer',
       totalOdds: 1.59,
       legs: [{ matchDescription: 'Team A vs Team B', prediction: 'Home', result: 'won', homeScore: 2, awayScore: 0 }],

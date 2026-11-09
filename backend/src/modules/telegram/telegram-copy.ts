@@ -11,7 +11,7 @@ import { PUBLIC_CHANNEL_SURE_USERNAME } from '../../config/rollover-desk.config'
  *
  * Off by default: 10:00 tipster recruit, 19:00 second growth post.
  * Tip and win alerts stay event-driven (Acca Sure on the free channel).
- * VIP Two-Fold slips stay event-/desk-driven in BETROLLOVER VIP (not throttled here).
+ * AccaSure1X2 VIP slips stay event-/desk-driven in BETROLLOVER VIP (not throttled here).
  *
  * Tip & win alerts (event-driven): product first + short engagement footer.
  * Reaction legend lives ONLY on the community appeal (not every tip).

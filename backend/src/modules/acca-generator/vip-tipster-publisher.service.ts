@@ -22,13 +22,10 @@ import {
   type AccaDeskSlotKey,
 } from '../../config/acca-desk-slots';
 import { ACCA_DESK_TIPSTER_TYPE } from '../../config/acca-desk-tipsters.config';
-import { VIP_PACKAGE_OWNER_USERNAME } from '../../config/vip-roster.config';
-import { isSubscriptionsEnabled } from '../../common/subscriptions-enabled';
 import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.entity';
 import { AccumulatorPick } from '../accumulators/entities/accumulator-pick.entity';
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
-import { TipsterSubscriptionPackage } from '../subscriptions/entities/tipster-subscription-package.entity';
 import { SyncStatus } from '../fixtures/entities/sync-status.entity';
 import { AccaGeneratorService } from './acca-generator.service';
 import { VipTipsterSetupService } from './vip-tipster-setup.service';
@@ -65,8 +62,6 @@ export class VipTipsterPublisherService {
     private readonly pickRepo: Repository<AccumulatorPick>,
     @InjectRepository(Fixture)
     private readonly fixtureRepo: Repository<Fixture>,
-    @InjectRepository(TipsterSubscriptionPackage)
-    private readonly packageRepo: Repository<TipsterSubscriptionPackage>,
     @InjectRepository(SyncStatus)
     private readonly syncStatusRepo: Repository<SyncStatus>,
   ) {}
@@ -75,16 +70,6 @@ export class VipTipsterPublisherService {
     const tipster = await this.tipsterRepo.findOne({
       where: { username: VIP_TIPSTER.username, tipsterType: VIP_TIPSTER_TYPE },
     });
-    const packageOwner = await this.tipsterRepo.findOne({
-      where: { username: VIP_PACKAGE_OWNER_USERNAME },
-      select: ['userId'],
-    });
-    const pkg = packageOwner?.userId
-      ? await this.packageRepo.findOne({
-          where: { tipsterUserId: packageOwner.userId, status: 'active' },
-          order: { createdAt: 'ASC' },
-        })
-      : null;
 
     const tz = this.predictionTimeZone();
     const todayDesk = accraDateStr(new Date(), tz);
@@ -173,7 +158,7 @@ export class VipTipsterPublisherService {
 
     return {
       enabled: isVipTipsterEnabled(),
-      subscriptionsEnabled: isSubscriptionsEnabled(),
+      desk: 'sure_two_fold_free',
       cron: VIP_TIPSTER_DAILY_CRON,
       earlyCron: VIP_TIPSTER_EARLY_CRON,
       timezone: tz,
@@ -192,9 +177,6 @@ export class VipTipsterPublisherService {
       setup: !!tipster,
       isActive: tipster?.isActive ?? false,
       userId: tipster?.userId ?? null,
-      packageId: pkg?.id ?? null,
-      packageName: pkg?.name ?? null,
-      packagePrice: pkg ? Number(pkg.price) : null,
       todayPublished: todayTickets.length,
       tomorrowPublished: tomorrowTickets.length,
       syncStatus: sync
@@ -223,13 +205,10 @@ export class VipTipsterPublisherService {
     const deskDayStr = opts?.deskDayStr || accraDateStr(new Date(), tz);
 
     if (!isVipTipsterEnabled()) {
-      this.logger.warn('VIP tipster disabled (VIP_TIPSTER_ENABLED=false)');
+      this.logger.warn('Sure · Two-Fold desk disabled (VIP_TIPSTER_ENABLED=false — legacy env name)');
       return this.emptyResult(deskDayStr, 'disabled');
     }
-    if (!isSubscriptionsEnabled()) {
-      this.logger.warn('VIP tipster skipped — SUBSCRIPTIONS_ENABLED is off');
-      return this.emptyResult(deskDayStr, 'subscriptions_off');
-    }
+    // Free desk: do not gate on SUBSCRIPTIONS_ENABLED (that flag is for AccaSure1X2 VIP shop only).
 
     if (opts?.ensureSetup !== false) {
       await this.setup.initializeVipTipster();
@@ -335,12 +314,12 @@ export class VipTipsterPublisherService {
           slotKey: slot.key,
         });
         this.logger.log(
-          `VIP published ${generated.construction} ${slot.key} deskDay=${deskDayStr} ticket=#${ticketId} odds=${generated.combinedOdds}`,
+          `Sure · Two-Fold published ${generated.construction} ${slot.key} deskDay=${deskDayStr} ticket=#${ticketId} odds=${generated.combinedOdds}`,
         );
       } catch (err: unknown) {
         result.errors++;
         const message = err instanceof Error ? err.message : String(err);
-        this.logger.error(`VIP publish failed ${slot.key} deskDay=${deskDayStr}: ${message}`);
+        this.logger.error(`Sure · Two-Fold publish failed ${slot.key} deskDay=${deskDayStr}: ${message}`);
         result.details.push({ status: 'error', slotKey: slot.key, message });
       }
     }

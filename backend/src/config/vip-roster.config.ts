@@ -3,6 +3,7 @@
  *
  * VIP plan (one package, one Telegram) is AccaSure1X2 only (Sure · 1X2).
  * AccaSure1X2 owns the package and the 7-day rollover board.
+ * Free Sure · Two-Fold (SureTwoFold / tipster_type vip_desk) is NOT on this roster.
  * TheAnalyst / LateBloomer were removed from VIP — pending slips are ungated on setup.
  * SureTwoFold keeps Home+Home rules and is the free public tipster.
  */

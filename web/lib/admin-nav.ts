@@ -43,12 +43,14 @@ export function getAdminNavItems(): AdminNavItem[] {
     { href: '/admin/analytics', icon: IconTrending, label: 'Analytics' },
     { href: '/admin/ai-predictions', icon: IconTarget, label: 'AI Predictions' },
     { href: '/admin/acca-desk', icon: IconChart, label: 'Acca Desk' },
-    { href: '/admin/vip-tipster', icon: IconStar, label: 'VIP Two-Fold' },
+    { href: '/admin/acca-desk#rollover', icon: IconTrending, label: '7-day Rollover' },
+    { href: '/admin/sure-two-fold', icon: IconTarget, label: 'Sure · Two-Fold' },
   ];
   if (vip) {
     items.push(
       { href: '/admin/ai-tipster-packages', icon: IconPackage, label: 'AI Packages' },
       { href: '/admin/subscriptions', icon: IconStar, label: 'VIP subscribers' },
+      { href: '/admin/acca-desk#vip-telegram', icon: IconBell, label: 'VIP Telegram' },
     );
   }
   items.push(

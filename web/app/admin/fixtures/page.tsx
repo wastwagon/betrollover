@@ -1271,7 +1271,7 @@ export default function AdminFixturesPage() {
                 Needs settle (past kickoff, still pending)
               </h2>
               <p className="text-xs text-amber-800/80 dark:text-amber-200/80 mt-1 max-w-2xl">
-                The list below only shows upcoming NS fixtures. Matches that already kicked off (e.g. VIP WSL Cup)
+                The list below only shows upcoming NS fixtures. Matches that already kicked off (e.g. WSL Cup)
                 appear here when API-Sports still has no FT score. Settle them so the 7-day rollover can advance.
               </p>
             </div>

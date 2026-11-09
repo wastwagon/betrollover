@@ -1,14 +1,19 @@
 /**
- * Free two-fold desk — Home+Home only, separate from Acca Desk.
+ * Free Sure · Two-Fold desk — Home+Home only, separate from Acca Desk and AccaSure1X2 VIP.
+ *
+ * Naming debt (do not confuse):
+ * - Tipster: SureTwoFold (free). DB tipster_type remains `vip_desk` for history.
+ * - Env flags stay VIP_TIPSTER_* in Coolify (legacy) but control this free desk.
+ * - Paid VIP plan + VIP Telegram + 7-day Rollover owner: AccaSure1X2 (vip-roster.config.ts).
  *
  * Same Acca Desk kick-off windows (Early / Afternoon / Evening / Midnight).
  * Tomorrow’s 20:00 pass only fills Early + Afternoon so Evening cannot eat the 2/day cap.
  * Publishes first so Acca Desk can still mix leftover fixtures.
- * Construction is unchanged: two Home wins @ 1.20–1.40, combined 1.50–1.99.
- * This tipster is free. The VIP plan is AccaSure1X2 only (see vip-roster.config.ts).
  */
 
+/** DB tipster_type for the free Two-Fold desk (legacy value — not AccaSure1X2 VIP). */
 export const VIP_TIPSTER_TYPE = 'vip_desk';
+export const FREE_TWO_FOLD_TIPSTER_TYPE = VIP_TIPSTER_TYPE;
 
 /**
  * Earlier usernames. Setup renames the row in place so history stays on the same account.
@@ -24,6 +29,9 @@ export const VIP_TIPSTER = {
   strategy_id: 'vip_desk_two_fold',
   legs: 2 as const,
 };
+
+/** Clear alias — prefer this name in new code. */
+export const FREE_TWO_FOLD_DESK = VIP_TIPSTER;
 
 export const VIP_PACKAGE_NAME = 'VIP Monthly';
 export const VIP_PACKAGE_PRICE = 300;
@@ -65,10 +73,13 @@ export const VIP_CONSTRUCTIONS: {
   },
 ];
 
+/** Legacy env VIP_TIPSTER_ENABLED — enables the free Sure · Two-Fold desk. */
 export function isVipTipsterEnabled(): boolean {
   const raw = (process.env.VIP_TIPSTER_ENABLED || 'true').toLowerCase().trim();
   return raw !== 'false' && raw !== '0' && raw !== 'no';
 }
+
+export const isFreeTwoFoldDeskEnabled = isVipTipsterEnabled;
 
 /** 00:20 Accra — today’s catch-up, before Acca Desk 00:30. */
 export const VIP_TIPSTER_DAILY_CRON = process.env.VIP_TIPSTER_DAILY_CRON || '20 0 * * *';

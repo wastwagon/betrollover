@@ -65,7 +65,7 @@ import {
   marketplaceOpenFreeListingSql,
 } from '../../common/subscription-gated-listing.util';
 import { VIP_TIPSTER, VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
-import { isVipRosterUsername } from '../../config/vip-roster.config';
+import { isVipRosterUsername, VIP_PACKAGE_OWNER_USERNAME } from '../../config/vip-roster.config';
 import { RolloverDay } from '../acca-generator/entities/rollover-day.entity';
 
 /** Keep pick create aligned with Acca Generator max legs (admin can still lower Acca range). */
@@ -1662,33 +1662,58 @@ export class AccumulatorsService {
   }
 
   /**
-   * List existing house VIP tickets on the marketplace (covered for non-subscribers).
-   * Idempotent — used so admin/customer marketplace and reports see SureTwoFold without waiting for the next cron.
+   * Backfill marketplace rows for AccaSure1X2 (VIP · both) and SureTwoFold (free · marketplace).
+   * Idempotent — marketplace browse calls this so cron lag does not hide desk slips.
    */
   async ensureHouseVipMarketplaceListings(): Promise<number> {
     if (this.houseVipListEnsure) return this.houseVipListEnsure;
-    this.houseVipListEnsure = this.ensureHouseVipMarketplaceListingsInner().finally(() => {
+    this.houseVipListEnsure = this.ensureDeskMarketplaceListingsInner().finally(() => {
       this.houseVipListEnsure = null;
     });
     return this.houseVipListEnsure;
   }
 
-  private async ensureHouseVipMarketplaceListingsInner(): Promise<number> {
+  private async ensureDeskMarketplaceListingsInner(): Promise<number> {
+    const vipListed = await this.ensureTipsterMarketplaceBackfill({
+      username: VIP_PACKAGE_OWNER_USERNAME,
+      placement: 'both',
+      attachVipPackage: true,
+    });
+    const freeListed = await this.ensureTipsterMarketplaceBackfill({
+      username: VIP_TIPSTER.username,
+      tipsterType: VIP_TIPSTER_TYPE,
+      placement: 'marketplace',
+      attachVipPackage: false,
+    });
+    return vipListed + freeListed;
+  }
+
+  private async ensureTipsterMarketplaceBackfill(opts: {
+    username: string;
+    tipsterType?: string;
+    placement: 'marketplace' | 'both';
+    attachVipPackage: boolean;
+  }): Promise<number> {
     const tipster = await this.tipsterRepo.findOne({
-      where: { username: VIP_TIPSTER.username, tipsterType: VIP_TIPSTER_TYPE },
+      where: opts.tipsterType
+        ? { username: opts.username, tipsterType: opts.tipsterType }
+        : { username: opts.username },
       select: ['userId'],
     });
     if (!tipster?.userId) return 0;
 
-    const pkgRows = await this.dataSource.query(
-      `SELECT id FROM tipster_subscription_packages
-       WHERE tipster_user_id = $1 AND status = 'active'
-       ORDER BY created_at ASC
-       LIMIT 1`,
-      [tipster.userId],
-    );
-    const packageId = Number(pkgRows?.[0]?.id);
-    if (!Number.isFinite(packageId) || packageId < 1) return 0;
+    let packageId: number | null = null;
+    if (opts.attachVipPackage) {
+      const pkgRows = await this.dataSource.query(
+        `SELECT id FROM tipster_subscription_packages
+         WHERE tipster_user_id = $1 AND status = 'active'
+         ORDER BY created_at ASC
+         LIMIT 1`,
+        [tipster.userId],
+      );
+      packageId = Number(pkgRows?.[0]?.id);
+      if (!Number.isFinite(packageId) || packageId! < 1) return 0;
+    }
 
     const unlisted = await this.ticketRepo
       .createQueryBuilder('t')
@@ -1716,14 +1741,18 @@ export class AccumulatorsService {
         price: 0,
         status: 'active',
         maxPurchases: 999999,
-        placement: 'both',
-        subscriptionPackageId: packageId,
+        placement: opts.placement,
+        subscriptionPackageId: opts.attachVipPackage ? packageId : null,
       });
-      await this.subscriptionsService.addCouponToPackages(ticket.id, [packageId], tipster.userId);
+      if (opts.attachVipPackage && packageId) {
+        await this.subscriptionsService.addCouponToPackages(ticket.id, [packageId], tipster.userId);
+      }
       listed += 1;
     }
     if (listed > 0) {
-      this.logger.log(`Listed ${listed} house VIP ticket(s) on marketplace (covered for non-subscribers)`);
+      this.logger.log(
+        `Listed ${listed} ${opts.username} ticket(s) on marketplace (placement=${opts.placement})`,
+      );
     }
     return listed;
   }

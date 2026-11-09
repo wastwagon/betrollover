@@ -95,9 +95,9 @@ export default function AdminSeoPage() {
   const apiProbes = report?.probes.filter((p) => p.layer === 'api') ?? [];
 
   return (
-    <div className="flex min-h-screen w-full min-w-0">
+    <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
-      <main className="flex-1 min-w-0 p-4 md:p-8 max-w-5xl">
+      <main className="admin-main-sibling section-ux-admin-main min-w-0 max-w-5xl">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-[var(--text)]">SEO / GSC health</h1>

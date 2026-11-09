@@ -310,15 +310,30 @@ export class AdminController {
     return this.accaDeskPublisher.getOverview();
   }
 
+  /** @deprecated Prefer setup/sure-two-fold — free Sure · Two-Fold desk (not AccaSure1X2 VIP). */
   @Post('setup/vip-tipster')
   async initializeVipTipster(@CurrentUser() user: User) {
+    return this.initializeSureTwoFold(user);
+  }
+
+  @Post('setup/sure-two-fold')
+  async initializeSureTwoFold(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.vipTipsterSetup.initializeVipTipster();
   }
 
-  /** Manual VIP Two-Fold publish. Body `{ deskDay?: 'today' | 'tomorrow' | YYYY-MM-DD }`. */
+  /** @deprecated Prefer sure-two-fold/run-daily */
   @Post('vip-tipster/run-daily')
   async runVipTipsterDaily(
+    @CurrentUser() user: User,
+    @Body() body?: { deskDay?: string },
+  ) {
+    return this.runSureTwoFoldDaily(user, body);
+  }
+
+  /** Manual free Sure · Two-Fold publish. Body `{ deskDay?: 'today' | 'tomorrow' | YYYY-MM-DD }`. */
+  @Post('sure-two-fold/run-daily')
+  async runSureTwoFoldDaily(
     @CurrentUser() user: User,
     @Body() body?: { deskDay?: string },
   ) {
@@ -336,15 +351,30 @@ export class AdminController {
     });
   }
 
+  /** @deprecated Prefer sure-two-fold/overview */
   @Get('vip-tipster/overview')
   async getVipTipsterOverview(@CurrentUser() user: User) {
+    return this.getSureTwoFoldOverview(user);
+  }
+
+  @Get('sure-two-fold/overview')
+  async getSureTwoFoldOverview(@CurrentUser() user: User) {
     if (user.role !== 'admin') throw new ForbiddenException('Admin access required');
     return this.vipTipsterPublisher.getOverview();
   }
 
-  /** Post a VIP Two-Fold coupon to Telegram again (new message if the last one was deleted). */
+  /** @deprecated Prefer telegram/vip/repost-coupon/:id */
   @Post('vip-tipster/tickets/:id/repost-telegram')
   async repostVipTipsterTelegram(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.repostAccaSureVipTelegram(user, id);
+  }
+
+  /** Re-post an AccaSure1X2 VIP coupon to VIP Telegram (not free Sure · Two-Fold). */
+  @Post('telegram/vip/repost-coupon/:id')
+  async repostAccaSureVipTelegram(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
   ) {
@@ -353,7 +383,7 @@ export class AdminController {
     if (!result.ok) {
       if (result.error === 'not_found') throw new NotFoundException('Coupon not found');
       if (result.error === 'not_vip_coupon') {
-        throw new BadRequestException('That coupon is not a VIP Two-Fold slip');
+        throw new BadRequestException('That coupon is not an AccaSure1X2 VIP slip');
       }
       if (result.error === 'not_configured') {
         throw new BadRequestException('VIP Telegram is not configured');

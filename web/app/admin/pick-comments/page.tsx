@@ -79,7 +79,7 @@ export default function AdminPickCommentsPage() {
   return (
     <div className="min-h-screen bg-[var(--bg)] flex">
       <AdminSidebar />
-      <main className="flex-1 p-4 md:p-8 md:ml-64 max-w-5xl">
+      <main className="admin-main-sibling section-ux-admin-main min-w-0 max-w-5xl">
         <h1 className="text-2xl font-bold text-[var(--text)] mb-1">Pick comments</h1>
         <p className="text-sm text-[var(--text-muted)] mb-6">
           Moderate comments on marketplace picks. Deletes are soft-deleted in the database.

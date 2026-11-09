@@ -32,7 +32,10 @@ export class VipTipsterSetupService {
     private readonly packageRepo: Repository<TipsterSubscriptionPackage>,
   ) {}
 
-  /** Idempotent: VIP user + tipster row + monthly package. Does not touch Acca Desk. */
+  /**
+   * Idempotent: seed free Sure · Two-Fold desk, then ensure AccaSure1X2 owns the VIP package.
+   * Does not touch Acca Desk personas.
+   */
   async initializeVipTipster(): Promise<{
     created: boolean;
     updated: boolean;

@@ -21,7 +21,7 @@ export function telegramMonthlyCron(envValue: string | undefined, fallback: stri
  * Scheduled channel promo posts (Africa/Accra) — once per new month by default:
  *  day 1 · 08:00 growth · 12:00 advice · 17:00 community
  * Evening growth and tipster recruit stay off unless their env flags are turned on.
- * Tip/win alerts and VIP Two-Fold slips are event-driven (not here).
+ * Tip/win alerts and AccaSure1X2 VIP slips are event-driven (not here).
  */
 @Injectable()
 export class TelegramGrowthScheduler {

@@ -3,7 +3,7 @@ import { formatVipCouponPost, formatVipWinPost, parseVipStartPayload, vipBotStar
 describe('VIP Telegram format', () => {
   it('formats a two-fold with booking code', () => {
     const text = formatVipCouponPost({
-      title: 'VIP · Two-Fold · Home or Draw',
+      title: 'AccaSure1X2 · Home or Draw',
       totalOdds: 2.45,
       legs: [
         { matchDescription: 'Team A vs Team B', prediction: 'Home or Draw', odds: 1.5 },
@@ -34,7 +34,7 @@ describe('VIP Telegram format', () => {
 
   it('formats a won post with WON on each fixture', () => {
     const text = formatVipWinPost({
-      title: 'VIP · Two-Fold · Home win',
+      title: 'AccaSure1X2 · Home win',
       totalOdds: 1.63,
       couponUrl: 'https://betrollover.com/coupons/1',
       legs: [

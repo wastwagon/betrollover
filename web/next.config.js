@@ -180,6 +180,11 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: '/admin/vip-tipster',
+        destination: '/admin/sure-two-fold',
+        permanent: true,
+      },
+      {
         source: '/tipsters/VipTwoFold',
         destination: '/tipsters/SureTwoFold',
         permanent: true,

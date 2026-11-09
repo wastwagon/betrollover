@@ -49,7 +49,7 @@ export class RolloverDeskService {
   ) {}
 
   /**
-   * Settlement sync + auto-attach unused VIP · Two-Fold coupons (serialized).
+   * Settlement sync + auto-attach unused AccaSure1X2 coupons (serialized).
    * Admin can still attach manually via adminAttach.
    */
   async syncBoard(): Promise<void> {

@@ -10,6 +10,8 @@ import { getApiErrorMessage } from '@/lib/api-error-message';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
 import { Button, buttonClassName } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { AdminVipTelegramPanel } from '@/components/admin/AdminVipTelegramPanel';
+import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 
 type RosterRow = {
   username: string;
@@ -233,6 +235,19 @@ export default function AdminAccaDeskPage() {
     if (stake != null) setStakeDraft(String(stake));
   }, [overview?.rollover?.campaignStakeGhs, overview?.rollover?.defaultCampaignStakeGhs]);
 
+  useEffect(() => {
+    if (loading) return;
+    if (typeof window === 'undefined') return;
+    const hash = window.location.hash;
+    if (hash !== '#rollover' && hash !== '#vip-telegram') return;
+    if (hash === '#rollover' && !overview?.rollover) return;
+    const id = hash.slice(1);
+    const el = document.getElementById(id);
+    if (el) {
+      requestAnimationFrame(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    }
+  }, [loading, overview?.rollover]);
+
   const handleSetup = async () => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -378,15 +393,15 @@ export default function AdminAccaDeskPage() {
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Acca Desk</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Automated. Most Acca Desk tipsters post up to 2 free 2-folds per desk day
-            (picked from early / afternoon / evening / midnight kick-off windows). Bank · Half
-            posts at most one HT-home 2-fold (legs 1.47–1.60, combined 2.20–2.50) and skips cups /
-            youth. Sure/Safe · 1st Half Over 0.5 use short FH totals bands (skip midnight, cups,
-            youth). Primary publish at{' '}
-            {overview?.earlyCron || '0 20 * * *'} ({overview?.timezone || 'Africa/Accra'}) for{' '}
-            <strong>tomorrow</strong>; catch-up at {overview?.cron || '30 0 * * *'}, 06:00 and 08:45 for{' '}
-            <strong>today</strong>. Cards badge Today / Tomorrow from the earliest Accra kickoff. Followers get one batched email
-            after each publish that created new slips.
+            Acca Desk personas (AccaSure*, AccaSafe*, …) plus AccaSure1X2 VIP Telegram and the{' '}
+            <strong>7-day Rollover</strong> board. Free Sure · Two-Fold Home+Home is a separate desk —{' '}
+            <Link href="/admin/sure-two-fold" className="font-medium text-teal-700 dark:text-teal-300 hover:underline">
+              open Sure · Two-Fold
+            </Link>
+            . Most Acca Desk tipsters post up to 2 free 2-folds per desk day (early / afternoon / evening /
+            midnight). Primary publish at {overview?.earlyCron || '0 20 * * *'} (
+            {overview?.timezone || 'Africa/Accra'}) for <strong>tomorrow</strong>; catch-up at{' '}
+            {overview?.cron || '30 0 * * *'}, 06:00 and 08:45 for <strong>today</strong>.
           </p>
         </div>
 
@@ -524,7 +539,10 @@ export default function AdminAccaDeskPage() {
             </div>
 
             {overview.rollover ? (
-              <div className="mb-8 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 shadow-sm">
+              <div
+                id="rollover"
+                className="mb-8 scroll-mt-24 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 shadow-sm"
+              >
                 <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
                   <div>
                     <h2 className="text-sm font-semibold text-gray-900 dark:text-white">7-day rollover (AccaSure1X2)</h2>
@@ -669,10 +687,10 @@ export default function AdminAccaDeskPage() {
                     {rolloverBusy === 'sync' ? 'Syncing…' : 'Sync settlement + auto-attach'}
                   </Button>
                   <Link
-                    href="/admin/vip-tipster"
+                    href="/admin/sure-two-fold"
                     className={buttonClassName({ size: 'sm', variant: 'secondary' })}
                   >
-                    Open VIP Tipster publish
+                    Open Sure · Two-Fold publish
                   </Link>
                   <Button
                     type="button"
@@ -783,6 +801,14 @@ export default function AdminAccaDeskPage() {
                   </div>
                 )}
               </div>
+            ) : null}
+
+            {isSubscriptionsEnabled() ? (
+              <AdminVipTelegramPanel
+                onMessage={(msg) => {
+                  if (msg) setMessage(msg);
+                }}
+              />
             ) : null}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">

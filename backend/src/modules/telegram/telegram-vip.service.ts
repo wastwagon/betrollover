@@ -78,7 +78,7 @@ export class TelegramVipService {
     return isVipRosterUsername(tipster?.username);
   }
 
-  /** userId → display name for the three VIP tipsters. */
+  /** userId → display name for VIP roster tipsters (AccaSure1X2 only). */
   async vipRosterNamesByUserId(): Promise<Map<number, string>> {
     const rows = await this.tipsterRepo.find({
       where: { username: In([...VIP_ROSTER_USERNAMES]) },
