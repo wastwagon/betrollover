@@ -88,6 +88,33 @@ async function HomeBelowFold() {
         </div>
         <HomeQuickMarketplaceSections initialMarketItems={homeData.marketplaceItems} initialLeaderboard={homeData.topTipsters} />
 
+        <section className="border-t border-[var(--border)] w-full min-w-0" aria-labelledby="home-seo-body">
+          <div className="section-ux-cap-4xl w-full min-w-0 px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+            <h2 id="home-seo-body" className="font-display text-lg sm:text-xl font-semibold text-[var(--text)] mb-3">
+              {t('home.seo_body_h2')}
+            </h2>
+            <div className="space-y-3 text-sm sm:text-[15px] text-[var(--text-muted)] leading-relaxed max-w-3xl">
+              <p>{t('home.seo_body_p1')}</p>
+              <p>{t('home.seo_body_p2')}</p>
+              <p>{t('home.seo_body_p3')}</p>
+              <p>{t('home.seo_body_p4')}</p>
+            </div>
+            <p className="mt-4 text-sm font-semibold text-[var(--text)]">{t('home.seo_body_links')}</p>
+            <nav className="mt-2 flex flex-wrap gap-x-4 gap-y-2" aria-label={t('home.seo_body_links')}>
+              <Link href="/football-tips-ghana" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                {t('home.seo_link_ghana')}
+              </Link>
+              <Link href="/how-it-works" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                {t('home.seo_link_how')}
+              </Link>
+              <Link href="/guides" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                {t('home.seo_link_guides')}
+              </Link>
+            </nav>
+            <p className="mt-4 text-xs text-[var(--text-tertiary)] leading-relaxed max-w-3xl">{t('home.seo_notice')}</p>
+          </div>
+        </section>
+
         <section className="border-t border-[var(--border)] w-full min-w-0">
           <div className="section-ux-cap-4xl w-full min-w-0 px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
             <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-[var(--primary)] mb-4">
@@ -338,8 +365,9 @@ export default function HomePage() {
       <UnifiedHeader />
 
       <main className="bg-[var(--bg)] w-full min-w-0">
+        {/* Hero stays outside client PTR so the LCP image is not gated on hydration. */}
+        <HomeHeroBanner />
         <HomePullToRefresh>
-          <HomeHeroBanner />
           <Suspense fallback={<HomeStreamFallback />}>
             <HomeBelowFold />
           </Suspense>

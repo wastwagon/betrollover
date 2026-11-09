@@ -214,6 +214,26 @@ const nextConfig = {
         destination: '/fr/tipsters/SureTwoFold',
         permanent: true,
       },
+      {
+        source: '/tipsters/LateBloomer',
+        destination: '/tipsters/midweek-value',
+        permanent: true,
+      },
+      {
+        source: '/tipsters/HomeHeroes',
+        destination: '/tipsters/home-win-daily',
+        permanent: true,
+      },
+      {
+        source: '/fr/tipsters/LateBloomer',
+        destination: '/fr/tipsters/midweek-value',
+        permanent: true,
+      },
+      {
+        source: '/fr/tipsters/HomeHeroes',
+        destination: '/fr/tipsters/home-win-daily',
+        permanent: true,
+      },
     ];
     if (process.env.SKIP_WWW_REDIRECT === '1') return copyRedirects;
     return [

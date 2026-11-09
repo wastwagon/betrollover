@@ -1,6 +1,7 @@
 import type { SupportedLanguage } from '@/lib/i18n';
 import { SITE_URL, getAvatarUrl } from '@/lib/site-config';
 import { getServerBackendOrigin } from '@/lib/seo/server-backend';
+import { buildPickSeoTitle, isLegacyGenericPickTitle } from '@betrollover/shared-types';
 
 const API = () => `${getServerBackendOrigin()}/api/v1`;
 
@@ -250,6 +251,15 @@ export type PublicCouponMeta = {
     displayName?: string | null;
     username?: string | null;
   } | null;
+  picks?: Array<{
+    homeTeamName?: string | null;
+    awayTeamName?: string | null;
+    matchDescription?: string | null;
+    prediction?: string | null;
+    outcomeKey?: string | null;
+    matchDate?: string | null;
+    leagueLabel?: string | null;
+  }> | null;
 };
 
 export async function fetchPublicCouponMeta(
@@ -270,30 +280,48 @@ export async function fetchPublicCouponMeta(
   }
 }
 
+export function couponDisplayTitle(coupon: PublicCouponMeta): string {
+  const fromLegs = buildPickSeoTitle(
+    (coupon.picks || []).map((p) => ({
+      homeTeam: p.homeTeamName,
+      awayTeam: p.awayTeamName,
+      matchDescription: p.matchDescription,
+      prediction: p.prediction,
+      outcomeKey: p.outcomeKey,
+      matchDate: p.matchDate,
+    })),
+  );
+  const stored = (coupon.title || '').trim();
+  if (fromLegs && (!stored || isLegacyGenericPickTitle(stored))) return fromLegs;
+  if (fromLegs && stored.includes('· #')) return fromLegs;
+  if (stored && !isLegacyGenericPickTitle(stored)) {
+    return stored.replace(/\s·\s#\d+\s*$/, '').trim() || stored;
+  }
+  return fromLegs || stored || `Football pick #${coupon.id}`;
+}
+
 export function couponMetaTitle(coupon: PublicCouponMeta): string {
-  const tipster =
-    coupon.tipster?.displayName?.trim() ||
-    coupon.tipster?.username?.trim() ||
-    'Tipster';
-  const title = (coupon.title || '').trim() || 'Football pick';
-  return `${title} — ${tipster}`;
+  return couponDisplayTitle(coupon);
 }
 
 export function couponMetaDescription(coupon: PublicCouponMeta): string {
   const tipster =
     coupon.tipster?.displayName?.trim() ||
     coupon.tipster?.username?.trim() ||
-    'a verified tipster';
+    'a tipster';
+  const display = couponDisplayTitle(coupon);
   const oddsRaw = coupon.totalOdds != null ? Number(coupon.totalOdds) : NaN;
   const odds = Number.isFinite(oddsRaw) ? oddsRaw.toFixed(2) : null;
   const priceRaw = coupon.price != null ? Number(coupon.price) : NaN;
-  const priceLabel = Number.isFinite(priceRaw) && priceRaw > 0 ? 'Premium pick' : 'Free pick';
+  const priceLabel = Number.isFinite(priceRaw) && priceRaw > 0 ? 'Paid prediction' : 'Free prediction';
   const result = (coupon.result || 'pending').toLowerCase();
   const resultLabel =
     result === 'won' ? 'Won' : result === 'lost' ? 'Lost' : result === 'void' ? 'Void' : 'Pending';
-  const oddsPart = odds ? ` Combined odds ${odds}.` : '';
+  const league = coupon.picks?.find((p) => p.leagueLabel?.trim())?.leagueLabel?.trim();
+  const leaguePart = league ? ` ${league}.` : '';
+  const oddsPart = odds ? ` Odds ${odds}.` : '';
   return truncateMetaDescription(
-    `${priceLabel} by ${tipster} on BetRollover.${oddsPart} Result: ${resultLabel}. Purchase-protected marketplace — 18+.`,
+    `${display}. ${priceLabel} by ${tipster}.${leaguePart}${oddsPart} Result: ${resultLabel}. Purchase-protected — not a bookmaker. 18+.`,
   );
 }
 

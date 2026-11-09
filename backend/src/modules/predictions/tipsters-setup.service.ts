@@ -6,6 +6,7 @@ import { Tipster } from './entities/tipster.entity';
 import { User, UserRole, UserStatus } from '../users/entities/user.entity';
 import { TipsterSubscriptionPackage } from '../subscriptions/entities/tipster-subscription-package.entity';
 import { AI_TIPSTERS } from '../../config/ai-tipsters.config';
+import { TIPSTER_SLUG_REDIRECTS } from '../../config/tipster-slug-redirects';
 
 const DEFAULT_AI_PACKAGE_NAME = 'AI VIP Monthly';
 const DEFAULT_AI_PACKAGE_PRICE = 49;
@@ -81,6 +82,47 @@ export class TipstersSetupService {
   }
 
   /**
+   * Apply SEO username renames (LateBloomer → midweek-value, etc.) before config upsert.
+   * Updates tipsters.username and linked users.username / email local-part when free.
+   */
+  private async migrateTipsterSlugRedirects(): Promise<number> {
+    let renamed = 0;
+    for (const rule of TIPSTER_SLUG_REDIRECTS) {
+      const oldRow = await this.tipsterRepo.findOne({ where: { username: rule.oldUsername } });
+      if (!oldRow) continue;
+      const taken = await this.tipsterRepo.findOne({ where: { username: rule.newUsername } });
+      if (taken && taken.id !== oldRow.id) {
+        this.logger.warn(
+          `Skip tipster rename ${rule.oldUsername} → ${rule.newUsername}: target username already exists`,
+        );
+        continue;
+      }
+      await this.tipsterRepo.update(oldRow.id, {
+        username: rule.newUsername,
+        displayName: rule.displayName,
+      });
+      if (oldRow.userId) {
+        const user = await this.userRepo.findOne({ where: { id: oldRow.userId } });
+        if (user) {
+          const userUpdates: Partial<User> = {
+            displayName: rule.displayName,
+            username: rule.newUsername,
+          };
+          const newEmail = `${rule.newUsername.toLowerCase()}@betrollover.internal`;
+          const emailTaken = await this.userRepo.findOne({ where: { email: newEmail } });
+          if (!emailTaken || emailTaken.id === user.id) {
+            userUpdates.email = newEmail;
+          }
+          await this.userRepo.update(user.id, userUpdates);
+        }
+      }
+      renamed++;
+      this.logger.log(`Renamed tipster ${rule.oldUsername} → ${rule.newUsername}`);
+    }
+    return renamed;
+  }
+
+  /**
    * Initialize/sync AI tipsters from config (distinct strategies).
    * Idempotent: upserts by username, preserves existing stats, re-applies display_name/bio/avatar
    * from config (fixes drift like Midweek Value vs Midweek Away).
@@ -93,6 +135,8 @@ export class TipstersSetupService {
     let packagesCreated = 0;
     let packagesFound = 0;
     const activeUsernames = new Set(AI_TIPSTERS.map((c) => c.username));
+
+    await this.migrateTipsterSlugRedirects();
 
     for (const config of AI_TIPSTERS) {
       const existing = await this.tipsterRepo.findOne({

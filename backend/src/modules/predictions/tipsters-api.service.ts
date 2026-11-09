@@ -39,6 +39,11 @@ import {
   isClassicAiHiddenFromBrowse,
   isClassicAiHiddenFromPublic,
 } from '../../common/classic-ai-public-visibility.util';
+import {
+  canonicalizeTipsterUsername,
+  tipsterSlugRedirectFromNew,
+  tipsterSlugRedirectFromOld,
+} from '../../config/tipster-slug-redirects';
 import { computeStreaksFromNewestFirst } from './tipster-streaks.util';
 
 const SORT_COLUMNS: Record<string, string> = {
@@ -180,6 +185,31 @@ export class TipstersApiService {
     @Inject(forwardRef(() => AccumulatorsService))
     private readonly accumulatorsService: AccumulatorsService,
   ) {}
+
+  /** Resolve profile by canonical or legacy username (SEO renames, either direction). */
+  private async findTipsterByUsernameOrAlias(username: string): Promise<Tipster | null> {
+    const raw = (username || '').trim();
+    if (!raw) return null;
+    const fromOld = tipsterSlugRedirectFromOld(raw);
+    const fromNew = tipsterSlugRedirectFromNew(raw);
+    const candidates = [
+      ...new Set(
+        [
+          canonicalizeTipsterUsername(raw),
+          raw,
+          fromOld?.newUsername,
+          fromOld?.oldUsername,
+          fromNew?.newUsername,
+          fromNew?.oldUsername,
+        ].filter(Boolean) as string[],
+      ),
+    ];
+    for (const name of candidates) {
+      const tipster = await this.tipsterRepo.findOne({ where: { username: name } });
+      if (tipster) return tipster;
+    }
+    return null;
+  }
 
   /** At most one active package per tipster (DB-enforced); map user id → package id. */
   private async loadActiveVipPackageIdsByUserIds(userIds: number[]): Promise<Map<number, number>> {
@@ -1024,9 +1054,7 @@ export class TipstersApiService {
     window: TipsterProfilePerformanceWindow,
     viewerUserId?: number,
   ) {
-    const tipster = await this.tipsterRepo.findOne({
-      where: { username },
-    });
+    const tipster = await this.findTipsterByUsernameOrAlias(username);
     if (!tipster) return null;
     if (isClassicAiHiddenFromPublic() && isClassicAiHiddenFromBrowse(tipster)) {
       return null;
@@ -1142,10 +1170,7 @@ export class TipstersApiService {
 
   /** Total count of settled profile coupons in the selected window. */
   async getArchivedSettledCount(username: string, window: TipsterProfilePerformanceWindow): Promise<number> {
-    const tipster = await this.tipsterRepo.findOne({
-      where: { username },
-      select: ['userId', 'tipsterType'],
-    });
+    const tipster = await this.findTipsterByUsernameOrAlias(username);
     if (!tipster?.userId) return 0;
     const qb = this.ticketRepo
       .createQueryBuilder('t')
@@ -1162,7 +1187,7 @@ export class TipstersApiService {
     window: TipsterProfilePerformanceWindow,
     viewerUserId?: number,
   ) {
-    const tipster = await this.tipsterRepo.findOne({ where: { username } });
+    const tipster = await this.findTipsterByUsernameOrAlias(username);
     if (!tipster?.userId) return [];
 
     const includeSub = this.profileIncludesSubscriptionTickets(tipster.username);
@@ -1235,7 +1260,7 @@ export class TipstersApiService {
     window: TipsterProfilePerformanceWindow,
     viewerUserId?: number,
   ) {
-    const tipster = await this.tipsterRepo.findOne({ where: { username } });
+    const tipster = await this.findTipsterByUsernameOrAlias(username);
     if (!tipster?.userId) return [];
 
     const includeSub = this.profileIncludesSubscriptionTickets(tipster.username);

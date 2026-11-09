@@ -848,25 +848,81 @@ export class AccumulatorsService {
     };
   }
 
-  private buildRedactedPicksForCoupon(picks: Array<{ id?: number }>): Array<Record<string, unknown>> {
+  /** Coarse market family for public preview (does not reveal Home/Away/etc.). */
+  private publicMarketFamilyFromPick(p: Record<string, unknown>): string {
+    const key = String(p.outcomeKey || p.prediction || '')
+      .trim()
+      .toLowerCase();
+    if (!key || key === '—' || key === 'tip locked') return 'Market tip';
+    if (key.includes('btts')) return 'BTTS';
+    if (key.includes('over') || key.includes('under') || key.startsWith('o') || key.startsWith('u')) {
+      if (key.includes('fh') || key.includes('half') || key.includes('ht')) return '1st Half Goals';
+      return 'Goals';
+    }
+    if (key.includes('dnb') || key.includes('draw no bet')) return 'Draw No Bet';
+    if (key.includes('double') || key === 'home_away' || key === 'home_draw' || key === 'draw_away' || key.includes('1x') || key.includes('x2') || key.includes('12')) {
+      return 'Double Chance';
+    }
+    if (key.includes('half') || key.includes('fh') || key.includes('ht')) return '1st Half Winner';
+    return 'Match Winner';
+  }
+
+  /**
+   * Public preview for gated paid picks: teams, league, kickoff, market family, odds.
+   * Hides the exact selection label and scores until purchase / reveal.
+   */
+  private buildRedactedPicksForCoupon(
+    picks: Array<Record<string, unknown> & { id?: number }>,
+  ): Array<Record<string, unknown>> {
     const list = picks || [];
-    return list.map((p, i) => ({
-      id: p.id,
-      redacted: true,
-      matchDescription: `Selection ${i + 1}`,
-      prediction: '—',
-      odds: null,
-      matchDate: null,
-      result: 'pending',
-      status: 'pending',
-      homeScore: null,
-      awayScore: null,
-      fixtureStatus: null,
-      homeTeamName: null,
-      awayTeamName: null,
-      homeTeamLogo: null,
-      awayTeamLogo: null,
-    }));
+    return list.map((p, i) => {
+      const home =
+        (typeof p.homeTeamName === 'string' && p.homeTeamName.trim()) ||
+        (typeof p.homeTeam === 'string' && p.homeTeam.trim()) ||
+        null;
+      const away =
+        (typeof p.awayTeamName === 'string' && p.awayTeamName.trim()) ||
+        (typeof p.awayTeam === 'string' && p.awayTeam.trim()) ||
+        null;
+      const fromDesc =
+        !home || !away
+          ? String(p.matchDescription || '')
+              .split(/\s+vs\.?\s+/i)
+              .map((s) => s.trim())
+          : null;
+      const homeTeamName = home || fromDesc?.[0] || null;
+      const awayTeamName = away || fromDesc?.[1] || null;
+      const matchDescription =
+        homeTeamName && awayTeamName
+          ? `${homeTeamName} vs ${awayTeamName}`
+          : `Selection ${i + 1}`;
+      const leagueLabel =
+        (typeof p.leagueLabel === 'string' && p.leagueLabel.trim()) ||
+        (typeof p.leagueName === 'string' && p.leagueName.trim()) ||
+        null;
+      const marketLabel = this.publicMarketFamilyFromPick(p);
+      return {
+        id: p.id,
+        redacted: true,
+        publicPreview: true,
+        matchDescription,
+        prediction: marketLabel,
+        odds: p.odds ?? null,
+        matchDate: p.matchDate ?? null,
+        result: 'pending',
+        status: 'pending',
+        homeScore: null,
+        awayScore: null,
+        fixtureStatus: null,
+        homeTeamName,
+        awayTeamName,
+        homeTeamLogo: p.homeTeamLogo ?? null,
+        awayTeamLogo: p.awayTeamLogo ?? null,
+        homeCountryCode: p.homeCountryCode ?? null,
+        awayCountryCode: p.awayCountryCode ?? null,
+        leagueLabel,
+      };
+    });
   }
 
   private async applyCouponPickVisibility(

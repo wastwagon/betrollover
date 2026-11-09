@@ -56,6 +56,9 @@ export function AppFooter() {
                 <FooterLink href="/football-tips-ghana">{t('footer.ghana_hub')}</FooterLink>
               </li>
               <li>
+                <FooterLink href="/football-predictions-today">Football predictions today</FooterLink>
+              </li>
+              <li>
                 <FooterLink href="/track-record">{t('footer.track_record')}</FooterLink>
               </li>
               {isSubscriptionsEnabled() ? (
@@ -70,7 +73,7 @@ export function AppFooter() {
                 <FooterLink href="/coupons/archive">{t('header.settled_archive')}</FooterLink>
               </li>
               <li>
-                <FooterLink href="/guides/free-and-paid-picks#booking-codes">{t('footer.booking_codes')}</FooterLink>
+                <FooterLink href="/sportybet-booking-codes">{t('footer.booking_codes')}</FooterLink>
               </li>
               <li>
                 <FooterLink href="/tipsters">{t('nav.top_tipsters')}</FooterLink>
@@ -139,10 +142,13 @@ export function AppFooter() {
           <span suppressHydrationWarning>
             &copy; {new Date().getFullYear()} BetRollover. {t('footer.rights')}
           </span>
-          <span className="inline-flex items-center gap-2 text-center max-w-xl">
+          <span className="inline-flex flex-wrap items-center justify-center gap-2 text-center max-w-xl">
             <span className="shrink-0 rounded-md border border-[var(--border)] bg-[var(--fill-secondary)] px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-[var(--text)]">
               {t('topbar.disclaimer_5')}
             </span>
+            <Link href="/about" className={`${footerLinkClass} text-[10px] font-semibold uppercase tracking-wide`}>
+              {t('nav.about')}
+            </Link>
             {t('footer.disclaimer')}
           </span>
         </div>

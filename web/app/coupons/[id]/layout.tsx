@@ -1,11 +1,14 @@
 import type { Metadata } from 'next';
-import { localizedUrl, seoAlternates } from '@/lib/site-config';
+import { localizedUrl, seoAlternates, SITE_URL } from '@/lib/site-config';
 import { getLocale } from '@/lib/i18n';
 import {
+  couponDisplayTitle,
   couponMetaDescription,
   couponMetaTitle,
   fetchPublicCouponMeta,
 } from '@/lib/seo/public-content';
+import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
+import { ProductOfferJsonLd } from '@/components/seo/ProductOfferJsonLd';
 
 export async function generateMetadata({
   params,
@@ -60,6 +63,47 @@ export async function generateMetadata({
   };
 }
 
-export default function CouponDetailLayout({ children }: { children: React.ReactNode }) {
-  return children;
+export default async function CouponDetailLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ id: string }>;
+}) {
+  const { id: raw } = await params;
+  const id = parseInt(raw, 10);
+  const locale = await getLocale();
+  const path = Number.isFinite(id) ? `/coupons/${id}` : '/coupons';
+  const pageUrl = localizedUrl(path, locale);
+
+  const coupon = Number.isFinite(id) ? await fetchPublicCouponMeta(id, { revalidate: 120 }) : null;
+  const title = coupon ? couponDisplayTitle(coupon) : `Pick #${raw}`;
+  const price = coupon?.price != null ? Number(coupon.price) : NaN;
+  const paid = Number.isFinite(price) && price > 0;
+
+  return (
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: localizedUrl('/', locale) },
+          { name: 'Marketplace', url: localizedUrl('/marketplace', locale) },
+          { name: title, url: pageUrl },
+        ]}
+      />
+      {paid && coupon ? (
+        <ProductOfferJsonLd
+          items={[
+            {
+              name: title,
+              description: couponMetaDescription(coupon),
+              price,
+              currency: 'GHS',
+              url: `${SITE_URL.replace(/\/$/, '')}${path}`,
+            },
+          ]}
+        />
+      ) : null}
+      {children}
+    </>
+  );
 }

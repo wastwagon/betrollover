@@ -7,6 +7,7 @@ export * from './auth';
 export * from './wallet';
 export * from './api';
 export * from './format-football-outcome';
+export * from './pick-seo-title';
 export * from './leaderboard';
 export * from './bookmakers-africa';
 export * from './acca-generator';

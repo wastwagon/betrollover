@@ -503,9 +503,9 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
 
   // --- Day / odds variants (re-enabled, not same-rule clones) ---
   {
-    username: 'HomeHeroes',
-    display_name: 'Home Mid-Price',
-    bio: 'Home wins @ 2.20–3.20 (longer than Home Favorites). No advice gate — EV-led mid-price homes.',
+    username: 'home-win-daily',
+    display_name: 'Home Win Daily',
+    bio: 'Automated AI tipster. Home wins @ 2.20–3.20 (longer than Home Favorites). EV-led mid-price homes. Educational — not guaranteed. 18+.',
     avatar_url: '/avatars/home_heroes.png',
     personality: {
       strategy_id: 'home_mid_price',
@@ -590,7 +590,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   {
     username: 'MidweekMagic',
     display_name: 'Midweek Home',
-    bio: 'Home wins on Tue–Thu slates only (cups/Europe). Day-scoped vs SafetyFirstPro / HomeHeroes.',
+    bio: 'Home wins on Tue–Thu slates only (cups/Europe). Day-scoped vs SafetyFirstPro / Home Win Daily.',
     avatar_url: '/avatars/midweek_magic.png',
     personality: {
       strategy_id: 'midweek_home',
@@ -610,9 +610,9 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
     },
   },
   {
-    username: 'LateBloomer',
-    display_name: 'Midweek Away',
-    bio: 'Away wins on Tue–Thu only. Day-scoped road value vs SteadyEddie / ChampionshipChamp.',
+    username: 'midweek-value',
+    display_name: 'Midweek Value',
+    bio: 'Automated AI tipster. Away wins on Tue–Thu only. Day-scoped road value vs SteadyEddie / ChampionshipChamp. Educational — not guaranteed. 18+.',
     avatar_url: '/avatars/late_bloomer.png',
     personality: {
       strategy_id: 'midweek_away',

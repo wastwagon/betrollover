@@ -556,6 +556,15 @@ export default function LeaderboardPage({
           </div>
         )}
 
+        {entries.length > 0 ? (
+          <p className="mt-4 text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed max-w-4xl">
+            {t('leaderboard.rank_rule_under_table')}{' '}
+            <Link href="/guides/leaderboard-ranking" className="font-semibold text-[var(--primary)] hover:underline">
+              {t('guides.board_short')}
+            </Link>
+          </p>
+        ) : null}
+
         <div className="mt-8 text-center">
           <Link href="/tipsters" className="text-sm font-medium text-[var(--primary)] hover:underline">
             {t('tipster.browse_tipsters')}

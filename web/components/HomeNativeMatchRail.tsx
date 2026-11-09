@@ -43,13 +43,14 @@ function formatMatchSchedule(
 }
 
 function TeamLogo({ src, alt }: { src: string | null; alt: string }) {
+  const label = alt?.trim() ? `${alt.trim()} club badge` : 'Club badge';
   if (!src) {
     return (
       <span
         className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[var(--fill-secondary)] text-[10px] font-semibold text-[var(--text-muted)]"
         aria-hidden
       >
-        {alt.slice(0, 1)}
+        {(alt || '?').slice(0, 1)}
       </span>
     );
   }
@@ -57,7 +58,7 @@ function TeamLogo({ src, alt }: { src: string | null; alt: string }) {
   return (
     <Image
       src={src}
-      alt=""
+      alt={label}
       width={24}
       height={24}
       className="h-6 w-6 shrink-0 rounded-md bg-[var(--fill-secondary)] object-contain p-0.5"
@@ -199,13 +200,16 @@ export function HomeNativeMatchRail({
               <div className="flex border-t border-[var(--separator)]">
                 <Link
                   href={`/matches/${m.id}`}
-                  className="flex min-h-[34px] flex-1 items-center justify-center border-r border-[var(--separator)] text-[11px] font-semibold text-[var(--primary)] active:bg-[var(--fill-secondary)]"
+                  className="flex min-h-[34px] flex-1 items-center justify-center border-r border-[var(--separator)] px-1 text-[11px] font-semibold text-[var(--primary)] active:bg-[var(--fill-secondary)] text-center leading-snug"
                 >
-                  {t('home.today_matches_details')}
+                  {t('home.today_matches_prediction_link', {
+                    home: m.homeTeamName,
+                    away: m.awayTeamName,
+                  })}
                 </Link>
                 <Link
-                  href="/marketplace?sport=football"
-                  className="flex min-h-[34px] flex-1 items-center justify-center text-[11px] font-semibold text-[var(--primary)] active:bg-[var(--fill-secondary)]"
+                  href={`/matches/${m.id}`}
+                  className="flex min-h-[34px] flex-1 items-center justify-center px-1 text-[11px] font-semibold text-[var(--primary)] active:bg-[var(--fill-secondary)] text-center"
                 >
                   {picks > 0 ? t('home.today_matches_picks', { count: String(picks) }) : t('home.today_matches_browse')}
                 </Link>

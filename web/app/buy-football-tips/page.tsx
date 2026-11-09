@@ -3,12 +3,63 @@ import Link from 'next/link';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
+import { ProductOfferJsonLd } from '@/components/seo/ProductOfferJsonLd';
 import { buttonClassName } from '@/components/ui/button-styles';
-import { localizedUrl, seoAlternates } from '@/lib/site-config';
+import { localizedUrl, seoAlternates, SITE_URL } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import { getServerBackendOrigin } from '@/lib/seo/server-backend';
+import { isAccaDeskTipsterType, isVipRosterUsername } from '@/lib/tipster-kind';
 
 const PATH = '/buy-football-tips';
+
+type VipMarketplaceRow = {
+  package: {
+    id: number;
+    name: string;
+    price: number;
+    durationDays: number;
+    includedSlipsPerPeriod?: number | null;
+    channel?: string | null;
+  };
+  tipster: {
+    username: string;
+    displayName: string;
+    isAi?: boolean;
+    tipsterType?: string | null;
+  } | null;
+};
+
+function publicPlanName(row: VipMarketplaceRow): string {
+  const raw = (row.package.name || '').trim();
+  const tipsterName = row.tipster?.displayName?.trim() || row.tipster?.username || 'Tipster';
+  const automated =
+    !!row.tipster?.isAi ||
+    isAccaDeskTipsterType(row.tipster?.tipsterType) ||
+    isVipRosterUsername(row.tipster?.username);
+  if (/accasure|sure\s*·|sure\s*1x2/i.test(raw) || isVipRosterUsername(row.tipster?.username)) {
+    return `Match Winner Tips VIP — ${row.package.durationDays} days`;
+  }
+  if (automated && (!raw || /ai vip/i.test(raw))) {
+    return `${tipsterName} VIP — ${row.package.durationDays} days`;
+  }
+  return raw || `${tipsterName} VIP — ${row.package.durationDays} days`;
+}
+
+async function fetchVipPlans(): Promise<VipMarketplaceRow[]> {
+  if (!isSubscriptionsEnabled()) return [];
+  try {
+    const res = await fetch(`${getServerBackendOrigin()}/api/v1/subscriptions/marketplace?limit=50`, {
+      next: { revalidate: 120 },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const items = Array.isArray(data?.items) ? data.items : [];
+    return items as VipMarketplaceRow[];
+  } catch {
+    return [];
+  }
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -24,14 +75,11 @@ export async function generateMetadata(): Promise<Metadata> {
       googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
     },
     keywords: [
+      'buy football predictions',
       'VIP football tipster subscription',
-      'AccaSure1X2 VIP tips',
       'purchase-protected football tips',
       'refund if paid football tip loses',
-      'free 7-day football rollover',
-      'two fold football tips educational',
-      'football accumulator tips',
-      'SportyBet booking code tips',
+      'Match Winner Tips VIP',
     ],
     alternates: seoAlternates(PATH, locale),
     openGraph: {
@@ -52,6 +100,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function BuyFootballTipsPage() {
   const t = buildT(await getLocale());
   const vipOpen = isSubscriptionsEnabled();
+  const plans = vipOpen ? await fetchVipPlans() : [];
   const faqs = [
     { question: t('buy.faq_q1'), answer: t('buy.faq_a1') },
     { question: t('buy.faq_q2'), answer: t('buy.faq_a2') },
@@ -59,9 +108,22 @@ export default async function BuyFootballTipsPage() {
     { question: t('buy.faq_q4'), answer: t('buy.faq_a4') },
   ];
 
+  const productItems = plans.map((row) => {
+    const name = publicPlanName(row);
+    const tipsterName = row.tipster?.displayName || row.tipster?.username || 'Tipster';
+    return {
+      name,
+      description: `${name} from ${tipsterName}. ${t('buy.vip_included')} ${t('buy.vip_refund_rule')}`,
+      price: Number(row.package.price) || 0,
+      currency: 'GHS',
+      url: `${SITE_URL.replace(/\/$/, '')}/subscriptions/checkout?packageId=${row.package.id}`,
+    };
+  });
+
   return (
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <FaqJsonLd faqs={faqs} />
+      <ProductOfferJsonLd items={productItems} />
       <UnifiedHeader />
       <main className="section-ux-page-narrow w-full min-w-0">
         <header className="mb-6">
@@ -85,9 +147,6 @@ export default async function BuyFootballTipsPage() {
               {t('buy.cta_vip')}
             </Link>
           ) : null}
-          <Link href="/rollover" className={buttonClassName({ variant: 'secondary', className: 'min-h-[48px]' })}>
-            {t('buy.cta_rollover')}
-          </Link>
           <Link href="/tipsters" className={buttonClassName({ variant: 'ghost', className: 'min-h-[48px]' })}>
             {t('buy.cta_tipsters')}
           </Link>
@@ -96,48 +155,84 @@ export default async function BuyFootballTipsPage() {
         <article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-7 text-[var(--text)]">
           <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('buy.intro')}</p>
 
-          <h2 id="regions-africa" className="text-lg font-semibold mt-6 scroll-mt-24">
-            {t('buy.regions_h')}
-          </h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('buy.regions_body')}{' '}
-            <Link href="/football-tips-ghana" className="font-semibold text-[var(--primary)] hover:underline">
-              {t('buy.regions_ghana_hub_link')}
-            </Link>
-            {' · '}
-            <Link href="/about" className="font-semibold text-[var(--primary)] hover:underline">
-              {t('buy.regions_about_link')}
-            </Link>
-          </p>
-
           <h2 className="text-lg font-semibold mt-6">{t('buy.picks_h')}</h2>
           <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
             {t('buy.picks_body')}{' '}
             <Link href="/guides/purchase-protection" className="font-semibold text-[var(--primary)] hover:underline">
               {t('guides.escrow_short')}
             </Link>
+            {' · '}
+            <Link href="/football-tips-ghana" className="font-semibold text-[var(--primary)] hover:underline">
+              {t('buy.regions_ghana_hub_link')}
+            </Link>
           </p>
 
           <h2 className="text-lg font-semibold mt-6">{t('buy.vip_h')}</h2>
           <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('buy.vip_body')}</p>
 
-          <h2 className="text-lg font-semibold mt-6">{t('buy.acca_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('buy.acca_body')}{' '}
-            <Link href="/acca-generator" className="font-semibold text-[var(--primary)] hover:underline">
-              {t('nav.acca_generator')}
-            </Link>
-          </p>
-
-          <h2 id="booking-codes" className="text-lg font-semibold mt-6 scroll-mt-24">
-            {t('buy.codes_h')}
-          </h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('buy.codes_body')}{' '}
-            <Link href="/guides/free-and-paid-picks#booking-codes" className="font-semibold text-[var(--primary)] hover:underline">
-              {t('footer.booking_codes')}
-            </Link>
-          </p>
+          {plans.length === 0 ? (
+            <p className="mt-4 text-sm text-[var(--text-muted)]">{t('buy.vip_empty')}</p>
+          ) : (
+            <ul className="mt-4 space-y-4">
+              {plans.map((row) => {
+                const name = publicPlanName(row);
+                const tipsterName = row.tipster?.displayName || row.tipster?.username || 'Tipster';
+                const automated =
+                  !!row.tipster?.isAi ||
+                  isAccaDeskTipsterType(row.tipster?.tipsterType) ||
+                  isVipRosterUsername(row.tipster?.username);
+                const days = row.package.durationDays;
+                const price = Number(row.package.price);
+                const included =
+                  row.package.includedSlipsPerPeriod != null
+                    ? `Up to ${row.package.includedSlipsPerPeriod} VIP slips per ${days}-day period.`
+                    : t('buy.vip_included');
+                return (
+                  <li
+                    key={row.package.id}
+                    className="rounded-xl border border-[var(--border)] bg-[var(--bg)] p-4 text-sm leading-relaxed"
+                  >
+                    <p className="font-semibold text-[var(--text)]">{name}</p>
+                    <p className="mt-1 text-[var(--text-muted)]">
+                      Tipster: {tipsterName}
+                      {row.tipster?.username ? (
+                        <>
+                          {' '}
+                          (
+                          <Link
+                            href={`/tipsters/${encodeURIComponent(row.tipster.username)}`}
+                            className="font-semibold text-[var(--primary)] hover:underline"
+                          >
+                            @{row.tipster.username}
+                          </Link>
+                          )
+                        </>
+                      ) : null}
+                    </p>
+                    <p className="mt-1 text-[var(--text-muted)]">
+                      {automated ? t('buy.vip_automated_note') : t('buy.vip_human_note')}
+                    </p>
+                    <p className="mt-2 text-[var(--text)]">
+                      Price: <strong>GHS {price.toFixed(2)}</strong>
+                    </p>
+                    <p className="text-[var(--text)]">
+                      Length: <strong>{days} days</strong>
+                    </p>
+                    <p className="mt-2 text-[var(--text-muted)]">{included}</p>
+                    <p className="mt-2 text-[var(--text-muted)]">{t('buy.vip_refund_rule')}</p>
+                    <p className="mt-3">
+                      <Link
+                        href={`/subscriptions/checkout?packageId=${row.package.id}`}
+                        className="font-semibold text-[var(--primary)] hover:underline"
+                      >
+                        Open checkout for {name}
+                      </Link>
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
 
           <h2 className="text-lg font-semibold mt-6">{t('buy.compare_h')}</h2>
           <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
@@ -147,10 +242,21 @@ export default async function BuyFootballTipsPage() {
             </Link>
           </p>
 
+          <h2 className="text-lg font-semibold mt-6">{t('buy.regions_h')}</h2>
+          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('buy.regions_body')}</p>
+          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
+            Marketplace paid picks: tip price refunded to your BetRollover wallet if the pick settles lost or void.{' '}
+            <Link href="/how-it-works#refund-rule" className="font-semibold text-[var(--primary)] hover:underline">
+              Full refund rule
+            </Link>
+            .
+          </p>
+
           <p className="mt-6 text-xs text-[var(--text-tertiary)] leading-relaxed">{t('buy.not_guaranteed')}</p>
         </article>
 
         <section className="mt-8" aria-label="FAQ">
+          <h2 className="text-lg font-semibold text-[var(--text)] mb-4">{t('how_it_works.faq_title')}</h2>
           <dl className="space-y-4">
             {faqs.map((faq) => (
               <div key={faq.question} className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">

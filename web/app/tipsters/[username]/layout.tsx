@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { PersonJsonLd } from '@/components/PersonJsonLd';
 import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { getLocale, serverT } from '@/lib/i18n';
@@ -8,6 +8,7 @@ import {
   tipsterOgImageUrl,
   truncateMetaDescription,
 } from '@/lib/seo/public-content';
+import { TIPSTER_SLUG_REDIRECTS } from '@/lib/seo/tipster-slug-redirects';
 
 export async function generateMetadata({
   params,
@@ -73,6 +74,7 @@ export default async function TipsterUsernameLayout({
 }) {
   const { username } = await params;
   const locale = await getLocale();
+  const tipsterPath = (slug: string) => (locale === 'fr' ? `/fr/tipsters/${slug}` : `/tipsters/${slug}`);
   const result = await fetchTipsterProfileForSeo(username);
 
   if (result.state === 'not_found') {
@@ -80,6 +82,11 @@ export default async function TipsterUsernameLayout({
   }
 
   const tip = result.state === 'found' ? result.data.tipster : null;
+  // Only redirect old → new (never new → old during migration).
+  const wantedNew = TIPSTER_SLUG_REDIRECTS[username.trim().toLowerCase()];
+  if (wantedNew && tip?.username?.toLowerCase() === wantedNew.toLowerCase()) {
+    permanentRedirect(tipsterPath(encodeURIComponent(tip.username)));
+  }
 
   return (
     <>

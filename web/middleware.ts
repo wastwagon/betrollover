@@ -56,6 +56,8 @@ function withLocaleHeader(req: NextRequest, locale: Locale, pathname: string) {
   url.pathname = pathname;
   const reqHeaders = new Headers(req.headers);
   reqHeaders.set('x-locale', locale);
+  // Public URL path (with /fr prefix) for SSR breadcrumbs / SEO helpers.
+  reqHeaders.set('x-pathname', req.nextUrl.pathname);
   const response = NextResponse.rewrite(url, { request: { headers: reqHeaders } });
   response.cookies.set(LOCALE_COOKIE, locale, {
     path: '/',
@@ -108,6 +110,7 @@ export function middleware(req: NextRequest) {
 
   const reqHeaders = new Headers(req.headers);
   reqHeaders.set('x-locale', 'en');
+  reqHeaders.set('x-pathname', pathname);
   const response = NextResponse.next({ request: { headers: reqHeaders } });
   applyMarketingHomeCache(response, req, pathname);
   return response;

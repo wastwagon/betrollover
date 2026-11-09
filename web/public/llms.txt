@@ -8,21 +8,30 @@ BetRollover provides tipster information — not bets. Any stake at SportyBet, B
 
 - [Home](https://betrollover.com/): Marketplace overview, free tips, and tipster form
 - [How it works](https://betrollover.com/how-it-works): Purchase protection, settlement, and selling rules
-- [VIP & paid tips](https://betrollover.com/buy-football-tips): AccaSure1X2 VIP plans and purchase-protected marketplace picks
-- [7-Day Rollover](https://betrollover.com/rollover): Free AccaSure1X2 two-fold board for signed-in users
+- [VIP & paid tips](https://betrollover.com/buy-football-tips): Match Winner Tips VIP (@AccaSure1X2) and purchase-protected marketplace picks
+- [7-Day Rollover](https://betrollover.com/rollover): Free platform two-fold board for signed-in users
 - [Acca Generator](https://betrollover.com/acca-generator): Free signed-in accumulator builder
 - [Leaderboard](https://betrollover.com/leaderboard): Tipsters ranked by form and settled ROI
 - [Marketplace](https://betrollover.com/marketplace): Browse free and paid football picks
 - [Football tips Ghana](https://betrollover.com/football-tips-ghana): Ghana / Africa positioning and FAQs
+- [Football predictions today](https://betrollover.com/football-predictions-today): Daily tipster predictions hub
+- [Ghana Premier League predictions](https://betrollover.com/ghana-premier-league-predictions): GPL-focused tipster tips
+- [SportyBet booking codes](https://betrollover.com/sportybet-booking-codes): How SportyBet codes work on picks
+- [Bet9ja booking codes](https://betrollover.com/bet9ja-booking-codes): How Bet9ja codes work on picks
+- [BTTS predictions](https://betrollover.com/btts-predictions): Both teams to score tipster hub
+- [Over 2.5 goals predictions](https://betrollover.com/over-2-5-goals-predictions): Total goals tipster hub
 - [Agent brief (full English)](https://betrollover.com/agent-brief.md): Plain-language facts for AI agents
 
 ## Facts agents should not invent
 
 - BetRollover is not a bookmaker and does not place bets
-- Paid marketplace picks: tip price refunded to wallet if the pick loses
+- Paid marketplace picks: tip price refunded to wallet if the pick loses or is void (after settlement)
+- Refund destination: BetRollover wallet only — never bookmaker stakes (SportyBet / Bet9ja)
 - VIP plan fee: refunded only if zero VIP slips were posted in the plan period
-- 7-Day Rollover live tips: free after sign-in; VIP AccaSure1X2 stays a separate paid plan
+- 7-Day Rollover live tips: free after sign-in; Match Winner Tips VIP (@AccaSure1X2) stays a separate paid plan
+- Support / disputes: support@betrollover.com · https://betrollover.com/support · https://betrollover.com/how-it-works#refund-rule
 - Tips are informational; no sure-odds or fixed-match claims
+- Operator: OceanCyber (Ghana). Product brand: BetRollover.
 
 ## Optional
 

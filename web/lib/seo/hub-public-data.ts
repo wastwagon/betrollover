@@ -27,6 +27,8 @@ export type MarketplaceHubData = {
   items: Record<string, unknown>[];
   total: number;
   hasMore: boolean;
+  /** True when live marketplace was empty and latest settled picks were used instead. */
+  showingSettledFallback?: boolean;
 };
 
 export async function fetchMarketplaceHub(options?: {
@@ -48,10 +50,38 @@ export async function fetchMarketplaceHub(options?: {
   if (footballOnly) {
     items = items.filter((item) => isDiscoverySportAllowed(typeof item.sport === 'string' ? item.sport : undefined));
   }
+  let total = typeof obj.total === 'number' ? obj.total : items.length;
+  let hasMore = Boolean(obj.hasMore);
+  let showingSettledFallback = false;
+
+  // Never leave /marketplace empty for crawlers: show latest settled picks with results.
+  if (items.length === 0 && !options?.tipster?.trim() && (!options?.priceFilter || options.priceFilter === 'all')) {
+    const archive = await hubFetch('/accumulators/archive?limit=10', options?.revalidate ?? 60);
+    const archiveObj = archive && typeof archive === 'object' ? (archive as Record<string, unknown>) : {};
+    let settled = Array.isArray(archiveObj.items)
+      ? (archiveObj.items as Record<string, unknown>[])
+      : Array.isArray(archive)
+        ? (archive as Record<string, unknown>[])
+        : [];
+    if (footballOnly) {
+      settled = settled.filter((item) =>
+        isDiscoverySportAllowed(typeof item.sport === 'string' ? item.sport : undefined),
+      );
+    }
+    settled = settled.slice(0, 10);
+    if (settled.length > 0) {
+      items = settled;
+      total = settled.length;
+      hasMore = false;
+      showingSettledFallback = true;
+    }
+  }
+
   return {
     items,
-    total: typeof obj.total === 'number' ? obj.total : items.length,
-    hasMore: Boolean(obj.hasMore),
+    total,
+    hasMore,
+    showingSettledFallback,
   };
 }
 

@@ -15,11 +15,11 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   return {
     title: footballOnly
-      ? 'About the Football Predictions Marketplace'
+      ? 'About BetRollover | Football Predictions Marketplace'
       : 'About the Tipster Marketplace',
     description: footballOnly
-      ? 'About BetRollover: Ghana-based football predictions marketplace for Africa and a global match audience. Purchase-protected picks, verified tipsters, refund if tips lose.'
-      : 'Learn about BetRollover — Ghana-based, global audience. All major global sports: football, basketball, tennis, MMA, rugby and more. Purchase-protected picks, verified tipsters. Refund if tips lose. Worldwide coverage.',
+      ? 'Who runs BetRollover, company details, how tipsters are checked, what verified and AI tipsters mean, and that users do not place bets here. Ghana-based. 18+.'
+      : 'Learn about BetRollover — Ghana-based tipster marketplace. Purchase-protected picks, tipster checks, AI tipster labels. Not a bookmaker. 18+.',
     alternates: seoAlternates('/about', locale),
   };
 }
@@ -41,6 +41,17 @@ export default async function AboutPage() {
           <div className="prose prose-slate max-w-none text-[var(--text)] space-y-10 leading-relaxed min-w-0">
 
             <section>
+              <h2 className="text-xl font-semibold mb-3">{t('about.who_h')}</h2>
+              <p>{t('about.who_body')}</p>
+              <p className="mt-3 text-sm">
+                Email:{' '}
+                <a href="mailto:support@betrollover.com" className="font-semibold text-[var(--primary)] hover:underline">
+                  {t('about.contact_email')}
+                </a>
+              </p>
+            </section>
+
+            <section>
               <h2 className="text-xl font-semibold mb-3">{t('about.what_we_do')}</h2>
               <p>{t('about.what_we_do_desc')}</p>
             </section>
@@ -56,6 +67,21 @@ export default async function AboutPage() {
             <section>
               <h2 className="text-xl font-semibold mb-3">{t('about.tipster_status_title')}</h2>
               <p>{t('about.tipster_status_desc', sellVars)}</p>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold mb-3">{t('about.verified_h')}</h2>
+              <p>{t('about.verified_body')}</p>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold mb-3">{t('about.ai_h')}</h2>
+              <p>{t('about.ai_body')}</p>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold mb-3">{t('about.not_bookie_h')}</h2>
+              <p>{t('about.not_bookie_body')}</p>
             </section>
 
             <section>

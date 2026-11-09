@@ -39,19 +39,22 @@ export async function HomeHeroBanner() {
           />
           <img
             src={HERO_LCP_MOBILE_AVIF}
-            alt=""
+            alt={t('home.hero_image_alt')}
             width={800}
             height={533}
+            sizes="100vw"
             fetchPriority="high"
-            decoding="async"
-            className="absolute inset-0 h-full w-full object-cover object-[center_42%] brightness-[1.04] contrast-[1.02] saturate-[1.08]"
+            decoding="sync"
+            // Keep LCP paint cheap: no CSS filter on the LCP image (filters delay compositing).
+            className="absolute inset-0 h-full w-full object-cover object-[center_42%]"
           />
         </picture>
         <div
           className="absolute inset-0"
           style={{
+            // Subtle grade lives on the overlay so the LCP <img> can paint immediately.
             background:
-              'linear-gradient(105deg, rgba(4, 22, 18, 0.72) 0%, rgba(4, 22, 18, 0.45) 32%, rgba(4, 22, 18, 0.12) 58%, transparent 72%), linear-gradient(180deg, transparent 40%, rgba(4, 22, 18, 0.5) 100%)',
+              'linear-gradient(105deg, rgba(4, 22, 18, 0.72) 0%, rgba(4, 22, 18, 0.45) 32%, rgba(4, 22, 18, 0.12) 58%, transparent 72%), linear-gradient(180deg, transparent 40%, rgba(4, 22, 18, 0.5) 100%), linear-gradient(0deg, rgba(255,255,255,0.04), rgba(255,255,255,0.04))',
           }}
           aria-hidden
         />

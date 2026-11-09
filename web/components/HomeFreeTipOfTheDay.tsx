@@ -140,6 +140,7 @@ export function HomeFreeTipOfTheDay({
                   : null
               }
               viewOnly
+              picksRevealed
               detailsHref={`/coupons/${item.id}`}
               onPurchase={() => {}}
               bookmakerKey={item.bookmakerKey}

@@ -88,6 +88,14 @@ type DeskExtras = Pick<
   | 'allowedOutcomeKeys'
 >;
 
+/** Public risk labels — avoid "Sure" (reads like a guarantee). */
+const RISK_PUBLIC_LABEL: Record<AccaDeskTipsterConfig['riskLevel'], string> = {
+  sure: 'Low Odds',
+  safe: 'Steady',
+  medium: 'Value',
+  high: 'Long Odds',
+};
+
 function desk(
   risk: AccaDeskTipsterConfig['riskLevel'],
   marketKey: string,
@@ -96,11 +104,12 @@ function desk(
   extras?: DeskExtras,
 ): AccaDeskTipsterConfig {
   const riskLabel = risk.charAt(0).toUpperCase() + risk.slice(1);
+  const publicRisk = RISK_PUBLIC_LABEL[risk];
   const marketSlug = MARKET_SLUG[marketKey] ?? marketKey.toUpperCase();
   return {
     username: `Acca${riskLabel}${marketSlug}`,
-    display_name: `${riskLabel} · ${marketLabel}`,
-    bio: `${riskLabel} · ${marketLabel} only. Up to 2 free 2-fold picks a day, clustered by kick-off. Educational odd bands — not guaranteed. 18+.`,
+    display_name: `${publicRisk} · ${marketLabel}`,
+    bio: `Automated AI tipster. ${publicRisk} · ${marketLabel} only. Up to 2 free 2-fold picks a day, clustered by kick-off. Educational odd bands — not guaranteed. 18+.`,
     avatar_url: `/avatars/acca_${risk}_${marketKey}.png?v=2`,
     strategy_id: `acca_desk_${risk}_${marketKey}`,
     riskLevel: risk,
@@ -411,7 +420,8 @@ export const ACCA_DESK_TIPSTERS: AccaDeskTipsterConfig[] = [
   tipster.username === 'AccaSure1X2'
     ? {
         ...tipster,
-        bio: 'Sure · 1X2 only. Up to 2 2-folds a day, clustered by kick-off. Live tips on the 7-day Rollover board are free when signed in; VIP desk slips stay for subscribers. Educational odd bands — not guaranteed. 18+.',
+        display_name: 'Match Winner Tips',
+        bio: 'Automated AI tipster (Match Winner / 1X2). Up to 2 2-folds a day, clustered by kick-off. Live tips on the 7-day Rollover board are free when signed in; VIP desk slips stay for subscribers. Educational odd bands — not guaranteed. 18+.',
       }
     : tipster,
 );

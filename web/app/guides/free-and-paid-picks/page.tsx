@@ -86,11 +86,19 @@ export default async function FreeAndPaidPicksGuidePage() {
           </h2>
           <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
             {t('guides.free_booking_body')}{' '}
+            <Link href="/sportybet-booking-codes" className="text-[var(--primary)] hover:underline">
+              SportyBet booking codes
+            </Link>
+            {' · '}
+            <Link href="/bet9ja-booking-codes" className="text-[var(--primary)] hover:underline">
+              Bet9ja booking codes
+            </Link>
+            {' · '}
             <Link href="/marketplace" className="text-[var(--primary)] hover:underline">
               {t('nav.marketplace')}
             </Link>
             {' · '}
-            <Link href="/buy-football-tips#booking-codes" className="text-[var(--primary)] hover:underline">
+            <Link href="/buy-football-tips" className="text-[var(--primary)] hover:underline">
               {t('buy.nav')}
             </Link>
           </p>

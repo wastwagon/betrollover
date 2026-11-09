@@ -11,7 +11,7 @@ import { TipstersSetupService } from './tipsters-setup.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { TipsterService } from '../tipster/tipster.service';
-import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
+import { buildPickSeoTitle, formatFootballOutcomeLabel } from '@betrollover/shared-types';
 import { ResultTrackerService } from './result-tracker.service';
 import { TipsterSubscriptionPackage } from '../subscriptions/entities/tipster-subscription-package.entity';
 import { Subscription } from '../subscriptions/entities/subscription.entity';
@@ -146,20 +146,27 @@ export class PredictionMarketplaceSyncService {
       return { accumulatorId: duplicate };
     }
 
-    // Unique (user_id, title): include prediction.id so concurrent syncs cannot collide on the same serial
-    // (getCount()+1 races when two jobs insert for the same tipster/day before either commits).
+    // Unique (user_id, title): SEO title from first leg; append prediction id for uniqueness.
     const isMulti = fixtures.length > 1;
-    const rawTitle = prediction.predictionTitle || '';
-    const baseTitle = this.isMatchBasedTitle(rawTitle)
-      ? isMulti
-        ? '2-Pick Acca'
-        : 'Single'
-      : rawTitle || (isMulti ? '2-Pick Acca' : 'Single');
-    const dateStr = prediction.predictionDate
-      ? new Date(prediction.predictionDate).toISOString().slice(0, 10)
-      : new Date().toISOString().slice(0, 10);
-    const prefix = `${baseTitle} (${dateStr})`;
-    const title = `${prefix} #${prediction.id}`;
+    const seoTitle = buildPickSeoTitle(
+      fixtures.map((f) => ({
+        homeTeam: f.homeTeam,
+        awayTeam: f.awayTeam,
+        matchDescription: `${f.homeTeam} vs ${f.awayTeam}`,
+        prediction: formatFootballOutcomeLabel(f.selectedOutcome),
+        outcomeKey: f.selectedOutcome,
+        matchDate: f.matchDate,
+      })),
+    );
+    const rawTitle = (prediction.predictionTitle || '').trim();
+    const baseTitle =
+      seoTitle ||
+      (this.isMatchBasedTitle(rawTitle)
+        ? isMulti
+          ? '2-Pick Acca'
+          : 'Single'
+        : rawTitle || (isMulti ? '2-Pick Acca' : 'Single'));
+    const title = seoTitle ? `${seoTitle} · #${prediction.id}` : `${baseTitle} · #${prediction.id}`;
     const totalOdds = fixtures.reduce((acc, f) => acc * Number(f.selectionOdds), 1);
 
     const ticket = this.ticketRepo.create({
@@ -457,8 +464,16 @@ export class PredictionMarketplaceSyncService {
       }
       seen.set(key, ticket.id);
 
-      const legCount = ticket.picks?.length ?? ticket.totalPicks ?? 1;
-      const newTitle = legCount > 1 ? '2-Pick Acca' : 'Single';
+      const seoTitle = buildPickSeoTitle(
+        (ticket.picks || []).map((p) => ({
+          matchDescription: p.matchDescription,
+          prediction: p.prediction,
+          outcomeKey: p.outcomeKey,
+          matchDate: p.matchDate,
+        })),
+      );
+      if (!seoTitle) continue;
+      const newTitle = `${seoTitle} · #${ticket.id}`;
       if (ticket.title !== newTitle) {
         await this.ticketRepo.update(ticket.id, { title: newTitle });
         titlesUpdated++;

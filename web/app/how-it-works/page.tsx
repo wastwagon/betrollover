@@ -120,6 +120,29 @@ export default async function HowItWorksPage() {
               <p className="m-0 text-[var(--text-muted)] leading-relaxed">{t('how_it_works.verification_p', sellVars)}</p>
             </section>
 
+            <section
+              id="refund-rule"
+              className="rounded-2xl border border-[var(--primary)]/25 bg-[var(--primary-light)]/40 p-4 sm:p-6 min-w-0 scroll-mt-[calc(var(--br-chrome-below-header)+1rem)]"
+            >
+              <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">{t('how_it_works.refund_h2')}</h2>
+              <p className="m-0 text-[var(--text)] leading-relaxed">{t('how_it_works.refund_when')}</p>
+              <p className="mt-3 mb-0 text-[var(--text)] leading-relaxed">{t('how_it_works.refund_how_long')}</p>
+              <p className="mt-3 mb-0 text-[var(--text)] leading-relaxed">{t('how_it_works.refund_where')}</p>
+              <p className="mt-3 mb-0 text-sm text-[var(--text-muted)] leading-relaxed">
+                <Link href="/guides/purchase-protection" className="text-[var(--primary)] hover:underline">
+                  {t('how_it_works.guides_link')}
+                </Link>
+                {' · '}
+                <Link href="/support" className="text-[var(--primary)] hover:underline">
+                  {t('support.title')}
+                </Link>
+                {' · '}
+                <a href="mailto:support@betrollover.com" className="text-[var(--primary)] hover:underline">
+                  support@betrollover.com
+                </a>
+              </p>
+            </section>
+
             <section id="faq" className="scroll-mt-[calc(var(--br-chrome-below-header)+1rem)] min-w-0">
               <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-4 sm:mb-5">{t('how_it_works.faq_title')}</h2>
               <ul className="space-y-3 sm:space-y-4 list-none pl-0">

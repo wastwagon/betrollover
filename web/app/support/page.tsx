@@ -117,6 +117,28 @@ function SupportContent() {
           }
         />
 
+        <section
+          className="mb-6 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6 max-w-3xl"
+          aria-label={t('support.contact_facts_h')}
+        >
+          <h2 className="text-base font-semibold text-[var(--text)]">{t('support.contact_facts_h')}</h2>
+          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('support.contact_facts_body')}</p>
+          <p className="mt-3 text-sm text-[var(--text)]">
+            {t('support.contact_email_label')}:{' '}
+            <a href="mailto:support@betrollover.com" className="font-semibold text-[var(--primary)] hover:underline">
+              support@betrollover.com
+            </a>
+            {' · '}
+            <Link href="/contact" className="font-semibold text-[var(--primary)] hover:underline">
+              /contact
+            </Link>
+            {' · '}
+            <Link href="/how-it-works#refund-rule" className="font-semibold text-[var(--primary)] hover:underline">
+              /how-it-works#refund-rule
+            </Link>
+          </p>
+        </section>
+
         <div className="mb-6">
           <AdSlot zoneSlug="support-full" fullWidth className="w-full max-w-3xl" />
         </div>

@@ -154,6 +154,22 @@ const fr: Record<string, string> = {
 
   // ── Home page ────────────────────────────────────────────────────────────
   'home.hero_title': 'Marketplace tipsters football avec picks protégés.',
+  'home.seo_body_h2': 'Ce qu\'est BetRollover',
+  'home.seo_body_p1':
+    'BetRollover est une marketplace de pronostics football. Les tipsters publient des tips. Vous achetez le tip si vous le souhaitez. Vous ne placez pas de paris et ne misez pas sur BetRollover. Nous ne sommes pas un bookmaker. Si vous pariez ensuite, c\'est chez un bookmaker comme SportyBet ou Bet9ja.',
+  'home.seo_body_p2':
+    'Le public principal est le Ghana, puis le Nigeria, le Kenya, l\'Afrique du Sud et l\'Afrique francophone. Les portefeuilles supportent le cedi ghanéen (GHS). Vous pouvez recharger et retirer via les méthodes affichées dans le compte, y compris Mobile Money lorsqu\'il est disponible.',
+  'home.seo_body_p3':
+    'Les pronostics marketplace payants ont une protection d\'achat. Quand vous achetez un pick payant, le tipster n\'est pas payé tant que chaque sélection n\'est pas réglée. Si le pick perd, le prix est remboursé automatiquement sur votre portefeuille BetRollover. Les tips gratuits sont gratuits car vous n\'avez pas payé de frais. Les plans VIP sont des abonnements séparés ; les slips VIP perdants ne sont pas remboursés comme les picks marketplace. Les frais VIP ne sont rendus que si zéro slip VIP est publié pendant votre période.',
+  'home.seo_body_p4':
+    'Avant d\'acheter, lisez le record réglé de chaque tipster : taux de victoire, ROI et résultats récents. Utilisez le marketplace pour les tips du jour, le guide Ghana pour les paiements locaux, et Comment ça marche pour les remboursements. Les guides courts couvrent la protection d\'achat, les stats tipster et le classement.',
+  'home.seo_body_links': 'Pages utiles',
+  'home.seo_link_ghana': 'Pronostics football au Ghana',
+  'home.seo_link_how': 'Comment ça marche et remboursements',
+  'home.seo_link_guides': 'Guides courts',
+  'home.seo_notice':
+    '18+ uniquement. Les pronostics sont informatifs. BetRollover n\'est pas un bookmaker. Utilisez les tips de façon responsable.',
+  'home.hero_image_alt': 'Lumières d\'un stade de football la nuit — marketplace de pronostics BetRollover',
   'home.hero_subtitle': 'Pronostics payants et abonnements VIP — basé au Ghana pour l\'Afrique et un public mondial.',
   'home.hero_escrow_line': 'Si un pronostic payant perd, votre portefeuille est remboursé automatiquement.',
   'home.hero_informational_note': 'Les pronostics et analyses de tipsters sont à titre informatif et éducatif uniquement. BetRollover n\'est pas un bookmaker ni un opérateur de paris. 18 ans et plus.',
@@ -167,6 +183,7 @@ const fr: Record<string, string> = {
   'home.app_snapshot_title': 'Aperçu de la plateforme',
   'home.featured_matches_title': 'Matchs phares',
   'home.today_matches_title': 'Matchs phares du jour',
+  'home.today_matches_prediction_link': 'Pronostic {home} vs {away}',
   'home.today_matches_sub': 'Heures de coup d\'envoi et scores en direct',
   'home.today_matches_see_all': 'Tous les scores',
   'home.today_matches_browse': 'Voir les pronostics',
@@ -180,6 +197,9 @@ const fr: Record<string, string> = {
 
   // ── Match detail page ────────────────────────────────────────────────────
   'match.breadcrumb': 'Aperçu du match',
+  'match.preview_label': 'Aperçu du match',
+  'match.preview_title': 'Aperçu du match',
+  'match.link_predictions_today': 'Pronostics football du jour',
   'match.back_live_scores': 'Scores en direct',
   'match.table_rank': 'N°{rank} au classement',
   'match.browse_picks': 'Voir les pronostics',
@@ -205,12 +225,12 @@ const fr: Record<string, string> = {
   'home.for_sellers': 'Pour les vendeurs',
   'home.how_it_works_sub': 'Commencez en Trois Étapes Simples',
   'home.escrow_note': 'Pas d\'abonnement. Pas de frais cachés. Payez uniquement pour les pronostics que vous voulez — chaque pronostic payant a une protection d\'achat.',
-  'home.step1_title': 'Parcourir & Comparer',
-  'home.step1_desc': 'Explorez des tipsters vérifiés — Football, Basketball, Tennis et plus sur le marché. Consultez le taux de victoire, le ROI et l\'historique de chaque tipster avant de dépenser un sou. Des pronostics gratuits toujours disponibles.',
-  'home.step2_title': 'Acheter & Sécuriser',
-  'home.step2_desc': 'Achetez un pronostic ou choisissez-en un gratuit. Le tipster n\'est pas payé tant que toutes les sélections de ce pronostic ne sont pas réglées. S\'il perd, le prix d\'achat est remboursé sur votre portefeuille. Vous gardez le contrôle.',
-  'home.step3_title': 'Gagner ou Être Remboursé',
-  'home.step3_desc': 'Les résultats sont suivis automatiquement. Si le pronostic gagne, le tipster reçoit sa part après les frais plateforme. S\'il perd, le montant que vous avez payé pour le pronostic est remboursé sur votre portefeuille — sans réclamation nécessaire.',
+  'home.step1_title': 'Créer un compte et créditer le portefeuille',
+  'home.step1_desc': 'Inscrivez-vous gratuitement, puis ajoutez des fonds (MoMo, Telecel Cash ou carte). Vous achetez des pronostics ici — vous ne placez pas de paris sur BetRollover.',
+  'home.step2_title': 'Parcourir et acheter un pronostic',
+  'home.step2_desc': 'Comparez les tipsters (taux de victoire, ROI), puis achetez un pronostic ou prenez un gratuit. Le tipster n\'est pas payé tant que tout n\'est pas réglé. En cas de perte, remboursement au portefeuille.',
+  'home.step3_title': 'Gagner ou être remboursé',
+  'home.step3_desc': 'Les résultats sont suivis automatiquement. Si le pronostic gagne, le tipster reçoit sa part après les frais plateforme. S\'il perd, le montant payé est remboursé au portefeuille — sans réclamation.',
   'home.news_guides_title': 'Actualités & Guides Football',
   'home.news_guides_desc': 'Mises à jour des transferts, rapports de blessures et guides stratégiques pour tipsters football.',
   'home.explore_cta_title': 'Prêt à explorer ?',
@@ -235,6 +255,13 @@ const fr: Record<string, string> = {
   'how_it_works.settlement_p': 'Nous utilisons des sources officielles (API-Sports pour le football et le volleyball, The Odds API pour les autres sports). Chaque pronostic est gagné, perdu ou annulé. Le pronostic gagne seulement si tous les pronostics non annulés gagnent.',
   'how_it_works.verification_h2': 'Historique & règles de vente',
   'how_it_works.verification_p': 'Un seul type de compte. Les stats (taux de victoire, ROI, série) viennent des pronostics réglés uniquement. Vendre payant sur le marché exige le ROI minimum ({minRoi} %) et le taux de victoire minimum ({minWr} %) fixés par l\'admin — pas de processus d\'approbation séparé.',
+  'how_it_works.refund_h2': 'Règle de remboursement (protection d\'achat) — résumé clair',
+  'how_it_works.refund_when':
+    'Quand ça s\'applique : pronostics marketplace payants uniquement. Après règlement, si le pick est perdu ou annulé (void), le prix du tip est remboursé. Les tips gratuits n\'ont pas de frais, donc rien à rembourser. Les frais VIP suivent une règle séparée : le forfait n\'est rendu que si zéro slip VIP a été publié pendant la période payée. Les slips VIP perdants ne sont pas remboursés comme les picks marketplace.',
+  'how_it_works.refund_how_long':
+    'Délai : le remboursement est automatique quand la plateforme a réglé le pick à partir des résultats officiels. Pas besoin d\'ouvrir un ticket pour un pick marketplace payant perdu standard. Les tickets support sont pour litiges ou erreurs — réponses typiques sous 24 h (lun–ven) ; litiges portefeuille/paiement sous 48 h.',
+  'how_it_works.refund_where':
+    'Où va l\'argent : le prix du tip est recrédité sur votre portefeuille BetRollover (pas chez SportyBet, Bet9ja ou un autre bookmaker). Les mises bookmaker ne sont jamais remboursées par BetRollover. Nous ne sommes pas un bookmaker.',
   'how_it_works.faq_escrow_q': 'Comment la protection d\'achat protège-t-elle les acheteurs ?',
   'how_it_works.faq_escrow_a': 'Lorsque vous achetez un pronostic, le tipster n\'est pas payé tant que le pronostic n\'est pas réglé. S\'il perd, votre achat est remboursé automatiquement sur votre portefeuille.',
   'how_it_works.faq_lose_q': 'Que se passe-t-il si les pronostics perdent ?',
@@ -1281,7 +1308,12 @@ const fr: Record<string, string> = {
   'tipster.browse_tipsters': 'Voir les Tipsters',
   'tipster.back_to_tipsters': '← Retour aux Tipsters',
   'tipster.ai_tipster': 'Tipster IA',
-  'tipster.ai_badge': 'IA',
+  'tipster.ai_badge': 'Tipster IA',
+  'tipster.automated_badge': 'Automatisé',
+  'tipster.automated_badge_title': 'Tipster automatisé — bureau plateforme, pas un vendeur humain',
+  'tipster.automated_badge_aria': 'Tipster automatisé opéré par la plateforme',
+  'marketplace.settled_fallback_note':
+    'Aucun pronostic en direct pour le moment. Voici les 10 derniers pronostics réglés avec résultats.',
   'tipster.ai_badge_title': 'Tipster IA — géré par la plateforme',
   'tipster.acca_desk_badge': 'Acca Desk',
   'tipster.acca_desk_badge_title': 'Acca Desk — 2-folds de la plateforme',
@@ -1291,7 +1323,7 @@ const fr: Record<string, string> = {
   'pick_card.desk_today_title': "Premier coup d'envoi aujourd'hui (Accra)",
   'pick_card.desk_tomorrow_title': 'Premier coup d’envoi demain (Accra)',
   'tipster.verified_badge': 'Vérifié',
-  'tipster.verified_badge_title': 'Compte tipster vérifié',
+  'tipster.verified_badge_title': 'Compte vérifié — contrôles plateforme réussis ; pas une promesse de profit',
   'tipster.verified_badge_aria': 'Tipster vérifié',
   'kickoff.started': 'Premier coup d’envoi commencé',
   'kickoff.started_short': 'Commencé',
@@ -1558,6 +1590,10 @@ const fr: Record<string, string> = {
   'support.admin_reply': 'Réponse de l\'admin',
   'support.help_centre': 'Centre d\'aide',
   'support.raise_prompt': 'Soumettez un ticket et nous vous répondrons rapidement.',
+  'support.contact_facts_h': 'Contact support et litiges (texte clair)',
+  'support.contact_facts_body':
+    'E-mail : support@betrollover.com. Web : /support (tickets connectés) et /contact. Pour un litige ou un règlement, choisissez la catégorie dispute/settlement et indiquez l\'id du pick / de l\'achat. Réponses typiques sous 24 h (lun–ven) ; litiges portefeuille/paiement sous 48 h. BetRollover est opéré par OceanCyber. Nous ne sommes pas un bookmaker — les problèmes de compte bookmaker restent chez SportyBet, Bet9ja ou votre bookie.',
+  'support.contact_email_label': 'E-mail support',
   'support.cancel': '✕ Annuler',
   'support.new_ticket_btn': '+ Nouveau ticket',
   'support.ticket_submitted': 'Ticket soumis',
@@ -1968,6 +2004,8 @@ const fr: Record<string, string> = {
     'Ce mois-ci : seuls les tipsters avec au moins un pronostic arbitré publié dans le mois civil en cours apparaissent. Ceux avec au moins {n} pronostics arbitrés publiés ce mois-là sont classés en premier par ROI, puis profit, puis taux de réussite ; les autres sur le mois suivent en dessous, par ROI.',
   'leaderboard.rank_notice_weekly':
     'Cette semaine : seuls les tipsters avec au moins un pronostic arbitré publié dans la semaine civile en cours apparaissent. Ceux avec au moins {n} pronostics arbitrés publiés cette semaine-là sont classés en premier par ROI, puis profit, puis taux de réussite ; les autres sur la semaine suivent en dessous, par ROI.',
+  'leaderboard.rank_rule_under_table':
+    'Le rang n’est pas le ROI seul. Les tipsters actifs à ROI ≥ 0 passent d’abord, puis forme + ROI (taux de victoire et publications récentes dans la forme). Voir comment le classement fonctionne.',
   'seo.discover_title': 'Hub Actualités et Guides Football',
   'seo.discover_desc': 'Un hub pour l’actualité des matchs et les guides éducatifs. Pour les transferts et blessures du jour, voir Actualités ; pour la protection d\'achat et l’évaluation des tipsters, voir Guides.',
   'seo.news_title': 'Actualités matchs football',
@@ -2026,6 +2064,18 @@ const fr: Record<string, string> = {
 
   // ── About page ───────────────────────────────────────────────────────────
   'about.headline': 'Marketplace de Pronostics Football — Basée au Ghana',
+  'about.who_h': 'Qui gère BetRollover',
+  'about.who_body':
+    'BetRollover est opéré par OceanCyber. Le nom produit affiché sur le site est BetRollover. Nous sommes basés au Ghana. Contact : support@betrollover.com. Les utilisateurs achètent des pronostics football auprès de tipsters. Ils ne placent pas de paris et ne misent pas sur cette plateforme. Nous ne sommes pas un bookmaker.',
+  'about.verified_h': 'Ce que signifie « vérifié »',
+  'about.verified_body':
+    'Sur les profils tipsters humains, « Vérifié » signifie que le compte a passé les contrôles plateforme (par ex. un parcours d\'inscription confirmé). Cela ne garantit pas que le tipster gagne. Le taux de victoire et le ROI réglés sont des stats publiques séparées. Les tipsters IA ou automatisés sont étiquetés « Tipster IA » ou « Automatisé » au lieu de « Vérifié ».',
+  'about.ai_h': 'Qu\'est-ce qu\'un tipster IA',
+  'about.ai_body':
+    'Un tipster IA ou Automatisé est un bureau géré par la plateforme qui publie des pronostics selon des règles de marché fixes. Les résultats se règlent comme pour les tipsters humains. Ce ne sont pas des vendeurs humains. Les libellés sur les profils et listes le rendent clair.',
+  'about.not_bookie_h': 'Pas un bookmaker',
+  'about.not_bookie_body':
+    'Vous achetez des pronostics ici. Vous ne misez pas sur BetRollover. Si vous placez un pari, vous le faites vous-même chez un bookmaker comme SportyBet ou Bet9ja. 18+ uniquement. Utilisez les tips de façon responsable.',
   'about.intro': 'BetRollover relie des analystes football à un public mondial de matchs — surtout en Afrique — qui veulent des pronostics fondés sur les données et avec protection d\'achat.',
   'about.what_we_do': 'Ce Que Nous Faisons',
   'about.what_we_do_desc': 'Nous offrons aux tipsters — toute personne ayant un historique cohérent d\'analyse football — une plateforme professionnelle pour publier et monétiser leurs pronostics. Les acheteurs parcourent des picks football vérifiés sous protection d\'achat et suivent les résultats en temps réel.',
@@ -2048,6 +2098,7 @@ const fr: Record<string, string> = {
   'about.africa_title': 'Forte en Afrique, Conçue pour le Monde',
   'about.africa_desc': 'Basée au Ghana et adoptée au Nigeria, Kenya, Afrique du Sud et en Afrique francophone — avec tipsters et acheteurs dans le monde entier. Pronostics football, portefeuilles GHS & multi-devises, picks avec protection d\'achat avec taux de victoire et ROI transparents.',
   'about.ready_cta': 'Prêt à commencer ?',
+  'about.contact_email': 'support@betrollover.com',
 
   // ── Top bar rolling disclaimer ────────────────────────────────────────────
   'topbar.disclaimer_1': 'BetRollover est une plateforme éducative de tipsters — pas un site de paris',
@@ -2571,14 +2622,21 @@ const fr: Record<string, string> = {
   'buy.tagline': 'Payez un prono unique ou un plan VIP. Les résultats réglés restent publics pour juger la forme avant de vous abonner.',
   'buy.intro':
     'Les plans VIP et les picks marketplace protégés partagent un historique réglé public, un prix clair et un remboursement portefeuille si un pick payant perd. C\'est ce que propose BetRollover. Nous ne sommes pas un bookmaker. 18+ uniquement.',
-  'buy.regions_h': 'Pronostics football payants au Ghana, Nigeria, Kenya et ailleurs',
+  'buy.regions_h': 'Devise et pays',
   'buy.regions_body':
-    'BetRollover est basé au Ghana : portefeuille GHS, Mobile Money lorsque disponible, et picks sous protection d\'achat pour l\'Afrique de l\'Ouest, l\'Est, l\'Afrique du Sud, la francophonie et le monde. Comparez les tipsters vérifiés, achetez les pronos du jour ou ouvrez un plan VIP sur un seul marketplace.',
+    'Les prix sont affichés en GHS (cedi ghanéen). Le portefeuille peut montrer d\'autres devises. BetRollover est basé au Ghana et utilisé au Nigeria, Kenya, Afrique du Sud, Afrique francophone et au-delà. Pour acheter des pronostics tipster — pas pour parier sur ce site. Mobile Money lorsque disponible.',
   'buy.regions_about_link': 'À propos de BetRollover et nos marchés',
   'buy.picks_h': 'Acheter un prono football',
   'buy.picks_body': 'Le marché liste des pronostics football gratuits et payants. Comparez le taux de victoire et le ROI, puis payez depuis votre portefeuille. Un prono payant perdant est remboursé automatiquement.',
-  'buy.vip_h': 'Abonnement tipster VIP',
-  'buy.vip_body': 'Un plan VIP est un abonnement à AccaSure1X2 (Sure · 1X2). Vous payez une fois pour la période et recevez les coupons réservés aux abonnés. Si aucun n\'est publié pendant votre période, les frais sont rendus. Le tableau Relance 7 jours est séparé — les tips live y sont gratuits une fois connecté.',
+  'buy.vip_h': 'Plans tipster VIP (texte clair)',
+  'buy.vip_body':
+    'Chaque plan ci-dessous indique le tipster, le nom du plan, le prix en GHS, la durée en jours, ce qui est inclus et la règle de remboursement. Les tipsters automatisés sont étiquetés. Les slips VIP perdants ne sont pas remboursés comme les picks marketplace. Les frais du plan ne sont rendus que si zéro slip VIP est publié pendant votre période.',
+  'buy.vip_empty': 'Aucun plan VIP n\'est listé pour le moment. Revenez plus tard sur le marketplace VIP ou achetez un prono unique.',
+  'buy.vip_included': 'Inclus : slips VIP réservés aux abonnés pour la période du plan (voir le rythme du tipster).',
+  'buy.vip_refund_rule':
+    'Règle de remboursement : frais du plan intégralement rendus sur le portefeuille seulement si zéro slip VIP est publié sur ce plan pendant votre période. Les slips VIP perdants ne sont pas remboursés.',
+  'buy.vip_automated_note': 'Tipster automatisé (bureau plateforme).',
+  'buy.vip_human_note': 'Plan tipster indépendant.',
   'buy.acca_h': 'Accumulateurs et pronos à deux sélections',
   'buy.acca_body': 'Le rollover sur 7 jours est un plan à deux sélections à cote basse : gain d’un jour, relance au suivant jusqu’au jour 7, puis l\'exemple recommence. Les tips live de la relance sont gratuits une fois connecté. Le générateur d\'acca est aussi gratuit pour les comptes connectés et construit des accumulateurs du jour en bandes de cotes Sure, Safe, Medium ou High. Ces bandes sont des fourchettes de prix, pas des résultats garantis.',
   'buy.codes_h': 'Codes de réservation SportyBet, Bet9ja et autres',
@@ -2614,6 +2672,19 @@ const fr: Record<string, string> = {
   'ghana_hub.platform_h': 'Qu\'est-ce que BetRollover ?',
   'ghana_hub.platform_body':
     'Parcourez des tipsters vérifiés, achetez les pronos du jour sur le marketplace ou suivez des plans VIP. Les coupons réglés restent publics pour juger la forme avant de payer. Portefeuille en GHS, Mobile Money lorsque disponible. Acheteurs aussi au Nigeria, Kenya, Afrique du Sud et dans le monde.',
+  'ghana_hub.gpl_h': 'Pronostics Ghana Premier League',
+  'ghana_hub.gpl_body':
+    'Quand des matches de Ghana Premier League ont des picks tipster, ils apparaissent sur le marketplace et sur chaque page match avec heure de coup d\'envoi, marché et record tipster. La couverture dépend des fixtures et des publications — nous n\'inventons pas les résultats.',
+  'ghana_hub.momo_h': 'Payer avec MTN MoMo et Telecel Cash',
+  'ghana_hub.momo_body':
+    'Approvisionnez le portefeuille depuis votre compte avec les méthodes Ghana affichées, y compris MTN MoMo et Telecel Cash lorsqu\'elles sont activées. Vous payez les tipsters depuis le portefeuille BetRollover. Vous achetez des pronostics, vous ne misez pas chez nous.',
+  'ghana_hub.withdraw_h': 'Retirer en GHS',
+  'ghana_hub.withdraw_body':
+    'Les soldes portefeuille sont en cedis ghanéens (GHS). Vous pouvez demander un retrait vers une méthode disponible dans votre compte. Les remboursements des picks payants perdants reviennent d\'abord au portefeuille, puis vous pouvez retirer.',
+  'ghana_hub.settled_h': 'Derniers pronostics réglés',
+  'ghana_hub.settled_sub': 'Vrais résultats de l\'archive publique. Ouvrez un pick pour le coupon complet.',
+  'ghana_hub.settled_empty': 'Aucun pick réglé à afficher pour le moment. Consultez l\'archive plus tard.',
+  'ghana_hub.more_pages_h': 'Pages de pronostics liées',
   'ghana_hub.protection_h': 'Protection d\'achat vs pronos gratuits',
   'ghana_hub.protection_body':
     'Les tips gratuits et codes sur les réseaux sociaux ne sont pas remboursés s\'ils perdent. Sur BetRollover, les picks payants marketplace sont protégés : perte = remboursement auto au portefeuille. Différence clé vs canaux anonymes. Les pronos restent informatifs — vous choisissez d\'utiliser un bookmaker tiers.',

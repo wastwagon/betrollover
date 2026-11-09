@@ -117,10 +117,16 @@ export default function MarketplacePage({
   initialPicks = [],
   initialTotal = 0,
   initialHasMore = false,
+  initialSettledFallback = false,
+  introText,
+  pageHeading,
 }: {
   initialPicks?: Accumulator[] | Record<string, unknown>[];
   initialTotal?: number;
   initialHasMore?: boolean;
+  initialSettledFallback?: boolean;
+  introText?: string;
+  pageHeading?: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -128,7 +134,8 @@ export default function MarketplacePage({
   const [picks, setPicks] = useState<Accumulator[]>(() => (initialPicks as Accumulator[]) ?? []);
   const [total, setTotal] = useState(initialTotal);
   const [hasMore, setHasMore] = useState(initialHasMore);
-  const [loading, setLoading] = useState(initialPicks.length === 0);
+  const [settledFallback, setSettledFallback] = useState(initialSettledFallback);
+  const [loading, setLoading] = useState(initialPicks.length === 0 && !initialSettledFallback);
   const [loadingMore, setLoadingMore] = useState(false);
   const [purchasing, setPurchasing] = useState<number | null>(null);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
@@ -331,6 +338,43 @@ export default function MarketplacePage({
 
   const fetchMarketplaceRef = useRef<() => Promise<void>>(async () => {});
 
+  const applyMarketplaceItems = useCallback(
+    async (marketplaceData: any, listHeaders: Record<string, string>) => {
+      let items: Accumulator[] =
+        marketplaceData?.items ?? (Array.isArray(marketplaceData) ? marketplaceData : []);
+      let totalCount = marketplaceData?.total ?? items.length;
+      let hasMoreFlag = marketplaceData?.hasMore ?? false;
+      let usedSettled = false;
+      const allowSettledFallback =
+        !debouncedTipster && priceFilter === 'all' && items.length === 0;
+      if (allowSettledFallback) {
+        try {
+          const archiveRes = await fetch(`${API_URL}/accumulators/archive?limit=10`, {
+            headers: listHeaders,
+          });
+          if (archiveRes.ok) {
+            const archiveData = await archiveRes.json();
+            const settled: Accumulator[] =
+              archiveData?.items ?? (Array.isArray(archiveData) ? archiveData : []);
+            if (settled.length > 0) {
+              items = settled.slice(0, 10);
+              totalCount = items.length;
+              hasMoreFlag = false;
+              usedSettled = true;
+            }
+          }
+        } catch {
+          /* keep empty live list */
+        }
+      }
+      setPicks(items);
+      setTotal(totalCount);
+      setHasMore(hasMoreFlag);
+      setSettledFallback(usedSettled);
+    },
+    [debouncedTipster, priceFilter],
+  );
+
   const fetchMarketplace = useCallback(async () => {
     const token = localStorage.getItem('token');
     const effectiveSport = footballOnly ? FOOTBALL_SPORT_KEY : sportFilter;
@@ -345,10 +389,7 @@ export default function MarketplacePage({
     if (!token) {
       try {
         const marketplaceData = await listPromise;
-        const items = marketplaceData?.items ?? (Array.isArray(marketplaceData) ? marketplaceData : []);
-        setPicks(items);
-        setTotal(marketplaceData?.total ?? items.length);
-        setHasMore(marketplaceData?.hasMore ?? false);
+        await applyMarketplaceItems(marketplaceData, listHeaders);
         setWalletBalance(null);
         setCurrentUserId(null);
         setPurchasedIds(new Set());
@@ -357,6 +398,7 @@ export default function MarketplacePage({
         setPicks([]);
         setTotal(0);
         setHasMore(false);
+        setSettledFallback(false);
         showError(err);
       } finally {
         setLoading(false);
@@ -379,13 +421,8 @@ export default function MarketplacePage({
         headers: { Authorization: `Bearer ${token}` },
       }).then((r) => (r.ok ? r.json() : [])),
     ])
-      .then(([marketplaceData, walletData, purchasedData, userData, followingData]) => {
-        const items = marketplaceData?.items ?? (Array.isArray(marketplaceData) ? marketplaceData : []);
-        const totalCount = marketplaceData?.total ?? items.length;
-        const hasMoreFlag = marketplaceData?.hasMore ?? false;
-        setPicks(items);
-        setTotal(totalCount);
-        setHasMore(hasMoreFlag);
+      .then(async ([marketplaceData, walletData, purchasedData, userData, followingData]) => {
+        await applyMarketplaceItems(marketplaceData, listHeaders);
         if (walletData) setWalletBalance(Number(walletData.balance));
         if (userData) setCurrentUserId(userData.id);
         if (Array.isArray(purchasedData)) {
@@ -400,10 +437,11 @@ export default function MarketplacePage({
         setPicks([]);
         setTotal(0);
         setHasMore(false);
+        setSettledFallback(false);
         showError(err);
       })
       .finally(() => setLoading(false));
-  }, [sportFilter, tipsterParam, priceParam, showError, footballOnly]);
+  }, [sportFilter, tipsterParam, priceParam, showError, footballOnly, applyMarketplaceItems]);
 
   fetchMarketplaceRef.current = fetchMarketplace;
 
@@ -615,7 +653,7 @@ export default function MarketplacePage({
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-0 min-w-0">
             <PageHeader
               label={t('nav.marketplace')}
-              title={t('marketplace.title')}
+              title={pageHeading || t('marketplace.title')}
               tagline={t('marketplace.subtitle')}
             />
             {/* Contextual smart buttons — no hamburger needed */}
@@ -635,6 +673,12 @@ export default function MarketplacePage({
             </div>
           </div>
           <AccaFamilyNav current="buy" />
+
+          {introText ? (
+            <p className="mb-5 max-w-3xl text-sm sm:text-[15px] text-[var(--text-muted)] leading-relaxed">
+              {introText}
+            </p>
+          ) : null}
 
           {!footballOnly && sportFilter ? (
             <div className="mb-4 rounded-2xl border border-[var(--separator)] bg-[var(--card)] px-4 py-3.5">
@@ -827,6 +871,11 @@ export default function MarketplacePage({
               />
             </div>
           )}
+          {!loading && settledFallback && picks.length > 0 ? (
+            <p className="mb-3 text-sm text-[var(--text-muted)]" role="status">
+              {t('marketplace.settled_fallback_note')}
+            </p>
+          ) : null}
           {!loading && picks.length > 0 && filteredAndSortedPicks.length === 0 && (
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6">
               <EmptyState

@@ -12,6 +12,7 @@ import { AnalyticsBeacon } from '@/components/AnalyticsBeacon';
 import { GoogleTagManagerNoScript } from '@/components/GoogleTagManagerNoScript';
 import { ThirdPartyTags } from '@/components/ThirdPartyTags';
 import { JsonLdScript } from '@/components/JsonLdScript';
+import { PathBreadcrumbJsonLd } from '@/components/seo/PathBreadcrumbJsonLd';
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_DEFAULT_TITLE } from '@/lib/site-config';
 import { getLocale } from '@/lib/i18n';
 import './globals.css';
@@ -141,6 +142,7 @@ export default async function RootLayout({
       <body className="min-h-[100dvh] min-h-screen bg-[var(--bg)] font-sans antialiased">
         {!offThirdParty && <GoogleTagManagerNoScript />}
         <JsonLdScript />
+        <PathBreadcrumbJsonLd />
         <ThirdPartyTags disabled={offThirdParty} />
         <AnalyticsBeacon />
         <QueryProvider>

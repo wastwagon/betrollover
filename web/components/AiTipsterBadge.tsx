@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/Badge';
 import { isAccaDeskTipsterType } from '@/lib/tipster-kind';
 
 /**
- * Classic 1-fixture AI indicator. Acca Desk is omitted so those tipsters read like the rest of the board.
+ * Platform-operated tipsters: classic AI + Acca Desk automations.
+ * Acca Desk uses an "Automated" label so it is clear these are not human sellers.
  */
 export function AiTipsterBadge({
   className = '',
@@ -15,15 +16,15 @@ export function AiTipsterBadge({
   tipsterType?: string | null;
 }) {
   const t = useT();
-  if (isAccaDeskTipsterType(tipsterType)) return null;
+  const automated = isAccaDeskTipsterType(tipsterType);
   return (
     <Badge
       tone="ai"
       className={className}
-      title={t('tipster.ai_badge_title')}
-      aria-label={t('tipster.ai_badge_aria')}
+      title={automated ? t('tipster.automated_badge_title') : t('tipster.ai_badge_title')}
+      aria-label={automated ? t('tipster.automated_badge_aria') : t('tipster.ai_badge_aria')}
     >
-      {t('tipster.ai_badge')}
+      {automated ? t('tipster.automated_badge') : t('tipster.ai_badge')}
     </Badge>
   );
 }

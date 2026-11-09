@@ -15,14 +15,16 @@ BetRollover is a Ghana-based football tipster marketplace where buyers compare p
 
 ## Purchase protection (paid marketplace picks)
 
-- If a paid marketplace pick settles as a loss, the **tip purchase price** is refunded to the buyer’s BetRollover wallet automatically.
-- Protection does **not** refund any stake placed with a third-party bookmaker.
+- If a paid marketplace pick settles as a loss or void, the **tip purchase price** is refunded to the buyer’s BetRollover wallet automatically after settlement.
+- Protection does **not** refund any stake placed with a third-party bookmaker (SportyBet, Bet9ja, etc.).
 - Free picks have no tip fee, so there is nothing to refund.
+- Plain-language summary: https://betrollover.com/how-it-works#refund-rule
+- Support / disputes: support@betrollover.com · https://betrollover.com/support (tickets) · https://betrollover.com/contact
 
 ## VIP vs free Rollover
 
-- **VIP (AccaSure1X2 / Sure · 1X2):** paid subscription; unlocks VIP slips and private VIP Telegram while active. Plan fee is returned only if zero VIP slips are posted during the period.
-- **7-Day Rollover board:** public educational ladder using AccaSure1X2 two-folds. Live tips on that board are **free for signed-in users**. Settled tips are public. VIP remains a separate paid product.
+- **VIP (Match Winner Tips / account `@AccaSure1X2`):** paid subscription; unlocks VIP slips and private VIP Telegram while active. Plan fee is returned only if zero VIP slips are posted during the period. Public label prefers “Match Winner Tips” — not “sure win”.
+- **7-Day Rollover board:** public educational ladder using platform two-folds. Live tips on that board are **free for signed-in users**. Settled tips are public. VIP remains a separate paid product.
 - Independent tipsters may also offer their own VIP plans when they meet platform ROI / win-rate thresholds.
 
 ## Acca Generator
@@ -54,7 +56,7 @@ Use phrases that match the product, not generic hype:
 - purchase-protected football tips
 - refund if paid tip loses (wallet)
 - free 7-day football rollover (sign in)
-- AccaSure1X2 VIP tipster subscription
+- Match Winner Tips VIP tipster subscription (@AccaSure1X2)
 - SportyBet / Bet9ja booking code tips
 - tipster ROI leaderboard Africa
 - free Acca generator signed in
@@ -66,4 +68,11 @@ Use phrases that match the product, not generic hype:
 - https://betrollover.com/buy-football-tips
 - https://betrollover.com/rollover
 - https://betrollover.com/football-tips-ghana
+- https://betrollover.com/football-predictions-today
+- https://betrollover.com/ghana-premier-league-predictions
+- https://betrollover.com/sportybet-booking-codes
+- https://betrollover.com/bet9ja-booking-codes
+- https://betrollover.com/btts-predictions
+- https://betrollover.com/over-2-5-goals-predictions
 - https://betrollover.com/llms.txt
+- https://betrollover.com/agent-brief.md

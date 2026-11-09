@@ -13,12 +13,13 @@ import { getApiErrorMessage } from '@/lib/api-error-message';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { FixtureLiveChip } from '@/components/FixtureLiveChip';
 import { useLanguage, useT, type SupportedLanguage } from '@/context/LanguageContext';
+import { formatDateTimeShort } from '@/lib/intl-locale';
 import { formatTipsterRankHash } from '@/lib/tipster-rank-ui';
 import { KickoffUrgencyLine } from '@/components/KickoffUrgencyLine';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { EscrowPurchaseTimeline } from '@/components/EscrowPurchaseTimeline';
 import { EscrowRefundReceipt } from '@/components/EscrowRefundReceipt';
-import { formatFootballOutcomeLabel } from '@betrollover/shared-types';
+import { buildPickSeoTitle, formatFootballOutcomeLabel, isLegacyGenericPickTitle } from '@betrollover/shared-types';
 import { BookingCodeCopyBlock } from '@/components/BookingCodeCopyBlock';
 import { PickShareButtons } from '@/components/PickShareButtons';
 import { IconPicks, IconShield, IconLock } from '@/components/ios/icons';
@@ -531,7 +532,24 @@ export default function CouponDetailPage({
         >
           ← {t('nav.marketplace')}
         </Link>
-        <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)] mb-6 tracking-tight min-w-0 break-words">{coupon.title}</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)] mb-6 tracking-tight min-w-0 break-words">
+          {(() => {
+            const fromLegs = buildPickSeoTitle(
+              coupon.picks.map((p) => ({
+                homeTeam: p.homeTeamName,
+                awayTeam: p.awayTeamName,
+                matchDescription: p.matchDescription,
+                prediction: p.redacted ? undefined : p.prediction,
+                matchDate: p.matchDate,
+              })),
+            );
+            const stored = (coupon.title || '').trim();
+            if (fromLegs && (!stored || isLegacyGenericPickTitle(stored) || stored.includes('· #'))) {
+              return fromLegs;
+            }
+            return stored.replace(/\s·\s#\d+\s*$/, '').trim() || fromLegs || stored;
+          })()}
+        </h1>
 
         {Number(coupon.price) > 0 ? (
           <EscrowTrustCallout
@@ -718,16 +736,22 @@ export default function CouponDetailPage({
                   {coupon.picks.map((pick, idx) => (
                     <div
                       key={pick.id ?? idx}
-                      className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 p-4 flex items-center gap-3 min-w-0"
+                      className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 p-4 flex items-start gap-3 min-w-0"
                     >
-                      <IconLock className="w-5 h-5 opacity-60 shrink-0 text-[var(--text-muted)]" aria-hidden />
-                      <div className="min-w-0">
+                      <IconLock className="w-5 h-5 opacity-60 shrink-0 text-[var(--text-muted)] mt-0.5" aria-hidden />
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-[var(--text)]">
-                          {pick.redacted
-                            ? pick.matchDescription || t('pick_detail.selection_number', { n: String(idx + 1) })
-                            : t('pick_detail.selection_number', { n: String(idx + 1) })}
+                          {pick.homeTeamName && pick.awayTeamName
+                            ? `${pick.homeTeamName} vs ${pick.awayTeamName}`
+                            : pick.matchDescription || t('pick_detail.selection_number', { n: String(idx + 1) })}
                         </p>
-                        <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                        <p className="text-xs text-[var(--text-muted)] mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5">
+                          {pick.leagueLabel ? <span>{pick.leagueLabel}</span> : null}
+                          {pick.prediction ? <span>{formatFootballOutcomeLabel(pick.prediction)}</span> : null}
+                          {pick.odds != null ? <span>@ {Number(pick.odds).toFixed(2)}</span> : null}
+                          {pick.matchDate ? <span>{formatDateTimeShort(pick.matchDate, lang)}</span> : null}
+                        </p>
+                        <p className="text-xs text-[var(--text-muted)] mt-1">
                           {subscriptionLocked
                             ? t('pick_detail.hidden_until_subscribe')
                             : t('pick_detail.hidden_until_purchase')}

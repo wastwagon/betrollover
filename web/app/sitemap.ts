@@ -14,6 +14,7 @@ import {
   sortNewsByPublished,
 } from '@/lib/seo/sitemap-limits';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
+import { isRedirectedTipsterUsername } from '@/lib/seo/tipster-slug-redirects';
 
 /**
  * Core pages that exist in both English (canonical) and French (/fr/...) versions.
@@ -27,6 +28,12 @@ const LOCALISED_PAGES: Array<{
   { path: '/',                       changeFrequency: 'weekly',  priority: 1.0  },
   { path: '/buy-football-tips',      changeFrequency: 'weekly',  priority: 0.95 },
   { path: '/football-tips-ghana',    changeFrequency: 'weekly',  priority: 0.93 },
+  { path: '/football-predictions-today', changeFrequency: 'daily', priority: 0.92 },
+  { path: '/ghana-premier-league-predictions', changeFrequency: 'weekly', priority: 0.9 },
+  { path: '/sportybet-booking-codes', changeFrequency: 'weekly', priority: 0.88 },
+  { path: '/bet9ja-booking-codes',   changeFrequency: 'weekly',  priority: 0.88 },
+  { path: '/btts-predictions',       changeFrequency: 'weekly',  priority: 0.87 },
+  { path: '/over-2-5-goals-predictions', changeFrequency: 'weekly', priority: 0.87 },
   { path: '/track-record',           changeFrequency: 'daily',   priority: 0.92 },
   { path: '/marketplace',            changeFrequency: 'daily',   priority: 0.9  },
   { path: '/tipsters',               changeFrequency: 'daily',   priority: 0.9  },
@@ -123,11 +130,14 @@ async function dynamicSitemapEntries(origin: string): Promise<MetadataRoute.Site
       });
     }
 
+    const tipsterSeen = new Set<string>();
     for (const u of usernames) {
-      if (!u) continue;
-      const seg = encodeURIComponent(u);
+      if (!u || isRedirectedTipsterUsername(u)) continue;
+      const key = u.toLowerCase();
+      if (tipsterSeen.has(key)) continue;
+      tipsterSeen.add(key);
       out.push({
-        url: `${origin}/tipsters/${seg}`,
+        url: `${origin}/tipsters/${encodeURIComponent(u)}`,
         changeFrequency: 'daily',
         priority: 0.75,
       });

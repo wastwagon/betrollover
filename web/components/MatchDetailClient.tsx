@@ -15,7 +15,7 @@ import { useT } from '@/context/LanguageContext';
 import { formatLiveFixturePeriod, FIXTURE_NS_CHIP } from '@/lib/live-fixture-display';
 import { FixtureLiveChip } from '@/components/FixtureLiveChip';
 import { isFixtureLive } from '@/lib/home-today-matches';
-import type { PublicFixtureDetail } from '@/lib/match-detail';
+import { matchPreviewParagraphs, type PublicFixtureDetail } from '@/lib/match-detail';
 import { buttonClassName } from '@/components/ui/Button';
 
 const LIVE_REFRESH_MS = 30_000;
@@ -96,6 +96,7 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
 
   const live = isFixtureLive(match.status);
   const title = `${match.homeTeamName} vs ${match.awayTeamName}`;
+  const preview = matchPreviewParagraphs(match);
 
   return (
     <div className="min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
@@ -112,6 +113,35 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
           title={title}
           tagline={formatKickoff(match.matchDate)}
         />
+
+        <section
+          className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6 mb-6"
+          aria-label={t('match.preview_label')}
+        >
+          <h2 className="text-lg font-semibold text-[var(--text)] mb-2">{t('match.preview_title')}</h2>
+          {preview.map((p) => (
+            <p key={p.slice(0, 40)} className="text-sm text-[var(--text-muted)] leading-relaxed mt-2 first:mt-0">
+              {p}
+            </p>
+          ))}
+          <p className="mt-3 text-sm text-[var(--text-muted)]">
+            <Link href="/football-predictions-today" className="font-semibold text-[var(--primary)] hover:underline">
+              {t('match.link_predictions_today')}
+            </Link>
+            {' · '}
+            <Link href="/marketplace?sport=football" className="font-semibold text-[var(--primary)] hover:underline">
+              {t('match.browse_picks')}
+            </Link>
+            {' · '}
+            <Link href="/btts-predictions" className="font-semibold text-[var(--primary)] hover:underline">
+              BTTS
+            </Link>
+            {' · '}
+            <Link href="/over-2-5-goals-predictions" className="font-semibold text-[var(--primary)] hover:underline">
+              Over 2.5
+            </Link>
+          </p>
+        </section>
 
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-8 mb-8 shadow-sm">
           <div className="flex flex-col gap-6">

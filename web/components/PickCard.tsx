@@ -12,7 +12,12 @@ import { useClientNow } from '@/hooks/useClientNow';
 import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { tipsterRankBadgeClass, tipsterRankBadgeContent } from '@/lib/tipster-rank-ui';
-import { formatFootballOutcomeLabel, LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
+import {
+  buildPickSeoTitle,
+  formatFootballOutcomeLabel,
+  isLegacyGenericPickTitle,
+  LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING,
+} from '@betrollover/shared-types';
 import { KickoffUrgencyLine } from '@/components/KickoffUrgencyLine';
 import { FixtureLiveChip } from '@/components/FixtureLiveChip';
 import { BookingCodeCopyBlock } from '@/components/BookingCodeCopyBlock';
@@ -190,10 +195,15 @@ export function PickCard({
   }, [showUnveil]);
 
   const isFree = price === 0 && !requiresSubscription;
-  /** Trust server reveal only — viewOnly free cards can still be login-gated (rollover). */
-  const showFullDetails = isPurchased || picksRevealed;
+  /** Trust server reveal; free marketplace picks may omit picksRevealed when legs are already public. */
+  const hasPublicLegPreview = picks.some(
+    (p) =>
+      !!(p.homeTeamName || p.awayTeamName || (p.matchDescription && /vs/i.test(p.matchDescription))),
+  );
+  const showFullDetails = isPurchased || picksRevealed || (isFree && hasPublicLegPreview && !requiresSubscription);
   /** Match primary CTA to server-granted leg visibility (subscription, settled, login, etc.). */
-  const showAccessCTA = isPurchased || picksRevealed;
+  const showAccessCTA = isPurchased || picksRevealed || (isFree && hasPublicLegPreview && !requiresSubscription);
+  const showLockedPreview = !showFullDetails && hasPublicLegPreview;
   const subscribeHref = tipster?.username
     ? `/tipsters/${encodeURIComponent(tipster.username)}#subscription-packages`
     : '/subscriptions/marketplace';
@@ -212,6 +222,19 @@ export function PickCard({
   const displayStatus = result && ['won', 'lost', 'void'].includes(result) ? result : status;
   const statusColor = displayStatus ? resultChipClass(displayStatus) : '';
   const deskBoard = accaDeskBoardBadge(title, tipster?.tipsterType ?? tipster?.tipster_type, picks);
+  const seoTitle = buildPickSeoTitle(
+    picks.map((p) => ({
+      homeTeam: p.homeTeamName,
+      awayTeam: p.awayTeamName,
+      matchDescription: p.matchDescription,
+      prediction: p.prediction,
+      matchDate: p.matchDate,
+    })),
+  );
+  const displayTitle =
+    seoTitle && (!title?.trim() || isLegacyGenericPickTitle(title) || title.includes('· #'))
+      ? seoTitle
+      : (title || '').replace(/\s·\s#\d+\s*$/, '').trim() || title;
 
   const handlePurchase = () => {
     if (price > 0) {
@@ -336,13 +359,13 @@ export function PickCard({
           {/* Coupon title & summary */}
           <div className="mb-2">
             <div className="flex items-center justify-between gap-2 flex-wrap min-h-[1.875rem] min-w-0">
-              {title ? (
+              {displayTitle ? (
                 <span
                   className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[var(--primary)]/10 border border-[var(--primary)]/25 text-[var(--text)] font-medium text-xs truncate max-w-full min-w-0 flex-1"
-                  title={title}
+                  title={displayTitle}
                 >
                   <span className="flex-shrink-0 text-[var(--primary)] opacity-80" aria-hidden>#</span>
-                  <span className="truncate">{title}</span>
+                  <span className="truncate">{displayTitle}</span>
                 </span>
               ) : (
                 <span
@@ -519,8 +542,47 @@ export function PickCard({
             </div>
           )}
 
-          {/* Locked Message for Paid Coupons */}
-          {!showFullDetails && (
+          {/* Public preview for gated paid picks — teams / kickoff / market / odds stay visible */}
+          {showLockedPreview && (
+            <div className="mb-2 flex-1">
+              <ul className="space-y-1">
+                {picks.slice(0, 3).map((p, i) => (
+                  <li key={i} className="flex flex-col gap-0 text-[11px]">
+                    <div className="flex justify-between items-start gap-1.5 min-w-0">
+                      <span className="text-[var(--text)] font-medium truncate flex-1 flex items-center gap-1 min-w-0">
+                        {(p.homeTeamLogo || p.awayTeamLogo || p.homeCountryCode || p.awayCountryCode) && (
+                          <span className="flex items-center gap-0.5 flex-shrink-0">
+                            <TeamBadge logo={p.homeTeamLogo} countryCode={p.homeCountryCode} name={p.homeTeamName || undefined} size={14} />
+                            <TeamBadge logo={p.awayTeamLogo} countryCode={p.awayCountryCode} name={p.awayTeamName || undefined} size={14} />
+                          </span>
+                        )}
+                        <span className="truncate">{p.matchDescription}</span>
+                      </span>
+                      <span className="text-[var(--text-muted)] flex-shrink-0 text-[9px]">
+                        {formatFootballOutcomeLabel(p.prediction)}
+                        {p.odds != null ? ` @ ${Number(p.odds || 0).toFixed(2)}` : ''}
+                      </span>
+                    </div>
+                    {p.matchDate ? (
+                      <span className="text-[9px] text-[var(--text-muted)] tabular-nums">
+                        {formatDateTimeShort(p.matchDate, lang)}
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-1.5 text-[10px] text-[var(--text-muted)] text-center">
+                {requiresSubscription
+                  ? t('pick_card.subscribe_to_view')
+                  : viewOnly || isFree
+                    ? t('pick_card.sign_in_to_view')
+                    : t('pick_card.purchase_to_view')}
+              </p>
+            </div>
+          )}
+
+          {/* Locked Message when no public leg preview is available */}
+          {!showFullDetails && !showLockedPreview && (
             <div className="mb-2 flex-1 flex items-center justify-center bg-[var(--fill-secondary)] rounded-md py-2 px-2">
               <div className="text-center">
                 <svg
