@@ -64,7 +64,6 @@ export function AdSlot({ zoneSlug, className = '', fullWidth = false }: AdSlotPr
       <div
         className={`${shell} rounded-xl border-2 border-dashed border-[var(--border)] bg-[var(--bg)] flex flex-col items-center justify-center gap-2 p-4 text-center ${placeholderMinH}`}
       >
-        <span className="text-xs text-[var(--text-muted)] font-medium">Advertise here</span>
         <a
           href={TELEGRAM_ADS_URL}
           target="_blank"
@@ -72,9 +71,9 @@ export function AdSlot({ zoneSlug, className = '', fullWidth = false }: AdSlotPr
           className="inline-flex max-w-full items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-700 hover:bg-sky-800 text-white text-xs font-medium transition-colors"
         >
           {TELEGRAM_ICON}
-          <span className="truncate">Contact on Telegram</span>
+          <span className="truncate">Join Us on Telegram</span>
         </a>
-        <span className="text-[10px] text-[var(--text-muted)] max-w-full px-1">Interested in advertising?</span>
+        <span className="text-[10px] text-[var(--text-muted)] max-w-full px-1">Free tips and pick alerts</span>
       </div>
     );
   }
