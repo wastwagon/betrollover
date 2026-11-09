@@ -10,7 +10,11 @@ import {
   VIP_TIPSTER,
   VIP_TIPSTER_TYPE,
 } from '../../config/vip-tipster.config';
-import { VIP_PACKAGE_OWNER_USERNAME, VIP_ROSTER_USERNAMES } from '../../config/vip-roster.config';
+import {
+  FORMER_VIP_ROSTER_USERNAMES,
+  VIP_PACKAGE_OWNER_USERNAME,
+  VIP_ROSTER_USERNAMES,
+} from '../../config/vip-roster.config';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { User, UserRole, UserStatus } from '../users/entities/user.entity';
 import { TipsterSubscriptionPackage } from '../subscriptions/entities/tipster-subscription-package.entity';
@@ -140,29 +144,19 @@ export class VipTipsterSetupService {
 
   /** Pending slips follow the swap. Settled archive stays public either way. */
   private async applyAccessSwap(packageId: number, freeUserId: number): Promise<void> {
-    await this.packageRepo.manager.query(
-      `UPDATE pick_marketplace pm
-       SET placement = 'marketplace', subscription_package_id = NULL, price = 0, updated_at = NOW()
-       FROM accumulator_tickets t
-       WHERE pm.accumulator_id = t.id
-         AND t.user_id = $1
-         AND LOWER(COALESCE(t.result, 'pending')) = 'pending'`,
-      [freeUserId],
-    );
-    await this.packageRepo.manager.query(
-      `DELETE FROM subscription_coupon_access sca
-       USING accumulator_tickets t
-       WHERE sca.accumulator_id = t.id
-         AND t.user_id = $1
-         AND LOWER(COALESCE(t.result, 'pending')) = 'pending'`,
-      [freeUserId],
-    );
-    await this.packageRepo.manager.query(
-      `UPDATE accumulator_tickets
-       SET price = 0, is_marketplace = true
-       WHERE user_id = $1 AND LOWER(COALESCE(result, 'pending')) = 'pending'`,
-      [freeUserId],
-    );
+    await this.ungatePendingVipUserIds([freeUserId]);
+
+    const former = await this.tipsterRepo.find({
+      where: FORMER_VIP_ROSTER_USERNAMES.map((username) => ({ username })),
+      select: ['userId', 'username'],
+    });
+    const formerUserIds = former.map((t) => t.userId).filter((id): id is number => id != null);
+    if (formerUserIds.length) {
+      await this.ungatePendingVipUserIds(formerUserIds);
+      this.logger.log(
+        `Ungated pending VIP slips for former roster: ${former.map((t) => t.username).join(', ')}`,
+      );
+    }
 
     const roster = await this.tipsterRepo.find({
       where: VIP_ROSTER_USERNAMES.map((username) => ({ username })),
@@ -194,6 +188,36 @@ export class VipTipsterSetupService {
          AND LOWER(COALESCE(t.result, 'pending')) = 'pending'
        ON CONFLICT DO NOTHING`,
       [packageId, rosterUserIds],
+    );
+  }
+
+  /** Drop subscription gating on pending slips for these tipster user ids. */
+  private async ungatePendingVipUserIds(userIds: number[]): Promise<void> {
+    const ids = [...new Set(userIds.filter((id) => id > 0))];
+    if (!ids.length) return;
+
+    await this.packageRepo.manager.query(
+      `UPDATE pick_marketplace pm
+       SET placement = 'marketplace', subscription_package_id = NULL, price = 0, updated_at = NOW()
+       FROM accumulator_tickets t
+       WHERE pm.accumulator_id = t.id
+         AND t.user_id = ANY($1::int[])
+         AND LOWER(COALESCE(t.result, 'pending')) = 'pending'`,
+      [ids],
+    );
+    await this.packageRepo.manager.query(
+      `DELETE FROM subscription_coupon_access sca
+       USING accumulator_tickets t
+       WHERE sca.accumulator_id = t.id
+         AND t.user_id = ANY($1::int[])
+         AND LOWER(COALESCE(t.result, 'pending')) = 'pending'`,
+      [ids],
+    );
+    await this.packageRepo.manager.query(
+      `UPDATE accumulator_tickets
+       SET price = 0, is_marketplace = true
+       WHERE user_id = ANY($1::int[]) AND LOWER(COALESCE(result, 'pending')) = 'pending'`,
+      [ids],
     );
   }
 

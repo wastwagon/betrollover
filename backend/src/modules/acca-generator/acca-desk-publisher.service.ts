@@ -531,7 +531,7 @@ export class AccaDeskPublisherService {
     const onRoster = isVipRosterUsername(config.username);
     const description = (
       onRoster
-        ? `${config.bio} ${slot.label} · ${deskDayStr}. Live slip for VIP subscribers. Settled record is public. Educational only.`
+        ? `${config.bio} ${slot.label} · ${deskDayStr}. Free on the Rollover board when signed in; VIP plans stay separate. Settled record is public. Educational only.`
         : `${config.bio} ${slot.label} · ${deskDayStr}. Free pick — educational only.`
     ).slice(0, 2000);
 

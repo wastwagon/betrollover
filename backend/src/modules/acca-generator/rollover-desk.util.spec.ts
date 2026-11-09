@@ -83,15 +83,16 @@ describe('rollover-desk.util', () => {
     expect(picked).toBeNull();
   });
 
-  it('shows example cash for the full 2-day plan from GHS 100 at ×1.6', () => {
+  it('shows example cash for the full 7-day plan from GHS 100 at ×1.6', () => {
     expect(exampleStakeGhs(1)).toBe(100);
     expect(exampleReturnGhs(1)).toBe(160);
     expect(exampleMoneyForDay(1).stakeGhs).toBe(100);
     expect(exampleMoneyForDay(1).returnGhs).toBe(160);
     expect(exampleMoneyForDay(2).stakeGhs).toBe(160);
     expect(exampleMoneyForDay(2).returnGhs).toBe(256);
-    expect(exampleMoneyForDay(3).stakeGhs).toBeNull();
-    expect(exampleMoneyForDay(7).stakeGhs).toBeNull();
+    expect(exampleMoneyForDay(3).stakeGhs).toBe(256);
+    expect(exampleMoneyForDay(7).stakeGhs).not.toBeNull();
+    expect(exampleMoneyForDay(8).stakeGhs).toBeNull();
   });
 
   it('scales example cash from a custom campaign stake', () => {
@@ -114,7 +115,7 @@ describe('rollover-desk.util', () => {
     expect(cutAtDay4.stakeGhs).toBe(100);
     // 100×1.64=164; 164×1.80=295; 295×1.70=502 — dummy ×1.60³ is 410
     expect(cutAtDay4.returnGhs).toBe(502);
-    // Dummy ladder still compounds beyond the live 2-day board when maxDay is raised for the check.
+    // Dummy ladder compounds for the requested maxDay window.
     expect(exampleMoneyForDay(3, 3).returnGhs).toBe(410);
 
     const holeAfterDay2 = archiveMoneyForRun([

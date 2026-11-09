@@ -1,7 +1,7 @@
 /**
  * Classic 1-fixture AI tipsters (tipsterType=ai).
  * Acca Desk (tipsterType=acca_desk) and the free Two-Fold desk are unaffected.
- * VIP roster tipsters stay visible even when their type is still `ai`.
+ * AccaSure1X2 (VIP roster) stays visible even if typed as classic `ai`.
  *
  * Public by default (browse, profiles, marketplace, sitemap). Set
  * HIDE_CLASSIC_AI_TIPSTERS_FROM_PUBLIC=true to hide legacy 1-fixture AI again.

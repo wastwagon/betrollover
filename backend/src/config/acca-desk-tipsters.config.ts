@@ -411,7 +411,7 @@ export const ACCA_DESK_TIPSTERS: AccaDeskTipsterConfig[] = [
   tipster.username === 'AccaSure1X2'
     ? {
         ...tipster,
-        bio: 'Sure · 1X2 only. Up to 2 VIP 2-folds a day, clustered by kick-off. Live slips are for VIP subscribers. Educational odd bands — not guaranteed. 18+.',
+        bio: 'Sure · 1X2 only. Up to 2 2-folds a day, clustered by kick-off. Live tips on the 7-day Rollover board are free when signed in; VIP desk slips stay for subscribers. Educational odd bands — not guaranteed. 18+.',
       }
     : tipster,
 );

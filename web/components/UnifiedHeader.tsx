@@ -431,7 +431,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
         className={`z-50 w-full min-w-0 max-w-full ${
           hideTopBar
             ? 'sticky top-0'
-            : 'max-md:fixed max-md:left-0 max-md:right-0 max-md:top-0 max-md:pt-[env(safe-area-inset-top,0px)] md:sticky md:top-0'
+            : 'max-md:fixed max-md:left-0 max-md:right-0 max-md:top-0 max-md:pt-[env(safe-area-inset-top,0px)] max-md:bg-[var(--card)] md:sticky md:top-0'
         }`}
       >
         {!hideTopBar ? <TopBar /> : null}

@@ -44,17 +44,17 @@ describe('telegram-copy', () => {
     expect(out).not.toContain('I’m on it');
   });
 
-  it('formats growth post for VIP invite + private contact', () => {
+  it('formats growth post for free rollover board + VIP contact', () => {
     process.env.NEXT_PUBLIC_TELEGRAM_ADS_HANDLE = 'betrollovertips';
     delete process.env.TELEGRAM_CONTACT_HANDLE;
     const text = formatGrowthPost('https://betrollover.com', 0);
-    expect(text).toContain('Rollover VIP');
+    expect(text).toContain('7-Day Rollover');
+    expect(text).toContain('/rollover');
     expect(text).toContain('@wastwagon');
     expect(text).not.toContain('@betrollovertips');
     expect(text.toLowerCase()).toContain('fixed');
     expect(text).not.toContain('{channel}');
     expect(text).not.toContain('{contact}');
-    expect(text).not.toContain('/rollover');
   });
 
   it('formats VIP free-channel slip teaser without legs', () => {
@@ -300,7 +300,7 @@ describe('TelegramChannelService engagement', () => {
     const r = await svc.postGrowthMessage(0);
     expect(r.ok).toBe(true);
     const body = calls[0] as { text: string };
-    expect(body.text).toContain('Rollover VIP');
+    expect(body.text).toContain('7-Day Rollover');
     expect(body.text).toContain('@wastwagon');
     expect(body.text).toContain('18+');
   });

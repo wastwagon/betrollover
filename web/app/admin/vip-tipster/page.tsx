@@ -314,7 +314,7 @@ export default function AdminVipTipsterPage() {
       'API-Sports still has WSL Cup as NS with no scores. Apply confirmed FT results and settle?\n\n' +
         '• Crystal Palace W vs Watford W → 1–0\n' +
         '• Brighton W vs Charlton Athletic W → 4–0\n\n' +
-        'This grades pending picks and can move the 2-day rollover Day 1 off LIVE.',
+        'This grades pending picks and can move the 7-day rollover day off LIVE.',
     );
     if (!ok) return;
     setForceSettling(true);
@@ -392,8 +392,8 @@ export default function AdminVipTipsterPage() {
             Free Sure-family Home+Home desk. Two Home wins at 1.20–1.40, combined 1.50–1.99. Up to 2 slips
             per desk day, using the same Early / Afternoon / Evening / Midnight windows as
             Acca Desk — skip a window when no pair exists. This desk still publishes first so
-            other desks do not reuse those fixtures. The VIP plan is TheAnalyst, LateBloomer,
-            and AccaSure1X2. The rollover board attaches AccaSure1X2, not this desk.
+            other desks do not reuse those fixtures. The VIP plan is AccaSure1X2 (Sure · 1X2)
+            only. The rollover board attaches AccaSure1X2, not this desk.
           </p>
         </div>
 

@@ -100,7 +100,7 @@ export class TelegramChannelService {
     return this.sendMessage(text);
   }
 
-  /** Free channel: VIP win + contact CTA for Rollover VIP. */
+  /** Free channel: VIP win + CTA for VIP contact / free rollover board. */
   async postVipPublicWin(input: {
     couponId: number;
     title: string;

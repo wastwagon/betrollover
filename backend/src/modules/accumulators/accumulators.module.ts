@@ -27,6 +27,7 @@ import { User } from '../users/entities/user.entity';
 import { ApiSettings } from '../admin/entities/api-settings.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity';
+import { RolloverDay } from '../acca-generator/entities/rollover-day.entity';
 @Module({
   imports: [
     forwardRef(() => UsersModule),
@@ -45,6 +46,7 @@ import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity'
       ApiSettings,
       Tipster,
       WalletTransaction,
+      RolloverDay,
     ]),
     forwardRef(() => WalletModule),
     forwardRef(() => NotificationsModule),

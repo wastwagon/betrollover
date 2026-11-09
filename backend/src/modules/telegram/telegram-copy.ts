@@ -33,13 +33,14 @@ export const TELEGRAM_ENGAGEMENT_FOOTERS = [
 
 /** Monthly discovery — VIP join, free tips, purchase protection. */
 export const TELEGRAM_GROWTH_POSTS = [
-  `📌 Rollover VIP
+  `📌 7-Day Rollover · free with sign-in
 
 Don't buy fake "fixed" tickets on Telegram — there are no real fixed matches.
 You lose twice: the ticket fee and your stake.
 
-Join Rollover VIP. We post one max-bet slip a day.
-Message @{contact} to join
+Open the live 7-day rollover board free when you sign in:
+{site}/rollover?utm_source=telegram&utm_medium=social&utm_campaign=channel_growth
+VIP plans stay separate — message @{contact} for VIP.
 
 ${LEGAL_LINE}`,
 
@@ -170,7 +171,7 @@ ${LEGAL_LINE}`,
  */
 export function telegramChannelSeoDescription(): string {
   return applyTelegramCopyVars(
-    'Football tips & Rollover VIP | Free Acca picks daily | One VIP max-bet slip a day — message @{contact} | Refund if paid pick loses | 18+ education only',
+    'Football tips & 7-day Rollover | Free Acca picks daily | Sign in for live rollover | VIP slips — message @{contact} | Refund if paid pick loses | 18+ education only',
     '',
   );
 }
@@ -288,7 +289,7 @@ export function formatVipPublicWinPost(input: {
     if (match || pred) lines.push(`• ${match}${match && pred ? ' — ' : ''}${pred} · ${mark}${score}`);
   }
   lines.push('');
-  lines.push('Join Rollover VIP — message @{contact}');
+  lines.push('VIP desk slips: message @{contact} · Free 7-day board: {site}/rollover');
   lines.push('👉 {channel}');
   lines.push('');
   lines.push(LEGAL_LINE);

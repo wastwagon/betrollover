@@ -87,6 +87,8 @@ interface Coupon {
   requiresSubscription?: boolean;
   /** true when access to paid picks is unlocked via an active subscription to this tipster. */
   accessViaSubscription?: boolean;
+  /** true when a logged-in user unlocked this slip because it is on the public rollover board. */
+  accessViaRollover?: boolean;
   price: number;
   purchaseCount?: number;
   status?: string;
@@ -509,7 +511,10 @@ export default function CouponDetailPage({
     couponPending &&
     coupon.picksRevealed === true &&
     !isPurchased &&
-    (Number(coupon.price) > 0 || coupon.requiresSubscription === true || coupon.accessViaSubscription === true);
+    (Number(coupon.price) > 0 ||
+      coupon.requiresSubscription === true ||
+      coupon.accessViaSubscription === true ||
+      coupon.accessViaRollover === true);
   const subscribeHref = coupon.tipster?.username
     ? `/tipsters/${encodeURIComponent(coupon.tipster.username)}#subscription-packages`
     : '/subscriptions/marketplace';
@@ -888,13 +893,15 @@ export default function CouponDetailPage({
                     )}
                   </div>
 
-                  {!isAuthed && isSettled ? (
+                  {!isAuthed && (isSettled || (picksHidden && !subscriptionLocked)) ? (
                     <div className="space-y-3">
                       <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                        {t('pick_detail.settled_guest_intro')}
+                        {isSettled
+                          ? t('pick_detail.settled_guest_intro')
+                          : t('pick_detail.rollover_sign_in_intro')}
                       </p>
                       <Link
-                        href={`/register?redirect=/marketplace`}
+                        href={`/register?redirect=${encodeURIComponent(`/coupons/${id}`)}`}
                         className={buttonClassName({ fullWidth: true })}
                       >
                         {t('pick_detail.create_account')}
@@ -941,16 +948,29 @@ export default function CouponDetailPage({
                         <IconShield className="w-5 h-5 text-[var(--primary)] shrink-0" />
                         <div>
                           <p className="text-sm font-semibold text-[var(--primary)]">
-                            {coupon.accessViaSubscription ? t('pick_detail.access_via_subscription') : t('pick_detail.access_granted')}
+                            {coupon.accessViaRollover
+                              ? t('pick_detail.access_via_rollover')
+                              : coupon.accessViaSubscription
+                                ? t('pick_detail.access_via_subscription')
+                                : t('pick_detail.access_granted')}
                           </p>
                           <p className="text-xs text-[var(--primary)] opacity-90">
-                            {coupon.accessViaSubscription
-                              ? t('pick_detail.access_subscription_note')
-                              : t('pick_detail.access_granted_note')}
+                            {coupon.accessViaRollover
+                              ? t('pick_detail.access_rollover_note')
+                              : coupon.accessViaSubscription
+                                ? t('pick_detail.access_subscription_note')
+                                : t('pick_detail.access_granted_note')}
                           </p>
                         </div>
                       </div>
-                      {isSubscriptionsEnabled() ? (
+                      {coupon.accessViaRollover ? (
+                        <Link
+                          href="/rollover"
+                          className="block text-center text-sm text-[var(--primary)] hover:underline"
+                        >
+                          {t('nav.rollover')} →
+                        </Link>
+                      ) : isSubscriptionsEnabled() ? (
                         <Link
                           href="/subscriptions"
                           className="block text-center text-sm text-[var(--primary)] hover:underline"
@@ -1139,7 +1159,7 @@ export default function CouponDetailPage({
       {/* Mobile sticky buy — mirrors create-pick slip bar above tab nav */}
       {!isPurchased &&
       !hasNonPurchaseAccess &&
-      !( !isAuthed && isSettled) ? (
+      !(!isAuthed && (isSettled || (picksHidden && !subscriptionLocked))) ? (
         <div
           className="lg:hidden fixed inset-x-0 z-40 border-t border-[var(--separator)] bg-[var(--card)]/95 backdrop-blur-md px-3 pt-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]"
           style={{ bottom: 'calc(3.5rem + env(safe-area-inset-bottom, 0px))' }}

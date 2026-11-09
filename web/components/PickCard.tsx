@@ -190,9 +190,10 @@ export function PickCard({
   }, [showUnveil]);
 
   const isFree = price === 0 && !requiresSubscription;
-  const showFullDetails = isPurchased || picksRevealed || (viewOnly && !requiresSubscription);
-  /** Match primary CTA to server-granted leg visibility (subscription, settled, etc.). */
-  const showAccessCTA = isPurchased || picksRevealed || (viewOnly && !requiresSubscription);
+  /** Trust server reveal only — viewOnly free cards can still be login-gated (rollover). */
+  const showFullDetails = isPurchased || picksRevealed;
+  /** Match primary CTA to server-granted leg visibility (subscription, settled, login, etc.). */
+  const showAccessCTA = isPurchased || picksRevealed;
   const subscribeHref = tipster?.username
     ? `/tipsters/${encodeURIComponent(tipster.username)}#subscription-packages`
     : '/subscriptions/marketplace';
@@ -536,7 +537,11 @@ export function PickCard({
                   <path d="M8 11V8a4 4 0 0 1 8 0v3" />
                 </svg>
                 <p className="text-[10px] text-[var(--text-muted)]">
-                  {requiresSubscription ? t('pick_card.subscribe_to_view') : t('pick_card.purchase_to_view')}
+                  {requiresSubscription
+                    ? t('pick_card.subscribe_to_view')
+                    : viewOnly || isFree
+                      ? t('pick_card.sign_in_to_view')
+                      : t('pick_card.purchase_to_view')}
                 </p>
               </div>
             </div>
@@ -570,6 +575,13 @@ export function PickCard({
                 className={buttonClassName({ variant: 'accent', size: 'sm', fullWidth: true, className: 'text-xs' })}
               >
                 {t('pick_card.subscribe_cta')}
+              </Link>
+            ) : viewOnly || isFree ? (
+              <Link
+                href={loginRedirectPath}
+                className={buttonClassName({ variant: 'accent', size: 'sm', fullWidth: true, className: 'text-xs' })}
+              >
+                {t('pick_card.sign_in_cta')}
               </Link>
             ) : canPurchase ? (
               <Button

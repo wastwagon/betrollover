@@ -14,9 +14,9 @@ export function isVipDeskTipsterType(type?: string | null): boolean {
 
 /**
  * Live slips behind the one VIP plan. Selection rules stay on each tipster.
- * SureTwoFold is free and is not in this list.
+ * SureTwoFold is free and is not in this list. AccaSure1X2 only.
  */
-export const VIP_ROSTER_USERNAMES = ['TheAnalyst', 'LateBloomer', 'AccaSure1X2'] as const;
+export const VIP_ROSTER_USERNAMES = ['AccaSure1X2'] as const;
 
 export function isVipRosterUsername(username?: string | null): boolean {
   const u = (username || '').trim().toLowerCase();

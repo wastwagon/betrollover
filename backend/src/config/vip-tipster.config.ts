@@ -5,7 +5,7 @@
  * Tomorrow’s 20:00 pass only fills Early + Afternoon so Evening cannot eat the 2/day cap.
  * Publishes first so Acca Desk can still mix leftover fixtures.
  * Construction is unchanged: two Home wins @ 1.20–1.40, combined 1.50–1.99.
- * This tipster is free. The VIP plan is the roster in vip-roster.config.ts.
+ * This tipster is free. The VIP plan is AccaSure1X2 only (see vip-roster.config.ts).
  */
 
 export const VIP_TIPSTER_TYPE = 'vip_desk';

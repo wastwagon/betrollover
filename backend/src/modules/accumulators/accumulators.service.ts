@@ -66,6 +66,7 @@ import {
 } from '../../common/subscription-gated-listing.util';
 import { VIP_TIPSTER, VIP_TIPSTER_TYPE } from '../../config/vip-tipster.config';
 import { isVipRosterUsername } from '../../config/vip-roster.config';
+import { RolloverDay } from '../acca-generator/entities/rollover-day.entity';
 
 /** Keep pick create aligned with Acca Generator max legs (admin can still lower Acca range). */
 const MAX_SELECTIONS_PER_PICK = ACCA_GENERATOR_LEGS_MAX;
@@ -166,6 +167,8 @@ export class AccumulatorsService {
     private tipsterRepo: Repository<Tipster>,
     @InjectRepository(WalletTransaction)
     private walletTxRepo: Repository<WalletTransaction>,
+    @InjectRepository(RolloverDay)
+    private rolloverDayRepo: Repository<RolloverDay>,
     @Inject(forwardRef(() => WalletService))
     private walletService: WalletService,
     @Inject(forwardRef(() => NotificationsService))
@@ -655,16 +658,33 @@ export class AccumulatorsService {
     return this.subscriptionsService.isCouponLinkedToSubscriptionPackage(ticketId);
   }
 
+  /** Coupon currently (or previously) attached to the public rollover board. */
+  private async isRolloverBoardTicket(ticketId: number): Promise<boolean> {
+    if (!ticketId) return false;
+    const count = await this.rolloverDayRepo.count({ where: { ticketId } });
+    return count > 0;
+  }
+
   /**
    * Whether the viewer may see full pick legs and booking code (matches applyCouponPickVisibility rules).
+   * Rollover-board coupons: free for any logged-in user (VIP packages stay paid for non-rollover slips).
    */
   private async couponPicksRevealState(
     ticket: AccumulatorTicket,
     listingRow: PickMarketplace | null,
     viewerUserId: number | null | undefined,
     opts?: { forceFullPicks?: boolean; viewerIsAdmin?: boolean },
-  ): Promise<{ revealed: boolean; accessViaSubscription?: boolean; requiresSubscription: boolean }> {
-    const requiresSubscription = await this.couponIsSubscriptionGated(ticket.id, listingRow);
+  ): Promise<{
+    revealed: boolean;
+    accessViaSubscription?: boolean;
+    accessViaRollover?: boolean;
+    requiresSubscription: boolean;
+  }> {
+    const subscriptionGated = await this.couponIsSubscriptionGated(ticket.id, listingRow);
+    const onRolloverBoard = subscriptionGated ? await this.isRolloverBoardTicket(ticket.id) : false;
+    // Rollover surface is free-with-login; keep VIP gating for coupons not on the board.
+    const requiresSubscription = subscriptionGated && !onRolloverBoard;
+
     if (opts?.forceFullPicks || opts?.viewerIsAdmin) {
       return { revealed: true, requiresSubscription };
     }
@@ -672,7 +692,7 @@ export class AccumulatorsService {
       listingRow && listingRow.status === 'active'
         ? Number(listingRow.price)
         : Number(ticket.price ?? 0);
-    if (effectivePrice <= 0 && !requiresSubscription) {
+    if (effectivePrice <= 0 && !requiresSubscription && !onRolloverBoard) {
       return { revealed: true, requiresSubscription };
     }
     const settled = ['won', 'lost', 'void'].includes((ticket.result || 'pending').toLowerCase());
@@ -684,6 +704,9 @@ export class AccumulatorsService {
     }
     if (ticket.userId === viewerUserId) {
       return { revealed: true, requiresSubscription };
+    }
+    if (onRolloverBoard) {
+      return { revealed: true, accessViaRollover: true, requiresSubscription: false };
     }
     const hasSubscriptionAccess = await this.subscriptionsService.hasSubscriptionAccessToCoupon(
       viewerUserId,
@@ -867,6 +890,7 @@ export class AccumulatorsService {
       picksRevealed: true,
       requiresSubscription: state.requiresSubscription,
       ...(state.accessViaSubscription ? { accessViaSubscription: true as const } : {}),
+      ...(state.accessViaRollover ? { accessViaRollover: true as const } : {}),
     };
   }
 

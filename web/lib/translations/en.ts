@@ -63,7 +63,7 @@ const en = {
   'nav.create_pick_short': '+Picks',
   'nav.acca_generator': 'Acca Generator',
   'nav.acca_generator_short': 'Acca',
-  'nav.rollover': '2-Day VIP Rollover',
+  'nav.rollover': '7-Day Rollover',
   'nav.rollover_short': 'Rollover',
   'nav.pick_tab': 'Create',
 
@@ -635,7 +635,7 @@ const en = {
   'acca.job_buy_short': 'Buy',
   'acca.job_build': 'Build a slip',
   'acca.job_build_short': 'Build',
-  'acca.job_climb': '2-day VIP ladder',
+  'acca.job_climb': '7-day rollover ladder',
   'acca.job_climb_short': 'Climb',
   'acca.landing_how': 'How it works',
   'acca.landing_step1': 'Choose Sure, Safe, Medium, or High (per-leg odd band).',
@@ -1034,6 +1034,8 @@ const en = {
   'pick_card.purchase_to_view': 'Purchase to view details',
   'pick_card.subscribe_to_view': 'Subscribe to view details',
   'pick_card.subscribe_cta': 'Subscribe',
+  'pick_card.sign_in_to_view': 'Sign in to view details',
+  'pick_card.sign_in_cta': 'Sign in',
   'pick_card.vip_included': 'VIP',
   'pick_card.booking_code_title': 'Booking code ({bookie})',
   'pick_card.copy_booking_code': 'Copy',
@@ -1174,9 +1176,12 @@ const en = {
   'pick_detail.get_free_pick': 'Get free pick',
   'pick_detail.escrow_badge_title': 'Purchase protected',
   'pick_detail.access_via_subscription': 'Access via subscription',
+  'pick_detail.access_via_rollover': 'Free on the Rollover board',
   'pick_detail.access_granted': 'Access granted',
   'pick_detail.access_subscription_note': 'This slip is included in your VIP plan.',
+  'pick_detail.access_rollover_note': 'Signed-in members can open live tips attached to the public Rollover board.',
   'pick_detail.access_granted_note': 'You can view this paid pick without buying it.',
+  'pick_detail.rollover_sign_in_intro': 'Sign in free to unlock this live Rollover tip. VIP plans stay separate and paid.',
   'pick_detail.manage_subscriptions_link': 'Manage subscriptions →',
   'pick_detail.wallet_balance': 'Balance: GHS {amount}',
   'pick_detail.insufficient_balance_link': 'Insufficient balance — Top up wallet →',
@@ -1315,7 +1320,7 @@ const en = {
   'tipster.subscription_packages_desc': 'Set recurring tip subscriptions',
   'subscriptions.marketplace_title': 'VIP subscriptions',
   'subscriptions.marketplace_tagline':
-    'House Two-Fold (daily Telegram) and tipster VIP plans (in-app). Paid marketplace picks are sold separately. Pay from your wallet.',
+    'VIP AccaSure1X2 (Sure · 1X2) with private Telegram, plus independent tipster VIP plans (in-app). Paid marketplace picks are sold separately. Pay from your wallet.',
   'subscriptions.marketplace_empty_title': 'No VIP packages yet',
   'subscriptions.marketplace_empty_desc':
     'When the house desk or a tipster publishes a plan, it will appear here.',
@@ -1329,7 +1334,7 @@ const en = {
   'subscriptions.vip_already_subscribed_hint':
     'You already have an active VIP plan with this tipster. Manage it from your subscriptions page.',
   'subscriptions.marketplace_footnote':
-    'House Two-Fold posts one slip most days to private Telegram. Independent tipsters post up to 2 in-app VIP slips per plan period and need at least {minRoi}% settled ROI and {minWr}% settled win rate to offer a plan. Losing VIP slips are not refunded. Full refund only if zero VIP slips are published on the plan during the period. Paid marketplace picks still refund if that coupon loses, and are not included in VIP.',
+    'AccaSure1X2 VIP posts one slip most days to private Telegram. Independent tipsters post up to 2 in-app VIP slips per plan period and need at least {minRoi}% settled ROI and {minWr}% settled win rate to offer a plan. Losing VIP slips are not refunded. Full refund only if zero VIP slips are published on the plan during the period. Paid marketplace picks still refund if that coupon loses, and are not included in VIP. The public 7-day Rollover board is free when signed in.',
   'subscriptions.trust_callout_title': 'VIP plan purchase protection',
   'subscriptions.trust_callout_body':
     'The plan fee stays pending until period-end payout. This is not pick purchase protection: losing VIP slips are not refunded. Full refund only if zero VIP slips are published on this plan during your period. If at least one is published, the tipster is paid 70% and the platform keeps 30% at period end — even if those slips lose. Paid marketplace picks from the same tipster are not included.',
@@ -1341,10 +1346,10 @@ const en = {
   'subscriptions.cadence_tipster':
     'Up to {n} included VIP slips in this {days}-day plan, in-app only. Paid marketplace picks from this tipster are sold separately.',
   'subscriptions.checkout_house_includes':
-    'Unlocks the private Telegram channel and house Two-Fold slips while the plan is active.',
+    'Unlocks the private Telegram channel and AccaSure1X2 VIP slips while the plan is active.',
   'subscriptions.checkout_tipster_includes':
     'Unlocks this tipster’s included VIP slips in My Subscriptions. Does not unlock their paid marketplace picks.',
-  'subscriptions.checkout_tagline_house': 'Pay from your wallet to join the house Two-Fold Telegram desk.',
+  'subscriptions.checkout_tagline_house': 'Pay from your wallet to join AccaSure1X2 VIP Telegram.',
   'subscriptions.seller_package_tagline':
     'One active VIP plan per tipster. Subscribers pay from wallet. Included VIP slips are in-app only.',
   'subscriptions.seller_package_rules':
@@ -1907,7 +1912,7 @@ const en = {
   'seo.tipsters_title': 'Football Tipsters to Subscribe To',
   'seo.tipsters_desc': 'Compare verified football tipsters by ROI and win rate, then buy a pick or open a VIP plan. Purchase-protected. Ghana-based, worldwide audience.',
   'seo.vip_title': 'VIP Football Tipster Subscriptions',
-  'seo.vip_desc': 'Subscribe to VIP football tips. House two-fold plans and independent tipster plans, paid from your wallet. The fee is returned if no VIP slips are posted during your period. 18+.',
+  'seo.vip_desc': 'Subscribe to AccaSure1X2 VIP football tips (Sure · 1X2) or independent tipster VIP plans, paid from your wallet. The fee is returned if no VIP slips are posted during your period. 18+.',
   'seo.leaderboard_title': 'Football Tipster Form Leaderboard',
   'seo.leaderboard_desc': 'Active football tipsters ranked by form plus ROI. Positive ROI lists above negative. Inactive accounts are not listed. Separate from the searchable directory.',
   'seo.marketplace_keywords':
@@ -1932,23 +1937,23 @@ const en = {
   'seo.acca_faq_3_q': 'Are Acca Generator slips guaranteed tips?',
   'seo.acca_faq_3_a':
     'No. Risk levels are odd bands only. Outputs are educational and informational — not sure bets. Gamble responsibly. 18+ only.',
-  'seo.rollover_title': 'VIP Football Tips — 2-Day Two-Fold Rollover',
+  'seo.rollover_title': 'Free Football Tips — 7-Day Two-Fold Rollover',
   'seo.rollover_desc':
-    'Subscribe for live two-fold VIP football tips. Settled history is public so you can judge form first. Win Day 1, roll Day 2, then the example restarts. Not a bookmaker payout. 18+.',
+    'Sign in free to see live two-fold rollover tips. Settled history is public so you can judge form first. Win Day 1, roll through Day 7, then the example restarts. Not a bookmaker payout. 18+.',
   'seo.rollover_keywords':
-    'VIP football tips|two fold football tips|football tipster subscription|2 day vip tips|football rollover|low odds accumulator tips',
-  'seo.rollover_faq_1_q': 'What is the 2-day VIP rollover?',
+    'free football tips|two fold football tips|7 day rollover tips|football rollover|low odds accumulator tips|AccaSure1X2',
+  'seo.rollover_faq_1_q': 'What is the 7-day rollover?',
   'seo.rollover_faq_1_a':
-    'It is a public educational board linked to AccaSure1X2. Each plan day uses one AccaSure1X2 2-fold. Win Day 1 and the example stake rolls to Day 2; win Day 2 and the cycle finishes (take-profit example) and a new board starts at Day 1. A loss cuts the run and starts Day 1. Live tips are for VIP subscribers; settled tips are public. We do not pay odds or credit wallets for this board.',
+    'It is a public educational board linked to AccaSure1X2. Each plan day uses one AccaSure1X2 2-fold. Win a day and the example stake rolls to the next; win Day 7 and the cycle finishes (take-profit example) and a new board starts at Day 1. A loss cuts the run and starts Day 1. Live tips are free for signed-in users; settled tips are public. We do not pay odds or credit wallets for this board.',
   'seo.rollover_faq_2_q': 'Can I see today’s tip without a VIP subscription?',
   'seo.rollover_faq_2_a':
-    'Active (pending) coupons stay locked for non-subscribers — you see a Subscribe CTA, same as marketplace VIP cards. Settled won/lost coupons are fully visible so you can judge form before joining.',
+    'Yes. Sign in with a free account to unlock live rollover tips. VIP subscriptions are separate and stay paid. Settled won/lost coupons are fully visible to everyone.',
   'seo.rollover_faq_3_q': 'Is this betting on the odds?',
   'seo.rollover_faq_3_a':
     'No. BetRollover is not a bookmaker. The coupon is tipster information. Any wager you place with a third-party bookmaker is outside this app.',
   'seo.rollover_faq_4_q': 'What do the GHS figures mean?',
   'seo.rollover_faq_4_a':
-    'They are a worked example of compounding that campaign’s example stake (default GHS 100) at the board’s target multiplier across the two plan days. Day 2 shows the harvest example if both coupons hit, then the cycle restarts. They are not payouts.',
+    'They are a worked example of compounding that campaign’s example stake (default GHS 100) at the board’s target multiplier across the seven plan days. Day 7 shows the harvest example if all coupons hit, then the cycle restarts. They are not payouts.',
   'seo.subscriptions_account_desc':
     'Your active VIP subscription plans and included slips. Sign in required — not a public landing page.',
   'leaderboard.empty_logged_sub':
@@ -2511,12 +2516,12 @@ const en = {
   'discover.view_all_guides': 'View all guides →',
   'discover.no_items': 'No items yet.',
 
-  'rollover.label': 'VIP · Climb',
-  'rollover.title': '2-Day VIP Rollover',
+  'rollover.label': 'Free · Climb',
+  'rollover.title': '7-Day Rollover',
   'rollover.tagline':
-    'AccaSure1X2 board: win Day 1, roll to Day 2, then take profit and restart. Live tips for VIP subscribers; settled history is public. Educational — not a payout.',
+    'AccaSure1X2 board: win a day, roll to the next, finish Day 7, then restart. Live tips free when you sign in; settled history is public. Educational — not a payout.',
   'rollover.today': "Today's coupon",
-  'rollover.plan_title': '2-day board',
+  'rollover.plan_title': '7-day board',
   'rollover.no_coupon': 'No AccaSure1X2 coupon attached for this plan day yet. The run holds on day {day}.',
   'rollover.waiting_settlement': 'Waiting for the current coupon to settle before the next day is attached.',
   'rollover.day': 'Day',
@@ -2527,9 +2532,9 @@ const en = {
   'rollover.win': 'After win',
   'rollover.coupon': 'Coupon',
   'rollover.example_hint': 'Example only: {stake} at ×{odds} on day {day} would return {ret} if it hits. Not a payout — we do not credit wallets.',
-  'rollover.finish_label': 'If both days hit',
+  'rollover.finish_label': 'If all {days} days hit',
   'rollover.ladder_hint':
-    'Day 1 stake rolls into Day 2 after a win. Open days show ×{odds}; attached coupons use real odds for After win. After Day 2 wins, the example harvest finishes and a new cycle starts at Day 1.',
+    'Each win rolls the example stake into the next day. Open days show ×{odds}; attached coupons use real odds for After win. After Day 7 wins, the example harvest finishes and a new cycle starts at Day 1.',
   'rollover.status_pending': 'Live',
   'rollover.status_won': 'Won',
   'rollover.status_lost': 'Lost',
@@ -2539,27 +2544,27 @@ const en = {
   'rollover.view_coupon': 'View coupon',
   'rollover.disclaimer_label': 'Educational & informational · 18+',
   'rollover.disclaimer':
-    'This is a public educational board linked to AccaSure1X2. Flow: win Day 1 → roll Day 2 → take-profit example and restart. Live tips are for VIP subscribers. Settled tips are public. Paying for a subscription buys information, not a bet. We do not pay odds or credit wallets when this sequence “wins”. Gamble responsibly. 18+ only.',
+    'This is a public educational board linked to AccaSure1X2. Flow: win a day → roll to the next → Day 7 take-profit example and restart. Live tips are free for signed-in users. Settled tips are public. VIP plans stay separate and paid. We do not pay odds or credit wallets when this sequence “wins”. Gamble responsibly. 18+ only.',
   'rollover.run_day': 'Day {day} of {total}',
-  'rollover.run_completed': 'Both days hit. Example harvest complete — a new 2-day cycle has started at Day 1.',
-  'rollover.run_broken': 'This campaign was cut. A new 2-day cycle has started at Day 1.',
+  'rollover.run_completed': 'All {total} days hit. Example harvest complete — a new {total}-day cycle has started at Day 1.',
+  'rollover.run_broken': 'This campaign was cut. A new {total}-day cycle has started at Day 1.',
   'rollover.owner': 'Published by {name}',
   'rollover.load_error': 'The rollover board could not be loaded. Try again shortly.',
   'rollover.records': 'Cycle',
   'rollover.stat_start': 'Start',
   'rollover.stat_start_hint': 'Example stake for this cycle',
-  'rollover.stat_harvest_hint': 'Projected if Day 1 and Day 2 both win',
+  'rollover.stat_harvest_hint': 'Projected if all {days} days win',
   'rollover.stat_finished': 'Finished',
   'rollover.stat_cut': 'Cut',
   'rollover.stat_campaigns': 'Results',
   'rollover.last_cut': 'Last campaign was cut at Day {day}. This table is a new cycle.',
   'rollover.last_cut_cycle': 'Last campaign was cut under a previous plan. This table is a new cycle.',
   'rollover.last_reset': 'Last campaign was reset at Day {day}. This table is a new cycle.',
-  'rollover.last_finished': 'Last campaign finished both days. This table is a new cycle.',
+  'rollover.last_finished': 'Last campaign finished all {total} days. This table is a new cycle.',
 
   'buy.nav': 'Buy football tips',
   'buy.meta_title': 'VIP Football Tips & Tipster Subscriptions',
-  'buy.meta_desc': 'Subscribe to VIP football tips or buy a single paid prediction. Refunded if a paid pick loses. Two-fold rollover plans, accumulators, and booking codes when a tipster includes one. 18+.',
+  'buy.meta_desc': 'Subscribe to VIP football tips or buy a single paid prediction. Refunded if a paid pick loses. Free 7-day rollover when you sign in, accumulators, and booking codes when a tipster includes one. 18+.',
   'buy.label': 'Subscriptions',
   'buy.title': 'VIP football tips and tipster subscriptions',
   'buy.tagline': 'Pay for a single pick or a VIP plan. Settled results stay public so you can judge form before you subscribe.',
@@ -2571,16 +2576,16 @@ const en = {
   'buy.picks_h': 'Buy a single football tip',
   'buy.picks_body': 'The marketplace lists free and paid football picks. Compare win rate and track record, then pay from your wallet. A paid pick that loses is refunded automatically.',
   'buy.vip_h': 'VIP football tipster subscription',
-  'buy.vip_body': 'A VIP plan is a subscription to one tipster, including the house two-fold desk. You pay once for the period and receive the included subscriber-only slips. If that tipster posts none during your period, the fee is returned. Live rollover tips stay locked until you subscribe.',
+  'buy.vip_body': 'A VIP plan is a subscription to AccaSure1X2 (Sure · 1X2). You pay once for the period and receive the included subscriber-only slips. If none are posted during your period, the fee is returned. The public 7-day Rollover board is separate — live tips there are free when you sign in.',
   'buy.acca_h': 'Accumulator and two-fold tips',
-  'buy.acca_body': 'The 2-day VIP rollover is a low-odds two-fold plan: win day 1, roll day 2, then the example restarts. The Acca Generator is free for signed-in users and builds same-day accumulators in Sure, Safe, Medium, or High odd bands. Those bands are price ranges, not guaranteed results.',
+  'buy.acca_body': 'The 7-day rollover is a low-odds two-fold plan: win a day, roll to the next through Day 7, then the example restarts. Live rollover tips are free when you sign in. The Acca Generator is also free for signed-in users and builds same-day accumulators in Sure, Safe, Medium, or High odd bands. Those bands are price ranges, not guaranteed results.',
   'buy.codes_h': 'Booking codes for SportyBet, Bet9ja and others',
   'buy.codes_body': 'When a tipster attaches a booking code, you can copy it into that bookmaker to load the same slip. The code does not place the bet and does not change the result.',
   'buy.compare_h': 'Choose a tipster before you pay',
   'buy.compare_body': 'Open the directory and the leaderboard, then read settled picks. Start with one paid pick if you do not want a subscription yet.',
   'buy.cta_picks': 'Buy today\'s tips',
   'buy.cta_vip': 'See VIP subscriptions',
-  'buy.cta_rollover': 'View the 2-day rollover',
+  'buy.cta_rollover': 'View the 7-day rollover',
   'buy.cta_tipsters': 'Compare tipsters',
   'buy.not_guaranteed': 'No tip is guaranteed. BetRollover does not sell fixed matches or sure-odds promises.',
   'buy.faq_q1': 'How do I buy football tips on BetRollover?',

@@ -60,7 +60,7 @@ const fr: Record<string, string> = {
   'nav.create_pick_short': '+Picks',
   'nav.acca_generator': 'Générateur d\'acca',
   'nav.acca_generator_short': 'Acca',
-  'nav.rollover': 'Relance VIP 2 jours',
+  'nav.rollover': 'Relance 7 jours',
   'nav.rollover_short': 'Relance',
   'nav.pick_tab': 'Créer',
 
@@ -632,7 +632,7 @@ const fr: Record<string, string> = {
   'acca.job_buy_short': 'Desk',
   'acca.job_build': 'Construire un slip',
   'acca.job_build_short': 'Slip',
-  'acca.job_climb': 'Série VIP 2 jours',
+  'acca.job_climb': 'Série relance 7 jours',
   'acca.job_climb_short': 'Série',
   'acca.landing_how': 'Comment ça marche',
   'acca.landing_step1': 'Choisissez Sure, Safe, Medium ou High (bande de cotes par sélection).',
@@ -1030,6 +1030,8 @@ const fr: Record<string, string> = {
   'pick_card.purchase_to_view': 'Achetez pour voir les détails',
   'pick_card.subscribe_to_view': 'Abonnez-vous pour voir les détails',
   'pick_card.subscribe_cta': 'S’abonner',
+  'pick_card.sign_in_to_view': 'Connectez-vous pour voir les détails',
+  'pick_card.sign_in_cta': 'Se connecter',
   'pick_card.vip_included': 'VIP',
   'pick_card.booking_code_title': 'Code de prise ({bookie})',
   'pick_card.copy_booking_code': 'Copier',
@@ -1169,9 +1171,13 @@ const fr: Record<string, string> = {
   'pick_detail.get_free_pick': 'Obtenir le pronostic gratuit',
   'pick_detail.escrow_badge_title': 'Protection d\'achat',
   'pick_detail.access_via_subscription': 'Accès via abonnement',
+  'pick_detail.access_via_rollover': 'Gratuit sur le tableau Relance',
   'pick_detail.access_granted': 'Accès accordé',
   'pick_detail.access_subscription_note': 'Ce ticket est inclus dans votre forfait VIP.',
+  'pick_detail.access_rollover_note': 'Les membres connectés peuvent ouvrir les tips live attachés au tableau Relance public.',
   'pick_detail.access_granted_note': 'Vous pouvez voir ce pronostic payant sans l’acheter.',
+  'pick_detail.rollover_sign_in_intro':
+    'Connectez-vous gratuitement pour débloquer ce tip Relance en direct. Les forfaits VIP restent séparés et payants.',
   'pick_detail.manage_subscriptions_link': 'Gérer les abonnements →',
   'pick_detail.wallet_balance': 'Solde : GHS {amount}',
   'pick_detail.insufficient_balance_link': 'Solde insuffisant — Recharger le portefeuille →',
@@ -1310,7 +1316,7 @@ const fr: Record<string, string> = {
   'tipster.subscription_packages_desc': 'Gérer les abonnements récurrents aux pronostics',
   'subscriptions.marketplace_title': 'Abonnements VIP',
   'subscriptions.marketplace_tagline':
-    'Two-Fold maison (Telegram quotidien) et forfaits VIP tipster (dans l’app). Les pronostics payants du marché se vendent à part. Paiement depuis le portefeuille.',
+    'VIP AccaSure1X2 (Sure · 1X2) avec Telegram privé, plus forfaits VIP tipster indépendants (dans l’app). Les pronostics payants du marché se vendent à part. Paiement depuis le portefeuille.',
   'subscriptions.marketplace_empty_title': 'Aucun forfait VIP',
   'subscriptions.marketplace_empty_desc':
     'Quand le desk maison ou un tipster publiera un forfait, il apparaîtra ici.',
@@ -1324,7 +1330,7 @@ const fr: Record<string, string> = {
   'subscriptions.vip_already_subscribed_hint':
     'Vous avez déjà un forfait VIP actif avec ce tipster. Gérez-le depuis la page Mes abonnements.',
   'subscriptions.marketplace_footnote':
-    'Le desk Two-Fold publie un ticket la plupart des jours sur Telegram privé. Les tipsters indépendants publient jusqu’à 2 tickets VIP in-app par période et ont besoin d’au moins {minRoi} % de ROI réglé et {minWr} % de taux de victoire pour proposer un forfait. Les tickets VIP perdants ne sont pas remboursés. Remboursement intégral uniquement si zéro ticket VIP est publié sur le forfait pendant la période. Les pronostics payants du marché restent remboursés si ce coupon perd, et ne sont pas inclus dans le VIP.',
+    'AccaSure1X2 VIP publie un ticket la plupart des jours sur Telegram privé. Les tipsters indépendants publient jusqu’à 2 tickets VIP in-app par période et ont besoin d’au moins {minRoi} % de ROI réglé et {minWr} % de taux de victoire pour proposer un forfait. Les tickets VIP perdants ne sont pas remboursés. Remboursement intégral uniquement si zéro ticket VIP est publié sur le forfait pendant la période. Les pronostics payants du marché restent remboursés si ce coupon perd, et ne sont pas inclus dans le VIP. Le tableau Relance 7 jours est gratuit une fois connecté.',
   'subscriptions.trust_callout_title': 'Protection d\'achat du forfait VIP',
   'subscriptions.trust_callout_body':
     'Le prix du forfait reste en attente jusqu’au paiement en fin de période. Ce n’est pas la protection d\'achat d’un pronostic : les tickets VIP perdants ne sont pas remboursés. Remboursement intégral uniquement si zéro ticket VIP est publié sur ce forfait pendant votre période. Si au moins un ticket est publié, le tipster reçoit 70 % et la plateforme conserve 30 % à la fin — même si ces tickets perdent. Les pronostics payants du même tipster ne sont pas inclus.',
@@ -1336,10 +1342,10 @@ const fr: Record<string, string> = {
   'subscriptions.cadence_tipster':
     'Jusqu’à {n} tickets VIP inclus sur ce forfait de {days} jours, in-app uniquement. Les pronostics payants de ce tipster se vendent à part.',
   'subscriptions.checkout_house_includes':
-    'Débloque le canal Telegram privé et les tickets Two-Fold maison pendant la durée du forfait.',
+    'Débloque le canal Telegram privé et les tickets VIP AccaSure1X2 pendant la durée du forfait.',
   'subscriptions.checkout_tipster_includes':
     'Débloque les tickets VIP inclus de ce tipster dans Mes abonnements. Ne débloque pas ses pronostics payants.',
-  'subscriptions.checkout_tagline_house': 'Payez depuis votre portefeuille pour rejoindre le desk Two-Fold Telegram.',
+  'subscriptions.checkout_tagline_house': 'Payez depuis votre portefeuille pour rejoindre AccaSure1X2 VIP Telegram.',
   'subscriptions.seller_package_tagline':
     'Un forfait VIP actif par tipster. Les abonnés paient depuis le portefeuille. Les tickets VIP inclus sont in-app uniquement.',
   'subscriptions.seller_package_rules':
@@ -1902,7 +1908,7 @@ const fr: Record<string, string> = {
   'seo.tipsters_title': 'Tipsters football à suivre',
   'seo.tipsters_desc': 'Comparez des tipsters football vérifiés par ROI et taux de réussite, puis achetez un prono ou ouvrez un plan VIP. Protection d\'achat. Basé au Ghana, audience mondiale.',
   'seo.vip_title': 'Abonnements tipsters football VIP',
-  'seo.vip_desc': 'Abonnez-vous à des pronostics football VIP. Plans deux sélections de la maison et plans de tipsters indépendants, payés depuis le portefeuille. Les frais sont rendus si aucun coupon VIP n\'est publié pendant votre période. 18+.',
+  'seo.vip_desc': 'Abonnez-vous aux pronostics VIP AccaSure1X2 (Sure · 1X2) ou aux forfaits VIP de tipsters indépendants, payés depuis le portefeuille. Les frais sont rendus si aucun coupon VIP n\'est publié pendant votre période. 18+.',
   'seo.leaderboard_title': 'Classement de forme des tipsters',
   'seo.leaderboard_desc': 'Tipsters football actifs classés par forme plus ROI. Le ROI positif passe au-dessus du négatif. Les comptes inactifs n’apparaissent pas. Distinct de l’annuaire.',
   'seo.marketplace_keywords':
@@ -1927,23 +1933,23 @@ const fr: Record<string, string> = {
   'seo.acca_faq_3_q': 'Les coupons Acca sont-ils des pronostics garantis ?',
   'seo.acca_faq_3_a':
     'Non. Les niveaux de risque ne sont que des bandes de cotes. Les résultats sont éducatifs et informatifs — pas des paris sûrs. Jouez responsablement. 18+ uniquement.',
-  'seo.rollover_title': 'Pronostics VIP football — relance 2 jours à deux sélections',
+  'seo.rollover_title': 'Pronostics football gratuits — relance 7 jours à deux sélections',
   'seo.rollover_desc':
-    'Abonnez-vous aux pronostics VIP live à deux sélections. L’historique réglé est public pour juger la forme. Gagnez jour 1, enchaînez jour 2, puis l’exemple repart. Pas un paiement bookmaker. 18+.',
+    'Connectez-vous gratuitement pour voir les tips live à deux sélections. L’historique réglé est public pour juger la forme. Gagnez un jour, enchaînez jusqu’au jour 7, puis l’exemple repart. Pas un paiement bookmaker. 18+.',
   'seo.rollover_keywords':
-    'pronostics VIP football|deux sélections football|abonnement tipster football|VIP 2 jours|relance football|accumulateur faible cote',
-  'seo.rollover_faq_1_q': 'Qu’est-ce que la relance VIP 2 jours ?',
+    'pronostics football gratuits|deux sélections football|relance 7 jours|relance football|accumulateur faible cote|AccaSure1X2',
+  'seo.rollover_faq_1_q': 'Qu’est-ce que la relance 7 jours ?',
   'seo.rollover_faq_1_a':
-    'Un tableau éducatif public lié à AccaSure1X2. Chaque jour de plan utilise un 2-fold AccaSure1X2. Victoire jour 1 : la mise d’exemple passe au jour 2 ; victoire jour 2 : cycle terminé (exemple de prise de profit) et nouveau tableau au jour 1. Une perte coupe la série. Les tips live sont pour les abonnés VIP ; les tips réglés sont publics. Nous ne payons pas les cotes ni ne créditons les portefeuilles.',
+    'Un tableau éducatif public lié à AccaSure1X2. Chaque jour de plan utilise un 2-fold AccaSure1X2. Victoire : la mise d’exemple passe au jour suivant ; victoire jour 7 : cycle terminé (exemple de prise de profit) et nouveau tableau au jour 1. Une perte coupe la série. Les tips live sont gratuits pour les comptes connectés ; les tips réglés sont publics. Nous ne payons pas les cotes ni ne créditons les portefeuilles.',
   'seo.rollover_faq_2_q': 'Puis-je voir le tip du jour sans abonnement VIP ?',
   'seo.rollover_faq_2_a':
-    'Les coupons en cours restent verrouillés pour les non-abonnés — bouton S’abonner, comme sur le marketplace VIP. Les coupons gagnés/perdus réglés sont visibles pour juger la forme avant de rejoindre.',
+    'Oui. Connectez-vous avec un compte gratuit pour débloquer les tips live de la relance. Les abonnements VIP restent payants et séparés. Les coupons gagnés/perdus réglés sont visibles pour tout le monde.',
   'seo.rollover_faq_3_q': 'Est-ce parier sur les cotes ?',
   'seo.rollover_faq_3_a':
     'Non. BetRollover n’est pas un bookmaker. Le coupon est une information tipster. Toute mise chez un bookmaker tiers est en dehors de l’app.',
   'seo.rollover_faq_4_q': 'Que signifient les montants en GHS ?',
   'seo.rollover_faq_4_a':
-    'Exemple chiffré de capitalisation avec la mise d’exemple de la campagne (100 GHS par défaut) et le multiplicateur cible sur les deux jours. Le jour 2 montre l’exemple de récolte si les deux coupons passent, puis le cycle repart. Ce ne sont pas des paiements.',
+    'Exemple chiffré de capitalisation avec la mise d’exemple de la campagne (100 GHS par défaut) et le multiplicateur cible sur les sept jours. Le jour 7 montre l’exemple de récolte si tous les coupons passent, puis le cycle repart. Ce ne sont pas des paiements.',
   'seo.subscriptions_account_desc':
     'Vos abonnements VIP actifs et coupons inclus. Connexion requise — page compte, pas une landing publique.',
   'leaderboard.empty_logged_sub':
@@ -2516,12 +2522,12 @@ const fr: Record<string, string> = {
   'discover.view_all_guides': 'Voir tous les guides →',
   'discover.no_items': 'Aucun élément pour le moment.',
 
-  'rollover.label': 'VIP · Grimper',
-  'rollover.title': 'Relance VIP 2 jours',
+  'rollover.label': 'Gratuit · Grimper',
+  'rollover.title': 'Relance 7 jours',
   'rollover.tagline':
-    'Tableau AccaSure1X2 : gagnez le jour 1, relancez au jour 2, puis prenez le profit et recommencez. Pronostics live pour abonnés VIP ; historique réglé public. Éducatif — pas un paiement.',
+    'Tableau AccaSure1X2 : gagnez un jour, enchaînez au suivant, terminez le jour 7, puis recommencez. Tips live gratuits une fois connecté ; historique réglé public. Éducatif — pas un paiement.',
   'rollover.today': 'Coupon du jour',
-  'rollover.plan_title': 'Tableau 2 jours',
+  'rollover.plan_title': 'Tableau 7 jours',
   'rollover.no_coupon': 'Aucun coupon AccaSure1X2 attaché pour ce jour de série. La série reste au jour {day}.',
   'rollover.waiting_settlement': 'En attente du règlement du coupon en cours avant d’attacher le jour suivant.',
   'rollover.day': 'Jour',
@@ -2532,9 +2538,9 @@ const fr: Record<string, string> = {
   'rollover.win': 'Après gain',
   'rollover.coupon': 'Coupon',
   'rollover.example_hint': 'Exemple seulement : {stake} à ×{odds} au jour {day} donnerait {ret} s’il passe. Ce n’est pas un paiement — nous ne créditons pas les portefeuilles.',
-  'rollover.finish_label': 'Si les deux jours passent',
+  'rollover.finish_label': 'Si les {days} jours passent',
   'rollover.ladder_hint':
-    'La mise du jour 1 se relève au jour 2 après un gain. Jours ouverts : ×{odds} ; coupon attaché = cote réelle pour Après gain. Après le gain du jour 2, l’exemple de prise de profit se termine et un nouveau cycle commence au jour 1.',
+    'Chaque gain relève la mise d’exemple au jour suivant. Jours ouverts : ×{odds} ; coupon attaché = cote réelle pour Après gain. Après le gain du jour 7, l’exemple de prise de profit se termine et un nouveau cycle commence au jour 1.',
   'rollover.status_pending': 'En cours',
   'rollover.status_won': 'Gagné',
   'rollover.status_lost': 'Perdu',
@@ -2544,27 +2550,27 @@ const fr: Record<string, string> = {
   'rollover.view_coupon': 'Voir le coupon',
   'rollover.disclaimer_label': 'Éducatif et informatif · 18+',
   'rollover.disclaimer':
-    'Tableau éducatif public lié à AccaSure1X2. Flux : gain jour 1 → relance jour 2 → exemple de prise de profit et redémarrage. Les tips live sont pour les abonnés VIP. Les tips réglés sont publics. Un abonnement achète une information, pas un pari. Nous ne versons pas les cotes et ne créditons pas les portefeuilles si cette série « gagne ». Jouez de manière responsable. 18+ uniquement.',
+    'Tableau éducatif public lié à AccaSure1X2. Flux : gain d’un jour → relance au suivant → exemple de prise de profit au jour 7 et redémarrage. Les tips live sont gratuits pour les comptes connectés. Les tips réglés sont publics. Les forfaits VIP restent séparés et payants. Nous ne versons pas les cotes et ne créditons pas les portefeuilles si cette série « gagne ». Jouez de manière responsable. 18+ uniquement.',
   'rollover.run_day': 'Jour {day} sur {total}',
-  'rollover.run_completed': 'Les deux jours sont passés. Exemple de prise de profit terminé — un nouveau cycle 2 jours a commencé au jour 1.',
-  'rollover.run_broken': 'Cette série a été coupée. Un nouveau cycle 2 jours a commencé au jour 1.',
+  'rollover.run_completed': 'Les {total} jours sont passés. Exemple de prise de profit terminé — un nouveau cycle {total} jours a commencé au jour 1.',
+  'rollover.run_broken': 'Cette série a été coupée. Un nouveau cycle {total} jours a commencé au jour 1.',
   'rollover.owner': 'Publié par {name}',
   'rollover.load_error': 'Impossible de charger le tableau de relance. Réessayez dans un instant.',
   'rollover.records': 'Cycle',
   'rollover.stat_start': 'Départ',
   'rollover.stat_start_hint': 'Mise d’exemple pour ce cycle',
-  'rollover.stat_harvest_hint': 'Projection si le jour 1 et le jour 2 gagnent',
+  'rollover.stat_harvest_hint': 'Projection si les {days} jours gagnent',
   'rollover.stat_finished': 'Terminées',
   'rollover.stat_cut': 'Coupées',
   'rollover.stat_campaigns': 'Résultats',
   'rollover.last_cut': 'La dernière série a été coupée au jour {day}. Ce tableau est un nouveau cycle.',
   'rollover.last_cut_cycle': 'La dernière série a été coupée sous un ancien plan. Ce tableau est un nouveau cycle.',
   'rollover.last_reset': 'La dernière série a été réinitialisée au jour {day}. Ce tableau est un nouveau cycle.',
-  'rollover.last_finished': 'La dernière série a terminé les deux jours. Ce tableau est un nouveau cycle.',
+  'rollover.last_finished': 'La dernière série a terminé les {total} jours. Ce tableau est un nouveau cycle.',
 
   'buy.nav': 'Acheter des pronos',
   'buy.meta_title': 'Pronostics VIP et abonnements tipsters',
-  'buy.meta_desc': 'Abonnez-vous à des pronostics football VIP ou achetez un prono payant. Remboursé si le pick payant perd. Rollover à deux sélections, accumulateurs et codes de réservation quand le tipster en ajoute un. 18+.',
+  'buy.meta_desc': 'Abonnez-vous à des pronostics football VIP ou achetez un prono payant. Remboursé si le pick payant perd. Relance 7 jours gratuite une fois connecté, accumulateurs et codes de réservation quand le tipster en ajoute un. 18+.',
   'buy.label': 'Abonnements',
   'buy.title': 'Pronostics football VIP et abonnements',
   'buy.tagline': 'Payez un prono unique ou un plan VIP. Les résultats réglés restent publics pour juger la forme avant de vous abonner.',
@@ -2576,16 +2582,16 @@ const fr: Record<string, string> = {
   'buy.picks_h': 'Acheter un prono football',
   'buy.picks_body': 'Le marché liste des pronostics football gratuits et payants. Comparez le taux de victoire et le ROI, puis payez depuis votre portefeuille. Un prono payant perdant est remboursé automatiquement.',
   'buy.vip_h': 'Abonnement tipster VIP',
-  'buy.vip_body': 'Un plan VIP est un abonnement à un tipster, y compris le bureau deux sélections de la maison. Vous payez une fois pour la période et recevez les coupons réservés aux abonnés. Si le tipster n\'en publie aucun pendant votre période, les frais sont rendus. Les tips de rollover en cours restent verrouillés jusqu\'à l\'abonnement.',
+  'buy.vip_body': 'Un plan VIP est un abonnement à AccaSure1X2 (Sure · 1X2). Vous payez une fois pour la période et recevez les coupons réservés aux abonnés. Si aucun n\'est publié pendant votre période, les frais sont rendus. Le tableau Relance 7 jours est séparé — les tips live y sont gratuits une fois connecté.',
   'buy.acca_h': 'Accumulateurs et pronos à deux sélections',
-  'buy.acca_body': 'Le rollover VIP sur 2 jours est un plan à deux sélections à cote basse : gain jour 1, relance jour 2, puis l\'exemple recommence. Le générateur d\'acca est gratuit pour les comptes connectés et construit des accumulateurs du jour en bandes de cotes Sure, Safe, Medium ou High. Ces bandes sont des fourchettes de prix, pas des résultats garantis.',
+  'buy.acca_body': 'Le rollover sur 7 jours est un plan à deux sélections à cote basse : gain d’un jour, relance au suivant jusqu’au jour 7, puis l\'exemple recommence. Les tips live de la relance sont gratuits une fois connecté. Le générateur d\'acca est aussi gratuit pour les comptes connectés et construit des accumulateurs du jour en bandes de cotes Sure, Safe, Medium ou High. Ces bandes sont des fourchettes de prix, pas des résultats garantis.',
   'buy.codes_h': 'Codes de réservation SportyBet, Bet9ja et autres',
   'buy.codes_body': 'Quand un tipster joint un code de réservation, vous pouvez le copier chez ce bookmaker pour charger le même coupon. Le code ne place pas le pari et ne change pas le résultat.',
   'buy.compare_h': 'Choisir un tipster avant de payer',
   'buy.compare_body': 'Ouvrez l\'annuaire et le classement de forme, puis lisez les coupons réglés. Commencez par un prono payant si vous ne voulez pas encore d\'abonnement.',
   'buy.cta_picks': 'Acheter les pronos du jour',
   'buy.cta_vip': 'Voir les abonnements VIP',
-  'buy.cta_rollover': 'Voir le rollover 2 jours',
+  'buy.cta_rollover': 'Voir le rollover 7 jours',
   'buy.cta_tipsters': 'Comparer les tipsters',
   'buy.not_guaranteed': 'Aucun prono n\'est garanti. BetRollover ne vend pas de matchs truqués ni de promesses de cotes sûres.',
   'buy.faq_q1': 'Comment acheter des pronostics football sur BetRollover ?',

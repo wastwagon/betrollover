@@ -7,6 +7,7 @@ import { LanguageProvider } from '@/context/LanguageContext';
 import { SkipToMainContent } from '@/components/SkipToMainContent';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { RateAppPrompt } from '@/components/RateAppPrompt';
+import { WebViewStatusBarSync } from '@/components/WebViewStatusBarSync';
 import { AnalyticsBeacon } from '@/components/AnalyticsBeacon';
 import { GoogleTagManagerNoScript } from '@/components/GoogleTagManagerNoScript';
 import { ThirdPartyTags } from '@/components/ThirdPartyTags';
@@ -106,8 +107,9 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  /** Status bar / PWA chrome matches the white header, not brand green. */
+  /** Default white first — some WebViews ignore media-query theme-color and keep a native green bar. */
   themeColor: [
+    { color: '#ffffff' },
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
     { media: '(prefers-color-scheme: dark)', color: '#1c1c1e' },
   ],
@@ -148,6 +150,7 @@ export default async function RootLayout({
                 </div>
                 <MobileBottomNav />
                 <RateAppPrompt />
+                <WebViewStatusBarSync />
               </SlipCartProvider>
             </CurrencyProvider>
           </LanguageProvider>

@@ -283,9 +283,9 @@ export function RolloverBoard() {
 
   const runNote =
     board.run?.status === 'completed'
-      ? t('rollover.run_completed')
+      ? t('rollover.run_completed', { total: String(board.planDays) })
       : board.run?.status === 'broken'
-        ? t('rollover.run_broken')
+        ? t('rollover.run_broken', { total: String(board.planDays) })
         : t('rollover.run_day', { day: String(currentDay), total: String(board.planDays) });
 
   const skipNote =
@@ -428,7 +428,9 @@ export function RolloverBoard() {
               ) : (
                 <span className="text-[1.65rem] font-bold text-[var(--text-tertiary)]">—</span>
               )}
-              <p className="mt-1.5 text-[12px] text-[var(--text-muted)]">{t('rollover.stat_harvest_hint')}</p>
+              <p className="mt-1.5 text-[12px] text-[var(--text-muted)]">
+                {t('rollover.stat_harvest_hint', { days: String(board.planDays) })}
+              </p>
             </div>
           </Surface>
 

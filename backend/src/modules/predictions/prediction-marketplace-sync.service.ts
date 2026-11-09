@@ -166,7 +166,7 @@ export class PredictionMarketplaceSyncService {
       userId: tipster.userId,
       title,
       description: onRoster
-        ? 'Live slip for VIP subscribers. Settled record is public.'
+        ? 'Free on the Rollover board when signed in; VIP plans stay separate. Settled record is public.'
         : isMulti
           ? 'Hand-picked accumulator from our tipsters.'
           : 'Single-fixture tip from our AI tipsters.',
