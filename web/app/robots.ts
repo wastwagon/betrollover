@@ -28,6 +28,8 @@ const PUBLIC_ALLOW = [
   '/rollover',
   '/acca-generator',
   '/coupons/archive',
+  '/llms.txt',
+  '/agent-brief.md',
 ];
 
 const PRIVATE_PATHS = [
@@ -64,10 +66,21 @@ export default function robots(): MetadataRoute.Robots {
     disallow: PRIVATE_PATHS,
   };
 
+  /** AI search / answer engines that cite the live web (not training scrapers). */
+  const aiSearchAgents = [
+    'OAI-SearchBot',
+    'ChatGPT-User',
+    'PerplexityBot',
+    'ClaudeBot',
+    'Claude-User',
+    'Applebot-Extended',
+  ];
+
   return {
     rules: [
       { userAgent: 'Googlebot', ...crawlRule },
       { userAgent: 'Googlebot-Image', ...crawlRule },
+      ...aiSearchAgents.map((userAgent) => ({ userAgent, ...crawlRule })),
       { userAgent: '*', ...crawlRule },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,

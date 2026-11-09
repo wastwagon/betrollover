@@ -72,10 +72,10 @@ export const PLAY_STORE_URL =
 export const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL?.trim() || '';
 
 const SITE_DESCRIPTION_FOOTBALL =
-  'Buy paid football tips and VIP tipster subscriptions. Purchase-protected picks are refunded if they lose. Two-fold plans and accumulators. Ghana-based, 18+.';
+  'Ghana tipster marketplace for football. Purchase-protected paid picks refund to your wallet if they lose. Free 7-day Rollover when signed in. AccaSure1X2 VIP stays paid. Not a bookmaker. 18+.';
 
 const SITE_DESCRIPTION_MULTISPORT =
-  'Verified tipster picks across football and more. Purchase-protected, refunded if tips lose. Ghana-based for Africa and a global audience.';
+  'Ghana tipster marketplace with purchase-protected picks refunded if they lose. Football first, more sports when available. Free signed-in tools plus VIP plans. Not a bookmaker. 18+.';
 
 export const SITE_DESCRIPTION = isFootballOnlyDiscovery()
   ? SITE_DESCRIPTION_FOOTBALL
@@ -83,61 +83,55 @@ export const SITE_DESCRIPTION = isFootballOnlyDiscovery()
 
 /** Page title without the brand — root layout template appends `| BetRollover`. */
 export const SITE_TITLE_CORE = isFootballOnlyDiscovery()
-  ? 'Buy Football Tips & VIP Tipster Subscriptions'
-  : 'Buy Verified Sports Tips & Tipster Subscriptions';
+  ? 'Football Tipster Marketplace — Purchase-Protected Picks'
+  : 'Tipster Marketplace — Purchase-Protected Picks';
 
 export const SITE_DEFAULT_TITLE = `${SITE_TITLE_CORE} — ${SITE_NAME}`;
 
+/**
+ * Keyword themes we can honestly rank for (owned product language).
+ * No buy-intent phrases (“buy tips”, “buy predictions”, “buy sure tips”).
+ * No competitor hype (“win bigger”, “sure tips”, “best tipsters”).
+ */
 const SITE_KEYWORDS_FOOTBALL = [
-  'buy football tips',
-  'paid football predictions',
-  'football tipster subscription',
-  'VIP football tips',
-  'best football tipsters to subscribe',
-  'football accumulator tips',
-  'two fold football tips',
-  'football tips refund',
-  'purchase-protected picks',
-  'verified football tipsters',
-  'football tips today',
-  'SportyBet booking code tips',
-  'Bet9ja booking code',
-  'football tips Ghana',
-  'Nigeria football tips',
-  'Kenya football predictions',
-  'South Africa football tips',
-  'Premier League tips subscription',
-  'Champions League tips',
-  'ROI football tips',
-  'free football tips',
-  'tipster marketplace Africa',
+  'football tipster marketplace Ghana',
+  'purchase-protected football tips',
+  'refund if paid football tip loses',
+  'tipster wallet refund Ghana',
+  'free 7-day football rollover',
+  'AccaSure1X2 VIP tips',
+  '1X2 tipster subscription',
+  'football tipster ROI leaderboard',
+  'verified football tipster track record',
+  'SportyBet booking code tips Ghana',
+  'Bet9ja booking code tips',
+  'free Acca generator signed in',
+  'football tipster subscription Africa',
+  'public tipster win rate ROI',
+  'Nigeria football tipster marketplace',
+  'Kenya football tips refund',
+  'South Africa football tipsters',
+  'two fold football tips educational',
+  'not a bookmaker tipster platform',
+  'football tips today Ghana',
 ];
 
 const SITE_KEYWORDS_MULTISPORT = [
-  'buy sports tips',
-  'paid sports predictions',
-  'tipster subscription',
-  'VIP sports tips',
-  'verified tipsters',
-  'football tipster subscription',
-  'buy football tips',
-  'basketball predictions',
-  'tennis picks',
-  'MMA predictions',
-  'rugby tips',
-  'Premier League tips',
-  'Champions League tips',
-  'NBA picks',
-  'accumulator picks',
-  'purchase-protected picks',
-  'refund if sports tips lose',
-  'free sports tips',
-  'sports tips marketplace',
-  'betting tips Ghana',
-  'football tips today',
-  'Nigeria tipsters',
-  'Kenya football tips',
-  'South Africa sports picks',
+  'tipster marketplace Ghana',
+  'purchase-protected sports tips',
+  'refund if paid tip loses wallet',
+  'football tipster marketplace Africa',
+  'verified tipster track record',
+  'SportyBet booking code tips',
+  'Bet9ja booking code tips',
+  'tipster ROI leaderboard',
+  'VIP tipster subscription',
+  'free sports tips signed in',
+  'accumulator tips educational',
+  'Nigeria tipster marketplace',
+  'Kenya football tipsters',
+  'South Africa sports tips',
+  'not a bookmaker tipster platform',
 ];
 
 /** SEO keywords — football-only when discovery flag is on. */

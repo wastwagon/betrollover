@@ -38,9 +38,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   if (isFootballOnlyDiscovery()) {
     return {
-      title: 'Buy Football Tips Today',
+      title: 'Football Tips Marketplace — Today’s Picks',
       description:
-        'Buy today\'s paid football predictions from verified tipsters. Refunded if a paid pick loses. Compare win rate and ROI before you pay.',
+        'Browse today’s free and paid football picks from verified tipsters. Purchase-protected paid picks refund to your wallet if they lose. Compare win rate and ROI.',
       robots: { index: false, follow: true },
     };
   }

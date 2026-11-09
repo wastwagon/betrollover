@@ -47,6 +47,10 @@ const nextConfig = {
   poweredByHeader: false,
   // Smaller Coolify/Docker images: runner copies `.next/standalone` instead of all of node_modules.
   output: 'standalone',
+  // Docker/Coolify: typecheck after webpack routinely OOM-kills (exit 255) on small builders
+  // when api+web compose build in parallel. Lint is already skipped via `next build --no-lint`.
+  // Run `npx tsc --noEmit` / full `next build` locally or in CI for type safety.
+  typescript: lowMemBuild ? { ignoreBuildErrors: true } : undefined,
   compiler: isProd
     ? {
         removeConsole: { exclude: ['error', 'warn'] },

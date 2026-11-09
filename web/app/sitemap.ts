@@ -65,6 +65,8 @@ const EN_ONLY_PAGES: Array<{
     ? [{ path: '/subscriptions/marketplace', changeFrequency: 'daily' as const, priority: 0.9 }]
     : []),
   { path: '/tools/converter',   changeFrequency: 'weekly',  priority: 0.5 },
+  { path: '/llms.txt',          changeFrequency: 'weekly',  priority: 0.55 },
+  { path: '/agent-brief.md',    changeFrequency: 'weekly',  priority: 0.55 },
 ];
 
 /**

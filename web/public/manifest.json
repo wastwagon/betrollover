@@ -1,7 +1,7 @@
 {
-  "name": "BetRollover — Buy Football Tips",
+  "name": "BetRollover — Football Tipster Marketplace",
   "short_name": "BetRollover",
-  "description": "Buy paid football tips and VIP tipster subscriptions. Purchase-protected picks, refunded if they lose. Ghana-based, 18+.",
+  "description": "Ghana tipster marketplace. Purchase-protected picks refund if they lose. Free 7-day Rollover when signed in. AccaSure1X2 VIP stays paid. 18+.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f2f2f7",

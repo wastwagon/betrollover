@@ -156,7 +156,7 @@ const en = {
   'status.void': 'Void',
 
   // ── Home page ────────────────────────────────────────────────────────────
-  'home.hero_title': 'Buy football tips from verified tipsters.',
+  'home.hero_title': 'Football tipster marketplace with purchase-protected picks.',
   'home.hero_subtitle': 'Paid picks and VIP subscriptions — built in Ghana for Africa and a global match audience.',
   'home.hero_escrow_line': 'If a paid pick loses, your wallet is refunded automatically — no claims.',
   'home.hero_informational_note': 'Tipster picks and analyses are for information and education only. BetRollover is not a bookmaker or betting operator. 18+ only.',
@@ -363,7 +363,7 @@ const en = {
   // ── Home — Platform Features section ────────────────────────────────────
   'home.features_badge': 'Why BetRollover',
   'home.features_title': 'A Tipster Marketplace Built on Trust',
-  'home.features_sub': 'Every feature exists to protect your purchase, surface the best tipsters, and give you full transparency before you buy.',
+  'home.features_sub': 'Every feature exists to protect your purchase, surface verified tipsters, and give you full transparency before you pay.',
   'home.feature_escrow_title': 'Purchase Protection',
   'home.feature_escrow_desc': 'When you purchase a pick, the tipster is not paid until every selection settles. If the pick loses, the amount you paid is automatically refunded to your wallet. No claims, no disputes, no waiting.',
   'home.feature_escrow_bullet1': 'Pending settlement on purchase',
@@ -598,7 +598,7 @@ const en = {
   'guides.free_price_body': 'A price is allowed only when settled ROI is at least {minRoi}% and settled win rate is at least {minWr}%. Those floors are set on the platform and can change. If either number is below the floor, new listings stay free until both recover.',
   'guides.free_booking_h': 'SportyBet, Bet9ja and booking codes',
   'guides.free_booking_body':
-    'Some tipsters attach a bookmaker booking code so you can load the same slip in SportyBet, Bet9ja, or another listed bookie. Copy the code in the app — it does not place the bet or guarantee a result. Filter the marketplace for picks with codes, or see VIP and paid football tips on the buy football tips page.',
+    'Some tipsters attach a bookmaker booking code so you can load the same slip in SportyBet, Bet9ja, or another listed bookie. Copy the code in the app — it does not place the bet or guarantee a result. Filter the marketplace for picks with codes, or see VIP plans and purchase-protected picks.',
   'guides.free_faq_q1': 'Do free picks change ROI and win rate?',
   'guides.free_faq_a1': 'Yes. A free pick that settles as won or lost is part of the tipster’s win rate, ROI, and streak. A void or a pick that is still pending is not.',
   'guides.free_faq_q2': 'Is a free pick refunded if it loses?',
@@ -1903,31 +1903,35 @@ const en = {
   'resp.tip_5': 'Sports prediction should be treated as entertainment, not a source of income',
 
   // ── SEO metadata (titles & descriptions for layout files) ────────────────
-  'seo.home_title': 'Buy Football Tips from Verified Tipsters — BetRollover',
-  'seo.home_desc': 'Buy paid football tips and VIP tipster subscriptions. Purchase-protected picks are refunded if they lose. Two-fold plans and accumulators. Ghana-based, 18+.',
-  'seo.marketplace_title': 'Buy Football Tips Today',
-  'seo.marketplace_desc': 'Buy today\'s paid football predictions from verified tipsters. Refunded if a paid pick loses. Compare win rate and ROI before you pay. Booking codes when the tipster includes one.',
-  'seo.marketplace_title_multisport': 'Buy Sports Tips Today',
-  'seo.marketplace_desc_multisport': 'Buy verified tipster picks across football, basketball, tennis, MMA, rugby and more. Compare win rate and ROI. Free and paid picks; refunded if a paid tip loses.',
-  'seo.tipsters_title': 'Football Tipsters to Subscribe To',
-  'seo.tipsters_desc': 'Compare verified football tipsters by ROI and win rate, then buy a pick or open a VIP plan. Purchase-protected. Ghana-based, worldwide audience.',
+  'seo.home_title': 'Football Tipster Marketplace — Purchase-Protected Picks — BetRollover',
+  'seo.home_desc':
+    'Ghana tipster marketplace. Purchase-protected paid picks refund to your wallet if they lose. Free 7-day Rollover when signed in. AccaSure1X2 VIP stays paid. Not a bookmaker. 18+.',
+  'seo.marketplace_title': 'Football Tips Marketplace — Today’s Picks',
+  'seo.marketplace_desc':
+    'Browse today’s free and paid football picks from verified tipsters. Purchase-protected paid picks refund to your wallet if they lose. Compare win rate and ROI. Booking codes when included.',
+  'seo.marketplace_title_multisport': 'Sports Tips Marketplace — Today’s Picks',
+  'seo.marketplace_desc_multisport':
+    'Browse verified tipster picks across football and more. Compare win rate and ROI. Free and paid picks; purchase-protected paid tips refund if they lose.',
+  'seo.tipsters_title': 'Verified Football Tipsters — ROI & Win Rate',
+  'seo.tipsters_desc':
+    'Compare verified football tipsters by settled ROI and win rate. Open VIP plans or browse marketplace picks. Purchase-protected. Ghana-based, worldwide audience.',
   'seo.vip_title': 'VIP Football Tipster Subscriptions',
   'seo.vip_desc': 'Subscribe to AccaSure1X2 VIP football tips (Sure · 1X2) or independent tipster VIP plans, paid from your wallet. The fee is returned if no VIP slips are posted during your period. 18+.',
   'seo.leaderboard_title': 'Football Tipster Form Leaderboard',
   'seo.leaderboard_desc': 'Active football tipsters ranked by form plus ROI. Positive ROI lists above negative. Inactive accounts are not listed. Separate from the searchable directory.',
   'seo.marketplace_keywords':
-    'buy football tips today|paid football predictions|football tips today|verified football tipsters|purchase-protected picks|football booking code tips',
+    'football tips marketplace|football tips today|verified football tipsters|purchase-protected picks|football booking code tips|tipster ROI Ghana',
   'seo.marketplace_keywords_multisport':
-    'buy sports tips today|paid sports predictions|verified tipsters|football tips today|purchase-protected picks',
+    'sports tips marketplace|verified tipsters|football tips today|purchase-protected picks|tipster track record',
   'seo.tipsters_keywords':
-    'football tipsters to subscribe|verified football tipsters|tipster ROI|buy football tips|VIP football tipster|best football tipsters',
+    'verified football tipsters|tipster ROI win rate|VIP football tipster|football tipster directory Africa|public tipster track record',
   'seo.leaderboard_keywords':
     'football tipster leaderboard|tipster form ranking|football tipster ROI|verified tipsters ranking',
   'seo.acca_title': 'Acca Generator — Football Accumulator Tips',
   'seo.acca_desc':
     'Build same-day football accumulator tips from synced odds. Sign in free, choose Sure, Safe, Medium, or High odd bands, generate a slip, and publish a marketplace pick. Educational tool — 18+.',
   'seo.acca_keywords':
-    'football accumulator tips|acca generator|football accumulator builder|same day acca|buy accumulator tips|football tips Ghana',
+    'football accumulator tips|acca generator|football accumulator builder|same day acca|educational accumulator tips|football tips Ghana',
   'seo.acca_faq_1_q': 'What is the BetRollover Acca Generator?',
   'seo.acca_faq_1_a':
     'It is a free same-day football accumulator builder for signed-in users. It picks legs from synced odds within Sure, Safe, Medium, or High risk bands. You can generate a sample slip and optionally publish it as a marketplace pick.',
@@ -2562,16 +2566,18 @@ const en = {
   'rollover.last_reset': 'Last campaign was reset at Day {day}. This table is a new cycle.',
   'rollover.last_finished': 'Last campaign finished all {total} days. This table is a new cycle.',
 
-  'buy.nav': 'Buy football tips',
+  'buy.nav': 'VIP & paid tips',
   'buy.meta_title': 'VIP Football Tips & Tipster Subscriptions',
-  'buy.meta_desc': 'Subscribe to VIP football tips or buy a single paid prediction. Refunded if a paid pick loses. Free 7-day rollover when you sign in, accumulators, and booking codes when a tipster includes one. 18+.',
+  'buy.meta_desc':
+    'VIP football tipster subscriptions and purchase-protected marketplace picks. Paid picks refund to your wallet if they lose. Free 7-day rollover when you sign in. Booking codes when included. 18+.',
   'buy.label': 'Subscriptions',
   'buy.title': 'VIP football tips and tipster subscriptions',
   'buy.tagline': 'Pay for a single pick or a VIP plan. Settled results stay public so you can judge form before you subscribe.',
-  'buy.intro': 'Searches like football tipster subscription, VIP football tips, and paid predictions usually want a public record, a clear price, and a refund if the pick loses. That is what BetRollover sells. We are not a bookmaker. 18+ only.',
+  'buy.intro':
+    'VIP plans and purchase-protected marketplace picks share a public settled record, a clear price, and a wallet refund if a paid pick loses. That is what BetRollover offers. We are not a bookmaker. 18+ only.',
   'buy.regions_h': 'Paid football tips in Ghana, Nigeria, Kenya and worldwide',
   'buy.regions_body':
-    'BetRollover is built in Ghana: GHS wallets, Mobile Money where enabled, and purchase-protected picks for buyers in Nigeria, Kenya, South Africa, Francophone Africa, and globally. Compare verified tipsters, buy today’s paid predictions, or open a VIP plan on one marketplace.',
+    'BetRollover is built in Ghana: GHS wallets, Mobile Money where enabled, and purchase-protected picks for buyers in Nigeria, Kenya, South Africa, Francophone Africa, and globally. Compare verified tipsters, browse today’s paid picks, or open a VIP plan on one marketplace.',
   'buy.regions_about_link': 'About BetRollover & our markets',
   'buy.picks_h': 'Buy a single football tip',
   'buy.picks_body': 'The marketplace lists free and paid football picks. Compare win rate and track record, then pay from your wallet. A paid pick that loses is refunded automatically.',
@@ -2600,9 +2606,9 @@ const en = {
 
   'ghana_hub.meta_title': 'Football Tipster Platform in Ghana | Purchase-Protected Picks',
   'ghana_hub.meta_desc':
-    'BetRollover is a Ghana-based tipster marketplace. Compare verified win rates, buy paid picks with automatic refunds if they lose, and copy SportyBet or Bet9ja booking codes when tipsters add them. Not a bookmaker. 18+.',
+    'BetRollover is a Ghana-based tipster marketplace. Compare verified win rates, use purchase-protected picks with automatic wallet refunds if they lose, and copy SportyBet or Bet9ja booking codes when tipsters add them. Not a bookmaker. 18+.',
   'ghana_hub.meta_keywords':
-    'football tips platform ghana|betting tipster platform ghana|football tips ghana|purchase protected tips|verified tipsters ghana|sportybet booking code tips|tipster marketplace africa',
+    'football tipster platform ghana|tipster marketplace ghana|football tips ghana|purchase protected tips|verified tipsters ghana|sportybet booking code tips|tipster marketplace africa',
   'ghana_hub.label': 'Ghana & Africa',
   'ghana_hub.title': 'Football tipster platform in Ghana',
   'ghana_hub.tagline':

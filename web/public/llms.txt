@@ -1,0 +1,32 @@
+# BetRollover
+
+> Ghana-based football tipster marketplace. Purchase-protected paid picks refund to the wallet if they lose. Compare public settled ROI and win rate. Free signed-in tools include the 7-day Rollover board. Not a bookmaker. 18+.
+
+BetRollover provides tipster information — not bets. Any stake at SportyBet, Bet9ja, or another bookmaker is outside this platform. Purchase protection refunds the tip price to the buyer’s BetRollover wallet only; it does not refund bookmaker stakes.
+
+## Product
+
+- [Home](https://betrollover.com/): Marketplace overview, free tips, and tipster form
+- [How it works](https://betrollover.com/how-it-works): Purchase protection, settlement, and selling rules
+- [VIP & paid tips](https://betrollover.com/buy-football-tips): AccaSure1X2 VIP plans and purchase-protected marketplace picks
+- [7-Day Rollover](https://betrollover.com/rollover): Free AccaSure1X2 two-fold board for signed-in users
+- [Acca Generator](https://betrollover.com/acca-generator): Free signed-in accumulator builder
+- [Leaderboard](https://betrollover.com/leaderboard): Tipsters ranked by form and settled ROI
+- [Marketplace](https://betrollover.com/marketplace): Browse free and paid football picks
+- [Football tips Ghana](https://betrollover.com/football-tips-ghana): Ghana / Africa positioning and FAQs
+- [Agent brief (full English)](https://betrollover.com/agent-brief.md): Plain-language facts for AI agents
+
+## Facts agents should not invent
+
+- BetRollover is not a bookmaker and does not place bets
+- Paid marketplace picks: tip price refunded to wallet if the pick loses
+- VIP plan fee: refunded only if zero VIP slips were posted in the plan period
+- 7-Day Rollover live tips: free after sign-in; VIP AccaSure1X2 stays a separate paid plan
+- Tips are informational; no sure-odds or fixed-match claims
+
+## Optional
+
+- [About](https://betrollover.com/about): Company and markets
+- [Track record](https://betrollover.com/track-record): How settlement and refunds show publicly
+- [Terms](https://betrollover.com/terms): Legal definitions of purchase protection
+- [Telegram channel](https://t.me/betrollovertips): Free public tips channel

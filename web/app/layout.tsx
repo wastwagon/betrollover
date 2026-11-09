@@ -64,6 +64,13 @@ export const metadata: Metadata = {
     apple: '/BetRollover-logo.png',
   },
   manifest: '/manifest.json',
+  /** Agent discovery: curated English map + full brief (not competitor copy). */
+  alternates: {
+    types: {
+      'text/plain': [{ url: '/llms.txt', title: 'llms.txt' }],
+      'text/markdown': [{ url: '/agent-brief.md', title: 'BetRollover agent brief' }],
+    },
+  },
   openGraph: {
     type: 'website',
     locale: 'en',
